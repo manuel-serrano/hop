@@ -1,0 +1,32 @@
+#*=====================================================================*/
+#*    serrano/prgm/project/hop/etc/Makefile.contrib                    */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Wed Dec  7 14:48:42 2005                          */
+#*    Last change :  Wed Dec  7 16:10:43 2005 (serrano)                */
+#*    Copyright   :  2005 Manuel Serrano                               */
+#*    -------------------------------------------------------------    */
+#*    Default contribution installation                                */
+#*=====================================================================*/
+
+#*---------------------------------------------------------------------*/
+#*    install                                                          */
+#*---------------------------------------------------------------------*/
+install-contrib:
+	mkdir -p $(CONTRIBSDIR) && chmod a+rx $(CONTRIBSDIR)
+	mkdir -p $(CONTRIBSDIR)/$(CONTRIB) && chmod a+rx $(CONTRIBSDIR)/$(CONTRIB)
+	for p in $(CONTRIBSFILES); do \
+          if [ -d $$p ]; then \
+	     cp -r $$p $(CONTRIBSDIR)/$(CONTRIB)/$$p; \
+          else \
+	     install -m a+r $$p $(CONTRIBSDIR)/$(CONTRIB)/$$p; \
+          fi \
+        done
+
+#*---------------------------------------------------------------------*/
+#*    uninstall                                                        */
+#*---------------------------------------------------------------------*/
+uninstall-contrib:
+	for p in $(CONTRIBSFILES); do \
+	  /bin/rm -rf $(CONTRIBSDIR)/$(CONTRIB)/$$p; \
+        done

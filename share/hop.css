@@ -1,0 +1,37 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop.css                           */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Dec 25 07:01:42 2004                          */
+/*    Last change :  Tue Nov 29 07:53:42 2005 (serrano)                */
+/*    Copyright   :  2004-05 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    Standard HOP CSS                                                 */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Tooltip ...                                                      */
+/*---------------------------------------------------------------------*/
+.hoptooltip {
+  top: 0;
+  left: 0;
+  position: absolute;
+  visibility: hidden;
+  z-index: 10;
+  overflow: hidden;
+  border-style: solid;
+  border-width: 1px;
+  background-color: #ffffcc;
+}
+
+/*---------------------------------------------------------------------*/
+/*    mailto                                                           */
+/*---------------------------------------------------------------------*/
+.hopmailto {
+  font-family: monospace;
+  cursor: pointer;
+}
+
+.hopmailto:hover {
+  text-decoration: underline;
+}

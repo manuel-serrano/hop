@@ -1,0 +1,24 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-sorttable.css                 */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Mon Jan  9 13:43:05 2006                          */
+/*    Last change :  Mon Jan  9 15:07:52 2006 (serrano)                */
+/*    Copyright   :  2006 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Hop sorttable CSS                                                */
+/*=====================================================================*/
+
+span.hop-sorttable a.hop-sortheader {
+  text-decoration: none;
+}
+
+span.hop-sorttable span.hop-sortarrow {
+  border: 1px solid transparent;
+  font-size: small;
+  font-weight: bold;
+}
+
+span.hop-sorttable a.hop-sortheader:visited {
+  border: 2px solid yellow;
+}

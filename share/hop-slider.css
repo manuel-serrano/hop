@@ -1,0 +1,53 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-slider.css                    */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Aug 10 11:04:10 2005                          */
+/*    Last change :  Thu Sep  8 09:50:09 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    HOP slider CSS                                                   */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Line configuration                                               */
+/*---------------------------------------------------------------------*/
+table.hop-slider div.lineleft {
+  height: 3px;
+  border-right: 0;
+  border-left: 1px inset black;
+  border-top: 1px inset black;
+  border-bottom: 1px inset black;
+  background: rgb(204,204,204);
+}
+  
+table.hop-slider div.lineright {
+  height: 3px;
+  border-left: 0;
+  margin: 0;
+  border-top: 1px inset black;
+  border-right: 1px inset black;
+  border-bottom: 1px inset black;
+  background: white;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Cursor configuration                                             */
+/*---------------------------------------------------------------------*/
+table.hop-slider div.cursoron {
+  border: 1px outset black;
+  background-color: rgb(150,150,150);
+  background-image: url( "icons/slider-cursor.png" );
+}
+   
+table.hop-slider div.cursoroff {
+  border: 1px outset black;
+  background-color: rgb(204,204,204);
+  background-image: url( "icons/slider-cursor.png" );
+}
+
+table.hop-slider td.caption {
+  font-family: Arial,Helvetica,sans-serif;
+  font-weight: bold; 
+  font-size: 11px;
+}

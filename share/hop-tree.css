@@ -1,0 +1,40 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-tree.css                      */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Tue Jul 19 10:48:00 2005                          */
+/*    Last change :  Thu Aug 18 13:26:46 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Hop Tree CSS                                                     */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Tree configuration                                               */
+/*---------------------------------------------------------------------*/
+table.hop-tree {
+  font-family: Tahoma, Verdana;
+  font-size: 12px;
+}
+
+table.hop-tree-leaf {
+  font-family: Tahoma, Verdana;
+  font-size: 10px;
+}
+
+img.hop-tree-openclose {
+  cursor: pointer;
+}
+
+/*---------------------------------------------------------------------*/
+/*    row                                                              */
+/*---------------------------------------------------------------------*/
+tr.hop-tree-row-unselected {
+  background: inherit;
+  border: 0;
+}
+
+tr.hop-tree-row-selected {
+  background: #6b5dff;
+  border: 1px solid black;
+}

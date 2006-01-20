@@ -1,0 +1,107 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-paned.css                     */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Aug 17 16:08:51 2005                          */
+/*    Last change :  Thu Nov 10 08:16:23 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    HOP paned CSS                                                    */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Common settings                                                  */
+/*---------------------------------------------------------------------*/
+div.hop-paned {
+  width: 100%;
+  height: inherit;
+  border: 0;
+  border: 1px inset black;
+  padding: 0;
+  margin: 0;
+}
+
+div.hop-paned-cursoron {
+  border: 0;
+  cursor: move;
+  background: rgb(150,150,150);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+   
+div.hop-paned-cursoroff {
+  border: 0;
+  background: rgb(204,204,204);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Vertical paned                                                   */
+/*---------------------------------------------------------------------*/
+table.hop-vpaned {
+  border: 5px solid rgb(204,204,204);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+td.hop-vpaned-pan {
+  border: 1px inset black;
+  padding: 0;
+  margin: 0;
+  vertical-align: top;
+}
+
+table.hop-vpaned > tr > td > div.hop-pan {
+  border: 0;
+  height: 100%;
+}
+
+td.hop-paned-cursor {
+  align: center;
+  vertical-align: middle;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+ 
+table.hop-vpaned > tr > td.hop-paned-cursor {
+  width: 7px;
+}
+table.hop-vpaned > tr > td.hop-paned-cursor > div {
+  height: 100%;
+  width: 7px;
+}
+
+table.hop-vpaned > tr > td > div.hop-paned-cursoron {
+  background-image: url( "icons/paned-vcursor.png" );
+}
+
+table.hop-vpaned > tr > td > div.hop-paned-cursoroff {
+  background-image: url( "icons/paned-vcursor.png" );
+}
+
+/*---------------------------------------------------------------------*/
+/*    Horizontal settings                                              */
+/*---------------------------------------------------------------------*/
+div.hop-hpaned {
+  border: 5px solid rgb(204,204,204);
+  border-spacing: 0;
+}
+
+div.hop-hpaned > div.hop-paned-cursor {
+  border-top: 1px inset black;
+}
+
+div.hop-paned-cursor { 
+  height: 7px; 
+  width: 100%;
+}
+
+div.hop-paned-cursoron {
+  background-image: url( "icons/paned-hcursor.png" );
+}
+   
+div.hop-paned-cursoroff {
+  background-image: url( "icons/paned-hcursor.png" );
+}

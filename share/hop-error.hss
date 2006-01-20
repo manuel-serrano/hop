@@ -1,0 +1,86 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-error.hss                     */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Jan 18 15:46:42 2006                          */
+/*    Last change :  Wed Jan 18 16:43:13 2006 (serrano)                */
+/*    Copyright   :  2006 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    The CSS for showing errors.                                      */
+/*=====================================================================*/
+
+$(define border-color "#bbb")
+
+body {
+  background: #dfdfdf;
+  font-family: arial;
+}
+
+img {
+  padding: 20px;
+}
+
+table.error {
+  width: 45em;
+  margin-top: 50px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  -moz-border-radius: 0.5em;
+}
+
+td {
+  vertical-align: top;
+}
+table.error td {
+  font-weight: bold;
+}
+
+td#title {
+  font-size: x-large;
+  font-weight: bold;
+  padding-bottom: 1px;
+}
+
+td#msg {
+  width: 35em;
+  margin-bottom: 20px;
+  margin-top: 20px;
+  padding-bottom: 20px;
+  padding-top: 20px;
+  border-bottom: 1px solid $border-color;
+  border-top: 1px solid $border-color;
+}
+
+td#msg {
+  font-family: sans-serif;
+}
+
+td#msg tt {
+  font-size: large;
+}
+
+td#dump {
+  padding-top: 20px;
+}
+
+td#dump pre {
+  font-size: large;
+}
+
+td.request-info {
+  padding-left: 10px;
+}
+
+td.request-info table th {
+  font-size: small;
+}
+
+td.request-info tt {
+  font-size: xx-large;
+  color: blue;
+}
+
+span.filenotfound {
+  color: blue;
+}

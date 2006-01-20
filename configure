@@ -1,0 +1,276 @@
+#!/bin/sh
+#*=====================================================================*/
+#*    serrano/prgm/project/hop/configure                               */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Sat Jul 31 06:49:37 2004                          */
+#*    Last change :  Thu Jan 19 09:43:04 2006 (serrano)                */
+#*    Copyright   :  2004-06 Manuel Serrano                            */
+#*    -------------------------------------------------------------    */
+#*    HOP autoconfiguration                                            */
+#*=====================================================================*/
+
+#*---------------------------------------------------------------------*/
+#*    User flags                                                       */
+#*---------------------------------------------------------------------*/
+prefix=/usr/local
+
+bigloo=bigloo
+afile=afile
+jfile=jfile
+btags=btags
+bdepend=bdepend
+cc=
+backend=native
+
+bcflags="-O3 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
+
+bcflagsdbg="-g -cg"
+bcflagsbmem="-g2"
+bcflagsopt="-unsafe"
+
+blflags="-copt \$(CPICFLAGS)"
+
+mimetypes=/etc/mime.types
+
+#*---------------------------------------------------------------------*/
+#*    Private variables                                                */
+#*---------------------------------------------------------------------*/
+version="1.0i"
+
+bindir=$prefix/bin;
+libdir=$prefix/lib
+sharedir=$prefix/share/hop
+webletsdir=
+contribsdir=$prefix/share/hop/contribs
+buildlibdir=$PWD/lib
+buildsharedir=$PWD/share
+distribdir=$HOME/prgm/distrib
+buildbindir=$PWD/bin
+
+# Argument parsing
+while : ; do
+  case $1 in
+    "")
+      break;;
+
+    --prefix=*)
+      prefix="`echo $1 | sed 's/^[^=]*=//'`";
+      bindir=$prefix/bin;
+      libdir=$prefix/lib;
+      sharedir=$prefix/share;
+      contribsdir=$prefix/share/contribs;;
+
+    --bindir=*)
+      bindir="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --libdir=*)
+      libdir="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --sharedir=*)
+      sharedir="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --webletsdir=*)
+      webletsdir="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --contribsdir=*)
+      contribsdir="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --mimetypes=*)
+      mimetypes="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --bigloo=*)
+      bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --backend=*)
+      backend="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --cigloo=*)
+      cigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --afile=*)
+      afile="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --btags=*)
+      btags="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --bdepend=*)
+      bdepend="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --cc=*)
+      cc="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --bcflags=*)
+      bcflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
+    --blflags=*)
+      blflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
+    --bhflags=*)
+      bhflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
+    --brflags=*)
+      brflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
+    --ccflags=*)
+      ccflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
+    --debug)
+      bcflags="$bcflags $bcflagsdbg";;
+
+    --bmem)
+      bcflags="$bcflags $bcflagsbmem";;
+
+    --optimize)
+      bcflags="$bcflags $bcflagsopt";;
+
+    -*)
+      echo "*** Configure error, unknown option $1" >&2;
+      echo >&2;
+      echo "Usage: configure [options]" >&2;
+      echo "   --prefix=dir.......... prefix to HOP install" >&2;
+      echo "   --bindir=dir.......... alternative Hop bin directory" >&2;
+      echo "   --libdir=dir.......... alternative Hop lib directory" >&2;
+      echo "   --sharedir=dir........ alternative Hop share directory" >&2;
+      echo "   --webletsdir=dir...... alternative Hop weblets directory" >&2;
+      echo "   --contribsdir=dir..... alternative Hop contribs directory" >&2;
+      echo "   --mimetypes=file...... default mime.types file" >&2;
+      echo "   --bigloo=comp......... The Bigloo compiler" >&2;
+      echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
+      echo "   --cigloo=comp......... The Cigloo compiler" >&2;
+      echo "   --afile=afile......... The Bigloo afile tool" >&2;
+      echo "   --btags=btags......... The Bigloo btags tool" >&2;
+      echo "   --bdepend=bdepend..... The Bigloo dependence tool" >&2;
+      echo "   --ccs=cc.............. The C compiler" >&2;
+      echo "   --bcflags=args........ The compilation options" >&2;
+      echo "   --blflags=args........ The link options" >&2;
+      echo "   --bhflags=args........ The heap options" >&2;
+      echo "   --brflags=args........ The heap options" >&2;
+      echo "   --ccflags=args........ The heap options" >&2;
+      echo "   --debug............... Enables Bigloo debug mode" >&2;
+      echo "   --bmem................ Enables Bigloo bmem mode" >&2;
+      echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
+      exit -1;
+  esac
+  shift
+done
+
+#*---------------------------------------------------------------------*/
+#*    Check the backend                                                */
+#*---------------------------------------------------------------------*/
+case $backend in
+  "native")
+     break;;
+  "jvm")
+     break;;
+  "dotnet")
+     break;;
+  *)
+      echo "*** Configure error, Illegal backend $backend" >&2;
+      echo "see configure --help" >&2;
+      exit -1;
+esac
+
+#*---------------------------------------------------------------------*/
+#*    Weblets dir                                                      */
+#*---------------------------------------------------------------------*/
+if [ "$webletsdir " = " " ]; then
+  webletsdir=$sharedir/weblets;
+fi
+
+#*---------------------------------------------------------------------*/
+#*    We are now able to set the correct value for cc since we know    */
+#*    what Bigloo is.                                                  */
+#*---------------------------------------------------------------------*/
+if [ "$cc " = " " ]; then
+  cc=`$bigloo -eval '(begin (print *cc*) (exit 0))'`
+fi
+
+bigloolibdir=`$bigloo -q -eval "(begin (print *default-lib-dir*) (exit 0))"`
+if [ "$ccflags " = " " ]; then
+  ccflags=`grep '^CFLAGS=' $bigloolibdir/Makefile.config | sed 's/^[A-Z]*=//'`
+  ccflags="$ccflags -I $bigloolibdir"
+fi
+
+
+# Makefile.hopconfig
+mkmf=etc/Makefile.hopconfig
+
+rm -f $mkmf 2> /dev/null
+echo "#* Automatically generated file (don't edit) */" > $mkmf
+
+cat $mkmf.in \
+    | sed -e "s|@RELEASE@|$version|" \
+          -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@BACKEND@|$backend|" \
+          -e "s|@BIGLOOLIBDIR@|$bigloolibdir|" \
+          -e "s|@CIGLOO@|$cigloo|" \
+          -e "s|@AFILE@|$afile|" \
+          -e "s|@JFILE@|$jfile|" \
+          -e "s|@BTAGS@|$btags|" \
+          -e "s|@BDEPEND@|$bdepend|" \
+          -e "s|@CC@|$cc|" \
+          -e "s|@BCFLAGS@|$bcflags|" \
+          -e "s|@BLFLAGS@|$blflags|" \
+          -e "s|@CCFLAGS@|$ccflags|" \
+          -e "s|@BUILDLIBDIR@|$PWD/lib|" \
+          -e "s|@BUILDBINDIR@|$PWD/bin|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@BUILDBINDIR@|$buildbindir|" \
+          -e "s|@BUILDLIBDIR@|$buildlibdir|" \
+          -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
+          -e "s|@DISTRIBDIR@|$distribdir|" \
+    >> $mkmf
+
+# src/configure.scm
+configure=runtime/configure.scm
+rm -f $configure 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $configure
+
+cat etc/configure.scm.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@MIMETYPES@|$mimetypes|" \
+    >> $configure
+
+# lib/hop.init
+init=lib/hop.init
+rm -f $init 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/hop.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+    >> $init
+echo "" >> $init
+
+cat runtime/compiler-macro.sch >> $init
+cat runtime/xml.sch >> $init
+cat runtime/param.sch >> $init
+cat runtime/service.sch >> $init
+
+#*---------------------------------------------------------------------*/
+#*    Summary                                                          */
+#*---------------------------------------------------------------------*/
+echo "** Configuration summary **"
+echo 
+echo "Release features:"
+echo "  Hop release number.................... $version"
+echo "  Bigloo................................ $bigloo"
+echo "  Bakend................................ $backend"
+echo "  Bigloo compilation flags.............. $bcflags"
+echo
+echo "Directories where Hop will be installed:"
+echo "  binaries.............................. $bindir"
+echo "  libraries............................. $libdir"
+echo "  share directory....................... $sharedir"
+echo "  weblets directory..................... $webletsdir"
+echo "  contribs directory.................... $contribsdir"
+echo 
