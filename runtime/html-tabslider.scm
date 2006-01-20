@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/src/html-tabslider.scm                  */
+;*    serrano/prgm/project/hop/runtime/html-tabslider.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Jan 12 13:29:19 2006 (eg)                     */
+;*    Last change :  Fri Jan 20 17:02:10 2006 (eg)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -11,17 +11,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hop_html-tabslider
+(module __hop_html-tabslider
 
    (include "compiler-macro.sch"
 	    "xml.sch")
 
-   (import  hop_configure
-	    hop_param
-	    hop_misc
-	    hop_xml
-	    hop_init
-	    hop_types)
+   (import  __hop_param
+	    __hop_types
+	    __hop_xml
+	    __hop_misc
+	    __hop_js-lib
+	    __hop_service)
 
    (static  (class html-tabslider::xml-element
 	       (width (default #f))

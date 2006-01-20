@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Jan 20 15:27:40 2006 (serrano)                */
+#*    Last change :  Fri Jan 20 17:00:44 2006 (eg)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -46,7 +46,7 @@ _OBJECTS	= param misc types thread \
                   html-paned html-tabslider html-inline \
                   event
 
-OBJECTS		= $(_OBJECTS:%=o/%.o) configure.o
+OBJECTS		= $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS	= o/make-lib.o
 
 BGL_CLASSES	= $(_OBJECTS:%=$(CLASS_DIR)/%.class)
@@ -55,7 +55,7 @@ BGL_ECLASSES	= $(CLASS_EDIR)/make-lib.class
 BGL_DOTNET_OBJ	= $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
 BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
 
-SOURCES		= $(_OBJECTS:%=%.scm)
+SOURCES		= $(_OBJECTS:%=%.scm) configure.scm
 
 INCLUDES	= compiler-macro.sch eval-macro.sch xml.sch param.sch \
                   http-lib.sch service.sch
