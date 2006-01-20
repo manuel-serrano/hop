@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Jan 20 14:46:20 2006 (serrano)                */
+#*    Last change :  Fri Jan 20 15:27:40 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -36,7 +36,7 @@ DOTNET_OBJ_EDIR	= o/dotnet_e
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS	= configure param misc types thread \
+_OBJECTS	= param misc types thread \
                   xml dom read \
                   read-js css js-lib cgi \
                   hop service builtin \
@@ -46,7 +46,7 @@ _OBJECTS	= configure param misc types thread \
                   html-paned html-tabslider html-inline \
                   event
 
-OBJECTS		= $(_OBJECTS:%=o/%.o)
+OBJECTS		= $(_OBJECTS:%=o/%.o) configure.o
 EOBJECTS	= o/make-lib.o
 
 BGL_CLASSES	= $(_OBJECTS:%=$(CLASS_DIR)/%.class)

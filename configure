@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jan 20 14:45:20 2006 (serrano)                */
+#*    Last change :  Fri Jan 20 15:02:53 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -47,6 +47,8 @@ buildlibdir=$PWD/lib
 buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 buildbindir=$PWD/bin
+
+repository=ssh://skribe@saxo.essi.fr/hop
 
 # Argument parsing
 while : ; do
@@ -223,6 +225,7 @@ cat $mkmf.in \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
           -e "s|@DISTRIBDIR@|$distribdir|" \
+          -e "s|@HOPREPOSITORY@|$repository|" \
     >> $mkmf
 
 # src/configure.scm
