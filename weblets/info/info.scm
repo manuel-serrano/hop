@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jan 20 12:42:23 2006 (serrano)                */
+;*    Last change :  Fri Jan 20 17:43:52 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info encryption                                              */
@@ -64,7 +64,6 @@
 			   (hop-http-response-remote-hook-remove! hook)
 			   #f)(),
 			false, false, false );
-		   sleep( 100 );
 		}
 		(<CENTER>
 		   (<TABLE>

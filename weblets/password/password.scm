@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Jan 18 15:25:39 2006 (serrano)                */
+;*    Last change :  Fri Jan 20 17:55:25 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP password encryption                                          */
@@ -18,7 +18,7 @@
 ;*    password-directory ...                                           */
 ;*---------------------------------------------------------------------*/
 (define password-directory
-   (dirname (the-loading-file)))
+   (make-file-name (hop-weblets-directory) "password"))
 
 ;*---------------------------------------------------------------------*/
 ;*    password filter ...                                              */
