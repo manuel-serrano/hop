@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Fri Jan 20 13:45:50 2006 (serrano)                */
+#*    Last change :  Fri Jan 20 15:09:29 2006 (eg)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -40,13 +40,20 @@ POPULATION 	= $(SOURCES:configure.scm=configure.scm.in) \
 #*---------------------------------------------------------------------*/
 #*    The roost executable                                             */
 #*---------------------------------------------------------------------*/
-.PHONY: build
+.PHONY: build dobuild
 
-build: $(BUILDBINDIR)/$(EXEC)
+build:  o dobuild
+
+o: 
+	mkdir -p $@
+
+dobuild: $(BUILDBINDIR)/$(EXEC)
+
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $^)
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+
 
 #*---------------------------------------------------------------------*/
 #*    SUFFIXES                                                         */
