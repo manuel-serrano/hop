@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/html-tabslider.scm              */
+;*    serrano/prgm/project/hop/src/html-tabslider.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Jan 19 10:32:59 2006 (serrano)                */
+;*    Last change :  Thu Jan 12 13:29:19 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -11,21 +11,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_html-tabslider
+(module hop_html-tabslider
 
    (include "compiler-macro.sch"
 	    "xml.sch")
 
-   (import  __hop_param
-	    __hop_types
-	    __hop_xml
-	    __hop_misc
-	    __hop_js-lib
-	    __hop_service)
+   (import  hop_configure
+	    hop_param
+	    hop_misc
+	    hop_xml
+	    hop_init
+	    hop_types)
 
    (static  (class html-tabslider::xml-element
 	       (width (default #f))
-	       (height (default #f)))
+	       (height (default #f))
+	       (index (default 0)))
 	    (class html-tspage::xml-element)
 	    (class html-tshead::xml-element))
 
@@ -41,6 +42,7 @@
 (define-xml-compound TABSLIDER ((id #unspecified string)
 				(width #f)
 				(height #f)
+				(index 0)
 				body)
   ;; Verify that the body is a list of <TABPAN>
   (for-each (lambda (x)
@@ -54,13 +56,14 @@
      (id (xml-make-id id 'TABSLIDER))
      (width width)
      (height height)
+     (index index)
      (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tabslider ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-tabslider p encoding)
-  (with-access::html-tabslider obj (id width height body)
+  (with-access::html-tabslider obj (id width height body index)
      (fprintf p "<div class='hop-tabslider' id='~a'" id)
      (when (or width height)
        (fprintf p " style=\"~a~a\""
@@ -68,8 +71,11 @@
 		(if height (format "height: ~a;" height) "")))
      (display ">" p)
      (xml-write body p encoding)
-     (display "</div>" p)))
-     
+     (display "</div>" p)
+     (fprintf p
+        "<script type='text/javascript'>hop_tabslider_init('~a', ~a)</script>"
+	id index)))
+
 ;*---------------------------------------------------------------------*/
 ;*    <TSPAN> ...                                                      */
 ;*---------------------------------------------------------------------*/

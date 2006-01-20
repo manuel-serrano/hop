@@ -3,7 +3,7 @@
  * 
  *              Author: Erick Gallesio [eg@essi.fr]
  *       Creation date: 14-Sep-2005 09:24 (eg)
- *    Last file update: 16-Sep-2005 16:17 (eg)
+ *    Last file update: 12-Jan-2006 13:24 (eg)
  * ======================================================================
  */
 
@@ -40,29 +40,25 @@ function hop_tabslider_select(item)
 /*---------------------------------------------------------------------*/
 /*    hop_tabslider_init ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_tabslider_init(id)
+function hop_tabslider_init(id, index)
 {
     var ts = document.getElementById(id);
-    hop_tabslider_select(ts.childNodes[0]);
+
+    window.addEventListener('load', 
+			    function(event) {
+				hop_tabslider_select(ts.childNodes[2*index]);
+			    },
+			    false);
 }
 
 
 /*---------------------------------------------------------------------*/
 /*    Plug the tabsliders behaviour ...                                */
 /*---------------------------------------------------------------------*/
-hopBehaviour.register('hop-tabslider',
-		      function (el) {
-			  window.addEventListener(
-			      'load', 
-			      function(event) {
-				  hop_tabslider_select(el.childNodes[0]);
-			      },
-			      false);
-		      });
-
 hopBehaviour.register('hop-tabslider-head',
 		      function (el) {
 			  el.onclick = function(){
 			      hop_tabslider_select(this)
 			  }
+			  // hop_tabslider_select(el.parentNode.childNodes[0]);
 		      });
