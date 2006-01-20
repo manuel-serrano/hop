@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Jan 18 15:28:09 2006 (serrano)                */
+;*    Last change :  Fri Jan 20 17:55:58 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP bbdb script                                                  */
@@ -18,7 +18,7 @@
 ;*    bbdb-directory ...                                               */
 ;*---------------------------------------------------------------------*/
 (define bbdb-directory
-   (dirname (the-loading-file)))
+   (make-file-name (hop-weblets-directory) "bbdb"))
 
 ;*---------------------------------------------------------------------*/
 ;*    bbdb filter ...                                                  */

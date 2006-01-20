@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jan 20 17:43:52 2006 (serrano)                */
+;*    Last change :  Fri Jan 20 17:56:20 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info encryption                                              */
@@ -23,7 +23,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    info-dir ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define info-dir  (dirname (the-loading-file)))
+(define info-dir
+   (make-file-name (hop-weblets-directory) "info"))
 
 ;*---------------------------------------------------------------------*/
 ;*    traffic-hook ...                                                 */
