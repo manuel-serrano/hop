@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/info/info.scm                   */
+;*    serrano/prgm/project/hop/weblets/info/info.hop                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jan 20 17:56:20 2006 (serrano)                */
+;*    Last change :  Fri Jan 20 20:43:39 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info encryption                                              */
@@ -161,5 +161,3 @@
 	     :handler { hop_append( $traffic )( event ) }
 	     :event info-event)
 	  (<SORTTABLE> traffic)))))
-
-
