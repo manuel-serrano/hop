@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Jan 20 17:00:44 2006 (eg)                */
+#*    Last change :  Fri Jan 20 16:48:57 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -55,7 +55,7 @@ BGL_ECLASSES	= $(CLASS_EDIR)/make-lib.class
 BGL_DOTNET_OBJ	= $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
 BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
 
-SOURCES		= $(_OBJECTS:%=%.scm) configure.scm
+SOURCES		= $(_OBJECTS:%=%.scm)
 
 INCLUDES	= compiler-macro.sch eval-macro.sch xml.sch param.sch \
                   http-lib.sch service.sch
@@ -259,16 +259,16 @@ ude:
 	@ $(MAKE) -f Makefile .afile .etags .jfile
 	@ $(MAKE) dep
 
-.afile: $(SOURCES)
-	@ $(AFILE) -o .afile $(SOURCES) 
+.afile: $(SOURCES) configure.scm
+	@ $(AFILE) -o .afile $(SOURCES) configure.scm
 
-.jfile: $(SOURCES)
+.jfile: $(SOURCES) configure.scm
 	@ $(JFILE) -o .jfile \
                    -I $(MISC_SRC_DIR) \
-                   -pbase $(PBASE) $(_BGL_OBJECTS:%=%.scm) make-lib.scm
+                   -pbase $(PBASE) $(SOURCES) configure.scm make-lib.scm
 
 .etags: $(SOURCES)
-	@ $(BTAGS) -o .etags $(SOURCES)
+	@ $(BTAGS) -o .etags $(SOURCES) configure.scm
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */
