@@ -1,0 +1,22 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-jsMath.css                    */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Dec  7 14:39:07 2005                          */
+/*    Last change :  Wed Dec  7 14:39:37 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    CSS for jsMath                                                   */
+/*=====================================================================*/
+
+div.jsM_noFont{
+  display: none;
+}
+
+div.jsM_Warning{
+  display: none;
+}
+
+div.jsM_button{
+  display:none;
+}

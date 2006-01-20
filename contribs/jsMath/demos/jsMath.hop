@@ -1,0 +1,69 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/contribs/jsMath/demos/jsMath.hop        */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed Dec  7 14:59:23 2005                          */
+;*    Last change :  Wed Dec  7 16:24:19 2005 (serrano)                */
+;*    Copyright   :  2005 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    An example of HOP page using the jsMath contribution.            */
+;*=====================================================================*/
+
+(load-once "jsMath/jsMath.hop")
+
+(<HTML>
+   (<HEAD>
+      (<HOP-JSMATH-HEAD>))
+   (<BODY>
+      (<UL>
+	 (<LI> "TeXbook p. 139")
+	 (<P>
+	  (<MATH> "{1\\over 2} \\quad {n+1\\over 3} \\quad {n+1 \\choose 3} \\quad
+\\sum_{n=1}^3 Z_n^2"))
+         (<P>
+          (<MATH> "{x+y^2\\over k+1} \\quad
+{x+y^2\\over k} + 1 \\quad
+ x + {y^2\\over k} + 1 \\quad
+x+ {y^2 \\over k+1} \\quad
+x+y^{2\\over k+1}"))
+         (<P>
+          (<MATH> "{{a \\over b} \\over 2} \\quad
+{a \\over {b \\over 2}} \\quad
+{a/b\\over 2} \\quad
+{a \\over {b/2}}"))
+
+         (<LI> "TeXbook p. 143")
+         (<P>
+          (<MATH> "{n\\choose k} \\quad
+{{n\\choose k} \\over 2}\\quad
+{n \\choose {k\\over 2}}\\quad
+{n\\choose k/2} \\quad
+{n\\choose {1\\over 2} k} \\quad
+{1\\over 2}{n\\choose k} \\quad
+\\vcenter{\\displaystyle {n\\choose k} \\over 2}"))
+         (<P>
+          (<MATH> "{p\\choose 2}x^2y^{p-2} - {1\\over 1-x} {1\\over 1-x^2}"))
+         (<P>
+           (<MATH> "{\\displaystyle {a\\over b}\\above1pt\\displaystyle{c\\over d}}"))
+
+         (<LI> "TeXbook p. 144")
+         (<P>
+          (<MATH> "{\\textstyle \\sum x_n}\\quad {\\sum x_n} \\quad
+\\sum_{n=1}^m"))
+         (<P>
+          (<MATH> "{\\textstyle\\int_{-\\infty}^{+\\infty}} \\quad
+\\int_{-\\infty}^{+\\infty} \\quad
+\\int\\limits_{0}^{\\pi\\over 2} \\quad"))
+
+         (<LI> "TeXbook p. 145")
+         (<P>
+          (<MATH> "\\sum_{\\scriptstyle 0\\le i\\le m\\atop \\scriptstyle 0 < j < n} P(i,j)\\quad
+
+\\sum_{i=1}^p\\sum_{j=1}^q \\sum_{k=1}^r a_{ij}b_{jk}c_{ki} \\quad
+
+\\sum_{{\\scriptstyle 1\\le i\\le p \\atop \\scriptstyle 1\\le j\\le q}
+\\atop \\scriptstyle 1\\le k\\le r} a_{ij} b_{jk} c_{ki}"))
+
+         (<P>
+          (<MATH> "\\sqrt{1+\\sqrt{1+\\sqrt{1+\\sqrt{1+\\sqrt{1+\\sqrt{1+\\sqrt{1+x}}}}}}}")))))
+
