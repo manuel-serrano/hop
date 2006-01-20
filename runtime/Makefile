@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Jan 20 13:56:50 2006 (serrano)                */
+#*    Last change :  Fri Jan 20 15:27:40 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -15,6 +15,7 @@ do: build
 #*    Standard Bigloo configuration                                    */
 #*---------------------------------------------------------------------*/
 include ../etc/Makefile.hopconfig
+include ../etc/Makefile.version
 include $(BIGLOOLIBDIR)/Makefile.config
 
 #*---------------------------------------------------------------------*/
@@ -35,7 +36,7 @@ DOTNET_OBJ_EDIR	= o/dotnet_e
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS	= configure param misc types thread \
+_OBJECTS	= param misc types thread \
                   xml dom read \
                   read-js css js-lib cgi \
                   hop service builtin \
@@ -45,7 +46,7 @@ _OBJECTS	= configure param misc types thread \
                   html-paned html-tabslider html-inline \
                   event
 
-OBJECTS		= $(_OBJECTS:%=o/%.o)
+OBJECTS		= $(_OBJECTS:%=o/%.o) configure.o
 EOBJECTS	= o/make-lib.o
 
 BGL_CLASSES	= $(_OBJECTS:%=$(CLASS_DIR)/%.class)
@@ -313,12 +314,6 @@ udeclean:
 cleanall: stdclean
 
 devclean: cleanall
-
-#*---------------------------------------------------------------------*/
-#*    pop ...                                                          */
-#*---------------------------------------------------------------------*/
-pop:
-	@ echo $(POPULATION:%=runtime/%)
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */

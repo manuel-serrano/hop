@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Jan 20 13:58:31 2006 (serrano)                */
+#*    Last change :  Fri Jan 20 14:47:32 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -13,19 +13,17 @@
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
 include ../etc/Makefile.hopconfig
+include ../etc/Makefile.version
 
+#*---------------------------------------------------------------------*/
+#*    Population                                                       */
+#*---------------------------------------------------------------------*/
 POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-error.hss hop-paned.js hop-table.js hop.css md5.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css hop.js \
                   user.scm hop-notepad.css hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css hop.scm \
 		  icons Makefile
-
-#*---------------------------------------------------------------------*/
-#*    pop ...                                                          */
-#*---------------------------------------------------------------------*/
-pop:
-	@ echo $(POPULATION:%=share/%)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jan 19 09:43:04 2006 (serrano)                */
+#*    Last change :  Fri Jan 20 15:02:53 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -47,6 +47,8 @@ buildlibdir=$PWD/lib
 buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 buildbindir=$PWD/bin
+
+repository=ssh://skribe@saxo.essi.fr/hop
 
 # Argument parsing
 while : ; do
@@ -214,16 +216,16 @@ cat $mkmf.in \
           -e "s|@BLFLAGS@|$blflags|" \
           -e "s|@CCFLAGS@|$ccflags|" \
           -e "s|@BUILDLIBDIR@|$PWD/lib|" \
+          -e "s|@BUILDETCDIR@|$PWD/etc|" \
           -e "s|@BUILDBINDIR@|$PWD/bin|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@BUILDBINDIR@|$buildbindir|" \
-          -e "s|@BUILDLIBDIR@|$buildlibdir|" \
           -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
           -e "s|@DISTRIBDIR@|$distribdir|" \
+          -e "s|@HOPREPOSITORY@|$repository|" \
     >> $mkmf
 
 # src/configure.scm

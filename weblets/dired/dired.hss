@@ -1,0 +1,375 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/dired/dired.hss                 */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Tue Dec 14 12:59:39 2004                          */
+/*    Last change :  Mon Jan  9 15:00:07 2006 (serrano)                */
+/*    Copyright   :  2004-06 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    DIRED CSS                                                        */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Hoptables                                                        */
+/*---------------------------------------------------------------------*/
+sorttable a.hop-sortheader {
+  background-color:#eee;
+  color:#666666;
+  font-weight: bold;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  cursor: help;
+}
+
+/*---------------------------------------------------------------------*/
+/*    dired                                                            */
+/*---------------------------------------------------------------------*/
+body.dired {
+  background: black;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Directory                                                        */
+/*---------------------------------------------------------------------*/
+body.dired div.header {
+  border: 1px solid black;
+  background: #b2e2aa;
+  margin-bottom: 10px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Directory                                                        */
+/*---------------------------------------------------------------------*/
+body.dired div.directory {
+  font-size: x-large;
+  font-family: monospace;
+  font-weight: bold;
+  padding-bottom: 4px;
+  border-bottom: 1px solid black;
+}
+
+body.dired div.directory > table {
+  font-size: inherit;
+  font-weight: bold;
+}
+
+body.dired div.directory > table span.separator {
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+body.dired div.directory > table span.separator:hover {
+  border: 1px dashed black;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Config                                                           */
+/*---------------------------------------------------------------------*/
+body.dired div.config {
+  font-size: x-small;
+  font-family: sans-serif;
+}
+
+body.dired div.config table {
+  font-size: x-small;
+  font-family: sans-serif;
+}
+
+body.dired span.edit {
+  cursor: pointer;
+}
+
+body.dired span.edit:hover {
+  text-decoration: underline;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Icon entries                                                     */
+/*---------------------------------------------------------------------*/
+body.dired div.ientry {
+  border: 0;
+  background: #eeeeee;
+  width: 200px;
+  font-size: small;
+  text-align: center;
+  overflow: hidden;
+}
+
+body.dired div.ientry table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+body.dired table.ientry td {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  vertical-align: top;
+}
+
+body.dired div.ientry div.icon {
+  width: 100%;
+  height: 175px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+body.dired div.ientry div.icon table {
+  height: 100%;
+}
+
+body.dired div.ientry div.icon td div.text {
+  margin-top: 5px;
+  margin-left: 15px;
+  margin-right: 15px;
+  background: #cccccc;
+}
+
+body.dired div.ientry div.icon td.text {
+  vertical-align: bottom;
+}
+
+body.dired div.ientry div.icon td.exif {
+  vertical-align: top;
+  font-size: xx-small;
+  font-style: oblique;
+  font-weight: normal;
+}
+
+body.dired div.ientry div.icon td.exif textarea {
+  background: inherit;
+  width: 81%;
+  margin-left: 15px;
+  margin-right: 15px;
+  padding: 2px;
+  border: none;
+  vertical-align: top;
+  font-size: xx-small;
+  font-style: oblique;
+  font-weight: normal;
+}
+
+body.dired div.ientry div.icon td div.text td {
+  font-size: xx-small;
+  font-family: sans-serif;
+  font-weight: bold;
+}
+
+body.dired div.ientry div.icon img.thumbnail {
+  margin: 0;
+  padding: 0;
+  border: 2px solid black;
+}
+
+body.dired div.ientry div.icon img.thumbnail:hover {
+  border: 2px solid red;
+}
+
+body.dired div.ientry div.icon a {
+  margin: 0;
+  padding: 0;
+  border-width: 2px;
+  border-style: solid;
+  border-color: black;
+ border: 0;
+}
+
+body.dired div.ientry div.buttons {
+  width: 95%;
+  border: 2px solid transparent;
+  text-align: center;
+}
+
+body.dired div.ientry div.buttons span.dired-button {
+  cursor: pointer;
+}
+
+body.dired div.ientry div.buttons span.dired-button#help {
+  cursor: help;
+}
+
+img.dired-button {
+  margin: 0px;
+  padding: 2px;
+  border: 1px solid transparent;
+}
+
+img.dired-button:hover {
+  border: 1px dashed black;
+}
+
+body.dired div.ientry div.filename {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+body.dired div.ientry input.filename {
+  width: 164px;
+  cursor: pointer;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
+  text-align: center;
+  font-size: xx-small;
+  font-weight: bold;
+}
+
+div.dired-image {
+  text-align: center;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+img.dired-image {
+  border: 5px;
+  border-style: solid;
+  border-color: black;
+}
+
+img.dired-image#timeout {
+  cursor: wait;
+}
+
+span.dired-mv {
+  background: red;
+  color: blue;
+  border: 2px;
+  cursor: pointer;
+  border-color: black;
+  border-style: solid;
+}
+
+body.dired img.link {
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.hoptooltip {
+  cursor: help;
+  font-size: xx-small;
+  font-family: sans-serif;
+  font-weight: bold;
+}
+
+.hoptooltip th {
+  font-size: xx-small;
+  font-family: sans-serif;
+  font-weight: bold;
+  text-align: right;
+}
+
+.hoptooltip td {
+  font-size: xx-small;
+  font-family: sans-serif;
+  text-align: left;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Name entries                                                     */
+/*---------------------------------------------------------------------*/
+body.dired div.entries pre {
+  background: white;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Jpeg comment                                                     */
+/*---------------------------------------------------------------------*/
+div.dired-jpeg-comment {
+  visibility: hidden;
+  z-index: 10;
+  border: 1px solid black;
+  background-color: #ffffcc;
+  top: 0;
+  left: 0;
+  position: absolute;
+  padding: 5px;
+}
+
+div.dired-jpeg-comment > div {
+  padding-top: 5px;
+  text-align: center;
+}
+
+div.dired-jpeg-comment span {
+  width: 100px;
+  margin: 5px;
+  border: 1px outset;
+  font-size: xx-small;
+  font-family: sans-serif;
+  font-weight: bold;
+  cursor: pointer;
+  background: #ddd;
+}
+
+div.dired-jpeg-comment span#reset {
+  text-align: right;
+  margin-left: 30px;
+}
+
+div.dired-jpeg-comment span:hover {
+  border-color: black;
+}
+
+div.dired-jpeg-comment span#cancel:hover {
+  color: orange;
+}
+
+div.dired-jpeg-comment span#reset:hover {
+  color: red;
+}
+
+div.dired-jpeg-comment span#ok:hover {
+  color: green;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Image popup                                                      */
+/*---------------------------------------------------------------------*/
+div.dired-image-popup {
+  width: 340px;
+  height: 28px;
+  visibility: hidden;
+  z-index: 10;
+  border: 1px solid black;
+  background-color: #ccc;
+  top: 0;
+  left: 0;
+  position: absolute;
+  padding: 5px;
+  -moz-opacity: 0.9;
+}
+
+div.dired-image-popup img.dired-button#trashcan {
+  margin-right: 20px;
+}
+
+div.dired-image-popup img.dired-button#cancel {
+  margin-left: 20px;
+}
+
+div.dired-image-popup img.dired-button#backward {
+  margin-left: 20px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Quick tree                                                       */
+/*---------------------------------------------------------------------*/
+div.dired-quick-tree {
+  width: 250px;
+  height: 100px;
+  border: 1px solid black;
+  background-color: white;
+  padding: 5px;
+  overflow: auto;
+}
+
+span.hop-tree-head {
+  cursor: pointer;
+}

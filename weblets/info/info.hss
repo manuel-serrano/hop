@@ -1,0 +1,160 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/info/info.hss                   */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 24 13:57:44 2005                          */
+/*    Last change :  Thu Jan 19 14:44:17 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    history simple CSS                                               */
+/*=====================================================================*/
+
+$(define border-color "#bbb")
+$(define info-color "#f9f9f9")
+$(define title-color "#ddd")
+
+body {
+  background: #e0e0e0;
+  font-family: arial;
+}
+
+img {
+  padding: 20px;
+}
+
+table.info {
+  width: 45em;
+  margin-top: 50px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  -moz-border-radius: 0.5em;
+}
+
+table.info td#user-name {
+  font-weight: bold;
+}
+
+table.info td {
+  font-weight: bold;
+}
+
+div#title {
+  width: 35em;
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+
+div#result {
+  text-align: center;
+  width: 30em;
+  font-weight: bold;
+  font-size: large;
+  color: red;
+  border-top: 1px solid $border-color;
+  margin-top: 10px;
+  padding-top: 10px;
+}  
+
+table td {
+  vertical-align: top;
+}
+
+div.hop-notepad-title {
+  background: transparent;
+  padding: 0 10px 20px 0;
+  border-color: red;
+}
+
+div.hop-notepad-tabs {
+  background: transparent;
+  clear: left;
+  text-align: left;
+  padding: 10px 0 0 5%;
+  margin-left: 10px;
+  border-color: red;
+}
+
+div.hop-notepad-tabs > span {
+  font-size: small;
+  border-color: $border-color;
+}
+
+div.hop-notepad-tabs > span.hop-nptab-active {
+  background-color: $info-color;
+  border-bottom-color: $info-color;
+}
+
+div.hop-notepad-body {
+  border-color: $border-color;
+}
+
+div.hop-notepad-body {
+  border-left: 1px solid $border-color;
+  border-right: 1px solid $border-color;
+  border-bottom: 1px solid $border-color;
+  padding: 10px;
+  font-size: small;
+  background-color: $info-color;
+}
+
+div.hop-notepad-body-tab {
+  border-color: blue;
+  background-color: $info-color;
+}  
+
+table.hop-info {
+  font-size: small;
+}
+
+table.hop-info th {
+  vertical-align: top;
+}
+  
+table.hop-info th:after {
+  content: ":";
+}
+
+table.hop-info td {
+  font-family: monospace;
+  font-size: large;
+  vertical-align: bottom;
+}
+
+div.traffic {
+  overflow: auto;
+  height: 300px;
+}
+
+tr.remote td {
+  color: blue;
+  font-family: monospace;
+  font-size: large;
+}
+
+sorttable {
+  background-color: white;
+  width: 100%;
+  border: 1px solid $border-color;
+  overflow: auto;
+}
+
+sorttable th {
+  vertical-align: middle;
+}
+
+sorttable td {
+  vertical-align: top;
+}
+
+sorttable tr.title {
+  background-color: $title-color;
+}
+
+div.clear {
+  padding-bottom: 10px;
+  text-align: center;
+}
