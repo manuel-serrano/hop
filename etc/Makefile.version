@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:38:36 2006                          */
-#*    Last change :  Fri Jan 20 14:53:56 2006 (serrano)                */
+#*    Last change :  Fri Jan 20 14:59:53 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    This Makefile interfaces with version managers.                  */
@@ -30,7 +30,14 @@ pop:
 #*---------------------------------------------------------------------*/
 #*    populate                                                         */
 #*---------------------------------------------------------------------*/
-.PHONY: populate
+.PHONY: populate commit revision
 
 populate:
 	$(VM-POPULATE) `$(MAKE) -s pop`
+
+commit:
+	$(VM-COMMIT)
+
+revision: populate commit
+
+
