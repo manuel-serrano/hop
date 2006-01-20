@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Dec  7 14:47:20 2005                          */
-#*    Last change :  Wed Dec  7 16:14:16 2005 (serrano)                */
-#*    Copyright   :  2005 Manuel Serrano                               */
+#*    Last change :  Fri Jan 20 14:52:25 2006 (serrano)                */
+#*    Copyright   :  2005-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the jsMath contribution                         */
 #*=====================================================================*/
@@ -13,12 +13,13 @@
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
 include ../../etc/Makefile.hopconfig
+include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Specific files                                                   */
 #*---------------------------------------------------------------------*/
 CONTRIB		= jsMath
-CONTRIBSFILES	= jsMath.hop hop-jsMath.css jsMath demos
+CONTRIBSFILES	= README jsMath.hop hop-jsMath.css jsMath demos
 
 #*---------------------------------------------------------------------*/
 #*    Contribs installation procedure                                  */
@@ -33,3 +34,8 @@ install: install-contrib
 	unzip -x jsMath-fonts-1.2.zip -d $(CONTRIBSDIR)/$(CONTRIB)/jsMath
 
 uninstall: uninstall-contrib
+
+#*---------------------------------------------------------------------*/
+#*    Population                                                       */
+#*---------------------------------------------------------------------*/
+POPULATION	= Makefile $(CONTRIBSFILES)

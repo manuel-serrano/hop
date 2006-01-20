@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Jan 20 14:31:13 2006 (serrano)                */
+#*    Last change :  Fri Jan 20 14:41:17 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -15,12 +15,14 @@ do: build
 #*    Standard Bigloo configuration                                    */
 #*---------------------------------------------------------------------*/
 include etc/Makefile.hopconfig
+include etc/Makefile.version
 include $(BIGLOOLIBDIR)/Makefile.config
 
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile configure
+POPDIRS		= runtime src etc share contribs weblets
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -44,17 +46,6 @@ dep:
 ude:
 	(cd runtime; $(MAKE) ude)
 	(cd src; $(MAKE) ude)
-
-#*---------------------------------------------------------------------*/
-#*    pop                                                              */
-#*---------------------------------------------------------------------*/
-pop:
-	@ (cd runtime && $(MAKE) -s pop) && \
-	  (cd src && $(MAKE) -s pop) && \
-	  (cd etc && $(MAKE) -s pop) && \
-	  (cd share && $(MAKE) -s pop) && \
-	  (cd contribs && $(MAKE) -s pop) && \
-          echo $(POPULATION)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */

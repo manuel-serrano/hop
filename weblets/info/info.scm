@@ -1,0 +1,165 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/info/info.scm                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Fri Jan 20 12:42:23 2006 (serrano)                */
+;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP info encryption                                              */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_info)
+
+;*---------------------------------------------------------------------*/
+;*    info-event ...                                                   */
+;*---------------------------------------------------------------------*/
+(define info-event
+   (instantiate::hop-event (name "connect")))
+
+;*---------------------------------------------------------------------*/
+;*    info-dir ...                                                     */
+;*---------------------------------------------------------------------*/
+(define info-dir  (dirname (the-loading-file)))
+
+;*---------------------------------------------------------------------*/
+;*    traffic-hook ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (traffic-hook)
+   (lambda (req rep)
+      (tprint "TRAFFIC-HOOK...")
+      (with-access::http-request req (http host port path user date)
+	 (signal-hop-event! info-event
+			    (<TR> :class "remote"
+				  (<TD> :nowrap #t
+					host ":" port)
+				  (<TD> :nowrap #t
+					path)
+				  (<TD> :nowrap #t
+					(if (user? user) (user-name user) ""))
+				  (<TD> :nowrap #t
+					date)))
+	 rep)))
+
+;*---------------------------------------------------------------------*/
+;*    info weblet ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-weblet (info)
+   (let ((req (the-current-request))
+	 (hook (traffic-hook)))
+      (hop-http-response-remote-hook-add! hook)
+      (if (not (user-authorized-service? (http-request-user req) 'inffo))
+	  (user-access-denied req)
+	  (<HTML>
+	     (<HEAD>
+		(<HOP-HEAD> :css '("hop-notepad.css" "hop-sorttable.css")
+			    :css (format "~a/info.hss" info-dir)
+			    :jscript '("hop-notepad.js" "hop-sorttable.js")))
+	     (<BODY>
+		:onunload {
+		   hop( $(service ()
+			   (hop-http-response-remote-hook-remove! hook)
+			   #f)(),
+			false, false, false );
+		   sleep( 100 );
+		}
+		(<CENTER>
+		   (<TABLE>
+		      :class "info"
+		      (<TR>
+			 (<TD>
+			    (<IMG> :src (format "~a/icons/info.png"
+						(hop-share-directory))))
+			 (<TD>
+			    (<TABLE>
+			       (<TR>
+				  (<TD>
+				     (<DIV> :id "title"
+					    "Hop Information Center")))
+			       (<TR>
+				  (<TD>
+				     (<DIV> :id "glop"
+					    (<NOTEPAD>
+					       (<NPHEAD> "")
+					       (<NPTAB>
+						  (<NPTABHEAD> "Misc")
+						  (<MISC>))
+					       (<NPTAB>
+						  (<NPTABHEAD> "Weblets")
+						  (<WEBLETS>))
+					       (<NPTAB>
+						  (<NPTABHEAD> "Traffic")
+						  (<TRAFFIC>))))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <MISC> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<MISC>)
+   (<TABLE>
+      :class "hop-info"
+      (<TR>
+	 (<TH> :align 'right "Version")
+	 (<TD> :align 'left (hop-version)))
+      (<TR>
+	 (<TH> :align 'right "Hop")
+	 (<TD> :align 'left (hop-name)))
+      (<TR>
+	 (<TH> :align 'right "Uptime")
+	 (<TD> :align 'left (hop-uptime)))
+      (<TR>
+	 (<TH> :align 'right "System")
+	 (<TD> :align 'left (os-name)))
+      (<TR>
+	 (<TH> :align 'right "Arch")
+	 (<TD> :align 'left (os-arch)))))
+
+;*---------------------------------------------------------------------*/
+;*    <WEBLETS> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<WEBLETS>)
+   (<TABLE>
+      :class "hop-info"
+      (map (lambda (rf)
+	      (<TR>
+		 (<TD>
+		    (<A> :href (hop-request-filter-url rf)
+			 (hop-request-filter-name rf)))))
+	   (sort (hop-weblets)
+		 (lambda (rf1 rf2)
+		    (string<? (hop-request-filter-name rf1)
+			      (hop-request-filter-name rf2)))))))
+
+;*---------------------------------------------------------------------*/
+;*    <TRAFFIC> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<TRAFFIC>)
+   (let* ((row (<TR>
+		  :class "title"
+		  (<TH> "host")
+		  (<TH> "path")
+		  (<TH> "user")
+		  (<TH> "date")))
+	  (traffic (<TBODY> row)))
+      (<DIV>
+       (<DIV> :class "clear"
+	      (<BUTTON>
+		 :onclick {
+		    var e = $traffic
+		    var ch = e.childNodes
+		    var i
+
+		    for( i = ch.length - 1; i >  0; i-- ) {
+		       e.removeChild( ch[ i ] );
+	            }
+		  } "clear"))
+       (<DIV>
+	  :class "traffic"
+	  (<HOP-EVENT>
+	     :handler { hop_append( $traffic )( event ) }
+	     :event info-event)
+	  (<SORTTABLE> traffic)))))
+
+

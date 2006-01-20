@@ -1,0 +1,50 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/jobs/jobs.css                   */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Fri Sep 16 11:42:15 2005                          */
+/*    Last change :  Fri Sep 16 12:08:47 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    JOBS CSS                                                         */
+/*=====================================================================*/
+
+div.hop-notepad-tabs {
+  padding: 0 0 0 10%;
+}
+
+div.job {
+  font-family: Tahoma, Verdana;
+  font-size: 10px;
+  background-color: white;
+  border: 2px ridge black;
+  padding: 5px;
+}
+
+div.job th {
+  text-align: left;
+  vertical-align: top;
+}
+
+div.job td {
+  text-align: left;
+  vertical-align: top;
+}
+
+pre.code {
+  padding: 0;
+  margin: 0;
+  background-color: #cfc;
+  -moz-border-radius: 0.5em;
+}
+
+b.cancel {
+  border: 2px inset black;
+  cursor: pointer;
+  background: #ddd;
+}
+
+b.cancel:hover {
+  background: #eee;
+}
+  
