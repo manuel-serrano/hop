@@ -35,13 +35,3 @@
 .hopmailto:hover {
   text-decoration: underline;
 }
-
-/*---------------------------------------------------------------------*/
-/*    hop_failure                                                      */
-/*---------------------------------------------------------------------*/
-div.hop_failure {
-  background: transparent;
-  position: fixed;
-  text-align: center;
-  width: 100%;
-}
