@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Tue Nov 29 07:53:42 2005 (serrano)                */
-/*    Copyright   :  2004-05 Manuel Serrano                            */
+/*    Last change :  Sat Jan 21 17:24:26 2006 (serrano)                */
+/*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP CSS                                                 */
 /*=====================================================================*/
@@ -34,4 +34,14 @@
 
 .hopmailto:hover {
   text-decoration: underline;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_failure                                                      */
+/*---------------------------------------------------------------------*/
+div.hop_failure {
+  background: transparent;
+  position: fixed;
+  text-align: center;
+  width: 100%;
 }
