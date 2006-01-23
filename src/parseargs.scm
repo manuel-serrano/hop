@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 20 20:52:30 2006 (serrano)                */
+;*    Last change :  Mon Jan 23 16:54:48 2006 (eg)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -167,10 +167,23 @@
 ;*    autoload-weblets ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (autoload-weblets)
+   (define (do-autoload weblet name file)
+     (let ((p (make-file-name weblet (string-append file ".hop"))))
+       (when (file-exists? p)
+	 (autoload p (autoload-prefix (string-append "/hop/" name))))))
+     
    (define (autoload-weblet weblet name)
-      (let ((p (make-file-name weblet (string-append name ".hop"))))
-	 (when (file-exists? p)
-	    (autoload p (autoload-prefix (string-append "/hop/" name))))))
+     (let* ((file   (make-file-name weblet (string-append name ".conf")))
+	    (in     (open-input-file file))
+	    (config (and in
+			 (let ((i (read in))) (close-input-port in) i))))
+       (if config
+	   (let ((active (assoc 'active config))
+		 (main   (assoc 'main-file config)))
+	     (if (and active (cadr active))
+		 (do-autoload weblet name (if main (cadr main) name))))
+	   (do-autoload weblet name name))))
+
    (for-each (lambda (dir)
 		(for-each (lambda (path)
 			     (let ((weblet (make-file-name dir path)))
