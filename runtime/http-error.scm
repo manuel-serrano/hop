@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jan 20 11:49:53 2006 (serrano)                */
+;*    Last change :  Sun Jan 22 14:10:02 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -33,6 +33,7 @@
 	    (http-bad-request obj)
 	    (http-internal-error ::&error ::obj)
 	    (http-service-error ::http-request ::symbol ::bstring)
+	    (http-warning msg #!optional dump)
 	    (http-internal-warning e)
 	    (http-service-unavailable obj))
 
@@ -262,6 +263,30 @@
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>")))))
    
+;*---------------------------------------------------------------------*/
+;*    http-warning ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (http-warning msg #!optional dump)
+      (instantiate::http-response-hop
+	 (start-line "HTTP/1.0 200 ok")
+	 (xml (<HTML>
+		 (<HEAD>
+		    (<HOP-HEAD> :css "hop-error.hss"))
+		 (<BODY>
+		    (<CENTER>
+		       (<TABLE>
+			  :class "error"
+			  (<TR>
+			     (<TD>
+				(<IMG> :inline #t
+				       :src (format "~a/icons/warning.png"
+						    (hop-share-directory))))
+			     (<TD>
+				(<TABLE>
+				   (<TR> (<TD> :id "title" "warning"))
+				   (<TR> (<TD> :id "msg" msg))
+				   (<TR> (<TD> :id "dump" (or dump "")))))))))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    http-service-unavailable ...                                     */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Jan 20 14:41:17 2006 (serrano)                */
+#*    Last change :  Fri Jan 20 20:46:32 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -54,10 +54,7 @@ install: install-init
 	(cd runtime && $(MAKE) install) && \
 	(cd src && $(MAKE) install) && \
 	(cd share && $(MAKE) install) && \
-	(cd weblets && $(MAKE) install) && \
-	if [ -d private ]; then \
-	   (cd private && $(MAKE) install) \
-	fi
+	(cd weblets && $(MAKE) install)
 
 install-init: $(DESTDIR)$(HOPFILDIR)
 	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPFILDIR)/hop.init && \

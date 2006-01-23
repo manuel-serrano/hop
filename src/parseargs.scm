@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jan 18 13:57:41 2006 (serrano)                */
+;*    Last change :  Fri Jan 20 20:52:30 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -32,6 +32,7 @@
 	 (mimep #t)
 	 (hopp #t)
 	 (replp #f)
+	 (autoloadp #t)
 	 (p (hop-port))
 	 (rc-file #unspecified)
 	 (mime-file #unspecified)
@@ -50,6 +51,12 @@
 	  (set! loadp #f))
 	 (("-qmime" (help "Do not load an mime file"))
 	  (set! mimep #f))
+	 (("--enable-autoload" (help "Enable autoload"))
+	  (set! autoloadp #t))
+	 (("--disable-autoload" (help "Enable autoload"))
+	  (set! autoloadp #f))
+	 (("--autoload-dir" ?dir (help "Add autoload directory"))
+	  (hop-autoload-directory-add! dir))
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
 	 (("--rc-dir" ?dir (help "Set rc directory"))
@@ -119,7 +126,8 @@
 					 #unspecified)
 				      (raise e)))
 			       (eval sexp))))))
-		exprs)))
+		exprs)
+      (when autoloadp (autoload-weblets))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-hop ...                                                     */
@@ -154,3 +162,19 @@
 (define (hop-repl)
    (hop-verb 1 "Entering repl...\n")
    (thread-start! (make-thread (lambda () (begin (repl) (exit 0))))))
+
+;*---------------------------------------------------------------------*/
+;*    autoload-weblets ...                                             */
+;*---------------------------------------------------------------------*/
+(define (autoload-weblets)
+   (define (autoload-weblet weblet name)
+      (let ((p (make-file-name weblet (string-append name ".hop"))))
+	 (when (file-exists? p)
+	    (autoload p (autoload-prefix (string-append "/hop/" name))))))
+   (for-each (lambda (dir)
+		(for-each (lambda (path)
+			     (let ((weblet (make-file-name dir path)))
+				(when (directory? weblet)
+				   (autoload-weblet weblet path))))
+			  (directory->list dir)))
+	     (hop-autoload-directories)))

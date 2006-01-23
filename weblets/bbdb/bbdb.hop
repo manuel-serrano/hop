@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/bbdb/bbdb.scm                   */
+;*    serrano/prgm/project/hop/weblets/bbdb/bbdb.hop                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jan 20 17:55:58 2006 (serrano)                */
+;*    Last change :  Fri Jan 20 20:45:47 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP bbdb script                                                  */
@@ -397,5 +397,3 @@
 				     (<DIV> :class "bbdb-entry"
 					    (<BBDB-RECORD> rec)))
 				  es)))))))))
-   
-   
