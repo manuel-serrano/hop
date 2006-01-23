@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Jan 19 10:34:21 2006 (serrano)                */
+;*    Last change :  Mon Jan 23 10:36:11 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -77,6 +77,7 @@
 	    (<BODY> . ::obj)
 	    (<BR> . ::obj)
 	    (<BUTTON> . ::obj)
+	    (<CANVAS> . ::obj)
 	    (<CAPTION> . ::obj)
 	    (<CENTER> . ::obj)
 	    (<CITE> . ::obj)
@@ -383,6 +384,7 @@
 (define-xml-element BODY)
 (define-xml-element BR)
 (define-xml-element BUTTON)
+(define-xml-element CANVAS)
 (define-xml-element CAPTION)
 (define-xml-element CENTER)
 (define-xml-element CITE)
