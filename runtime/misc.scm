@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Thu Jan 19 09:32:23 2006 (serrano)                */
+;*    Last change :  Mon Jan 23 14:24:10 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -142,7 +142,14 @@
 	  (begin
 	     (hashtable-put! *table* f #t)
 	     (mutex-unlock! *load-once-mutex*)
-	     (hop-load f)))))
+	     (with-handler
+		(lambda (e)
+		   ;; unload the file on error
+		   (mutex-lock! *load-once-mutex*)
+		   (hashtable-remove! *table* f)
+		   (mutex-unlock! *load-once-mutex*)
+		   (raise e))
+		(hop-load f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    shortest-prefix ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Jan 21 17:53:12 2006 (serrano)                */
+;*    Last change :  Mon Jan 23 14:17:39 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -48,6 +48,7 @@
    (hop-verb 2 "Starting hop on port " (hop-port) ":\n")
    (signal-init!)
    (bigloo-load-reader-set! hop-read)
+   (bigloo-load-module-set! load-once)
    (job-start-scheduler!)
    (with-handler
       (lambda (e)
@@ -139,26 +140,25 @@
 	    (with-handler
 	       (lambda (e) #f)
 	       (hop-verb 1 (hop-color req req " ERROR")
-			 " " (trace-color 1 e) "\n")
+			 " " (trace-color 1 (find-runtime-type e)) "\n")
 	       (if (http-response-string? e)
 		   (http-response e sock)
 		   (begin
 		      (cond
 			 ((&error? e)
-			  (if (and (&error-fname e))
-			      (error-notify e)
-			      (match-case (eval-last-location)
-				 ((CARE at ?fname ?loc)
-				  (error-notify/location e fname loc))
-				 (else
-				  (error-notify e)))))
+			  (unless (&error-fname e)
+			     (match-case (eval-last-location)
+				((at ?fname ?loc)
+				 (&error-fname-set! e fname)
+				 (&error-location-set! e loc))))
+			  (error-notify e))
 			 ((&warning? e)
-			  (if (&warning-fname e)
-			      (warning-notify e)
-			      (match-case (eval-last-location)
-				 ((CARE at ?fname ?loc)
-				  (warning-notify/location e fname loc))
-				 (warning-notify e)))))
+			  (unless (&warning-fname e)
+			     (match-case (eval-last-location)
+				((at ?fname ?loc)
+				 (&warning-fname-set! e fname)
+				 (&warning-location-set! e loc))))
+			  (warning-notify e)))
 		      (unless (&io-sigpipe-error? e)
 			 (let ((resp ((or (hop-http-response-error)
 					  http-response-error)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Jan 22 13:20:59 2006 (serrano)                */
+/*    Last change :  Mon Jan 23 14:38:58 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -513,6 +513,9 @@ function hop_bigloo_serialize( item ) {
       return hop_serialize( item.value );
 
    if( item instanceof HTMLTextAreaElement )
+      return hop_serialize( item.value );
+
+   if( item instanceof HTMLSelectElement )
       return hop_serialize( item.value );
 
    alert( "*** Hop Error, Can't serialize element: `" + item + "'" );
