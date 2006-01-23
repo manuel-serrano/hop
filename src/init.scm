@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Jan 20 11:22:10 2006 (serrano)                */
+;*    Last change :  Sun Jan 22 14:10:07 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -50,11 +50,15 @@
 		     (cond
 			((%http-response? rep)
 			 rep)
-			(else
+			((xml? rep)
 			 (instantiate::http-response-hop
 			    (bodyp (eq? method 'GET))
 			    (content-type (mime-type path "text/html"))
-			    (xml rep))))))
+			    (xml rep)))
+			(else
+			 (http-warning
+			  (format "File `~a' loaded but produced no result"
+				  (http-request-path req)))))))
 		 ((is-suffix? (http-request-path req) "hss")
 		  (let ((hss (hop-load-hss (http-request-path req))))
 		     (instantiate::http-response-hop
