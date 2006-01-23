@@ -245,6 +245,7 @@ cat etc/configure.scm.in \
 
 # lib/hop.init
 init=lib/hop.init
+mkdir -p lib
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
 
