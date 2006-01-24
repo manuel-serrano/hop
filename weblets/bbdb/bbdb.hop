@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jan 20 20:45:47 2006 (serrano)                */
+;*    Last change :  Tue Jan 24 17:51:32 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP bbdb script                                                  */
@@ -83,7 +83,8 @@
 	       :value string
 	       :size 50
 	       :onkeypress {if(event.keyCode == 13)
-			      hop( $bbdb/search(this.value), hop_replace )}))
+			      hop( $bbdb/search(this.value),
+				   hop_replace_document )}))
 	(<TH> "Data base")
 	(<TD> (<INPUT>
 	       :id "bbdb-db"

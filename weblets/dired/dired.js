@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec 13 13:23:10 2004                          */
-/*    Last change :  Sun Nov  6 09:04:25 2005 (serrano)                */
-/*    Copyright   :  2004-05 Manuel Serrano                            */
+/*    Last change :  Tue Jan 24 17:52:04 2006 (serrano)                */
+/*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dired JScript management.                                        */
 /*=====================================================================*/
@@ -100,7 +100,7 @@ function dired_image_keypress( evt, service, file, timer ) {
 		    (dired_image_popup_on &&
 		     dired_image_popup instanceof HTMLDivElement &&
 		     (dired_image_popup.style.visibility != "hidden")) ),
-	   hop_replace,
+	   hop_replace_document,
 	   dired_no_more_image );
    };
    
@@ -267,7 +267,7 @@ function dired_image_mouse_move( event, service, rm, file, tip ) {
 	    var h = window.innerHeight;
 	 
 	    hop( service( dired_image_popup_file, rotate, w, h, false, d, tm, pp ),
-		 hop_replace,
+		 hop_replace_document,
 		 dired_no_more_image );
 	 };
 
@@ -336,7 +336,8 @@ function dired_image_init( service, rm, file, rotation, fsize, tm, tip, pp, idir
 	 var w = window.innerWidth;
 	 var h = window.innerHeight;
 
-	 hop( service( file, rotation, w, h, false, 0, true ), hop_replace );
+	 hop( service( file, rotation, w, h, false, 0, true ),
+	      hop_replace_document );
       }
    }
 
