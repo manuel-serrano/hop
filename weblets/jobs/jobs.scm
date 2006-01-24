@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jan 20 14:58:02 2006 (serrano)                */
+;*    Last change :  Tue Jan 24 17:47:29 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP jobs control                                                 */
@@ -31,7 +31,7 @@
 			    hop( $(service( jn )
 				     (job-cancel! (job-find jn))
                                      (rec))( $(job-name j) ),
-				 hop_replace_id( $id ) ) } }
+				 hop_replace_inner_id( $id ) ) } }
 	    "Cancel!")
        
        (<TABLE>

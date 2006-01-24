@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jan 24 16:32:54 2006 (serrano)                */
+/*    Last change :  Tue Jan 24 17:46:14 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -107,25 +107,6 @@ function hop_replace( http ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_replace_id ...                                               */
-/*---------------------------------------------------------------------*/
-function hop_replace_id( id ) {
-   var el = document.getElementById( id );
-
-   if( el != undefined ) {
-      return function( http ) {
-	 if( http.responseText != null ) {
-	    hop_js_eval( http );
-	    el.innerHTML = http.responseText;
-	 }
-      }
-   } else {
-      alert( "*** Hop Error, Can't find element: `" + id + "'" );
-      return function( http ) { };
-   }
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_replace_inner ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_replace_inner( el ) {
@@ -140,6 +121,14 @@ function hop_replace_inner( el ) {
       alert( "*** Hop Error, Can't find element" );
       return function( http ) { };
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_replace_inner_id ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_replace_inner_id( id ) {
+   var el = document.getElementById( id );
+   return hop_replace_inner( el );
 }
 
 /*---------------------------------------------------------------------*/
