@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:51 2005                          */
-/*    Last change :  Thu Nov 10 08:16:23 2005 (serrano)                */
-/*    Copyright   :  2005 Manuel Serrano                               */
+/*    Last change :  Tue Jan 24 08:55:49 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned CSS                                                    */
 /*=====================================================================*/
@@ -58,7 +58,7 @@ table.hop-vpaned > tr > td > div.hop-pan {
 }
 
 td.hop-paned-cursor {
-  align: center;
+  text-align: center;
   vertical-align: middle;
   border: 0;
   margin: 0;

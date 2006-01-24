@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jan 23 14:17:39 2006 (serrano)                */
+;*    Last change :  Mon Jan 23 15:49:45 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -140,7 +140,7 @@
 	    (with-handler
 	       (lambda (e) #f)
 	       (hop-verb 1 (hop-color req req " ERROR")
-			 " " (trace-color 1 (find-runtime-type e)) "\n")
+			 " " (trace-color 1 e) "\n")
 	       (if (http-response-string? e)
 		   (http-response e sock)
 		   (begin
