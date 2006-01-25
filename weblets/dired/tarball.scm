@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 19:49:32 2005                          */
-;*    Last change :  Wed Aug 10 08:01:42 2005 (serrano)                */
-;*    Copyright   :  2005 Manuel Serrano                               */
+;*    Last change :  Tue Jan 24 17:52:17 2006 (serrano)                */
+;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    dired tarball                                                    */
 ;*=====================================================================*/
@@ -113,7 +113,7 @@
 	      (tgz (make-file-name dir name))
 	      (icon (<DIRED-IMG-CLICK> img
 				       {hop( $dired/tar( $tgz, null ),
-					     hop_replace )}
+					     hop_replace_document )}
 				       name))
 	      (info (<DIRED-FILE-INFO> tgz)))
 	  (apply <DIRED-ICON-ENTRY> req dir "text" name ident icon info

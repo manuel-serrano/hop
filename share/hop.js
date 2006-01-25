@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Jan 22 13:20:59 2006 (serrano)                */
+/*    Last change :  Tue Jan 24 17:53:44 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -95,33 +95,14 @@ function hop_set_cookie( http ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_replace ...                                                  */
+/*    hop_replace_document ...                                         */
 /*---------------------------------------------------------------------*/
-function hop_replace( http ) {
+function hop_replace_document( http ) {
    if( http.responseText != null ) {
       hop_set_cookie( http );
       document.open();
       document.write( http.responseText );
       document.close();
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_replace_id ...                                               */
-/*---------------------------------------------------------------------*/
-function hop_replace_id( id ) {
-   var el = document.getElementById( id );
-
-   if( el != undefined ) {
-      return function( http ) {
-	 if( http.responseText != null ) {
-	    hop_js_eval( http );
-	    el.innerHTML = http.responseText;
-	 }
-      }
-   } else {
-      alert( "*** Hop Error, Can't find element: `" + id + "'" );
-      return function( http ) { };
    }
 }
 
@@ -143,6 +124,14 @@ function hop_replace_inner( el ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_replace_inner_id ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_replace_inner_id( id ) {
+   var el = document.getElementById( id );
+   return hop_replace_inner( el );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_append ...                                                   */
 /*---------------------------------------------------------------------*/
 function hop_append( el ) {
@@ -157,6 +146,32 @@ function hop_append( el ) {
       alert( "*** Hop Error, Can't find element" );
       return function( http ) { };
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_remove ...                                                   */
+/*---------------------------------------------------------------------*/
+function hop_remove( el ) {
+   if( el != undefined ) {
+      var p = el.parentNode;
+      
+      return function( http ) {
+	 p.removeChild( el );
+	 if( http.responseText != null ) {
+	    hop_js_eval( http );
+	 }
+      }
+   } else {
+      alert( "*** Hop Error, Can't find element" );
+      return function( http ) { };
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_remove_id ...                                                */
+/*---------------------------------------------------------------------*/
+function hop_remove_id( id ) {
+   return hop_remove( document.getElementById( id ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -269,7 +284,7 @@ function hop_inner( method, service, success, failure, sync ) {
 /*---------------------------------------------------------------------*/
 /*    resume_XXX ...                                                   */
 /*---------------------------------------------------------------------*/
-var resume_success = hop_replace;
+var resume_success = hop_replace_document;
 var resume_failure = false;
 
 /*---------------------------------------------------------------------*/
@@ -513,6 +528,9 @@ function hop_bigloo_serialize( item ) {
       return hop_serialize( item.value );
 
    if( item instanceof HTMLTextAreaElement )
+      return hop_serialize( item.value );
+
+   if( item instanceof HTMLSelectElement )
       return hop_serialize( item.value );
 
    alert( "*** Hop Error, Can't serialize element: `" + item + "'" );

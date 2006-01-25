@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Thu Jan 19 09:23:15 2006 (serrano)                */
+;*    Last change :  Mon Jan 23 16:51:05 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -62,7 +62,7 @@
        (string-append (hop-filter-base) "/" (hop-request-filter-url obj)))
       ((procedure? obj)
        (error 'scheme->javascript
-	      "Illegal procedure in JavaScript objression"
+	      "Illegal procedure in JavaScript conversion"
 	      obj))
       ((date? obj)
        (format "new Date( ~a000 )" (date->seconds obj)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 17:57:14 2005                          */
-;*    Last change :  Sun Sep 18 06:32:52 2005 (serrano)                */
-;*    Copyright   :  2005 Manuel Serrano                               */
+;*    Last change :  Tue Jan 24 17:51:51 2006 (serrano)                */
+;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The dired user configuration                                     */
 ;*=====================================================================*/
@@ -57,7 +57,7 @@
 	       :value "icon"
 	       :checked (eq? mode 'icon)
 	       :onclick {hop( $dired/config( $dir, "mode", "icon" ),
-			      hop_replace )})))
+			      hop_replace_document )})))
        (<TR>
 	(<TD>)
 	(<TD> "names")
@@ -67,7 +67,7 @@
 	       :value "name"
 	       :checked (eq? mode 'name)
 	       :onclick {hop( $dired/config( $dir, "mode", "name" ),
-			      hop_replace )})))))
+			      hop_replace_document )})))))
    (define (config-sort dir)
       (<TABLE>
        (<TR>
@@ -79,7 +79,7 @@
 	       :value "name"
 	       :checked (eq? sort 'name)
 	       :onclick {hop( $dired/config( $dir, "sort", "name" ),
-			      hop_replace )})))
+			      hop_replace_document )})))
        (<TR>
 	(<TH>)
 	(<TD> "date")
@@ -89,7 +89,7 @@
 	       :value "date"
 	       :checked (eq? sort 'date)
 	       :onclick {hop( $dired/config( $dir, "sort", "date" ),
-			      hop_replace )})))
+			      hop_replace_document )})))
        (<TR>
 	(<TH>)
 	(<TD> "size")
@@ -99,7 +99,7 @@
 	       :value "size"
 	       :checked (eq? sort 'size)
 	       :onclick {hop( $dired/config( $dir, "sort", "size" ),
-			      hop_replace )})))
+			      hop_replace_document )})))
        (<TR>
 	(<TH>)
 	(<TD> "size")
@@ -109,7 +109,7 @@
 	       :value "user"
 	       :checked (eq? sort 'user)
 	       :onclick {hop( $dired/config( $dir, "sort", "user" ),
-			      hop_replace )})))))
+			      hop_replace_document )})))))
    (define (config-order dir)
       (<TABLE>
        (<TR>
@@ -121,7 +121,7 @@
 	       :value "increate"
 	       :checked (eq? order 'increase)
 	       :onclick {hop( $dired/config( $dir, "order", "increase" ),
-			      hop_replace )})))
+			      hop_replace_document )})))
        (<TR>
 	(<TD>)
 	(<TD> "decrease")
@@ -131,7 +131,7 @@
 	       :value "decrease"
 	       :checked (eq? order 'decrease)
 	       :onclick {hop( $dired/config( $dir, "order", "decrease" ),
-			      hop_replace )})))))
+			      hop_replace_document )})))))
    (define (config-hide dir)
       (<TABLE>
        (<TR>
@@ -145,7 +145,7 @@
 					     "hide",
 					     this.checked ?
 					     "false" : "true" ),
-			      hop_replace )})))))
+			      hop_replace_document )})))))
    (define (config-css dir)
       (let* ((sep (if (char=? (string-ref dir (-fx (string-length dir) 1))
 			      (file-separator))
