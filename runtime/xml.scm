@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Jan 23 10:36:11 2006 (serrano)                */
+;*    Last change :  Wed Jan 25 09:41:36 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -253,7 +253,7 @@
        (display obj p))
       ((null? obj)
        #unspecified)
-      ((not obj)
+      ((eq? obj #unspecified)
        #unspecified)
       ((eq? obj #f)
        (display "false" p))
