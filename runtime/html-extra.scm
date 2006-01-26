@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Jan 26 09:23:43 2006 (serrano)                */
+;*    Last change :  Thu Jan 26 18:28:09 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -159,10 +159,12 @@
    :hss-type "div.hop-foot-logo"
    (let ((r (if (null? body)
 		(<SPAN> :style "font-size: 22px;
-                                                font-style: normal;
-                                                font-family: Futura_Poster, Blippo, Cooper, Eras-UltraBlk, RoostHeavy, Sinaloa, Arial, Verda, sans serif;
-                                                font-weight: bold;"
-			(hop-name))
+                                font-style: normal;
+                                font-family: Futura_Poster, Blippo, Cooper, Eras-UltraBlk, RoostHeavy, Sinaloa, Arial, Verda, sans serif;
+                                font-weight: bold;"
+			(hop-name)
+			(<SPAN> :style "font-size: 8px; font-family: sans serif"
+				(hop-version)))
 		body)))
       (<DIV> :style "width: 84px; height: 27px;
                      overflow: hidden;
