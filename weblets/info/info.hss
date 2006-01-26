@@ -3,10 +3,10 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Jan 23 10:33:03 2006 (serrano)                */
+/*    Last change :  Thu Jan 26 09:45:47 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
-/*    history simple CSS                                               */
+/*    INFO HOP CSS                                                     */
 /*=====================================================================*/
 
 $(define border-color "#bbb")

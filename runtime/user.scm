@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Thu Jan 19 11:44:10 2006 (serrano)                */
+;*    Last change :  Thu Jan 26 10:28:47 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -65,7 +65,7 @@
    (let loop ((a args)
 	      (g '())
 	      (p #f)
-	      (s #f)
+	      (s '())
 	      (d #f))
       (cond
 	 ((null? a)

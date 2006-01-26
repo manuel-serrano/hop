@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Jan 22 14:10:02 2006 (serrano)                */
+;*    Last change :  Thu Jan 26 12:12:56 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -48,8 +48,6 @@
        (http-unknown-host (&error-obj e)))
       ((&hop-method-error? e)
        (http-method-error (&error-obj e)))
-      ((&io-parse-error? e)
-       (http-parse-error (&error-obj e)))
       ((&io-error? e)
        (http-io-error e))
       (else
@@ -62,6 +60,7 @@
 ;*    http-response-error ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-response-error e::&error req::http-request)
+   (tprint "http-response-error: " e)
    (let ((msg (<TABLE>
 		 (<TR>
 		    (<TD> "An error occured while responding to"))
@@ -299,30 +298,33 @@
 ;*    http-io-error ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (http-io-error e)
-   (instantiate::http-response-hop
-      (start-line "HTTP/1.0 404 Not Found")
-      (header '(("Retry-After:" . 1)))
-      (xml (<HTML>
-	      (<HEAD>
-		 (<HOP-HEAD> :css
-			     (format "http://~a:~a/~a/hop-error.hss"
-				     (hostname)
-				     (hop-port)
-				     (hop-share-directory))))
-	      (<BODY>
-		 (<CENTER>
-		    (<TABLE>
-		       :class "error"
-		       (<TR>
-			  (<TD>
-			     (<IMG> :src (format
-					  "http://~a:~a/~a/icons/notfound.png"
-					  (hostname)
-					  (hop-port)
-					  (hop-share-directory))))
-			  (<TD>
-			     (<TABLE>
-				(<TR> (<TD> :id "title" (&error-msg e)))
-				(<TR> (<TD> :id "msg"
-					    (<SPAN> :class "filenotfound"
-						    (&error-obj e))))))))))))))
+   (let ((s (with-error-to-string (lambda () (error-notify e)))))
+      (instantiate::http-response-hop
+	 (start-line "HTTP/1.0 200 ok")
+	 (xml (<HTML>
+		 (<HEAD>
+		    (<HOP-HEAD> :css
+				(format "http://~a:~a/~a/hop-error.hss"
+					(hostname)
+					(hop-port)
+					(hop-share-directory))))
+		 (<BODY>
+		    (<CENTER>
+		       (<TABLE>
+			  :class "error"
+			  (<TR>
+			     (<TD>
+				(<IMG> :src (format
+					     "http://~a:~a/~a/icons/notfound.png"
+					     (hostname)
+					     (hop-port)
+					     (hop-share-directory))))
+			     (<TD>
+				(<TABLE>
+				   (<TR> (<TD> :id "title" "IO Error"))
+				   (<TR> (<TD> :id "msg"
+					       (list (find-runtime-type e)
+						     ": "
+						     (&error-msg e))))
+				   (<TR> (<TD> :id "dump"
+					       (<PRE> (html-string-encode s)))))))))))))))

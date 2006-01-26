@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Dec 14 12:59:39 2004                          */
-/*    Last change :  Mon Jan  9 15:00:07 2006 (serrano)                */
+/*    Last change :  Thu Jan 26 06:07:13 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DIRED CSS                                                        */
@@ -177,7 +177,7 @@ body.dired div.ientry div.icon a {
   border-width: 2px;
   border-style: solid;
   border-color: black;
- border: 0;
+  border: 0;
 }
 
 body.dired div.ientry div.buttons {

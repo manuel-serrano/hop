@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jan 20 09:17:53 2006 (serrano)                */
+;*    Last change :  Thu Jan 26 09:23:43 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -28,6 +28,7 @@
 	    __hop_hop)
 
    (export  (<HOP-HEAD> . ::obj)
+	    (<HOP-FOOT-LOGO> . ::obj)
 	    
 	    (<HOP-MAILTO> . ::obj)
 	    (<TOOLTIP> . ::obj)
@@ -142,6 +143,42 @@
 			(format "Unknown ~a argument" (car a))
 			(cadr a))))
 	     (loop (cddr a)))))))
+
+;*---------------------------------------------------------------------*/
+;*    <HOP-FOOT-LOGO> ...                                              */
+;*    -------------------------------------------------------------    */
+;*    This do not use CSS because we want them to be correctly         */
+;*    displayed even when no CSS is specified.                         */
+;*---------------------------------------------------------------------*/
+(define-xml-compound HOP-FOOT-LOGO ((id #unspecified string)
+				    (img (<IMG> :inline #t
+						:src (make-file-name
+						      (hop-share-directory)
+						      "icons/foot-logo.png")))
+				    body)
+   :hss-type "div.hop-foot-logo"
+   (let ((r (if (null? body)
+		(<SPAN> :style "font-size: 22px;
+                                                font-style: normal;
+                                                font-family: Futura_Poster, Blippo, Cooper, Eras-UltraBlk, RoostHeavy, Sinaloa, Arial, Verda, sans serif;
+                                                font-weight: bold;"
+			(hop-name))
+		body)))
+      (<DIV> :style "width: 84px; height: 27px;
+                     overflow: hidden;
+                     background-color: white;
+                     border: 2px outset #777;
+                     padding: 0; padding: 0;"
+	     :class "hop-foot-logo"
+	     (if (not img)
+		 r
+		 (<TABLE> :style "width: 100%;
+                           border-collapse: collapse;
+                           font-size: x-small;"
+			  (<TR>
+			     (<TD> img)
+			     (<TD> :align 'center r)))))))
+		   
 
 ;*---------------------------------------------------------------------*/
 ;*    <HOP-MAILTO> ...                                                 */
