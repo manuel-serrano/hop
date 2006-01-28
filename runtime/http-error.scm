@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jan 26 12:12:56 2006 (serrano)                */
+;*    Last change :  Fri Jan 27 13:45:05 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -300,7 +300,7 @@
 (define (http-io-error e)
    (let ((s (with-error-to-string (lambda () (error-notify e)))))
       (instantiate::http-response-hop
-	 (start-line "HTTP/1.0 200 ok")
+	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
 		 (<HEAD>
 		    (<HOP-HEAD> :css

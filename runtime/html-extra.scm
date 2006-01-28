@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Jan 26 18:28:09 2006 (serrano)                */
+;*    Last change :  Fri Jan 27 09:45:12 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -166,11 +166,14 @@
 			(<SPAN> :style "font-size: 8px; font-family: sans serif"
 				(hop-version)))
 		body)))
-      (<DIV> :style "width: 84px; height: 27px;
-                     overflow: hidden;
-                     background-color: white;
-                     border: 2px outset #777;
-                     padding: 0; padding: 0;"
+      (<DIV> :style
+	     (format "width: 84px; height: 27px;
+                      overflow: hidden;
+                      background-color: white;
+                      border: 2px outset #777;
+                      padding: 0; padding: 0;
+                      background-image: url( '~a/icons/logo-bg.png' );"
+		     (hop-share-directory))
 	     :class "hop-foot-logo"
 	     (if (not img)
 		 r

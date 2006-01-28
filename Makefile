@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Jan 20 20:46:32 2006 (serrano)                */
+#*    Last change :  Thu Jan 26 22:02:51 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -102,10 +102,12 @@ distrib:
            make devclean && \
 	   find . -name '*~' -exec /bin/rm {} \; && \
            /bin/rm -f etc/Makefile.hopconfig && \
-	   /bin/rm -rf work private && \
+	   /bin/rm -rf work private .hg && \
            cd .. && \
            tar cvfz hop$(HOPRELEASE).tar.gz hop$(HOPRELEASE) \
-               --exclude=hop$(HOPRELEASE)/src/o && \
+               --exclude=hop$(HOPRELEASE)/src/o \
+               --exclude=hop$(HOPRELEASE)/runtime/o \
+               --exclude=hop$(HOPRELEASE)/.hg && \
 	   /bin/rm -rf /tmp/hop$(HOPRELEASE) && \
            mv hop$(HOPRELEASE).tar.gz $(DISTRIBDIR)); \
         fi

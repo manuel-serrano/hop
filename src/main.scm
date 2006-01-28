@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jan 23 15:49:45 2006 (serrano)                */
+;*    Last change :  Sat Jan 28 06:57:29 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -146,18 +146,8 @@
 		   (begin
 		      (cond
 			 ((&error? e)
-			  (unless (&error-fname e)
-			     (match-case (eval-last-location)
-				((at ?fname ?loc)
-				 (&error-fname-set! e fname)
-				 (&error-location-set! e loc))))
 			  (error-notify e))
 			 ((&warning? e)
-			  (unless (&warning-fname e)
-			     (match-case (eval-last-location)
-				((at ?fname ?loc)
-				 (&warning-fname-set! e fname)
-				 (&warning-location-set! e loc))))
 			  (warning-notify e)))
 		      (unless (&io-sigpipe-error? e)
 			 (let ((resp ((or (hop-http-response-error)
