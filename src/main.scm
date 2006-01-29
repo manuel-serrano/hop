@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jan 23 14:17:39 2006 (serrano)                */
+;*    Last change :  Sat Jan 28 15:44:10 2006 (eg)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -20,7 +20,8 @@
 
    (import  hop_parseargs
 	    hop_param
-	    hop_http-request)
+	    hop_http-request
+	    hop_weblets)
 
    (with    hop_init)
 

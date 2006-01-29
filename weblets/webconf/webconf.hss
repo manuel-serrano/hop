@@ -1,0 +1,115 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/webconf/webconf.hss             */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Erick Gallesio                                    */
+/*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+/*    Last change :  Sun Jan 29 20:01:10 2006 (eg)                     */
+/*    Copyright   :  2006 Erick Gallesio                               */
+/*    -------------------------------------------------------------    */
+/*    HOP Weblet configuration CSS                                     */
+/*=====================================================================*/
+
+BODY {
+    background: #8888ee;
+}
+
+.webconf-infos {
+    background: #eeeeee;
+    -moz-border-radius: 10px;
+    padding: 5 5 5 5;
+    margin: 20 20 20 20;
+}
+
+.webconf-infos H1 {
+    background: transparent;
+    margin-bottom: 4px;
+    padding: 0;
+    font-size: 150%;
+    text-align: center;
+}
+
+.webconf-infos H4 {
+    background: transparent;
+    font-size: 120%;
+    color: blue;
+    text-align: center;
+    margin: 2px;
+}
+
+.webconf-infos TH {
+    background: #cccccc;
+    text-align: right;
+    width: 15%;
+}
+
+.webconf-infos TD {
+    background: #fff;
+    width: 100%
+}
+
+.webconf-infos BUTTON {
+    margin-right: 5px;
+    font-size: 80%;
+}
+
+.webconf-link {
+    color: blue;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.webconf-link :hover {
+    color: white;
+    background: blue;
+}
+
+
+#webconf-about-window {
+    position: absolute;
+    background: #eee;
+    opacity: 0.9;
+    top: 50;
+    left: 50;
+    width: 250;
+    height: 350;
+    border-width: 1 3 3 1;
+    border-color: black;
+    border-style: solid;
+    padding: 0;
+    z-index: 10;
+}
+
+#webconf-config-window {
+    position: absolute;
+    background: #FFFACD;
+    opacity: 0.95;
+    top: 100;
+    left: 100;
+    width: 640;
+    height: 480;
+    border-width: 1 3 3 1;
+    border-color: black;
+    border-style: solid;
+    padding: 0;
+    z-index: 10;
+}
+
+.webconf-window-handle {
+    text-align: right; 
+    margin-bottom: 15px;
+    background: brown;
+    color: white;
+    padding: 1;
+    cursor: move;
+    opacity: 1;
+    /* border-bottom: 1px dotted #888;*/
+}
+
+.webconf-window-close {
+    cursor: pointer;
+    padding: 1;
+}
+
+.webconf-window-content {
+    margin: 5;
+}
