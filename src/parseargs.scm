@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 20 20:52:30 2006 (serrano)                */
+;*    Last change :  Sat Jan 28 15:53:31 2006 (eg)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -17,7 +17,7 @@
    (library hop
 	    pthread)
    
-   (import  hop_param)
+   (import  hop_param hop_weblets)
    
    (eval    (export hop-load-rc))
    
@@ -163,18 +163,3 @@
    (hop-verb 1 "Entering repl...\n")
    (thread-start! (make-thread (lambda () (begin (repl) (exit 0))))))
 
-;*---------------------------------------------------------------------*/
-;*    autoload-weblets ...                                             */
-;*---------------------------------------------------------------------*/
-(define (autoload-weblets)
-   (define (autoload-weblet weblet name)
-      (let ((p (make-file-name weblet (string-append name ".hop"))))
-	 (when (file-exists? p)
-	    (autoload p (autoload-prefix (string-append "/hop/" name))))))
-   (for-each (lambda (dir)
-		(for-each (lambda (path)
-			     (let ((weblet (make-file-name dir path)))
-				(when (directory? weblet)
-				   (autoload-weblet weblet path))))
-			  (directory->list dir)))
-	     (hop-autoload-directories)))
