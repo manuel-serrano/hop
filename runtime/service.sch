@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Sun Jan 29 08:13:16 2006 (serrano)                */
+;*    Last change :  Sun Jan 29 15:54:00 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -141,7 +141,7 @@
 			  (%exec ,exec)
 			  (proc ,proc)
 			  (javascript ,(jscript vargs path)))))
-	      (hop-verb 2 (hop-color 1 1 "REG. SERVICE: ") svc " " ,path)
+	      (hop-verb 2 (hop-color 1 1 " REG. SERVICE: ") svc " " ,path "\n")
 	      (hashtable-put! ,ta ,path svc)
 	      svc))))
 
