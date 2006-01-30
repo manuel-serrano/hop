@@ -3,14 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-/*    Last change :  Sun Jan 29 20:01:10 2006 (eg)                     */
+/*    Last change :  Mon Jan 30 10:08:24 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet configuration CSS                                     */
 /*=====================================================================*/
 
 BODY {
-    background: #8888ee;
+    background: #ddd;
 }
 
 .webconf-infos {
