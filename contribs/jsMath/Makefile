@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Dec  7 14:47:20 2005                          */
-#*    Last change :  Fri Jan 20 14:52:25 2006 (serrano)                */
+#*    Last change :  Wed Feb  1 06:40:33 2006 (serrano)                */
 #*    Copyright   :  2005-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the jsMath contribution                         */
@@ -19,7 +19,8 @@ include ../../etc/Makefile.version
 #*    Specific files                                                   */
 #*---------------------------------------------------------------------*/
 CONTRIB		= jsMath
-CONTRIBSFILES	= README jsMath.hop hop-jsMath.css jsMath demos
+CONTRIBSFILES	= README jsMath.hop hop-jsMath.css demos \
+                  jsMath-2.4b.zip jsMath-fonts-1.2.zip
 
 #*---------------------------------------------------------------------*/
 #*    Contribs installation procedure                                  */
