@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sat Jan 28 17:25:20 2006 (eg)                     */
+;*    Last change :  Wed Feb  1 14:28:15 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -27,13 +27,11 @@
    
    (eval    (export-exports)))
 
-
 ;; ----------------------------------------------------------------------
 ;; 	weblets-config-directory ...
 ;; ----------------------------------------------------------------------
 (define (weblets-config-directory)
-  (make-file-path (getenv "HOME")
-		  ".config/hop/weblets-conf"))
+  (make-file-name (hop-rc-directory) "weblets-conf"))
 
 ;; ----------------------------------------------------------------------
 ;; 	get-weblet-infos ...

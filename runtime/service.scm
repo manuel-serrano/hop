@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Jan 29 08:14:17 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 06:48:26 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -29,6 +29,8 @@
    
    (export  (get-service-url::bstring)
 	    (hop-service ::hop-request-filter ::http-request)
+	    (hop-weblet-prefix?::bool ::bstring ::bstring)
+	    (hop-weblet-path?::bool ::bstring ::bstring)
 	    (hop-filter-path?::bool ::bstring ::bstring)
 	    (make-hop-service-url::bstring ::hop-request-service . o)
 	    (make-service-url::bstring ::hop-request-service . o)
@@ -57,18 +59,43 @@
 	 (format "~a-~a" *service-table-count* (hop-session)))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-weblet-prefix? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (hop-weblet-prefix? path weblet)
+   (let ((l1 (string-length (hop-filter-base)))
+	 (l2 (string-length path))
+	 (l3 (string-length weblet)))
+      (and (>=fx l2 (+fx 1 (+fx l1 l3)))
+	   (substring-at? path (hop-filter-base) 0)
+	   (substring-at? path weblet (+fx 1 l1)))))
+   
+;*---------------------------------------------------------------------*/
+;*    hop-weblet-path? ...                                             */
+;*    -------------------------------------------------------------    */
+;*    This predicate is invoked when HOP-WEBLET-PREFIX? is assumed.    */
+;*---------------------------------------------------------------------*/
+(define (hop-weblet-path? path weblet)
+   (let ((l1 (string-length (hop-filter-base)))
+	 (l2 (string-length path))
+	 (l3 (string-length weblet)))
+      (and (or (=fx l2 (+fx 1 (+fx l1 l3)))
+	       (and (>fx l2 (+fx 1 (+fx l1 l3)))
+		    (char=? (string-ref path (+fx (+fx 1 l1) l3)) #\?)))
+	   (char=? (string-ref path l1) #\/))))
+   
+;*---------------------------------------------------------------------*/
 ;*    hop-filter-path? ...                                             */
+;*    -------------------------------------------------------------    */
+;*    This predicate is invoked when HOP-WEBLET-PREFIX? is assumed.    */
 ;*---------------------------------------------------------------------*/
 (define (hop-filter-path? path filter)
    (let ((l1 (string-length (hop-filter-base)))
 	 (l2 (string-length path))
 	 (l3 (string-length filter)))
-      (and (or (=fx l2 (+fx 1 (+fx l1 l3)))
-	       (and (>fx l2 (+fx 1 (+fx l1 l3)))
-		    (char=? (string-ref path (+fx (+fx 1 l1) l3)) #\/)))
-	   (and (substring-at? path (hop-filter-base) 0)
-		(char=? (string-ref path l1) #\/)
-		(substring-at? path filter (+fx 1 l1))))))
+      (and (>fx l2 (+fx 1 (+fx l1 l3)))
+	   (char=? (string-ref path l1) #\/)
+	   (char=? (string-ref path (+fx (+fx 1 l1) l3)) #\/)
+	   (substring-at? path filter (+fx 1 l1)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-request-service-name ...                                     */

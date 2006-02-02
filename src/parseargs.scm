@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Jan 28 15:53:31 2006 (eg)                */
+;*    Last change :  Wed Feb  1 14:34:57 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -71,6 +71,10 @@
           (if (string=? level "")
 	      (bigloo-debug-set! (+fx 1 (bigloo-debug)))
 	      (bigloo-debug-set! (string->integer level))))
+	 (("-w?level" (help "Increase or set warning level (-w0 no warning)"))
+          (if (string=? level "")
+	      (bigloo-warning-set! (+fx 1 (bigloo-warning)))
+	      (bigloo-warning-set! (string->integer level))))
 	 (("--no-color" (help "Disable colored traces"))
 	  (bigloo-trace-color-set! #f))
 	 ((("-p" "--port") ?port (help (format "Port number (default: ~s)" p)))
@@ -101,7 +105,6 @@
 	  (print "Unknown argument: " else)
 	  (args-parse-usage #f)
 	  (exit 1)))
-      (bigloo-warning-set! 2)
       (when mimep
 	 (load-mime-types (hop-mime-types-file))
 	 (load-mime-types (if (string? mime-file)
