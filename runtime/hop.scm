@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Feb  2 07:03:09 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:11:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling HTTP requests.                                          */
@@ -40,9 +40,7 @@
 	    (re-hop ::http-request)
 	    (autoload ::bstring ::procedure . opt)
 	    (autoload-prefix::procedure ::bstring)
-	    (hop-to-hop ::bstring ::int ::obj ::hop-request-service . ::obj))
-
-   (eval    (export-exports)))
+	    (hop-to-hop ::bstring ::int ::obj ::hop-request-service . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    the-current-request ...                                          */

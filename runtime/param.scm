@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jan 20 12:42:40 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:15:28 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -130,9 +130,7 @@
 	    (hop-connection-timeout-set! ::int)
 
 	    (hop-weblets::pair-nil)
-	    (hop-weblets-set! ::pair-nil))
-
-   (eval    (export-exports)))
+	    (hop-weblets-set! ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-uptime ...                                                   */

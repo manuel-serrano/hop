@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Thu Jan 19 10:15:36 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:16:37 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -45,6 +45,37 @@
 	   __hop_html-notepad
 	   __hop_html-slider
 	   __hop_html-tree
-	   __hop_event)
+	   __hop_event
+	   __hop_color)
 
-   (eval   (export-all)))
+   (eval   (export-all)
+	   
+	   (class xml-document)
+	   (class hop-event)
+	   (class job)
+
+	   (class user)
+	   
+	   (class %http-message)
+	   (class http-request)
+	   (class %http-response)
+	   (class http-response-remote)
+	   (class http-response-hop)
+	   (class http-response-procedure)
+	   (class http-response-file)
+	   (class http-response-shoutcast)
+	   (class http-response-string)
+	   (class http-response-obj)
+	   (class http-response-authentication)
+	   (class http-response-cgi)
+	   (class http-response-persistent)
+	   (class http-response-put)
+	   (class hop-request-filter)
+	   (class hop-request-service)
+
+	   (class xml)
+	   (class xml-markup)
+	   (class xml-element)
+	   (class xml-html)))
+	   
+	   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:57:04 2006                          */
-;*    Last change :  Sun Jan 29 08:14:12 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:13:15 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Builtin services                                                 */
@@ -29,9 +29,7 @@
 
    (export  builtin/mailto
             anonymous
-            (%eval::%http-response ::bstring ::procedure))
-
-   (eval    (export-exports)))
+            (%eval::%http-response ::bstring ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    builtin ...                                                      */

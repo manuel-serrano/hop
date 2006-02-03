@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Wed Jan 18 13:28:33 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:11:02 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -45,10 +45,7 @@
    
    (export (class xml-document::xml-markup
 	      (%make-xml-document)
-	      (%idtable read-only (default (make-hashtable)))))
-   
-   (eval   (class xml-document)
-	   (export-exports)))
+	      (%idtable read-only (default (make-hashtable))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %make-xml-document ...                                           */

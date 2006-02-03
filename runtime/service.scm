@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Feb  2 06:48:26 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:15:44 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -35,9 +35,7 @@
 	    (make-hop-service-url::bstring ::hop-request-service . o)
 	    (make-service-url::bstring ::hop-request-service . o)
 	    (hop-request-service-name::bstring ::http-request)
-	    (procedure->service::hop-request-service ::procedure))
-   
-   (eval    (export-exports)))
+	    (procedure->service::hop-request-service ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */

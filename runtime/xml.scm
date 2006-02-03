@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Feb  1 05:55:53 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:16:40 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -157,14 +157,8 @@
 	    (<VAR> . ::obj)
 	    
 	    (<DELAY> . ::obj)
-	    (<GHOST> . ::obj))
+	    (<GHOST> . ::obj)))
    
-   (eval    (class xml)
-	    (class xml-markup)
-	    (class xml-element)
-	    (class xml-html)
-	    (export-exports)))
-
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
 ;*---------------------------------------------------------------------*/

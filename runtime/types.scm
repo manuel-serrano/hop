@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jan 26 10:29:27 2006 (serrano)                */
+;*    Last change :  Fri Feb  3 08:36:37 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -119,29 +119,8 @@
 	      (javascript::bstring read-only)
 	      (expiration read-only (default #f)))
 
-	   (http-request-hook-add! ::http-request ::procedure))
+	   (http-request-hook-add! ::http-request ::procedure)))
    
-   (eval   (class user)
-	   
-	   (class %http-message)
-	   (class http-request)
-	   (class %http-response)
-	   (class http-response-remote)
-	   (class http-response-hop)
-	   (class http-response-procedure)
-	   (class http-response-file)
-	   (class http-response-shoutcast)
-	   (class http-response-string)
-	   (class http-response-obj)
-	   (class http-response-authentication)
-	   (class http-response-cgi)
-	   (class http-response-persistent)
-	   (class http-response-put)
-	   (class hop-request-filter)
-	   (class hop-request-service)
-
-	   (export http-request-hook-add!)))
-
 ;*---------------------------------------------------------------------*/
 ;*    object-display ...                                               */
 ;*---------------------------------------------------------------------*/
