@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jan 25 09:41:36 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:16:40 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -157,14 +157,8 @@
 	    (<VAR> . ::obj)
 	    
 	    (<DELAY> . ::obj)
-	    (<GHOST> . ::obj))
+	    (<GHOST> . ::obj)))
    
-   (eval    (class xml)
-	    (class xml-markup)
-	    (class xml-element)
-	    (class xml-html)
-	    (export-exports)))
-
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -251,18 +245,18 @@
 	   (display obj p)))
       ((or (number? obj) (symbol? obj))
        (display obj p))
+      ((pair? obj)
+       (for-each (lambda (o) (xml-write o p encoding)) obj))
+      ((date? obj)
+       (display obj p))
       ((null? obj)
        #unspecified)
       ((eq? obj #unspecified)
        #unspecified)
       ((eq? obj #f)
-       (display "false" p))
+       #unspecified)
       ((eq? obj #t)
-       (display "true" p))
-      ((pair? obj)
-       (for-each (lambda (o) (xml-write o p encoding)) obj))
-      ((date? obj)
-       (display obj p))
+       #unspecified)
       (else
        (error 'xml-write "Illegal xml object" obj))))
 

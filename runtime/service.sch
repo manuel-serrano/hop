@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Sun Jan 29 15:54:00 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 07:04:39 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -13,30 +13,24 @@
 ;*    define-weblet ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-pervasive-macro (define-weblet decl . body)
-   (define (weblet-body id args req ca)
-      (if (pair? body)
-	  `(or (hop-service ,id ,req)
-	       ,(if (pair? args)
-		    `(let* ((,ca (http-request-cgi-args ,req))
-			    ,@args)
-			(if (or (eq? (http-request-method ,req) "HOP")
-				(equal? (cgi-arg "hop-encoding" ,ca) "hop"))
-			    (begin
-			       ,@(map (lambda (a)
-					 `(set! ,a 
-						(serialized-cgi-arg
-						 ,(symbol->string a)
-						 ,ca)))
-				      args))
-			    (begin
-			       ,@(map (lambda (a)
-					 `(set! ,a 
-						(cgi-arg ,(symbol->string a)
-							 ,ca)))
-				      args)))
-			,@body)
-		    `(begin ,@body)))
-	  `(hop-service ,id ,req)))
+   (define (weblet-body id args req ca url)
+      (if (pair? args)
+	  `(let* ((,ca (http-request-cgi-args ,req))
+		  ,@args)
+	      (if (or (eq? (http-request-method ,req) "HOP")
+		      (equal? (cgi-arg "hop-encoding" ,ca) "hop"))
+		  (begin
+		     ,@(map (lambda (a)
+			       `(set! ,a 
+				      (serialized-cgi-arg
+				       ,(symbol->string a) ,ca)))
+			    args))
+		  (begin
+		     ,@(map (lambda (a)
+			       `(set! ,a (cgi-arg ,(symbol->string a) ,ca)))
+			    args)))
+	      ,@body)
+	  `(begin ,@body)))
    (if (not (and (list? decl) (every? symbol? decl)))
        (error 'define-weblet "Inccorect declaration" decl)
        (let ((id (car decl))
@@ -52,14 +46,11 @@
 		     "Reserved weblet identifier"
 		     id))
 	     (else
-	      (let* ((req (gensym 'req))
+	      (let* ((rq (gensym 'req))
 		     (url (symbol->string id))
 		     (ca (gensym))
-		     (body `(when (and (http-request-localhostp ,req)
-				       (hop-filter-path?
-					(http-request-path ,req) ,url))
-			       (scheme->response ,(weblet-body id args req ca)
-						 ,req))))
+		     (def (gensym))
+		     (pa (gensym)))
 		 `(begin
 		     (define ,id
 			(instantiate::hop-request-filter
@@ -67,9 +58,26 @@
 			   (name ,(symbol->string id))
 			   (url ,url)))
 		     (hop-weblets-set! (cons ,id (hop-weblets)))
-		     (hop-filter-add! (lambda (,req)
-					 (define (the-current-request) ,req)
-					 ,body)))))))))
+		     (hop-filter-add!
+		      (lambda (,rq)
+			 (when (http-request-localhostp ,rq)
+			    (let ((,pa (http-request-path ,rq)))
+			       (cond
+				  ((not (hop-weblet-prefix? ,pa ,url))
+				   #f)
+				  ((hop-weblet-path? ,pa ,url)
+				   ,(if (pair? body)
+					`(let ((the-current-request
+						(lambda () ,rq)))
+					    (scheme->response
+					     ,(weblet-body id args rq ca url)
+					     ,rq))
+					#f))
+				  ((hop-filter-path? ,pa ,url)
+				   (scheme->response
+				    (hop-service ,id ,rq) ,rq))
+				  (else
+				   #f)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    $service/filter ...                                              */

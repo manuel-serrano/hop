@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jan 27 09:45:12 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:11:20 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -32,9 +32,7 @@
 	    
 	    (<HOP-MAILTO> . ::obj)
 	    (<TOOLTIP> . ::obj)
-	    (<SORTTABLE> . ::obj))
-	    
-   (eval    (export-exports)))
+	    (<SORTTABLE> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-file ...                                                     */

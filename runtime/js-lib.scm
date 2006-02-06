@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Jan 23 16:51:05 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:14:54 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -18,9 +18,7 @@
 	    __hop_types
 	    __hop_xml)
 
-   (export  (generic scheme->javascript ::obj))
-
-   (eval    (export-exports)))
+   (export  (generic scheme->javascript ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->javascript ...                                           */

@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Jan 30 10:18:39 2006 (eg)                     */
+;*    Last change :  Wed Feb  1 06:32:07 2006 (serrano)                */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
-;*    HOP Weblet configuration                                        */
+;*    HOP Weblet configuration                                         */
 ;*=====================================================================*/
 
 
@@ -109,11 +109,9 @@
        (<TABLE> :width "100%" :justify "center"
 	  ;; Informations on the widget
 	  (if author
-	      (<TR> (<TH> "Author: ") (<TD> author))
-	      "")
+	      (<TR> (<TH> "Author: ") (<TD> author)))
 	  (if version
-	      (<TR> (<TH> "Version: ") (<TD> version))
-	      "")
+	      (<TR> (<TH> "Version: ") (<TD> version)))
 	  (<TR> (<TH> "Location: ") (<TD> loc))
 	  (<TR> :height "10px")
 	  ;; Widget activation
@@ -126,8 +124,8 @@
 		      (<INPUT> :type 'radio :name name :checked (not active)
 			       :onclick {hop( $webconf/activate( $name, false ),
 					      false )}))))
-       (if about  (about-button name about) "")
-       (if config (config-button name config) ""))))
+       (if about  (about-button name about))
+       (if config (config-button name config)))))
   
 ;; ----------------------------------------------------------------------
 ;; 	make-about-n-config-windows ...

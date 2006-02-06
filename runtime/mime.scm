@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 07:59:54 2006                          */
-;*    Last change :  Thu Jan 19 08:02:25 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:15:04 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP mime types management.                                       */
@@ -18,9 +18,7 @@
 	   (mime-type-add! ::bstring ::bstring)
 	   (mime-type-add-list! ::pair-nil)
 	   (mime-type-parse ::input-port)
-	   (load-mime-types ::bstring))
-
-   (eval   (export-exports)))
+	   (load-mime-types ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *mime-types-table* ...                                           */

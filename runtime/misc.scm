@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Mon Jan 23 14:24:10 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:15:13 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -39,9 +39,7 @@
 	   (keyword->symbol::symbol ::keyword)
 	   (symbol->keyword::keyword ::symbol)
 	   (delete-path ::bstring)
-	   (hop-calendar::pair ::date))
-
-   (eval   (export-exports)))
+	   (hop-calendar::pair ::date)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */

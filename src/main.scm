@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Jan 28 06:57:29 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:24:47 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -44,6 +44,8 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   (eval `(library-translation-table-add! 'hop "hop" ,(hop-version)))
+   (eval `(library-load 'hop ,(hop-lib-directory)))
    (parse-args args)
    (hop-verb 2 "Starting hop on port " (hop-port) ":\n")
    (signal-init!)

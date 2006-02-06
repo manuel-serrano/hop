@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jan 27 13:45:05 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:12:26 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -35,9 +35,7 @@
 	    (http-service-error ::http-request ::symbol ::bstring)
 	    (http-warning msg #!optional dump)
 	    (http-internal-warning e)
-	    (http-service-unavailable obj))
-
-   (eval    (export-exports)))
+	    (http-service-unavailable obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-error ...                                           */
@@ -60,7 +58,6 @@
 ;*    http-response-error ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-response-error e::&error req::http-request)
-   (tprint "http-response-error: " e)
    (let ((msg (<TABLE>
 		 (<TR>
 		    (<TD> "An error occured while responding to"))

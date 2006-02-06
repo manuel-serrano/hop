@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Jan 20 12:27:46 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:11:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling HTTP requests.                                          */
@@ -40,9 +40,7 @@
 	    (re-hop ::http-request)
 	    (autoload ::bstring ::procedure . opt)
 	    (autoload-prefix::procedure ::bstring)
-	    (hop-to-hop ::bstring ::int ::obj ::hop-request-service . ::obj))
-
-   (eval    (export-exports)))
+	    (hop-to-hop ::bstring ::int ::obj ::hop-request-service . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    the-current-request ...                                          */
@@ -140,27 +138,33 @@
 ;*    autoload ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (autoload file pred . hooks)
-   (let ((qfile (find-file/path file (hop-path))))
+   (let ((qfile (find-file/path file (hop-path)))
+	 (mutex (make-mutex))
+	 (autoloadp #f))
+      (define (aload req)
+	 (if (pred req)
+	     (begin
+		(mutex-lock! mutex)
+		(unless autoloadp
+		   (hop-verb 1 "Autoloading `" qfile "'...\n")
+		   ;; load the autoloaded file
+		   (load-once qfile)
+		   ;; execute the hooks
+		   (for-each (lambda (h)
+				(when (and (procedure? h) (correct-arity? h 0))
+				   (h)))
+			     hooks)
+		   ;; remove the autoaload 
+		   (hop-filter-remove! aload)
+		   ;; mark the autoload executed
+		   (set! autoloadp #t))
+		(mutex-unlock! mutex)
+		;; re-scan the filter list
+		(re-hop req))
+	     req))
       (if (not (and (string? qfile) (file-exists? qfile)))
 	  (error 'autoload "Can't find autoload file" file)
-	  (letrec ((aload (lambda (req)
-			     (if (pred req)
-				 (begin
-				    (hop-verb 2 "Autoloading `" qfile "'...\n")
-				    ;; load the autoloaded file
-				    (load-once qfile)
-				    ;; execute the hooks
-				    (for-each (lambda (h)
-						 (if (and (procedure? h)
-							  (correct-arity? h 0))
-						     (h)))
-					      hooks)
-				    ;; remove the autoaload 
-				    (hop-filter-remove! aload)
-				    ;; re-scan the filter list
-				    (re-hop req))
-				 req))))
-	     (hop-filter-add-always-first! aload)))))
+	  (hop-filter-add-always-first! aload))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-prefix ...                                              */

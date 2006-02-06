@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Jan 19 10:32:33 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:11:37 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -31,10 +31,8 @@
    (export  (<NOTEPAD> . ::obj)
 	    (<NPHEAD> . ::obj)
 	    (<NPTAB> . ::obj)
-	    (<NPTABHEAD> . ::obj))
+	    (<NPTABHEAD> . ::obj)))
    
-   (eval    (export-exports)))
-
 ;*---------------------------------------------------------------------*/
 ;*    notepad-inline ...                                               */
 ;*---------------------------------------------------------------------*/
