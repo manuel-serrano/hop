@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jan 20 15:02:53 2006 (serrano)                */
+#*    Last change :  Wed Feb  8 06:12:25 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -36,7 +36,7 @@ mimetypes=/etc/mime.types
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="1.0i"
+version="1.1a"
 
 bindir=$prefix/bin;
 libdir=$prefix/lib

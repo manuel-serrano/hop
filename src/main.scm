@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Feb  2 16:24:47 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 07:59:56 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -44,14 +44,23 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; catch critical signals
+   (signal-init!)
+   ;; load the hop library
    (eval `(library-translation-table-add! 'hop "hop" ,(hop-version)))
    (eval `(library-load 'hop ,(hop-lib-directory)))
+   ;; parse the command line
    (parse-args args)
    (hop-verb 2 "Starting hop on port " (hop-port) ":\n")
-   (signal-init!)
+   ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! load-once)
+   ;; install the builtin filters
+   (hop-filter-add-always-first! autoload-filter)
+   (hop-filter-add! service-filter)
+   ;; start the job scheduler
    (job-start-scheduler!)
+   ;; start the hop main loop
    (with-handler
       (lambda (e)
 	 (exception-notify e)
@@ -159,7 +168,7 @@
 	    (socket-close sock)
 	    #f)
 	 (let ((hp (hop req)))
-	    (hop-verb 3 (hop-color req req " EXEC")
+	    (hop-verb 4 (hop-color req req " EXEC")
 		      ": " hp
 		      " "
 		      (if (user? (http-request-user req))

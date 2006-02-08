@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Feb  2 16:16:40 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 06:13:28 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -345,12 +345,8 @@
 		   (unless (eq? (cdr a) #t)
 		      (display "='" p)
 		      (cond
-			 ((hop-request-service? (cdr a))
-			  (display (hop-request-service-path (cdr a)) p))
-			 ((hop-request-filter? (cdr a))
-			  (display (hop-request-filter-base (cdr a)) p)
-			  (display "/" p)
-			  (display (hop-request-filter-url (cdr a)) p))
+			 ((hop-service? (cdr a))
+			  (display (hop-service-path (cdr a)) p))
 			 ((procedure? (cdr a))
 			  (error 'xml
 				 "Illegal procedure argument in XML attribute"

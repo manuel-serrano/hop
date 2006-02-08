@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Feb  1 06:32:07 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 08:58:58 2006 (serrano)                */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
@@ -25,7 +25,7 @@
 ;; ----------------------------------------------------------------------
 ;;	webconf-filter ...
 ;; ----------------------------------------------------------------------
-(define-weblet (webconf)
+(define-service (webconf)
    (<HTML>
       (<HEAD>
 	 (<HOP-HEAD>)

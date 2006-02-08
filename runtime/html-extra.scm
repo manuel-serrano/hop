@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Feb  2 16:11:20 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 06:25:40 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -24,13 +24,11 @@
 	    __hop_xml
 	    __hop_css
 	    __hop_js-lib
-	    __hop_builtin
 	    __hop_hop)
 
    (export  (<HOP-HEAD> . ::obj)
 	    (<HOP-FOOT-LOGO> . ::obj)
 	    
-	    (<HOP-MAILTO> . ::obj)
 	    (<TOOLTIP> . ::obj)
 	    (<SORTTABLE> . ::obj)))
 
@@ -86,7 +84,8 @@
 		   '()))
 	  (css '())
 	  (jscript '())
-	  (favicon #f))
+	  (favicon #f)
+	  (mode #f))
       (let loop ((a obj))
 	 (cond
 	    ((null? a)
@@ -112,35 +111,46 @@
 		     (append! css jscript)))))
 	    ((pair? (car a))
 	     (loop (append (car a) (cdr a))))
-	    ((null? (cdr a))
-	     (error '<HOP-HEAD> (format "Missing ~a value" (car a)) a))
-	    (else
-	     (case (car a)
+	    ((keyword? (car a))
+	     (if (null? (cdr a))
+		 (error '<HOP-HEAD> (format "Missing ~a value" (car a)) a)
+		 (case (car a)
+		    ((:dir)
+		     (set! mode :dir)
+		     (if (string? (cadr a))
+			 (set! dir (cons (cadr a) dir))
+			 (error '<HOP-HEAD> "Illegal :dir" (cadr a))))
+		    ((:css)
+		     (set! mode :css)
+		     (if (string? (cadr a))
+			 (set! css (cons (cadr a) css))
+			 (error '<HOP-HEAD> "Illegal :css" (cadr a))))
+		    ((:jscript)
+		     (set! mode :jscript)
+		     (if (string? (cadr a))
+			 (set! jscript (cons (cadr a) jscript))
+			 (error '<HOP-HEAD> "Illegal :jscript" (cadr a))))
+		    ((:favicon)
+		     (set! mode #f)
+		     (if (string? (cadr a))
+			 (set! favicon (cadr a))
+			 (error '<HOP-HEAD> "Illegal :favicon" (cadr a))))
+		    (else
+		     (error '<HOP-HEAD>
+			    (format "Unknown ~a argument" (car a))
+			    (cadr a)))))
+	     (loop (cddr a)))
+	    ((string? (car a))
+	     (case mode
 		((:dir)
-		 (set! dir (cons (cadr a) dir)))
+		 (set! dir (cons (car a) dir)))
 		((:css)
-		 (cond
-		    ((and (pair? (cadr a)) (every? string? (cadr a)))
-		     (set! css (append (reverse (cadr a)) css)))
-		    ((string? (cadr a))
-		     (set! css (cons (cadr a) css)))
-		    (else
-		     (error '<HOP-HEAD> "Illegal :css" (cadr a)))))
+		 (set! css (cons (car a) css)))
 		((:jscript)
-		 (cond
-		    ((and (pair? (cadr a)) (every? string? (cadr a)))
-		     (set! jscript (append (reverse (cadr a)) jscript)))
-		    ((string? (cadr a))
-		     (set! jscript (cons (cadr a) jscript)))
-		    (else
-		     (error '<HOP-HEAD> "Illegal :jscript" (cadr a)))))
-		((:favicon)
-		 (set! favicon (cadr a)))
-		(else
-		 (error '<HOP-HEAD>
-			(format "Unknown ~a argument" (car a))
-			(cadr a))))
-	     (loop (cddr a)))))))
+		 (set! jscript (cons (car a) jscript))))
+	     (loop (cdr a)))
+	    (else
+	     (error '<HOP-HEAD> (format "Illegal ~a argument" (car a)) a))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HOP-FOOT-LOGO> ...                                              */
@@ -182,16 +192,6 @@
 			     (<TD> img)
 			     (<TD> :align 'center r)))))))
 		   
-
-;*---------------------------------------------------------------------*/
-;*    <HOP-MAILTO> ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (<HOP-MAILTO> . args)
-   (let* ((email (car args))
-	  (oclick (format "hop( ~a, ~s )"
-			  (scheme->javascript builtin/mailto)
-			  email)))
-      (<SPAN> :class "hopmailto" :onclick oclick email)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TOOLTIP> ...                                                    */

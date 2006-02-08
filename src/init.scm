@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sun Jan 22 14:10:07 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 07:08:13 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -75,5 +75,7 @@
 		     (content-type (mime-type path "text/plain"))
 		     (bodyp (eq? method 'GET))
 		     (file path)))))
+	     ((HOPEVT HOP)
+	      (http-file-not-found path))
 	     (else
 	      req))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Feb  3 08:36:37 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 08:55:13 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -103,16 +103,9 @@
 	   (class http-response-put::%http-response-local
 	      (uri::bstring read-only))
 
-	   (class hop-request-filter
-	      base::bstring
-	      (name::bstring read-only)
-	      (url::bstring read-only)
-	      (table read-only (default (make-hashtable 10))))
-
-	   (class hop-request-service
+	   (class hop-service
 	      (id::symbol read-only)
 	      (path::bstring read-only)
-	      (filter::hop-request-filter read-only)
 	      (args::obj read-only)
 	      (%exec::procedure read-only)
 	      (proc::procedure read-only)
@@ -152,19 +145,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-display ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-method (object-display o::hop-request-service . port)
+(define-method (object-display o::hop-service . port)
    (with-output-to-port (if (null? port) (current-output-port) (car port))
       (lambda ()
-	 (with-access::hop-request-service o (id)
-	    (display* "#<hop-request-service: " id ">")))))
+	 (with-access::hop-service o (id)
+	    (display* "#<hop-service: " id ">")))))
     
 ;*---------------------------------------------------------------------*/
 ;*    object-write ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (object-write o::hop-request-service . port)
+(define-method (object-write o::hop-service . port)
    (with-output-to-port (if (null? port) (current-output-port) (car port))
       (lambda ()
-	 (with-access::hop-request-service o (id path args)
+	 (with-access::hop-service o (id path args)
 	    (print "id  : " id)
 	    (print "path: " path)
 	    (print "args: " args)))))

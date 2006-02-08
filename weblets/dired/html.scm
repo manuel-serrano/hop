@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 17:45:08 2005                          */
-;*    Last change :  Fri Jan 20 09:36:00 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 07:38:37 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dired HTML facilities                                            */
@@ -20,8 +20,8 @@
 	 (<HEAD>
 	  (<META> :http-equiv "Content-Type"
 		  :content "text/html; charset=ISO-8859-1")
-	  (<HOP-HEAD> :css '("hop-tree.css" "hop-sorttable.css")
-		      :jscript '("hop-tree.js" "hop-sorttable.js"))
+	  (<HOP-HEAD> :css "hop-tree.css" "hop-sorttable.css"
+		      :jscript "hop-tree.js" "hop-sorttable.js")
 	  (<LINK> :rel "stylesheet"
 		  :type "text/css"
 		  :href (format "~a/dired.hss" (dired-install-directory)))

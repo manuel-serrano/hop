@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Thu Feb  2 16:16:37 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 06:11:30 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -33,7 +33,6 @@
 	   __hop_job
 	   __hop_hop
 	   __hop_service
-	   __hop_builtin
 	   __hop_http-lib
 	   __hop_http-response
 	   __hop_http-shoutcast
@@ -70,8 +69,8 @@
 	   (class http-response-cgi)
 	   (class http-response-persistent)
 	   (class http-response-put)
-	   (class hop-request-filter)
-	   (class hop-request-service)
+	   
+	   (class hop-service)
 
 	   (class xml)
 	   (class xml-markup)

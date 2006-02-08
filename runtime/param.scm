@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Feb  2 16:15:28 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 08:51:19 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -60,9 +60,10 @@
 	    
 	    (hop-http-response-error::obj)
 	    (hop-http-response-error-set! ::procedure)
-	    
-	    (hop-filter::pair-nil)
-	    (hop-filter-set! ::pair-nil)
+
+	    (hop-filter-mutex::mutex)
+	    (hop-filters::pair-nil)
+	    (hop-filters-set! ::pair-nil)
 	    (hop-filter-add! ::procedure)
 	    (hop-filter-remove! ::procedure)
 	    (hop-filter-add-always-first! ::procedure)
@@ -84,14 +85,10 @@
 	    (hop-path::pair-nil)
 	    (hop-path-set! ::pair-nil)
 	    
-	    (hop-mailer::bstring)
-	    (hop-mailer-set! ::bstring)
-	    
 	    (hop-server-hostname::bstring)
 	    (hop-server-ip::bstring)
 	    
-	    (hop-filter-base::bstring)
-	    (hop-filter-base-set! ::bstring)
+	    (hop-service-base::bstring)
 	    
 	    (hop-server-aliases::pair-nil)
 	    (hop-server-aliases-set! ::pair-nil)
@@ -239,7 +236,7 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    Loging                                                           */
+;*    hop-log ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-log
    0)
@@ -262,16 +259,22 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    hop-filter ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-filter
-   '())
-
-;*---------------------------------------------------------------------*/
 ;*    *filter-mutex* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *filter-mutex* (make-mutex "hop-filter-mutex*"))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-filter-mutex ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-filter-mutex)
+   *filter-mutex*)
+
+;*---------------------------------------------------------------------*/
+;*    hop-filter ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-filters
+   '())
+
 ;*---------------------------------------------------------------------*/
 ;*    %hop-filter-add! ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -279,11 +282,11 @@
    (define (add! p n)
       (if p
 	  (set-cdr! p n)
-	  (hop-filter-set! n)))
+	  (hop-filters-set! n)))
    (with-lock *filter-mutex*
       (lambda ()
 	 (if (eq? kind 'last)
-	     (let loop ((fs (hop-filter))
+	     (let loop ((fs (hop-filters))
 			(p #f))
 		(cond
 		   ((null? fs)
@@ -292,7 +295,7 @@
 		    (add! p (cons (cons kind proc) fs)))
 		   (else
 		    (loop (cdr fs) fs))))
-	     (let loop ((fs (hop-filter))
+	     (let loop ((fs (hop-filters))
 			(p #f))
 		(cond
 		   ((null? fs)
@@ -308,13 +311,13 @@
 (define (hop-filter-remove! proc)
    (with-lock *filter-mutex*
       (lambda ()
-	 (let loop ((fs (hop-filter))
+	 (let loop ((fs (hop-filters))
 		    (p #f))
 	    (when (pair? fs)
 	       (if (eq? (cdar fs) proc)
 		   (if p
 		       (set-cdr! p (cdr fs))
-		       (hop-filter-set! (cdr fs)))
+		       (hop-filters-set! (cdr fs)))
 		   (loop (cdr fs) fs)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -401,12 +404,6 @@
 	 (hop-contribs-directory)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-mailer ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-mailer
-   "emacs --eval '(message-mail ~s)'")
-
-;*---------------------------------------------------------------------*/
 ;*    hop-server-hostname ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-server-hostname
@@ -419,9 +416,9 @@
    (host (hostname)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-filter-base ...                                              */
+;*    hop-service-base ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-filter-base
+(define-parameter hop-service-base
    "/hop")
 
 ;*---------------------------------------------------------------------*/

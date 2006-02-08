@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Jan 24 17:51:32 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 07:37:04 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP bbdb script                                                  */
@@ -23,7 +23,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    bbdb filter ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-weblet (bbdb)
+(define-service (bbdb)
    (let ((req (the-current-request)))
       (multiple-value-bind (db match name fname emails)
 	 (bbdb-cookie-config req)
@@ -33,7 +33,7 @@
 		   (<HOP-HEAD>)
 		   (<LINK> :rel "stylesheet"
 			   :type "text/css"
-			   :href (format "~a/bbdb.css" bbdb-directory))
+			   :href (format "~a/bbdb.hss" bbdb-directory))
 		   (<SCRIPT> :type "text/javascript"
 			     :src (format "~a/bbdb.js" bbdb-directory)))
 		  (<BODY> :class "bbdb"

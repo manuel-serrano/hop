@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Feb  2 16:11:12 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 07:14:32 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling HTTP requests.                                          */
@@ -29,18 +29,11 @@
 	    __hop_html-tabslider
 	    __hop_html-tree
 	    __hop_html-extra
-	    __hop_event
-	    __hop_builtin)
-   
-   (static  (class reset
-	       (request::http-request read-only)))
+	    __hop_event)
    
    (export  (the-current-request::obj)
 	    (hop::%http-response ::http-request)
-	    (re-hop ::http-request)
-	    (autoload ::bstring ::procedure . opt)
-	    (autoload-prefix::procedure ::bstring)
-	    (hop-to-hop ::bstring ::int ::obj ::hop-request-service . ::obj)))
+	    (hop-to-hop ::bstring ::int ::obj ::hop-service . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    the-current-request ...                                          */
@@ -55,45 +48,43 @@
 ;*    hop ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define (hop req::http-request)
-   (let ((r (bind-exit (reset)
-	       (let loop ((m req)
-			  (filters (hop-filter)))
-		  (if (null? filters)
-		      (with-access::http-request m (content-length method)
-			 (let* ((rp (instantiate::http-response-remote
-				       (method (http-request-method m))
-				       (host (http-request-host m))
-				       (port (http-request-port m))
-				       (path (http-request-path m))
-				       (userinfo (http-request-userinfo m))
-				       (encoded-path (http-request-encoded-path m))
-				       (http (http-request-http m))
-				       (header (http-request-header m))
-				       (scheme (http-request-scheme m))
-				       (bodyp (not (eq? method 'HEAD)))
-				       (content-length content-length)
-				       (request req)
-				       (timeout (hop-connection-timeout))))
-				(rp2 (hop-run-hook
-				      (hop-http-response-remote-hooks)
-				      m rp)))
-			    (hop-request-hook m rp2)))
-		      (let ((n ((cdar filters) m)))
-			 (cond
-			    ((http-request? n)
-			     (loop n (cdr filters)))
-			    ((%http-response? n)
-			     (let ((rp2 (hop-run-hook
-					 (hop-http-response-local-hooks)
-					 m n)))
-				(hop-request-hook m rp2)))
-			    ((reset? n)
-			     (reset n))
-			    (else
-			     (loop m (cdr filters))))))))))
-      (if (reset? r)
-	  (hop (reset-request r))
-	  r)))
+   (let loop ((m req)
+	      (filters (hop-filters)))
+      (if (null? filters)
+	  (with-access::http-request m (content-length method)
+	     (let* ((rp (instantiate::http-response-remote
+			   (method (http-request-method m))
+			   (host (http-request-host m))
+			   (port (http-request-port m))
+			   (path (http-request-path m))
+			   (userinfo (http-request-userinfo m))
+			   (encoded-path (http-request-encoded-path m))
+			   (http (http-request-http m))
+			   (header (http-request-header m))
+			   (scheme (http-request-scheme m))
+			   (bodyp (not (eq? method 'HEAD)))
+			   (content-length content-length)
+			   (request req)
+			   (timeout (hop-connection-timeout))))
+		    (rp2 (hop-run-hook
+			  (hop-http-response-remote-hooks) m rp)))
+		(hop-request-hook m rp2)))
+	  (let ((n ((cdar filters) m)))
+	     (cond
+		((%http-response? n)
+		 (let ((rp2 (hop-run-hook
+			     (hop-http-response-local-hooks) m n)))
+		    (hop-request-hook m rp2)))
+		((http-request? n)
+		 (mutex-lock! (hop-filter-mutex))
+		 (let ((tail (cdr filters)))
+		    (mutex-unlock! (hop-filter-mutex))
+		    (loop n tail)))
+		(else
+		 (mutex-lock! (hop-filter-mutex))
+		 (let ((tail (cdr filters)))
+		    (mutex-unlock! (hop-filter-mutex))
+		    (loop m tail))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-run-hooks ...                                                */
@@ -104,16 +95,6 @@
       (if (null? hooks)
 	  rp
 	  (loop (cdr hooks) ((car hooks) m rp)))))
-
-;*---------------------------------------------------------------------*/
-;*    re-hop ...                                                       */
-;*    -------------------------------------------------------------    */
-;*    This function is used for restarting the hop filter search.      */
-;*    For instance, it is used by the autoloading mechanism.           */
-;*---------------------------------------------------------------------*/
-(define (re-hop req::http-request)
-   (instantiate::reset
-      (request req)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-request-hook ...                                             */
@@ -135,49 +116,6 @@
 	  res))))
 
 ;*---------------------------------------------------------------------*/
-;*    autoload ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (autoload file pred . hooks)
-   (let ((qfile (find-file/path file (hop-path)))
-	 (mutex (make-mutex))
-	 (autoloadp #f))
-      (define (aload req)
-	 (if (pred req)
-	     (begin
-		(mutex-lock! mutex)
-		(unless autoloadp
-		   (hop-verb 1 "Autoloading `" qfile "'...\n")
-		   ;; load the autoloaded file
-		   (load-once qfile)
-		   ;; execute the hooks
-		   (for-each (lambda (h)
-				(when (and (procedure? h) (correct-arity? h 0))
-				   (h)))
-			     hooks)
-		   ;; remove the autoaload 
-		   (hop-filter-remove! aload)
-		   ;; mark the autoload executed
-		   (set! autoloadp #t))
-		(mutex-unlock! mutex)
-		;; re-scan the filter list
-		(re-hop req))
-	     req))
-      (if (not (and (string? qfile) (file-exists? qfile)))
-	  (error 'autoload "Can't find autoload file" file)
-	  (hop-filter-add-always-first! aload))))
-
-;*---------------------------------------------------------------------*/
-;*    autoload-prefix ...                                              */
-;*---------------------------------------------------------------------*/
-(define (autoload-prefix string)
-   (let* ((p string)
-	  (p/ (string-append string "/")))
-      (lambda (req)
-	 (with-access::http-request req (path)
-	    (or (and (not (file-exists? path)) (string=? path p))
-		(substring-at? path p/ 0))))))
-
-;*---------------------------------------------------------------------*/
 ;*    hop-to-hop-id ...                                                */
 ;*---------------------------------------------------------------------*/
 (define hop-to-hop-id -1)
@@ -188,12 +126,12 @@
 (define (hop-to-hop host port userinfo service . opts)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " HOP-TO-HOP")
-	     ": " host ":" port " " (hop-request-service-id service) " " opts
+	     ": " host ":" port " " (hop-service-id service) " " opts
 	     "\n")
    (with-trace 2 'hop-to-hop
-      (trace-item "host=" host " port=" port " service=" (hop-request-service-id service) " opts=" opts)
+      (trace-item "host=" host " port=" port " service=" (hop-service-id service) " opts=" opts)
       (if (or (not (string? host)) (is-local? host))
-	  (let ((resp (apply (hop-request-service-proc service) opts)))
+	  (let ((resp (apply (hop-service-proc service) opts)))
 	     (if (http-response-obj? resp)
 		 (http-response-obj-body resp)
 		 #unspecified))

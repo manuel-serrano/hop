@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Feb  1 14:28:15 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 08:52:04 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -46,7 +46,7 @@
 ;; 	get-weblet-config ...
 ;; ----------------------------------------------------------------------
 (define (get-weblet-config name)
-  (let ((file (make-file-path (weblets-config-directory)
+  (let ((file (make-file-name (weblets-config-directory)
 			      (string-append name ".conf"))))
     (if (file-exists? file)
 	(with-input-from-file file read)
@@ -93,7 +93,7 @@
 ;; ----------------------------------------------------------------------
 (define (autoload-weblets)
   (define (maybe-autoload x)
-    (let ((url    (string-append "/hop/" (cadr (assoc 'name x))))
+    (let ((url    (make-file-name (hop-service-base) (cadr (assoc 'name x))))
 	  (path   (cadr (assoc 'weblet x)))
 	  (active (cadr (assoc 'active x))))
       (when active 

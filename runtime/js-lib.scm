@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Thu Feb  2 16:14:54 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 06:14:11 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -54,10 +54,8 @@
 	   (list->array (vector->list obj))))
       ((eq? obj #unspecified)
        "undefined")
-      ((hop-request-service? obj)
-       (hop-request-service-javascript obj))
-      ((hop-request-filter? obj)
-       (string-append (hop-filter-base) "/" (hop-request-filter-url obj)))
+      ((hop-service? obj)
+       (hop-service-javascript obj))
       ((procedure? obj)
        (error 'scheme->javascript
 	      "Illegal procedure in JavaScript conversion"
