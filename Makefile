@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Jan 26 22:02:51 2006 (serrano)                */
+#*    Last change :  Wed Feb  8 19:04:56 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -107,6 +107,8 @@ distrib:
            tar cvfz hop$(HOPRELEASE).tar.gz hop$(HOPRELEASE) \
                --exclude=hop$(HOPRELEASE)/src/o \
                --exclude=hop$(HOPRELEASE)/runtime/o \
+               --exclude=hop$(HOPRELEASE)/lib \
+               --exclude=hop$(HOPRELEASE)/.hgignore \
                --exclude=hop$(HOPRELEASE)/.hg && \
 	   /bin/rm -rf /tmp/hop$(HOPRELEASE) && \
            mv hop$(HOPRELEASE).tar.gz $(DISTRIBDIR)); \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Feb  8 08:51:19 2006 (serrano)                */
+;*    Last change :  Thu Feb  9 06:51:20 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -89,6 +89,7 @@
 	    (hop-server-ip::bstring)
 	    
 	    (hop-service-base::bstring)
+	    (hop-service-weblet-name::bstring)
 	    
 	    (hop-server-aliases::pair-nil)
 	    (hop-server-aliases-set! ::pair-nil)
@@ -420,6 +421,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-base
    "/hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-service-weblet-weblet-name ...                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-service-weblet-name
+   (symbol->string (gensym 'svc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-aliases ...                                           */
