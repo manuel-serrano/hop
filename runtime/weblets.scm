@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Feb 10 11:41:38 2006 (eg)                     */
+;*    Last change :  Fri Feb 10 15:09:54 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -12,18 +12,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hop_weblets
+(module __hop_weblets
 
-   (library hop)
+   (import __hop_param
+	   __hop_types
+	   __hop_service
+	   __hop_misc)
 
-   (import hop_param)
    
    (export  (weblets-config-directory)
 	    (get-weblet-infos ::string ::string)
 	    (get-weblet-config ::string)
 	    (get-weblet-config-value ::string ::symbol ::obj)
 	    (find-weblets ::string)
-	    (autoload-weblets))
+	    (autoload-weblets ::pair-nil))
    
    (eval    (export-exports)))
 
@@ -91,7 +93,7 @@
 ;; ----------------------------------------------------------------------
 ;; 	autoload-weblets ...
 ;; ----------------------------------------------------------------------
-(define (autoload-weblets)
+(define (autoload-weblets dirs)
   (define (maybe-autoload x)
     (let ((url    (make-file-name (hop-service-base) (cadr (assoc 'name x))))
 	  (path   (cadr (assoc 'weblet x)))
@@ -99,7 +101,7 @@
       (when active 
 	(hop-verb 2 "Autoload " path " on " url "\n")
 	(autoload path (autoload-prefix url)))))
-    
   (for-each (lambda (dir)
 	      (for-each maybe-autoload (find-weblets dir)))
-	    (hop-autoload-directories)))
+	    dirs))
+
