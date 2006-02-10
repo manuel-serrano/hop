@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Feb  8 08:58:58 2006 (serrano)                */
+;*    Last change :  Fri Feb 10 16:58:35 2006 (eg)                     */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
@@ -69,7 +69,7 @@
 	(make-directories confdir))
       (with-output-to-file (make-file-path confdir (string-append wl ".conf"))
 	(lambda ()
-	  (printf ";; -*- scheme -*- generated file on ~A\n(\n" date)
+	  (printf ";; -*- scheme -*- generated file on ~A\n(\n" (date))
 	  (for-each (lambda (x) (printf "  ~A\n" x)) conf)
 	  (display ")\n"))))))
 
@@ -143,4 +143,14 @@
     (list
      (make "about"  { hop_close_window("about") })
      (make "config" { hop_close_window("config") }))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    webconf about ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (webconf/about)
+  (<WEBLET-ABOUT> :title "webconf"
+		  :subtitle "Hop weblets configuration tool"
+		  :icon (format "~a/configure.png" *webconf-directory*)
+		  :version (hop-version)
+   (<P> [This weblets permits to configure the installed widgets.])))
+  

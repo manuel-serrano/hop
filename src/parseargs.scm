@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Feb  1 14:34:57 2006 (serrano)                */
+;*    Last change :  Fri Feb 10 14:59:53 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -17,7 +17,7 @@
    (library hop
 	    pthread)
    
-   (import  hop_param hop_weblets)
+   (import  hop_param)
    
    (eval    (export hop-load-rc))
    
@@ -130,7 +130,8 @@
 				      (raise e)))
 			       (eval sexp))))))
 		exprs)
-      (when autoloadp (autoload-weblets))))
+      (when autoloadp
+	(autoload-weblets (hop-autoload-directories)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-hop ...                                                     */

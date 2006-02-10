@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Feb  8 07:37:04 2006 (serrano)                */
+;*    Last change :  Fri Feb 10 16:14:48 2006 (eg)                     */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP bbdb script                                                  */
@@ -398,3 +398,17 @@
 				     (<DIV> :class "bbdb-entry"
 					    (<BBDB-RECORD> rec)))
 				  es)))))))))
+;*---------------------------------------------------------------------*/
+;*    bbdb/about service ...                                           */
+;*---------------------------------------------------------------------*/
+(define-service (bbdb/about)
+  (<WEBLET-ABOUT> :title "bbdb"
+		  :subtitle "A BBDB browser"
+		  :icon (format "~a/stock_people.png" bbdb-directory)
+		  :version (hop-version)
+    (<P> [This weblet allows you to browse BBDB files.])
+    (<P> [BBDB, which stands for the
+	  ,(<STRONG> "The Insidious Big Brother Database"),
+	  is a contact management utility developed for Emacs])
+    (<A> :href "http://bbdb.sourceforge.net/"
+	 :target "_blank" "BBDB web site")))
