@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Feb  9 06:51:20 2006 (serrano)                */
+;*    Last change :  Fri Feb 10 08:54:52 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -56,7 +56,7 @@
 	    (hop-log-set! ::int)
 	    
 	    (hop-http-request-error::obj)
-	    (hop-http-request-error-set! ::procedure)
+	    (hop-http-request-error-set! ::obj)
 	    
 	    (hop-http-response-error::obj)
 	    (hop-http-response-error-set! ::procedure)
@@ -248,7 +248,7 @@
 (define-parameter hop-http-request-error
    #f
    (lambda (v)
-      (if (or (not (procedure? v)) (not (correct-arity? v 2)))
+      (if (and v (or (not (procedure? v)) (not (correct-arity? v 2))))
 	  (error 'hop-http-request-error "Illegal value" v)
 	  v)))
       
@@ -446,7 +446,7 @@
 (define-parameter hop-mime-types
    '(;; web
      ("text/html" "html" "htm" "shtml")
-     ("text/css" "css")
+     ("text/css" "css" "hss")
      ("application/x-javascript" "js")
      ;; audio
      ("audio/audible" "aa")
@@ -459,7 +459,8 @@
      ("video/mpeg" "avi")
      ("video/mpeg" "mpg"))
    (lambda (v)
-      (mime-type-add-list! v)))
+      (mime-type-add-list! v)
+      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-icons-directory ...                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Feb  8 07:08:13 2006 (serrano)                */
+;*    Last change :  Fri Feb 10 08:40:18 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -41,9 +41,13 @@
 		 ((not (file-exists? path))
 		  (let ((i (string-index path #\?)))
 		     (if (>fx i 0)
-			 (instantiate::http-response-file
-			    (bodyp (eq? method 'GET))
-			    (file (substring path 0 i)))
+			 (let ((p (substring path 0 i)))
+			    (if (file-exists? p)
+				(instantiate::http-response-file
+				   (content-type (mime-type p "text/plain"))
+				   (bodyp (eq? method 'GET))
+				   (file p))
+				(http-file-not-found p)))
 			 (http-file-not-found path))))
 		 ((is-suffix? (http-request-path req) "hop")
 		  (let ((rep (hop-load (http-request-path req))))
@@ -52,8 +56,8 @@
 			 rep)
 			((xml? rep)
 			 (instantiate::http-response-hop
-			    (bodyp (eq? method 'GET))
 			    (content-type (mime-type path "text/html"))
+			    (bodyp (eq? method 'GET))
 			    (xml rep)))
 			(else
 			 (http-warning
@@ -62,8 +66,8 @@
 		 ((is-suffix? (http-request-path req) "hss")
 		  (let ((hss (hop-load-hss (http-request-path req))))
 		     (instantiate::http-response-hop
-			(bodyp (eq? method 'GET))
 			(content-type (mime-type path "text/css"))
+			(bodyp (eq? method 'GET))
 			(xml hss))))
 		 ((pair? (assq 'icy-metadata: header))
 		  (instantiate::http-response-shoutcast

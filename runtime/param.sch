@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  1 05:02:42 2005                          */
-;*    Last change :  Thu Jan 19 07:56:47 2006 (serrano)                */
+;*    Last change :  Fri Feb 10 08:47:47 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the param macros                               */
@@ -16,7 +16,7 @@
    (let ((vid (symbol-append '* id '*))
 	 (set (symbol-append id '-set!)))
       `(begin
-          (define ,vid ,default)
+          (define ,vid ,(if (pair? setter) `(,(car setter) ,default) default))
           (define (,id)
              ,vid)
           (define (,set v)
