@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Feb  8 19:04:56 2006 (serrano)                */
+#*    Last change :  Fri Feb 10 07:19:09 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -92,25 +92,10 @@ cleanall: distclean
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
 distrib:
-	@ if [ -f /tmp/hop ]; then \
-          echo "*** ERROR: /tmp/hop exists!"; \
+	@ if [ -f $(HOPTMPDIR)/hop ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop exists!"; \
           exit 1; \
         else \
-          (cp -r ../hop /tmp/hop$(HOPRELEASE) && \
-           cd /tmp/hop$(HOPRELEASE) && \
-           ./configure && \
-           make devclean && \
-	   find . -name '*~' -exec /bin/rm {} \; && \
-           /bin/rm -f etc/Makefile.hopconfig && \
-	   /bin/rm -rf work private .hg && \
-           cd .. && \
-           tar cvfz hop$(HOPRELEASE).tar.gz hop$(HOPRELEASE) \
-               --exclude=hop$(HOPRELEASE)/src/o \
-               --exclude=hop$(HOPRELEASE)/runtime/o \
-               --exclude=hop$(HOPRELEASE)/lib \
-               --exclude=hop$(HOPRELEASE)/.hgignore \
-               --exclude=hop$(HOPRELEASE)/.hg && \
-	   /bin/rm -rf /tmp/hop$(HOPRELEASE) && \
-           mv hop$(HOPRELEASE).tar.gz $(DISTRIBDIR)); \
+          $(MAKE) clone && tar -C $(HOPTMPDIR) cvfz hop$(HOPRELEASE).tar.gz $(HOPTMPDIR)/hop \
         fi
 

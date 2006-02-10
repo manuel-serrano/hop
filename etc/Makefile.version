@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:38:36 2006                          */
-#*    Last change :  Mon Jan 23 10:54:51 2006 (serrano)                */
+#*    Last change :  Fri Feb 10 07:18:58 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    This Makefile interfaces with version managers.                  */
@@ -39,11 +39,12 @@ commit:
 	$(VM-COMMIT)
 
 push:
-	$(VM-PUSH) ssh://skribe@saxo.essi.fr/hop
+	$(VM-PUSH) $(HOPREPOSITORY)
 
 pull:
-	$(VM-PULL) ssh://skribe@saxo.essi.fr/hop
+	$(VM-PULL) $(HOPREPOSITORY)
 
 revision: populate commit
 
-
+clone:
+	$(VM-CLONE) . $(HOPTMPDIR)/hop
