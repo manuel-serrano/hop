@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Feb 10 11:23:32 2006 (eg)                     */
+;*    Last change :  Fri Feb 10 16:58:35 2006 (eg)                     */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
@@ -143,4 +143,14 @@
     (list
      (make "about"  { hop_close_window("about") })
      (make "config" { hop_close_window("config") }))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    webconf about ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (webconf/about)
+  (<WEBLET-ABOUT> :title "webconf"
+		  :subtitle "Hop weblets configuration tool"
+		  :icon (format "~a/configure.png" *webconf-directory*)
+		  :version (hop-version)
+   (<P> [This weblets permits to configure the installed widgets.])))
+  

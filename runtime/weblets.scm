@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/src/weblets.scm                         */
+;*    serrano/prgm/project/hop/runtime/weblets.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Feb 10 15:09:54 2006 (eg)                     */
+;*    Last change :  Fri Feb 10 16:08:10 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -14,8 +14,12 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_weblets
 
+   (include "compiler-macro.sch"
+	    "xml.sch")
+   
    (import __hop_param
 	   __hop_types
+	   __hop_xml
 	   __hop_service
 	   __hop_misc)
 
@@ -25,7 +29,9 @@
 	    (get-weblet-config ::string)
 	    (get-weblet-config-value ::string ::symbol ::obj)
 	    (find-weblets ::string)
-	    (autoload-weblets ::pair-nil))
+	    (autoload-weblets ::pair-nil)
+
+	    (<WEBLET-ABOUT> . args))
    
    (eval    (export-exports)))
 
@@ -105,3 +111,25 @@
 	      (for-each maybe-autoload (find-weblets dir)))
 	    dirs))
 
+;; ----------------------------------------------------------------------
+;; 	WEBLET-ABOUT ...
+;; ----------------------------------------------------------------------
+(define-xml-compound WEBLET-ABOUT ((id #unspecified string)
+				   (title #f)
+				   (subtitle #f)
+				   (version #f)
+				   (icon #f)
+				   body)
+
+  (cons* 
+   (<TABLE> :width "100%" 
+     (<TR>
+      (<TD> :valign "top" :align "left"
+	    (<IMG> :src icon)
+      (<TD> :valign "top" :align "right"
+	    (when title (<H2> title))
+	    (when subtitle (<H3> subtitle))
+	    (when version
+	      (<H4> (format "(version ~A)" version)))))))
+   body))
+  

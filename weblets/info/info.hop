@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Feb  8 08:58:36 2006 (serrano)                */
+;*    Last change :  Fri Feb 10 16:23:30 2006 (eg)                     */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info encryption                                              */
@@ -159,3 +159,17 @@
 	     :handler { hop_append( $traffic )( event ) }
 	     :event info-event)
 	  (<SORTTABLE> traffic)))))
+
+;*---------------------------------------------------------------------*/
+;*    info/about service ...                                           */
+;*---------------------------------------------------------------------*/
+(define-service (info/about)
+  (<WEBLET-ABOUT> :title "info"
+		  :subtitle "Displays Hop Informations"
+		  :icon (format "~a/icons/info.png" (hop-share-directory))
+		  :version (hop-version)
+    (<P> [This weblets displays:])
+    (<UL>
+       (<LI> "General informations on the running hop enegine")
+       (<LI> "The list of all the loaded weblets")
+       (<LI> "The generated traffic when hop is used as a proxy"))))
