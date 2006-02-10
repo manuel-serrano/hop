@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Feb 10 07:19:09 2006 (serrano)                */
+#*    Last change :  Fri Feb 10 07:28:24 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -92,10 +92,21 @@ cleanall: distclean
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
 distrib:
-	@ if [ -f $(HOPTMPDIR)/hop ]; then \
+	if [ -f $(HOPTMPDIR)/hop ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop exists!"; \
           exit 1; \
+        elif [ -f $(HOPTMPDIR)/hop$(HOPRELEASE) ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop$(HOPRELEASE) exists!"; \
+          exit 1; \
         else \
-          $(MAKE) clone && tar -C $(HOPTMPDIR) cvfz hop$(HOPRELEASE).tar.gz $(HOPTMPDIR)/hop \
+          $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
+          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop$(HOPRELEASE) && \
+          tar cvfz hop$(HOPRELEASE).tar.gz -C $(HOPTMPDIR) hop$(HOPRELEASE) && \
+          $(RM) -rf $(HOPTMPDIR)/hop$(HOPRELEASE) && \
+          if [ $(HOPDISTRIBDIR) != "." ]; then \
+            if [ $(HOPDISTRIBDIR) != "" ]; then \
+              mv hop$(HOPRELEASE).tar.gz $(HOPDISTRIBDIR); \
+            fi \
+          fi \
         fi
 

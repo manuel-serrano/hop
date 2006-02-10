@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Feb  8 06:12:25 2006 (serrano)                */
+#*    Last change :  Fri Feb 10 07:26:57 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -50,6 +50,12 @@ buildbindir=$PWD/bin
 
 repository=ssh://skribe@saxo.essi.fr/hop
 
+if [ $USER = "serrano" ]; then
+  distribdir=$HOME/prgm/distrib
+else
+  distribdir=.
+fi
+
 # Argument parsing
 while : ; do
   case $1 in
@@ -77,6 +83,9 @@ while : ; do
 
     --contribsdir=*)
       contribsdir="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --distribdir=*)
+      distribdir="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --mimetypes=*)
       mimetypes="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -226,6 +235,7 @@ cat $mkmf.in \
           -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
           -e "s|@DISTRIBDIR@|$distribdir|" \
           -e "s|@HOPREPOSITORY@|$repository|" \
+          -e "s|@HOPDISTRIBDIR@|$distribdir|" \
     >> $mkmf
 
 # src/configure.scm
