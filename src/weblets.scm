@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Feb  8 08:52:04 2006 (serrano)                */
+;*    Last change :  Fri Feb 10 11:41:38 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -40,7 +40,7 @@
   (let ((file  (make-file-path dir name (string-append name ".info"))))
     (if (file-exists? file)
 	(with-input-from-file file read)
-	'((active #t)))))
+	'())))
 
 ;; ----------------------------------------------------------------------
 ;; 	get-weblet-config ...
@@ -50,7 +50,7 @@
 			      (string-append name ".conf"))))
     (if (file-exists? file)
 	(with-input-from-file file read)
-	'())))
+	'((active #t)))))
 
 ;; ----------------------------------------------------------------------
 ;; 	get-weblet-config-value ...
@@ -103,4 +103,3 @@
   (for-each (lambda (dir)
 	      (for-each maybe-autoload (find-weblets dir)))
 	    (hop-autoload-directories)))
-
