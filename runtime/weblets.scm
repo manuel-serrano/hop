@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/src/weblets.scm                         */
+;*    serrano/prgm/project/hop/runtime/weblets.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Feb  8 08:52:04 2006 (serrano)                */
+;*    Last change :  Fri Feb 10 16:08:10 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -12,18 +12,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hop_weblets
+(module __hop_weblets
 
-   (library hop)
+   (include "compiler-macro.sch"
+	    "xml.sch")
+   
+   (import __hop_param
+	   __hop_types
+	   __hop_xml
+	   __hop_service
+	   __hop_misc)
 
-   (import hop_param)
    
    (export  (weblets-config-directory)
 	    (get-weblet-infos ::string ::string)
 	    (get-weblet-config ::string)
 	    (get-weblet-config-value ::string ::symbol ::obj)
 	    (find-weblets ::string)
-	    (autoload-weblets))
+	    (autoload-weblets ::pair-nil)
+
+	    (<WEBLET-ABOUT> . args))
    
    (eval    (export-exports)))
 
@@ -40,7 +48,7 @@
   (let ((file  (make-file-path dir name (string-append name ".info"))))
     (if (file-exists? file)
 	(with-input-from-file file read)
-	'((active #t)))))
+	'())))
 
 ;; ----------------------------------------------------------------------
 ;; 	get-weblet-config ...
@@ -50,7 +58,7 @@
 			      (string-append name ".conf"))))
     (if (file-exists? file)
 	(with-input-from-file file read)
-	'())))
+	'((active #t)))))
 
 ;; ----------------------------------------------------------------------
 ;; 	get-weblet-config-value ...
@@ -91,7 +99,7 @@
 ;; ----------------------------------------------------------------------
 ;; 	autoload-weblets ...
 ;; ----------------------------------------------------------------------
-(define (autoload-weblets)
+(define (autoload-weblets dirs)
   (define (maybe-autoload x)
     (let ((url    (make-file-name (hop-service-base) (cadr (assoc 'name x))))
 	  (path   (cadr (assoc 'weblet x)))
@@ -99,8 +107,29 @@
       (when active 
 	(hop-verb 2 "Autoload " path " on " url "\n")
 	(autoload path (autoload-prefix url)))))
-    
   (for-each (lambda (dir)
 	      (for-each maybe-autoload (find-weblets dir)))
-	    (hop-autoload-directories)))
+	    dirs))
 
+;; ----------------------------------------------------------------------
+;; 	WEBLET-ABOUT ...
+;; ----------------------------------------------------------------------
+(define-xml-compound WEBLET-ABOUT ((id #unspecified string)
+				   (title #f)
+				   (subtitle #f)
+				   (version #f)
+				   (icon #f)
+				   body)
+
+  (cons* 
+   (<TABLE> :width "100%" 
+     (<TR>
+      (<TD> :valign "top" :align "left"
+	    (<IMG> :src icon)
+      (<TD> :valign "top" :align "right"
+	    (when title (<H2> title))
+	    (when subtitle (<H3> subtitle))
+	    (when version
+	      (<H4> (format "(version ~A)" version)))))))
+   body))
+  

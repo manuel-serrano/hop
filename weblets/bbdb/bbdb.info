@@ -1,0 +1,18 @@
+;; -*- scheme -*-
+;; Weblet Informations
+
+(
+ ;; Description [description] 
+ (description "A BBDB browser")
+
+ ;; Author [author]
+ ;; Version [version]
+ ;; Update URL [update-url]
+ ;; File containing the main [main-file]  (defaults to "weblet-name.hop")
+
+ ;; About service if exists [about-service]
+ (about-service "about")
+
+ ;; Configuration service [config-service]
+
+)

@@ -3,14 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-/*    Last change :  Sun Jan 29 20:01:10 2006 (eg)                     */
+/*    Last change :  Fri Feb 10 12:02:42 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet configuration CSS                                     */
 /*=====================================================================*/
 
 BODY {
-    background: #8888ee;
+    background: #ddd;
 }
 
 .webconf-infos {
@@ -67,7 +67,7 @@ BODY {
 #webconf-about-window {
     position: absolute;
     background: #eee;
-    opacity: 0.9;
+    opacity: .95;
     top: 50;
     left: 50;
     width: 250;
