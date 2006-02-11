@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Feb 10 07:28:24 2006 (serrano)                */
+#*    Last change :  Sat Feb 11 20:38:48 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -101,7 +101,7 @@ distrib:
         else \
           $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
           mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop$(HOPRELEASE) && \
-          tar cvfz hop$(HOPRELEASE).tar.gz -C $(HOPTMPDIR) hop$(HOPRELEASE) && \
+          tar cvfz hop$(HOPRELEASE).tar.gz --exclude .hg -C $(HOPTMPDIR) hop$(HOPRELEASE) && \
           $(RM) -rf $(HOPTMPDIR)/hop$(HOPRELEASE) && \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
