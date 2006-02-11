@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Feb  8 06:25:40 2006 (serrano)                */
+;*    Last change :  Sat Feb 11 14:58:12 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -171,7 +171,7 @@
                                 font-family: Futura_Poster, Blippo, Cooper, Eras-UltraBlk, RoostHeavy, Sinaloa, Arial, Verda, sans serif;
                                 font-weight: bold;"
 			(hop-name)
-			(<SPAN> :style "font-size: 8px; font-family: sans serif"
+			(<SPAN> :style "font-size: 7px; font-stretch: ultra-condensed; font-family: sans serif"
 				(hop-version)))
 		body)))
       (<DIV> :style

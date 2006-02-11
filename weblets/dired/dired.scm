@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 15:05:13 2005                          */
-;*    Last change :  Wed Feb  8 07:37:55 2006 (serrano)                */
+;*    Last change :  Sat Feb 11 16:44:17 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A HOP file browser                                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Feb  8 07:59:56 2006 (serrano)                */
+;*    Last change :  Sat Feb 11 18:18:55 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -49,6 +49,7 @@
    ;; load the hop library
    (eval `(library-translation-table-add! 'hop "hop" ,(hop-version)))
    (eval `(library-load 'hop ,(hop-lib-directory)))
+   (eval `(library-load 'web))
    ;; parse the command line
    (parse-args args)
    (hop-verb 2 "Starting hop on port " (hop-port) ":\n")
@@ -112,8 +113,7 @@
 		       (when (&error? e) (error-notify e))
 		       (unless (socket-down? sock)
 			  (with-handler
-			     (lambda (e)
-				#unspecified)
+			     (lambda (e) #unspecified)
 			     (unless (&io-sigpipe-error? e)
 				(let ((resp ((or (hop-http-request-error)
 						 http-request-error)
