@@ -1,0 +1,226 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/webfilter/webfilter.hop         */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Sun Feb 12 15:26:18 2006 (serrano)                */
+;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP webfilter weblet                                             */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_webfilter)
+
+;*---------------------------------------------------------------------*/
+;*    The user configuration                                           */
+;*---------------------------------------------------------------------*/
+(hop-load-rc "webfilterrc.hop")
+
+;*---------------------------------------------------------------------*/
+;*    webfilter-dir ...                                                */
+;*---------------------------------------------------------------------*/
+(define webfilter-dir
+   (make-file-name (hop-weblets-directory) "webfilter"))
+
+(define webfilter-config
+   (make-file-name (hop-rc-directory) "webfilter.config"))
+
+;*---------------------------------------------------------------------*/
+;*    Global parameters                                                */
+;*---------------------------------------------------------------------*/
+(define webfilter-blacklist #t)
+(define webfilter-google-unbounce #t)
+
+;*---------------------------------------------------------------------*/
+;*    load webfilter config                                            */
+;*---------------------------------------------------------------------*/
+(let ((f webfilter-config))
+   (when (file-exists? f)
+      (with-input-from-file f
+	 (lambda ()
+	    (for-each (lambda (c)
+			 (case (car c)
+			    ((blacklist)
+			     (set! webfilter-blacklist (cadr c)))
+			    ((google-unbounce)
+			     (set! webfilter-google-unbounce (cadr c)))))
+		      (read))))))
+
+;*---------------------------------------------------------------------*/
+;*    webfilter-write-config ...                                       */
+;*---------------------------------------------------------------------*/
+(define (webfilter-write-config)
+   (with-output-to-file webfilter-config
+      (lambda ()
+	 (display `((blacklist ,webfilter-blacklist)
+		    (google-unbounce ,webfilter-google-unbounce))))))
+
+;*---------------------------------------------------------------------*/
+;*    load-blacklist ...                                               */
+;*---------------------------------------------------------------------*/
+(define (load-blacklist t f)
+   (when (file-exists? f)
+      (hop-verb 1 "Loading domain blacklist `" f "'...\n")
+      (with-input-from-file f
+	 (lambda ()
+	    (let loop ()
+	       (let ((s (read-of-strings)))
+		  (when (string? s)
+		     (hashtable-put! t s #t)
+		     (loop))))))))
+
+;*---------------------------------------------------------------------*/
+;*    domain-blacklist                                                 */
+;*---------------------------------------------------------------------*/
+(define *domain-blacklist*
+   (let ((t (make-hashtable)))
+      (load-blacklist t (make-file-name webfilter-dir "BLACKLIST"))
+      (load-blacklist t (make-file-name (hop-rc-directory) "BLACKLIST"))
+      t))
+
+;*---------------------------------------------------------------------*/
+;*    <BLACKLIST> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<BLACKLIST>)
+   (<TABLE>
+      :class "webfilter-config"
+      (<TR>
+	 (<TH>
+	    (<P> [This filter bans domains registerd in black lists.])))
+      (let ((txt (<SPAN>
+		    :class (if webfilter-blacklist "enable" "disable")
+		    "Black listing")))
+	 (<TR>
+	    (<TD>
+	       (<INPUT>
+		  :type "checkbox"
+		  :checked webfilter-blacklist
+		  :onchange {
+		     hop($(service (val)
+			     (set! webfilter-blacklist val)
+			     (webfilter-write-config))
+			  (this.checked));
+		     ($txt).className = this.checked ? "enable" : "disable"
+		  })
+	       txt)))))
+   
+;*---------------------------------------------------------------------*/
+;*    <GOOGLE> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<GOOGLE>)
+   (<TABLE>
+      :class "webfilter-config"
+      (<TR>
+	 (<TH>
+	    (<P> [This filter prevents Google bouncing.])
+	    (<P> :class "readme"
+		 [Google boucing is a technique that enables Google to log
+users requests selections. That is, when Google serves a request, instead
+of returning a list of found URLs, it returns a list of URLs pointing to
+Google, each containing a forward pointer to the found wanted URL.])))
+      (let ((txt (<SPAN>
+		    :class (if webfilter-google-unbounce "enable" "disable")
+		    "Google unbounce")))
+	 (<TR>
+	    (<TD>
+	       (<INPUT>
+		  :type "checkbox"
+		  :checked webfilter-google-unbounce
+		  :onchange {
+		     hop($(service (val)
+			     (set! webfilter-google-unbounce val)
+			     (webfilter-write-config))
+			  (this.checked));
+		     ($txt).className = this.checked ? "enable" : "disable"
+		  })
+	       txt)))))
+   
+;*---------------------------------------------------------------------*/
+;*    info weblet ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (webfilter)
+   (let ((req (the-current-request)))
+      (if (not (user-authorized-service? (http-request-user req) 'admin))
+	  (user-access-denied req)
+	  (<HTML>
+	     (<HEAD>
+		(<HOP-HEAD> :css "hop-notepad.css" "hop-sorttable.css"
+			    :css (format "~a/webfilter.hss" webfilter-dir)
+			    :jscript "hop-notepad.js" "hop-sorttable.js"))
+	     (<BODY>
+		(<CENTER>
+		   (<TABLE>
+		      :class "webfilter"
+		      (<TR>
+			 (<TD>
+			    (<IMG> :src (format "~a/icons/control.png"
+						(hop-share-directory))))
+			 (<TD>
+			    (<TABLE>
+			       (<TR>
+				  (<TD>
+				     (<DIV> :id "title" "Hop Web Filtering")))
+			       (<TR>
+				  (<TD>
+				     (<DIV> :id "glop"
+					    (<NOTEPAD>
+					       (<NPHEAD> "")
+					       (<NPTAB>
+						  (<NPTABHEAD> "Blacklist")
+						  (<BLACKLIST>))
+					       (<NPTAB>
+						  (<NPTABHEAD> "Google")
+						  (<GOOGLE>))))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    webfilter/about ...                                              */
+;*---------------------------------------------------------------------*/
+(define-service (webfilter/about)
+   (<WEBLET-ABOUT>
+      :title "webfilter"
+      :subtitle "Filters Web traffic."
+      :icon (format "~a/icons/control.png" (hop-share-directory))
+      :version (hop-version)
+      (<P> [This weblet filters Web traffic:])
+      (<UL>
+	 (<LI> "It bans domains according to blacklists."))))
+
+;*---------------------------------------------------------------------*/
+;*    blacklist ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (blacklist req)
+   (when webfilter-blacklist
+      (with-access::http-request req (host port path header)
+	 (when (hashtable-get *domain-blacklist*  host)
+	    (hop-verb 2 (hop-color req req " BLACKLISTED") ": " host ":" port path "\n")
+	    (hop-verb 3 " header: " header "\n")
+	    (instantiate::http-response-string
+	       (start-line "HTTP/1.0 404 Not Found"))))))
+
+;*---------------------------------------------------------------------*/
+;*    google ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (google req)
+   (when webfilter-google-unbounce
+      (with-access::http-request req (host path localhostp)
+	 (when (and (string=? host "www.google.com")
+		    (substring-at? path "/url" 0))
+	    (let ((q (cgi-fetch-arg "q" path)))
+	       (when q
+		  (instantiate::http-response-string
+		     (start-line "HTTP/1.0 301 Moved Permanently")
+		     (header (list (cons 'location: q))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    Remote hook                                                      */
+;*---------------------------------------------------------------------*/
+(hop-http-response-remote-hook-add!
+ (lambda (req resp)
+    (or (blacklist req)
+	resp)))
+
+
+

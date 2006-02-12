@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Feb 10 16:08:10 2006 (eg)                     */
+;*    Last change :  Sun Feb 12 14:47:32 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -31,9 +31,7 @@
 	    (find-weblets ::string)
 	    (autoload-weblets ::pair-nil)
 
-	    (<WEBLET-ABOUT> . args))
-   
-   (eval    (export-exports)))
+	    (<WEBLET-ABOUT> . args)))
 
 ;; ----------------------------------------------------------------------
 ;; 	weblets-config-directory ...
@@ -101,12 +99,18 @@
 ;; ----------------------------------------------------------------------
 (define (autoload-weblets dirs)
   (define (maybe-autoload x)
-    (let ((url    (make-file-name (hop-service-base) (cadr (assoc 'name x))))
-	  (path   (cadr (assoc 'weblet x)))
-	  (active (cadr (assoc 'active x))))
-      (when active 
-	(hop-verb 2 "Autoload " path " on " url "\n")
-	(autoload path (autoload-prefix url)))))
+    (let ((url      (make-file-name (hop-service-base) (cadr (assoc 'name x))))
+	  (path     (cadr (assq 'weblet x)))
+	  (active   (cadr (assq 'active x)))
+	  (autopred (assq 'autoload x)))
+      (when active
+	(if (pair? autopred)
+	    (begin
+	       (hop-verb 2 "Autoload " path " on " (cadr autopred) "\n")
+	       (autoload path (eval (cadr autopred))))
+	    (begin
+	       (hop-verb 2 "Autoload " path " on " url "\n")
+	       (autoload path (autoload-prefix url)))))))
   (for-each (lambda (dir)
 	      (for-each maybe-autoload (find-weblets dir)))
 	    dirs))

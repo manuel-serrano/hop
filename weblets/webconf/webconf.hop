@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Feb 10 16:58:35 2006 (eg)                     */
+;*    Last change :  Sun Feb 12 14:40:59 2006 (serrano)                */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
@@ -85,7 +85,9 @@
 		:onclick { hop_open_webconf_window($serv, "about", 50, 50) })))
 
   (define (config-button name config)
-    (let ((serv (string-append "/hop/" name "/" config)))
+    (let ((serv (if (string=? config "")
+		    (string-append "/hop/" name)
+		    (string-append "/hop/" name "/" config))))
       (<BUTTON> "Configure"
 		:onclick { hop_open_webconf_window($serv, "config", 100, 100) })))
   ;;
