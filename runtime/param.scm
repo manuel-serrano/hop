@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jan 20 12:42:40 2006 (serrano)                */
+;*    Last change :  Mon Feb 13 07:25:03 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -56,13 +56,14 @@
 	    (hop-log-set! ::int)
 	    
 	    (hop-http-request-error::obj)
-	    (hop-http-request-error-set! ::procedure)
+	    (hop-http-request-error-set! ::obj)
 	    
 	    (hop-http-response-error::obj)
 	    (hop-http-response-error-set! ::procedure)
-	    
-	    (hop-filter::pair-nil)
-	    (hop-filter-set! ::pair-nil)
+
+	    (hop-filter-mutex::mutex)
+	    (hop-filters::pair-nil)
+	    (hop-filters-set! ::pair-nil)
 	    (hop-filter-add! ::procedure)
 	    (hop-filter-remove! ::procedure)
 	    (hop-filter-add-always-first! ::procedure)
@@ -84,14 +85,11 @@
 	    (hop-path::pair-nil)
 	    (hop-path-set! ::pair-nil)
 	    
-	    (hop-mailer::bstring)
-	    (hop-mailer-set! ::bstring)
-	    
 	    (hop-server-hostname::bstring)
 	    (hop-server-ip::bstring)
 	    
-	    (hop-filter-base::bstring)
-	    (hop-filter-base-set! ::bstring)
+	    (hop-service-base::bstring)
+	    (hop-service-weblet-name::bstring)
 	    
 	    (hop-server-aliases::pair-nil)
 	    (hop-server-aliases-set! ::pair-nil)
@@ -130,9 +128,7 @@
 	    (hop-connection-timeout-set! ::int)
 
 	    (hop-weblets::pair-nil)
-	    (hop-weblets-set! ::pair-nil))
-
-   (eval    (export-exports)))
+	    (hop-weblets-set! ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-uptime ...                                                   */
@@ -165,7 +161,7 @@
 ;*    hop-rc-file ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-rc-file
-   "hoprc.scm")
+   "hoprc.hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-verbose ...                                                  */
@@ -241,7 +237,7 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    Loging                                                           */
+;*    hop-log ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-log
    0)
@@ -252,7 +248,7 @@
 (define-parameter hop-http-request-error
    #f
    (lambda (v)
-      (if (or (not (procedure? v)) (not (correct-arity? v 2)))
+      (if (and v (or (not (procedure? v)) (not (correct-arity? v 2))))
 	  (error 'hop-http-request-error "Illegal value" v)
 	  v)))
       
@@ -264,16 +260,22 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    hop-filter ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-filter
-   '())
-
-;*---------------------------------------------------------------------*/
 ;*    *filter-mutex* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *filter-mutex* (make-mutex "hop-filter-mutex*"))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-filter-mutex ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-filter-mutex)
+   *filter-mutex*)
+
+;*---------------------------------------------------------------------*/
+;*    hop-filter ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-filters
+   '())
+
 ;*---------------------------------------------------------------------*/
 ;*    %hop-filter-add! ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -281,11 +283,11 @@
    (define (add! p n)
       (if p
 	  (set-cdr! p n)
-	  (hop-filter-set! n)))
+	  (hop-filters-set! n)))
    (with-lock *filter-mutex*
       (lambda ()
 	 (if (eq? kind 'last)
-	     (let loop ((fs (hop-filter))
+	     (let loop ((fs (hop-filters))
 			(p #f))
 		(cond
 		   ((null? fs)
@@ -294,7 +296,7 @@
 		    (add! p (cons (cons kind proc) fs)))
 		   (else
 		    (loop (cdr fs) fs))))
-	     (let loop ((fs (hop-filter))
+	     (let loop ((fs (hop-filters))
 			(p #f))
 		(cond
 		   ((null? fs)
@@ -310,13 +312,13 @@
 (define (hop-filter-remove! proc)
    (with-lock *filter-mutex*
       (lambda ()
-	 (let loop ((fs (hop-filter))
+	 (let loop ((fs (hop-filters))
 		    (p #f))
 	    (when (pair? fs)
 	       (if (eq? (cdar fs) proc)
 		   (if p
 		       (set-cdr! p (cdr fs))
-		       (hop-filter-set! (cdr fs)))
+		       (hop-filters-set! (cdr fs)))
 		   (loop (cdr fs) fs)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -403,12 +405,6 @@
 	 (hop-contribs-directory)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-mailer ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-mailer
-   "emacs --eval '(message-mail ~s)'")
-
-;*---------------------------------------------------------------------*/
 ;*    hop-server-hostname ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-server-hostname
@@ -421,10 +417,16 @@
    (host (hostname)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-filter-base ...                                              */
+;*    hop-service-base ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-filter-base
+(define-parameter hop-service-base
    "/hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-service-weblet-weblet-name ...                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-service-weblet-name
+   (format "svc-~a" (hop-session)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-aliases ...                                           */
@@ -444,7 +446,7 @@
 (define-parameter hop-mime-types
    '(;; web
      ("text/html" "html" "htm" "shtml")
-     ("text/css" "css")
+     ("text/css" "css" "hss")
      ("application/x-javascript" "js")
      ;; audio
      ("audio/audible" "aa")
@@ -457,7 +459,8 @@
      ("video/mpeg" "avi")
      ("video/mpeg" "mpg"))
    (lambda (v)
-      (mime-type-add-list! v)))
+      (mime-type-add-list! v)
+      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-icons-directory ...                                          */

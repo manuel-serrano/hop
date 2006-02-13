@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Wed Jan 18 14:04:06 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:14:40 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
@@ -39,18 +39,7 @@
 	    (job-reschedule! ::job . ::obj)
 	    (job-abort! ::job)
 	    (job-cancel! ::job)
-	    (job-find ::bstring))
-
-   (eval    (class job)
-	    (export jobs-queue)
-	    (export jobs-run)
-	    (export jobs-end)
-	    (export job-find)
-	    (export job-schedule!)
-	    (export job-restore!)
-	    (export job-reschedule!)
-	    (export job-abort!)
-	    (export job-cancel!)))
+	    (job-find ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Scheduler control                                                */

@@ -1,12 +1,12 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/info/Makefile                   */
+#*    serrano/prgm/project/hop/weblets/password/Makefile               */
 #*    -------------------------------------------------------------    */
-#*    Author      :  Manuel Serrano                                    */
+#*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Feb 10 16:25:02 2006 (eg)                     */
+#*    Last change :  Fri Feb 10 16:38:54 2006 (eg)                     */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
-#*    Weblet Makefile                                                  */
+#*    The Makefile of the password weblet                              */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
@@ -18,4 +18,6 @@ include ../../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile info.hss info.hop info.info
+POPULATION	= Makefile webconf.hss webconf.hop  webconf.js \
+		  configure.png webconf.info
+

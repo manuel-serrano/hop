@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Jan 19 10:33:08 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:12:17 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -43,10 +43,8 @@
    (export  (<TREE> . ::obj)
 	    (<TRHEAD> . ::obj)
 	    (<TRBODY> . ::obj)
-	    (<TRLEAF> . ::obj))
+	    (<TRLEAF> . ::obj)))
    
-   (eval    (export-exports)))
-
 ;*---------------------------------------------------------------------*/
 ;*    <TREE> ...                                                       */
 ;*---------------------------------------------------------------------*/

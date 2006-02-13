@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Jan 26 09:40:34 2006 (serrano)                */
+;*    Last change :  Sun Feb 12 13:58:13 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info encryption                                              */
@@ -47,17 +47,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    info weblet ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-weblet (info)
+(define-service (info)
    (let ((req (the-current-request))
 	 (hook (traffic-hook)))
       (hop-http-response-remote-hook-add! hook)
-      (if (not (user-authorized-service? (http-request-user req) 'inffo))
+      (if (not (user-authorized-service? (http-request-user req) 'info))
 	  (user-access-denied req)
 	  (<HTML>
 	     (<HEAD>
-		(<HOP-HEAD> :css '("hop-notepad.css" "hop-sorttable.css")
+		(<HOP-HEAD> :css "hop-notepad.css" "hop-sorttable.css"
 			    :css (format "~a/info.hss" info-dir)
-			    :jscript '("hop-notepad.js" "hop-sorttable.js")))
+			    :jscript "hop-notepad.js" "hop-sorttable.js"))
 	     (<BODY>
 		:onunload {
 		   hop( $(service ()
@@ -124,12 +124,11 @@
       (map (lambda (rf)
 	      (<TR>
 		 (<TD>
-		    (<A> :href (hop-request-filter-url rf)
-			 (hop-request-filter-name rf)))))
+		    (<A> :href (hop-service-path rf) (hop-service-id rf)))))
 	   (sort (hop-weblets)
 		 (lambda (rf1 rf2)
-		    (string<? (hop-request-filter-name rf1)
-			      (hop-request-filter-name rf2)))))))
+		    (string<? (hop-service-path rf1)
+			      (hop-service-path rf2)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TRAFFIC> ...                                                    */
@@ -160,3 +159,17 @@
 	     :handler { hop_append( $traffic )( event ) }
 	     :event info-event)
 	  (<SORTTABLE> traffic)))))
+
+;*---------------------------------------------------------------------*/
+;*    info/about service ...                                           */
+;*---------------------------------------------------------------------*/
+(define-service (info/about)
+  (<WEBLET-ABOUT> :title "info"
+		  :subtitle "Displays Hop Informations"
+		  :icon (format "~a/icons/info.png" (hop-share-directory))
+		  :version (hop-version)
+    (<P> [This weblets displays:])
+    (<UL>
+       (<LI> "General informations on the running hop enegine")
+       (<LI> "The list of all the loaded weblets")
+       (<LI> "The generated traffic when hop is used as a proxy"))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Thu Jan 19 09:46:51 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:10:07 2006 (serrano)                */
 ;*    Copyright   :  2003-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -23,10 +23,7 @@
    (export  (http-request-url-cgi-args::pair-nil ::bstring)
 	    (http-request-cgi-args::pair-nil ::http-request)
 	    (cgi-arg::obj ::bstring ::pair-nil)
-	    (serialized-cgi-arg name args))
-
-   (eval    (export-exports)))
-
+	    (serialized-cgi-arg name args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-url-cgi-args ...                                    */

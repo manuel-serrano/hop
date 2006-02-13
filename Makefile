@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Jan 26 22:02:51 2006 (serrano)                */
+#*    Last change :  Sat Feb 11 20:38:48 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -92,23 +92,21 @@ cleanall: distclean
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
 distrib:
-	@ if [ -f /tmp/hop ]; then \
-          echo "*** ERROR: /tmp/hop exists!"; \
+	if [ -f $(HOPTMPDIR)/hop ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop exists!"; \
+          exit 1; \
+        elif [ -f $(HOPTMPDIR)/hop$(HOPRELEASE) ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop$(HOPRELEASE) exists!"; \
           exit 1; \
         else \
-          (cp -r ../hop /tmp/hop$(HOPRELEASE) && \
-           cd /tmp/hop$(HOPRELEASE) && \
-           ./configure && \
-           make devclean && \
-	   find . -name '*~' -exec /bin/rm {} \; && \
-           /bin/rm -f etc/Makefile.hopconfig && \
-	   /bin/rm -rf work private .hg && \
-           cd .. && \
-           tar cvfz hop$(HOPRELEASE).tar.gz hop$(HOPRELEASE) \
-               --exclude=hop$(HOPRELEASE)/src/o \
-               --exclude=hop$(HOPRELEASE)/runtime/o \
-               --exclude=hop$(HOPRELEASE)/.hg && \
-	   /bin/rm -rf /tmp/hop$(HOPRELEASE) && \
-           mv hop$(HOPRELEASE).tar.gz $(DISTRIBDIR)); \
+          $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
+          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop$(HOPRELEASE) && \
+          tar cvfz hop$(HOPRELEASE).tar.gz --exclude .hg -C $(HOPTMPDIR) hop$(HOPRELEASE) && \
+          $(RM) -rf $(HOPTMPDIR)/hop$(HOPRELEASE) && \
+          if [ $(HOPDISTRIBDIR) != "." ]; then \
+            if [ $(HOPDISTRIBDIR) != "" ]; then \
+              mv hop$(HOPRELEASE).tar.gz $(HOPDISTRIBDIR); \
+            fi \
+          fi \
         fi
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 20 20:52:30 2006 (serrano)                */
+;*    Last change :  Fri Feb 10 14:59:53 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -71,6 +71,10 @@
           (if (string=? level "")
 	      (bigloo-debug-set! (+fx 1 (bigloo-debug)))
 	      (bigloo-debug-set! (string->integer level))))
+	 (("-w?level" (help "Increase or set warning level (-w0 no warning)"))
+          (if (string=? level "")
+	      (bigloo-warning-set! (+fx 1 (bigloo-warning)))
+	      (bigloo-warning-set! (string->integer level))))
 	 (("--no-color" (help "Disable colored traces"))
 	  (bigloo-trace-color-set! #f))
 	 ((("-p" "--port") ?port (help (format "Port number (default: ~s)" p)))
@@ -101,7 +105,6 @@
 	  (print "Unknown argument: " else)
 	  (args-parse-usage #f)
 	  (exit 1)))
-      (bigloo-warning-set! 2)
       (when mimep
 	 (load-mime-types (hop-mime-types-file))
 	 (load-mime-types (if (string? mime-file)
@@ -127,7 +130,8 @@
 				      (raise e)))
 			       (eval sexp))))))
 		exprs)
-      (when autoloadp (autoload-weblets))))
+      (when autoloadp
+	(autoload-weblets (hop-autoload-directories)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-hop ...                                                     */
@@ -163,18 +167,3 @@
    (hop-verb 1 "Entering repl...\n")
    (thread-start! (make-thread (lambda () (begin (repl) (exit 0))))))
 
-;*---------------------------------------------------------------------*/
-;*    autoload-weblets ...                                             */
-;*---------------------------------------------------------------------*/
-(define (autoload-weblets)
-   (define (autoload-weblet weblet name)
-      (let ((p (make-file-name weblet (string-append name ".hop"))))
-	 (when (file-exists? p)
-	    (autoload p (autoload-prefix (string-append "/hop/" name))))))
-   (for-each (lambda (dir)
-		(for-each (lambda (path)
-			     (let ((weblet (make-file-name dir path)))
-				(when (directory? weblet)
-				   (autoload-weblet weblet path))))
-			  (directory->list dir)))
-	     (hop-autoload-directories)))

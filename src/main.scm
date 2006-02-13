@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jan 23 15:49:45 2006 (serrano)                */
+;*    Last change :  Sat Feb 11 18:18:55 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -44,12 +44,24 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; catch critical signals
+   (signal-init!)
+   ;; load the hop library
+   (eval `(library-translation-table-add! 'hop "hop" ,(hop-version)))
+   (eval `(library-load 'hop ,(hop-lib-directory)))
+   (eval `(library-load 'web))
+   ;; parse the command line
    (parse-args args)
    (hop-verb 2 "Starting hop on port " (hop-port) ":\n")
-   (signal-init!)
+   ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! load-once)
+   ;; install the builtin filters
+   (hop-filter-add-always-first! autoload-filter)
+   (hop-filter-add! service-filter)
+   ;; start the job scheduler
    (job-start-scheduler!)
+   ;; start the hop main loop
    (with-handler
       (lambda (e)
 	 (exception-notify e)
@@ -101,8 +113,7 @@
 		       (when (&error? e) (error-notify e))
 		       (unless (socket-down? sock)
 			  (with-handler
-			     (lambda (e)
-				#unspecified)
+			     (lambda (e) #unspecified)
 			     (unless (&io-sigpipe-error? e)
 				(let ((resp ((or (hop-http-request-error)
 						 http-request-error)
@@ -146,18 +157,8 @@
 		   (begin
 		      (cond
 			 ((&error? e)
-			  (unless (&error-fname e)
-			     (match-case (eval-last-location)
-				((at ?fname ?loc)
-				 (&error-fname-set! e fname)
-				 (&error-location-set! e loc))))
 			  (error-notify e))
 			 ((&warning? e)
-			  (unless (&warning-fname e)
-			     (match-case (eval-last-location)
-				((at ?fname ?loc)
-				 (&warning-fname-set! e fname)
-				 (&warning-location-set! e loc))))
 			  (warning-notify e)))
 		      (unless (&io-sigpipe-error? e)
 			 (let ((resp ((or (hop-http-response-error)
@@ -167,7 +168,7 @@
 	    (socket-close sock)
 	    #f)
 	 (let ((hp (hop req)))
-	    (hop-verb 3 (hop-color req req " EXEC")
+	    (hop-verb 4 (hop-color req req " EXEC")
 		      ": " hp
 		      " "
 		      (if (user? (http-request-user req))

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Jan 20 16:48:57 2006 (serrano)                */
+#*    Last change :  Fri Feb 10 14:29:20 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -39,12 +39,12 @@ DOTNET_OBJ_EDIR	= o/dotnet_e
 _OBJECTS	= param misc types thread \
                   xml dom read \
                   read-js css js-lib cgi \
-                  hop service builtin \
+                  hop service \
                   job mime user \
                   http-lib http-response http-shoutcast http-error \
                   html-extra html-notepad html-tree html-slider \
                   html-paned html-tabslider html-inline \
-                  event
+                  event color weblets
 
 OBJECTS		= $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS	= o/make-lib.o

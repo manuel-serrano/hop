@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Jan 23 14:24:02 2006 (serrano)                */
+;*    Last change :  Sun Feb  5 15:21:08 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -25,10 +25,8 @@
 	    (hop-read ::input-port)
 	    (hop-load ::bstring)
 	    (read-error msg obj port)
-	    (read-error/location msg obj fname loc))
+	    (read-error/location msg obj fname loc)))
    
-   (eval    (export-exports)))
-
 ;*---------------------------------------------------------------------*/
 ;*    Control marks ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -407,14 +405,14 @@
        (read-quote 'unquote-splicing (the-port) ignore))
       
       ;; lists
-      ((in "([")
+      ((in "(")
        ;; we increment the number of open parenthesis
        (set! par-open (+fx 1 par-open))
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
        ;; and then, we compute the result list...
        (make-list! (collect-up-to ignore "list" (the-port)) (the-port)))
-      ((in ")]")
+      ((in ")")
        ;; we decrement the number of open parenthesis
        (set! par-open (-fx par-open 1))
        (if (<fx par-open 0)
@@ -424,6 +422,12 @@
 	   (begin
 	      (set! par-poses (cdr par-poses))
 	      *end-of-list*)))
+      
+      ;; list of strings
+      (#\[
+       (let ((exp (read/rp *text-grammar* (the-port)
+			   cycles par-open bra-open par-poses bra-poses)))
+	  (list 'quasiquote exp)))
       
       ;; vectors
       ("#("
@@ -512,6 +516,87 @@
 				   (illegal-char-rep char)
 				   (input-port-name (the-port))
 				   (input-port-position (the-port))))))))
+
+;*---------------------------------------------------------------------*/
+;*    *text-grammar* ...                                               */
+;*    -------------------------------------------------------------    */
+;*    The grammar that parses texts (the [...] forms).                 */
+;*---------------------------------------------------------------------*/
+(define *text-grammar*
+   (regular-grammar (cycles par-open bra-open par-poses bra-poses)
+
+      ((: (* (out ",[]\\")) #\])
+       (let* ((port (the-port))
+	      (name (input-port-name port))
+	      (pos (input-port-position port))
+	      (loc (list 'at name pos))
+	      (item (the-substring 0 (-fx (the-length) 1))))
+	  (econs item '() loc)))
+      ((: (* (out ",[\\")) ",]")
+       (let* ((port (the-port))
+	      (name (input-port-name port))
+	      (pos (input-port-position port))
+	      (loc (list 'at name pos))
+	      (item (the-substring 0 (-fx (the-length) 1))))
+	  (econs item '() loc)))
+      ((: (* (out ",[]\\")) #\, (out #\( #\] #\,))
+       (let* ((port (the-port))
+	      (name (input-port-name port))
+	      (pos (input-port-position port))
+	      (loc (list 'at name pos))
+	      (item (the-string))
+	      (rest (ignore)))
+	  (econs item rest loc)))
+      ((: (* (out ",[]\\")) #\,)
+       (let* ((port (the-port))
+	      (name (input-port-name port))
+	      (pos (input-port-position port))
+	      (loc (list 'at name pos))
+	      (item (the-substring 0 (-fx (the-length) 1)))
+	      (sexp (read/rp *hop-grammar* (the-port)
+			     cycles par-open bra-open
+			     par-poses bra-poses))
+	      (rest (ignore)))
+	  (if (string=? item "")
+	      (cons (list 'unquote sexp) rest)
+	      (econs item (cons (list 'unquote sexp) rest) loc))))
+      ((or (+ (out ",[]\\"))
+	   (+ #\Newline)
+	   (: (* (out ",[]\\")) #\, (out "([]\\")))
+       (let* ((port (the-port))
+	      (name (input-port-name port))
+	      (pos (input-port-position port))
+	      (loc (list 'at name pos))
+	      (item (the-string))
+	      (rest (ignore)))
+	  (econs item rest loc)))
+      ("\\\\"
+       (cons "\\" (ignore)))
+      ("\\n"
+       (cons "\n" (ignore)))
+      ("\\t"
+       (cons "\t" (ignore)))
+      ("\\]"
+       (cons "]" (ignore)))
+      ("\\["
+       (cons "[" (ignore)))
+      ("\\,"
+       (cons "," (ignore)))
+      (#\\
+       (cons "\\" (ignore)))
+      (else
+       (let ((c (the-failure))
+	     (port (the-port)))
+	  (define (err msg)
+	     (read-error/location
+	      msg c (input-port-name port) (input-port-position port)))
+	  (cond
+	     ((eof-object? c)
+	      (err "Illegal `end of file'"))
+	     ((char=? c #\[)
+	      (err "Illegal nested `[...]' form"))
+	     (else
+	      (err "Illegal string character")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-read ...                                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Mon Jan 23 14:24:10 2006 (serrano)                */
+;*    Last change :  Tue Feb  7 08:04:18 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -39,9 +39,8 @@
 	   (keyword->symbol::symbol ::keyword)
 	   (symbol->keyword::keyword ::symbol)
 	   (delete-path ::bstring)
-	   (hop-calendar::pair ::date))
-
-   (eval   (export-exports)))
+	   (autoload-prefix::procedure ::bstring)
+	   (hop-calendar::pair ::date)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -385,6 +384,20 @@
       (if (=fx m 2)
 	  (if (leap-year? (date-year d)) 29 28)
 	  (vector-ref *month-lengths* (-fx m 1)))))
+
+;*---------------------------------------------------------------------*/
+;*    autoload-prefix ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Builds a predicate that matches if the request path is a         */
+;*    prefix of STRING.                                                */
+;*---------------------------------------------------------------------*/
+(define (autoload-prefix string)
+   (let* ((p string)
+	  (p/ (string-append string "/")))
+      (lambda (req)
+	 (with-access::http-request req (path)
+	    (or (and (not (file-exists? path)) (string=? path p))
+		(substring-at? path p/ 0))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-calendar ...                                                 */

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Jan 21 17:05:25 2006 (serrano)                */
+#*    Last change :  Sun Feb 12 14:31:56 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -18,12 +18,12 @@ include ../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile
+POPULATION	= Makefile BLACKLIST
 
 #*---------------------------------------------------------------------*/
 #*    weblets                                                          */
 #*---------------------------------------------------------------------*/
-POPDIRS	= password info jobs dired bbdb
+POPDIRS	= password info jobs dired bbdb webconf webfilter
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */

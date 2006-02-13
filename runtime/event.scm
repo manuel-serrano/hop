@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Jan 19 10:33:29 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:13:34 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -42,11 +42,7 @@
 	    (hop-event-close ::hop-event)
 	    
 	    (<HOP-EVENT> . args)
-	    (<TIMEOUT-EVENT> . args))
-
-   (eval    (class hop-event)
-	    
-	    (export-exports)))
+	    (<TIMEOUT-EVENT> . args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %hop-event-init! ...                                             */

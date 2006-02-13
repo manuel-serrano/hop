@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Jan 20 11:45:04 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:13:49 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -28,11 +28,7 @@
 	    (generic scheme->response ::obj ::http-request)
 	    (http-response-void)
 	    (http-send-request ::http-request ::procedure)
-	    (response-remote-start-line ::http-response-remote))
-
-   (eval    (export scheme->response)
-	    (export http-send-request)
-	    (export http-response-void)))
+	    (response-remote-start-line ::http-response-remote)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-client-socket/timeout ...                                   */

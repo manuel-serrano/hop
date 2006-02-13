@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Mon Jan 23 10:34:57 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:10:29 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -23,9 +23,7 @@
    (export  (hop-load-hss ::bstring)
 	    (hop-read-hss ::input-port)
 
-	    (hop-hss-type! ::bstring ::bstring))
-
-   (eval    (export-exports)))
+	    (hop-hss-type! ::bstring ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-hss ...                                                 */

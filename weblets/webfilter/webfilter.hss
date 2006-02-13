@@ -1,0 +1,194 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/webfilter/webfilter.hss         */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 24 13:57:44 2005                          */
+/*    Last change :  Sun Feb 12 15:16:18 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    WEBFILTER HOP CSS                                                */
+/*=====================================================================*/
+
+$(define border-color "#bbb")
+$(define webfilter-color "#f9f9f9")
+$(define title-color "#ddd")
+$(define background-color "#e0e0e0")
+
+body {
+  background: $background-color;
+  font-family: arial;
+}
+
+img {
+  padding: 20px;
+}
+
+table.webfilter {
+  width: 45em;
+  margin-top: 50px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  -moz-border-radius: 0.5em;
+}
+
+table.webfilter td#user-name {
+  font-weight: bold;
+}
+
+table.webfilter td {
+  font-weight: bold;
+}
+
+div#title {
+  width: 35em;
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+
+div#result {
+  text-align: center;
+  width: 30em;
+  font-weight: bold;
+  font-size: large;
+  color: red;
+  border-top: 1px solid $border-color;
+  margin-top: 10px;
+  padding-top: 10px;
+}  
+
+table td {
+  vertical-align: top;
+}
+
+div.hop-notepad-title {
+  background: transparent;
+  padding: 0 10px 20px 0;
+  border-color: red;
+}
+
+div.hop-notepad-tabs {
+  background: transparent;
+  clear: left;
+  text-align: left;
+  padding: 10px 0 0 5%;
+  margin-left: 10px;
+  border-color: red;
+}
+
+div.hop-notepad-tabs > span {
+  font-size: small;
+  border-color: $border-color;
+}
+
+div.hop-notepad-tabs > span.hop-nptab-active {
+  background-color: $webfilter-color;
+  border-bottom-color: $webfilter-color;
+}
+
+div.hop-notepad-tabs > span.hop-nptab-inactive {
+  background-color: $background-color;
+}
+
+div.hop-notepad-body {
+  border-color: $border-color;
+}
+
+div.hop-notepad-body {
+  border-left: 1px solid $border-color;
+  border-right: 1px solid $border-color;
+  border-bottom: 1px solid $border-color;
+  padding: 10px;
+  font-size: small;
+  background-color: $webfilter-color;
+}
+
+div.hop-notepad-body-tab {
+  border-color: blue;
+  background-color: $webfilter-color;
+}  
+
+table.hop-webfilter {
+  font-size: small;
+}
+
+table.hop-webfilter th {
+  vertical-align: top;
+}
+  
+table.hop-webfilter th:after {
+  content: ":";
+}
+
+table.hop-webfilter td {
+  font-family: monospace;
+  font-size: large;
+  vertical-align: bottom;
+}
+
+div.traffic {
+  overflow: auto;
+  height: 300px;
+}
+
+tr.remote td {
+  color: blue;
+  font-family: monospace;
+  font-size: large;
+}
+
+sorttable {
+  background-color: white;
+  width: 100%;
+  border: 1px solid $border-color;
+  overflow: auto;
+}
+
+sorttable th {
+  vertical-align: middle;
+}
+
+sorttable td {
+  vertical-align: top;
+}
+
+sorttable tr.title {
+  background-color: $title-color;
+}
+
+div.clear {
+  padding-bottom: 10px;
+  text-align: center;
+}
+
+/*---------------------------------------------------------------------*/
+/*    config                                                           */
+/*---------------------------------------------------------------------*/
+table.webfilter-config {
+  font-size: small;
+  width: 100%;
+}
+
+table.webfilter-config th {
+  font-size: small;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  text-align: left;
+}
+
+table.webfilter-config th p.readme {
+  font-weight: normal;
+}
+
+table.webfilter-config span.enable {
+  color: red;
+}
+
+table.webfilter-config span.disable {
+  color: #777;
+}
+

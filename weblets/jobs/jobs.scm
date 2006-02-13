@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Jan 24 17:47:29 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 07:36:22 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP jobs control                                                 */
@@ -17,7 +17,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    jobs weblet ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-weblet (jobs)
+(define-service (jobs)
    (define (<CODE> expr)
       (<PRE> :class "code"
 	     (with-output-to-string

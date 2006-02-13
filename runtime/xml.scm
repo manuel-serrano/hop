@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jan 25 09:41:36 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 06:13:28 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -157,14 +157,8 @@
 	    (<VAR> . ::obj)
 	    
 	    (<DELAY> . ::obj)
-	    (<GHOST> . ::obj))
+	    (<GHOST> . ::obj)))
    
-   (eval    (class xml)
-	    (class xml-markup)
-	    (class xml-element)
-	    (class xml-html)
-	    (export-exports)))
-
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -251,18 +245,18 @@
 	   (display obj p)))
       ((or (number? obj) (symbol? obj))
        (display obj p))
+      ((pair? obj)
+       (for-each (lambda (o) (xml-write o p encoding)) obj))
+      ((date? obj)
+       (display obj p))
       ((null? obj)
        #unspecified)
       ((eq? obj #unspecified)
        #unspecified)
       ((eq? obj #f)
-       (display "false" p))
+       #unspecified)
       ((eq? obj #t)
-       (display "true" p))
-      ((pair? obj)
-       (for-each (lambda (o) (xml-write o p encoding)) obj))
-      ((date? obj)
-       (display obj p))
+       #unspecified)
       (else
        (error 'xml-write "Illegal xml object" obj))))
 
@@ -351,12 +345,8 @@
 		   (unless (eq? (cdr a) #t)
 		      (display "='" p)
 		      (cond
-			 ((hop-request-service? (cdr a))
-			  (display (hop-request-service-path (cdr a)) p))
-			 ((hop-request-filter? (cdr a))
-			  (display (hop-request-filter-base (cdr a)) p)
-			  (display "/" p)
-			  (display (hop-request-filter-url (cdr a)) p))
+			 ((hop-service? (cdr a))
+			  (display (hop-service-path (cdr a)) p))
 			 ((procedure? (cdr a))
 			  (error 'xml
 				 "Illegal procedure argument in XML attribute"

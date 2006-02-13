@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Fri Jan 20 10:53:05 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:12:50 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -32,14 +32,7 @@
 	    (http-parse-status-line ::input-port)
 	    (http-decode-authentication::bstring ::bstring)
 	    (http-write-header ::output-port ::pair-nil)
-	    (http-filter-proxy-header ::pair-nil))
-   
-   (eval    (export http-header-field)
-	    (export http-header-field-values)
-	    (export http-cookie-get)
-	    (export http-basic-authentication?)
-	    (export http-basic-base64-authentication?)
-	    (export http-htaccess-authentication?)))
+	    (http-filter-proxy-header ::pair-nil)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */

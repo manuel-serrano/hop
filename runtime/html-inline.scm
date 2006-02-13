@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Thu Jan 19 10:32:26 2006 (serrano)                */
+;*    Last change :  Thu Feb  2 16:11:29 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -37,9 +37,7 @@
 	       (userinfo read-only (default #f))
 	       (authorization read-only (default #f))))
    
-   (export  (<INLINE> . ::obj))
-   
-   (eval    (export-exports)))
+   (export  (<INLINE> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <INLINE> ...                                                     */

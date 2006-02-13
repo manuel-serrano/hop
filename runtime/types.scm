@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jan 26 10:29:27 2006 (serrano)                */
+;*    Last change :  Wed Feb  8 08:55:13 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -103,45 +103,17 @@
 	   (class http-response-put::%http-response-local
 	      (uri::bstring read-only))
 
-	   (class hop-request-filter
-	      base::bstring
-	      (name::bstring read-only)
-	      (url::bstring read-only)
-	      (table read-only (default (make-hashtable 10))))
-
-	   (class hop-request-service
+	   (class hop-service
 	      (id::symbol read-only)
 	      (path::bstring read-only)
-	      (filter::hop-request-filter read-only)
 	      (args::obj read-only)
 	      (%exec::procedure read-only)
 	      (proc::procedure read-only)
 	      (javascript::bstring read-only)
 	      (expiration read-only (default #f)))
 
-	   (http-request-hook-add! ::http-request ::procedure))
+	   (http-request-hook-add! ::http-request ::procedure)))
    
-   (eval   (class user)
-	   
-	   (class %http-message)
-	   (class http-request)
-	   (class %http-response)
-	   (class http-response-remote)
-	   (class http-response-hop)
-	   (class http-response-procedure)
-	   (class http-response-file)
-	   (class http-response-shoutcast)
-	   (class http-response-string)
-	   (class http-response-obj)
-	   (class http-response-authentication)
-	   (class http-response-cgi)
-	   (class http-response-persistent)
-	   (class http-response-put)
-	   (class hop-request-filter)
-	   (class hop-request-service)
-
-	   (export http-request-hook-add!)))
-
 ;*---------------------------------------------------------------------*/
 ;*    object-display ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -173,19 +145,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-display ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-method (object-display o::hop-request-service . port)
+(define-method (object-display o::hop-service . port)
    (with-output-to-port (if (null? port) (current-output-port) (car port))
       (lambda ()
-	 (with-access::hop-request-service o (id)
-	    (display* "#<hop-request-service: " id ">")))))
+	 (with-access::hop-service o (id)
+	    (display* "#<hop-service: " id ">")))))
     
 ;*---------------------------------------------------------------------*/
 ;*    object-write ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (object-write o::hop-request-service . port)
+(define-method (object-write o::hop-service . port)
    (with-output-to-port (if (null? port) (current-output-port) (car port))
       (lambda ()
-	 (with-access::hop-request-service o (id path args)
+	 (with-access::hop-service o (id path args)
 	    (print "id  : " id)
 	    (print "path: " path)
 	    (print "args: " args)))))

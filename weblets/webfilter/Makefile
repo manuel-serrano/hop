@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/info/Makefile                   */
+#*    serrano/prgm/project/hop/weblets/webfilter/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Feb 10 16:25:02 2006 (eg)                     */
+#*    Last change :  Sun Feb 12 13:48:30 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
@@ -18,4 +18,4 @@ include ../../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile info.hss info.hop info.info
+POPULATION	= Makefile webfilter.hss webfilter.hop webfilter.info

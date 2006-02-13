@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Jan 25 07:52:38 2006 (serrano)                */
+/*    Last change :  Sun Jan 29 15:51:29 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -271,6 +271,7 @@ function hop_inner( method, service, success, failure, sync ) {
 		     t = t.replace( /<[^>]+>/g, " " );
 		     t = t.replace( /&lt;/g, "<" );
 		     t = t.replace( /&gt;/g, ">" );
+		     t = t.replace( /&quot;/g, "\"" );
 		     alert( "*** Hop Error " + http.status + ": " + t );
 		  }
 	       }
