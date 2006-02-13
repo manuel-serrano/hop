@@ -21,8 +21,9 @@
  (config-service "")
 
  ;; autoload predicate [autoload]
- (autoload (let ((url (make-file-name (hop-service-base) "webfilter")))
+ (autoload (let ((pred (autoload-prefix
+			(make-file-name (hop-service-base) "webfilter"))))
 	      (lambda (req)
 		 (or (not (http-request-localhostp req))
-		     (autoload-prefix url)))))
+		     (pred req)))))
 )

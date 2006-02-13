@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Feb  9 06:51:39 2006 (serrano)                */
+;*    Last change :  Mon Feb 13 17:50:55 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -65,8 +65,7 @@
    (with-lock *service-table-mutex*
       (lambda ()
 	 (set! *service-table-count* (+fx 1 *service-table-count*))
-	 (format "~a/~a-~a" (hop-service-weblet-name)
-		 *service-table-count* (hop-session)))))
+	 (format "~a/~a" (hop-service-weblet-name) *service-table-count*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-path? ...                                            */

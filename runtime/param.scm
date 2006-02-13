@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Feb 12 15:21:05 2006 (serrano)                */
+;*    Last change :  Mon Feb 13 07:47:11 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -59,7 +59,7 @@
 	    (hop-http-request-error-set! ::obj)
 	    
 	    (hop-http-response-error::obj)
-	    (hop-http-response-error-set! ::procedure)
+	    (hop-http-response-error-set! ::obj)
 
 	    (hop-filter-mutex::mutex)
 	    (hop-filters::pair-nil)
@@ -426,7 +426,7 @@
 ;*    hop-service-weblet-weblet-name ...                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-weblet-name
-   (symbol->string (gensym 'svc)))
+   (format "svc-~a" (hop-session)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-aliases ...                                           */

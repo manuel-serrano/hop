@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Jan 29 15:51:29 2006 (serrano)                */
+/*    Last change :  Mon Feb 13 17:28:10 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -280,6 +280,8 @@ function hop_inner( method, service, success, failure, sync ) {
    }
 
    http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+/*    http.setTimeouts = 1000;                                         */
+
    http.send( null );
 
    return http;
