@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Feb 14 08:56:22 2006 (serrano)                */
+/*    Last change :  Tue Feb 14 09:33:46 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -231,6 +231,7 @@ function hop_inner( method, service, success, failure, sync, mute ) {
       vis.style.setProperty( "border-style", "outset", "" );
       vis.style.setProperty( "border-width", "1px", "" );
       vis.style.setProperty( "padding", "2px", "" );
+      vis.title = service;
 
       var img = document.createElement( "img" );
       img.src = hop_busy_anim;
@@ -351,7 +352,8 @@ function hop_event_handler_set( svc, evt, success, failure ) {
                         return res;
 		     },
 		     failure,
-		     false );
+		     false,
+		     true );
 }
 
 /*---------------------------------------------------------------------*/
