@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Feb 13 17:28:10 2006 (serrano)                */
+/*    Last change :  Tue Feb 14 08:54:42 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -17,6 +17,11 @@ var undefined;
 if( window.HTMLFormElement == undefined ) {
    window.HTMLFormElement = window.HTMLForm;
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_busy_logo ...                                                */
+/*---------------------------------------------------------------------*/
+var hop_busy_logo = "data:image/gif;base64,R0lGODlhEAAQAMZ4AAAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICAkJCQoKCgsLCwwMDA0NDQ4ODg8PDxAQEBERERISEhMTExQUFBUVFRYWFhcXFxgYGBkZGRoaGhsbGxwcHB0dHR4eHh8fHyAgICEhISIiIiMjIyQkJCUlJSYmJicnJygoKCkpKSoqKisrKywsLC0tLS4uLi8vLzAwMDExMTIyMjMzMzQ0NDU1NTY2Njc3Nzg4ODk5OTo6Ojs7Ozw8PD09PT4+Pj8/P0BAQEFBQUJCQkNDQ0REREVFRUZGRkdHR0hISElJSUpKSktLS0xMTE1NTU5OTk9PT1BQUFFRUVJSUlNTU1RUVFVVVVZWVldXV1hYWFlZWVpaWltbW1xcXF1dXV5eXl9fX2BgYGFhYWJiYmNjY2RkZGVlZWZmZmdnZ2hoaGlpaWpqamtra2xsbG1tbW5ubm9vb3BwcHFxcXJycnNzc3R0dHV1dXZ2dnd3d////////////////////////////////yH/C05FVFNDQVBFMi4wAwEAAAAh+QQBCgB/ACwAAAAAEAAQAAAHTIB/goN/IiKEiISGhomDRESFi393d4iPj5GTlJWOl4SbnJ2JlIRmZo2DpKamqKCrp42gf6yomp+hqbiapLm8grKksre7lb6jm7XDiYEAIfkEAQoAfwAsAAAAABAAEAAAB0yAf4KDf0REhIiEhoaJg2ZmhYt/IiKIj4+Rk5SVjpeEm5ydiZSEd3eNg6Z/pqqNrK+nrqyrsaitgreptbizurmvtLS5wcDDpb2ouo2BACH5BAEKAH8ALAAAAAAQABAAAAdMgH+Cg39mZoSIhIaGiYN3d4WLf0REiI+PkZOUlY6XhJucnYmUhJiNgiIif5eQjamprKevqqayqqKWrZ21q567kJixpcCevLnGp8h/gQAh+QQBCgB/ACwAAAAAEAAQAAAHTIB/goN/d3eEiISGhomDjIuHZmaIkIWRkpOOi4SYmZqJkoqHjYJERJaMjaamlaqrlqSlp5+IIiKUm4O2tqKPh7u3oqi/wY2tsYKpiIEAIfkEAQoAfwAsAAAAABAAEAAAB0uAf4KDf3d3hIiEhoaJg4yLh4yKi4WRlI6XgpCIkpOejYJmZpWdiKKim42no6WJop+EREScmX+yspOMIiK2t7R/u7u9oMDBxITCiYEAIfkEAQoAfwAsAAAAABAAEAAAB0yAf4KDf3d3hIiEhoaJg4yLh4yKi4WRlI6XgpCIkpOejZqWnZyQmaSPh6CVhCIiiWZmiK2thLCwrLN/RER/trG4uru8t6DCvKqDu42BACH5BAEKAH8ALAAAAAAQABAAAAdMgH+Cg393d4SIhIaGiYOMi4eMiouFkZSOl4KQiJKThCIijZh/oKCikKWhjZumopWERESJnYKxsZO0trJmZpW0f7e8vK+iwr2ug8OJgQAh+QQBCgB/ACwAAAAAEAAQAAAHTYB/goN/d3eEiISGhomDIiKFi5GIj4+Ti4eOlYqShJaIjINERI2DjKOjpZiopI2Yf6mlk4NmZomhtLW2pp2CuraMr4S1kcGZrr2ys4iBADs=";
 
 /*---------------------------------------------------------------------*/
 /*    hop_service_url ...                                              */
@@ -210,14 +215,39 @@ function hop_js_eval( http ) {
 /*---------------------------------------------------------------------*/
 /*    hop ...                                                          */
 /*---------------------------------------------------------------------*/
-function hop_inner( method, service, success, failure, sync ) {
+function hop_inner( method, service, success, failure, sync, mute ) {
    var http = new XMLHttpRequest();
-   
+   var vis = false;
+
+   if( !mute ) {
+      vis = document.createElement( "div" );
+      vis.style.setProperty( "position", "absolute", "" );
+      vis.style.setProperty( "top", "5", "" );
+      vis.style.setProperty( "right", "5", "" );
+      vis.style.setProperty( "z-index", "100", "" );
+      vis.style.setProperty( "background", "#eeeeee", "" );
+      vis.style.setProperty( "-moz-opacity", "0.7", "" );
+      vis.style.setProperty( "border-color", "black", "" );
+      vis.style.setProperty( "border-style", "outset", "" );
+      vis.style.setProperty( "border-width", "1px", "" );
+      vis.style.setProperty( "padding", "2px", "" );
+
+      var img = document.createElement( "img" );
+      img.src = hop_busy_logo;
+      
+      vis.appendChild( img );
+      document.body.appendChild( vis );
+   }
+
    http.open( method, service, (sync != true) );
 
    http.onreadystatechange = function() {
       if( http.readyState == 4 ) {
 	 var status;
+
+	 if( !mute ) {
+	    document.body.removeChild( vis );
+	 }
 
 	 try {
 	    status = http.status;
@@ -281,7 +311,6 @@ function hop_inner( method, service, success, failure, sync ) {
 
    http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
 /*    http.setTimeouts = 1000;                                         */
-
    http.send( null );
 
    return http;
