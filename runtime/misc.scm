@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Feb 15 07:43:03 2006 (serrano)                */
+;*    Last change :  Wed Feb 15 07:58:02 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -20,8 +20,6 @@
    
    (export (hop-verb ::int . args)
 	   (hop-color ::obj ::obj ::obj)
-	   (list-split::pair-nil ::pair-nil ::int . obj)
-	   (list-split!::pair-nil ::pair-nil ::int . obj)
 	   (load-once ::bstring)
 	   (shortest-prefix ::bstring)
 	   (longest-suffix ::bstring)
@@ -72,50 +70,6 @@
 		       (http-request-id req)
 		       req)
 		   msg)))
-
-;*---------------------------------------------------------------------*/
-;*    list-split ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (list-split l num . fill)
-   (let loop ((l l)
-	      (i 0)
-	      (acc '())
-	      (res '()))
-      (cond
-	 ((null? l)
-	  (reverse! (cons (if (or (null? fill) (=fx i num))
-			      (reverse! acc)
-			      (append! (reverse! acc)
-				       (make-list (-fx num i) (car fill))))
-			  res)))
-	 ((=fx i num)
-	  (loop l 0 '() (cons (reverse! acc) res)))
-	 (else
-	  (loop (cdr l) (+fx i 1) (cons (car l) acc) res)))))
-
-;*---------------------------------------------------------------------*/
-;*    list-split! ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (list-split! l num . fill)
-   (let loop ((l l)
-	      (i 0)
-	      (last #f)
-	      (acc l)
-	      (rows '()))
-      (cond
-	 ((null? l)
-	  (let ((lrow (if (or (null? fill) (=fx i num))
-			  acc
-			  (begin
-			     (set-cdr! last
-				       (make-list (-fx num i) (car fill)))
-			     acc))))
-	     (reverse! (cons lrow rows))))
-	 ((=fx i num)
-	  (set-cdr! last '())
-	  (loop l 0 l l (cons acc rows)))
-	 (else
-	  (loop (cdr l) (+fx i 1) l acc rows)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *table* ...                                                      */
