@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Tue Feb  7 08:04:18 2006 (serrano)                */
+;*    Last change :  Wed Feb 15 07:43:03 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -39,8 +39,7 @@
 	   (keyword->symbol::symbol ::keyword)
 	   (symbol->keyword::keyword ::symbol)
 	   (delete-path ::bstring)
-	   (autoload-prefix::procedure ::bstring)
-	   (hop-calendar::pair ::date)))
+	   (autoload-prefix::procedure ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -372,20 +371,6 @@
        (delete-file path))))
 
 ;*---------------------------------------------------------------------*/
-;*    *month-lengths* ...                                              */
-;*---------------------------------------------------------------------*/
-(define *month-lengths* `#(31 28 31 30 31 30 31 31 30 31 30 31))
-
-;*---------------------------------------------------------------------*/
-;*    month-length ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (month-length d)
-   (let ((m (date-month d)))
-      (if (=fx m 2)
-	  (if (leap-year? (date-year d)) 29 28)
-	  (vector-ref *month-lengths* (-fx m 1)))))
-
-;*---------------------------------------------------------------------*/
 ;*    autoload-prefix ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Builds a predicate that matches if the request path is a         */
@@ -398,23 +383,3 @@
 	 (with-access::http-request req (path)
 	    (or (and (not (file-exists? path)) (string=? path p))
 		(substring-at? path p/ 0))))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-calendar ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (hop-calendar dt)
-   (let* ((mlen (month-length dt))
-	  (ds (date-copy dt :day 1))
-	  (de (date-copy dt :day mlen))
-	  (start (-second (date->seconds ds)
-			  (*second (integer->second (-fx (date-wday ds) 1))
-				   (day-seconds))))
-	  (end (+second (date->seconds de)
-			(*second (integer->second (-fx 7 (date-wday de)))
-				 (day-seconds)))))
-      (let loop ((i start)
-		 (res '()))
-	 (if (>second i end)
-	     (list-split! (reverse! res) 7)
-	     (loop (+second i (day-seconds))
-		   (cons (seconds->date i) res))))))
