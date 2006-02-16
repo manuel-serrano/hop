@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Feb 11 14:58:12 2006 (serrano)                */
+;*    Last change :  Wed Feb 15 05:32:51 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -111,6 +111,8 @@
 		     (append! css jscript)))))
 	    ((pair? (car a))
 	     (loop (append (car a) (cdr a))))
+	    ((null? (car a))
+	     (loop (cdr a)))
 	    ((keyword? (car a))
 	     (if (null? (cdr a))
 		 (error '<HOP-HEAD> (format "Missing ~a value" (car a)) a)

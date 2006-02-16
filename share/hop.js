@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Feb 14 09:33:46 2006 (serrano)                */
+/*    Last change :  Thu Feb 16 07:50:41 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -213,6 +213,60 @@ function hop_js_eval( http ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_default_failure ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_default_failure( http ) {
+   var t = http.responseText;
+   var div = document.getElementById( "hop_default_failure" );
+
+   t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
+   t = t.replace( /<(head|meta|link)[^>]*>/g, "<div style='display: none'>" );
+   t = t.replace( /<\/(head|meta|link)>/g, "</div>" );
+   t = t.replace( /<html[^>]*>/g, "<div style='width: 45em; overflow: auto; cursor: pointer;' onclick='document.body.removeChild( document.getElementById( \"hop_default_failure\" ) )' title='Click to hide this message'>" );
+   t = t.replace( /<\/html>/g, "</div>" );
+   t = t.replace( /<body[^>]*>/g, "<div style='background: #f7f7f7; font-family: sans serif; -moz-opacity: 0.97'>" );
+   t = t.replace( /<\/body>/g, "</div>" );
+   t = t.replace( /&lt;/g, "<" );
+   t = t.replace( /&gt;/g, ">" );
+   t = t.replace( /&quot;/g, "\"" );
+
+   if( !div ) {
+      div = document.createElement( "div" );
+      div.id = "hop_default_failure";
+      div.style.setProperty( "position", "absolute", "" );
+      div.style.setProperty( "top", "100", "" );
+      div.style.setProperty( "z-index", "100", "" );
+      div.style.setProperty( "width", "100%", "" );
+      div.style.setProperty( "padding", "0", "" );
+      div.align = "center";
+      div.style.setProperty( "background", "transparent", "" );
+
+      div.innerHTML = t;
+      
+      document.body.appendChild( div );
+   } else {
+      div.innerHTML = t;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_failure_alert ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_failure_alert( http ) {
+   var t = http.responseText;
+   
+   t = t.replace( /<\tr>/g, "\n" );
+   t = t.replace( /<[^>]+>/g, " " );
+   t = t.replace( /&lt;/g, "<" );
+   t = t.replace( /&gt;/g, ">" );
+   t = t.replace( /&quot;/g, "\"" );
+   
+   alert( "*** Hop Error " + http.status + ": " + t );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop ...                                                          */
 /*---------------------------------------------------------------------*/
 function hop_inner( method, service, success, failure, sync, mute ) {
@@ -298,12 +352,7 @@ function hop_inner( method, service, success, failure, sync, mute ) {
 		  if( failure ) {
 		     failure( http );
 		  } else {
-		     var t = http.responseText;
-		     t = t.replace( /<[^>]+>/g, " " );
-		     t = t.replace( /&lt;/g, "<" );
-		     t = t.replace( /&gt;/g, ">" );
-		     t = t.replace( /&quot;/g, "\"" );
-		     alert( "*** Hop Error " + http.status + ": " + t );
+		     hop_default_failure( http );
 		  }
 	       }
 	 }
