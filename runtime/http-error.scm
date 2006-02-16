@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Feb  2 16:12:26 2006 (serrano)                */
+;*    Last change :  Thu Feb 16 07:35:15 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -16,12 +16,16 @@
    
    (library web)
    
+   (include "compiler-macro.sch"
+	    "xml.sch")
+
    (import  __hop_param
 	    __hop_configure
 	    __hop_types
 	    __hop_xml
 	    __hop_html-extra
-	    __hop_service)
+	    __hop_service
+	    __hop_misc)
    
    (export  (http-request-error::%http-response ::&error)
 	    (http-response-error::%http-response ::&error ::http-request)
@@ -86,6 +90,54 @@
 	  (http-internal-error e msg)))))
 
 ;*---------------------------------------------------------------------*/
+;*    <EIMG> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<EIMG> . args)
+   (apply <IMG> :style "padding: 20px;" :inline #t args))
+
+;*---------------------------------------------------------------------*/
+;*    <ETD> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-xml-compound ETD ((class #f)
+			  (style "" string)
+			  body)
+   (let* ((default "vertical-align: top; font-weight: bold")
+	  (add (cond
+		  ((not class)
+		   "")
+		  ((string=? class "title")
+		   "font-size: x-large;
+  font-weight: bold;
+  padding-bottom: 1px;")
+		  ((string=? class "msg")
+		   "width: 35em;
+  margin-bottom: 20px;
+  margin-top: 20px;
+  padding-bottom: 20px;
+  padding-top: 20px;
+  border-bottom: 1px solid #bbb;
+  border-top: 1px solid #bbb;
+  font-family: sans-serif;")
+		  ((string=? class "dump")
+		   "padding-top: 20px;"))))
+      (apply <TD> :style (string-append style default add) body)))
+
+;*---------------------------------------------------------------------*/
+;*    <ETABLE> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<ETABLE> . args)
+   (apply <TABLE>
+	  :class "error"
+	  :style "width: 100%; border: 1px solid #bbb;  -moz-border-radius: 0.5em;"
+	  args))
+
+;*---------------------------------------------------------------------*/
+;*    title-style ...                                                  */
+;*---------------------------------------------------------------------*/
+(define title-style
+   "font-size: x-large; font-weight: bold; padding-bottom: 1px;")
+
+;*---------------------------------------------------------------------*/
 ;*    http-unknown-host ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-unknown-host host)
@@ -100,18 +152,17 @@
 				     (hop-share-directory))))
 	      (<BODY>
 		 (<CENTER>
-		    (<TABLE>
-		       :class "error"
+		    (<ETABLE>
 		       (<TR>
-			  (<TD>
-			     (<IMG> :src (format "http://~a:~a/~a/icons/notfound.png"
-						 (hostname)
-						 (hop-port)
-						 (hop-share-directory))))
-			  (<TD>
+			  (<ETD>
+			     (<EIMG> :src (format "http://~a:~a/~a/icons/notfound.png"
+						  (hostname)
+						  (hop-port)
+						  (hop-share-directory))))
+			  (<ETD>
 			     (<TABLE>
-				(<TR> (<TD> :id "title" "Unknown Host"))
-				(<TR> (<TD> :id "msg"
+				(<TR> (<ETD> :class "title" "Unknown Host"))
+				(<TR> (<ETD> :class "msg"
 					    (<SPAN> :class "filenotfound"
 						    host)))))))))))))
 
@@ -126,16 +177,15 @@
 		 (<HOP-HEAD> :css "hop-error.hss"))
 	      (<BODY>
 		 (<CENTER>
-		    (<TABLE>
-		       :class "error"
+		    (<ETABLE>
 		       (<TR>
-			  (<TD>
-			     (<IMG> :src (format "~a/icons/notfound.png"
-						 (hop-share-directory))))
-			  (<TD>
+			  (<ETD>
+			     (<EIMG> :src (format "~a/icons/notfound.png"
+						  (hop-share-directory))))
+			  (<ETD>
 			     (<TABLE>
-				(<TR> (<TD> :id "title" "File not found"))
-				(<TR> (<TD> :id "msg"
+				(<TR> (<ETD> :class "title" "File not found"))
+				(<TR> (<ETD> :class "msg"
 					    (<SPAN> :class "filenotfound"
 						    file)))))))))))))
 
@@ -185,19 +235,21 @@
 		    (<HOP-HEAD> :css "hop-error.hss"))
 		 (<BODY>
 		    (<CENTER>
-		       (<TABLE>
-			  :class "error"
+		       (<ETABLE>
 			  (<TR>
-			     (<TD>
-				(<IMG> :inline #t
-				       :src (format "~a/icons/error.png"
-						    (hop-share-directory))))
-			     (<TD>
+			     (<ETD>
+				(<EIMG> :src (format "~a/icons/error.png"
+						     (hop-share-directory))))
+			     (<ETD>
 				(<TABLE>
-				   (<TR> (<TD> :id "title" "Internal Error"))
-				   (<TR> (<TD> :id "msg" msg))
-				   (<TR> (<TD> :id "dump"
-					       (<PRE> (html-string-encode s)))))))))))))))
+				   (<TR>
+				      (<ETD> :class "title" "Internal Error"))
+				   (<TR>
+				      (<ETD> :class "msg" msg))
+				   (<TR>
+				      (<ETD> :class "dump"
+					     (<PRE>
+						(html-string-encode s)))))))))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-service-error ...                                           */
@@ -205,23 +257,23 @@
 (define (http-service-error req service m)
    (let ((info (<TABLE>
 		  (<TR>
-		     (<TD> "An error occured while responding to"))
+		     (<ETD> "An error occured while responding to"))
 		  (<TR>
-		     (<TD>
+		     (<ETD>
 			:class "request-info"
 			(<TABLE>
 			   (<TR>
 			      (<TH> :align 'right "host:")
-			      (<TD> (<TT> (http-request-host req))))
+			      (<ETD> (<TT> (http-request-host req))))
 			   (<TR>
 			      (<TH> :align 'right "port:")
-			      (<TD> (<TT> (http-request-port req))))
+			      (<ETD> (<TT> (http-request-port req))))
 			   (<TR>
 			      (<TH> :align 'right "service:")
-			      (<TD> (<TT> service)))
+			      (<ETD> (<TT> service)))
 			   (<TR>
 			      (<TH> :align 'right "filter:")
-			      (<TD> (<TT> (hop-request-service-name req))))))))))
+			      (<ETD> (<TT> (hop-request-service-name req))))))))))
       (instantiate::http-response-hop
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (xml (<HTML>
@@ -229,26 +281,23 @@
 		    (<HOP-HEAD> :css "hop-error.hss"))
 		 (<BODY>
 		    (<CENTER>
-		       (<TABLE>
-			  :class "error"
+		       (<ETABLE>
 			  (<TR>
-			     (<TD>
-				(<IMG> :inline #t
-				       :src (format "~a/icons/error.png"
-						    (hop-share-directory))))
-			     (<TD>
+			     (<ETD>
+				(<EIMG> :src (format "~a/icons/error.png"
+						     (hop-share-directory))))
+			     (<ETD>
 				(<TABLE>
 				   (<TR>
-				      (<TD>
-					 :id "title" "Hop service error"))
+				      (<ETD> :class "title"
+					     "Hop service error"))
 				   (<TR>
-				      (<TD>
-					 :id "msg" info))
+				      (<ETD> :class "msg"
+					     info))
 				   (<TR>
-				      (<TD>
-					 :id "dump"
-					 (<PRE>
-					    (html-string-encode m)))))))))))))))
+				      (<ETD> :class "dump"
+					     (<PRE>
+						(html-string-encode m)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-internal-warning ...                                        */
@@ -263,25 +312,23 @@
 ;*    http-warning ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (http-warning msg #!optional dump)
-      (instantiate::http-response-hop
-	 (start-line "HTTP/1.0 200 ok")
-	 (xml (<HTML>
-		 (<HEAD>
-		    (<HOP-HEAD> :css "hop-error.hss"))
-		 (<BODY>
-		    (<CENTER>
-		       (<TABLE>
-			  :class "error"
-			  (<TR>
-			     (<TD>
-				(<IMG> :inline #t
-				       :src (format "~a/icons/warning.png"
-						    (hop-share-directory))))
-			     (<TD>
-				(<TABLE>
-				   (<TR> (<TD> :id "title" "warning"))
-				   (<TR> (<TD> :id "msg" msg))
-				   (<TR> (<TD> :id "dump" (or dump "")))))))))))))
+   (instantiate::http-response-hop
+      (start-line "HTTP/1.0 200 ok")
+      (xml (<HTML>
+	      (<HEAD>
+		 (<HOP-HEAD> :css "hop-error.hss"))
+	      (<BODY>
+		 (<CENTER>
+		    (<ETABLE>
+		       (<TR>
+			  (<ETD>
+			     (<EIMG> :src (format "~a/icons/warning.png"
+						  (hop-share-directory))))
+			  (<ETD>
+			     (<TABLE>
+				(<TR> (<ETD> :id "title" "warning"))
+				(<TR> (<ETD> :id "msg" msg))
+				(<TR> (<ETD> :id "dump" (or dump "")))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-service-unavailable ...                                     */
@@ -307,21 +354,20 @@
 					(hop-share-directory))))
 		 (<BODY>
 		    (<CENTER>
-		       (<TABLE>
-			  :class "error"
+		       (<ETABLE>
 			  (<TR>
-			     (<TD>
-				(<IMG> :src (format
-					     "http://~a:~a/~a/icons/notfound.png"
-					     (hostname)
-					     (hop-port)
-					     (hop-share-directory))))
-			     (<TD>
+			     (<ETD>
+				(<EIMG> :src (format
+					      "http://~a:~a/~a/icons/notfound.png"
+					      (hostname)
+					      (hop-port)
+					      (hop-share-directory))))
+			     (<ETD>
 				(<TABLE>
-				   (<TR> (<TD> :id "title" "IO Error"))
-				   (<TR> (<TD> :id "msg"
-					       (list (find-runtime-type e)
-						     ": "
-						     (&error-msg e))))
-				   (<TR> (<TD> :id "dump"
-					       (<PRE> (html-string-encode s)))))))))))))))
+				   (<TR> (<ETD> :id "title" "IO Error"))
+				   (<TR> (<ETD> :id "msg"
+						(list (find-runtime-type e)
+						      ": "
+						      (&error-msg e))))
+				   (<TR> (<ETD> :id "dump"
+						(<PRE> (html-string-encode s)))))))))))))))
