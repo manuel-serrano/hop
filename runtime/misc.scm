@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Tue Feb  7 08:04:18 2006 (serrano)                */
+;*    Last change :  Wed Feb 15 07:58:02 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -20,8 +20,6 @@
    
    (export (hop-verb ::int . args)
 	   (hop-color ::obj ::obj ::obj)
-	   (list-split::pair-nil ::pair-nil ::int . obj)
-	   (list-split!::pair-nil ::pair-nil ::int . obj)
 	   (load-once ::bstring)
 	   (shortest-prefix ::bstring)
 	   (longest-suffix ::bstring)
@@ -39,8 +37,7 @@
 	   (keyword->symbol::symbol ::keyword)
 	   (symbol->keyword::keyword ::symbol)
 	   (delete-path ::bstring)
-	   (autoload-prefix::procedure ::bstring)
-	   (hop-calendar::pair ::date)))
+	   (autoload-prefix::procedure ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -73,50 +70,6 @@
 		       (http-request-id req)
 		       req)
 		   msg)))
-
-;*---------------------------------------------------------------------*/
-;*    list-split ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (list-split l num . fill)
-   (let loop ((l l)
-	      (i 0)
-	      (acc '())
-	      (res '()))
-      (cond
-	 ((null? l)
-	  (reverse! (cons (if (or (null? fill) (=fx i num))
-			      (reverse! acc)
-			      (append! (reverse! acc)
-				       (make-list (-fx num i) (car fill))))
-			  res)))
-	 ((=fx i num)
-	  (loop l 0 '() (cons (reverse! acc) res)))
-	 (else
-	  (loop (cdr l) (+fx i 1) (cons (car l) acc) res)))))
-
-;*---------------------------------------------------------------------*/
-;*    list-split! ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (list-split! l num . fill)
-   (let loop ((l l)
-	      (i 0)
-	      (last #f)
-	      (acc l)
-	      (rows '()))
-      (cond
-	 ((null? l)
-	  (let ((lrow (if (or (null? fill) (=fx i num))
-			  acc
-			  (begin
-			     (set-cdr! last
-				       (make-list (-fx num i) (car fill)))
-			     acc))))
-	     (reverse! (cons lrow rows))))
-	 ((=fx i num)
-	  (set-cdr! last '())
-	  (loop l 0 l l (cons acc rows)))
-	 (else
-	  (loop (cdr l) (+fx i 1) l acc rows)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *table* ...                                                      */
@@ -372,20 +325,6 @@
        (delete-file path))))
 
 ;*---------------------------------------------------------------------*/
-;*    *month-lengths* ...                                              */
-;*---------------------------------------------------------------------*/
-(define *month-lengths* `#(31 28 31 30 31 30 31 31 30 31 30 31))
-
-;*---------------------------------------------------------------------*/
-;*    month-length ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (month-length d)
-   (let ((m (date-month d)))
-      (if (=fx m 2)
-	  (if (leap-year? (date-year d)) 29 28)
-	  (vector-ref *month-lengths* (-fx m 1)))))
-
-;*---------------------------------------------------------------------*/
 ;*    autoload-prefix ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Builds a predicate that matches if the request path is a         */
@@ -398,23 +337,3 @@
 	 (with-access::http-request req (path)
 	    (or (and (not (file-exists? path)) (string=? path p))
 		(substring-at? path p/ 0))))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-calendar ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (hop-calendar dt)
-   (let* ((mlen (month-length dt))
-	  (ds (date-copy dt :day 1))
-	  (de (date-copy dt :day mlen))
-	  (start (-second (date->seconds ds)
-			  (*second (integer->second (-fx (date-wday ds) 1))
-				   (day-seconds))))
-	  (end (+second (date->seconds de)
-			(*second (integer->second (-fx 7 (date-wday de)))
-				 (day-seconds)))))
-      (let loop ((i start)
-		 (res '()))
-	 (if (>second i end)
-	     (list-split! (reverse! res) 7)
-	     (loop (+second i (day-seconds))
-		   (cons (seconds->date i) res))))))

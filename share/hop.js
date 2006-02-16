@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Jan 29 15:51:29 2006 (serrano)                */
+/*    Last change :  Thu Feb 16 10:17:26 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -17,6 +17,11 @@ var undefined;
 if( window.HTMLFormElement == undefined ) {
    window.HTMLFormElement = window.HTMLForm;
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_busy_anim ...                                                */
+/*---------------------------------------------------------------------*/
+var hop_busy_anim = "data:image/gif;base64,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";
 
 /*---------------------------------------------------------------------*/
 /*    hop_service_url ...                                              */
@@ -208,16 +213,96 @@ function hop_js_eval( http ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_default_failure ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_default_failure( http ) {
+   var t = http.responseText;
+   var div = document.getElementById( "hop_default_failure" );
+
+   t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
+   t = t.replace( /<(head|meta|link)[^>]*>/g, "<div style='display: none'>" );
+   t = t.replace( /<\/(head|meta|link)>/g, "</div>" );
+   t = t.replace( /<html[^>]*>/g, "<div style='width: 45em; overflow: auto; cursor: pointer;' onclick='document.body.removeChild( document.getElementById( \"hop_default_failure\" ) )' title='Click to hide this message'>" );
+   t = t.replace( /<\/html>/g, "</div>" );
+   t = t.replace( /<body[^>]*>/g, "<div style='background: #f7f7f7; font-family: sans serif; -moz-opacity: 0.97'>" );
+   t = t.replace( /<\/body>/g, "</div>" );
+   t = t.replace( /&lt;/g, "<" );
+   t = t.replace( /&gt;/g, ">" );
+   t = t.replace( /&quot;/g, "\"" );
+
+   if( !div ) {
+      div = document.createElement( "div" );
+      div.id = "hop_default_failure";
+      div.style.setProperty( "position", "absolute", "" );
+      div.style.setProperty( "top", "100", "" );
+      div.style.setProperty( "z-index", "100", "" );
+      div.style.setProperty( "width", "100%", "" );
+      div.style.setProperty( "padding", "0", "" );
+      div.align = "center";
+      div.style.setProperty( "background", "transparent", "" );
+
+      div.innerHTML = t;
+      
+      document.body.appendChild( div );
+   } else {
+      div.innerHTML = t;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_failure_alert ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_failure_alert( http ) {
+   var t = http.responseText;
+   
+   t = t.replace( /<\tr>/g, "\n" );
+   t = t.replace( /<[^>]+>/g, " " );
+   t = t.replace( /&lt;/g, "<" );
+   t = t.replace( /&gt;/g, ">" );
+   t = t.replace( /&quot;/g, "\"" );
+   
+   alert( "*** Hop Error " + http.status + ": " + t );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop ...                                                          */
 /*---------------------------------------------------------------------*/
-function hop_inner( method, service, success, failure, sync ) {
+function hop_inner( method, service, success, failure, sync, mute ) {
    var http = new XMLHttpRequest();
-   
+   var vis = false;
+
+   if( !mute ) {
+      vis = document.createElement( "div" );
+      vis.style.setProperty( "position", "absolute", "" );
+      vis.style.setProperty( "top", "5", "" );
+      vis.style.setProperty( "right", "5", "" );
+      vis.style.setProperty( "z-index", "100", "" );
+      vis.style.setProperty( "background", "#eeeeee", "" );
+      vis.style.setProperty( "-moz-opacity", "0.7", "" );
+      vis.style.setProperty( "border-color", "black", "" );
+      vis.style.setProperty( "border-style", "outset", "" );
+      vis.style.setProperty( "border-width", "1px", "" );
+      vis.style.setProperty( "padding", "2px", "" );
+      vis.title = service;
+
+      var img = document.createElement( "img" );
+      img.src = hop_busy_anim;
+      
+      vis.appendChild( img );
+      document.body.appendChild( vis );
+   }
+
    http.open( method, service, (sync != true) );
 
    http.onreadystatechange = function() {
       if( http.readyState == 4 ) {
 	 var status;
+
+	 if( !mute ) {
+	    document.body.removeChild( vis );
+	 }
 
 	 try {
 	    status = http.status;
@@ -267,12 +352,7 @@ function hop_inner( method, service, success, failure, sync ) {
 		  if( failure ) {
 		     failure( http );
 		  } else {
-		     var t = http.responseText;
-		     t = t.replace( /<[^>]+>/g, " " );
-		     t = t.replace( /&lt;/g, "<" );
-		     t = t.replace( /&gt;/g, ">" );
-		     t = t.replace( /&quot;/g, "\"" );
-		     alert( "*** Hop Error " + http.status + ": " + t );
+		     hop_default_failure( http );
 		  }
 	       }
 	 }
@@ -280,6 +360,7 @@ function hop_inner( method, service, success, failure, sync ) {
    }
 
    http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+/*    http.setTimeouts = 1000;                                         */
    http.send( null );
 
    return http;
@@ -320,7 +401,8 @@ function hop_event_handler_set( svc, evt, success, failure ) {
                         return res;
 		     },
 		     failure,
-		     false );
+		     false,
+		     true );
 }
 
 /*---------------------------------------------------------------------*/
