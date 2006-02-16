@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Feb 16 07:35:15 2006 (serrano)                */
+;*    Last change :  Thu Feb 16 08:55:36 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -101,7 +101,7 @@
 (define-xml-compound ETD ((class #f)
 			  (style "" string)
 			  body)
-   (let* ((default "vertical-align: top; font-weight: bold")
+   (let* ((default "vertical-align: top; text-align: left; font-weight: bold")
 	  (add (cond
 		  ((not class)
 		   "")
@@ -128,7 +128,7 @@
 (define (<ETABLE> . args)
    (apply <TABLE>
 	  :class "error"
-	  :style "width: 100%; border: 1px solid #bbb;  -moz-border-radius: 0.5em;"
+	  :style "width: 45em; border: 1px solid #bbb;  -moz-border-radius: 0.5em;"
 	  args))
 
 ;*---------------------------------------------------------------------*/
@@ -184,6 +184,7 @@
 						  (hop-share-directory))))
 			  (<ETD>
 			     (<TABLE>
+				:style "35em"
 				(<TR> (<ETD> :class "title" "File not found"))
 				(<TR> (<ETD> :class "msg"
 					    (<SPAN> :class "filenotfound"
