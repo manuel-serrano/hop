@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Wed Sep 28 17:08:16 2005 (serrano)                */
-/*    Copyright   :  2005 Manuel Serrano                               */
+/*    Last change :  Thu Feb 16 09:09:31 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
 /*=====================================================================*/
@@ -37,11 +37,8 @@ function hop_notepad_remote( service, tab, ghost, notepad ) {
 	 }
       }
    }
-   var failure = function( http ) {
-      alert( "*** Hop Notepad Tab Error: `" + http.responseText + "'" );
-   }
 
-   hop( service( tab ), success, failure);
+   hop( service( tab ), success);
 }
 
 /*---------------------------------------------------------------------*/
