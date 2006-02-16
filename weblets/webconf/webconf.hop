@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Feb 12 14:40:59 2006 (serrano)                */
+;*    Last change :  Thu Feb 16 16:46:42 2006 (eg)                     */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
@@ -82,14 +82,14 @@
   (define (about-button name about)
     (let ((serv (string-append "/hop/" name "/" about)))
       (<BUTTON> "About"
-		:onclick { hop_open_webconf_window($serv, "about", 50, 50) })))
+		:onclick { hop_open_float_window($serv, "hop-webconf-aboutwin", 50, 50) })))
 
   (define (config-button name config)
     (let ((serv (if (string=? config "")
 		    (string-append "/hop/" name)
 		    (string-append "/hop/" name "/" config))))
       (<BUTTON> "Configure"
-		:onclick { hop_open_webconf_window($serv, "config", 100, 100) })))
+		:onclick { hop_open_float_window($serv, "hop-webconf-confwin", 100, 100) })))
   ;;
   ;; show-weblet-config
   ;;
@@ -132,19 +132,54 @@
 ;; ----------------------------------------------------------------------
 ;; 	make-about-n-config-windows ...
 ;; ----------------------------------------------------------------------
+(define (hop-make-window id #!optional (visible? #f) (suffix ""))
+
+  (define (<TD-BORDER> img)
+    (<TD> :width 8 :height 8
+	  (if img (<IMG> :src (format "~A/~A"(hop-icons-directory) img)) "")))
+
+  (define (<TD-EAST> img)
+    (<TD> :width 8
+	  :style (format "background-image:url(~a/~a);background-repeat:repeat-y"
+			 (hop-icons-directory) img)))
+  
+  (define (<TD-SOUTH> img)
+    (<TD> :height 8 :width "100%"
+	  :style (format "background-image:url(~a/~a);background-repeat:repeat-x"
+			 (hop-icons-directory) img)))
+
+  (let ((win        (string-append "hop-float-window" suffix))
+	(handle     (string-append "hop-float-handle" suffix))
+	(content    (string-append "hop-float-content" suffix))
+	(handle-id  (string-append id "-handle"))
+	(content-id (string-append id "-content")))
+    (<DIV> :id id :class win
+	   :style (format "display:~a" (if visible? "block" "none"))
+      (<TABLE> :width "100%" :height "100%" :cellpadding 0 :cellspacing 0
+	       :border 0 :rules "none"
+       (<TR>	; Line #1
+	(<TD> :colspan 3 :rowspan 3 :valign "top"
+	  (<DIV> :class handle :id handle-id
+	      (<SPAN> :class "hop-float-close-button"
+		 (<A> (<B> "X") :onclick {hop_close_float_window($id)})))
+	  (<DIV> :class content :id content-id "?"))
+	(<TD-BORDER> #f))
+
+       (<TR>	; Line #2
+	(<TD-BORDER> "shadow-ne.png"))
+
+       (<TR>	; Line #3
+	(<TD-EAST> "shadow-e.png"))
+
+       (<TR>	; Line #4
+	(<TD-BORDER> #f) (<TD-BORDER> "shadow-sw.png")
+	(<TD-SOUTH> "shadow-s.png") (<TD-BORDER> "shadow-se.png"))))))
+
+
 (define (make-about-n-config-windows)
-  (let ((make (lambda (type action)
-		(let ((win     (format "webconf-~A-window" type))
-		      (handle  (format "webconf-~A-handle" type))
-		      (content (format "webconf-~A-content" type)))
-		  (<DIV> :id win :style "display: none"
-		     (<DIV> :class "webconf-window-handle" :id handle
-			(<SPAN> :class "webconf-window-close" 
-			   (<A> (<B> "X") :onclick action)))
-		     (<DIV> :class "webconf-window-content" :id content " "))))))
-    (list
-     (make "about"  { hop_close_window("about") })
-     (make "config" { hop_close_window("config") }))))
+  (list 
+   (hop-make-window "hop-webconf-aboutwin")
+   (hop-make-window "hop-webconf-confwin")))
 
 ;*---------------------------------------------------------------------*/
 ;*    webconf about ...                                                */
@@ -154,5 +189,5 @@
 		  :subtitle "Hop weblets configuration tool"
 		  :icon (format "~a/configure.png" *webconf-directory*)
 		  :version (hop-version)
-   (<P> [This weblets permits to configure the installed widgets.])))
+   (<P> [This weblet can be used to configure the installed widgets.])))
   

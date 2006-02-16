@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-/*    Last change :  Sun Jan 29 22:41:54 2006 (eg)                     */
+/*    Last change :  Thu Feb 16 15:17:00 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet JavaScript Functions                                  */
@@ -17,13 +17,14 @@ function hop_webconf_toggle(id)
 }
 
 
-function hop_open_webconf_window(serv, type, x, y)
+function hop_open_float_window(serv, id, x, y)
 {
    hop(serv, 
        function( http ) {
-	   var win = document.getElementById("webconf-" + type + "-window");
-	   var el  = document.getElementById("webconf-" + type + "-content");
-	   var h   = document.getElementById("webconf-" + type + "-handle");
+	   var win = document.getElementById(id);
+	   var h   = document.getElementById(id + "-handle");
+	   var el  = document.getElementById(id + "-content");
+	   
 	   if (http.responseText != null) {
 	       el.innerHTML = http.responseText;
 	       hop_js_eval( http );
@@ -45,9 +46,9 @@ function hop_open_webconf_window(serv, type, x, y)
 }
 
 
-function hop_close_window(type)
+function hop_close_float_window(id)
 {
-    var el = document.getElementById("webconf-" + type + "-window");
+    var el = document.getElementById(id)
     el.style.display = "none";
 }
 
