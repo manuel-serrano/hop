@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Feb 16 08:55:36 2006 (serrano)                */
+;*    Last change :  Fri Feb 17 14:32:19 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -108,7 +108,8 @@
 		  ((string=? class "title")
 		   "font-size: x-large;
   font-weight: bold;
-  padding-bottom: 1px;")
+  padding-bottom: 1px;
+  color: red;")
 		  ((string=? class "msg")
 		   "width: 35em;
   margin-bottom: 20px;
@@ -128,7 +129,7 @@
 (define (<ETABLE> . args)
    (apply <TABLE>
 	  :class "error"
-	  :style "width: 45em; border: 1px solid #bbb;  -moz-border-radius: 0.5em;"
+	  :style "width: 45em; border: 1px solid #bbb;  -moz-border-radius: 0.5em; background: #f7f7f7;"
 	  args))
 
 ;*---------------------------------------------------------------------*/
