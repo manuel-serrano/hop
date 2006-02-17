@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Thu Feb  2 16:10:29 2006 (serrano)                */
+;*    Last change :  Fri Feb 17 07:40:38 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -92,10 +92,6 @@
 				  (raise e)))
 			   (eval exp))))
 		(cond
-		   ((procedure? val)
-		    (instantiate::xml-delay
-		       (id (gensym))
-		       (thunk val)))
 		   ((string? val)
 		    val)
 		   (else
