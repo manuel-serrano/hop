@@ -45,6 +45,30 @@
 	    (<TIMEOUT-EVENT> . args)))
 
 ;*---------------------------------------------------------------------*/
+;*    check-queued-events ...                                          */
+;*---------------------------------------------------------------------*/
+(define (check-queued-events evt::hop-event)
+   (with-access::hop-event evt (%request %fifo %fifol)
+      (define (pop!)
+	 (let ((r (car %fifo)))
+	    (set-car! %fifo #unspecified)
+	    (set! %fifo (cdr %fifo))
+	    r))
+      (define (send! val socket)
+	 (http-response (scheme->response val %request) socket)
+	 (set! %request #f)
+	 (socket-close socket))
+      (if (and (not (null? %fifo))
+	       (not (eq? (car %fifo) #unspecified))
+	       (http-request? %request))
+	  (let* ((socket (http-request-socket %request))
+		 (port (socket-output socket)))
+	     (if (output-port? port)
+		 (begin
+		    (send! (pop!) socket)
+		    'pop))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    %hop-event-init! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (%hop-event-init! evt::hop-event)
@@ -62,6 +86,7 @@
 		       (body (format "Closed server event `~a'" name)))
 		    (begin
 		       (set! %request (the-current-request))
+		       (check-queued-events evt)
 		       (instantiate::http-response-persistent))))))))
    
 ;*---------------------------------------------------------------------*/
@@ -76,28 +101,8 @@
 		(set! %fifol (cdr %fifol))
 		'push)
 	     'ignore))
-      (define (pop!)
-	 (let ((r (car %fifo)))
-	    (set-car! %fifo #unspecified)
-	    (set! %fifo (cdr %fifo))
-	    r))
-      (define (send! val socket)
-	 (http-response (scheme->response val %request) socket)
-	 (set! %request #f)
-	 (socket-close socket))
-      (if (http-request? %request)
-	  (let* ((socket (http-request-socket %request))
-		 (port (socket-output socket)))
-	     (if (output-port? port)
-		 (if (or (null? %fifo) (eq? (car %fifo) #unspecified))
-		     (begin
-			(send! val socket)
-			'send)
-		     (begin
-			(send! (pop!) socket)
-			'pop))
-		 (push! val)))
-	  (push! val))))
+      (push! val)
+      (check-queued-events evt)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-close ...                                              */
