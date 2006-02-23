@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Thu Feb  2 16:12:50 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 03:21:58 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -463,7 +463,7 @@
 		   (if (pair? h)
 		       (let ((k (car h))
 			     (v (cdr h)))
-			  (http-write-line p k " " v))
+			  (http-write-line p (keyword->string k) ": " v))
 		       (http-write-line p h)))
 		header)
       (flush-output-port p)))
@@ -489,9 +489,9 @@
 			 header)))
 	    ((not (pair? (car lst)))
 	     (loop (cdr lst) fil))
-	    ((eq? (caar lst) 'proxy-connection:)
+	    ((eq? (caar lst) proxy-connection:)
 	     (loop (cdr lst) (cons (caar lst) fil)))
-	    ((not (eq? (caar lst) 'content:))
+	    ((not (eq? (caar lst) content:))
 	     (loop (cdr lst) fil))
 	    (else
 	     (if (string-ci=? (cdar lst) "close")
