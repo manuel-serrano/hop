@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Feb  2 16:13:34 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:45:44 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -45,6 +45,30 @@
 	    (<TIMEOUT-EVENT> . args)))
 
 ;*---------------------------------------------------------------------*/
+;*    check-queued-events ...                                          */
+;*---------------------------------------------------------------------*/
+(define (check-queued-events evt::hop-event)
+   (with-access::hop-event evt (%request %fifo %fifol)
+      (define (pop!)
+	 (let ((r (car %fifo)))
+	    (set-car! %fifo #unspecified)
+	    (set! %fifo (cdr %fifo))
+	    r))
+      (define (send! val socket)
+	 (http-response (scheme->response val %request) socket)
+	 (set! %request #f)
+	 (socket-close socket))
+      (if (and (not (null? %fifo))
+	       (not (eq? (car %fifo) #unspecified))
+	       (http-request? %request))
+	  (let* ((socket (http-request-socket %request))
+		 (port (socket-output socket)))
+	     (if (output-port? port)
+		 (begin
+		    (send! (pop!) socket)
+		    'pop))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    %hop-event-init! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (%hop-event-init! evt::hop-event)
@@ -62,6 +86,7 @@
 		       (body (format "Closed server event `~a'" name)))
 		    (begin
 		       (set! %request (the-current-request))
+		       (check-queued-events evt)
 		       (instantiate::http-response-persistent))))))))
    
 ;*---------------------------------------------------------------------*/
@@ -76,28 +101,8 @@
 		(set! %fifol (cdr %fifol))
 		'push)
 	     'ignore))
-      (define (pop!)
-	 (let ((r (car %fifo)))
-	    (set-car! %fifo #unspecified)
-	    (set! %fifo (cdr %fifo))
-	    r))
-      (define (send! val socket)
-	 (http-response (scheme->response val %request) socket)
-	 (set! %request #f)
-	 (socket-close socket))
-      (if (http-request? %request)
-	  (let* ((socket (http-request-socket %request))
-		 (port (socket-output socket)))
-	     (if (output-port? port)
-		 (if (or (null? %fifo) (eq? (car %fifo) #unspecified))
-		     (begin
-			(send! val socket)
-			'send)
-		     (begin
-			(send! (pop!) socket)
-			'pop))
-		 (push! val)))
-	  (push! val))))
+      (push! val)
+      (check-queued-events evt)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-close ...                                              */
@@ -113,11 +118,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    HOP-EVENT ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound HOP-EVENT ((id #unspecified string)
-				(event #f hop-event)
-				(handler #f)
-				(failure #f)
-				body)
+(define-xml-compound <HOP-EVENT> ((id #unspecified string)
+				  (event #f hop-event)
+				  (handler #f)
+				  (failure #f)
+				  body)
    (cond
       ((not event)
        (error '<HOP-EVENT> "Event missing" handler))
@@ -136,11 +141,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    TIMEOUT-EVENT ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound TIMEOUT-EVENT ((id #unspecified string)
-				    (eager #f boolean)
-				    (timeout 1000 integer)
-				    (handler #f)
-				    body)
+(define-xml-compound <TIMEOUT-EVENT> ((id #unspecified string)
+				      (eager #f boolean)
+				      (timeout 1000 integer)
+				      (handler #f)
+				      body)
    (cond
       ((not handler)
        (error '<TIMEOUT-EVENT> "Event handler missing" id))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Thu Feb  2 16:11:29 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:45:21 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -42,9 +42,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <INLINE> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound INLINE ((id #unspecified string)
-			     (src #f string)
-			     (early #t boolean))
+(define-xml-compound <INLINE> ((id #unspecified string)
+			       (src #f string)
+			       (early #t boolean))
    (cond
       ((not (string? src))
        (error '<INLINE> "Missing :src attribute" src))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Feb 15 05:32:51 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:36:41 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -160,12 +160,12 @@
 ;*    This do not use CSS because we want them to be correctly         */
 ;*    displayed even when no CSS is specified.                         */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound HOP-FOOT-LOGO ((id #unspecified string)
-				    (img (<IMG> :inline #t
-						:src (make-file-name
-						      (hop-share-directory)
-						      "icons/foot-logo.png")))
-				    body)
+(define-xml-compound <HOP-FOOT-LOGO> ((id #unspecified string)
+				      (img (<IMG> :inline #t
+						  :src (make-file-name
+							(hop-share-directory)
+							"icons/foot-logo.png")))
+				      body)
    :hss-type "div.hop-foot-logo"
    (let ((r (if (null? body)
 		(<SPAN> :style "font-size: 22px;
@@ -198,10 +198,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TOOLTIP> ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound TOOLTIP ((id #unspecified string)
-			      (onclick 0)
-			      (onmouseout 0)
-			      body)
+(define-xml-compound <TOOLTIP> ((id #unspecified string)
+				(onclick 0)
+				(onmouseout 0)
+				body)
    (<DIV> :id (xml-make-id id 'TOOLTIP)
 	  :class "hoptooltip"
 	  :onclick (format "~a; hop_tooltip_hide()" onclick)
@@ -211,9 +211,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <SORTTABLE> ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound SORTTABLE ((id #unspecified string)
-				(attributes)
-				body)
+(define-xml-compound <SORTTABLE> ((id #unspecified string)
+				  (attributes)
+				  body)
    :hss-type "span.hop-sorttable table"
    (let ((i (xml-make-id))
 	 (attr (map! (lambda (e)

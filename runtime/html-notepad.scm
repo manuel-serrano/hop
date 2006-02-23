@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Feb  2 16:11:37 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:37:08 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -105,10 +105,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <NOTEPAD> ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound NOTEPAD ((id #unspecified string)
-			      (inline #t)
-			      (attr)
-			      body)
+(define-xml-compound <NOTEPAD> ((id #unspecified string)
+				(inline #t)
+				(attr)
+				body)
    (let ((id (xml-make-id id 'NOTEPAD))
 	 head)
       (if (and (pair? body) (xml-nphead-element? (car body)))
@@ -127,9 +127,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <NPHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound NPHEAD ((id #unspecified string)
-			     (attr)
-			     body)
+(define-xml-compound <NPHEAD> ((id #unspecified string)
+			       (attr)
+			       body)
    (instantiate::xml-nphead-element
       (markup 'DIV)
       (id (xml-make-id id 'NPHEAD))
@@ -139,9 +139,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <NPTABHEAD> ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound NPTABHEAD ((id #unspecified string)
-				(attr)
-				body)
+(define-xml-compound <NPTABHEAD> ((id #unspecified string)
+				  (attr)
+				  body)
    (instantiate::xml-nptabhead-element
       (markup 'SPAN)
       (id (xml-make-id id 'NPTABHEAD))
@@ -151,9 +151,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <NPTAB> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound NPTAB ((id #unspecified string)
-			    (attr)
-			    body)
+(define-xml-compound <NPTAB> ((id #unspecified string)
+			      (attr)
+			      body)
    (if (and (pair? body) (xml-nptabhead-element? (car body)))
        (instantiate::xml-nptab-element
 	  (markup 'SPAN)

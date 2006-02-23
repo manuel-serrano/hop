@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Feb 15 07:58:02 2006 (serrano)                */
+;*    Last change :  Wed Feb 22 19:49:47 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -34,8 +34,6 @@
 	   (is-local?::bool ::bstring)
 	   (string-escape::bstring ::bstring ::char)
 	   (escape-string::bstring ::bstring)
-	   (keyword->symbol::symbol ::keyword)
-	   (symbol->keyword::keyword ::symbol)
 	   (delete-path ::bstring)
 	   (autoload-prefix::procedure ::bstring)))
 
@@ -296,19 +294,6 @@
 ;*---------------------------------------------------------------------*/
 (define (escape-string string)
    (escape-scheme-string string))
-
-;*---------------------------------------------------------------------*/
-;*    keyword->symbol ...                                              */
-;*---------------------------------------------------------------------*/
-(define (keyword->symbol k)
-   (let ((s (keyword->string k)))
-      (string->symbol (substring s 1 (string-length s)))))
-
-;*---------------------------------------------------------------------*/
-;*    symbol->keyword ...                                              */
-;*---------------------------------------------------------------------*/
-(define (symbol->keyword k)
-   (string->keyword (string-append ":" (symbol->string k))))
 
 ;*---------------------------------------------------------------------*/
 ;*    delete-path ...                                                  */

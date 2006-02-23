@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Feb 12 15:26:18 2006 (serrano)                */
+;*    Last change :  Tue Feb 21 15:38:05 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -33,6 +33,8 @@
 ;*---------------------------------------------------------------------*/
 (define webfilter-blacklist #t)
 (define webfilter-google-unbounce #t)
+(define webfilter-flash-stop #t)
+(define webfilter-flash-content-length 20000)
 
 ;*---------------------------------------------------------------------*/
 ;*    load webfilter config                                            */
@@ -46,7 +48,11 @@
 			    ((blacklist)
 			     (set! webfilter-blacklist (cadr c)))
 			    ((google-unbounce)
-			     (set! webfilter-google-unbounce (cadr c)))))
+			     (set! webfilter-google-unbounce (cadr c)))
+			    ((flash-stop)
+			     (set! webfilter-flash-stop (cadr c)))
+			    ((flash-content-length)
+			     (set! webfilter-flash-content-length (cadr c)))))
 		      (read))))))
 
 ;*---------------------------------------------------------------------*/
@@ -56,7 +62,9 @@
    (with-output-to-file webfilter-config
       (lambda ()
 	 (display `((blacklist ,webfilter-blacklist)
-		    (google-unbounce ,webfilter-google-unbounce))))))
+		    (google-unbounce ,webfilter-google-unbounce)
+		    (flash-stop ,webfilter-flash-stop)
+		    (flash-content-length ,webfilter-flash-content-length))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-blacklist ...                                               */
@@ -139,6 +147,50 @@ Google, each containing a forward pointer to the found wanted URL.])))
 	       txt)))))
    
 ;*---------------------------------------------------------------------*/
+;*    <FLASH> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<FLASH>)
+   (<TABLE>
+      :class "webfilter-config"
+      (<TR>
+	 (<TH>
+	    (<P> [This filter change the default ,(<TT> "play") attribute
+		       to Flash script to ,(<TT> "false").])
+	    (<P> :class "readme"
+		 [This filter prevents annoying Flash scripts to be started
+		       automatically when the page is loaded.])))
+      (let ((txt (<SPAN>
+		    :class (if webfilter-flash-stop "enable" "disable")
+		    "Flash stop")))
+	 (<TR>
+	    (<TD>
+	       (<INPUT>
+		  :type "checkbox"
+		  :checked webfilter-flash-stop
+		  :onchange {
+		     hop($(service (val)
+			     (set! webfilter-flash-stop val)
+			     (webfilter-write-config))
+			  (this.checked));
+		     ($txt).className = this.checked ? "enable" : "disable"
+		  })
+	       txt)
+	    (<TD>
+	       (<INPUT>
+		  :type "text"
+		  :size 6
+		  :checked webfilter-flash-content-length
+		  :onchange {
+		     hop($(service (val)
+			     (set! webfilter-flash-content-length
+				   (string->integer val))
+			     (webfilter-write-config))
+			  (this.checked));
+		     ($txt).className = this.checked ? "enable" : "disable"
+		  })
+	       txt)))))
+   
+;*---------------------------------------------------------------------*/
 ;*    info weblet ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (webfilter)
@@ -173,7 +225,10 @@ Google, each containing a forward pointer to the found wanted URL.])))
 						  (<BLACKLIST>))
 					       (<NPTAB>
 						  (<NPTABHEAD> "Google")
-						  (<GOOGLE>))))))))))))))))
+						  (<GOOGLE>))
+					       (<NPTAB>
+						  (<NPTABHEAD> "Flash")
+						  (<FLASH>))))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webfilter/about ...                                              */
@@ -186,7 +241,9 @@ Google, each containing a forward pointer to the found wanted URL.])))
       :version (hop-version)
       (<P> [This weblet filters Web traffic:])
       (<UL>
-	 (<LI> "It bans domains according to blacklists."))))
+	 (<LI> "It bans domains according to blacklists.")
+	 (<LI> "It prevents Google bouncing.")
+	 (<LI> "It disables Flash script auto-play."))))
 
 ;*---------------------------------------------------------------------*/
 ;*    blacklist ...                                                    */
@@ -205,6 +262,20 @@ Google, each containing a forward pointer to the found wanted URL.])))
 ;*---------------------------------------------------------------------*/
 (define (google req)
    (when webfilter-google-unbounce
+      (with-access::http-request req (host path)
+	 (when (and (string=? host "www.google.com")
+		    (substring-at? path "/url" 0))
+	    (let ((q (cgi-fetch-arg "q" path)))
+	       (when q
+		  (instantiate::http-response-string
+		     (start-line "HTTP/1.0 301 Moved Permanently")
+		     (header (list (cons 'location: q))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    flash ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (flash req)
+   (when webfilter-flash-stop
       (with-access::http-request req (host path localhostp)
 	 (when (and (string=? host "www.google.com")
 		    (substring-at? path "/url" 0))
