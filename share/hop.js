@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Feb 17 14:29:58 2006 (serrano)                */
+/*    Last change :  Thu Feb 23 08:41:19 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -225,7 +225,7 @@ function hop_default_failure( http ) {
    t = t.replace( /<\/(head|meta|link)>/g, "</div>" );
    t = t.replace( /<html[^>]*>/g, "<div style='width: 45em; overflow: auto; cursor: pointer;' onclick='document.body.removeChild( document.getElementById( \"hop_default_failure\" ) )' title='Click to hide this message'>" );
    t = t.replace( /<\/html>/g, "</div>" );
-   t = t.replace( /<body[^>]*>/g, "<div style='background: transparent; font-family: sans serif; -moz-opacity: 0.97'>" );
+   t = t.replace( /<body[^>]*>/g, "<div style='background: transparent; font-family: sans serif; -moz-opacity: 0.87'>" );
    t = t.replace( /<\/body>/g, "</div>" );
    t = t.replace( /&lt;/g, "<" );
    t = t.replace( /&gt;/g, ">" );

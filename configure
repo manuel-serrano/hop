@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Feb 10 07:26:57 2006 (serrano)                */
+#*    Last change :  Thu Feb 23 08:56:27 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -47,6 +47,9 @@ buildlibdir=$PWD/lib
 buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 buildbindir=$PWD/bin
+
+bigloorequired=2.8a
+bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
 repository=ssh://skribe@saxo.essi.fr/hop
 
@@ -165,6 +168,29 @@ while : ; do
   esac
   shift
 done
+
+#*---------------------------------------------------------------------*/
+#*    First check if bigloo exists and if it is recent enough          */
+#*---------------------------------------------------------------------*/
+if [ ! -f $bigloo ]; then
+   which $bigloo > /dev/null 2> /dev/null
+   if [ "$?" != "0" ]; then
+      echo "*** ERROR:configure:bigloo. Aborting"
+      echo "Can't find bigloo."
+      exit 1;
+   fi
+fi
+
+$bigloo -q -eval "(exit (if (string>=? *bigloo-version* \"$bigloorequired\") 0 1))"
+
+if [ $? != "0" ]; then
+  echo "*** ERROR:configure:bigloo. Aborting"
+  echo "Your version of Bigloo is too old. Release"
+  echo "   $bigloorequired"
+  echo "or more recent is required. It may be downloaded at:"
+  echo "   $bigloourl"
+  exit 1;
+fi
 
 #*---------------------------------------------------------------------*/
 #*    Check the backend                                                */
