@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Feb  8 08:55:13 2006 (serrano)                */
+;*    Last change :  Fri Feb 24 14:01:46 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -69,6 +69,12 @@
 	      (userinfo read-only)
 	      (encoded-path::bstring read-only)
 	      (timeout read-only (default #f)))
+
+	   (class http-response-filter::%http-response
+	      (response::%http-response read-only)
+	      (statusf::procedure (default (lambda (x) x)))
+	      (headerf::procedure (default (lambda (x) x)))
+	      bodyf::procedure)
 
 	   (class http-response-authentication::%http-response
 	      (server::bstring (default (hop-server-name)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Thu Feb 23 09:33:04 2006 (serrano)                */
+;*    Last change :  Fri Feb 24 13:09:04 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -32,7 +32,7 @@
 	    (http-parse-status-line ::input-port)
 	    (http-decode-authentication::bstring ::bstring)
 	    (http-write-header ::output-port ::pair-nil)
-	    (http-filter-proxy-header ::pair-nil)))
+	    (http-filter-proxy-header::pair-nil ::pair-nil)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
@@ -147,8 +147,7 @@
 			hostname port content-length transfer-encoding
 			authorization proxy-authorization)
 	 ((: (+ (or (out " :\r\n\t") (: #\space (out #\:)))) #\:)
-	  (let* ((k (the-downcase-keyword))
-		 (s (keyword->string k)))
+	  (let* ((k (the-downcase-keyword)))
 	     (case k
 		((host:)
 		 (multiple-value-bind (h p)
@@ -157,25 +156,25 @@
 		    (set! port p)
 		    (trace-item "##1 " k " [" hostname ":" port "]")
 		    (read/rp crlf-grammar (the-port))
-		    (set! header (cons (cons s hostname) header))
+		    (set! header (cons (cons k hostname) header))
 		    (ignore)))
 		((content-length:)
 		 (set! content-length (read/rp elong-grammar (the-port)))
 		 (trace-item "##2 " k " [" content-length "]")
 		 (read/rp crlf-grammar (the-port))
-		 (set! header (cons (cons s content-length) header))
+		 (set! header (cons (cons k content-length) header))
 		 (ignore))
 		((transfer-encoding:)
 		 (set! transfer-encoding (read/rp symbol-grammar (the-port)))
 		 (trace-item "##3 " k " [" transfer-encoding "]")
 		 (read/rp crlf-grammar (the-port))
-		 (set! header (cons (cons s transfer-encoding) header))
+		 (set! header (cons (cons k transfer-encoding) header))
 		 (ignore))
 		((authorization:)
 		 (set! authorization (read/rp auth-grammar (the-port)))
 		 (trace-item "##4 " k " [" authorization "]")
 		 (read/rp crlf-grammar (the-port))
-		 (set! header (cons (cons s authorization) header))
+		 (set! header (cons (cons k authorization) header))
 		 (ignore))
 		((proxy-authorization:)
 		 (set! proxy-authorization (read/rp auth-grammar (the-port)))
@@ -186,7 +185,7 @@
 		(else
 		 (let ((v (read/rp value-grammar (the-port))))
 		    (trace-item "##6 " k " [" v "]")
-		    (set! header (cons (cons s v) header))
+		    (set! header (cons (cons k v) header))
 		    (ignore))))))
 	 ((: (* (in #\space #\tab)) (? #\Return) #\Newline)
 	  (values (reverse! header)
@@ -463,7 +462,11 @@
 		   (if (pair? h)
 		       (let ((k (car h))
 			     (v (cdr h)))
-			  (http-write-line p k ": " v))
+			  (if (keyword? k)
+			      (http-write-line p (keyword->string! k) ": " v)
+			      (error 'http-write-header
+				     "Illegal header"
+				     h)))
 		       (http-write-line p h)))
 		header)
       (flush-output-port p)))

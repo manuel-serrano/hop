@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Feb  2 16:13:49 2006 (serrano)                */
+;*    Last change :  Fri Feb 24 14:06:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -22,13 +22,17 @@
 	    __hop_misc
 	    __hop_xml
 	    __hop_http-lib
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_http-filter)
 
    (export  (generic http-response ::%http-response ::socket)
 	    (generic scheme->response ::obj ::http-request)
 	    (http-response-void)
 	    (http-send-request ::http-request ::procedure)
-	    (response-remote-start-line ::http-response-remote)))
+	    (response-remote-start-line ::http-response-remote)
+	    (make-unchunks ::input-port)
+	    (response-chunks ::input-port ::output-port)
+	    (make-client-socket/timeout host port ::int ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-client-socket/timeout ...                                   */
@@ -390,6 +394,13 @@
 	       (socket-close remote))))))
 
 ;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-filter ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-filter socket)
+   (with-trace 3 'http-response::http-response-filter
+      (http-filter (http-response-filter-response r) r socket)))
+
+;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-persistent ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-persistent socket)
@@ -553,7 +564,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    response-chunks ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (response-chunks ip op)
+(define (response-chunks ip::input-port op::output-port)
    (with-trace 4 'response-chunks
       (let loop ()
 	 (let ((sz (read/rp *chunk-size-grammar* ip op)))
@@ -584,7 +595,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-unchunks ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (make-unchunks ip)
+(define (make-unchunks ip::input-port)
    (let* ((state 'size)
 	  (sz 0)
 	  (bufsz 512)
