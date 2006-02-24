@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Feb  2 16:11:53 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:38:02 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -37,13 +37,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    <SLIDER> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound SLIDER ((id #unspecified string)
-			     (value 0 integer)
-			     (min 0 integer)
-			     (max 100 integer)
-			     (step 1 integer)
-			     (onchange "")
-			     (caption "top"))
+(define-xml-compound <SLIDER> ((id #unspecified string)
+			       (value 0 integer)
+			       (min 0 integer)
+			       (max 100 integer)
+			       (step 1 integer)
+			       (onchange "")
+			       (caption "top"))
    (instantiate::html-slider
       (markup 'slider)
       (id (xml-make-id id 'SLIDER))

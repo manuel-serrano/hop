@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Feb  2 16:12:02 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:39:11 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -37,25 +37,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TABSLIDER> ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound TABSLIDER ((id #unspecified string)
-				(width #f)
-				(height #f)
-				(index 0)
-				body)
-  ;; Verify that the body is a list of <TABPAN>
-  (for-each (lambda (x)
-	      (unless (and (xml-element? x)
-			   (eq? (xml-element-markup x) 'tspan))
-		(error '<TABSLIDER> "Component is not a <TABPAN>" x)))
-	    body)
-  
-  (instantiate::html-tabslider
-     (markup 'tabslider)
-     (id (xml-make-id id 'TABSLIDER))
-     (width width)
-     (height height)
-     (index index)
-     (body body)))
+(define-xml-compound <TABSLIDER> ((id #unspecified string)
+				  (width #f)
+				  (height #f)
+				  (index 0)
+				  body)
+   ;; Verify that the body is a list of <TABPAN>
+   (for-each (lambda (x)
+		(unless (and (xml-element? x)
+			     (eq? (xml-element-markup x) 'tspan))
+		   (error '<TABSLIDER> "Component is not a <TABPAN>" x)))
+	     body)
+   
+   (instantiate::html-tabslider
+      (markup 'tabslider)
+      (id (xml-make-id id 'TABSLIDER))
+      (width width)
+      (height height)
+      (index index)
+      (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tabslider ...                                   */
@@ -77,17 +77,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TSPAN> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound TSPAN ((id #unspecified string)
-			    body)
-  ;; Check that body is well formed
-  (unless (and (pair? body) (>= (length body) 2))
-     (error '<TSPAGE> "Illegal body, at least two elements needed" body))
-
-  (instantiate::html-tspage
-   (markup 'tspan)
-   (id (xml-make-id id 'TSPAN))
-   (body (list (car body)
-	       (apply <DIV> :class "hop-tabslider-content" (cdr body))))))
+(define-xml-compound <TSPAN> ((id #unspecified string)
+			      body)
+   ;; Check that body is well formed
+   (unless (and (pair? body) (>= (length body) 2))
+      (error '<TSPAGE> "Illegal body, at least two elements needed" body))
+   
+   (instantiate::html-tspage
+      (markup 'tspan)
+      (id (xml-make-id id 'TSPAN))
+      (body (list (car body)
+		  (apply <DIV> :class "hop-tabslider-content" (cdr body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tspan ...                                       */
@@ -98,4 +98,4 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TSHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-alias TSHEAD SPAN :class "hop-tabslider-head")
+(define-xml-alias <TSHEAD> <SPAN> :class "hop-tabslider-head")

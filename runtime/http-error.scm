@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Feb 17 14:32:19 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:36:09 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -98,9 +98,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <ETD> ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound ETD ((class #f)
-			  (style "" string)
-			  body)
+(define-xml-compound <ETD> ((class #f)
+			    (style "" string)
+			    body)
    (let* ((default "vertical-align: top; text-align: left; font-weight: bold")
 	  (add (cond
 		  ((not class)

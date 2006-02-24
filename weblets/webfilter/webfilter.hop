@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Feb 21 15:38:05 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 09:16:06 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -159,9 +159,12 @@ Google, each containing a forward pointer to the found wanted URL.])))
 	    (<P> :class "readme"
 		 [This filter prevents annoying Flash scripts to be started
 		       automatically when the page is loaded.])))
-      (let ((txt (<SPAN>
+      (let ((txt1 (<SPAN>
 		    :class (if webfilter-flash-stop "enable" "disable")
-		    "Flash stop")))
+		    "Flash stop"))
+	    (txt2 (<SPAN>
+		    :class (if webfilter-flash-stop "enable" "disable")
+		    "Max content length")))
 	 (<TR>
 	    (<TD>
 	       (<INPUT>
@@ -172,23 +175,23 @@ Google, each containing a forward pointer to the found wanted URL.])))
 			     (set! webfilter-flash-stop val)
 			     (webfilter-write-config))
 			  (this.checked));
-		     ($txt).className = this.checked ? "enable" : "disable"
+		     ($txt1).className = this.checked ? "enable" : "disable"
 		  })
-	       txt)
-	    (<TD>
+	       txt1
+	       "&nbsp;&nbsp;"
 	       (<INPUT>
 		  :type "text"
 		  :size 6
-		  :checked webfilter-flash-content-length
+		  :value webfilter-flash-content-length
 		  :onchange {
 		     hop($(service (val)
 			     (set! webfilter-flash-content-length
 				   (string->integer val))
 			     (webfilter-write-config))
 			  (this.checked));
-		     ($txt).className = this.checked ? "enable" : "disable"
-		  })
-	       txt)))))
+		     ($txt2).className = this.checked ? "enable" : "disable"
+		     })
+	       txt2)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    info weblet ...                                                  */

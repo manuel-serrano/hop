@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Feb  2 16:11:44 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:38:24 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -39,12 +39,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    <PANED> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound PANED ((id #unspecified string)
-			    (fraction 0)
-			    (onresize "")
-			    (orientation 'vertical)
-			    (style #f)
-			    body)
+(define-xml-compound <PANED> ((id #unspecified string)
+			      (fraction 0)
+			      (onresize "")
+			      (orientation 'vertical)
+			      (style #f)
+			      body)
    (cond
       ((null? body)
        (error '<PANED> "Illegal body, missing two pans" body))
@@ -65,9 +65,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    <PAN> ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound PAN ((id #unspecified string)
-			  (attr)
-			  body)
+(define-xml-compound <PAN> ((id #unspecified string)
+			    (attr)
+			    body)
    (instantiate::html-pan
       (markup 'PAN)
       (id (xml-make-id id 'PAN))

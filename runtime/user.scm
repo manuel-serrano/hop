@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Feb 11 18:44:53 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 09:03:21 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -233,7 +233,7 @@
 ;*---------------------------------------------------------------------*/
 (define (user-access-denied req)
    (instantiate::http-response-authentication
-      (header '(("WWW-Authenticate:" . "Basic realm=\"Hop authentication\"")))
+      (header '(("WWW-Authenticate" . "Basic realm=\"Hop authentication\"")))
       (body (if (http-request? req)
 		(format "Protected Area! Authentication required.~a:~a:/~a"
 			(http-request-host req)

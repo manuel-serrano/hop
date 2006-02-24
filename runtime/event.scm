@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Feb  2 16:13:34 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:45:44 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -118,11 +118,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    HOP-EVENT ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound HOP-EVENT ((id #unspecified string)
-				(event #f hop-event)
-				(handler #f)
-				(failure #f)
-				body)
+(define-xml-compound <HOP-EVENT> ((id #unspecified string)
+				  (event #f hop-event)
+				  (handler #f)
+				  (failure #f)
+				  body)
    (cond
       ((not event)
        (error '<HOP-EVENT> "Event missing" handler))
@@ -141,11 +141,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    TIMEOUT-EVENT ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound TIMEOUT-EVENT ((id #unspecified string)
-				    (eager #f boolean)
-				    (timeout 1000 integer)
-				    (handler #f)
-				    body)
+(define-xml-compound <TIMEOUT-EVENT> ((id #unspecified string)
+				      (eager #f boolean)
+				      (timeout 1000 integer)
+				      (handler #f)
+				      body)
    (cond
       ((not handler)
        (error '<TIMEOUT-EVENT> "Event handler missing" id))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 15:24:40 2005                          */
-;*    Last change :  Fri Jan 20 09:18:02 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 03:04:17 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML macros                                                       */
@@ -12,105 +12,126 @@
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-element ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (define-xml element el . exp)
-   (define (define-xml el exp)
-      (let ((id (symbol-append '< el '>)))
-	 `(define (,id . args)
-	     (let loop ((args args)
-			(attr '())
-			(body '())
-			(id   #unspecified))
-		(cond
-		   ((null? args)
-		    ,(if (null? exp)
-			 `(,(symbol-append 'instantiate:: element)
-			   (markup ',(string->symbol
-				      (string-downcase
-				       (symbol->string el))))
-			   (attributes attr)
-			   (id (xml-make-id id ',el))
-			   (body (reverse! body)))
-			 `(begin ,@exp)))
-		   ((keyword? (car args))
-		    (if (null? (cdr args))
-			(error ',el "attribute value missing" (car args))
-			(let* ((s (keyword->string (car args)))
-			       (l (string-length s))
-			       (s2 (substring s 1 l)))
-			   (unless (char=? (string-ref s 0) #\:)
-			      (error ',el "illegal attribute" (car args)))
-			   (if (eq? (car args) :id)
-			       (if (string? (cadr args))
-				   (loop (cddr args)
-					 attr
-					 body
-					 (cadr args))
-				   (bigloo-type-error ',el
-						      "string"
-						      (cadr args)))
-			       (loop (cddr args)
-				     (cons (cons s2 (cadr args)) attr)
-				     body
-				     id)))))
-		   ((null? (car args))
-		    (loop (cdr args) attr body id))
-		   ((pair? (car args))
-		    (loop (append (car args) (cdr args)) attr body id))
-		   (else
-		    (loop (cdr args) attr (cons (car args) body) id)))))))
-   (let ((css (memq :hss-type exp)))
-      (if (and (pair? css) (pair? (cdr css)))
-	  (let ((new (cadr css)))
-	     (set-cdr! css (cddr css))
-	     (set! exp (remq! (car css) exp))
-	     `(begin
-		 (hop-hss-type! ,(symbol->string el) ,new)
-		 ,(define-xml el exp)))
-	  (define-xml el exp))))
+(define-pervasive-macro (define-xml element id . exp)
+   (define (define-xml id el exp)
+      `(define (,id . args)
+	  (let loop ((args args)
+		     (attr '())
+		     (body '())
+		     (id   #unspecified))
+	     (cond
+		((null? args)
+		 ,(if (null? exp)
+		      `(,(symbol-append 'instantiate:: element)
+			(markup ',(string->symbol
+				   (string-downcase
+				    (symbol->string el))))
+			(attributes attr)
+			(id (xml-make-id id ',el))
+			(body (reverse! body)))
+		      `(begin ,@exp)))
+		((keyword? (car args))
+		 (if (null? (cdr args))
+		     (error ',id "attribute value missing" (car args))
+		     (if (eq? (car args) :id)
+			 (if (string? (cadr args))
+			     (loop (cddr args)
+				   attr
+				   body
+				   (cadr args))
+			     (bigloo-type-error ',id
+						"string"
+						(cadr args)))
+			 (loop (cddr args)
+			       (cons (cons (keyword->string (car args))
+					   (cadr args))
+				     attr)
+			       body
+			       id))))
+		((null? (car args))
+		 (loop (cdr args) attr body id))
+		((pair? (car args))
+		 (loop (append (car args) (cdr args)) attr body id))
+		(else
+		 (loop (cdr args) attr (cons (car args) body) id))))))
+   (let ((s (symbol->string id)))
+      (if (and (>fx (string-length s) 2)
+	       (char=? (string-ref s 0) #\<)
+	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
+	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1))))
+		(css (memq :hss-type exp)))
+	     (if (and (pair? css) (pair? (cdr css)))
+		 (let ((new (cadr css)))
+		    (set-cdr! css (cddr css))
+		    (set! exp (remq! (car css) exp))
+		    `(begin
+			(hop-hss-type! ,(symbol->string el) ,new)
+			,(define-xml id el exp)))
+		 (define-xml id el exp)))
+	  (error 'define-xml "Illegal identifier" id))))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-element ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (define-xml-element el . exp)
-   (define (define-element el exp)
+(define-pervasive-macro (define-xml-element id . exp)
+   (define (define-element id el exp)
       (if (null? exp)
-	  `(define (,(symbol-append '< el '>) . args)
+	  `(define (,id . args)
 	      (%make-xml-element ',el args))
 	  `(define-xml xml-element ,el ,@exp)))
-   (let ((css (memq :hss-type exp)))
-      (if (and (pair? css) (pair? (cdr css)))
-	  (let ((new (cadr css)))
-	     (set-cdr! css (cddr css))
-	     (set! exp (remq! (car css) exp))
-	     `(begin
-		 (hop-hss-type! ,(symbol->string el) ,new)
-		 ,(define-element el exp)))
-	  (define-element el exp))))
+   (let ((s (symbol->string id)))
+      (if (and (>fx (string-length s) 2)
+		   (char=? (string-ref s 0) #\<)
+		   (char=? (string-ref s (-fx (string-length s) 1)) #\>))
+	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1))))
+		(css (memq :hss-type exp)))
+	     (if (and (pair? css) (pair? (cdr css)))
+		 (let ((new (cadr css)))
+		    (set-cdr! css (cddr css))
+		    (set! exp (remq! (car css) exp))
+		    `(begin
+			(hop-hss-type! ,(symbol->string el) ,new)
+			,(define-element id el exp)))
+		 (define-element id el exp)))
+	 (error 'define-xml-element "Illegal identifier" id))))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-alias ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (define-xml-alias el alias . opts)
-   (define (define-alias el opts)
-      `(define (,(symbol-append '< el '>) . args)
-	  (%make-xml-element ',alias (append args ',opts))))
-   (let ((css (memq :hss-type opts)))
-      (if (and (pair? css) (pair? (cdr css)))
-	  (let ((new (cadr css)))
-	     (set-cdr! css (cddr css))
-	     (set! opts (remq! (car css) opts))
-	     `(begin
-		 (hop-hss-type! ,(symbol->string el) ,new)
-		 ,(define-alias el opts)))
-	  (define-alias el opts))))
+(define-pervasive-macro (define-xml-alias id alias . opts)
+   (define (define-alias id ea opts)
+      `(define (,id . args)
+	  (%make-xml-element ',ea (append args ',opts))))
+   (let ((s (symbol->string id))
+	 (t (symbol->string alias)))
+      (cond
+	 ((not (and (>fx (string-length s) 2)
+		    (char=? (string-ref s 0) #\<)
+		    (char=? (string-ref s (-fx (string-length s) 1)) #\>)))
+	  (error 'define-xml-alias "Illegal identifier" id))
+	 ((not (and (>fx (string-length t) 2)
+		    (char=? (string-ref t 0) #\<)
+		    (char=? (string-ref t (-fx (string-length t) 1)) #\>)))
+	  (error 'define-xml-alias "Illegal alias identifier" alias))
+	 (else
+	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1))))
+		(ea (string->symbol (substring t 1 (-fx (string-length t) 1))))
+		(css (memq :hss-type opts)))
+	     (if (and (pair? css) (pair? (cdr css)))
+		 (let ((new (cadr css)))
+		    (set-cdr! css (cddr css))
+		    (set! opts (remq! (car css) opts))
+		    `(begin
+			(hop-hss-type! ,(symbol->string el) ,new)
+			,(define-alias id ea opts)))
+		 (define-alias id ea opts)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-compound ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (define-xml-compound el bindings . body)
-   (define (define-compound el bindings body)
-      (let ((m (symbol-append '< el '>))
-	    (args (gensym 'args))
+(define-pervasive-macro (define-xml-compound id bindings . body)
+   (define (define-compound m el bindings body)
+      (let ((args (gensym 'args))
 	    (loop (gensym 'loop)))
 	 `(define (,m . ,args)
 	     (let ,(map (lambda (b)
@@ -147,10 +168,7 @@
 			,@(map (lambda (b)
 				  (match-case b
 				     (((and (? symbol?) ?id) ?init . ?-)
-				      `((eq? (car ,args)
-					     ,(string->keyword
-					       (string-append
-						":" (symbol->string id))))
+				      `((eq? (car ,args) ,(symbol->keyword id))
 					(when (null? (cdr ,args))
 					   (error ',m
 						  ,(format "Illegal :~a" id)
@@ -182,12 +200,18 @@
 			       bindings)
 			(else
 			 (error ',m "Illegal argument" (car ,args)))))))))
-   (let ((css (memq :hss-type body)))
-      (if (and (pair? css) (pair? (cdr css)))
-	  (let ((new (cadr css)))
-	     (set-cdr! css (cddr css))
-	     (set! body (remq! (car css) body))
-	     `(begin
-		 (hop-hss-type! ,(symbol->string el) ,new)
-		 ,(define-compound el bindings body)))
-	  (define-compound el bindings body))))
+   (let ((s (symbol->string id)))
+      (if (and (>fx (string-length s) 2)
+	       (char=? (string-ref s 0) #\<)
+	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
+	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1))))
+		(css (memq :hss-type body)))
+	     (if (and (pair? css) (pair? (cdr css)))
+		 (let ((new (cadr css)))
+		    (set-cdr! css (cddr css))
+		    (set! body (remq! (car css) body))
+		    `(begin
+			(hop-hss-type! ,(symbol->string el) ,new)
+			,(define-compound id el bindings body)))
+		 (define-compound id el bindings body)))
+	  (error 'define-xml-compound "Illegal identifier" id))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  7 15:10:15 2005                          */
-;*    Last change :  Fri Jan 20 14:30:19 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:47:24 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HOP binding for jsMath                                    */
@@ -26,15 +26,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    <MATH> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound MATH ((id #unspecified string)
-			   (class "div")
-			   body)
+(define-xml-compound <MATH> ((id #unspecified string)
+			     (class "div")
+			     body)
    (list (<SCRIPT> :type "text/javascript" {
 			    if( jsMath_init == 0 ) {
 				 jsMath_init = 1
 			         jsMath.Setup.Body()
-		            }
-			  })
+				 }
+			    })
 	 (let ((id (xml-make-id id)))
 	    (if (string-ci=? class "div")
 		(<DIV> :class "math" :id id body)

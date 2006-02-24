@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sun Feb 12 14:47:32 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:46:06 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -118,22 +118,22 @@
 ;; ----------------------------------------------------------------------
 ;; 	WEBLET-ABOUT ...
 ;; ----------------------------------------------------------------------
-(define-xml-compound WEBLET-ABOUT ((id #unspecified string)
-				   (title #f)
-				   (subtitle #f)
-				   (version #f)
-				   (icon #f)
-				   body)
-
-  (cons* 
-   (<TABLE> :width "100%" 
-     (<TR>
-      (<TD> :valign "top" :align "left"
-	    (<IMG> :src icon)
-      (<TD> :valign "top" :align "right"
-	    (when title (<H2> title))
-	    (when subtitle (<H3> subtitle))
-	    (when version
-	      (<H4> (format "(version ~A)" version)))))))
-   body))
+(define-xml-compound <WEBLET-ABOUT> ((id #unspecified string)
+				     (title #f)
+				     (subtitle #f)
+				     (version #f)
+				     (icon #f)
+				     body)
+   
+   (cons* 
+    (<TABLE> :width "100%" 
+	     (<TR>
+		(<TD> :valign "top" :align "left"
+		      (<IMG> :src icon)
+		      (<TD> :valign "top" :align "right"
+			    (when title (<H2> title))
+			    (when subtitle (<H3> subtitle))
+			    (when version
+			       (<H4> (format "(version ~A)" version)))))))
+    body))
   

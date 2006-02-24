@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Feb  2 16:12:17 2006 (serrano)                */
+;*    Last change :  Thu Feb 23 02:37:41 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -48,19 +48,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TREE> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound TREE ((id #unspecified string)
-			   (foldero #f)
-			   (folderc #f)
-			   (open #f)
-			   (multiselect #f)
-			   (onselect #f)
-			   (onunselect #f)
-			   (cached #f)
-			   body)
+(define-xml-compound <TREE> ((id #unspecified string)
+			     (foldero #f)
+			     (folderc #f)
+			     (open #f)
+			     (multiselect #f)
+			     (onselect #f)
+			     (onunselect #f)
+			     (cached #f)
+			     body)
    (let ((head ""))
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
-	  (set! head (car body))
-	  (set! body (cdr body)))
+	 (set! head (car body))
+	 (set! body (cdr body)))
       (when (any? (lambda (e) (not (xml-markup-is? e 'trbody))) body)
 	 (error (if (string? id) (format "<tree id='~a'>" id) '<tree>)
 		"Illegal body"
@@ -81,16 +81,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TRHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-element TRHEAD)   
-(define-xml html-trbody TRBODY)
+(define-xml-element <TRHEAD>)   
+(define-xml html-trbody <TRBODY>)
    
 ;*---------------------------------------------------------------------*/
 ;*    <TRLEAF> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound TRLEAF ((id #unspecified string)
-			     (value "")
-			     (file #f)
-			     body)
+(define-xml-compound <TRLEAF> ((id #unspecified string)
+			       (value "")
+			       (file #f)
+			       body)
    (instantiate::html-tree-leaf
       (markup 'tree-leaf)
       (id (xml-make-id id 'TRLEAF))
