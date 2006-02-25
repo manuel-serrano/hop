@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Feb 23 02:36:41 2006 (serrano)                */
+;*    Last change :  Fri Feb 24 09:34:07 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -162,9 +162,10 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <HOP-FOOT-LOGO> ((id #unspecified string)
 				      (img (<IMG> :inline #t
-						  :src (make-file-name
+						  :src (make-file-path
 							(hop-share-directory)
-							"icons/foot-logo.png")))
+							"icons"
+							"foot-logo.png")))
 				      body)
    :hss-type "div.hop-foot-logo"
    (let ((r (if (null? body)

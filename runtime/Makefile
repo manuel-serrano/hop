@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Feb 10 14:29:20 2006 (eg)                     */
+#*    Last change :  Fri Feb 24 13:20:40 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -42,7 +42,7 @@ _OBJECTS	= param misc types thread \
                   hop service \
                   job mime user \
                   http-lib http-response http-shoutcast http-error \
-                  html-extra html-notepad html-tree html-slider \
+                  http-filter html-extra html-notepad html-tree html-slider \
                   html-paned html-tabslider html-inline \
                   event color weblets
 

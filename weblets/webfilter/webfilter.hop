@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Feb 21 15:38:05 2006 (serrano)                */
+;*    Last change :  Sat Feb 25 08:44:44 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -34,7 +34,7 @@
 (define webfilter-blacklist #t)
 (define webfilter-google-unbounce #t)
 (define webfilter-flash-stop #t)
-(define webfilter-flash-content-length 20000)
+(define webfilter-flash-content-length #e200000)
 
 ;*---------------------------------------------------------------------*/
 ;*    load webfilter config                                            */
@@ -159,9 +159,12 @@ Google, each containing a forward pointer to the found wanted URL.])))
 	    (<P> :class "readme"
 		 [This filter prevents annoying Flash scripts to be started
 		       automatically when the page is loaded.])))
-      (let ((txt (<SPAN>
+      (let ((txt1 (<SPAN>
 		    :class (if webfilter-flash-stop "enable" "disable")
-		    "Flash stop")))
+		    "Flash stop"))
+	    (txt2 (<SPAN>
+		    :class (if webfilter-flash-stop "enable" "disable")
+		    "Max content length")))
 	 (<TR>
 	    (<TD>
 	       (<INPUT>
@@ -172,23 +175,23 @@ Google, each containing a forward pointer to the found wanted URL.])))
 			     (set! webfilter-flash-stop val)
 			     (webfilter-write-config))
 			  (this.checked));
-		     ($txt).className = this.checked ? "enable" : "disable"
+		     ($txt1).className = this.checked ? "enable" : "disable"
 		  })
-	       txt)
-	    (<TD>
+	       txt1
+	       "&nbsp;&nbsp;"
 	       (<INPUT>
 		  :type "text"
 		  :size 6
-		  :checked webfilter-flash-content-length
+		  :value webfilter-flash-content-length
 		  :onchange {
 		     hop($(service (val)
 			     (set! webfilter-flash-content-length
-				   (string->integer val))
+				   (string->elong val))
 			     (webfilter-write-config))
 			  (this.checked));
-		     ($txt).className = this.checked ? "enable" : "disable"
-		  })
-	       txt)))))
+		     ($txt2).className = this.checked ? "enable" : "disable"
+		     })
+	       txt2)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    info weblet ...                                                  */
@@ -274,16 +277,38 @@ Google, each containing a forward pointer to the found wanted URL.])))
 ;*---------------------------------------------------------------------*/
 ;*    flash ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (flash req)
+(define (flash req resp)
+   (define flash-grammar
+      (regular-grammar (op)
+	 ((uncase "<embed ")
+	  (display "<param name='PLAY' value='false'><embed play='false' " op)
+	  (ignore))
+	 ((+ (out #\space))
+	  (display (the-string) op)
+	  (ignore))
+	 ((+ #\space)
+	  (display (the-string) op)
+	  (ignore))
+	 (else
+	  (flush-output-port op))))
    (when webfilter-flash-stop
-      (with-access::http-request req (host path localhostp)
-	 (when (and (string=? host "www.google.com")
-		    (substring-at? path "/url" 0))
-	    (let ((q (cgi-fetch-arg "q" path)))
-	       (when q
-		  (instantiate::http-response-string
-		     (start-line "HTTP/1.0 301 Moved Permanently")
-		     (header (list (cons 'location: q))))))))))
+      (instantiate::http-response-filter
+	 (response resp)
+	 (bodyf (lambda (ip op status header cl)
+		   (if (< cl webfilter-flash-content-length)
+		       (let ((c (assq content-encoding: header)))
+			  (if (equal? c '(content-encoding: . "gzip"))
+			      (begin
+				 (send-chars ip op cl)
+				 (flush-output-port op))
+			      (begin
+				 (unless (= cl #e-1)
+				    (let ((barrier (elong->fixnum cl)))
+				       (input-port-fill-barrier-set! ip barrier)))
+				 (read/rp flash-grammar ip op))))
+		       (begin
+			  (send-chars ip op cl)
+			  (flush-output-port op))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Remote hook                                                      */
@@ -291,6 +316,8 @@ Google, each containing a forward pointer to the found wanted URL.])))
 (hop-http-response-remote-hook-add!
  (lambda (req resp)
     (or (blacklist req)
+	(google req)
+	(flash req resp)
 	resp)))
 
 

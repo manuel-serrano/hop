@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Feb 22 19:49:47 2006 (serrano)                */
+;*    Last change :  Fri Feb 24 09:31:15 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -114,7 +114,7 @@
 	     (if (not last)
 		 ""
 		 (substring string 0 last)))
-            ((char=? (string-ref string read) runtime-file-separator)
+            ((char=? (string-ref string read) (file-separator))
 	     (if (not last)
 		 ""
 		 (substring string 0 last)))
@@ -136,7 +136,7 @@
 	     (if (not last)
 		 ""
 		 (substring string (+fx last 1) len)))
-            ((char=? (string-ref string read) runtime-file-separator)
+            ((char=? (string-ref string read) (file-separator))
 	     (if (not last)
 		 ""
 		 (substring string (+fx last 1) len)))
