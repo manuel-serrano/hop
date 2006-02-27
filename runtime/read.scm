@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Feb  5 15:21:08 2006 (serrano)                */
+;*    Last change :  Sat Feb 25 05:38:20 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -453,6 +453,15 @@
       ;; hss (this reads up to the closing bracket).
       ("@{"
        (hop-read-hss (the-port)))
+      
+      ;; escape sequences
+      ("~("
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       ;; and then, we compute the result list...
+       ((hop-make-escape)
+	(make-list! (collect-up-to ignore "list" (the-port)) (the-port))))
       
       ;; structures
       ("#{"

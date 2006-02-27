@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Fri Feb 24 15:40:42 2006 (serrano)                */
+;*    Last change :  Sat Feb 25 06:28:41 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -70,11 +70,6 @@
 			 (bodyf (http-response-filter-bodyf f)))
 		     (multiple-value-bind (http-version status-code phrase)
 			(http-parse-status-line ip)
-			;; WARNING: phrase contains its terminal \r\n hence
-			;; it must be displayed with regular scheme writer,
-			;; not HTTP-WRITE-LINE!
-			(trace-item "# " http-version " " status-code " "
-				    (string-for-read phrase))
 			(let ((fs (statusf
 				   (format "~a ~a ~a"
 					   http-version

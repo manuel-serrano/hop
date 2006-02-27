@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Feb 13 07:47:11 2006 (serrano)                */
+;*    Last change :  Sat Feb 25 05:37:01 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -128,7 +128,10 @@
 	    (hop-connection-timeout-set! ::int)
 
 	    (hop-weblets::pair-nil)
-	    (hop-weblets-set! ::pair-nil)))
+	    (hop-weblets-set! ::pair-nil)
+
+	    (hop-make-escape::procedure)
+	    (hop-make-escape-set! ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-uptime ...                                                   */
@@ -539,3 +542,14 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-weblets
    '())
+
+;*---------------------------------------------------------------------*/
+;*    hop-make-escape ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-make-escape
+   (lambda (x)
+      (error 'hop-make-escape "No escape hooked." x))
+   (lambda (v)
+      (if (or (not (procedure? v)) (not (correct-arity? v 1)))
+	  (error 'hop-make-escape "Illegal value" v)
+	  v)))
