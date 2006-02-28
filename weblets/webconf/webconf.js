@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-/*    Last change :  Tue Feb 28 14:11:45 2006 (eg)                     */
+/*    Last change :  Tue Feb 28 14:44:08 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet JavaScript Functions                                  */
@@ -59,10 +59,11 @@ function hop_open_float_window(serv, id, x, y)
 	
 	el.style.setProperty("margin", "0", "");
 	el.style.setProperty("padding", "0", "");
+
 	win.onDragStart = function(x, y) { 
 	    document.getElementById(iframe).style.display= "none";  
+	    el.style.setProperty("height", compute_height()+"px", "");
 	    el.style.opacity= 0.8; 
-	    el.style.offsetHeight = 100;
 	}
 	win.onDragEnd   = function(x, y) {
 	    document.getElementById(iframe).style.display= "block"; 
