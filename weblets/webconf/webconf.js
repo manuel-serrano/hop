@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-/*    Last change :  Tue Feb 28 14:08:43 2006 (eg)                     */
+/*    Last change :  Tue Feb 28 14:11:45 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet JavaScript Functions                                  */
@@ -71,7 +71,7 @@ function hop_open_float_window(serv, id, x, y)
 
 	change_style();	
 	el.innerHTML= "<iframe class=hop-float-iframe id='" + iframe + "' " +
-	    "src='" + "http://www.wanadoo.fr" + "' " + 
+	    "src='" + serv + "' " + 
 	    "' height='" + compute_height() + "'></iframe>";
     }
 }
