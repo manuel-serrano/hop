@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-/*    Last change :  Thu Feb 16 15:17:00 2006 (eg)                     */
+/*    Last change :  Tue Feb 28 14:08:43 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet JavaScript Functions                                  */
@@ -17,33 +17,65 @@ function hop_webconf_toggle(id)
 }
 
 
+function hop_float_window_init(id, inframe)
+{
+    var el = document.getElementById(id);
+    
+    Drag.init(el);
+    el.inFrame = inframe;
+    //    el.style.zIndex = ++Drag.zIndex;
+}
+
+
 function hop_open_float_window(serv, id, x, y)
 {
-   hop(serv, 
-       function( http ) {
-	   var win = document.getElementById(id);
-	   var h   = document.getElementById(id + "-handle");
-	   var el  = document.getElementById(id + "-content");
-	   
-	   if (http.responseText != null) {
-	       el.innerHTML = http.responseText;
-	       hop_js_eval( http );
-	       win.style.display = "block";
-	       Drag.init(h, win);
-	       win.style.left = x;
-	       win.style.top  = y;
-	       win.style.zIndex = ++Drag.zIndex;
-	       win.onDragStart = function(x, y) {
-		   Drag.opacity = win.style.opacity;
-		   win.style.zIndex = ++Drag.zIndex;
-		   win.style.opacity = 0.4;
-	       }
-	       win.onDragEnd = function(x, y) {
-		   win.style.opacity = Drag.opacity;
-	       }
-	   }
-       });
+    var win = document.getElementById(id);
+    var h   = document.getElementById(id + "-handle");
+    var el  = document.getElementById(id + "-content");
+
+    function change_style() {
+	win.style.display = "block";
+	win.style.left = x;
+	win.style.top  = y;
+	win.style.zIndex = ++Drag.zIndex;
+    }
+
+    function compute_height() {
+	var shadow_height = 8;
+	return win.offsetHeight - h.offsetHeight - shadow_height;
+    }
+	
+    if (!win.inFrame) {
+	hop(serv, 
+	    function( http ) {
+		if (http.responseText != null) {
+		    el.innerHTML = http.responseText;
+		    hop_js_eval( http );
+		    change_style();
+		}
+	    });
+    } else {
+	var iframe = id + "-frame";
+	
+	el.style.setProperty("margin", "0", "");
+	el.style.setProperty("padding", "0", "");
+	win.onDragStart = function(x, y) { 
+	    document.getElementById(iframe).style.display= "none";  
+	    el.style.opacity= 0.8; 
+	    el.style.offsetHeight = 100;
+	}
+	win.onDragEnd   = function(x, y) {
+	    document.getElementById(iframe).style.display= "block"; 
+	    el.style.opacity= 1; 
+	}
+
+	change_style();	
+	el.innerHTML= "<iframe class=hop-float-iframe id='" + iframe + "' " +
+	    "src='" + "http://www.wanadoo.fr" + "' " + 
+	    "' height='" + compute_height() + "'></iframe>";
+    }
 }
+
 
 
 function hop_close_float_window(id)
@@ -95,6 +127,8 @@ var Drag = {
 	e = Drag.fixE(e);
 	var y = parseInt(o.vmode ? o.root.style.top  : o.root.style.bottom);
 	var x = parseInt(o.hmode ? o.root.style.left : o.root.style.right );
+
+	o.root.style.zIndex = ++Drag.zIndex;
 	o.root.onDragStart(x, y);
 	
 	o.lastMouseX	= e.clientX;
@@ -157,8 +191,9 @@ var Drag = {
     {
 	document.onmousemove = null;
 	document.onmouseup   = null;
-	Drag.obj.root.onDragEnd(	parseInt(Drag.obj.root.style[Drag.obj.hmode ? "left" : "right"]), 
-					parseInt(Drag.obj.root.style[Drag.obj.vmode ? "top" : "bottom"]));
+	Drag.obj.root.onDragEnd(
+		parseInt(Drag.obj.root.style[Drag.obj.hmode ? "left" : "right"]), 
+		parseInt(Drag.obj.root.style[Drag.obj.vmode ? "top" : "bottom"]));
 	Drag.obj = null;
     },
 

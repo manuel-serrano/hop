@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Feb 16 16:46:42 2006 (eg)                     */
+;*    Last change :  Tue Feb 28 14:08:08 2006 (eg)                     */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
@@ -36,7 +36,11 @@
 		   :src (format "~a/webconf.js" *webconf-directory*)))
       (<BODY>
          (<H1> "Weblets Configuration")
-	 (make-about-n-config-windows)
+	 ;; Create the About and Configuration windows (not displayed yet) 
+	 (<HOP-WINDOW> :title "About ..." :id "hop-webconf-aboutwin")
+	 (<HOP-WINDOW> :title "Configure ..." :id "hop-webconf-confwin"
+		       :in-frame #t)
+	 ;; Display all the weblets
 	 (map (lambda (dir)
 		(<DIV> :class "webconf-dir"
 		   (<P> (<B> "Directory: ") (<CODE> dir))
@@ -82,14 +86,14 @@
   (define (about-button name about)
     (let ((serv (string-append "/hop/" name "/" about)))
       (<BUTTON> "About"
-		:onclick { hop_open_float_window($serv, "hop-webconf-aboutwin", 50, 50) })))
-
+	 :onclick { hop_open_float_window($serv, "hop-webconf-aboutwin", 50, 50)})))
+  
   (define (config-button name config)
     (let ((serv (if (string=? config "")
 		    (string-append "/hop/" name)
 		    (string-append "/hop/" name "/" config))))
       (<BUTTON> "Configure"
-		:onclick { hop_open_float_window($serv, "hop-webconf-confwin", 100, 100) })))
+	 :onclick { hop_open_float_window($serv, "hop-webconf-confwin", 100, 100)})))
   ;;
   ;; show-weblet-config
   ;;
@@ -129,58 +133,6 @@
        (if about  (about-button name about))
        (if config (config-button name config)))))
   
-;; ----------------------------------------------------------------------
-;; 	make-about-n-config-windows ...
-;; ----------------------------------------------------------------------
-(define (hop-make-window id #!optional (visible? #f) (suffix ""))
-
-  (define (<TD-BORDER> img)
-    (<TD> :width 8 :height 8
-	  (if img (<IMG> :src (format "~A/~A"(hop-icons-directory) img)) "")))
-
-  (define (<TD-EAST> img)
-    (<TD> :width 8
-	  :style (format "background-image:url(~a/~a);background-repeat:repeat-y"
-			 (hop-icons-directory) img)))
-  
-  (define (<TD-SOUTH> img)
-    (<TD> :height 8 :width "100%"
-	  :style (format "background-image:url(~a/~a);background-repeat:repeat-x"
-			 (hop-icons-directory) img)))
-
-  (let ((win        (string-append "hop-float-window" suffix))
-	(handle     (string-append "hop-float-handle" suffix))
-	(content    (string-append "hop-float-content" suffix))
-	(handle-id  (string-append id "-handle"))
-	(content-id (string-append id "-content")))
-    (<DIV> :id id :class win
-	   :style (format "display:~a" (if visible? "block" "none"))
-      (<TABLE> :width "100%" :height "100%" :cellpadding 0 :cellspacing 0
-	       :border 0 :rules "none"
-       (<TR>	; Line #1
-	(<TD> :colspan 3 :rowspan 3 :valign "top"
-	  (<DIV> :class handle :id handle-id
-	      (<SPAN> :class "hop-float-close-button"
-		 (<A> (<B> "X") :onclick {hop_close_float_window($id)})))
-	  (<DIV> :class content :id content-id "?"))
-	(<TD-BORDER> #f))
-
-       (<TR>	; Line #2
-	(<TD-BORDER> "shadow-ne.png"))
-
-       (<TR>	; Line #3
-	(<TD-EAST> "shadow-e.png"))
-
-       (<TR>	; Line #4
-	(<TD-BORDER> #f) (<TD-BORDER> "shadow-sw.png")
-	(<TD-SOUTH> "shadow-s.png") (<TD-BORDER> "shadow-se.png"))))))
-
-
-(define (make-about-n-config-windows)
-  (list 
-   (hop-make-window "hop-webconf-aboutwin")
-   (hop-make-window "hop-webconf-confwin")))
-
 ;*---------------------------------------------------------------------*/
 ;*    webconf about ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -191,3 +143,63 @@
 		  :version (hop-version)
    (<P> [This weblet can be used to configure the installed widgets.])))
   
+
+;*---------------------------------------------------------------------*/
+;*    <HOP-WINDOW> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-xml-compound HOP-WINDOW ((id #unspecified string)
+				 (class #f)
+				 (title "")
+				 (width #f)
+				 (height #f)
+				 (visible #f)
+				 (in-frame #f)
+				 body)
+  (define (<TD-BORDER> img)
+    (<TD> :width 8 :height 8
+	  (if img (<IMG> :src (format "~A/~A"(hop-icons-directory) img)) "")))
+  
+  (define (<TD-EAST> img)
+    (<TD> :width 8
+	  :style (format "background-image:url(~a/~a);background-repeat:repeat-y"
+			 (hop-icons-directory) img)))
+  
+  (define (<TD-SOUTH> img)
+    (<TD> :height 8 :width "100%"
+	  :style (format "background-image:url(~a/~a);background-repeat:repeat-x"
+			 (hop-icons-directory) img)))
+  
+  (let* ((id         (xml-make-id id 'HOP-WINDOW))
+	 (cls        (or class "hop-float-window"))
+	 (handle-id  (string-append id "-handle"))
+	 (content-id (string-append id "-content")))
+    (list 
+      (<DIV> :id id :class cls
+	     :style (string-append
+		        (if width  (format "width: ~A; " width) "")
+			(if height (format "height: ~A; " height) "")
+			(format "display:~a" (if visible "block" "none")))
+	(<TABLE> :width "100%" :height "100%" :cellpadding 0 :cellspacing 0
+		 :border 0 :rules "none"
+	 (<TR>	; Line #1
+	  (<TD> :colspan 3 :rowspan 3 :valign "top"
+	    (<TABLE> :class "hop-float-handle" :id handle-id :width "100%"
+		     :cellpadding 0 :cellspacing 0 :border 0 :rules "none"
+	      (<TR>
+	       (<TD> :class "hop-float-title" :width "100%" title)
+	       (<TD> :class "hop-float-close-button"
+		     (<A> (<B> "X") :onclick {hop_close_float_window($id)}))))
+	    (<DIV> :class "hop-float-content" :id content-id body))
+	  (<TD-BORDER> #f))
+
+	 (<TR>	; Line #2
+	  (<TD-BORDER> "shadow-ne.png"))
+
+	 (<TR>	; Line #3
+	  (<TD-EAST> "shadow-e.png"))
+
+	 (<TR>	; Line #4
+	  (<TD-BORDER> #f) (<TD-BORDER> "shadow-sw.png")
+	  (<TD-SOUTH> "shadow-s.png") (<TD-BORDER> "shadow-se.png"))))
+      (<SCRIPT> :type "text/javascript"
+		{ hop_float_window_init($id, $in-frame)}))))
