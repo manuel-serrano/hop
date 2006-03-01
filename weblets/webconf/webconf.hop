@@ -3,12 +3,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Feb 28 14:34:47 2006 (eg)                     */
+;*    Last change :  Wed Mar  1 12:05:24 2006 (eg)                     */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
 ;*=====================================================================*/
-
 
 ;; ----------------------------------------------------------------------
 ;;	module ...
@@ -28,7 +27,8 @@
 (define-service (webconf)
    (<HTML>
       (<HEAD>
-	 (<HOP-HEAD>)
+	 (<HOP-HEAD> :jscript "hop-folditem.js"
+		     :css "hop-folditem.css")
 	 (<LINK> :rel "stylesheet"
 		 :type "text/css"
 		 :href (format "~a/webconf.hss" *webconf-directory*))
@@ -40,21 +40,17 @@
 	 (<HOP-WINDOW> :title "About ..." :id "hop-webconf-aboutwin")
 	 (<HOP-WINDOW> :title "Configure ..." :id "hop-webconf-confwin"
 		       :in-frame #t)
+
 	 ;; Display all the weblets
 	 (map (lambda (dir)
 		(<DIV> :class "webconf-dir"
 		   (<P> (<B> "Directory: ") (<CODE> dir))
-		   (<UL> 
-		    (map (lambda (x)
-			   (let ((id (symbol->string (gensym "wc")))
-				 (wl (cadr (assoc 'name x))))
-			     (<LI> (<A> :href "#" :class "webconf-link"
-					:onclick { hop_webconf_toggle($id) }
-					wl)
-				   (<DIV> :id id
-					  :style "display:none"
-					  (show-weblet-config x)))))
-			 (find-weblets dir)))))
+		   (<DIV> :class "webconf-items"
+		       (map (lambda (x)
+			      (let ((weblet-name (cadr (assoc 'name x))))
+				(<FOLD-ITEM> :title (<I> weblet-name)
+					     (show-weblet-config x))))
+			  (find-weblets dir)))))
 	      (hop-autoload-directories)))))
 
 ;; ----------------------------------------------------------------------
@@ -132,10 +128,10 @@
 					      false )}))))
        (if about  (about-button name about))
        (if config (config-button name config)))))
-  
-;*---------------------------------------------------------------------*/
-;*    webconf about ...                                                */
-;*---------------------------------------------------------------------*/
+
+;; ----------------------------------------------------------------------
+;; 	webconf-about ...
+;; ----------------------------------------------------------------------  
 (define-service (webconf/about)
   (<WEBLET-ABOUT> :title "webconf"
 		  :subtitle "Hop weblets configuration tool"
@@ -203,3 +199,4 @@
 	  (<TD-SOUTH> "shadow-s.png") (<TD-BORDER> "shadow-se.png"))))
       (<SCRIPT> :type "text/javascript"
 		{ hop_float_window_init($id, $in-frame)}))))
+

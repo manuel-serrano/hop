@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Jan 20 14:47:32 2006 (serrano)                */
+#*    Last change :  Wed Mar  1 12:01:38 2006 (eg)                     */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -22,7 +22,8 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-error.hss hop-paned.js hop-table.js hop.css md5.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css hop.js \
                   user.scm hop-notepad.css hop-slider.js hop-tabslider.js \
-	 	  hop-notepad.js hop-sorttable.css hop-tree.css hop.scm \
+	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
+		  hop-folditem.js hop-folditem.css hop.scm \
 		  icons Makefile
 
 #*---------------------------------------------------------------------*/
@@ -47,6 +48,8 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-notepad.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-tabslider.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-tabslider.css $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-folditem.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-folditem.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
 	mkdir -p $(HOPSHAREDIR)/icons && \
 	chmod a+rx $(HOPSHAREDIR)/icons && \

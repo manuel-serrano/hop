@@ -3,18 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-/*    Last change :  Tue Feb 28 14:44:08 2006 (eg)                     */
+/*    Last change :  Wed Mar  1 12:05:38 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet JavaScript Functions                                  */
 /*=====================================================================*/
-
-
-function hop_webconf_toggle(id)
-{
-    var info = document.getElementById(id);
-    info.style.display = (info.style.display == "block") ? "none" : "block";
-}
 
 
 function hop_float_window_init(id, inframe)

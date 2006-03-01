@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Feb 10 14:29:20 2006 (eg)                     */
+#*    Last change :  Wed Mar  1 11:28:59 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -44,7 +44,7 @@ _OBJECTS	= param misc types thread \
                   http-lib http-response http-shoutcast http-error \
                   html-extra html-notepad html-tree html-slider \
                   html-paned html-tabslider html-inline \
-                  event color weblets
+                  event color weblets html-folditem
 
 OBJECTS		= $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS	= o/make-lib.o

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2006                          */
-/*    Last change :  Tue Feb 28 14:38:12 2006 (eg)                     */
+/*    Last change :  Wed Mar  1 12:05:54 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet configuration CSS                                     */
@@ -59,6 +59,17 @@ BODY {
     cursor: pointer;
 }
 
+.webconf-dir {
+    background: #F5F5DC;
+    border: 2px solid grey;
+    padding: 5;
+    margin: 0 30px 10px 30px;
+    -moz-border-radius: 15px;
+}
+
+.webconf-items {
+    margin-bottom: 5px;
+}
 
 /* ====================================================================== *\
  *
@@ -91,7 +102,7 @@ BODY {
 
 .hop-float-content {
     height: 100%;
-    background: #FFFACD;
+    background: #BFFFCF;
     border-left: 2px solid #BEBEBE;
 }
 
@@ -128,6 +139,7 @@ BODY {
 }
 
 #hop-webconf-confwin-content {
-    background: #FDF5E6;
+    background: #FAEBD7;
 }
+
 
