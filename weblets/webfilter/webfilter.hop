@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Feb 25 08:44:44 2006 (serrano)                */
+;*    Last change :  Wed Mar  1 10:38:07 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -12,7 +12,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module weblet_webfilter)
+(module weblet_webfilter
+;*    (library zip)                                                    */
+   )
 
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */
@@ -198,6 +200,7 @@ Google, each containing a forward pointer to the found wanted URL.])))
 ;*---------------------------------------------------------------------*/
 (define-service (webfilter)
    (let ((req (the-current-request)))
+      (tprint "webfilter..." req " " (user-authorized-service? (http-request-user req) 'admin))
       (if (not (user-authorized-service? (http-request-user req) 'admin))
 	  (user-access-denied req)
 	  (<HTML>
@@ -281,6 +284,7 @@ Google, each containing a forward pointer to the found wanted URL.])))
    (define flash-grammar
       (regular-grammar (op)
 	 ((uncase "<embed ")
+	  (tprint "GOT ONE...")
 	  (display "<param name='PLAY' value='false'><embed play='false' " op)
 	  (ignore))
 	 ((+ (out #\space))
@@ -301,6 +305,17 @@ Google, each containing a forward pointer to the found wanted URL.])))
 			      (begin
 				 (send-chars ip op cl)
 				 (flush-output-port op))
+;* 			      (let ((ipz (open-input-gzip-port ip))    */
+;* 				    (opz (open-output-gzip-port op)))  */
+;* 				 (unless (= cl #e-1)                   */
+;* 				    (let ((barrier (elong->fixnum cl))) */
+;* 				       (input-port-fill-barrier-set! ip barrier))) */
+;* 				 (unwind-protect                       */
+;* 				    (read/rp flash-grammar ipz opz)    */
+;* 				    (begin                             */
+;* 				       (close-input-port ipz)          */
+;* 				       (close-output-port opz)))       */
+;* 				 (flush-output-port op))               */
 			      (begin
 				 (unless (= cl #e-1)
 				    (let ((barrier (elong->fixnum cl)))

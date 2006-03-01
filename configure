@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Feb 23 08:56:27 2006 (serrano)                */
+#*    Last change :  Wed Mar  1 12:01:05 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -16,10 +16,10 @@
 prefix=/usr/local
 
 bigloo=bigloo
-afile=afile
-jfile=jfile
-btags=btags
-bdepend=bdepend
+afile=bglafile
+jfile=bgljfile
+btags=bgltags
+bdepend=bgldepend
 cc=
 backend=native
 
