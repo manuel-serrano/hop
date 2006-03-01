@@ -1,25 +1,27 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/webconf/webconf.js              */
+/*    serrano/prgm/project/hop/share/hop-window.js                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
-/*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-/*    Last change :  Wed Mar  1 12:05:38 2006 (eg)                     */
-/*    Copyright   :  2006 Erick Gallesio                               */
+/*    Creation    :  Wed Mar  1 14:09:36 2006                          */
+/*    Last change :  Wed Mar  1 14:58:25 2006 (eg)                     */
 /*    -------------------------------------------------------------    */
-/*    HOP Weblet JavaScript Functions                                  */
+/*    FLOAT-WINDOW implementation                                      */
 /*=====================================================================*/
 
-
+/* ====================================================================== *\
+ * 	hop_float_window_init ...
+\* ====================================================================== */
 function hop_float_window_init(id, inframe)
 {
     var el = document.getElementById(id);
     
-    Drag.init(el);
+    HopDrag.init(el);
     el.inFrame = inframe;
-    //    el.style.zIndex = ++Drag.zIndex;
 }
 
-
+/* ====================================================================== *\
+ * 	hop_open_float_window ...
+\* ====================================================================== */
 function hop_open_float_window(serv, id, x, y)
 {
     var win = document.getElementById(id);
@@ -30,7 +32,7 @@ function hop_open_float_window(serv, id, x, y)
 	win.style.display = "block";
 	win.style.left = x;
 	win.style.top  = y;
-	win.style.zIndex = ++Drag.zIndex;
+	win.style.zIndex = ++HopDrag.zIndex;
     }
 
     function compute_height() {
@@ -70,8 +72,9 @@ function hop_open_float_window(serv, id, x, y)
     }
 }
 
-
-
+/* ====================================================================== *\
+ * 	hop_close_float_window ...
+\* ====================================================================== */
 function hop_close_float_window(id)
 {
     var el = document.getElementById(id)
@@ -79,8 +82,15 @@ function hop_close_float_window(id)
 }
 
 
-
-var Drag = {
+/* ====================================================================== *\
+ *
+ * HopDrag Object
+ * 
+ * The following code is an adaptation of the dom-drag.js Drag object 
+ * available at "http://www.youngpup.net/2001/domdrag/project"
+ *
+\* ====================================================================== */
+var HopDrag = {
     obj : null,
 
     opacity: 1,
@@ -90,17 +100,21 @@ var Drag = {
     init : function(o, oRoot, minX, maxX, minY, maxY, 
 		    bSwapHorzRef, bSwapVertRef, fXMapper, fYMapper)
     {
-	o.onmousedown	= Drag.start;
+	o.onmousedown	= HopDrag.start;
 	
 	o.hmode		= bSwapHorzRef ? false : true ;
 	o.vmode		= bSwapVertRef ? false : true ;
 	
 	o.root = oRoot && oRoot != null ? oRoot : o ;
 	
-	if (o.hmode  && isNaN(parseInt(o.root.style.left  ))) o.root.style.left   = "0px";
-	if (o.vmode  && isNaN(parseInt(o.root.style.top   ))) o.root.style.top    = "0px";
-	if (!o.hmode && isNaN(parseInt(o.root.style.right ))) o.root.style.right  = "0px";
-	if (!o.vmode && isNaN(parseInt(o.root.style.bottom))) o.root.style.bottom = "0px";
+	if (o.hmode  && isNaN(parseInt(o.root.style.left  ))) 
+	    o.root.style.left   = "0px";
+	if (o.vmode  && isNaN(parseInt(o.root.style.top   )))
+	    o.root.style.top    = "0px";
+	if (!o.hmode && isNaN(parseInt(o.root.style.right ))) 
+	    o.root.style.right  = "0px";
+	if (!o.vmode && isNaN(parseInt(o.root.style.bottom))) 
+	    o.root.style.bottom = "0px";
 	
 	o.minX	= typeof minX != 'undefined' ? minX : null;
 	o.minY	= typeof minY != 'undefined' ? minY : null;
@@ -117,12 +131,12 @@ var Drag = {
     
     start : function(e)
     {
-	var o = Drag.obj = this;
-	e = Drag.fixE(e);
+	var o = HopDrag.obj = this;
+	e = HopDrag.fixE(e);
 	var y = parseInt(o.vmode ? o.root.style.top  : o.root.style.bottom);
 	var x = parseInt(o.hmode ? o.root.style.left : o.root.style.right );
 
-	o.root.style.zIndex = ++Drag.zIndex;
+	o.root.style.zIndex = ++HopDrag.zIndex;
 	o.root.onDragStart(x, y);
 	
 	o.lastMouseX	= e.clientX;
@@ -144,16 +158,16 @@ var Drag = {
 	    if (o.maxY != null) o.minMouseY = -o.maxY + e.clientY + y;
 	}
 	
-	document.onmousemove	= Drag.drag;
-	document.onmouseup	= Drag.end;
+	document.onmousemove	= HopDrag.drag;
+	document.onmouseup	= HopDrag.end;
 	
-		return false;
+	return false;
     },
     
     drag : function(e)
     {
-	e = Drag.fixE(e);
-	var o = Drag.obj;
+	e = HopDrag.fixE(e);
+	var o = HopDrag.obj;
 	
 	var ey	= e.clientY;
 	var ex	= e.clientX;
@@ -161,23 +175,27 @@ var Drag = {
 	var x = parseInt(o.hmode ? o.root.style.left : o.root.style.right );
 	var nx, ny;
 	
-	if (o.minX != null) ex = o.hmode ? Math.max(ex, o.minMouseX) : Math.min(ex, o.maxMouseX);
-	if (o.maxX != null) ex = o.hmode ? Math.min(ex, o.maxMouseX) : Math.max(ex, o.minMouseX);
-	if (o.minY != null) ey = o.vmode ? Math.max(ey, o.minMouseY) : Math.min(ey, o.maxMouseY);
-	if (o.maxY != null) ey = o.vmode ? Math.min(ey, o.maxMouseY) : Math.max(ey, o.minMouseY);
+	if (o.minX != null) 
+	    ex = o.hmode ? Math.max(ex, o.minMouseX) : Math.min(ex, o.maxMouseX);
+	if (o.maxX != null) 
+	    ex = o.hmode ? Math.min(ex, o.maxMouseX) : Math.max(ex, o.minMouseX);
+	if (o.minY != null) 
+	    ey = o.vmode ? Math.max(ey, o.minMouseY) : Math.min(ey, o.maxMouseY);
+	if (o.maxY != null) 
+	    ey = o.vmode ? Math.min(ey, o.maxMouseY) : Math.max(ey, o.minMouseY);
 
 	nx = x + ((ex - o.lastMouseX) * (o.hmode ? 1 : -1));
 	ny = y + ((ey - o.lastMouseY) * (o.vmode ? 1 : -1));
 	
-	if (o.xMapper)		nx = o.xMapper(y)
-	    else if (o.yMapper)	ny = o.yMapper(x);
+	if (o.xMapper)	     nx = o.xMapper(y)
+	else if (o.yMapper)  ny = o.yMapper(x);
 				    
-	Drag.obj.root.style[o.hmode ? "left" : "right"] = nx + "px";
-	Drag.obj.root.style[o.vmode ? "top" : "bottom"] = ny + "px";
-	Drag.obj.lastMouseX	= ex;
-	Drag.obj.lastMouseY	= ey;
+	HopDrag.obj.root.style[o.hmode ? "left" : "right"] = nx + "px";
+	HopDrag.obj.root.style[o.vmode ? "top" : "bottom"] = ny + "px";
+	HopDrag.obj.lastMouseX	= ex;
+	HopDrag.obj.lastMouseY	= ey;
 	
-	Drag.obj.root.onDrag(nx, ny);
+	HopDrag.obj.root.onDrag(nx, ny);
 	return false;
     },
 
@@ -185,10 +203,10 @@ var Drag = {
     {
 	document.onmousemove = null;
 	document.onmouseup   = null;
-	Drag.obj.root.onDragEnd(
-		parseInt(Drag.obj.root.style[Drag.obj.hmode ? "left" : "right"]), 
-		parseInt(Drag.obj.root.style[Drag.obj.vmode ? "top" : "bottom"]));
-	Drag.obj = null;
+	HopDrag.obj.root.onDragEnd(
+	   parseInt(HopDrag.obj.root.style[HopDrag.obj.hmode ? "left" : "right"]), 
+	   parseInt(HopDrag.obj.root.style[HopDrag.obj.vmode ? "top" : "bottom"]));
+	HopDrag.obj = null;
     },
 
     fixE : function(e)

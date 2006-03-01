@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2006                          */
-/*    Last change :  Wed Mar  1 12:05:54 2006 (eg)                     */
+/*    Last change :  Wed Mar  1 14:25:15 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet configuration CSS                                     */
@@ -70,55 +70,6 @@ BODY {
 .webconf-items {
     margin-bottom: 5px;
 }
-
-/* ====================================================================== *\
- *
- * 			         Floating window 
- *
-\* ====================================================================== */
-.hop-float-handle {
-    text-align: right;
-    margin-bottom: 0;
-    background: #000080;
-    border: 2px;
-    border-color: #000080;
-    border-style: inset;
-    color: white;
-    padding: 1;
-    cursor: move;
-    opacity: 1;
-}
-
-.hop-float-title {
-    text-align: left;
-    font-size: 90%;
-    font-style: italic;
-}
-
-.hop-float-close-button {
-    cursor: pointer;
-    padding: 1;
-}
-
-.hop-float-content {
-    height: 100%;
-    background: #BFFFCF;
-    border-left: 2px solid #BEBEBE;
-}
-
-.hop-float-window {
-    position: absolute;
-    background: transparent;
-    border: 0;
-    padding: 0;
-}
-
-.hop-float-iframe {
-    opacity: 1.0;
-    width: 100%;
-    border: 0;
-}
-
 
 /* ====================================================================== */
 

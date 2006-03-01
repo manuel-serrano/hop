@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Mar  1 12:01:38 2006 (eg)                     */
+#*    Last change :  Wed Mar  1 14:25:06 2006 (eg)                     */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -23,7 +23,8 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css hop.js \
                   user.scm hop-notepad.css hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
-		  hop-folditem.js hop-folditem.css hop.scm \
+		  hop-folditem.js hop-folditem.css hop-window.js \
+		  hop-window.css hop.scm \
 		  icons Makefile
 
 #*---------------------------------------------------------------------*/
@@ -50,6 +51,8 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-tabslider.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-folditem.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-folditem.css $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-window.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-window.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
 	mkdir -p $(HOPSHAREDIR)/icons && \
 	chmod a+rx $(HOPSHAREDIR)/icons && \
@@ -76,6 +79,10 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop-notepad.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-tabslider.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-tabslider.css && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-folditem.js && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-folditem.css && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-window.js && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-window.css && \
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \
 	/bin/rm -f $(HOPSHAREDIR)/icons
 

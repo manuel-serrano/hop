@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Mar  1 11:47:40 2006 (eg)                     */
+;*    Last change :  Wed Mar  1 12:28:13 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling HTTP requests.                                          */
@@ -30,6 +30,7 @@
 	    __hop_html-tree
 	    __hop_html-extra
 	    __hop_html-folditem
+	    __hop_html-window
 	    __hop_event)
    
    (export  (the-current-request::obj)
