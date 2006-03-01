@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat Feb 11 20:38:48 2006 (serrano)                */
+#*    Last change :  Wed Mar  1 15:50:34 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -27,11 +27,21 @@ POPDIRS		= runtime src etc share contribs weblets
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: showflags
+.PHONY: bindir libdir bin lib
+
+build: showflags bindir libdir bin lib
+
+bindir:
 	mkdir -p bin
+
+libdir:
 	mkdir -p lib
-	(cd runtime && $(MAKE) build)
+
+bin: lib
 	(cd src && $(MAKE) build)
+
+lib:
+	(cd runtime && $(MAKE) build)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */
