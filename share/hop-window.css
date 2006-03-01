@@ -1,0 +1,54 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-window.css                    */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Erick Gallesio                                    */
+/*    Creation    :  Wed Mar  1 14:09:36 2006                          */
+/*    Last change :  Wed Mar  1 14:28:36 2006 (eg)                     */
+/*    -------------------------------------------------------------    */
+/*    FLOAT-WINDOW CSS                                                 */
+/*=====================================================================*/
+
+.hop-float-window {
+    position: absolute;
+    background: transparent;
+    border: 0;
+    padding: 0;
+}
+
+.hop-float-handle {
+    text-align: right;
+    margin-bottom: 0;
+    background: #000080;
+    border: 2px;
+    border-color: #000080;
+    border-style: inset;
+    color: white;
+    padding: 1;
+    cursor: move;
+    opacity: 1;
+}
+
+.hop-float-title {
+    text-align: left;
+    font-size: 90%;
+    font-style: italic;
+}
+
+.hop-float-close-button {
+    cursor: pointer;
+    padding: 1;
+}
+
+.hop-float-content {
+    height: 100%;
+    background: #BFFFCF;
+    border-left: 2px solid #BEBEBE;
+}
+
+
+.hop-float-iframe {
+    opacity: 1.0;
+    width: 100%;
+    border: 0;
+}
+

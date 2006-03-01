@@ -3,12 +3,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Feb 12 14:40:59 2006 (serrano)                */
+;*    Last change :  Wed Mar  1 15:01:24 2006 (eg)                     */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
 ;*=====================================================================*/
-
 
 ;; ----------------------------------------------------------------------
 ;;	module ...
@@ -28,29 +27,28 @@
 (define-service (webconf)
    (<HTML>
       (<HEAD>
-	 (<HOP-HEAD>)
+	 (<HOP-HEAD> :jscript "hop-folditem.js" "hop-window.js"
+		     :css "hop-folditem.css" "hop-window.css")
 	 (<LINK> :rel "stylesheet"
 		 :type "text/css"
-		 :href (format "~a/webconf.hss" *webconf-directory*))
-      	 (<SCRIPT> :type "text/javascript"
-		   :src (format "~a/webconf.js" *webconf-directory*)))
+		 :href (format "~a/webconf.hss" *webconf-directory*)))
       (<BODY>
          (<H1> "Weblets Configuration")
-	 (make-about-n-config-windows)
+	 ;; Create the About and Configuration windows (not displayed yet) 
+	 (<FLOAT-WINDOW> :title "About ..." :id "hop-webconf-aboutwin")
+	 (<FLOAT-WINDOW> :title "Configure ..." :id "hop-webconf-confwin"
+		       :in-frame #t)
+
+	 ;; Display all the weblets
 	 (map (lambda (dir)
 		(<DIV> :class "webconf-dir"
 		   (<P> (<B> "Directory: ") (<CODE> dir))
-		   (<UL> 
-		    (map (lambda (x)
-			   (let ((id (symbol->string (gensym "wc")))
-				 (wl (cadr (assoc 'name x))))
-			     (<LI> (<A> :href "#" :class "webconf-link"
-					:onclick { hop_webconf_toggle($id) }
-					wl)
-				   (<DIV> :id id
-					  :style "display:none"
-					  (show-weblet-config x)))))
-			 (find-weblets dir)))))
+		   (<DIV> :class "webconf-items"
+		       (map (lambda (x)
+			      (let ((weblet-name (cadr (assoc 'name x))))
+				(<FOLD-ITEM> :title (<I> weblet-name)
+					     (show-weblet-config x))))
+			  (find-weblets dir)))))
 	      (hop-autoload-directories)))))
 
 ;; ----------------------------------------------------------------------
@@ -82,14 +80,14 @@
   (define (about-button name about)
     (let ((serv (string-append "/hop/" name "/" about)))
       (<BUTTON> "About"
-		:onclick { hop_open_webconf_window($serv, "about", 50, 50) })))
-
+	 :onclick { hop_open_float_window($serv, "hop-webconf-aboutwin", 50, 50)})))
+  
   (define (config-button name config)
     (let ((serv (if (string=? config "")
 		    (string-append "/hop/" name)
 		    (string-append "/hop/" name "/" config))))
       (<BUTTON> "Configure"
-		:onclick { hop_open_webconf_window($serv, "config", 100, 100) })))
+	 :onclick { hop_open_float_window($serv, "hop-webconf-confwin", 100, 100)})))
   ;;
   ;; show-weblet-config
   ;;
@@ -128,31 +126,14 @@
 					      false )}))))
        (if about  (about-button name about))
        (if config (config-button name config)))))
-  
-;; ----------------------------------------------------------------------
-;; 	make-about-n-config-windows ...
-;; ----------------------------------------------------------------------
-(define (make-about-n-config-windows)
-  (let ((make (lambda (type action)
-		(let ((win     (format "webconf-~A-window" type))
-		      (handle  (format "webconf-~A-handle" type))
-		      (content (format "webconf-~A-content" type)))
-		  (<DIV> :id win :style "display: none"
-		     (<DIV> :class "webconf-window-handle" :id handle
-			(<SPAN> :class "webconf-window-close" 
-			   (<A> (<B> "X") :onclick action)))
-		     (<DIV> :class "webconf-window-content" :id content " "))))))
-    (list
-     (make "about"  { hop_close_window("about") })
-     (make "config" { hop_close_window("config") }))))
 
-;*---------------------------------------------------------------------*/
-;*    webconf about ...                                                */
-;*---------------------------------------------------------------------*/
+;; ----------------------------------------------------------------------
+;; 	webconf-about ...
+;; ----------------------------------------------------------------------  
 (define-service (webconf/about)
   (<WEBLET-ABOUT> :title "webconf"
 		  :subtitle "Hop weblets configuration tool"
 		  :icon (format "~a/configure.png" *webconf-directory*)
 		  :version (hop-version)
-   (<P> [This weblets permits to configure the installed widgets.])))
+   (<P> [This weblet can be used to configure the installed widgets.])))
   
