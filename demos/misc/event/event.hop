@@ -1,0 +1,27 @@
+(let ((evt (instantiate::hop-event (name "connect"))))
+
+   (hop-http-response-remote-hook-add!
+    (lambda (req rep)
+       (with-access::http-request req (host port path)
+	  (signal-hop-event! evt (<B> host ":" port path))
+	  rep)))
+
+   (<HTML>
+      (<HEAD> (<HOP-HEAD>))
+      (<BODY>
+	 (<P>
+	    "This example implements an event loop. Access another HOP service
+from another tab our window of your browser."
+	    (let ((foo (<DIV> :style {border: 1px solid black} (<P> (<B> ""))))
+		  (bar (<DIV> :style {border: 1px solid red} (<P> (<B> "")))))
+	       (list foo
+		     bar
+		     (<HOP-EVENT>
+			:event evt
+			:handler { hop_replace_inner( $foo )( event );
+			           hop_clear_timeout( "tmt" ); })
+		     (<TIMEOUT-EVENT>
+			:id "tmt"
+			:eager #f
+			:timeout 5000
+			:handler { $(begin bar).innerHTML = new Date() + "" })))))))))

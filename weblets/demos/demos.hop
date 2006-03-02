@@ -1,0 +1,190 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/webconf/webconf.hop             */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Erick Gallesio                                    */
+;*    Creation    :  Thu Mar  2 11:12:55 2006                          */
+;*    Last change :  Mon Feb 14 06:14:00 2005                          */
+;*    Copyright   :  2006 Erick Gallesio                               */
+;*    -------------------------------------------------------------    */
+;*    HOP Demos                                                        */
+;*=====================================================================*/
+
+;; ----------------------------------------------------------------------
+;;	module ...
+;; ----------------------------------------------------------------------
+;;(module demos_configuration)
+;; (export webconf-make-window)
+
+;; ----------------------------------------------------------------------
+;;	Utilities ...
+;; ----------------------------------------------------------------------
+(define *demos-directory*
+   (make-file-name (hop-weblets-directory) "demos"))
+
+
+(define (<DEMO-HEAD>)
+  (<HEAD>
+    (<HOP-HEAD>)
+    (<LINK> :rel "stylesheet"
+	    :type "text/css"
+	    :href (format "~a/demos.hss" *demos-directory*))))
+
+
+(define (<DEMO-TABLE> dir proc)
+  (let ((even? #f))
+    (<TABLE> :class "hop-demos-tbl" 
+       (map (lambda (x)
+	      (set! even? (not even?))
+	      (<TR> :class (string-append "hop-demos-tbl-"
+					  (if even? "even" "odd"))
+		    (<TD> (proc x))))
+	    (directory->list dir)))))
+
+;; ----------------------------------------------------------------------
+;;	demos-filter ...
+;; ----------------------------------------------------------------------
+(define-service (demos)
+  (<HTML>
+   (<DEMO-HEAD>)
+   (<FRAMESET> :rows "35%,*"  :frameborder 1 :border 4 :framespacing 0
+      (<FRAMESET> :cols "200,200,*"
+	 (<FRAME> :name "cats" :src "demos/categories")
+	 (<FRAME> :name "samples" :src "demos/empty-frame")
+	 (<FRAME> :name "doc" :src "demos/initial-doc"))
+       (<FRAMESET> :cols "50%,50%"
+	 (<FRAME> :name "code" :src "demos/empty-frame")
+	 (<FRAME> :name "view" :src "demos/empty-frame")))))
+
+;; ----------------------------------------------------------------------
+;;	demos/categories service ...
+;; ----------------------------------------------------------------------
+(define-service (demos/categories)
+  (let ((even? #f))
+    (<HTML>
+     (<DEMO-HEAD>)
+     (<BODY>
+      (<H1> "categories")
+      (<DEMO-TABLE>
+          (hop-demos-directory)
+	  (lambda(x)
+	    (<A> :href (make-service-url demos/fill-samples x)
+		 :target "samples"
+		 x)))))))
+
+
+;; ----------------------------------------------------------------------
+;;	demos/fill-samples service ...
+;; ----------------------------------------------------------------------
+(define-service (demos/fill-samples dir)
+  (<HTML>
+   (<DEMO-HEAD>)
+   (<BODY>
+    (<H1> (string-append dir " demos"))
+    (<DEMO-TABLE>
+       (make-file-path (hop-demos-directory) dir)
+       (lambda (x)
+	 (<A> :href "#"
+	      :onclick {
+		  parent.frames["code"].window.location=
+			       $(make-service-url demos/show-sample dir x)
+		  parent.frames["view"].window.location=
+			       $(make-file-path (hop-demos-directory)
+						dir x (string-append x ".hop"))
+		  parent.frames["doc"].window.location=
+		  	       $(make-service-url demos/show-doc dir x)
+	       }
+	      x))))))
+
+
+;; ----------------------------------------------------------------------
+;;	demos/initial-doc service ...
+;; ----------------------------------------------------------------------
+(define-service (demos/initial-doc)
+  (<HTML>
+   (<DEMO-HEAD>)
+   (<BODY>
+    (<H1> "Welcome on the Hop demos browser"))
+    (<P> "Click on a category and choose a demo to launch.")
+    (<P> "The bottom part of this window is split in two: ")
+    (<UL> (<LI> "on the left, some Hop code is presented")
+	  (<LI> "on the right, the result of the evaluation of "
+		"this code is shown"))
+    (<TABLE> :width "98%"
+       (<TR> (<TD> :align "right" (<HOP-FOOT-LOGO>))))))
+
+;; ----------------------------------------------------------------------
+;;	demos/empty-frame service ...
+;; ----------------------------------------------------------------------
+(define-service (demos/empty-frame)
+  (<HTML>
+   (<DEMO-HEAD>)
+   (<BODY> "")))
+
+;; ----------------------------------------------------------------------
+;;	demos/show-sample service ...
+;; ----------------------------------------------------------------------
+(define (htmlize obj)				;; FIXME. must be completely changed
+  (tprint "htmlize " obj)
+  (cond
+    ((null? obj) '())
+    ((pair? obj) (cons (htmlize (car obj))
+		       (htmlize (cdr obj))))
+    ((string? obj) (pregexp-replace* ">"
+				     (pregexp-replace* "<" obj "&lt;")
+				     "&gt;"))
+    (else (error 'htmlize "Cannot htmlize" obj))))
+
+		   
+(define-service (demos/show-sample dir sample)
+  (define (show-code file)
+    (let ((in (open-input-file file)))
+      (if in
+	  (<DIV> :class "hop-demos-code"
+	     (<PRE> 
+	      (htmlize (with-output-to-string
+			 (lambda ()
+			   (let Loop ((l (read-line in)))
+			     (unless (eof-object? l)
+			       (display l)
+			       (newline)
+			       (Loop (read-line in))))))))))))
+  (<HTML>
+   (<DEMO-HEAD>)
+   (<BODY> :class "hop-demos-code"
+    (<H1> (format "Code of '~a/~a'" dir sample))
+    (show-code (make-file-path (hop-demos-directory)
+			       dir
+			       sample
+			       (string-append sample ".hop"))))))
+
+;; ----------------------------------------------------------------------
+;;	demos/show-doc service ...
+;; ----------------------------------------------------------------------
+(define-service (demos/show-doc dir sample)
+  (let ((doc (open-input-file (make-file-path (hop-demos-directory)
+					      dir sample "comment.hop"))))
+    (<HTML>
+     (<DEMO-HEAD>)
+     (<BODY>
+      (if (input-port? doc)
+	(let Loop ((txt (hop-read doc))
+		   (res '()))
+	  (if (eof-object? txt)
+	      (list (<H1> (format "~a/~a demo" dir sample))
+		    (map eval (reverse! res)))
+	      (Loop (hop-read doc)
+		    (cons txt res))))
+	(<H2> (format "No documentation for ~a/~a!!" dir sample)))))))
+
+;; ----------------------------------------------------------------------
+;; 	demos/about service ...
+;; ----------------------------------------------------------------------  
+(define-service (demos/about)
+  (<WEBLET-ABOUT> :title "demos"
+		  :subtitle "Hop Demonstrations"
+		  :icon (format "~a/demos.png" *demos-directory*)
+		  :version (hop-version)
+   (<P> [This weblet gives access to all the demos which are provided
+	 with the Hop distribution.])
+   (<P> [Enjoy])))
+  

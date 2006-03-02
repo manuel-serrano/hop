@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Feb 25 05:37:01 2006 (serrano)                */
+;*    Last change :  Thu Mar  2 16:12:37 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -120,6 +120,7 @@
 	    (hop-server-name-set! ::bstring)
 	    
 	    hop-icons-directory
+	    hop-demos-directory
 
 	    (hop-connection-ttl::int) 
 	    (hop-connection-ttl-set! ::int)
@@ -470,6 +471,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-icons-directory
    (make-file-name (hop-share-directory) "icons"))
+
+;*---------------------------------------------------------------------*/
+;*    hop-demos-directory ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-demos-directory
+   (make-file-name (hop-share-directory) "demos"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-authorize-service-hook ...                                   */

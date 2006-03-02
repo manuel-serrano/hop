@@ -1,0 +1,49 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/webconf/webconf.hop             */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Erick Gallesio                                    */
+/*    Creation    :  Thu Mar  2 11:12:55 2006                          */
+/*    Last change :  Mon Feb 14 06:14:00 2005                          */
+/*    Copyright   :  2006 Erick Gallesio                               */
+/*    -------------------------------------------------------------    */
+/*    HOP Demos                                                        */
+/*=====================================================================*/
+
+BODY {
+    background: cornsilk;
+}
+
+H1 {
+    font-size: 120%;
+    text-align: center;
+}
+
+H1, H2 {
+    color: darkgoldenrod;
+}
+
+.hop-demos-tbl {
+    width: 100%;
+    border: 1px solid khaki;
+}
+
+.hop-demos-tbl-even {
+    background: palegoldenrod;
+}
+
+.hop-demos-tbl A {
+    color: brown;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.hop-demos-code {
+    background: #eee;
+}
+
+.hop-demos-code H1 {
+    font-size: 140%;
+    text-align: center;
+    padding-bottom: 3px;
+    border-bottom: 1px solid brown;
+}

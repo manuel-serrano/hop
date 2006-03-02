@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Mar  1 15:50:34 2006 (serrano)                */
+#*    Last change :  Thu Mar  2 21:19:30 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -22,7 +22,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile configure
-POPDIRS		= runtime src etc share contribs weblets
+POPDIRS		= runtime src etc share contribs weblets demos
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -65,6 +65,7 @@ install: install-init
 	(cd src && $(MAKE) install) && \
 	(cd share && $(MAKE) install) && \
 	(cd weblets && $(MAKE) install)
+	(cd demos && $(MAKE) install)
 
 install-init: $(DESTDIR)$(HOPFILDIR)
 	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPFILDIR)/hop.init && \
@@ -79,6 +80,7 @@ $(DESTDIR)$(HOPFILDIR):
 uninstall:
 	(cd src; $(MAKE) uninstall)
 	(cd runtime; $(MAKE) uninstall)
+	(cd demos; $(MAKE) uninstall)
 	/bin/rm -rf $(FILDIR)
 
 #*---------------------------------------------------------------------*/
