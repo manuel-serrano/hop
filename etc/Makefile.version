@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:38:36 2006                          */
-#*    Last change :  Fri Feb 10 07:22:30 2006 (serrano)                */
+#*    Last change :  Thu Mar  2 15:58:56 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    This Makefile interfaces with version managers.                  */
@@ -44,6 +44,9 @@ push:
 
 pull:
 	$(VM-PULL) $(HOPREPOSITORY)
+
+tag:
+	$(VM-TAG) "v$(HOPRELEASE)"
 
 revision: populate commit
 

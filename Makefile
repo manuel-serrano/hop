@@ -112,12 +112,12 @@ distrib:
           exit 1; \
         else \
           $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
-          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop$(HOPRELEASE) && \
-          tar cvfz hop$(HOPRELEASE).tar.gz --exclude .hg -C $(HOPTMPDIR) hop$(HOPRELEASE) && \
-          $(RM) -rf $(HOPTMPDIR)/hop$(HOPRELEASE) && \
+          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$(HOPRELEASE) && \
+          tar cvfz hop-$(HOPRELEASE).tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$(HOPRELEASE) && \
+          $(RM) -rf $(HOPTMPDIR)/hop-$(HOPRELEASE) && \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
-              mv hop$(HOPRELEASE).tar.gz $(HOPDISTRIBDIR); \
+              mv hop-$(HOPRELEASE).tar.gz $(HOPDISTRIBDIR); \
             fi \
           fi \
         fi
