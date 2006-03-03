@@ -1,0 +1,12 @@
+(<HTML>
+ (<HEAD>
+  (<TITLE> "Hop demos"))
+ (<H1> "Hop Demos")
+ (let ((cur (dirname (http-request-path (the-current-request)))))
+    (<UL>
+     (map (lambda (dir)
+	     (<LI>
+	      (<A> :href (make-file-path cur dir (string-append dir ".hop"))
+		   dir)))
+	  (filter (lambda (d) (directory? (make-file-name cur d)))
+		  (directory->list cur))))))

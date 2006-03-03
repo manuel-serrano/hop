@@ -1,21 +1,26 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/webfilter/Makefile              */
+#*    serrano/prgm/project/hop/demos/misc/event/Makefile               */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
-#*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Mar  3 10:26:08 2006 (serrano)                */
+#*    Creation    :  Fri Mar  3 10:30:36 2006                          */
+#*    Last change :  Fri Mar  3 10:34:24 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
-#*    Weblet Makefile                                                  */
+#*    Makefile of a HOP demo                                           */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../etc/Makefile.hopconfig
-include ../../etc/Makefile.version
+include ../../../etc/Makefile.hopconfig
+include ../../../etc/Makefile.version
+
+DESTDIR=$(HOPSHAREDIR)/demos/weblets/event
+
+POPULATION = Makefile event.hop
 
 #*---------------------------------------------------------------------*/
-#*    POPULATION                                                       */
+#*    install                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile webfilter.hss webfilter.hop webfilter.info BLACKLIST
+install:
+	install -m a+r $(POPULATION) $(DESTDIR)

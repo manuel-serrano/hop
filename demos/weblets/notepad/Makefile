@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Thu Mar  2 14:37:38 2006 (eg)                     */
+#*    Last change :  Fri Mar  3 10:31:25 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP demos/weblets/notepad directory         */
 #*=====================================================================*/
@@ -16,7 +16,7 @@ include ../../../etc/Makefile.version
 
 DESTDIR=$(HOPSHAREDIR)/demos/weblets/notepad
 
-POPULATION = notepad.hop
+POPULATION = Makefile notepad.hop
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */

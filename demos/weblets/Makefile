@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Thu Mar  2 21:20:37 2006 (eg)                     */
+#*    Last change :  Fri Mar  3 10:34:50 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP demos/weblets directory                 */
 #*=====================================================================*/
@@ -17,19 +17,15 @@ include ../../etc/Makefile.version
 DEMOSDIR=$(HOPSHAREDIR)/demos/weblets
 
 #*---------------------------------------------------------------------*/
-#*    SUBDIRS                                                          */
+#*    POPDIRS                                                          */
 #*---------------------------------------------------------------------*/
-SUBDIRS =  notepad paned slider tabslider tree
+POPDIRS= notepad paned slider tabslider tree
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
-	for d in $(SUBDIRS) ;do \
+	for d in $(POPDIRS) ;do \
 	  mkdir -p $(DEMOSDIR)/$$d; \
-	  if [ -f $$d/Makefile ] ;then \
-	    (cd $$d; $(MAKE) install); \
-	  else \
-	    install -m a+r $$d/* $(DEMOSDIR)/$$d ;\
-	  fi; \
+	  $(MAKE) -C $$d install; \
 	done
