@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Mar  2 21:19:30 2006 (eg)                     */
+#*    Last change :  Fri Mar  3 16:00:44 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -81,7 +81,7 @@ uninstall:
 	(cd src; $(MAKE) uninstall)
 	(cd runtime; $(MAKE) uninstall)
 	(cd demos; $(MAKE) uninstall)
-	/bin/rm -rf $(FILDIR)
+	/bin/rm -rf $(HOPFILDIR)
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */

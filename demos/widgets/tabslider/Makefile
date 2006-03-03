@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/weblets/tabslider/Makefile        */
+#*    serrano/prgm/project/hop/demos/widgets/tabslider/Makefile        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Mar  3 10:30:36 2006                          */
-#*    Last change :  Fri Mar  3 10:36:01 2006 (serrano)                */
+#*    Last change :  Fri Mar  3 15:56:45 2006 (eg)                     */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Makefile of a HOP demo                                           */
@@ -15,7 +15,7 @@
 include ../../../etc/Makefile.hopconfig
 include ../../../etc/Makefile.version
 
-DESTDIR=$(HOPSHAREDIR)/demos/weblets/tabslider
+DESTDIR=$(HOPSHAREDIR)/demos/widgets/tabslider
 
 POPULATION = Makefile tabslider.hop
 

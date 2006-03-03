@@ -1,11 +1,11 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/weblets/Makefile                  */
+#*    serrano/prgm/project/hop/demos/widgets/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Fri Mar  3 10:34:50 2006 (serrano)                */
+#*    Last change :  Fri Mar  3 15:55:16 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
-#*    The Makefile for the HOP demos/weblets directory                 */
+#*    The Makefile for the HOP demos/widgets directory                 */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
@@ -14,7 +14,7 @@
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
-DEMOSDIR=$(HOPSHAREDIR)/demos/weblets
+DEMOSDIR=$(HOPSHAREDIR)/demos/widgets
 
 #*---------------------------------------------------------------------*/
 #*    POPDIRS                                                          */

@@ -1,11 +1,11 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/weblets/notepad/Makefile          */
+#*    serrano/prgm/project/hop/demos/widgets/notepad/Makefile          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Fri Mar  3 10:31:25 2006 (serrano)                */
+#*    Last change :  Fri Mar  3 15:55:45 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
-#*    The Makefile for the HOP demos/weblets/notepad directory         */
+#*    The Makefile for the HOP demos/widgets/notepad directory         */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
@@ -14,7 +14,7 @@
 include ../../../etc/Makefile.hopconfig
 include ../../../etc/Makefile.version
 
-DESTDIR=$(HOPSHAREDIR)/demos/weblets/notepad
+DESTDIR=$(HOPSHAREDIR)/demos/widgets/notepad
 
 POPULATION = Makefile notepad.hop
 

@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/weblets/slider/Makefile           */
+#*    serrano/prgm/project/hop/demos/widgets/slider/Makefile           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Mar  3 10:30:36 2006                          */
-#*    Last change :  Fri Mar  3 10:32:43 2006 (serrano)                */
+#*    Last change :  Fri Mar  3 15:56:27 2006 (eg)                     */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Makefile of a HOP demo                                           */
@@ -15,7 +15,7 @@
 include ../../../etc/Makefile.hopconfig
 include ../../../etc/Makefile.version
 
-DESTDIR=$(HOPSHAREDIR)/demos/weblets/slider
+DESTDIR=$(HOPSHAREDIR)/demos/widgets/slider
 
 POPULATION = Makefile slider.hop
 
