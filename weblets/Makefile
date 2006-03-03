@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Mar  2 11:14:19 2006 (eg)                     */
+#*    Last change :  Fri Mar  3 10:37:15 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -18,7 +18,7 @@ include ../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile BLACKLIST
+POPULATION	= Makefile
 
 #*---------------------------------------------------------------------*/
 #*    weblets                                                          */
