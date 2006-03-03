@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Mar  3 10:30:36 2006                          */
-#*    Last change :  Fri Mar  3 10:32:58 2006 (serrano)                */
+#*    Last change :  Fri Mar  3 10:36:01 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Makefile of a HOP demo                                           */
@@ -17,7 +17,7 @@ include ../../../etc/Makefile.version
 
 DESTDIR=$(HOPSHAREDIR)/demos/weblets/tabslider
 
-POPULATION = Makefile slider.hop
+POPULATION = Makefile tabslider.hop
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
