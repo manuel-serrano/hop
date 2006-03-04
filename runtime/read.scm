@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Feb 25 05:38:20 2006 (serrano)                */
+;*    Last change :  Sat Mar  4 08:22:08 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -318,6 +318,8 @@
        (the-integer))
       ((: "-" (+ digit))
        (the-integer))
+      ((: "#b" (? (in "-+")) (+ (in ("02"))))
+       (string->integer (the-substring 2 (the-length)) 2))
       ((: "#o" (? (in "-+")) (+ (in ("07"))))
        (string->integer (the-substring 2 (the-length)) 8))
       ((: "#d" (? (in "-+")) (+ (in ("09"))))
