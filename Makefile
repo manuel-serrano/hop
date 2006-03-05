@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Mar  2 21:19:30 2006 (eg)                     */
+#*    Last change :  Sun Mar  5 16:55:12 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -111,13 +111,32 @@ distrib:
           echo "*** ERROR: $(HOPTMPDIR)/hop$(HOPRELEASE) exists!"; \
           exit 1; \
         else \
+          ver=$(HOPRELEASE); \
+          dev=$(HOPDEVEL); \
+          min=1; \
+          if [ -f .hoprelease ]; then \
+             . .hoprelease; \
+             rm -f .hoprelease; \
+             if [ $$ver = $$version -a $$dev == $$devel ]; then \
+               min=`expr $$min + 1`; \
+             fi \
+          fi && \
+          if [ "$$dev " = " " ]; then \
+            distrib=$$ver; \
+          else \
+            distrib=$$ver-$$dev$$min; \
+          fi && \
+          echo "version=$$ver" > .hoprelease; \
+          echo "devel=$$dev" >> .hoprelease; \
+          echo "minor=$$min" >> .hoprelease; \
           $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
-          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$(HOPRELEASE) && \
-          tar cvfz hop-$(HOPRELEASE).tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$(HOPRELEASE) && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$(HOPRELEASE) && \
+          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
+          tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
+          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
-              mv hop-$(HOPRELEASE).tar.gz $(HOPDISTRIBDIR); \
+              /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
+              mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
             fi \
           fi \
         fi

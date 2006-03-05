@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Mar  3 10:30:36 2006                          */
-#*    Last change :  Fri Mar  3 10:34:24 2006 (serrano)                */
+#*    Last change :  Sat Mar  4 19:01:10 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Makefile of a HOP demo                                           */
@@ -23,4 +23,4 @@ POPULATION = Makefile event.hop
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
-	install -m a+r $(POPULATION) $(DESTDIR)
+	install -m a+r event.hop $(DESTDIR)
