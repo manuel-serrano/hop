@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Mar  3 10:30:36 2006                          */
-#*    Last change :  Sat Mar  4 19:01:10 2006 (serrano)                */
+#*    Last change :  Sun Mar  5 18:56:46 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Makefile of a HOP demo                                           */
@@ -15,7 +15,7 @@
 include ../../../etc/Makefile.hopconfig
 include ../../../etc/Makefile.version
 
-DESTDIR=$(HOPSHAREDIR)/demos/weblets/event
+DESTDIR=$(HOPSHAREDIR)/demos/misc/event
 
 POPULATION = Makefile event.hop
 
