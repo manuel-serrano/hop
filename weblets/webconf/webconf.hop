@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Mar  1 16:04:24 2006 (serrano)                */
+;*    Last change :  Tue Mar  7 22:25:53 2006 (eg)                     */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
@@ -44,11 +44,14 @@
 		(<DIV> :class "webconf-dir"
 		   (<P> (<B> "Directory: ") (<CODE> dir))
 		   (<DIV> :class "webconf-items"
+		     (<FL> 
 		       (map (lambda (x)
 			      (let ((weblet-name (cadr (assoc 'name x))))
-				(<FOLD-ITEM> :title (<I> weblet-name)
-					     (show-weblet-config x))))
-			  (find-weblets dir)))))
+				(<FLITEM>
+				    (<FLHEAD> (<SPAN> :class "webconf-item"
+						      weblet-name))
+				    (show-weblet-config x))))
+			  (find-weblets dir))))))
 	      (hop-autoload-directories)))))
 
 ;; ----------------------------------------------------------------------
