@@ -1,12 +1,11 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/widgets/paned/Makefile            */
+#*    serrano/prgm/project/hop/demos/widgets/calendar/Makefile         */
 #*    -------------------------------------------------------------    */
-#*    Author      :  Manuel Serrano                                    */
-#*    Creation    :  Fri Mar  3 10:30:36 2006                          */
-#*    Last change :  Mon Mar  6 18:34:06 2006 (eg)                     */
-#*    Copyright   :  2006 Manuel Serrano                               */
+#*    Author      :  Erick Gallesio                                    */
+#*    Creation    :  Fri Mar  3 18:52:29 CET 2006                      */
+#*    Last change :  Mon Mar  6 18:12:23 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
-#*    Makefile of a HOP demo                                           */
+#*    The Makefile for the HOP demos/widgets/calendar directory        */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
@@ -15,7 +14,7 @@
 include ../../../etc/Makefile.hopconfig
 include ../../../etc/Makefile.version
 
-FILES      = paned.hop
+FILES      = wadler.hop
 POPULATION = Makefile $(FILES)
 DESTDIR    = $(HOPDEMOSDIR)/$(CATEGORY)/$(DEMO)
 

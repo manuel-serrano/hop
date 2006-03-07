@@ -1,39 +1,29 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/Makefile                          */
+#*    serrano/prgm/project/hop/demos/proxy/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Mon Mar  6 18:22:15 2006 (eg)                     */
+#*    Last change :  Mon Mar  6 18:15:04 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
-#*    The Makefile for the HOP demos directory                         */
+#*    The Makefile for the HOP demos/proxy directory                   */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../etc/Makefile.hopconfig
-include ../etc/Makefile.version
+include ../../etc/Makefile.hopconfig
+include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    POPDIRS                                                          */
 #*---------------------------------------------------------------------*/
-POPDIRS = misc widgets proxy
+POPDIRS= filtering 
 
-#*---------------------------------------------------------------------*/
-#*    POPULATION                                                       */
-#*---------------------------------------------------------------------*/
-POPULATION	= Makefile
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
 	for d in $(POPDIRS) ;do \
-          $(MAKE) -C $$d install CATEGORY=$$d ; \
+	  $(MAKE) -C $$d install CATEGORY=$(CATEGORY) DEMO=$$d ; \
 	done
-
-#*---------------------------------------------------------------------*/
-#*    uninstall                                                        */
-#*---------------------------------------------------------------------*/
-uninstall:
-	/bin/rm -rf $(HOPDEMOSDIR)

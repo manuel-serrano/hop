@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/widgets/tree/Makefile             */
+#*    serrano/prgm/project/hop/demos/widgets/paned/Makefile            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Mar  3 10:30:36 2006                          */
-#*    Last change :  Fri Mar  3 15:57:11 2006 (eg)                     */
+#*    Last change :  Mon Mar  6 18:38:24 2006 (eg)                     */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Makefile of a HOP demo                                           */
@@ -15,12 +15,13 @@
 include ../../../etc/Makefile.hopconfig
 include ../../../etc/Makefile.version
 
-DESTDIR=$(HOPSHAREDIR)/demos/widgets/tree
-
-POPULATION = Makefile tree.hop
+FILES      = tree.hop img.png
+POPULATION = Makefile $(FILES)
+DESTDIR    = $(HOPDEMOSDIR)/$(CATEGORY)/$(DEMO)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
+	mkdir -p $(DESTDIR)
 	install -m a+r $(POPULATION) $(DESTDIR)

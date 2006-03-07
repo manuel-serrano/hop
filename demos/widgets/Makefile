@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Fri Mar  3 15:55:16 2006 (eg)                     */
+#*    Last change :  Mon Mar  6 18:43:29 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP demos/widgets directory                 */
 #*=====================================================================*/
@@ -14,18 +14,15 @@
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
-DEMOSDIR=$(HOPSHAREDIR)/demos/widgets
-
 #*---------------------------------------------------------------------*/
 #*    POPDIRS                                                          */
 #*---------------------------------------------------------------------*/
-POPDIRS= notepad paned slider tabslider tree
+POPDIRS= notepad paned slider sorttable tabslider tree
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
 	for d in $(POPDIRS) ;do \
-	  mkdir -p $(DEMOSDIR)/$$d; \
-	  $(MAKE) -C $$d install; \
+	  $(MAKE) -C $$d install CATEGORY=$(CATEGORY) DEMO=$$d ; \
 	done

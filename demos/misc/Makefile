@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Fri Mar  3 10:35:08 2006 (serrano)                */
+#*    Last change :  Mon Mar  6 18:16:39 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP demos/misc directory                    */
 #*=====================================================================*/
@@ -14,20 +14,15 @@
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
-DEMOSDIR=$(HOPSHAREDIR)/demos/misc
-
 #*---------------------------------------------------------------------*/
 #*    POPDIRS                                                          */
 #*---------------------------------------------------------------------*/
-POPDIRS = event
+POPDIRS=  calendar dhtml event hss text wadler
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
 	for d in $(POPDIRS) ;do \
-	  mkdir -p $(DEMOSDIR)/$$d; \
-	  $(MAKE) -C $$d install; \
+	  $(MAKE) -C $$d install CATEGORY=$(CATEGORY) DEMO=$$d ; \
 	done
-
-

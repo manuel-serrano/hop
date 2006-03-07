@@ -27,7 +27,7 @@
 						:onclick {hop( $(service ()
 								   (<PRE>
 								    (file->string qf)))(),
-								hop_replace_id( "file-content" ))})))))
+								hop_replace_inner_id( "file-content" ))})))))
 			       (directory->list dir)))))))
        (directory->tree d (basename d))))
    (<PAN>

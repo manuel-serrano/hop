@@ -1,12 +1,11 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/misc/event/Makefile               */
+#*    serrano/prgm/project/hop/demos/widgets/calendar/Makefile         */
 #*    -------------------------------------------------------------    */
-#*    Author      :  Manuel Serrano                                    */
-#*    Creation    :  Fri Mar  3 10:30:36 2006                          */
-#*    Last change :  Fri Mar  3 10:34:24 2006 (serrano)                */
-#*    Copyright   :  2006 Manuel Serrano                               */
+#*    Author      :  Erick Gallesio                                    */
+#*    Creation    :  Fri Mar  3 18:52:29 CET 2006                      */
+#*    Last change :  Mon Mar  6 18:10:57 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
-#*    Makefile of a HOP demo                                           */
+#*    The Makefile for the HOP demos/widgets/calendar directory        */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
@@ -15,12 +14,13 @@
 include ../../../etc/Makefile.hopconfig
 include ../../../etc/Makefile.version
 
-DESTDIR=$(HOPSHAREDIR)/demos/weblets/event
-
-POPULATION = Makefile event.hop
+FILES      = event.hop
+POPULATION = Makefile $(FILES)
+DESTDIR    = $(HOPDEMOSDIR)/$(CATEGORY)/$(DEMO)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
+	mkdir -p $(DESTDIR)
 	install -m a+r $(POPULATION) $(DESTDIR)

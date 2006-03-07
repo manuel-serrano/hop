@@ -10,17 +10,5 @@ a time. Basically, the structure of a tabslider is given below: ])
 	 ...)]))
 
 
-;;(<PRE>
-;; (htmlize [
-;;(<TABSLIDER> :width w :height h
-;;   (<TSPAN> (<TSHEAD> "title of first span")
-;;	"Body of first pan")
-;;   (<TSPAN> (<TSHEAD> ...)
-;;	...)
-;;	 ...)]))
-;;
-
-
-
 
 

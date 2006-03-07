@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Mar  3 10:30:36 2006                          */
-#*    Last change :  Mon Mar  6 18:34:06 2006 (eg)                     */
+#*    Last change :  Mon Mar  6 18:35:52 2006 (eg)                     */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Makefile of a HOP demo                                           */
@@ -15,7 +15,7 @@
 include ../../../etc/Makefile.hopconfig
 include ../../../etc/Makefile.version
 
-FILES      = paned.hop
+FILES      = sorttable.hop sorttable.hss
 POPULATION = Makefile $(FILES)
 DESTDIR    = $(HOPDEMOSDIR)/$(CATEGORY)/$(DEMO)
 

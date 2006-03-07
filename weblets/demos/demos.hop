@@ -38,7 +38,7 @@
 	      (<TR> :class (string-append "hop-demos-tbl-"
 					  (if even? "even" "odd"))
 		    (<TD> (proc x))))
-	    (directory->list dir)))))
+	    (sort (directory->list dir) string<?)))))
 
 ;; ----------------------------------------------------------------------
 ;;	demos-filter ...

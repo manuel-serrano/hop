@@ -3,7 +3,7 @@
  * 
  *              Author: Erick Gallesio [eg@essi.fr]
  *       Creation date: 14-Sep-2005 09:24 (eg)
- *    Last file update: 15-Sep-2005 23:52 (eg)
+ *    Last file update:  7-Mar-2006 11:15 (eg)
  * ======================================================================
  */
 
@@ -20,8 +20,7 @@ div.hop-tabslider > span {
     cursor:pointer;
     border-width: 1;
     border-style: dotted;
-    padding: 2px 10px 0px 10px;
-    margin: 0 4px 0 0;
+    padding: 2px 10px 2px 10px;
 }
 
 div.hop-tabslider-content {

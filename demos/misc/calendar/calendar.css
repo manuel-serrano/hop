@@ -1,0 +1,42 @@
+div.day, div.day-wd {
+  margin: 0;
+  border: 1px solid transparent;
+  width: 100%;
+}
+
+div.day:hover, div.day-wd:hover {
+  border: 1px solid black;
+}
+
+div.day-wd {
+  background-color: #f7ffff;
+}
+
+table.hop-calendar th, table.hop-calendar td {
+}
+
+th.hop-calendar-calh, td.hop-calendar-cald {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+table.hop-calendar {
+  border: 2px solid #eef;
+}
+
+tr.hop-calendar-row {
+  background: #f7f7f7;
+}
+
+tr.hop-calendar-head {
+  background: #eef;
+}
+
+th.hop-calendar-calh div.hr {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  height: 1px;
+  border-top: 1px solid #ddd;
+  background: #fff;
+}
