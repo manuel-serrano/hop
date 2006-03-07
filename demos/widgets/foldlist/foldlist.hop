@@ -16,9 +16,9 @@
 		    (iota 10)))))
    (<HR>)
    (<H3> "A customized list")
-   (<FL> :id "demofl"
-	 :open-icon   (make-file-path (hop-icons-directory) "folder-open.png")
-	 :closed-icon (make-file-path (hop-icons-directory) "folder-close.png")
+   (<FL> :id "demofl" :spacing "5px"
+	 :icono (make-file-path (hop-icons-directory) "folder-open.png")
+	 :iconc (make-file-path (hop-icons-directory) "folder-close.png")
     (<FLITEM> (<FLHEAD> "First")
 	      [Nothing interesting here])
     (<FLITEM> (<FLHEAD> "Second")

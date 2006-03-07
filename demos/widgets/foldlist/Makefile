@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Tue Mar  7 14:36:14 2006                          */
-#*    Last change :  Fri Mar  3 10:30:36 2006                          */
+#*    Last change :  Tue Mar  7 19:13:05 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    Makefile of a HOP demo                                           */
 #*=====================================================================*/
@@ -14,7 +14,7 @@
 include ../../../etc/Makefile.hopconfig
 include ../../../etc/Makefile.version
 
-FILES      = foldlist.hop demofl.css
+FILES      = foldlist.hop demofl.css comment.hop
 POPULATION = Makefile $(FILES)
 DESTDIR    = $(HOPDEMOSDIR)/$(CATEGORY)/$(DEMO)
 

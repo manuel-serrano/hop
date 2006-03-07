@@ -1,3 +1,13 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/demos/widgets/foldlist/demofl.css       */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Erick Gallesio                                    */
+/*    Creation    :  Tue Mar  7 14:36:14 2006                          */
+/*    Last change :  Tue Mar  7 21:41:05 2006 (eg)                     */
+/*    -------------------------------------------------------------    */
+/*    CSS for <FL> demo                                                */
+/*=====================================================================*/
+
 #demofl {
     border: 1px solid red;
 }
@@ -5,6 +15,4 @@
 #demofl SPAN {
     background: #ddd;
     color: green;
-    width: 200px;
 }
-

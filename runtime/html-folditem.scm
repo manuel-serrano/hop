@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Tue Mar  7 18:36:28 2006 (eg)                     */
+;*    Last change :  Tue Mar  7 21:48:39 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -20,8 +20,9 @@
 	    __hop_xml)
 
    (static  (class html-foldlist::xml-element
-		   (open-icon (default #f))
-		   (closed-icon (default #f)))
+		   (spacing (default 0))
+		   (icono (default #f))
+		   (iconc (default #f)))
 	    (class html-flitem::xml-element
 		   (open (default #f)))
 	    (class html-flhead::xml-element))
@@ -38,16 +39,14 @@
 (define-xml-compound <FOLD-ITEM> ((id #unspecified string)
 				  (class #f)
 				  (title #f)
-				  (open-icon #f)
-				  (closed-icon #f)
+				  (icono #f)
+				  (iconc #f)
 				  body)
   (let ((iditem (symbol->string (gensym "fi")))
-	(open   (or open-icon
-		    (make-file-name (hop-icons-directory)
-				    "triangle-down.png")))
-	(closed (or closed-icon
-		    (make-file-name (hop-icons-directory)
-				    "triangle-right.png")))
+	(open   (or icono (make-file-name (hop-icons-directory)
+					  "triangle-down.png")))
+	(closed (or iconc (make-file-name (hop-icons-directory)
+					  "triangle-right.png")))
 	(cls    (if class
 		    (string-append "hop-fold-item " class)
 		    "hop-fold-item")))
@@ -65,14 +64,16 @@
 ;*    <FL> ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <FL> ((id #unspecified string)
-			   (open-icon #f)
-			   (closed-icon #f)
+			   (spacing 0)
+			   (icono #f)
+			   (iconc #f)
 			   body)
   (let ((res (instantiate::html-foldlist
 	         (markup 'fl)
 		 (id (xml-make-id id 'FL))
-		 (open-icon open-icon)
-		 (closed-icon closed-icon)
+		 (spacing spacing)
+		 (icono icono)
+		 (iconc iconc)
 		 (body body))))
     ;; Verify that the body is a list of <FLITEM>s and fill their parent
     (for-each (lambda (x)
@@ -83,11 +84,12 @@
 	      body)
     res))
 
-;*---------------------------------------------------------------------*/
-;*    xml-write ::html-foldlist ...                                    */
-;*---------------------------------------------------------------------*/
+;;;
+;;;    xml-write ::html-foldlist ...
+;;;
 (define-method (xml-write obj::html-foldlist p encoding)
-  (fprintf p "<table class='hop-fl' id='~a'>" (html-foldlist-id obj))
+  (fprintf p "<table class='hop-fl' id='~a' cellpadding='0' cellspacing='~a'>"
+	   (html-foldlist-id obj) (html-foldlist-spacing obj))
   (xml-write (html-foldlist-body obj) p encoding)
   (display "</table>" p))
 
@@ -104,16 +106,18 @@
      (open open)
      (body body)))
 
-
+;;;
+;;;    xml-write ::html-flitem ...
+;;;
 (define-method (xml-write obj::html-flitem p encoding)
   (with-access::html-flitem obj (body id parent open)
      (let ((tmp    body)
-	   (icono (or (html-foldlist-open-icon parent)
-		       (make-file-name (hop-icons-directory)
+	   (icono (or (html-foldlist-icono parent)
+		      (make-file-name (hop-icons-directory)
 				       "triangle-down.png")))
-	   (iconc (or (html-foldlist-closed-icon parent)
-		       (make-file-name (hop-icons-directory)
-				       "triangle-right.png"))))
+	   (iconc (or (html-foldlist-iconc parent)
+		      (make-file-name (hop-icons-directory)
+				      "triangle-right.png"))))
        (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s)'>" id icono iconc)
        (fprintf p "<td><img id=~s src=~s></td><td width='100%'>"
 		(string-append id "-img") (if open icono iconc))       
@@ -130,14 +134,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FLHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <FLHEAD> ((id #unspecified string)
-			       body)
+(define-xml-compound <FLHEAD> ((id #unspecified string) body)
   (instantiate::html-flhead
      (markup 'flhead)
      (id (xml-make-id id 'FLHEAD))
      (body body)))
 
-
+;;;
+;;;    xml-write ::html-flhead ...
+;;;
 (define-method (xml-write obj::html-flhead p encoding)
   (display "<span>" p)
   (xml-write (html-flhead-body obj) p encoding)

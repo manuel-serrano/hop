@@ -1,4 +1,14 @@
-(<P> [The ,(htmlize "<TABSLIDER>") widget show only one part of a list at
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/demos/widgets/tabslider/comment.hop     */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Erick Gallesio                                    */
+;*    Creation    :  Tue Mar  3 14:36:14 2006                          */
+;*    Last change :  Tue Mar  7 19:21:15 2006 (eg)                     */
+;*    -------------------------------------------------------------    */
+;*    Comment for <FL> demo                                            */
+;*=====================================================================*/
+
+(<P> [The ,(htmlize "<TABSLIDER>") widget shows only one part of a list at
 a time. Basically, the structure of a tabslider is given below: ])
 
 (<PRE> :class "hop-demos-code" (htmlize [
