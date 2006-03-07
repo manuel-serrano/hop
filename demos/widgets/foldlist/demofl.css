@@ -1,0 +1,10 @@
+#demofl {
+    border: 1px solid red;
+}
+
+#demofl SPAN {
+    background: #ddd;
+    color: green;
+    width: 200px;
+}
+
