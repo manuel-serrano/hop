@@ -684,17 +684,18 @@
 	  (let ((port (open-input-file path)))
 	     (if (input-port? port)
 		 (let ((t (current-thread)))
-		    ((hop-load-pre-hook port) port)
 		    (hop-load-afile (dirname file-name))
 		    (if (thread? t)
 			(thread-specific-set! t file-name)
 			(set! *the-loading-file* file-name))
 		    (let loop ((last #unspecified))
+		       ((hop-read-pre-hook) port)
 		       (let ((sexp (hop-read port)))
+			  ((hop-read-post-hook) port)
 			  (if (eof-object? sexp)
 			      (begin
 				 (close-input-port port)
-				 ((hop-load-post-hook) port last))
+				 last)
 			      (loop (with-handler
 				       (lambda (e)
 					  (if (&warning? e)
@@ -707,11 +708,3 @@
 			   (proc 'hop-load)
 			   (msg "Can't open file")
 			   (obj file-name))))))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-load ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (hop-load file-name)
-   (pre-hook file-name)
-   (let ((val (%hop-load file-name)))
-      (post-hook file-name val)))

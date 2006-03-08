@@ -134,11 +134,11 @@
 	    (hop-make-escape::procedure)
 	    (hop-make-escape-set! ::procedure)
 	    
-	    (hop-load-pre-hook::procedure)
-	    (hop-load-pre-hook-set! ::procedure)
+	    (hop-read-pre-hook::procedure)
+	    (hop-read-pre-hook-set! ::procedure)
 	    
-	    (hop-load-post-hook::procedure)
-	    (hop-load-post-hook-set! ::procedure)))
+	    (hop-read-post-hook::procedure)
+	    (hop-read-post-hook-set! ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-uptime ...                                                   */
@@ -570,22 +570,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-pre-hook ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-load-pre-hook
+(define-parameter hop-read-pre-hook
    (lambda (p)
       #unspecified)
    (lambda (v)
       (if (or (not (procedure? v)) (not (correct-arity? v 1)))
-	  (error 'hop-load-pre-hook-set! "Illegal value" v)
+	  (error 'hop-read-pre-hook-set! "Illegal value" v)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-post-hook ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-load-post-hook
+(define-parameter hop-read-post-hook
    (lambda (p)
       #unspecified)
    (lambda (v)
       (if (or (not (procedure? v)) (not (correct-arity? v 1)))
-	  (error 'hop-load-post-hook-set! "Illegal value" v)
+	  (error 'hop-read-post-hook-set! "Illegal value" v)
 	  v)))
 
