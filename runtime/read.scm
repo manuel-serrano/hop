@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Mar  4 08:22:08 2006 (serrano)                */
+;*    Last change :  Wed Mar  8 16:33:30 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -268,6 +268,8 @@
 	       (input-port-name     (the-port))
 	       (input-port-position (the-port)))
 	      (integer->char (string->integer (the-substring 2 5))))))
+      ((: "#\\" (>= 3 digit))
+       (integer->char (string->integer (the-substring 2 0) 8)))
       ((: "#\\" (or letter digit special (in "|#; " quote paren)))
        (string-ref (the-string) 2))
       ((: "#\\" (>= 2 letter))
@@ -283,6 +285,8 @@
 	      #\space)
 	     ((eq? char-name 'RETURN)
 	      (integer->char 13))
+	     ((eq? char-name 'NULL)
+	      (integer->char 0))
 	     (else
 	      (read-error/location
 	       "Illegal character"
@@ -463,6 +467,7 @@
 			     par-poses))
        ;; and then, we compute the result list...
        ((hop-make-escape)
+	(the-port)
 	(make-list! (collect-up-to ignore "list" (the-port)) (the-port))))
       
       ;; structures
@@ -679,6 +684,7 @@
 	  (let ((port (open-input-file path)))
 	     (if (input-port? port)
 		 (let ((t (current-thread)))
+		    ((hop-load-pre-hook port) port)
 		    (hop-load-afile (dirname file-name))
 		    (if (thread? t)
 			(thread-specific-set! t file-name)
@@ -688,7 +694,7 @@
 			  (if (eof-object? sexp)
 			      (begin
 				 (close-input-port port)
-				 last)
+				 ((hop-load-post-hook) port last))
 			      (loop (with-handler
 				       (lambda (e)
 					  (if (&warning? e)
@@ -701,3 +707,11 @@
 			   (proc 'hop-load)
 			   (msg "Can't open file")
 			   (obj file-name))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-load ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hop-load file-name)
+   (pre-hook file-name)
+   (let ((val (%hop-load file-name)))
+      (post-hook file-name val)))

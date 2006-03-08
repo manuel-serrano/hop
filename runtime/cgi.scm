@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Thu Feb  2 16:10:07 2006 (serrano)                */
+;*    Last change :  Tue Mar  7 11:48:04 2006 (serrano)                */
 ;*    Copyright   :  2003-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -40,11 +40,7 @@
 		(args (substring path (+fx i 1) (string-length path))))
 	     (cons cmd
 		   (map! (lambda (p)
-			    (set-cdr! p
-	  ;; CARE: Je ne sais pas s'il faut toujours faire la conversion
-	  ;; utf8->iso-latin!
-				      (utf8->iso-latin!
-				       (xml-string-decode! (cdr p))))
+			    (set-cdr! p (xml-string-decode! (cdr p)))
 			    p)
 			 (cgi-args->list args)))))))
 
