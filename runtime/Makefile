@@ -44,7 +44,7 @@ _OBJECTS	= param misc types thread \
                   http-lib http-response http-shoutcast http-error \
                   http-filter html-extra html-notepad html-tree html-slider \
                   html-paned html-tabslider html-inline \
-                  event color weblets html-folditem html-window
+                  event color weblets html-foldlist html-window
 
 OBJECTS		= $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS	= o/make-lib.o

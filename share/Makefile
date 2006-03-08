@@ -23,7 +23,7 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css hop.js \
                   user.scm hop-notepad.css hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
-		  hop-folditem.js hop-folditem.css hop-window.js \
+		  hop-foldlist.js hop-foldlist.css hop-window.js \
 		  hop-window.css hop.scm \
 		  icons Makefile
 
@@ -49,8 +49,8 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-notepad.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-tabslider.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-tabslider.css $(HOPSHAREDIR) && \
-	install -m a+r $(BUILDSHAREDIR)/hop-folditem.js $(HOPSHAREDIR) && \
-	install -m a+r $(BUILDSHAREDIR)/hop-folditem.css $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-foldlist.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-foldlist.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-window.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-window.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
@@ -79,8 +79,8 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop-notepad.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-tabslider.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-tabslider.css && \
-	/bin/rm -f $(HOPSHAREDIR)/hop-folditem.js && \
-	/bin/rm -f $(HOPSHAREDIR)/hop-folditem.css && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-foldlist.js && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-foldlist.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-window.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-window.css && \
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \

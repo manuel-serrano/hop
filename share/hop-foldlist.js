@@ -1,5 +1,5 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-folditem.js                   */
+/*    serrano/prgm/project/hop/share/hop-foldlist.js                   */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */

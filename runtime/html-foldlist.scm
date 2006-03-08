@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/html-folditem.scm               */
+;*    serrano/prgm/project/hop/runtime/html-foldlist.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Tue Mar  7 21:48:39 2006 (eg)                     */
+;*    Last change :  Wed Mar  8 08:39:31 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -11,7 +11,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_html-folditem
+(module __hop_html-foldlist
 
    (include "compiler-macro.sch"
 	    "xml.sch")
