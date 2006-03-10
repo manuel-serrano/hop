@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Sat Feb 25 06:28:41 2006 (serrano)                */
+;*    Last change :  Thu Mar  9 06:02:59 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -67,9 +67,10 @@
 			 (op (socket-output socket))
 			 (statusf (http-response-filter-statusf f))
 			 (headerf (http-response-filter-headerf f))
-			 (bodyf (http-response-filter-bodyf f)))
+			 (bodyf (http-response-filter-bodyf f))
+			 (sl (http-parse-status-line ip)))
 		     (multiple-value-bind (http-version status-code phrase)
-			(http-parse-status-line ip)
+			sl
 			(let ((fs (statusf
 				   (format "~a ~a ~a"
 					   http-version
@@ -94,9 +95,9 @@
 					 (let ((ip2 (open-input-procedure
 						     (make-unchunks ip))))
 					    (unwind-protect
-					       (bodyf ip2 op fs fh cl)
+					       (bodyf ip2 op sl header cl)
 					       (close-input-port ip2)))
-					 (bodyf ip op fs fh cl)))))))))))
+					 (bodyf ip op sl header cl)))))))))))
 	    (socket-close rsock)))))
 
 ;*---------------------------------------------------------------------*/
