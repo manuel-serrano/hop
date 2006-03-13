@@ -22,7 +22,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile configure
-POPDIRS		= runtime src etc share contribs weblets demos
+POPDIRS		= runtime scheme2js src etc share contribs weblets demos
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -42,12 +42,14 @@ bin: lib
 
 lib:
 	(cd runtime && $(MAKE) build)
+	(cd scheme2js && $(MAKE) build)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */
 #*---------------------------------------------------------------------*/
 dep:
 	(cd runtime; $(MAKE) dep)
+	(cd scheme2js; $(MAKE) dep)
 	(cd src; $(MAKE) dep)
 
 #*---------------------------------------------------------------------*/
@@ -55,6 +57,7 @@ dep:
 #*---------------------------------------------------------------------*/
 ude:
 	(cd runtime; $(MAKE) ude)
+	(cd scheme2js; $(MAKE) ude)
 	(cd src; $(MAKE) ude)
 
 #*---------------------------------------------------------------------*/
@@ -62,6 +65,7 @@ ude:
 #*---------------------------------------------------------------------*/
 install: install-init
 	(cd runtime && $(MAKE) install) && \
+	(cd scheme2js && $(MAKE) install) && \
 	(cd src && $(MAKE) install) && \
 	(cd share && $(MAKE) install) && \
 	(cd weblets && $(MAKE) install)
@@ -80,6 +84,7 @@ $(DESTDIR)$(HOPFILDIR):
 uninstall:
 	(cd src; $(MAKE) uninstall)
 	(cd runtime; $(MAKE) uninstall)
+	(cd scheme2js; $(MAKE) uninstall)
 	(cd demos; $(MAKE) uninstall)
 	/bin/rm -rf $(FILDIR)
 
@@ -88,6 +93,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 clean:
 	(cd runtime; $(MAKE) clean)
+	(cd scheme2js; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
 
 devclean:

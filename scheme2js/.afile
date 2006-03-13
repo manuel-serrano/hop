@@ -1,0 +1,32 @@
+;; /home/flo/work/these/hopsrc/hop/scheme2js
+;; Mon Mar 13 16:04:58 2006
+
+(
+  (capture "./capture.scm")
+  (collect-vars "./collect-vars.scm")
+  (compile "./compile.scm")
+  (constants "./constants.scm")
+  (dot-expand "./dot-expand.scm")
+  (expand "./expand.scm")
+  (expanders "./expanders.scm")
+  (gen-code "./gen-code.scm")
+  (gen-js "./gen-js.scm")
+  (inline "./inline.scm")
+  (js-interface "./js-interface.scm")
+  (liveness "./liveness.scm")
+  (node-elimination "./node-elimination.scm")
+  (nodes "./nodes.scm")
+  (pobject-conv "./pobject-conv.scm")
+  (protobject "./protobject.scm")
+  (scheme2js "./scheme2js.scm")
+  (side "./side.scm")
+  (statements "./statements.scm")
+  (symbol "./symbol.scm")
+  (tail-rec "./tail-rec.scm")
+  (tail "./tail.scm")
+  (transform-util "./transform-util.scm")
+  (traverse "./traverse.scm")
+  (var "./var.scm")
+  (verbose "./verbose.scm")
+)
+
