@@ -3,14 +3,14 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Tue Mar  3 14:36:14 2006                          */
-;*    Last change :  Tue Mar  7 21:58:56 2006 (eg)                     */
+;*    Last change :  Tue Mar 14 23:13:48 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    Comment for <FL> demo                                            */
 ;*=====================================================================*/
 (<P> [The ,(htmlize "<TABSLIDER>") widget show only one part of a list at
 a time. Basically, the structure of a tabslider is given below: ])
 
-(<PRE> :class "hop-demos-code" (htmlize [
+(<PRE> :class "hop-demos-comment-code" (htmlize [
 (<TABSLIDER> :width w :height h
    (<TSPAN> (<TSHEAD> "title of first span")
 	"Body of first pan")

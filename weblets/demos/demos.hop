@@ -15,7 +15,9 @@
     ((pair? obj) (cons (htmlize (car obj))
 		       (htmlize (cdr obj))))
     ((string? obj) (pregexp-replace* ">"
-				     (pregexp-replace* "<" obj "<font color=blue>&lt;")
+				     (pregexp-replace* "<"
+						       obj
+						       "<font color=blue>&lt;")
 				     "&gt;</font>"))
     (else (error 'htmlize "Cannot htmlize" obj))))
 
@@ -44,7 +46,14 @@
 	    :type "text/css"
 	    :href (format "~a/demos.hss" *demos-directory*))))
 
-(define (read-source-file file)
+(define (<SWITCH-DIV> id panel1 panel2)
+  (<DIV> :id id
+     (<DIV> :id (string-append id "-1")
+	panel1)
+     (<DIV> :id (string-append id "-2") :style "display: none"
+	panel2)))
+
+(define (<DEMO-INCLUDE> file)
   (let ((in (open-input-file file)))
     (and (input-port? in)
 	 (with-output-to-string
@@ -62,14 +71,14 @@
   (<HTML>
    (<DEMO-HEAD>)
    (<FRAMESET> :cols "20%,*"  :frameborder 1 :border 4 :framespacing 0
-      (<FRAME> :name "list" :src "demos/show-tree")
-      (<FRAME> :name "code" :src "demos/initial-doc"))))
+      (<FRAME> :name "list" :src "demos/show-demos")
+      (<FRAME> :name "code" :src "demos/initial-right-frame"))))
 
 
 ;; ----------------------------------------------------------------------
-;;	demos/show-tree service ...
+;;	demos/show-demos service ...
 ;; ----------------------------------------------------------------------
-(define-service (demos/show-tree)
+(define-service (demos/show-demos)
   (let ((lst (with-input-from-file (make-file-path (hop-demos-directory) "list.hop")
 	       read)))
     (<HTML>
@@ -93,9 +102,9 @@
 
 
 ;; ----------------------------------------------------------------------
-;;	demos/initial-doc service ...
+;;	demos/initial-right-frame service ...
 ;; ----------------------------------------------------------------------
-(define-service (demos/initial-doc)
+(define-service (demos/initial-right-frame)
   (<HTML>
    (<DEMO-HEAD>)
    (<BODY>
@@ -113,70 +122,55 @@
 ;; ----------------------------------------------------------------------
 ;;	demos/show-demo service ...
 ;; ----------------------------------------------------------------------
-(define (show-documentation path)
-  (let ((doc (open-input-file path)))
-    (<DIV> :class "hop-demos-comment"
-       (if (input-port? doc)
-	   (let Loop ((txt (hop-read doc))
-		      (res '()))
-	     (if (eof-object? txt)
-		 (map eval (reverse! res))
-		 (Loop (hop-read doc)
-		       (cons txt res))))
-	   (<H2> "No documentation available for this demo")))))
+(define-service (demos/show-demo title demo)
+  (define (show-documentation path)
+    (let ((doc (open-input-file path)))
+      (<DIV> :class "hop-demos-comment"
+	 (if (input-port? doc)
+	     (let Loop ((txt (hop-read doc))
+			(res '()))
+	       (if (eof-object? txt)
+		   (map eval (reverse! res))
+		   (Loop (hop-read doc)
+			 (cons txt res))))
+	     (<H2> "No documentation available for this demo")))))
 
-(define (show-demo-code title path code)
-  (<HTML>
-   (<DEMO-HEAD>)
-   (<BODY> :class "hop-demos-code"
-      ;; Create the run window
-      (<FLOAT-WINDOW> :id "hop-run-window" :width 640 :height 480
-		      :in-frame #t :title (format "~a demo" (basename path)))
-      ;; Create the edit window
-      (<FLOAT-WINDOW> :id "hop-edit-window" :width 700 :height 400
-		      :title " Edit code"
-	(<FORM> :action (service (txt)
-			  (show-demo-code title path txt))
-	  (<BUTTON> :class "hop-demo-button" "Replace" :onclick "submit()")
-	  (<BUTTON> :class "hop-demo-button" "Cancel"
-		    :onclick { hop_close_float_window("hop-edit-window") })
-	  (<TEXTAREA> :name "txt" :cols 80 :rows 25 code)))
-      ;; Document
-      (<H1> title)
-      (show-documentation (make-file-path (dirname path) "comment.hop"))
-      (<BUTTON> :class "hop-demo-button" "Run"
+  (define (switch-window-show)
+    (list
+     (<BUTTON> :class "hop-demo-button" "Run"
 	:onclick { hop_open_float_window($(make-service-url demos/run path code),
 					  "hop-run-window", 50, 50)})
-      (<BUTTON> :class "hop-demo-button" "Edit"
-		:onclick { hop_open_float_window(null, "hop-edit-window", 10, 25)})
-      ;; Display the code
-      (<DIV> :id "hop-demos-code" :class "hop-demos-code"
-	     (<PRE> (htmlize code))))))
+     (<BUTTON> :class "hop-demo-button" "Edit"
+	       :onclick { hop_switch_div("hop-demos-view") })
+     (<DIV> :class "hop-demos-code"
+	    (<PRE> (htmlize code)))))
 
-
-(define (<SWITCH-DIV> id panel1 panel2)
-  (<DIV> :id id
-     (<DIV> :id (string-append id "-1")
-	panel1)
-     (<DIV> :id (string-append id "-2") :style "display: none"
-	panel2)))
-
-(define (show-demo-code title path code)
-  (<HTML>
-   (<DEMO-HEAD>)
-   (<BODY> :class "hop-demos-code"
-      ;; Create the run window
-      (<FLOAT-WINDOW> :id "hop-run-window" :width 640 :height 480
-		      :in-frame #t :title (format "~a demo" (basename path)))
-      ;; Document
-      (<H1> title)
-      (show-documentation (make-file-path (dirname path) "comment.hop"))
-      (<SWITCH-DIV> "hop-demos-view"
-	;; First div
+  (define (switch-window-edit)
+    (list
+     (<FORM> :action (service (txt)
+		       (show-demo-code title path txt))
+       (<BUTTON> :class "hop-demo-button" "Replace" :onclick "submit()")
+       (<BUTTON> :class "hop-demo-button" "Cancel"
+		 :onclick { hop_switch_div("hop-demos-view") })
+       (<DIV>
+	(<TEXTAREA> :name "txt" :class "hop-demos-code-edit" :rows 200 code)))))
+  
+  (define (show-demo-code title path code)
+    (<HTML>
+     (<DEMO-HEAD>)
+     (<BODY> :class "hop-demos-code"
+	 ;; Create the run window
+	 (<FLOAT-WINDOW> :id "hop-run-window" :width 640 :height 480
+			 :in-frame #t :title (format "~a demo" title))
+	 ;; The document
+	 (<H1> title)
+	 (show-documentation (make-file-path (dirname path) "comment.hop"))
+	 (<SWITCH-DIV> "hop-demos-view"
+	     ;; First div
 	(list
 	  (<BUTTON> :class "hop-demo-button" "Run"
-	     :onclick { hop_open_float_window($(make-service-url demos/run path code),
-					       "hop-run-window", 50, 50)})
+	    :onclick { hop_open_float_window($(make-service-url demos/run path code),
+					      "hop-run-window", 50, 50)})
 	  (<BUTTON> :class "hop-demo-button" "Edit"
 		:onclick { hop_switch_div("hop-demos-view") })
 	  (<DIV> :class "hop-demos-code"
@@ -191,14 +185,13 @@
 	    (<DIV>
 	     (<TEXTAREA> :name "txt" :class "hop-demos-code-edit" 
 			 :rows 200 code))))))))
-
-	  
-
-(define-service (demos/show-demo title demo)
-  (let* ((file (make-file-path (hop-demos-directory)
-			       demo (string-append demo ".hop")))
-	 (code (read-source-file file)))
-    (show-demo-code title file code)))
+  ;;
+  ;; Service code starts here.
+  ;; 
+  (let ((file (make-file-path (hop-demos-directory)
+			      demo
+			      (string-append demo ".hop"))))
+    (show-demo-code title file (<DEMO-INCLUDE> file))))
 
 
 ;; ----------------------------------------------------------------------
@@ -212,6 +205,7 @@
    (<BODY>
     (<SCRIPT> :type "text/javascript"
        (format "location='http://~a:~a/~a'" (hostname) (hop-port) path)))))
+
 
 ;; ----------------------------------------------------------------------
 ;; 	demos/about service ...
@@ -229,6 +223,9 @@
 ;; ----------------------------------------------------------------------
 ;; 	demo-filter ...
 ;; ----------------------------------------------------------------------
+;; This filter works on demos files. All the files used by a demo are read
+;; on disk. Only the main file is read from the value stored in the
+;; hash table when the «Run» button is clicked.
 (define (demo-filter req)
   (define (run-customized-demo path code)
     (let ((port (open-input-string code))
@@ -265,7 +262,6 @@
 		    (http-warning "Demo code evaluation produced no result"))))
 	       req))
 	 req)))
-
 
 ;; ----------------------------------------------------------------------
 ;; 	Initialization ...

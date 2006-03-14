@@ -26,10 +26,19 @@ H1, H2 {
     padding-bottom: 10px;
 }
 
-/***
- *** Left part 
- ***/   
+#hop-run-window-content {
+    background: white;
+}
 
+.hop-demo-button {
+    font-size: 50%;
+    padding: 0 10px 0 10px;
+    margin: 2px 1em 2px 0;
+}
+
+/* ====================================================================== *\
+ *	Left frame  ...
+\* ====================================================================== */   
 .hop-demos-category {
     color: $hop-demo-fg;
 }
@@ -43,15 +52,14 @@ H1, H2 {
     text-decoration: none;
 }
 
-
 .hop-demos-link :hover {
     background: white;
     color: red;
 }
 
-
-
-
+/* ====================================================================== *\
+ *	Right frame  ...
+\* ====================================================================== */   
 .hop-demos-comment {
     margin: 5px;
     background: #CFCDFF;
@@ -63,28 +71,17 @@ H1, H2 {
     font-size: 95%;
 }
 
-
-
-
-.hop-demos-tbl {
-    width: 100%;
-    border: 1px solid khaki;
-}
-
-.hop-demos-tbl-even {
-    background: palegoldenrod;
-}
-
-.hop-demos-tbl A {
-    color: brown;
-    font-weight: bold;
-    text-decoration: none;
-}
-
 .hop-demos-code {
     background: $hop-demo-bg;
     font-size: 95%;
     padding: 1;
+}
+
+.hop-demos-comment-code {
+    background: $hop-demo-bg;
+    font-size: 95%;
+    padding: 1px;
+    margin: 2px 30px 2px 30px;
 }
 
 .hop-demos-code-edit {
@@ -95,29 +92,4 @@ H1, H2 {
     border: 1px dotted red;
     margin-top: 6px;
     padding-top: 5px
-}
-    
-
-#hop-run-window-content {
-    background: white;
-}
-
-
-#hop-edit-window-content  {
-    background: #eeeeff;
-}
-
-#hop-edit-window-content TEXTAREA {
-    background: #fff8dc;
-    width: 100%;
-    height: 100%;
-}
-
-/*
- * Buttons 
- */
-.hop-demo-button {
-    font-size: 50%;
-    padding: 0 10px 0 10px;
-    margin: 2px 1em 2px 0;
 }
