@@ -1,12 +1,7 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/runtime/Makefile                        */
-#*    -------------------------------------------------------------    */
-#*    Author      :  Manuel Serrano                                    */
-#*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Mar  7 05:52:14 2006 (serrano)                */
-#*    -------------------------------------------------------------    */
-#*    The makefile to build the HOP library.                           */
+#*    The makefile to build the Scheme2Js library.                     */
 #*=====================================================================*/
+
 .PHONY: do 
 
 do: build
@@ -22,7 +17,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*    Compilers, Tools and Destinations                                */
 #*---------------------------------------------------------------------*/
 # the library name
-TARGETNAME	= hop
+TARGETNAME	= scheme2js
 # The heap file
 HEAP_FILE	= $(BUILDLIBDIR)/$(TARGETNAME).heap
 HEAPJVM_FILE	= $(BUILDLIBDIR)/$(TARGETNAME).jheap
@@ -33,21 +28,19 @@ CLASS_EDIR	= o/class_e/bigloo/$(TARGETNAME)
 DOTNET_OBJ_DIR	= o/dotnet_s
 DOTNET_OBJ_EDIR	= o/dotnet_e
 
+PROTOBJECT_FLAGS = -eval "(load \""$(BIGLOO_SRC_DIR)"/protobject-eval.sch\")"
+
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS	= param misc types thread \
-                  xml dom read \
-                  read-js css js-lib cgi \
-                  hop service \
-                  job mime user \
-                  http-lib http-response http-shoutcast http-error \
-                  http-filter html-extra html-notepad html-tree html-slider \
-                  html-paned html-tabslider html-inline html-foldlist \
-                  html-window \
-                  event color weblets
+_BGL_OBJECTS	= capture collect-vars compile constants expanders \
+	gen-code gen-js inline js-interface liveness node-elimination \
+	nodes pobject-conv protobject scheme2js side statements symbol \
+	tail-rec tail transform-util traverse var expand verbose dot-expand
 
-OBJECTS		= $(_OBJECTS:%=o/%.o) o/configure.o
+_OBJECTS	= $(_BGL_OBJECTS)
+
+OBJECTS		= $(_OBJECTS:%=o/%.o)
 EOBJECTS	= o/make-lib.o
 
 BGL_CLASSES	= $(_OBJECTS:%=$(CLASS_DIR)/%.class)
@@ -58,8 +51,9 @@ BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
 
 SOURCES		= $(_OBJECTS:%=%.scm)
 
-INCLUDES	= compiler-macro.sch eval-macro.sch xml.sch param.sch \
-                  http-lib.sch service.sch
+INCLUDES	= hop-eval.sch nodes.sch protobject.sch tools.sch \
+	runtime_mapping_hack.sch compile-optimized-boolify.scm \
+	compile-optimized-call.scm
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -86,24 +80,29 @@ dotnet: heap-jvm lib-dotnet
 #*---------------------------------------------------------------------*/
 #*    The implicit rules                                               */
 #*---------------------------------------------------------------------*/
+#o/%.o: %.scm
+#	echo $(BLFLAGS)
+#	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$*.scm -o $@ -c)
+
 o/%.o: %.scm
-	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$*.scm -o $@ -c)
+	$(BIGLOO) $(BCFLAGS) $(BLFLAGS) $(PROTOBJECT_FLAGS) $< -o $@ -c
+
 
 $(CLASS_DIR)/%.class: %.scm
-	$(BIGLOO) -jvm $(BJVMFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -jvm-purify $< -o $@
+	$(BIGLOO) -jvm $(BJVMFLAGS) $(EFLAGS) $(BHOPFLAGS) $(PROTOBJECT_FLAGS) -c -jvm-purify $< -o $@
 
 $(CLASS_EDIR)/%.class: %.scm
-	$(BIGLOO) -jvm $(BJVMFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -jvm-purify $< -o $@
+	$(BIGLOO) -jvm $(BJVMFLAGS) $(EFLAGS) $(BHOPFLAGS) $(PROTOBJECT_FLAGS) -c -jvm-purify $< -o $@
 
 $(DOTNET_OBJ_DIR)/%.obj: %.scm
 	$(BIGLOO) -dotnet \
             -dotnet-mono-workaround -dotnet-pnet-workaround \
-             $(BDOTNETFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -dotnet-managed $< -o $@
+             $(BDOTNETFLAGS) $(EFLAGS) $(BHOPFLAGS) $(PROTOBJECT_FLAGS) -c -dotnet-managed $< -o $@
 
 $(DOTNET_OBJ_EDIR)/%.obj: %.scm
 	$(BIGLOO) -dotnet \
             -dotnet-mono-workaround -dotnet-pnet-workaround \
-             $(BDOTNETFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -dotnet-managed $< -o $@
+             $(BDOTNETFLAGS) $(EFLAGS) $(BHOPFLAGS) $(PROTOBJECT_FLAGS) -c -dotnet-managed $< -o $@
 
 #*---------------------------------------------------------------------*/
 #*    The heap construction                                            */
@@ -260,16 +259,16 @@ ude:
 	@ $(MAKE) -f Makefile .afile .etags .jfile
 	@ $(MAKE) dep
 
-.afile: $(SOURCES) configure.scm
-	@ $(AFILE) -o .afile $(SOURCES) configure.scm
+.afile: $(SOURCES)
+	@ $(AFILE) -o .afile $(SOURCES)
 
-.jfile: $(SOURCES) configure.scm
+.jfile: $(SOURCES)
 	@ $(JFILE) -o .jfile \
                    -I $(MISC_SRC_DIR) \
-                   -pbase $(PBASE) $(SOURCES) configure.scm make-lib.scm
+                   -pbase $(PBASE) $(SOURCES) make-lib.scm
 
 .etags: $(SOURCES)
-	@ $(BTAGS) -o .etags $(SOURCES) configure.scm
+	@ $(BTAGS) -o .etags $(SOURCES)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */

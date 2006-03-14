@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sun Feb 12 15:16:18 2006 (serrano)                */
+/*    Last change :  Fri Mar 10 13:34:17 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WEBFILTER HOP CSS                                                */
@@ -191,4 +191,18 @@ table.webfilter-config span.enable {
 table.webfilter-config span.disable {
   color: #777;
 }
+
+table.http-headers th {
+  font-size: small;
+  border: 0;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  text-align: center;
+}
+
+table.http-headers input {
+  border: 1px solid $border-color;
+  font-size: small;
+}
+
 

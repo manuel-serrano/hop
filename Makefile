@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Mar  3 16:00:44 2006 (eg)                     */
+#*    Last change :  Sun Mar  5 16:55:12 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -22,7 +22,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile configure
-POPDIRS		= runtime src etc share contribs weblets demos
+POPDIRS		= runtime scheme2js src etc share contribs weblets demos
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -42,12 +42,14 @@ bin: lib
 
 lib:
 	(cd runtime && $(MAKE) build)
+	(cd scheme2js && $(MAKE) build)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */
 #*---------------------------------------------------------------------*/
 dep:
 	(cd runtime; $(MAKE) dep)
+	(cd scheme2js; $(MAKE) dep)
 	(cd src; $(MAKE) dep)
 
 #*---------------------------------------------------------------------*/
@@ -55,6 +57,7 @@ dep:
 #*---------------------------------------------------------------------*/
 ude:
 	(cd runtime; $(MAKE) ude)
+	(cd scheme2js; $(MAKE) ude)
 	(cd src; $(MAKE) ude)
 
 #*---------------------------------------------------------------------*/
@@ -62,6 +65,7 @@ ude:
 #*---------------------------------------------------------------------*/
 install: install-init
 	(cd runtime && $(MAKE) install) && \
+	(cd scheme2js && $(MAKE) install) && \
 	(cd src && $(MAKE) install) && \
 	(cd share && $(MAKE) install) && \
 	(cd weblets && $(MAKE) install)
@@ -80,6 +84,7 @@ $(DESTDIR)$(HOPFILDIR):
 uninstall:
 	(cd src; $(MAKE) uninstall)
 	(cd runtime; $(MAKE) uninstall)
+	(cd scheme2js; $(MAKE) uninstall)
 	(cd demos; $(MAKE) uninstall)
 	/bin/rm -rf $(HOPFILDIR)
 
@@ -88,6 +93,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 clean:
 	(cd runtime; $(MAKE) clean)
+	(cd scheme2js; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
 
 devclean:
@@ -111,13 +117,32 @@ distrib:
           echo "*** ERROR: $(HOPTMPDIR)/hop$(HOPRELEASE) exists!"; \
           exit 1; \
         else \
+          ver=$(HOPRELEASE); \
+          dev=$(HOPDEVEL); \
+          min=1; \
+          if [ -f .hoprelease ]; then \
+             . .hoprelease; \
+             rm -f .hoprelease; \
+             if [ $$ver = $$version -a $$dev == $$devel ]; then \
+               min=`expr $$min + 1`; \
+             fi \
+          fi && \
+          if [ "$$dev " = " " ]; then \
+            distrib=$$ver; \
+          else \
+            distrib=$$ver-$$dev$$min; \
+          fi && \
+          echo "version=$$ver" > .hoprelease; \
+          echo "devel=$$dev" >> .hoprelease; \
+          echo "minor=$$min" >> .hoprelease; \
           $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
-          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$(HOPRELEASE) && \
-          tar cvfz hop-$(HOPRELEASE).tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$(HOPRELEASE) && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$(HOPRELEASE) && \
+          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
+          tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
+          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
-              mv hop-$(HOPRELEASE).tar.gz $(HOPDISTRIBDIR); \
+              /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
+              mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
             fi \
           fi \
         fi

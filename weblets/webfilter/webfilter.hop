@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Mar  1 10:38:07 2006 (serrano)                */
+;*    Last change :  Fri Mar 10 14:42:36 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -12,9 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module weblet_webfilter
-;*    (library zip)                                                    */
-   )
+(module weblet_webfilter)
 
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */
@@ -33,9 +31,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    Global parameters                                                */
 ;*---------------------------------------------------------------------*/
+(define webfilter-http-header-filter #t)
+(define webfilter-http-headers
+   '((user-agent: . "Mozilla/5.0 (X11; U; Linux i686; rv:1.8.0.1) Gecko/20060124 Firefox/1.5.0.1")))
+
 (define webfilter-blacklist #t)
+
 (define webfilter-google-unbounce #t)
-(define webfilter-flash-stop #t)
+
+(define webfilter-flash-stop #f)
 (define webfilter-flash-content-length #e200000)
 
 ;*---------------------------------------------------------------------*/
@@ -47,6 +51,10 @@
 	 (lambda ()
 	    (for-each (lambda (c)
 			 (case (car c)
+			    ((http-header-filter)
+			     (set! webfilter-http-header-filter (cadr c)))
+			    ((http-headers)
+			     (set! webfilter-http-headers (cadr c)))
 			    ((blacklist)
 			     (set! webfilter-blacklist (cadr c)))
 			    ((google-unbounce)
@@ -63,10 +71,12 @@
 (define (webfilter-write-config)
    (with-output-to-file webfilter-config
       (lambda ()
-	 (display `((blacklist ,webfilter-blacklist)
-		    (google-unbounce ,webfilter-google-unbounce)
-		    (flash-stop ,webfilter-flash-stop)
-		    (flash-content-length ,webfilter-flash-content-length))))))
+	 (write `((http-header-filter ,webfilter-http-header-filter)
+		  (http-headers ,webfilter-http-headers)
+		  (blacklist ,webfilter-blacklist)
+		  (google-unbounce ,webfilter-google-unbounce)
+		  (flash-stop ,webfilter-flash-stop)
+		  (flash-content-length ,webfilter-flash-content-length))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-blacklist ...                                               */
@@ -91,6 +101,139 @@
       (load-blacklist t (make-file-name (hop-rc-directory) "BLACKLIST"))
       t))
 
+;*---------------------------------------------------------------------*/
+;*    <HTTP-HEADERS-TABLE> ...                                         */
+;*---------------------------------------------------------------------*/
+(define (<HTTP-HEADERS-TABLE> id)
+   (<TABLE>
+      :class "http-headers"
+      (<TR>
+	 (<TH> "Key") (<TH> "Value"))
+      (map (lambda (l)
+	      (let ((key (if (eq? l #unspecified)
+			     ""
+			     (keyword->string (car l))))
+		    (val (if (eq? l #unspecified)
+			     ""
+			     (cdr l)))
+		    (id1 (xml-make-id))
+		    (id2 (xml-make-id)))
+		 (define save-entry
+		    (service (key val)
+		       (cond
+			  ((eq? l #unspecified)
+			   (if (or (string=? val "") (string=? key ""))
+			       #t
+			       (let ((key (string->keyword
+					   (string-downcase key))))
+				  (set! webfilter-http-headers
+					(cons (cons key val)
+					      webfilter-http-headers))
+				  (webfilter-write-config)
+				  (<HTTP-HEADERS-TABLE> id))))
+			  (else
+			   (if (or (string=? val "") (string=? key ""))
+			       (begin
+				  (set! webfilter-http-headers
+					(remq! l webfilter-http-headers))
+				  (webfilter-write-config)
+				  (<HTTP-HEADERS-TABLE> id))
+			       (let ((key (string->keyword
+					   (string-downcase key))))
+				  (set-car! l key)
+				  (set-cdr! l val)
+				  (webfilter-write-config)
+				  (<HTTP-HEADERS-TABLE> id)))))))
+		 (define keypress {
+		     this.style.color = "red";
+		     if( event.keyCode == 13 ) {
+			  var key = document.getElementById($id1).value
+			  var val = document.getElementById($id2).value
+			  this.style.color = "blue";
+			  hop( $save-entry( key, val ),
+			       function( http ) {
+			          if( http.responseText.length != 0 ) {
+				      hop_replace_inner_id( $id )( http );
+				  }
+			     } )
+			 }
+		     })
+		 (<TR>
+		    (<TD>
+		       (<INPUT>
+			  :id id1
+			  :type "text"
+			  :size 30
+			  :value key
+			  :onkeypress keypress))
+		    (<TD>
+		       (<INPUT>
+			  :id id2
+			  :type "text"
+			  :size 80
+			  :value val
+			  :onkeypress keypress)))))
+	   (append (sort webfilter-http-headers
+			 (lambda (c1 c2)
+			    (string-ci<? (keyword->string (car c1))
+					 (keyword->string (car c2)))))
+		   '(#unspecified)))))
+
+;*---------------------------------------------------------------------*/
+;*    <HTTP-HEADERS> ...                                               */
+;*---------------------------------------------------------------------*/
+(define (<HTTP-HEADERS>)
+   (<TABLE>
+      :class "webfilter-config"
+      (<TR>
+	 (<TH>
+	    (<P> [This filter re-writes outgoing HTTP headers.])))
+      (let ((txt (<SPAN>
+		    :class (if webfilter-http-header-filter "enable" "disable")
+		    "HTTP headers filtering")))
+	 (<TR>
+	    (<TH>
+	       (<INPUT>
+		  :type "checkbox"
+		  :checked webfilter-http-header-filter
+		  :onchange {
+		     hop($(service (val)
+			     (set! webfilter-http-header-filter val)
+			     (webfilter-write-config))
+			  (this.checked));
+		     ($txt).className = this.checked ? "enable" : "disable"
+		     })
+	       txt)))
+      (<TR>
+	 (let ((id "http-headers-table"))
+	    (<TD> :id id (<HTTP-HEADERS-TABLE> id))))))
+
+;*---------------------------------------------------------------------*/
+;*    <BLACKLIST> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<BLACKLIST>)
+   (<TABLE>
+      :class "webfilter-config"
+      (<TR>
+	 (<TH>
+	    (<P> [This filter bans domains registerd in black lists.])))
+      (let ((txt (<SPAN>
+		    :class (if webfilter-blacklist "enable" "disable")
+		    "Black listing")))
+	 (<TR>
+	    (<TD>
+	       (<INPUT>
+		  :type "checkbox"
+		  :checked webfilter-blacklist
+		  :onchange {
+		     hop($(service (val)
+			     (set! webfilter-blacklist val)
+			     (webfilter-write-config))
+			  (this.checked));
+		     ($txt).className = this.checked ? "enable" : "disable"
+		  })
+	       txt)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    <BLACKLIST> ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -227,6 +370,9 @@ Google, each containing a forward pointer to the found wanted URL.])))
 					    (<NOTEPAD>
 					       (<NPHEAD> "")
 					       (<NPTAB>
+						  (<NPTABHEAD> "Headers")
+						  (<HTTP-HEADERS>))
+					       (<NPTAB>
 						  (<NPTABHEAD> "Blacklist")
 						  (<BLACKLIST>))
 					       (<NPTAB>
@@ -247,9 +393,26 @@ Google, each containing a forward pointer to the found wanted URL.])))
       :version (hop-version)
       (<P> [This weblet filters Web traffic:])
       (<UL>
+	 (<LI> "It filters HTTP headers.")
 	 (<LI> "It bans domains according to blacklists.")
 	 (<LI> "It prevents Google bouncing.")
 	 (<LI> "It disables Flash script auto-play."))))
+
+;*---------------------------------------------------------------------*/
+;*    http-headers-rewrite ...                                         */
+;*---------------------------------------------------------------------*/
+(define (http-headers-rewrite resp)
+   (with-access::%http-response resp (header)
+      (for-each (lambda (h)
+		   (when (pair? h)
+		      (let* ((v (string->keyword
+				 (string-downcase!
+				  (keyword->string (car h)))))
+			     (c (assq v webfilter-http-headers)))
+			 (when (pair? c)
+			    (set-cdr! h (cdr c))))))
+		header))
+   resp)
 
 ;*---------------------------------------------------------------------*/
 ;*    blacklist ...                                                    */
@@ -284,7 +447,6 @@ Google, each containing a forward pointer to the found wanted URL.])))
    (define flash-grammar
       (regular-grammar (op)
 	 ((uncase "<embed ")
-	  (tprint "GOT ONE...")
 	  (display "<param name='PLAY' value='false'><embed play='false' " op)
 	  (ignore))
 	 ((+ (out #\space))
@@ -298,24 +460,23 @@ Google, each containing a forward pointer to the found wanted URL.])))
    (when webfilter-flash-stop
       (instantiate::http-response-filter
 	 (response resp)
+	 (headerf (lambda (header)
+		     (let ((c (assq content-encoding: header)))
+			(if (equal? c '(content-encoding: . "gzip"))
+			    (delete c header)
+			    header))))
 	 (bodyf (lambda (ip op status header cl)
 		   (if (< cl webfilter-flash-content-length)
 		       (let ((c (assq content-encoding: header)))
 			  (if (equal? c '(content-encoding: . "gzip"))
-			      (begin
-				 (send-chars ip op cl)
+			      (let ((ipz (open-input-gzip-port ip)))
+				 (unless (= cl #e-1)
+				    (let ((barrier (elong->fixnum cl)))
+				       (input-port-fill-barrier-set! ip barrier)))
+				 (unwind-protect
+				    (read/rp flash-grammar ipz op)
+				    (close-input-port ipz))
 				 (flush-output-port op))
-;* 			      (let ((ipz (open-input-gzip-port ip))    */
-;* 				    (opz (open-output-gzip-port op)))  */
-;* 				 (unless (= cl #e-1)                   */
-;* 				    (let ((barrier (elong->fixnum cl))) */
-;* 				       (input-port-fill-barrier-set! ip barrier))) */
-;* 				 (unwind-protect                       */
-;* 				    (read/rp flash-grammar ipz opz)    */
-;* 				    (begin                             */
-;* 				       (close-input-port ipz)          */
-;* 				       (close-output-port opz)))       */
-;* 				 (flush-output-port op))               */
 			      (begin
 				 (unless (= cl #e-1)
 				    (let ((barrier (elong->fixnum cl)))
@@ -332,8 +493,6 @@ Google, each containing a forward pointer to the found wanted URL.])))
  (lambda (req resp)
     (or (blacklist req)
 	(google req)
-	(flash req resp)
-	resp)))
-
-
-
+	(let ((resp2 (http-headers-rewrite resp)))
+	   (or (flash req resp2)
+	       resp2)))))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Feb 23 08:41:19 2006 (serrano)                */
+/*    Last change :  Fri Mar 10 14:05:42 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -132,8 +132,7 @@ function hop_replace_inner( el ) {
 /*    hop_replace_inner_id ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_replace_inner_id( id ) {
-   var el = document.getElementById( id );
-   return hop_replace_inner( el );
+   return hop_replace_inner( document.getElementById( id ) );
 }
 
 /*---------------------------------------------------------------------*/

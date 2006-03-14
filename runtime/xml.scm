@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Feb 23 02:41:31 2006 (serrano)                */
+;*    Last change :  Tue Mar  7 05:50:09 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -61,6 +61,7 @@
 	    (xml-make-id::bstring #!optional id (markup 'HOP))
 	    
  	    (generic xml-write ::obj ::output-port ::symbol)
+	    (generic xml-write-attribute attr::obj id p)	    
 	    
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -336,23 +337,32 @@
 (define (xml-write-attributes attr p)
    (for-each (lambda (a)
 		(display " " p)
-		;; boolean false attribute has no value
-		(unless (eq? (cdr a) #f)
-		   (display (car a) p)
-		   ;; boolean true attribute has no value
-		   (unless (eq? (cdr a) #t)
-		      (display "='" p)
-		      (cond
-			 ((hop-service? (cdr a))
-			  (display (hop-service-path (cdr a)) p))
-			 ((procedure? (cdr a))
-			  (error 'xml
-				 "Illegal procedure argument in XML attribute"
-				 (car a)))
-			 (else
-			  (display (xml-attribute-encode (cdr a)) p)))
-		      (display "'" p))))
+		(xml-write-attribute (cdr a) (car a) p))
 	     attr))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::obj ...                                    */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-write-attribute attr::obj id p)
+   ;; boolean false attribute has no value
+   (unless (eq? attr #f)
+      (display id p)
+      ;; boolean true attribute has no value
+      (unless (eq? attr #t)
+	 (display "='" p)
+	 (if (procedure? attr)
+	     (error 'xml "Illegal procedure argument in XML attribute" id)
+	     (display (xml-attribute-encode attr) p))
+	 (display "'" p))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::hop-service ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute attr::hop-service id p)
+   (display id p)
+   (display "='" p)
+   (display (hop-service-path attr) p)
+   (display "'" p))
 
 ;*---------------------------------------------------------------------*/
 ;*    HTML 4.01 elements ...                                           */

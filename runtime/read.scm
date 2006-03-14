@@ -269,6 +269,8 @@
 	       (input-port-name     (the-port))
 	       (input-port-position (the-port)))
 	      (integer->char (string->integer (the-substring 2 5))))))
+      ((: "#\\" (>= 3 digit))
+       (integer->char (string->integer (the-substring 2 0) 8)))
       ((: "#\\" (or letter digit special (in "|#; " quote paren)))
        (string-ref (the-string) 2))
       ((: "#\\" (>= 2 letter))
@@ -284,6 +286,8 @@
 	      #\space)
 	     ((eq? char-name 'RETURN)
 	      (integer->char 13))
+	     ((eq? char-name 'NULL)
+	      (integer->char 0))
 	     (else
 	      (read-error/location
 	       "Illegal character"
@@ -319,6 +323,8 @@
        (the-integer))
       ((: "-" (+ digit))
        (the-integer))
+      ((: "#b" (? (in "-+")) (+ (in ("02"))))
+       (string->integer (the-substring 2 (the-length)) 2))
       ((: "#o" (? (in "-+")) (+ (in ("07"))))
        (string->integer (the-substring 2 (the-length)) 8))
       ((: "#d" (? (in "-+")) (+ (in ("09"))))
@@ -462,6 +468,7 @@
 			     par-poses))
        ;; and then, we compute the result list...
        ((hop-make-escape)
+	(the-port)
 	(make-list! (collect-up-to ignore "list" (the-port)) (the-port))))
       
       ;; structures
@@ -683,7 +690,9 @@
 			(thread-specific-set! t file-name)
 			(set! *the-loading-file* file-name))
 		    (let loop ((last #unspecified))
+		       ((hop-read-pre-hook) port)
 		       (let ((sexp (hop-read port)))
+			  ((hop-read-post-hook) port)
 			  (if (eof-object? sexp)
 			      (begin
 				 (close-input-port port)
