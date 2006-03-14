@@ -1,15 +1,15 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-foldlist.js                   */
+/*    serrano/prgm/project/hop/share/hop-foldlist.css                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Tue Mar  7 18:43:12 2006 (eg)                     */
+/*    Last change :  Tue Mar 14 18:16:05 2006 (eg)                     */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implemenetation                                    */
 /*=====================================================================*/
 
 .hop-fl {
-    margin: 2px
+    margin: 2px;
     width: 100%;
     padding: 0;
     margin: 0;

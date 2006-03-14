@@ -3,13 +3,14 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Tue Mar  3 14:36:14 2006                          */
-;*    Last change :  Tue Mar  7 21:59:34 2006 (eg)                     */
+;*    Last change :  Tue Mar 14 15:34:05 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    Comment for <FL> demo                                            */
 ;*=====================================================================*/
 
 
-(<P> [The ,(htmlize "<FL>") widget allows to fold/unfold the compnets of a list. Basically, the structure of a fold-list is given below: ])
+(<P> [The ,(htmlize "<FL>") widget allows to fold/unfold the componentts
+      of a list. Basically, the structure of a folding list is given below: ])
 
 (<PRE> :class "hop-demos-code" (htmlize [
 (<FL> 
@@ -17,4 +18,4 @@
 	"Details of the list item")
    (<FLITEM> (<FLHEAD> ...)
 	...)
-	 ...)]))
+   ...)]))

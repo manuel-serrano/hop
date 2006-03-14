@@ -60,6 +60,7 @@ H1, H2 {
     border: 2px dotted #104E8B;
     overflow: auto;
     color: #104E8B;
+    font-size: 95%;
 }
 
 
@@ -82,8 +83,20 @@ H1, H2 {
 
 .hop-demos-code {
     background: $hop-demo-bg;
-    font-size: 90%;
+    font-size: 95%;
+    padding: 1;
 }
+
+.hop-demos-code-edit {
+    background: #FFF8DC;
+    font-size: 95%;
+    width: 99%;
+    overflow: auto;
+    border: 1px dotted red;
+    margin-top: 6px;
+    padding-top: 5px
+}
+    
 
 #hop-run-window-content {
     background: white;

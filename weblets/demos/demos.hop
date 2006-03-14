@@ -15,8 +15,8 @@
     ((pair? obj) (cons (htmlize (car obj))
 		       (htmlize (cdr obj))))
     ((string? obj) (pregexp-replace* ">"
-				     (pregexp-replace* "<" obj "&lt;")
-				     "&gt;"))
+				     (pregexp-replace* "<" obj "<font color=blue>&lt;")
+				     "&gt;</font>"))
     (else (error 'htmlize "Cannot htmlize" obj))))
 
 
@@ -38,6 +38,7 @@
 (define (<DEMO-HEAD>)
   (<HEAD>
     (<HOP-HEAD> :jscript "hop-window.js" "hop-foldlist.js"
+		(make-file-path *demos-directory* "demos.js")
 		:css "hop-window.css" "hop-foldlist.css")
     (<LINK> :rel "stylesheet"
 	    :type "text/css"
@@ -149,8 +150,49 @@
       (<BUTTON> :class "hop-demo-button" "Edit"
 		:onclick { hop_open_float_window(null, "hop-edit-window", 10, 25)})
       ;; Display the code
-      (<DIV> :class "hop-demos-code"
+      (<DIV> :id "hop-demos-code" :class "hop-demos-code"
 	     (<PRE> (htmlize code))))))
+
+
+(define (<SWITCH-DIV> id panel1 panel2)
+  (<DIV> :id id
+     (<DIV> :id (string-append id "-1")
+	panel1)
+     (<DIV> :id (string-append id "-2") :style "display: none"
+	panel2)))
+
+(define (show-demo-code title path code)
+  (<HTML>
+   (<DEMO-HEAD>)
+   (<BODY> :class "hop-demos-code"
+      ;; Create the run window
+      (<FLOAT-WINDOW> :id "hop-run-window" :width 640 :height 480
+		      :in-frame #t :title (format "~a demo" (basename path)))
+      ;; Document
+      (<H1> title)
+      (show-documentation (make-file-path (dirname path) "comment.hop"))
+      (<SWITCH-DIV> "hop-demos-view"
+	;; First div
+	(list
+	  (<BUTTON> :class "hop-demo-button" "Run"
+	     :onclick { hop_open_float_window($(make-service-url demos/run path code),
+					       "hop-run-window", 50, 50)})
+	  (<BUTTON> :class "hop-demo-button" "Edit"
+		:onclick { hop_switch_div("hop-demos-view") })
+	  (<DIV> :class "hop-demos-code"
+	     (<PRE> (htmlize code))))
+	;; Second div
+	(list
+	 (<FORM> :action (service (txt)
+				  (show-demo-code title path txt))
+	    (<BUTTON> :class "hop-demo-button" "Replace" :onclick "submit()")
+	    (<BUTTON> :class "hop-demo-button" "Cancel"
+		      :onclick { hop_switch_div("hop-demos-view") })
+	    (<DIV>
+	     (<TEXTAREA> :name "txt" :class "hop-demos-code-edit" 
+			 :rows 200 code))))))))
+
+	  
 
 (define-service (demos/show-demo title demo)
   (let* ((file (make-file-path (hop-demos-directory)
