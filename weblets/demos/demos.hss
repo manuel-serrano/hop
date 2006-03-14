@@ -23,7 +23,7 @@ H1 {
 
 H1, H2 {
     color: $hop-demo-fg;
-        padding-bottom: 10px;
+    padding-bottom: 10px;
 }
 
 /***
@@ -82,6 +82,7 @@ H1, H2 {
 
 .hop-demos-code {
     background: $hop-demo-bg;
+    font-size: 90%;
 }
 
 #hop-run-window-content {
