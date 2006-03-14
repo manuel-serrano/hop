@@ -9,12 +9,21 @@
 ;*    HOP Demos                                                        */
 ;*=====================================================================*/
 
+(define (htmlize obj)				;; FIXME. must be completely changed
+  (cond
+    ((null? obj) '())
+    ((pair? obj) (cons (htmlize (car obj))
+		       (htmlize (cdr obj))))
+    ((string? obj) (pregexp-replace* ">"
+				     (pregexp-replace* "<" obj "&lt;")
+				     "&gt;"))
+    (else (error 'htmlize "Cannot htmlize" obj))))
+
+
 ;; ----------------------------------------------------------------------
 ;;	module ...
 ;; ----------------------------------------------------------------------
-;;(module demos_configuration)
-;; (export webconf-make-window)
-
+;(module demos_demos)
 
 (define *demos-directory*
    (make-file-name (hop-weblets-directory) "demos"))
@@ -28,32 +37,11 @@
 ;; ----------------------------------------------------------------------
 (define (<DEMO-HEAD>)
   (<HEAD>
-    (<HOP-HEAD> :jscript "hop-window.js" :css "hop-window.css")
+    (<HOP-HEAD> :jscript "hop-window.js" "hop-foldlist.js"
+		:css "hop-window.css" "hop-foldlist.css")
     (<LINK> :rel "stylesheet"
 	    :type "text/css"
 	    :href (format "~a/demos.hss" *demos-directory*))))
-
-
-(define (<DEMO-TABLE> dir proc)
-  (let ((even? #f))
-    (<TABLE> :class "hop-demos-tbl" 
-       (map (lambda (x)
-	      (set! even? (not even?))
-	      (<TR> :class (string-append "hop-demos-tbl-"
-					  (if even? "even" "odd"))
-		    (<TD> (proc x))))
-	    (sort (directory->list dir) string<?)))))
-
-(define (htmlize obj)				;; FIXME. must be completely changed
-  (cond
-    ((null? obj) '())
-    ((pair? obj) (cons (htmlize (car obj))
-		       (htmlize (cdr obj))))
-    ((string? obj) (pregexp-replace* ">"
-				     (pregexp-replace* "<" obj "&lt;")
-				     "&gt;"))
-    (else (error 'htmlize "Cannot htmlize" obj))))
-
 
 (define (read-source-file file)
   (let ((in (open-input-file file)))
@@ -81,17 +69,27 @@
 ;;	demos/show-tree service ...
 ;; ----------------------------------------------------------------------
 (define-service (demos/show-tree)
-  (let ((even? #f))
+  (let ((lst (with-input-from-file (make-file-path (hop-demos-directory) "list.hop")
+	       read)))
     (<HTML>
-     (<DEMO-HEAD>)
+     (<HEAD>
+      (<DEMO-HEAD>))
+     (<H1> "Hop Demos")
      (<BODY>
-      (<H1> "Hop Demos")
-      (<DEMO-TABLE>
-         (hop-demos-directory)
-	 (lambda(x)
-	   (<A> :href (make-service-url demos/show-demo x)
-		:target "code"
-		x)))))))
+      (<FL> :icono (make-file-path (hop-icons-directory) "folder-open.png")
+	    :iconc (make-file-path (hop-icons-directory) "folder-close.png")
+       (map (lambda (x)
+	      (<FLITEM> :open #t
+			(<FLHEAD> (<SPAN> :class "hop-demos-category"  (car x)))
+		 (map (lambda (y)
+			(<A> :class "hop-demos-link"
+			     :href (make-service-url demos/show-demo
+						     (car y) (cadr y))
+			     :target "code"
+			     (car y)))
+		      (cdr x))))
+	    lst))))))
+
 
 ;; ----------------------------------------------------------------------
 ;;	demos/initial-doc service ...
@@ -100,14 +98,15 @@
   (<HTML>
    (<DEMO-HEAD>)
    (<BODY>
-    (<H1> "Welcome on the Hop demos browser"))
-    (<P> "Click on a category and choose a demo to launch.")
-    (<P> "The bottom part of this window is split in two: ")
-    (<UL> (<LI> "on the left, some Hop code is presented")
-	  (<LI> "on the right, the result of the evaluation of "
-		"this code is shown"))
+    (<H1> "Welcome on the Hop demos browser")
+    (<P> "Choose a demo on the left part of the screen. For each demo, "
+	 "you'll see on the right part of the screen:")
+    (<UL> (<LI> "some explanations on the demo code, ")
+	  (<LI> "the code of the demo"))
+    (<P> "To change the code of a demo, use «Edit» button before launching"
+	 "its execution with the «Run» button")
     (<TABLE> :width "98%"
-       (<TR> (<TD> :align "right" (<HOP-FOOT-LOGO>))))))
+       (<TR> (<TD> :align "right" (<HOP-FOOT-LOGO>)))))))
 
 
 ;; ----------------------------------------------------------------------
@@ -125,7 +124,7 @@
 		       (cons txt res))))
 	   (<H2> "No documentation available for this demo")))))
 
-(define (show-demo-code path code)
+(define (show-demo-code title path code)
   (<HTML>
    (<DEMO-HEAD>)
    (<BODY> :class "hop-demos-code"
@@ -136,12 +135,13 @@
       (<FLOAT-WINDOW> :id "hop-edit-window" :width 700 :height 400
 		      :title " Edit code"
 	(<FORM> :action (service (txt)
-			  (show-demo-code path txt))
+			  (show-demo-code title path txt))
 	  (<BUTTON> :class "hop-demo-button" "Replace" :onclick "submit()")
 	  (<BUTTON> :class "hop-demo-button" "Cancel"
 		    :onclick { hop_close_float_window("hop-edit-window") })
 	  (<TEXTAREA> :name "txt" :cols 80 :rows 25 code)))
       ;; Document
+      (<H1> title)
       (show-documentation (make-file-path (dirname path) "comment.hop"))
       (<BUTTON> :class "hop-demo-button" "Run"
 	:onclick { hop_open_float_window($(make-service-url demos/run path code),
@@ -152,11 +152,11 @@
       (<DIV> :class "hop-demos-code"
 	     (<PRE> (htmlize code))))))
 
-(define-service (demos/show-demo demo)
+(define-service (demos/show-demo title demo)
   (let* ((file (make-file-path (hop-demos-directory)
 			       demo (string-append demo ".hop")))
 	 (code (read-source-file file)))
-    (show-demo-code file code)))
+    (show-demo-code title file code)))
 
 
 ;; ----------------------------------------------------------------------

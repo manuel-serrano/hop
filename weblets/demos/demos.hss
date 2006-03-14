@@ -9,18 +9,48 @@
 /*    HOP Demos                                                        */
 /*=====================================================================*/
 
+$(define hop-demo-fg "#183879")
+$(define hop-demo-bg "#f7f7ef")
+
 BODY {
-    background: cornsilk;
+    background: #efebdf;
 }
 
 H1 {
-    font-size: 120%;
+    font-size: 180%;
     text-align: center;
 }
 
 H1, H2 {
-    color: darkgoldenrod;
+    color: $hop-demo-fg;
+        padding-bottom: 10px;
 }
+
+/***
+ *** Left part 
+ ***/   
+
+.hop-demos-category {
+    color: $hop-demo-fg;
+}
+
+.hop-demos-link {
+    display: block;
+    background: $hop-demo-bg;
+    padding: 1px 1px 1px 10px;
+    margin: 2px;
+    color: #444;
+    text-decoration: none;
+}
+
+
+.hop-demos-link :hover {
+    background: white;
+    color: red;
+}
+
+
+
 
 .hop-demos-comment {
     margin: 5px;
@@ -31,6 +61,8 @@ H1, H2 {
     overflow: auto;
     color: #104E8B;
 }
+
+
 
 
 .hop-demos-tbl {
@@ -49,16 +81,8 @@ H1, H2 {
 }
 
 .hop-demos-code {
-    background: #eee;
+    background: $hop-demo-bg;
 }
-
-.hop-demos-code H1 {
-    font-size: 140%;
-    text-align: center;
-    padding-bottom: 3px;
-    border-bottom: 1px solid brown;
-}
-
 
 #hop-run-window-content {
     background: white;

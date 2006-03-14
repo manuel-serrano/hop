@@ -4,7 +4,7 @@
   (<BODY>
    ;; Create a tabslider opened of the second tab
    (<H3> "An example od a tabslider")
-   (<TABSLIDER> :width 200 :index 1
+   (<TABSLIDER> :width 200 :height  300 
 		(<TSPAN>
 		 (<TSHEAD> "TITLE 0")
 		 "I'm the content of pan 0")

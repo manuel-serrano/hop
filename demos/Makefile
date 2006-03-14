@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Tue Mar 14 08:50:02 2006 (eg)                     */
+#*    Last change :  Tue Mar 14 14:16:02 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP demos directory                         */
 #*=====================================================================*/
@@ -21,16 +21,18 @@ POPDIRS = calendar dhtml event filtering foldlist \
 	  hss notepad paned slider sorttable \
 	  tabslider text  todolist tree
 
-
+FILES   = list.hop
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile
+POPULATION	= Makefile $(FILES)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
+	mkdir -p $(HOPDEMOSDIR)
+	install -m a+r $(FILES) $(HOPDEMOSDIR)
 	for d in $(POPDIRS) ;do \
           $(MAKE) -C $$d install DEMO=$$d ; \
 	done
