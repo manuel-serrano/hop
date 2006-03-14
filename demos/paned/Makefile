@@ -1,11 +1,12 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/proxy/Makefile                    */
+#*    serrano/prgm/project/hop/demos/widgets/paned/Makefile            */
 #*    -------------------------------------------------------------    */
-#*    Author      :  Erick Gallesio                                    */
-#*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Mon Mar  6 18:15:04 2006 (eg)                     */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Fri Mar  3 10:30:36 2006                          */
+#*    Last change :  Tue Mar 14 08:52:58 2006 (eg)                     */
+#*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
-#*    The Makefile for the HOP demos/proxy directory                   */
+#*    Makefile of a HOP demo                                           */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
@@ -14,16 +15,13 @@
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
-#*---------------------------------------------------------------------*/
-#*    POPDIRS                                                          */
-#*---------------------------------------------------------------------*/
-POPDIRS= filtering 
-
+FILES      = paned.hop
+POPULATION = Makefile $(FILES)
+DESTDIR    = $(HOPDEMOSDIR)/$(DEMO)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
-	for d in $(POPDIRS) ;do \
-	  $(MAKE) -C $$d install CATEGORY=$(CATEGORY) DEMO=$$d ; \
-	done
+	mkdir -p $(DESTDIR)
+	install -m a+r $(POPULATION) $(DESTDIR)

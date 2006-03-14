@@ -1,22 +1,23 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/widgets/calendar/Makefile         */
+#*    serrano/prgm/project/hop/demos/widgets/paned/Makefile            */
 #*    -------------------------------------------------------------    */
-#*    Author      :  Erick Gallesio                                    */
-#*    Creation    :  Fri Mar  3 18:52:29 CET 2006                      */
-#*    Last change :  Sat Mar  4 11:49:19 2006 (eg)                     */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Fri Mar  3 10:30:36 2006                          */
+#*    Last change :  Tue Mar 14 08:53:10 2006 (eg)                     */
+#*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
-#*    The Makefile for the HOP demos/widgets/calendar directory        */
+#*    Makefile of a HOP demo                                           */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../../etc/Makefile.hopconfig
-include ../../../etc/Makefile.version
+include ../../etc/Makefile.hopconfig
+include ../../etc/Makefile.version
 
-FILES      = calendar.hop calendar.css calendar.hss
+FILES      = slider.hop comment.hop
 POPULATION = Makefile $(FILES)
-DESTDIR    = $(HOPDEMOSDIR)/$(CATEGORY)/$(DEMO)
+DESTDIR    = $(HOPDEMOSDIR)/$(DEMO)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */

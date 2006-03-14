@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Mon Mar  6 18:22:15 2006 (eg)                     */
+#*    Last change :  Tue Mar 14 08:50:02 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP demos directory                         */
 #*=====================================================================*/
@@ -17,7 +17,10 @@ include ../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 #*    POPDIRS                                                          */
 #*---------------------------------------------------------------------*/
-POPDIRS = misc widgets proxy
+POPDIRS = calendar dhtml event filtering foldlist \
+	  hss notepad paned slider sorttable \
+	  tabslider text  todolist tree
+
 
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
@@ -29,7 +32,7 @@ POPULATION	= Makefile
 #*---------------------------------------------------------------------*/
 install:
 	for d in $(POPDIRS) ;do \
-          $(MAKE) -C $$d install CATEGORY=$$d ; \
+          $(MAKE) -C $$d install DEMO=$$d ; \
 	done
 
 #*---------------------------------------------------------------------*/

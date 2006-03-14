@@ -15,16 +15,20 @@
 ;;(module demos_configuration)
 ;; (export webconf-make-window)
 
-;; ----------------------------------------------------------------------
-;;	Utilities ...
-;; ----------------------------------------------------------------------
+
 (define *demos-directory*
    (make-file-name (hop-weblets-directory) "demos"))
 
+(define *filter-initialized* #f)
+(define *user-code* (make-hashtable))
 
+
+;; ----------------------------------------------------------------------
+;;	Utilities ...
+;; ----------------------------------------------------------------------
 (define (<DEMO-HEAD>)
   (<HEAD>
-    (<HOP-HEAD>)
+    (<HOP-HEAD> :jscript "hop-window.js" :css "hop-window.css")
     (<LINK> :rel "stylesheet"
 	    :type "text/css"
 	    :href (format "~a/demos.hss" *demos-directory*))))
@@ -40,61 +44,54 @@
 		    (<TD> (proc x))))
 	    (sort (directory->list dir) string<?)))))
 
+(define (htmlize obj)				;; FIXME. must be completely changed
+  (cond
+    ((null? obj) '())
+    ((pair? obj) (cons (htmlize (car obj))
+		       (htmlize (cdr obj))))
+    ((string? obj) (pregexp-replace* ">"
+				     (pregexp-replace* "<" obj "&lt;")
+				     "&gt;"))
+    (else (error 'htmlize "Cannot htmlize" obj))))
+
+
+(define (read-source-file file)
+  (let ((in (open-input-file file)))
+    (and (input-port? in)
+	 (with-output-to-string
+	   (lambda ()
+	     (let Loop ((l (read-line in)))
+	       (unless (eof-object? l)
+		 (display l)
+		 (newline)
+		 (Loop (read-line in)))))))))
+
 ;; ----------------------------------------------------------------------
 ;;	demos-filter ...
 ;; ----------------------------------------------------------------------
-(define-service (demos)
+(define-service (demos file)
   (<HTML>
    (<DEMO-HEAD>)
-   (<FRAMESET> :rows "35%,*"  :frameborder 1 :border 4 :framespacing 0
-      (<FRAMESET> :cols "200,200,*"
-	 (<FRAME> :name "cats" :src "demos/categories")
-	 (<FRAME> :name "samples" :src "demos/empty-frame")
-	 (<FRAME> :name "doc" :src "demos/initial-doc"))
-       (<FRAMESET> :cols "50%,50%"
-	 (<FRAME> :name "code" :src "demos/empty-frame")
-	 (<FRAME> :name "view" :src "demos/empty-frame")))))
+   (<FRAMESET> :cols "20%,*"  :frameborder 1 :border 4 :framespacing 0
+      (<FRAME> :name "list" :src "demos/show-tree")
+      (<FRAME> :name "code" :src "demos/initial-doc"))))
+
 
 ;; ----------------------------------------------------------------------
-;;	demos/categories service ...
+;;	demos/show-tree service ...
 ;; ----------------------------------------------------------------------
-(define-service (demos/categories)
+(define-service (demos/show-tree)
   (let ((even? #f))
     (<HTML>
      (<DEMO-HEAD>)
      (<BODY>
-      (<H1> "categories")
+      (<H1> "Hop Demos")
       (<DEMO-TABLE>
-          (hop-demos-directory)
-	  (lambda(x)
-	    (<A> :href (make-service-url demos/fill-samples x)
-		 :target "samples"
-		 x)))))))
-
-
-;; ----------------------------------------------------------------------
-;;	demos/fill-samples service ...
-;; ----------------------------------------------------------------------
-(define-service (demos/fill-samples dir)
-  (<HTML>
-   (<DEMO-HEAD>)
-   (<BODY>
-    (<H1> (string-append dir " demos"))
-    (<DEMO-TABLE>
-       (make-file-path (hop-demos-directory) dir)
-       (lambda (x)
-	 (<A> :href "#"
-	      :onclick {
-		  parent.frames["code"].window.location=
-			       $(make-service-url demos/show-sample dir x)
-		  parent.frames["view"].window.location=
-			       $(make-file-path (hop-demos-directory)
-						dir x (string-append x ".hop"))
-		  parent.frames["doc"].window.location=
-		  	       $(make-service-url demos/show-doc dir x)
-	       }
-	      x))))))
-
+         (hop-demos-directory)
+	 (lambda(x)
+	   (<A> :href (make-service-url demos/show-demo x)
+		:target "code"
+		x)))))))
 
 ;; ----------------------------------------------------------------------
 ;;	demos/initial-doc service ...
@@ -112,69 +109,67 @@
     (<TABLE> :width "98%"
        (<TR> (<TD> :align "right" (<HOP-FOOT-LOGO>))))))
 
-;; ----------------------------------------------------------------------
-;;	demos/empty-frame service ...
-;; ----------------------------------------------------------------------
-(define-service (demos/empty-frame)
-  (<HTML>
-   (<DEMO-HEAD>)
-   (<BODY> "")))
 
 ;; ----------------------------------------------------------------------
-;;	demos/show-sample service ...
+;;	demos/show-demo service ...
 ;; ----------------------------------------------------------------------
-(define (htmlize obj)				;; FIXME. must be completely changed
-  (tprint "htmlize " obj)
-  (cond
-    ((null? obj) '())
-    ((pair? obj) (cons (htmlize (car obj))
-		       (htmlize (cdr obj))))
-    ((string? obj) (pregexp-replace* ">"
-				     (pregexp-replace* "<" obj "&lt;")
-				     "&gt;"))
-    (else (error 'htmlize "Cannot htmlize" obj))))
+(define (show-documentation path)
+  (let ((doc (open-input-file path)))
+    (<DIV> :class "hop-demos-comment"
+       (if (input-port? doc)
+	   (let Loop ((txt (hop-read doc))
+		      (res '()))
+	     (if (eof-object? txt)
+		 (map eval (reverse! res))
+		 (Loop (hop-read doc)
+		       (cons txt res))))
+	   (<H2> "No documentation available for this demo")))))
 
-		   
-(define-service (demos/show-sample dir sample)
-  (define (show-code file)
-    (let ((in (open-input-file file)))
-      (if in
-	  (<DIV> :class "hop-demos-code"
-	     (<PRE> 
-	      (htmlize (with-output-to-string
-			 (lambda ()
-			   (let Loop ((l (read-line in)))
-			     (unless (eof-object? l)
-			       (display l)
-			       (newline)
-			       (Loop (read-line in))))))))))))
+(define (show-demo-code path code)
   (<HTML>
    (<DEMO-HEAD>)
    (<BODY> :class "hop-demos-code"
-    (<H1> (format "Code of '~a/~a'" dir sample))
-    (show-code (make-file-path (hop-demos-directory)
-			       dir
-			       sample
-			       (string-append sample ".hop"))))))
+      ;; Create the run window
+      (<FLOAT-WINDOW> :id "hop-run-window" :width 640 :height 480
+		      :in-frame #t :title (format "~a demo" (basename path)))
+      ;; Create the edit window
+      (<FLOAT-WINDOW> :id "hop-edit-window" :width 700 :height 400
+		      :title " Edit code"
+	(<FORM> :action (service (txt)
+			  (show-demo-code path txt))
+	  (<BUTTON> :class "hop-demo-button" "Replace" :onclick "submit()")
+	  (<BUTTON> :class "hop-demo-button" "Cancel"
+		    :onclick { hop_close_float_window("hop-edit-window") })
+	  (<TEXTAREA> :name "txt" :cols 80 :rows 25 code)))
+      ;; Document
+      (show-documentation (make-file-path (dirname path) "comment.hop"))
+      (<BUTTON> :class "hop-demo-button" "Run"
+	:onclick { hop_open_float_window($(make-service-url demos/run path code),
+					  "hop-run-window", 50, 50)})
+      (<BUTTON> :class "hop-demo-button" "Edit"
+		:onclick { hop_open_float_window(null, "hop-edit-window", 10, 25)})
+      ;; Display the code
+      (<DIV> :class "hop-demos-code"
+	     (<PRE> (htmlize code))))))
+
+(define-service (demos/show-demo demo)
+  (let* ((file (make-file-path (hop-demos-directory)
+			       demo (string-append demo ".hop")))
+	 (code (read-source-file file)))
+    (show-demo-code file code)))
+
 
 ;; ----------------------------------------------------------------------
-;;	demos/show-doc service ...
-;; ----------------------------------------------------------------------
-(define-service (demos/show-doc dir sample)
-  (let ((doc (open-input-file (make-file-path (hop-demos-directory)
-					      dir sample "comment.hop"))))
-    (<HTML>
-     (<DEMO-HEAD>)
-     (<BODY>
-      (if (input-port? doc)
-	(let Loop ((txt (hop-read doc))
-		   (res '()))
-	  (if (eof-object? txt)
-	      (list (<H1> (format "~a/~a demo" dir sample))
-		    (map eval (reverse! res)))
-	      (Loop (hop-read doc)
-		    (cons txt res))))
-	(<H2> (format "No documentation for ~a/~a!!" dir sample)))))))
+;; 	demos/run service ...
+;; ----------------------------------------------------------------------  
+(define-service (demos/run path code)
+  ;; First register the code associated to path in global hash-table
+  (hashtable-put! *user-code* path code)
+  ;; Return a scripts which loads the new code
+  (<HTML>
+   (<BODY>
+    (<SCRIPT> :type "text/javascript"
+       (format "location='http://~a:~a/~a'" (hostname) (hop-port) path)))))
 
 ;; ----------------------------------------------------------------------
 ;; 	demos/about service ...
@@ -187,4 +182,57 @@
    (<P> [This weblet gives access to all the demos which are provided
 	 with the Hop distribution.])
    (<P> [Enjoy])))
-  
+
+
+;; ----------------------------------------------------------------------
+;; 	demo-filter ...
+;; ----------------------------------------------------------------------
+(define (demo-filter req)
+  (define (run-customized-demo path code)
+    (let ((port (open-input-string code))
+	  (t    (current-thread)))
+      (hop-load-afile (dirname path))
+      (if (thread? t)
+	  (thread-specific-set! t path)
+	  (set! *the-loading-file* path))
+      (let loop ((last #unspecified))
+	(let ((sexp (hop-read port)))
+	  (if (eof-object? sexp)
+	      last
+	      (loop (with-handler
+		       (lambda (e)
+			 (if (&warning? e)
+			     (begin (warning-notify e) #unspecified)
+			     (raise e)))
+		       (eval sexp))))))))
+ 
+  (with-access::http-request req (path host port localhostp)
+     (if (and localhostp
+	      (substring-at? path (hop-demos-directory) 0))
+	 (let ((code (hashtable-get *user-code* path)))
+	   (if  code
+	       (let ((rep (run-customized-demo path code)))
+		 (cond
+		   ((%http-response? rep)
+		    rep)
+		   ((xml? rep)
+		    (instantiate::http-response-hop
+		     (content-type (mime-type path "text/html"))
+		     (xml rep)))
+		   (else
+		    (http-warning "Demo code evaluation produced no result"))))
+	       req))
+	 req)))
+
+
+;; ----------------------------------------------------------------------
+;; 	Initialization ...
+;; ----------------------------------------------------------------------
+(unless *filter-initialized*
+  (hop-filter-add! demo-filter)
+  (set! *filter-initialized* #t))
+
+
+
+
+

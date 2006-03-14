@@ -1,26 +1,28 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/widgets/calendar/Makefile         */
+#*    serrano/prgm/project/hop/demos/widgets/notepad/Makefile          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
-#*    Creation    :  Fri Mar  3 18:52:29 CET 2006                      */
-#*    Last change :  Mon Mar  6 18:11:31 2006 (eg)                     */
+#*    Creation    :  Wed Mar  1 14:25:06 2006                          */
+#*    Last change :  Tue Mar 14 08:52:46 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
-#*    The Makefile for the HOP demos/widgets/calendar directory        */
+#*    The Makefile for the HOP demos/widgets/notepad directory         */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../../etc/Makefile.hopconfig
-include ../../../etc/Makefile.version
+include ../../etc/Makefile.hopconfig
+include ../../etc/Makefile.version
 
-FILES      = hss.hop hss.hss
+FILES      = notepad.hop
 POPULATION = Makefile $(FILES)
-DESTDIR    = $(HOPDEMOSDIR)/$(CATEGORY)/$(DEMO)
+DESTDIR    = $(HOPDEMOSDIR)/$(DEMO)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
-	mkdir -p $(DESTDIR)
-	install -m a+r $(POPULATION) $(DESTDIR)
+	mkdir -p $(DESTDIR) $(DESTDIR)/nuvola/128x128 $(DESTDIR)/nuvola/16x16
+	install -m a+r $(FILES) $(DESTDIR)
+	install -m a+r nuvola/128x128/* $(DESTDIR)/nuvola/128x128
+	install -m a+r nuvola/16x16/* $(DESTDIR)/nuvola/16x16

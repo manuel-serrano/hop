@@ -22,6 +22,17 @@ H1, H2 {
     color: darkgoldenrod;
 }
 
+.hop-demos-comment {
+    margin: 5px;
+    background: #CFCDFF;
+    height: 150px;
+    padding: 5px;
+    border: 2px dotted #104E8B;
+    overflow: auto;
+    color: #104E8B;
+}
+
+
 .hop-demos-tbl {
     width: 100%;
     border: 1px solid khaki;
@@ -46,4 +57,29 @@ H1, H2 {
     text-align: center;
     padding-bottom: 3px;
     border-bottom: 1px solid brown;
+}
+
+
+#hop-run-window-content {
+    background: white;
+}
+
+
+#hop-edit-window-content  {
+    background: #eeeeff;
+}
+
+#hop-edit-window-content TEXTAREA {
+    background: #fff8dc;
+    width: 100%;
+    height: 100%;
+}
+
+/*
+ * Buttons 
+ */
+.hop-demo-button {
+    font-size: 50%;
+    padding: 0 10px 0 10px;
+    margin: 2px 1em 2px 0;
 }

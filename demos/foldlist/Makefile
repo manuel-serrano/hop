@@ -1,28 +1,26 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/demos/widgets/notepad/Makefile          */
+#*    serrano/prgm/project/hop/demos/widgets/foldlist/Makefile         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
-#*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Tue Mar  7 10:14:51 2006 (eg)                     */
+#*    Creation    :  Tue Mar  7 14:36:14 2006                          */
+#*    Last change :  Tue Mar 14 08:52:22 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
-#*    The Makefile for the HOP demos/widgets/notepad directory         */
+#*    Makefile of a HOP demo                                           */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../../etc/Makefile.hopconfig
-include ../../../etc/Makefile.version
+include ../../etc/Makefile.hopconfig
+include ../../etc/Makefile.version
 
-FILES      = notepad.hop
+FILES      = foldlist.hop demofl.css comment.hop
 POPULATION = Makefile $(FILES)
-DESTDIR    = $(HOPDEMOSDIR)/$(CATEGORY)/$(DEMO)
+DESTDIR    = $(HOPDEMOSDIR)/$(DEMO)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
-	mkdir -p $(DESTDIR) $(DESTDIR)/nuvola/128x128 $(DESTDIR)/nuvola/16x16
-	install -m a+r $(FILES) $(DESTDIR)
-	install -m a+r nuvola/128x128/* $(DESTDIR)/nuvola/128x128
-	install -m a+r nuvola/16x16/* $(DESTDIR)/nuvola/16x16
+	mkdir -p $(DESTDIR)
+	install -m a+r $(POPULATION) $(DESTDIR)
