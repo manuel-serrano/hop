@@ -3,6 +3,7 @@
    (include "protobject.sch")
    (include "nodes.sch")
    (include "tools.sch")
+   (option (loadq "protobject-eval.sch"))
    (import protobject
 	   nodes
 	   side

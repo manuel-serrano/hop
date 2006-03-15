@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Wed Mar  1 11:56:53 2006 (serrano)                */
+#*    Last change :  Wed Mar 15 07:13:57 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -54,7 +54,6 @@ dobuild: $(BUILDBINDIR)/$(EXEC)
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $^)
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
-
 
 #*---------------------------------------------------------------------*/
 #*    SUFFIXES                                                         */

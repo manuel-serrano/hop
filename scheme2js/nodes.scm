@@ -3,6 +3,7 @@
    (include "protobject.sch")
    (import protobject
 	   verbose)
+   (option (loadq "protobject-eval.sch"))
    (export Node
 	   Program
 	   Part

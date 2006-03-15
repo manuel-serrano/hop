@@ -28,8 +28,6 @@ CLASS_EDIR	= o/class_e/bigloo/$(TARGETNAME)
 DOTNET_OBJ_DIR	= o/dotnet_s
 DOTNET_OBJ_EDIR	= o/dotnet_e
 
-PROTOBJECT_FLAGS = -eval "(load \""$(BIGLOO_SRC_DIR)"/protobject-eval.sch\")"
-
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
@@ -80,29 +78,24 @@ dotnet: heap-jvm lib-dotnet
 #*---------------------------------------------------------------------*/
 #*    The implicit rules                                               */
 #*---------------------------------------------------------------------*/
-#o/%.o: %.scm
-#	echo $(BLFLAGS)
-#	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$*.scm -o $@ -c)
-
 o/%.o: %.scm
-	$(BIGLOO) $(BCFLAGS) $(BLFLAGS) $(PROTOBJECT_FLAGS) $< -o $@ -c
-
+	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$*.scm -o $@ -c)
 
 $(CLASS_DIR)/%.class: %.scm
-	$(BIGLOO) -jvm $(BJVMFLAGS) $(EFLAGS) $(BHOPFLAGS) $(PROTOBJECT_FLAGS) -c -jvm-purify $< -o $@
+	$(BIGLOO) -jvm $(BJVMFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -jvm-purify $< -o $@
 
 $(CLASS_EDIR)/%.class: %.scm
-	$(BIGLOO) -jvm $(BJVMFLAGS) $(EFLAGS) $(BHOPFLAGS) $(PROTOBJECT_FLAGS) -c -jvm-purify $< -o $@
+	$(BIGLOO) -jvm $(BJVMFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -jvm-purify $< -o $@
 
 $(DOTNET_OBJ_DIR)/%.obj: %.scm
 	$(BIGLOO) -dotnet \
             -dotnet-mono-workaround -dotnet-pnet-workaround \
-             $(BDOTNETFLAGS) $(EFLAGS) $(BHOPFLAGS) $(PROTOBJECT_FLAGS) -c -dotnet-managed $< -o $@
+             $(BDOTNETFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -dotnet-managed $< -o $@
 
 $(DOTNET_OBJ_EDIR)/%.obj: %.scm
 	$(BIGLOO) -dotnet \
             -dotnet-mono-workaround -dotnet-pnet-workaround \
-             $(BDOTNETFLAGS) $(EFLAGS) $(BHOPFLAGS) $(PROTOBJECT_FLAGS) -c -dotnet-managed $< -o $@
+             $(BDOTNETFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -dotnet-managed $< -o $@
 
 #*---------------------------------------------------------------------*/
 #*    The heap construction                                            */

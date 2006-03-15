@@ -2,6 +2,7 @@
 (module transform-util
    (include "protobject.sch")
    (include "nodes.sch")
+   (option (loadq "protobject-eval.sch"))
    (import protobject
 	   nodes
 	   symbol

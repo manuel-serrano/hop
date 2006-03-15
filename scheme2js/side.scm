@@ -2,6 +2,7 @@
 (module side
    (include "protobject.sch")
    (include "nodes.sch")
+   (option (loadq "protobject-eval.sch"))
    (import protobject
 	   nodes
 	   var

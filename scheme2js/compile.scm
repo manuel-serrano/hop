@@ -5,6 +5,7 @@
    (include "tools.sch")
    (include "compile-optimized-call.scm")
    (include "compile-optimized-boolify.scm")
+   (option (loadq "protobject-eval.sch"))
    (export (compile::bstring tree::pobject)
 	   *optimize-calls*
 	   *optimize-var-number*
