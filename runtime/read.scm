@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Mar  8 16:33:30 2006 (serrano)                */
+;*    Last change :  Fri Mar 10 14:51:14 2006 (eg)                     */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -24,6 +24,7 @@
    (export  (the-loading-file)
 	    (hop-read ::input-port)
 	    (hop-load ::bstring)
+	    (hop-load-afile ::bstring)
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
    

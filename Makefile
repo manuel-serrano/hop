@@ -86,7 +86,7 @@ uninstall:
 	(cd runtime; $(MAKE) uninstall)
 	(cd scheme2js; $(MAKE) uninstall)
 	(cd demos; $(MAKE) uninstall)
-	/bin/rm -rf $(FILDIR)
+	/bin/rm -rf $(HOPFILDIR)
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -147,3 +147,4 @@ distrib:
           fi \
         fi
 
+ 

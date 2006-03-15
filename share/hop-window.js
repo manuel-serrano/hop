@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed Mar  1 14:58:25 2006 (eg)                     */
+/*    Last change :  Thu Mar  9 14:04:46 2006 (eg)                     */
 /*    -------------------------------------------------------------    */
 /*    FLOAT-WINDOW implementation                                      */
 /*=====================================================================*/
@@ -14,8 +14,9 @@
 function hop_float_window_init(id, inframe)
 {
     var el = document.getElementById(id);
-    
-    HopDrag.init(el);
+    var h  = document.getElementById(id + "-handle");
+
+    HopDrag.init(el, h);
     el.inFrame = inframe;
 }
 
@@ -39,7 +40,12 @@ function hop_open_float_window(serv, id, x, y)
 	var shadow_height = 8;
 	return win.offsetHeight - h.offsetHeight - shadow_height;
     }
-	
+
+    if (serv == null) {
+	change_style();
+	return
+    }
+    
     if (!win.inFrame) {
 	hop(serv, 
 	    function( http ) {
@@ -97,10 +103,12 @@ var HopDrag = {
 
     zIndex: 100,
 
-    init : function(o, oRoot, minX, maxX, minY, maxY, 
+    init : function(o, h, oRoot, minX, maxX, minY, maxY, 
 		    bSwapHorzRef, bSwapVertRef, fXMapper, fYMapper)
     {
-	o.onmousedown	= HopDrag.start;
+	o.hop_handle    = h;
+	h.hop_window    = o;
+	h.onmousedown	= HopDrag.start;
 	
 	o.hmode		= bSwapHorzRef ? false : true ;
 	o.vmode		= bSwapVertRef ? false : true ;
@@ -131,10 +139,12 @@ var HopDrag = {
     
     start : function(e)
     {
-	var o = HopDrag.obj = this;
-	e = HopDrag.fixE(e);
+	var o = this.hop_window;
 	var y = parseInt(o.vmode ? o.root.style.top  : o.root.style.bottom);
 	var x = parseInt(o.hmode ? o.root.style.left : o.root.style.right );
+
+	e = HopDrag.fixE(e);
+	HopDrag.obj = o;
 
 	o.root.style.zIndex = ++HopDrag.zIndex;
 	o.root.onDragStart(x, y);

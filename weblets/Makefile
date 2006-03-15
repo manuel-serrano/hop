@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Mar  3 10:37:15 2006 (serrano)                */
+#*    Last change :  Fri Mar  3 16:34:29 2006 (eg)                     */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -54,6 +54,4 @@ install-weblet:
 	    install -m a+r $$f $(HOPWEBLETSDIR)/$(DIR); \
           fi; \
         done
-
-
 

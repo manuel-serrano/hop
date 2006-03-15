@@ -58,6 +58,7 @@ HOPWEBLETSDIR	= @WEBLETSDIR@
 HOPCONTRIBSDIR	= @CONTRIBSDIR@
 
 HOPFILDIR	= $(HOPLIBDIR)/hop/$(HOPRELEASE)
+HOPDEMOSDIR	= $(HOPSHAREDIR)/demos
 
 #*---------------------------------------------------------------------*/
 #*    REPOSITORY                                                       */

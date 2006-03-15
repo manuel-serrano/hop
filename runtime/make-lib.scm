@@ -44,7 +44,7 @@
 	   __hop_html-notepad
 	   __hop_html-slider
 	   __hop_html-tree
-	   __hop_html-folditem
+	   __hop_html-foldlist
 	   __hop_html-window
 	   __hop_event
 	   __hop_color
