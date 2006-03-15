@@ -1,4 +1,4 @@
-;; $Id$
+
 (module protobject
    (include "protobject.sch")
    (export

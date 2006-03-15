@@ -1,4 +1,3 @@
-;; $Id: symbol.scm 133 2006-03-08 14:06:31Z flo $
 (module symbol
    (include "protobject.sch")
    (include "nodes.sch")

@@ -1,4 +1,3 @@
-;; $Id: liveness.scm 126 2006-02-22 11:22:58Z flo $
 (module liveness
    (include "protobject.sch")
    (include "nodes.sch")

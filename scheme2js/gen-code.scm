@@ -1,4 +1,3 @@
-;; $Id: gen-code.scm 137 2006-03-09 11:08:14Z flo $
 (module gen-code
    (include "tools.sch")
    (import gen-js)

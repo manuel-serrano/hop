@@ -1,4 +1,3 @@
-;; $Id: collect-vars.scm 130 2006-03-02 17:28:56Z flo $
 (module collect-vars
    (include "protobject.sch")
    (include "nodes.sch")

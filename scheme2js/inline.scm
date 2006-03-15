@@ -1,4 +1,3 @@
-;; $Id: inline.scm 126 2006-02-22 11:22:58Z flo $
 (module inline
    (include "protobject.sch")
    (include "nodes.sch")

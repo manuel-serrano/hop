@@ -1,4 +1,3 @@
-;; $Id: transform-util.scm 112 2006-02-08 15:33:40Z flo $
 (module transform-util
    (include "protobject.sch")
    (include "nodes.sch")

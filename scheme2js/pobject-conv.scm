@@ -1,4 +1,3 @@
-;; $Id: pobject-conv.scm 130 2006-03-02 17:28:56Z flo $
 (module pobject-conv
    (include "protobject.sch")
    (import nodes

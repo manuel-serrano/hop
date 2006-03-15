@@ -1,4 +1,3 @@
-;; $Id: expand.scm 133 2006-03-08 14:06:31Z flo $
 (module expand
    (import verbose)
    (export (my-expand x)

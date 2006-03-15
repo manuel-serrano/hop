@@ -1,4 +1,3 @@
-;; $Id: capture.scm 126 2006-02-22 11:22:58Z flo $
 (module capture
    (include "protobject.sch")
    (include "nodes.sch")

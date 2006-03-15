@@ -1,4 +1,3 @@
-;; $Id: compile-optimized-call.scm 137 2006-03-09 11:08:14Z flo $
 ;; part of compile-module
 (define (infix-op nb-operands-min nb-operands-max infix-operator . Ldefault-val)
    (lambda (operands)
