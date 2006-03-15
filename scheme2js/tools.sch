@@ -1,4 +1,3 @@
-;; $Id: tools.sch 137 2006-03-09 11:08:14Z flo $
 (define (make-eq-hashtable)
    (make-hashtable #unspecified #unspecified eq?))
 

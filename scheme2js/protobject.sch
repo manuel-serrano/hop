@@ -1,4 +1,4 @@
-;; $Id$
+
 (directives
 ;   (import protobject)
     )

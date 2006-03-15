@@ -1,4 +1,3 @@
-;; $Id: nodes.sch 114 2006-02-08 15:36:41Z flo $
 (define-macro (overload field extension bindings . Lbody)
    (let ((bindings (map (lambda (binding)
 			   (if (pair? binding)
