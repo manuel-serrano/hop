@@ -235,7 +235,9 @@
 	  (thread-specific-set! t path)
 	  (set! *the-loading-file* path))
       (let loop ((last #unspecified))
+	((hop-read-pre-hook) port)     
 	(let ((sexp (hop-read port)))
+	  ((hop-read-post-hook) port)
 	  (if (eof-object? sexp)
 	      last
 	      (loop (with-handler

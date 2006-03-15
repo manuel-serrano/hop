@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Wed Mar 15 07:28:37 2006 (serrano)                */
+#*    Last change :  Wed Mar 15 12:20:27 2006 (eg)                     */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -67,6 +67,25 @@ build: $(BACKEND)
 native: heap-c lib-c
 jvm: heap-jvm lib-jvm
 dotnet: heap-jvm lib-dotnet
+
+#*---------------------------------------------------------------------*/
+#*    ude                                                              */
+#*---------------------------------------------------------------------*/
+.PHONY: ude
+ude:
+	@ $(MAKE) -f Makefile .afile .etags .jfile
+	@ $(MAKE) dep
+
+.afile: $(SOURCES)
+	@ $(AFILE) -o .afile $(SOURCES)
+
+.jfile: $(SOURCES) 
+	@ $(JFILE) -o .jfile \
+                   -I $(MISC_SRC_DIR) \
+                   -pbase $(PBASE) $(SOURCES)  make-lib.scm
+
+.etags: $(SOURCES)
+	@ $(BTAGS) -o .etags $(SOURCES)
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
