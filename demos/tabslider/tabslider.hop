@@ -1,0 +1,22 @@
+(<HTML>
+ (<HEAD>
+  (<HOP-HEAD> :jscript "hop-tabslider.js" :css "hop-tabslider.css" "demots.hss")) 
+  (<BODY>
+   ;; Create a tabslider opened of the second tab
+   (<H3> "An example od a tabslider")
+   (<TABSLIDER> :width 200 :height  300 
+		(<TSPAN>
+		 (<TSHEAD> "TITLE 0")
+		 "I'm the content of pan 0")
+		(<TSPAN>
+		 (<TSHEAD> "TITLE 1")
+		 "I'm the content of pan 1")
+		(<TSPAN>
+		 (<TSHEAD> :style "color:red; padding 20;" (<I> "TITLE 2"))
+		 "I'm the content of pan 2")
+		(<TSPAN>
+		 (<TSHEAD> "TITLE 3 ")
+		 "I'm the content of pan 3")
+		(<TSPAN>
+		 (<TSHEAD> "TITLE 4")
+		 "I'm the content of pan 4"))))

@@ -1,0 +1,21 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/demos/widgets/foldlist/comment.hop      */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Erick Gallesio                                    */
+;*    Creation    :  Tue Mar  3 14:36:14 2006                          */
+;*    Last change :  Tue Mar 14 23:10:25 2006 (eg)                     */
+;*    -------------------------------------------------------------    */
+;*    Comment for <FL> demo                                            */
+;*=====================================================================*/
+
+
+(<P> [The ,(htmlize "<FL>") widget allows to fold/unfold the componentts
+      of a list. Basically, the structure of a folding list is given below: ])
+
+(<PRE> :class "hop-demos-comment-code" (htmlize [
+(<FL> 
+   (<FLITEM> (<FLHEAD> "A list item")
+	"Details of the list item")
+   (<FLITEM> (<FLHEAD> ...)
+	...)
+   ...)]))

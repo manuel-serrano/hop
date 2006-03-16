@@ -1,0 +1,30 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/demos/Makefile                          */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Erick Gallesio                                    */
+;*    Creation    :  Tue Mar 14 08:50:02 2006                          */
+;*    Last change :  Tue Mar 14 12:34:07 2006 (eg)                     */
+;*    -------------------------------------------------------------    */
+;*    The demo tree                                                    */
+;*=====================================================================*/
+
+
+(
+ ("Widgets"
+  ("Folding list"	"foldlist")
+  ("Notepad"		"notepad")
+  ("Paned"		"paned")
+  ("Slider"		"slider")
+  ("Sortable table"	"sorttable")
+  ("Tabslider"		"tabslider")
+  ("Tree"		"tree"))
+ ("Proxy"
+  ("Filtering"		"filtering"))
+ ("Misc"
+  ("Calendar widget"	"calendar")
+  ("DHTML"		"dhtml")
+  ("Event programming"	"event")
+  ("Hop CSS"		"hss")
+  ("Input conventions"	"text")
+  ("Simple Todo list"	"todolist"))
+ )

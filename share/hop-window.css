@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed Mar  1 14:28:36 2006 (eg)                     */
+/*    Last change :  Mon Mar 13 16:31:47 2006 (eg)                     */
 /*    -------------------------------------------------------------    */
 /*    FLOAT-WINDOW CSS                                                 */
 /*=====================================================================*/
@@ -18,20 +18,18 @@
 .hop-float-handle {
     text-align: right;
     margin-bottom: 0;
-    background: #000080;
-    border: 2px;
-    border-color: #000080;
-    border-style: inset;
+    background: #333;
     color: white;
     padding: 1;
     cursor: move;
-    opacity: 1;
+    -moz-opacity: 1;
 }
 
 .hop-float-title {
     text-align: left;
     font-size: 90%;
-    font-style: italic;
+    padding-left:5px;
+    font-weight: bold;
 }
 
 .hop-float-close-button {

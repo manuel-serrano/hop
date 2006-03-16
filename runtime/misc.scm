@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Mon Mar 13 16:25:16 2006 (serrano)                */
+;*    Last change :  Thu Mar 16 10:28:23 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -324,5 +324,5 @@
 	       (or (and (not (file-exists? path))
 			(if (=fx i -1)
 			    (string=? path p)
-			    (substring-at? p path 0 i)))
-		   (substring-at? path p/ 0)))))))
+			    (substring-at? p path i)))
+		   (substring-at? path p/ 0 i)))))))

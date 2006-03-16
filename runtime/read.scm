@@ -24,6 +24,7 @@
    (export  (the-loading-file)
 	    (hop-read ::input-port)
 	    (hop-load ::bstring)
+	    (hop-load-afile ::bstring)
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
    

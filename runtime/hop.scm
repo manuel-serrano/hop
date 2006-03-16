@@ -29,7 +29,7 @@
 	    __hop_html-tabslider
 	    __hop_html-tree
 	    __hop_html-extra
-	    __hop_html-folditem
+	    __hop_html-foldlist
 	    __hop_html-window
 	    __hop_event)
    

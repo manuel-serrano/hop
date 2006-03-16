@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2006                          */
-/*    Last change :  Wed Mar  1 14:25:15 2006 (eg)                     */
+/*    Last change :  Thu Mar  9 10:51:23 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet configuration CSS                                     */
@@ -68,8 +68,15 @@ BODY {
 }
 
 .webconf-items {
+    padding-left: 15px;
     margin-bottom: 5px;
 }
+
+.webconf-item {
+    color: blue;
+    font-weight: bold;
+}
+
 
 /* ====================================================================== */
 
@@ -92,5 +99,3 @@ BODY {
 #hop-webconf-confwin-content {
     background: #FAEBD7;
 }
-
-

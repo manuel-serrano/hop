@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 12:23:29 2006                          */
-;*    Last change :  Wed Mar  1 15:33:13 2006 (eg)                     */
+;*    Last change :  Mon Mar 13 16:06:01 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <HOP-WINDOW>.                          */
 ;*=====================================================================*/
@@ -64,7 +64,8 @@
 	  (<TD> :colspan 3 :rowspan 3 :valign "top"
 	    (<TABLE> :class "hop-float-handle" :id handle-id :width "100%"
 		     :cellpadding 0 :cellspacing 0 :border 0 :rules "none"
-	      (<TR>
+	      (<TR> :style (format "background-image: url('~a/window-handle.png')"
+				   (hop-icons-directory))
 	       (<TD> :class "hop-float-title" :width "100%" title)
 	       (<TD> :class "hop-float-close-button"
 		     (<A> :onclick (format "hop_close_float_window(~s)" id)
