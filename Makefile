@@ -22,7 +22,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile configure
-POPDIRS		= runtime scheme2js src etc share contribs weblets demos
+POPDIRS		= runtime hopscheme scheme2js src etc share contribs weblets demos
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -43,6 +43,7 @@ bin: lib
 lib:
 	(cd runtime && $(MAKE) build)
 	(cd scheme2js && $(MAKE) build)
+	(cd hopscheme && $(MAKE) build)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */
@@ -50,6 +51,7 @@ lib:
 dep:
 	(cd runtime; $(MAKE) dep)
 	(cd scheme2js; $(MAKE) dep)
+	(cd hopscheme; $(MAKE) dep)
 	(cd src; $(MAKE) dep)
 
 #*---------------------------------------------------------------------*/
@@ -58,6 +60,7 @@ dep:
 ude:
 	(cd runtime; $(MAKE) ude)
 	(cd scheme2js; $(MAKE) ude)
+	(cd hopscheme; $(MAKE) ude)
 	(cd src; $(MAKE) ude)
 
 #*---------------------------------------------------------------------*/
@@ -66,6 +69,7 @@ ude:
 install: install-init
 	(cd runtime && $(MAKE) install) && \
 	(cd scheme2js && $(MAKE) install) && \
+	(cd hopscheme && $(MAKE) install) && \
 	(cd src && $(MAKE) install) && \
 	(cd share && $(MAKE) install) && \
 	(cd weblets && $(MAKE) install)
@@ -76,6 +80,8 @@ install-init: $(DESTDIR)$(HOPFILDIR)
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hop.init;
 	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPFILDIR)/scheme2js.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/scheme2js.init;
+	cp $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPFILDIR)/hopscheme.init && \
+        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hopscheme.init;
 
 $(DESTDIR)$(HOPFILDIR):
 	mkdir -p $(DESTDIR)$(HOPFILDIR)
@@ -87,6 +93,7 @@ uninstall:
 	(cd src; $(MAKE) uninstall)
 	(cd runtime; $(MAKE) uninstall)
 	(cd scheme2js; $(MAKE) uninstall)
+	(cd hopscheme; $(MAKE) uninstall)
 	(cd demos; $(MAKE) uninstall)
 	/bin/rm -rf $(HOPFILDIR)
 
@@ -96,6 +103,7 @@ uninstall:
 clean:
 	(cd runtime; $(MAKE) clean)
 	(cd scheme2js; $(MAKE) clean)
+	(cd hopscheme; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
 
 devclean:
@@ -106,6 +114,7 @@ distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig
 	/bin/rm -f lib/hop.init
 	/bin/rm -f lib/scheme2js.init
+	/bin/rm -f lib/hopscheme.init
 
 cleanall: distclean
 
@@ -150,4 +159,3 @@ distrib:
           fi \
         fi
 
- 
