@@ -3,7 +3,6 @@
    (library hop)
    (eval (export-all)))
 
-
 ;; ===========================================================================
 ;; add hook, so we add always our runtime-files
 ;; ===========================================================================
@@ -68,12 +67,14 @@
 ;; ===========================================================================
 
 (define (post-compile p)
-   (print "post-compile")
+;   (print "post-compile")
    (let ((rev-scheme-exprs (hashtable-get *rev-scheme-exprs* p)))
       (when rev-scheme-exprs
 	 (hashtable-remove! *rev-scheme-exprs* p)
-	 (print "compiling (reverse): " rev-scheme-exprs)
-	 (scheme2js (reverse! rev-scheme-exprs) '()))))
+;	 (print "compiling (reverse): " rev-scheme-exprs)
+	 (with-output-to-string
+	    (lambda ()
+	       (scheme2js (reverse! rev-scheme-exprs) '()))))))
 
 (hop-read-post-hook-set! post-compile)
 
