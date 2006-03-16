@@ -18,7 +18,8 @@
 	   liveness
 	   verbose)
    (main my-main)
-   (export (scheme2js top-level::pair-nil js-interface::pair-nil)))
+   (export (scheme2js top-level::pair-nil js-interface::pair-nil)
+	   (scheme2js-compile-files! in-files::pair out-file::bstring)))
 
 ;; TODO: automate this...
 (define *version* 0.1)
@@ -142,15 +143,17 @@
 	    (print compiled))
 	 )))
 
+(define (scheme2js-compile-files! in-files out-file)
+   (let ((top-level (read-files (reverse! in-files))))
+      (if (string=? "-" out-file)
+	  (scheme2js top-level '())
+	  (with-output-to-file out-file
+	     (lambda () (scheme2js top-level '()))))))
+
 (define (my-main args)
    (handle-args args)
    (if (or (null? *in-files*)
 	   (not *out-file*))
        (error #f "missing in or output-file. Use --help to see the usage." #f))
 
-   
-   (let ((top-level (read-files (reverse! *in-files*))))
-      (if (string=? "-" *out-file*)
-	  (scheme2js top-level '())
-	  (with-output-to-file *out-file*
-	     (lambda () (scheme2js top-level '()))))))
+   (scheme2js-compile-files! *in-files* *out-file*))

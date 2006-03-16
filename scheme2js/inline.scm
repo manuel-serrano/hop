@@ -111,7 +111,8 @@
 	 (lvar.inlined?
 	  (new Const #unspecified))
 	 ((and (not lvar.uses)
-	       (not (inherits-from? lvar JS-Var)))
+	       (not (inherits-from? lvar JS-Var))
+	       (not lvar.is-global?))
 	  (this.val.traverse!))
 	 (else (this.traverse0!)))))
 
