@@ -1,4 +1,3 @@
-;; $Id$
 (module dot-expand
    (import verbose
 	   expand)
@@ -109,6 +108,10 @@
        x)
       ;(quasiquote ...)
       (((kwote quasiquote) ???-)
+       x)
+      ;(let (bindings) ...)
+      ((let ?bindings . ?body)
+       (for-each expand-indirect-accesses! bindings)
        x)
       (else
        (expand-indirect-accesses! x)

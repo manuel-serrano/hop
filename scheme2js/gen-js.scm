@@ -1,4 +1,3 @@
-;; $Id: gen-js.scm 112 2006-02-08 15:33:40Z flo $
 (module gen-js
    (export (mangle-JS-sym::bstring sym::symbol)
 	   (gen-JS-sym::bstring sym::symbol)))

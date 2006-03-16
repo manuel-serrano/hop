@@ -1,4 +1,3 @@
-;; $Id: compile.scm 139 2006-03-13 11:13:19Z flo $
 (module compile
    (include "protobject.sch")
    (include "nodes.sch")

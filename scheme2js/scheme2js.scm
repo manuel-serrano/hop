@@ -1,4 +1,3 @@
-;; $Id: scheme2js.scm 139 2006-03-13 11:13:19Z flo $
 (module scheme2js
    (option (loadq "protobject-eval.sch"))
    (import compile

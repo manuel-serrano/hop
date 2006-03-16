@@ -1,4 +1,3 @@
-;; $Id: node-elimination.scm 126 2006-02-22 11:22:58Z flo $
 (module node-elimination
    (include "protobject.sch")
    (include "nodes.sch")

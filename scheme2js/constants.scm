@@ -1,4 +1,3 @@
-;; $Id: constants.scm 138 2006-03-10 10:54:42Z flo $
 (module constants
    (include "protobject.sch")
    (include "nodes.sch")

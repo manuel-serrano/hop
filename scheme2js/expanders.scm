@@ -1,4 +1,3 @@
-;; $Id: expanders.scm 128 2006-02-22 15:47:37Z flo $
 (module expanders
    (import expand))
 

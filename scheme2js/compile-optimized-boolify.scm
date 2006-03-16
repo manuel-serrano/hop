@@ -1,4 +1,3 @@
-;; $Id: compile-optimized-boolify.scm 112 2006-02-08 15:33:40Z flo $
 ;; part of compile-module
 
 (define *bool-operators* '(

@@ -72,27 +72,56 @@ dotnet: heap-jvm lib-dotnet
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
-o/param.o param.class: ./eval-macro.sch ./param.sch 
-o/html-slider.o html-slider.class: ./compiler-macro.sch ./xml.sch 
-o/html-paned.o html-paned.class: ./compiler-macro.sch ./xml.sch 
-o/http-response.o ./http-response.class: ./http-lib.sch 
-o/param.o ./param.class: ./eval-macro.sch ./param.sch 
-o/html-extra.o html-extra.class: ./compiler-macro.sch ./xml.sch 
-o/event.o event.class: ./compiler-macro.sch ./xml.sch 
-o/html-tree.o html-tree.class: ./compiler-macro.sch ./xml.sch 
-o/http-response.o http-response.class: ./http-lib.sch 
-o/http-lib.o ./http-lib.class: ./http-lib.sch 
-o/service.o ./service.class: ./eval-macro.sch ./service.sch 
-o/html-notepad.o html-notepad.class: ./compiler-macro.sch ./xml.sch 
-o/service.o service.class: ./eval-macro.sch ./service.sch 
-o/xml.o xml.class: ./eval-macro.sch ./xml.sch 
-o/html-extra.o ./html-extra.class: ./compiler-macro.sch ./xml.sch 
-o/builtin.o ./builtin.class: ./compiler-macro.sch ./service.sch 
-o/html-tabslider.o html-tabslider.class: ./compiler-macro.sch ./xml.sch 
-o/builtin.o builtin.class: ./compiler-macro.sch ./service.sch 
-o/http-lib.o http-lib.class: ./http-lib.sch 
-o/xml.o ./xml.class: ./eval-macro.sch ./xml.sch 
-o/http-shoutcast.o http-shoutcast.class: ./http-lib.sch 
-o/html-inline.o html-inline.class: ./compiler-macro.sch ./xml.sch 
+o/var.o ./var.class: ./nodes.sch ./protobject.sch 
+o/statements.o ./statements.class: ./nodes.sch ./protobject.sch 
+o/constants.o constants.class: ./tools.sch ./nodes.sch ./protobject.sch 
+o/protobject.o protobject.class: ./protobject.sch 
+o/traverse.o ./traverse.class: ./nodes.sch ./protobject.sch 
+o/tail-rec.o tail-rec.class: ./nodes.sch ./protobject.sch 
+o/transform-util.o transform-util.class: ./nodes.sch ./protobject.sch 
+o/liveness.o liveness.class: ./nodes.sch ./protobject.sch 
+o/collect-vars.o collect-vars.class: ./tools.sch ./nodes.sch             \
+      ./protobject.sch 
+o/symbol.o ./symbol.class: ./nodes.sch ./protobject.sch 
+o/pobject-conv.o pobject-conv.class: ./protobject.sch 
+o/gen-code.o ./gen-code.class: ./tools.sch 
+o/nodes.o nodes.class: ./protobject.sch 
+o/compile.o ./compile.class: ./compile-optimized-boolify.scm             \
+      ./compile-optimized-call.scm ./tools.sch ./nodes.sch               \
+      ./protobject.sch 
+o/traverse.o traverse.class: ./nodes.sch ./protobject.sch 
+o/transform-util.o ./transform-util.class: ./nodes.sch ./protobject.sch 
+o/inline.o ./inline.class: ./nodes.sch ./protobject.sch 
+o/compile.o compile.class: ./compile-optimized-boolify.scm               \
+      ./compile-optimized-call.scm ./tools.sch ./nodes.sch               \
+      ./protobject.sch 
+o/nodes.o ./nodes.class: ./protobject.sch 
+o/symbol.o symbol.class: ./nodes.sch ./protobject.sch 
+o/statements.o statements.class: ./nodes.sch ./protobject.sch 
+o/node-elimination.o node-elimination.class: ./nodes.sch                 \
+      ./protobject.sch 
+o/js-interface.o js-interface.class: ./runtime_mapping.alist             \
+      ./runtime_mapping_hack.sch 
+o/protobject.o ./protobject.class: ./protobject.sch 
+o/capture.o ./capture.class: ./tools.sch ./nodes.sch ./protobject.sch 
+o/tail.o ./tail.class: ./nodes.sch ./protobject.sch 
+o/collect-vars.o ./collect-vars.class: ./tools.sch ./nodes.sch           \
+      ./protobject.sch 
+o/capture.o capture.class: ./tools.sch ./nodes.sch ./protobject.sch 
+o/pobject-conv.o ./pobject-conv.class: ./protobject.sch 
+o/inline.o inline.class: ./nodes.sch ./protobject.sch 
+o/tail.o tail.class: ./nodes.sch ./protobject.sch 
+o/gen-code.o gen-code.class: ./tools.sch 
+o/node-elimination.o ./node-elimination.class: ./nodes.sch               \
+      ./protobject.sch 
+o/tail-rec.o ./tail-rec.class: ./nodes.sch ./protobject.sch 
+o/var.o var.class: ./nodes.sch ./protobject.sch 
+o/liveness.o ./liveness.class: ./nodes.sch ./protobject.sch 
+o/constants.o ./constants.class: ./tools.sch ./nodes.sch                 \
+      ./protobject.sch 
+o/side.o ./side.class: ./nodes.sch ./protobject.sch 
+o/js-interface.o ./js-interface.class: ./runtime_mapping.alist           \
+      ./runtime_mapping_hack.sch 
+o/side.o side.class: ./nodes.sch ./protobject.sch 
 
 #bdepend stop

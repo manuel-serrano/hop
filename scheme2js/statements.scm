@@ -1,4 +1,3 @@
-;; $Id: statements.scm 130 2006-03-02 17:28:56Z flo $
 (module statements
    (include "protobject.sch")
    (include "nodes.sch")
