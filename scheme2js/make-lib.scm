@@ -5,6 +5,7 @@
 
    (option  (set! *dlopen-init* #t))
    
-   (import scheme2js)
+   (import scheme2js
+	   expand)
 
    (eval   (export-all)))

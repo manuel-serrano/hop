@@ -110,7 +110,7 @@
       (((kwote quasiquote) ???-)
        x)
       ;(let (bindings) ...)
-      ((let ?bindings . ?body)
+      ((let (and (? pair?) ?bindings) . ?body)
        (for-each expand-indirect-accesses! bindings)
        x)
       (else
