@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Feb 23 02:39:11 2006 (serrano)                */
+;*    Last change :  Tue Mar  7 12:52:35 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -42,11 +42,11 @@
 				  (height #f)
 				  (index 0)
 				  body)
-   ;; Verify that the body is a list of <TABPAN>
+   ;; Verify that the body is a list of <TSPAN>
    (for-each (lambda (x)
 		(unless (and (xml-element? x)
 			     (eq? (xml-element-markup x) 'tspan))
-		   (error '<TABSLIDER> "Component is not a <TABPAN>" x)))
+		   (error '<TABSLIDER> "Component is not a <TSPAN>" x)))
 	     body)
    
    (instantiate::html-tabslider

@@ -1,0 +1,8 @@
+(<HTML>
+   (<HEAD>
+      (<HOP-HEAD> :css "hss.hss"))
+   (<BODY>
+      (<P>
+	 [This example illustrates the use of ,(<SPAN> :class "a" "HSS"). It
+	       uses several ,(<SPAN> :class "b" "customizations").])))
+

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Fri Mar  3 13:35:12 2006 (serrano)                */
+#*    Last change :  Tue Mar 14 14:16:02 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP demos directory                         */
 #*=====================================================================*/
@@ -14,29 +14,31 @@
 include ../etc/Makefile.hopconfig
 include ../etc/Makefile.version
 
-DEMOSDIR=$(HOPSHAREDIR)/demos
-
 #*---------------------------------------------------------------------*/
 #*    POPDIRS                                                          */
 #*---------------------------------------------------------------------*/
-POPDIRS = weblets misc
+POPDIRS = calendar dhtml event filtering foldlist \
+	  hss notepad paned slider sorttable \
+	  tabslider text  todolist tree
 
+FILES   = list.hop
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile
+POPULATION	= Makefile $(FILES)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
+	mkdir -p $(HOPDEMOSDIR)
+	install -m a+r $(FILES) $(HOPDEMOSDIR)
 	for d in $(POPDIRS) ;do \
-          (cd $$d; $(MAKE) install) \
+          $(MAKE) -C $$d install DEMO=$$d ; \
 	done
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -rf $(DEMOSDIR)
-
+	/bin/rm -rf $(HOPDEMOSDIR)

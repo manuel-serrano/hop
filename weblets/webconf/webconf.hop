@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Mar  1 16:04:24 2006 (serrano)                */
+;*    Last change :  Wed Mar  8 08:42:55 2006 (eg)                     */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
@@ -27,8 +27,8 @@
 (define-service (webconf)
    (<HTML>
       (<HEAD>
-	 (<HOP-HEAD> :jscript "hop-folditem.js" "hop-window.js"
-		     :css "hop-folditem.css" "hop-window.css")
+	 (<HOP-HEAD> :jscript "hop-foldlist.js" "hop-window.js"
+		     :css "hop-foldlist.css" "hop-window.css")
 	 (<LINK> :rel "stylesheet"
 		 :type "text/css"
 		 :href (format "~a/webconf.hss" *webconf-directory*)))
@@ -44,11 +44,14 @@
 		(<DIV> :class "webconf-dir"
 		   (<P> (<B> "Directory: ") (<CODE> dir))
 		   (<DIV> :class "webconf-items"
+		     (<FL> 
 		       (map (lambda (x)
 			      (let ((weblet-name (cadr (assoc 'name x))))
-				(<FOLD-ITEM> :title (<I> weblet-name)
-					     (show-weblet-config x))))
-			  (find-weblets dir)))))
+				(<FLITEM>
+				    (<FLHEAD> (<SPAN> :class "webconf-item"
+						      weblet-name))
+				    (show-weblet-config x))))
+			  (find-weblets dir))))))
 	      (hop-autoload-directories)))))
 
 ;; ----------------------------------------------------------------------

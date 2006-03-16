@@ -1,0 +1,30 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-foldlist.css                  */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Erick Gallesio                                    */
+/*    Creation    :  Wed Mar  1 11:56:02 2006                          */
+/*    Last change :  Tue Mar 14 18:16:05 2006 (eg)                     */
+/*    -------------------------------------------------------------    */
+/*    HOP fold-item implemenetation                                    */
+/*=====================================================================*/
+
+.hop-fl {
+    margin: 2px;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.hop-fl IMG {
+    cursor: pointer;
+}
+
+.hop-fl SPAN {
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.hop-fl DIV {
+    margin-left: 4px;
+}

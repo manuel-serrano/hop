@@ -9,41 +9,87 @@
 /*    HOP Demos                                                        */
 /*=====================================================================*/
 
+$(define hop-demo-fg "#183879")
+$(define hop-demo-bg "#f7f7ef")
+
 BODY {
-    background: cornsilk;
+    background: #efebdf;
 }
 
 H1 {
-    font-size: 120%;
+    font-size: 180%;
     text-align: center;
 }
 
 H1, H2 {
-    color: darkgoldenrod;
+    color: $hop-demo-fg;
+    padding-bottom: 10px;
 }
 
-.hop-demos-tbl {
-    width: 100%;
-    border: 1px solid khaki;
+#hop-run-window-content {
+    background: white;
 }
 
-.hop-demos-tbl-even {
-    background: palegoldenrod;
+.hop-demo-button {
+    font-size: 50%;
+    padding: 0 10px 0 10px;
+    margin: 2px 1em 2px 0;
 }
 
-.hop-demos-tbl A {
-    color: brown;
-    font-weight: bold;
+/* ====================================================================== *\
+ *	Left frame  ...
+\* ====================================================================== */   
+.hop-demos-category {
+    color: $hop-demo-fg;
+}
+
+.hop-demos-link {
+    display: block;
+    background: $hop-demo-bg;
+    padding: 1px 1px 1px 10px;
+    margin: 2px;
+    color: #444;
     text-decoration: none;
 }
 
-.hop-demos-code {
-    background: #eee;
+.hop-demos-link :hover {
+    background: white;
+    color: red;
 }
 
-.hop-demos-code H1 {
-    font-size: 140%;
-    text-align: center;
-    padding-bottom: 3px;
-    border-bottom: 1px solid brown;
+/* ====================================================================== *\
+ *	Right frame  ...
+\* ====================================================================== */   
+.hop-demos-comment {
+    margin: 5px;
+    background: #CFCDFF;
+    height: 150px;
+    padding: 5px;
+    border: 2px dotted #104E8B;
+    overflow: auto;
+    color: #104E8B;
+    font-size: 95%;
+}
+
+.hop-demos-code {
+    background: $hop-demo-bg;
+    font-size: 95%;
+    padding: 1;
+}
+
+.hop-demos-comment-code {
+    background: $hop-demo-bg;
+    font-size: 95%;
+    padding: 1px;
+    margin: 2px 30px 2px 30px;
+}
+
+.hop-demos-code-edit {
+    background: #FFF8DC;
+    font-size: 95%;
+    width: 99%;
+    overflow: auto;
+    border: 1px dotted red;
+    margin-top: 6px;
+    padding-top: 5px
 }

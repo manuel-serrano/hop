@@ -1,0 +1,36 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/demos/filtering/filtering.hop           */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Feb 24 13:11:05 2006                          */
+;*    Last change :  Fri Feb 24 15:44:20 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    An example of web filtering.                                     */
+;*=====================================================================*/
+
+(define (linux-kernel-filtering req resp)
+   (with-access::http-request req (host path localhostp)
+      (when (and (string=? host "www.kernel.org")
+		 (substring-at? path "/" 0))
+	 (instantiate::http-response-filter
+	    (response resp)
+	    (bodyf (lambda (ip op s h cl)
+		      (let* ((s1 (if (=elong cl #e-1)
+				     (read-string ip)
+				     (read-chars (elong->fixnum cl) ip)))
+			     (s2 (pregexp-replace* "Linux" s1 "<span style='color: red'>Xunil</span>")))
+			 (display s2 op)
+			 (flush-output-port op))))))))
+
+(hop-http-response-remote-hook-add!
+ (lambda (req resp)
+    (or (linux-kernel-filtering req resp)
+	resp)))
+
+(<HTML>
+   (<BODY>
+      [Visit the ,(<A> :href "http://www.kernel.org/" "Linux kernel") Web site.]))
+
+
+

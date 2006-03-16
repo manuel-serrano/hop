@@ -34,7 +34,7 @@ _OBJECTS	= param misc types thread \
                   job mime user \
                   http-lib http-response http-shoutcast http-error \
                   http-filter html-extra html-notepad html-tree html-slider \
-                  html-paned html-tabslider html-inline html-folditem \
+                  html-paned html-tabslider html-inline html-foldlist \
                   html-window \
                   event color weblets
 

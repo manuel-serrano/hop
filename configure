@@ -70,8 +70,8 @@ while : ; do
       prefix="`echo $1 | sed 's/^[^=]*=//'`";
       bindir=$prefix/bin;
       libdir=$prefix/lib;
-      sharedir=$prefix/share;
-      contribsdir=$prefix/share/contribs;;
+      sharedir=$prefix/share/hop;
+      contribsdir=$prefix/share/hop/contribs;;
 
     --bindir=*)
       bindir="`echo $1 | sed 's/^[^=]*=//'`";;
