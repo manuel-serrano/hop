@@ -25,6 +25,7 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css hop-window.js \
 		  hop-window.css hop.scm \
+		  runtime.js runtime-interface.js \
 		  icons Makefile
 
 #*---------------------------------------------------------------------*/
@@ -54,6 +55,8 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-window.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-window.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/runtime.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/runtime-interface.js $(HOPSHAREDIR) && \
 	mkdir -p $(HOPSHAREDIR)/icons && \
 	chmod a+rx $(HOPSHAREDIR)/icons && \
 	install -m a+r $(BUILDSHAREDIR)/icons/* $(HOPSHAREDIR)/icons
@@ -84,6 +87,8 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop-window.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-window.css && \
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \
+	/bin/rm -f $(HOPSHAREDIR)/runtime.js && \
+	/bin/rm -f $(HOPSHAREDIR)/runtime-interface.js && \
 	/bin/rm -f $(HOPSHAREDIR)/icons
 
 
