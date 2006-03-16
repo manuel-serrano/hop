@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Mar 16 08:38:59 2006 (serrano)                */
+;*    Last change :  Thu Mar 16 16:46:00 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -23,7 +23,7 @@
 	    __hop_mime
 	    __hop_misc)
    
-   (export  (abstract-class xml
+   (export  (class xml
 	       (%xml-constructor)
 	       (id::bstring read-only (default "_")))
 
