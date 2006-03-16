@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Feb 23 02:45:44 2006 (serrano)                */
+;*    Last change :  Thu Mar 16 08:39:24 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -156,9 +156,3 @@
 		   (format "hop_timeout( \"~a\", function() { ~a; return true; }, ~a, ~a )"
 			   id handler timeout (if eager "true" "false")))
 		body)))))
-		      
-	  
-					   
-   
-   
-

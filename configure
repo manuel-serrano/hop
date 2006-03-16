@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Mar 14 13:42:07 2006 (serrano)                */
+#*    Last change :  Thu Mar 16 08:07:59 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -296,6 +296,17 @@ cat runtime/compiler-macro.sch >> $init
 cat runtime/xml.sch >> $init
 cat runtime/param.sch >> $init
 cat runtime/service.sch >> $init
+
+# lib/scheme2js.init
+init=lib/scheme2js.init
+mkdir -p lib
+rm -f $init 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/scheme2js.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+    >> $init
+echo "" >> $init
 
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */

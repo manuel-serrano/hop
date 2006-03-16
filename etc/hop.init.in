@@ -3,20 +3,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 09:57:45 2006                          */
-;*    Last change :  Thu Jan 19 10:29:55 2006 (serrano)                */
+;*    Last change :  Thu Mar 16 08:19:04 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP lib init file.                                           */
 ;*=====================================================================*/
-
-;*---------------------------------------------------------------------*/
-;*    The additional libraries                                         */
-;*---------------------------------------------------------------------*/
-(set! *additional-bigloo-libraries*
-      (cons* 'bigloomultimedia
-	     'biglooweb
-	     'bigloopth
-	     *additional-bigloo-libraries*))
 
 ;*---------------------------------------------------------------------*/
 ;*    The basename of the HOP library name                             */
@@ -28,6 +19,10 @@
 ;*---------------------------------------------------------------------*/
 (cond-expand
    (bigloo-compile
-    #unspecified)
+    (set! *additional-bigloo-libraries*
+	  (cons* 'bigloomultimedia
+		 'biglooweb
+		 'bigloopth
+		 *additional-bigloo-libraries*)))
    (bigloo-eval
     #unspecified))

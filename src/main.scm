@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Feb 11 18:18:55 2006 (serrano)                */
+;*    Last change :  Thu Mar 16 08:42:00 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -46,10 +46,12 @@
 (define (main args)
    ;; catch critical signals
    (signal-init!)
+   ;; set the library load path
+   (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
+      (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
    ;; load the hop library
-   (eval `(library-translation-table-add! 'hop "hop" ,(hop-version)))
-   (eval `(library-load 'hop ,(hop-lib-directory)))
-   (eval `(library-load 'web))
+   (eval '(library-load 'hop))
+   (eval '(library-load 'web))
    ;; parse the command line
    (parse-args args)
    (hop-verb 2 "Starting hop on port " (hop-port) ":\n")

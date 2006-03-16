@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Mar  5 16:55:12 2006 (serrano)                */
+#*    Last change :  Thu Mar 16 08:08:38 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -74,6 +74,8 @@ install: install-init
 install-init: $(DESTDIR)$(HOPFILDIR)
 	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPFILDIR)/hop.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hop.init;
+	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPFILDIR)/scheme2js.init && \
+        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/scheme2js.init;
 
 $(DESTDIR)$(HOPFILDIR):
 	mkdir -p $(DESTDIR)$(HOPFILDIR)
@@ -103,6 +105,7 @@ devclean:
 distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig
 	/bin/rm -f lib/hop.init
+	/bin/rm -f lib/scheme2js.init
 
 cleanall: distclean
 
