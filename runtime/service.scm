@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Mar 13 15:58:54 2006 (serrano)                */
+;*    Last change :  Thu Mar 16 09:24:15 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -202,19 +202,20 @@
 	     (if (pred req)
 		 (begin
 		    (mutex-lock! mutex)
-		    (unless loaded
-		       (hop-verb 1 (hop-color req req " AUTOLOADING")
-				 ": " path "\n")
-		       ;; load the autoloaded file
-		       (load-once path)
-		       ;; execute the hooks
-		       (for-each (lambda (h) (h req)) hooks)
-		       ;; remove the autoaload (once loaded)
-		       (mutex-lock! *autoload-mutex*)
-		       (set! *autoloads* (remq! (car al) *autoloads*))
-		       (mutex-unlock! *autoload-mutex*)
-		       (set! loaded #t))
-		    (mutex-unlock! mutex)
+		    (unwind-protect
+		       (unless loaded
+			  (hop-verb 1 (hop-color req req " AUTOLOADING")
+				    ": " path "\n")
+			  ;; load the autoloaded file
+			  (load-once path)
+			  ;; execute the hooks
+			  (for-each (lambda (h) (h req)) hooks)
+			  ;; remove the autoaload (once loaded)
+			  (mutex-lock! *autoload-mutex*)
+			  (set! *autoloads* (remq! (car al) *autoloads*))
+			  (mutex-unlock! *autoload-mutex*)
+			  (set! loaded #t))
+		       (mutex-unlock! mutex))
 		    ;; re-scan the filter list
 		    req)
 		 (begin

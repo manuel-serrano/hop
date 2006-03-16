@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Tue Mar  7 11:48:04 2006 (serrano)                */
+;*    Last change :  Thu Mar 16 12:07:15 2006 (serrano)                */
 ;*    Copyright   :  2003-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -34,13 +34,14 @@
 	  (list path)
 	  ;; CARE: Je ne sais pas s'il faut toujours faire la conversion
 	  ;; utf8->iso-latin!
-	  (let ((cmd (xml-string-decode!
-		      (utf8->iso-latin!
+	  (let ((cmd (utf8->iso-latin!
+		      (xml-string-decode!
 		       (substring path 0 i))))
 		(args (substring path (+fx i 1) (string-length path))))
 	     (cons cmd
 		   (map! (lambda (p)
-			    (set-cdr! p (xml-string-decode! (cdr p)))
+			    (set-cdr! p (utf8->iso-latin!
+					 (xml-string-decode! (cdr p))))
 			    p)
 			 (cgi-args->list args)))))))
 
@@ -59,15 +60,17 @@
 			 (substring-ci-at? ctype
 					   "multipart/form-data; boundary="
 					   0))
-		    (let ((boundary (substring ctype
-					       (string-length
-						"multipart/form-data; boundary=")
-					       (string-length ctype))))
+		    (let ((boundary (substring
+				     ctype
+				     (string-length
+				      "multipart/form-data; boundary=")
+				     (string-length ctype))))
 		       (cons path
-			     (cgi-multipart->list (hop-upload-directory)
-						  pi
-						  content-length
-						  boundary)))
+			     (cgi-multipart->list
+			      (hop-upload-directory)
+			      pi
+			      content-length
+			      boundary)))
 		    (let ((body (read-chars (elong->fixnum content-length) pi)))
 		       (cons path
 			     (cgi-args->list body))))))
