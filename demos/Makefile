@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Tue Mar 14 14:16:02 2006 (eg)                     */
+#*    Last change :  Fri Mar 17 10:18:20 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP demos directory                         */
 #*=====================================================================*/
@@ -22,6 +22,7 @@ POPDIRS = calendar dhtml event filtering foldlist \
 	  tabslider text  todolist tree
 
 FILES   = list.hop
+
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/

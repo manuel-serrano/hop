@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Mar 16 08:38:47 2006 (serrano)                */
+;*    Last change :  Fri Mar 17 08:07:12 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -174,7 +174,7 @@
                                 font-family: Futura_Poster, Blippo, Cooper, Eras-UltraBlk, RoostHeavy, Sinaloa, Arial, Verda, sans serif;
                                 font-weight: bold;"
 			(hop-name)
-			(<SPAN> :style "font-size: 7px; font-stretch: ultra-condensed; font-family: sans serif"
+			(<SPAN> :style "font-size: 7px; font-stretch: ultra-condensed; font-family: sans serif; margin-right: 2px; margin-left: -1px; vertical-align: bottom"
 				(hop-version)))
 		body)))
       (<DIV> :style
@@ -189,10 +189,12 @@
 	     (if (not img)
 		 r
 		 (<TABLE> :style "width: 100%;
-                           border-collapse: collapse;
-                           font-size: x-small;"
+                           border-collapse: collapse; cell-spacing: 0; cell-padding: 0; font-size: x-small;"
+			  :border 0
+			  :cellspacing 0
+			  :cellpadding 0
 			  (<TR>
-			     (<TD> img)
+			     (<TD> :align 'left img)
 			     (<TD> :align 'center r)))))))
 		   
 

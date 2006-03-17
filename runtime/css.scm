@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Feb 17 07:40:38 2006 (serrano)                */
+;*    Last change :  Fri Mar 17 09:18:20 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -110,4 +110,5 @@
    (with-lock *hss-type-mutex*
       (lambda ()
 	 (hashtable-put! *hss-types* (string-upcase old) new)
-	 (hashtable-put! *hss-types* (string-downcase old) new))))
+	 (hashtable-put! *hss-types* (string-downcase old) new)
+	 "")))

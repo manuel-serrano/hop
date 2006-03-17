@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Thu Mar 16 10:28:23 2006 (eg)                     */
+;*    Last change :  Fri Mar 17 10:36:07 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -320,9 +320,10 @@
 	  (p/ (string-append string "/")))
       (lambda (req)
 	 (with-access::http-request req (path)
-	    (let ((i (string-index path #\?)))
-	       (or (and (not (file-exists? path))
-			(if (=fx i -1)
-			    (string=? path p)
-			    (substring-at? p path i)))
-		   (substring-at? path p/ 0 i)))))))
+	    (let ((i (string-index path #\?))
+		  (l (string-length path))
+		  (lp (string-length p)))
+	       (if (=fx i -1)
+		   (and (substring-at? path p 0)
+			(or (=fx l lp) (eq? (string-ref path lp) #\/)))
+		   (substring-at? path p 0 i)))))))

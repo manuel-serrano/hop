@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 15:24:40 2005                          */
-;*    Last change :  Thu Mar 16 08:33:19 2006 (serrano)                */
+;*    Last change :  Fri Mar 17 07:52:11 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML macros                                                       */
@@ -54,7 +54,6 @@
 		 (loop (append (car args) (cdr args)) attr body id))
 		(else
 		 (loop (cdr args) attr (cons (car args) body) id))))))
-   (tprint `(DEFINE-XML ,element ,id ,@exp))
    (let ((s (symbol->string id)))
       (if (and (>fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\<)
