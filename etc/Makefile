@@ -20,5 +20,5 @@ include ../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile Makefile.contrib \
                   Makefile.mercurial Makefile.version Makefile.library \
-		  Makefile.hopconfig.in configure.scm.in hop.init.in
-
+		  Makefile.hopconfig.in configure.scm.in \
+		  hop.init.in scheme2js.init.in hopscheme.init.in

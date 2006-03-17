@@ -308,6 +308,17 @@ cat etc/scheme2js.init.in \
     >> $init
 echo "" >> $init
 
+# lib/hopscheme.init
+init=lib/hopscheme.init
+mkdir -p lib
+rm -f $init 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/hopscheme.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+    >> $init
+echo "" >> $init
+
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */
 #*---------------------------------------------------------------------*/
