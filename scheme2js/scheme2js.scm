@@ -45,10 +45,14 @@
 				      file))
 	     (let ((rev-sexps (if (string=? file "-")
 				  (read-rev-port (current-input-port))
-				  (let* ((port (open-input-file file))
-					 (res (read-rev-port port)))
-				     (close-input-port port)
-				     res))))
+				  (let ((port (open-input-file file)))
+				     (if port
+					 (let ((res (read-rev-port port)))
+					    (close-input-port port)
+					    res)
+					 (error "read-files"
+						"couldn't open: "
+						file))))))
 		(loop (cdr files)
 		      (append! rev-sexps rev-top-level)))))))
 

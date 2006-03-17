@@ -310,11 +310,15 @@ function sc_inexact2exact(x) { /// export
     return x;
 }
 
-function sc_number2string(x, radix) { /// export
+function sc_number2symbol(x, radix) { /// export
     if (radix)
-	return new sc_String(x.toString(radix));
+	return x.toString(radix);
     else
-	return sc_String(x.toString());
+	return x.toString();
+}
+    
+function sc_number2string(x, radix) { /// export
+    return new sc_String(sc_number2Symbol(x, radix));
 }
 
 function sc_string2number(s, radix) { /// export
@@ -926,7 +930,7 @@ function sc_isVectorEqual(v1, v2) {
 
 function sc_makeVector(size, fill) { /// export
     var a = new Array(size);
-    var res = new sc_vector(a);
+    var res = new sc_Vector(a);
     if (fill != undefined)
 	sc_vector_fill(v, fill);
     return res;

@@ -5,7 +5,8 @@
    (import protobject
 	   nodes
 	   var
-	   verbose)
+	   verbose
+	   gen-js)
    (export (symbol-resolution tree::pobject js-interface)
 	   (id->js-var id::symbol)
 	   *unresolved=JS*
@@ -143,7 +144,7 @@
       (cond
 	 (var (set! this.var var))
 	 (*unresolved=JS*
-	  (js-symbol-add! this.id this.id)
+	  (js-symbol-add! this.id (string->symbol (mangle-JS-sym this.id)))
 	  (verbose "Unresolved symbol " this.id " assumed to be a JS-var")
 	  (pcall this Var-ref-resolve symbol-table))
 	 (else
