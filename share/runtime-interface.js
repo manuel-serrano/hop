@@ -64,6 +64,7 @@ var sci_sqrt = sc_sqrt;
 var sci_expt = sc_expt;
 var sci_exact2inexact = sc_exact2inexact;
 var sci_inexact2exact = sc_inexact2exact;
+var sci_number2symbol = sc_number2symbol;
 var sci_number2string = sc_number2string;
 var sci_string2number = sc_string2number;
 var sci_not = sc_not;
