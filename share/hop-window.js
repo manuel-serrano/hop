@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Thu Mar  9 14:04:46 2006 (eg)                     */
+/*    Last change :  Mon Mar 20 18:06:19 2006 (eg)                     */
 /*    -------------------------------------------------------------    */
 /*    FLOAT-WINDOW implementation                                      */
 /*=====================================================================*/
@@ -13,10 +13,11 @@
 \* ====================================================================== */
 function hop_float_window_init(id, inframe)
 {
-    var el = document.getElementById(id);
-    var h  = document.getElementById(id + "-handle");
+    var el  = document.getElementById(id);
+    var h   = document.getElementById(id + "-handle");
+    var rsz = document.getElementById(id + "-rsz");
 
-    HopDrag.init(el, h);
+    HopDrag.init(el, h, rsz);
     el.inFrame = inframe;
 }
 
@@ -25,9 +26,11 @@ function hop_float_window_init(id, inframe)
 \* ====================================================================== */
 function hop_open_float_window(serv, id, x, y)
 {
-    var win = document.getElementById(id);
-    var h   = document.getElementById(id + "-handle");
-    var el  = document.getElementById(id + "-content");
+    var win    = document.getElementById(id);
+    var h      = document.getElementById(id + "-handle");
+    var el     = document.getElementById(id + "-content");
+    var iframe = id + "-frame";
+
 
     function change_style() {
 	win.style.display = "block";
@@ -41,11 +44,42 @@ function hop_open_float_window(serv, id, x, y)
 	return win.offsetHeight - h.offsetHeight - shadow_height;
     }
 
-    if (serv == null) {
-	change_style();
-	return
+    function start_resize(w, h) {
+	el.style.overflow = "auto";
+	if (win.inFrame) {
+	    document.getElementById(iframe).style.display= "none";
+	    el.style.opacity= 0.8;
+	}
     }
     
+    function resize(w, h) {
+	el.style.setProperty("height",  compute_height() +"px", "");
+	el.style.setProperty("overflow",  "auto", "");	
+    }
+
+    function end_resize(w, h) {
+	var sz   = compute_height() + "px";
+	
+	el.style.height = sz;
+	if (win.inFrame) {
+	    var ifrm = document.getElementById(iframe);
+	    
+	    ifrm.style.display= "block"; 
+	    ifrm.style.height = sz;
+	    el.style.opacity= 1;
+	}
+    }
+
+	    
+    /* Set the resize functions */
+    win.onResizeStart = start_resize;
+    win.onResize      = resize;
+    win.onResizeEnd   = end_resize;
+
+//    if (serv == null) {
+//	change_style();
+//	return
+//    }
     if (!win.inFrame) {
 	hop(serv, 
 	    function( http ) {
@@ -56,21 +90,17 @@ function hop_open_float_window(serv, id, x, y)
 		}
 	    });
     } else {
-	var iframe = id + "-frame";
-	
-	el.style.setProperty("margin", "0", "");
-	el.style.setProperty("padding", "0", "");
-
 	win.onDragStart = function(x, y) { 
 	    document.getElementById(iframe).style.display= "none";  
 	    el.style.setProperty("height", compute_height()+"px", "");
-	    el.style.opacity= 0.8; 
-	}
-	win.onDragEnd   = function(x, y) {
-	    document.getElementById(iframe).style.display= "block"; 
-	    el.style.opacity= 1; 
+	    /* el.style.opacity= 0.8; */
 	}
 
+	win.onDragEnd   = function(x, y) {
+	    document.getElementById(iframe).style.display= "block"; 
+	    /* el.style.opacity= 1;  */
+	}
+	
 	change_style();	
 	el.innerHTML= "<iframe class=hop-float-iframe id='" + iframe + "' " +
 	    "src='" + serv + "' " + 
@@ -83,7 +113,7 @@ function hop_open_float_window(serv, id, x, y)
 \* ====================================================================== */
 function hop_close_float_window(id)
 {
-    var el = document.getElementById(id)
+    var el = document.getElementById(id);
     el.style.display = "none";
 }
 
@@ -97,18 +127,19 @@ function hop_close_float_window(id)
  *
 \* ====================================================================== */
 var HopDrag = {
-    obj : null,
+    obj     : null,
+    opacity : 1,
+    zIndex  : 100,
 
-    opacity: 1,
-
-    zIndex: 100,
-
-    init : function(o, h, oRoot, minX, maxX, minY, maxY, 
+    init : function(o, h, rsz, oRoot, minX, maxX, minY, maxY, 
 		    bSwapHorzRef, bSwapVertRef, fXMapper, fYMapper)
     {
 	o.hop_handle    = h;
+	o.rsz_handle	= rsz;
 	h.hop_window    = o;
+	rsz.hop_window  = o;
 	h.onmousedown	= HopDrag.start;
+	rsz.onmousedown = HopDrag.startResize;
 	
 	o.hmode		= bSwapHorzRef ? false : true ;
 	o.vmode		= bSwapVertRef ? false : true ;
@@ -133,8 +164,11 @@ var HopDrag = {
 	o.yMapper = fYMapper ? fYMapper : null;
 
 	o.root.onDragStart	= new Function();
-	o.root.onDragEnd	= new Function();
 	o.root.onDrag		= new Function();
+	o.root.onDragEnd	= new Function();
+	o.root.onResizeStart	= new Function();
+	o.root.onResize	        = new Function();
+	o.root.onResizeEnd      = new Function();
     },
     
     start : function(e)
@@ -173,7 +207,7 @@ var HopDrag = {
 	
 	return false;
     },
-    
+
     drag : function(e)
     {
 	e = HopDrag.fixE(e);
@@ -217,6 +251,64 @@ var HopDrag = {
 	   parseInt(HopDrag.obj.root.style[HopDrag.obj.hmode ? "left" : "right"]), 
 	   parseInt(HopDrag.obj.root.style[HopDrag.obj.vmode ? "top" : "bottom"]));
 	HopDrag.obj = null;
+    },
+
+    /* ============== *\
+     *    Resize 
+    \* ============== */       
+    startResize : function(e)
+    {
+	var o = this.hop_window;
+	var x = parseInt(o.hmode ? o.root.style.left : o.root.style.right );
+	var y = parseInt(o.vmode ? o.root.style.top  : o.root.style.bottom);
+
+	e = HopDrag.fixE(e);
+	HopDrag.obj = o;
+
+	o.root.style.zIndex = ++HopDrag.zIndex;
+	o.root.onResizeStart(o.root.style["width"],
+			     o.root.style["height"]);
+	
+	o.lastMouseX	= e.clientX;
+	o.lastMouseY	= e.clientY;
+	
+	document.onmousemove	= HopDrag.resize;
+	document.onmouseup	= HopDrag.endResize;
+	return false;
+    },
+
+    resize: function (e)
+    {
+	e = HopDrag.fixE(e);
+	var o = HopDrag.obj;
+
+	var ex	= e.clientX;
+	var ey	= e.clientY;
+	var x = parseInt(o.hmode ? o.root.style.left : o.root.style.right );	
+	var y = parseInt(o.vmode ? o.root.style.top  : o.root.style.bottom);
+	var w, h; 
+	
+	w = HopDrag.obj.offsetWidth  + ex - HopDrag.obj.lastMouseX;
+	h = HopDrag.obj.offsetHeight + ey - HopDrag.obj.lastMouseY; 
+	
+	HopDrag.obj.root.style["width"]  = w + "px";
+	HopDrag.obj.root.style["height"] = h + "px";
+	
+	HopDrag.obj.lastMouseX	= ex;
+	HopDrag.obj.lastMouseY	= ey;
+	
+	HopDrag.obj.root.onResize(w, h);
+	return false;
+    },
+
+    endResize : function()
+    {
+	document.onmousemove = null;
+	document.onmouseup   = null;
+	HopDrag.obj.root.onResizeEnd(parseInt(HopDrag.obj.root.style["width"]), 
+				     parseInt(HopDrag.obj.root.style["height"]));
+	HopDrag.obj = null;
+	return false;
     },
 
     fixE : function(e)
