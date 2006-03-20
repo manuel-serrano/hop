@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Fri Feb 24 13:09:04 2006 (serrano)                */
+;*    Last change :  Sat Mar 18 10:09:47 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -25,7 +25,7 @@
 	    (http-read-header::pair-nil ::input-port)
 	    (http-header-field ::pair-nil ::keyword)
 	    (http-header-field-values::pair-nil ::bstring)
-	    (http-cookie-get ::http-request ::bstring ::obj ::obj)
+	    (http-cookie-get ::http-request ::bstring #!optional path domain)
 	    (http-basic-authentication? ::http-request ::bstring ::bstring)
 	    (http-basic-base64-authentication? ::http-request ::pair-nil)
 	    (http-htaccess-authentication? ::http-request ::bstring)
@@ -276,7 +276,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-cookie-get ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (http-cookie-get req name path domain)
+(define (http-cookie-get req name #!optional path domain)
    (with-access::http-request req (header)
       (let ((cookie (http-header-field header cookie:)))
 	 ;; konqueror uses the string "undefined" for no cookie!

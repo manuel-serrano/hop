@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Mar 16 08:42:00 2006 (serrano)                */
+;*    Last change :  Mon Mar 20 07:32:57 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -177,7 +177,10 @@
 			  (user-name (http-request-user req))
 			  "anonymous") "\n")
 	    (let ((rep (http-response hp sock)))
-	       (hop-verb 2 (hop-color req req " RESPONSE") ": " rep "\n")
+	       (hop-verb 2 (hop-color req req " RESPONSE") ": "
+			 (current-date)
+			 " persistent: " (http-response-persistent? rep)
+			 "\n")
 	       (unless (http-response-persistent? rep)
 		  (socket-close sock)))))))
 

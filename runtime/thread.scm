@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Nov 16 13:24:06 2004                          */
-;*    Last change :  Thu Jan 19 09:52:36 2006 (serrano)                */
+;*    Last change :  Mon Mar 20 07:21:04 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hop_thread                                                       */
@@ -104,7 +104,7 @@
 		(set! free (cdr free))
 		(set! use (cons t use))
 		(mutex-unlock! mutex)
-		(hop-verb 2 (hop-color msg msg
+		(hop-verb 3 (hop-color msg msg
 				       (format " THREAD POOL ~a" id))
 			  " free threads: " (length free) "\n")
 		t)
