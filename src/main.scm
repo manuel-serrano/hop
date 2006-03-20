@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Mar 20 07:32:57 2006 (serrano)                */
+;*    Last change :  Mon Mar 20 07:59:13 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -147,7 +147,11 @@
 ;*---------------------------------------------------------------------*/
 (define (http-process req sock)
    (lambda ()
-      (hop-verb 2 (hop-color req req " PROCESS") ": " req "\n")
+      (with-access::http-request req (method scheme host port path)
+	 (hop-verb 2 (hop-color req req " PROCESS") ": "
+		   method " "
+		   scheme "://" host ":" port (string-for-read path)
+		   "\n"))
       (with-handler
 	 (lambda (e)
 	    (with-handler
@@ -178,9 +182,11 @@
 			  "anonymous") "\n")
 	    (let ((rep (http-response hp sock)))
 	       (hop-verb 2 (hop-color req req " RESPONSE") ": "
-			 (current-date)
-			 " persistent: " (http-response-persistent? rep)
-			 "\n")
+			 rep
+			 " [" (current-date) "]"
+			 (if (http-response-persistent? rep)
+			     " persistent\n"
+			     "\n"))
 	       (unless (http-response-persistent? rep)
 		  (socket-close sock)))))))
 
