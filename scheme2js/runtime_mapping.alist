@@ -65,6 +65,7 @@
   (expt sci_expt)
   (exact->inexact sci_exact2inexact)
   (inexact->exact sci_inexact2exact)
+  (number->symbol sci_number2symbol)
   (number->string sci_number2string)
   (string->number sci_string2number)
   (not sci_not)
