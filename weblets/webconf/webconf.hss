@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Feb 14 06:14:00 2006                          */
-/*    Last change :  Thu Mar  9 10:51:23 2006 (eg)                     */
+/*    Last change :  Mon Mar 20 14:31:15 2006 (eg)                     */
 /*    Copyright   :  2006 Erick Gallesio                               */
 /*    -------------------------------------------------------------    */
 /*    HOP Weblet configuration CSS                                     */
@@ -84,8 +84,8 @@ BODY {
     top: 50;
     left: 50;
     width: 280;
-    height: 350;
-    opacity: 0.9;
+    height: 350; 
+/*    opacity: 0.9; */
 }
 
 #hop-webconf-confwin {
@@ -93,7 +93,7 @@ BODY {
     left: 100;
     width: 640;
     height: 480;
-    opacity: 1;
+/*    opacity: 1; */
 }
 
 #hop-webconf-confwin-content {
