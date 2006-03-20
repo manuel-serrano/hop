@@ -23,7 +23,8 @@ POPULATION	= Makefile
 #*---------------------------------------------------------------------*/
 #*    weblets                                                          */
 #*---------------------------------------------------------------------*/
-POPDIRS	= password info jobs dired bbdb webconf webfilter demos
+POPDIRS	= password info jobs dired bbdb webconf webfilter demos \
+          minesweeper
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
