@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Feb 24 13:04:43 2006 (serrano)                */
+;*    Last change :  Mon Mar 20 11:55:39 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -22,6 +22,8 @@
 	    (user-exists? ::bstring)
 	    (users-added?::bool)
 	    (find-authenticated-user ::bstring)
+	    (find-user ::bstring ::bstring)
+	    (find-user/encrypt ::bstring ::bstring ::procedure)
 	    (user-authorized-request?::bool ::obj ::http-request)
 	    (user-authorized-path?::bool ::obj ::bstring)
 	    (user-authorized-service?::bool ::obj ::symbol)
@@ -164,16 +166,30 @@
 		   (len (string-length dauth))
 		   (i (string-index dauth #\:))
 		   (u (and (>=fx i 0)
-			   (let* ((nm (substring dauth 0 i))
-				  (pd (substring dauth (+fx i 1) len))
-				  (u (hashtable-get *users* nm)))
-			      (and (user? u)
-				   (string=? (md5sum (format "~a ~a" nm pd))
-					     (user-password u))
-				   u)))))
+			   (let* ((n (substring dauth 0 i))
+				  (p (substring dauth (+fx i 1) len)))
+			      (find-user n (md5sum (format "~a ~a" n p)))))))
 	       (when (user? u)
 		  (add-cached-user! auth u))
 	       u))))
+
+;*---------------------------------------------------------------------*/
+;*    find-user ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (find-user user-name encoded-passwd)
+   (let ((u (hashtable-get *users* user-name)))
+      (and (user? u)
+	   (string=? encoded-passwd (user-password u))
+	   u)))
+
+;*---------------------------------------------------------------------*/
+;*    find-user/encrypt ...                                            */
+;*---------------------------------------------------------------------*/
+(define (find-user/encrypt user-name encoded-passwd encrypt)
+   (let ((u (hashtable-get *users* user-name)))
+      (and (user? u)
+	   (string=? encoded-passwd (encrypt (user-password u)))
+	   u)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-hopaccess ...                                               */

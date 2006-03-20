@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Mar 18 09:58:59 2006 (serrano)                */
+/*    Last change :  Mon Mar 20 14:03:02 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -468,6 +468,15 @@ function hop_tooltip_hide() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_cookie_remove ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_cookie_remove( name, path, domain ) {
+   if( hop_cookie_get_value( name ) ) {
+      hop_cookie_set_value( name, "", path, domain );
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_cookie_get_value ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_cookie_get_value( name ) {
@@ -498,12 +507,16 @@ function hop_cookie_set_value( name, val, path, domain, expires ) {
 
    if( (expires instanceof String) || (typeof expires == "string") ) {
       cookie += "; expires=" + expires;
+   } else {
+      if( expires instanceof Date ) {
+	 cookie += "; expires=" + expires.toGMTString();
+      }
    }
 
    if( (domain instanceof String) || (typeof domain == "string") ) {
       cookie += "; domain=" + domain;
    }
-
+   
    document.cookie = cookie;
 }
 
