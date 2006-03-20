@@ -302,14 +302,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-element p encoding)
    (with-access::xml-element obj (markup id attributes body)
-      (if (and (null? body) (null? attributes))
+      (if (and (null? body)
+	       (null? attributes)
+	       (memq markup '(br img input)))
 	  (begin
 	     (display "<" p)
 	     (display markup p)
 	     (display " id=\"" p)
 	     (display id p)
-	     (display "\"" p)
-	     (display "/>" p))
+	     (display "\"/>" p))
 	  (begin
 	     (display "<" p)
 	     (display markup p)
