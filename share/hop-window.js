@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Mon Mar 20 18:06:19 2006 (eg)                     */
+/*    Last change :  Mon Mar 20 19:54:45 2006 (eg)                     */
 /*    -------------------------------------------------------------    */
 /*    FLOAT-WINDOW implementation                                      */
 /*=====================================================================*/
@@ -29,6 +29,7 @@ function hop_open_float_window(serv, id, x, y)
     var win    = document.getElementById(id);
     var h      = document.getElementById(id + "-handle");
     var el     = document.getElementById(id + "-content");
+    var around = id + "-around";
     var iframe = id + "-frame";
 
 
@@ -45,11 +46,11 @@ function hop_open_float_window(serv, id, x, y)
     }
 
     function start_resize(w, h) {
+	var id = (win.inFrame) ? iframe : around;
+
+	document.getElementById(id).style.display= "none";
 	el.style.overflow = "auto";
-	if (win.inFrame) {
-	    document.getElementById(iframe).style.display= "none";
-	    el.style.opacity= 0.8;
-	}
+	el.style.opacity= 0.8;
     }
     
     function resize(w, h) {
@@ -58,16 +59,14 @@ function hop_open_float_window(serv, id, x, y)
     }
 
     function end_resize(w, h) {
-	var sz   = compute_height() + "px";
-	
+	var id  = (win.inFrame) ? iframe : around;
+	var tmp = document.getElementById(id);
+	var sz  = compute_height() + "px";
+
+	tmp.style.display= "block"; 
+	tmp.style.height = sz;
 	el.style.height = sz;
-	if (win.inFrame) {
-	    var ifrm = document.getElementById(iframe);
-	    
-	    ifrm.style.display= "block"; 
-	    ifrm.style.height = sz;
-	    el.style.opacity= 1;
-	}
+	el.style.opacity= 1;
     }
 
 	    
@@ -84,7 +83,7 @@ function hop_open_float_window(serv, id, x, y)
 	hop(serv, 
 	    function( http ) {
 		if (http.responseText != null) {
-		    el.innerHTML = http.responseText;
+		    document.getElementById(around).innerHTML = http.responseText;
 		    hop_js_eval( http );
 		    change_style();
 		}

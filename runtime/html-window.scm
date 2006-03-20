@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 12:23:29 2006                          */
-;*    Last change :  Thu Mar 16 13:56:23 2006 (eg)                     */
+;*    Last change :  Mon Mar 20 19:33:13 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <HOP-WINDOW>.                          */
 ;*=====================================================================*/
@@ -52,6 +52,7 @@
 	 (cls        (or class "hop-float-window"))
 	 (handle-id  (string-append id "-handle"))
 	 (content-id (string-append id "-content"))
+	 (around-id  (string-append id "-around"))
 	 (resize-id  (string-append id "-rsz")))
     (list 
       (<DIV> :id id :class cls
@@ -71,7 +72,8 @@
 	       (<TD> :class "hop-float-close-button"
 		     (<A> :onclick (format "hop_close_float_window(~s)" id)
 			  (<B> "X")))))
-	    (<DIV> :class "hop-float-content" :id content-id body))
+	    (<DIV> :class "hop-float-content" :id content-id
+		   (<DIV> :id around-id body)))
 	  (<TD-BORDER> #f))
 
 	 (<TR>	; Line #2
