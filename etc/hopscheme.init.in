@@ -6,3 +6,15 @@
 ;*    The basename of the hopscheme library name                       */
 ;*---------------------------------------------------------------------*/
 (library-translation-table-add! 'hopscheme "hopscheme" "@VERSION@")
+
+;*---------------------------------------------------------------------*/
+;*    Link option                                                      */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo-compile
+    (set! *additional-bigloo-libraries*
+	  (cons* 'scheme2js
+		 'hop
+		 *additional-bigloo-libraries*)))
+   (bigloo-eval
+    #unspecified))
