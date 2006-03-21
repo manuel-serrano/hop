@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Mar  1 14:25:06 2006 (eg)                     */
+#*    Last change :  Mon Mar 20 10:44:52 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -19,7 +19,8 @@ include ../etc/Makefile.version
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
-		  hop-error.hss hop-paned.js hop-table.js hop.css md5.js \
+		  hop-error.hss hop-paned.js hop-table.js hop.css \
+                  md5.js base64.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css hop.js \
                   user.scm hop-notepad.css hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
@@ -55,6 +56,7 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-window.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-window.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/base64.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/runtime.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/runtime-interface.js $(HOPSHAREDIR) && \
 	mkdir -p $(HOPSHAREDIR)/icons && \
@@ -86,6 +88,7 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop-foldlist.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-window.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-window.css && \
+	/bin/rm -f $(HOPSHAREDIR)/base64.js && \
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \
 	/bin/rm -f $(HOPSHAREDIR)/runtime.js && \
 	/bin/rm -f $(HOPSHAREDIR)/runtime-interface.js && \

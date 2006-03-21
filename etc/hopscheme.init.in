@@ -17,4 +17,5 @@
 		 'hop
 		 *additional-bigloo-libraries*)))
    (bigloo-eval
+    (library-load 'scheme2js)
     #unspecified))

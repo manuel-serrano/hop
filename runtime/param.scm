@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Mar  8 16:36:04 2006 (serrano)                */
+;*    Last change :  Mon Mar 20 16:51:20 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -195,8 +195,7 @@
 ;*    hop-login-cookie-crypt-key ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-login-cookie-crypt-key
-   (string->integer (elong->string (date->seconds (current-date)))))
-
+   (elong->fixnum (date->seconds (current-date))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-login-cookie-time ...                                        */

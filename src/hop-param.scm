@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jan 20 20:37:15 2006 (serrano)                */
+;*    Last change :  Tue Mar 21 07:57:37 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -27,7 +27,10 @@
 
 	    (hop-autoload-directories::pair-nil)
 	    (hop-autoload-directories-set! ::pair-nil)
-	    (hop-autoload-directory-add! ::bstring))
+	    (hop-autoload-directory-add! ::bstring)
+
+	    (hop-preload-libraries::pair-nil)
+	    (hop-preload-libraries-set! ::pair-nil))
    
    (eval    (export-exports)))
 
@@ -51,3 +54,9 @@
 
 (define (hop-autoload-directory-add! d)
    (hop-autoload-directories-set! (cons d (hop-autoload-directories))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-preload-libraries ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-preload-libraries
+   '(hop web hopscheme scheme2js))

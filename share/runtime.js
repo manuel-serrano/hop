@@ -824,6 +824,10 @@ sc_String.prototype.toString = function() {
     return this.val;
 }
 
+sc_String.prototype.hop_bigloo_serialize = function() {
+   return hop_bigloo_serialize( this.val );
+}
+
 function sc_isString(s) { /// export
     return (s instanceof sc_String);
 }

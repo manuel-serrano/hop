@@ -193,6 +193,7 @@
   (js-call sci_jsCall)
   (js-method-call sci_jsMethodCall)
   (js-new sci_jsNew)
+  (new sci_jsNew)
   (read sci_read)
   (read-char sci_readChar)
   (peek-char sci_peekChar)

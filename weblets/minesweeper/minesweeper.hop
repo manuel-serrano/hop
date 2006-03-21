@@ -1,6 +1,6 @@
 (module minesweeper
-   (library hopscheme)
-   (library scheme2js)
+;*    (library hopscheme)                                              */
+;*    (library scheme2js)                                              */
    )
 
 ;(library-load 'scheme2js)
