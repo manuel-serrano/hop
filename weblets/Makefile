@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Mar  3 16:34:29 2006 (eg)                     */
+#*    Last change :  Tue Mar 21 09:15:56 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -23,8 +23,7 @@ POPULATION	= Makefile
 #*---------------------------------------------------------------------*/
 #*    weblets                                                          */
 #*---------------------------------------------------------------------*/
-POPDIRS	= password info jobs dired bbdb webconf webfilter demos \
-          minesweeper
+POPDIRS	= password info jobs dired bbdb webconf webfilter demos
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */

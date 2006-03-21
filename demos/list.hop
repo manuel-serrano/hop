@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/demos/Makefile                          */
+;*    serrano/prgm/project/hop/demos/list.hop                          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Tue Mar 14 08:50:02 2006                          */
-;*    Last change :  Tue Mar 14 12:34:07 2006 (eg)                     */
+;*    Last change :  Tue Mar 21 09:24:11 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The demo tree                                                    */
 ;*=====================================================================*/
@@ -27,4 +27,6 @@
   ("Hop CSS"		"hss")
   ("Input conventions"	"text")
   ("Simple Todo list"	"todolist"))
+ ("Games"
+  ("Mine sweeper"       "minesweeper"))
  )

@@ -1,0 +1,21 @@
+(module minesweeper)
+
+(define *minesweeper-directory*
+   (string-append (dirname (the-loading-file)) "/"))
+
+(<HTML>
+   (<HEAD>
+      (<SCRIPT> ~(define *minesweeper-directory* $*minesweeper-directory*)))
+   (<HOP-SCHEME-HEAD>
+      :sscript (string-append *minesweeper-directory* "minesweeper.scm"))
+   (<BODY>
+      (<TABLE>
+	 (<TR>
+	    (<TD>
+	       (<BUTTON> :onclick ~(game-start!) "restart"))
+	    (<TD>
+	       (<SPAN> :id "remaining"))))
+      (<DIV> :id "board")
+      (<SCRIPT> ~(begin
+		    (board-init!)
+		    (game-start!)))))

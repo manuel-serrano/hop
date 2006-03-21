@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Mar 17 08:07:12 2006 (serrano)                */
+;*    Last change :  Tue Mar 21 09:31:43 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -189,7 +189,7 @@
 	     (if (not img)
 		 r
 		 (<TABLE> :style "width: 100%;
-                           border-collapse: collapse; cell-spacing: 0; cell-padding: 0; font-size: x-small;"
+                           border-collapse: collapse; border-spacing: 0; font-size: x-small;"
 			  :border 0
 			  :cellspacing 0
 			  :cellpadding 0
