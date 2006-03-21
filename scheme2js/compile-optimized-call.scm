@@ -50,6 +50,22 @@
 			   (cdr pattern)
 			   (cdr operands)))))))))
 
+(define (minus-op operands)
+   (cond
+      ((null? operands) #f)
+      ((null? (cdr operands))
+       (string-append "(-" ((car operands).compile) ")"))
+      (else
+       ((infix-op 1 #f "-") operands))))
+
+(define (div-op operands)
+   (cond
+      ((null? operands) #f)
+      ((null? (cdr operands))
+       (string-append "(1/" ((car operands).compile) ")"))
+      (else
+       ((infix-op 1 #f "/") operands))))
+
 (define (vector-op operands)
    (let ((args (separated-list (map-node-compile operands) ", ")))
       (string-append "(new sc_Vector([" args "]))")))
@@ -98,8 +114,8 @@
     (sci_isNegative ,(postfix-op "< 0"))
     (sci_plus ,(infix-op 0 #f "+" "0"))
     (sci_multi ,(infix-op 0 #f "*" "1"))
-    (sci_minus ,(infix-op 1 #f "-"))
-    (sci_div ,(infix-op 1 #f "/"))
+    (sci_minus ,minus-op)
+    (sci_div ,div-op)
     (sci_modulo ,(infix-op 2 2 "%"))
     
     (sci_exact2inexact ,id)
