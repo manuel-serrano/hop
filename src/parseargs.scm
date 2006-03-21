@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Feb 10 14:59:53 2006 (eg)                     */
+;*    Last change :  Tue Mar 21 09:43:57 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -36,6 +36,7 @@
 	 (p (hop-port))
 	 (rc-file #unspecified)
 	 (mime-file #unspecified)
+	 (libraries '())
 	 (exprs '()))
       (args-parse (cdr args)
          ((("-h" "--help") (help "This message"))
@@ -98,6 +99,8 @@
 	  (set! replp #t))
 	 ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
 	  (hop-path-set! (cons path (hop-path))))
+	 ((("-l" "--library") ?library (help "Preload additional <LIBRARY>"))
+	  (set! libraries (cons library libraries )))
 	 (("-?dummy")
 	  (args-parse-usage #f)
 	  (exit 1))
@@ -131,7 +134,8 @@
 			       (eval sexp))))))
 		exprs)
       (when autoloadp
-	(autoload-weblets (hop-autoload-directories)))))
+	(autoload-weblets (hop-autoload-directories)))
+      (hop-preload-libraries-set! (append libraries (hop-preload-libraries)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-hop ...                                                     */

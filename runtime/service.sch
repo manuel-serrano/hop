@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Wed Feb  8 08:55:14 2006 (serrano)                */
+;*    Last change :  Tue Mar 21 12:12:28 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -125,4 +125,3 @@
 				 str)
 			  (cons `(,(car binding) (vector-ref ,vec ,i))
 				nbindings)))))))))
-

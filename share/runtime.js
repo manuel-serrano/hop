@@ -1,5 +1,21 @@
 var sc_JS_GLOBALS = this; /// export *js*
 
+function sc_alert() {
+   var len = arguments.length;
+   var s = "";
+   var i;
+
+   for( i = 0; i < len; i++ ) {
+      s += arguments[ i ];
+   }
+
+   return alert( s );
+}
+
+function sc_typeof( x ) {
+   return typeof x;
+}
+
 function sc_error() {  /// export
     sc_print("**ERROR**");
     for (var i = 0; i < arguments.length; i++) {
@@ -940,6 +956,26 @@ function sc_makeVector(size, fill) { /// export
     return res;
 }
 
+// MS: 21 mar 2006
+function sc_array() { /// export
+    var a = new Array();
+    for (var i = 0; i < arguments.length; i++)
+	a.push(arguments[i]);
+    return a;
+}
+
+function sc_arrayLength(v) { /// export
+    return v.length;
+}
+
+function sc_arrayRef(v, pos) { /// export
+    return v[pos];
+}
+
+function sc_arraySet(v, pos, val) { /// export vector-set!
+    v[pos] = val;
+}
+
 function sc_vector() { /// export
     var a = new Array();
     for (var i = 0; i < arguments.length; i++)
@@ -981,7 +1017,6 @@ function sc_vectorFill(v, fill) { /// export vector-fill!
     for (var i = 0; i < a.length; i++)
 	a[i] = fill;
 }
-
 
 function sc_isProcedure(o) { /// export
     return (typeof o === "function");
@@ -2148,3 +2183,4 @@ sc_String.prototype.getHash = function() {
 }
 sc_Char.prototype.getHash = sc_counterHash;
 sc_Hashtable.prototype.getHash = sc_counterHash;
+

@@ -193,7 +193,6 @@
   (js-call sci_jsCall)
   (js-method-call sci_jsMethodCall)
   (js-new sci_jsNew)
-  (new sci_jsNew)
   (read sci_read)
   (read-char sci_readChar)
   (peek-char sci_peekChar)
@@ -223,4 +222,15 @@
   (hashtable-get sci_hashtableGet)
   (hashtable-for-each sci_hashtableForEach)
   (hashtable-contains? sci_hashtableContains)
+  ;; MS: 21 march 2006
+  (alert sc_alert)
+  (typeof sc_typeof)
+  (with-hop with_hop)
+  (new sci_jsNew)
+  ;; MS: pourquoi est-ce que les vecteurs Scheme en sont pas mappe's sur
+  ;; des ARRAY JS ?
+  (array sc_array)
+  (array-length sc_arrayLength)
+  (array-ref sc_arrayRef)
+  (array-set! sc_arraySet)
 )

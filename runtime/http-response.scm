@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Mar 10 14:43:12 2006 (serrano)                */
+;*    Last change :  Tue Mar 21 13:55:54 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -23,7 +23,8 @@
 	    __hop_xml
 	    __hop_http-lib
 	    __hop_http-error
-	    __hop_http-filter)
+	    __hop_http-filter
+	    __hop_js-lib)
 
    (export  (generic http-response ::%http-response ::socket)
 	    (generic scheme->response ::obj ::http-request)
@@ -125,6 +126,26 @@
 	       (http-write-line p "Content-Length: " content-length))
 	    (http-write-line p)
 	    (when bodyp (write body p))
+	    (flush-output-port p)))))
+      
+;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-js ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-js socket)
+   (with-trace 3 'http-response::http-response-js
+      (with-access::http-response-js r (start-line header content-type server content-length body bodyp)
+	 (let ((p (socket-output socket)))
+	    (http-write-line p start-line)
+	    (http-write-header p header)
+	    (http-write-line p "Connection: close")
+	    (when content-type
+	       (http-write-line p "Content-Type: " content-type))
+	    (when server
+	       (http-write-line p "Server: " server))
+	    (when (>elong content-length #e0)
+	       (http-write-line p "Content-Length: " content-length))
+	    (http-write-line p)
+	    (when bodyp (display (scheme->javascript body) p))
 	    (flush-output-port p)))))
       
 ;*---------------------------------------------------------------------*/
