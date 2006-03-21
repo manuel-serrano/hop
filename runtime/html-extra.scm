@@ -188,8 +188,8 @@
 	     :class "hop-foot-logo"
 	     (if (not img)
 		 r
-		 (<TABLE> :style "width: 100%;
-                           border-collapse: collapse; border-spacing: 0; font-size: x-small;"
+		 (<TABLE> :style "width: 100%; font-size: x-small;"
+			  :border-collapse "collapse" 
 			  :border 0
 			  :cellspacing 0
 			  :cellpadding 0

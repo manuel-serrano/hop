@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Mon Mar 13 16:31:47 2006 (eg)                     */
+/*    Last change :  Fri Mar 17 11:46:14 2006 (eg)                     */
 /*    -------------------------------------------------------------    */
 /*    FLOAT-WINDOW CSS                                                 */
 /*=====================================================================*/
@@ -22,7 +22,7 @@
     color: white;
     padding: 1;
     cursor: move;
-    -moz-opacity: 1;
+/*     -moz-opacity: 1; */
 }
 
 .hop-float-title {
@@ -45,8 +45,14 @@
 
 
 .hop-float-iframe {
-    opacity: 1.0;
+/*    opacity: 1.0; */
     width: 100%;
     border: 0;
 }
 
+.hop-float-resize {
+    position:absolute; 
+    right: 10px; 
+    bottom:10px; 
+    cursor: se-resize;
+}
