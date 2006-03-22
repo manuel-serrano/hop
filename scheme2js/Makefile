@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Wed Mar 15 12:20:27 2006 (eg)                     */
+#*    Last change :  Wed Mar 22 16:17:31 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -124,6 +124,11 @@ ude:
 .etags: $(SOURCES)
 	@ $(BTAGS) -o .etags $(SOURCES)
 
+#*---------------------------------------------------------------------*/
+#*    Explicit dependency                                              */
+#*---------------------------------------------------------------------*/
+scheme2js.scm: $(SCHEME2JS_RUNTIME)/runtime_mapping.alist
+
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
@@ -156,7 +161,7 @@ o/symbol.o symbol.class: ./nodes.sch ./protobject.sch
 o/statements.o statements.class: ./nodes.sch ./protobject.sch 
 o/node-elimination.o node-elimination.class: ./nodes.sch                 \
       ./protobject.sch 
-o/js-interface.o js-interface.class: runtime/runtime_mapping.alist       \
+o/js-interface.o js-interface.class: ./runtime/runtime_mapping.alist     \
       ./runtime_mapping_hack.sch 
 o/protobject.o ./protobject.class: ./protobject.sch 
 o/capture.o ./capture.class: ./tools.sch ./nodes.sch ./protobject.sch 
@@ -176,7 +181,7 @@ o/liveness.o ./liveness.class: ./nodes.sch ./protobject.sch
 o/constants.o ./constants.class: ./tools.sch ./nodes.sch                 \
       ./protobject.sch 
 o/side.o ./side.class: ./nodes.sch ./protobject.sch 
-o/js-interface.o ./js-interface.class: runtime/runtime_mapping.alist     \
+o/js-interface.o ./js-interface.class: ./runtime/runtime_mapping.alist   \
       ./runtime_mapping_hack.sch 
 o/side.o side.class: ./nodes.sch ./protobject.sch 
 
