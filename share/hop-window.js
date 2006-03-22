@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed Mar 22 17:33:52 2006 (serrano)                */
+/*    Last change :  Wed Mar 22 17:58:31 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    FLOAT-WINDOW implementation                                      */
 /*=====================================================================*/
@@ -24,7 +24,7 @@ function hop_float_window_init(id, inframe)
 /* ====================================================================== *\
  * 	hop_open_float_window ...
 \* ====================================================================== */
-function hop_open_float_window(serv, e, x, y)
+function hop_open_float_window(serv, e, x, y, inframe)
 {
     var win    = (e instanceof HTMLDivElement) ? e : document.getElementById(e);
     var id     = (e instanceof HTMLDivElement) ? e.id : e;
@@ -70,7 +70,7 @@ function hop_open_float_window(serv, e, x, y)
     }
 
     /* initialize the window */
-    hop_float_window_init(id, true);
+    hop_float_window_init(id, inframe);
     
     /* Set the resize functions */
     win.onResizeStart = start_resize;

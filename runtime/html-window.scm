@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 12:23:29 2006                          */
-;*    Last change :  Wed Mar 22 17:27:39 2006 (serrano)                */
+;*    Last change :  Wed Mar 22 17:47:28 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <HOP-WINDOW>.                          */
 ;*=====================================================================*/
@@ -17,8 +17,8 @@
 	    "xml.sch")
 
    (import  __hop_param
-	    __hop_xml)
-
+	    __hop_xml
+	    __hop_css)
 
    (export  (<FLOAT-WINDOW> . ::obj)))
 
@@ -34,6 +34,7 @@
 				     (visible #f)
 				     (in-frame #f)
 				     body)
+  :hss-type "div.hop-float-window"
   (define (<TD-BORDER> img)
     (<TD> :width 8 :height 8
 	  (if img (<IMG> :src (format "~A/~A"(hop-icons-directory) img)) "")))
