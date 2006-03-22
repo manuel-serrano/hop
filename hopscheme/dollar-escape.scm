@@ -20,7 +20,14 @@
       ((and (symbol? x)
 	    (starts-with-dollar? x)
 	    (not (eq? x '$)))
-       `(pragma ,(symbol->string x)))
+       ;; split dotted notation...
+       (let* ((symstr (symbol->string x))
+	      (first-dot (string-index symstr ".")))
+	  (if (<fx first-dot 0)
+	      `(pragma ,symstr)
+	      `(begin
+		  `(pragma ,(substring symstr 0 first-dot)
+			   ,(string->symbol symstr first-dot (string-length symstr)))))))
       ; '(...) `(...)
       ((and (pair? x)
 	    (or (eq? (car x) 'quote)
