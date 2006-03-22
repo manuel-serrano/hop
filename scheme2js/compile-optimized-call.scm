@@ -68,7 +68,7 @@
 
 (define (vector-op operands)
    (let ((args (separated-list (map-node-compile operands) ", ")))
-      (string-append "(new sc_Vector([" args "]))")))
+      (string-append "[" args "]")))
 		  
 (define (id operand)
    (and (pair? operand)
@@ -173,9 +173,9 @@
 
     (sci_isVector ,(postfix-op " instanceof sc_Vector"))
     (sci_vector ,vector-op)
-    (sci_vectorLength ,(postfix-op ".val.length"))
-    (sci_vectorRef ,(hole-op 2 'vector ".val[" 'index "]"))
-    (sci_vectorSet ,(hole-op 3 'vector ".val[" 'index "] = " 'val))
+    (sci_vectorLength ,(postfix-op ".length"))
+    (sci_vectorRef ,(hole-op 2 'vector "[" 'index "]"))
+    (sci_vectorSet ,(hole-op 3 'vector "[" 'index "] = " 'val))
 
     (sci_isProcedure ,(hole-op 1 "typeof " 'hole " === 'function'"))
 
