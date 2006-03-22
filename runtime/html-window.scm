@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 12:23:29 2006                          */
-;*    Last change :  Mon Mar 20 19:33:13 2006 (eg)                     */
+;*    Last change :  Wed Mar 22 17:27:39 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <HOP-WINDOW>.                          */
 ;*=====================================================================*/
@@ -54,7 +54,7 @@
 	 (content-id (string-append id "-content"))
 	 (around-id  (string-append id "-around"))
 	 (resize-id  (string-append id "-rsz")))
-    (list 
+;*     (list                                                           */
       (<DIV> :id id :class cls
 	     :style (string-append
 		        (if width  (format "width: ~A; " width) "")
@@ -87,8 +87,9 @@
 	  (<TD-SOUTH> "shadow-s.png") (<TD-BORDER> "shadow-se.png")))
 	(<IMG> :src (make-file-path (hop-icons-directory) "resize-grip.png")
 	       :class "hop-float-resize" :id resize-id))
-      (<SCRIPT> :type "text/javascript"
-		(format "hop_float_window_init(~s, ~a)"
-			id
-			(if in-frame "true" "false"))))))
+      ))
+;*       (<SCRIPT> :type "text/javascript"                             */
+;* 		(format "hop_float_window_init(~s, ~a)"                */
+;* 			id                                             */
+;* 			(if in-frame "true" "false"))))))              */
 
