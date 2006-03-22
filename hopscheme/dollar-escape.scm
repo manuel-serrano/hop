@@ -14,6 +14,24 @@
    (let ((str (symbol->string s)))
       (string->symbol (substring str 1 (string-length str)))))
 
+(define (unhop-list! l)
+   (let loop ((l l))
+      (cond
+	 ((or (null? l)
+	      (not (pair? l)))
+	  'done)
+	 ((and (eq? (car l) '$)
+	       (pair? (cdr l))
+	       (pair? (cadr l)))
+	  (set-car! l `(pragma ,(with-output-to-string
+				   (lambda ()
+				      (write '$)
+				      (write (cadr l))))))
+	  (set-cdr! l (cddr l))
+	  (loop (cdr l)))
+	 (else
+	  (loop (cdr l))))))
+   
 (define (unhop x)
    (cond
       ; $var
@@ -36,24 +54,17 @@
 	    (or (eq? (car x) 'quote)
 		(eq? (car x) 'quasiquote)))
        x)
+      ;(let (bindings) ...)
+      ((and (pair? x)
+	    (eq? (car x) 'let)
+	    (pair? (cdr x))
+	    (pair? (cadr x)))
+       (for-each unhop-list! (cadr x))
+       x)
       ; (... $ (...) ....)
       ((pair? x)
-       (let loop ((l x))
-	  (cond
-	     ((or (null? l)
-		  (not (pair? l)))
-	      x)
-	     ((and (eq? (car l) '$)
-		   (pair? (cdr l))
-		   (pair? (cadr l)))
-	      (set-car! l `(pragma ,(with-output-to-string
-				       (lambda ()
-					  (write '$)
-					  (write (cadr l))))))
-	      (set-cdr! l (cddr l))
-	      (loop (cdr l)))
-	     (else
-	      (loop (cdr l))))))
+       (unhop-list! x)
+       x)
       (else
        x)))
 
