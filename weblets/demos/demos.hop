@@ -3,11 +3,16 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Mar  2 11:12:55 2006                          */
-;*    Last change :  Fri Mar 17 10:42:03 2006 (serrano)                */
+;*    Last change :  Wed Mar 22 11:59:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Demos                                                        */
 ;*=====================================================================*/
+
+;; ----------------------------------------------------------------------
+;;	module ...
+;; ----------------------------------------------------------------------
+(module demos_demos)
 
 (define (htmlize obj)				;; FIXME. must be completely changed
   (cond
@@ -21,11 +26,6 @@
 				     "&gt;</font>"))
     (else (error 'htmlize "Cannot htmlize" obj))))
 
-
-;; ----------------------------------------------------------------------
-;;	module ...
-;; ----------------------------------------------------------------------
-;(module demos_demos)
 
 (define *demos-directory*
    (make-file-name (hop-weblets-directory) "demos"))
@@ -124,13 +124,14 @@
 ;; ----------------------------------------------------------------------
 (define-service (demos/show-demo title demo)
   (define (show-documentation path)
-    (let ((doc (open-input-file path)))
+    (let ((doc (open-input-file path))
+	  (mod (eval-find-module 'demos_demos)))
       (<DIV> :class "hop-demos-comment"
 	 (if (input-port? doc)
 	     (let Loop ((txt (hop-read doc))
 			(res '()))
 	       (if (eof-object? txt)
-		   (map eval (reverse! res))
+		   (map (lambda (e) (eval e mod)) (reverse! res))
 		   (Loop (hop-read doc)
 			 (cons txt res))))
 	     (<H2> "No documentation available for this demo")))))
