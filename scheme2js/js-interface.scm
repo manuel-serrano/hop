@@ -1,6 +1,6 @@
 (module js-interface
    (include "runtime_mapping_hack.sch")
-   (include "runtime_mapping.alist")
+   (include "runtime/runtime_mapping.alist")
 
    (import verbose)
    (export (extract-js-interface::pair top-level::pair-nil js-interface::pair-nil)))
