@@ -53,7 +53,8 @@ INCLUDES	= hop-eval.sch nodes.sch protobject.sch tools.sch \
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION	= $(SOURCES) $(INCLUDES) make-lib.scm Makefile
+POPULATION	= $(SOURCES) $(INCLUDES) make-lib.scm Makefile \
+                  runtime/exporter.scm runtime/runtime.js
 
 include ../etc/Makefile.library
 
@@ -62,11 +63,47 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 .PHONY: build native jvm dotnet
 
-build: $(BACKEND)
+build: $(BACKEND) runtime-build
 
 native: heap-c lib-c
 jvm: heap-jvm lib-jvm
 dotnet: heap-jvm lib-dotnet
+
+clean: runtime-clean
+install: runtime-install
+uninstall: runtime-uninstall
+
+#*---------------------------------------------------------------------*/
+#*    scheme2js runtime                                                */
+#*---------------------------------------------------------------------*/
+
+SCHEME2JS_RUNTIME = runtime
+
+runtime-build: $(SCHEME2JS_RUNTIME)/runtime-interface.js $(SCHEME2JS_RUNTIME)/runtime_mapping.alist
+
+$(SCHEME2JS_RUNTIME)/exporter: $(SCHEME2JS_RUNTIME)/exporter.scm
+	$(BIGLOO) -o $@ $^
+
+$(SCHEME2JS_RUNTIME)/runtime_mapping.alist: $(SCHEME2JS_RUNTIME)/runtime.js $(SCHEME2JS_RUNTIME)/exporter
+	$(SCHEME2JS_RUNTIME)/exporter $< mapping > $@
+
+$(SCHEME2JS_RUNTIME)/runtime-interface.js: $(SCHEME2JS_RUNTIME)/runtime.js $(SCHEME2JS_RUNTIME)/exporter
+	$(SCHEME2JS_RUNTIME)/exporter $< interface > $@
+
+runtime-clean:
+	/bin/rm -f $(SCHEME2JS_RUNTIME)/exporter
+	/bin/rm -f $(SCHEME2JS_RUNTIME)/runtime_mapping.alist
+	/bin/rm -f $(SCHEME2JS_RUNTIME)/runtime-interface.js
+	/bin/rm -f $(SCHEME2JS_RUNTIME)/*.o
+
+runtime-install:
+	mkdir -p $(HOPSHAREDIR) && \
+	install -m a+r $(SCHEME2JS_RUNTIME)/runtime.js $(HOPSHAREDIR) && \
+	install -m a+r $(SCHEME2JS_RUNTIME)/runtime-interface.js $(HOPSHAREDIR)
+
+runtime-uninstall:
+	/bin/rm -f $(HOPSHAREDIR)/runtime.js && \
+	/bin/rm -f $(HOPSHAREDIR)/runtime-interface.js
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
@@ -119,7 +156,7 @@ o/symbol.o symbol.class: ./nodes.sch ./protobject.sch
 o/statements.o statements.class: ./nodes.sch ./protobject.sch 
 o/node-elimination.o node-elimination.class: ./nodes.sch                 \
       ./protobject.sch 
-o/js-interface.o js-interface.class: ./runtime_mapping.alist             \
+o/js-interface.o js-interface.class: runtime/runtime_mapping.alist       \
       ./runtime_mapping_hack.sch 
 o/protobject.o ./protobject.class: ./protobject.sch 
 o/capture.o ./capture.class: ./tools.sch ./nodes.sch ./protobject.sch 
@@ -139,7 +176,7 @@ o/liveness.o ./liveness.class: ./nodes.sch ./protobject.sch
 o/constants.o ./constants.class: ./tools.sch ./nodes.sch                 \
       ./protobject.sch 
 o/side.o ./side.class: ./nodes.sch ./protobject.sch 
-o/js-interface.o ./js-interface.class: ./runtime_mapping.alist           \
+o/js-interface.o ./js-interface.class: runtime/runtime_mapping.alist     \
       ./runtime_mapping_hack.sch 
 o/side.o side.class: ./nodes.sch ./protobject.sch 
 

@@ -1,6 +1,8 @@
 var sc_JS_GLOBALS = this; /// export *js*
 
-function sc_alert() {
+var with_hop; /// export with-hop
+
+function sc_alert() { /// export
    var len = arguments.length;
    var s = "";
    var i;
@@ -12,7 +14,7 @@ function sc_alert() {
    return alert( s );
 }
 
-function sc_typeof( x ) {
+function sc_typeof( x ) { /// export
    return typeof x;
 }
 
@@ -923,97 +925,70 @@ function sc_stringFill(s, c) { /// export string-fill!
     s.val = sc_makeJSStringOfLength(s.val.length, c.val);
 }
 
+var sc_Vector = Array;
 
-function sc_Vector(a) {
-    this.val = a;
-}
 sc_Vector.prototype.toString = function() {
     var res = "#(";
-    var a = this.val;
-    for (var i = 0; i < a.length; i++)
-	res += a[i] + " ";
+    for (var i = 0; i < this.length; i++)
+	res += this[i] + " ";
     return res + ")";
 }
 
-function sc_isVector(v) { /// export
+function sc_isVector(v) { /// export is-vector? is-array?
     return (v instanceof sc_Vector);
 }
 
 // only applies to vectors
 function sc_isVectorEqual(v1, v2) {
-    var a1 = v1.val;
-    var a2 = v2.val;
-    for (var i = 0; i < a1.length; a++)
-	if (!sc_isEqual(a1[i], a2[i])) return false;
+    if (v1.length != v2.length) return false;
+    for (var i = 0; i < v1.length; i++)
+	if (!sc_isEqual(v1[i], v2[i])) return false;
     return true;
 }
 
-function sc_makeVector(size, fill) { /// export
-    var a = new Array(size);
-    var res = new sc_Vector(a);
+function sc_makeVector(size, fill) { /// export make-vector make-array
+    var a = new sc_Vector(size);
     if (fill != undefined)
-	sc_vector_fill(v, fill);
-    return res;
+	sc_vector_fill(a, fill);
+    return a;
 }
 
-// MS: 21 mar 2006
-function sc_array() { /// export
-    var a = new Array();
+function sc_vector() { /// export vector array
+    var a = new sc_Vector();
     for (var i = 0; i < arguments.length; i++)
 	a.push(arguments[i]);
     return a;
 }
 
-function sc_arrayLength(v) { /// export
+function sc_vectorLength(v) { /// export vector-length array-length
     return v.length;
 }
 
-function sc_arrayRef(v, pos) { /// export
+function sc_vectorRef(v, pos) { /// export vector-ref array-ref
     return v[pos];
 }
 
-function sc_arraySet(v, pos, val) { /// export vector-set!
+function sc_vectorSet(v, pos, val) { /// export vector-set! array-set!
     v[pos] = val;
 }
 
-function sc_vector() { /// export
-    var a = new Array();
-    for (var i = 0; i < arguments.length; i++)
-	a.push(arguments[i]);
-    return new sc_Vector(a);
-}
-
-function sc_vectorLength(v) { /// export
-    return v.val.length;
-}
-
-function sc_vectorRef(v, pos) { /// export
-    return v.val[pos];
-}
-
-function sc_vectorSet(v, pos, val) { /// export vector-set!
-    v.val[pos] = val;
-}
-
-function sc_vector2list(v) { /// export
+function sc_vector2list(a) { /// export vector->list array->list
     var res = null;
-    var a = v.val;
     for (var i = a.length-1; i >= 0; i--)
 	res = sc_cons(a[i], res);
     return res;
 }
 
-function sc_list2vector(l) { /// export
-    var a = new Array();
+function sc_list2vector(l) { /// export list->vector list->array
+    var a = new sc_Vector();
     while(l != null) {
 	a.push(l.car);
 	l = l.cdr;
     }
-    return new sc_Vector(a);
+    return a;
 }
 
-function sc_vectorFill(v, fill) { /// export vector-fill!
-    var a = v.val;
+function sc_vectorFill(a, fill) { /// export vector-fill! array-fill!
     for (var i = 0; i < a.length; i++)
 	a[i] = fill;
 }
@@ -1170,7 +1145,7 @@ function sc_jsMethodCall(o, field) { /// export
     return o[field].apply(o, args);
 }
 
-function sc_jsNew(c) { /// export
+function sc_jsNew(c) { /// export new js-new
     var evalStr = "new c(";
     evalStr +=arguments.length > 1? "arguments[1]": "";
     for (var i = 2; i < arguments.length; i++)
@@ -1553,7 +1528,7 @@ sc_Reader.prototype.read = function() {
 	    switch (token.type) {
 	    case 2/*CLOSE_PAR*/:
 		tokenizer.readToken();
-		return new sc_Vector(a);
+		return a;
 		
 	    default:
 		a.push(this.read());
@@ -2183,4 +2158,3 @@ sc_String.prototype.getHash = function() {
 }
 sc_Char.prototype.getHash = sc_counterHash;
 sc_Hashtable.prototype.getHash = sc_counterHash;
-
