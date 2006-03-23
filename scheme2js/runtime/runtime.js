@@ -934,7 +934,7 @@ sc_Vector.prototype.toString = function() {
     return res + ")";
 }
 
-function sc_isVector(v) { /// export is-vector? is-array?
+function sc_isVector(v) { /// export vector? array?
     return (v instanceof sc_Vector);
 }
 
