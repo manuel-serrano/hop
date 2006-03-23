@@ -244,9 +244,12 @@
 	  bnode))
       (state-var
        (set! this.val (this.val.traverse! #f #f))
-       (new Begin
-	    `(,this
-	      ,(state-var.assig (new Const #unspecified)))))
+       (let* ((unspec-assig (state-var.assig (new Const #unspecified)))
+	      (bnode (new Begin `(,this ,unspec-assig))))
+	  (mark-node! this statement-form?)
+	  (mark-node! unspec-assig statement-form?)
+	  (mark-node! bnode statement-form?)
+	  bnode))
       (else
        (set! this.val (this.val.traverse! #f #f))
        (mark-node! this statement-form?)
