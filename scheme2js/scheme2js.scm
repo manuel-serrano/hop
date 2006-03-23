@@ -90,6 +90,9 @@
       (("--optimize-var-number"
 	(help "reduce used variables by reusing existing vars."))
        (set! *optimize-var-number* #t))
+      (("--inline-globals"
+	(help "inline global constants."))
+       (set! *inline-globals?* #t))
       (("--unresolved-is-js"
 	(help "unresolved vars are supposed to be js-vars."))
        (set! *unresolved=JS* #t))

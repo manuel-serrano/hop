@@ -8,7 +8,10 @@
 	   side
 	   transform-util
 	   verbose)
-   (export (inline! tree::pobject)))
+   (export (inline! tree::pobject)
+	   *inline-globals?*))
+
+(define *inline-globals?* #f)
 
 (define *second-pass* #t)
 (define *inlined-funs* #f)
@@ -69,7 +72,9 @@
 (define-pmethod (Var-ref-propagate!)
    (let ((single-value this.var.single-value))
       (if (and single-value
-	       (inherits-from? single-value Const))
+	       (inherits-from? single-value Const)
+	       (or *inline-globals?*
+		   (not this.var.is-global?)))
 	  (begin
 	     (set! this.var.inlined? #t)
 	     (new Const single-value.value))
