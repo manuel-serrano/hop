@@ -46,7 +46,7 @@ BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
 
 SOURCES		= $(_OBJECTS:%=%.scm)
 
-INCLUDES	= hop-eval.sch nodes.sch protobject.sch tools.sch \
+INCLUDES	= nodes.sch protobject.sch tools.sch \
 	runtime_mapping_hack.sch compile-optimized-boolify.scm \
 	compile-optimized-call.scm
 
