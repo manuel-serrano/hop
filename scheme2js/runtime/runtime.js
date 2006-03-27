@@ -1154,6 +1154,30 @@ function sc_jsNew(c) { /// export new js-new
     return eval(evalStr);
 }    
 
+// Keywords
+function sc_Keyword(str) { /// export
+    return this.val = str;
+}
+
+sc_Keyword.prototype.toString = function() {
+    return ":" + this.val;
+}
+
+
+function sc_isKeyword(o) { /// export
+    return (o instanceof sc_Keyword);
+}
+
+function sc_keyword2string(o) { /// export
+    return new sc_String(o.val);
+}
+
+function sc_string2keyword(o) { /// export
+    return new sc_Keyword(o.val);
+}
+
+
+
 // ======================== I/O =======================
 
 /*------------------------------------------------------------------*/
@@ -1749,6 +1773,7 @@ sc_Vector.prototype.writeOrDisplay = function(p, writeOrDisplay) {
 
 // write
 function sc_write(o, p) { /// export
+    alert("write " + o);
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
     sc_doWrite(p, o);
@@ -1825,10 +1850,15 @@ sc_Struct.prototype.doWrite = function(p) {
     p.appendJSString("#<struct" + this.getHash() + ">");
 }
 
+sc_Keyword.prototype.doWrite = function(p) {
+    p.appendJSString(":" + this.val);
+}
+
 /* ------------------ display ---------------------------------------------------*/
 
 // display
 function sc_display(o, p) { /// export
+    alert("Display " + o)
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
     sc_doDisplay(p, o);
@@ -1864,6 +1894,8 @@ sc_Vector.prototype.doDisplay = function(p) {
     this.writeOrDisplay(p, sc_doDisplay);
 }
 sc_Struct.prototype.doDisplay = sc_Struct.prototype.doWrite;
+
+sc_Keyword.prototype.doDisplay = sc_Keyword.prototype.doWrite;
 
 /* ------------------ newline ---------------------------------------------------*/
 

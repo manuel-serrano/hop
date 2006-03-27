@@ -139,6 +139,7 @@
        (gen-code-pair (compile-const (car const))
 		      (compile-const (cdr const))))
       ((eq? const #unspecified) (gen-code-unspecified))
+      ((keyword? const) (gen-code-keyword const))
       (else (error #f "forgot Const-type: " const))))
    
 (define-pmethod (Const-compile)

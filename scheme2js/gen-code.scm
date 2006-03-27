@@ -29,7 +29,8 @@
 	   (gen-code-closure-alloc::bstring vars body)
 	   (gen-code-label::bstring id body)
 	   (gen-code-boolify::bstring test)
-	   (gen-code-pragma::bstring str)))
+	   (gen-code-pragma::bstring str)
+	   (gen-code-keyword::bstring kw)))
 
 (define *tmp-var* "tmp") ;; can't conflict, as all vars are starting with 'sc_
 
@@ -244,3 +245,8 @@
 
 (define (gen-code-pragma str)
    (string-append "(" str ")"))
+
+(define (gen-code-keyword kw)
+  (string-append "(new sc_Keyword('"
+		 (keyword->string kw)
+		 "'))"))
