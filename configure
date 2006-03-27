@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Mar 26 08:51:45 2006 (serrano)                */
+#*    Last change :  Mon Mar 27 18:54:14 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -50,10 +50,12 @@ buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 buildbindir=$PWD/bin
 
+repository=$$HOME/prgm/project/hop/repository
+
 bigloorequired=2.8a
 bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
-repository=ssh://skribe@saxo.essi.fr/hop
+svn=ssh://skribe@saxo.essi.fr/hop
 
 if [ $USER = "serrano" ]; then
   distribdir=$HOME/prgm/distrib
@@ -268,6 +270,7 @@ cat $mkmf.in \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
           -e "s|@DISTRIBDIR@|$distribdir|" \
+          -e "s|@HOPSVN@|$svn|" \
           -e "s|@HOPREPOSITORY@|$repository|" \
           -e "s|@HOPDISTRIBDIR@|$distribdir|" \
     >> $mkmf
