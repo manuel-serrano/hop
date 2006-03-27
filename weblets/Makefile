@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/weblets/Makefile                    */
+#*    serrano/prgm/project/hop/weblets/Makefile                        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Mar 27 14:10:33 2006 (serrano)                */
+#*    Last change :  Mon Mar 27 18:44:26 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -47,13 +47,15 @@ uninstall:
 install-weblet:
 	mkdir -p $(HOPWEBLETSDIR)/$(DIR) && \
         chmod a+rx $(HOPWEBLETSDIR)/$(DIR) && \
-        for f in $(DIR)/* $(DIR)/.afile; do \
-          if [ -f $$f ]; then \
-            if [ -d $$f ]; then \
-	      $(MAKE) install-weblet DIR=$$f; \
-            else \
-	      install -m a+r $$f $(HOPWEBLETSDIR)/$(DIR); \
-            fi; \
+	for f in $(DIR)/*; do \
+          if [ -d $$f ]; then \
+            install -m a+rx -d $(HOPWEBLETSDIR)/$(DIR); \
+            make install-weblet DIR=$$f; \
+          else \
+	    install -m a+r $$f $(HOPWEBLETSDIR)/$(DIR); \
           fi; \
-        done
+        done; \
+        if [ -f $(DIR)/.afile ]; then \
+          install -m a+r $(DIR)/.afile $(HOPWEBLETSDIR)/$(DIR); \
+        fi; \
 
