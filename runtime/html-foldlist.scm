@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Wed Mar  8 08:39:31 2006 (eg)                     */
+;*    Last change :  Thu Mar 23 14:15:24 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -129,7 +129,7 @@
        (fprintf p "</td></tr><tr><td></td><td><div id='~a' style='display:~a'>"
 		id (if open "block" "none"))
        (xml-write tmp p encoding)
-       (display "</div></td></tr>"))))
+       (display "</div></td></tr>" p))))
   
 ;*---------------------------------------------------------------------*/
 ;*    <FLHEAD> ...                                                     */
