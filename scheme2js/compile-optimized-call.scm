@@ -116,7 +116,14 @@
     (sci_multi ,(infix-op 0 #f "*" "1"))
     (sci_minus ,minus-op)
     (sci_div ,div-op)
+    ;; TODO: this is actually not true!
     (sci_modulo ,(infix-op 2 2 "%"))
+    
+    (sci_quotient ,(hole-op 2 "parseInt(" 'x "/" 'y ")"))
+    (sci_bitAnd ,(infix-op 2 2 "&"))
+    (sci_bitOr ,(infix-op 2 2 "|"))
+    (sci_bitXor ,(infix-op 2 2 "^"))
+    
     
     (sci_exact2inexact ,id)
     (sci_inexact2exact ,id)

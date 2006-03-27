@@ -129,15 +129,14 @@ function sc_isInexact(n) { /// export
     return true;
 }
 
-function sc_equal(x) { /// export =
+function sc_equal(x) { /// export = =fx =fl
     for (var i = 1; i < arguments.length; i++)
 	if (x !== arguments[i])
 	    return false;
     return true;
 }
-var sc_equalFx = sc_equal /// export =fx
 
-function sc_less(x) { /// export <
+function sc_less(x) { /// export < <fx <fl
     for (var i = 1; i < arguments.length; i++) {
 	if (x >= arguments[i])
 	    return false;
@@ -145,9 +144,8 @@ function sc_less(x) { /// export <
     }
     return true;
 }
-var sc_lessFx = sc_less /// export <fx
 
-function sc_greater(x, y) { /// export >
+function sc_greater(x, y) { /// export > >fx >fl
     for (var i = 1; i < arguments.length; i++) {
 	if (x <= arguments[i])
 	    return false;
@@ -155,9 +153,8 @@ function sc_greater(x, y) { /// export >
     }
     return true;
 }
-var sc_greaterFx = sc_greater /// export >fx
 
-function sc_lessEqual(x, y) { /// export <=
+function sc_lessEqual(x, y) { /// export <= <=fx <=fl
     for (var i = 1; i < arguments.length; i++) {
 	if (x > arguments[i])
 	    return false;
@@ -165,9 +162,8 @@ function sc_lessEqual(x, y) { /// export <=
     }
     return true;
 }
-var sc_lessEqualFx = sc_lessEqual /// export <=fx
 
-function sc_greaterEqual(x, y) { /// export >=
+function sc_greaterEqual(x, y) { /// export >= >=fl >=fx
     for (var i = 1; i < arguments.length; i++) {
 	if (x < arguments[i])
 	    return false;
@@ -175,7 +171,6 @@ function sc_greaterEqual(x, y) { /// export >=
     }
     return true;
 }
-var sc_greaterEqualFx = sc_greaterEqual /// export >=fx
 
 function sc_isZero(x) { /// export
     return (x === 0);
@@ -200,31 +195,28 @@ function sc_isEven(x) { /// export
 var sc_max = Math.max; /// export
 var sc_min = Math.min; /// export
 
-function sc_plus() { /// export +
+function sc_plus() { /// export + +fx +fl
     var sum = 0;
     for (var i = 0; i < arguments.length; i++)
 	sum += arguments[i];
     return sum;
 }
-var sc_plusFx = sc_plus /// export +fx
 
-function sc_multi() { /// export *
+function sc_multi() { /// export * *fx *fl
     var product = 1;
     for (var i = 0; i < arguments.length; i++)
 	product *= arguments[i];
     return product;
 }
-var sc_multiFx = sc_multi /// export *fx
 
-function sc_minus(x, y) { /// export -
+function sc_minus(x, y) { /// export - -fx -fl
     if (y === undefined)
 	return -x;
     else
 	return x - y;
 }
-var sc_minusFx = sc_minus /// export -fx
 
-function sc_div(x, y) { /// export /
+function sc_div(x, y) { /// export / /fl
     if (y === undefined)
 	return 1 / x;
     else
@@ -233,10 +225,9 @@ function sc_div(x, y) { /// export /
 
 var sc_abs = Math.abs; /// export
 
-function sc_quotient(x, y) { /// export
+function sc_quotient(x, y) { /// export quotient /fx
     return parseInt(x / y);
 }
-var sc_divFx = sc_quotient /// export /fx
 
 function sc_remainder(x, y) { /// export
     return x % y;
@@ -949,7 +940,7 @@ function sc_isVectorEqual(v1, v2) {
 function sc_makeVector(size, fill) { /// export make-vector make-array
     var a = new sc_Vector(size);
     if (fill != undefined)
-	sc_vector_fill(a, fill);
+	sc_vectorFill(a, fill);
     return a;
 }
 
@@ -1117,6 +1108,18 @@ function sc_getStructField(s, name, field) { /// export struct-field
 
 function sc_setStructField(s, name, field, val) { /// export struct-field-set!
     s[field] = val;
+}
+
+function sc_bitAnd(x, y) { /// export
+    return x & y;
+}
+
+function sc_bitOr(x, y) { /// export
+    return x | y;
+}
+
+function sc_bitXor(x, y) { /// export
+    return x ^ y;
 }
 
 function sc_jsField(o, field) { /// export
@@ -1426,7 +1429,8 @@ sc_Tokenizer.prototype.nextToken = function() {
 	}
 	while(true) {
 	    c = port.peekChar();
-	    if (isWhitespaceOrEOF(c) && needing == "")
+	    if ((isWhitespaceOrEOF(c) || c === ')') &&
+		needing == "")
 		return res;
 	    else if (isWhitespace(c) || needing == "")
 		return new sc_Token(13/*ERROR*/, "bad #-pattern4 " + c + " " + needing);
@@ -1867,7 +1871,7 @@ sc_Struct.prototype.doDisplay = sc_Struct.prototype.doWrite;
 
 /* ------------------ newline ---------------------------------------------------*/
 
-function sc_newLine(p) { /// export
+function sc_newline(p) { /// export
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
     p.appendJSString("\n");
@@ -2035,12 +2039,12 @@ sc_Struct.prototype.doWriteCircle = sc_Struct.prototype.doWrite;
 function sc_print(s) { /// export
     if (arguments.length === 1) {
 	sc_display(s);
-	sc_newLine();
+	sc_newline();
     }
     else {
 	for (var i = 0; i < arguments.length; i++)
 	    sc_display(arguments[i]);
-	sc_newLine();
+	sc_newline();
     }
 }
 
