@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Mar  8 08:42:55 2006 (eg)                     */
+;*    Last change :  Mon Mar 27 07:30:36 2006 (serrano)                */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
@@ -68,7 +68,7 @@
     (let ((confdir (weblets-config-directory)))
       (unless (file-exists? confdir)
 	(make-directories confdir))
-      (with-output-to-file (make-file-path confdir (string-append wl ".conf"))
+      (with-output-to-file (make-file-path confdir (string-append wl ".info"))
 	(lambda ()
 	  (printf ";; -*- scheme -*- generated file on ~A\n(\n" (date))
 	  (for-each (lambda (x) (printf "  ~A\n" x)) conf)

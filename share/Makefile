@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/share/Makefile                          */
+#*    serrano/prgm/project/hop/hop/share/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Mar 20 10:44:52 2006 (serrano)                */
+#*    Last change :  Mon Mar 27 14:01:21 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -22,7 +22,7 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-error.hss hop-paned.js hop-table.js hop.css \
                   md5.js base64.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css hop.js \
-                  user.scm hop-notepad.css hop-slider.js hop-tabslider.js \
+                  hop-notepad.css hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css hop-window.js \
 		  hop-window.css hop.scm \
@@ -34,7 +34,6 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 install:
 	mkdir -p $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.scm $(HOPSHAREDIR) && \
-	install -m a+r $(BUILDSHAREDIR)/user.scm $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-error.hss $(HOPSHAREDIR) && \
@@ -65,7 +64,6 @@ install:
 #*---------------------------------------------------------------------*/
 uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop.scm && \
-	/bin/rm -f $(HOPSHAREDIR)/user.scm && \
 	/bin/rm -f $(HOPSHAREDIR)/hop.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop.hss && \

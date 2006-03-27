@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Mar 15 07:27:12 2006 (serrano)                */
+#*    Last change :  Fri Mar 24 06:21:30 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -88,6 +88,9 @@ ude:
 
 .etags: $(SOURCES)
 	@ $(BTAGS) -o .etags $(SOURCES) configure.scm
+
+getsources:
+	@ echo $(SOURCES)
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
