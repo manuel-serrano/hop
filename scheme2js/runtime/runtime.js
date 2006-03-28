@@ -1155,8 +1155,17 @@ function sc_jsNew(c) { /// export new js-new
 }    
 
 // Keywords
+var SeenKeywords = new Array;
+
 function sc_Keyword(str) { /// export
-    return this.val = str;
+    var old = SeenKeywords[str];
+
+    if (old === undefined) {
+	SeenKeywords[str] = this;
+	return this.val = str;
+    } else {
+	return old;
+    }
 }
 
 sc_Keyword.prototype.toString = function() {
