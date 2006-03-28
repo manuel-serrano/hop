@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Mar 23 11:01:48 2006 (serrano)                */
+/*    Last change :  Tue Mar 28 16:21:24 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -764,6 +764,7 @@ document.getElementsByClass = function( className ) {
 	 res[ n++ ] = all[ i ];
       }
    }
+   
    return res;
 }
 

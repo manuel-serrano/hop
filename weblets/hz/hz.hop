@@ -1,0 +1,137 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/hz/hz.hop                       */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
+;*    Last change :  Tue Mar 28 17:37:01 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOP weblets managers.                                            */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz
+   (import hz_config
+	   hz_authenticate
+	   hz_sync
+	   hz_widgets
+	   hz_db
+	   hz_weblets
+	   hz_repository))
+
+;*---------------------------------------------------------------------*/
+;*    hz ...                                                           */
+;*---------------------------------------------------------------------*/
+(define-service (hz)
+   (let* ((req (the-current-request)))
+      (multiple-value-bind (user mode)
+	 (hz-get-access req)
+	 (if (and (user? user)
+		  (symbol? mode)
+		  (user-authorized-service? user 'hz))
+	     (hz-main req user mode)
+	     (hz-authenticate req)))))
+
+;*---------------------------------------------------------------------*/
+;*    logout ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (logout req)
+   (let ((path (http-request-path req)))
+      ~(let ((path $path))
+	  (hop_cookie_remove "hop_hz" path)
+	  (set! location path))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-main ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (hz-main req user mode)
+   (let ((db (hz-get-db (hz-db-path user mode)))
+	 (prefs (make-file-name (hz-rc-directory) "hz.prefs")))
+      (when (file-exists? prefs)
+	 (hz-preferences-load prefs))
+      (<HTML>
+	 (<HEAD>
+	    (<HOP-HEAD> :dir (hz-dir)
+			:jscript "hop-notepad.js" :css "hop-notepad.css"
+			:jscript "hop-paned.js" :css "hop-paned.css"
+			:jscript "hop-tree.js" :css "hop-tree.css"
+			:jscript "hop-foldlist.js" :css "hop-foldlist.css"
+			:jscript "hop-window.js" :css "hop-window.css"
+			:css "hz.hss"))
+	 (<ABODY>
+	    (<DIV>
+	       :id "body"
+	       (<VBOX>
+		  (<VBOX-BLOCK>
+		     (<TABLE>
+			:class "identity"
+			(<TR>
+			   (<TH> "User: ")
+			   (<TD> (user-name user))
+;* 			   (<TH> "Mode: ")                             */
+;* 			   (<TD> :class mode)                          */
+			   (<TD> (<BUTTON>
+				    :onclick (logout req)
+				    "logout")))))
+		  (<VBOX-SEPARATOR>)
+		  (<VBOX-BLOCK>
+		     (<NOTEPAD>
+			:inline #f
+			(<NPHEAD> "")
+			(<NPTAB>
+			   (<NPTABHEAD> "Sync")
+			   (<SYNC> db))
+			(<NPTAB>
+			   (<NPTABHEAD> "Weblets")
+			   (<DELAY>
+			      (lambda ()
+				 (<WEBLETS> db))))
+			(<NPTAB>
+			   (<NPTABHEAD> "Preferences")
+			   (<PREFERENCES>))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <FOOTER> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<FOOTER>)
+   (<DIV>
+      :class "foot"
+      (<TABLE>
+	 :class "foot"
+	 (<TR>
+	    (<TD> "")
+	    (<TD>
+	       :class "foot"
+	       (<HOP-FOOT-LOGO>))))))
+		      
+;*---------------------------------------------------------------------*/
+;*    hz/preferences ...                                               */
+;*---------------------------------------------------------------------*/
+(define-service (hz/preferences)
+   (<HTML>
+      (<HEAD>
+	 (<HOP-HEAD> :dir (hz-dir)
+		     :jscript "hop-notepad.js" :css "hop-notepad.css"
+		     :jscript "hop-paned.js" :css "hop-paned.css"
+		     :jscript "hop-tree.js" :css "hop-tree.css"
+		     :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+		     :jscript "hop-window.js" :css "hop-window.css"
+		     :css "hz.hss"))
+      (<ABODY>
+	 (<DIV>
+	    :id "body"
+	    (<PREFERENCES)))))
+
+;*---------------------------------------------------------------------*/
+;*    <PREFERENCES> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<PREFERENCES>)
+   (hz-preferences-edit
+    :onclick ~(hop ($(service ()
+			(let ((d (hz-rc-directory)))
+			   (unless (directory? d)
+			      (make-directory d)))
+			(hz-preferences-save prefs))))))
+

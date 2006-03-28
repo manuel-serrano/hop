@@ -1,0 +1,127 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/hop/weblets/hz/install.hop              */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
+;*    Last change :  Mon Mar 27 14:24:54 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Actual installation/uninstallation.                              */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_install
+   
+   (import hz_config
+	   hz_db)
+   
+   (export (hz-install ::dbhz)
+	   (hz-uninstall ::dbhz)))
+
+;*---------------------------------------------------------------------*/
+;*    hz/get ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-service (hz/get hz)
+   (instantiate::http-response-file
+      (file (make-file-name (hz-repository) hz))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-install ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (hz-install hz)
+   (with-access::dbhz hz (name category install version hop)
+      (multiple-value-bind (_ uinfo host port path)
+	 (url-parse hop)
+	 ;; get the tarball
+	 (let* ((hzpath (format "~a/~a-~a.hz" category name version))
+		(req (instantiate::http-request
+			(userinfo uinfo)
+			(host host)
+			(port port)
+			(path (make-hop-service-url hz/get hzpath)))))
+	    (http-send-request
+	     req
+	     (lambda (status clength p)
+		(case status
+		   ((200)
+		    (let ((base (make-file-name (hop-rc-directory) "weblets")))
+		       (unless (file-exists? base) (make-directory base))
+		       (let ((lst (hz-untar (elong->fixnum clength) p base)))
+			  (if (pair? lst)
+			      (let ((path (make-file-path
+					   base
+					   name
+					   (string-append name ".hop")))
+				    (url (make-file-name
+					  (hop-service-base)
+					  name)))
+				 (for-each load-once-unmark! lst)
+				 (autoload path (autoload-prefix url))
+				 (set! install version))
+			      (error 'hz-install
+				     "Installation failure"
+				     hzpath)))))
+		   ((401 407)
+		    (user-access-denied req))
+		   (else
+		    (error 'hz-install "Can't download hz" hzpath)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-uninstall ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (hz-uninstall hz)
+   (with-access::dbhz hz (name install)
+      (let ((dir (make-file-path (hop-rc-directory) "weblets" name)))
+	 (rm-rf dir)
+	 (set! install ""))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-untar ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hz-untar clen p base)
+   (unless (=fx clen -1) (input-port-fill-barrier-set! p clen))
+   (let ((pz (open-input-gzip-port p)))
+      (unwind-protect
+	 (let loop ((lst '()))
+	    (let ((h (tar-read-header pz)))
+	       (if (not h)
+		   lst
+		   (case (tar-header-type h)
+		      ((dir)
+		       (let ((path (make-file-name base (tar-header-name h))))
+			  (rm-rf path)
+			  (if (make-directory path)
+			      (loop lst)
+			      (error 'hz-install
+				     "Cannot create directory"
+				     path))))
+		      ((normal)
+		       (let* ((path (make-file-name base (tar-header-name h)))
+			      (dir (dirname path)))
+			  (when (and (file-exists? dir) (not (directory? dir)))
+			     (delete-file dir))
+			  (unless (file-exists? dir)
+			     (make-directory dir))
+			  (with-output-to-file path
+			     (lambda ()
+				(display (tar-read-block h pz))))
+			  (loop (cons path lst))))
+		      (else
+		       (error 'hz-install
+			      (format "Illegal file type `~a'"
+				      (tar-header-type h))
+			      (tar-header-name h)))))))
+	 (close-input-port pz))))
+
+;*---------------------------------------------------------------------*/
+;*    rm-rf ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (rm-rf path)
+   (when (file-exists? path)
+      (if (directory? path)
+	  (let ((files (directory->list path)))
+	     (for-each (lambda (f) (rm-rf (make-file-name path f))) files)
+	     (delete-directory path))
+	  (delete-file path))))

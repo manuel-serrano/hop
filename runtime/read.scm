@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Mar 16 08:24:55 2006 (serrano)                */
+;*    Last change :  Tue Mar 28 15:14:27 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -23,7 +23,7 @@
    
    (export  (the-loading-file)
 	    (hop-read ::input-port)
-	    (hop-load ::bstring)
+	    (hop-load ::bstring #!optional (env (interaction-environment)))
 	    (hop-load-afile ::bstring)
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
@@ -675,7 +675,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-load file-name)
+(define (hop-load file-name #!optional (env (interaction-environment)))
    (let ((path (find-file/path file-name (hop-path))))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
@@ -684,27 +684,33 @@
 		    (obj file-name)))
 	  (let ((port (open-input-file path)))
 	     (if (input-port? port)
-		 (let ((t (current-thread)))
-		    (hop-load-afile (dirname file-name))
-		    (if (thread? t)
-			(thread-specific-set! t file-name)
-			(set! *the-loading-file* file-name))
-		    (let loop ((last #unspecified))
-		       ((hop-read-pre-hook) port)
-		       (let ((sexp (hop-read port)))
-			  ((hop-read-post-hook) port)
-			  (if (eof-object? sexp)
-			      (begin
-				 (close-input-port port)
-				 last)
-			      (loop (with-handler
-				       (lambda (e)
-					  (if (&warning? e)
-					      (begin
-						 (warning-notify e)
-						 #unspecified)
-					      (raise e)))
-				       (eval sexp)))))))
+		 (let ((t (current-thread))
+		       (m (eval-module))
+		       (f *the-loading-file*))
+		    (unwind-protect
+		       (begin
+			  (hop-load-afile (dirname file-name))
+			  (if (thread? t)
+			      (thread-specific-set! t file-name)
+			      (set! *the-loading-file* file-name))
+			  (let loop ((last #unspecified))
+			     ((hop-read-pre-hook) port)
+			     (let ((sexp (hop-read port)))
+				((hop-read-post-hook) port)
+				(if (eof-object? sexp)
+				    last
+				    (loop (with-handler
+					     (lambda (e)
+						(if (&warning? e)
+						    (begin
+						       (warning-notify e)
+						       #unspecified)
+						    (raise e)))
+					     (eval sexp env)))))))
+		       (begin
+			  (close-input-port port)
+			  (eval-module-set! m)
+			  (set! *the-loading-file* f))))
 		 (raise (instantiate::&io-port-error
 			   (proc 'hop-load)
 			   (msg "Can't open file")

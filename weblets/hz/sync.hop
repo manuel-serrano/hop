@@ -1,0 +1,177 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/hz/sync.hop                     */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
+;*    Last change :  Tue Mar 28 17:32:02 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOP hz sync                                                      */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_sync
+   (import  hz_config
+	    hz_widgets
+	    hz_db)
+   (export  <SYNC>))
+
+;*---------------------------------------------------------------------*/
+;*    hz/getsync ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-service (hz/getsync)
+   (let* ((path (hz-db-path "hz" 'repository))
+	  (db (hz-get-db path)))
+      (unwind-protect
+	 (instantiate::http-response-obj
+	    (body (hz-db->list db)))
+	 (hz-db-close db))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-get-sync ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (hz-get-sync host)
+   (multiple-value-bind (_ uinfo host port path)
+      (url-parse host)
+      (let ((req (instantiate::http-request
+		    (userinfo uinfo)
+		    (host host)
+		    (port port)
+		    (path (make-hop-service-url hz/getsync)))))
+	 (http-send-request req
+			    (lambda (s clength p)
+			       (case s
+				  ((200)
+				   (read p))
+				  ((401 407)
+				   (user-access-denied req))
+				  (else
+				   (error 'hz-get-sync
+					  (format "Illegal status `~a'" s)
+					  (read-string p)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    list-index ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (list-index lst el)
+   (let loop ((i 0)
+	      (lst lst))
+      (cond
+	 ((null? lst)
+	  #f)
+	 ((string=? (car lst) el)
+	  i)
+	 (else
+	  (loop (+fx i 1) (cdr lst))))))
+
+;*---------------------------------------------------------------------*/
+;*    sync/host ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (sync/host host db)
+   (let* ((tables (hz-get-sync host))
+	  (info (assoc "info" tables))
+	  (weblets (assoc "weblets" tables)))
+      (if (not (and (pair? info) (pair? weblets)))
+	  (error 'hz-sync "Corrupted database" (hz-sync-host))
+	  (let* ((cols (cadr weblets))
+		 (ni (list-index cols "name"))
+		 (ci (list-index cols "category"))
+		 (vi (list-index cols "version"))
+		 (names (map car (hz-db-columns)))
+		 (indexes (map (lambda (n)
+				  (list-index cols (symbol->string n)))
+			       names)))
+	     
+	     (define (sync-weblet v)
+		(let ((vals (map (lambda (i)
+				    (if (integer? i)
+					(vector-ref v i)
+					""))
+				 indexes))
+		      (o (hz-db-get-entry-by-name-category
+			  db
+			  (vector-ref v ni) (vector-ref v ci))))
+		   (if (dbhz? o)
+		       (with-access::dbhz o (version)
+			  (when (string>? (vector-ref v vi) version)
+			     (apply hz-db-update-entry db vals)))
+		       (apply hz-db-add-entry db vals))))
+	     
+	     (filter-map sync-weblet (cddr weblets))))))
+
+;*---------------------------------------------------------------------*/
+;*    <SYNC> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<SYNC> db)
+   (let ((out (<DIV> (show-updates (hz-db-query-update db)
+				   (hz-db-query-new db))))
+	 (sync (service ()
+		  (let ((news (append-map (lambda (h) (sync/host h db))
+					  (hz-sync-hops)))
+			(odate (hz-db-sync-date db)))
+		     ;; fetch the new entries
+		     (let ((res (show-updates (hz-db-query-update db)
+					      (hz-db-query-new db))))
+			;; update the sync date
+			(hz-db-sync-date-update! db (current-date))
+			(hz-db-sync-stamp-inc! db)
+			(<DIV> res (<SPAN> (hz-db-sync-date db)))))))
+	 (syncd (<SPAN> (hz-db-sync-date db))))
+      (<VBOX>
+	 (<VBOX-BLOCK>
+	    :class "block-sync"
+	    (<TABLE>
+	       :class "sync"
+	       (<TR>
+		  (<TD> :valign 'top
+			(<BUTTON>
+			   :class "sync"
+			   :title "Synchronize HOP Weblets data"
+			   :onclick
+			   ~(hop ($sync)
+				 (lambda (h)
+				    (let ((d (document.createElement "div")))
+				       (set! d.innerHTML h.responseText)
+				       (set! d (array-ref d.childNodes 0))
+				       ($out.replaceChild
+					(array-ref d.childNodes 0)
+					(array-ref $out.childNodes 0))
+				       ($syncd.replaceChild
+					(array-ref d.childNodes 0)
+					(array-ref $syncd.childNodes 0)))))
+			   "Sync"))
+		  (<TH> "last sync date:") (<TD> syncd))))
+	 (<VBOX-SEPARATOR>)
+	 (<VBOX-BLOCK> "&nbsp;")
+	 (<VBOX-BLOCK> out))))
+
+;*---------------------------------------------------------------------*/
+;*    show-updates ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (show-updates update new)
+   
+   (define (<TDE> o)
+      (if (dbhz? o)
+	  (<TD>
+	     (<SPAN> :class "name"
+		     (dbhz-name o) "-" (dbhz-version o))
+	     " (" (dbhz-category o) ") -- "
+	     (<SPAN> :class "descr" (dbhz-sdescr o)))
+	  (<TD> "")))
+   
+   (let* ((lu (length update))
+	  (ln (length new))
+	  (m (max lu ln)))
+      (if (=fx m 0)
+	  (<SPAN> :class "title" "Everything is up to date...")
+	  (<TABLE>
+	     :class "sync-result"
+	     (<COLGROUP> :span 2 :width "50%")
+	     (<TR> (<TH> "Update") (<TH> "New"))
+	     (map (lambda (u n) (<TR> (<TDE> u) (<TDE> n)))
+		  (append update (make-list (-fx m lu) #f))
+		  (append new (make-list (-fx m ln) #f)))))))
+
+
