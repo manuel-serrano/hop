@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Mar 28 07:03:21 2006 (serrano)                */
+#*    Last change :  Tue Mar 28 19:08:28 2006 (eg)                     */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -39,7 +39,7 @@ mimetypes=/etc/mime.types
 version="1.2.1"
 devel=pre
 
-etcdir=/etc
+etcdir=$prefix/etc
 bindir=$prefix/bin;
 libdir=$prefix/lib
 sharedir=$prefix/share/hop
@@ -74,6 +74,7 @@ while : ; do
       bindir=$prefix/bin;
       libdir=$prefix/lib;
       sharedir=$prefix/share/hop;
+      etcdir=$prefix/etc;
       contribsdir=$prefix/share/hop/contribs;;
 
     --etcdir=*)

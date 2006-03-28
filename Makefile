@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Mar 27 14:37:03 2006 (serrano)                */
+#*    Last change :  Tue Mar 28 19:01:41 2006 (eg)                     */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -78,7 +78,7 @@ install: hop-dirs install-init etc-hoprc
 install-init: hop-dirs
 	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPFILDIR)/hop.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hop.init;
-	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPFILDIR)/scheme2js.init && \
+	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDItcR)$(HOPFILDIR)/scheme2js.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/scheme2js.init;
 	cp $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPFILDIR)/hopscheme.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hopscheme.init;
@@ -90,6 +90,7 @@ hop-dirs:
 	mkdir -p $(DESTDIR)$(HOPFILDIR)
 	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)
 	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR)
+	mkdir -p $(DESTDIR)$(HOPETCDIR)
 
 etc-hoprc:
 	if [ -d $(DESTDIR)$(HOPETCDIR) ]; then \
