@@ -1,0 +1,4 @@
+((name "hz")
+ (author "M. Serrano")
+ (version "1.0.0")
+ (sdescr "HZ HOP weblets manager"))

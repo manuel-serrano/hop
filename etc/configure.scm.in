@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop2/src/configure.scm.in                   */
+;*    serrano/prgm/project/hop/etc/configure.scm.in                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Sat Dec 25 07:00:01 2004 (serrano)                */
+;*    Last change :  Sun Mar 26 08:13:11 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -18,6 +18,7 @@
            (hop-version)
 	   (hop-bin-directory)
 	   (hop-lib-directory)
+	   (hop-etc-directory)
 	   (hop-share-directory)
 	   (hop-contribs-directory)
            (hop-weblets-directory)
@@ -25,6 +26,7 @@
    
    (eval   (export hop-name)
 	   (export hop-version)
+	   (export hop-etc-directory)
 	   (export hop-bin-directory)
 	   (export hop-lib-directory)
 	   (export hop-share-directory)
@@ -39,6 +41,8 @@
    (case (string->symbol config)
       ((--version)
        (print (hop-version)))
+      ((--etcdir)
+       (print (hop-etc-directory)))
       ((--bindir)
        (print (hop-bin-directory)))
       ((--libdir)
@@ -58,6 +62,7 @@
 	     (newline)
 	     (print "Option:")
 	     (print "  [--version]")
+	     (print "  [--etcdir]")
 	     (print "  [--bindir]")
 	     (print "  [--libdir]")
 	     (print "  [--sharedir]")
@@ -74,6 +79,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    Install directories ...                                          */
 ;*---------------------------------------------------------------------*/
+(define (hop-etc-directory) "@ETCDIR@")
 (define (hop-bin-directory) "@BINDIR@")
 (define (hop-lib-directory) "@LIBDIR@")
 (define (hop-share-directory) "@SHAREDIR@")

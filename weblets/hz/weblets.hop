@@ -1,0 +1,316 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/private/hz/weblets.hop                  */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
+;*    Last change :  Mon Mar 27 11:36:26 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOP hz weblets                                                   */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_weblets
+   (import hz_config
+	   hz_db
+	   hz_widgets
+	   hz_install)
+   (export (<WEBLETS> db)))
+
+;*---------------------------------------------------------------------*/
+;*    <WEBLETS> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<WEBLETS> db)
+   (let* ((entry (<DIV> :class "weblet" ""))
+	  (win (<FLOAT-WINDOW>
+		  :title "Hop Weblets Hz Query"
+		  :width 400
+		  :height 300))
+	  (<search> (lambda (fmt entries)
+		       (<TABLE>
+			  :class "search-result"
+			  (<TR> (<TH> (format fmt (length entries))))
+			  (map (lambda (e)
+				  (let ((s (service () (<WEBLET> db e))))
+				     (<TR>
+					(<TD> :onclick
+					      ~(hop ($s)
+						    (hop_replace_inner $entry))
+					      (<SPAN>
+						 :class "name"
+						 (dbhz-name e)
+						 "-" (dbhz-version e))
+					      " (" (dbhz-category e)
+					      ") -- "
+					      (<SPAN>
+						 :class "descr"
+						 (dbhz-sdescr e))))))
+			       entries))))
+	  (search (service (value)
+		     (let ((fmt (format "`~a' matches ~~a weblets" value)))
+			(<search> fmt (hz-db-query db value)))))
+	  (searchn (service ()
+		      (let ((fmt "~a new weblets found"))
+			 (<search> fmt (hz-db-query-uninstalled db)))))
+	  (searcho (service ()
+		      (let ((fmt "~a update weblets found"))
+			 (<search> fmt (hz-db-query-update db))))))
+      (<DIV>
+	 :class "weblets"
+	 win
+	 (<TABLE>
+	    :class "search"
+	    (<TR>
+	       (<TD> "search:")
+	       (<TD> (<INPUT>
+			:type "text"
+			:title "Hit [Return] to search"
+			:size 20
+			:onkeyup ~(if (= event.keyCode 13)
+				      (hop_open_float_window
+				       ($search this.value)
+				       $win (- window.innerWidth 410) 100))))
+	       (<TD> (<BUTTON> :onclick ~(hop_open_float_window
+					  ($searcho)
+					  $win (- window.innerWidth 410) 100)
+			       :title "Show weblets update"
+			       "Update"))
+	       (<TD> (<BUTTON> :onclick ~(hop_open_float_window
+					  ($searchn)
+					  $win (- window.innerWidth 410) 100)
+			       :title "Show new available weblets"
+			       "New"))))
+	 (<PANED>
+	    :fraction 20
+	    (<PAN>
+	       (<TREE>
+		  :id "main-tree"
+		  :open #t
+		  (<TRHEAD>
+		     (let ((dt (hz-db-sync-date db)))
+			(format "~a ~a ~a"
+				(date-day dt)
+				(month-aname (date-month dt))
+				(date-year dt))))
+		  (<TRBODY>
+		     (map (lambda (c)
+			     (<TREE>
+				(<TRHEAD> :value c c)
+				(<TRBODY>
+				   (<DELAY>
+				      (lambda ()
+					 (let* ((icon (cond
+							 ((assoc c (hz-category-icons)) => cdr)
+							 (else "file.png")))
+						(ifile (make-file-path (hz-dir) "icons" icon)))
+					    (map (lambda (e)
+						    (let ((s (service ()
+								;; we have to reload the entry
+								;; because it might have changed
+								;; since the tree has been built
+								(let ((ne (hz-db-get-entry-by-name-category
+									   db
+									   (dbhz-name e)
+									   (dbhz-category e))))
+								   (when (dbhz? ne)
+								      (<WEBLET> db ne))))))
+						       (<TRLEAF>
+							  :file ifile
+							  (<SPAN>
+							     :class "weblet"
+							     :onclick ~(hop ($s) (hop_replace_inner $entry))
+							     (dbhz-name e)))))
+						 (hz-db-get-entries-by-category db c))))))))
+			  (hz-db-get-categories db)))))
+	    (<PAN> entry)))))
+
+;*---------------------------------------------------------------------*/
+;*    <WEBLET> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<WEBLET> db weblet)
+   (with-access::dbhz weblet (name version author sdescr hop date install
+				   minhop maxhop)
+      
+      (define prefwin
+	 (<FLOAT-WINDOW> :title "Preferences" :width 640 :height 400))
+      
+      (define action
+	 (service (action id)
+	    (cond
+	       ((string=? action "install")
+		(hz-install weblet)
+		;; db update
+		(hz-db-update-weblet db weblet)
+		(<ACTION-DONE> id action))
+	       ((string=? action "uninstall")
+		;; fake uninstallation
+		(hz-uninstall weblet)
+		;; db update
+		(hz-db-update-weblet db weblet)
+		(<ACTION-DONE> id action))
+	       ((string=? action "refresh")
+		(<ACTION> id))
+	       (else
+		;; fake update
+		(hz-uninstall weblet)
+		(hz-install weblet)
+		(hz-db-update-weblet db weblet)
+		(<ACTION-DONE> id action)))))
+
+      (define (<ACTION-DONE> id act)
+	 (<TR>
+	    (<TD>
+	       :class "icon"
+	       (<IMG>
+		  :src (make-file-path (hz-dir) "icons" "apply.png")))
+	    (<TD>
+	       :class "action"
+	       (<SPAN>
+		  :onclick ~(hop ($action "refresh" $id)
+				 (hop_replace_inner_id $id))
+		  act " completed"))))
+      
+      (define (<ACTION-INSTALL> id)
+	 (<TR>
+	    (<TD>
+	       :class "icon"
+	       (<IMG>
+		  :src (make-file-path (hz-dir) "icons" "package.png")))
+	    (<TD>
+	       :class "action"
+	       (<SPAN>
+		  :title "Install the weblet now"
+		  :onclick ~(hop ($action "install" $id)
+				 (hop_replace_inner_id $id))
+		  "Install"))))
+      
+      (define (<RUN> id)
+	 (list
+	  (<TD>
+	     :class "icon"
+	     (<IMG>
+		:src (make-file-path (hz-dir) "icons" "run.png")))
+	  (<TD>
+	     :class "action"
+	     (<SPAN>
+		:title "Run the weblet in a new window"
+		:onclick ~(window.open
+			   $(format "~a/~a" (hop-service-base) name)
+			   $name)
+		"Run"))))
+
+      (define (<PREF> id)
+	 (list
+	  (<TD>
+	     :class "icon"
+	     (<IMG>
+		:src (make-file-path (hz-dir) "icons" "config.png")))
+	  (<TD>
+	     :class "action"
+	     (<SPAN>
+		:title "Run the weblet in a new window"
+		:onclick ~(hop_open_float_window
+			   $(format "~a/~a/preferences" (hop-service-base) name)
+			   $prefwin (/ (- window.innerWidth 640) 2) 50)
+		"Preferences"))))
+
+      (define (<UNINSTALL> id)
+	 (list
+	  (<TD>
+	     :class "icon"
+	     (<IMG>
+		:src (make-file-path (hz-dir) "icons" "delete.png")))
+	  (<TD>
+	     :class "action"
+	     (<SPAN>
+		:title "Uninstall the weblet now"
+		:onclick ~(hop ($action "uninstall" $id)
+			       (hop_replace_inner_id $id))
+		"Uninstall"))))
+
+      (define (<UPDATE> id)
+	 (list 
+	  (<TD>
+	     :class "icon"
+	     (<IMG>
+		:src (make-file-path (hz-dir) "icons" "update.png")))
+	  (<TD>
+	     :class "action"
+	     (<SPAN>
+		:title "Update the weblet now"
+		:onclick ~(hop ($action "update" $id)
+			       (hop_replace_inner_id $id))
+		"Update"
+		(<SPAN>
+		   :class "old-version"
+		   "(from " install ")")))))
+	 
+      (define (<ACTION-UNINSTALL> id)
+	 (<TR>
+	    (<RUN> id)
+	    (<TD> "&nbsp;")
+	    (<PREF> id)
+	    (<TD> "&nbsp;")
+	    (<UNINSTALL> id)))
+      
+      (define (<ACTION-UPDATE> id)
+	 (<TR>
+	    (<RUN> id)
+	    (<TD> "&nbsp;")
+	    (<PREF> id)
+	    (<TD> "&nbsp;")
+	    (<UPDATE> id)
+	    (<TD> "&nbsp;")
+	    (<UNINSTALL> id)))
+      
+      (define (<ACTION-INCOMPATIBLE> id msg)
+	 (<TR>
+	    (<TD>
+	       :class "icon"
+	       (<IMG>
+		  :src (make-file-path (hz-dir) "icons" "warning.png")))
+	    (<TD>
+	       (<SPAN>
+		  "HOP " (hop-version) " incompatible, required " msg))))
+      
+      (define (<ACTION> id)
+	 (cond
+	    ((and (not (string-null? minhop))
+		  (string<? (hop-version) minhop))
+	     (<ACTION-INCOMPATIBLE> id (format "> ~a" minhop)))
+	    ((and (not (string-null? maxhop))
+		  (string>? (hop-version) maxhop))
+	     (<ACTION-INCOMPATIBLE id (format "< ~a" maxhop)))
+	    ((or (not install) (string-null? install))
+	     (<ACTION-INSTALL> id))
+	    ((string=? version install)
+	     (<ACTION-UNINSTALL> id))
+	    (else
+	     (<ACTION-UPDATE> id))))
+
+      (list
+	 prefwin
+	 (<VBOX>
+	    (<VBOX-BLOCK>
+	       (<SPAN> :class "title" name " " version))
+	    (<VBOX-SEPARATOR>)
+	    (<VBOX-BLOCK>
+	       (<TABLE>
+		  :class "weblet"
+		  (<TR> (<TD> "By " author))
+		  (<TR> (<TD> "&nbsp;"))
+		  (<TR> (<TD> (<P> sdescr)))
+		  (<TR> (<TD> "&nbsp;"))
+		  (<TR> (<TD>
+			   :class "action"
+			   (<DIV>
+			      :class "action"
+			      (let ((id (xml-make-id)))
+				 (<TABLE>
+				    :id id
+				    (<ACTION> id))))))
+		  (<TR> :class "lastrow"
+			(<TD> :class "update" "Revision date: " date))))))))
+

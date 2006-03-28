@@ -1,0 +1,558 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/hz/hz.hss                       */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Fri Mar 17 08:39:36 2006                          */
+/*    Last change :  Tue Mar 28 17:01:13 2006 (serrano)                */
+/*    Copyright   :  2006 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Admi CSS                                                         */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    User configuration                                               */
+/*---------------------------------------------------------------------*/
+$(define border-color "#bbb")
+$(define info-color "#f9f9f9")
+$(define title-color "#ddd")
+$(define deep-blue "#00a")
+$(define button-margin "margin-left: 4px; 
+  margin-right: 4px; 
+  margin-top: 2px;
+  margin-bottom: 2px")
+$(define button-padding "padding-left: 5px; 
+  padding-right: 5px;
+  padding-top: 0;
+  padding-bottom: 0")
+
+
+/*---------------------------------------------------------------------*/
+/*    Local rewriting                                                  */
+/*---------------------------------------------------------------------*/
+$(hop-hss-type! "main" "table.main")
+$(hop-hss-type! "foot" "div.foot")
+$(hop-hss-type! "main-title" "div#title")
+$(hop-hss-type! "vbox" "table.vbox")
+$(hop-hss-type! "sync" ".block-sync")
+$(hop-hss-type! "authentication" "table.authentication")
+$(hop-hss-type! "identity" "table.identity")
+$(hop-hss-type! "add" "div#add")
+$(hop-hss-type! "weblets" "div.weblets")
+$(hop-hss-type! "preferences" "table.preferences")
+
+/*---------------------------------------------------------------------*/
+/*    CSS rules                                                        */
+/*---------------------------------------------------------------------*/
+body {
+  background: #e0e0e0;
+  font-family: arial, sans serif;
+}
+
+/*--- forms -----------------------------------------------------------*/
+button {
+  border-width: 1px;
+  $button-margin;
+  $button-padding;
+}
+
+button[disabled] {
+  border-width: 1px;
+  $button-margin;
+  $button-padding;
+}
+
+button:hover {
+  background-color: #eee;
+  border-color: #999;
+}
+
+button:focus {
+  background-color: #eee;
+  border-color: #999;
+  color: blue;
+}
+
+input {
+  border: 1px solid $border-color;
+}
+
+input[type=text] {
+  color: blue;
+}
+
+input[type=radio]#share {
+  color: red;
+}
+
+textarea {
+  border: 1px solid $border-color;
+  color: blue;
+}
+
+/*--- main table ------------------------------------------------------*/
+main {
+  width: 45em;
+  margin-top: 50px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  -moz-border-radius: 0.5em;
+}
+
+main td.logo {
+  vertical-align: top;
+}
+
+main img.logo {
+  padding: 20px;
+}
+
+main-title {
+  width: 35em;
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+  
+/*--- foot ------------------------------------------------------------*/
+foot {
+  text-align: right;
+}
+
+foot table.foot {
+  width: 100%;
+  font-size: x-small;
+}
+
+foot table.foot td.foot {
+  text-align: right;
+  width: 95px;
+}
+
+foot table.foot-logo {
+  border: 0;
+  border-collapse: collapse;
+  font-size: xx-small;
+  font-style: italic;
+  margin-left: 2px;
+}
+
+/*--- notepad ---------------------------------------------------------*/
+div.hop-notepad-title {
+  background: transparent;
+  padding: 0 10px 20px 0;
+  border-color: red;
+}
+
+div.hop-notepad-tabs {
+  background: transparent;
+  clear: left;
+  text-align: left;
+  padding: 10px 0 0 5%;
+  margin-left: 10px;
+  border-color: red;
+}
+
+div.hop-notepad-tabs > span {
+  font-size: small;
+  border-color: $border-color;
+}
+
+div.hop-notepad-tabs > span.hop-nptab-active {
+  background-color: $info-color;
+  border-bottom-color: $info-color;
+}
+
+div.hop-notepad-body {
+  border-color: $border-color;
+}
+
+div.hop-notepad-body {
+  border-left: 1px solid $border-color;
+  border-right: 1px solid $border-color;
+  border-bottom: 1px solid $border-color;
+  padding: 10px;
+  font-size: small;
+  background-color: $info-color;
+}
+
+div.hop-notepad-body-tab {
+  border-color: blue;
+  background-color: $info-color;
+}  
+
+/*--- paned -----------------------------------------------------------*/
+div.hop-paned {
+  width: 100%;
+  height: inherit;
+  border: 0;
+  border: 1px solid $border-color;
+  padding: 0;
+  margin: 0;
+}
+
+div.hop-paned-cursoroff {
+  border: 1px solid $border-color;
+  background: rgb(204,204,204);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+div.hop-paned-cursoron {
+  border: 1px solid $border-color;
+  cursor: move;
+  background: rgb(220,220,220);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+   
+table.hop-vpaned {
+  border: 1px solid $info-color;
+  border: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+td.hop-vpaned-pan {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  vertical-align: top;
+}
+
+/*--- tree ------------------------------------------------------------*/
+tr.hop-tree-row-selected {
+  background: inherit;
+  color: #008;
+}
+
+table.hop-tree {
+  font-weight: bold;
+  font-size: 12px;
+}
+
+table.hop-tree-leaf {
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/*--- window ----------------------------------------------------------*/
+float-window {
+  opacity: 0.95;
+}
+
+.hop-float-content {
+  background: white;
+  font-size: small;
+}
+
+/*--- vbox ------------------------------------------------------------*/
+vbox {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+vbox td.vbox-separator div {
+  width: 100%;
+  border-top: 1px solid $border-color;
+}
+
+vbox span.title {
+  font-weight: bold;
+}
+
+/*--- sync ------------------------------------------------------------*/
+sync button.sync {
+  margin-left: 20px;
+  margin-right: 20px;
+  font-size: small;
+}
+
+sync button.sync:hover {
+  color: red;
+}
+
+sync table.sync {
+  font-size: small;
+}
+
+sync table.sync th, sync table.sync td {
+  text-align: left;
+  font-size: inherit;
+}
+
+table.sync-result {
+  font-size: small;
+  width: 100%;
+}
+
+table.sync-result th {
+  text-align: left;
+  border-bottom: 1px solid $border-color;
+}
+
+table.sync-result span.descr {
+  font-size: x-small;
+}
+
+table.sync-result span.name {
+  color: $deep-blue;
+  font-weight: bold;
+}
+
+/*--- identity --------------------------------------------------------*/
+identity {
+  font-size: small;
+}
+
+identity td {
+  margin-right: 20px;
+  padding-right: 20px;
+  color: blue;
+}
+
+identity td.admin-share {
+  color: red;
+}
+
+identity button {
+  font-size: small;
+}
+
+/*--- authentication --------------------------------------------------*/
+div.authentication {
+  border: 1px solid $border-color;
+  padding: 10px;
+  background: $info-color;
+  -moz-border-radius: 0.5em;
+}
+
+authentication {
+  font-size: small;
+}
+
+authentication button {
+  font-size: small;
+}
+
+authentication th, authentication td {
+  text-align: left;
+}
+
+authentication td.login {
+  text-align : right;
+}
+
+/*--- add -------------------------------------------------------------*/
+add table.buttons {
+  width: 100%;
+}
+
+add div.weblets {
+  font-size: small;
+}
+
+add table.weblets {
+  font-size: inherit;
+}
+
+add th {
+  text-align: right;
+  vertical-align: middle;
+}
+
+add th#descr {
+  padding-top: 2px;
+  vertical-align: top;
+}
+
+add a.repository {
+  font-size: small;
+  text-decoration: none;
+}
+
+add a.repository:hover {
+  text-decoration: underline;
+}
+
+table.build-repository {
+  font-size: small;
+  width: 100%;
+}
+  
+table.build-repository div.title {
+  font-weight: bold;
+  font-size: large;
+  border-bottom: 1px solid $border-color;
+}
+
+table.build-repository th.new {
+  color: #0f0;
+  border-bottom: 1px solid $border-color;
+}
+
+table.build-repository th {
+  border-bottom: 1px solid $border-color;
+  border-top: 1px solid $border-color;
+}
+
+table.build-repository th.update {
+  color: #ffb514;
+}
+
+table.build-repository th.bad {
+  color: #f00;
+}
+
+/*--- weblets ---------------------------------------------------------*/
+weblets div.weblet {
+  font-size: small;
+  padding: 2px;
+}
+
+weblets table.search {
+  margin-bottom: 5px;
+  font-size: x-small;
+}
+  
+weblets table.search input {
+  font-size: x-small;
+}
+
+weblets div#main-tree {
+  min-height: 300px;
+}
+
+weblets span.weblet {
+  cursor: pointer;
+  padding-left: 5px;
+}
+
+weblets table.weblet {
+  font-size: small;
+  width: 100%;
+}
+
+weblets table.weblet th {
+  text-align: right;
+}
+
+weblets table.weblet tr.lastrow td {
+  border-top: 1px solid $border-color;
+}
+
+weblets table.weblet td.update {
+  font-size: x-small;
+}
+
+weblets span.title {
+  color: $deep-blue;
+  text-transform: capitalize;
+}
+
+weblets div.action {
+  background: #daffbd;
+  border: 1px solid $border-color;
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  margin: 5px;
+  -moz-border-radius: 0.5em;
+  display: table;
+}
+
+weblets div.action table td {
+  vertical-align: middle;
+  font-weight: bold;
+  font-size: small;
+}
+
+weblets div.action table td.action span {
+  margin-left: 5px;
+}
+
+weblets div.action table td.action span:hover {
+  color: $deep-blue;
+  text-decoration: underline;
+}
+
+weblets td.action {
+  cursor: default;
+}
+
+weblets td.action span.old-version {
+  font-size: xx-small;
+}
+
+span.search-result {
+  font-size: small;
+  font-weight: bold;
+}
+
+table.search-result {
+  font-size: small;
+  width: 100%;
+}
+
+table.search-result th {
+  text-align: left;
+  border-bottom: 1px solid $border-color;
+}
+
+table.search-result span.descr {
+  font-size: x-small;
+}
+
+table.search-result span.name {
+  color: $deep-blue;
+  font-weight: bold;
+}
+
+table.search-result td {
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+div.weblets table.search-result td:hover {
+  border: 1px dotted black;
+}
+
+/*--- preferences -----------------------------------------------------*/
+preferences {
+  font-size: small;
+}
+
+preferences th {
+  text-align: left;
+}
+
+preferences th.label {
+  padding-top: 10px;
+  font-size: small;
+  border-bottom: 1px solid $border-color;
+  color: $deep-blue;
+}
+
+preferences td.save {
+  text-align: left;
+}
+
+preferences td.save button:hover {
+  color: darkorange;
+}
+
+preferences input.pref_modified {
+  color: red;
+}
+
+preferences input.pref_applied {
+  color: green;
+}
+
+preferences input.pref_saved {
+  color: blue;
+}
+  

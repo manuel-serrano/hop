@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sun Mar  5 16:37:25 2006 (serrano)                */
+#*    Last change :  Mon Mar 27 18:52:35 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -51,6 +51,7 @@ DISTRIBDIR	= @DISTRIBDIR@
 #*---------------------------------------------------------------------*/
 #*    Destinations                                                     */
 #*---------------------------------------------------------------------*/
+HOPETCDIR	= @ETCDIR@
 HOPBINDIR	= @BINDIR@
 HOPLIBDIR	= @LIBDIR@
 HOPSHAREDIR	= @SHAREDIR@
@@ -63,9 +64,10 @@ HOPDEMOSDIR	= $(HOPSHAREDIR)/demos
 #*---------------------------------------------------------------------*/
 #*    REPOSITORY                                                       */
 #*---------------------------------------------------------------------*/
-HOPREPOSITORY	= @HOPREPOSITORY@
+HOPSVN		= @HOPSVN@
 HOPTMPDIR	= /tmp
 HOPDISTRIBDIR	= @HOPDISTRIBDIR@
+HOPREPOSITORY	= @HOPREPOSITORY@
 
 #*---------------------------------------------------------------------*/
 #*    compile                                                          */

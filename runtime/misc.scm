@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Fri Mar 17 10:36:07 2006 (serrano)                */
+;*    Last change :  Fri Mar 24 14:57:52 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -21,6 +21,7 @@
    (export (hop-verb ::int . args)
 	   (hop-color ::obj ::obj ::obj)
 	   (load-once ::bstring)
+	   (load-once-unmark! ::bstring)
 	   (shortest-prefix ::bstring)
 	   (longest-suffix ::bstring)
 	   (is-suffix?::bool ::bstring ::bstring)
@@ -101,6 +102,17 @@
 		   (raise e))
 		(hop-load f))))))
 
+;*---------------------------------------------------------------------*/
+;*    load-once-unmark! ...                                            */
+;*    -------------------------------------------------------------    */
+;*    Remove a file name from the load-once table                      */
+;*---------------------------------------------------------------------*/
+(define (load-once-unmark! file)
+   (mutex-lock! *load-once-mutex*)
+   (when (hashtable? *table*)
+      (hashtable-remove! *table* (file-name-unix-canonicalize file)))
+   (mutex-unlock! *load-once-mutex*))
+   
 ;*---------------------------------------------------------------------*/
 ;*    shortest-prefix ...                                              */
 ;*---------------------------------------------------------------------*/

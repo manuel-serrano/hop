@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Mar 13 15:52:49 2006 (serrano)                */
+;*    Last change :  Fri Mar 24 11:44:08 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -98,7 +98,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    <ETD> ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <ETD> ((class #f)
+(define-xml-compound <ETD> ((id #unspecified string)
+			    (class #f)
 			    (style "" string)
 			    body)
    (let* ((default "vertical-align: top; text-align: left; font-weight: bold")
@@ -121,7 +122,7 @@
   font-family: sans-serif;")
 		  ((string=? class "dump")
 		   "padding-top: 20px;"))))
-      (apply <TD> :style (string-append style default add) body)))
+      (apply <TD> :id (xml-make-id id 'ETD) :style (string-append style default add) body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ETABLE> ...                                                     */

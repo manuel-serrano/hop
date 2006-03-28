@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Mar 15 07:27:12 2006 (serrano)                */
+#*    Last change :  Tue Mar 28 07:44:45 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -36,7 +36,7 @@ _OBJECTS	= param misc types thread \
                   http-filter html-extra html-notepad html-tree html-slider \
                   html-paned html-tabslider html-inline html-foldlist \
                   html-window \
-                  event color weblets
+                  event color weblets prefs
 
 OBJECTS		= $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS	= o/make-lib.o
@@ -50,7 +50,7 @@ BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
 SOURCES		= $(_OBJECTS:%=%.scm)
 
 INCLUDES	= compiler-macro.sch eval-macro.sch xml.sch param.sch \
-                  http-lib.sch service.sch
+                  http-lib.sch service.sch prefs.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -88,6 +88,9 @@ ude:
 
 .etags: $(SOURCES)
 	@ $(BTAGS) -o .etags $(SOURCES) configure.scm
+
+getsources:
+	@ echo $(SOURCES)
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/

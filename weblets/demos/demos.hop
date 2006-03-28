@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Mar  2 11:12:55 2006                          */
-;*    Last change :  Fri Mar 24 11:46:57 2006 (eg)                     */
+;*    Last change :  Fri Mar 24 11:34:35 2006 (serrano)                */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Demos                                                        */
@@ -113,8 +113,8 @@
 	 "you'll see on the right part of the screen:")
     (<UL> (<LI> "some explanations on the demo code, ")
 	  (<LI> "the code of the demo"))
-    (<P> "To change the code of a demo, use «Edit» button before launching"
-	 "its execution with the «Run» button")
+    (<P> "To change the code of a demo, use Edit button before launching"
+	 "its execution with the Run button")
     (<TABLE> :width "98%"
        (<TR> (<TD> :align "right" (<HOP-FOOT-LOGO>)))))))
 
@@ -131,7 +131,9 @@
 	     (let Loop ((txt (hop-read doc))
 			(res '()))
 	       (if (eof-object? txt)
-		   (map (lambda (e) (eval e mod)) (reverse! res))
+		   (map (lambda (e)
+			   (eval e mod))
+			(reverse! res))
 		   (Loop (hop-read doc)
 			 (cons txt res))))
 	     (<H2> "No documentation available for this demo")))))
@@ -170,7 +172,8 @@
 	     ;; First div
 	(list
 	  (<BUTTON> :class "hop-demo-button" "Run"
-	    :onclick { hop_open_float_window($(make-service-url demos/run path code),
+	    :onclick {
+	       hop_open_float_window($(make-service-url demos/run path code),
 					      "hop-run-window", 50, 50, true)})
 	  (<BUTTON> :class "hop-demo-button" "Edit"
 		:onclick { hop_switch_div("hop-demos-view") })
@@ -226,7 +229,7 @@
 ;; ----------------------------------------------------------------------
 ;; This filter works on demos files. All the files used by a demo are read
 ;; on disk. Only the main file is read from the value stored in the
-;; hash table when the «Run» button is clicked.
+;; hash table when the Run button is clicked.
 (define (demo-filter req)
   (define (run-customized-demo path code)
     (let ((port (open-input-string code))

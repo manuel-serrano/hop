@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Mar 21 09:43:57 2006 (serrano)                */
+;*    Last change :  Sun Mar 26 08:31:35 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -113,6 +113,8 @@
 	 (load-mime-types (if (string? mime-file)
 			      mime-file
 			      (make-file-name (getenv "HOME") ".mime.types"))))
+      (hop-autoload-directory-add!
+       (make-file-name (hop-rc-directory) "weblets"))
       (when hopp (load-hop))
       (when loadp
 	 (if (string? rc-file)
@@ -134,7 +136,7 @@
 			       (eval sexp))))))
 		exprs)
       (when autoloadp
-	(autoload-weblets (hop-autoload-directories)))
+	 (autoload-weblets (hop-autoload-directories)))
       (hop-preload-libraries-set! (append libraries (hop-preload-libraries)))))
 
 ;*---------------------------------------------------------------------*/
@@ -162,7 +164,10 @@
 ;*    hop-load-rc ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-rc file)
-   (%hop-load-rc (make-file-name (hop-rc-directory) file)))
+   (let ((path (make-file-name (hop-rc-directory) file)))
+      (if (file-exists? path)
+	  (%hop-load-rc path)
+	  (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file))))))
       
 ;*---------------------------------------------------------------------*/
 ;*    hop-repl ...                                                     */

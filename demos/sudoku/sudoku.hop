@@ -3,12 +3,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Mon Mar 27 11:51:01 2006 (eg)                     */
+;*    Last change :  Tue Mar 28 18:01:33 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
 
-(module sudoku)
+;(module sudoku)
 
 
 (define *sudoku-directory* (dirname (the-loading-file)))
@@ -62,7 +62,7 @@
 ;;; ======================================================================
 ;;; 	init-sudoku ...
 ;;; ======================================================================
-(define (init-sudoku)
+(define (init-sudoku level)
   (define board (vector (vector 4 3 6 1 8 2 7 5 9)
 			 (vector 5 1 7 9 3 6 8 4 2)
 			 (vector 9 2 8 4 7 5 6 1 3)
@@ -74,7 +74,6 @@
 			 (vector 8 6 2 7 5 3 1 9 4)))
 
   (define count-cells '#(unused 36 34 32 31 30))
-  (define level 1)
   
   (define (board-switch proc)
     (dotimes (i 3)
@@ -150,14 +149,14 @@
 ;;; ======================================================================
 ;;; 	board->html ...
 ;;; ======================================================================
-(define (board->html board)
+(define (board->html board level)
   (define (show-cell id i j)
     (let ((item (array-ref board i j)))
       (if (negative? item)
 	  (<SPAN> :class "sudoku-cell-given" :id id (- item))
 	  (<SPAN> :class "sudoku-cell-unknown" :id id))))
-  
-  (<DIV> :class "sudoku-board"
+  (list 
+   (<DIV> :class "sudoku-board"
      (map (lambda (x)
 	    (<DIV> :class "sudoku-group"
 		   (map (lambda (y)
@@ -168,13 +167,16 @@
 				   :onclick ~(click-cell $id)
 				   (show-cell id i j))))
 			(iota 9))))
-	  (iota 9))))
+	  (iota 9)))
+   (<DIV> "Game level: " level "/5")))
+
 
 ;;; ======================================================================
 ;;; 	run-sudoku ...
 ;;; ======================================================================
 (define (run-sudoku)
-  (let ((board (init-sudoku)))
+  (let* ((level 1)
+	 (board (init-sudoku level)))
     (<HTML>
      (<HEAD>
       (<HOP-SCHEME-HEAD> :sscript (make-file-name *sudoku-directory* "sudoku.scm"))
@@ -183,10 +185,40 @@
       (<DIV> :class "sudoku-title" (<IMG> :src
 					  (make-file-name *sudoku-directory*
 							  "sudoku.png")))
-      (board->html board)
-      (<SCRIPT>
+      (<DIV> :class "sudoku-panel"
+	 (<H2>  "Menu")
+	 (<DIV> :class "sudoku-menu"
+	   (<DIV> 
+	      "Level: " [,(<A> "1") ,(<A> "2") ,(<A> "3") ,(<A> "4") ,(<A> "5")])
+
+	   (<DIV>
+	      "Show errors: " (<INPUT> :type "radio" :name "err" :checked "checked"
+				       :style "cursor: pointer"
+				       :onclick ~(set! *show-errors* #t)
+				       "yes")
+			       " "
+			       (<INPUT> :type "radio" :name "err"
+					:style "cursor: pointer"
+					:onclick ~(set! *show-errors* #f)
+					"no"))
+	   (<DIV> :style "cursor: pointer" :onclick ~(show-solution)
+		  "Show-solution")
+	   (<DIV> :style "cursor: pointer" :onclick ~(window.print)
+		  "Print the board"))
+	 (<H2> "Help")
+	 (<DIV> :class "sudoku-help"
+	    (<DIV> "- Click on a cell and enter a number")
+	    (<DIV> "- You can use arrows to move on the board")
+	    (<DIV> "- Use \"h\" or \"?\" to view the value of selected cell")
+	    (<DIV> "- Numbers in red are misplaced")))
+     (board->html board level)
+     (<SCRIPT>
          ~(begin
+	    (set! *show-errors* #t)
 	    (set! *board* $board)
 	    (set! document.documentElement.onkeydown key-event)))))))
 
-(run-sudoku)
+;(run-sudoku)
+
+(define-service (sudoku/level)
+  "Hello")

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Mar 21 09:36:46 2006 (serrano)                */
+#*    Last change :  Tue Mar 28 07:03:21 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -39,6 +39,7 @@ mimetypes=/etc/mime.types
 version="1.2.1"
 devel=pre
 
+etcdir=/etc
 bindir=$prefix/bin;
 libdir=$prefix/lib
 sharedir=$prefix/share/hop
@@ -49,10 +50,12 @@ buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 buildbindir=$PWD/bin
 
+repository=$$HOME/prgm/project/hop/repository
+
 bigloorequired=2.8a
 bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
-repository=ssh://skribe@saxo.essi.fr/hop
+svn=ssh://skribe@saxo.essi.fr/hop
 
 if [ $USER = "serrano" ]; then
   distribdir=$HOME/prgm/distrib
@@ -72,6 +75,9 @@ while : ; do
       libdir=$prefix/lib;
       sharedir=$prefix/share/hop;
       contribsdir=$prefix/share/hop/contribs;;
+
+    --etcdir=*)
+      etcdir="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --bindir=*)
       bindir="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -144,6 +150,7 @@ while : ; do
       echo >&2;
       echo "Usage: configure [options]" >&2;
       echo "   --prefix=dir.......... prefix to HOP install" >&2;
+      echo "   --etcdir=dir.......... Hop etc directory" >&2;
       echo "   --bindir=dir.......... alternative Hop bin directory" >&2;
       echo "   --libdir=dir.......... alternative Hop lib directory" >&2;
       echo "   --sharedir=dir........ alternative Hop share directory" >&2;
@@ -258,10 +265,12 @@ cat $mkmf.in \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
           -e "s|@DISTRIBDIR@|$distribdir|" \
+          -e "s|@HOPSVN@|$svn|" \
           -e "s|@HOPREPOSITORY@|$repository|" \
           -e "s|@HOPDISTRIBDIR@|$distribdir|" \
     >> $mkmf
@@ -276,10 +285,25 @@ cat etc/configure.scm.in \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
     >> $configure
+
+# etc/hoprc.hop
+hoprc=etc/hoprc.hop
+rm -f $hoprc 2> /dev/null
+cat etc/hoprc.hop.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@ETCDIR@|$etcdir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@MIMETYPES@|$mimetypes|" \
+    >> $hoprc
 
 # lib/hop.init
 init=lib/hop.init
@@ -293,8 +317,13 @@ cat etc/hop.init.in \
 echo "" >> $init
 
 cat runtime/compiler-macro.sch >> $init
+echo "" >> $init
 cat runtime/xml.sch >> $init
+echo "" >> $init
 cat runtime/param.sch >> $init
+echo "" >> $init
+cat runtime/prefs.sch >> $init
+echo "" >> $init
 cat runtime/service.sch >> $init
 
 # lib/scheme2js.init
@@ -331,6 +360,7 @@ echo "  Backend............................... $backend"
 echo "  Bigloo compilation flags.............. $bcflags"
 echo
 echo "Directories where Hop will be installed:"
+echo "  etc directory......................... $etcdir"
 echo "  binaries.............................. $bindir"
 echo "  libraries............................. $libdir"
 echo "  share directory....................... $sharedir"

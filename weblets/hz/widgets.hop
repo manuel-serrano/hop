@@ -1,0 +1,95 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/private/hz/widgets.hop                  */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Mar 17 09:47:11 2006                          */
+;*    Last change :  Sat Mar 25 09:37:27 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Various hz widgets                                               */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_widgets
+   (export <ABODY>
+	   <VBOX>
+	   <VBOX-BLOCK>
+	   <VBOX-SEPARATOR>))
+
+;*---------------------------------------------------------------------*/
+;*    <ABODY> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<ABODY> . content)
+   (<BODY>
+      (<CENTER>
+	 (<TABLE>
+	    :class "main"
+	    (<TR>
+	       (<TD>
+		  :class "logo"
+		  (<IMG> :class "logo"
+			 :src (format "~a/icons/system.png"
+				      (hop-share-directory))))
+	       (<TD>
+		  :class "main"
+		  :valign 'top
+		  (<TABLE>
+		     (<TR>
+			(<TD>
+			   (<DIV>
+			      :id "title"
+			      "Hz -- Hop Weblets Admin")))
+		     (<TR>
+			(apply <TD> content)))))))
+      (<HR>)
+      (<FOOTER>)))
+
+;*---------------------------------------------------------------------*/
+;*    <FOOTER> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<FOOTER>)
+   (<DIV>
+      :class "foot"
+      (<TABLE>
+	 :class "foot"
+	 (<TR>
+	    (<TD> "")
+	    (<TD>
+	       :class "foot"
+	       (<HOP-FOOT-LOGO>))))))
+
+;*---------------------------------------------------------------------*/
+;*    VBOX ...                                                         */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <VBOX> ((id #f)
+			     (class #f)
+			     body)
+   (let ((table (<TABLE> :class "vbox" :border 0 (map <TR> body))))
+      (if (or id class)
+	  (<DIV :class (or class "vbox")
+		:id (or id (xml-make-id))
+		table)
+	  table)))
+
+;*---------------------------------------------------------------------*/
+;*    <VBOX-BLOCK> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <VBOX-BLOCK> ((id #f)
+				   (class #f)
+				   body)
+   (let ((b (if (or id class)
+		(<DIV> :class (or class "vbox-block")
+		       :id (or id (xml-make-id))
+		       body)
+		body)))
+      (<TD> :class "vbox-block" b)))
+
+;*---------------------------------------------------------------------*/
+;*    <VBOX-SEPARATOR> ...                                             */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <VBOX-SEPARATOR> ((id #f)
+				       (class #f))
+   (<TD> :class (or class "vbox-separator") :id (or id (xml-make-id))
+	 (<DIV> "")))

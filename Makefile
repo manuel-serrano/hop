@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Mar 16 16:49:29 2006 (serrano)                */
+#*    Last change :  Mon Mar 27 14:37:03 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -66,7 +66,7 @@ ude:
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
-install: install-init
+install: hop-dirs install-init etc-hoprc
 	(cd runtime && $(MAKE) install) && \
 	(cd scheme2js && $(MAKE) install) && \
 	(cd hopscheme && $(MAKE) install) && \
@@ -75,7 +75,7 @@ install: install-init
 	(cd weblets && $(MAKE) install)
 	(cd demos && $(MAKE) install)
 
-install-init: $(DESTDIR)$(HOPFILDIR)
+install-init: hop-dirs
 	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPFILDIR)/hop.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hop.init;
 	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPFILDIR)/scheme2js.init && \
@@ -83,8 +83,20 @@ install-init: $(DESTDIR)$(HOPFILDIR)
 	cp $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPFILDIR)/hopscheme.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hopscheme.init;
 
-$(DESTDIR)$(HOPFILDIR):
+hop-dirs:
+	mkdir -p $(DESTDIR)$(HOPBINDIR)
+	mkdir -p $(DESTDIR)$(HOPLIBDIR)
+	mkdir -p $(DESTDIR)$(HOPSHAREDIR)
 	mkdir -p $(DESTDIR)$(HOPFILDIR)
+	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)
+	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR)
+
+etc-hoprc:
+	if [ -d $(DESTDIR)$(HOPETCDIR) ]; then \
+          if [ ! -f $(DESTDIR)$(HOPETCDIR)/hoprc.hop ]; then \
+            install -m a+r etc/hoprc.hop $(DESTDIR)$(HOPETCDIR); \
+          fi; \
+        fi
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

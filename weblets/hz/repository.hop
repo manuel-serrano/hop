@@ -1,0 +1,336 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/private/hz/repository.hop               */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
+;*    Last change :  Mon Mar 27 12:01:34 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HZ add/update entry in repository.                               */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_repository
+   (import hz_config
+	   hz_widgets
+	   hz_db))
+
+;*---------------------------------------------------------------------*/
+;*    create ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-service (hz/create db name author category hop version minhop maxhop sdescr descr)
+   (let ((db (hz-get-repository-db)))
+      (hz-db-add-entry db (hz-db-sync-stamp db)
+		       name author category hop
+		       version minhop maxhop
+		       sdescr descr
+		       (number->string (date->seconds (current-date)))
+		       "rw"
+		       #f)))
+	 
+;*---------------------------------------------------------------------*/
+;*    update ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-service (hz/update name author category hop version minhop maxhop sdescr descr)
+   (let* ((db (hz-get-repository-db))
+	  (e (hz-db-get-entry-by-name-category db name category)))
+      (hz-db-update-entry db (hz-db-sync-stamp db)
+			  name author category hop
+			  version minhop maxhop
+			  sdescr descr
+			  (number->string (date->seconds (current-date)))
+			  "rw"
+			  (and (dbhz? e) (dbhz-install e)))))
+
+;*---------------------------------------------------------------------*/
+;*    remove ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-service (hz/remove name category)
+   (hz-db-remove-entry (hz-get-repository-db) name category))
+
+;*---------------------------------------------------------------------*/
+;*    hz/query-entry ...                                               */
+;*---------------------------------------------------------------------*/
+(define-service (hz/query-entry val)
+   (let ((entry (hz-db-get-entry-by-name (hz-get-repository-db) val)))
+      (instantiate::http-response-js
+	 (body entry))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/repository ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (hz/repository)
+   (let ((req (the-current-request)))
+      (if (user-authorized-service? (http-request-user req) 'super-admin)
+	  (hz-update-repository)
+	  (user-access-denied req))))
+
+;*---------------------------------------------------------------------*/
+;*    hz->name ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hz->name s)
+   (let ((m (pregexp-match "(.*)-[0-9]+[.][0-9]+[.][0-9]+(?:-r[0-9]+)?.hz" s)))
+      (and (pair? m) (cadr m))))
+
+;*---------------------------------------------------------------------*/
+;*    hz->info ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hz->info path name)
+   (let ((p (open-input-gzip-file path))
+	 (info (string-append name ".info")))
+      (when (input-port? p)
+	 (unwind-protect
+	    (let loop ()
+	       (let ((h (tar-read-header p)))
+		  (when (tar-header? h)
+		     (if (string=? (basename (tar-header-name h)) info)
+			 (read p)
+			 (begin
+			    (tar-read-block h p)
+			    (loop))))))
+	    (close-input-port p)))))
+
+;*---------------------------------------------------------------------*/
+;*    hz->dbhz ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hz->dbhz path category name)
+   (let ((info (hz->info path name)))
+      (when (pair? info)
+	 (bind-exit (exit)
+	    (define (find val lst)
+	       (cond
+		  ((assq val lst) => cadr)
+		  (else #f)))
+	    (list (or (find 'name info) (exit #f))
+		  (or (find 'author info) (exit #f))
+		  category
+		  (or (find 'hop info) (hz-master-hop))
+		  (or (find 'version info) (exit #f))
+		  (or (find 'minhop info) "")
+		  (or (find 'maxhop info) "")
+		  (or (find 'sdescr info) (exit #f))
+		  (or (find 'descr info) "")
+		  (number->string (file-modification-time path))
+		  "rw"
+		  "")))))
+
+;*---------------------------------------------------------------------*/
+;*    build-repository-file ...                                        */
+;*---------------------------------------------------------------------*/
+(define (build-repository-file db base dir file)
+   (when (is-suffix? file "hz")
+      (let ((name (hz->name file))
+	    (view (make-file-name dir file)))
+	 (if (string? name)
+	     (let ((old (hz-db-get-entry-by-name-category db name dir))
+		   (path (make-file-name base view))
+		   (stamp (hz-db-sync-stamp db)))
+		(cond
+		   ((not old)
+		    (let ((n (hz->dbhz path dir name)))
+		       (if (pair? n)
+			   (begin
+			      (apply hz-db-add-entry db (cons stamp n))
+			      (list view "" ""))
+			   (list "" "" view))))
+		   ((=second (date->seconds (dbhz-date old))
+			     (file-modification-time path))
+		    'ok)
+		   (else
+		    (let ((n (hz->dbhz path dir name)))
+		       (if (pair? n)
+			   (begin
+			      (apply hz-db-update-entry db (cons stamp n))
+			      (list "" view ""))
+			   (list "" "" view))))))
+	     (list "" "" view)))))
+   
+;*---------------------------------------------------------------------*/
+;*    build-repository-dir ...                                         */
+;*---------------------------------------------------------------------*/
+(define (build-repository-dir db base dir)
+   (let ((path (make-file-name base dir)))
+      (if (directory? path)
+	  (filter-map (lambda (file) (build-repository-file db base dir file))
+		      (directory->list path))
+	  '())))
+   
+;*---------------------------------------------------------------------*/
+;*    hz/build-repository ...                                          */
+;*---------------------------------------------------------------------*/
+(define-service (hz/build-repository)
+   (let ((db (hz-get-repository-db)))
+      ;; update the sync stamp
+      (hz-db-sync-stamp-inc! db)
+      ;; get the new weblets
+      (let* ((lst (append-map (lambda (d)
+				 (build-repository-dir db (hz-repository) d))
+			      (directory->list (hz-repository))))
+	     (len (length lst)))
+	 ;; build the visual result
+	 (<TABLE>
+	    :class "build-repository"
+	    (<COLGROUP> :span 3 :width "30%")
+	    (<TR> (<TD>
+		     :colspan 3
+		     (<DIV> :class "title" len " weblets inspected...")))
+	    (<TR> (<TD> :colspan 3 "&nbsp;"))
+	    (<TR> (<TH> :class "new" "New")
+		  (<TH> :class "update" "Update")
+		  (<TH> :class "bad" "Bad"))
+	    (let ((sf (lambda (s1 s2)
+			 (or (string-null? s1) (string<? s1 s2))))
+		  (lst (filter pair? lst)))
+	       (map (lambda l (<TR> (map <TD> l)))
+		    (sort (map car lst) sf)
+		    (sort (map cadr lst) sf)
+		    (sort (map caddr lst) sf)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-update-repository ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hz-update-repository)
+   (<HTML>
+      (<HEAD>
+	 (<HOP-HEAD> :dir (hz-dir) 
+		     :jscript "hop-window.js" :css "hop-window.css"
+		     :css "hz.hss"))
+      (let ((author (<INPUT> :type 'text :size 30))
+	    (category (<INPUT> :type 'text :size 20))
+	    (hop (<INPUT> :type 'text :size "100%"))
+	    (version (<INPUT> :type 'text :size 10))
+	    (minhop (<INPUT> :type 'text :size 10))
+	    (maxhop (<INPUT> :type 'text :size 10))
+	    (sdescr (<INPUT> :type 'text :size 50))
+	    (descr (<TEXTAREA> :cols "100%"))
+	    (win (<FLOAT-WINDOW> :title "Repository" :width 640 :height 400)))
+	 (<ABODY>
+	    (<SCRIPT> ~(define reset!
+			  (lambda ()
+			     (set! $author.value "")
+			     (set! $category.value "")
+			     (set! $hop.value "")
+			     (set! $version.value "")
+			     (set! $minhop.value "")
+			     (set! $maxhop.value "")
+			     (set! $sdescr.value "")
+			     (set! $descr.value ""))))
+	    win
+	    (<DIV>
+	       :id "add"
+	       (<VBOX>
+		  (<VBOX-BLOCK>
+		     (<SPAN> :class "title" "DB management"))
+		  (<VBOX-SEPARATOR>)
+		  (<VBOX-BLOCK>
+		     (<A> :class "repository"
+			  :href (string-append (hz-db-inspector-url)
+					       (hz-db-path "hz" 'repository))
+			  (hz-db-path "hz" 'repository)))
+		  (<VBOX-BLOCK> "&nbsp;")
+		  (<VBOX-BLOCK> (<BUTTON>
+				   :title "Build the db by files inspection"
+				   :onclick ~(hop_open_float_window
+					      ($hz/build-repository)
+					      $win (/ (- window.innerWidth 640) 2) 50)
+				   "Build Repository DB")) 
+		  (<VBOX-BLOCK> "&nbsp;")
+		  (<VBOX-BLOCK>
+		     (<SPAN> :class "title" "Add/Update/Remove Weblet entry"))
+		  (<VBOX-SEPARATOR>)
+		  (<VBOX-BLOCK> "&nbsp;")
+		  (let* ((create (<BUTTON>
+				    :title "Create a new Weblet entry"
+				    :onclick ~(hop ($hz/create
+						    
+						    (document.getElementById "name")
+						    $author $category $hop
+						    $version $minhop $maxhop
+						    $sdescr $descr)
+						   (lambda (h) (reset!)))
+				    "create"))
+			 (update (<BUTTON>
+				    :title "Update a new Weblet entry"
+				    :disabled #t
+				    :onclick ~(hop ($hz/update
+						    (document.getElementById "name")
+						    $author $category $hop
+						    $version $minhop $maxhop
+						    $sdescr $descr))
+				    "update"))
+			 (remove (<BUTTON>
+				    :title "Remove a new Weblet entry"
+				    :disabled #t
+				    :onclick ~(let ((el (document.getElementById "name")))
+						 (if (and el (confirm (+ "Remove entry `" el.value "'")))
+						     (begin
+							(hop ($hz/remove el.value $category))
+							(reset!))))
+				    "remove"))
+			 (reset (<BUTTON>
+				   :title "Reset the current form"
+				   :onclick ~(reset!)
+				   "reset"))
+			 (weblet (<INPUT>
+				    :type 'text :id "name" :size 50
+				    :onkeyup
+				    ~(let ((e this)
+					   (k event.keyCode))
+					(with-hop ($hz/query-entry e.value)
+					   (lambda (old)
+					      (if old
+						  (begin
+						     (set! e.style.color "#ff2222")
+						     (set! $remove.disabled #f)
+						     (set! $update.disabled #f)
+						     (set! $create.disabled #t)
+						     (if (or (= k 13) (= $author.value.length 0))
+							 (set! $author.value old.author))
+						     (if (or (= k 13) (= $category.value.length 0))
+							 (set! $category.value old.category))
+						     (if (or (= k 13) (= $hop.value.length 0))
+							 (set! $hop.value old.hop))
+						     (if (or (= k 13) (= $version.value.length 0))
+							 (set! $version.value old.version))
+						     (if (or (= k 13) (= $minhop.value.length 0))
+							 (set! $minhop.value old.minhop))
+						     (if (or (= k 13) (= $maxhop.value.length 0))
+							 (set! $maxhop.value old.maxhop))
+						     (if (or (= k 13) (= $sdescr.value.length 0))
+							 (set! $sdescr.value old.sdescr))
+						     (if (or (= k 13) (= $descr.value.length 0))
+							 (set! $descr.value old.descr)))
+						  (begin
+						     (set! e.style.color "blue")
+						     (set! $remove.disabled #t)
+						     (set! $update.disabled #t)
+						     (set! $create.disabled #f)
+						     (if (= k 13)
+							 (reset!))))))))))
+		     (<VBOX-BLOCK>
+			(<DIV>
+			   :class "weblets"
+			   (<TABLE>
+			      :class "weblets"
+			      (<TR> (<TH> "weblet: ") (<TD> weblet))
+			      (<TR> (<TH> "author: ") (<TD> author))
+			      (<TR> (<TH> "category: ") (<TD> category))
+			      (<TR> (<TH> "hop: ") (<TD> hop))
+			      (<TR> (<TH> "version: ") (<TD> version))
+			      (<TR> (<TH> "min hop version: ") (<TD> minhop))
+			      (<TR> (<TH> "max hop version: ") (<TD> maxhop))
+			      (<TR> (<TH> "short descr: ") (<TD> sdescr))
+			      (<TR> (<TH> :id "descr" "descr: ") (<TD> descr))
+			      (<TR> (<TD> "&nbsp;"))
+			      (<TR>
+				 (<TD>
+				    :colspan 2
+				    (<TABLE>
+				       :class "buttons"
+				       (<TR>
+					  (<TD> create)
+					  (<TD> update)
+					  (<TD> remove)
+					  (<TD> reset)))))))))))))))

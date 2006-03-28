@@ -1,0 +1,109 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/hz/config.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
+;*    Last change :  Tue Mar 28 17:05:43 2006 (serrano)                */
+;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HZ configuration                                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_config
+   (export (hz-version)
+	   (hz-date)
+	   (hz-author)
+	   (hz-rc-directory::bstring)
+	   (hz-master-hop)
+	   (hz-sync-hops)
+	   (hz-dir)
+	   (hz-db)
+	   (hz-session-key::bstring)
+	   (hz-auto-logout-minute::int)
+	   (hz-repository::bstring)
+	   (hz-db-inspector-url::bstring)
+	   (hz-category-icons::pair-nil)
+	   (hz-preferences-load ::bstring)
+	   (hz-preferences-save ::bstring)
+	   (hz-preferences-edit)))
+
+;*---------------------------------------------------------------------*/
+;*    Version                                                          */
+;*---------------------------------------------------------------------*/
+(define (hz-version) "1.0.0")
+(define (hz-date) "2006")
+(define (hz-author) "M. Serrano")
+
+;*---------------------------------------------------------------------*/
+;*    hz-dir                                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-dir (dirname (the-loading-file)))
+
+;*---------------------------------------------------------------------*/
+;*    hz-rc-directory ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-rc-directory (make-file-name (hop-rc-directory) "hz"))
+
+;*---------------------------------------------------------------------*/
+;*    hz-repository ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-repository
+   "/users/serrano/prgm/project/hop/repository")
+   
+;*---------------------------------------------------------------------*/
+;*    hz-db-inspector-url ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-db-inspector-url "/hop/websql/manage-base?base=")
+
+;*---------------------------------------------------------------------*/
+;*    Master servers ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-master-hop "http://redrock.inria.fr:8080")
+
+;*---------------------------------------------------------------------*/
+;*    Sync servers... ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-sync-hops '("http://redrock.inria.fr:8080"))
+
+;*---------------------------------------------------------------------*/
+;*    hz-db                                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-db "hz.db")
+
+;*---------------------------------------------------------------------*/
+;*    hz-session-key ...                                               */
+;*---------------------------------------------------------------------*/
+(define (hz-session-key)
+   "0")
+;*    (integer->string (hop-login-cookie-crypt-key)))                  */
+
+;*---------------------------------------------------------------------*/
+;*    hz-auto-logout-minute ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-auto-logout-minute
+   60)
+
+;*---------------------------------------------------------------------*/
+;*    hz-category-icons ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-category-icons
+   '(("hop" . "hop.png")
+     ("game" . "game.png")
+     ("multimedia" . "multimedia.png")))
+
+;*---------------------------------------------------------------------*/
+;*    preferences ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-preferences hz-preferences
+   
+   "Setup"
+   ("Automatic log out" integer hz-auto-logout-minute)
+   ("Hops" expr hz-sync-hops)
+   
+   "Master administration"
+   ("HZ master" string hz-master-hop)
+   ("Database inspector" string hz-db-inspector-url))
+

@@ -3,18 +3,18 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Sun Mar 26 20:32:15 2006 (eg)                     */
+;*    Last change :  Tue Mar 28 17:04:33 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
 
 (define *selected-cell* #f)
-;(define *selected-col*  0)
-;(define *selected-row* 0)
 (define *board* #f)
+(define *show-errors* #t)
+
 
 (define (board-ref i j)
-  (vector-ref (vector-ref j) i))
+  (vector-ref (vector-ref *board* j) i))
 
 
 
@@ -58,14 +58,29 @@
 	       (begin
 		 (set-cell-value! *selected-cell* in)
 		 (set-cell-foreground! *selected-cell*
-				       (if (= val in) "black" "red"))))))
+				       (if (or (not *show-errors*)
+					       (= val in))
+					   "black"
+					   "red"))))))
       ((16) #t)
       ((191 72) 				;; ? or h: hint
        (set-cell-value! *selected-cell* (find-cell-value *selected-cell*))
        (set-cell-foreground! *selected-cell* "#7EF09E"))
-      ((80)					;; p: print
-       (window.print))       
       (else (alert key-code)))))
 
 		   
 
+;; ======================================================================
+;; 	show-solution ...
+;; ======================================================================
+(define (show-solution)
+  ;; Embedded do seems to not work for now, so use a for-each
+  (for-each (lambda (i)
+	      (for-each (lambda(j)
+			  (let* ((id   (+ "sudoku-" i "-" j))
+				 (cell (document.getElementById id))
+				 (val (find-cell-value cell)))
+			    (if (> val 0)
+				(set-cell-value! cell val))))
+			'(0 1 2 3 4 5 6 7 8)))
+	    '(0 1 2 3 4 5 6 7 8)))

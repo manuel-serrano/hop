@@ -1,0 +1,139 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/private/hz/authenticate.hop             */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Mar 17 11:31:17 2006                          */
+;*    Last change :  Mon Mar 27 13:10:24 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HZ authentication                                                */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_authenticate
+   (import hz_config
+	   hz_widgets)
+   (export (hz-get-access req)
+	   (hz-authenticate req)))
+
+;*---------------------------------------------------------------------*/
+;*    hz-get-access ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hz-get-access req)
+   (let ((cookie (http-cookie-get req "hop_hz")))
+      (if (string? cookie)
+	  (let ((exp (with-input-from-string (base64-decode cookie) read)))
+	     (if (pair? exp)
+		 (values (find-user-cookie exp) (cookie-mode exp))
+		 (values #f #f)))
+	  (values #f #f))))
+
+;*---------------------------------------------------------------------*/
+;*    find-user-cookie ...                                             */
+;*---------------------------------------------------------------------*/
+(define (find-user-cookie exp)
+   (let* ((user (memq :user exp))
+	  (passwd (memq :passwd exp)))
+      (and (pair? user) (pair? (cdr user)) (symbol? (cadr user))
+	   (pair? passwd) (pair? (cdr passwd)) (symbol? (cadr passwd))
+	   (find-user/encrypt (symbol->string (cadr user))
+			      (symbol->string (cadr passwd))
+			      hz-encrypt-password))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-encrypt-password ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hz-encrypt-password p)
+   (string-append (hz-session-key) p))
+
+;*---------------------------------------------------------------------*/
+;*    cookie-mode ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (cookie-mode exp)
+   (let ((mode (memq :mode exp)))
+      (and (pair? mode) (pair? (cdr mode)) (symbol? (cadr mode)) (cadr mode))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/setcookie ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-service (hz/setcookie name passwd mode)
+   (let* ((pd (hz-encrypt-password
+	       (md5sum (string-append name " " passwd))))
+	  (cookie `(user: ,name passwd: ,pd mode: ,mode))
+	  (p (open-output-string)))
+      (display cookie p)
+      (let ((s (close-output-port p)))
+	 (instantiate::http-response-string
+	    (body (base64-encode s))))))
+
+;*---------------------------------------------------------------------*/
+;*    login ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (login req name pass local)
+   ~(let ((svc ($hz/setcookie $(begin name).value
+			      $(begin pass).value
+			      (if $(begin local).checked "local" "share")))
+	  (cback (lambda (http)
+		    (let ((date (new Date)))
+		       (date.setMinutes
+			(+ (date.getMinutes) $(hz-auto-logout-minute)))
+		       (hop_cookie_set_value "hop_hz"
+					     http.responseText
+					     $(http-request-path req)
+					     #f
+					     date)
+		       (set! location $(http-request-path req))))))
+       (hop svc cback)))
+
+;*---------------------------------------------------------------------*/
+;*    hz-authenticate ...                                              */
+;*    -------------------------------------------------------------    */
+;*    The cookie authentication is computed on the HOP, by opposition  */
+;*    to the client, in order to encrypt the password with the hz      */
+;*    key. With this technics, even if the cookie is stolen, the       */
+;*    user password cannot be forged.                                  */
+;*---------------------------------------------------------------------*/
+(define (hz-authenticate req)
+   (<HTML>
+      (<HEAD>
+	 (<HOP-HEAD> :dir (hz-dir) :css "hz.hss"))
+      (<ABODY>
+	 (<DIV>
+	    :id "body"
+	    (<VBOX>
+	       (<VBOX-BLOCK>
+		  (let ((name (<INPUT>
+				 :type 'text :id "user-name"
+				 :name "name" :size 30))
+			(pass (<INPUT> 
+				 :type 'password :id "password"
+				 :name "password" :size 30))
+			(local (<INPUT>
+				  :type "radio" :id "local" :name "mode"
+				  :value "local" :checked #t "local"))
+			(share (<INPUT>
+				  :type "radio" :id "share" :name "mode"
+				  :value "share" "share")))
+		     (<DIV>
+			:class "authentication"
+			(<TABLE>
+			   :class "authentication"
+			   (<TR>
+			      (<TH> "User name: ")
+			      (<TD> :colspan 2 name))
+			   (<TR>
+			      (<TH> "Password: ")
+			      (<TD> :colspan 2 pass))
+			   (<TR>
+			      (<TD> :colspan 3 "&nbsp;"))
+			   (<TR>
+			      (<TH> "Mode:")
+			      (<TD> :class "mode" local share)
+			      (<TD> :class "login"
+				    (<BUTTON>
+				       :title "Login with identify and mode"
+				       :onclick (login req name pass local)
+				       "login"))))))))))))
+      
