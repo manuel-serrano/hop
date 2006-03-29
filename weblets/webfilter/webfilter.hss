@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Mar 10 13:34:17 2006 (serrano)                */
+/*    Last change :  Wed Mar 29 14:27:26 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WEBFILTER HOP CSS                                                */
@@ -206,3 +206,39 @@ table.http-headers input {
 }
 
 
+/*---------------------------------------------------------------------*/
+/*    Preferences                                                      */
+/*---------------------------------------------------------------------*/
+table.preferences {
+  font-size: small;
+}
+
+table.preferences th {
+  text-align: left;
+}
+
+table.preferences th.label {
+  padding-top: 10px;
+  font-size: small;
+  border-bottom: 1px solid $border-color;
+}
+
+table.preferences td.save {
+  text-align: left;
+}
+
+table.preferences td.save button:hover {
+  color: darkorange;
+}
+
+table.preferences input.pref_modified {
+  color: red;
+}
+
+table.preferences input.pref_applied {
+  color: green;
+}
+
+table.preferences input.pref_saved {
+  color: blue;
+}

@@ -1,27 +1,10 @@
-;; -*- scheme -*-
-;; Weblet Informations
-
-(
- ;; Description [description] 
- (description "HOP Web filtering tool")
-
- ;; Author [author]
- (author "Manuel Serrano")
- 
- ;; Version [version]
- ;; Update URL [update-url]
- ;; File containing the main [main-file]  (defaults to "weblet-name.hop")
-
- ;; About service if exists [about-service]
+((name "webfilter")
+ (version "1.0.0")
+ (author "M. Serrano")
+ (sdescr "HOP Web filtering.")
  (about-service "about")
-
- ;; Configuration service [config-service]
- (config-service "")
-
- ;; autoload predicate [autoload]
  (autoload (let ((pred (autoload-prefix
 			(make-file-name (hop-service-base) "webfilter"))))
 	      (lambda (req)
 		 (or (not (http-request-localhostp req))
-		     (pred req)))))
-)
+		     (pred req))))))

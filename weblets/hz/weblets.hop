@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Wed Mar 29 10:51:00 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 14:12:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -83,7 +83,7 @@
 			       :title "Show new available weblets"
 			       "New"))))
 	 (<PANED>
-	    :fraction 20
+	    :fraction 25
 	    (<PAN>
 	       (<TREE>
 		  :id "main-tree"

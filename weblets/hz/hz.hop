@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Wed Mar 29 11:48:54 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 13:38:48 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -123,7 +123,7 @@
       (<ABODY>
 	 (<DIV>
 	    :id "body"
-	    (<PREFERENCES (make-file-name (hz-rc-directory) "hz.prefs"))))))
+	    (<PREFERENCES> (make-file-name (hz-rc-directory) "hz.prefs"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PREFERENCES> ...                                                */

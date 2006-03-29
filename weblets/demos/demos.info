@@ -4,9 +4,17 @@
 (
  ;; Description [description] 
  (description "Hop Demonstrations")
+ (sdescr "Hop Demonstrations.")
 
  ;; Author [author]
+ (author "E. Gallesio")
+ 
  ;; Version [version]
+ (version "1.0.0")
+
+ ;; Name [name]
+ (name "demos")
+ 
  ;; Update URL [update-url]
  ;; File containing the main [main-file]  (defaults to "weblet-name.hop")
 

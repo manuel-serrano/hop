@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Tue Mar 28 17:07:51 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 14:34:51 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -40,6 +40,10 @@
        (text-editor "A string" get (service (v) (set v) #t)))
       (expr
        (sexp-editor get set))
+      (bool
+       (bool-editor "yes" "no" get (service (v) (set v) #t)))
+      ((bool (and ?yes (? string?)) (and ?no (? string?)))
+       (bool-editor yes no get (service (v) (set v) #t)))
       (else
        (error 'preferences-editor "Illegal type" type))))
 
@@ -75,3 +79,32 @@
 		      (lambda ()
 			 (set (read))))
 		   #t)))
+
+;*---------------------------------------------------------------------*/
+;*    bool-editor ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (bool-editor yes-string no-string get svc)
+   (let ((checked (get))
+	 (name (symbol->string (gensym))))
+      (<TABLE>
+	 (<COLGROUP> :span 2 :width "0*")
+	 (<TR>
+	    (<TD>
+	       (<INPUT>
+		  :type "radio"
+		  :checked checked
+		  :name name
+		  :onclick (format
+			    "hop(~a(true)); this.className = 'pref_applied';"
+			    (scheme->javascript svc))
+		  yes-string))
+	    (<TD> 
+	       (<INPUT>
+		  :type "radio"
+		  :checked (not checked)
+		  :name name
+		  :onclick (format
+			    "hop(~a(false)); this.className = 'pref_applied';"
+			    (scheme->javascript svc))
+		  no-string))))))
+      
