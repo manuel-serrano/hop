@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Wed Mar 29 06:56:03 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 10:41:41 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -27,7 +27,7 @@
 	      sdescr::bstring
 	      (descr::bstring (info "BLOB"))
 	      date::date
-	      (access::bstring (default "rw"))
+	      (driver::bstring (default "hz"))
 	      (install::bstring (default "")))
 	   (hz-db-path user mode)
 	   (hz-db-columns)
@@ -41,11 +41,14 @@
 	   (hz-get-repository-db)
 	   (hz-db-get-entry-by-name db name)
 	   (hz-db-get-entry-by-name-category db name category)
+	   (hz-db-get-unmanaged db name category)
+	   (hz-db-get-all-unmanaged db)
 	   (hz-db-add-entry db . args)
 	   (hz-db-add-weblet db o)
 	   (hz-db-update-entry db . args)
 	   (hz-db-update-weblet db o)
 	   (hz-db-remove-entry db name category)
+	   (hz-db-remove-weblet db o)
 	   (hz-db-get-categories db)
 	   (hz-db-get-entries-by-category db category)
 	   (hz-db-query db key)
@@ -194,7 +197,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    new-dbhz ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (new-dbhz s n a c h v mi ma sd d dt a i)
+(define (new-dbhz s n a c h v mi ma sd d dt dr i)
    (instantiate::dbhz
       (stamp s)
       (name n)
@@ -207,7 +210,7 @@
       (sdescr sd)
       (descr d)
       (date (seconds->date (string->elong dt)))
-      (access i)
+      (driver dr)
       (install (if (string? i) i ""))))
 
 ;*---------------------------------------------------------------------*/
@@ -224,6 +227,21 @@
    (sqlite-eval db new-dbhz
       "SELECT ~a FROM weblets WHERE (name = ~q) AND (category = ~q)"
       (hz-db-row) name category))
+
+;*---------------------------------------------------------------------*/
+;*    hz-db-get-unmanaged ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hz-db-get-unmanaged db name category)
+   (sqlite-eval db new-dbhz
+      "SELECT ~a FROM weblets WHERE (name = ~q) AND (category = ~q) AND (driver != 'hz')"
+      (hz-db-row) name category))
+
+;*---------------------------------------------------------------------*/
+;*    hz-db-get-all-unmanaged ...                                      */
+;*---------------------------------------------------------------------*/
+(define (hz-db-get-all-unmanaged db)
+   (sqlite-map db new-dbhz
+      "SELECT ~a FROM weblets WHERE (driver != 'hz')" (hz-db-row)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-add-entry ...                                              */
@@ -271,6 +289,15 @@
    (sqlite-exec db
       "DELETE FROM weblets WHERE( name = ~q ) AND (category = ~q)"
       name category))
+
+;*---------------------------------------------------------------------*/
+;*    hz-db-remove-weblet ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hz-db-remove-weblet db o)
+   (with-access::dbhz o (name category driver)
+      (sqlite-exec db
+	 "DELETE FROM weblets WHERE( name = ~q ) AND (category = ~q) AND (driver = ~q)"
+	 name category driver)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-get-categories ...                                         */

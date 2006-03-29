@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed Mar 29 06:58:14 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 10:50:51 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -13,10 +13,12 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hz_sync
+   
    (import  hz_config
 	    hz_widgets
 	    hz_db)
-   (export  <SYNC>))
+   
+   (export  (<SYNC> db)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/getsync ...                                                   */
@@ -106,6 +108,7 @@
 ;*    <SYNC> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<SYNC> db)
+   (sync-unmanaged! db)
    (let ((out (<DIV> (show-updates (hz-db-query-update db)
 				   (hz-db-query-new db))))
 	 (sync (service ()
@@ -175,4 +178,64 @@
 		  (append update (make-list (-fx m lu) #f))
 		  (append new (make-list (-fx m ln) #f)))))))
 
+;*---------------------------------------------------------------------*/
+;*    sync-unmanaged! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (sync-unmanaged! db)
+   
+   (define (find val lst)
+      (cond
+	 ((assq val lst) => cadr)
+	 (else #f)))
 
+   (define (sync-info db name exit info)
+      (with-input-from-file info
+	 (lambda ()
+	    (let* ((i (read))
+		   (v (or (find 'version i) (exit #f)))
+		   (a (or (find 'author i) ""))
+		   (sd (or (find 'sdescr i) (exit #f)))
+		   (de (or (find 'descr i) ""))
+		   (cat (or (find 'category i) "hop"))
+		   (o (hz-db-get-unmanaged db name cat)))
+	       (tprint "O=" o)
+	       (if (dbhz? o)
+		   (with-access::dbhz o (version)
+		      (unless (string=? version v)
+			 (set! version v)
+			 (hz-db-update-weblet db o)))
+		   (hz-db-add-entry
+		    db (hz-db-sync-stamp db)
+		    name a cat ""
+		    v "" ""
+		    sd de
+		    (number->string (date->seconds (current-date)))
+		    "unmanaged" v))))))
+   
+   (define (sync-dir name)
+      (let ((dir (make-file-name (hop-weblets-directory) name)))
+	 (when (directory? dir)
+	    (let ((info (make-file-name dir (string-append name ".info"))))
+	       (when (file-exists? info)
+		  (tprint "INFO=" info)
+		  (bind-exit (exit)
+		     (with-handler
+			(lambda (e)
+			   (exception-notify e)
+			   (exit #f))
+			(sync-info db name exit info))))))))
+
+   (define (sync-dbhz o)
+      (with-access::dbhz o (name)
+	 (let ((i (make-file-path (hop-weblets-directory)
+				  name
+				  (string-append name ".info"))))
+	    (unless (file-exists? i)
+	       (hz-db-remove-weblet o)))))
+   
+   ;; check the file systems
+   (for-each sync-dir (directory->list (hop-weblets-directory)))
+   
+   ;; check the db
+   (for-each sync-dbhz (hz-db-get-all-unmanaged db)))
+   

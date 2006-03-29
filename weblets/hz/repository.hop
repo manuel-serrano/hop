@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Wed Mar 29 06:42:17 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 10:16:06 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -27,7 +27,7 @@
 		       version minhop maxhop
 		       sdescr descr
 		       (number->string (date->seconds (current-date)))
-		       "rw"
+		       "hz"
 		       #f)))
 	 
 ;*---------------------------------------------------------------------*/
@@ -41,7 +41,7 @@
 			  version minhop maxhop
 			  sdescr descr
 			  (number->string (date->seconds (current-date)))
-			  "rw"
+			  "hz"
 			  (and (dbhz? e) (dbhz-install e)))))
 
 ;*---------------------------------------------------------------------*/
@@ -113,7 +113,7 @@
 		  (or (find 'sdescr info) (exit #f))
 		  (or (find 'descr info) "")
 		  (number->string (file-modification-time path))
-		  "rw"
+		  "hz"
 		  "")))))
 
 ;*---------------------------------------------------------------------*/

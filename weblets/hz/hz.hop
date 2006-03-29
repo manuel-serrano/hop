@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Wed Mar 29 09:56:09 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 10:40:03 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -49,8 +49,7 @@
 (define (hz-main req user mode)
    (let ((db (hz-get-db (hz-db-path user mode)))
 	 (prefs (make-file-name (hz-rc-directory) "hz.prefs")))
-      (when (file-exists? prefs)
-	 (hz-preferences-load prefs))
+      (when (file-exists? prefs) (hz-preferences-load prefs))
       (<HTML>
 	 (<HEAD>
 	    (<HOP-HEAD> :dir (hz-dir)
