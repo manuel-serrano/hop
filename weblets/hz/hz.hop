@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Wed Mar 29 11:47:20 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 11:48:54 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -25,8 +25,8 @@
 ;*    hz ...                                                           */
 ;*---------------------------------------------------------------------*/
 (define-service (hz)
-   (if (users-added?)
-       (let* ((req (the-current-request)))
+   (let* ((req (the-current-request)))
+      (if (users-added?)
 	  (multiple-value-bind (user mode)
 	     (hz-get-access req)
 	     (if (and (user? user)
@@ -34,7 +34,7 @@
 		      (user-authorized-service? user 'hz))
 		 (hz-main req user mode)
 		 (hz-authenticate req))))
-       (hz-main req "" 'local)))
+      (hz-main req #f 'local)))
 
 ;*---------------------------------------------------------------------*/
 ;*    logout ...                                                       */
@@ -70,7 +70,7 @@
 			:class "identity"
 			(<TR>
 			   (<TH> "User: ")
-			   (<TD> (user-name user))
+			   (<TD> (if (user? user) (user-name user) ""))
 ;* 			   (<TH> "Mode: ")                             */
 ;* 			   (<TD> :class mode)                          */
 			   (<TD> (<BUTTON>
