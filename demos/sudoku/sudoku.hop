@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Tue Mar 28 18:01:33 2006 (eg)                     */
+;*    Last change :  Wed Mar 29 09:05:27 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
@@ -218,7 +218,4 @@
 	    (set! *board* $board)
 	    (set! document.documentElement.onkeydown key-event)))))))
 
-;(run-sudoku)
-
-(define-service (sudoku/level)
-  "Hello")
+(run-sudoku)
