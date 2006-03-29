@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Mar 20 11:55:39 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 11:40:39 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -177,19 +177,21 @@
 ;*    find-user ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-user user-name encoded-passwd)
-   (let ((u (hashtable-get *users* user-name)))
-      (and (user? u)
-	   (string=? encoded-passwd (user-password u))
-	   u)))
+   (and (users-added?)
+	(let ((u (hashtable-get *users* user-name)))
+	   (and (user? u)
+		(string=? encoded-passwd (user-password u))
+		u))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-user/encrypt ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (find-user/encrypt user-name encoded-passwd encrypt)
-   (let ((u (hashtable-get *users* user-name)))
-      (and (user? u)
-	   (string=? encoded-passwd (encrypt (user-password u)))
-	   u)))
+   (and (users-added?)
+	(let ((u (hashtable-get *users* user-name)))
+	   (and (user? u)
+		(string=? encoded-passwd (encrypt (user-password u)))
+		u))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-hopaccess ...                                               */

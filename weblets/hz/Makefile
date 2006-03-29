@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Mar 28 17:42:40 2006 (serrano)                */
+#*    Last change :  Wed Mar 29 11:46:27 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -20,3 +20,8 @@ POPULATION	= Makefile hz.info \
 		  authenticate.hop db.hop hz.hss install.hop sync.hop \
                   widgets.hop
 
+build:
+	afile -suffix hop $(POPULATION) > .afile
+
+clean:
+	/bin/rm -f .afile

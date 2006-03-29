@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Mar  3 10:37:45 2006 (serrano)                */
+#*    Last change :  Wed Mar 29 11:46:51 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the password weblet                              */
@@ -21,3 +21,6 @@ include ../../etc/Makefile.version
 POPULATION	= Makefile webconf.hss webconf.hop \
 		  configure.png webconf.info
 
+build:
+
+clean:

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Mar 14 18:03:53 2006 (eg)                     */
+#*    Last change :  Wed Mar 29 11:46:09 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
@@ -21,3 +21,6 @@ include ../../etc/Makefile.version
 POPULATION	= Makefile demos.hop  demos.hss  demos.info  demos.png \
 		  demos.js
 
+build:
+
+clean:

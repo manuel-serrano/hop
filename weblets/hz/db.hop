@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Wed Mar 29 10:41:41 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 11:45:35 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -29,7 +29,7 @@
 	      date::date
 	      (driver::bstring (default "hz"))
 	      (install::bstring (default "")))
-	   (hz-db-path user mode)
+	   (hz-db-path mode)
 	   (hz-db-columns)
 	   (hz-get-db path)
 	   (hz-db-sync-date db)
@@ -59,7 +59,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-path ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (hz-db-path user mode)
+(define (hz-db-path mode)
    (case mode
       ((local share)
        (make-file-name (hz-rc-directory) (hz-db)))
