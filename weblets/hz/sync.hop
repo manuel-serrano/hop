@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Tue Mar 28 17:32:02 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 06:58:14 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -72,7 +72,8 @@
 (define (sync/host host db)
    (let* ((tables (hz-get-sync host))
 	  (info (assoc "info" tables))
-	  (weblets (assoc "weblets" tables)))
+	  (weblets (assoc "weblets" tables))
+	  (stamp (hz-db-sync-stamp db)))
       (if (not (and (pair? info) (pair? weblets)))
 	  (error 'hz-sync "Corrupted database" (hz-sync-host))
 	  (let* ((cols (cadr weblets))
@@ -97,7 +98,7 @@
 		       (with-access::dbhz o (version)
 			  (when (string>? (vector-ref v vi) version)
 			     (apply hz-db-update-entry db vals)))
-		       (apply hz-db-add-entry db vals))))
+		       (apply hz-db-add-entry db (cons stamp (cdr vals))))))
 	     
 	     (filter-map sync-weblet (cddr weblets))))))
 
@@ -116,6 +117,7 @@
 					      (hz-db-query-new db))))
 			;; update the sync date
 			(hz-db-sync-date-update! db (current-date))
+			;; increment the stamp after the news are collected
 			(hz-db-sync-stamp-inc! db)
 			(<DIV> res (<SPAN> (hz-db-sync-date db)))))))
 	 (syncd (<SPAN> (hz-db-sync-date db))))
@@ -151,7 +153,6 @@
 ;*    show-updates ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (show-updates update new)
-   
    (define (<TDE> o)
       (if (dbhz? o)
 	  (<TD>

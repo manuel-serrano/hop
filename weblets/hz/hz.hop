@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue Mar 28 17:37:01 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 09:56:09 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -90,7 +90,7 @@
 				 (<WEBLETS> db))))
 			(<NPTAB>
 			   (<NPTABHEAD> "Preferences")
-			   (<PREFERENCES>))))))))))
+			   (<PREFERENCES> prefs))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FOOTER> ...                                                     */
@@ -122,12 +122,12 @@
       (<ABODY>
 	 (<DIV>
 	    :id "body"
-	    (<PREFERENCES)))))
+	    (<PREFERENCES (make-file-name (hz-rc-directory) "hz.prefs"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PREFERENCES> ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (<PREFERENCES>)
+(define (<PREFERENCES> prefs)
    (hz-preferences-edit
     :onclick ~(hop ($(service ()
 			(let ((d (hz-rc-directory)))

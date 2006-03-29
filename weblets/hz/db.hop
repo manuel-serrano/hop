@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Tue Mar 28 15:02:45 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 06:56:03 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -314,5 +314,5 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-db-query-new db)
    (sqlite-map db new-dbhz
-      "SELECT * FROM weblets WHERE (install = '') AND (stamp > ~a) ORDER BY name ASC"
+      "SELECT * FROM weblets WHERE (install = '') AND (stamp = ~a) ORDER BY name ASC"
       (hz-db-sync-stamp db)))
