@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Wed Mar 29 11:45:35 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 11:53:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -191,7 +191,7 @@
    (with-lock *hz-mutex*
       (lambda ()
 	 (unless (sqlite? *hz-db*)
-	    (set! *hz-db* (hz-get-db (hz-db-path "hz" 'repository))))
+	    (set! *hz-db* (hz-get-db (hz-db-path 'repository))))
 	 *hz-db*)))
 
 ;*---------------------------------------------------------------------*/

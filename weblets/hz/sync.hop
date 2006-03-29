@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed Mar 29 10:50:51 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 11:53:03 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -24,7 +24,7 @@
 ;*    hz/getsync ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/getsync)
-   (let* ((path (hz-db-path "hz" 'repository))
+   (let* ((path (hz-db-path 'repository))
 	  (db (hz-get-db path)))
       (unwind-protect
 	 (instantiate::http-response-obj

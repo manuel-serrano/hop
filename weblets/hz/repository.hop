@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Wed Mar 29 10:16:06 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 11:53:36 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -227,8 +227,8 @@
 		  (<VBOX-BLOCK>
 		     (<A> :class "repository"
 			  :href (string-append (hz-db-inspector-url)
-					       (hz-db-path "hz" 'repository))
-			  (hz-db-path "hz" 'repository)))
+					       (hz-db-path 'repository))
+			  (hz-db-path 'repository)))
 		  (<VBOX-BLOCK> "&nbsp;")
 		  (<VBOX-BLOCK> (<BUTTON>
 				   :title "Build the db by files inspection"
