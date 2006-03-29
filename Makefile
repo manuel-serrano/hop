@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Mar 28 19:01:41 2006 (eg)                     */
+#*    Last change :  Wed Mar 29 09:59:00 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -78,7 +78,7 @@ install: hop-dirs install-init etc-hoprc
 install-init: hop-dirs
 	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPFILDIR)/hop.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hop.init;
-	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDItcR)$(HOPFILDIR)/scheme2js.init && \
+	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDItR)$(HOPFILDIR)/scheme2js.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/scheme2js.init;
 	cp $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPFILDIR)/hopscheme.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hopscheme.init;

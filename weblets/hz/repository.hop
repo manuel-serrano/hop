@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/private/hz/repository.hop               */
+;*    serrano/prgm/project/hop/weblets/hz/repository.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Mon Mar 27 12:01:34 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 06:42:17 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -181,7 +181,7 @@
 		  (<TH> :class "update" "Update")
 		  (<TH> :class "bad" "Bad"))
 	    (let ((sf (lambda (s1 s2)
-			 (or (string-null? s1) (string<? s1 s2))))
+			 (or (string-null? s2) (string<? s1 s2))))
 		  (lst (filter pair? lst)))
 	       (map (lambda l (<TR> (map <TD> l)))
 		    (sort (map car lst) sf)
