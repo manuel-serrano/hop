@@ -1,0 +1,15 @@
+;; /users/serrano/prgm/project/hop/weblets/hz
+;; Wed Mar 29 11:49:07 2006
+
+(
+  (hz_authenticate "./authenticate.hop")
+  (hz_config "./config.hop")
+  (hz_db "./db.hop")
+  (hz "./hz.hop")
+  (hz_install "./install.hop")
+  (hz_repository "./repository.hop")
+  (hz_sync "./sync.hop")
+  (hz_weblets "./weblets.hop")
+  (hz_widgets "./widgets.hop")
+)
+
