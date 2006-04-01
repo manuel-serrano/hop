@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sun Mar 26 08:55:27 2006 (serrano)                */
+;*    Last change :  Sat Apr  1 08:31:30 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -27,6 +27,38 @@
        (when (is-local? host)
 	  (set! host "localhost")
 	  (set! port (hop-port))))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-cache ...                                                    */
+;*---------------------------------------------------------------------*/
+(define hss-cache
+   (instantiate::cache
+      (path (make-file-path (hop-rc-directory) "cache" "hss"))
+      (out (lambda (o p) (xml-write o p (hop-char-encoding))))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-response ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (hss-response req)
+   (with-access::http-request req (path method header)
+      (let ((cache (cache-get hss-cache path))
+	    (mime (mime-type path "text/css")))
+	 (if (string? cache)
+	     (instantiate::http-response-file
+		(content-type mime)
+		(bodyp (eq? method 'GET))
+		(file cache))
+	     (let* ((hss (hop-load-hss path))
+		    (cache (cache-put! hss-cache path hss)))
+		(if (string? cache)
+		    (instantiate::http-response-file
+		       (content-type mime)
+		       (bodyp (eq? method 'GET))
+		       (file cache))
+		    (instantiate::http-response-hop
+		       (content-type mime)
+		       (bodyp (eq? method 'GET))
+		       (xml hss))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-filter ...                                                   */
@@ -66,11 +98,7 @@
 			  (format "File `~a' loaded but produced no result"
 				  (http-request-path req)))))))
 		 ((is-suffix? (http-request-path req) "hss")
-		  (let ((hss (hop-load-hss (http-request-path req))))
-		     (instantiate::http-response-hop
-			(content-type (mime-type path "text/css"))
-			(bodyp (eq? method 'GET))
-			(xml hss))))
+		  (hss-response req))
 		 ((pair? (assq 'icy-metadata: header))
 		  (instantiate::http-response-shoutcast
 		     (start-line "ICY 200 OK")

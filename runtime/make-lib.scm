@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Mar 28 07:59:46 2006 (serrano)                */
+;*    Last change :  Sat Apr  1 08:04:47 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -49,7 +49,8 @@
 	   __hop_event
 	   __hop_color
 	   __hop_prefs
-	   __hop_weblets)
+	   __hop_weblets
+	   __hop_cache)
 
    (eval   (export-all)
 	   
@@ -81,6 +82,8 @@
 	   (class xml)
 	   (class xml-markup)
 	   (class xml-element)
-	   (class xml-html)))
+	   (class xml-html)
+
+	   (class cache)))
 	   
 	   
