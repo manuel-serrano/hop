@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Sat Apr  1 09:01:17 2006 (serrano)                */
+;*    Last change :  Sat Apr  1 13:07:41 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -132,12 +132,8 @@
 ;*    cache-get ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (cache-get c path::bstring)
-   (cond
-      ((not (%cache? c))
-       (bigloo-type-error 'cache-get '%cache c))
-      ((not (file-exists? path))
-       #f)
-      (else
+   (if (not (%cache? c))
+       (bigloo-type-error 'cache-get '%cache c)
        (with-access::%cache c (%table %head %tail validity)
 	  (let ((ce (hashtable-get %table path)))
 	     (when (validity ce path)
@@ -150,7 +146,7 @@
 		      (set! next %head)
 		      (cache-entry-prev-set! %head ce)
 		      (set! %head ce))
-		   path)))))))
+		   path))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-put! ...                                                   */
