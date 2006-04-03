@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:02:51 2006                          */
-;*    Last change :  Mon Apr  3 07:08:09 2006 (serrano)                */
+;*    Last change :  Mon Apr  3 15:04:23 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki library heap.                                           */
@@ -18,4 +18,6 @@
    
    (import __hopwiki_syntax)
    
-   (eval   (export-all)))
+   (eval   (class wiki-syntax)
+
+	   (export-all)))

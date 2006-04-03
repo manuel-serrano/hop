@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Dec  7 14:48:42 2005                          */
-#*    Last change :  Wed Dec  7 16:10:43 2005 (serrano)                */
-#*    Copyright   :  2005 Manuel Serrano                               */
+#*    Last change :  Mon Apr  3 15:02:41 2006 (serrano)                */
+#*    Copyright   :  2005-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Default contribution installation                                */
 #*=====================================================================*/
@@ -13,13 +13,13 @@
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install-contrib:
-	mkdir -p $(CONTRIBSDIR) && chmod a+rx $(CONTRIBSDIR)
-	mkdir -p $(CONTRIBSDIR)/$(CONTRIB) && chmod a+rx $(CONTRIBSDIR)/$(CONTRIB)
+	mkdir -p $(HOPCONTRIBSDIR) && chmod a+rx $(HOPCONTRIBSDIR)
+	mkdir -p $(HOPCONTRIBSDIR)/$(CONTRIB) && chmod a+rx $(HOPCONTRIBSDIR)/$(CONTRIB)
 	for p in $(CONTRIBSFILES); do \
           if [ -d $$p ]; then \
-	     cp -r $$p $(CONTRIBSDIR)/$(CONTRIB)/$$p; \
+	     cp -r $$p $(HOPCONTRIBSDIR)/$(CONTRIB)/$$p; \
           else \
-	     install -m a+r $$p $(CONTRIBSDIR)/$(CONTRIB)/$$p; \
+	     install -m a+r $$p $(HOPCONTRIBSDIR)/$(CONTRIB)/$$p; \
           fi \
         done
 
@@ -28,5 +28,5 @@ install-contrib:
 #*---------------------------------------------------------------------*/
 uninstall-contrib:
 	for p in $(CONTRIBSFILES); do \
-	  /bin/rm -rf $(CONTRIBSDIR)/$(CONTRIB)/$$p; \
+	  /bin/rm -rf $(HOPCONTRIBSDIR)/$(CONTRIB)/$$p; \
         done

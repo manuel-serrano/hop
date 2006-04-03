@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Apr  3 11:45:31 2006 (serrano)                */
+;*    Last change :  Mon Apr  3 14:37:46 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -128,8 +128,8 @@
 		      (let ((socket (http-request-socket r)))
 			 (socket-close socket)))
 		   %requests)
-	 (set! %requests '())
-	 (set! %closep #f))))
+	 (set! %requests '()))
+      (set! %closep #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    HOP-EVENT ...                                                    */
