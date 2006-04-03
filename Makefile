@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Apr  2 07:07:29 2006 (serrano)                */
+#*    Last change :  Mon Apr  3 07:04:10 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -22,7 +22,9 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile configure
-POPDIRS		= runtime hopscheme scheme2js src etc share contribs weblets demos
+POPDIRS		= runtime hopscheme scheme2js hopwiki src \
+                  etc share \
+                  contribs weblets demos
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -44,6 +46,7 @@ lib:
 	(cd runtime && $(MAKE) build)
 	(cd scheme2js && $(MAKE) build)
 	(cd hopscheme && $(MAKE) build)
+	(cd hopwiki && $(MAKE) build)
 
 weblets:
 	(cd weblets && $(MAKE) build)
@@ -55,6 +58,7 @@ dep:
 	(cd runtime; $(MAKE) dep)
 	(cd scheme2js; $(MAKE) dep)
 	(cd hopscheme; $(MAKE) dep)
+	(cd hopwiki; $(MAKE) dep)
 	(cd src; $(MAKE) dep)
 
 #*---------------------------------------------------------------------*/
@@ -64,6 +68,7 @@ ude:
 	(cd runtime; $(MAKE) ude)
 	(cd scheme2js; $(MAKE) ude)
 	(cd hopscheme; $(MAKE) ude)
+	(cd hopwiki; $(MAKE) ude)
 	(cd src; $(MAKE) ude)
 
 #*---------------------------------------------------------------------*/
@@ -77,6 +82,7 @@ install-quick: hop-dirs install-init etc-hoprc
 	(cd runtime && $(MAKE) install) && \
 	(cd scheme2js && $(MAKE) install) && \
 	(cd hopscheme && $(MAKE) install) && \
+	(cd hopwiki && $(MAKE) install) && \
 	(cd src && $(MAKE) install) && \
 	(cd share && $(MAKE) install)
 
@@ -87,6 +93,8 @@ install-init: hop-dirs
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/scheme2js.init;
 	cp $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPFILDIR)/hopscheme.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hopscheme.init;
+	cp $(BUILDLIBDIR)/hopwiki.init $(DESTDIR)$(HOPFILDIR)/hopwiki.init && \
+        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hopwiki.init;
 
 hop-dirs:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
@@ -112,6 +120,7 @@ uninstall:
 	(cd runtime; $(MAKE) uninstall)
 	(cd scheme2js; $(MAKE) uninstall)
 	(cd hopscheme; $(MAKE) uninstall)
+	(cd hopwiki; $(MAKE) uninstall)
 	(cd demos; $(MAKE) uninstall)
 	/bin/rm -rf $(HOPFILDIR)
 
@@ -122,6 +131,7 @@ clean:
 	(cd runtime; $(MAKE) clean)
 	(cd scheme2js; $(MAKE) clean)
 	(cd hopscheme; $(MAKE) clean)
+	(cd hopwiki; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
 
 devclean:
@@ -133,6 +143,7 @@ distclean: clean devclean
 	/bin/rm -f lib/hop.init
 	/bin/rm -f lib/scheme2js.init
 	/bin/rm -f lib/hopscheme.init
+	/bin/rm -f lib/hopwiki.init
 
 cleanall: distclean
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu Jan 26 09:45:47 2006 (serrano)                */
+/*    Last change :  Mon Apr  3 10:59:01 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
@@ -157,4 +157,55 @@ sorttable tr.title {
 div.clear {
   padding-bottom: 10px;
   text-align: center;
+}
+
+table.hop-caches {
+  width: 100%;
+}
+
+div.caches {
+  font-size: small;
+  overflow: auto;
+  min-height: 300px;
+  border: 1px solid $border-color;
+  padding: 2px;
+}  
+
+div.cache-info {
+  font-size: small;
+  border: 1px solid $border-color;
+  min-height: 300px;
+  padding: 2px;
+}
+
+span.cache-link {
+  cursor: pointer;
+  color: #008;
+}
+
+span.cache-link:hover {
+  text-decoration: underline;
+}
+
+table.info-cache {
+  font-size: inherit;
+  width: 100%;
+}
+
+table.info-cache th {
+  text-align: left;
+  font-size: large;
+  border-bottom: 1px solid $border-color;
+}
+ 
+div.cache-files {
+  min-height: 150px;
+  overflow: auto;
+  border: 1px solid $border-color;
+  background: white;
+  width: 100%;
+}
+
+table.cache-files {
+  font-size: small;
 }

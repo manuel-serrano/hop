@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sat Apr  1 08:04:47 2006 (serrano)                */
+;*    Last change :  Mon Apr  3 10:07:13 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -84,6 +84,7 @@
 	   (class xml-element)
 	   (class xml-html)
 
+	   (class cache-entry)
 	   (class cache)))
 	   
 	   

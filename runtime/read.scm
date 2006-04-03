@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Apr  1 19:40:20 2006 (serrano)                */
+;*    Last change :  Sun Apr  2 08:12:27 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -22,7 +22,7 @@
 	    __hop_css)
    
    (export  (the-loading-file)
-	    (hop-read ::input-port)
+	    (hop-read #!optional (iport::input-port (current-input-port)))
 	    (hop-load ::bstring #!optional (env (interaction-environment)))
 	    (hop-load-afile ::bstring)
 	    (read-error msg obj port)
@@ -618,7 +618,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-read ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-read iport)
+(define (hop-read #!optional (iport::input-port (current-input-port)))
    (if (closed-input-port? iport)
        (error 'hop-read "Illegal closed input port" iport)
        (read/rp *hop-grammar* iport '() 0 0 '() '())))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Sat Apr  1 13:07:41 2006 (serrano)                */
+;*    Last change :  Mon Apr  3 10:08:53 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -14,14 +14,14 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_cache
    
-   (static (class cache-entry
-	      (prev (default #f))
-	      (next (default #f))
+   (export (class cache-entry
+	      (%prev (default #f))
+	      (%next (default #f))
 	      (mtime::elong read-only)
 	      (path::bstring read-only)
-	      (upath::bstring read-only)))
-   
-   (export (abstract-class %cache
+	      (upath::bstring read-only))
+
+	   (abstract-class %cache
 	      (%table (default #f))
 	      (%head (default #f))
 	      (%tail (default #f))
@@ -36,13 +36,14 @@
 	      (%cache-new)
 	      (max-file-size::elong (default #e100000)))
 
-	   (get-register-caches::pair-nil)
+	   (registered-caches::pair-nil)
 	   (unregister-cache! ::cache)
 	   
 	   (cache-entry-valid?::bool ::obj ::bstring)
 
 	   (%cache-new ::%cache)
 	   (cache-clear ::cache)
+	   (cache->list ::cache)
 	   (cache-get::obj ::obj ::bstring)
 	   (cache-put! ::cache ::bstring ::obj)))
 
@@ -72,9 +73,9 @@
 (define *all-caches* '())
 
 ;*---------------------------------------------------------------------*/
-;*    get-register-caches ...                                          */
+;*    registered-caches ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (get-register-caches)
+(define (registered-caches)
    *all-caches*)
 
 ;*---------------------------------------------------------------------*/
@@ -110,7 +111,7 @@
       (let loop ((h %head))
 	 (when (cache-entry? h)
 	    (proc h)
-	    (loop (cache-entry-next h))))))
+	    (loop (cache-entry-%next h))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-clear ::cache-file ...                                     */
@@ -129,6 +130,17 @@
 		   c))
 
 ;*---------------------------------------------------------------------*/
+;*    cache->list ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (cache->list c::cache)
+   (with-access::%cache c (%tail)
+      (let loop ((tail %tail)
+		 (res '()))
+	 (if (not tail)
+	     res
+	     (loop (cache-entry-%prev tail) (cons tail res))))))
+
+;*---------------------------------------------------------------------*/
 ;*    cache-get ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (cache-get c path::bstring)
@@ -137,14 +149,14 @@
        (with-access::%cache c (%table %head %tail validity)
 	  (let ((ce (hashtable-get %table path)))
 	     (when (validity ce path)
-		(with-access::cache-entry ce (path prev next)
-		   (when prev
-		      (cache-entry-next-set! prev next)
-		      (if next
-			  (cache-entry-prev-set! next prev)
-			  (set! %tail prev))
-		      (set! next %head)
-		      (cache-entry-prev-set! %head ce)
+		(with-access::cache-entry ce (path %prev %next)
+		   (when %prev
+		      (cache-entry-%next-set! %prev %next)
+		      (if %next
+			  (cache-entry-%prev-set! %next %prev)
+			  (set! %tail %prev))
+		      (set! %next %head)
+		      (cache-entry-%prev-set! %head ce)
 		      (set! %head ce))
 		   path))))))
 
@@ -171,11 +183,11 @@
 		(set! current-entries (+fx 1 current-entries))
 		(begin
 		   (hashtable-remove! %table (cache-entry-upath %tail))
-		   (set! %tail (cache-entry-prev %tail))))
+		   (set! %tail (cache-entry-%prev %tail))))
 	    (if %tail
 		(begin
-		   (cache-entry-next-set! %tail ce)
-		   (cache-entry-prev-set! ce %tail)
+		   (cache-entry-%next-set! %tail ce)
+		   (cache-entry-%prev-set! ce %tail)
 		   (set! %tail ce))
 		(begin
 		   (set! %head ce)

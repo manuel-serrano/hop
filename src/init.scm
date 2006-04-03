@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sat Apr  1 08:31:30 2006 (serrano)                */
+;*    Last change :  Mon Apr  3 10:52:20 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -33,7 +33,10 @@
 ;*---------------------------------------------------------------------*/
 (define hss-cache
    (instantiate::cache
-      (path (make-file-path (hop-rc-directory) "cache" "hss"))
+      (path (make-file-path (hop-rc-directory)
+			    "cache"
+			    (string-append "hss-"
+					   (integer->string (hop-port)))))
       (out (lambda (o p) (xml-write o p (hop-char-encoding))))))
 
 ;*---------------------------------------------------------------------*/

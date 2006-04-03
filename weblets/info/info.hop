@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Mar 17 08:36:17 2006 (serrano)                */
+;*    Last change :  Mon Apr  3 10:59:35 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -90,6 +90,9 @@
 						  (<NPTABHEAD> "Weblets")
 						  (<WEBLETS>))
 					       (<NPTAB>
+						  (<NPTABHEAD> "Caches")
+						  (<CACHES>))
+					       (<NPTAB>
 						  (<NPTABHEAD> "Traffic")
 						  (<TRAFFIC>))))))))))))))))
 
@@ -129,6 +132,82 @@
 		 (lambda (rf1 rf2)
 		    (string<? (hop-service-path rf1)
 			      (hop-service-path rf2)))))))
+
+;*---------------------------------------------------------------------*/
+;*    <CACHES> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<CACHES>)
+   (define (info-cache c)
+      (let* ((l (cache->list c))
+	     (d (<DIV>
+		   :class "cache-files"
+		   (<TABLE>
+		      :class "cache-files"
+		      (map (lambda (ce)
+			      (<TR>
+				 (<TD>
+				    (<A>
+				       :href (format "http://hop/~a"
+						     (cache-entry-path ce))
+				       (cache-entry-upath ce))
+				    " " (round
+					 (/ (file-size (cache-entry-path ce))
+					    1024))
+				    "KB ("
+				    (seconds->date (cache-entry-mtime ce))
+				    ")")))
+			   l)))))
+	 (<TABLE>
+	    :class "info-cache"
+	    (<TR>
+	       (<TH> (cache-path c)))
+	    (<TR>
+	       (<TD> (format "~a files, ~a KB on cache."
+			     (length l)
+			     (round
+			      (/ (apply + (map (lambda (ce)
+						  (file-size
+						   (cache-entry-path ce)))
+					       l))
+				 1024)))))
+	    (<TR> (<TD> "&nbsp;"))
+	    (<TR>
+	       (<TD> (<BUTTON>
+			:onclick ~(hop ($(service ()
+					    (cache-clear c)
+					    ""))
+				       (lambda (h)
+					  (set! $d.innerHTML h.responseText)))
+			"clear cache")))
+	    (<TR> (<TD> "&nbsp;"))
+	    (<TR>
+	       (<TD> d)))))
+   (let ((d (<DIV>
+	       :class "cache-info"
+	       "")))
+      (<TABLE>
+	 :class "hop-caches"
+	 (<TR>
+	    (<TD>
+	       :width "20%"
+	       :valign 'top
+	       (<DIV>
+		  :class "caches"
+		  (map (lambda (c)
+			  (<SPAN>
+			     :class "cache-link"
+			     :onclick ~(hop ($(service () (info-cache c)))
+					    (lambda (h)
+					       (set! $d.innerHTML
+						     h.responseText)))
+			     (make-file-name
+			      (basename (dirname (cache-path c)))
+			      (basename (cache-path c)))))
+		       (registered-caches))))
+	    (<TD>
+	       :width "80%"
+	       :valign 'top
+	       d)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TRAFFIC> ...                                                    */
