@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Mar  2 11:12:55 2006                          */
-;*    Last change :  Fri Mar 24 11:34:35 2006 (serrano)                */
+;*    Last change :  Thu Apr  6 21:28:57 2006 (eg)                     */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Demos                                                        */
@@ -231,32 +231,14 @@
 ;; on disk. Only the main file is read from the value stored in the
 ;; hash table when the Run button is clicked.
 (define (demo-filter req)
-  (define (run-customized-demo path code)
-    (let ((port (open-input-string code))
-	  (t    (current-thread)))
-      (hop-load-afile (dirname path))
-      (if (thread? t)
-	  (thread-specific-set! t path)
-	  (set! *the-loading-file* path))
-      (let loop ((last #unspecified))
-	((hop-read-pre-hook) port)     
-	(let ((sexp (hop-read port)))
-	  ((hop-read-post-hook) port)
-	  (if (eof-object? sexp)
-	      last
-	      (loop (with-handler
-		       (lambda (e)
-			 (if (&warning? e)
-			     (begin (warning-notify e) #unspecified)
-			     (raise e)))
-		       (eval sexp))))))))
- 
   (with-access::http-request req (path host port localhostp)
      (if (and localhostp
 	      (substring-at? path (hop-demos-directory) 0))
 	 (let ((code (hashtable-get *user-code* path)))
 	   (if  code
-	       (let ((rep (run-customized-demo path code)))
+	       (let ((rep  (hop-load-port path
+					  (open-input-string code)
+					  (interaction-environment))))
 		 (cond
 		   ((%http-response? rep)
 		    rep)

@@ -3,12 +3,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Wed Mar 29 09:05:27 2006 (eg)                     */
+;*    Last change :  Thu Mar 30 10:38:36 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
 
-;(module sudoku)
+(module sudoku)
 
 
 (define *sudoku-directory* (dirname (the-loading-file)))
@@ -157,41 +157,72 @@
 	  (<SPAN> :class "sudoku-cell-unknown" :id id))))
   (list 
    (<DIV> :class "sudoku-board"
-     (map (lambda (x)
-	    (<DIV> :class "sudoku-group"
-		   (map (lambda (y)
-			  (let* ((i  (+ (* (quotient x 3) 3) (quotient y 3)))
-				 (j  (+ (* (remainder x 3) 3) (remainder y 3)))
-				 (id (format "sudoku-~a-~a" i j)))
-			    (<DIV> :class "sudoku-cell" 
-				   :onclick ~(click-cell $id)
-				   (show-cell id i j))))
-			(iota 9))))
-	  (iota 9)))
-   (<DIV> "Game level: " level "/5")))
+	  (map (lambda (x)
+		 (<DIV> :class "sudoku-group"
+			(map (lambda (y)
+			       (let* ((i  (+ (* (quotient x 3) 3) (quotient y 3)))
+				      (j  (+ (* (remainder x 3) 3) (remainder y 3)))
+				      (id (format "sudoku-~a-~a" i j)))
+				 (<DIV> :class "sudoku-cell"
+					:onclick ~(click-cell $id)
+					(show-cell id i j))))
+			     (iota 9))))
+	       (iota 9)))
+   (<DIV> :style "margin-top: 1em" "Game level: " (<B> level) "/5")
+   (<SCRIPT>
+    ~(begin
+       (set! *show-errors* #t)
+       (set! *board* $board)
+       (set! *level* $level)
+       (set! document.documentElement.onkeydown key-event)))))
 
 
 ;;; ======================================================================
 ;;; 	run-sudoku ...
 ;;; ======================================================================
+(define-service (sudoku)
+  *the-sudoku*)
+
+(define-service (sudoku/change-level level)
+  (let ((board (init-sudoku level)))
+    (board->html board level)))
+
+
 (define (run-sudoku)
+  (define (<LVL> i)
+    (<DIV> 
+     :onclick ~(let ((old (document.getElementById (+ "sudoku-level-"
+						      *level*)))
+		     (new (document.getElementById (+ "sudoku-level-"
+						      $i)))
+		     (brd (document.getElementById "the-board")))
+		 (set! old.style.fontWeight "normal")
+		 (set! new.style.fontWeight "bold")
+		 (set! *level* $i)
+		 (hop ($sudoku/change-level $i)
+		      (hop_replace_inner brd)))
+	 :style (format "cursor: pointer; font-weight: ~a"
+			(if (= i 1) "bold" "normal"))
+	 :id (format "sudoku-level-~a" i)
+	 i))
   (let* ((level 1)
 	 (board (init-sudoku level)))
     (<HTML>
      (<HEAD>
       (<HOP-SCHEME-HEAD> :sscript (make-file-name *sudoku-directory* "sudoku.scm"))
-      (<HOP-HEAD> :css "sudoku.hss"))
+      (<HOP-HEAD> :css "sudoku.hss")
+      (<TITLE> "Sudoku"))
      (<BODY>
       (<DIV> :class "sudoku-title" (<IMG> :src
 					  (make-file-name *sudoku-directory*
 							  "sudoku.png")))
       (<DIV> :class "sudoku-panel"
-	 (<H2>  "Menu")
+	 (<H2> "Level")
 	 (<DIV> :class "sudoku-menu"
-	   (<DIV> 
-	      "Level: " [,(<A> "1") ,(<A> "2") ,(<A> "3") ,(<A> "4") ,(<A> "5")])
-
-	   (<DIV>
+		(<LVL> 1) (<LVL> 2) (<LVL> 3) (<LVL> 4) (<LVL> 5))
+	 (<H2>  "Options")
+	 (<DIV> :class "sudoku-menu"
+	    (<DIV>
 	      "Show errors: " (<INPUT> :type "radio" :name "err" :checked "checked"
 				       :style "cursor: pointer"
 				       :onclick ~(set! *show-errors* #t)
@@ -202,20 +233,23 @@
 					:onclick ~(set! *show-errors* #f)
 					"no"))
 	   (<DIV> :style "cursor: pointer" :onclick ~(show-solution)
-		  "Show-solution")
+		  "Show solution")
+	   (<DIV> :style "cursor: pointer" :onclick ~(restart-current-game)
+		  "Restart current game")
 	   (<DIV> :style "cursor: pointer" :onclick ~(window.print)
 		  "Print the board"))
 	 (<H2> "Help")
 	 (<DIV> :class "sudoku-help"
-	    (<DIV> "- Click on a cell and enter a number")
-	    (<DIV> "- You can use arrows to move on the board")
+	    (<DIV> "- Use a digit to enter the cell value")
+	    (<DIV> "- Use arrows to move on the board")
+	    (<DIV> "- Use Backspace to delete the current cell")
 	    (<DIV> "- Use \"h\" or \"?\" to view the value of selected cell")
 	    (<DIV> "- Numbers in red are misplaced")))
-     (board->html board level)
-     (<SCRIPT>
-         ~(begin
-	    (set! *show-errors* #t)
-	    (set! *board* $board)
-	    (set! document.documentElement.onkeydown key-event)))))))
 
-(run-sudoku)
+      (<DIV> :id "the-board" (board->html board level))))))
+      
+
+(define *the-sudoku* (run-sudoku))
+
+
+*the-sudoku*

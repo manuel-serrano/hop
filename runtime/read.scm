@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Apr  2 08:12:27 2006 (serrano)                */
+;*    Last change :  Wed Mar 29 09:21:07 2006 (eg)                     */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -22,9 +22,9 @@
 	    __hop_css)
    
    (export  (the-loading-file)
-	    (hop-read #!optional (iport::input-port (current-input-port)))
+	    (hop-read ::input-port)
 	    (hop-load ::bstring #!optional (env (interaction-environment)))
-	    (hop-load-afile ::bstring)
+	    (hop-load-port ::bstring port env)
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
    
@@ -618,7 +618,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-read ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-read #!optional (iport::input-port (current-input-port)))
+(define (hop-read iport)
    (if (closed-input-port? iport)
        (error 'hop-read "Illegal closed input port" iport)
        (read/rp *hop-grammar* iport '() 0 0 '() '())))
@@ -673,6 +673,38 @@
 				exp))))))))
    
 ;*---------------------------------------------------------------------*/
+;*    hop-load-port ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hop-load-port file-name port env)
+  (let ((t (current-thread))
+	(m (eval-module))
+	(f *the-loading-file*))
+    (unwind-protect
+     (begin
+       (hop-load-afile (dirname file-name))
+       (if (thread? t)
+	   (thread-specific-set! t file-name)
+	   (set! *the-loading-file* file-name))
+       (let loop ((last #unspecified))
+	 ((hop-read-pre-hook) port)
+	 (let ((sexp (hop-read port)))
+	   ((hop-read-post-hook) port)
+	   (if (eof-object? sexp)
+	       last
+	       (loop (with-handler
+		      (lambda (e)
+			(if (&warning? e)
+			    (begin
+			      (warning-notify e)
+			      #unspecified)
+			    (raise e)))
+		      (eval sexp env)))))))
+     (begin
+       (close-input-port port)
+       (eval-module-set! m)
+       (set! *the-loading-file* f)))))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-load file-name #!optional (env (interaction-environment)))
@@ -684,26 +716,7 @@
 		    (obj file-name)))
 	  (let ((port (open-input-file path)))
 	     (if (input-port? port)
-		 (let ((t (current-thread))
-		       (m (eval-module))
-		       (f *the-loading-file*))
-		    (unwind-protect
-		       (begin
-			  (hop-load-afile (dirname file-name))
-			  (if (thread? t)
-			      (thread-specific-set! t file-name)
-			      (set! *the-loading-file* file-name))
-			  (let loop ((last #unspecified))
-			     ((hop-read-pre-hook) port)
-			     (let ((sexp (hop-read port)))
-				((hop-read-post-hook) port)
-				(if (eof-object? sexp)
-				    last
-				    (loop (eval sexp env))))))
-		       (begin
-			  (close-input-port port)
-			  (eval-module-set! m)
-			  (set! *the-loading-file* f))))
+		 (hop-load-port file-name port env)
 		 (raise (instantiate::&io-port-error
 			   (proc 'hop-load)
 			   (msg "Can't open file")

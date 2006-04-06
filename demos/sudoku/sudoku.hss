@@ -64,7 +64,7 @@ H1 {
 .sudoku-panel {
     position: absolute;
     left: 530px;
-    top: 300px;
+    top: 230px;
     border: 1px dotted grey;
     padding: 2px 15px 2px 15px;
 }
