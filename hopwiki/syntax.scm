@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Apr  5 14:02:25 2006 (serrano)                */
+;*    Last change :  Sat Apr  8 06:55:44 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -20,9 +20,16 @@
 	       markup::symbol
 	       syntax::procedure
 	       (expr::pair-nil (default '()))
-	       value::obj))
+	       value::obj)
+	    (class expr::state)
+	    (class block::state))
    
    (export  (class wiki-syntax
+	       (section1::procedure (default list))
+	       (section2::procedure (default list))
+	       (section3::procedure (default list))
+	       (section4::procedure (default list))
+	       (section5::procedure (default list))
 	       (h1::procedure (default <H1>))
 	       (h2::procedure (default <H2>))
 	       (h3::procedure (default <H3>))
@@ -43,7 +50,8 @@
 	       (table::procedure (default <TABLE>))
 	       (tr::procedure (default <TR>))
 	       (th::procedure (default <TH>))
-	       (td::procedure (default <TD>)))
+	       (td::procedure (default <TD>))
+	       (specials::procedure (default (lambda (id) #f))))
 	    
 	    (wiki-string->hop ::bstring #!optional syntax)))
 
@@ -83,17 +91,17 @@
    (regular-grammar ((blank (in " \t"))
 		     syn state result)
       
+      ;; result and expression
+      (define (add-expr! str)
+	 (if (pair? state)
+	     (with-access::state (car state) (expr)
+		(set! expr (cons str expr)))
+	     (set! result (cons str result))))
+
+      (define (the-result)
+	 (reverse! result))
+
       ;; state management
-      (define (in-state? st)
-	 (and (pair? state) (eq? (state-markup (car state)) st)))
-      
-      (define (in-deep-state st)
-	 (let loop ((state state))
-	    (and (pair? state)
-		 (if (eq? (state-markup (car state)) st)
-		     (car state)
-		     (loop (cdr state))))))
-      
       (define (enter-state! st fun value)
 	 (let ((st (instantiate::state
 		      (markup st)
@@ -102,83 +110,107 @@
 		      (value value))))
 	    (set! state (cons st state))))
       
-      (define (exit-state!)
-	 (with-access::state (car state) (syntax expr)
-	    (let ((el (syntax (reverse! expr))))
-	       (set! state (cdr state))
-	       el)))
+      (define (enter-expr! st fun value)
+	 (let ((st (instantiate::expr
+		      (markup st)
+		      (syntax fun)
+		      (expr '())
+		      (value value))))
+	    (set! state (cons st state))))
+      
+      (define (enter-block! st fun value)
+	 (let ((st (instantiate::block
+		      (markup st)
+		      (syntax fun)
+		      (expr '())
+		      (value value))))
+	    (set! state (cons st state))))
+      
+      (define (is-state? condition)
+	 (let ((pred (cond
+			((procedure? condition)
+			 condition)
+			((symbol? condition)
+			 (lambda (s _) (eq? (state-markup s) condition)))
+			((state? condition)
+			 (lambda (s _) (eq? s condition)))
+			(else
+			 (lambda (s _) #t)))))
+	    (and (pair? state) (pred (car state) (cdr state)))))
 
-      (define (abort-states!)
+      (define (%is-in-state states condition)
+	 (let ((pred (cond
+			((procedure? condition)
+			 condition)
+			((symbol? condition)
+			 (lambda (s _) (eq? (state-markup s) condition)))
+			((state? condition)
+			 (lambda (s _) (eq? s condition)))
+			(else
+			 (lambda (s _) #t)))))
+	    (let loop ((state states))
+	       (and (pair? state)
+		    (if (pred (car state) (cdr state))
+			(car state)
+			(loop (cdr state)))))))
+      
+      (define (in-state condition)
+	 (%is-in-state state condition))
+
+      (define (in-bottom-up-state condition)
+	 (%is-in-state (reverse state) condition))
+
+      ;; pop one state
+      (define (pop-state!)
+	 (when (pair? state)
+	    (unwind-state! (car state))))
+      
+      ;; unwind the state until the stack is empty or the state is found
+      (define (unwind-state! s . args)
 	 (let loop ((st state)
 		    (el '()))
 	    (if (null? st)
 		(begin
 		   (set! state '())
-		   el)
-		(with-access::state (car st) (syntax expr)
-		   (loop (cdr st) (syntax (reverse! (cons el expr))))))))
-
-      (define (abort-states-until! stop . args)
-	 (let loop ((st state)
-		    (el '()))
-	    (if (null? st)
-		(begin
-		   (set! state '())
-		   el)
+		   (add-expr! el))
 		(with-access::state (car st) (markup syntax expr)
-		   (let ((nel (apply syntax (reverse! (cons el expr)) args)))
-		      (if (eq? markup stop)
-			  (begin
-			     (set! state (cdr st))
-			     nel)
-			  (loop (cdr st) nel)))))))
-
-      (define (add-expr! str)
-	 (if (pair? state)
-	     (with-access::state (car state) (expr)
-		(set! expr (cons str expr)))
-	     (add-result! str)))
-      
-      ;; result
-      (define (add-result! res)
-	 (set! result (cons res result)))
-      
-      (define (the-result)
-	 (reverse! result))
+		   (if (eq? s (car st))
+		       (let* ((ar (reverse! (cons el expr)))
+			      (ne (apply syntax ar args)))
+			  (set! state (cdr st))
+			  (add-expr! ne))
+		       (let ((ne (syntax (reverse! (cons el expr)))))
+			  (loop (cdr st) ne)))))))
 
       ;; table cell
       (define (table-first-row-cell char rightp)
 	 (let ((tc (if (char=? char #\^)
 		       (wiki-syntax-th syn)
 		       (wiki-syntax-td syn))))
-	    (unless (in-state? 'table)
-	       (add-result! (abort-states!))
-	       (enter-state! 'table (wiki-syntax-table syn) #f))
-	    (enter-state! 'tr (wiki-syntax-tr syn) #f)
-	    (enter-state! 'tc tc rightp)
+	    (unless (is-state? 'table)
+	       (enter-block! 'table (wiki-syntax-table syn) #f))
+	    (enter-expr! 'tr (wiki-syntax-tr syn) #f)
+	    (enter-expr! 'tc tc rightp)
 	    (ignore)))
-      
+
       (define (table-last-row-cell char leftp cs)
-	 (let ((st (in-deep-state 'tc)))
+	 (let ((st (in-state 'tc)))
 	    (if (state? st)
 		(let ((align (cond
 				((state-value st) (if leftp "center" "right"))
 				(leftp "left")
 				(else "center"))))
 		   (if (>fx cs 1)
-		       (add-expr! (abort-states-until! 'tc
-						       :colspan cs
-						       :align align))
-		       (add-expr! (abort-states-until! 'tc
-						       :align align)))
-		   (add-expr! (exit-state!))
+		       (unwind-state! st :colspan cs :align align)
+		       (unwind-state! st :align align))
+		   (pop-state!)
 		   (ignore))
 		(begin
 		   (add-expr! (the-string))
 		   (ignore)))))
-	 
+
       (define (table-cell char leftp rightp cs)
-	 (let ((st (in-deep-state 'tc)))
+	 (let ((st (in-state 'tc)))
 	    (if (state? st)
 		(let ((align (cond
 				((state-value st) (if leftp "center" "right"))
@@ -188,96 +220,133 @@
 			      (wiki-syntax-th syn)
 			      (wiki-syntax-td syn))))
 		   (if (>fx cs 1)
-		       (add-expr! (abort-states-until! 'tc
-						       :colspan cs
-						       :align align))
-		       (add-expr! (abort-states-until! 'tc
-						       :align align)))
-		   (enter-state! 'tc tc rightp)
+		       (unwind-state! st :colspan cs :align align)
+		       (unwind-state! st :align align))
+		   (enter-expr! 'tc tc rightp)
 		   (ignore))
 		(begin
 		   (add-expr! (the-string))
 		   (ignore)))))
-	 
-      ;; continuation mark
-      ((: "\\\\" (: (? #\Return) #\Newline))
-       (ignore))
-      
-      ;; newline
+
+      ;; a blank line: end of expr
       ((bol (: (? #\Return) #\Newline))
-       (add-result! (abort-states!))
-       (enter-state! 'p
-		     (lambda (e)
-			(if (null? e)
-			    "\n"
-			    ((wiki-syntax-p syn) e)))
-		     #f)
-       (ignore))
-      
-      ;; simple text
-      ((+ (out "^|*=/_-$,`'() \\\n"))
+       (let ((st (in-bottom-up-state (lambda (n _) (expr? n)))))
+	  (when st
+	     (unwind-state! st)))
        (add-expr! (the-string))
        (ignore))
-      
+
+      ;; two consecutive blank lines: end of block
+      ((bol (= 2 (: (? #\Return) #\Newline)))
+       (let ((st (in-state (lambda (n _) (block? n)))))
+	  (when st
+	     (unwind-state! st)))
+       (add-expr! (the-string))
+       (ignore))
+
+      ;; three consecutive blank lines: end of everything
+      ((bol (= 3 (: (? #\Return) #\Newline)))
+       (unwind-state! #f)
+       (add-expr! (the-string))
+       (ignore))
+
+      ;; simple text
+      ((+ (out "<>^|*=/_-$#,`'() \\\n"))
+       (add-expr! (the-string))
+       (ignore))
+
+      ;; single escape characters
+      ((in "<>*=/_-$#,`'() \\\n")
+       (add-expr! (the-string))
+       (ignore))
+
+      ;; special escape markups
+      ((bol (: "<" (out #\> #\/) (* (out #\>)) ">"))
+       (let* ((id (the-symbol))
+	      (proc ((wiki-syntax-specials syn) id)))
+	  (if (procedure? proc)
+	      (let ((title (read-line (the-port))))
+		 (enter-state! id (lambda (el . _) (proc title el)) #f))
+	      (add-expr! (the-string)))
+	  (ignore)))
+
+      ((bol (: "</" (+ (out #\>)) ">"))
+       (let* ((s (the-substring 2 (the-length)))
+	      (id (symbol-append '< (string->symbol s)))
+	      (proc ((wiki-syntax-specials syn) id)))
+	  (if (procedure? proc)
+	      (let ((st (in-state id)))
+		 (if (state? st)
+		     (unwind-state! st)
+		     (add-expr! (the-string))))
+	      (add-expr! (the-string)))
+	  (ignore)))
+       
       ;; sectionning
       ((bol (>= 2 #\=))
-       (let ((s (the-symbol)))
-	  (if (in-state? s)
-	      (begin
-		 (add-expr! (exit-state!))
-		 (ignore))
-	      (let ((constr (case (the-length)
-			       ((5) (wiki-syntax-h4 syn))
-			       ((4) (wiki-syntax-h3 syn))
-			       ((3) (wiki-syntax-h2 syn))
-			       ((2) (wiki-syntax-h1 syn))
-			       (else (wiki-syntax-h5 syn)))))
-		 (add-result! (abort-states!))
-		 (enter-state! s constr #f)
-		 (ignore)))))
+       (let* ((id (the-symbol))
+	      (lv (-fx (the-length) 2))
+	      (hx (case lv
+		     ((3) (wiki-syntax-h4 syn))
+		     ((2) (wiki-syntax-h3 syn))
+		     ((1) (wiki-syntax-h2 syn))
+		     ((0) (wiki-syntax-h1 syn))
+		     (else (wiki-syntax-h5 syn))))
+	      (sx (case lv
+		     ((3) (wiki-syntax-section4 syn))
+		     ((2) (wiki-syntax-section3 syn))
+		     ((1) (wiki-syntax-section2 syn))
+		     ((0) (wiki-syntax-section1 syn))
+		     (else (wiki-syntax-section5 syn))))
+	      (st (in-bottom-up-state (lambda (s _)
+					 (with-access::state s (markup value)
+					    (and (eq? markup 'section)
+						 (>=fx value lv)))))))
+	  (when st (unwind-state! st))
+	  (enter-state! 'section sx lv)
+	  (enter-expr! '== hx #f)
+	  (ignore)))
+      
       ((>= 2 #\=)
-       (let ((s (the-symbol)))
-	  (if (in-state? s)
-	      (begin
-		 (add-expr! (exit-state!))
-		 (ignore))
-	      ;; an error
-	      (ignore))))
+       (let ((st (in-state '==)))
+	  (if st
+	      (unwind-state! st)
+	      (add-expr! (the-string))))
+       (ignore))
 
       ;; verbatim mode
-      ((bol (: "  " (* (in " \t")) (? (: (out "*- \t") (* all)))))
-       (if (in-state? 'pre)
-	   (begin
-	      (add-expr! (the-substring 2 (the-length)))
-	      (ignore))
-	   (begin
-	      (add-result! (abort-states!))
-	      (enter-state! 'pre (wiki-syntax-pre syn) #f)
-	      (add-expr! (the-substring 2 (the-length)))
-	      (ignore))))
+      ((bol (: "  " (* (in " \t")) (? (: (out "*- \t\n") (* all)))))
+       (unless (is-state? 'pre)
+	  (enter-block! 'pre (wiki-syntax-pre syn) #f))
+       (add-expr! (the-substring 2 (the-length)))
+       (ignore))
 
       ;; itemize/enumerate
       ((bol (: "  " (* " ") (in "*-")))
        (let* ((s (the-substring (-fx (the-length) 1) (the-length)))
 	      (c (string-ref s 0))
-	      (st (if (char=? c #\*) 'ul 'ol))
-	      (val (the-length)))
-	  (let loop ()
-	     (cond
-		((or (not (in-state? 'li)) (>fx val (state-value (car state))))
-		 (if (eq? st 'ul)
-		     (enter-state! st (wiki-syntax-ul syn) #f)
-		     (enter-state! st (wiki-syntax-ol syn) #f))
-		 (enter-state! 'li (wiki-syntax-li syn) val)
-		 (ignore))
-		((<fx val (state-value (car state)))
-		 (add-expr! (exit-state!))
-		 (add-expr! (exit-state!))
-		 (loop))
-		(else
-		 (add-expr! (exit-state!))
-		 (enter-state! 'li (wiki-syntax-li syn) val)
-		 (ignore))))))
+	      (val (the-length))
+	      (id (if (char=? c #\*) 'ul 'ol))
+	      (st (in-state (lambda (s n)
+			       (with-access::state s (markup value)
+				  (and (eq? markup 'li)
+				       (=fx value val)
+				       (eq? (state-markup (car n)) id)))))))
+	  (if st
+	      (unwind-state! st)
+	      (let ((st (in-bottom-up-state
+			 (lambda (s n)
+			    (when (pair? n)
+			       (with-access::state (car n) (markup value)
+				  (when (and (eq? markup 'li)
+					     (>=fx value val))
+				     s)))))))
+		 (when st (unwind-state! st))
+		 (if (char=? c #\*)
+		     (enter-block! id (wiki-syntax-ul syn) #f)
+		     (enter-block! id (wiki-syntax-ol syn) #f))))
+	  (enter-expr! 'li (wiki-syntax-li syn) val))
+       (ignore))
 
       ;; tables
       ((bol (in "^|"))
@@ -291,12 +360,12 @@
        (let* ((str (the-string))
 	      (cs (string-index str " \t\r\n")))
 	  (table-last-row-cell (the-character) #f cs)))
-      
+
       ((: "  " (+ (in "^|")) (* (in " \t")) (? #\Return) #\Newline)
        (let* ((str (the-substring 2 (the-length)))
 	      (cs (string-index str " \t\r\n")))
 	  (table-last-row-cell (the-character) #t cs)))
-      
+
       ((+ (in "^|"))
        (table-cell (the-character) #f #f (the-length)))
 
@@ -313,56 +382,65 @@
       
       ;; standard markups
       ("**"
-       (if (in-state? '**)
-	   (begin
-	      (add-expr! (exit-state!))
-	      (ignore))
-	   (begin
-	      (enter-state! '** (wiki-syntax-b syn) #f)
-	      (ignore))))
+       (let ((s (in-state '**)))
+	  (if s
+	      (begin
+		 (unwind-state! s)
+		 (ignore))
+	      (begin
+		 (enter-expr! '** (wiki-syntax-b syn) #f)
+		 (ignore)))))
       ("//"
-       (if (in-state? '//)
-	   (begin
-	      (add-expr! (exit-state!))
-	      (ignore))
-	   (begin
-	      (enter-state! '// (wiki-syntax-em syn) #f)
-	      (ignore))))
+       (let ((s (in-state '//)))
+	  (if s
+	      (begin
+		 (unwind-state! s)
+		 (ignore))
+	      (begin
+		 (enter-expr! '// (wiki-syntax-em syn) #f)
+		 (ignore)))))
       ("__"
-       (if (in-state? '__)
-	   (begin
-	      (add-expr! (exit-state!))
-	      (ignore))
-	   (begin
-	      (enter-state! '__ (wiki-syntax-u syn) #f)
-	      (ignore))))
+       (let ((s (in-state '__)))
+	  (if s
+	      (begin
+		 (unwind-state! s)
+		 (ignore))
+	      (begin
+		 (enter-expr! '__ (wiki-syntax-u syn) #f)
+		 (ignore)))))
       ("--"
-       (if (in-state? '--)
-	   (begin
-	      (add-expr! (exit-state!))
-	      (ignore))
-	   (begin
-	      (enter-state! '-- (wiki-syntax-del syn) #f)
-	      (ignore))))
+       (let ((s (in-state '--)))
+	  (if s
+	      (begin
+		 (unwind-state! s)
+		 (ignore))
+	      (begin
+		 (enter-expr! '-- (wiki-syntax-del syn) #f)
+		 (ignore)))))
       ("$$"
-       (if (in-state? '$$)
-	   (begin
-	      (add-expr! (exit-state!))
-	      (ignore))
-	   (begin
-	      (enter-state! '$$ (wiki-syntax-math syn) #f)
-	      (ignore))))
-      ("``"
-       (enter-state! 'tt (wiki-syntax-tt syn) #f)
-       (ignore))
-      ("''"
-       (add-expr! (abort-states-until! 'tt))
-       (ignore))
+       (let ((s (in-state '$$)))
+	  (if s
+	      (begin
+		 (unwind-state! s)
+		 (ignore))
+	      (begin
+		 (enter-expr! '$$ (wiki-syntax-math syn) #f)
+		 (ignore)))))
+      ("##"
+       (let ((s (in-state 'tt)))
+	  (if s
+	      (begin
+		 (unwind-state! s)
+		 (ignore))
+	      (begin
+		 (enter-expr! 'tt (wiki-syntax-tt syn) #f)
+		 (ignore)))))
       ("(("
-       (enter-state! 'code (wiki-syntax-code syn) #f)
+       (enter-expr! 'code (wiki-syntax-code syn) #f)
        (ignore))
       ("))"
-       (add-expr! (abort-states-until! 'code))
+       (let ((s (in-state 'code)))
+	  (when s (unwind-state! s)))
        (ignore))
 
       ;; embedded hop
@@ -383,16 +461,11 @@
 		(add-expr! (eval expr)))))
        (ignore))
        
-      ;; single escape characters
-      ((in "*=/_-$,`'() \\\n")
-       (add-expr! (the-string))
-       (ignore))
-
       (else
        (let ((c (the-failure)))
 	  (if (eof-object? c)
 	      (begin
-		 (add-result! (abort-states!))
+		 (add-expr! (unwind-state! #f))
 		 (the-result))
 	      (wiki-read-error "Illegal character" (string c) (the-port)))))))
 
