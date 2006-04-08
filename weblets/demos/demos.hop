@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Mar  2 11:12:55 2006                          */
-;*    Last change :  Fri Mar 24 11:34:35 2006 (serrano)                */
+;*    Last change :  Sat Apr  8 06:59:39 2006 (serrano)                */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Demos                                                        */
@@ -113,7 +113,7 @@
 	 "you'll see on the right part of the screen:")
     (<UL> (<LI> "some explanations on the demo code, ")
 	  (<LI> "the code of the demo"))
-    (<P> "To change the code of a demo, use Edit button before launching"
+    (<P> "To change the code of a demo, use Edit button before launching "
 	 "its execution with the Run button")
     (<TABLE> :width "98%"
        (<TR> (<TD> :align "right" (<HOP-FOOT-LOGO>)))))))

@@ -1,0 +1,136 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/demos/wikiedit/wikiedit.hop             */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Sat Apr  8 07:03:09 2006                          */
+;*    Last change :  Sat Apr  8 07:36:27 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Wiki edit demo                                                   */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module wikiedit
+   (library hopwiki))
+
+;*---------------------------------------------------------------------*/
+;*    wikiedit-dir ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-parameter wikiedit-dir (dirname (the-loading-file)))
+
+;*---------------------------------------------------------------------*/
+;*    wikiedit-event ...                                               */
+;*---------------------------------------------------------------------*/
+(define wikiedit-event
+   (instantiate::hop-event
+      (name "wikiedit")))
+
+;*---------------------------------------------------------------------*/
+;*    wikiedit/view ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (wikiedit/view)
+   (let ((d (<DIV> :class "view" "")))
+      (<HTML>
+	 (<HEAD> (<HOP-HEAD> :dir (wikiedit-dir) :css "wikiedit.hss"))
+	 (<BODY>
+	    d
+	    (<HOP-EVENT>
+	       :event wikiedit-event
+	       :handler ~(set! $d.innerHTML event.responseText))))))
+
+;*---------------------------------------------------------------------*/
+;*    wikiedit/update ...                                              */
+;*---------------------------------------------------------------------*/
+(define-service (wikiedit/update src)
+   (broadcast-hop-event! wikiedit-event (wikiedit-compile src)))
+
+;*---------------------------------------------------------------------*/
+;*    *wikiedit-initial-text* ...                                      */
+;*---------------------------------------------------------------------*/
+(define *wikiedit-initial-text*
+   "=== Syntax ===
+This section describes the main hopwiki syntax elements:
+
+^ syntax ^         meaning            ^
+| ==     | beginning of section       |
+| ===    | beginning of subsection    |
+| ====   | beginning of subsubsection |
+|   *    | itemize                    |
+|   -    | enumerate                  |
+|        | verbatim                   |
+| **..** | strong                     |
+| //..// | emphasize                  |
+| __..__ | underline                  |
+| --..-- | strike                     |
+| ##..## | type writer                |
+| ((..)) | code                       |
+
+=== Examples ===
+
+==== itemize ====
+
+  * one
+  * two
+    - un
+    - deux
+      * one
+      * two
+  * three
+
+
+toto")
+
+;*---------------------------------------------------------------------*/
+;*    *wikiedit-syntax* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *wikiedit-syntax*
+   (instantiate::wiki-syntax
+      (section1 (lambda expr (<DIV> :class "section1" expr)))
+      (section2 (lambda expr (<DIV> :class "section2" expr)))
+      (section3 (lambda expr (<DIV> :class "section3" expr)))
+      (section4 (lambda expr (<DIV> :class "section4" expr)))
+      (specials (lambda (id) (when (eq? id '<block>) wikiedit-block)))))
+
+;*---------------------------------------------------------------------*/
+;*    wikiedit-block ...                                               */
+;*---------------------------------------------------------------------*/
+(define (wikiedit-block title expr)
+   (apply <DIV> :class "block" (<SPAN> :class "title" title) expr))
+
+;*---------------------------------------------------------------------*/
+;*    wikiedit-compile ...                                             */
+;*---------------------------------------------------------------------*/
+(define (wikiedit-compile src)
+   (let ((o (with-handler
+	       (lambda (e)
+		  (<SPAN> :class "error" (html-string-encode src)))
+	       (wiki-string->hop src *wikiedit-syntax*))))
+      (with-output-to-string
+	 (lambda ()
+	    (xml-write o (current-output-port) (hop-char-encoding))))))
+
+;*---------------------------------------------------------------------*/
+;*    main answer                                                      */
+;*---------------------------------------------------------------------*/
+(<HTML>
+   (<HEAD> (<HOP-HEAD> :dir (wikiedit-dir) :css "wikiedit.hss"))
+   (<BODY>
+      (<H3> "Live editor")
+      (<TEXTAREA>
+	 :class "playground"
+	 :rows 10 :cols 80
+	 :onkeyup ~(hop ($wikiedit/update this.value))
+	 *wikiedit-initial-text*)
+      (<H3> "Live view")
+      (<BUTTON>
+	 :onclick ~(window.open $(make-service-url wikiedit/view)
+				"Wiki Edit"
+				"toolbar=yes, location=yes, status=yes, menubar=yes, scrollbars=yes, resizable=yes, titlebar=yes, width=640, height=480")
+	 "Add new views")
+      (<BR>)
+      (<IFRAME>
+	 :class "view"
+	 :src (make-service-url wikiedit/view))))
+   
