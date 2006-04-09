@@ -55,6 +55,10 @@ div.block span.title {
   font-style: italic;
 }
 
+div.center {
+  text-align: center;
+}
+
 div.section1 {
   border: 1px double #008;
   padding: 2px;

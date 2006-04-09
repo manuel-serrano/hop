@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  8 07:03:09 2006                          */
-;*    Last change :  Sat Apr  8 07:36:27 2006 (serrano)                */
+;*    Last change :  Sun Apr  9 14:10:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki edit demo                                                   */
@@ -67,6 +67,11 @@ This section describes the main hopwiki syntax elements:
 | ##..## | type writer                |
 | ((..)) | code                       |
 
+=== Extensions ===
+User extensions can be defined. They look like
+HTML markup. The opening and closing markups must take place at
+the beginning of line.
+
 === Examples ===
 
 ==== itemize ====
@@ -79,8 +84,15 @@ This section describes the main hopwiki syntax elements:
       * two
   * three
 
+==== Extensions =====
 
-toto")
+<block> A block
+a text
+<center>
+a centered text
+</center>
+</block>
+")
 
 ;*---------------------------------------------------------------------*/
 ;*    *wikiedit-syntax* ...                                            */
@@ -91,13 +103,22 @@ toto")
       (section2 (lambda expr (<DIV> :class "section2" expr)))
       (section3 (lambda expr (<DIV> :class "section3" expr)))
       (section4 (lambda expr (<DIV> :class "section4" expr)))
-      (specials (lambda (id) (when (eq? id '<block>) wikiedit-block)))))
+      (specials (lambda (id)
+		   (case id
+		      ((<block>) wikiedit-block)
+		      ((<center>) wikiedit-center))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wikiedit-block ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (wikiedit-block title expr)
-   (apply <DIV> :class "block" (<SPAN> :class "title" title) expr))
+   (apply <DIV> :class "block" (<SPAN> :class "title" title) "\n" expr))
+
+;*---------------------------------------------------------------------*/
+;*    wikiedit-center ...                                              */
+;*---------------------------------------------------------------------*/
+(define (wikiedit-center title expr)
+   (<DIV> :class "center" expr))
 
 ;*---------------------------------------------------------------------*/
 ;*    wikiedit-compile ...                                             */
