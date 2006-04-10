@@ -331,14 +331,17 @@ function sc_number2string(x, radix) { /// export
 }
 
 function sc_string2number(s, radix) { /// export
+    sc_symbol2number(s.val, radix);
+}
+
+function sc_symbol2number(s, radix) { /// export
     // first test, if there aren't any trailing chars
     // (which are ignored by parseFloat/parseInt)
-    var x = s.val;
-    if (+x || +x === 0) {
+    if (+s || +s === 0) {
 	if (radix) {
-	    var t = parseInt(x, radix);
+	    var t = parseInt(s, radix);
 	    if (t || t === 0) return t; else return false;
-	} else return parseFloat(x);
+	} else return parseFloat(s);
     } else
 	return false;
 }
@@ -799,6 +802,10 @@ function sc_isCharLowerCase(c) /// export
 
 function sc_char2integer(c) /// export
     { return c.val.valharCodeAt(0); }
+function sc_char2string(c) /// export
+    { return new sc_String(c.val); }
+function sc_char2symbol(c) /// export
+    { return c.val; }
 function sc_integer2char(n) /// export
     { return new sc_Char(String.fromCharCode(n)); }
 
@@ -1158,23 +1165,20 @@ function sc_jsNew(c) { /// export new js-new
 }    
 
 // Keywords
-var SeenKeywords = new Array;
+function sc_Keyword(str) {
+    var cached = sc_Keyword.lazy[str];
 
-function sc_Keyword(str) { /// export
-    var old = SeenKeywords[str];
+    if (cached)
+	return cached;
 
-    if (old === undefined) {
-	SeenKeywords[str] = this;
-	return this.val = str;
-    } else {
-	return old;
-    }
+    sc_Keyword.lazy[str] = this;
+    this.val = str;
 }
+sc_Keyword.lazy = new Object;
 
 sc_Keyword.prototype.toString = function() {
     return ":" + this.val;
 }
-
 
 function sc_isKeyword(o) { /// export
     return (o instanceof sc_Keyword);
@@ -1786,7 +1790,6 @@ sc_Vector.prototype.writeOrDisplay = function(p, writeOrDisplay) {
 
 // write
 function sc_write(o, p) { /// export
-    alert("write " + o);
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
     sc_doWrite(p, o);
@@ -1862,7 +1865,6 @@ sc_Vector.prototype.doWrite = function(p) {
 sc_Struct.prototype.doWrite = function(p) {
     p.appendJSString("#<struct" + this.getHash() + ">");
 }
-
 sc_Keyword.prototype.doWrite = function(p) {
     p.appendJSString(":" + this.val);
 }
@@ -1871,7 +1873,6 @@ sc_Keyword.prototype.doWrite = function(p) {
 
 // display
 function sc_display(o, p) { /// export
-    alert("Display " + o)
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
     sc_doDisplay(p, o);
@@ -1907,7 +1908,6 @@ sc_Vector.prototype.doDisplay = function(p) {
     this.writeOrDisplay(p, sc_doDisplay);
 }
 sc_Struct.prototype.doDisplay = sc_Struct.prototype.doWrite;
-
 sc_Keyword.prototype.doDisplay = sc_Keyword.prototype.doWrite;
 
 /* ------------------ newline ---------------------------------------------------*/
