@@ -9,8 +9,10 @@
 	   transform-util
 	   verbose)
    (export (inline! tree::pobject)
-	   *inline-globals?*))
+	   *inline-globals?*
+	   *do-inlining?*))
 
+(define *do-inlining?* #t)
 (define *inline-globals?* #f)
 
 (define *second-pass* #t)
@@ -19,15 +21,17 @@
 (define *max-uses* 99999)
 
 (define (inline! tree)
-   (verbose "inlining")
-   (constant-propagation! tree)
-   (clean! tree)
-   (inline-funs! tree)
-   (if (and *inlined-funs*
-	    *second-pass*)
+   (if *do-inlining?*
        (begin
+	  (verbose "inlining")
 	  (constant-propagation! tree)
-	  (clean! tree))))
+	  (clean! tree)
+	  (inline-funs! tree)
+	  (if (and *inlined-funs*
+		   *second-pass*)
+	      (begin
+		 (constant-propagation! tree)
+		 (clean! tree))))))
 
 ;; currently only single-assig propagation:
 ;;  if a value is assigned only once, we can safely propagate this value.

@@ -90,6 +90,9 @@
       (("--optimize-var-number"
 	(help "reduce used variables by reusing existing vars."))
        (set! *optimize-var-number* #t))
+      (("--no-inlining"
+	(help "don't inline at all"))
+       (set! *do-inlining?* #f))
       (("--inline-globals"
 	(help "inline global constants."))
        (set! *inline-globals?* #t))
