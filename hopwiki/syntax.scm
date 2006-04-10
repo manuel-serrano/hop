@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sat Apr  8 06:55:44 2006 (serrano)                */
+;*    Last change :  Mon Apr 10 10:16:12 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -251,12 +251,12 @@
        (ignore))
 
       ;; simple text
-      ((+ (out "<>^|*=/_-$#,`'() \\\n"))
+      ((+ (out "<>+^|*=/_-$#,`'() \\\n"))
        (add-expr! (the-string))
        (ignore))
 
       ;; single escape characters
-      ((in "<>*=/_-$#,`'() \\\n")
+      ((in "<>+*=/_-$#,`'() \\\n")
        (add-expr! (the-string))
        (ignore))
 
@@ -426,7 +426,7 @@
 	      (begin
 		 (enter-expr! '$$ (wiki-syntax-math syn) #f)
 		 (ignore)))))
-      ("##"
+      ("++"
        (let ((s (in-state 'tt)))
 	  (if s
 	      (begin

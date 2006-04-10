@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  8 07:03:09 2006                          */
-;*    Last change :  Sun Apr  9 14:10:42 2006 (serrano)                */
+;*    Last change :  Sun Apr  9 14:56:28 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki edit demo                                                   */
@@ -64,7 +64,7 @@ This section describes the main hopwiki syntax elements:
 | //..// | emphasize                  |
 | __..__ | underline                  |
 | --..-- | strike                     |
-| ##..## | type writer                |
+| ++..++ | type writer                |
 | ((..)) | code                       |
 
 === Extensions ===
