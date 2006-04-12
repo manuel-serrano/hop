@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Apr 12 16:30:18 2006 (serrano)                */
+;*    Last change :  Wed Apr 12 18:25:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -332,13 +332,14 @@
 	      (st (in-bottom-up-state (lambda (s _)
 					 (with-access::state s (markup value)
 					    (and (eq? markup 'section)
-						 (>=fx value lv)))))))
+						 (>=fx value lv))))))
+	      (mk (gensym)))
 	  (when st (unwind-state! st))
 	  (enter-state! 'section sx lv)
 	  (enter-expr! '==
 		       (lambda expr
 			  (list (apply hx expr)
-				(<A> :name "TODO")))
+				(<A> :name (symbol->string mk))))
 		       #f)
 	  (ignore)))
       

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Mar 16 16:46:00 2006 (serrano)                */
+;*    Last change :  Wed Apr 12 18:24:44 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -52,7 +52,7 @@
 	    (class xml-html::xml-markup
 	       (prelude read-only (default "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">")))
 
-	    (%xml-constructor ::xml)
+	    (generic %xml-constructor ::xml)
 	    (xml-constructor-add! ::symbol ::procedure)
 	    (%make-xml-element ::symbol ::pair-nil)
 
@@ -176,11 +176,31 @@
 ;*---------------------------------------------------------------------*/
 ;*    %xml-constructor ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (%xml-constructor o::xml)
+(define-generic (%xml-constructor o::xml)
    (with-access::xml o (id)
       (let ((hook (hashtable-get *xml-constructors* id)))
 	 (when (procedure? hook)
 	    (hook o)))
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    %xml-constructor ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (%xml-constructor o::xml-markup)
+   (call-next-method)
+   (with-access::xml-markup o (body markup)
+      (let loop ((es body))
+	 (cond
+	    ((pair? es)
+	     (let ((e (car es)))
+		(cond
+		   ((xml-element? e)
+		    (xml-element-parent-set! e o))
+		   ((pair? e)
+		    (loop e))))
+	     (loop (cdr es)))
+	    ((xml-element? es)
+	     (xml-element-parent-set! es o))))
       o))
 
 ;*---------------------------------------------------------------------*/
@@ -194,7 +214,9 @@
       (cond
 	 ((null? args)
 	  (instantiate::xml-element
-	     (markup (string->symbol (string-downcase (symbol->string el))))
+	     (markup (string->symbol
+		      (string-downcase
+		       (symbol->string el))))
 	     (attributes (reverse! attr))
 	     (id (xml-make-id id el))
 	     (body (reverse! body))))
@@ -515,4 +537,5 @@
 	     (id (xml-make-id id 'img))
 	     (attributes (cons `(src . ,src) attributes))
 	     (body body)))))
+	  
 
