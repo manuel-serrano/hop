@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  8 07:03:09 2006                          */
-;*    Last change :  Sun Apr  9 14:56:28 2006 (serrano)                */
+;*    Last change :  Tue Apr 11 11:38:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki edit demo                                                   */
@@ -111,13 +111,13 @@ a centered text
 ;*---------------------------------------------------------------------*/
 ;*    wikiedit-block ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (wikiedit-block title expr)
+(define (wikiedit-block port title expr)
    (apply <DIV> :class "block" (<SPAN> :class "title" title) "\n" expr))
 
 ;*---------------------------------------------------------------------*/
 ;*    wikiedit-center ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (wikiedit-center title expr)
+(define (wikiedit-center port title expr)
    (<DIV> :class "center" expr))
 
 ;*---------------------------------------------------------------------*/
