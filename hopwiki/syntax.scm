@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Apr 12 07:52:12 2006 (serrano)                */
+;*    Last change :  Wed Apr 12 16:30:18 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -285,10 +285,19 @@
        (let* ((id (the-symbol))
 	      (proc ((wiki-syntax-specials syn) id)))
 	  (if (procedure? proc)
-	      (let ((title (read-line (the-port))))
-		 (enter-state! id
-			       (lambda el (proc (the-port) title el))
-			       #f))
+	      (let* ((/markup (string-append
+			       "</" (the-substring 1 (the-length))))
+		     (l/markup (string-length /markup))
+		     (title (read-line (the-port)))
+		     (ltitle (string-length title)))
+		 (if (substring-at? title /markup (-fx ltitle l/markup))
+		     (add-expr!
+		      (proc (the-port)
+			    (substring title 0 (-fx ltitle l/markup))
+			    #f))
+		     (enter-state! id
+				   (lambda el (proc (the-port) title el))
+				   #f)))
 	      (add-expr! (the-html-string)))
 	  (ignore)))
 
@@ -326,7 +335,11 @@
 						 (>=fx value lv)))))))
 	  (when st (unwind-state! st))
 	  (enter-state! 'section sx lv)
-	  (enter-expr! '== hx #f)
+	  (enter-expr! '==
+		       (lambda expr
+			  (list (apply hx expr)
+				(<A> :name "TODO")))
+		       #f)
 	  (ignore)))
       
       ((>= 2 #\=)

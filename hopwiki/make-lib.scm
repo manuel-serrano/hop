@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:02:51 2006                          */
-;*    Last change :  Mon Apr  3 15:04:23 2006 (serrano)                */
+;*    Last change :  Wed Apr 12 15:54:34 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki library heap.                                           */
@@ -16,7 +16,8 @@
    
    (option (set! *dlopen-init* #t))
    
-   (import __hopwiki_syntax)
+   (import __hopwiki_syntax
+	   __hopwiki_toc)
    
    (eval   (class wiki-syntax)
 

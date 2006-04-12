@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Thu Feb  2 16:11:02 2006 (serrano)                */
+;*    Last change :  Wed Apr 12 16:12:25 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -37,7 +37,7 @@
 	   (dom-remove-child! node old)
 	   (dom-replace-child! node new old)
 	   (generic dom-get-element-by-id obj ::bstring)
-	   (dom-get-elements-by-tag-name obj ::bstring)
+	   (dom-get-elements-by-tag-name::pair-nil obj ::bstring)
 	   (dom-get-attribute node ::bstring)
 	   (dom-has-attribute?::bool node ::bstring)
 	   (dom-remove-attribute! node name)
@@ -440,23 +440,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-elements-by-tag-name ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (dom-get-elements-by-tag-name obj name)
-   (when (xml-markup? obj)
-      (let ((sym (string->symbol (string-downcase name))))
-	 (let loop ((obj obj)
-		    (res '()))
-	    (let liip ((body (xml-markup-body obj))
-		       (res res))
-	       (cond
-		  ((null? body)
-		   (reverse! res))
-		  ((xml-markup? (car body))
-		   (if (eq? sym (xml-markup-markup (car body)))
-		       (liip (cdr body)
-			     (cons (car body) (loop (car body) res)))
-		       (liip (cdr body) (loop (car body) res))))
-		  (else
-		   (liip (cdr body) res))))))))
+(define (dom-get-elements-by-tag-name::pair-nil obj name)
+   (let ((sym (string->symbol (string-downcase name))))
+      (let loop ((obj obj))
+	 (cond
+	    ((pair? obj)
+	     (append-map loop obj))
+	    ((xml-markup? obj)
+	     (if (eq? sym (xml-markup-markup obj))
+		 (cons obj (loop (xml-markup-body obj)))
+		 (loop (xml-markup-body obj))))
+	    (else
+	     '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-attribute ...                                            */
