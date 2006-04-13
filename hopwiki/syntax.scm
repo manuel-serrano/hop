@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Apr 12 18:25:56 2006 (serrano)                */
+;*    Last change :  Thu Apr 13 08:50:00 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -338,8 +338,8 @@
 	  (enter-state! 'section sx lv)
 	  (enter-expr! '==
 		       (lambda expr
-			  (list (apply hx expr)
-				(<A> :name (symbol->string mk))))
+			  (list (<A> :name (symbol->string mk))
+				(apply hx expr)))
 		       #f)
 	  (ignore)))
       

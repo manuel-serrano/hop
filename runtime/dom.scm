@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Wed Apr 12 16:12:25 2006 (serrano)                */
+;*    Last change :  Wed Apr 12 19:10:27 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -459,7 +459,7 @@
 (define (dom-get-attribute node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((c (assq (string->symbol name) attributes)))
+	 (let ((c (assoc name attributes)))
 	    (and (pair? c) (cdr c))))))
 
 ;*---------------------------------------------------------------------*/
