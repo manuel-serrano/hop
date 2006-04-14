@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Wed Mar 29 11:40:39 2006 (serrano)                */
+;*    Last change :  Fri Apr 14 10:04:59 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -26,7 +26,9 @@
 	    (find-user/encrypt ::bstring ::bstring ::procedure)
 	    (user-authorized-request?::bool ::obj ::http-request)
 	    (user-authorized-path?::bool ::obj ::bstring)
+	    (authorized-path?::bool ::http-request ::bstring)
 	    (user-authorized-service?::bool ::obj ::symbol)
+	    (authorized-service?::bool ::http-request ::symbol)
 	    (user-access-denied ::http-request)))
 
 ;*---------------------------------------------------------------------*/
@@ -227,6 +229,12 @@
 			   (with-input-from-file hopaccess read)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    authorized-path? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (authorized-path? req path)
+   (user-authorized-path? (http-request-user req) path))
+
+;*---------------------------------------------------------------------*/
 ;*    user-authorized-service? ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-service? user service)
@@ -235,6 +243,12 @@
 	    (with-access::user user (services)
 	       (or (eq? services '*) (memq service services))))
        ((hop-authorize-service-hook) user service)))
+
+;*---------------------------------------------------------------------*/
+;*    authorized-service? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (authorized-service? req service)
+   (user-authorized-service? (http-request-user req) service))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-request? ...                                     */

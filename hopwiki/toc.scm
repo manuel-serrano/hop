@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 12 15:53:32 2006                          */
-;*    Last change :  Thu Apr 13 08:51:54 2006 (serrano)                */
+;*    Last change :  Fri Apr 14 07:43:17 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki toc                                                         */
@@ -38,6 +38,9 @@
 	  (values (reverse! res) '()))
 	 ((pair? (car obj))
 	  (loop (append (car obj) (cdr obj)) res level))
+	 ((and (xml-element? (car obj))
+	       (eq? (xml-element-markup (car obj)) 'div))
+	  (loop (append (xml-element-body (car obj)) (cdr obj)) res level))
 	 ((null? (cdr obj))
 	  (values (reverse! res) '()))
 	 (else
