@@ -10,7 +10,8 @@
 	   *optimize-var-number*
 	   *optimize-consts*
 	   *optimize-boolify*
-	   *encapsulate-parts*)
+	   *encapsulate-parts*
+	   *print-locations*)
    (import protobject
 	   nodes
 	   var
@@ -27,6 +28,7 @@
 (define *optimize-consts* #t)
 (define *optimize-boolify* #t)
 (define *encapsulate-parts* #f)
+(define *print-locations* #f)
 
 (define (compile::bstring tree::pobject)
    (verbose "Compiling")
@@ -111,11 +113,25 @@
 
 (define (gen-code tree)
    (verbose "  generating code")
-   (overload compile compile (Node Program Part Node Const Var-ref Lambda
-				   If Case Clause Set! Begin Bind-exit
-				   Call Tail-rec Tail-rec-call Return
-				   Closure-alloc Label Break Pragma)
-	      (tree.compile)))
+   ;; small HACK: XXX-compile is stored in XXX.prototype.compile-gen-code
+   ;;             XXX.prototype.compile is actually filled with the "location"
+   ;;              method, that adds the location to the output.
+   (overload compile-gen-code compile
+	     (Node Program Part Node Const Var-ref Lambda
+		   If Case Clause Set! Begin Bind-exit
+		   Call Tail-rec Tail-rec-call Return
+		   Closure-alloc Label Break Pragma)
+	     (overload compile location (Node)
+		       (tree.compile))))
+
+(define-pmethod (Node-location)
+   (let ((compil (this.compile-gen-code)))
+      (if (and *print-locations*
+	       this.loc)
+	  (string-append compil "/*" (with-output-to-string
+					(lambda () (display this.loc)))
+			 "*/")
+	  compil)))
 
 (define (check-stmt-form expr node)
    (if (statement-form? node)

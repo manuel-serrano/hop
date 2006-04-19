@@ -181,7 +181,7 @@
    (set! this.body (this.body.traverse! state-var statement-form?)))
 
 (define-pmethod (Part-transform-statements! state-var statement-form?)
-   (this.body.traverse! state-var #t)
+   (set! this.body (this.body.traverse! state-var #t))
    this)
 
 (define-pmethod (Value-transform-statements! state-var statement-form?)
@@ -289,8 +289,8 @@
 	    (set-car! opnds (transform-optr/opnd (car opnds)))
 	    (loop (cdr opnds))))
 
-      ;; remove potential mark (we might re-add the statement-form?
-      ;; mark again
+      ;; remove potential mark (we might re-add the
+      ;; 'statement-form?' mark again)
       (mark-node! this #f)
 
       (let ((new-this (if state-var

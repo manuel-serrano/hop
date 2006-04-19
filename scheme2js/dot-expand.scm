@@ -6,8 +6,8 @@
 (define *direct-js-object-access* #t)
 
 (define (split-dot id)
-   (let ((splitted (map string->symbol
-			(string-split (symbol->string id) "."))))
+   (let ((splitted (map! string->symbol
+			 (string-split (symbol->string id) "."))))
       splitted))
 
 (define (split-multi-dot id)
@@ -117,10 +117,7 @@
        (expand-indirect-accesses! x)
        x)))
 
-(let ((old-initial-expander *scheme2js-initial-expander*))
-   (define (new-initial-expander x e::procedure)
-      (if *direct-js-object-access*
-	  (let ((x-undotted (undot x)))
-	     (old-initial-expander x-undotted e))
-	  (old-initial-expander x e)))
-   (set! *scheme2js-initial-expander* new-initial-expander))
+(add-pre-expand! (lambda (x)
+		    (if *direct-js-object-access*
+			(undot x)
+			x)))

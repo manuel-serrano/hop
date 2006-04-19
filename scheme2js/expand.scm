@@ -2,14 +2,28 @@
    (import verbose)
    (export (my-expand x)
 	   (install-expander! id e)
-	   *scheme2js-initial-expander*)
-   (eval (export *scheme2js-initial-expander*)))
+	   (add-pre-expand! f::procedure)
+	   (pre-expand! x))
+   (eval (export add-pre-expand!)))
+
+(define *pre-expanders* '())
+
+(define (add-pre-expand! f)
+   (set! *pre-expanders* (cons f *pre-expanders*)))
+
+(define (pre-expand! x)
+   (let loop ((x x)
+	      (pre-expanders *pre-expanders*))
+      (if (null? pre-expanders)
+	  x
+	  (loop ((car pre-expanders) x)
+		(cdr pre-expanders)))))
 
 (define (my-expand x)
    (verbose "expanding")
-   (*scheme2js-initial-expander* x *scheme2js-initial-expander*))
+   (scheme2js-initial-expander x scheme2js-initial-expander))
 
-(define (*scheme2js-initial-expander* x e)
+(define (scheme2js-initial-expander x e)
    (let ((e1 (cond
 		((symbol? x) symbol-expander)
 		((not (pair? x)) identify-expander)
@@ -18,8 +32,9 @@
 		     (expander (car x))
 		     application-expander))
 		(else
-		 application-expander))))
-      (e1 x e)))
+		 application-expander)))
+	 (pre-expanded-x (pre-expand! x)))
+      (e1 pre-expanded-x e)))
 
 (define (symbol-expander x e)
    x)
@@ -27,7 +42,7 @@
 (define (identify-expander x e) x)
 
 (define (application-expander x e)
-   (map (lambda (y) (e y e)) x))
+   (map! (lambda (y) (e y e)) x))
 
 (define *expander-list* '())
 
@@ -51,12 +66,28 @@
 		       (pair-map f (cdr p))))
       (else (f p))))
 
+(define (pair-map! f p)
+   (let loop ((p p))
+      (cond
+	 ((null? p) 'done)
+	 ((pair? p) (set-car! p (f (car p)))
+		    (if (pair? (cdr p))
+			(pair-map! f (cdr p))
+			(set-cdr! p (f (cdr p)))))
+	 (else (error "pair-map! (expand)"
+		      "pair-map! should never encounter atom"
+		      p))))
+   p)
+
 ;; works for (define (f ...) ..) and (lambda (...) ...)
 (define (formals-aware-expander x e)
    (if (pair? (cadr x))
-       `(,(car x)
-	 ,(pair-map (lambda (y) (e y e)) (cadr x))
-	 ,@(map (lambda (y) (e y e)) (cddr x)))
+       (let ((formals-pair (cdr x)))
+	  (set-car! formals-pair
+		    (pair-map! (lambda (y) (e y e)) (car formals-pair)))
+	  (set-cdr! formals-pair (map! (lambda (y) (e y e))
+				       (cdr formals-pair)))
+	  x)
        (application-expander x e)))
 
 (install-expander! 'lambda formals-aware-expander)

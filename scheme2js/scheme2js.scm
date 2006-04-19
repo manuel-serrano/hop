@@ -27,11 +27,11 @@
 (define (read-rev-port in-port)
    (with-input-from-port in-port
       (lambda ()
-	 (let loop ((sexp (read))
+	 (let loop ((sexp (read (current-input-port) #t))
 		    (rev-res '()))
 	    (if (eof-object? sexp)
 		rev-res
-		(loop (read) (cons sexp rev-res)))))))
+		(loop (read (current-input-port) #t) (cons sexp rev-res)))))))
    
 ;; just read all expressions we can get
 (define (read-files files)
@@ -116,6 +116,8 @@
        (set! *optimize-boolify* #f))
       (("-d" ?stage (help "debug stage"))
        (set! *debug-stage* (string->symbol stage)))
+      ((("-l" "--print-locs") (help "print locations"))
+       (set! *print-locations* #t))
       (else
        (set! *in-files* (cons else *in-files*)))))
 
