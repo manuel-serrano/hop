@@ -6,9 +6,13 @@
 	   nodes
 	   symbol
 	   var)
-   (export (parameter-assigs operands formals vaarg take-reference?)))
+   (export (parameter-assigs operands
+			     formals
+			     vaarg
+			     take-reference?
+			     id->js-var)))
 
-(define (parameter-assigs operands formals vaarg take-reference?)
+(define (parameter-assigs operands formals vaarg take-reference? id->js-var)
    (let loop ((opnds operands)
 	      (formals formals)
 	      (res '()))
@@ -35,8 +39,8 @@
 	  ;; just assign '() to the vaarg, and return the
 	  ;; whole assig-list
 	  (cons (if take-reference?
-		    (vaarg.var.assig (new Const '()))
-		    (new Set! vaarg (new Const '())))
+		    (vaarg.var.assig (new-node Const '()))
+		    (new-node Set! vaarg (new-node Const '())))
 		res))
 	 
 	 ;; no formals anymore, but vars left for vaarg
@@ -44,12 +48,12 @@
 	       vaarg)
 	  ;; create a list, and assign it to the vaarg.
 	  ;; then return the whole list of assigs.
-	  (let ((rvalue (new Call
+	  (let ((rvalue (new-node Call
 			     ((id->js-var 'list).reference)
 			     opnds)))
 	     (cons (if take-reference?
 		       (vaarg.assig rvalue)
-		       (new Set! vaarg rvalue))
+		       (new-node Set! vaarg rvalue))
 		   res)))
 	  
 	 ;; still formals and opnd-refs left.
@@ -58,5 +62,5 @@
 		(cdr formals)
 		(cons (if take-reference?
 			  ((car formals).var.assig (car opnds))
-			  (new Set! (car formals) (car opnds)))
+			  (new-node Set! (car formals) (car opnds)))
 		      res))))))

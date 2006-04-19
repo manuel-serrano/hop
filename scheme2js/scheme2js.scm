@@ -1,6 +1,7 @@
 (module scheme2js
    (option (loadq "protobject-eval.sch"))
-   (import compile
+   (import config
+	   compile
 	   pobject-conv
 	   js-interface
 	   expand
@@ -18,11 +19,29 @@
 	   liveness
 	   verbose)
    (main my-main)
-   (export (scheme2js top-level::pair-nil js-interface::pair-nil)
-	   (scheme2js-compile-files! in-files::pair out-file::bstring)))
+   (export (scheme2js top-level::pair-nil js-interface::pair-nil config)
+	   (scheme2js-compile-files! in-files::pair out-file::bstring config)
+	   (default-scheme2js-config)))
 
 ;; TODO: automate this...
 (define *version* 0.1)
+
+(define (default-scheme2js-config)
+   (let ((ht (make-hashtable)))
+      (for-each (lambda (p)
+		   (hashtable-put! ht (car p) (cadr p)))
+		'((direct-js-object-access #t)
+		  (procedures-provide-js-this? #f)
+		  (unresolved=JS #f)
+		  (optimize-tail-rec #t)
+		  (do-inlining #t)
+		  (inline-globals #f)
+		  (optimize-calls #t)
+		  (optimize-var-number #f)
+		  (optimize-boolify #t)
+		  (encapsulate-parts #f)
+		  (print-locations #f)))
+      ht))
 
 (define (read-rev-port in-port)
    (with-input-from-port in-port
@@ -66,7 +85,7 @@
 (define *out-file* #f)
 (define *in-files* '())
 
-(define (handle-args args)
+(define (handle-args args config-ht)
    (args-parse (cdr args)
       (section "Help")
       (("?")
@@ -77,95 +96,98 @@
       ((("--version") (help "Version number"))
        (print *version*))
       ((("-v" "--verbose") (help "Verbose output"))
-       (set! *verbose* #t))
+       (hashtable-put! config-ht 'verbose #t))
       (("-o" ?file (help "The output file. '-' prints to stdout."))
        (set! *out-file* file))
       (section "Compile-flags")
       (("--no-js-dot-notation"
 	(help "disallows the access of JS-fields with dots."))
-       (set! *direct-js-object-access* #f))
+       (hashtable-put! config-ht 'direct-js-object-access #f))
       (("--encapsulate-parts"
 	(help "encapsulates subparts, so they don't flood the surrounding scope with local vars."))
-       (set! *encapsulate-parts* #t))
+       (hashtable-put! config-ht 'encapsulate-parts #t))
       (("--optimize-var-number"
 	(help "reduce used variables by reusing existing vars."))
-       (set! *optimize-var-number* #t))
+       (hashtable-put! config-ht 'optimize-var-number #t))
       (("--no-inlining"
 	(help "don't inline at all"))
-       (set! *do-inlining?* #f))
+       (hashtable-put! config-ht 'do-inlining #f))
       (("--inline-globals"
 	(help "inline global constants."))
-       (set! *inline-globals?* #t))
+       (hashtable-put! config-ht 'inline-globals #t))
       (("--unresolved-is-js"
 	(help "unresolved vars are supposed to be js-vars."))
-       (set! *unresolved=JS* #t))
+       (hashtable-put! config-ht 'unresolved=JS #t))
       (("--js-this"
 	(help "procedures may use Javascript's 'this' variable."))
-       (set! *procedures-provide-js-this?* #t))
+       (hashtable-put! config-ht 'procedures-provide-js-this #t))
       (("--no-tailrec"
 	(help "don't optimize tail-recs."))
-       (set! *optimize-tail-rec* #f))
+       (hashtable-put! config-ht 'optimize-tail-rec #f))
       (("--no-optimize-calls"
 	(help "don't inline simple runtime-functions."))
-       (set! *optimize-calls* #f))
+       (hashtable-put! config-ht 'optimize-calls #f))
       (("--no-optimize-consts"
 	(help "don't factor constants, but recreate them at every use."))
-       (set! *optimize-consts* #f))
+       (hashtable-put! config-ht 'optimize-consts #f))
       (("--no-optimize-boolify"
 	(help "always test against false. Even if the test is a bool."))
-       (set! *optimize-boolify* #f))
+       (hashtable-put! config-ht 'optimize-boolify #f))
       (("-d" ?stage (help "debug stage"))
-       (set! *debug-stage* (string->symbol stage)))
+       (hashtable-put! config-ht 'debug-stage (string->symbol stage)))
       ((("-l" "--print-locs") (help "print locations"))
-       (set! *print-locations* #t))
+       (hashtable-put! config-ht 'print-locations #t))
       (else
        (set! *in-files* (cons else *in-files*)))))
 
-(define *debug-stage* #f)
-(define (scheme2js top-level js-interface)
+(define (scheme2js top-level js-interface config-ht)
+   (config-init! config-ht)
    (let* ((tmp (extract-js-interface top-level js-interface))
 	  (top-level-s (cons 'begin (car tmp))) ;; top-level-s plitted
 	  (extended-js-interface (cdr tmp))
 	  (top-level-e (my-expand top-level-s))
-	  (dummy (if (eq? *debug-stage* 'expand)
+	  (dummy (if (eq? (config 'debug-stage) 'expand)
 		     (pp top-level-e)))
 	  (tree (pobject-conv top-level-e)))
-      (if (eq? *debug-stage* 'tree) (dot-out tree))
+      (if (eq? (config 'debug-stage) 'tree) (dot-out tree))
       (symbol-resolution tree extended-js-interface)
-      (if (eq? *debug-stage* 'symbol) (dot-out tree))
+      (if (eq? (config 'debug-stage) 'symbol) (dot-out tree))
       (node-elimination! tree)
-      (if (eq? *debug-stage* 'node-elim1) (dot-out tree))
+      (if (eq? (config 'debug-stage) 'node-elim1) (dot-out tree))
       (side-effect tree)
-      (if (eq? *debug-stage* 'side) (dot-out tree))
+      (if (eq? (config 'debug-stage) 'side) (dot-out tree))
       (tail-rec! tree)
-      (if (eq? *debug-stage* 'tail) (dot-out tree))
+      (if (eq? (config 'debug-stage) 'tail) (dot-out tree))
       (capture! tree)
-      (if (eq? *debug-stage* 'capture) (dot-out tree))
+      (if (eq? (config 'debug-stage) 'capture) (dot-out tree))
       (inline! tree)
-      (if (eq? *debug-stage* 'inline) (dot-out tree))
+      (if (eq? (config 'debug-stage) 'inline) (dot-out tree))
       (statements! tree)
-      (if (eq? *debug-stage* 'statements) (dot-out tree))
+      (if (eq? (config 'debug-stage) 'statements) (dot-out tree))
       (node-elimination! tree)
-      (if (eq? *debug-stage* 'node-elim2) (dot-out tree))
+      (if (eq? (config 'debug-stage) 'node-elim2) (dot-out tree))
       ;(liveness tree)
       (let ((compiled (compile tree)))
-	 (if (eq? *debug-stage* 'compiled) (dot-out tree))
+	 (if (eq? (config 'debug-stage) 'compiled) (dot-out tree))
 	 (verbose "--- compiled")
-	 (unless *debug-stage*
+	 (unless (config 'debug-stage)
 	    (print compiled))
 	 )))
 
-(define (scheme2js-compile-files! in-files out-file)
+(define (scheme2js-compile-files! in-files out-file config-ht)
+   ;; we need this for "verbose" outputs.
+   (config-init! config-ht)
    (let ((top-level (read-files (reverse! in-files))))
       (if (string=? "-" out-file)
-	  (scheme2js top-level '())
+	  (scheme2js top-level '() config-ht)
 	  (with-output-to-file out-file
-	     (lambda () (scheme2js top-level '()))))))
+	     (lambda () (scheme2js top-level '() config-ht))))))
 
 (define (my-main args)
-   (handle-args args)
-   (if (or (null? *in-files*)
-	   (not *out-file*))
-       (error #f "missing in or output-file. Use --help to see the usage." #f))
-
-   (scheme2js-compile-files! *in-files* *out-file*))
+   (let ((config-ht (default-scheme2js-config)))
+      (handle-args args config-ht)
+      (if (or (null? *in-files*)
+	      (not *out-file*))
+	  (error #f "missing in or output-file. Use --help to see the usage." #f))
+      
+      (scheme2js-compile-files! *in-files* *out-file* config-ht)))

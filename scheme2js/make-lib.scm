@@ -6,7 +6,6 @@
    (option  (set! *dlopen-init* #t))
    
    (import scheme2js
-	   expand
-	   (*unresolved=JS* symbol))
+	   expand)
 
    (eval   (export-all)))

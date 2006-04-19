@@ -1,6 +1,7 @@
 (module pobject-conv
    (option (loadq "protobject-eval.sch"))
    (include "protobject.sch")
+   (include "nodes.sch")
    (import nodes
 	   protobject
 	   verbose)
@@ -36,15 +37,16 @@
    
 (define (pobject-conv prog)
    (verbose "list->pobject")
-   (new Program
-	(new Part
+   (nodes-init!)
+   (new-node Program
+	(new-node Part
 	     (scheme->pobject prog (location prog)))))
    
 (define (expr-list->Body expr-list)
-   (new Body (expr-list->Begin expr-list)))
+   (new-node Body (expr-list->Begin expr-list)))
 
 (define (expr-list->Begin expr-list)
-   (new Begin (scheme->pobject-map expr-list)))
+   (new-node Begin (scheme->pobject-map expr-list)))
 
 (define (lambda->pobject formals-vaarg body)
    (define (split-formals-vaarg! formals-vaarg)
@@ -57,35 +59,35 @@
 
    (let ((vaarg (split-formals-vaarg! formals-vaarg))
 	 (formals formals-vaarg)) ;; just an alias
-      (new Lambda
+      (new-node Lambda
 	   (location-map (lambda (formal loc)
-			    (attach-location (new Decl formal) loc))
+			    (attach-location (new-node Decl formal) loc))
 			 formals)
-	   (and vaarg (new Decl vaarg))
-	   (new Return (expr-list->Body body)))))
+	   (and vaarg (new-node Decl vaarg))
+	   (new-node Return (expr-list->Body body)))))
 
 (define (let-form->pobject bindings body kind)
    (define (binding->pobject binding)
       (let ((var (car binding))
 	    (val (cadr binding)))
-	 (new Binding
-	      (attach-location (new Decl var) (location binding))
+	 (new-node Binding
+	      (attach-location (new-node Decl var) (location binding))
 	      (scheme->pobject val (location (cdr binding))))))
    
    (let ((pobject-bindings (map! binding->pobject bindings)))
-      (new Let-form pobject-bindings (expr-list->Body body) kind)))
+      (new-node Let-form pobject-bindings (expr-list->Body body) kind)))
 
 (define (case->pobject key clauses)
    (define (clause->pobject clause maybe-default-clause?)
       (let* ((consts (car clause))
 	     (raw-exprs (cdr clause))
 	     (exprs (scheme->pobject-map raw-exprs))
-	     (begin-expr (new Begin exprs)))
+	     (begin-expr (new-node Begin exprs)))
 	 (if (and maybe-default-clause?
 		  (eq? consts 'else))
-	     (new Clause '() begin-expr #t)
-	     (new Clause (map (lambda (const)
-				 (new Const const))
+	     (new-node Clause '() begin-expr #t)
+	     (new-node Clause (map (lambda (const)
+				 (new-node Const const))
 			      consts)
 		  begin-expr #f))))
    
@@ -101,7 +103,7 @@
 			     (cons (clause->pobject (car clauses) #f)
 				   rev-result)))))
 
-   (new Case
+   (new-node Case
 	(scheme->pobject-no-loc key)
 	(clauses->pobjects clauses '())))
 
@@ -109,14 +111,14 @@
    (cond
       ((pair? exp)
        (match-case exp
-	  ((quote ?datum) (new Const datum))
+	  ((quote ?datum) (new-node Const datum))
 	  ((lambda ?formals . ?body) (lambda->pobject formals body))
 	  ((if ?test ?then)
 	   ;(scheme->pobject `(if ,test ,then #unspecified)))
 	   (set-cdr! (cddr exp) '(#unspecified))
 	   (scheme->pobject-no-loc exp))
 	  ((if ?test ?then ?else)
-	   (new If
+	   (new-node If
 		(scheme->pobject test (location (cdr exp)))
 		(scheme->pobject then (location (cddr exp)))
 		(scheme->pobject else (location (cdddr exp)))))
@@ -124,38 +126,38 @@
 	  ((case ?key . ?clauses)
 	   (case->pobject key clauses))
 	  ((set! ?var ?expr)
-	   (new Set!
-		(attach-location (new Var-ref var) (location (cdr exp)))
+	   (new-node Set!
+		(attach-location (new-node Var-ref var) (location (cdr exp)))
 		(scheme->pobject expr (location (cddr exp)))))
 	  ((set! . L) (error #f "bad set!-form: " exp))
 	  ((let ?bindings . ?body) (let-form->pobject bindings body 'let))
 	  ((letrec ?bindings . ?body) (let-form->pobject bindings body 'letrec))
-	  ((begin . ?body) (new Begin (scheme->pobject-map body)))
+	  ((begin . ?body) (new-node Begin (scheme->pobject-map body)))
 	  ((define ?var ?expr)
-	   (new Define
-		(attach-location (new Decl var) (location (cdr exp)))
+	   (new-node Define
+		(attach-location (new-node Decl var) (location (cdr exp)))
 		(scheme->pobject expr (location (cddr exp)))))
 	  ((bind-exit (?escape) . ?body)
-	   (new Bind-exit (new Decl escape) (expr-list->Body body)))
+	   (new-node Bind-exit (new-node Decl escape) (expr-list->Body body)))
 	  ((pragma ?str)
-	   (new Pragma str))
+	   (new-node Pragma str))
 	  ((part ?expr (and ?fun (? procedure?)))
-	   (new Part
+	   (new-node Part
 		(scheme->pobject expr (location (cdr exp)))
 		fun))
 	  ((?operator . ?operands)
-	   (new Call
+	   (new-node Call
 		(scheme->pobject operator (location exp))
 		(scheme->pobject-map operands)))))
       ((eq? exp #unspecified)
-	(new Const #unspecified))
+	(new-node Const #unspecified))
        ;; unquoted symbols must be var-refs
       ((symbol? exp)
-       (new Var-ref exp))
+       (new-node Var-ref exp))
       ((vector? exp)
        (error #f "vectors must be quoted" exp))
       (else
-       (new Const exp))))
+       (new-node Const exp))))
 
 (define (scheme->pobject exp loc)
    (attach-location (scheme->pobject-no-loc exp) loc))

@@ -5,14 +5,9 @@
    (include "compile-optimized-call.scm")
    (include "compile-optimized-boolify.scm")
    (option (loadq "protobject-eval.sch"))
-   (export (compile::bstring tree::pobject)
-	   *optimize-calls*
-	   *optimize-var-number*
-	   *optimize-consts*
-	   *optimize-boolify*
-	   *encapsulate-parts*
-	   *print-locations*)
+   (export (compile::bstring tree::pobject))
    (import protobject
+	   config
 	   nodes
 	   var
 	   gen-code
@@ -21,94 +16,18 @@
 	   liveness
 	   constants
 	   verbose
-	   gen-js))
-
-(define *optimize-calls* #t)
-(define *optimize-var-number* #f)
-(define *optimize-consts* #t)
-(define *optimize-boolify* #t)
-(define *encapsulate-parts* #f)
-(define *print-locations* #f)
+	   allocate-names))
 
 (define (compile::bstring tree::pobject)
    (verbose "Compiling")
    (liveness tree)
-   (if *optimize-consts*
+   (if (config 'optimize-consts)
        (constants! tree))
 
    (collect-vars tree)
 
    (gen-var-names tree)
    (gen-code tree))
-
-(define *reusable-var-names* '())
-
-(define (gen-var-names tree)
-   (verbose "  generating names for vars")
-   (set! *reusable-var-names* '())
-   (overload traverse name-gen (Node Var-ref)
-	     (overload allocate-name allocate-name (Var JS-Var JS-This-Var)
-		       (overload free-name free-name (Var JS-Var)
-				 (tree.traverse))))
-   (set! *reusable-var-names* '()))
-
-(define-pmethod (Node-name-gen)
-   (if this.live-begin-vars
-       (for-each (lambda (var)
-		    (var.allocate-name #t))
-		 this.live-begin-vars))
-   (this.traverse0)
-   (if this.live-end-vars
-       (for-each (lambda (var)
-		    (var.free-name))
-		 this.live-end-vars)))
-
-(define-pmethod (Var-ref-name-gen)
-   (for-each (lambda (var)
-		(var.allocate-name #t))
-	     (or this.live-begin-vars '()))
-   (let ((var this.var))
-      (if (not var.compiled) ;; imported, captured or something else
-	  (var.allocate-name #f)))
-   (for-each (lambda (var)
-		(var.free-name))
-	     (or this.live-end-vars '())))
-
-(define-pmethod (Var-allocate-name use-generic-name?)
-   (cond
-      (this.compiled
-       'do-nothing)
-      (this.is-global?
-       (set! this.compiled (mangle-JS-sym this.id)))
-      ((and *optimize-var-number*
-	    use-generic-name?)
-       (if (null? *reusable-var-names*)
-	   (set! this.compiled (gen-code-var 'var))
-	   (begin
-	      (set! this.compiled (car *reusable-var-names*))
-	      (set! *reusable-var-names* (cdr *reusable-var-names*)))))
-      (else
-       (set! this.compiled (gen-code-var this.id)))))
-
-; (define-pmethod (Var-allocate-name)
-;    (let ((compiled this.compiled))
-;       (or compiled
-; 	  (let ((compiled (gen-code-var this.id)))
-; 	     (set! this.compiled compiled)
-; 	     compiled))))
-   
-(define-pmethod (JS-Var-allocate-name use-generic-name?)
-   (set! this.compiled (symbol->string this.js-id)))
-
-(define-pmethod (JS-This-Var-allocate-name use-generic-name?)
-   (set! this.compiled "this"))
-
-(define-pmethod (Var-free-name)
-   (set! *reusable-var-names* (cons this.compiled *reusable-var-names*)))
-
-(define-pmethod (JS-Var-free-name)
-   'do-nothing)
-   
 
 
 (define (gen-code tree)
@@ -126,7 +45,7 @@
 
 (define-pmethod (Node-location)
    (let ((compil (this.compile-gen-code)))
-      (if (and *print-locations*
+      (if (and (config 'print-locations)
 	       this.loc)
 	  (string-append compil "/*" (with-output-to-string
 					(lambda () (display this.loc)))
@@ -190,7 +109,7 @@
 						#t)))
 	 (cons outer-vars part-vars)))
 
-   (let* ((outer/part-vars (if *encapsulate-parts*
+   (let* ((outer/part-vars (if (config 'encapsulate-parts)
 			       (split-globals this.collected-vars)
 			       (cons this.collected-vars #f)))
 	  (outer-vars (car outer/part-vars))
@@ -198,8 +117,8 @@
 	  (part-filter-fun this.fun)
 	  (compiled-body (if (and part-vars
 				  (> (hashtable-size part-vars) 0))
-			     (let* ((fun (new Lambda '() #f this.body))
-				    (call (new Call fun '())))
+			     (let* ((fun (new-node Lambda '() #f this.body))
+				    (call (new-node Call fun '())))
 				(mark-statement-form! call #t)
 				(set! fun.collected-vars part-vars)
 				(call.compile))
@@ -229,7 +148,7 @@
        this)))
 
 (define (boolify compiled node)
-   (if *optimize-boolify*
+   (if (config 'optimize-boolify)
        (compile-optimized-boolify compiled node)
        (gen-code-boolify compiled)))
 
@@ -266,7 +185,7 @@
 (define-pmethod (Call-compile)
    (check-stmt-form
     (let ((operator this.operator))
-       (or (and *optimize-calls*
+       (or (and (config 'optimize-calls)
 		(compile-optimized-call operator this.operands))
 	   (gen-code-call (this.operator.compile)
 			  (map-node-compile this.operands))))
@@ -277,7 +196,7 @@
 	  (body (gen-code-begin (list (this.body.compile)
 				      (gen-code-break label))
 				#t)))
-      (gen-code-while ((new Const #t).compile)
+      (gen-code-while ((new-node Const #t).compile)
 		      body
 		      label)))
 

@@ -1,9 +1,7 @@
 (module dot-expand
    (import verbose
-	   expand)
-   (export *direct-js-object-access*))
-
-(define *direct-js-object-access* #t)
+	   config
+	   expand))
 
 (define (split-dot id)
    (let ((splitted (map! string->symbol
@@ -118,6 +116,6 @@
        x)))
 
 (add-pre-expand! (lambda (x)
-		    (if *direct-js-object-access*
+		    (if (config 'direct-js-object-access)
 			(undot x)
 			x)))

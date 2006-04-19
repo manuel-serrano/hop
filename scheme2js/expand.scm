@@ -8,16 +8,25 @@
 
 (define *pre-expanders* '())
 
+(define *mutex* (make-mutex))
+
 (define (add-pre-expand! f)
-   (set! *pre-expanders* (cons f *pre-expanders*)))
+   (mutex-lock! *mutex*)
+   (set! *pre-expanders* (cons f *pre-expanders*))
+   (mutex-unlock! *mutex*))
 
 (define (pre-expand! x)
-   (let loop ((x x)
-	      (pre-expanders *pre-expanders*))
-      (if (null? pre-expanders)
-	  x
-	  (loop ((car pre-expanders) x)
-		(cdr pre-expanders)))))
+   (define (pre-expand!-inner x)
+      (let loop ((x x)
+		 (pre-expanders *pre-expanders*))
+	 (if (null? pre-expanders)
+	     x
+	     (loop ((car pre-expanders) x)
+		   (cdr pre-expanders)))))
+   (mutex-lock! *mutex*)
+   (let ((res (pre-expand!-inner x)))
+      (mutex-unlock! *mutex*)
+      res))
 
 (define (my-expand x)
    (verbose "expanding")

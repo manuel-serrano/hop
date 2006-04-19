@@ -209,7 +209,7 @@
 
 (define (compile-optimized-call operator::pobject
 				operands::pair-nil)
-   (if (inherits-from? operator Var-ref)
+   (if (inherits-from? operator (node 'Var-ref))
        (let* ((var operator.var)
 	      (id var.js-id)
 	      (optimize-fun (and (not operator.var.muted)
