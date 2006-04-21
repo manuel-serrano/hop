@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Mar 28 16:21:24 2006 (serrano)                */
+/*    Last change :  Tue Apr 18 07:15:51 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -447,6 +447,13 @@ function hop_tooltip_show( event, id, ux, uy ) {
 
    if( (el instanceof HTMLDivElement) &&
        (hop_current_tooltip != el) ) {
+
+      var p = el.parentNode;
+      
+      if( p != document.body ) {
+	 p.removeChild( el );
+	 document.body.appendChild( el );
+      }
 
       if( hop_current_tooltip instanceof HTMLDivElement ) {
 	 hop_current_tooltip.style.visibility = "hidden";

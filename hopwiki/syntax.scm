@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Apr 14 07:29:14 2006 (serrano)                */
+;*    Last change :  Sun Apr 16 07:14:43 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -271,12 +271,12 @@
        (ignore))
 
       ;; simple text
-      ((+ (out ":<>+^|*=/_-$#,`'() \\\n"))
+      ((+ (out ";:<>+^|*=/_-$#,`'(){} \\\n"))
        (add-expr! (the-html-string))
        (ignore))
 
       ;; single escape characters
-      ((in ":<>+*=/_-$#,`'() \\\n")
+      ((in ";:<>+*=/_-$#,`'() \\\n")
        (add-expr! (the-html-string))
        (ignore))
 
@@ -394,6 +394,10 @@
 	  (enter-expr! 'li (wiki-syntax-li syn) val))
        (ignore))
 
+      ;; comments
+      ((bol (: (or ";*" ";;") (+ all)))
+       (ignore))
+
       ;; tables
       ((bol (in "^|"))
        (table-first-row-cell (the-character) #f))
@@ -481,10 +485,10 @@
 	      (begin
 		 (enter-expr! 'tt (wiki-syntax-tt syn) #f)
 		 (ignore)))))
-      ("(("
+      ("{{"
        (enter-expr! 'code (wiki-syntax-code syn) #f)
        (ignore))
-      ("))"
+      ("}}"
        (let ((s (in-state 'code)))
 	  (when s (unwind-state! s)))
        (ignore))
