@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Mar 24 11:44:08 2006 (serrano)                */
+;*    Last change :  Mon Apr 24 14:22:58 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -309,7 +309,7 @@
    (let ((s (with-error-to-string (lambda () (warning-notify e)))))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 400 Bad Request")
-	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>")))))
+	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>" s)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-warning ...                                                 */

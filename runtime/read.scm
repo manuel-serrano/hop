@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Apr  2 08:12:27 2006 (serrano)                */
+;*    Last change :  Mon Apr 24 14:33:19 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -621,7 +621,11 @@
 (define (hop-read #!optional (iport::input-port (current-input-port)))
    (if (closed-input-port? iport)
        (error 'hop-read "Illegal closed input port" iport)
-       (read/rp *hop-grammar* iport '() 0 0 '() '())))
+       (begin
+	  ((hop-read-pre-hook) iport)
+	  (let ((e (read/rp *hop-grammar* iport '() 0 0 '() '())))
+	     ((hop-read-post-hook) iport)
+	     e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *the-loading-file* ...                                           */
@@ -694,9 +698,7 @@
 			      (thread-specific-set! t file-name)
 			      (set! *the-loading-file* file-name))
 			  (let loop ((last #unspecified))
-			     ((hop-read-pre-hook) port)
 			     (let ((sexp (hop-read port)))
-				((hop-read-post-hook) port)
 				(if (eof-object? sexp)
 				    last
 				    (loop (eval sexp env))))))

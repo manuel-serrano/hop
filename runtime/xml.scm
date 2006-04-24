@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Apr 12 18:24:44 2006 (serrano)                */
+;*    Last change :  Mon Apr 24 19:33:48 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -505,7 +505,9 @@
       ((null? body)
        (error '<GHOST> "Illegal empty ghost body" body))
       ((pair? (cdr body))
-       (error '<GHOST> "Illegal extra ghost body" (cdr body)))
+       (instantiate::xml-ghost
+	  (id (xml-make-id id 'GHOST))
+	  (body body)))
       (else
        (instantiate::xml-ghost
 	  (id (xml-make-id id 'GHOST))

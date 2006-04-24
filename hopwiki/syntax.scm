@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sun Apr 16 07:14:43 2006 (serrano)                */
+;*    Last change :  Mon Apr 24 16:34:49 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -53,6 +53,7 @@
 	       (th::procedure (default <TH>))
 	       (td::procedure (default <TD>))
 	       (keyword::procedure (default (lambda (x) x)))
+	       (type::procedure (default (lambda (x) x)))
 	       (specials::procedure (default (lambda (id) #f))))
 	    
 	    (wiki-string->hop ::bstring #!optional syntax)
@@ -74,7 +75,8 @@
 		  (current-input-port)
 		  (or syntax *default-syntax*)
 		  '()
-		  '()))))
+		  '()
+		  0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-input-port->hop ...                                         */
@@ -84,7 +86,8 @@
 	    iport
 	    (or syntax *default-syntax*)
 	    '()
-	    '()))
+	    '()
+	    0))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-read-error ...                                              */
@@ -102,7 +105,7 @@
 ;*---------------------------------------------------------------------*/
 (define *wiki-grammar*
    (regular-grammar ((blank (in " \t"))
-		     syn state result)
+		     syn state result trcount)
 
       ;; misc
       (define (the-html-string)
@@ -208,9 +211,17 @@
 		       (wiki-syntax-th syn)
 		       (wiki-syntax-td syn))))
 	    (unless (is-state? 'table)
+	       (set! trcount 0)
 	       (enter-block! 'table (wiki-syntax-table syn) #f))
-	    (enter-expr! 'tr (wiki-syntax-tr syn) #f)
+	    (enter-expr! 'tr
+			 (lambda exp
+			    (let ((cl (if (even? trcount)
+					  "hopwiki-row-even"
+					  "hopwiki-row-odd")))
+			       (apply (wiki-syntax-tr syn) :class cl exp)))
+			 #f)
 	    (enter-expr! 'tc tc rightp)
+	    (set! trcount (+fx 1 trcount))
 	    (ignore)))
 
       (define (table-last-row-cell char leftp cs)
@@ -492,8 +503,20 @@
        (let ((s (in-state 'code)))
 	  (when s (unwind-state! s)))
        (ignore))
-      ((: #\: (+ (out " \t\n")))
-       (add-expr! ((wiki-syntax-keyword syn) (the-string)))
+
+      ;; keywords
+      ((: (in " \t") #\: (+ (or (out " \t\n:") (: #\: (out " \t\n:")))))
+       (add-expr! " ")
+       (add-expr! ((wiki-syntax-keyword syn) (the-html-substring 1 (the-length))))
+       (ignore))
+
+      ((bol (: #\: (+ (or (out " \t\n:") (: #\: (out " \t\n:"))))))
+       (add-expr! ((wiki-syntax-keyword syn) (the-html-string)))
+       (ignore))
+
+      ;; types
+      ((: "::" (+ (out " \t\n")))
+       (add-expr! ((wiki-syntax-type syn) (the-html-string)))
        (ignore))
 
       ;; code embedding

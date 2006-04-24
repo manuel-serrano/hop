@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Fri Apr 21 15:34:29 2006 (serrano)                */
+/*    Last change :  Mon Apr 24 11:57:40 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW CSS                                                  */
@@ -14,7 +14,7 @@
 /*---------------------------------------------------------------------*/
 div.hop-iwindow {
   position: absolute;
-  background: white;
+  background: none;
 }
 
 /*---------------------------------------------------------------------*/
@@ -24,12 +24,14 @@ table.hop-iwindow-shadow td.hop-iwindow-shadow-ne {
   font-size: 2pt;
   width: 8px;
   height: 8px;
+  background: none;
   background-image: url( "icons/iwindow-shadow-ne.png" );
 }
 
 table.hop-iwindow-shadow td.hop-iwindow-shadow-e {
   font-size: 2pt;
   width: 8px;
+  background: none;
   background-image: url( "icons/iwindow-shadow-e.png" );
 }
 
@@ -37,18 +39,21 @@ table.hop-iwindow-shadow td.hop-iwindow-shadow-sw {
   font-size: 2pt;
   width: 8px;
   height: 8px;
+  background: none;
   background-image: url( "icons/iwindow-shadow-sw.png" );
 }
 
 table.hop-iwindow-shadow td.hop-iwindow-shadow-s {
   font-size: 2pt;
   height: 8px;
+  background: none;
   background-image: url( "icons/iwindow-shadow-s.png" );
 }
 
 table.hop-iwindow-shadow td.hop-iwindow-shadow-se {
   font-size: 2pt;
   height: 8px;
+  background: none;
   background-image: url( "icons/iwindow-shadow-se.png" );
 }
 
@@ -136,10 +141,7 @@ table.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-right {
 table.hop-iwindow td.hop-iwindow-content {
   border-left: 1px solid #555;
   border-right: 1px solid #555;
-}
-
-table.hop-iwindow table.td.hop-iwindow-body td.hop-iwindow-body {
-  overflow: auto;
+  background: white;
 }
 
 /*---------------------------------------------------------------------*/

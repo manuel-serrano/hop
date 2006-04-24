@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Feb 23 02:37:08 2006 (serrano)                */
+;*    Last change :  Mon Apr 24 17:12:33 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -42,8 +42,7 @@
 	     (gid (xml-make-id #unspecified 'NOTEPAD-INLINE))
 	     (ghost (cadr (xml-element-body tab)))
 	     (cla (if (=fx i 1) "hop-nptab-active" "hop-nptab-inactive"))
-	     (click (format "hop_notepad_inline( \"~a\", \"~a\", \"~a\" )"
-			    tid gid id)))
+	     (click (format "hop_notepad_inline( \"~a\", \"~a\" )" id tid)))
 	 (with-access::xml-element tab (attributes)
 	    (set! attributes
 		  (cons* (cons "class" cla)
@@ -83,9 +82,9 @@
 				     el)))
 			     (else
 			      (loop (cdr tabs)))))))))
-	     (click (format "hop_notepad_remote( ~a, \"~a\", \"~a\", \"~a\" )"
+	     (click (format "hop_notepad_remote( ~a, \"~a\", \"~a\" )"
 			    svc
-			    tid gid id)))
+			    id tid)))
 	 (with-access::xml-element tab (attributes)
 	    (set! attributes
 		  (cons* (cons "class" cla)
