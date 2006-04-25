@@ -20,7 +20,7 @@
 	   verbose)
    (main my-main)
    (export (scheme2js top-level::pair-nil js-interface::pair-nil config)
-	   (scheme2js-compile-files! in-files::pair out-file::bstring config)
+	   (scheme2js-compile-files! in-files::pair out-file::bstring js-interface::pair-nil config)
 	   (default-scheme2js-config)))
 
 ;; TODO: automate this...
@@ -174,14 +174,14 @@
 	    (print compiled))
 	 )))
 
-(define (scheme2js-compile-files! in-files out-file config-ht)
+(define (scheme2js-compile-files! in-files out-file js-interface config-ht)
    ;; we need this for "verbose" outputs.
    (config-init! config-ht)
    (let ((top-level (read-files (reverse! in-files))))
       (if (string=? "-" out-file)
 	  (scheme2js top-level '() config-ht)
 	  (with-output-to-file out-file
-	     (lambda () (scheme2js top-level '() config-ht))))))
+	     (lambda () (scheme2js top-level js-interface config-ht))))))
 
 (define (my-main args)
    (let ((config-ht (default-scheme2js-config)))
@@ -190,4 +190,4 @@
 	      (not *out-file*))
 	  (error #f "missing in or output-file. Use --help to see the usage." #f))
       
-      (scheme2js-compile-files! *in-files* *out-file* config-ht)))
+      (scheme2js-compile-files! *in-files* *out-file* '() config-ht)))
