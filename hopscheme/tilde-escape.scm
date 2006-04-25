@@ -1,4 +1,5 @@
 (module tilde-escape
+   (import  hopscheme_aliases)
    (library hop
 	    scheme2js))
 
@@ -39,6 +40,7 @@
 ;	 (print "compiling (reverse): " rev-scheme-exprs)
 	 (with-output-to-string
 	    (lambda ()
-	       (scheme2js (reverse! rev-scheme-exprs) '()))))))
+	       (scheme2js (reverse! rev-scheme-exprs)
+			  (hopscheme-aliases)))))))
 
 (hop-read-post-hook-set! post-compile)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Apr 25 10:25:20 2006 (serrano)                */
+;*    Last change :  Tue Apr 25 11:52:02 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -59,7 +59,7 @@
 					    (<A> :href href node))))
 	       (keyword::procedure (default (lambda (x) x)))
 	       (type::procedure (default (lambda (x) x)))
-	       (specials::procedure (default (lambda (id) #f))))
+	       (plugins::procedure (default (lambda (id) #f))))
 	    
 	    (wiki-string->hop ::bstring #!optional syntax)
 	    (wiki-input-port->hop ::input-port #!optional syntax)))
@@ -575,7 +575,7 @@
       ;; special escape markups
       ((bol (: "<" (out #\> #\/) (* (out #\>)) ">"))
        (let* ((id (the-symbol))
-	      (proc ((wiki-syntax-specials syn) id)))
+	      (proc ((wiki-syntax-plugins syn) id)))
 	  (if (procedure? proc)
 	      (let* ((/markup (string-append
 			       "</" (the-substring 1 (the-length))))
@@ -596,7 +596,7 @@
       ((bol (: "</" (+ (out #\>)) ">"))
        (let* ((s (the-substring 2 (the-length)))
 	      (id (symbol-append '< (string->symbol s)))
-	      (proc ((wiki-syntax-specials syn) id)))
+	      (proc ((wiki-syntax-plugins syn) id)))
 	  (if (procedure? proc)
 	      (let ((st (in-state id)))
 		 (if (state? st)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  8 07:03:09 2006                          */
-;*    Last change :  Tue Apr 11 11:38:42 2006 (serrano)                */
+;*    Last change :  Tue Apr 25 11:53:19 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki edit demo                                                   */
@@ -103,10 +103,10 @@ a centered text
       (section2 (lambda expr (<DIV> :class "section2" expr)))
       (section3 (lambda expr (<DIV> :class "section3" expr)))
       (section4 (lambda expr (<DIV> :class "section4" expr)))
-      (specials (lambda (id)
-		   (case id
-		      ((<block>) wikiedit-block)
-		      ((<center>) wikiedit-center))))))
+      (plugins (lambda (id)
+		  (case id
+		     ((<block>) wikiedit-block)
+		     ((<center>) wikiedit-center))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wikiedit-block ...                                               */
