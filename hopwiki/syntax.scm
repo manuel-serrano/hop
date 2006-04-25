@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Apr 25 10:11:29 2006 (serrano)                */
+;*    Last change :  Tue Apr 25 10:25:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -547,8 +547,11 @@
 	  (add-expr!
 	   (if (=fx i -1)
 	       (href s s)
-	       (href (substring s 0 i)
-		     (substring s (+fx i 1) (string-length s)))))
+	       (let ((s2 (substring s (+fx i 1) (string-length s))))
+		  (href (substring s 0 i)
+			(wiki-string->hop
+			 (substring s (+fx i 1) (string-length s))
+			 syn)))))
 	  (ignore)))
 
       ;; embedded hop
