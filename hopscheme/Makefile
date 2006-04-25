@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Tue Apr 25 14:34:20 2006 (serrano)                */
+#*    Last change :  Tue Apr 25 14:57:56 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
@@ -29,7 +29,7 @@ TARGETNAME	= hopscheme
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _BGL_OBJECTS	= hopscheme hop-scheme-head runtime-files dollar-escape \
-		  tilde-escape hop-aliases
+		  tilde-escape hopscheme-config hop-aliases
 
 _OBJECTS	= $(_BGL_OBJECTS)
 

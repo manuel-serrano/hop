@@ -31,9 +31,9 @@
 				       Closure-alloc
 				       Label
 				       Break)
-	     (set! Node.proto.default-traverse-value #f)
+	     (set! (node 'Node).proto.default-traverse-value #f)
 	     (tree.traverse)
-	     (delete! Node.proto.default-traverse-value)))
+	     (delete! (node 'Node).proto.default-traverse-value)))
 
 (define (mark-statement-form! o statement-form?)
    (mark-node! o statement-form?))
@@ -166,7 +166,7 @@
 		  (stmt-var-decl (Decl-of-new-Var stmt-id))
 		  (stmt-var stmt-var-decl.var)
 		  (new-stmt (,this-field-traverse! stmt-var #t))
-		  (begin-node (new Begin (list new-stmt this))))
+		  (begin-node (new-node Begin (list new-stmt this))))
 	      (mark-node! begin-node #t)
 	      (set! ,this-field stmt-var-decl)
 	      begin-node)
@@ -181,7 +181,7 @@
    (set! this.body (this.body.traverse! state-var statement-form?)))
 
 (define-pmethod (Part-transform-statements! state-var statement-form?)
-   (this.body.traverse! state-var #t)
+   (set! this.body (this.body.traverse! state-var #t))
    this)
 
 (define-pmethod (Value-transform-statements! state-var statement-form?)
@@ -227,10 +227,10 @@
       ((marked-node? this)
        (let* ((lvalue this.lvalue)
 	      (state-var-assig (and state-var
-				    (state-var.assig (new Const #unspecified))))
+				    (state-var.assig (new-node Const #unspecified))))
 	      (new-val (this.val.traverse! lvalue.var #t))
-	      (bnode (new Begin
-			  `(,@(if (inherits-from? lvalue Decl)
+	      (bnode (new-node Begin
+			  `(,@(if (inherits-from? lvalue (node 'Decl))
 				  (list lvalue) ;; don't loose the Decl
 				  '())
 			    ,new-val
@@ -244,8 +244,8 @@
 	  bnode))
       (state-var
        (set! this.val (this.val.traverse! #f #f))
-       (let* ((unspec-assig (state-var.assig (new Const #unspecified)))
-	      (bnode (new Begin `(,this ,unspec-assig))))
+       (let* ((unspec-assig (state-var.assig (new-node Const #unspecified)))
+	      (bnode (new-node Begin `(,this ,unspec-assig))))
 	  (mark-node! this statement-form?)
 	  (mark-node! unspec-assig statement-form?)
 	  (mark-node! bnode statement-form?)
@@ -298,7 +298,7 @@
 			  this)))
 	 
 	 (if (not (null? prolog))
-	     (let ((bnode (new Begin (append! prolog (list new-this)))))
+	     (let ((bnode (new-node Begin (append! prolog (list new-this)))))
 		(mark-node! bnode #t)
 		bnode)
 	     (begin

@@ -29,11 +29,13 @@
       (let ((new-body (this.body.traverse!))
 	    (assigs (hashtable-map *constants*
 				   (lambda (const decl)
-				      (let ((s (new Set! decl (new Const const))))
+				      (let ((s (new-node Set!
+							 decl
+							 (new-node Const const))))
 					 (mark-statement-form! s #t)
 					 s)))))
 	 (if (pair? assigs)
-	     (let ((bnode (new Begin (append! assigs (list new-body)))))
+	     (let ((bnode (new-node Begin (append! assigs (list new-body)))))
 		(mark-statement-form! bnode #t)
 		(set! this.body bnode))
 	     (set! this.body new-body)))

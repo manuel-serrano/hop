@@ -33,10 +33,10 @@
 			   sci_isProcedure
 			   ))
 
-(define (compile-optimized-boolify compiled::bstring node)
-   (if (inherits-from? node Call)
-       (let ((op node.operator))
-	  (if (inherits-from? op Var-ref)
+(define (compile-optimized-boolify compiled::bstring n)
+   (if (inherits-from? n (node 'Call))
+       (let ((op n.operator))
+	  (if (inherits-from? op (node 'Var-ref))
 	      (let* ((var op.var)
 		     (id var.js-id))
 		 (if (and (not var.muted)

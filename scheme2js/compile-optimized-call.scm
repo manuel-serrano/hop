@@ -102,6 +102,7 @@
 	   
 (define *optimizable-operators*
    `(
+     ;; TODO: add string-append
     (sci_isEq ,(infix-op 2 2 "==="))
     (sci_isEqv ,(infix-op 2 2 "==="))
 
@@ -177,6 +178,10 @@
     (sci_isStringLessEqual ,(hole-op 2 'str1 ".val <= " 'str2 ".val"))
     (sci_isStringGreaterEqual ,(hole-op 2 'str1 ".val >= " 'str2 ".val"))
     (sci_symbolAppend ,(infix-op 0 #f "+" "''"))
+    (sci_symbol2string ,(hole-op 1 "new sc_String(" 'sym ")"))
+    (sci_string2symbol ,(postfix-op ".val"))
+    (sci_char2symbol ,(postfix-op ".val"))
+    (sci_char2string ,(hole-op 1 "new sc_string(" 'char ".val)"))
 
     (sci_isVector ,(postfix-op " instanceof sc_Vector"))
     (sci_vector ,vector-op)
@@ -204,7 +209,7 @@
 
 (define (compile-optimized-call operator::pobject
 				operands::pair-nil)
-   (if (inherits-from? operator Var-ref)
+   (if (inherits-from? operator (node 'Var-ref))
        (let* ((var operator.var)
 	      (id var.js-id)
 	      (optimize-fun (and (not operator.var.muted)

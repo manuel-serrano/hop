@@ -5,6 +5,3 @@
 	   dollar-escape
 	   tilde-escape)
    (from hop-scheme-head))
-
-;; unresolved symbols are considered to be JS variables
-(set! *unresolved=JS* #t)

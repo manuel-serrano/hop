@@ -31,7 +31,8 @@ TARGETNAME	= scheme2js
 _BGL_OBJECTS	= capture collect-vars compile constants expanders \
 	gen-code gen-js inline js-interface liveness node-elimination \
 	nodes pobject-conv protobject scheme2js side statements symbol \
-	tail-rec tail transform-util traverse var expand verbose dot-expand
+	tail-rec tail transform-util traverse var expand verbose \
+	dot-expand allocate-names config
 
 _OBJECTS	= $(_BGL_OBJECTS)
 

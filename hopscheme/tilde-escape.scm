@@ -1,7 +1,8 @@
 (module tilde-escape
    (import  hopscheme_aliases)
    (library hop
-	    scheme2js))
+	    scheme2js)
+   (import hopscheme-config))
 
 ;; ===========================================================================
 ;; add hook for '~'-escaped expressions.
@@ -40,7 +41,6 @@
 ;	 (print "compiling (reverse): " rev-scheme-exprs)
 	 (with-output-to-string
 	    (lambda ()
-	       (scheme2js (reverse! rev-scheme-exprs)
-			  (hopscheme-aliases)))))))
+	       (scheme2js (reverse! rev-scheme-exprs) (hopscheme-aliases) (hopscheme-config)))))))
 
 (hop-read-post-hook-set! post-compile)
