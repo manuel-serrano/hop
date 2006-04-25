@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Apr 24 16:34:49 2006 (serrano)                */
+;*    Last change :  Tue Apr 25 10:11:29 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -36,6 +36,7 @@
 	       (h3::procedure (default <H3>))
 	       (h4::procedure (default <H4>))
 	       (h5::procedure (default <H5>))
+	       (hr::procedure (default <HR>))
 	       (p::procedure (default <P>))
 	       (ol::procedure (default <OL>))
 	       (ul::procedure (default <UL>))
@@ -44,6 +45,8 @@
 	       (em::procedure (default <EM>))
 	       (u::procedure (default <U>))
 	       (del::procedure (default <DEL>))
+	       (sub::procedure (default <SUB>))
+	       (sup::procedure (default <SUP>))
 	       (tt::procedure (default <TT>))
 	       (code::procedure (default <CODE>))
 	       (math::procedure (default <PRE>))
@@ -52,6 +55,8 @@
 	       (tr::procedure (default <TR>))
 	       (th::procedure (default <TH>))
 	       (td::procedure (default <TD>))
+	       (href::procedure (default (lambda (href node)
+					    (<A> :href href node))))
 	       (keyword::procedure (default (lambda (x) x)))
 	       (type::procedure (default (lambda (x) x)))
 	       (specials::procedure (default (lambda (id) #f))))
@@ -282,77 +287,49 @@
        (ignore))
 
       ;; simple text
-      ((+ (out ";:<>+^|*=/_-$#,`'(){} \\\n"))
+      ((+ (out ";:<>+^|*=/_-$#,`'(){}[] \\\n"))
        (add-expr! (the-html-string))
        (ignore))
 
       ;; single escape characters
-      ((in ";:<>+*=/_-$#,`'() \\\n")
+      ((in ";:<>+*=/_-$#,`'(){}[] \\\n")
        (add-expr! (the-html-string))
        (ignore))
 
-      ;; special escape markups
-      ((bol (: "<" (out #\> #\/) (* (out #\>)) ">"))
-       (let* ((id (the-symbol))
-	      (proc ((wiki-syntax-specials syn) id)))
-	  (if (procedure? proc)
-	      (let* ((/markup (string-append
-			       "</" (the-substring 1 (the-length))))
-		     (l/markup (string-length /markup))
-		     (title (read-line (the-port)))
-		     (ltitle (string-length title)))
-		 (if (substring-at? title /markup (-fx ltitle l/markup))
-		     (add-expr!
-		      (proc (the-port)
-			    (substring title 0 (-fx ltitle l/markup))
-			    #f))
-		     (enter-state! id
-				   (lambda el (proc (the-port) title el))
-				   #f)))
-	      (add-expr! (the-html-string)))
-	  (ignore)))
-
-      ((bol (: "</" (+ (out #\>)) ">"))
-       (let* ((s (the-substring 2 (the-length)))
-	      (id (symbol-append '< (string->symbol s)))
-	      (proc ((wiki-syntax-specials syn) id)))
-	  (if (procedure? proc)
-	      (let ((st (in-state id)))
-		 (if (state? st)
-		     (unwind-state! st)
-		     (add-expr! (the-html-string))))
-	      (add-expr! (the-html-string)))
-	  (ignore)))
-       
       ;; sections
       ((bol (>= 2 #\=))
        (let* ((id (the-symbol))
-	      (lv (-fx (the-length) 2))
-	      (hx (case lv
-		     ((3) (wiki-syntax-h4 syn))
-		     ((2) (wiki-syntax-h3 syn))
-		     ((1) (wiki-syntax-h2 syn))
-		     ((0) (wiki-syntax-h1 syn))
-		     (else (wiki-syntax-h5 syn))))
-	      (sx (case lv
-		     ((3) (wiki-syntax-section4 syn))
-		     ((2) (wiki-syntax-section3 syn))
-		     ((1) (wiki-syntax-section2 syn))
-		     ((0) (wiki-syntax-section1 syn))
-		     (else (wiki-syntax-section5 syn))))
-	      (st (in-bottom-up-state (lambda (s _)
-					 (with-access::state s (markup value)
-					    (and (eq? markup 'section)
-						 (>=fx value lv))))))
-	      (mk (gensym)))
-	  (when st (unwind-state! st))
-	  (enter-state! 'section sx lv)
-	  (enter-expr! '==
-		       (lambda expr
-			  (list (<A> :name (symbol->string mk))
-				(apply hx expr)))
-		       #f)
-	  (ignore)))
+	      (lv (-fx (the-length) 2)))
+	  (if (> lv 4)
+	      (begin
+		 (add-expr! ((wiki-syntax-hr syn)))
+		 (ignore))
+	      (let* ((hx (case lv
+			    ((3) (wiki-syntax-h4 syn))
+			    ((2) (wiki-syntax-h3 syn))
+			    ((1) (wiki-syntax-h2 syn))
+			    ((0) (wiki-syntax-h1 syn))
+			    (else (wiki-syntax-h5 syn))))
+		     (sx (case lv
+			    ((3) (wiki-syntax-section4 syn))
+			    ((2) (wiki-syntax-section3 syn))
+			    ((1) (wiki-syntax-section2 syn))
+			    ((0) (wiki-syntax-section1 syn))
+			    (else (wiki-syntax-section5 syn))))
+		     (st (in-bottom-up-state
+			  (lambda (s _)
+			     (with-access::state s (markup value)
+				(and (eq? markup 'section)
+				     (>=fx value lv))))))
+		     (mk (gensym)))
+		 (when st (unwind-state! st))
+		 (enter-state! 'section sx lv)
+		 (enter-expr! '==
+			      (lambda expr
+				 (list (<A> :name (symbol->string mk))
+				       (apply hx expr)))
+			      #f)
+		 (ignore)))))
       
       ((>= 2 #\=)
        (let ((st (in-state '==)))
@@ -469,15 +446,30 @@
 	      (begin
 		 (enter-expr! '__ (wiki-syntax-u syn) #f)
 		 (ignore)))))
-      ("--"
-       (let ((s (in-state '--)))
-	  (if s
-	      (begin
-		 (unwind-state! s)
-		 (ignore))
-	      (begin
-		 (enter-expr! '-- (wiki-syntax-del syn) #f)
-		 (ignore)))))
+      ("<del>"
+       (enter-expr! '<del> (wiki-syntax-del syn) #f)
+       (ignore))
+      ("</del>"
+       (let ((s (in-state '<del>)))
+	  (when s (unwind-state! s))
+	  (ignore)))
+      
+      ("<sup>"
+       (enter-expr! '<sup> (wiki-syntax-sup syn) #f)
+       (ignore))
+      ("</sup>"
+       (let ((s (in-state '<sup>)))
+	  (when s (unwind-state! s))
+	  (ignore)))
+      
+      ("<sub>"
+       (enter-expr! '<sub> (wiki-syntax-sub syn) #f)
+       (ignore))
+      ("</sub>"
+       (let ((s (in-state '<sub>)))
+	  (when s (unwind-state! s))
+	  (ignore)))
+      
       ("$$"
        (let ((s (in-state '$$)))
 	  (if s
@@ -496,13 +488,15 @@
 	      (begin
 		 (enter-expr! 'tt (wiki-syntax-tt syn) #f)
 		 (ignore)))))
-      ("{{"
-       (enter-expr! 'code (wiki-syntax-code syn) #f)
-       (ignore))
-      ("}}"
+      ("--"
        (let ((s (in-state 'code)))
-	  (when s (unwind-state! s)))
-       (ignore))
+	  (if s
+	      (begin
+		 (unwind-state! s)
+		 (ignore))
+	      (begin
+		 (enter-expr! 'code (wiki-syntax-tt syn) #f)
+		 (ignore)))))
 
       ;; keywords
       ((: (in " \t") #\: (+ (or (out " \t\n:") (: #\: (out " \t\n:")))))
@@ -544,7 +538,19 @@
 	      (add-expr! ((wiki-syntax-pre syn)
 			  "Cannot find file in path -- " name))))
 	  (ignore)))
-      
+
+      ;; links
+      ((: "[[" (+ (or (out #\]) (: #\] (out #\])))) "]]")
+       (let* ((s (the-substring 2 -2))
+	      (i (string-index s "|"))
+	      (href (wiki-syntax-href syn)))
+	  (add-expr!
+	   (if (=fx i -1)
+	       (href s s)
+	       (href (substring s 0 i)
+		     (substring s (+fx i 1) (string-length s)))))
+	  (ignore)))
+
       ;; embedded hop
       (",("
        (rgc-buffer-unget-char (the-port) (char->integer #\())
@@ -562,6 +568,39 @@
 					    (write expr))))))
 		(add-expr! (eval expr)))))
        (ignore))
+       
+      ;; special escape markups
+      ((bol (: "<" (out #\> #\/) (* (out #\>)) ">"))
+       (let* ((id (the-symbol))
+	      (proc ((wiki-syntax-specials syn) id)))
+	  (if (procedure? proc)
+	      (let* ((/markup (string-append
+			       "</" (the-substring 1 (the-length))))
+		     (l/markup (string-length /markup))
+		     (title (read-line (the-port)))
+		     (ltitle (string-length title)))
+		 (if (substring-at? title /markup (-fx ltitle l/markup))
+		     (add-expr!
+		      (proc (the-port)
+			    (substring title 0 (-fx ltitle l/markup))
+			    #f))
+		     (enter-state! id
+				   (lambda el (proc (the-port) title el))
+				   #f)))
+	      (add-expr! (the-html-string)))
+	  (ignore)))
+
+      ((bol (: "</" (+ (out #\>)) ">"))
+       (let* ((s (the-substring 2 (the-length)))
+	      (id (symbol-append '< (string->symbol s)))
+	      (proc ((wiki-syntax-specials syn) id)))
+	  (if (procedure? proc)
+	      (let ((st (in-state id)))
+		 (if (state? st)
+		     (unwind-state! st)
+		     (add-expr! (the-html-string))))
+	      (add-expr! (the-html-string)))
+	  (ignore)))
        
       (else
        (let ((c (the-failure)))

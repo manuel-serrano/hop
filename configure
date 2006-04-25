@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Apr  3 09:28:10 2006 (serrano)                */
+#*    Last change :  Tue Apr 25 09:57:49 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -25,7 +25,7 @@ backend=native
 
 bcflags="-O3 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
-bcflagsdbg="-g -cg"
+bcflagsdbg="-g"
 bcflagsbmem="-g2"
 bcflagsopt="-unsafe"
 
