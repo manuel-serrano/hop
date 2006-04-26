@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Mar 26 08:31:35 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 13:17:40 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -135,8 +135,7 @@
 				      (raise e)))
 			       (eval sexp))))))
 		exprs)
-      (when autoloadp
-	 (autoload-weblets (hop-autoload-directories)))
+      (when autoloadp (autoload-weblets (reverse (hop-autoload-directories))))
       (hop-preload-libraries-set! (append libraries (hop-preload-libraries)))))
 
 ;*---------------------------------------------------------------------*/

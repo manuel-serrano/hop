@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/private/doc/search.hop                  */
+;*    serrano/prgm/project/hop/weblets/doc/search.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Wed Apr 26 08:18:10 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 09:50:51 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -17,7 +17,8 @@
    (import hopdoc_config
 	   hopdoc_widgets
 	   hopdoc_wiki
-	   hopdoc_services)
+	   hopdoc_services
+	   hopdoc_api)
 
    (export (make-doc-tables offset . markups)
 	   (search-see-also name dir pattern)
@@ -53,7 +54,7 @@
 	     (for-each (lambda (f)
 			  (when (is-suffix? f (doc-suffix))
 			     (let* ((path (make-file-name dir f))
-				    (mm (open-mmap path)))
+				    (mm (open-mmap path :write #f)))
 				(when (mmap? mm)
 				   (unwind-protect
 				      (mmap-search mm path t (car markups))
@@ -62,7 +63,7 @@
 	  (for-each (lambda (f)
 		       (when (is-suffix? f (doc-suffix))
 			  (let* ((path (make-file-name dir f))
-				 (mm (open-mmap path)))
+				 (mm (open-mmap path :write #f)))
 			     (when (mmap? mm)
 				(unwind-protect
 				   (for-each (lambda (m)
@@ -113,7 +114,7 @@
 		      (when (and (is-suffix? f (doc-suffix))
 				 (not (string=? f bname)))
 			 (let* ((path (make-file-name dir f))
-				(mm (open-mmap path)))
+				(mm (open-mmap path :write #f)))
 			    (when (mmap? mm)
 			       (unwind-protect
 				  (when (>elong (kmp-mmap kmpt mm #e0) #e0)
@@ -187,7 +188,7 @@
 ;*---------------------------------------------------------------------*/
 (define (example-file dir file kmpt)
    (let* ((path (make-file-name dir file))
-	  (mm (open-mmap path :read #t :write #f)))
+	  (mm (open-mmap path :write #f)))
       (when (mmap? mm)
 	 (unwind-protect
 	    (when (> (kmp-mmap kmpt mm #e0) 0)
@@ -203,8 +204,8 @@
 				     (wiki-string->hop
 				      (substring h 2 (string-length h))
 				      (doc-wiki-syntax)))
-				  (let ((code (html-string-encode
-					       (read-string p))))
+				  (let* ((plain-code (read-string p))
+					 (api-code (read-api-code plain-code)))
 				     (list
 				      (<RUN> id2)
 				      (<EDIT> id1 id2)
@@ -212,15 +213,14 @@
 					 (<TEXTAREA>
 					    :class "example"
 					    :id id2
-					    code)
+					    plain-code)
 					 (<PRE>
 					    :class "example"
 					    :id id1
-					    (string-append code "\n"))))))
-			       (let ((code (string-append
-					    (html-string-encode h) "\n"
-					    (html-string-encode
-					     (read-string p)))))
+					    api-code)))))
+			       (let* ((plain-code (string-append
+						   h "\n" (read-string p)))
+				      (api-code (read-api-code plain-code)))
 				  (<FLITEM>
 				     (<FLHEAD> file)
 				     (list
@@ -230,11 +230,11 @@
 					 (<TEXTAREA>
 					    :class "example"
 					    :id id2
-					    code)
+					    plain-code)
 					 (<PRE>
 					    :class "example"
 					    :id id1
-					    (string-append code "\n"))))))))
+					    api-code)))))))
 			(close-input-port p)))))
 	    (close-mmap mm)))))
 

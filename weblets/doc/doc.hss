@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/private/doc/doc.hss                     */
+/*    serrano/prgm/project/hop/weblets/doc/doc.hss                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Apr 26 08:11:00 2006 (serrano)                */
+/*    Last change :  Wed Apr 26 12:04:25 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -38,6 +38,7 @@ $(define deep-blue "#00a")
 $(define deep-green "#0a0")
 $(define deep-magenta "#7a459e")
 $(define deep-magenta2 "#4a346c")
+$(define deep-orange "#c67015")
 
 $(define server-color "#00a")
 $(define client-color "#0a0")
@@ -58,6 +59,7 @@ $(define button-padding "padding-left: 5px;
 body {
   background-color: #e0e0e0;
   font-family: $font-family;
+  overflow: scroll;
 }
 
 img.logo {
@@ -356,6 +358,7 @@ doc pre, doc textarea {
 }
 
 doc tt.href, doc span.href {
+  font: $typewriter;
   cursor: default;
   color: $deep-blue;
 }
@@ -423,7 +426,7 @@ doc pre.source {
   background-color: $source-background;
 }
 
-doc h1 {
+doc h1, tutorial h1 {
   margin-left: 2px;
   margin-right: 2px;
   font-size: 105%;
@@ -431,7 +434,7 @@ doc h1 {
   border-bottom: 1px dotted $border-color;
 }
 
-doc div.section2 {
+doc div.section2, tutorial div.section2 {
   margin-left: 15px;
 }
 
@@ -621,13 +624,49 @@ table.search-result td:hover {
 }
 
 /*---------------------------------------------------------------------*/
+/*    tutorials                                                        */
+/*---------------------------------------------------------------------*/
+$(hop-hss-type! "tutorials" "div.tutorials")
+
+tutorials div.tutorial-title {
+  border: 1px solid $border-color;
+  padding: 2px;
+  margin-bottom: 10px;
+}
+
+tutorials div.tutorial-title th {
+  color: $deep-orange;
+  font-weight: bold;
+  font-size: large;
+  margin-bottom: 10px;
+  padding-left: 5px;
+}
+
+tutorials select.tutorial-selector {
+  margin-right: 1em;
+  border: 1px solid $border-color;
+  font-size: small;
+}
+
+tutorials div.tutorial-title span.label {
+  font-size: small;
+}
+
+tutorials div.tutorial-title input {
+  font-size: small;
+}
+
+tutorials div.doc-title th {
+  color: $deep-orange;
+}
+
+/*---------------------------------------------------------------------*/
 /*    wiki                                                             */
 /*---------------------------------------------------------------------*/
 $(hop-hss-type! "wiki" "div.wiki")
 
 wiki {
   background: white;
-  margin: 5px;
   padding: 2px;
   border: 1px solid $border-color;
 }

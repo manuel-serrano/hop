@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/private/doc/api.hop                     */
+;*    serrano/prgm/project/hop/weblets/doc/api.hop                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Wed Apr 26 08:20:46 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 10:19:33 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -21,14 +21,15 @@
 
    (export (setup-api-tables!)
 	   doc/api
-	   (<API>)))
+	   (<API>)
+	   (read-api-code port-or-string)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <API> ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (<API>)
    (let ((pagearea (<DIV> :class "pagearea" :id "pad-api"
-			  "This pages document the HOP apis.")))
+			  "This pages document the HOP APIs.")))
       (<DIV>
 	 :class "api"
 	 (<SEARCH-BAR>
@@ -140,6 +141,37 @@
 				(let ((el (document.getElementById "pad-api")))
 				   (set! el.innerHTML r.responseText))))
 		       k))))))
+
+;*---------------------------------------------------------------------*/
+;*    *api-grammar* ...                                                */
+;*---------------------------------------------------------------------*/
+(define *api-grammar*
+   (regular-grammar ((letter (in "_-<>!?" ("azAZ09")))
+		     (sep (out "_-<>!?" ("azAZ09")))
+		     res)
+      ((+ letter)
+       (let ((k (the-string)))
+	  (set! res (cons (or (markup-parser k)
+			      (server-parser k)
+			      (client-parser k)
+			      (html-string-encode k))
+			  res))
+	  (ignore)))
+      ((+ sep)
+       (set! res (cons (the-string) res))
+       (ignore))
+      (else
+       (reverse! res))))
+
+;*---------------------------------------------------------------------*/
+;*    read-api-code ...                                                */
+;*---------------------------------------------------------------------*/
+(define (read-api-code port-or-string)
+   (if (input-port? port-or-string)
+       (read/rp *api-grammar* port-or-string (list "\n"))
+       (with-input-from-string port-or-string
+	  (lambda ()
+	     (read/rp *api-grammar* (current-input-port) (list "\n"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *server-syntax* ...                                              */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/private/doc/doc.hop                     */
+;*    serrano/prgm/project/hop/weblets/doc/doc.hop                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Tue Apr 25 11:49:54 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 11:49:31 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -16,10 +16,10 @@
    (library hopwiki)
    (import  hopdoc_config
 	    hopdoc_api
-	    hopdoc_wikisyntax
 	    hopdoc_wiki
 	    hopdoc_widgets
-	    hopdoc_services))
+	    hopdoc_services
+	    hopdoc_tutorials))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc ...                                                          */
@@ -53,7 +53,7 @@
 			 (<API>))
 		(<NPTAB> :id "doc-tutorials"
 			 (<NPTABHEAD> "Tutorials")
-			 "not yet")
+			 (<TUTORIALS> req))
 		(<NPTAB> :id "doc-wiki"
 			 (<NPTABHEAD> "Wiki syntax")
 			 (<DIV>

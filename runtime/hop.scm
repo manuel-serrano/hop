@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Mar  1 12:28:13 2006 (eg)                     */
+;*    Last change :  Wed Apr 26 13:16:51 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling HTTP requests.                                          */
@@ -73,6 +73,8 @@
 		(hop-request-hook m rp2)))
 	  (let ((n ((cdar filters) m)))
 	     (cond
+		((eq? n 'hop-resume)
+		 (loop m (hop-filters)))
 		((%http-response? n)
 		 (let ((rp2 (hop-run-hook
 			     (hop-http-response-local-hooks) m n)))

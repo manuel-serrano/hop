@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Mar 21 07:58:10 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 13:17:24 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -58,7 +58,7 @@
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! load-once)
    ;; install the builtin filters
-   (hop-filter-add-always-first! autoload-filter)
+   (hop-filter-add-always-last! autoload-filter)
    (hop-filter-add! service-filter)
    ;; start the job scheduler
    (job-start-scheduler!)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Mar 16 09:24:15 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 13:17:21 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -190,9 +190,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    autoload-filter ...                                              */
 ;*    -------------------------------------------------------------    */
-;*    Autoload has to be the first filter. When the autoload matches,  */
-;*    it simply returns the request that is handled by the autoloaded  */
-;*    file.                                                            */
+;*    Autoload has to be the last filter. When the autoload matches,   */
+;*    it simply returns the hop-resume value that is handled by the    */
+;*    hop loop.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (autoload-filter req)
    (let loop ((al *autoloads*))
@@ -217,7 +217,7 @@
 			  (set! loaded #t))
 		       (mutex-unlock! mutex))
 		    ;; re-scan the filter list
-		    req)
+		    'hop-resume)
 		 (begin
 		    (mutex-lock! *autoload-mutex*)
 		    (let ((tail (cdr al)))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/private/doc/config.hop                  */
+;*    serrano/prgm/project/hop/weblets/doc/config.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Mon Apr 24 19:22:38 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 10:32:03 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Doc configuration                                                */
@@ -19,6 +19,7 @@
 	   (doc-dir)
 	   (doc-api-dir)
 	   (doc-wiki-dir)
+	   (doc-tutorials-dir)
 	   (doc-rc-directory)
 	   (doc-suffix)
 	   (doc-editor)
@@ -43,6 +44,11 @@
 ;*    doc-api-dir                                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter doc-api-dir (make-file-name (doc-dir) "api"))
+
+;*---------------------------------------------------------------------*/
+;*    doc-tutorials-dir                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter doc-tutorials-dir (make-file-name (doc-dir) "tutorials"))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-wiki-dir                                                     */

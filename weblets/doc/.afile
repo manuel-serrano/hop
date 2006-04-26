@@ -1,5 +1,5 @@
-;; /users/serrano/prgm/project/hop/private/doc
-;; Mon Apr 24 19:14:54 2006
+;; /users/serrano/prgm/project/hop/weblets/doc
+;; Wed Apr 26 13:17:41 2006
 
 (
   (hopdoc_api "./api.hop")
@@ -7,8 +7,8 @@
   (hopdoc "./doc.hop")
   (hopdoc_search "./search.hop")
   (hopdoc_services "./services.hop")
+  (hopdoc_tutorials "./tutorials.hop")
   (hopdoc_widgets "./widgets.hop")
   (hopdoc_wiki "./wiki.hop")
-  (hopdoc_wikisyntax "./wikisyntax.hop")
 )
 

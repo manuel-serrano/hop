@@ -1,0 +1,105 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/doc/tutorials.hop               */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
+;*    Last change :  Wed Apr 26 13:18:49 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The HOP tutorials                                                */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc_tutorials
+
+   (import hopdoc_config
+	   hopdoc_wiki
+	   hopdoc_api)
+   
+   (export (<TUTORIALS> req)))
+
+;*---------------------------------------------------------------------*/
+;*    <TUTORIALS> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<TUTORIALS> req)
+   (let ((pagearea (<DIV> :class "pagearea"
+			  :id "pad-tutorials"
+			  "Please, select a tutorial."))
+	 (syntax (make-wiki-request-syntax *tutorial-syntax* req)))
+      (<DIV>
+	 :class "tutorials"
+	 (<TUTORIALS-MAIN> "pad-tutorials" syntax)
+	 pagearea)))
+
+;*---------------------------------------------------------------------*/
+;*    *tutorial-syntax* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *tutorial-syntax*
+   (duplicate::wiki-syntax (doc-wiki-syntax)
+      (plugins (lambda (id)
+		  (case id
+		     ((<doc>)
+		      (lambda (port title expr)
+			 (<DIV> :class "doc" expr)))
+		     (else
+		      ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))
+;*       (tt (wiki-tt-parser                                           */
+;* 	   (lambda (k)                                                 */
+;* 	      (or (markup-parser k)                                    */
+;* 		  (server-parser k)                                    */
+;* 		  (client-parser k)))))                                */
+      (keyword (lambda x
+		  (<SPAN> :class "doc-keyword" x)))))
+;*       (type (lambda x                                               */
+;* 	       (if (and (null? (cdr x)) (string? (car x)))             */
+;* 		   (let ((s (html-string-decode (car x))))             */
+;* 		      (or (class-parser s) (<SPAN> :class "doc-type" x))) */
+;* 		   (<SPAN> :class "doc-type" x))))))                   */
+
+;*---------------------------------------------------------------------*/
+;*    <TUTORIALS-MAIN> ...                                             */
+;*---------------------------------------------------------------------*/
+(define (<TUTORIALS-MAIN> id syntax)
+   (let ((files (filter (lambda (x) (is-suffix? x "wiki"))
+			(directory->list (doc-tutorials-dir))))
+	 (tutorial (service (file)
+		      (let ((path (make-file-name (doc-tutorials-dir) file)))
+			 (if (file-exists? path)
+			     (doc-page path syntax)
+			     ""))))
+	 (dummy "--select tutorial--"))
+      (<DIV>
+	 :class "tutorial-title"
+	 (<TABLE>
+	    :width "100%"
+	    :border 0
+	    (<TR>
+	       (<TH>
+		  :align "left"
+		  "HOP Tutorials")
+	       (<TD>
+		  :align "right"
+		  (<DIV>
+		     :class "selector"
+		     (<SELECT>
+			:class "tutorial-selector"
+			:onmouseup ~(alert "click")
+			:onchange
+			~(hop ($tutorial this.value)
+			      (lambda (h)
+				 (let ((el (document.getElementById $id)))
+				    (set! el.innerHTML h.responseText))))
+			(cons (<OPTION> :disabled #f :selected #t dummy)
+			      (map (lambda (f) (<OPTION> f :selected #f))
+				   files)))
+		     (<SPAN> :class "label" "search:")
+		     (<INPUT>
+			:type "text"
+			:size 20
+			:title "Hit [Return] to search"
+			:onkeyup ~(if (= event.keyCode 13)
+				      (alert "toto"))))))))))
+
+		       
