@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Wed Apr 26 10:19:33 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 17:29:49 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -22,7 +22,8 @@
    (export (setup-api-tables!)
 	   doc/api
 	   (<API>)
-	   (read-api-code port-or-string)))
+	   (decorate-api-code port-or-string)
+	   (<APIREF> key)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <API> ...                                                        */
@@ -97,10 +98,12 @@
 	 (<SPAN> :class (string-append "href " class)
 		 :title "View online documentation"
 		 :onclick
-		 ~(hop ($doc/api $o)
-		       (lambda (r)
-			  (let ((el (document.getElementById "pad-api")))
-			     (set! el.innerHTML r.responseText))))
+		 ~(begin
+		     (hop_notepad_select "doc-notepad" "doc-api")
+		     (hop ($doc/api $o)
+			  (lambda (r)
+			     (let ((el (document.getElementById "pad-api")))
+				(set! el.innerHTML r.responseText)))))
 		 (html-string-encode k)))))
 
 ;*---------------------------------------------------------------------*/
@@ -164,14 +167,14 @@
        (reverse! res))))
 
 ;*---------------------------------------------------------------------*/
-;*    read-api-code ...                                                */
+;*    decorate-api-code ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (read-api-code port-or-string)
+(define (decorate-api-code port-or-string)
    (if (input-port? port-or-string)
-       (read/rp *api-grammar* port-or-string (list "\n"))
+       (read/rp *api-grammar* port-or-string '())
        (with-input-from-string port-or-string
 	  (lambda ()
-	     (read/rp *api-grammar* (current-input-port) (list "\n"))))))
+	     (read/rp *api-grammar* (current-input-port) '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *server-syntax* ...                                              */
@@ -283,3 +286,17 @@
 ;*---------------------------------------------------------------------*/
 (define (see-also name dir markup)
    (<SEE-ALSO-LIST> doc/api "pad-api" (search-see-also name dir markup)))
+
+;*---------------------------------------------------------------------*/
+;*    <APIREF> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<APIREF> key api)
+   (<SPAN> 
+      :class "href" 
+      :onclick ~(begin
+		   (hop_notepad_select "doc-notepad" "doc-api")
+		   (hop ($doc/api $(make-file-name (doc-api-dir) api))
+			(lambda (r)
+			   (let ((el (document.getElementById "pad-api")))
+			      (set! el.innerHTML r.responseText)))))
+      key))

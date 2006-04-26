@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Wed Apr 26 13:18:49 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 17:18:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -16,7 +16,8 @@
 
    (import hopdoc_config
 	   hopdoc_wiki
-	   hopdoc_api)
+	   hopdoc_api
+	   hopdoc_widgets)
    
    (export (<TUTORIALS> req)))
 
@@ -34,6 +35,18 @@
 	 pagearea)))
 
 ;*---------------------------------------------------------------------*/
+;*    apify ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (apify expr)
+   (cond
+      ((string? expr)
+       (decorate-api-code expr ""))
+      ((pair? expr)
+       (map apify expr))
+      (else
+       expr)))
+
+;*---------------------------------------------------------------------*/
 ;*    *tutorial-syntax* ...                                            */
 ;*---------------------------------------------------------------------*/
 (define *tutorial-syntax*
@@ -43,15 +56,20 @@
 		     ((<doc>)
 		      (lambda (port title expr)
 			 (<DIV> :class "doc" expr)))
+		     ((<example>)
+		      (lambda (port title expr)
+			 (<DIV>
+			    :class "example"
+			    (<EXAMPLE> expr))))
 		     (else
 		      ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))
+      (keyword (lambda x (<SPAN> :class "doc-keyword" x)))
+      (pre list)))
 ;*       (tt (wiki-tt-parser                                           */
 ;* 	   (lambda (k)                                                 */
 ;* 	      (or (markup-parser k)                                    */
 ;* 		  (server-parser k)                                    */
 ;* 		  (client-parser k)))))                                */
-      (keyword (lambda x
-		  (<SPAN> :class "doc-keyword" x)))))
 ;*       (type (lambda x                                               */
 ;* 	       (if (and (null? (cdr x)) (string? (car x)))             */
 ;* 		   (let ((s (html-string-decode (car x))))             */
@@ -59,17 +77,37 @@
 ;* 		   (<SPAN> :class "doc-type" x))))))                   */
 
 ;*---------------------------------------------------------------------*/
+;*    tutorial->name ...                                               */
+;*---------------------------------------------------------------------*/
+(define (tutorial->name x)
+   (with-input-from-file (make-file-name (doc-tutorials-dir) x)
+      (lambda ()
+	 (let ((l (read-line (current-input-port))))
+	    (if (substring-at? l "<doc> " 0)
+		(substring l 6 (string-length l))
+		(let ((i (string-index x "-")))
+		   (if (>fx i 0)
+		       (substring x (+fx i 1) (-fx (string-length x) 5))
+		       (substring x 0 (-fx (string-length x) 5)))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    <TUTORIALS-MAIN> ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (<TUTORIALS-MAIN> id syntax)
-   (let ((files (filter (lambda (x) (is-suffix? x "wiki"))
-			(directory->list (doc-tutorials-dir))))
-	 (tutorial (service (file)
-		      (let ((path (make-file-name (doc-tutorials-dir) file)))
-			 (if (file-exists? path)
-			     (doc-page path syntax)
-			     ""))))
-	 (dummy "--select tutorial--"))
+   (let* ((table '())
+	  (files (filter-map (lambda (x)
+				(when (is-suffix? x "wiki")
+				   (let ((s (tutorial->name x)))
+				      (set! table (cons (cons s x) table))
+				      s)))
+			     (directory->list (doc-tutorials-dir))))
+	  (tutorial (service (key)
+		       (let* ((file (cdr (assoc key table)))
+			      (path (make-file-name (doc-tutorials-dir) file)))
+			  (if (file-exists? path)
+			      (doc-page path syntax)
+			      ""))))
+	  (dummy "--select tutorial--"))
       (<DIV>
 	 :class "tutorial-title"
 	 (<TABLE>
@@ -85,12 +123,17 @@
 		     :class "selector"
 		     (<SELECT>
 			:class "tutorial-selector"
-			:onmouseup ~(alert "click")
-			:onchange
+			:onmouseup
 			~(hop ($tutorial this.value)
 			      (lambda (h)
 				 (let ((el (document.getElementById $id)))
 				    (set! el.innerHTML h.responseText))))
+			:onkeyup
+			~(if (= event.keyCode 13)
+			     (hop ($tutorial this.value)
+				  (lambda (h)
+				     (let ((el (document.getElementById $id)))
+					(set! el.innerHTML h.responseText)))))
 			(cons (<OPTION> :disabled #f :selected #t dummy)
 			      (map (lambda (f) (<OPTION> f :selected #f))
 				   files)))

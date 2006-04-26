@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Tue Mar 14 18:16:05 2006 (eg)                     */
+/*    Last change :  Wed Apr 26 17:56:35 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implemenetation                                    */
 /*=====================================================================*/
@@ -15,16 +15,16 @@
     margin: 0;
 }
 
-.hop-fl IMG {
+.hop-fl IMG.hop-fl-img {
     cursor: pointer;
 }
 
-.hop-fl SPAN {
+.hop-fl SPAN.hop-fl-head {
     cursor: pointer;
     font-weight: bold;
     margin-left: 4px;
 }
 
-.hop-fl DIV {
+.hop-fl DIV.hop-fl-item {
     margin-left: 4px;
 }

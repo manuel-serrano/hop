@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/private/doc/widgets.hop                 */
+;*    serrano/prgm/project/hop/weblets/doc/widgets.hop                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Wed Apr 26 08:24:46 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 17:09:45 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -15,14 +15,18 @@
 (module hopdoc_widgets
 
    (import hopdoc_config
-	   hopdoc_wiki)
+	   hopdoc_wiki
+	   hopdoc_api
+	   hopdoc_services)
    
    (export (<DOC> . obj)
 	   (<POPUP> ::bstring)
 	   (<SEARCH-BAR> . obj)
 	   (char->offset c)
 	   (<SEARCH-POPUP-MENU> service table i)
-	   (<SEE-ALSO-LIST> service id lst)))
+	   (<SEE-ALSO-LIST> service id lst)
+	   (<EXAMPLE> . expr)
+	   (<EXAMPLE-FILE> path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DOC> ...                                                        */
@@ -207,3 +211,94 @@
 	     (if (null? (cdr l))
 		 (list (link (car l)))
 		 (cons* (link (car l)) ", " (loop (cdr l)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <RUN> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<RUN> id)
+   (<BUTTON>
+      :onclick ~(let ((frame (document.createElement "iframe"))
+		      (t (document.getElementById $id)))
+		   (set! frame.src ($doc/example t.value))
+		   (set! frame.style.width "100%")
+		   (set! frame.style.height "100%")
+		   (set! frame.style.border "0")
+		   (hop_iwindow_open "doc/example"
+				     frame
+				     false false
+				     640 480
+				     (+ event.pageX 100)
+				     (- event.pageY 100)))
+      "Run"))
+
+;*---------------------------------------------------------------------*/
+;*    <EDIT> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<EDIT> id1 id2)
+   (let ((id (xml-make-id 'edit)))
+      (<BUTTON>
+	 :id id
+	 :onclick ~(let ((e1 (document.getElementById $id1))
+			 (e2 (document.getElementById $id2))
+			 (b (document.getElementById $id)))
+		      (if b.edit
+			  (begin
+			     (set! b.edit #f)
+			     (set! b.innerHTML "cancel")
+			     (set! e2.style.width e1.offsetWidth)
+			     (set! e2.style.height e1.offsetHeight)
+			     (set! e2.style.top e1.offsetTop)
+			     (set! e2.style.left e1.offsetLeft)
+			     (set! e2.style.display "block")
+			     (set! e1.style.display "none"))
+			  (begin
+			     (set! b.edit #t)
+			     (set! b.innerHTML "edit")
+			     (set! e1.style.display "block")
+			     (set! e2.style.display "none"))))
+	 "Edit")))
+
+;*---------------------------------------------------------------------*/
+;*    apify ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (apify expr)
+   (cond
+      ((string? expr) (decorate-api-code expr))
+      ((pair? expr) (map apify expr))
+      (else expr)))
+
+;*---------------------------------------------------------------------*/
+;*    <EXAMPLE> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<EXAMPLE> . code)
+   (let ((id1 (xml-make-id 'pre))
+	 (id2 (xml-make-id 'textarea))
+	 (api-code (apify code)))
+      (list
+       (<RUN> id2)
+       (<EDIT> id1 id2)
+       (<DIV>
+	  :align "center"
+	  (<TEXTAREA> :class "example" :id id2 code)
+	  (<PRE> :class "example" :id id1 api-code "\n")))))
+
+;*---------------------------------------------------------------------*/
+;*    <EXAMPLE-FILE> ...                                               */
+;*---------------------------------------------------------------------*/
+(define (<EXAMPLE-FILE> path)
+   (let ((p (open-input-file path)))
+      (when (input-port? p)
+	 (unwind-protect
+	    (let ((h (read-line p))
+		  (id1 (xml-make-id 'pre))
+		  (id2 (xml-make-id 'textarea)))
+	       (if (substring-at? h ";;" 0)
+		   (<FLITEM>
+		      (<FLHEAD>
+			 (wiki-string->hop
+			  (substring h 2 (string-length h))
+			  (doc-wiki-syntax)))
+		      (<EXAMPLE> (read-string p)))
+		   (let ((code (string-append h "\n" (read-string p))))
+		      (<EXAMPLE> code))))
+	    (close-input-port p)))))

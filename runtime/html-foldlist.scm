@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Thu Mar 23 14:15:24 2006 (eg)                     */
+;*    Last change :  Wed Apr 26 17:56:32 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -51,11 +51,13 @@
 		    (string-append "hop-fold-item " class)
 		    "hop-fold-item")))
     (list
-    (<UL> :class cls :onclick "alert('XX')"
+    (<UL> :class cls
 	   (<LI> (<SPAN> :onclick (format "hop_fold_item_toggle(~s, ~s, ~s)"
 					  iditem open closed)
+			 :class "hop-fl-item"
 			 title)
 		 (<DIV> :onclick " alert('inside'); return true"
+			:class "hop-fl-item"
 			:id iditem :style "display:none" body)))
      (<SCRIPT> :type "text/javascript"
 	       (format "hop_fold_item_icon_set(~s, ~s)" iditem closed)))))
@@ -119,7 +121,7 @@
 		      (make-file-name (hop-icons-directory)
 				      "triangle-right.png"))))
        (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s)'>" id icono iconc)
-       (fprintf p "<td><img id=~s src=~s></td><td width='100%'>"
+       (fprintf p "<td><img class='hop-fl-img' id=~s src=~s></td><td width='100%'>"
 		(string-append id "-img") (if open icono iconc))       
        (when (and (pair? tmp)
 		  (xml-element? (car tmp))
@@ -144,7 +146,7 @@
 ;;;    xml-write ::html-flhead ...
 ;;;
 (define-method (xml-write obj::html-flhead p encoding)
-  (display "<span>" p)
+  (display "<span class='hop-fl-head'>" p)
   (xml-write (html-flhead-body obj) p encoding)
   (display "</span>" p))
 

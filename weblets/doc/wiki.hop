@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/private/doc/wiki.hop                    */
+;*    serrano/prgm/project/hop/weblets/doc/wiki.hop                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Wed Apr 26 09:12:20 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 13:27:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -301,9 +301,9 @@
 (define (wiki-template)
    "<doc>
 
-== Synopsis ==
-
 == Description ==
+
+== Synopsis ==
 
 == Examples ==
 
