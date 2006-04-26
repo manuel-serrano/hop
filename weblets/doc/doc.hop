@@ -1,0 +1,64 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/private/doc/doc.hop                     */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
+;*    Last change :  Tue Apr 25 11:49:54 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOP meta-documentation.                                          */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc
+   (library hopwiki)
+   (import  hopdoc_config
+	    hopdoc_api
+	    hopdoc_wikisyntax
+	    hopdoc_wiki
+	    hopdoc_widgets
+	    hopdoc_services))
+
+;*---------------------------------------------------------------------*/
+;*    doc ...                                                          */
+;*---------------------------------------------------------------------*/
+(define-service (doc)
+   (let ((m1 (eval-find-module 'hopdoc))
+	 (m2 (eval-module)))
+      (if (eq? m1 m2)
+	  (doc-main (the-current-request))
+	  (unwind-protect
+	     (begin
+		(eval-module-set! m1)
+		(doc-main (the-current-request)))
+	     (eval-module-set! m2)))))
+
+;*---------------------------------------------------------------------*/
+;*    doc-main ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (doc-main req)
+   (if (and (users-added?) (not (authorized-service? req 'doc)))
+       (user-access-denied req)
+       (let ((prefs (make-file-name (doc-rc-directory) "doc.prefs")))
+	  (thread-start! (make-thread (lambda () (setup-api-tables!))))
+	  (when (file-exists? prefs) (doc-preferences-load prefs))
+	  (<DOC>
+	     (<NOTEPAD>
+		:id "doc-notepad"
+		(<NPHEAD> "")
+		(<NPTAB> :id "doc-api"
+			 (<NPTABHEAD> "API")
+			 (<API>))
+		(<NPTAB> :id "doc-tutorials"
+			 (<NPTABHEAD> "Tutorials")
+			 "not yet")
+		(<NPTAB> :id "doc-wiki"
+			 (<NPTABHEAD> "Wiki syntax")
+			 (<DIV>
+			    :class "wiki"
+			    (doc-page
+			     (make-file-name (doc-wiki-dir) "syntax.wiki")
+			     (make-wiki-request-syntax (doc-wiki-syntax)
+						       req)))))))))

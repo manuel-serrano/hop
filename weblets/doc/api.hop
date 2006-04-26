@@ -1,0 +1,253 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/private/doc/api.hop                     */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
+;*    Last change :  Wed Apr 26 08:20:46 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The developper documentation                                     */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc_api
+
+   (import hopdoc_widgets
+	   hopdoc_config
+	   hopdoc_wiki
+	   hopdoc_search)
+
+   (export (setup-api-tables!)
+	   doc/api
+	   (<API>)))
+
+;*---------------------------------------------------------------------*/
+;*    <API> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<API>)
+   (let ((pagearea (<DIV> :class "pagearea" :id "pad-api"
+			  "This pages document the HOP apis.")))
+      (<DIV>
+	 :class "api"
+	 (<SEARCH-BAR>
+	    "markup"
+	    (service (i) (get-markups i pagearea)) doc/api-search-markup
+	    "server"
+	    (service (i) (get-servers i pagearea)) doc/api-search-server
+	    "client"
+	    (service (i) (get-clients i pagearea)) doc/api-search-client)
+	 pagearea)))
+
+;*---------------------------------------------------------------------*/
+;*    *markup-menu-table* ...                                          */
+;*---------------------------------------------------------------------*/
+(define *server-mutex* (make-mutex "hopdoc-server"))
+(define *server-time* #e0)
+
+(define *markup-menu-table* #unspecified)
+(define *markup-table* #unspecified)
+
+(define *server-menu-table* #unspecified)
+(define *server-table* #unspecified)
+
+(define *client-menu-table* #unspecified)
+(define *client-table* #unspecified)
+
+(define *class-table* #unspecified)
+
+(define *see-also-table* #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    doc/api ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-service (doc/api page)
+   (let ((s (make-wiki-request-syntax *server-syntax* (the-current-request))))
+      (doc-page page s)))
+
+;*---------------------------------------------------------------------*/
+;*    doc/api-search-markup ...                                        */
+;*---------------------------------------------------------------------*/
+(define-service (doc/api-search-markup value)
+   (setup-api-tables!)
+   (search-table value doc/api "pad-api" *markup-table*))
+   
+;*---------------------------------------------------------------------*/
+;*    doc/api-search-server ...                                        */
+;*---------------------------------------------------------------------*/
+(define-service (doc/api-search-server value)
+   (setup-api-tables!)
+   (search-table value doc/api "pad-api" *server-table*))
+   
+;*---------------------------------------------------------------------*/
+;*    doc/api-search-client ...                                        */
+;*---------------------------------------------------------------------*/
+(define-service (doc/api-search-client value)
+   (setup-api-tables!)
+   (search-table value doc/api "pad-api" *client-table*))
+   
+;*---------------------------------------------------------------------*/
+;*    hash-parser ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (hash-parser k table class)
+   (let ((o (hashtable-get table k)))
+      (when o
+	 (<SPAN> :class (string-append "href " class)
+		 :title "View online documentation"
+		 :onclick
+		 ~(hop ($doc/api $o)
+		       (lambda (r)
+			  (let ((el (document.getElementById "pad-api")))
+			     (set! el.innerHTML r.responseText))))
+		 (html-string-encode k)))))
+
+;*---------------------------------------------------------------------*/
+;*    markup-parser ...                                                */
+;*---------------------------------------------------------------------*/
+(define (markup-parser k)
+   (hash-parser k *markup-table* "href-markup"))
+
+;*---------------------------------------------------------------------*/
+;*    server-parser ...                                                */
+;*---------------------------------------------------------------------*/
+(define (server-parser k)
+   (hash-parser k *server-table* "href-server"))
+
+;*---------------------------------------------------------------------*/
+;*    client-parser ...                                                */
+;*---------------------------------------------------------------------*/
+(define (client-parser k)
+   (hash-parser k *client-table* "href-client"))
+
+;*---------------------------------------------------------------------*/
+;*    class-parser ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (class-parser k)
+   (let ((e (string-index k ":"))
+	 (l (string-length k)))
+      (when (and (>fx e -1)
+		 (<fx e (-fx l 1))
+		 (char=? (string-ref k (+fx e 1)) #\:))
+	 (let* ((ty (substring k (+fx e 2) l))
+		(ol (hashtable-get *class-table* ty)))
+	    (when ol
+	       (<SPAN> :class "doc-type doc-link"
+		       :title "View class definition"
+		       :onclick
+		       ~(hop ($doc/api $ol)
+			     (lambda (r)
+				(let ((el (document.getElementById "pad-api")))
+				   (set! el.innerHTML r.responseText))))
+		       k))))))
+
+;*---------------------------------------------------------------------*/
+;*    *server-syntax* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *server-syntax*
+   (duplicate::wiki-syntax (doc-wiki-syntax)
+      (plugins (lambda (id)
+		  (case id
+		     ((<see-also>)
+		      <SEE-ALSO>)
+		     ((<markup> <parameter> <function> <class>)
+		      (lambda (port title expr)
+			 (list (<A> :name (string-append "server:" title))
+			       expr)))
+		     ((<procedure>)
+		      (lambda (port title expr)
+			 (list (<A> :name (string-append "client:" title))
+			       expr)))
+		     ((<server>)
+		      (lambda (port title expr)
+			 (<DIV> :class "server" expr)))
+		     ((<client>)
+		      (lambda (port title expr)
+			 (<DIV> :class "client" expr)))
+		     ((<style>)
+		      (lambda (port title expr)
+			 (<DIV> :class "style" expr)))
+		     (else
+		      ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))
+      (tt (wiki-tt-parser 
+	   (lambda (k)
+	      (or (markup-parser k)
+		  (server-parser k)
+		  (client-parser k)))))
+      (keyword (lambda x
+		  (<SPAN> :class "doc-keyword" x)))
+      (type (lambda x
+	       (if (and (null? (cdr x)) (string? (car x)))
+		   (let ((s (html-string-decode (car x))))
+		      (or (class-parser s) (<SPAN> :class "doc-type" x)))
+		   (<SPAN> :class "doc-type" x))))))
+
+;*---------------------------------------------------------------------*/
+;*    setup-api-tables! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (setup-api-tables!)
+   (with-lock *server-mutex*
+      (lambda ()
+	 (unless (and (vector? *markup-menu-table*)
+		      (=elong *server-time*
+			      (file-modification-time (doc-api-dir))))
+	    (multiple-value-bind (menu table)
+	       (make-doc-tables 1 "<markup>")
+	       (set! *markup-menu-table* menu)
+	       (set! *markup-table* table))
+	    (multiple-value-bind (menu table)
+	       (make-doc-tables 0 "<parameter>" "<function>" "<class>")
+	       (set! *server-menu-table* menu)
+	       (set! *server-table* table))
+	    (multiple-value-bind (_ table)
+	       (make-doc-tables 0 "<class>")
+	       (set! *class-table* table))
+	    (multiple-value-bind (menu table)
+	       (make-doc-tables 0 "<procedure>")
+	       (set! *client-menu-table* menu)
+	       (set! *client-table* table))))))
+
+;*---------------------------------------------------------------------*/
+;*    get-markups ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (get-markups i pagearea)
+   (setup-api-tables!)
+   (<SEARCH-POPUP-MENU> doc/api *markup-menu-table* pagearea i))
+
+;*---------------------------------------------------------------------*/
+;*    get-servers ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (get-servers i pagearea)
+   (setup-api-tables!)
+   (<SEARCH-POPUP-MENU> doc/api *server-menu-table* pagearea i))
+
+;*---------------------------------------------------------------------*/
+;*    get-clients ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (get-clients i pagearea)
+   (setup-api-tables!)
+   (<SEARCH-POPUP-MENU> doc/api *client-menu-table* pagearea i))
+
+;*---------------------------------------------------------------------*/
+;*    <SEE-ALSO> ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (<SEE-ALSO> port keyword body)
+   (let* ((name (input-port-name port))
+	  (dir (dirname name)))
+      (with-lock *server-mutex*
+	 (lambda ()
+	    (when (or (not (=elong *server-time* (file-modification-time dir)))
+		      (not (hashtable* *see-also-table*)))
+	       (set! *see-also-table* (make-hashtable)))
+	    (let ((old (hashtable-get *see-also-table* keyword)))
+	       (or old
+		   (let ((so (see-also name dir keyword)))
+		      (set! *see-also-table* (make-hashtable))
+		      (hashtable-put! *see-also-table* keyword so)
+		      so)))))))
+
+;*---------------------------------------------------------------------*/
+;*    see-also ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (see-also name dir markup)
+   (<SEE-ALSO-LIST> doc/api "pad-api" (search-see-also name dir markup)))

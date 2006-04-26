@@ -1,0 +1,209 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/private/doc/widgets.hop                 */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
+;*    Last change :  Wed Apr 26 08:24:46 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The DOC widgets.                                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc_widgets
+
+   (import hopdoc_config
+	   hopdoc_wiki)
+   
+   (export (<DOC> . obj)
+	   (<POPUP> ::bstring)
+	   (<SEARCH-BAR> . obj)
+	   (char->offset c)
+	   (<SEARCH-POPUP-MENU> service table i)
+	   (<SEE-ALSO-LIST> service id lst)))
+
+;*---------------------------------------------------------------------*/
+;*    <DOC> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<DOC> . obj)
+   (<HTML>
+      (<HEAD>
+	 (<HOP-HEAD> :css "hop-notepad.css" "hop-sorttable.css"
+		     :jscript "hop-notepad.js" "hop-sorttable.js"
+		     :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+		     :jscript "hop-iwindow.js" :css "hop-iwindow.css"
+		     :css (format "~a/doc.hss" (doc-dir))))
+      (<BODY>
+	 (<CENTER>
+	    (<TABLE>
+	       :class "doc"
+	       (<TR>
+		  (<TD>
+		     :valign "top"
+		     (<IMG> :class "logo"
+			    :src (format "~a/icons/edu.png"
+					 (hop-share-directory))))
+		  (<TD>
+		     :valign "top"
+		     (<TABLE>
+			(<TR>
+			   (<TD>
+			      (<DIV> :id "title"
+				     "Hop Documentation Center")))
+			(<TR>
+			   (<TD>
+			      obj))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <POPUP> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<POPUP> id)
+   (<DIV>
+      :class "popup-menu"
+      :id id
+      :onmouseup ~(let ((el (document.getElementById $id)))
+		     (set! el.style.display "none"))
+      ""))
+
+;*---------------------------------------------------------------------*/
+;*    <SEARCH-MENU> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<SEARCH-MENU> lbl click keypress popup)
+   
+   (define popup-letter-menu
+      ~(let ((el this)
+	     (menu $popup))
+	  (event.preventDefault)
+	  (event.stopPropagation)
+	  (hop ($click this.innerHTML)
+	       (lambda (h)
+		  (if (> h.responseText.length 0)
+		      (begin
+			 (set! menu.innerHTML h.responseText)
+			 (set! menu.style.top (+ 12 (hop_element_y el)))
+			 (set! menu.style.left (- (hop_element_x el) 10))
+			 (set! menu.style.display "block"))
+		      (set! menu.style.display "none"))))
+	  #f))
+   
+   (let ((size (-fx 22 (string-length lbl))))
+      (<TABLE>
+	 :class "search-menu"
+	 (<TR>
+	    (<TD>
+	       :width "100%"
+	       (<TABLE>
+		  :class "search-menu-input"
+		  :width "100%"
+		  (<TR>
+		     (<TD>
+			:width "0*"
+			:class "search-menu-label"
+			:valign "center"
+			lbl ": ")
+		     (<TD>
+			:valign "bottom"
+			:width "0*"
+			(<INPUT>
+			   :style "width: 100%"
+			   :type "text"
+			   :onkeyup ~(if (= event.keyCode 13)
+					 (hop_iwindow_open
+					  "doc/search"
+					  ($keypress this.value)
+					  false false
+					  400 200
+					  (- window.innerWidth 450) 100))
+			   :title "Hit [return] to search"))))))
+	 (<TR>
+	    (<TD>
+	       (<TABLE>
+		  :class "search-menu-menu"
+		  (<COLGROUP> :span 27 :width "1em")
+		  (<TR>
+		     (map (lambda (i)
+			     (<TD>
+				:class "search-letter"
+				:onmousedown popup-letter-menu
+				(string (integer->char i))))
+			  (cons (char->integer #\?)
+				(iota 26 (char->integer #\A)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <SEARCH-BAR> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<SEARCH-BAR> . obj)
+   (let ((popup (<POPUP> (xml-make-id)))
+	 (width (round (* 100 (/ 1 (/ (length obj) 2))))))
+      (<DIV>
+	 :class "search-bar"
+	 popup
+	 (<TABLE>
+	    :class "develop-menu"
+	    (<COLGROUP> :colspan 3 :width (format "~a%" width))
+	    (<TR>
+	       (map (lambda (el)
+		       (<TD>
+			  (<SEARCH-MENU> (car el) (cadr el) (caddr el) popup)))
+		    (list-split obj 3)))))))
+
+;*---------------------------------------------------------------------*/
+;*    char->offset ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (char->offset c)
+   (cond
+      ((and (char>=? c #\A) (char<=? c #\Z))
+       (+fx 1 (-fx (char->integer c) (char->integer #\A))))
+      ((and (char>=? c #\a) (char<=? c #\z))
+       (+fx 1 (-fx (char->integer c) (char->integer #\a))))
+      (else
+       0)))
+
+;*---------------------------------------------------------------------*/
+;*    <SEARCH-POPUP-MENU> ...                                          */
+;*---------------------------------------------------------------------*/
+(define (<SEARCH-POPUP-MENU> service table pagearea i)
+   (let ((es (vector-ref table (char->offset (string-ref i 0)))))
+      (when (pair? es)
+	 (<TABLE>
+	    :class "popup-menu"
+	    (map (lambda (el)
+		    (<TR>
+		       (<TD>
+			  (<TT>
+			     :onmouseup
+			     ~(hop ($service $(cdr el))
+				   (lambda (r)
+				      (set! $pagearea.innerHTML
+					    r.responseText)))
+			     (html-string-encode (car el))))))
+		 (sort es
+		       (lambda (a b)
+			  (string-ci<? (car a) (car b)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <SEE-ALSO-LIST> ...                                              */
+;*---------------------------------------------------------------------*/
+(define (<SEE-ALSO-LIST> service id lst)
+   (define (link f)
+      (<SPAN> :class "href"
+	      :title "View documentation"
+	      :onclick ~(hop ($service $f)
+			     (lambda (r)
+				(let ((el (document.getElementById $id)))
+				   (set! el.innerHTML r.responseText))))
+	      (doc-page->name f)))
+   (<DIV>
+      :class "see-also" 
+      (cond
+	 ((null? lst)
+	  "")
+	 ((null? (cdr lst))
+	  (link (car lst)))
+	 (else
+	  (let loop ((l (sort lst string<?)))
+	     (if (null? (cdr l))
+		 (list (link (car l)))
+		 (cons* (link (car l)) ", " (loop (cdr l)))))))))

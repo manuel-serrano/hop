@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Mon Apr 24 12:32:41 2006 (serrano)                */
+/*    Last change :  Wed Apr 26 08:23:17 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -333,6 +333,8 @@ function hop_iwindow_open( id, obj, title, class, width, height, x, y ) {
       }
       
       if( win.onresize ) win.onresize();
+   } else {
+      win.el_body.style.top = 0;
    }
    
    win.el_body.style.display = "block";

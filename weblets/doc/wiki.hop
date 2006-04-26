@@ -1,0 +1,330 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/private/doc/wiki.hop                    */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
+;*    Last change :  Wed Apr 26 09:12:20 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    DOC wiki parsing                                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc_wiki
+
+   (import hopdoc_services
+	   hopdoc_config
+	   hopdoc_search)
+   
+   (export (doc-wiki-syntax)
+	   (make-wiki-request-syntax initial-syntax request)
+	   (wiki-tt-parser proc)
+	   (doc-page page syntax)
+	   (doc-page->name path)
+	   (meta-wiki-example name)))
+
+;*---------------------------------------------------------------------*/
+;*    doc-wiki-syntax ...                                              */
+;*---------------------------------------------------------------------*/
+(define (doc-wiki-syntax)
+   *doc-syntax*)
+
+;*---------------------------------------------------------------------*/
+;*    wiki-plugins ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (wiki-plugins id)
+   (case id
+      ((<doc>) <DOC>)
+      ((<css>) <CSS>)
+      ((<arguments>) <ARGUMENTS>)
+      ((<fields>) <FIELDS>)
+      ((<example>) <EXAMPLE>)
+      ((<share>) <SHARE>)))
+
+;*---------------------------------------------------------------------*/
+;*    *doc-syntax*                                                     */
+;*---------------------------------------------------------------------*/
+(define *doc-syntax*
+   (instantiate::wiki-syntax
+      (section2 (lambda expr (<DIV> :class "section2" expr)))
+      (keyword (lambda (x) (<SPAN> :class "doc-keyword" x)))
+      (type (lambda (x) (<SPAN> :class "doc-type" x)))
+      (pre (lambda expr (<DIV> :align "center" (<PRE> expr))))
+      (plugins wiki-plugins)))
+
+;*---------------------------------------------------------------------*/
+;*    *meta-wiki-syntax* ...                                           */
+;*---------------------------------------------------------------------*/
+(define *meta-wiki-syntax*
+   (instantiate::wiki-syntax
+      (plugins (lambda (id)
+		   (if (eq? id '<center>)
+		       (lambda (port title expr)
+			  (<DIV> :align "center"
+				 (<DIV> :style "width: 50%; color: #555"
+					expr))))))))
+
+;*---------------------------------------------------------------------*/
+;*    make-wiki-request-syntax ...                                     */
+;*---------------------------------------------------------------------*/
+(define (make-wiki-request-syntax initial-syntax request)
+   (let ((req (the-current-request)))
+      (if (authorized-service? req 'admin)
+	  (duplicate::wiki-syntax initial-syntax
+	     (plugins (lambda (id)
+			  (case id
+			     ((<doc>)
+			      (if (http-request-localhostp req)
+				  <DOC/emacs>
+				  <DOC/edit>))
+			     (else
+			      ((wiki-syntax-plugins initial-syntax) id))))))
+	  initial-syntax)))
+
+;*---------------------------------------------------------------------*/
+;*    <DOC> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<DOC> port title expr)
+   (list
+    (<DIV>
+       :class "doc-title"
+       (<TABLE>
+	  :width "100%"
+	  (<TR>
+	     (<TH>
+		:align 'left title))))
+    (<DIV>
+       :class "doc"
+       (<DIV>
+	  :class "toc"
+	  (hop-wiki->toc expr :max-depth 3))
+       expr)))
+
+;*---------------------------------------------------------------------*/
+;*    <DOC/edit> ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (<DOC/edit> port title expr)
+   (list
+    (<DIV>
+       :class "doc-title"
+       (<TABLE>
+	  :width "100%"
+	  (<TR>
+	     (<TH>
+		:align 'left title)
+	     (<TD>
+		:align 'right "[ "
+		(<SPAN>
+		   :class "edit"
+		   :onclick ~(window.open $(make-service-url doc/edit (input-port-name port)))
+		   "edit")
+		" | "
+		(<SPAN>
+		   :class "edit"
+		   :onclick ~(window.open $(make-service-url doc/edit (input-port-name port)))
+		   "new")
+		" ]"))))
+    (<DIV>
+       :class "doc"
+       (<DIV>
+	  :class "toc"
+	  (hop-wiki->toc expr :max-depth 3))
+       expr)))
+
+;*---------------------------------------------------------------------*/
+;*    <DOC/emacs> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<DOC/emacs> port title expr)
+   (list
+    (<DIV>
+       :class "doc-title"
+       (<TABLE>
+	  :width "100%"
+	  (<TR>
+	     (<TH>
+		:align 'left title)
+	     (<TD>
+		:align 'right "[ "
+		(<SPAN>
+		   :class "edit"
+		   :onclick ~(window.open $(make-service-url doc/edit (input-port-name port)))
+		   "edit")
+		" | "
+		(<SPAN>
+		   :class "edit"
+		   :onclick ~(hop ($(service (file)
+				       (run-process (doc-editor) file :wait #f)
+				       #f)
+				    $(input-port-name port)))
+		   (basename (doc-editor)))
+		" | "
+		(<SPAN>
+		   :class "edit"
+		   :onclick ~(hop ($(service (file)
+				       (let ((f (make-file-name
+						 (dirname file)
+						 (string-append
+						  "new." (doc-suffix)))))
+					  (with-output-to-file f
+					     (lambda ()
+						(display (wiki-template))))
+					  (run-process (doc-editor)
+						       f :wait #f)
+					  #f))
+				    $(input-port-name port)))
+		   "new")
+		" ]"))))
+    (<DIV>
+       :class "doc"
+       (<DIV>
+	  :class "toc"
+	  (hop-wiki->toc expr :max-depth 3))
+       expr)))
+
+;*---------------------------------------------------------------------*/
+;*    <CSS> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<CSS> port title expr)
+   expr)
+
+;*---------------------------------------------------------------------*/
+;*    <ARGUMENTS> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<ARGUMENTS> port title expr)
+   (<DIV> :class "doc-arguments" :align "center" expr))
+
+;*---------------------------------------------------------------------*/
+;*    <FIELDS> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<FIELDS> port title expr)
+   (<DIV> :class "doc-fields" :align "center" expr))
+
+;*---------------------------------------------------------------------*/
+;*    <EXAMPLE> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<EXAMPLE> port title expr)
+   (search-examples port title expr))
+				  
+;*---------------------------------------------------------------------*/
+;*    <SHARE> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<SHARE> port file body)
+   (let ((path (make-file-name (hop-share-directory) file)))
+      (<FL>
+	 (<FLITEM>
+	    (<FLHEAD> file)
+	    (with-input-from-file path
+	       (lambda ()
+		  (<PRE>
+		     :class "source"
+		     (html-string-encode
+		      (read-string (current-input-port))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    doc-page ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (doc-page page syntax)
+   (define (err src)
+      (<SPAN> :class "parse-error" (html-string-encode src)))
+   (if (not (file-exists? page))
+       (http-file-not-found page)
+       (let ((iport (open-input-file page)))
+	  (if (not (input-port? iport))
+	      (http-permission-denied path)
+	      (with-handler
+		 (lambda (e)
+		    (exception-notify e)
+		    (err "???"))
+		 (unwind-protect
+		    (wiki-input-port->hop iport syntax)
+		    (close-input-port iport)))))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-tt-parser ...                                               */
+;*---------------------------------------------------------------------*/
+(define (wiki-tt-parser parser)
+   (lambda x
+      (if (and (null? (cdr x)) (every? string? (car x)))
+	  (let ((s (html-string-decode (apply string-append (car x)))))
+	     (or (parser s) (<TT> x)))
+	  (<TT> x))))
+
+;*---------------------------------------------------------------------*/
+;*    doc-page->name ...                                               */
+;*---------------------------------------------------------------------*/
+(define (doc-page->name path)
+   (if (file-exists? path)
+       (let ((p (open-input-file path)))
+	  (unwind-protect
+	     (let ((l (read-line p)))
+		(if (substring-at? l "<doc> " 0)
+		    (let ((m (pregexp-match "((?:[^-]|-[^-])*)--" l)))
+		       (if (pair? m)
+			   (cadr m)
+			   (substring l 5 (string-length l))))
+		    (basename path)))
+	     (close-input-port p)))
+       (basename path)))
+
+;*---------------------------------------------------------------------*/
+;*    meta-wiki-example ...                                            */
+;*---------------------------------------------------------------------*/
+(define (meta-wiki-example file)
+   (let ((path (make-file-name (doc-wiki-dir) file)))
+      (define (err src)
+	 (<SPAN> :class "parse-error" (html-string-encode src)))
+      (if (not (file-exists? path))
+	  (err (format "file not found `~a'" path))
+	  (let ((iport (open-input-file path)))
+	     (if (not (input-port? iport))
+		 (err (format "cannot open file for input `~a'" path))
+		 (with-handler
+		    (lambda (e)
+		       (exception-notify e)
+		       (err "???"))
+		    (unwind-protect
+		       (let ((doc (wiki-input-port->hop iport
+							*meta-wiki-syntax*)))
+			  (close-input-port iport)
+			  (set! iport (open-input-file path))
+			  (let ((code (<PRE> :class "example"
+					     (html-string-encode
+					      (read-string iport)))))
+			     (list doc (<P>) code)))
+		       (close-input-port iport))))))))
+	 
+;*---------------------------------------------------------------------*/
+;*    wiki-template ...                                                */
+;*---------------------------------------------------------------------*/
+(define (wiki-template)
+   "<doc>
+
+== Synopsis ==
+
+== Description ==
+
+== Examples ==
+
+== Definitions ==
+
+=== <> ===
+<markup> <>
+
+<arguments>
+^  arguments  ^   type    ^   default    ^  short description          ^
+</arguments>
+</markup>
+
+== Style ==
+
+===  ===
+<css> 
+
+</css>
+
+== See also ==
+<see-also></see-also>
+
+</doc>")
