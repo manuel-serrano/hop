@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Wed Apr 26 14:04:04 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 18:37:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -156,6 +156,29 @@
 	    (when (> (kmp-mmap kmpt mm #e0) 0)
 	       (<EXAMPLE-FILE> path))
 	    (close-mmap mm)))))
+
+;*---------------------------------------------------------------------*/
+;*    <EXAMPLE-FILE> ...                                               */
+;*---------------------------------------------------------------------*/
+(define (<EXAMPLE-FILE> path)
+   (let ((p (open-input-file path)))
+      (when (input-port? p)
+	 (unwind-protect
+	    (let ((h (read-line p))
+		  (id1 (xml-make-id 'pre))
+		  (id2 (xml-make-id 'textarea)))
+	       (if (substring-at? h ";;" 0)
+		   (<FLITEM>
+		      (<FLHEAD>
+			 (wiki-string->hop
+			  (substring h 2 (string-length h))
+			  (doc-wiki-syntax)))
+		      (<EXAMPLE> (read-string p)))
+		   (let ((code (string-append h "\n" (read-string p))))
+		      (<FLITEM>
+			 (<FLHEAD> (prefix (basename path)))
+			 (<EXAMPLE> code)))))
+	    (close-input-port p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    unique ...                                                       */

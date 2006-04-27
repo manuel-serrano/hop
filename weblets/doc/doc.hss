@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Apr 26 18:05:13 2006 (serrano)                */
+/*    Last change :  Thu Apr 27 07:02:47 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -42,7 +42,7 @@ $(define small "small")
 $(define x-small "x-small")
 
 $(define server-color "#00a")
-$(define client-color "#0a0")
+$(define client-color "#070")
 $(define style-color "#a00")
 
 $(define button-margin "margin-left: 4px; 
@@ -179,7 +179,7 @@ table.popup-menu td:hover {
   margin: 0;
 }
 
-.hop-fl IMG.hop-fl {
+.hop-fl IMG.hop-fl-img {
   margin-left: 5px;
   padding: 2px;
   cursor: pointer;
@@ -369,7 +369,10 @@ doc span.href {
   font-size: $small;
 }
 
-doc pre span.href, doc toc span.href {
+doc pre span.href, 
+doc toc span.href, 
+doc toc span.doc-keyword, 
+doc toc span.doc-type {
   font-size: $x-small;
 }
 
@@ -476,6 +479,16 @@ doc span.doc-keyword {
   font-family: $typewriter;
   font-size: $small;
   color: $keyword-color;
+}
+
+doc div.doc-arguments span.doc-keyword,
+doc div.doc-arguments span.doc-type {
+  font-size: $x-small;
+}
+
+doc div.doc-fields span.doc-keyword,
+doc div.doc-fields span.doc-type {
+  font-size: $x-small;
 }
 
 doc span.doc-type {
@@ -689,6 +702,10 @@ wiki doc table th {
 wiki doc table td, wiki table th {
   padding-left: 5px;
   padding-right: 5px;
+}
+
+wiki doc pre.example {
+  overflow: visible;
 }
 
 /*                                                                     */

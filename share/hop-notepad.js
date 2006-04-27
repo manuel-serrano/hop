@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Mon Apr 24 19:26:28 2006 (serrano)                */
+/*    Last change :  Thu Apr 27 08:14:20 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -29,7 +29,7 @@ function hop_notepad_remote( service, notepad, tab ) {
 	       for( j = 0; j < c.childNodes.length; j++ ) {
 		  var c2 = c.childNodes[ j ];
 
-		  if( c2 = ta ) {
+		  if( c2 == ta ) {
 		     c2.className = "hop-nptab-active";
 		     found = j;
 		  } else {

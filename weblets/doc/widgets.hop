@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Wed Apr 26 17:09:45 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 18:36:58 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -25,8 +25,7 @@
 	   (char->offset c)
 	   (<SEARCH-POPUP-MENU> service table i)
 	   (<SEE-ALSO-LIST> service id lst)
-	   (<EXAMPLE> . expr)
-	   (<EXAMPLE-FILE> path)))
+	   (<EXAMPLE> . expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DOC> ...                                                        */
@@ -259,21 +258,12 @@
 	 "Edit")))
 
 ;*---------------------------------------------------------------------*/
-;*    apify ...                                                        */
-;*---------------------------------------------------------------------*/
-(define (apify expr)
-   (cond
-      ((string? expr) (decorate-api-code expr))
-      ((pair? expr) (map apify expr))
-      (else expr)))
-
-;*---------------------------------------------------------------------*/
 ;*    <EXAMPLE> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (<EXAMPLE> . code)
    (let ((id1 (xml-make-id 'pre))
 	 (id2 (xml-make-id 'textarea))
-	 (api-code (apify code)))
+	 (api-code (decorate-api-code code)))
       (list
        (<RUN> id2)
        (<EDIT> id1 id2)
@@ -282,23 +272,3 @@
 	  (<TEXTAREA> :class "example" :id id2 code)
 	  (<PRE> :class "example" :id id1 api-code "\n")))))
 
-;*---------------------------------------------------------------------*/
-;*    <EXAMPLE-FILE> ...                                               */
-;*---------------------------------------------------------------------*/
-(define (<EXAMPLE-FILE> path)
-   (let ((p (open-input-file path)))
-      (when (input-port? p)
-	 (unwind-protect
-	    (let ((h (read-line p))
-		  (id1 (xml-make-id 'pre))
-		  (id2 (xml-make-id 'textarea)))
-	       (if (substring-at? h ";;" 0)
-		   (<FLITEM>
-		      (<FLHEAD>
-			 (wiki-string->hop
-			  (substring h 2 (string-length h))
-			  (doc-wiki-syntax)))
-		      (<EXAMPLE> (read-string p)))
-		   (let ((code (string-append h "\n" (read-string p))))
-		      (<EXAMPLE> code))))
-	    (close-input-port p)))))

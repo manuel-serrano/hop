@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Wed Apr 26 13:27:50 2006 (serrano)                */
+;*    Last change :  Thu Apr 27 08:24:28 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -36,12 +36,12 @@
 ;*---------------------------------------------------------------------*/
 (define (wiki-plugins id)
    (case id
-      ((<doc>) <DOC>)
-      ((<css>) <CSS>)
-      ((<arguments>) <ARGUMENTS>)
-      ((<fields>) <FIELDS>)
-      ((<example>) <EXAMPLE>)
-      ((<share>) <SHARE>)))
+      ((<doc>) <WIKI-DOC>)
+      ((<css>) <WIKI-CSS>)
+      ((<arguments>) <WIKI-ARGUMENTS>)
+      ((<fields>) <WIKI-FIELDS>)
+      ((<example>) <WIKI-EXAMPLE>)
+      ((<share>) <WIKI-SHARE>)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *doc-syntax*                                                     */
@@ -84,9 +84,9 @@
 	  initial-syntax)))
 
 ;*---------------------------------------------------------------------*/
-;*    <DOC> ...                                                        */
+;*    <WIKI-DOC> ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (<DOC> port title expr)
+(define (<WIKI-DOC> port title expr)
    (list
     (<DIV>
        :class "doc-title"
@@ -184,33 +184,37 @@
        expr)))
 
 ;*---------------------------------------------------------------------*/
-;*    <CSS> ...                                                        */
+;*    <WIKI-CSS> ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (<CSS> port title expr)
+(define (<WIKI-CSS> port title expr)
    expr)
 
 ;*---------------------------------------------------------------------*/
-;*    <ARGUMENTS> ...                                                  */
+;*    <WIKI-ARGUMENTS> ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (<ARGUMENTS> port title expr)
-   (<DIV> :class "doc-arguments" :align "center" expr))
+(define (<WIKI-ARGUMENTS> port title expr)
+   (list
+    (<DIV> :class "doc-arguments" :align "center" expr)
+    (<P>)))
 
 ;*---------------------------------------------------------------------*/
-;*    <FIELDS> ...                                                     */
+;*    <WIKI-FIELDS> ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (<FIELDS> port title expr)
-   (<DIV> :class "doc-fields" :align "center" expr))
+(define (<WIKI-FIELDS> port title expr)
+   (list
+    (<DIV> :class "doc-fields" :align "center" expr)
+    (<P>)))
 
 ;*---------------------------------------------------------------------*/
-;*    <EXAMPLE> ...                                                    */
+;*    <WIKI-EXAMPLE> ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (<EXAMPLE> port title expr)
+(define (<WIKI-EXAMPLE> port title expr)
    (search-examples port title expr))
 				  
 ;*---------------------------------------------------------------------*/
-;*    <SHARE> ...                                                      */
+;*    <WIKI-SHARE> ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (<SHARE> port file body)
+(define (<WIKI-SHARE> port file body)
    (let ((path (make-file-name (hop-share-directory) file)))
       (<FL>
 	 (<FLITEM>
@@ -313,7 +317,7 @@
 <markup> <>
 
 <arguments>
-^  arguments  ^   type    ^   default    ^  short description          ^
+^  arguments   ^   type    ^   default    ^  short description          ^
 </arguments>
 </markup>
 

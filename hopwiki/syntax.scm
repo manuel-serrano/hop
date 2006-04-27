@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Apr 25 11:52:02 2006 (serrano)                */
+;*    Last change :  Wed Apr 26 19:01:38 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -499,12 +499,12 @@
 		 (ignore)))))
 
       ;; keywords
-      ((: (in " \t") #\: (+ (or (out " \t\n:") (: #\: (out " \t\n:")))))
+      ((: (in " \t") #\: (out " \t\n:") (* (out " \t\n")))
        (add-expr! " ")
        (add-expr! ((wiki-syntax-keyword syn) (the-html-substring 1 (the-length))))
        (ignore))
 
-      ((bol (: #\: (+ (or (out " \t\n:") (: #\: (out " \t\n:"))))))
+      ((bol (: #\: (out " \t\n:") (* (out " \t\n"))))
        (add-expr! ((wiki-syntax-keyword syn) (the-html-string)))
        (ignore))
 

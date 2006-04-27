@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed Apr 26 08:23:17 2006 (serrano)                */
+/*    Last change :  Thu Apr 27 07:07:40 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -99,8 +99,10 @@ function hop_iwindow_drag( event, win ) {
    win.el_handle.style.cursor = "move";
 
    document.onmousemove = function( event ) {
-      win.style.left = event.clientX - dx;
-      win.style.top = event.clientY - dy;
+      if( (event.clientX - dx) > 0 )
+        win.style.left = event.clientX - dx;
+      if( (event.clientY - dy) > 0 )
+        win.style.top = event.clientY - dy;
    }
 
    document.onmouseup = function( event ) {

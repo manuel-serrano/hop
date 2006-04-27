@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Wed Apr 26 17:29:49 2006 (serrano)                */
+;*    Last change :  Thu Apr 27 08:33:22 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -22,8 +22,12 @@
    (export (setup-api-tables!)
 	   doc/api
 	   (<API>)
-	   (decorate-api-code port-or-string)
-	   (<APIREF> key)))
+	   (decorate-api-code code)
+	   (<APIREF> key)
+	   (markup-parser k)
+	   (server-parser k)
+	   (client-parser k)
+	   (class-parser k)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <API> ...                                                        */
@@ -98,12 +102,11 @@
 	 (<SPAN> :class (string-append "href " class)
 		 :title "View online documentation"
 		 :onclick
-		 ~(begin
-		     (hop_notepad_select "doc-notepad" "doc-api")
-		     (hop ($doc/api $o)
-			  (lambda (r)
-			     (let ((el (document.getElementById "pad-api")))
-				(set! el.innerHTML r.responseText)))))
+		 ~(hop ($doc/api $o)
+		       (lambda (r)
+			  (hop-notepad-select "doc-notepad" "doc-api")
+			  (let ((el (document.getElementById "pad-api")))
+			     (set! el.innerHTML r.responseText))))
 		 (html-string-encode k)))))
 
 ;*---------------------------------------------------------------------*/
@@ -141,6 +144,7 @@
 		       :onclick
 		       ~(hop ($doc/api $ol)
 			     (lambda (r)
+				(hop-notepad-select "doc-notepad" "doc-api")
 				(let ((el (document.getElementById "pad-api")))
 				   (set! el.innerHTML r.responseText))))
 		       k))))))
@@ -167,14 +171,36 @@
        (reverse! res))))
 
 ;*---------------------------------------------------------------------*/
+;*    decorate-api-string ...                                          */
+;*---------------------------------------------------------------------*/
+(define (decorate-api-string port-or-string)
+   (with-input-from-string port-or-string
+      (lambda ()
+	 (read/rp *api-grammar* (current-input-port) '()))))
+
+;*---------------------------------------------------------------------*/
 ;*    decorate-api-code ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (decorate-api-code port-or-string)
-   (if (input-port? port-or-string)
-       (read/rp *api-grammar* port-or-string '())
-       (with-input-from-string port-or-string
-	  (lambda ()
-	     (read/rp *api-grammar* (current-input-port) '())))))
+(define (decorate-api-code expr)
+   (cond
+      ((string? expr)
+       (decorate-api-string expr))
+      ((pair? expr)
+       (map decorate-api-code expr))
+      (else
+       expr)))
+
+;*---------------------------------------------------------------------*/
+;*    decorate-api-wiki-code ...                                       */
+;*---------------------------------------------------------------------*/
+(define (decorate-api-wiki-code expr)
+   (cond
+      ((string? expr)
+       (decorate-api-string (html-string-decode expr)))
+      ((pair? expr)
+       (map decorate-api-wiki-code expr))
+      (else
+       expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *server-syntax* ...                                              */
@@ -211,6 +237,8 @@
 		  (client-parser k)))))
       (keyword (lambda x
 		  (<SPAN> :class "doc-keyword" x)))
+      (pre (lambda x
+	      (<PRE> (decorate-api-wiki-code x))))
       (type (lambda x
 	       (if (and (null? (cdr x)) (string? (car x)))
 		   (let ((s (html-string-decode (car x))))

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat Apr  1 06:54:31 2006 (serrano)                */
+#*    Last change :  Thu Apr 27 08:10:04 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -33,9 +33,9 @@ _OBJECTS	= param misc types thread \
                   hop service \
                   job mime user cache \
                   http-lib http-response http-shoutcast http-error \
-                  http-filter html-extra html-notepad html-tree html-slider \
-                  html-paned html-tabslider html-inline html-foldlist \
-                  html-window \
+                  http-filter hop-extra hop-notepad hop-tree hop-slider \
+                  hop-paned hop-tabslider hop-inline hop-foldlist \
+                  hop-window \
                   event color weblets prefs
 
 OBJECTS		= $(_OBJECTS:%=o/%.o) o/configure.o

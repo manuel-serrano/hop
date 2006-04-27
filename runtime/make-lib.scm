@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Mon Apr  3 10:07:13 2006 (serrano)                */
+;*    Last change :  Thu Apr 27 08:09:52 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -37,15 +37,15 @@
 	   __hop_http-response
 	   __hop_http-shoutcast
 	   __hop_http-error
-	   __hop_html-extra
-	   __hop_html-inline
-	   __hop_html-paned
-	   __hop_html-tabslider
-	   __hop_html-notepad
-	   __hop_html-slider
-	   __hop_html-tree
-	   __hop_html-foldlist
-	   __hop_html-window
+	   __hop_hop-extra
+	   __hop_hop-inline
+	   __hop_hop-paned
+	   __hop_hop-tabslider
+	   __hop_hop-notepad
+	   __hop_hop-slider
+	   __hop_hop-tree
+	   __hop_hop-foldlist
+	   __hop_hop-window
 	   __hop_event
 	   __hop_color
 	   __hop_prefs

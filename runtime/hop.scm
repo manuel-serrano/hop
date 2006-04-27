@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Apr 26 13:16:51 2006 (serrano)                */
+;*    Last change :  Thu Apr 27 08:09:42 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling HTTP requests.                                          */
@@ -22,15 +22,15 @@
 	    __hop_service
 	    __hop_http-response)
    
-   (with    __hop_html-notepad
-	    __hop_html-inline
-	    __hop_html-paned
-	    __hop_html-slider
-	    __hop_html-tabslider
-	    __hop_html-tree
-	    __hop_html-extra
-	    __hop_html-foldlist
-	    __hop_html-window
+   (with    __hop_hop-notepad
+	    __hop_hop-inline
+	    __hop_hop-paned
+	    __hop_hop-slider
+	    __hop_hop-tabslider
+	    __hop_hop-tree
+	    __hop_hop-extra
+	    __hop_hop-foldlist
+	    __hop_hop-window
 	    __hop_event)
    
    (export  (the-current-request::obj)
