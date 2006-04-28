@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Thu Apr 27 08:24:28 2006 (serrano)                */
+;*    Last change :  Fri Apr 28 08:33:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -241,9 +241,15 @@
 		 (lambda (e)
 		    (exception-notify e)
 		    (err "???"))
-		 (unwind-protect
-		    (wiki-input-port->hop iport syntax)
-		    (close-input-port iport)))))))
+		 (let ((m1 (eval-find-module 'hopdoc))
+		       (m2 (eval-module)))
+		    (unwind-protect
+		       (begin
+			  (eval-module-set! m1)
+			  (wiki-input-port->hop iport syntax))
+		       (begin
+			  (eval-module-set! m2)
+			  (close-input-port iport)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-tt-parser ...                                               */
@@ -264,7 +270,7 @@
 	  (unwind-protect
 	     (let ((l (read-line p)))
 		(if (substring-at? l "<doc> " 0)
-		    (let ((m (pregexp-match "((?:[^-]|-[^-])*)--" l)))
+		    (let ((m (pregexp-match "((?:[^-]|-[^-])*[^ ])[ ]*--" l)))
 		       (if (pair? m)
 			   (cadr m)
 			   (substring l 5 (string-length l))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Wed Apr 26 18:37:42 2006 (serrano)                */
+;*    Last change :  Fri Apr 28 09:30:55 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -23,7 +23,7 @@
    (export (make-doc-tables offset . markups)
 	   (search-see-also name dir pattern)
 	   (search-examples port title expr*)
-	   (search-table value service id . tables)))
+	   (search-table value service id table offset)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-doc-tables ...                                              */
@@ -54,7 +54,8 @@
 	     (for-each (lambda (f)
 			  (when (is-suffix? f (doc-suffix))
 			     (let* ((path (make-file-name dir f))
-				    (mm (open-mmap path :write #f)))
+				    (mm (and (file-exists? path)
+					     (open-mmap path :write #f))))
 				(when (mmap? mm)
 				   (unwind-protect
 				      (mmap-search mm path t (car markups))
@@ -63,7 +64,8 @@
 	  (for-each (lambda (f)
 		       (when (is-suffix? f (doc-suffix))
 			  (let* ((path (make-file-name dir f))
-				 (mm (open-mmap path :write #f)))
+				 (mm (and (file-exists? path)
+					  (open-mmap path :write #f))))
 			     (when (mmap? mm)
 				(unwind-protect
 				   (for-each (lambda (m)
@@ -114,7 +116,8 @@
 		      (when (and (is-suffix? f (doc-suffix))
 				 (not (string=? f bname)))
 			 (let* ((path (make-file-name dir f))
-				(mm (open-mmap path :write #f)))
+				(mm (and (file-exists? path)
+					 (open-mmap path :write #f))))
 			    (when (mmap? mm)
 			       (unwind-protect
 				  (when (>elong (kmp-mmap kmpt mm #e0) #e0)
@@ -126,8 +129,19 @@
 ;*    search-examples ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (search-examples port title* _)
-   (let ((res (append-map (lambda (key) (search-example port key _))
-			  (string-split title* ", "))))
+   (let ((res (append-map (lambda (key)
+			     (let ((len (string-length key)))
+				(let loop ((i 0))
+				   (cond
+				      ((=fx i len)
+				       (search-example port key _))
+				      ((char=? (string-ref key i) #\space)
+				       (loop (+fx i 1)))
+				      (else
+				       (search-example port
+						       (substring key i len)
+						       _))))))
+			  (string-split title* ","))))
       (when (pair? res)
 	 (apply <FL> res))))
 
@@ -193,52 +207,80 @@
 ;*---------------------------------------------------------------------*/
 ;*    search-table ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (search-table value service id . tables)
-   
+(define (search-table value service id table offset)
+
    (define (<ENTRY> k p)
       (<TD>
+	 :class "entry"
 	 :onclick ~(hop ($service $p)
 			(lambda (r)
 			   (let ((el (document.getElementById $id)))
 			      (set! el.innerHTML r.responseText))))
 	 (<SPAN> :class "descr" (html-string-encode k))))
    
-   (let* ((l1 (if (=fx (string-length value) 0)
-		  (apply append
-			 (map (lambda (t) (hashtable-map t list)) tables))
-		  (let ((kt (kmp-table value)))
-		     (filter (lambda (x) x)
-			     (apply append
-				    (map (lambda (t)
-					    (hashtable-map
-					     t
-					     (lambda (k p)
-						(and (>= (kmp-string kt k 0) 0)
-						     (list k p)))))
-					 tables))))))
-	  (l2 (sort l1 (lambda (a b) (string<? (car a) (car b))))))
-      (if (and (pair? l2) (null? (cdr l2)))
+   (define (char0 str)
+      (let ((c (char-upcase (string-ref str offset))))
+	 (if (char-alphabetic? c)
+	     c
+	     #\?)))
+   
+   (define (<LABEL> c)
+      (<TD> (<SPAN> :class "search-label" (string c))))
+   
+   (define (list->entries lst)
+      (let* ((c0 (char0 (caar lst)))
+	     (res (cons (<LABEL> c0) lst)))
+	 (let loop ((c c0)
+		    (prev res)
+		    (lst lst)
+		    (len 1))
+	    (if (null? lst)
+		(list-split! res
+			     (inexact->exact (ceiling (/ len 3)))
+			     (<TD> "&nbsp;"))
+		(let ((c1 (char0 (caar lst))))
+		   (if (char=? c c1)
+		       (begin
+			  (set-car! lst (apply <ENTRY> (car lst)))
+			  (loop c lst (cdr lst) (+fx len 1)))
+		       (begin
+			  (set-cdr! prev (cons (<LABEL> c1) lst))
+			  (loop c1 (cdr prev) lst (+fx len 1)))))))))
+   
+   (let ((l1 (if (=fx (string-length value) 0)
+		 (hashtable-map table list)
+		 (let ((kt (kmp-table value)))
+		    (filter (lambda (x) x)
+			    (hashtable-map table
+					   (lambda (k p)
+					      (and (>= (kmp-string kt k 0) 0)
+						   (list k p)))))))))
+      (cond
+	 ((null? l1)
+	  (<TABLE>
+	     :class "search-result"
+	     (<COLGROUP> :span 3 :width "33%")
+	     (<TR> 
+		(<TH>
+		   :colspan 3
+		   (format "\"~a\" does not matche any entry" value)))))
+	 ((and (pair? l1) (null? (cdr l1)))
+	  ;; only one element matches, jump to it
 	  (<SCRIPT> 
 	     ~(begin
 		 (hop ($service $(cadr (car l2)))
 		      (lambda (r)
 			 (let ((el (document.getElementById $id)))
 			    (set! el.innerHTML r.responseText))
-			 (hop_close_float_window "search-window")))))
-	  (let ((lst (map (lambda (k.p) (apply <ENTRY> k.p)) l2)))
+			 (hop-iwindow-close "doc/search"))))))
+	 (else
+	  (let ((l2 (sort l1 (lambda (a b) (string<? (car a) (car b))))))
 	     (<TABLE>
 		:class "search-result"
 		(<COLGROUP> :span 3 :width "33%")
 		(<TR> 
 		   (<TH>
 		      :colspan 3
-		      (format "\"~a\" matches ~a entries" value (length lst))))
-		(case (length lst)
-		   ((1)
-		    (list (<TR> (car lst) (<TD> :colspan 2 "&nbsp;"))))
-		   ((2)
-		    (list (<TR> (car lst) (<TD> :colspan 2 "&nbsp;"))
-			  (<TR> (cadr lst) (<TD> :colspan 2 "&nbsp;"))))
-		   (else
-		    (map <TR> (list-split! lst 3 "")))))))))
+		      (format "\"~a\" matches ~a entries" value (length l1))))
+		(apply map <TR> (list->entries l2))))))))
 				  

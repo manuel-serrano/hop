@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Apr 26 19:01:38 2006 (serrano)                */
+;*    Last change :  Fri Apr 28 09:33:45 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -45,8 +45,16 @@
 	       (em::procedure (default <EM>))
 	       (u::procedure (default <U>))
 	       (del::procedure (default <DEL>))
-	       (sub::procedure (default <SUB>))
-	       (sup::procedure (default <SUP>))
+	       (sub::procedure (default (lambda x
+					   (<SUB>
+					      (<SPAN>
+						 :style "font-size: smaller"
+						 x)))))
+	       (sup::procedure (default (lambda x
+					   (<SUP>
+					      (<SPAN>
+						 :style "font-size: smaller"
+						 x)))))
 	       (tt::procedure (default <TT>))
 	       (code::procedure (default <CODE>))
 	       (math::procedure (default <PRE>))
@@ -504,12 +512,12 @@
        (add-expr! ((wiki-syntax-keyword syn) (the-html-substring 1 (the-length))))
        (ignore))
 
-      ((bol (: #\: (out " \t\n:") (* (out " \t\n"))))
+      ((bol (: #\: (out " \t\n:") (* (out " \t\n(){}[]"))))
        (add-expr! ((wiki-syntax-keyword syn) (the-html-string)))
        (ignore))
 
       ;; types
-      ((: "::" (+ (out " \t\n")))
+      ((: "::" (+ (out " \t\n(){}[]")))
        (add-expr! ((wiki-syntax-type syn) (the-html-string)))
        (ignore))
 

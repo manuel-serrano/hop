@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu Apr 27 07:02:47 2006 (serrano)                */
+/*    Last change :  Fri Apr 28 09:49:09 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -151,7 +151,7 @@ div.popup-menu {
   font-weight: bold;
   font-family: sans serif;
   position: absolute;
-  width : 15em;
+  min-width : 18em;
   z-index: 10;
   background-color: $popup-menu-color;
   border: $popup-menu-border;
@@ -372,6 +372,7 @@ doc span.href {
 doc pre span.href, 
 doc toc span.href, 
 doc toc span.doc-keyword, 
+doc pre span.doc-type,
 doc toc span.doc-type {
   font-size: $x-small;
 }
@@ -487,7 +488,8 @@ doc div.doc-arguments span.doc-type {
 }
 
 doc div.doc-fields span.doc-keyword,
-doc div.doc-fields span.doc-type {
+doc div.doc-fields span.doc-type,
+doc div.doc-fields tt {
   font-size: $x-small;
 }
 
@@ -500,7 +502,7 @@ doc span.doc-type {
 doc toc {
   margin-top: -13px;
   margin-left: 5px;
-  width: 280px;
+  min-width: 280px;
   float: right; 
   clear: both; 
   background-color: $popup-menu-color; 
@@ -626,13 +628,21 @@ table.search-result span.name {
 
 table.search-result td {
   cursor: pointer;
+  padding-right: 10px;
 }
 
-table.search-result td:hover {
+table.search-result td.entry:hover {
   text-decoration: underline;
   color: $deep-blue;
 }
 
+table.search-result span.search-label {
+  font-size: small;
+  font-weight: bold;
+  font-style: italic;
+  color: $deep-orange;
+}
+  
 /*---------------------------------------------------------------------*/
 /*    tutorials                                                        */
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr 27 08:11:40 2006 (serrano)                */
+;*    Last change :  Fri Apr 28 08:02:05 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -28,7 +28,7 @@
 	       (fraction read-only)
 	       (style read-only (default #f))
 	       (height read-only (default #f))
-	       (orientation read-only (default 'horizontal))
+	       (orientation read-only (default 'vertical))
 	       (onresize read-only))
 
 	    (class html-pan::xml-element))

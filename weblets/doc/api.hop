@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Thu Apr 27 08:33:22 2006 (serrano)                */
+;*    Last change :  Thu Apr 27 15:08:30 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -34,7 +34,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<API>)
    (let ((pagearea (<DIV> :class "pagearea" :id "pad-api"
-			  "This pages document the HOP APIs.")))
+			  "Overview of the HOP programming language.")))
       (<DIV>
 	 :class "api"
 	 (<SEARCH-BAR>
@@ -77,21 +77,21 @@
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api-search-markup value)
    (setup-api-tables!)
-   (search-table value doc/api "pad-api" *markup-table*))
+   (search-table value doc/api "pad-api" *markup-table* 1))
    
 ;*---------------------------------------------------------------------*/
 ;*    doc/api-search-server ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api-search-server value)
    (setup-api-tables!)
-   (search-table value doc/api "pad-api" *server-table*))
+   (search-table value doc/api "pad-api" *server-table* 0))
    
 ;*---------------------------------------------------------------------*/
 ;*    doc/api-search-client ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api-search-client value)
    (setup-api-tables!)
-   (search-table value doc/api "pad-api" *client-table*))
+   (search-table value doc/api "pad-api" *client-table* 0))
    
 ;*---------------------------------------------------------------------*/
 ;*    hash-parser ...                                                  */
@@ -153,10 +153,10 @@
 ;*    *api-grammar* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *api-grammar*
-   (regular-grammar ((letter (in "_-<>!?" ("azAZ09")))
-		     (sep (out "_-<>!?" ("azAZ09")))
+   (regular-grammar ((letter (in "_-<>!?%" ("azAZ09")))
+		     (sep (out "_-<>!?%" ("azAZ09")))
 		     res)
-      ((+ letter)
+      ((+ (or letter (: #\/ (out #\/))))
        (let ((k (the-string)))
 	  (set! res (cons (or (markup-parser k)
 			      (server-parser k)

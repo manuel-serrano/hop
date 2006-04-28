@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Wed Apr 26 18:36:58 2006 (serrano)                */
+;*    Last change :  Thu Apr 27 14:15:39 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -113,12 +113,12 @@
 			   :style "width: 100%"
 			   :type "text"
 			   :onkeyup ~(if (= event.keyCode 13)
-					 (hop_iwindow_open
+					 (hop-iwindow-open
 					  "doc/search"
 					  ($keypress this.value)
 					  false false
-					  400 200
-					  (- window.innerWidth 450) 100))
+					  500 300
+					  (- window.innerWidth 550) 100))
 			   :title "Hit [return] to search"))))))
 	 (<TR>
 	    (<TD>
@@ -222,7 +222,7 @@
 		   (set! frame.style.width "100%")
 		   (set! frame.style.height "100%")
 		   (set! frame.style.border "0")
-		   (hop_iwindow_open "doc/example"
+		   (hop-iwindow-open "doc/example"
 				     frame
 				     false false
 				     640 480

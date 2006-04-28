@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Thu Apr 27 08:14:20 2006 (serrano)                */
+/*    Last change :  Fri Apr 28 08:35:57 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -95,8 +95,10 @@ function hop_notepad_inline( notepad, tab ) {
 /*    hop_notepad_select ...                                           */
 /*---------------------------------------------------------------------*/
 function hop_notepad_select( id1, id2 ) {
-   var notepad = document.getElementById( id1 );
-   var tab = document.getElementById( id2 );
+   var notepad = (id1 instanceof HTMLElement) ?
+      id1 : document.getElementById( id1 );
+   var tab = (id2 instanceof HTMLElement) ?
+      id2 : document.getElementById( id2 );
 
    if( notepad.remote_service != null ) {
       hop_notepad_remote( notepad.remote_service, notepad, tab );

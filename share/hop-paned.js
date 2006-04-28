@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Thu Nov 10 08:24:14 2005 (serrano)                */
-/*    Copyright   :  2005 Manuel Serrano                               */
+/*    Last change :  Fri Apr 28 08:07:17 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
 /*=====================================================================*/
@@ -65,6 +65,16 @@ function hop_hpaned_fraction_set( paned, fraction ) {
 	 paned.onresize();
       }
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_paned_fraction_set ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_paned_fraction_set( paned, fraction ) {
+   if( paned.className == "hop-vpaned" )
+      hop_vpaned_fraction_set( paned, fraction );
+   else 
+      hop_hpaned_fraction_set( paned, fraction );
 }
 
 /*---------------------------------------------------------------------*/

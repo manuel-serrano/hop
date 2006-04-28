@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Wed Apr 26 11:49:31 2006 (serrano)                */
+;*    Last change :  Fri Apr 28 08:33:32 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -25,15 +25,7 @@
 ;*    doc ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (doc)
-   (let ((m1 (eval-find-module 'hopdoc))
-	 (m2 (eval-module)))
-      (if (eq? m1 m2)
-	  (doc-main (the-current-request))
-	  (unwind-protect
-	     (begin
-		(eval-module-set! m1)
-		(doc-main (the-current-request)))
-	     (eval-module-set! m2)))))
+   (doc-main (the-current-request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-main ...                                                     */

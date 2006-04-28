@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Wed Apr 26 09:01:28 2006 (serrano)                */
+;*    Last change :  Fri Apr 28 08:08:16 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -33,5 +33,9 @@
      (hop-slider-onchange-set! hop_slider_onchange_set)
      (hop-notepad-select hop_notepad_select)
      (hop-iwindow-open hop_iwindow_open)
-     (hop-iwindow-close hop_iwindow_close)))
+     (hop-iwindow-close hop_iwindow_close)
+     (hop-paned-fraction hop_paned_fraction_get)
+     (hop-paned-fraction-set! hop_paned_fraction_set)
+     (hop-paned-onresize hop_paned_onresize_get)
+     (hop-paned-onresize-set! hop_paned_onresize_set)))
 
