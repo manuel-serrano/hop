@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Apr 28 09:49:09 2006 (serrano)                */
+/*    Last change :  Fri Apr 28 17:08:32 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -70,6 +70,7 @@ img.logo {
 tt {
   font-family: $typewriter;
   font-size: $small;
+  color: #300;
 }
 
 /*--- forms -----------------------------------------------------------*/
@@ -152,6 +153,8 @@ div.popup-menu {
   font-family: sans serif;
   position: absolute;
   min-width : 18em;
+  max-height: 400px;
+  overflow: auto;
   z-index: 10;
   background-color: $popup-menu-color;
   border: $popup-menu-border;
@@ -371,6 +374,7 @@ doc span.href {
 
 doc pre span.href, 
 doc toc span.href, 
+doc pre span.doc-keyword, 
 doc toc span.doc-keyword, 
 doc pre span.doc-type,
 doc toc span.doc-type {

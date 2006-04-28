@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu Apr 27 14:15:39 2006 (serrano)                */
+;*    Last change :  Fri Apr 28 15:04:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -66,8 +66,6 @@
    (<DIV>
       :class "popup-menu"
       :id id
-      :onmouseup ~(let ((el (document.getElementById $id)))
-		     (set! el.style.display "none"))
       ""))
 
 ;*---------------------------------------------------------------------*/
@@ -168,10 +166,12 @@
 ;*    <SEARCH-POPUP-MENU> ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (<SEARCH-POPUP-MENU> service table pagearea i)
-   (let ((es (vector-ref table (char->offset (string-ref i 0)))))
+   (let ((es (vector-ref table (char->offset (string-ref i 0))))
+	 (id (xml-make-id)))
       (when (pair? es)
 	 (<TABLE>
 	    :class "popup-menu"
+	    :id id
 	    (map (lambda (el)
 		    (<TR>
 		       (<TD>
@@ -179,8 +179,11 @@
 			     :onmouseup
 			     ~(hop ($service $(cdr el))
 				   (lambda (r)
-				      (set! $pagearea.innerHTML
-					    r.responseText)))
+				      (let* ((n (document.getElementById $id))
+					     (p n.parentNode))
+					 (set! p.style.display "none")
+					 (set! $pagearea.innerHTML
+					       r.responseText))))
 			     (html-string-encode (car el))))))
 		 (sort es
 		       (lambda (a b)

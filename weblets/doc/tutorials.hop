@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Fri Apr 28 08:33:44 2006 (serrano)                */
+;*    Last change :  Fri Apr 28 17:24:19 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -51,7 +51,7 @@
 			    (<EXAMPLE> expr))))
 		     (else
 		      ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))
-      (keyword (lambda x (<SPAN> :class "doc-keyword" x)))
+      (keyword list)
       (pre list)
       (tt (wiki-tt-parser
 	   (lambda (k)

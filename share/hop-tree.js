@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon Sep 26 16:56:03 2005 (serrano)                */
-/*    Copyright   :  2005 Manuel Serrano                               */
+/*    Last change :  Fri Apr 28 12:03:36 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
@@ -397,12 +397,11 @@ function hop_tree_id_reset( id ) {
    var el = document.getElementById( id );
 
    if( el instanceof HTMLDivElement ) {
-      return hop_tree_reset( document.getElementById( id ) );
+      return hop_tree_reset( el );
    } else {
       return new Array( 0 );
    }
 }
-
 /*---------------------------------------------------------------------*/
 /*    hop_tree_selection ...                                           */
 /*---------------------------------------------------------------------*/
