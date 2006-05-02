@@ -7,7 +7,7 @@
 	  rep)))
 
    (<HTML>
-      (<HEAD> (<HOP-HEAD>))
+      (<HEAD>)
       (<BODY>
 	 (<P>
 	    "This example implements an event loop. Access another HOP service

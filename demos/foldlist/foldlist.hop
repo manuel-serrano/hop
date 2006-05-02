@@ -1,6 +1,5 @@
 (<HTML>
- (<HEAD>
-  (<HOP-HEAD> :jscript "hop-foldlist.js" :css "hop-foldlist.css" "demofl.css"))
+  (<HEAD> :jscript "hop-foldlist.js" :css "hop-foldlist.css" :css "demofl.css")
   (<BODY>
    (<H3> "A list with standard icons")
    (<FL>

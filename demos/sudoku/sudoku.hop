@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/demos/widgets/sudoku/Makefile           */
+;*    serrano/prgm/project/hop/demos/sudoku/sudoku.hop                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Wed Mar 29 09:05:27 2006 (eg)                     */
+;*    Last change :  Tue May  2 13:32:49 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
@@ -180,7 +180,7 @@
     (<HTML>
      (<HEAD>
       (<HOP-SCHEME-HEAD> :sscript (make-file-name *sudoku-directory* "sudoku.scm"))
-      (<HOP-HEAD> :css "sudoku.hss"))
+      :css "sudoku.hss")
      (<BODY>
       (<DIV> :class "sudoku-title" (<IMG> :src
 					  (make-file-name *sudoku-directory*

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  8 07:03:09 2006                          */
-;*    Last change :  Tue Apr 25 11:53:19 2006 (serrano)                */
+;*    Last change :  Tue May  2 13:59:22 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki edit demo                                                   */
@@ -33,7 +33,7 @@
 (define-service (wikiedit/view)
    (let ((d (<DIV> :class "view" "")))
       (<HTML>
-	 (<HEAD> (<HOP-HEAD> :dir (wikiedit-dir) :css "wikiedit.hss"))
+	 (<HEAD> :dir (wikiedit-dir) :css "wikiedit.hss")
 	 (<BODY>
 	    d
 	    (<HOP-EVENT>
@@ -136,7 +136,7 @@ a centered text
 ;*    main answer                                                      */
 ;*---------------------------------------------------------------------*/
 (<HTML>
-   (<HEAD> (<HOP-HEAD> :dir (wikiedit-dir) :css "wikiedit.hss"))
+   (<HEAD> :dir (wikiedit-dir) :css "wikiedit.hss")
    (<BODY>
       (<H3> "Live editor")
       (<TEXTAREA>

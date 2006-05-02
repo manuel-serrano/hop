@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Apr 27 08:13:40 2006 (serrano)                */
+;*    Last change :  Tue May  2 10:54:22 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -157,7 +157,7 @@
 	     (procedure->service (lambda (res) (cont res))))))
       (instantiate::http-response-hop
 	 (xml (<HTML>
-		 (<HOP-HEAD>)
+		 (<HEAD>)
 		 (<BODY>
 		    (<SCRIPT>
 		       (format "hop( ~a( eval( '~a' ) ), true )" s exp))))))))

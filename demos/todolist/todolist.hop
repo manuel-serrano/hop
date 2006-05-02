@@ -1,6 +1,6 @@
 (let loop ((items (iota 1024)))
    (<HTML>
-    (<HEAD> (<HOP-HEAD>))
+    (<HEAD>)
     (<BODY>
      (<H1> "To do list " (symbol->string (gensym)))
      (<FORM> :action (service (new) (loop (cons new items)))

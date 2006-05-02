@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Apr 27 08:10:28 2006 (serrano)                */
+;*    Last change :  Tue May  2 13:59:08 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -26,7 +26,7 @@
 	    __hop_js-lib
 	    __hop_hop)
 
-   (export  (<HOP-HEAD> . ::obj)
+   (export  (<HEAD> . ::obj)
 	    (<HOP-FOOT-LOGO> . ::obj)
 	    
 	    (<TOOLTIP> . ::obj)
@@ -50,7 +50,7 @@
       :type "text/css"
       :href (cond
 	       ((= (string-length file) 0)
-		(error '<HOP-HEAD> "Illegal css" file))
+		(error '<HEAD> "Illegal css" file))
 	       ((char=? (string-ref file 0) (file-separator))
 		file)
 	       ((substring-at? file "http://" 0)
@@ -66,7 +66,7 @@
       :type "text/javascript"
       :src (cond
 	      ((= (string-length file) 0)
-	       (error '<HOP-HEAD> "Illegal jscript" file))
+	       (error '<HEAD> "Illegal jscript" file))
 	      ((char=? (string-ref file 0) (file-separator))
 	       file)
 	      ((substring-at? file "http://" 0)
@@ -75,9 +75,9 @@
 	       (hop-file dir file)))))
 
 ;*---------------------------------------------------------------------*/
-;*    <HOP-HEAD> ...                                                   */
+;*    head-parse-body ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (<HOP-HEAD> . obj)
+(define (head-parse-body args)
    (let* ((req (the-current-request))
 	  (dir (if (http-request? req)
 		   (list (dirname (http-request-path req)))
@@ -85,8 +85,9 @@
 	  (css '())
 	  (jscript '())
 	  (favicon #f)
-	  (mode #f))
-      (let loop ((a obj))
+	  (mode #f)
+	  (rest '()))
+      (let loop ((a args))
 	 (cond
 	    ((null? a)
 	     (cons
@@ -107,38 +108,38 @@
 					 (reverse! jscript)))))
 		 (if favicon
 		     (cons (<LINK> :rel "shortcut icon" :href favicon)
-			   (append! css jscript))
-		     (append! css jscript)))))
+			   (append! (append! rest css) jscript))
+		     (append! (append! rest css) jscript)))))
 	    ((pair? (car a))
 	     (loop (append (car a) (cdr a))))
 	    ((null? (car a))
 	     (loop (cdr a)))
 	    ((keyword? (car a))
 	     (if (null? (cdr a))
-		 (error '<HOP-HEAD> (format "Missing ~a value" (car a)) a)
+		 (error '<HEAD> (format "Missing ~a value" (car a)) a)
 		 (case (car a)
 		    ((:dir)
 		     (set! mode :dir)
 		     (if (string? (cadr a))
 			 (set! dir (cons (cadr a) dir))
-			 (error '<HOP-HEAD> "Illegal :dir" (cadr a))))
+			 (error '<HEAD> "Illegal :dir" (cadr a))))
 		    ((:css)
 		     (set! mode :css)
 		     (if (string? (cadr a))
 			 (set! css (cons (cadr a) css))
-			 (error '<HOP-HEAD> "Illegal :css" (cadr a))))
+			 (error '<HEAD> "Illegal :css" (cadr a))))
 		    ((:jscript)
 		     (set! mode :jscript)
 		     (if (string? (cadr a))
 			 (set! jscript (cons (cadr a) jscript))
-			 (error '<HOP-HEAD> "Illegal :jscript" (cadr a))))
+			 (error '<HEAD> "Illegal :jscript" (cadr a))))
 		    ((:favicon)
 		     (set! mode #f)
 		     (if (string? (cadr a))
 			 (set! favicon (cadr a))
-			 (error '<HOP-HEAD> "Illegal :favicon" (cadr a))))
+			 (error '<HEAD> "Illegal :favicon" (cadr a))))
 		    (else
-		     (error '<HOP-HEAD>
+		     (error '<HEAD>
 			    (format "Unknown ~a argument" (car a))
 			    (cadr a)))))
 	     (loop (cddr a)))
@@ -149,10 +150,29 @@
 		((:css)
 		 (set! css (cons (car a) css)))
 		((:jscript)
-		 (set! jscript (cons (car a) jscript))))
+		 (set! jscript (cons (car a) jscript)))
+		(else
+		 (set! rest (cons (car a) rest))))
 	     (loop (cdr a)))
 	    (else
-	     (error '<HOP-HEAD> (format "Illegal ~a argument" (car a)) a))))))
+	     (set! rest (cons (car a) rest))
+	     (loop (cdr a)))))))
+
+;*---------------------------------------------------------------------*/
+;*    <HEAD> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<HEAD> . args)
+   (let ((body (head-parse-body args))
+	 (meta (<META> :http-equiv "Content-Type"
+		       :content "text/html"
+		       :charset (if (eq? (hop-char-encoding) 'UTF-8)
+				    "UTF-8"
+				    "ISO-8859-1"))))
+      (instantiate::xml-markup
+	 (markup 'head)
+	 (attributes '())
+	 (id (xml-make-id))
+	 (body (cons meta body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HOP-FOOT-LOGO> ...                                              */

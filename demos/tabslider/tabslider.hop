@@ -1,6 +1,6 @@
 (<HTML>
- (<HEAD>
-  (<HOP-HEAD> :jscript "hop-tabslider.js" :css "hop-tabslider.css" "demots.hss")) 
+  (<HEAD> :jscript "hop-tabslider.js" :css "hop-tabslider.css"
+	  :css "demots.hss")
   (<BODY>
    ;; Create a tabslider opened of the second tab
    (<H3> "An example od a tabslider")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Apr 24 19:33:48 2006 (serrano)                */
+;*    Last change :  Tue May  2 10:51:05 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -104,7 +104,7 @@
 	    (<H4> . ::obj)
 	    (<H5> . ::obj)
 	    (<H6> . ::obj)
-	    (<HEAD> . ::obj)
+;* 	    (<HEAD> . ::obj)                                           */
 	    (<HR> . ::obj)
 	    (<HTML> . ::obj)
 	    (<I> . ::obj)
@@ -431,7 +431,7 @@
 (define-xml-element <H4>)
 (define-xml-element <H5>)
 (define-xml-element <H6>)
-(define-xml xml-markup <HEAD>)
+;* (define-xml xml-markup <HEAD>)                                      */
 (define-xml-element <HR>)
 (define-xml xml-html <HTML>)
 (define-xml-element <I>)

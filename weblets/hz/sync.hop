@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed Mar 29 11:53:03 2006 (serrano)                */
+;*    Last change :  Sat Apr 29 07:20:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -198,7 +198,6 @@
 		   (de (or (find 'descr i) ""))
 		   (cat (or (find 'category i) "hop"))
 		   (o (hz-db-get-unmanaged db name cat)))
-	       (tprint "O=" o)
 	       (if (dbhz? o)
 		   (with-access::dbhz o (version)
 		      (unless (string=? version v)
@@ -217,7 +216,6 @@
 	 (when (directory? dir)
 	    (let ((info (make-file-name dir (string-append name ".info"))))
 	       (when (file-exists? info)
-		  (tprint "INFO=" info)
 		  (bind-exit (exit)
 		     (with-handler
 			(lambda (e)

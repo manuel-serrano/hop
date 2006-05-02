@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Mar  2 11:12:55 2006                          */
-;*    Last change :  Sat Apr  8 06:59:39 2006 (serrano)                */
+;*    Last change :  Tue May  2 13:31:49 2006 (serrano)                */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Demos                                                        */
@@ -39,9 +39,9 @@
 ;; ----------------------------------------------------------------------
 (define (<DEMO-HEAD>)
   (<HEAD>
-    (<HOP-HEAD> :jscript "hop-window.js" "hop-foldlist.js"
-		(make-file-path *demos-directory* "demos.js")
-		:css "hop-window.css" "hop-foldlist.css")
+     :jscript "hop-window.js" "hop-foldlist.js"
+     (make-file-path *demos-directory* "demos.js")
+     :css "hop-window.css" "hop-foldlist.css"
     (<LINK> :rel "stylesheet"
 	    :type "text/css"
 	    :href (format "~a/demos.hss" *demos-directory*))))

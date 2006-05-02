@@ -69,8 +69,7 @@
    (date-copy dt :year (-fx (date-year dt) 1) :day 1))
 
 (<HTML>
-   (<HEAD>
-      (<HOP-HEAD> :css "calendar.hss"))
+   (<HEAD> :css "calendar.hss")
    (<BODY>
       (<H3> "An example of calendar")
       (<DIV>

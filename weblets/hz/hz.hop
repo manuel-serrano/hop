@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Wed Mar 29 13:38:48 2006 (serrano)                */
+;*    Last change :  Tue May  2 10:56:41 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -53,14 +53,13 @@
 	 (prefs (make-file-name (hz-rc-directory) "hz.prefs")))
       (when (file-exists? prefs) (hz-preferences-load prefs))
       (<HTML>
-	 (<HEAD>
-	    (<HOP-HEAD> :dir (hz-dir)
-			:jscript "hop-notepad.js" :css "hop-notepad.css"
-			:jscript "hop-paned.js" :css "hop-paned.css"
-			:jscript "hop-tree.js" :css "hop-tree.css"
-			:jscript "hop-foldlist.js" :css "hop-foldlist.css"
-			:jscript "hop-window.js" :css "hop-window.css"
-			:css "hz.hss"))
+	 (<HEAD> :dir (hz-dir)
+		 :jscript "hop-notepad.js" :css "hop-notepad.css"
+		 :jscript "hop-paned.js" :css "hop-paned.css"
+		 :jscript "hop-tree.js" :css "hop-tree.css"
+		 :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+		 :jscript "hop-window.js" :css "hop-window.css"
+		 :css "hz.hss")
 	 (<ABODY>
 	    (<DIV>
 	       :id "body"
@@ -112,14 +111,13 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hz/preferences)
    (<HTML>
-      (<HEAD>
-	 (<HOP-HEAD> :dir (hz-dir)
-		     :jscript "hop-notepad.js" :css "hop-notepad.css"
-		     :jscript "hop-paned.js" :css "hop-paned.css"
-		     :jscript "hop-tree.js" :css "hop-tree.css"
-		     :jscript "hop-foldlist.js" :css "hop-foldlist.css"
-		     :jscript "hop-window.js" :css "hop-window.css"
-		     :css "hz.hss"))
+      (<HEAD> :dir (hz-dir)
+	      :jscript "hop-notepad.js" :css "hop-notepad.css"
+	      :jscript "hop-paned.js" :css "hop-paned.css"
+	      :jscript "hop-tree.js" :css "hop-tree.css"
+	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+	      :jscript "hop-window.js" :css "hop-window.css"
+	      :css "hz.hss")
       (<ABODY>
 	 (<DIV>
 	    :id "body"

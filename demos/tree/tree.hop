@@ -1,6 +1,5 @@
 (<HTML>
- (<HEAD>
-  (<HOP-HEAD> :css "hop-tree.css" :jscript "hop-tree.js"))
+   (<HEAD> :css "hop-tree.css" :jscript "hop-tree.js")
  (<BODY>
   (<H3> "a static tree")
   (<TREE> :id "tree1"

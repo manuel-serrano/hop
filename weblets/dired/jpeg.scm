@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 19:19:24 2005                          */
-;*    Last change :  Tue Jan 31 16:43:30 2006 (serrano)                */
+;*    Last change :  Tue May  2 13:30:43 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    dired jpeg                                                       */
@@ -17,18 +17,17 @@
       (let ((css1 (make-file-name dir "dired.css"))
 	    (css2 (make-file-name dir ".dired.css")))
 	 (<HEAD>
-	  (<HOP-HEAD>)
-	  (<LINK> :rel "stylesheet"
-		  :type "text/css"
-		  :href (format "~a/dired.hss" (dired-install-directory)))
-	  (if (file-exists? css1)
-	      (<LINK> :rel "stylesheet" :type "text/css" :href css1)
-	      "")
-	  (if (file-exists? css2)
-	      (<LINK> :rel "stylesheet" :type "text/css" :href css2)
-	      "")
-	  (<SCRIPT> :type "text/javascript"
-		    :src (format "~a/dired.js" (dired-install-directory)))))))
+	    (<LINK> :rel "stylesheet"
+		    :type "text/css"
+		    :href (format "~a/dired.hss" (dired-install-directory)))
+	    (if (file-exists? css1)
+		(<LINK> :rel "stylesheet" :type "text/css" :href css1)
+		"")
+	    (if (file-exists? css2)
+		(<LINK> :rel "stylesheet" :type "text/css" :href css2)
+		"")
+	    (<SCRIPT> :type "text/javascript"
+		      :src (format "~a/dired.js" (dired-install-directory)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DIRED-JPEG-INFO> ...                                            */

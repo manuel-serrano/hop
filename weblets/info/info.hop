@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Apr  3 10:59:35 2006 (serrano)                */
+;*    Last change :  Tue May  2 11:16:02 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -54,10 +54,9 @@
       (if (not (user-authorized-service? (http-request-user req) 'info))
 	  (user-access-denied req)
 	  (<HTML>
-	     (<HEAD>
-		(<HOP-HEAD> :css "hop-notepad.css" "hop-sorttable.css"
-			    :css (format "~a/info.hss" info-dir)
-			    :jscript "hop-notepad.js" "hop-sorttable.js"))
+	     (<HEAD> :css "hop-notepad.css" "hop-sorttable.css"
+		     :css (format "~a/info.hss" info-dir)
+		     :jscript "hop-notepad.js" "hop-sorttable.js")
 	     (<BODY>
 		:onunload {
 		   hop( $(service ()

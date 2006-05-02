@@ -1,6 +1,5 @@
 (<HTML>
- (<HEAD>
-  (<HOP-HEAD> :css "hop-notepad.css" :jscript "hop-notepad.js"))
+   (<HEAD> :css "hop-notepad.css" :jscript "hop-notepad.js")
  (<BODY>
   :style "border: 0; margin: 0; padding 0; background: white;"
   (<NOTEPAD>

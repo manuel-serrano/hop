@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan  9 08:09:52 2006                          */
-;*    Last change :  Wed Feb  8 07:53:14 2006 (serrano)                */
+;*    Last change :  Tue May  2 13:56:57 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    SORTTABLE example                                                */
@@ -21,9 +21,8 @@
 		  (<TR> (<TD> (<TT> (format "&amp;#~a;" c)))
 			(<TD> (format "&#~a;" c))))))
    (<HTML>
-      (<HEAD>
-	 (<HOP-HEAD> :jscript "hop-sorttable.js"
-		     :css "hop-sorttable.css" "sorttable.hss"))
+      (<HEAD> :jscript "hop-sorttable.js"
+	      :css "hop-sorttable.css" :css "sorttable.hss")
       (<BODY>
 	 (<TABLE>
 	    (<TR>

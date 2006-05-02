@@ -1,8 +1,7 @@
 (<HTML>
- (<HEAD>
-  (<HOP-HEAD>
+  (<HEAD>
    :css "hop-paned.css" :css "hop-tree.css"
-   :jscript "hop-paned.js" :jscript "hop-tree.js"))
+   :jscript "hop-paned.js" :jscript "hop-tree.js")
  (<BODY>
   (<H3> "An example of paned")
   (<PANED>

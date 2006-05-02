@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Apr 27 08:13:57 2006 (serrano)                */
+;*    Last change :  Tue May  2 10:57:35 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -146,12 +146,11 @@
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
-	      (<HEAD>
-		 (<HOP-HEAD> :css
-			     (format "http://~a:~a/~a/hop-error.hss"
-				     (hostname)
-				     (hop-port)
-				     (hop-share-directory))))
+	      (<HEAD> :css
+		      (format "http://~a:~a/~a/hop-error.hss"
+			      (hostname)
+			      (hop-port)
+			      (hop-share-directory)))
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -175,8 +174,7 @@
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
-	      (<HEAD>
-		 (<HOP-HEAD> :css "hop-error.hss"))
+	      (<HEAD> :css "hop-error.hss")
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -234,8 +232,7 @@
       (instantiate::http-response-hop
 	 (start-line "HTTP/1.0 501 Internal Server Error")
 	 (xml (<HTML>
-		 (<HEAD>
-		    (<HOP-HEAD> :css "hop-error.hss"))
+		 (<HEAD> :css "hop-error.hss")
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
@@ -280,8 +277,7 @@
       (instantiate::http-response-hop
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (xml (<HTML>
-		 (<HEAD>
-		    (<HOP-HEAD> :css "hop-error.hss"))
+		 (<HEAD> :css "hop-error.hss")
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
@@ -318,8 +314,7 @@
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 200 ok")
       (xml (<HTML>
-	      (<HEAD>
-		 (<HOP-HEAD> :css "hop-error.hss"))
+	      (<HEAD> :css "hop-error.hss")
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -349,12 +344,11 @@
       (instantiate::http-response-hop
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
-		 (<HEAD>
-		    (<HOP-HEAD> :css
-				(format "http://~a:~a/~a/hop-error.hss"
-					(hostname)
-					(hop-port)
-					(hop-share-directory))))
+		 (<HEAD> :css
+			 (format "http://~a:~a/~a/hop-error.hss"
+				 (hostname)
+				 (hop-port)
+				 (hop-share-directory)))
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>

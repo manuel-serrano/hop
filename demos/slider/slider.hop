@@ -1,6 +1,5 @@
 (<HTML>
- (<HEAD>
-  (<HOP-HEAD>
+  (<HEAD>
    :css "hop-slider.css"
    :jscript "hop-slider.js")
   (<SCRIPT> :type "text/javascript"

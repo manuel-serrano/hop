@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Fri Apr 28 18:00:07 2006 (serrano)                */
+;*    Last change :  Tue May  2 10:55:45 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -32,12 +32,11 @@
 ;*---------------------------------------------------------------------*/
 (define (<DOC> . obj)
    (<HTML>
-      (<HEAD>
-	 (<HOP-HEAD> :css "hop-notepad.css" "hop-sorttable.css"
-		     :jscript "hop-notepad.js" "hop-sorttable.js"
-		     :jscript "hop-foldlist.js" :css "hop-foldlist.css"
-		     :jscript "hop-iwindow.js" :css "hop-iwindow.css"
-		     :css (format "~a/doc.hss" (doc-dir))))
+      (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css" 
+	      :jscript "hop-sorttable.js" :css "hop-sorttable.css" 
+	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
+	      :css (format "~a/doc.hss" (doc-dir)))
       (<BODY>
 	 (<CENTER>
 	    (<TABLE>

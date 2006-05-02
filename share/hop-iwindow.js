@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Thu Apr 27 07:07:40 2006 (serrano)                */
+/*    Last change :  Tue May  2 13:54:25 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -68,10 +68,14 @@ function hop_iwindow_iconify( id ) {
       win.iconifiedp = false;
    } else {
    }
+   
    if( win.iconify ) {
       win.iconify();
    } else {
-      /* nothing yet */
+      if( win.style[ "position" ]  == "absolute" )
+	 win.style.setProperty( "position", "fixed", "" );
+      else
+	 win.style.setProperty( "position", "absolute", "" );
    }
 
    /* user event */
