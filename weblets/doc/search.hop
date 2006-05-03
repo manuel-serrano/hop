@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Fri Apr 28 09:30:55 2006 (serrano)                */
+;*    Last change :  Wed May  3 20:03:11 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -268,7 +268,7 @@
 	  ;; only one element matches, jump to it
 	  (<SCRIPT> 
 	     ~(begin
-		 (hop ($service $(cadr (car l2)))
+		 (hop ($service $(cadr (car l1)))
 		      (lambda (r)
 			 (let ((el (document.getElementById $id)))
 			    (set! el.innerHTML r.responseText))
