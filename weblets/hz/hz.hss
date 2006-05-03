@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Tue Mar 28 17:01:13 2006 (serrano)                */
+/*    Last change :  Wed May  3 07:26:00 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -239,11 +239,8 @@ table.hop-tree-leaf {
 }
 
 /*--- window ----------------------------------------------------------*/
-float-window {
+hop-iwindow {
   opacity: 0.95;
-}
-
-.hop-float-content {
   background: white;
   font-size: small;
 }
@@ -509,6 +506,10 @@ table.search-result span.descr {
 table.search-result span.name {
   color: $deep-blue;
   font-weight: bold;
+}
+
+table.search-result span.name:hover {
+  text-decoration: underline;
 }
 
 table.search-result td {

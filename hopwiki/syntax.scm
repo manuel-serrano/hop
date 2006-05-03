@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sat Apr 29 07:18:55 2006 (serrano)                */
+;*    Last change :  Tue May  2 21:13:03 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -117,8 +117,8 @@
 ;*    *wiki-grammar* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *wiki-grammar*
-   (regular-grammar ((punct (in "<>+^|*=/_-$#"))
-		     (blank (in ":~;,`'(){}[] \\\n"))
+   (regular-grammar ((punct (in "+*=/_-$#"))
+		     (blank (in "<>^|:~;,`'(){}[] \\\n"))
 		     (letter (out "<>+^|*=/_-$#:~;,`'(){}[] \\\n"))
 		     syn state result trcount)
 
@@ -298,11 +298,6 @@
 
       ;; simple text
       ((+ (or letter (: punct letter)))
-       (add-expr! (the-html-string))
-       (ignore))
-
-      ;; single escape characters
-      ((or punct blank)
        (add-expr! (the-html-string))
        (ignore))
 
@@ -608,6 +603,7 @@
 	      (add-expr! (the-html-string)))
 	  (ignore)))
 
+      ;; ending markup
       ((bol (: "</" (+ (out #\>)) ">"))
        (let* ((s (the-substring 2 (the-length)))
 	      (id (symbol-append '< (string->symbol s)))
@@ -620,6 +616,11 @@
 	      (add-expr! (the-html-string)))
 	  (ignore)))
        
+      ;; single escape characters
+      ((or punct blank)
+       (add-expr! (the-html-string))
+       (ignore))
+
       (else
        (let ((c (the-failure)))
 	  (if (eof-object? c)

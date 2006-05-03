@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Wed Mar 22 15:16:46 2006 (serrano)                */
+;*    Last change :  Wed May  3 06:35:54 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -55,9 +55,11 @@
       ((eq? obj #f)
        "false")
       ((null? obj)
-       "new Array()")
+       "null")
       ((list? obj)
-       (list->array obj))
+       (let ((car (scheme->javascript (car obj)))
+	     (cdr (scheme->javascript (cdr obj))))
+	  (format "new sc_Pair( ~a, ~a )" car cdr)))
       ((vector? obj)
        (if (=fx (vector-length obj) 0)
 	   "new Array()"

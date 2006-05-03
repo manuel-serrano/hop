@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Tue May  2 13:54:25 2006 (serrano)                */
+/*    Last change :  Wed May  3 07:18:28 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -318,7 +318,7 @@ function hop_iwindow_open( id, obj, title, class, width, height, x, y ) {
 	 if( (obj instanceof String) || (typeof obj == "string") ) {
 	    hop( obj, cb );
 	 } else {
-	    alert( "*** Hop Error, Illegal `iwindow' obj -- " + obj );
+	    alert( "*** Hop Error, Illegal `iwindow' content -- " + obj );
 	 }
       }
    }

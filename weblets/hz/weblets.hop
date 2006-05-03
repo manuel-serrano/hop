@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Wed Mar 29 14:12:50 2006 (serrano)                */
+;*    Last change :  Wed May  3 07:26:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -24,10 +24,6 @@
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS> db)
    (let* ((entry (<DIV> :class "weblet" ""))
-	  (win (<FLOAT-WINDOW>
-		  :title "Hop Weblets Hz Query"
-		  :width 400
-		  :height 300))
 	  (<search> (lambda (fmt entries)
 		       (<TABLE>
 			  :class "search-result"
@@ -59,7 +55,6 @@
 			 (<search> fmt (hz-db-query-update db))))))
       (<DIV>
 	 :class "weblets"
-	 win
 	 (<TABLE>
 	    :class "search"
 	    (<TR>
@@ -69,17 +64,26 @@
 			:title "Hit [Return] to search"
 			:size 20
 			:onkeyup ~(if (= event.keyCode 13)
-				      (hop_open_float_window
+				      (hop-iwindow-open
+				       "Hop Weblets Hz Query"
 				       ($search this.value)
-				       $win (- window.innerWidth 410) 100))))
-	       (<TD> (<BUTTON> :onclick ~(hop_open_float_window
+				       false false
+				       430 300
+				       (- window.innerWidth 450) 100))))
+	       (<TD> (<BUTTON> :onclick ~(hop-iwindow-open
+					  "Hop Weblets Hz Query"
 					  ($searcho)
-					  $win (- window.innerWidth 410) 100)
+					  false false
+					  430 300
+					  (- window.innerWidth 450) 100)
 			       :title "Show weblets update"
 			       "Update"))
-	       (<TD> (<BUTTON> :onclick ~(hop_open_float_window
+	       (<TD> (<BUTTON> :onclick ~(hop-iwindow-open
+					  "Hop Weblets Hz Query"
 					  ($searchn)
-					  $win (- window.innerWidth 410) 100)
+					  false false
+					  430 300
+					  (- window.innerWidth 450) 100)
 			       :title "Show new available weblets"
 			       "New"))))
 	 (<PANED>
@@ -132,9 +136,6 @@
 (define (<WEBLET> db weblet)
    (with-access::dbhz weblet (name version author sdescr hop date install
 				   minhop maxhop driver)
-      
-      (define prefwin
-	 (<FLOAT-WINDOW> :title "Preferences" :width 640 :height 400))
       
       (define action
 	 (service (action id)
@@ -211,9 +212,11 @@
 	     :class "action"
 	     (<SPAN>
 		:title "Run the weblet in a new window"
-		:onclick ~(hop_open_float_window
+		:onclick ~(hop-iwindow-open
+			   "Preferences"
 			   $(format "~a/~a/preferences" (hop-service-base) name)
-			   $prefwin (/ (- window.innerWidth 640) 2) 50)
+			   false false
+			   640 400 (/ (- window.innerWidth 650) 2) 50)
 		"Preferences"))))
 
       (define (<UNINSTALL> id)
@@ -299,7 +302,6 @@
 	     (<ACTION-UPDATE> id))))
 
       (list
-	 prefwin
 	 (<VBOX>
 	    (<VBOX-BLOCK>
 	       (<SPAN> :class "title" name " " version))

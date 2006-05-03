@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Tue May  2 10:56:49 2006 (serrano)                */
+;*    Last change :  Wed May  3 07:23:49 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -194,7 +194,7 @@
 (define (hz-update-repository)
    (<HTML>
       (<HEAD> :dir (hz-dir) 
-	      :jscript "hop-window.js" :css "hop-window.css"
+	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
 	      :css "hz.hss"))
       (let ((author (<INPUT> :type 'text :size 30))
 	    (category (<INPUT> :type 'text :size 20))
@@ -203,8 +203,7 @@
 	    (minhop (<INPUT> :type 'text :size 10))
 	    (maxhop (<INPUT> :type 'text :size 10))
 	    (sdescr (<INPUT> :type 'text :size 50))
-	    (descr (<TEXTAREA> :cols "100%"))
-	    (win (<FLOAT-WINDOW> :title "Repository" :width 640 :height 400)))
+	    (descr (<TEXTAREA> :cols "100%")))
 	 (<ABODY>
 	    (<SCRIPT> ~(define reset!
 			  (lambda ()
@@ -216,7 +215,6 @@
 			     (set! $maxhop.value "")
 			     (set! $sdescr.value "")
 			     (set! $descr.value ""))))
-	    win
 	    (<DIV>
 	       :id "add"
 	       (<VBOX>
@@ -231,9 +229,12 @@
 		  (<VBOX-BLOCK> "&nbsp;")
 		  (<VBOX-BLOCK> (<BUTTON>
 				   :title "Build the db by files inspection"
-				   :onclick ~(hop_open_float_window
+				   :onclick ~(hop-iwindow-open
+					      "Repository"
 					      ($hz/build-repository)
-					      $win (/ (- window.innerWidth 640) 2) 50)
+					      false false
+					      640 400
+					      (/ (- window.innerWidth 640) 2) 50)
 				   "Build Repository DB")) 
 		  (<VBOX-BLOCK> "&nbsp;")
 		  (<VBOX-BLOCK>
