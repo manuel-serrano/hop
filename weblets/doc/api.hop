@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Fri Apr 28 18:04:53 2006 (serrano)                */
+;*    Last change :  Wed May  3 22:13:17 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -106,7 +106,11 @@
 		       (lambda (r)
 			  (hop-notepad-select "doc-notepad" "doc-api")
 			  (let ((el (document.getElementById "pad-api")))
-			     (set! el.innerHTML r.responseText))))
+			     (set! el.innerHTML r.responseText)
+			     (let* ((eo (document.getElementById $k))
+				    (po (and eo eo.offsetTop)))
+				(if (> po 50)
+				    (window.scrollBy 0 (- po 50)))))))
 		 (html-string-encode k)))))
 
 ;*---------------------------------------------------------------------*/
@@ -203,6 +207,22 @@
        expr)))
 
 ;*---------------------------------------------------------------------*/
+;*    skip-spaces ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (skip-spaces str)
+   (let ((len (string-length str)))
+      (let loop ((i 0))
+	 (cond
+	    ((=fx i len)
+	     str)
+	    ((char=? (string-ref str i) #\Space)
+	     (loop (+fx i 1)))
+	    ((=fx i 0)
+	     str)
+	    (else
+	     (substring str i len))))))
+
+;*---------------------------------------------------------------------*/
 ;*    *server-syntax* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *server-syntax*
@@ -213,11 +233,13 @@
 		      <SEE-ALSO>)
 		     ((<markup> <parameter> <function> <class>)
 		      (lambda (port title expr)
-			 (list (<A> :name (string-append "server:" title))
+			 (list (<A> :id (skip-spaces title)
+				    :name (string-append "server:" title))
 			       expr)))
 		     ((<procedure>)
 		      (lambda (port title expr)
-			 (list (<A> :name (string-append "client:" title))
+			 (list (<A> :id (skip-spaces title)
+				    :name (string-append "client:" title))
 			       expr)))
 		     ((<server>)
 		      (lambda (port title expr)
