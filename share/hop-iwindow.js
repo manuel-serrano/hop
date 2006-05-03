@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed May  3 17:55:10 2006 (serrano)                */
+/*    Last change :  Wed May  3 21:11:21 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -72,10 +72,15 @@ function hop_iwindow_iconify( id ) {
    if( win.iconify ) {
       win.iconify();
    } else {
-      if( win.style[ "position" ]  == "fixed" )
+      if( win.style[ "position" ]  == "fixed" ) {
+	 var old = win.offsetTop;
+	 win.style.top = old + window.pageYOffset;
 	 win.style.setProperty( "position", "absolute", "" );
-      else
+      } else {
+	 var old = win.offsetTop;
+	 win.style.top = old - window.pageYOffset;
 	 win.style.setProperty( "position", "fixed", "" );
+      }
    }
 
    /* user event */
@@ -208,7 +213,7 @@ function make_hop_iwindow( id, class ) {
   </TR>\
   <TR class='hop-iwindow-body'>\
     <TD id='" + id + "-content'  class='hop-iwindow-content' valign='top'>\
-      <TABLE class='hop-iwindow-body' width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'>\
+      <TABLE class='hop-iwindow-body' width='100%' XXXheight='100%' border='0' cellspacing='0' cellpadding='0'>\
         <TR>\
           <TD id='" + id + "-body' class='hop-iwindow-body' height='100%'></TD>\
         </TR>\
@@ -335,7 +340,7 @@ function hop_iwindow_open( id, obj, title, class, width, height, x, y ) {
       }
       if( height ) {
 	 win.el_main.style.height = height;
-	 win.el_content.style.height = "100%";
+/* 	 win.el_content.style.height = "100%";                         */
       }
       
       if( win.onresize ) win.onresize();
