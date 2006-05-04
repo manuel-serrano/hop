@@ -1758,6 +1758,27 @@ function sc_closeOutputPort(p) { /// export
     p.close();
 }
 
+function hop_bigloo_serialize_pair( l ) {
+   var res = "";
+   var len = 0;
+   
+   while (sc_isPair( l ) ) {
+      res += hop_serialize( l.car );
+      l = l.cdr;
+      len++;
+   }
+
+   if( l == null ) {
+      return hop_serialize_word( len + 1 ) + res + ".";
+   } else {
+      return hop_serialize_word( len ) + res;
+   }
+}
+
+sc_Pair.prototype.hop_bigloo_serialize = function() {
+   return '(' + hop_bigloo_serialize_pair( this );
+}
+
 sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {
     var isP = sc_isPair(this.cdr);
     p.appendJSString("(");

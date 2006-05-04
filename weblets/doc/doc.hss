@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed May  3 20:13:06 2006 (serrano)                */
+/*    Last change :  Thu May  4 08:19:32 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -166,13 +166,14 @@ div.popup-menu tt {
 }
 
 table.popup-menu {
+  width: 18em;
   font-weight: normal;
   font-size: $x-small;
 }
 
-table.popup-menu td:hover {
-  color: blue;
+table.popup-menu td tt:hover {
   text-decoration: underline;
+  color: blue;
 }
 
 /*--- fold list -------------------------------------------------------*/
@@ -322,7 +323,21 @@ search-menu table.search-menu-menu td.search-letter:hover {
   color: white;
   background-color: $deep-blue;
 }
-    
+
+/*--- api-index -------------------------------------------------------*/
+table.api-index {
+  font-size: x-small;
+}
+
+table.api-index span.href {
+  color: $deep-blue;
+  cursor: default;
+}
+
+table.api-index span.href:hover {
+  text-decoration: underline;
+}
+
 /*--- window ----------------------------------------------------------*/
 hop-iwindow {
   opacity: $doc-opacity;
@@ -719,6 +734,40 @@ wiki doc table td, wiki table th {
 }
 
 wiki doc pre.example {
+  overflow: visible;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hss                                                              */
+/*---------------------------------------------------------------------*/
+$(hop-hss-type! "hss" "div.hss")
+
+hss {
+  background: white;
+  padding: 2px;
+  border: 1px solid $border-color;
+}
+
+hss div.doc-title th {
+  color: #3d70ff;
+}
+
+hss doc table {
+  font-size: $x-small;
+  border: 1px solid $border-color;
+}
+
+hss doc table th {
+  border-bottom: 1px solid $border-color;
+  background: $table-background;
+}
+
+hss doc table td, hss table th {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+hss doc pre.example {
   overflow: visible;
 }
 

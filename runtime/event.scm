@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Apr  3 14:37:46 2006 (serrano)                */
+;*    Last change :  Thu May  4 05:03:59 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -169,6 +169,6 @@
        (let ((id (xml-make-id id 'TIMEOUT-EVENT)))
 	  (cons (<SCRIPT>
 		   :id id
-		   (format "hop_timeout( \"~a\", function() { ~a; return true; }, ~a, ~a )"
-			   id handler timeout (if eager "true" "false")))
+		   (format "hop_timeout( ~a, ~a, function() { ~a; return true; }, ~a )"
+			   id timeout handler (if eager "true" "false")))
 		body)))))

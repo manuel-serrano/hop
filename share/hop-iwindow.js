@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed May  3 21:13:53 2006 (serrano)                */
+/*    Last change :  Thu May  4 15:36:46 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -215,7 +215,7 @@ function make_hop_iwindow( id, class ) {
   </TR>\
   <TR class='hop-iwindow-body'>\
     <TD id='" + id + "-content'  class='hop-iwindow-content' valign='top'>\
-      <TABLE class='hop-iwindow-body' width='100%' XXXheight='100%' border='0' cellspacing='0' cellpadding='0'>\
+      <TABLE class='hop-iwindow-body' width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'>\
         <TR>\
           <TD id='" + id + "-body' class='hop-iwindow-body' height='100%'></TD>\
         </TR>\

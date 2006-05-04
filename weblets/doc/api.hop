@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Wed May  3 22:13:17 2006 (serrano)                */
+;*    Last change :  Thu May  4 07:14:12 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -23,7 +23,7 @@
 	   doc/api
 	   (<API>)
 	   (decorate-api-code code)
-	   (<APIREF> key)
+	   (<APIREF> key api)
 	   (markup-parser k)
 	   (server-parser k)
 	   (client-parser k)
@@ -34,7 +34,12 @@
 ;*---------------------------------------------------------------------*/
 (define (<API>)
    (let ((pagearea (<DIV> :class "pagearea" :id "pad-api"
-			  "Overview of the HOP programming language.")))
+			  (let ((l (search-docs (doc-api-dir))))
+			     (if (pair? l)
+				 (<TABLE>
+				    :class "api-index"
+				    (map (lambda (l) (<TR> (<TD> l))) l))
+				 "API description")))))
       (<DIV>
 	 :class "api"
 	 (<SEARCH-BAR>
@@ -92,7 +97,34 @@
 (define-service (doc/api-search-client value)
    (setup-api-tables!)
    (search-table value doc/api "pad-api" *client-table* 0))
-   
+
+;*---------------------------------------------------------------------*/
+;*    select-api-pad ...                                               */
+;*---------------------------------------------------------------------*/
+(define (select-api-pad api k)
+   ~(hop ($doc/api $api)
+	 (lambda (r)
+	    (hop-notepad-select "doc-notepad" "doc-api")
+	    (let ((el (document.getElementById "pad-api")))
+	       (set! el.innerHTML r.responseText)
+	       (let ((eo (and $k (document.getElementById $k))))
+		  (if eo
+		      (let ((po eo.offsetTop))
+			 (if (> po 50)
+			     (window.scrollTo 0 (- po 50)))
+			 (let* ((p eo.parentNode)
+				(ob p.style.border.background))
+			    (set! p.style.background "#fffd6b")
+			    (hop-timeout-start!
+			     "highlight"
+			     2000
+			     (lambda ()
+				(hop-timeout-clear! "highlight")
+				(set! p.style.background
+				      (if (eq? ob #unspecified)
+					  "transparent"
+					  ob))))))))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    hash-parser ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -101,16 +133,7 @@
       (when o
 	 (<SPAN> :class (string-append "href " class)
 		 :title "View online documentation"
-		 :onclick
-		 ~(hop ($doc/api $o)
-		       (lambda (r)
-			  (hop-notepad-select "doc-notepad" "doc-api")
-			  (let ((el (document.getElementById "pad-api")))
-			     (set! el.innerHTML r.responseText)
-			     (let* ((eo (document.getElementById $k))
-				    (po (and eo eo.offsetTop)))
-				(if (> po 50)
-				    (window.scrollBy 0 (- po 50)))))))
+		 :onclick (select-api-pad o k)
 		 (html-string-encode k)))))
 
 ;*---------------------------------------------------------------------*/
@@ -145,12 +168,7 @@
 	    (when ol
 	       (<SPAN> :class "doc-type doc-link"
 		       :title "View class definition"
-		       :onclick
-		       ~(hop ($doc/api $ol)
-			     (lambda (r)
-				(hop-notepad-select "doc-notepad" "doc-api")
-				(let ((el (document.getElementById "pad-api")))
-				   (set! el.innerHTML r.responseText))))
+		       :onclick (select-api-pad ol ty)
 		       k))))))
 
 ;*---------------------------------------------------------------------*/
@@ -234,13 +252,13 @@
 		     ((<markup> <parameter> <function> <class>)
 		      (lambda (port title expr)
 			 (list (<A> :id (skip-spaces title)
-				    :name (string-append "server:" title))
-			       expr)))
+				    :name (string-append "server:" title)
+				    expr))))
 		     ((<procedure>)
 		      (lambda (port title expr)
 			 (list (<A> :id (skip-spaces title)
-				    :name (string-append "client:" title))
-			       expr)))
+				    :name (string-append "client:" title)
+				    expr))))
 		     ((<server>)
 		      (lambda (port title expr)
 			 (<DIV> :class "server" expr)))
@@ -343,10 +361,5 @@
 (define (<APIREF> key api)
    (<SPAN> 
       :class "href" 
-      :onclick ~(begin
-		   (hop_notepad_select "doc-notepad" "doc-api")
-		   (hop ($doc/api $(make-file-name (doc-api-dir) api))
-			(lambda (r)
-			   (let ((el (document.getElementById "pad-api")))
-			      (set! el.innerHTML r.responseText)))))
+      :onclick (select-api-pad (make-file-name (doc-api-dir) api) key)
       key))

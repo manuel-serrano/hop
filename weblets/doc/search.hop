@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Wed May  3 20:26:29 2006 (serrano)                */
+;*    Last change :  Thu May  4 07:16:28 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -23,7 +23,8 @@
    (export (make-doc-tables offset . markups)
 	   (search-see-also name dir pattern)
 	   (search-examples port title expr*)
-	   (search-table value service id table offset)))
+	   (search-table value service id table offset)
+	   (search-docs dir)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-doc-tables ...                                              */
@@ -284,3 +285,34 @@
 		      (format "\"~a\" matches ~a entries" value (length l1))))
 		(apply map <TR> (list->entries l2))))))))
 				  
+
+;*---------------------------------------------------------------------*/
+;*    search-docs ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (search-docs dir)
+   (let ((t (kmp-table "<doc> ")))
+      (filter-map (lambda (f)
+		     (when (is-suffix? f "wiki")
+			(let* ((path (make-file-name dir f))
+			       (mm (and (file-exists? path)
+					(open-mmap path :write #f))))
+			   (when (mmap? mm)
+			      (unwind-protect
+				 (let ((r (kmp-mmap t mm #e0)))
+				    (and (>=elong r #e0)
+					 (<APIREF>
+					    (mmap-line mm (+elong r #e6)) f)))
+				 (close-mmap mm))))))
+		  (sort (directory->list dir) string<?))))
+
+;*---------------------------------------------------------------------*/
+;*    mmap-line ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (mmap-line mm n)
+   (let ((ls (mmap-length mm)))
+      (let loop ((e n))
+	 (when (<elong e ls)
+	    (if (char=? (mmap-ref mm e) #\Newline)
+		(mmap-substring mm n e)
+		(loop (+elong e #e1)))))))
+

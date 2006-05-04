@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Wed May  3 20:29:17 2006 (serrano)                */
+;*    Last change :  Thu May  4 04:12:40 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -171,6 +171,9 @@
 	 (<TABLE>
 	    :class "popup-menu"
 	    :id id
+	    :onmouseup ~(let* ((n (document.getElementById $id))
+			       (p n.parentNode))
+			   (set! p.style.display "none"))
 	    (map (lambda (el)
 		    (<TR>
 		       (<TD>
