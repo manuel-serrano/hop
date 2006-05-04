@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu May  4 08:19:32 2006 (serrano)                */
+/*    Last change :  Thu May  4 17:28:58 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -771,12 +771,8 @@ hss doc pre.example {
   overflow: visible;
 }
 
-/*                                                                     */
-/* {*---------------------------------------------------------------------*} */
-/* {*    Develop                                                          *} */
-/* {*---------------------------------------------------------------------*} */
-/* $(hop-hss-type! "develop-menu" "table.develop-menu")                */
-/*                                                                     */
-/* develop-menu {                                                      */
-/*   width: 100%;                                                      */
-/* }                                                                   */
+hss doc table.hop-fl {
+  border: 0;
+}
+
+
