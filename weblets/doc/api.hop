@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Thu May  4 07:14:12 2006 (serrano)                */
+;*    Last change :  Thu May  4 17:06:49 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -114,16 +114,19 @@
 			     (window.scrollTo 0 (- po 50)))
 			 (let* ((p eo.parentNode)
 				(ob p.style.border.background))
-			    (set! p.style.background "#fffd6b")
-			    (hop-timeout-start!
-			     "highlight"
-			     2000
-			     (lambda ()
-				(hop-timeout-clear! "highlight")
-				(set! p.style.background
-				      (if (eq? ob #unspecified)
-					  "transparent"
-					  ob))))))))))))
+			    (hop-fx-fade-background
+			     p
+			     500
+			     40
+			     (vector "#fffd6b"
+				     "#ffff6f"
+				     "#ffff8f"
+				     "#ffffaf"
+				     "#ffffdf"
+				     "#ffffdf"
+				     (if (eq? ob #unspecified)
+					 "transparent"
+					 ob)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hash-parser ...                                                  */

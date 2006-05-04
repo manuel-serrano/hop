@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Apr 19 15:07:22 2006 (serrano)                */
+#*    Last change :  Thu May  4 16:47:48 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -20,8 +20,9 @@ include ../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-error.hss hop-paned.js hop-table.js hop.css \
+                  hop.js hop-fx.js \
                   md5.js base64.js \
-		  hop-lframe.css hop-slider.css hop-tabslider.css hop.js \
+		  hop-lframe.css hop-slider.css hop-tabslider.css \
                   hop-notepad.css hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
@@ -37,6 +38,7 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop.scm $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.css $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-fx.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-error.hss $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-sorttable.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-sorttable.css $(HOPSHAREDIR) && \
@@ -70,6 +72,7 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop.hss && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-fx.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-sorttable.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-sorttable.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-tree.js && \

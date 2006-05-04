@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu May  4 04:12:40 2006 (serrano)                */
+;*    Last change :  Thu May  4 16:42:23 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -36,6 +36,7 @@
 	      :jscript "hop-sorttable.js" :css "hop-sorttable.css" 
 	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
 	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
+	      :jscript "hop-fx.js"
 	      :css (format "~a/doc.hss" (doc-dir)))
       (<BODY>
 	 (<CENTER>
