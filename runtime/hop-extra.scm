@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue May  2 13:59:08 2006 (serrano)                */
+;*    Last change :  Fri May  5 08:58:15 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -75,9 +75,9 @@
 	       (hop-file dir file)))))
 
 ;*---------------------------------------------------------------------*/
-;*    head-parse-body ...                                              */
+;*    head-parse ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (head-parse-body args)
+(define (head-parse args)
    (let* ((req (the-current-request))
 	  (dir (if (http-request? req)
 		   (list (dirname (http-request-path req)))
@@ -162,7 +162,7 @@
 ;*    <HEAD> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
-   (let ((body (head-parse-body args))
+   (let ((body (head-parse args))
 	 (meta (<META> :http-equiv "Content-Type"
 		       :content "text/html"
 		       :charset (if (eq? (hop-char-encoding) 'UTF-8)

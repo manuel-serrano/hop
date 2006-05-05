@@ -1,8 +1,8 @@
 (<HTML>
   (<HEAD>
-   :css "hop-slider.css"
-   :jscript "hop-slider.js")
-  (<SCRIPT> :type "text/javascript"
+     :css "hop-slider.css"
+     :jscript "hop-slider.js"
+     (<SCRIPT> :type "text/javascript"
 	    { var red = 0, green = 0, blue = 0;
 	      function setcolor( el, r, g, b ) {
 	         if( r ) red = r;
@@ -19,15 +19,15 @@
         (red (<SLIDER>
 		:caption "top"
 		:min 0 :max 255 :value 60
-		:onchange {setcolor($colbox,this.value,false,false)}))
+		:onchange { setcolor($colbox,this.value,false,false) }))
         (green (<SLIDER>
 		  :caption "top"
 		  :min 0 :max 255 :value 40
-		  :onchange {setcolor($colbox,false,this.value,false)}))
+		  :onchange { setcolor($colbox,false,this.value,false) }))
         (blue (<SLIDER>
 		 :caption "top"
 		 :min 0 :max 255 :value 80
-		 :onchange {setcolor($colbox,false,false,this.value)})))
+		 :onchange { setcolor($colbox,false,false,this.value) })))
     (<BODY>
        (<H3> "An example of slider")
        (<TABLE>
@@ -44,6 +44,6 @@
 			  setcolor($colbox,
 				   $(begin red).value,
 				   $(begin green).value,
-				   $(begin blue).value)}))))
+				   $(begin blue).value)})))))
 	
 	
