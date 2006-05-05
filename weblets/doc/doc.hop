@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Thu May  4 17:56:07 2006 (serrano)                */
+;*    Last change :  Fri May  5 05:05:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -43,14 +43,6 @@
 		(<NPTAB> :id "doc-api"
 			 (<NPTABHEAD> "API")
 			 (<API>))
-		(<NPTAB> :id "doc-hss"
-			 (<NPTABHEAD> "HSS")
-			 (<DIV>
-			    :class "hss"
-			    (doc-page
-			     (make-file-name (doc-hss-dir) "hss.wiki")
-			     (make-wiki-request-syntax (doc-wiki-syntax)
-						       req))))
 		(<NPTAB> :id "doc-tutorials"
 			 (<NPTABHEAD> "Tutorials")
 			 (<TUTORIALS> req))

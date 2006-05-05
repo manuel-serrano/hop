@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Thu May  4 07:16:28 2006 (serrano)                */
+;*    Last change :  Fri May  5 05:56:28 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -24,7 +24,8 @@
 	   (search-see-also name dir pattern)
 	   (search-examples port title expr*)
 	   (search-table value service id table offset)
-	   (search-docs dir)))
+	   (search-docs dir)
+	   (search-tutorials dir value)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-doc-tables ...                                              */
@@ -264,7 +265,7 @@
 	     (<TR> 
 		(<TH>
 		   :colspan 3
-		   (format "\"~a\" does not matche any entry" value)))))
+		   (format "\"~a\" does not match any entry" value)))))
 	 ((and (pair? l1) (null? (cdr l1)))
 	  ;; only one element matches, jump to it
 	  (<SCRIPT> 
@@ -315,4 +316,21 @@
 	    (if (char=? (mmap-ref mm e) #\Newline)
 		(mmap-substring mm n e)
 		(loop (+elong e #e1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    search-tutorials ...                                             */
+;*---------------------------------------------------------------------*/
+(define (search-tutorials dir value)
+   (let ((t (kmp-table value)))
+      (filter-map (lambda (f)
+		     (when (is-suffix? f "wiki")
+			(let* ((path (make-file-name dir f))
+			       (mm (and (file-exists? path)
+					(open-mmap path :write #f))))
+			   (when (mmap? mm)
+			      (unwind-protect
+				 (let ((r (kmp-mmap t mm #e0)))
+				    (and (>=elong r #e0) path))
+				 (close-mmap mm))))))
+		  (directory->list dir))))
 

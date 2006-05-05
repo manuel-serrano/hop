@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Thu May  4 17:06:49 2006 (serrano)                */
+;*    Last change :  Fri May  5 05:29:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -33,13 +33,7 @@
 ;*    <API> ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (<API>)
-   (let ((pagearea (<DIV> :class "pagearea" :id "pad-api"
-			  (let ((l (search-docs (doc-api-dir))))
-			     (if (pair? l)
-				 (<TABLE>
-				    :class "api-index"
-				    (map (lambda (l) (<TR> (<TD> l))) l))
-				 "API description")))))
+   (let ((pagearea (<DIV> :class "pagearea" :id "pad-api" (<TOC>))))
       (<DIV>
 	 :class "api"
 	 (<SEARCH-BAR>
@@ -50,6 +44,22 @@
 	    "client"
 	    (service (i) (get-clients i pagearea)) doc/api-search-client)
 	 pagearea)))
+
+;*---------------------------------------------------------------------*/
+;*    <TOC> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<TOC>)
+   (let ((l (search-docs (doc-api-dir))))
+      (if (pair? l)
+	  (let ((l2 (list-split! l
+				 (inexact->exact (ceiling (/ (length l) 2)))
+				 "&nbsp;")))
+	     (<TABLE>
+		:class "api-index"
+		(<COLGROUP> :span 2 :width "50%")
+		(map (lambda (a b) (<TR> (<TD> a) (<TD> b)))
+		     (car l2) (cadr l2))))
+	  "API description")))
 
 ;*---------------------------------------------------------------------*/
 ;*    *markup-menu-table* ...                                          */

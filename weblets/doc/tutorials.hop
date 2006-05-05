@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Thu May  4 17:54:48 2006 (serrano)                */
+;*    Last change :  Fri May  5 05:59:35 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -17,7 +17,8 @@
    (import hopdoc_config
 	   hopdoc_wiki
 	   hopdoc_api
-	   hopdoc_widgets)
+	   hopdoc_widgets
+	   hopdoc_search)
    
    (export (<TUTORIALS> req)))
 
@@ -49,6 +50,14 @@
 			 (<DIV>
 			    :class "example"
 			    (<EXAMPLE> expr))))
+		     ((<code>)
+		      (lambda (port title expr)
+			 (<DIV>
+			    :class "code"
+			    :align "center"
+			    (<PRE>
+			       :class "example"
+			       (decorate-api-code expr)))))
 		     (else
 		      ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))
       (keyword list)
@@ -67,16 +76,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    tutorial->name ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (tutorial->name x)
-   (with-input-from-file (make-file-name (doc-tutorials-dir) x)
+(define (tutorial->name path)
+   (with-input-from-file path
       (lambda ()
 	 (let ((l (read-line (current-input-port))))
 	    (if (substring-at? l "<doc> " 0)
 		(substring l 6 (string-length l))
-		(let ((i (string-index x "-")))
+		(let ((i (string-index l "-")))
 		   (if (>fx i 0)
-		       (substring x (+fx i 1) (-fx (string-length x) 5))
-		       (substring x 0 (-fx (string-length x) 5)))))))))
+		       (substring x (+fx i 1) (-fx (string-length l) 5))
+		       (substring x 0 (-fx (string-length l) 5)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TUTORIALS-MAIN> ...                                             */
@@ -85,7 +94,9 @@
    (let* ((table '())
 	  (files (filter-map (lambda (x)
 				(when (is-suffix? x "wiki")
-				   (let ((s (tutorial->name x)))
+				   (let ((s (tutorial->name
+					     (make-file-name
+					      (doc-tutorials-dir) x))))
 				      (set! table (cons (cons s x) table))
 				      s)))
 			     (sort (directory->list (doc-tutorials-dir))
@@ -134,6 +145,47 @@
 			:size 20
 			:title "Hit [Return] to search"
 			:onkeyup ~(if (= event.keyCode 13)
-				      (alert "toto"))))))))))
+				      (hop-iwindow-open
+				       "tutorial/search"
+				       ($(service (value)
+					    (tutorial-search id syntax value))
+					 this.value)
+				       false false
+				       400 200
+				       (- window.innerWidth 500) 100))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    tutorial-search ...                                              */
+;*---------------------------------------------------------------------*/
+(define (tutorial-search id syntax value)
+   (let* ((l (search-tutorials (doc-tutorials-dir) value))
+	  (l2 (sort (map (lambda (v) (cons (tutorial->name v) v)) l)
+		    (lambda (a b) (string<? (car a) (car b))))))
+      (if (null? l)
+	  (<TABLE>
+	     :class "search-result"
+	     (<TR> 
+		(<TH>
+		   (format "\"~a\" does not match any entry" value))))
+	  (<TABLE>
+	     :class "search-result"
+	     (<TR> 
+		(<TH>
+		   (format "\"~a\" matches ~a entries" value (length l))))
+	     (map (lambda (v)
+		     (<TR>
+			(<TD>
+			   :class "entry"
+			   (<SPAN>
+			      :class "href"
+			      :onclick
+			      ~(hop ($(service () (doc-page (cdr v) syntax)))
+				    (lambda (h)
+				       (hop-iwindow-close "tutorial/search")
+				       (let ((e (document.getElementById $id)))
+					  (set! e.innerHTML h.responseText))))
+			      (car v)))))
+		  l2)))))
+	 
+      
 		       

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu May  4 17:28:58 2006 (serrano)                */
+/*    Last change :  Fri May  5 05:29:01 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -327,6 +327,7 @@ search-menu table.search-menu-menu td.search-letter:hover {
 /*--- api-index -------------------------------------------------------*/
 table.api-index {
   font-size: x-small;
+  width: 100%;
 }
 
 table.api-index span.href {
@@ -736,43 +737,3 @@ wiki doc table td, wiki table th {
 wiki doc pre.example {
   overflow: visible;
 }
-
-/*---------------------------------------------------------------------*/
-/*    hss                                                              */
-/*---------------------------------------------------------------------*/
-$(hop-hss-type! "hss" "div.hss")
-
-hss {
-  background: white;
-  padding: 2px;
-  border: 1px solid $border-color;
-}
-
-hss div.doc-title th {
-  color: #3d70ff;
-}
-
-hss doc table {
-  font-size: $x-small;
-  border: 1px solid $border-color;
-}
-
-hss doc table th {
-  border-bottom: 1px solid $border-color;
-  background: $table-background;
-}
-
-hss doc table td, hss table th {
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-hss doc pre.example {
-  overflow: visible;
-}
-
-hss doc table.hop-fl {
-  border: 0;
-}
-
-
