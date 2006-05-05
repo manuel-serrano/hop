@@ -1,0 +1,7 @@
+;; Embedding parts of remote documents
+(let ((versions (<INLINE> :src "http://www.kernel.org" :id "versions")))
+   (<HTML>
+      (<HEAD> (<STYLE> :type "text/css" {table.kver {font-size: x-small}}))
+      (<BODY>
+	 [The current (,(current-date)) Linux kernel versions are:]
+	 versions)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Fri May  5 06:25:31 2006 (serrano)                */
+;*    Last change :  Fri May  5 17:10:36 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -287,9 +287,9 @@
 		(apply map <TR> (list->entries l2))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    search-docs ...                                                  */
+;*    search-docs-inner ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (search-docs dir)
+(define (search-docs-inner dir)
    (let ((t (kmp-table "<doc> ")))
       (filter-map (lambda (f)
 		     (when (is-suffix? f "wiki")
@@ -300,10 +300,19 @@
 			      (unwind-protect
 				 (let ((r (kmp-mmap t mm #e0)))
 				    (and (>=elong r #e0)
-					 (<APIREF>
-					    (mmap-line mm (+elong r #e6)) f)))
+					 (let ((l (mmap-line mm (+elong r #e6))))
+					    (cons l (<APIREF> l f)))))
 				 (close-mmap mm))))))
-		  (sort (directory->list dir) string<?))))
+		  (directory->list dir))))
+
+;*---------------------------------------------------------------------*/
+;*    search-docs ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (search-docs dir)
+   (map cdr 
+	(sort (search-docs-inner dir)
+	      (lambda (a b) (string<? (car a) (car b))))))
+      
 
 ;*---------------------------------------------------------------------*/
 ;*    mmap-line ...                                                    */

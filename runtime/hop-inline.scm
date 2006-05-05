@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Thu Apr 27 08:11:17 2006 (serrano)                */
+;*    Last change :  Fri May  5 16:55:47 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -48,8 +48,6 @@
    (cond
       ((not (string? src))
        (error '<INLINE> "Missing :src attribute" src))
-      ((and id (not (symbol? id)))
-       (error '<INLINE> "Illegal :id attribute" id))
       (else
        (multiple-value-bind (_ userinfo host port path)
 	  (url-parse src)
@@ -116,7 +114,7 @@
 					      (when (xml-element? b)
 						 (xml-element-parent-set! b el)))
 					   body)
-				 (if (string=? i eid)
+				 (if (and (string? eid) (string=? i eid))
 				     (return el)
 				     el)))))))
 	      (<DIV> "error"

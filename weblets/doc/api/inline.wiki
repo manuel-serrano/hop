@@ -1,0 +1,52 @@
+<doc> INLINE markup
+
+== Description ==
+
+The ++<INLINE>++ markup enables a document built on a server to embed
+part of a remote document.
+
+== Synopsis ==
+
+=== server ===
+
+  (<INLINE> :src url ...)
+
+== Examples ==
+
+<example><INLINE></example>
+
+== Server Definitions ==
+<server>
+
+=== <INLINE> ===
+<markup> <INLINE>
+
+<arguments>
+^  arguments    ^   type     ^   default    ^  short description                      ^
+| :id           |  string    |  //random//  | the element identifier to fetch.        |
+| :src          |  string    |     _        | a URL.                                  |
+| :early        |  boolean   |     #t       | specifies the remote URL parsing time.  |
+</arguments>
+
+  * If the attribute :early is ++#t++ then the distant URL specified by
+ ++src++ is parsed when the markup is evaluated. Otherwise, it is
+ parsed only the markup is to be transmitted to a client.
+  * If an attribute :id is provided, the parsing of HTML document stops 
+ as soon as the element is found. For that reason, it is more efficient to use:
+    (<INLINE> :src <a-url> :id <an-identifier>)
+
+ than
+
+    (let ((tree (<INLINE> :src <a-url>)))
+      (dom-get-element-by-id <an-identifier>))
+
+
+ even tought, the two versions produce the same result.
+
+</markup>
+</server>
+
+== See also ==
+<see-also><INLINE>, dom-get-element-by-id</see-also>
+
+</doc>
