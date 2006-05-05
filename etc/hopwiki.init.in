@@ -1,0 +1,25 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/etc/hopwiki.init.in                     */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed Jan 18 09:57:45 2006                          */
+;*    Last change :  Mon Apr  3 09:27:56 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The HOP lib init file.                                           */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The basename of the HOP library name                             */
+;*---------------------------------------------------------------------*/
+(library-translation-table-add! 'hopwiki "hopwiki" "@VERSION@")
+
+;*---------------------------------------------------------------------*/
+;*    Link option                                                      */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo-compile
+    (set! *additional-bigloo-libraries*
+	  (cons 'hop *additional-bigloo-libraries*)))
+   (bigloo-eval
+    #unspecified))
