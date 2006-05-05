@@ -1,0 +1,9 @@
+;; a basic example of //Slider//
+(<HTML>
+   (<HEAD> :css "hop-slider.css" :jscript "hop-slider.js")
+   (<BODY>
+      (let ((d (<DIV> "")))
+	 (list 
+	  (<SLIDER> :caption "top" :min 0 :max 100 :value 5
+		    :onchange ~(set! $d.innerHTML this.value))
+	  d))))

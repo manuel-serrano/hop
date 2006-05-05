@@ -1,0 +1,73 @@
+<doc> Interactive "sortable" tables
+
+== Description ==
+
+The //sorttable// widgets look like regular ++<TABLE>++s. They differ from
+the latter by allowing interactive columns sorting. User clicks on header
+dynamically sort the table.
+
+== Synopsis ==
+
+=== server ===
+
+  (<SORTTABLE> arg ...)
+
+
+=== Requirements ===
+
+Client codes using //sorttables// need to load the script ++hop-sorttable.js++.
+They also need to load the ++hop-sorttable.css++ style sheet. Hence, documents
+using this widget must include in their header, the following statement:
+
+  (<HEAD> :jscript "hop-sorttable.js" :css "hop-sorttable.css")
+
+
+== Examples ==
+
+<example><SORTTABLE></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<SORTTABLE>++ ===
+<markup> <SORTTABLE>
+
+<arguments>
+^  attributes ^   type    ^   default    ^  short description          ^
+| :id         |  string   |  //random//  | Element identifier.         |
+| body        |  element  |  empty       | The body.                   |
+</arguments>
+
+This markup creates a //sorttable//. User click on the columns header sort
+the table according to the column. By default the sort is lexicographic 
+and concern the value of the cells. The :lang attribute of table cell
+can be used to specify alternate keys.
+</markup>
+</server>
+
+== Style ==
+<style>
+
+=== ++span.hop-sorttable a.hop-sortheader++  ===
+<css> span.hop-sorttable a.hop-sortheader
+
+</css>
+
+=== ++span.hop-sorttable a.hop-sortarrow++  ===
+<css> span.hop-sorttable a.hop-sortarrow
+
+</css>
+
+=== ++hop-notepad.css++ ===
+
+The file ++hop-sorttable.css++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share>hop-sorttable.css</share>
+</style>
+
+== See also ==
+<see-also><SORTTABLE></see-also>
+
+</doc>

@@ -1,0 +1,98 @@
+<doc> Inner Windows
+
+== Description ==
+
+HOP inner windows are window embedded inside the HTML display. They may
+contain partial HTML tree or entire documents.
+
+== Synopsis ==
+
+=== Client ===
+
+  (hop-iwindow-open arg ...)
+  (hop-iwindow-close win)
+
+=== Requirements ===
+
+Documents using //iwindows// need to load the script
+++hop-iwindow.js++.  They also might want to load the
+++hop-iwindow.css++ style sheet. Hence, documents using //iwindows//
+must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-iwindow.js" :css "hop-iwindow.css")
+
+
+== Examples ==
+
+<example>hop-iwindow</example>
+
+== Client Definitions ==
+<client>
+
+=== ++(hop-iwindow-open id o [t] [c] [w h] [x y])++ ===
+<procedure> hop-iwindow-open
+
+<arguments>
+^  arguments  ^   type    ^   description                                   ^
+| id          |  string   | the window identifier.                          |
+| o           |   obj     | the content material.                           |
+| t           |  string   | an optional title, defaults to ++id++.          |
+| c           |  string   | an optional class.                              |
+| w           |  integer  | the optional width.                             |
+| h           |  integer  | the optional height.                            |
+| x           |  integer  | the optional X coordinate.                      |
+| y           |  integer  | the optional Y coordinate.                      |
+</arguments>
+
+,(<P>)
+This client-side procedure opens a window. If a window opened under the same
+identifier has already been opened, ++hop-iwindow-open++ returns that window.
+Otherwise, it creates a new window.
+
+The content of the window can either be:
+
+  * an HTML tree.
+  * a string denoting a URL.
+  * a procedure denoting a service.
+
+
+</procedure>
+
+=== ++(hop-iwindow-close obj)++ ===
+<procedure> hop-iwindow-close
+
+<arguments>
+^  arguments  ^   type    ^   description                                   ^
+| obj         |   obj     | A window identifier or a window itself.         |
+</arguments>
+
+,(<P>)
+This client-side procedure closes an //iwindow//.
+
+</procedure>
+<client>
+
+== Style ==
+<style>
+
+=== ++.hop-iwindow++ ===
+<css> .hop-iwindow
+
+The visual configuration of the body of the window.
+
+</css>
+
+=== ++hop-iwindow.css++ ===
+
+The file ++hop-iwindow.css++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share>hop-iwindow.css</share>
+</style>
+
+== See also ==
+<see-also>TOOLTIP, hop-iwindow</see-also>
+
+</doc>

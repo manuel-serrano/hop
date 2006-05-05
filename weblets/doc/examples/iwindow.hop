@@ -1,0 +1,12 @@
+;; Inner windows
+(define-service (iwindow/iota)
+   (<TABLE>
+      (map (lambda (i) (<TR> (map <TD> (iota 10 i))))
+	   (iota 10))))
+
+(<HTML>
+   (<HEAD> :jscript "hop-iwindow.js" :css "hop-iwindow.css")
+   (<BODY>
+      (<BUTTON>
+	 :onclick ~(hop-iwindow-open "iota" $iwindow/iota)
+	 "clickme")))

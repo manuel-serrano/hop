@@ -1,0 +1,45 @@
+<doc> Delayed executions
+
+== Description ==
+
+== Synopsis ==
+
+=== server ===
+
+  (<DELAY> ...)
+
+== Examples ==
+
+<example><DELAY></example>
+
+
+== Server Definitions ==
+<server>
+
+=== <DELAY> ===
+<markup> <DELAY>
+
+<arguments>
+^  arguments   ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+The ++body++ of the delayed execution is a //thunk//. That is a procedure
+accepting no parameter. This procedure is executed once, when the object
+is to be displayed. 
+
+,(<P>)
+The ++<DELAY>++ markup is supposed to be used in conjunction of 
+on-demand ++<NOTEPAD>++s and ++<TREE>++s.
+
+</markup>
+
+The 
+
+</server>
+
+== See also ==
+<see-also><DELAY>, <NOTEPAD>, <TREE></see-also>
+
+</doc>

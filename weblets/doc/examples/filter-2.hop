@@ -1,0 +1,11 @@
+;; A HOP filter for preventing GOOGLE bouncing
+(hop-filter-add!
+ (lambda (req)
+    (with-access::http-request req (host path)
+       (when (and (string=? host "www.google.com")
+		  (substring-at? path "/url" 0))
+	  (let ((q (cgi-fetch-arg "q" path)))
+	     (when q
+		(instantiate::http-response-string
+		   (start-line "HTTP/1.0 301 Moved Permanently")
+		   (header (list (cons 'location: q))))))))))

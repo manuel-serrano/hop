@@ -1,0 +1,41 @@
+;; A dynamic tree
+(let ((d (hop-share-directory)))
+   
+   (define (directory->tree id dir shape)
+      (<TREE>
+	 :id id
+	 :multiselect #t
+	 (<TRHEAD> :value dir shape)
+	 (<TRBODY>
+	    (<DELAY>
+	       (lambda ()
+		  (map (lambda (f)
+			  (let ((qf (make-file-name dir f)))
+			     (if (directory? qf)
+				 (directory->tree (xml-make-id)
+						  qf
+						  (make-file-name shape f))
+				 (<TRLEAF> :value qf f))))
+		       (directory->list dir)))))))
+   
+   (<HTML>
+      (<HEAD> :css "hop-tree.css" :jscript "hop-tree.js")
+      (<BODY>
+	 (let ((tree (directory->tree "t" d (basename d))))
+	    (list
+	     (<BUTTON>
+		:onclick ~(hop-tree-open $tree)
+		"Open tree")
+	     (<BUTTON>
+		:onclick ~(hop-tree-close $tree)
+		"Close tree")
+	     (<BUTTON>
+		:onclick
+		~(alert "selection=" (hop-tree-selection $tree))
+		"Show current selection")
+	     (<BUTTON>
+		:onclick ~(hop-tree-reset! $tree)
+		"Reset selection")
+	     (<BR>)
+	     (<BR>)
+	     tree)))))

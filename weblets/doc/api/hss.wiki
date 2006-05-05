@@ -1,0 +1,67 @@
+<doc> Cascading style sheet
+
+== Description ==
+
+The functions described in the page manages HOP cascade style sheets
+(hss). See the documentation on 
+,(<SPAN> 
+    :class "href" 
+    :onclick ~(hop-notepad-select "doc-notepad" "doc-hss")
+    "HSS") 
+for a general presentation of HSS.
+
+== Synopsis ==
+
+=== server ===
+
+  (hop-hss-type! string string)
+  (hop-load-hss string)
+  (hop-read-hss input-port)
+
+== Examples ==
+<example>hop-hss-type!, hop-load-hss, hop-read-hss</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(hop-hss-type! new old)++ ===
+<function> hop-hss-type!
+
+<arguments>
+^  arguments       ^   type       ^  short description                ^
+| new              |  string      | the new name for the CSS select.  |
+| descriptor       |  string      | the original CSS selector.        |
+</arguments>
+
+This function installs an alias for the ++selector++.
+</function>
+
+=== ++(hop-load-hss path)++ ===
+<function> hop-load-hss
+
+<arguments>
+^  arguments       ^   type       ^  short description                ^
+| path             |  string      | the name of a HSS file.           |
+</arguments>
+
+Loads an HSS file in memory.
+</function>
+
+=== ++(hop-read-hss port)++ ===
+<function> hop-read-hss
+
+<arguments>
+^  arguments       ^   type       ^  short description                ^
+| port             |  input-port  | a port opened for input.          |
+</arguments>
+
+Reads a HSS expression from an input port.
+</function>
+
+
+</server>
+
+== See also ==
+<see-also>hop-load-hss, hop-read-hss, hop-hss-type!</see-also>
+
+</doc>

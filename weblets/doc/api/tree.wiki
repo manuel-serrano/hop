@@ -1,0 +1,181 @@
+<doc> Tree widget
+
+== Description ==
+
+These markups implement //Trees// in HOP documents. A //tree// 
+acts as a list that can be interactively //folded// and //unfolded//.
+
+== Synopsis ==
+
+=== Server ===
+
+  (<TREE> arg ...)
+  (<TRHEAD> arg ...)
+  (<TRBODY> arg ...)
+  (<TRLEAF> arg ...)
+
+
+=== Client ===
+  
+  (hop-tree-close tree)
+  (hop-tree-open tree)
+  (hop-tree-toggle tree)
+  (hop-tree-reset! tree)
+  (hop-tree-selection tree)
+
+
+=== Requirements ===
+
+Client codes using //Trees// need to load the script ++hop-tree.js++.
+They also need to load the ++hop-tree.css++ style sheet. Hence, documents
+using //Trees// must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-tree.js" :css "hop-tree.css")
+
+
+== Examples ==
+
+<example><TREE></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<TREE>++ ===
+<markup> <TREE>
+
+<arguments>
+^  attributes   ^   type     ^   default    ^  short description                         ^
+| :id           |  string    |  //random//  | element identifier.                        |
+| :foldero      |  string    |   ++#f++     | an image for open folders.                 |
+| :folderc      |  string    |   ++#f++     | an image for closed folders.               |
+| :open         |  boolean   |   ++#f++     | is the tree starts open?                   |
+| :multiselect  |  boolean   |   ++#f++     | does the tree supports multi-selection?    |
+| :onselect     |  function  |     _        | a function to invoke on user selection.    |
+| :onunselect   |  function  |     _        | a function to invoke on user unselection.  |
+| body          |  element   |  empty       | the body.                    |
+</arguments>
+
+This function creates a //tree//. Its first child has to be a
+++<TRHEAD>++ and its second child a ++<TRBODY>++.
+
+</markup>
+
+=== ++<TRHEAD>++ ===
+<markup> <TRHEAD>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This function creates an optional //tree// header.
+</markup>
+
+=== ++<TRBODY>++ ===
+<markup> <TRBODY>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+As for ++<NOTEPAD>++s, tree bodies may be delayed using ++<DELAY>++ markups.
+Delayed tree bodies are evaluated each time the tree is open.
+
+</markup>
+
+=== ++<TRLEAF>++ ===
+<markup> <TRLEAF>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description                        ^
+| :id          |  string   |  //random//  | element identifier.                       |
+| :value       |  string   |    ++""++    | a string denoting the value of the leaf.  |
+| :file        |  string   |     _        | the image representing the leaf.          |
+| body         |  element  |  empty       | the body.                                 |
+</arguments>
+
+</markup>
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(hop-tree-close tree)++ ===
+<procedure> hop-tree-close
+
+<arguments>
+^  arguments  ^   type   ^  short description  ^
+| tree        |   tree   | the tree.        |
+</arguments>
+
+Closes the ++tree++.
+</procedure>
+
+=== ++(hop-tree-open tree)++ ===
+<procedure> hop-tree-open
+
+<arguments>
+^  arguments  ^   type   ^  short description  ^
+| tree        |   tree   | the tree.        |
+</arguments>
+
+Opens the ++tree++.
+</procedure>
+
+=== ++(hop-tree-toggle tree)++ ===
+<procedure> hop-tree-toggle
+
+<arguments>
+^  arguments  ^   type   ^  short description  ^
+| tree        |   tree   | the tree.        |
+</arguments>
+
+Opens the ++tree++ if closed. Otherwise, closes it.
+</procedure>
+
+=== ++(hop-tree-reset! tree)++ ===
+<procedure> hop-tree-reset!
+
+<arguments>
+^  arguments  ^   type   ^  short description  ^
+| tree        |   tree   | the tree.        |
+</arguments>
+
+Resets the ++tree++ selection.
+</procedure>
+
+=== ++(hop-tree-selection tree)++ ===
+<procedure> hop-tree-selection
+
+<arguments>
+^  arguments  ^   type   ^  short description  ^
+| tree        |   tree   | the tree.        |
+</arguments>
+
+Returns representing the selection.
+</procedure>
+
+
+</client>
+
+== Style ==
+<style>
+This section describes the various CSS elements used to configure
+//Trees//.
+
+=== ++hop-tree.css++ ===
+
+The file ++hop-tree.css++ contains the default graphical configuration.
+It is defined as:
+
+<share>hop-tree.css</share>
+</style>
+
+== See also ==
+<see-also><TREE></see-also>
+
+</doc>

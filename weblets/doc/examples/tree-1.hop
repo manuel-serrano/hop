@@ -1,0 +1,33 @@
+;; A static tree
+(let ((img "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAABSUlEQVRIx61VO5LCMAyVdtLihpKCliZnsDkAd7JvwW2Qz5DGHUORkiYcIFtkhBM5wtkdXpNRPM77WHIQvopx/LyOWLz5FvEEgBhjjDGvEBER5dp7773PQppvOakRq1+SxESTE8Z+H6MxuW5b514vnUgjnpyXBn62hmzMOB4OAI/H7XY6ceg6ET9TSiklKSDvVBNg50wscb8jXq8A1lprrX4UEpwQC2qYuOuIdjuAtkVEzE4Zx+P5nNLyQ2uEUlAIIYSgC3o34fNp7TAAdB2RMQDDAND3ZfTDgNj3057LJfcEO6sloArgyFnIPNR5E64dyTyZv6JoQhYiBWm9oME555zLtWzOCYjVKZBjuBVLorIWCSDK+a5BNqV0XBPEaKACjp4J5XSwgaUQ7SYtb9CqAMY6sQbc/I8peqB2FMvotxOpUj8vb4/yv/gF+PvvErb+RhQAAAAASUVORK5CYII="))
+   (<HTML>
+      (<HEAD> :css "hop-tree.css" :jscript "hop-tree.js")
+      (<BODY>
+	 (<TREE> :id "computer-science"
+		 :open #t
+		 (<TRHEAD> "Computer Science")
+		 (<TRBODY>
+		    (<TRLEAF> (<A> :href "http://www.acm.org" "ACM") :value "acm")
+		    (<TRLEAF> (<A> :href "http://www.inria.fr" "INRIA") :value "inria")
+		    (<TREE>
+		       (<TRHEAD> "Programming languages")
+		       (<TRBODY>
+			  (<TREE>
+			     (<TRHEAD> "Functional")
+			     (<TRBODY>
+				(<TRLEAF> "Haskell")
+				(<TRLEAF> "Hop")
+				(<TRLEAF> "Lisp")
+				(<TRLEAF> "ML")))
+			  (<TREE> :foldero img :folderc img
+				  (<TRHEAD> "Imperative")
+				  (<TRBODY>
+				     (<TRLEAF> "Ada")
+				     (<TRLEAF> "C")
+				     (<TREE>
+					(<TRHEAD> "Object oriented")
+					(<TRBODY>
+					   (<TRLEAF> "C++")
+					   (<TRLEAF> "Java")))
+				     (<TRLEAF> "Pascal")))
+			  (<TRLEAF> "APL"))))))))

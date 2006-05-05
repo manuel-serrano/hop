@@ -1,0 +1,59 @@
+;; A live //Wiki//
+(define wikiedit-event
+   (instantiate::hop-event
+      (name "wikiedit")))
+
+(define-service (wikiedit/update src)
+   (broadcast-hop-event! wikiedit-event (wikiedit-compile src)))
+
+(define *wikiedit-syntax*
+   (instantiate::wiki-syntax
+      (section1 (lambda expr (<DIV> :class "section1" expr)))
+      (section2 (lambda expr (<DIV> :class "section2" expr)))
+      (plugins (lambda (id)
+		  (case id
+		     ((<block>) wikiedit-block)
+		     ((<center>) wikiedit-center))))))
+
+(define (wikiedit-block port title expr)
+   (apply <DIV> :class "block" (<SPAN> :class "title" title) "\n" expr))
+
+(define (wikiedit-center port title expr)
+   (<DIV> :align "center" expr))
+
+(define-service (wikiedit/view)
+   (let ((d (<DIV> :style {font-size: small} "")))
+      (<HTML>
+	 (<HEAD>)
+	 (<BODY>
+	    d
+	    (<HOP-EVENT>
+	       :event wikiedit-event
+	       :handler ~(set! $d.innerHTML event.responseText))))))
+
+(define (wikiedit-compile src)
+   (let ((o (with-handler
+	       (lambda (e)
+		  (<SPAN> :class "error" (html-string-encode src)))
+	       (wiki-string->hop src *wikiedit-syntax*))))
+      (with-output-to-string
+	 (lambda ()
+	    (xml-write o (current-output-port) (hop-char-encoding))))))
+
+
+(<HTML>
+   (<BODY>
+      (<H3> "Live editor")
+      (<TEXTAREA>
+	 :class "playground"
+	 :rows 8 :cols 80
+	 :style "font-size: 100%; color: blue;"
+	 :onkeyup ~(hop ($wikiedit/update this.value))
+	 "__Please__, ++Type in++ //characters//...")
+      (<H3> "Live view")
+      (<BR>)
+      (<IFRAME>
+	 :class "view"
+	 :style "width: 95%;"
+	 :src (make-service-url wikiedit/view))))
+   

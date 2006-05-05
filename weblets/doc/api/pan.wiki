@@ -1,0 +1,157 @@
+<doc> Pan widget
+
+== Description ==
+
+These markups implement //Pans// in HOP documents. A //pan// 
+is a container. It is built using the ++<PANED>++ constructor. A
+//paned// contains two ++<PAN>++s whose size can be interactively
+adjusted. 
+
+== Synopsis ==
+
+=== Server ===
+
+  (<PANED> arg ...)
+  (<PAN> arg ...)
+
+=== Client ===
+  
+  (hop-notepad-select notepad pad)
+
+=== Requirements ===
+
+Client codes using //Paneds// need to load the script ++hop-paned.js++.
+They also need to load the ++hop-paned.css++ style sheet. Hence, documents
+using //Paneds// must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-paned.js" :css "hop-paned.css")
+
+
+== Examples ==
+
+<example><PANED></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<PANED>++ ===
+<markup> <PANED>
+
+<arguments>
+^  attributes   ^   type    ^   default       ^  short description                ^
+| :id           |  string   |  //random//     | element identifier.               |
+| :fraction     |  integer  |   ++0++         | the split ratio.                  |
+| :orientation  |  symbol   |   ++vertical++  | the paned orientation.            |
+| :style        |  string   |      _          | the CSS style.                    |
+| :onresize     |  script   |      _          | the action to execute on resize.  |
+| body          |  element  |  empty          | the body.                         |
+</arguments>
+
+This markup creates //paned//s. Currently, only //vertical// paneds are correctly
+implemented.
+
+</markup>
+
+=== ++<PAN>++ ===
+<markup> <PAN>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This markup creates //pan//s.
+</markup>
+
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(hop-paned-fraction paned)++ ===
+<procedure> hop-paned-fraction
+
+<arguments>
+^  arguments  ^   type            ^  short description          ^
+| paned       |  string or paned  | the paned.                  |
+</arguments>
+
+This function returns the current fraction of the //paned//.
+</procedure>
+
+=== ++(hop-paned-fraction-set! paned fraction)++ ===
+<procedure> hop-paned-fraction-set!
+
+<arguments>
+^  arguments  ^   type            ^  short description          ^
+| paned       |  string or paned  | the paned.                  |
+| fraction    |  integer          | the new fraction.           |
+</arguments>
+
+This function sets a new fraction to the //paned//.
+</procedure>
+
+=== ++(hop-paned-onresize paned)++ ===
+<procedure> hop-paned-onresize
+
+<arguments>
+^  arguments  ^   type            ^  short description          ^
+| paned       |  string or paned  | the paned.                  |
+</arguments>
+
+This function returns the current ++onresize++ function of the //paned//.
+</procedure>
+
+=== ++(hop-paned-onresize-set! paned onresize)++ ===
+<procedure> hop-paned-onresize-set!
+
+<arguments>
+^  arguments  ^   type            ^  short description          ^
+| paned       |  string or paned  | the paned.                  |
+| onresize    |  procedure        | the new onresize.           |
+</arguments>
+
+This function sets a new onresize fnction to the //paned//.
+</procedure>
+
+</client>
+
+== Style ==
+<style>
+This section describes the various CSS elements used to configure
+//Paneds//.
+
+=== ++div.hop-paned++ ===
+<css> div.hop-paned
+
+This element specifies the graphical configuration of the overall box
+of a //paned//.
+</css>
+
+=== ++div.hop-paned-cursoron++ ===
+<css> div.hop-paned-cursoron
+
+The configuration of the selected cursor (the row between the two pans).
+</css>
+
+=== ++div.hop-paned-cursoroff++ ===
+<css> div.hop-paned-cursoroff
+
+The configuration of the selected cursor (the row between the two pans).
+</css>
+
+=== ++hop-paned.css++ ===
+
+The file ++hop-paned.css++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share>hop-paned.css</share>
+</style>
+
+== See also ==
+<see-also><PANED>, <PAN></see-also>
+
+</doc>

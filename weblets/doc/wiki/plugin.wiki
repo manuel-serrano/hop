@@ -1,0 +1,5 @@
+<center>
+This example illustrates how to use a plugin
+inside a wiki document. This particular plugin
+does not use its title. It only uses its body.
+</center>

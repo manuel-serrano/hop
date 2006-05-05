@@ -1,0 +1,25 @@
+;; //Inline// notepad vs //on-demand// notpad
+(<HTML>
+   (<HEAD> :css "hop-notepad.css" :jscript "hop-notepad.js")
+   (<BODY>
+      (<NOTEPAD>
+	 (<NPHEAD>
+	    (<CENTER> (<B> "An inline of Notepad")))
+	 (<NPTAB>
+	    (<NPTABHEAD> "Readme")
+	    [In this notepad, the server date is still.])
+	 (<NPTAB>
+	    (<NPTABHEAD> "Server date")
+	    (current-date)))
+      (<NOTEPAD>
+	 :inline #f
+	 (<NPHEAD>
+	    (<CENTER> (<B> "A remote of Notepad")))
+	 (<NPTAB>
+	    (<NPTABHEAD> "Readme")
+	    [In this notepad, the server date is updated each time the tab is selected.])
+	 (<NPTAB>
+	    (<NPTABHEAD> "Server date")
+	    (<DELAY>
+	       (lambda ()
+		  (current-date)))))))

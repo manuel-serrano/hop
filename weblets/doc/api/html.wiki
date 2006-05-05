@@ -1,0 +1,319 @@
+<doc> HTML markups
+
+== Description ==
+
+This page list the HTML markup that exist //as is// in HOP. The whole HTML
+markups have counterparts in HOP. All but two markups (++<HEAD>++ and
+++<IMG>++) having the same evaluation in HOP that in plain HTML, they are
+only listed here.
+
+== Synopsis ==
+
+=== server ===
+
+  (<A> ...)
+  (<ABBR> ...)
+  (<ACRONYM> ...)
+  (<APPLET> ...)
+  (<AREA> ...)
+  (<B> ...)
+  (<BASE> ...)
+  (<BASEFONT> ...)
+  (<BDO> ...)
+  (<BIG> ...)
+  (<BLOCKQUOTE> ...)
+  (<BODY> ...)
+  (<BR> ...)
+  (<BUTTON> ...)
+  (<CANVAS> ...)
+  (<CAPTION> ...)
+  (<CENTER> ...)
+  (<CITE> ...)
+  (<CODE> ...)
+  (<COL> ...)
+  (<COLGROUP> ...)
+  (<DD> ...)
+  (<DEL> ...)
+  (<DFN> ...)
+  (<DIR> ...)
+  (<DIV> ...)
+  (<DL> ...)
+  (<DT> ...)
+  (<EM> ...)
+  (<FIELDSET> ...)
+  (<FONT> ...)
+  (<FORM> ...)
+  (<FRAME> ...)
+  (<FRAMESET> ...)
+  (<H1> ...)
+  (<H2> ...)
+  (<H3> ...)
+  (<H4> ...)
+  (<H5> ...)
+  (<H6> ...)
+  (<HR> ...)
+  (<HTML> ...)
+  (<I> ...)
+  (<IFRAME> ...)
+  (<INPUT> ...)
+  (<INS> ...)
+  (<ISINDEX> ...)
+  (<KBD> ...)
+  (<LABEL> ...)
+  (<LEGEND> ...)
+  (<LI> ...)
+  (<LINK> ...)
+  (<MAP> ...)
+  (<MARQUEE> ...)
+  (<MENU> ...)
+  (<META> ...)
+  (<NOFRAMES> ...)
+  (<NOSCRIPT> ...)
+  (<OBJECT> ...)
+  (<OL> ...)
+  (<OPTGROUP> ...)
+  (<OPTION> ...)
+  (<P> ...)
+  (<PARAM> ...)
+  (<PRE> ...)
+  (<Q> ...)
+  (<S> ...)
+  (<SAMP> ...)
+  (<SCRIPT> ...)
+  (<SELECT> ...)
+  (<SMALL> ...)
+  (<SPAN> ...)
+  (<STRIKE> ...)
+  (<STRONG> ...)
+  (<STYLE> ...)
+  (<SUB> ...)
+  (<SUP> ...)
+  (<TABLE> ...)
+  (<TBODY> ...)
+  (<TD> ...)
+  (<TEXTAREA> ...)
+  (<TFOOT> ...)
+  (<TH> ...)
+  (<THEAD> ...)
+  (<TITLE> ...)
+  (<TR> ...)
+  (<TT> ...)
+  (<U> ...)
+  (<UL> ...)
+  (<VAR> ...)
+
+
+== Server Definitions ==
+<server>
+
+=== Markups common attributes ===
+<markup> <A>
+<markup> <ABBR>
+<markup> <ACRONYM>
+<markup> <ADDRESS>
+<markup> <APPLET>
+<markup> <AREA>
+<markup> <B>
+<markup> <BASE>
+<markup> <BASEFONT>
+<markup> <BDO>
+<markup> <BIG>
+<markup> <BLOCKQUOTE>
+<markup> <BODY>
+<markup> <BR>
+<markup> <BUTTON>
+<markup> <CANVAS>
+<markup> <CAPTION>
+<markup> <CENTER>
+<markup> <CITE>
+<markup> <CODE>
+<markup> <COL>
+<markup> <COLGROUP>
+<markup> <DD>
+<markup> <DEL>
+<markup> <DFN>
+<markup> <DIR>
+<markup> <DIV>
+<markup> <DL>
+<markup> <DT>
+<markup> <EM>
+<markup> <FIELDSET>
+<markup> <FONT>
+<markup> <FORM>
+<markup> <FRAME>
+<markup> <FRAMESET>
+<markup> <H1>
+<markup> <H2>
+<markup> <H3>
+<markup> <H4>
+<markup> <H5>
+<markup> <H6>
+<markup> <HR>
+<markup> <HTML>
+<markup> <I>
+<markup> <IFRAME>
+<markup> <INPUT>
+<markup> <INS>
+<markup> <ISINDEX>
+<markup> <KBD>
+<markup> <LABEL>
+<markup> <LEGEND>
+<markup> <LI>
+<markup> <LINK>
+<markup> <MAP>
+<markup> <MARQUEE>
+<markup> <MENU>
+<markup> <META>
+<markup> <NOFRAMES>
+<markup> <NOSCRIPT>
+<markup> <OBJECT>
+<markup> <OL>
+<markup> <OPTGROUP>
+<markup> <OPTION>
+<markup> <P>
+<markup> <PARAM>
+<markup> <PRE>
+<markup> <Q>
+<markup> <S>
+<markup> <SAMP>
+<markup> <SCRIPT>
+<markup> <SELECT>
+<markup> <SMALL>
+<markup> <SPAN>
+<markup> <STRIKE>
+<markup> <STRONG>
+<markup> <STYLE>
+<markup> <SUB>
+<markup> <SUP>
+<markup> <TABLE>
+<markup> <TBODY>
+<markup> <TD>
+<markup> <TEXTAREA>
+<markup> <TFOOT>
+<markup> <TH>
+<markup> <THEAD>
+<markup> <TITLE>
+<markup> <TR>
+<markup> <TT>
+<markup> <U>
+<markup> <UL>
+<markup> <VAR>
+
+The actual list of HTML markup attributes is available at
+[[http://www.w3.org/TR/html4/|HTML4.0.1]]. The following table
+summarizes the most frequent ones.
+
+<arguments>
+^  arguments    ^   type     ^    short description                   ^
+| :id           |  string    | element identifier.                    |
+| :class        |  string    | element class name.                    |
+| :lang         |  string    | language information.                  |
+| :dir          |  string    | direction information.                 |
+| :title        |  string    | element title.                         |
+| :style        |  string    | inline style information.              |
+| :onclick      |  script    | event handler.                         |
+| :ondblclick   |  script    | event handler.                         |
+| :onmousedown  |  script    | event handler.                         |
+| :onmouseup    |  script    | event handler.                         |
+| :onmouseover  |  script    | event handler.                         |
+| :onmousemove  |  script    | event handler.                         |
+| :onmouseout   |  script    | event handler.                         |
+| :onkeypress   |  script    | event handler.                         |
+| :onkeydown    |  script    | event handler.                         |
+| :onkeyup      |  script    | event handler.                         |
+</arguments>
+
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+
+</doc>

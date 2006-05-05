@@ -1,0 +1,65 @@
+<doc> HEAD markup
+
+== Description ==
+
+The ++<HEAD>++ markup defines the //head// of a document. The HOP
+version of ++<HEAD>++ differs from the original HTML definition of
+++HEAD++ markup. In particular the HOP version relies on a highly
+non-standard way of evaluating its attributes which can occur several
+times in an invocation.
+
+== Synopsis ==
+
+=== server ===
+
+  (<HEAD> ...)
+
+== Examples ==
+
+<example><HEAD></example>
+
+== Server Definitions ==
+<server>
+
+=== <HEAD> ===
+<markup> <HEAD>
+
+<arguments>
+^  arguments   ^   type     ^   default    ^  short description                   ^
+| :dir         |  string    |     _        | a directory name added to the path.  |
+| :css         |  string    |     _        | a CSS/HSS file name.                 |
+| :jscript     |  string    |     _        | a script file name.                  |
+| :favicon     |  string    |     _        | a favicon file name.                 |
+| objs         |  element   |  empty       | the content of the head.             |
+</arguments>
+
+The ++<HEAD>++ markup uses special evaluation rules for its
+attributes.  Attributes are evaluated from left to right. In
+particular, contrary to all other markups, attributes may appear more
+than once in the arguments list. In such a case the values are
+accumulated (while with other markups, the last provided value
+overrides the previous ones).
+
+  * The attribute :dir is a //meta-attribute//. It add a new directory to
+ the //search path//. This path is used to find ++css++, ++jscript++, and 
+ ++favicon++ files. By default the search path is initialized with a list 
+ containing the following elements:
+     * the value of the ++hop-share-directory++ parameter.
+     * the directory component of the URL of the current request.
+ Each occurrence of a :dir attribute adds a new directory in the path.
+  * The attribute :css adds a new element to the list of CSS/HSS used in the 
+ document. This list is initially empty. Files using relative names are searched
+ in the //search path// as described above.
+  * The attribute :jscript adds a new element to the list of CSS/HSS used in the 
+ document. This list is initially empty. Files using relative names are searched
+ in the //search path// as described above.
+  * The attribute :favicon specifies an small image to be used in the URL
+ area of the web browser. Image files using relative names are searched
+ in the //search path// as specified with the :dir attribute.
+</markup>
+</server>
+
+== See also ==
+<see-also><HEAD>, <BODY>, <HTML></see-also>
+
+</doc>

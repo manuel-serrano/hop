@@ -1,0 +1,59 @@
+<doc> Server requests
+
+== Description ==
+
+The ::http-request class is used for representing HOP requests.
+
+== Synopsis ==
+
+=== server ===
+
+  (class http-request::%http-message ...)
+  (the-current-request)
+
+== Examples ==
+
+<example>http-request, the-current-request</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(class http-request::%http-message ...)++ ===
+
+<class> http-request
+
+<fields>
+^  fields              ^   access  ^   type      ^  default value   ^  short description            ^
+| ...                  |  ...      |   ...       |     ...          | fields from ::%http-message   |
+| user                 |  r/w      |   obj       |                  | an authenticated user         |
+| userinfo             |  r        |   obj       |                  | the optional user info.       |
+| id                   |  r        |  integer    |                  | an unique request identifier  |
+| localhostp           |  r/w      |  boolean    |                  | is the dest. host local?      |
+| localclientp         |  r/w      |  boolean    |                  | is the client local?          |
+| hook                 |  r/w      |  procedure  |  //identity//    | a hook to be applied          |
+| transfer-encoding    |  r/w      |  boolean    |                  | the characters encoding       |
+| authorization        |  r/w      |  boolean    |                  | an authentication             |
+| proxy-authorization  |  r/w      |  boolean    |                  | a proxy authentication        |
+| http                 |  r/w      |  string     |                  | the HTTP version              |
+| host                 |  r/w      |  string     |                  | the host                      |
+| path                 |  r/w      |  string     |                  | the path                      |
+| encoded-path         |  r/w      |  string     |                  | the encoded path              |
+| scheme               |  r/w      |  string     |                  | the protocol                  |
+| port                 |  r/w      |  integer    |                  | the connection port           |
+| method               |  r        |  symbol     |                  | the connection method         |
+| timeout              |  r        |  integer    |                  | the connection timeout        |
+</fields>
+</class>
+
+=== ++(the-current-request)++ ===
+<function> the-current-request
+
+The function ++the-current-request++ is bound in the body of all
+services. It returns an object representing the current HOP request.
+That is, the request that has yield the service invocation.
+
+ </function>
+
+== See also ==
+<see-also>the-current-request, http-request, http-response</see-also>
+</doc>

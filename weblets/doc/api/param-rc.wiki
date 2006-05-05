@@ -1,0 +1,40 @@
+<doc> HOP server runtime command files
+
+== Description ==
+
+These server parameters control the files loaded when HOP execution starts.
+
+== Synopsis ==
+
+  (hop-rc-directory)
+  (hop-rc-directory-set! arg)
+  (hop-rc-file)
+  (hop-rc-file-set! arg)
+
+== Server Definitions ==
+<server>
+
+=== ++hop-rc-directory++ ===
+<parameter> hop-rc-directory
+<parameter> hop-rc-directory-set!
+
+<arguments>
+^  access  ^   type   ^  current value            ^  short description        ^
+|   r/w    |  string  |  ++,(hop-rc-directory)++  | The path of rc files.     |
+</arguments>
+</parameter>
+</parameter>
+
+=== ++hop-rc-file++ ===
+<parameter> hop-rc-file
+<parameter> hop-rc-file-set!
+
+<arguments>
+^  access  ^   type   ^  current value       ^  short description            ^
+|   r/w    |  string  |  ++,(hop-rc-file)++  | The rc file.                  |
+</arguments>
+</parameter>
+</parameter>
+</server>
+
+</doc>

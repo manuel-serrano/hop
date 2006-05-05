@@ -1,0 +1,17 @@
+;; A service using ++the-current-request++
+(define-service (doc/demo/request arg)
+   (let ((req (the-current-request)))
+      (<TABLE>
+	 (<TR> (<TH> "path:") (<TD> (http-request-encoded-path req)))
+	 (<TR> (<TH> "host:") (<TD> (http-request-host req)))
+	 (<TR> (<TH> "port:") (<TD> (http-request-port req)))
+	 (<TR> (<TH> "method:") (<TD> (http-request-method req)))
+	 (<TR> (<TH> "date:") (<TD> (http-request-date req))))))
+
+(<HTML>
+   (let ((res (<SPAN> "")))
+      (<BODY>
+	 res
+	 (<SCRIPT> ~(hop ($doc/demo/request "foo")
+			 (lambda (h)
+			    (set! $res.innerHTML h.responseText)))))))

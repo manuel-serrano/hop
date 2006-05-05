@@ -1,0 +1,112 @@
+<doc> HOP server configuration
+
+== Description ==
+
+These parameters give information on the configuration of the running HOP.
+The configuration has been established when the server has been installed
+in the present computer and when the ++configure++ script has been
+executed.
+
+== Synopsis ==
+
+=== server ===
+
+  (hop-name)
+  (hop-version)
+  (hop-bin-directory)
+  (hop-lib-directory)
+  (hop-etc-directory)
+  (hop-share-directory)
+  (hop-contribs-directory)
+  (hop-weblets-directory)
+  (hop-mime-types-file)
+
+
+== Server Definitions ==
+<server>
+
+=== ++hop-name++ ===
+<parameter> hop-name
+
+<arguments>
+^  access  ^   type   ^  current value        ^  short description            ^
+|   r      |  string  |  ++,(hop-name)++      | The name of HOP.              |
+</arguments>
+</parameter>
+
+=== ++hop-version++ ===
+<parameter> hop-version
+
+<arguments>
+^  access  ^   type   ^  current value        ^  short description            ^
+|   r      |  string  |  ++,(hop-version)++   | The version of HOP.           |
+</arguments>
+</parameter>
+
+=== ++hop-etc-directory++ ===
+<parameter> hop-etc-directory
+
+<arguments>
+^  access  ^   type    ^  current value             ^  short description      ^
+|   r      |  string   |  ++,(hop-etc-directory)++  | The etc directory name. |
+</arguments>
+</parameter>
+
+=== ++hop-bin-directory++ ===
+<parameter> hop-bin-directory
+
+<arguments>
+^  access  ^   type    ^  current value             ^  short description      ^
+|   r      |  string   |  ++,(hop-bin-directory)++  | The bin directory name. |
+</arguments>
+</parameter>
+
+=== ++hop-lib-directory++ ===
+<parameter> hop-lib-directory
+
+<arguments>
+^  access  ^   type    ^  current value             ^  short description      ^
+|   r      |  string   |  ++,(hop-lib-directory)++  | The lib directory name. |
+</arguments>
+</parameter>
+
+=== ++hop-share-directory++ ===
+<parameter> hop-share-directory
+
+<arguments>
+^  access  ^   type    ^  current value             ^  short description      ^
+|   r      |  string   |  ++,(hop-share-directory)++  | The share directory name. |
+</arguments>
+</parameter>
+
+=== ++hop-contribs-directory++ ===
+<parameter> hop-contribs-directory
+
+<arguments>
+^  access  ^   type    ^  current value             ^  short description      ^
+|   r      |  string   |  ++,(hop-contribs-directory)++  | The contribs directory name. |
+</arguments>
+</parameter>
+
+=== ++hop-weblets-directory++ ===
+<parameter> hop-weblets-directory
+
+<arguments>
+^  access  ^   type    ^  current value             ^  short description      ^
+|   r      |  string   |  ++,(hop-weblets-directory)++  | The weblets directory name. |
+</arguments>
+</parameter>
+
+=== ++hop-mime-types-file++ ===
+<parameter> hop-mime-types-file
+
+<arguments>
+^  access  ^   type    ^  current value             ^  short description      ^
+|   r      |  string   |  ++,(hop-mime-types-file)++  | The weblets directory name. |
+</arguments>
+</parameter>
+
+
+</server>
+
+</doc>

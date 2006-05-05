@@ -1,0 +1,41 @@
+<doc> MD5 checksum
+
+== Description ==
+Compute the MD5 checksum of a string.
+
+== Synopsis ==
+
+=== Server & Client ===
+
+  (md5sum string)
+
+
+=== Requirements ===
+
+Client code using //MD5// facilities needs to load the script
+++md5.js++. Hence, documents using //MD5// must include in their
+header, the following statement:
+
+  (<HEAD> :jscript "md5.js")
+
+== Server & Client Definitions ==
+
+=== ++(md5sum string)++ ===
+<procedure> md5sum
+<function> md5sum
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string for which the chesum is computed.    |
+</arguments>
+
+,(<P>)
+This procedure returns a string denoting an hexadecimal integer.
+</function>
+</procedure>
+
+== See also ==
+
+<see-also>md5, base64</see-also>
+
+</doc>

@@ -1,0 +1,31 @@
+<doc> Server class for HTTP messages
+
+== Description ==
+
+The ++%http-message++ class is the super class of all HOP messages.
+
+== Synopsis ==
+
+  (abstract-class %http-message ...)
+
+== Server Definitions ==
+<server>
+
+=== ++(abstract-class %http-message ...)++ ===
+
+<class> %http-message
+
+<fields>
+^  fields              ^   access  ^   type     ^  default value  ^  short description            ^
+| date                 |  r        |  date      |                 | the date of the message       |
+| socket               |  r/w      |  socket    |                 | the connection socket         |
+| header               |  r/w      |  socket    |                 | the parsed header             |
+| content-length       |  r        |  long      |                 | the length of the content     |
+| char-encoding        |  r        |  obj       |                 | the character encoding        |
+</fields>
+</class>
+
+
+== See also ==
+<see-also>%http-message</see-also>
+</doc>

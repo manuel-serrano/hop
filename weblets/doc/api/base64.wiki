@@ -1,0 +1,56 @@
+<doc> BASE64 encoding/decoding
+
+== Description ==
+
+Compute the BASE64 encoding/decoding of a string.
+
+== Synopsis ==
+
+=== Server & Client ===
+
+  (base64-encode string)
+  (base64-decode string)
+
+
+=== Requirements ===
+
+Client codes using //BASE64// facilities need to load the 
+script ++base64.js++. Hence, documents using //BASE64// must include in their 
+header, the following statement:
+
+  (<HEAD> :jscript "base64.js")
+
+
+== Examples ==
+
+<example>base64</example>
+
+== Server & Client Definitions ==
+
+=== ++(base64-encode string)++ ===
+<procedure> base64-encode
+<function> base64-encode
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string to be encoded.                       |
+</arguments>
+</function>
+</procedure>
+
+=== ++(base64-decode string)++ ===
+<procedure> base64-decode
+<function> base64-decode
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string to be decoded.                       |
+</arguments>
+</function>
+</procedure>
+
+== See also ==
+
+<see-also>base64, md5</see-also>
+
+</doc>

@@ -1,0 +1,2 @@
+HOP wiki supports **bold**, //italic//, and __underline__. These can
+be **__combined__** **//anyhow//**.

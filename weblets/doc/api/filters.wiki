@@ -1,0 +1,93 @@
+<doc> Server Filters
+
+== Description ==
+
+When the HOP server receives a request, it first parses the stream of input
+characters in order to build a ::http-request that contains all the
+information needed to serve the client. Then, it applies all the
+//filters// for elaborating the answer.
+
+,(<P>)
+A filter is a function accepting one parameter, the a request descriptor 
+(an instance of ::http-request). It might either return:
+  * a request.
+  * an response (an instance of ::%http-response).
+  * the boolean ++#f++.
+
+
+HOP executes all the filters in the inverse order of addition until one
+filter returns a response. If no filter matches a request, HOP assumes that
+a local file whose path is designed in the URL is to be served.
+
+
+== Synopsis ==
+
+=== server ===
+
+  (hop-filters)
+  (hop-filters-set! list)
+  (hop-filter-add! procedure)
+  (hop-filter-add-always-first! procedure)
+  (hop-filter-add-always-last! procedure)
+  (hop-filter-remove! procedure)
+
+
+== Examples ==
+<example>hop-filter</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(hop-filters)++ ===
+<function> hop-filters
+
+Returns the list of currently installed //local// (respectively 
+//remote//) hooks.
+</function>
+
+=== ++(hop-filters-set! list)++ ===
+<function> hop-filters-set!
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| list             |  list        | a list of hook.                 |
+</arguments>
+
+Replaces all the filters.
+</function>
+
+=== ++(hop-filter-add! filter)++ ===
+=== ++(hop-filter-add-always-first! filter)++ ===
+=== ++(hop-filter-add-always-last! filter)++ ===
+<function> hop-filter-add!
+<function> hop-filter-add-always-first!
+<function> hop-filter-add-always-last!
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| filter           |  procedure   | a filter.                       |
+</arguments>
+
+Add the new ++filter++.
+</function>
+</function>
+</function>
+
+=== ++(hop-filter-remove! filter)++ ===
+<function> hop-filter-remove!
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| filter             |  procedure   | a filter.                         |
+</arguments>
+
+Remove the new ++filter++ to the list of filters.
+filters.
+</function>
+
+</server>
+
+== See also ==
+<see-also>hop-http-response-local-filter, hop-http-response-remote-filter, http-request, http-response, hop-filter</see-also>
+
+</doc>

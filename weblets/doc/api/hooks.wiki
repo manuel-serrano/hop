@@ -1,0 +1,99 @@
+<doc> Server Hooks
+
+== Description ==
+
+When the HOP server receives a request, it first parses the stream of input
+characters in order to build a ::http-request that contains all the
+information needed to serve the client. Then, it applies all the
+//filters// for elaborating an answer which is an instance of the
+::%http-response class. If the answer is an instance of ::http-response-remote
+it applies the //remote// hooks. Otherwise, it applies the //local// hooks.
+
+,(<P>)
+A hook is a function accepting two parameters:
+  - a request descriptor (an instance of ::http-request).
+  - a response descriptor (an instance of ::%http-response).
+
+
+It must return a response.
+
+
+== Synopsis ==
+
+=== server ===
+
+  (hop-http-response-local-hooks)
+  (hop-http-response-local-hooks-set! list)
+  (hop-http-response-local-hook-add! procedure)
+  (hop-http-response-local-hook-remove! procedure)
+  (hop-http-response-remote-hooks)
+  (hop-http-response-remote-hooks-set! list)
+  (hop-http-response-remote-hook-add! procedure)
+  (hop-http-response-remote-hook-remove! procedure)
+
+
+== Examples ==
+<example>hop-http-response-local-hook, hop-http-response-remote-hook</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(hop-http-response-local-hooks)++ ===
+=== ++(hop-http-response-remote-hooks)++ ===
+<function> hop-http-response-local-hooks
+<function> hop-http-response-remote-hooks
+
+Returns the list of currently installed //local// (respectively 
+//remote//) hooks.
+</function>
+</function>
+
+=== ++(hop-http-response-local-hooks-set! list)++ ===
+=== ++(hop-http-response-remote-hooks-set! list)++ ===
+<function> hop-http-response-local-hooks-set!
+<function> hop-http-response-remote-hooks-set!
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| list             |  list        | a list of hook.                 |
+</arguments>
+
+Replaces all the //local// (respectively //remote//) hooks.
+</function>
+</function>
+
+=== ++(hop-http-response-local-hook-add! hook)++ ===
+=== ++(hop-http-response-remote-hook-add! hook)++ ===
+<function> hop-http-response-local-hook-add!
+<function> hop-http-response-remote-hook-add!
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| hook             |  procedure   | a hook.                         |
+</arguments>
+
+Add the new ++hook++ to the list of //local// (respectively //remote//) hooks.
+</function>
+</function>
+
+=== ++(hop-http-response-local-hook-remove! hook)++ ===
+=== ++(hop-http-response-remote-hook-remove! hook)++ ===
+<function> hop-http-response-local-hook-remove!
+<function> hop-http-response-remote-hook-remove!
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| hook             |  procedure   | a hook.                         |
+</arguments>
+
+Remove the ++hook++ to the list of //local// (respectively //remote//) 
+hooks.
+</function>
+</function>
+
+</server>
+
+== See also ==
+<see-also>hop-http-response-local-hook, hop-http-response-remote-hook, http-request, http-response, hop-filter</see-also>
+
+</doc>

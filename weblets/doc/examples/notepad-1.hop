@@ -1,0 +1,11 @@
+;; A simple //Notepad//
+(<HTML>
+   (<HEAD> :css "hop-notepad.css" :jscript "hop-notepad.js")
+   (<BODY>
+      (<NOTEPAD>
+	 (<NPTAB>
+	    (<NPTABHEAD> "Numbers")
+	    (<TABLE> (<TR> (map <TD> (iota 10)))))
+	 (<NPTAB>
+	    (<NPTABHEAD> "Characters")
+	    (<TABLE> (<TR> (map <TD> (iota 10 65))))))))

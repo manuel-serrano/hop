@@ -1,0 +1,114 @@
+<doc> Server caching facilities
+
+== Description ==
+
+These functions handle HOP server //caches//.
+
+== Synopsis ==
+
+  (class cache ...)
+  (registered-caches)
+  (unregister-cache! cache)
+  (cache-clear cache)
+  (cache->list cache)
+  (cache-get cache key)
+  (cache-put! cache key value)
+  
+== Examples ==
+
+<example>cache-get, cache-put!</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(class cache ...)++ ===
+<class> cache
+
+<fields>
+^  fields       ^   type    ^  default value  ^  short description           ^
+|  max-entries  |  integer  |      128        |  maximum number of entries   |
+| max-file-size |  long     |   #e100000      | largest possible cached file |
+</fields>
+</class>
+
+=== ++(registered-caches)++ ===
+<function> registered-caches
+
+<arguments>
+^  arguments  ^   type    ^  short description          ^
+</arguments>
+</function>
+
+The function ++registered-caches++ returns the list of all caches
+currently in use.
+
+=== ++(unregister-cache! cache)++ ===
+<function> unregister-cache!
+
+<arguments>
+^  arguments  ^   type      ^  short description             ^
+| cache       |  ::cache    | the cache.                     |
+</arguments>
+
+This function //unregisters// a cache. The list returned by following 
+calls to ++registerec-caches++ won't contain this ++cache++ any longer.
+
+</function>
+
+=== ++(cache-clear cache)++ ===
+<function> cache-clear
+
+<arguments>
+^  arguments  ^   type        ^  short description                ^
+| cache       |  ::cache      | the cache.                        |
+</arguments>
+
+This function //resets// a cache. That is, it invalidates all the entries
+of the cache.
+
+</function>
+
+=== ++(cache->list cache)++ ===
+<function> cache->list
+
+<arguments>
+^  arguments  ^   type        ^  short description                ^
+| cache       |  ::cache      | the cache.                        |
+</arguments>
+
+Returns a list whose elements are the entries of the cache.
+
+</function>
+
+=== ++(cache-get cache key)++ ===
+<function> cache-get
+
+<arguments>
+^  arguments  ^   type        ^  short description                ^
+| cache       |  ::cache      | the cache.                        |
+| key         |  string       | the key.                          |
+</arguments>
+
+Gets the element store in the ++cache++ under the ++key++. If no element
+is found ++#f++ is returned.
+</function>
+
+=== ++(cache-put! cache key value)++ ===
+<function> cache-put!
+
+<arguments>
+^  arguments  ^   type      ^  short description               ^
+| cache       |  ::cache    | the cache.                       |
+| key         |  string     | the key.                         |
+| value       |  obj        | the stored value.                |
+</arguments>
+
+Adds the element ++value++ in the ++cache++ under the ++key++.
+</function>
+
+</server>
+
+== See also ==
+<see-also>registered-caches, unregister-cache!, cache-clear, cache-get, cache-put!, cache->list</see-also>
+
+</doc>

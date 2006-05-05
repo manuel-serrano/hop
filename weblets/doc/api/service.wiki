@@ -1,0 +1,212 @@
+<doc> Server Services
+
+== Description ==
+
+A //service// is a function that resides on the server and that can be
+invoked from client. This page describes how to create and how to use 
+//services// on the servers and how to invoke them from the clients.
+
+== Synopsis ==
+
+=== server ===
+
+  (service (arg ...) ...)
+  (define-service (name arg ...) ...)
+  (make-hop-service-url svc arg ...)
+  (make-service-url svc arg ...)
+  (procedure->service proc)
+  (hop-to-hop host port user svc arg ...)
+
+  (hop-autoload-directories)
+  (hop-autoload-directories-add! path)
+  (hop-autoload-directories-set! list)
+
+
+=== client ===
+
+  (hop (service arg ...) [success] [failure])
+  (with-hop (service arg) (lambda (val) ...))
+
+
+== Examples ==
+<example>service</example>
+
+== Server Definitions ==
+<server>
+
+A service is a function on that resides on the server. In most cases,
+a service returns an HTML tree (i.e., any object constructed by any
+markup), a string, or a number. An instance of any subclass of
+::%http-response is also permitted as return value.
+
+=== ++(service (arg<sub>0</sub> ...) body)++ ===
+<function> service
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| arg<sub>0</sub>  |  symbol      | the first argument identifier.  |
+| body             |  expression  | the body of the service.        |
+</arguments>
+
+This special form defines an //anonymous// service on the client. That is,
+no public URL is associated with this service.
+
+</function>
+
+=== ++(define-service (name arg<sub>0</sub> ...) body)++ ===
+<function> define-service
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| name             |  symbol      | the name of the service.        |
+| arg<sub>0</sub>  |  symbol      | the first argument identifier.  |
+| body             |  expression  | the body of the service.        |
+</arguments>
+
+This special form defines an //named// service on the client. That is,
+no public URL is associated with this service. The ++name++ is a symbol
+containing only letters, digits and, at most, on slash (++/++) character.
+A service whose name contains no slash character is called a **//weblet//**.
+
+</function>
+
+=== ++(make-hop-service-url svc arg<sub>0</sub> ...)++ ===
+<function> make-hop-service-url
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| svc              |  service     | the service.                    |
+| arg<sub>0</sub>  |  symbol      | the first argument.             |
+</arguments>
+
+The function ++make-hop-service-url++ forges an URL from a service and
+from arguments. This name can be used on the server to invoke the service
+from a distant server (see ++http-send-request++).
+
+=== ++(make-service-url svc arg<sub>0</sub> ...)++ ===
+<function> make-service-url
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| svc              |  service     | the service.                    |
+| arg<sub>0</sub>  |  symbol      | the first argument.             |
+</arguments>
+
+The function ++make-service-url++ forges an URL from a service and
+from arguments that is suitable for invoking the service from a client.
+In particular, the URL can be used in client ++<FORM>++ markups.
+
+=== ++(procedure->service proc)++ ===
+<function> procedure->service
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| proc             |  procedure   | a procedure.                    |
+</arguments>
+
+The function ++procedure->service++ creates an anonymous service that
+wraps the procedure ++proc++.
+
+=== ++(hop-to-hop host port user svc arg<sub>0</sub> ...)++ ===
+<function> hop-to-hop
+
+<arguments>
+^  arguments       ^   type           ^  short description              ^
+| host             |  string          | the host name.                  |
+| port             |  integer         | the host port number.           |
+| user             |  ++#f++, string  | user information.               |
+| svc              |  service         | the service to invoke.          |
+| arg<sub>0</sub>  |  obj             | the first argument.             |
+</arguments>
+
+The function ++hop-to-hop++ is used to invoke a service from a distant
+HOP server.
+
+=== ++(hop-autoload-directories)++ ===
+=== ++(hop-autoload-directories-add! string)++ ===
+=== ++(hop-autoload-directories-set! list)++ ===
+<parameter> hop-autoload-directories
+<parameter> hop-autoload-directories-add!
+<parameter> hop-autoload-directories-set!
+
+This parameter specifies the path scanned by HOP on startup to find all
+the currently available weblets. These are automatically
+//autoloaded//. That is, they are automatically loaded on demand.
+
+~~ The current value of ++hop-autoload-directories++ is:
+
+,(<DIV> :align "center"
+        (<PRE> 
+	   (with-output-to-string 
+	      (lambda () 
+		 (print "(")
+		 (for-each (lambda (v) (display " ") (write v) (newline))
+			   (hop-autoload-directories))
+		 (display ")")))))
+</parameter>
+</parameter>
+</parameter>
+
+</server>
+
+== Client Definitions ==
+<client>
+
+=== (hop (svc val<sub>0</sub> ...) [success] [failure]) ===
+<procedure> hop
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| svc              |  service     | the invoked service.            |
+| val<sub>0</sub>  |  obj         | the first argument.             |
+| success          |  procedure   | a procedure of one argument.    |
+| failure          |  procedure   | a procedure of one argument.    |
+</arguments>
+
+The client function ++hop++ invokes the server service ++svc++ with values
+++val<sub>0</sub>++, ... On success, it invokes the ++success++ client
+function with a data structure representing the response of the service.
+This data structure contains two fields:
+
+  * ++status++, an integer which denotes the success or failure of the call.
+    * 2xx denote a success. 
+    * 4xx denote a request for authentication. 
+    * Other code denote failures.
+  * ++responseText++, a string denoting the value of the invocation.
+ 
+
+Example:
+  
+  (let ((d (<DIV> "")))
+    (hop ($(service (x y) (<TABLE> (<TR> (<TD> x) (<TD> y)))) 1 2)
+         (lambda (h) 
+            (set! span.innerHTML h.responseText))))
+
+
+</procedure>
+
+=== (with-hop (svc val<sub>0</sub> ...) proc) ===
+<procedure> with-hop
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| svc              |  service     | the invoked service.            |
+| val<sub>0</sub>  |  obj         | the first argument.             |
+| proc             |  procedure   | a procedure of one argument.    |
+</arguments>
+
+The form ++with-hop++ invokes the server service ++svc++ with arguments
+++val<sub>0</sub>++, ... On success, it then invokes the function ++proc++
+with an object constructed from the service answer. The evaluation of
+the service ++svc++ must produce an instance of the class ::http-response-js .
+
+,(<P>)
+Example:
+<example>Sending complex values</example>
+</procedure>
+
+</client>
+
+== See also ==
+<see-also>%http-request, the-current-request, http-response, http-send-request</see-also>
+
+</doc>
