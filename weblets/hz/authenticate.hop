@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 11:31:17 2006                          */
-;*    Last change :  Tue May  2 10:56:17 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:12:45 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ authentication                                                */
@@ -80,12 +80,12 @@
 		       (date.setMinutes
 			(+ (date.getMinutes) $(hz-auto-logout-minute)))
 		       (hop_cookie_set_value "hop_hz"
-					     http.responseText
+					     http
 					     $(http-request-path req)
 					     #f
 					     date)
 		       (set! location $(http-request-path req))))))
-       (hop svc cback)))
+       (with-hop svc cback)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-authenticate ...                                              */

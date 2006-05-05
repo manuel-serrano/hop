@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Wed May  3 07:20:58 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:13:11 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -128,9 +128,9 @@
 ;*---------------------------------------------------------------------*/
 (define (<PREFERENCES> prefs)
    (hz-preferences-edit
-    :onclick ~(hop ($(service ()
-			(let ((d (hz-rc-directory)))
-			   (unless (directory? d)
-			      (make-directory d)))
-			(hz-preferences-save prefs))))))
+    :onclick ~(with-hop ($(service ()
+			     (let ((d (hz-rc-directory)))
+				(unless (directory? d)
+				   (make-directory d)))
+			     (hz-preferences-save prefs))))))
 

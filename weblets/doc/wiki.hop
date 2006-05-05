@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Fri Apr 28 08:33:24 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:04:23 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -154,26 +154,28 @@
 		" | "
 		(<SPAN>
 		   :class "edit"
-		   :onclick ~(hop ($(service (file)
-				       (run-process (doc-editor) file :wait #f)
-				       #f)
-				    $(input-port-name port)))
+		   :onclick ~(with-hop
+				   ($(service (file)
+					(run-process (doc-editor) file :wait #f)
+					#f)
+				     $(input-port-name port)))
 		   (basename (doc-editor)))
 		" | "
 		(<SPAN>
 		   :class "edit"
-		   :onclick ~(hop ($(service (file)
-				       (let ((f (make-file-name
-						 (dirname file)
-						 (string-append
-						  "new." (doc-suffix)))))
-					  (with-output-to-file f
-					     (lambda ()
-						(display (wiki-template))))
-					  (run-process (doc-editor)
-						       f :wait #f)
-					  #f))
-				    $(input-port-name port)))
+		   :onclick ~(with-hop
+				   ($(service (file)
+					(let ((f (make-file-name
+						  (dirname file)
+						  (string-append
+						   "new." (doc-suffix)))))
+					   (with-output-to-file f
+					      (lambda ()
+						 (display (wiki-template))))
+					   (run-process (doc-editor)
+							f :wait #f)
+					   #f))
+				     $(input-port-name port)))
 		   "new")
 		" ]"))))
     (<DIV>

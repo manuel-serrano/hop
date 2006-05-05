@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Wed May  3 07:23:49 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:14:13 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -243,22 +243,23 @@
 		  (<VBOX-BLOCK> "&nbsp;")
 		  (let* ((create (<BUTTON>
 				    :title "Create a new Weblet entry"
-				    :onclick ~(hop ($hz/create
-						    
-						    (document.getElementById "name")
-						    $author $category $hop
-						    $version $minhop $maxhop
-						    $sdescr $descr)
-						   (lambda (h) (reset!)))
+				    :onclick
+				    ~(with-hop ($hz/create
+						(document.getElementById "name")
+						$author $category $hop
+						$version $minhop $maxhop
+						$sdescr $descr)
+					(lambda (h) (reset!)))
 				    "create"))
 			 (update (<BUTTON>
 				    :title "Update a new Weblet entry"
 				    :disabled #t
-				    :onclick ~(hop ($hz/update
-						    (document.getElementById "name")
-						    $author $category $hop
-						    $version $minhop $maxhop
-						    $sdescr $descr))
+				    :onclick
+				    ~(with-hop ($hz/update
+						(document.getElementById "name")
+						$author $category $hop
+						$version $minhop $maxhop
+						$sdescr $descr))
 				    "update"))
 			 (remove (<BUTTON>
 				    :title "Remove a new Weblet entry"
@@ -266,7 +267,7 @@
 				    :onclick ~(let ((el (document.getElementById "name")))
 						 (if (and el (confirm (+ "Remove entry `" el.value "'")))
 						     (begin
-							(hop ($hz/remove el.value $category))
+							(with-hop ($hz/remove el.value $category))
 							(reset!))))
 				    "remove"))
 			 (reset (<BUTTON>

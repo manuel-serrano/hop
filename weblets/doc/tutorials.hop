@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Fri May  5 06:30:25 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:02:36 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -126,16 +126,16 @@
 		     (<SELECT>
 			:class "tutorial-selector"
 			:onmouseup
-			~(hop ($tutorial this.value)
-			      (lambda (h)
-				 (let ((el (document.getElementById $id)))
-				    (set! el.innerHTML h.responseText))))
+			~(with-hop ($tutorial this.value)
+			    (lambda (h)
+			       (let ((el (document.getElementById $id)))
+				  (set! el.innerHTML h))))
 			:onkeyup
 			~(if (= event.keyCode 13)
-			     (hop ($tutorial this.value)
-				  (lambda (h)
-				     (let ((el (document.getElementById $id)))
-					(set! el.innerHTML h.responseText)))))
+			     (with-hop ($tutorial this.value)
+				(lambda (h)
+				   (let ((el (document.getElementById $id)))
+				      (set! el.innerHTML h)))))
 			(cons (<OPTION> :disabled #f :selected #t dummy)
 			      (map (lambda (f) (<OPTION> f :selected #f))
 				   files)))
@@ -179,11 +179,11 @@
 			   (<SPAN>
 			      :class "href"
 			      :onclick
-			      ~(hop ($(service () (doc-page (cdr v) syntax)))
-				    (lambda (h)
-				       (hop-iwindow-close "tutorial/search")
-				       (let ((e (document.getElementById $id)))
-					  (set! e.innerHTML h.responseText))))
+			      ~(with-hop ($(service () (doc-page (cdr v) syntax)))
+				  (lambda (h)
+				     (hop-iwindow-close "tutorial/search")
+				     (let ((e (document.getElementById $id)))
+					(set! e.innerHTML h))))
 			      (car v)))))
 		  l2)))))
 	 

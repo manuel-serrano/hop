@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Fri May  5 06:31:19 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:03:39 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -78,15 +78,15 @@
 	     (menu $popup))
 	  (event.preventDefault)
 	  (event.stopPropagation)
-	  (hop ($click this.innerHTML)
-	       (lambda (h)
-		  (if (> h.responseText.length 0)
-		      (begin
-			 (set! menu.innerHTML h.responseText)
-			 (set! menu.style.top (+ 12 (hop_element_y el)))
-			 (set! menu.style.left (- (hop_element_x el) 10))
-			 (set! menu.style.display "block"))
-		      (set! menu.style.display "none"))))
+	  (with-hop ($click this.innerHTML)
+	     (lambda (h)
+		(if (> h.length 0)
+		    (begin
+		       (set! menu.innerHTML h)
+		       (set! menu.style.top (+ 12 (hop_element_y el)))
+		       (set! menu.style.left (- (hop_element_x el) 10))
+		       (set! menu.style.display "block"))
+		    (set! menu.style.display "none"))))
 	  #f))
    
    (let ((size (-fx 22 (string-length lbl))))
@@ -180,13 +180,12 @@
 		       (<TD>
 			  (<TT>
 			     :onmouseup
-			     ~(hop ($service $(cdr el))
-				   (lambda (r)
-				      (let* ((n (document.getElementById $id))
-					     (p n.parentNode))
-					 (set! p.style.display "none")
-					 (set! $pagearea.innerHTML
-					       r.responseText))))
+			     ~(with-hop ($service $(cdr el))
+				 (lambda (r)
+				    (let* ((n (document.getElementById $id))
+					   (p n.parentNode))
+				       (set! p.style.display "none")
+				       (set! $pagearea.innerHTML r))))
 			     (html-string-encode (car el))))))
 		 (sort es
 		       (lambda (a b)
@@ -199,10 +198,10 @@
    (define (link f)
       (<SPAN> :class "href"
 	      :title "View documentation"
-	      :onclick ~(hop ($service $f)
-			     (lambda (r)
-				(let ((el (document.getElementById $id)))
-				   (set! el.innerHTML r.responseText))))
+	      :onclick ~(with-hop ($service $f)
+			   (lambda (r)
+			      (let ((el (document.getElementById $id)))
+				 (set! el.innerHTML r))))
 	      (doc-page->name f)))
    (<DIV>
       :class "see-also" 

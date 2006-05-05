@@ -12,6 +12,6 @@
    (let ((res (<SPAN> "")))
       (<BODY>
 	 res
-	 (<SCRIPT> ~(hop ($doc/demo/request "foo")
-			 (lambda (h)
-			    (set! $res.innerHTML h.responseText)))))))
+	 (<SCRIPT> ~(with-hop ($doc/demo/request "foo")
+		       (lambda (h)
+			  (set! $res.innerHTML h)))))))

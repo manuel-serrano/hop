@@ -71,8 +71,8 @@ This returns a vector that is displayed in the ++show++ ++<DIV>++ element.
 	(<BODY>
 	   (<DIV> "Type a programming language name")
 	   (<INPUT> :type "text"
-		    :onkeyup ~(hop ($tutorial-ajax this.value)
-				   (lambda (h) (set! $show.innerHTML h.responseText))))
+		    :onkeyup ~(with-hop ($tutorial-ajax this.value)
+				  (lambda (h) (set! $show.innerHTML h))))
 	   (<DIV> "Results...")
 	   show)))
 

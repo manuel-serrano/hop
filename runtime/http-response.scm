@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Mar 21 13:55:54 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:11:35 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -135,7 +135,7 @@
    (with-trace 3 'http-response::http-response-js
       (with-access::http-response-js r (start-line header content-type server content-length body bodyp)
 	 (let ((p (socket-output socket)))
-	    (http-write-line p start-line)
+	    (http-write-line p "HTTP/1.1 201 Eval Ok")
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
 	    (when content-type

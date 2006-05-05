@@ -48,7 +48,7 @@
 	 :class "playground"
 	 :rows 8 :cols 80
 	 :style "font-size: 100%; color: blue;"
-	 :onkeyup ~(hop ($wikiedit/update this.value))
+	 :onkeyup ~(with-hop ($wikiedit/update this.value))
 	 "__Please__, ++Type in++ //characters//...")
       (<H3> "Live view")
       (<BR>)

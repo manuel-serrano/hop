@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Fri May  5 17:10:36 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:01:51 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -214,10 +214,10 @@
    (define (<ENTRY> k p)
       (<TD>
 	 :class "entry"
-	 :onclick ~(hop ($service $p)
-			(lambda (r)
-			   (let ((el (document.getElementById $id)))
-			      (set! el.innerHTML r.responseText))))
+	 :onclick ~(with-hop ($service $p)
+		      (lambda (r)
+			 (let ((el (document.getElementById $id)))
+			    (set! el.innerHTML r))))
 	 (<SPAN> :class "descr" (html-string-encode k))))
    
    (define (char0 str)
@@ -270,11 +270,11 @@
 	  ;; only one element matches, jump to it
 	  (<SCRIPT> 
 	     ~(begin
-		 (hop ($service $(cadr (car l1)))
-		      (lambda (r)
-			 (let ((el (document.getElementById $id)))
-			    (set! el.innerHTML r.responseText))
-			 (hop-iwindow-close "doc/search"))))))
+		 (with-hop ($service $(cadr (car l1)))
+		    (lambda (r)
+		       (let ((el (document.getElementById $id)))
+			  (set! el.innerHTML r))
+		       (hop-iwindow-close "doc/search"))))))
 	 (else
 	  (let ((l2 (sort l1 (lambda (a b) (string<? (car a) (car b))))))
 	     (<TABLE>

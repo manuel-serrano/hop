@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/private/doc/services.hop                */
+;*    serrano/prgm/project/hop/weblets/doc/services.hop                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Tue Apr 25 11:39:57 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:02:04 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -35,11 +35,11 @@
       (<DOC>
 	 (<BUTTON>
 	    :onclick ~(if (confirm "Save the document?")
-			  (hop ($(service (body)
-				    (with-output-to-file path
-				       (lambda ()
-					  (display body))))
-				 $editor.value)))
+			  (with-hop ($(service (body)
+					 (with-output-to-file path
+					    (lambda ()
+					       (display body))))
+				      $editor.value)))
 	    "Save")
 	 (<DIV>
 	    :align "center"

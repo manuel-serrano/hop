@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  8 07:03:09 2006                          */
-;*    Last change :  Tue May  2 13:59:22 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:46:40 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki edit demo                                                   */
@@ -142,7 +142,7 @@ a centered text
       (<TEXTAREA>
 	 :class "playground"
 	 :rows 10 :cols 80
-	 :onkeyup ~(hop ($wikiedit/update this.value))
+	 :onkeyup ~(with-hop ($wikiedit/update this.value))
 	 *wikiedit-initial-text*)
       (<H3> "Live view")
       (<BUTTON>

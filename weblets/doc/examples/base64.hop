@@ -9,7 +9,7 @@ and decoding on the server."
 	 (<INPUT>
 	    :type "text"
 	    :onkeyup ~(if (= event.keyCode 13)
-			  (hop ($(service (val) (base64-decode val))
-				 (base64-encode this.value))
-			       (lambda (h)
-				  (set! $out.innerHTML h.responseText))))))))
+			  (with-hop ($(service (val) (base64-decode val))
+				      (base64-encode this.value))
+			     (lambda (h)
+				(set! $out.innerHTML h))))))))

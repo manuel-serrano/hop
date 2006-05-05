@@ -24,8 +24,7 @@ invoked from client. This page describes how to create and how to use
 
 === client ===
 
-  (hop (service arg ...) [success] [failure])
-  (with-hop (service arg) (lambda (val) ...))
+  (with-hop (service arg) [success] [failure])
 
 
 == Examples ==
@@ -152,40 +151,40 @@ the currently available weblets. These are automatically
 == Client Definitions ==
 <client>
 
-=== (hop (svc val<sub>0</sub> ...) [success] [failure]) ===
-<procedure> hop
+;* === (hop (svc val<sub>0</sub> ...) [success] [failure]) ===         */
+;* <procedure> hop                                                     */
+;*                                                                     */
+;* <arguments>                                                         */
+;* ^  arguments       ^   type       ^  short description              ^ */
+;* | svc              |  service     | the invoked service.            | */
+;* | val<sub>0</sub>  |  obj         | the first argument.             | */
+;* | success          |  procedure   | a procedure of one argument.    | */
+;* | failure          |  procedure   | a procedure of one argument.    | */
+;* </arguments>                                                        */
+;*                                                                     */
+;* The client function ++hop++ invokes the server service ++svc++ with values */
+;* ++val<sub>0</sub>++, ... On success, it invokes the ++success++ client */
+;* function with a data structure representing the response of the service. */
+;* This data structure contains two fields:                            */
+;*                                                                     */
+;*   * ++status++, an integer which denotes the success or failure of the call. */
+;*     * 2xx denote a success.                                         */
+;*     * 4xx denote a request for authentication.                      */
+;*     * Other code denote failures.                                   */
+;*   * ++responseText++, a string denoting the value of the invocation. */
+;*                                                                     */
+;*                                                                     */
+;* Example:                                                            */
+;*                                                                     */
+;*   (let ((d (<DIV> "")))                                             */
+;*     (hop ($(service (x y) (<TABLE> (<TR> (<TD> x) (<TD> y)))) 1 2)  */
+;*          (lambda (h)                                                */
+;*             (set! span.innerHTML h.responseText))))                 */
+;*                                                                     */
+;*                                                                     */
+;* </procedure>                                                        */
 
-<arguments>
-^  arguments       ^   type       ^  short description              ^
-| svc              |  service     | the invoked service.            |
-| val<sub>0</sub>  |  obj         | the first argument.             |
-| success          |  procedure   | a procedure of one argument.    |
-| failure          |  procedure   | a procedure of one argument.    |
-</arguments>
-
-The client function ++hop++ invokes the server service ++svc++ with values
-++val<sub>0</sub>++, ... On success, it invokes the ++success++ client
-function with a data structure representing the response of the service.
-This data structure contains two fields:
-
-  * ++status++, an integer which denotes the success or failure of the call.
-    * 2xx denote a success. 
-    * 4xx denote a request for authentication. 
-    * Other code denote failures.
-  * ++responseText++, a string denoting the value of the invocation.
- 
-
-Example:
-  
-  (let ((d (<DIV> "")))
-    (hop ($(service (x y) (<TABLE> (<TR> (<TD> x) (<TD> y)))) 1 2)
-         (lambda (h) 
-            (set! span.innerHTML h.responseText))))
-
-
-</procedure>
-
-=== (with-hop (svc val<sub>0</sub> ...) proc) ===
+=== (with-hop (svc val<sub>0</sub> ...) [success] [failure]) ===
 <procedure> with-hop
 <arguments>
 ^  arguments       ^   type       ^  short description              ^
@@ -197,10 +196,20 @@ Example:
 The form ++with-hop++ invokes the server service ++svc++ with arguments
 ++val<sub>0</sub>++, ... On success, it then invokes the function ++proc++
 with an object constructed from the service answer. The evaluation of
-the service ++svc++ must produce an instance of the class ::http-response-js .
+the service ++svc++ must produce an instance of the class ::http-response .
+If it happens to be an answer of the ::http-response-js then result is
+interpreter as a compound client object. Otherwise, it is interpreted
+as a string.
 
-,(<P>)
-Example:
+~~ Example 1, sending text:
+
+  (let ((d (<DIV> "")))
+    (with-hop ($(service (x y) (<TABLE> (<TR> (<TD> x) (<TD> y)))) 1 2)
+         (lambda (h)
+            (set! span.innerHTML h))))
+
+
+~~ Example 2:
 <example>Sending complex values</example>
 </procedure>
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Fri May  5 17:10:58 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:01:03 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -113,31 +113,31 @@
 ;*    select-api-pad ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (select-api-pad api k)
-   ~(hop ($doc/api $api)
-	 (lambda (r)
-	    (hop-notepad-select "doc-notepad" "doc-api")
-	    (let ((el (document.getElementById "pad-api")))
-	       (set! el.innerHTML r.responseText)
-	       (let ((eo (and $k (document.getElementById $k))))
-		  (if eo
-		      (let ((po eo.offsetTop))
-			 (if (> po 50)
-			     (window.scrollTo 0 (- po 50)))
-			 (let* ((p eo.parentNode)
-				(ob p.style.border.background))
-			    (hop-fx-fade-background
-			     p
-			     500
-			     40
-			     (vector "#fffd6b"
-				     "#ffff6f"
-				     "#ffff8f"
-				     "#ffffaf"
-				     "#ffffdf"
-				     "#ffffdf"
-				     (if (eq? ob #unspecified)
-					 "transparent"
-					 ob)))))))))))
+   ~(with-hop ($doc/api $api)
+       (lambda (r)
+	  (hop-notepad-select "doc-notepad" "doc-api")
+	  (let ((el (document.getElementById "pad-api")))
+	     (set! el.innerHTML r)
+	     (let ((eo (and $k (document.getElementById $k))))
+		(if eo
+		    (let ((po eo.offsetTop))
+		       (if (> po 50)
+			   (window.scrollTo 0 (- po 50)))
+		       (let* ((p eo.parentNode)
+			      (ob p.style.border.background))
+			  (hop-fx-fade-background
+			   p
+			   500
+			   40
+			   (vector "#fffd6b"
+				   "#ffff6f"
+				   "#ffff8f"
+				   "#ffffaf"
+				   "#ffffdf"
+				   "#ffffdf"
+				   (if (eq? ob #unspecified)
+				       "transparent"
+				       ob)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hash-parser ...                                                  */
