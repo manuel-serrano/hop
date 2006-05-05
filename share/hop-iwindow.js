@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Fri May  5 07:17:10 2006 (serrano)                */
+/*    Last change :  Fri May  5 13:28:53 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -72,7 +72,7 @@ function hop_iwindow_iconify( id ) {
    if( win.iconify ) {
       win.iconify();
    } else {
-      if( win.style.position != "absolute" ) {
+      if( win.style.position == "fixed" ) {
 	 var old = win.offsetTop;
 	 // MS 3may2006: I think that for IE, we have to use
 	 // document.documentElement.scrollTop or document.body.scrollTop
