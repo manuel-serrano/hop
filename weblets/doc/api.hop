@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Fri May  5 05:29:20 2006 (serrano)                */
+;*    Last change :  Fri May  5 06:39:25 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -23,6 +23,7 @@
 	   doc/api
 	   (<API>)
 	   (decorate-api-code code)
+	   (decorate-api-wiki-code code)
 	   (<APIREF> key api)
 	   (markup-parser k)
 	   (server-parser k)
@@ -92,21 +93,21 @@
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api-search-markup value)
    (setup-api-tables!)
-   (search-table value doc/api "pad-api" *markup-table* 1))
+   (search-table value doc/api "pad-api" *markup-table* 1 6))
    
 ;*---------------------------------------------------------------------*/
 ;*    doc/api-search-server ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api-search-server value)
    (setup-api-tables!)
-   (search-table value doc/api "pad-api" *server-table* 0))
+   (search-table value doc/api "pad-api" *server-table* 0 3))
    
 ;*---------------------------------------------------------------------*/
 ;*    doc/api-search-client ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api-search-client value)
    (setup-api-tables!)
-   (search-table value doc/api "pad-api" *client-table* 0))
+   (search-table value doc/api "pad-api" *client-table* 0 3))
 
 ;*---------------------------------------------------------------------*/
 ;*    select-api-pad ...                                               */

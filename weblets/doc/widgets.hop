@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu May  4 16:42:23 2006 (serrano)                */
+;*    Last change :  Fri May  5 06:31:19 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -116,7 +116,7 @@
 					  ($keypress this.value)
 					  false false
 					  500 300
-					  (- window.innerWidth 550) 100))
+					  (- window.innerWidth 550) 10))
 			   :title "Hit [return] to search"))))))
 	 (<TR>
 	    (<TD>
@@ -269,7 +269,7 @@
 (define (<EXAMPLE> . code)
    (let ((id1 (xml-make-id 'pre))
 	 (id2 (xml-make-id 'textarea))
-	 (api-code (decorate-api-code code)))
+	 (api-code (decorate-api-wiki-code code)))
       (list
        (<RUN> id2)
        (<EDIT> id1 id2)

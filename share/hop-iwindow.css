@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Tue May  2 13:42:28 2006 (serrano)                */
+/*    Last change :  Fri May  5 07:15:14 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW CSS                                                  */
@@ -13,7 +13,7 @@
 /*    main frame                                                       */
 /*---------------------------------------------------------------------*/
 div.hop-iwindow {
-  position: absolute;
+  position: fixed;
   background: none;
 }
 

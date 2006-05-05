@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Fri May  5 05:59:35 2006 (serrano)                */
+;*    Last change :  Fri May  5 06:30:25 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -57,7 +57,7 @@
 			    :align "center"
 			    (<PRE>
 			       :class "example"
-			       (decorate-api-code expr)))))
+			       (decorate-api-wiki-code expr)))))
 		     (else
 		      ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))
       (keyword list)
@@ -152,7 +152,7 @@
 					 this.value)
 				       false false
 				       400 200
-				       (- window.innerWidth 500) 100))))))))))
+				       (- window.innerWidth 500) 10))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tutorial-search ...                                              */
