@@ -1,0 +1,143 @@
+<doc> CGI arguments parsing
+
+== Description ==
+
+This page describes the facilities supported by HOP for decoding CGI
+arguments. In general, applications that use
+,(<APIREF> (<I> "weblets") "service.wiki") don't need to fetch CGI arguments
+and then, don't need to use the functions described in the page. However,
+HOP provides these facilities for easing the authoring of applications that
+need to implement low-level operations on URLs.
+
+== Synopsis ==
+
+=== Server ===
+
+  (cgi-args->list url)
+  (cgi-fetch-arg url name)
+  (cgi-url-encode url)
+  (cgi-multipart->list tmp port length boundary)
+  (cgi-post-arg-field key field)
+
+== Examples ==
+
+<example>cgi-</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(cgi-args->list string) ===
+<function> cgi-args->list
+
+<arguments>
+^  arguments  ^   type   ^  short description                                   ^
+| string      |  string  | the part of the URL that follows the question mark.  |
+</arguments>
+
+Returns an association list of all the CGI arguments decoded from
+the ++URL++.
+
+~~ Example:
+
+~~ ++(cgi-args->list "a0=val0&a1=val1&a2=val2") =>++ ++,(<OBJ->STRING> (cgi-args->list "a0=val0&a1=val1&a2=val2"))++
+</function>
+
+=== ++(cgi-fetch-arg name url) ===
+<function> cgi-fetch-arg
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| name        |  string         | the argument name.             |
+| url         |  string         | the URL.                       |
+</arguments>
+
+This function decodes a URL (represented by a string) in order to
+fetch the value of the CGI argument ++name++. If the URL does not
+contain such a parameter ++#f++ is returned. Other the value, which
+is a string, is returned.
+
+~~ Example:
+
+~~ ++(cgi-fetch-arg "a1" "www.kernel.org?a0=val0&a1=val1&a2=val2") =>++ ++,(<OBJ->STRING> (cgi-fetch-arg "a1" "www.kernel.org?a0=val0&a1=val1&a2=val2"))++
+</function>
+
+=== ++(cgi-url-encode url) ===
+<function> cgi-url-encode
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| url         |  string         | the URL.                       |
+</arguments>
+
+Encodes a URL according to the HTTP conventions so that characters 
+are no longer interpreted as arguments delimiters.
+
+~~ Example:
+
+~~ ++(cgi-url-encode "www.kernel.org?a0=val0&a1=val1&a2=val2") =>++ ++,(<OBJ->STRING> (cgi-url-encode "www.kernel.org?a0=val0&a1=val1&a2=val2"))++
+</function>
+
+=== ++(cgi-multipart->list tmp port length boundary)++ ===
+<function> cgi-multipart->list
+
+<arguments>
+^  arguments  ^   type          ^  short description                 ^
+| tmp         |  string         | the path of an existing directory. |
+| port        |  input-port     | an input port.                     |
+| length      |  integer        | a content length.                  |
+| boundary    |  string         | an element boundary.               |
+</arguments>
+
+This function is used to decode arguments as transmitted in a POST
+request who specifies ++:enctype "multipart/form-data"++.
+
+~~ For the sake of the example, here is an excerpt of the HOP
+implementation that shows how POST requests are internally
+handled.
+
+  (define (cgi-args req)
+     (with-access::http-request req (socket method path encoded-path header content-length)
+        (case method
+           ((POST)
+            (let* ((pi (socket-input socket))
+                   (ctype (http-header-field header content-type:)))
+               (if (and (string? ctype)
+                        (substring-ci-at? ctype "multipart/form-data; boundary=" 0))
+                   (let ((boundary (substring
+                                    ctype
+                                    (string-length "multipart/form-data; boundary=")
+                                    (string-length ctype))))
+                      (cons path
+                            (cgi-multipart->list (hop-upload-directory)
+                                                 pi
+                                                 content-length
+                                                 boundary)))
+                   (let ((body (read-chars (elong->fixnum content-length) pi)))
+                      (cons path (cgi-args->list body))))))
+           ((HOP GET PUT HOPEVT)
+            (http-request-url-cgi-args encoded-path))
+           (else
+            (error 'http-request-cgi-args "Not a cgi request" method)))))
+
+
+</function>
+
+=== ++(cgi-post-arg-field key field)++ ===
+<function> cgi-post-arg-field
+
+<arguments>
+^  arguments  ^   type   ^  short description                                   ^
+| key         |  string  | the part of the URL that follows the question mark.  |
+| field       |  string  | the argument part.                                   |
+</arguments>
+
+This function retreives field information from POST URLs.
+</function>
+
+
+</server>
+
+== See also ==
+<see-also>cgi-</see-also>
+
+</doc>

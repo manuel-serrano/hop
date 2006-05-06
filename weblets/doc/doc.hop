@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Fri May  5 05:05:20 2006 (serrano)                */
+;*    Last change :  Sat May  6 16:23:41 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -43,6 +43,9 @@
 		(<NPTAB> :id "doc-api"
 			 (<NPTABHEAD> "API")
 			 (<API>))
+		(<NPTAB> :id "doc-libraries"
+			 (<NPTABHEAD> "Libraries")
+			 "Not documented yet")
 		(<NPTAB> :id "doc-tutorials"
 			 (<NPTABHEAD> "Tutorials")
 			 (<TUTORIALS> req))

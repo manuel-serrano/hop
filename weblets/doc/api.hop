@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Sat May  6 06:01:57 2006 (serrano)                */
+;*    Last change :  Sat May  6 19:03:49 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -25,6 +25,7 @@
 	   (decorate-api-code code)
 	   (decorate-api-wiki-code code)
 	   (<APIREF> key api)
+	   (<OBJ->STRING> expr)
 	   (markup-parser k)
 	   (server-parser k)
 	   (client-parser k)
@@ -379,3 +380,9 @@
       :class "href" 
       :onclick (select-api-pad (make-file-name (doc-api-dir) api) key)
       key))
+
+;*---------------------------------------------------------------------*/
+;*    <OBJ->STRING> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<OBJ->STRING> expr)
+   (with-output-to-string (lambda () (write expr))))
