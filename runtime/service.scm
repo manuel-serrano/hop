@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue May  2 10:54:22 2006 (serrano)                */
+;*    Last change :  Sat May  6 08:14:26 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -291,6 +291,7 @@
       (hop-verb 2 (hop-color 1 1 " REG. SERVICE: ") svc " " path "\n")
       (mutex-lock! *service-mutex*)
       (hashtable-put! *service-table* path svc)
+      (hashtable-put! *service-table* (string-append path "/") svc)
       (let ((l (string-length path)))
 	 (let loop ((i (+fx (string-length (hop-service-base)) 1)))
 	    (cond

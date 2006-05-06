@@ -19,6 +19,7 @@
 	  (let ((head (find-in-tree xml 'head))
 		(jshead (<HEAD> :dir (hop-share-directory)
 				:jscript "runtime.js"
+				:jscript "hop-dom.js"
 				:jscript "runtime-interface.js")))
 	     (if head
 		 (with-access::xml-markup head (body)

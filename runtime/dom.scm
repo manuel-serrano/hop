@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Sat May  6 06:43:16 2006 (serrano)                */
+;*    Last change :  Sat May  6 08:25:51 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -36,9 +36,7 @@
 	   (dom-normalize! node)
 	   (dom-remove-child! node old)
 	   (dom-replace-child! node new old)
-	   (dom-document-get-element-by-id ::xml-markup ::bstring)
 	   (generic dom-get-element-by-id obj ::bstring)
-	   (dom-document-get-elements-by-tag-name::pair-nil ::xml-markup ::bstring)
 	   (dom-get-elements-by-tag-name::pair-nil obj ::bstring)
 	   (dom-get-attribute node ::bstring)
 	   (dom-has-attribute?::bool node ::bstring)
@@ -61,12 +59,6 @@
 			 (loop (xml-markup-body obj))))
 		   body))
       doc))
-
-;*---------------------------------------------------------------------*/
-;*    dom-document-get-element-by-id ...                               */
-;*---------------------------------------------------------------------*/
-(define (dom-document-get-element-by-id obj id)
-   (dom-get-element-by-id obj id))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ...                                        */
@@ -444,12 +436,6 @@
 			  (set-car! body new))
 			 (else
 			  (loop (cdr body))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    dom-document-get-elements-by-tag-name ...                        */
-;*---------------------------------------------------------------------*/
-(define (dom-document-get-elements-by-tag-name doc name)
-   (dom-get-elements-by-tag-name doc name))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-elements-by-tag-name ...                                 */

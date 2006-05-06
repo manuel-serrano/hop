@@ -1,0 +1,20 @@
+<doc> Proxy hacking
+
+== Description ==
+
+**,(<SPAN> :style "color:red"
+[Montrer le filatrage de Linux et peut-e^tre aussi le filtrage de Google
+et e'ventuellement la balise inline pour faire du greasemonkey.])**
+
+The HOP programming environment rests on a programming language and
+a web server. This web server that we call the HOP server or HOP in short
+is actually more than a regular server. It may act as a server and as
+a proxy. That is, when a request hits a HOP server this later may decide
+to respond the request by itself or it may redirect the request to another
+server. In order to active this last feature, the web browsers must
+be configured for using HOP as a proxy. Once this is done, HOP may be used
+to implement ,(<APIREF> (<I> "weblet") "service.wiki") as demonstrated in the 
+other tutorials. It might also be used to filters remote requests. This 
+tutorial focuses on this last aspect of HOP.
+
+</doc>

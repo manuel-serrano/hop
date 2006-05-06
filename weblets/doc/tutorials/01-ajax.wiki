@@ -8,7 +8,7 @@ containing a status code and a characters string denoting the answer.
 
 ~~ Asynchronous server calls are ubiquitous in HOP. They are implicitly
 present in on-demand ++<NOTEPAD>++s and ++<TREE>++s. They are explicit
-with the ++hop++ and ++with-hop++ client function calls. In this tutorial
+with the ++with-hop++ client function calls. In this tutorial
 we show to use the latter.
 
 ~~ In this tutorial, we are going to use asynchronous function calls for
@@ -50,6 +50,7 @@ language description.
   ;; define the weblet searching the database
   (define-service (tutorial-ajax v)
       (<TABLE>
+         :border 1
          (map (lambda (x)
                  (<TR> (<TD> x)))
 	      (sqlite-map *db* (lambda (x) x) "SELECT name FROM languages WHERE (name LIKE '%~a%')" v))))
@@ -68,13 +69,13 @@ This returns a vector that is displayed in the ++show++ ++<DIV>++ element.
   (<HTML>
      (<HEAD>)
      (let ((show (<DIV> "")))
-	(<BODY>
-	   (<DIV> "Type a programming language name")
-	   (<INPUT> :type "text"
-		    :onkeyup ~(with-hop ($tutorial-ajax this.value)
-				  (lambda (h) (set! $show.innerHTML h))))
-	   (<DIV> "Results...")
-	   show)))
+        (<BODY>
+           (<DIV> "Type a programming language name")
+           (<INPUT> :type "text"
+                    :onkeyup ~(with-hop ($tutorial-ajax this.value)
+                                  (lambda (h) (set! $show.innerHTML h))))
+           (<DIV> "Results...")
+           show)))
 
 == Version 2 ==
 
@@ -125,24 +126,17 @@ table that replaces the body of the ++<DIV>++ element ++show++ .
   (<HTML>
      (<HEAD>)
      (let ((show (<DIV> "")))
-	(<BODY>
-	   (<DIV> "Type a programming language name")
-	   (<INPUT> :type "text"
-		    :onkeyup ~(with-hop ($tutorial-ajax this.value)
-				 (lambda (h)
-				    (define (<tr> r)
-				       (let ((row (document.createElement "row"))
-					     (td (document.createElement "td")))
-					  (set! td.innerHTML r)
-					  (row.appendChild td)))
-				    (let ((table (document.createElement "table")))
-				       (for-each (lambda (r) (table.appendChild (<tr> r))) h)
-				       (let loop ()
-					  (if (> $show.childNodes.length 0)
-					      (begin
-						 ($show.removeChild (array-ref $show.childNodes 0) table)
-						 (loop))))
-				       ($show.appendChild table)))))
-	   (<DIV> "Results...")
-	   show)))
+        (<BODY>
+           (<DIV> "Type a programming language name")
+           (<INPUT> :type "text"
+                    :onkeyup ~(with-hop ($tutorial-ajax this.value)
+                                 (lambda (h)
+                                    (let ((table (<TABLE>
+                                                     :border 1
+                                                     (map (lambda (x) (<TR> (<TD> x))) h))))
+                                       (if (dom-has-child-nodes? $show)
+                                           (dom-remove-child! $show (car (dom-child-nodes $show))))
+                                       (dom-append-child! $show table)))))
+           (<DIV> "Results...")
+           show)))
 </doc>
