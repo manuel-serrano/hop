@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Erick Gallesio                                    */
 #*    Creation    :  Wed Mar  1 14:25:06 2006                          */
-#*    Last change :  Sat Apr  8 07:01:06 2006 (serrano)                */
+#*    Last change :  Sat May  6 14:47:47 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP demos directory                         */
 #*=====================================================================*/
@@ -20,7 +20,7 @@ include ../etc/Makefile.version
 POPDIRS = calendar dhtml event filtering foldlist \
 	  hss notepad paned slider sorttable \
 	  tabslider text todolist tree minesweeper \
-	  sudoku wikiedit
+	  sudoku wikiedit wadler
 
 FILES   = list.hop
 
