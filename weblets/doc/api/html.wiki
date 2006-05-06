@@ -7,6 +7,15 @@ markups have counterparts in HOP. All but two markups (++<HEAD>++ and
 ++<IMG>++) having the same evaluation in HOP that in plain HTML, they are
 only listed here.
 
+~~ The markups are used to represent //graphical user interfaces// (which
+are generally called //document// in the HTML terminology). Such a interface
+looks like:
+
+  (<HTML>
+    (<HEAD> ... (<META> ...) ... (<LINK> ...) ... (<SCRIPT> ...))
+    (<BODY> ...))
+
+
 == Synopsis ==
 
 === server ===
@@ -223,7 +232,6 @@ summarizes the most frequent ones.
 | :onkeyup      |  script    | event handler.                         |
 </arguments>
 
-</markup>
 </markup>
 </markup>
 </markup>

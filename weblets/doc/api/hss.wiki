@@ -1,4 +1,4 @@
-<doc> Cascading style sheet
+<doc> Cascading style sheet (HSS)
 
 == Description ==
 

@@ -3,7 +3,14 @@
 == Description ==
 
 The ++<INLINE>++ markup enables a document built on a server to embed
-part of a remote document.
+part of a remote document. For that, at elaboration time, i.e., when the
+element representing the markup is built, a connection with a remote
+server is opened. The response is parsed according to the
+,(<APIREF> "HTML" "html.wiki") syntax. This parsing produces a tree,
+as if the tree was built locally by explicitly using markups. In particular,
+that tree can be embedded inside other markups. It can be searched using
+the server ,(<APIREF> "DOM" "dom.wiki") facilities. It can be transmitted
+to clients in a respond.
 
 == Synopsis ==
 
@@ -38,7 +45,7 @@ part of a remote document.
  than
 
     (let ((tree (<INLINE> :src <a-url>)))
-      (dom-get-element-by-id <an-identifier>))
+      (dom-get-element-by-id tree <an-identifier>))
 
 
  even tought, the two versions produce the same result.

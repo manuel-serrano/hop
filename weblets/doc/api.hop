@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Fri May  5 21:01:03 2006 (serrano)                */
+;*    Last change :  Sat May  6 06:01:57 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -292,7 +292,9 @@
       (keyword (lambda x
 		  (<SPAN> :class "doc-keyword" x)))
       (pre (lambda x
-	      (<PRE> (decorate-api-wiki-code x))))
+	      (<DIV>
+		 :align "center"
+		 (<PRE> (decorate-api-wiki-code x)))))
       (type (lambda x
 	       (if (and (null? (cdr x)) (string? (car x)))
 		   (let ((s (html-string-decode (car x))))

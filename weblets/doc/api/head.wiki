@@ -6,7 +6,21 @@ The ++<HEAD>++ markup defines the //head// of a document. The HOP
 version of ++<HEAD>++ differs from the original HTML definition of
 ++HEAD++ markup. In particular the HOP version relies on a highly
 non-standard way of evaluating its attributes which can occur several
-times in an invocation.
+times in an invocation. A typical ++<HEAD>++ looks like:
+
+  (<HEAD>
+     :dir <a-path>
+     :jscript <foo1.js> :css <foo1.css>
+     ...
+     :jscript <fooN.js> :css <fooN.css>
+     ...
+     (<META> ...)
+     ...
+     (<SCRIPT> :type "text/javascript" ~(a piece of code))
+     ...
+     (<STYLE> :type "text/css" {cascadeing style sheet elements})
+     ...)
+
 
 == Synopsis ==
 

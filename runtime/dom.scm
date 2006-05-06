@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Wed Apr 12 19:10:27 2006 (serrano)                */
+;*    Last change :  Sat May  6 06:43:16 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -17,7 +17,7 @@
    (import __hop_xml)
 
    (export (%make-xml-document ::xml-document)
-	   (dom-attributes::pair-nil ::obj)
+	   (dom-get-attributes::pair-nil ::obj)
 	   (dom-owner-document node)
 	   (dom-child-nodes::pair-nil ::obj)
 	   (dom-first-child ::obj)
@@ -30,13 +30,15 @@
 	   (dom-previous-sibling node)
 	   (dom-append-child! ::xml-markup new)
 	   (generic dom-clone-node ::obj ::bool)
-	   (dom-has-attributes node)
-	   (dom-has-child-nodes node)
+	   (dom-has-attributes? node)
+	   (dom-has-child-nodes? node)
 	   (dom-insert-before! node new ref)
 	   (dom-normalize! node)
 	   (dom-remove-child! node old)
 	   (dom-replace-child! node new old)
+	   (dom-document-get-element-by-id ::xml-markup ::bstring)
 	   (generic dom-get-element-by-id obj ::bstring)
+	   (dom-document-get-elements-by-tag-name::pair-nil ::xml-markup ::bstring)
 	   (dom-get-elements-by-tag-name::pair-nil obj ::bstring)
 	   (dom-get-attribute node ::bstring)
 	   (dom-has-attribute?::bool node ::bstring)
@@ -59,6 +61,12 @@
 			 (loop (xml-markup-body obj))))
 		   body))
       doc))
+
+;*---------------------------------------------------------------------*/
+;*    dom-document-get-element-by-id ...                               */
+;*---------------------------------------------------------------------*/
+(define (dom-document-get-element-by-id obj id)
+   (dom-get-element-by-id obj id))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ...                                        */
@@ -137,9 +145,9 @@
 	     #f)))))
 
 ;*---------------------------------------------------------------------*/
-;*    dom-attributes ...                                               */
+;*    dom-get-attributes ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (dom-attributes node)
+(define (dom-get-attributes node)
    (if (xml-markup? node)
        (with-access::xml-markup node (attributes)
 	  attributes)
@@ -334,15 +342,15 @@
 	  (body (dom-clone-node (xml-html-body node) deep)))))
        
 ;*---------------------------------------------------------------------*/
-;*    dom-has-attributes ...                                           */
+;*    dom-has-attributes? ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (dom-has-attributes node)
+(define (dom-has-attributes? node)
    (and (xml-markup? node) (pair? (xml-markup-attributes node))))
 
 ;*---------------------------------------------------------------------*/
-;*    dom-has-child-nodes ...                                          */
+;*    dom-has-child-nodes? ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (dom-has-child-nodes node)
+(define (dom-has-child-nodes? node)
    (and (xml-markup? node) (pair? (xml-markup-body node))))
 
 ;*---------------------------------------------------------------------*/
@@ -436,7 +444,13 @@
 			  (set-car! body new))
 			 (else
 			  (loop (cdr body))))))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    dom-document-get-elements-by-tag-name ...                        */
+;*---------------------------------------------------------------------*/
+(define (dom-document-get-elements-by-tag-name doc name)
+   (dom-get-elements-by-tag-name doc name))
+
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-elements-by-tag-name ...                                 */
 ;*---------------------------------------------------------------------*/
