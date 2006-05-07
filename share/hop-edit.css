@@ -3,54 +3,59 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Apr 10 11:43:00 2006                          */
-/*    Last change :  Mon Apr 10 22:08:19 2006 (eg)                     */
+/*    Last change :  Sun May  7 19:09:20 2006 (eg)                     */
 /*    -------------------------------------------------------------    */
 /*    EDITOR CSS                                                       */
 /*=====================================================================*/
 
-BODY {
-    background: #ccc;
+.hop-editor {
+    border: 1px inset #ccc;
+    background: #fff;
 }
-
+    
 .hop-edit-toolbars {
     border: 1px solid #666;
 }
 
 .hop-edit-button {
-    width: 20px; 
-    height: 20px; 
     border: 0px solid transparent; 
     margin: 1px; 
-    padding: 0px; 
+    padding: 2px; 
     background: transparent; 
 }
 
 .hop-edit-button-over { 
-    width: 20px; 
-    height: 20px; 
     border: 1px solid #999999; 
     margin: 0; 
-    padding: 0px;
+    padding: 2px;
 }
 
 
-/* Font Type and Size Drop Down */
-.dropdown          { background-color: #FFFFFF; border: 1px solid #333333; height: 140px; overflow: auto; padding: 1px; }
-button.mouseOver   { background-color: #EEEEEE; border: 1px solid #CCCCCC; padding: 3px; cursor: default; text-align: left;}
-button.mouseOut    { background-color: #FFFFFF; border: 1px solid #FFFFFF; padding: 3px; cursor: default; text-align: left;}
+/*****   P o p u p   W i n d o w s  *****/
+
+.hop-edit-popup {
+    background: #ccc;
+}
+
+.hop-edit-popup-title {
+    background: #ddf; 
+    color: #000; 
+    font-weight: bold; 
+    font-size: 120%; 
+    padding: 3px 10px; 
+    margin-bottom: 10px;
+    border-bottom: 1px solid black; 
+    letter-spacing: 2px;
+}
 
 
+.hop-edit-popup-label {
+    text-align: right; 
+}
 
-
-/* CREATE TABLE POPUP */
-
-/* Select Border Width/Type */
-.on   { background-color: #EEEEEE; border: 1px solid #CCCCCC; padding: 6px; width: 140px; cursor: default; height: 5px;}
-.off  { background-color: #FFFFFF; border: 1px solid #FFFFFF; padding: 6px; width: 140px; cursor: default; height: 5px;}
-
-/* Select Shading/Border Color */
-.selectColorTable  { border: 1px solid #7E7E81; background-color: #F7F7F7; padding: 1px; }
-.selectColorBorder { border: 1px solid #F7F7F7; }
-.selectColorOn     { border: 1px solid #999999; background-color: #CCCCCC; }
-.selectColorOff    { border: 1px solid #F7F7F7; background-color: #F7F7F7; }
-.selectColorBox    { border: 1px solid #FFFFFF; font-size: 1px; height: 13px; width: 13px; }
+.hop-edit-popup-buttons {
+    margin-top: 1em; 
+    border-top: 1px solid #999;
+    padding: 2px; 
+    text-align: right;
+}

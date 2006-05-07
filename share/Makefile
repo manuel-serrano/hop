@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Apr 10 11:45:50 2006 (eg)                     */
+#*    Last change :  Fri May  5 17:05:02 2006 (eg)                     */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -26,7 +26,7 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css hop-window.js \
 		  hop-window.css hop-edit.css hop-edit.js hop.scm \
-		  icons Makefile
+		  icons editor Makefile
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -59,7 +59,12 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/base64.js $(HOPSHAREDIR) && \
 	mkdir -p $(HOPSHAREDIR)/icons && \
 	chmod a+rx $(HOPSHAREDIR)/icons && \
-	install -m a+r $(BUILDSHAREDIR)/icons/* $(HOPSHAREDIR)/icons
+	install -m a+r $(BUILDSHAREDIR)/icons/* $(HOPSHAREDIR)/icons && \
+	mkdir -p $(HOPSHAREDIR)/editor && \
+	chmod a+rx $(HOPSHAREDIR)/editor && \
+	install -m a+r $(BUILDSHAREDIR)/editor/* $(HOPSHAREDIR)/editor \
+
+
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -89,6 +94,8 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop-edit.css && \
 	/bin/rm -f $(HOPSHAREDIR)/base64.js && \
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \
-	/bin/rm -f $(HOPSHAREDIR)/icons
+	/bin/rm -rf $(HOPSHAREDIR)/icons && \
+	/bin/rm -rf $(HOPSHAREDIR)/editor 
+
 
 
