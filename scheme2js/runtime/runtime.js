@@ -327,7 +327,7 @@ function sc_number2symbol(x, radix) { /// export
 }
     
 function sc_number2string(x, radix) { /// export
-    return new sc_String(sc_number2Symbol(x, radix));
+    return new sc_String(sc_number2symbol(x, radix));
 }
 
 function sc_string2number(s, radix) { /// export

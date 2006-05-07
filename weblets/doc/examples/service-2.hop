@@ -11,4 +11,6 @@
 	 s
 	 (<SCRIPT> ~(with-hop ($doc/demo/service-complex 1 0)
 		       (lambda (obj)
-		          (set! $s.innerHTML (+ "x=" obj.x " y=" obj.y))))))))
+		          (set! $s.innerHTML
+				(string-append "x=" (number->string obj.x)
+					       " y=" (number->string obj.y)))))))))

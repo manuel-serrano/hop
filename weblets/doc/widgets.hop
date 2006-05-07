@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Fri May  5 21:03:39 2006 (serrano)                */
+;*    Last change :  Sun May  7 17:23:41 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -185,7 +185,27 @@
 				    (let* ((n (document.getElementById $id))
 					   (p n.parentNode))
 				       (set! p.style.display "none")
-				       (set! $pagearea.innerHTML r))))
+				       (set! $pagearea.innerHTML r)
+				       (let ((eo (document.getElementById $(car el))))
+					  (if eo
+					      (let ((po eo.offsetTop))
+						 (if (> po 50)
+						     (window.scrollTo 0 (- po 50)))
+						 (let* ((p eo.parentNode)
+							(ob p.style.border.background))
+						    (hop-fx-fade-background
+						     p
+						     500
+						     40
+						     (vector "#fffd6b"
+							     "#ffff6f"
+							     "#ffff8f"
+							     "#ffffaf"
+							     "#ffffdf"
+							     "#ffffdf"
+							     (if (eq? ob #unspecified)
+								 "transparent"
+								 ob))))))))))
 			     (html-string-encode (car el))))))
 		 (sort es
 		       (lambda (a b)

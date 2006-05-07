@@ -2,8 +2,10 @@
 (<HTML>
    (<HEAD> :css "hop-slider.css" :jscript "hop-slider.js")
    (<BODY>
-      (let ((d (<DIV> "")))
-	 (list 
-	  (<SLIDER> :caption "top" :min 0 :max 100 :value 5
-		    :onchange ~(set! $d.innerHTML this.value))
-	  d))))
+      (let ((d (<DIV> :style {width: 50%}
+		      "The first time I laid eyes on Terry Lenox, he was drunk in a Rolls Royce Silverwraith.")))
+	 (list
+	  (<DIV> :style { width: 300px }
+		 (<SLIDER> :caption "top" :min 6 :max 20 :value 10
+			   :onchange ~($d.style.setProperty "font-size" (number->string this.value) "")))
+	  (<DIV> :align "center" :style {border: 1px solid #ccc} d)))))

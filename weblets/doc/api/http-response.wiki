@@ -220,7 +220,7 @@ client according to the [[http://www.shoutcast.com/|shoutcast]] protocol.
 </fields>
 
 The class ::http-response-obj is used to transmit values to another
-server using the ++hop-to-hop++ service invocation.
+server using the ++with-hop++ service invocation.
 </class>
 
 === ++(class http-response-js::%http-response-local ...)++ ===

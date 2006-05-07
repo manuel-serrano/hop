@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Tue Mar 21 12:12:28 2006 (serrano)                */
+;*    Last change :  Sun May  7 16:58:35 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -125,3 +125,48 @@
 				 str)
 			  (cons `(,(car binding) (vector-ref ,vec ,i))
 				nbindings)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    with-hop ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-pervasive-macro (with-hop arg0 . args)
+   (define (%invoke-service form)
+      (match-case form
+	 ((?svc . ?args)
+	  `((hop-service-proc ,svc) ,@args))
+	 (else
+	  (error 'with-hop "Illegal service invokation" form))))
+   (define (%with-local-host arg0 args)
+      (cond
+	 ((null? args)
+	  `(with-hop-response ,(%invoke-service arg0)
+			      (lambda (_) #f)
+			      raise))
+	 ((null? (cdr args))
+	  `(with-hop-response ,(%invoke-service arg0)
+			      ,(car args)
+			      raise))
+	 (else
+	  `(with-hop-response ,(%invoke-service arg0)
+			      ,(car args)
+			      ,(cadr args)))))
+   (cond
+      ((not (eq? arg0 :host))
+       (%with-local-host arg0 args))
+      ((null? args)
+       (error 'with-hop "Illegal host" arg0))
+      ((null? (cdr args))
+       (error 'with-hop "Service missing"))
+      (else
+       (match-case (cadr args)
+	  ((?svc . ?opts)
+	   `(with-remote-host ,(car args)
+			      ,svc (list ,@opts)
+			      ,(if (pair? (cddr args))
+				   (car (cddr args))
+				   raise)
+			      ,(if (pair? (cdddr args))
+				   (car (cdddr args))
+				   raise)))
+	  (else
+	   (error 'with-hop "Illegal service invokation" (cadr args)))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun May  7 08:47:39 2006 (serrano)                */
+;*    Last change :  Sun May  7 16:18:54 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -211,7 +211,7 @@
 						    file)
 		     (make-&io-port-error #f #f
 					  'http-response
-					  "File not found"
+					  "Cannot open file"
 					  file)))
 		(begin
 		   (http-write-line p start-line)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Sat May  6 19:03:49 2006 (serrano)                */
+;*    Last change :  Sun May  7 17:16:23 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -298,9 +298,18 @@
 		 (<PRE> (decorate-api-wiki-code x)))))
       (type (lambda x
 	       (if (and (null? (cdr x)) (string? (car x)))
-		   (let ((s (html-string-decode (car x))))
-		      (or (class-parser s) (<SPAN> :class "doc-type" x)))
-		   (<SPAN> :class "doc-type" x))))))
+		   (let* ((s (html-string-decode (car x)))
+			  (c (string-ref s (-fx (string-length s) 1))))
+		      (case c
+			 ((#\, #\; #\: #\.)
+			  (let* ((s2 (substring s 0 (-fx (string-length s) 1)))
+				 (p (class-parser s2)))
+			     (if p
+				 (list p (string c))
+				 (<SPAN> :class "doc-type" x))))
+			 (else
+			  (or (class-parser s) (<SPAN> :class "doc-type" x)))))
+		   (<SPAN> :class "doc-type"  x))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    setup-api-tables! ...                                            */

@@ -2,27 +2,26 @@
 
 == Description ==
 
-A //service// is a function that resides on the server and that can be
+A //service// is a special function that resides on the server and that can be
 invoked from client. This page describes how to create and how to use 
-//services// on the servers and how to invoke them from the clients.
+//services// on the servers and how to invoke them from servers and clients.
 
 == Synopsis ==
 
-=== server ===
+=== Server ===
 
   (service (arg ...) ...)
   (define-service (name arg ...) ...)
   (make-hop-service-url svc arg ...)
   (make-service-url svc arg ...)
   (procedure->service proc)
-  (hop-to-hop host port user svc arg ...)
 
   (hop-autoload-directories)
   (hop-autoload-directories-add! path)
   (hop-autoload-directories-set! list)
 
 
-=== client ===
+=== Server & Client ===
 
   (with-hop (service arg) [success] [failure])
 
@@ -36,7 +35,10 @@ invoked from client. This page describes how to create and how to use
 A service is a function on that resides on the server. In most cases,
 a service returns an HTML tree (i.e., any object constructed by any
 markup), a string, or a number. An instance of any subclass of
-::%http-response is also permitted as return value.
+::%http-response is also permitted as return value. Other values are
+automatically converted into instances of this class. See the
+description of ++with-hop++ for a detailed presentation of 
+automatic coercions that take place when a service is invoked. 
 
 === ++(service (arg<sub>0</sub> ...) body)++ ===
 <function> service
@@ -106,21 +108,6 @@ In particular, the URL can be used in client ++<FORM>++ markups.
 The function ++procedure->service++ creates an anonymous service that
 wraps the procedure ++proc++.
 
-=== ++(hop-to-hop host port user svc arg<sub>0</sub> ...)++ ===
-<function> hop-to-hop
-
-<arguments>
-^  arguments       ^   type           ^  short description              ^
-| host             |  string          | the host name.                  |
-| port             |  integer         | the host port number.           |
-| user             |  ++#f++, string  | user information.               |
-| svc              |  service         | the service to invoke.          |
-| arg<sub>0</sub>  |  obj             | the first argument.             |
-</arguments>
-
-The function ++hop-to-hop++ is used to invoke a service from a distant
-HOP server.
-
 === ++(hop-autoload-directories)++ ===
 === ++(hop-autoload-directories-add! string)++ ===
 === ++(hop-autoload-directories-set! list)++ ===
@@ -148,62 +135,41 @@ the currently available weblets. These are automatically
 
 </server>
 
-== Client Definitions ==
+== Server & Client Definitions ==
+<server>
 <client>
 
-;* === (hop (svc val<sub>0</sub> ...) [success] [failure]) ===         */
-;* <procedure> hop                                                     */
-;*                                                                     */
-;* <arguments>                                                         */
-;* ^  arguments       ^   type       ^  short description              ^ */
-;* | svc              |  service     | the invoked service.            | */
-;* | val<sub>0</sub>  |  obj         | the first argument.             | */
-;* | success          |  procedure   | a procedure of one argument.    | */
-;* | failure          |  procedure   | a procedure of one argument.    | */
-;* </arguments>                                                        */
-;*                                                                     */
-;* The client function ++hop++ invokes the server service ++svc++ with values */
-;* ++val<sub>0</sub>++, ... On success, it invokes the ++success++ client */
-;* function with a data structure representing the response of the service. */
-;* This data structure contains two fields:                            */
-;*                                                                     */
-;*   * ++status++, an integer which denotes the success or failure of the call. */
-;*     * 2xx denote a success.                                         */
-;*     * 4xx denote a request for authentication.                      */
-;*     * Other code denote failures.                                   */
-;*   * ++responseText++, a string denoting the value of the invocation. */
-;*                                                                     */
-;*                                                                     */
-;* Example:                                                            */
-;*                                                                     */
-;*   (let ((d (<DIV> "")))                                             */
-;*     (hop ($(service (x y) (<TABLE> (<TR> (<TD> x) (<TD> y)))) 1 2)  */
-;*          (lambda (h)                                                */
-;*             (set! span.innerHTML h.responseText))))                 */
-;*                                                                     */
-;*                                                                     */
-;* </procedure>                                                        */
 
-=== (with-hop (svc val<sub>0</sub> ...) [success] [failure]) ===
+=== (with-hop [:host host] (svc v<sub>0</sub> ...) [success] [fail]) ===
+<function> with-hop
 <procedure> with-hop
 <arguments>
 ^  arguments       ^   type       ^  short description              ^
+| host             |  string      | a remote server name.           |
 | svc              |  service     | the invoked service.            |
-| val<sub>0</sub>  |  obj         | the first argument.             |
-| proc             |  procedure   | a procedure of one argument.    |
+| v<sub>0</sub>    |  obj         | the first argument.             |
+| ...              |  ...         | ...                             |
+| v<sub>n</sub>    |  obj         | the n<sup>th</sup> argument.    |
+| success          |  procedure   | a procedure of one argument.    |
+| fail             |  procedure   | a procedure of one argument.    |
 </arguments>
 
-The form ++with-hop++ invokes the server service ++svc++ with arguments
-++val<sub>0</sub>++, ... On success, it then invokes the function ++proc++
-with an object constructed from the service answer. The evaluation of
-the service ++svc++ must produce an instance of the class ::http-response .
-If it happens to be an answer of the ::http-response-js then result is
-interpreter as a compound client object. It it happens to be of type 
-::http-response-hop or ::http-response-string, it is interpreted
-as a string.
+The special form ++with-hop++ invokes the server service ++svc++ with
+arguments ++v<sub>0</sub>++, ... On success, it then invokes the
+function ++success++ with an object constructed from the service
+answer. On failure, it invokes ++failure++. 
 
-~~ HOP performs automatic casts for converting value into instance of 
-::http-response. For an object ++res++, here are the rules that are applied:
+~~ When used from a server **only**, a remote ++host++ may be specified.
+In that particular case, the service is executed on the remote host.
+Otherwise, when ++with-hop++ is used from a server without specifying
+a remote ++host++, the service is executed locally. No remote ++host++
+might specified when used from a client. Only the server that has
+provided the page might be invoked in such a situation.
+
+~~ The evaluation of the service ++svc++ produce a response.  If its
+type is not an instance of ::%http-response HOP performs automatic
+casts for converting value into instance of ::%http-response. For an
+object ++res++, here are the rules that are applied:
 
   * if ++res++ is an XML object (built by a markup), it is automatically
  converted into an instance of ::http-response-hop.
@@ -213,19 +179,57 @@ as a string.
  ::http-response-string.
   * otherwise, ++res++ is converted into an instance of ::http-response-js.
 
-~~ Example 1, sending text:
 
-  (let ((d (<DIV> "")))
-    (with-hop ($(service (x y) (<TABLE> (<TR> (<TD> x) (<TD> y)))) 1 2)
-       (lambda (h)
-          (set! span.innerHTML h))))
+If the response is an instance of ::http-response-js then result it is
+interpreted by the client object as a compound object (i.e., a list, a
+vector, ...). It it is an instance of the ::http-response-hop or
+::http-response-string, it is interpreted as a string.
 
+==== Examples =====
 
-~~ Example 2:
+We present various examples that illustrates the different ways to
+use the ++with-hop++ form.
+
+===== 1. Sending HTML tree from the server to the client =====
+
+In this first example, an anonymous service send a HTML table to
+a client. The return type of the service is an XML element, as
+constructed by any markup.
+
+<example>Sending a HTML Tree</example>
+
+===== 2. Sending Complex Values =====
+
+In this second example, the server send to the client a instance of a local
+class. In this example, the client receives a object that it discriminates
+(using the ++obj.x++ and ++obj.y++ expressions) for building a string
+that is injected inside the currently visualized HTML tree.
+
 <example>Sending complex values</example>
+
+===== 3. Invoking Services From The Server =====
+
+In this example, we invoke a service directly from the server. The form
+++with-hop++ is not protected with a ++~++ client escape marker. It is
+then evaluated as all expressions on the server.
+
+<example>Invoking a service from the server</example>
+
+===== 4. Invoking Services From Server To Server =====
+
+In this last example, ++with-hop++ is used to invoke a service from
+a remote service. As for the previous example, the form ++with-hop++
+is not protected with a ++~++ client escape marker, which means that it
+is evaluated on the server. Contrary to the previous address a remote
+host is specified using the :host argument.
+
+<example>Invoking a remote service from the server</example>
+
 </procedure>
+</function>
 
 </client>
+</server>
 
 == See also ==
 <see-also>%http-request, the-current-request, http-response, http-send-request</see-also>

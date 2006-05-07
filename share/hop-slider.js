@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Thu Sep 29 10:38:27 2005 (serrano)                */
-/*    Copyright   :  2005 Manuel Serrano                               */
+/*    Last change :  Sun May  7 17:42:08 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
@@ -32,7 +32,7 @@ function hop_slider_value_set( slider, value ) {
 
    if( slider.value != value ) {
       var curw = slider.cursor.width;
-      var val = Math.round( (value/(slider.max-slider.min))*(100-curw) ) - slider.min;
+      var val = Math.round( ((value-slider.min)/(slider.max-slider.min))*(100-curw) );
       
       slider.value = value;
 

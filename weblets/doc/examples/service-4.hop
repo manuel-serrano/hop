@@ -1,0 +1,16 @@
+;; Invoking a service from the server
+(module example
+   (static (class point x y)))
+ 
+(define-service (doc/demo/service-complex v0 v1)
+   (instantiate::point (x v0) (y v1)))
+
+(<HTML>
+   (let ((s (<SPAN> "")))
+      (<BODY>
+	 s
+	 (with-hop (doc/demo/service-complex 1 0)
+	    (lambda (obj)
+	       (<TABLE>
+		  (<TR> (<TH> "x=") (<TD> (point-x obj))
+			(<TH> "y=") (<TD> (point-y obj)))))))))
