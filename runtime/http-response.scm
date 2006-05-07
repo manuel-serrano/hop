@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri May  5 21:11:35 2006 (serrano)                */
+;*    Last change :  Sun May  7 08:47:39 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -452,22 +452,38 @@
    (if (eq? (http-request-method req) 'HOP) 'UTF-8 (hop-char-encoding)))
 
 ;*---------------------------------------------------------------------*/
+;*    is-xml? ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (is-xml? p)
+   (cond
+      ((null? xml)
+       #f)
+      ((xml? (car p))
+       #t)
+      ((pair? (car p))
+       (or (is-xml? (car p))
+	   (is-xml? (cdr p))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
 ;*    scheme->response ::obj ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (scheme->response obj::obj req)
    (cond
-      ((or (pair? obj) (number? obj) (symbol? obj) (boolean? obj) (date? obj))
-       (instantiate::http-response-hop
-	  (char-encoding (request-encoding req))
-	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
-	  (xml obj)))
       ((string? obj)
        (instantiate::http-response-string
 	  (char-encoding (request-encoding req))
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
 	  (body obj)))
+      ((and (pair? obj) (is-xml? obj))
+       (instantiate::http-response-hop
+	  (char-encoding (request-encoding req))
+	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
+	  (xml obj)))
       (else
-       (http-response-void))))
+       (instantiate::http-response-js
+	  (body obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::%http-response ...                            */

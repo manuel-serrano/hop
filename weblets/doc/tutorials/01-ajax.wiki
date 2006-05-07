@@ -108,16 +108,17 @@ The only variation with respect to the first version are located in the
 
   ;; define the weblet searching the database
   (define-service (tutorial-ajax v)
-     (instantiate::http-response-js
-	(body (sqlite-map *db* (lambda (x) x) "SELECT name FROM languages WHERE (name LIKE '%~a%')" v))))
+     (sqlite-map *db* (lambda (x) x) "SELECT name FROM languages WHERE (name LIKE '%~a%')" v))
 </example>
 
 === The client code ===
 As for the previous version, the client code implements a simple text
 input selection. Each time a character is typed-in, the client invokes
 the ,(<APIREF> "service" "service.wiki") ++tutorial-ajax++ on the
-server.  This returns a list of strings from which the client builds a new 
-table that replaces the body of the ++<DIV>++ element ++show++ .
+server. This returns a list of strings from which the client builds a new 
+table that replaces the body of the ++<DIV>++ element ++show++ . In this
+second version, the code for building the table has been //shifted// from 
+the server to the client.
 
 <example>
   (module tutorial-ajax-html-v2

@@ -198,15 +198,27 @@ The form ++with-hop++ invokes the server service ++svc++ with arguments
 with an object constructed from the service answer. The evaluation of
 the service ++svc++ must produce an instance of the class ::http-response .
 If it happens to be an answer of the ::http-response-js then result is
-interpreter as a compound client object. Otherwise, it is interpreted
+interpreter as a compound client object. It it happens to be of type 
+::http-response-hop or ::http-response-string, it is interpreted
 as a string.
+
+~~ HOP performs automatic casts for converting value into instance of 
+::http-response. For an object ++res++, here are the rules that are applied:
+
+  * if ++res++ is an XML object (built by a markup), it is automatically
+ converted into an instance of ::http-response-hop.
+  * if ++res++ is a pair for which at least one element is an XML object, they
+ whole result is converted into an instance of ::http-response-hop.
+  * if ++res++ is a string, it is converted into an instance of 
+ ::http-response-string.
+  * otherwise, ++res++ is converted into an instance of ::http-response-js.
 
 ~~ Example 1, sending text:
 
   (let ((d (<DIV> "")))
     (with-hop ($(service (x y) (<TABLE> (<TR> (<TD> x) (<TD> y)))) 1 2)
-         (lambda (h)
-            (set! span.innerHTML h))))
+       (lambda (h)
+          (set! span.innerHTML h))))
 
 
 ~~ Example 2:
