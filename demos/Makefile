@@ -19,8 +19,8 @@ include ../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 POPDIRS = calendar dhtml event filtering foldlist \
 	  hss notepad paned slider sorttable \
-	  tabslider text  todolist tree minesweeper \
-	  sudoku editor
+	  tabslider text todolist tree minesweeper \
+	  sudoku wikiedit editor
 
 FILES   = list.hop
 

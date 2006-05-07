@@ -146,7 +146,7 @@
 (define (indirect-fun-call proc-var-ref visible-vars)
    (let ((single-val proc-var-ref.var.single-value))
       (if (and single-val
-	       (inherits-from? single-val Lambda))
+	       (inherits-from? single-val (node 'Lambda)))
 	  (let* ((proc single-val)
 		 (free-vars proc.free-vars)
 		 (captured-vars (make-eq-hashtable)))
@@ -199,9 +199,9 @@
    (let ((operator this.operator)
 	 (operands this.operands))
       (cond
-	 ((inherits-from? operator Lambda)
+	 ((inherits-from? operator (node 'Lambda))
 	      (pcall operator Scope-cc visible-vars))
-	 ((inherits-from? operator Var-ref)
+	 ((inherits-from? operator (node 'Var-ref))
 	  (indirect-fun-call operator visible-vars))
 	 (else
 	  (operator.traverse visible-vars)))
@@ -214,14 +214,14 @@
 	 (val this.val))
       ;; if this is the single assignment, we can ignore it.
       (if (and var.single-value
-	       (inherits-from? val Lambda))
+	       (inherits-from? val (node 'Lambda)))
 	  (pcall val Scope-cc visible-vars)
 	  (val.traverse visible-vars))))
 
 (define-pmethod (Var-ref-cc visible-vars)
    (let ((single-val this.var.single-value))
       (if (and single-val
-	       (inherits-from? single-val Lambda))
+	       (inherits-from? single-val (node 'Lambda)))
 	  (mark-closure! single-val))))
 
 (define (latest-allocation tree)
@@ -238,9 +238,9 @@
 			      Bind-exit
 			      Set!
 			      Call)
-	     (set! Node.proto.default-traverse-value '())
+	     (set! (node 'Node).proto.default-traverse-value '())
 	     (tree.traverse #f #f)
-	     (delete! Node.proto.default-traverse-value)))
+	     (delete! (node 'Node).proto.default-traverse-value)))
 
 (define (latest-merge . Ls)
    (let ((ht (make-eq-hashtable)))
@@ -399,7 +399,7 @@
    (if (and (not already-allocated?)
 	    this.latest)
        (let ((body (this.traverse! #t #f)))
-	  (new Closure-alloc this.latest body))
+	  (new-node Closure-alloc this.latest body))
        (this.traverse2! already-allocated? surrounding-tail-rec)))
 
 (define-pmethod (Tail-rec-alloc! already-allocated? surrounding-tail-rec)

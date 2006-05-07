@@ -2,7 +2,7 @@
    (library scheme2js))
 
 ;; ===========================================================================
-;; modify scheme2js expander, so we recognize '$'escapes.
+;; add scheme2js pre-expander, so we recognize '$'escapes.
 ;; ===========================================================================
 
 (define (starts-with-dollar? id)
@@ -68,8 +68,5 @@
       (else
        x)))
 
-(let ((old-initial-expander *scheme2js-initial-expander*))
-   (define (new-initial-expander x e::procedure)
-      (let ((x-unhopped (unhop x)))
-	 (old-initial-expander x-unhopped e)))
-   (set! *scheme2js-initial-expander* new-initial-expander))
+(add-pre-expand! (lambda (x)
+		    (unhop x)))

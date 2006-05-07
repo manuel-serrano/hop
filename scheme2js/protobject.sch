@@ -10,12 +10,11 @@
    (match-case L
       (((?class-name . ?args) . ?body)
        (let ((constr-props (gensym 'props)))
-	  `(begin
-	      (define ,class-name
-		 (create-pclass ',class-name
-				,(if (null? body)
-				     'pobject-id
-				     `(pmethod ,args ,@body)))))))
+	  `(define ,class-name
+	      (create-pclass ',class-name
+			     ,(if (null? body)
+				  'pobject-id
+				  `(pmethod ,args ,@body))))))
       (else (error "define-pclass" "invalid syntax" (cons define-pclass L)))))
 
 (define-macro (pmethod . L)

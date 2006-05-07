@@ -7,13 +7,10 @@
 	   verbose)
    (export (tail-exprs tree::pobject intermediate-nodes-are-tail?::bool)))
 
-(define *inter-tail?* #f)
-
 ;; might be called only after Node-elimination.
 ;; but then anytime. so don't assume nodes exist or not.
 (define (tail-exprs tree intermediate-nodes-are-tail?)
    (verbose "tail")
-   (set! *inter-tail?* intermediate-nodes-are-tail?)
    (overload traverse tail (Node
 			    Program
 			    (Part Inter-tail)
@@ -35,72 +32,72 @@
 			    (Label Inter-tail)
 			    Break
 			    (Pragma Value-tail))
-	     (tree.traverse #f)))
+	     (tree.traverse #f intermediate-nodes-are-tail?)))
 
-(define-pmethod (Node-tail tail?)
+(define-pmethod (Node-tail tail? inter-tail?)
    (error #f "tail. forgot node-type" this))
 
-(define-pmethod (Value-tail tail?)
+(define-pmethod (Value-tail tail? inter-tail?)
    (set! this.tail? tail?))
    
-(define-pmethod (Inter-tail tail?)
-   (set! this.tail? (and *inter-tail?* tail?))
-   (this.traverse1 tail?))
+(define-pmethod (Inter-tail tail? inter-tail?)
+   (set! this.tail? (and inter-tail? tail?))
+   (this.traverse2 tail? inter-tail?))
 
-(define-pmethod (Enclosing-tail tail?)
+(define-pmethod (Enclosing-tail tail? inter-tail?)
    (set! this.tail? tail?)
-   (this.traverse1 #f))
+   (this.traverse2 #f inter-tail?))
 
-(define-pmethod (Program-tail tail?)
+(define-pmethod (Program-tail tail? inter-tail?)
    (set! this.tail? #t)
    ;; program's content is tail
-   (this.traverse1 #t))
+   (this.traverse2 #t inter-tail?))
 
-(define-pmethod (Lambda-tail tail?)
+(define-pmethod (Lambda-tail tail? inter-tail?)
    (set! this.tail? tail?)
    ;; function's content is tail.
-   (this.traverse1 #t))
+   (this.traverse2 #t inter-tail?))
 
-(define-pmethod (If-tail tail?)
-   (set! this.tail? (and *inter-tail?* tail?))
-   (this.test.traverse #f)
-   (this.then.traverse tail?)
-   (this.else.traverse tail?))
+(define-pmethod (If-tail tail? inter-tail?)
+   (set! this.tail? (and inter-tail? tail?))
+   (this.test.traverse #f inter-tail?)
+   (this.then.traverse tail? inter-tail?)
+   (this.else.traverse tail? inter-tail?))
 
-(define-pmethod (Case-tail tail?)
-   (set! this.tail? (and *inter-tail?* tail?))
-   (this.key.traverse #f)
+(define-pmethod (Case-tail tail? inter-tail?)
+   (set! this.tail? (and inter-tail? tail?))
+   (this.key.traverse #f inter-tail?)
    (for-each (lambda (clause)
-		(clause.traverse tail?))
+		(clause.traverse tail? inter-tail?))
 	     this.clauses))
 
-(define-pmethod (Clause-tail tail?)
-   (set! this.tail? (and *inter-tail?* tail?))
+(define-pmethod (Clause-tail tail? inter-tail?)
+   (set! this.tail? (and inter-tail? tail?))
    (for-each (lambda (const)
-		(const.traverse #f))
+		(const.traverse #f inter-tail?))
 	     this.consts)
-   (this.expr.traverse tail?))
+   (this.expr.traverse tail? inter-tail?))
 
-(define-pmethod (Begin-tail tail?)
-   (set! this.tail? (and *inter-tail?* tail?))
+(define-pmethod (Begin-tail tail? inter-tail?)
+   (set! this.tail? (and inter-tail? tail?))
    (let loop ((exprs this.exprs))
       (cond
 	 ((null? exprs) 'do-nothing)
 	 ((null? (cdr exprs))
-	  ((car exprs).traverse tail?))
+	  ((car exprs).traverse tail? inter-tail?))
 	 (else
-	  ((car exprs).traverse #f)
+	  ((car exprs).traverse #f inter-tail?)
 	  (loop (cdr exprs))))))
 
-(define-pmethod (Bind-exit-tail tail?)
-   (set! this.tail? (and *inter-tail?* tail?))
-   (this.escape.traverse #f)
-   (this.body.traverse tail?))
+(define-pmethod (Bind-exit-tail tail? inter-tail?)
+   (set! this.tail? (and inter-tail? tail?))
+   (this.escape.traverse #f inter-tail?)
+   (this.body.traverse tail? inter-tail?))
 
-(define-pmethod (Return-tail tail?)
+(define-pmethod (Return-tail tail? inter-tail?)
    (set! this.tail? tail?)
-   (this.val.traverse #t))
+   (this.val.traverse #t inter-tail?))
 
-(define-pmethod (Break-tail tail?)
+(define-pmethod (Break-tail tail? inter-tail?)
    (set! this.tail? tail?)
-   (this.val.traverse this.label.tail?))
+   (this.val.traverse this.label.tail? inter-tail?))

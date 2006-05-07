@@ -1,66 +1,93 @@
 (module pobject-conv
+   (option (loadq "protobject-eval.sch"))
    (include "protobject.sch")
+   (include "nodes.sch")
    (import nodes
 	   protobject
 	   verbose)
    (export (pobject-conv::pobject prog)))
 
+(define (location s-expr)
+   (and (epair? s-expr)
+	(cer s-expr)))
+
+(define (scheme->pobject-map l)
+   (let loop ((l l)
+	      (rev-res '()))
+      (if (null? l)
+	  (reverse! rev-res)
+	  (let ((loc (location l)))
+	     (loop (cdr l)
+		   (cons (scheme->pobject (car l) loc)
+			 rev-res))))))
+
+(define (location-map f l)
+   (let loop ((l l)
+	      (rev-res '()))
+      (if (null? l)
+	  (reverse! rev-res)
+	  (let ((loc (location l)))
+	     (loop (cdr l)
+		   (cons (f (car l) loc)
+			 rev-res))))))
+
+(define (attach-location o loc)
+   (if loc (set! o.loc loc))
+   o)
+   
 (define (pobject-conv prog)
    (verbose "list->pobject")
-   (new Program
-	(new Part
-	     (scheme->pobject prog))))
+   (nodes-init!)
+   (new-node Program
+	(new-node Part
+	     (scheme->pobject prog (location prog)))))
    
 (define (expr-list->Body expr-list)
-   (new Body (expr-list->Begin expr-list)))
+   (new-node Body (expr-list->Begin expr-list)))
 
 (define (expr-list->Begin expr-list)
-   (new Begin (map scheme->pobject expr-list)))
+   (new-node Begin (scheme->pobject-map expr-list)))
 
 (define (lambda->pobject formals-vaarg body)
-   (define (split-formals-vaarg formals-vaarg)
-      (let loop ((formals-vaarg formals-vaarg)
-		 (rev-formals '()))
-	 (cond
-	    ((null? formals-vaarg)
-	     (values (reverse! rev-formals) #f))
-	    ((pair? formals-vaarg)
-	     (loop (cdr formals-vaarg)
-		   (cons (car formals-vaarg) rev-formals)))
-	    (else
-	     (values (reverse! rev-formals) formals-vaarg)))))
+   (define (split-formals-vaarg! formals-vaarg)
+      (and (pair? formals-vaarg)
+	   (let* ((p (last-pair formals-vaarg))
+		  (vaarg (cdr p)))
+	      (set-cdr! p '())
+	      (and (not (null? vaarg))
+		   vaarg))))
 
-   (multiple-value-bind (formals vaarg)
-      (split-formals-vaarg formals-vaarg)
-      (new Lambda
-	   (map (lambda (formal)
-		   (new Decl formal))
-		formals)
-	   (and vaarg (new Decl vaarg))
-	   (new Return (expr-list->Body body)))))
+   (let ((vaarg (split-formals-vaarg! formals-vaarg))
+	 (formals formals-vaarg)) ;; just an alias
+      (new-node Lambda
+	   (location-map (lambda (formal loc)
+			    (attach-location (new-node Decl formal) loc))
+			 formals)
+	   (and vaarg (new-node Decl vaarg))
+	   (new-node Return (expr-list->Body body)))))
 
 (define (let-form->pobject bindings body kind)
    (define (binding->pobject binding)
       (let ((var (car binding))
 	    (val (cadr binding)))
-	 (new Binding
-	      (new Decl var)
-	      (scheme->pobject val))))
+	 (new-node Binding
+	      (attach-location (new-node Decl var) (location binding))
+	      (scheme->pobject val (location (cdr binding))))))
    
-   (let ((pobject-bindings (map binding->pobject bindings)))
-      (new Let-form pobject-bindings (expr-list->Body body) kind)))
+   (let ((pobject-bindings (map! binding->pobject bindings)))
+      (new-node Let-form pobject-bindings (expr-list->Body body) kind)))
 
 (define (case->pobject key clauses)
    (define (clause->pobject clause maybe-default-clause?)
       (let* ((consts (car clause))
 	     (raw-exprs (cdr clause))
-	     (exprs (map scheme->pobject raw-exprs))
-	     (begin-expr (new Begin exprs)))
+	     (exprs (scheme->pobject-map raw-exprs))
+	     (begin-expr (new-node Begin exprs)))
 	 (if (and maybe-default-clause?
 		  (eq? consts 'else))
-	     (new Clause '() begin-expr #t)
-	     (new Clause (map (lambda (const)
-				 (new Const const))
+	     (new-node Clause '() begin-expr #t)
+	     (new-node Clause (map (lambda (const)
+				 (new-node Const const))
 			      consts)
 		  begin-expr #f))))
    
@@ -76,47 +103,61 @@
 			     (cons (clause->pobject (car clauses) #f)
 				   rev-result)))))
 
-   (new Case
-	(scheme->pobject key)
+   (new-node Case
+	(scheme->pobject-no-loc key)
 	(clauses->pobjects clauses '())))
 
-(define (scheme->pobject exp)
+(define (scheme->pobject-no-loc exp)
    (cond
       ((pair? exp)
        (match-case exp
-	  ((quote ?datum) (new Const datum))
+	  ((quote ?datum) (new-node Const datum))
 	  ((lambda ?formals . ?body) (lambda->pobject formals body))
 	  ((if ?test ?then)
-	   (scheme->pobject `(if ,test ,then #unspecified)))
+	   ;(scheme->pobject `(if ,test ,then #unspecified)))
+	   (set-cdr! (cddr exp) '(#unspecified))
+	   (scheme->pobject-no-loc exp))
 	  ((if ?test ?then ?else)
-	   (new If
-		(scheme->pobject test)
-		(scheme->pobject then)
-		(scheme->pobject else)))
+	   (new-node If
+		(scheme->pobject test (location (cdr exp)))
+		(scheme->pobject then (location (cddr exp)))
+		(scheme->pobject else (location (cdddr exp)))))
 	  ((if . L) (error #f "bad if-form: " exp))
 	  ((case ?key . ?clauses)
 	   (case->pobject key clauses))
 	  ((set! ?var ?expr)
-	   (new Set! (new Var-ref var) (scheme->pobject expr)))
+	   (new-node Set!
+		(attach-location (new-node Var-ref var) (location (cdr exp)))
+		(scheme->pobject expr (location (cddr exp)))))
+	  ((set! . L) (error #f "bad set!-form: " exp))
 	  ((let ?bindings . ?body) (let-form->pobject bindings body 'let))
 	  ((letrec ?bindings . ?body) (let-form->pobject bindings body 'letrec))
-	  ((begin . ?body) (new Begin (map scheme->pobject body)))
+	  ((begin . ?body) (new-node Begin (scheme->pobject-map body)))
 	  ((define ?var ?expr)
-	   (new Define (new Decl var) (scheme->pobject expr)))
+	   (new-node Define
+		(attach-location (new-node Decl var) (location (cdr exp)))
+		(scheme->pobject expr (location (cddr exp)))))
 	  ((bind-exit (?escape) . ?body)
-	   (new Bind-exit (new Decl escape) (expr-list->Body body)))
+	   (new-node Bind-exit (new-node Decl escape) (expr-list->Body body)))
 	  ((pragma ?str)
-	   (new Pragma str))
+	   (new-node Pragma str))
 	  ((part ?expr (and ?fun (? procedure?)))
-	   (new Part (scheme->pobject expr) fun))
+	   (new-node Part
+		(scheme->pobject expr (location (cdr exp)))
+		fun))
 	  ((?operator . ?operands)
-	   (new Call (scheme->pobject operator) (map scheme->pobject operands)))))
+	   (new-node Call
+		(scheme->pobject operator (location exp))
+		(scheme->pobject-map operands)))))
       ((eq? exp #unspecified)
-	(new Const #unspecified))
+	(new-node Const #unspecified))
        ;; unquoted symbols must be var-refs
       ((symbol? exp)
-       (new Var-ref exp))
+       (new-node Var-ref exp))
       ((vector? exp)
        (error #f "vectors must be quoted" exp))
       (else
-       (new Const exp))))
+       (new-node Const exp))))
+
+(define (scheme->pobject exp loc)
+   (attach-location (scheme->pobject-no-loc exp) loc))

@@ -31,4 +31,6 @@
  ("Games"
   ("Mine sweeper"       "minesweeper")
   ("Sudoku"		"sudoku"))
+ ("Wiki"
+  ("Live wiki editor"   "wikiedit"))
  )

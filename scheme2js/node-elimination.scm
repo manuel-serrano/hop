@@ -20,10 +20,10 @@
 
 ;; let-form becomes a suite ('begin') of bindings followed by the body.
 (define-pmethod (Let-form-node-elimination!)
-   (new Begin (append (map (lambda (binding)
-			      (binding.traverse!))
-			   this.bindings)
-		      (list (this.body.traverse!)))))
+   (new-node Begin (append (map (lambda (binding)
+				   (binding.traverse!))
+				this.bindings)
+			   (list (this.body.traverse!)))))
 
 ;; drop Body-node
 (define-pmethod (Body-node-elimination!)
@@ -35,7 +35,7 @@
    (let ((exprs this.exprs))
       (cond
 	 ((null? exprs)
-	  (new Const #unspecified))
+	  (new-node Const #unspecified))
 	 ((null? (cdr exprs))
 	  ((car exprs).traverse!))
 	 (else
@@ -44,7 +44,7 @@
 		(let ((expr ((car exprs).traverse!))
 		      (exprs-tail (cdr exprs)))
 		   (set-car! exprs expr)
-		   (if (inherits-from? expr Begin)
+		   (if (inherits-from? expr (node 'Begin))
 		       ;; insert into our list.
 		       (let ((other-exprs expr.exprs))
 			  ;; we know there must be at least 2 elements.
@@ -61,17 +61,17 @@
 		     (last #f)) ;; last-pair, that is in the 'accepted' list
 	     (cond
 		((null? exprs) ;; should never happen
-		 (new Const #unspecified))
+		 (new-node Const #unspecified))
 		((null? (cdr exprs))
 		 (if last
 		     (begin
 			(set! this.exprs head)
 			this)
 		     (car exprs)))
-		((or (inherits-from? (car exprs) Lambda)
-		     (inherits-from? (car exprs) Const)
-		     (and (inherits-from? (car exprs) Var-ref)
-			  (not (inherits-from? (car exprs) Decl))))
+		((or (inherits-from? (car exprs) (node 'Lambda))
+		     (inherits-from? (car exprs) (node 'Const))
+		     (and (inherits-from? (car exprs) (node 'Var-ref))
+			  (not (inherits-from? (car exprs) (node 'Decl)))))
 		 (if last
 		     (begin
 			(set-cdr! last (cdr exprs)) ;; remove the current el.

@@ -3,31 +3,28 @@
    (include "nodes.sch")
    (option (loadq "protobject-eval.sch"))
    (import protobject
+	   config
 	   nodes
 	   var
 	   side
 	   transform-util
 	   verbose)
-   (export (inline! tree::pobject)
-	   *inline-globals?*))
-
-(define *inline-globals?* #f)
+   (export (inline! tree::pobject)))
 
 (define *second-pass* #t)
-(define *inlined-funs* #f)
-
-(define *max-uses* 99999)
 
 (define (inline! tree)
-   (verbose "inlining")
-   (constant-propagation! tree)
-   (clean! tree)
-   (inline-funs! tree)
-   (if (and *inlined-funs*
-	    *second-pass*)
+   (if (config 'do-inlining)
        (begin
+	  (verbose "inlining")
 	  (constant-propagation! tree)
-	  (clean! tree))))
+	  (clean! tree)
+	  (let ((inlined-funs? (inline-funs! tree)))
+	     (if (and inlined-funs?
+		      *second-pass*)
+		 (begin
+		    (constant-propagation! tree)
+		    (clean! tree)))))))
 
 ;; currently only single-assig propagation:
 ;;  if a value is assigned only once, we can safely propagate this value.
@@ -72,21 +69,21 @@
 (define-pmethod (Var-ref-propagate!)
    (let ((single-value this.var.single-value))
       (if (and single-value
-	       (inherits-from? single-value Const)
-	       (or *inline-globals?*
+	       (inherits-from? single-value (node 'Const))
+	       (or (config 'inline-globals)
 		   (not this.var.is-global?)))
 	  (begin
 	     (set! this.var.inlined? #t)
-	     (new Const single-value.value))
+	     (new-node Const single-value.value))
 	  this)))
 
 (define-pmethod (Call-propagate!)
    (let ((op this.operator))
-      (if (inherits-from? op Var-ref)
+      (if (inherits-from? op (node 'Var-ref))
 	  (let* ((var op.var)
 		 (single-value var.single-value))
 	     (if (and single-value
-		      (inherits-from? single-value Lambda)
+		      (inherits-from? single-value (node 'Lambda))
 		      (not single-value.closure?)
 		      (eq? var.uses 1))
 		 (begin
@@ -114,52 +111,66 @@
    (let ((lvar this.lvalue.var))
       (cond
 	 (lvar.inlined?
-	  (new Const #unspecified))
+	  (new-node Const #unspecified))
 	 ((and (not lvar.uses)
-	       (not (inherits-from? lvar JS-Var))
+	       (not (inherits-from? lvar (node 'JS-Var)))
 	       (not lvar.is-global?))
 	  (this.val.traverse!))
 	 (else (this.traverse0!)))))
 
 (define (inline-funs! tree)
+   (define *inlined-funs* #f)
+   (define *id->js-var* #unspecified)
+
+   (define-pmethod (Node-inline! label)
+      (this.traverse1! label))
+
+   (define-pmethod (Program-inline! label)
+      (set! *id->js-var* this.id->js-var)
+      (this.traverse1! label))
+
+   (define-pmethod (Call-inline! label)
+      (let ((op this.operator))
+	 (if (inherits-from? op (node 'Lambda))
+	     (let* ((fun op)
+		    (assigs (parameter-assigs this.operands
+					      fun.formals
+					      fun.vaarg
+					      #f ;; don't take reference
+					      *id->js-var*))
+		    (traversed-assigs (map (lambda (node)
+					      (node.traverse! label))
+					   assigs))
+		    (label (new-node Label fun.body (gensym 'inlined)))
+		    (traversed-label (label.traverse! label)))
+		(set! *inlined-funs* #t)
+		(new-node Begin (append! traversed-assigs
+				    (list (if traversed-label.used
+					      traversed-label
+					      traversed-label.body)))))
+	     (this.traverse1! label))))
+
+   (define-pmethod (Lambda-inline! label)
+      (this.traverse1! #f))
+
+   (define-pmethod (Return-inline! label)
+      (if label
+	  (if this.tail?
+	      (this.val.traverse! label)
+	      (begin
+		 (set! label.used #t)
+		 ((new-node Break this.val label).traverse! label)))
+	  (this.traverse1! label)))
+
+
+   ;;=====================================================
+   ;; method-start
+   ;;====================================================
    (verbose " inline-funs!")
    (overload traverse! inline! (Node
+				Program
 				Call
 				Lambda
 				Return)
-	     (tree.traverse! #f)))
-
-(define-pmethod (Node-inline! label)
-   (this.traverse1! label))
-
-(define-pmethod (Call-inline! label)
-   (let ((op this.operator))
-      (if (inherits-from? op Lambda)
-	  (let* ((fun op)
-		 (assigs (parameter-assigs this.operands
-					   fun.formals
-					   fun.vaarg
-					   #f)) ;; don't take reference
-		 (traversed-assigs (map (lambda (node)
-					   (node.traverse! label))
-					assigs))
-		 (label (new Label fun.body (gensym 'inlined)))
-		 (traversed-label (label.traverse! label)))
-	     (set! *inlined-funs* #t)
-	     (new Begin (append! traversed-assigs
-				 (list (if traversed-label.used
-					   traversed-label
-					   traversed-label.body)))))
-	  (this.traverse1! label))))
-
-(define-pmethod (Lambda-inline! label)
-   (this.traverse1! #f))
-
-(define-pmethod (Return-inline! label)
-   (if label
-       (if this.tail?
-	   (this.val.traverse! label)
-	   (begin
-	      (set! label.used #t)
-	      ((new Break this.val label).traverse! label)))
-       (this.traverse1! label)))
+	     (tree.traverse! #f))
+   *inlined-funs*)

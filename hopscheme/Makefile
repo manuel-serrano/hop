@@ -29,7 +29,7 @@ TARGETNAME	= hopscheme
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _BGL_OBJECTS	= hopscheme hop-scheme-head runtime-files dollar-escape \
-		  tilde-escape
+		  tilde-escape hopscheme-config
 
 _OBJECTS	= $(_BGL_OBJECTS)
 

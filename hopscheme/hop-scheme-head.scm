@@ -1,6 +1,7 @@
 (module hop-scheme-head
    (library hop
 	    scheme2js)
+   (import hopscheme-config)
    (export (<HOP-SCHEME-HEAD> . obj))
    (eval (export-all)))
 
@@ -14,7 +15,10 @@
 (define (compile-scheme-file file)
    (let* ((tmp-name (string-append (symbol->string (gensym 'tmpFile)) ".js"))
 	  (tmp-file-name (make-file-name "/tmp" tmp-name)))
-      (scheme2js-compile-files! (list file) tmp-file-name)
+      (scheme2js-compile-files! (list file)          ;; input-files
+				tmp-file-name        ;; output-file
+				'()                  ;; js-interface
+				(hopscheme-config))  ;; config
       tmp-file-name))
 
 
