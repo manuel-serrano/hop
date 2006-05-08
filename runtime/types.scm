@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Mar 21 13:53:19 2006 (serrano)                */
+;*    Last change :  Mon May  8 06:00:36 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -98,6 +98,7 @@
 	   (class http-response-string::%http-response-local
 	      (body::bstring read-only (default "")))
 
+	   ;; this class is obsolete. it should no longer be used
 	   (class http-response-obj::%http-response-local
 	      (body::obj read-only))
 	   

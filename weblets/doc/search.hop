@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Fri May  5 21:01:51 2006 (serrano)                */
+;*    Last change :  Sun May  7 20:22:00 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -25,6 +25,7 @@
 	   (search-examples port title expr*)
 	   (search-table value service id table offset columns)
 	   (search-docs dir)
+	   (search-libraries dir)
 	   (search-tutorials dir value)))
 
 ;*---------------------------------------------------------------------*/
@@ -289,8 +290,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    search-docs-inner ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (search-docs-inner dir)
-   (let ((t (kmp-table "<doc> ")))
+(define (search-docs-inner dir key)
+   (let ((t (kmp-table key))
+	 (l (fixnum->elong (string-length key))))
       (filter-map (lambda (f)
 		     (when (is-suffix? f "wiki")
 			(let* ((path (make-file-name dir f))
@@ -300,7 +302,7 @@
 			      (unwind-protect
 				 (let ((r (kmp-mmap t mm #e0)))
 				    (and (>=elong r #e0)
-					 (let ((l (mmap-line mm (+elong r #e6))))
+					 (let ((l (mmap-line mm (+elong r l))))
 					    (cons l (<APIREF> l f)))))
 				 (close-mmap mm))))))
 		  (directory->list dir))))
@@ -310,10 +312,17 @@
 ;*---------------------------------------------------------------------*/
 (define (search-docs dir)
    (map cdr 
-	(sort (search-docs-inner dir)
+	(sort (search-docs-inner dir "<doc> ")
 	      (lambda (a b) (string<? (car a) (car b))))))
       
-
+;*---------------------------------------------------------------------*/
+;*    search-libraries ...                                             */
+;*---------------------------------------------------------------------*/
+(define (search-libraries dir)
+   (map cdr 
+	(sort (search-docs-inner dir "<library> ")
+	      (lambda (a b) (string<? (car a) (car b))))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    mmap-line ...                                                    */
 ;*---------------------------------------------------------------------*/

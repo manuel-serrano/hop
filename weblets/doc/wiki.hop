@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Fri May  5 21:04:23 2006 (serrano)                */
+;*    Last change :  Sun May  7 20:13:31 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -37,6 +37,7 @@
 (define (wiki-plugins id)
    (case id
       ((<doc>) <WIKI-DOC>)
+      ((<library>) <WIKI-LIBRARY>)
       ((<css>) <WIKI-CSS>)
       ((<arguments>) <WIKI-ARGUMENTS>)
       ((<fields>) <WIKI-FIELDS>)
@@ -101,6 +102,12 @@
 	  :class "toc"
 	  (hop-wiki->toc expr :max-depth 3))
        expr)))
+
+;*---------------------------------------------------------------------*/
+;*    <WIKI-LIBRARY> ...                                               */
+;*---------------------------------------------------------------------*/
+(define (<WIKI-LIBRARY> port title expr)
+   expr)
 
 ;*---------------------------------------------------------------------*/
 ;*    <DOC/edit> ...                                                   */

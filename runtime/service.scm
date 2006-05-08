@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat May  6 08:14:26 2006 (serrano)                */
+;*    Last change :  Mon May  8 06:07:02 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -153,7 +153,7 @@
 ;*    %eval ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%eval exp cont)
-   (let ((s (scheme->javascript
+   (let ((s (hop->json
 	     (procedure->service (lambda (res) (cont res))))))
       (instantiate::http-response-hop
 	 (xml (<HTML>

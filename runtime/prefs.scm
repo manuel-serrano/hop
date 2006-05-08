@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Wed Mar 29 14:34:51 2006 (serrano)                */
+;*    Last change :  Mon May  8 06:06:41 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -63,7 +63,7 @@
                           } else {
                             this.className = 'pref_modified';
                           } }"
-		       (scheme->javascript svc))))
+		       (hop->json svc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sexp-editor ...                                                  */
@@ -96,7 +96,7 @@
 		  :name name
 		  :onclick (format
 			    "hop(~a(true)); this.className = 'pref_applied';"
-			    (scheme->javascript svc))
+			    (hop->json svc))
 		  yes-string))
 	    (<TD> 
 	       (<INPUT>
@@ -105,6 +105,6 @@
 		  :name name
 		  :onclick (format
 			    "hop(~a(false)); this.className = 'pref_applied';"
-			    (scheme->javascript svc))
+			    (hop->json svc))
 		  no-string))))))
       

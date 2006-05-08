@@ -52,7 +52,7 @@ The function ++the-current-request++ is bound in the body of all
 services. It returns an object representing the current HOP request.
 That is, the request that has yield the service invocation.
 
- </function>
+</function>
 
 == See also ==
 <see-also>the-current-request, http-request, http-response</see-also>

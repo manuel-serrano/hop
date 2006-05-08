@@ -1,4 +1,5 @@
 <doc> Wiki facilities
+<library> hopwiki
 
 == Description ==
 
@@ -170,4 +171,5 @@ expressions that are parsed before the closing markup.
 == See also ==
 <see-also>wiki</see-also>
 
+</library>
 </doc>

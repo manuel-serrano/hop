@@ -20,7 +20,6 @@ to client requests.
   (class http-response-file::%http-response-local ...)
   (class http-response-shoutcast::http-response-file ...)
   (class http-response-string::%http-response-local ...)
-  (class http-response-obj::%http-response-local ...)
   (class http-response-js::%http-response-local ...)
   (class http-response-cgi::%http-response-local ...)
   (class http-response-persistent::%http-response ...)
@@ -139,7 +138,7 @@ than an authentication is needed to answer the current request.
 </fields>
 
 The abstract class ::%http-response-local is the super class of all
-local responses. A response is __local__ if it is handled by
+local responses. A response is local if it is handled by
 the current server.
 
 </class>
@@ -208,19 +207,6 @@ client according to the [[http://www.shoutcast.com/|shoutcast]] protocol.
 | string               |    r      |       string      |      _                | the body.                                   |
 </fields>
 
-</class>
-
-=== ++(class http-response-obj::%http-response-local ...)++ ===
-<class> http-response-obj
-
-<fields>
-^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
-| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
-| body                 |    r      |       obj         |      _                | the object to be returned.                  |
-</fields>
-
-The class ::http-response-obj is used to transmit values to another
-server using the ++with-hop++ service invocation.
 </class>
 
 === ++(class http-response-js::%http-response-local ...)++ ===

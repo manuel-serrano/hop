@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat May  6 06:04:01 2006 (serrano)                */
+/*    Last change :  Mon May  8 06:34:31 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -37,7 +37,7 @@ $(define deep-blue "#00a")
 $(define deep-green "#0a0")
 $(define deep-magenta "#7a459e")
 $(define deep-magenta2 "#4a346c")
-$(define deep-orange "#c67015")
+$(define deep-orange "#ffae2b")
 $(define small "small")
 $(define x-small "x-small")
 
@@ -702,6 +702,30 @@ tutorials div.doc-title th {
 
 tutorials div.example button {
   font-size: $x-small;
+}
+
+/*---------------------------------------------------------------------*/
+/*    libraries                                                        */
+/*---------------------------------------------------------------------*/
+$(hop-hss-type! "libraries" "div.libraries")
+
+libraries {
+  background: white;
+  padding: 2px;
+  border: 1px solid $border-color;
+}
+
+libraries div.libraries-title {
+  padding: 3px;
+  padding-left: 7px;
+  margin-bottom: 10px;
+  color: #82d664;
+  font-weight: bold;
+  font-size: large;
+  border-bottom: 1px solid $border-color;
+}
+
+libraries table.api-index {
 }
 
 /*---------------------------------------------------------------------*/

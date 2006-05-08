@@ -1,0 +1,58 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/doc/libraries.hop               */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon May  8 06:21:47 2006                          */
+;*    Last change :  Mon May  8 06:25:45 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The HOP libraries doc.                                           */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc_libraries
+
+   (import hopdoc_config
+	   hopdoc_wiki
+	   hopdoc_api
+	   hopdoc_widgets
+	   hopdoc_search)
+   
+   (export (<LIBRARIES>)))
+
+;*---------------------------------------------------------------------*/
+;*    <LIBRARIES> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<LIBRARIES>)
+   (<DIV>
+      :class "libraries"
+      (<DIV>
+	 :class "libraries-title"
+	 "HOP Libraries")
+      (<LIBRARIES-TOC>)))
+
+;*---------------------------------------------------------------------*/
+;*    <LIBRARIES-TOC> ...                                              */
+;*---------------------------------------------------------------------*/
+(define (<LIBRARIES-TOC>)
+   (let ((l (search-libraries (doc-api-dir))))
+      (cond
+	 ((null? l)
+	  "Libraries description")
+	 ((null? (cdr l))
+	  (<TABLE>
+		:class "api-index"
+		(<COLGROUP> :span 2 :width "50%")
+		(<TR> (<TD> (car l)))))
+	 (else
+	  (let ((l2 (list-split! l
+				 (inexact->exact (ceiling (/ (length l) 2)))
+				 "&nbsp;")))
+	     (<TABLE>
+		:class "api-index"
+		(<COLGROUP> :span 2 :width "50%")
+		(map (lambda (a b) (<TR> (<TD> a) (<TD> b)))
+		     (car l2) (cadr l2))))))))
+

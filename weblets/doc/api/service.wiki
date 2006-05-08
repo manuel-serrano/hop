@@ -23,7 +23,7 @@ invoked from client. This page describes how to create and how to use
 
 === Server & Client ===
 
-  (with-hop (service arg) [success] [failure])
+  (with-hop (svc arg ...) [success] [failure])
 
 
 == Examples ==

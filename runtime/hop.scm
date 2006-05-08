@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun May  7 16:44:16 2006 (serrano)                */
+;*    Last change :  Mon May  8 06:11:08 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling HTTP requests.                                          */
@@ -22,7 +22,8 @@
 	    __hop_thread
 	    __hop_user
 	    __hop_service
-	    __hop_http-response)
+	    __hop_http-response
+	    __hop_js-lib)
    
    (with    __hop_hop-notepad
 	    __hop_hop-inline
@@ -194,14 +195,20 @@
 				   (lambda (status clength p)
 				      (case status
 					 ((200)
-					  (read p))
+					  (success (read p)))
+					 ((201)
+					  (success (json->hop p clength)))
+					 ((202)
+					  (success (string->obj (read p))))
 					 ((401 407)
-					  (user-access-denied req))
+					  (fail (user-access-denied req)))
 					 (else
-					  (error 'hop-to-hop
-						 (format "Illegal status `~a'"
-							 status)
-						 (read-string p)))))))))))
+					  (fail
+					   (instantiate::&error
+					      (proc 'wih-hop)
+					      (msg (format "Illegal status `~a'"
+							   status))
+					      (obj (read p)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-response ...                                            */
@@ -223,12 +230,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-response obj::http-response-string success fail)
    (success (http-response-string-body obj)))
-
-;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-obj ...                        */
-;*---------------------------------------------------------------------*/
-(define-method (with-hop-response obj::http-response-obj success fail)
-   (success (http-response-obj-body obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-response ::http-response-js ...                         */

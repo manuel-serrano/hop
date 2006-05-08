@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr 27 08:12:31 2006 (serrano)                */
+;*    Last change :  Mon May  8 06:06:15 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -138,7 +138,7 @@
 		    (make-file-name (hop-icons-directory) "base.png"))))
 	    (svc (if (null? body)
 		     "false"
-		     (scheme->javascript
+		     (hop->json
 		      (procedure->service
 		       (lambda (level)
 			  (html-write-tree-body level (car body) id p)))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun May  7 16:18:54 2006 (serrano)                */
+;*    Last change :  Mon May  8 06:06:24 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -110,6 +110,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-obj ...                            */
+;*    -------------------------------------------------------------    */
+;*    The class HTTP-RESPONS-OBJ being obsolete, this method will      */
+;*    be removed soon.                                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-obj socket)
    (with-trace 3 'http-response::http-response-obj
@@ -145,7 +148,7 @@
 	    (when (>elong content-length #e0)
 	       (http-write-line p "Content-Length: " content-length))
 	    (http-write-line p)
-	    (when bodyp (display (scheme->javascript body) p))
+	    (when bodyp (display (hop->json body) p))
 	    (flush-output-port p)))))
       
 ;*---------------------------------------------------------------------*/

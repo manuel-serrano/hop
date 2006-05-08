@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Wed Jan 18 13:45:10 2006 (serrano)                */
+;*    Last change :  Mon May  8 06:06:52 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
@@ -58,7 +58,7 @@
 					     "Unclosed list"
 					     (input-port-name iport)
 				 	     pos)
-			(cons `(scheme->javascript ,exp) (ignore)))))
+			(cons `(hop->json ,exp) (ignore)))))
 		(else
 		 (let ((char (the-failure)))
 		    (if (eof-object? char)

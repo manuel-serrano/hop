@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sun May  7 16:44:11 2006 (serrano)                */
+;*    Last change :  Mon May  8 07:05:50 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -18,7 +18,8 @@
 	    __hop_types
 	    __hop_xml)
 
-   (export  (generic scheme->javascript ::obj)))
+   (export  (generic hop->json ::obj)
+	    (json->hop ::input-port ::elong)))
 
 ;*---------------------------------------------------------------------*/
 ;*    list->arguments ...                                              */
@@ -30,7 +31,7 @@
 	  (apply string-append (reverse! res))
 	  (loop (cdr lst)
 		(cons* (if (pair? (cdr lst)) "," ")")
-		       (scheme->javascript (car lst))
+		       (hop->json (car lst))
 		       res)))))
 
 ;*---------------------------------------------------------------------*/
@@ -40,9 +41,28 @@
    (string-append "new Array(" (list->arguments lst)))
 
 ;*---------------------------------------------------------------------*/
-;*    scheme->javascript ...                                           */
+;*    vector->json ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (scheme->javascript obj)
+(define (vector->json vec)
+   (let ((len (vector-length vec)))
+      (case len
+	 ((0)
+	  "[]")
+	 ((1)
+	  (string-append "[" (hop->json (vector-ref vec 0)) "]"))
+	 (else
+	  (let loop ((i (-fx len 2))
+		     (strs (list (hop->json (vector-ref vec (-fx len 1)))
+				 "]")))
+	     (if (=fx i -1)
+		 (apply string-append "[" strs)
+		 (loop (-fx i 1)
+		       (cons* (hop->json (vector-ref vec i)) ", " strs))))))))
+	 
+;*---------------------------------------------------------------------*/
+;*    hop->json ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-generic (hop->json obj)
    (cond
       ((string? obj)
        (string-append "\"" (string-for-read obj) "\""))
@@ -57,17 +77,15 @@
       ((null? obj)
        "null")
       ((list? obj)
-       (let ((car (scheme->javascript (car obj)))
-	     (cdr (scheme->javascript (cdr obj))))
+       (let ((car (hop->json (car obj)))
+	     (cdr (hop->json (cdr obj))))
 	  (format "new sc_Pair( ~a, ~a )" car cdr)))
       ((vector? obj)
-       (if (=fx (vector-length obj) 0)
-	   "new Array()"
-	   (list->array (vector->list obj))))
+       (vector->json obj))
       ((eq? obj #unspecified)
        "undefined")
       ((procedure? obj)
-       (error 'scheme->javascript
+       (error 'hop->json
 	      "Illegal procedure in JavaScript conversion"
 	      obj))
       ((date? obj)
@@ -76,9 +94,9 @@
        (error 'javascript "Illegal Javascript value" obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    scheme->javascript ::object ...                                  */
+;*    hop->json ::object ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (scheme->javascript obj::object)
+(define-method (hop->json obj::object)
    (define (list->block lst)
       (let loop ((lst lst)
 		 (res '()))
@@ -109,13 +127,168 @@
 				    fields)))))
    
 ;*---------------------------------------------------------------------*/
-;*    scheme->javascript ::xml ...                                     */
+;*    hop->json ::xml ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (scheme->javascript obj::xml)
+(define-method (hop->json obj::xml)
    (format "document.getElementById( \"~a\" )" (xml-id obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    scheme->javascript ...                                           */
+;*    hop->json ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (scheme->javascript obj::hop-service)
+(define-method (hop->json obj::hop-service)
    (hop-service-javascript obj))
+
+;*---------------------------------------------------------------------*/
+;*    *json-lexer* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define *json-lexer*
+   
+   (regular-grammar ()
+      
+      ;; blank
+      ((+ (in #\space #\newline #\tab #a012))
+       (ignore))
+      
+      ;; comment
+      ((or (: "/*" (* (or (out #\*) (: (+ #\*) (out #\/ #\*)))) (+ #\*) "/")
+	   (: "//" (* all)))
+       (ignore))
+      
+      ;; commas
+      (#\,
+       (list 'COMMA))
+      (#\;
+       (list 'SEMI-COMMA))
+      
+      ;; angles
+      (#\[
+       (list 'ANGLE-OPEN))
+      (#\]
+       (list 'ANGLE-CLO))
+      
+      ;; parenthesis
+      (#\(
+       (list 'PAR-OPEN))
+      (#\)
+       (list 'PAR-CLO))
+      
+      ;; brackets
+      (#\{
+       (list 'BRA-OPEN))
+      (#\}
+       (list 'BRA-CLO))
+      
+      ;; integer constant
+      ((: (+ digit))
+       (list 'CONSTANT (the-fixnum)))
+      
+      ;; floating-point constant
+      ((or (: (+ digit)
+	      (: (in #\e #\E) (? (in #\- #\+)) (+ digit))
+	      (? (in #\f #\F #\l #\L)))
+	   (: (or (: (+ digit) #\. (* digit)) (: #\. (+ digit)))
+	      (? (: (in #\e #\E) (? (in #\- #\+)) (+ digit)))
+	      (? (in #\f #\F #\l #\L))))
+       (list 'CONSTANT (the-flonum)))
+      
+      ;; symbols constant
+      ((: (? #\L) #\' (+ all) #\')
+       (list 'CONSTANT (the-symbol)))
+      
+      ;; string constant
+      ((: (? #\L) #\" (* (out #\")) #\")
+       (list 'CONSTANT (the-string)))
+      
+      ;; booleans
+      ("true"
+       (list 'CONSTANT #t))
+      ("false"
+       (list 'CONSTANT #f))
+      
+      ;; null and unspecified
+      ("null"
+       (list 'CONSTANT '()))
+      ("undefined"
+       (list 'CONSTANT #unspecified))
+      
+      ;; new
+      ("new"
+       (list 'NEW))
+
+      ;; function
+      ("function"
+       (list 'FUNCTION))
+
+      ;; sc_Pair
+      ("sc_Pair"
+       (list 'CONS))
+
+      ;; Date
+      ("Date"
+       (list 'DATE))
+       
+      ;; identifier
+      ((: (or #\_ alpha) (* (or #\_ alpha digit)))
+       (list 'IDENTIFIER (the-string)))
+      
+      (else
+       (let ((c (the-failure)))
+	  (if (eof-object? c)
+	      c
+	      (list 'ERROR c))))))
+
+;*---------------------------------------------------------------------*/
+;*    *json-parser* ...                                                */
+;*---------------------------------------------------------------------*/
+(define *json-parser*
+
+   (lalr-grammar
+
+      ;; tokens
+      (CONSTANT PAR-OPEN PAR-CLO BRA-OPEN BRA-CLO ANGLE-OPEN ANGLE-CLO
+       COMMA SEMI-COMMA
+       IDENTIFIER ERROR NEW CONS DATE FUNCTION)
+
+      ;; initial rule
+      (start
+       (() '())
+       ((start expression)))
+
+      ;; expression
+      (expression
+       ((CONSTANT)
+	(cadr CONSTANT))
+       ((NEW CONS PAR-OPEN expression@car COMMA expression@cdr PAR-CLO)
+	(cons car cdr))
+       ((NEW DATE PAR-OPEN CONSTANT PAR-CLO)
+	(let ((sec (cadr CONSTANT)))
+	   (if (integer? sec)
+	       (seconds->date (/fx sec 1000))
+	       (error 'json->hop "Illegal `date' construction" sec))))
+       ((ANGLE-OPEN ANGLE-CLO)
+	'#())
+       ((ANGLE-OPEN expression ANGLE-CLO)
+	(vector expression))
+       ((ANGLE-OPEN array-elements ANGLE-CLO)
+	 (list->vector array-elements))
+       ((object)
+	object))
+
+       (array-elements
+	((COMMA expression)
+	 expression)
+	((expression array-elements)
+	 (cons expression array-elements)))
+
+       (object
+	((FUNCTION IDENTIFIER PAR-OPEN IDENTIFIER BRA-OPEN BRA-CLO SEMI-COMMA
+		   NEW IDENTIFIER PAR-OPEN)
+	 'TODO))))
+;; ajouter json->hop de XML (document.getElementById( "a" )
+;; ajouter les services
+
+;*---------------------------------------------------------------------*/
+;*    json->hop ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (json->hop io content-length)
+   '())

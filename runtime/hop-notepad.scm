@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr 27 08:09:21 2006 (serrano)                */
+;*    Last change :  Mon May  8 06:06:01 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -67,7 +67,7 @@
 	     (cla (if (=fx i 1) "hop-nptab-active" "hop-nptab-inactive"))
 	     (ghost (cadr (xml-element-body tab)))
 	     (gid (xml-element-id ghost))
-	     (svc (scheme->javascript
+	     (svc (hop->json
 		   (procedure->service
 		    (lambda (tid)
 		       (let loop ((tabs tabs))
