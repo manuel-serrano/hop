@@ -1,0 +1,26 @@
+;; Invoking remote services from the server
+(module example)
+
+(define host (format "http://localhost:~a" (hop-port)))
+
+(define-service (doc/demo/service/gee)
+   '("gee" "foo" "bar"))
+
+(define-service (doc/demo/service/bar)
+   (<TABLE>
+      :border 1
+      (map (lambda (e) (<TR> (<TD> e))) '("gee" "foo" "bar"))))
+
+(<HTML>
+   (<BODY>
+      (<UL>
+	 (<LI> "Receive a list a build the table locally:"
+	       (with-hop :host host (doc/demo/service/gee)
+			 (lambda (l)
+			    (<TABLE>
+			       :border 1
+			       (map (lambda (e) (<TR> (<TD> e))) l)))))
+	 (<LI> "Build the table remotely and receive a string:"
+	       (with-hop :host host (doc/demo/service/bar)
+			 (lambda (h)
+			    (string->html h)))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon May  8 06:06:24 2006 (serrano)                */
+;*    Last change :  Mon May  8 11:49:22 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -33,7 +33,8 @@
 	    (response-remote-start-line ::http-response-remote)
 	    (make-unchunks ::input-port)
 	    (response-chunks ::input-port ::output-port)
-	    (make-client-socket/timeout host port ::int ::obj)))
+	    (make-client-socket/timeout host port ::int ::obj)
+	    (response-is-xml?::bool ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-client-socket/timeout ...                                   */
@@ -455,17 +456,17 @@
    (if (eq? (http-request-method req) 'HOP) 'UTF-8 (hop-char-encoding)))
 
 ;*---------------------------------------------------------------------*/
-;*    is-xml? ...                                                      */
+;*    response-is-xml? ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (is-xml? p)
+(define (response-is-xml? p)
    (cond
-      ((null? xml)
-       #f)
+      ((not (pair? p))
+       (xml? p))
       ((xml? (car p))
        #t)
       ((pair? (car p))
-       (or (is-xml? (car p))
-	   (is-xml? (cdr p))))
+       (or (response-is-xml? (car p))
+	   (response-is-xml? (cdr p))))
       (else
        #f)))
 
@@ -479,7 +480,7 @@
 	  (char-encoding (request-encoding req))
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
 	  (body obj)))
-      ((and (pair? obj) (is-xml? obj))
+      ((response-is-xml? obj)
        (instantiate::http-response-hop
 	  (char-encoding (request-encoding req))
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))

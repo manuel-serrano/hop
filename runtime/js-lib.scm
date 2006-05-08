@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon May  8 07:05:50 2006 (serrano)                */
+;*    Last change :  Mon May  8 11:02:44 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -19,7 +19,7 @@
 	    __hop_xml)
 
    (export  (generic hop->json ::obj)
-	    (json->hop ::input-port ::elong)))
+	    (json->hop ::input-port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    list->arguments ...                                              */
@@ -155,10 +155,14 @@
        (ignore))
       
       ;; commas
+      (#\.
+       (list 'DOT))
       (#\,
        (list 'COMMA))
       (#\;
        (list 'SEMI-COMMA))
+      (#\=
+       (list '=))
       
       ;; angles
       (#\[
@@ -192,44 +196,27 @@
        (list 'CONSTANT (the-flonum)))
       
       ;; symbols constant
-      ((: (? #\L) #\' (+ all) #\')
+      ((: #\' (+ all) #\')
        (list 'CONSTANT (the-symbol)))
       
       ;; string constant
-      ((: (? #\L) #\" (* (out #\")) #\")
-       (list 'CONSTANT (the-string)))
+      ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
+       (let ((str (the-substring 0 (-fx (the-length) 1))))
+	  (list 'CONSTANT (escape-C-string str))))
       
-      ;; booleans
-      ("true"
-       (list 'CONSTANT #t))
-      ("false"
-       (list 'CONSTANT #f))
-      
-      ;; null and unspecified
-      ("null"
-       (list 'CONSTANT '()))
-      ("undefined"
-       (list 'CONSTANT #unspecified))
-      
-      ;; new
-      ("new"
-       (list 'NEW))
-
-      ;; function
-      ("function"
-       (list 'FUNCTION))
-
-      ;; sc_Pair
-      ("sc_Pair"
-       (list 'CONS))
-
-      ;; Date
-      ("Date"
-       (list 'DATE))
-       
       ;; identifier
       ((: (or #\_ alpha) (* (or #\_ alpha digit)))
-       (list 'IDENTIFIER (the-string)))
+       (case (the-symbol)
+	  ((null) (list 'CONSTANT '()))
+	  ((undefined) (list 'CONSTANT #unspecified))
+	  ((true) (list 'CONSTANT #t))
+	  ((false) (list 'CONSTANT #f))
+	  ((new) (list 'NEW))
+	  ((function) (list 'FUNCTION))
+	  ((return) (list 'RETURN))
+	  ((sc_Pair) (list 'CONS))
+	  ((Date) (list 'DATE))
+	  (else (list 'IDENTIFIER (the-symbol)))))
       
       (else
        (let ((c (the-failure)))
@@ -241,27 +228,27 @@
 ;*    *json-parser* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *json-parser*
-
+   
    (lalr-grammar
-
+      
       ;; tokens
       (CONSTANT PAR-OPEN PAR-CLO BRA-OPEN BRA-CLO ANGLE-OPEN ANGLE-CLO
-       COMMA SEMI-COMMA
-       IDENTIFIER ERROR NEW CONS DATE FUNCTION)
-
+       COMMA SEMI-COMMA DOT =
+       IDENTIFIER ERROR NEW CONS DATE FUNCTION RETURN)
+      
       ;; initial rule
       (start
        (() '())
-       ((start expression)))
-
+       ((expression) expression))
+      
       ;; expression
       (expression
        ((CONSTANT)
-	(cadr CONSTANT))
-       ((NEW CONS PAR-OPEN expression@car COMMA expression@cdr PAR-CLO)
-	(cons car cdr))
+	(car CONSTANT))
+       ((NEW CONS PAR-OPEN expression@a COMMA expression@d PAR-CLO)
+	(cons a d))
        ((NEW DATE PAR-OPEN CONSTANT PAR-CLO)
-	(let ((sec (cadr CONSTANT)))
+	(let ((sec (car CONSTANT)))
 	   (if (integer? sec)
 	       (seconds->date (/fx sec 1000))
 	       (error 'json->hop "Illegal `date' construction" sec))))
@@ -270,25 +257,74 @@
        ((ANGLE-OPEN expression ANGLE-CLO)
 	(vector expression))
        ((ANGLE-OPEN array-elements ANGLE-CLO)
-	 (list->vector array-elements))
+	(list->vector array-elements))
        ((object)
-	object))
+	object)
+       ((get-element-by-id)
+	get-element-by-id)
+       ((service)
+	service))
+      
+      ;; array
+      (array-elements
+       ((COMMA expression)
+	expression)
+       ((expression array-elements)
+	(cons expression array-elements)))
 
-       (array-elements
-	((COMMA expression)
-	 expression)
-	((expression array-elements)
-	 (cons expression array-elements)))
+      ;; object
+      (object
+       ((FUNCTION IDENTIFIER PAR-OPEN arguments PAR-CLO
+		  BRA-OPEN sets BRA-CLO SEMI-COMMA
+		  NEW IDENTIFIER@klass PAR-OPEN vals PAR-CLO)
+	(let ((c (find-class klass)))
+	   (if (not (class? c))
+	       (error 'json->hop "Can't find class" c)
+	       (let* ((constr (class-constructor c))
+		      (create (class-creator c))
+		      (ins (apply constr vals)))
+		  (when (procedure? create) (create ins))
+		  ins)))))
 
-       (object
-	((FUNCTION IDENTIFIER PAR-OPEN IDENTIFIER BRA-OPEN BRA-CLO SEMI-COMMA
-		   NEW IDENTIFIER PAR-OPEN)
-	 'TODO))))
-;; ajouter json->hop de XML (document.getElementById( "a" )
-;; ajouter les services
+      (arguments
+       (()
+	'())
+       ((IDENTIFIER)
+	(list (car IDENTIFIER)))
+       ((IDENTIFIER COMMA arguments)
+	(cons (car IDENTIFIER) arguments)))
+
+      (sets
+       (()
+	'())
+       ((set SEMI-COMMA sets)
+	(cons set sets)))
+
+      (set
+       ((IDENTIFIER DOT IDENTIFIER = expression)
+	'_))
+
+      (vals
+       (()
+	'())
+       ((expression COMMA vals)
+	(cons expression vals)))
+
+      ;; get-element-by-id
+      (get-element-by-id
+       ((IDENTIFIER@obj DOT IDENTIFIER@field PAR-OPEN CONSTANT PAR-CLO)
+	;; we don't have a document at hand, so this is getElementById
+	;; is meaningless
+	#f))
+
+      ;; service
+      (service
+       ((FUNCTION PAR-OPEN PAR-CLO BRA-OPEN RETURN IDENTIFIER
+		  PAR-OPEN arguments PAR-CLO BRA-CLO)
+	(error 'json->hop "Service cannot be transmitted" IDENTIFIER)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    json->hop ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (json->hop io content-length)
-   '())
+(define (json->hop ip)
+   (read/lalrp *json-parser* *json-lexer* ip))

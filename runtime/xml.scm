@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri May  5 06:19:41 2006 (serrano)                */
+;*    Last change :  Mon May  8 11:29:03 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -61,7 +61,10 @@
 	    (xml-make-id::bstring #!optional id (markup 'HOP))
 	    
  	    (generic xml-write ::obj ::output-port ::symbol)
-	    (generic xml-write-attribute attr::obj id p)	    
+	    (generic xml-write-attribute attr::obj id p)
+
+	    (string->html ::bstring)
+	    (string->xml ::bstring)
 	    
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -385,6 +388,50 @@
    (display "='" p)
    (display (hop-service-path attr) p)
    (display "'" p))
+
+;*---------------------------------------------------------------------*/
+;*    string->html ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (string->html h)
+   (with-input-from-string h
+      (lambda ()
+	 (car (html-parse
+	       (current-input-port)
+	       0
+	       (lambda (markup attributes body)
+		  (let* ((m (string->symbol
+			     (string-append
+			      "<"
+			      (string-upcase (symbol->string markup))
+			      ">")))
+			 (a (append-map (lambda (a)
+					   (list (symbol->keyword (car a))
+						 (cdr a)))
+					attributes))
+			 (e `(,m ,@a ,@body)))
+		     (eval e))))))))
+
+;*---------------------------------------------------------------------*/
+;*    string->xml ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (string->xml h)
+   (with-input-from-string h
+      (lambda ()
+	 (car (xml-parse
+	       (current-input-port)
+	       0
+	       (lambda (markup attributes body)
+		  (let* ((m (string->symbol
+			     (string-append
+			      "<"
+			      (string-upcase (symbol->string markup))
+			      ">")))
+			 (a (append-map (lambda (a)
+					   (list (symbol->keyword (car a))
+						 (cdr a)))
+					attributes))
+			 (e `(,m ,@a ,@body)))
+		     (eval e))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    HTML 4.01 elements ...                                           */

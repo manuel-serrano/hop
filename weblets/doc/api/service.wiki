@@ -225,6 +225,11 @@ host is specified using the :host argument.
 
 <example>Invoking a remote service from the server</example>
 
+~~ In this last example, we show how server to server service invocation
+may transmit compound value. In the example above, one service sends
+an HTML tree. The other one sends a list of strings.
+
+<example>Invoking remote services from the server</example>
 </procedure>
 </function>
 
@@ -232,6 +237,6 @@ host is specified using the :host argument.
 </server>
 
 == See also ==
-<see-also>%http-request, the-current-request, http-response, http-send-request</see-also>
+<see-also>service, define-service, make-hop-service-url, make-service-url, procedure->service, hop-autoload, with-hop</see-also>
 
 </doc>

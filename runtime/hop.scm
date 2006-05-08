@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon May  8 06:11:08 2006 (serrano)                */
+;*    Last change :  Mon May  8 11:54:58 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Handling HTTP requests.                                          */
+;*    HOP engine.                                                      */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -23,7 +23,8 @@
 	    __hop_user
 	    __hop_service
 	    __hop_http-response
-	    __hop_js-lib)
+	    __hop_js-lib
+	    __hop_xml)
    
    (with    __hop_hop-notepad
 	    __hop_hop-inline
@@ -39,7 +40,7 @@
    (export  (the-current-request::obj)
 	    (hop::%http-response ::http-request)
 	    (hop-to-hop ::bstring ::int ::obj ::hop-service . ::obj)
-	    (with-remote-host ::bstring ::hop-service ::pair ::procedure ::procedure)
+	    (with-remote-host ::bstring ::hop-service ::pair-nil ::procedure ::procedure)
 	    (generic with-hop-response obj proc fail)))
 
 ;*---------------------------------------------------------------------*/
@@ -193,11 +194,14 @@
 		(trace-item "remote path=" path)
 		(http-send-request req
 				   (lambda (status clength p)
+				      (when (>elong clength #e0)
+					 (input-port-fill-barrier-set!
+					  p clength))
 				      (case status
 					 ((200)
-					  (success (read p)))
+					  (success (read-string p)))
 					 ((201)
-					  (success (json->hop p clength)))
+					  (success (json->hop p)))
 					 ((202)
 					  (success (string->obj (read p))))
 					 ((401 407)
@@ -214,7 +218,22 @@
 ;*    with-hop-response ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-generic (with-hop-response obj success fail)
-   (success obj))
+   (tprint "with-hop-response: " (find-runtime-type obj))
+   (if (response-is-xml? obj)
+       (with-hop-response-xml obj #f success)
+       (success obj)))
+
+;*---------------------------------------------------------------------*/
+;*    with-hop-response-xml ...                                        */
+;*---------------------------------------------------------------------*/
+(define (with-hop-response-xml obj encoding success)
+   (let ((s (with-output-to-string
+	       (lambda ()
+		  (xml-write obj
+			     (current-output-port)
+			     (or encoding
+				 (hop-char-encoding)))))))
+      (success s)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-response ::http-response-authentication ...             */
@@ -241,7 +260,9 @@
 ;*    with-hop-response ::http-response-hop ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-response obj::http-response-hop success fail)
-   (success (http-response-hop-xml obj)))
+   (with-hop-response-xml (http-response-hop-xml obj)
+			  (http-response-hop-char-encoding obj)
+			  success))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-response ::http-response-procedure ...                  */
