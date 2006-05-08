@@ -6,6 +6,10 @@ The classes described in the page are used to represent the
 values ,(<APIREF> "services" "service.wiki") might answer
 to client requests.
 
+~~ When an answer is not a instance of ::%http-response, 
+automatic conversions take place. These are described
+in the documentation for the ++with-hop++ form.
+
 == Synopsis ==
 
 === server ===

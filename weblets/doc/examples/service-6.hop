@@ -1,7 +1,7 @@
 ;; Invoking remote services from the server
 (module example)
 
-(define host (format "http://localhost:~a" (hop-port)))
+(define host (format "localhost:~a" (hop-port)))
 
 (define-service (doc/demo/service/gee)
    '("gee" "foo" "bar"))

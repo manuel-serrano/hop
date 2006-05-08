@@ -23,7 +23,7 @@ header, the following statement:
 
 == Examples ==
 
-<example>base64</example>
+<example>base64-</example>
 
 == Server & Client Definitions ==
 

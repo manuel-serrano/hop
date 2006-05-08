@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Sun May  7 17:16:23 2006 (serrano)                */
+;*    Last change :  Mon May  8 19:23:47 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -265,15 +265,17 @@
 		     ((<see-also>)
 		      <SEE-ALSO>)
 		     ((<markup> <parameter> <function> <class>)
-		      (lambda (port title expr)
-			 (list (<A> :id (skip-spaces title)
-				    :name (string-append "server:" title)
-				    expr))))
+		      (let* ((s (symbol->string id))
+			     (c (substring s 1 (-fx (string-length s) 1))))
+			 (lambda (port title expr)
+			    (list (<A> :id (skip-spaces title)
+				       :name (string-append "server:" title)
+				       (<DIV> :class c expr))))))
 		     ((<procedure>)
 		      (lambda (port title expr)
 			 (list (<A> :id (skip-spaces title)
 				    :name (string-append "client:" title)
-				    expr))))
+				    (<DIV> :class "procedure" expr)))))
 		     ((<server>)
 		      (lambda (port title expr)
 			 (<DIV> :class "server" expr)))

@@ -1,0 +1,214 @@
+<doc> SQLITE library
+<library> sqlite
+
+== Description ==
+
+This document describes the HOP supports for SQL queries using the 
+[[http://www.sqlite.org/|sqlite]] database.
+
+== Synopsis ==
+
+=== Server ===
+
+  (class sqlite ...)
+  (sqlite-close db)
+  (sqlite-format string arg ...)
+  (sqlite-exec db string arg ...)
+  (sqlite-eval db procedure string arg ...)
+  (sqlite-map db procedure string arg ...)
+  (sqlite-last-insert-rowid db)
+
+
+=== Requirements ===
+The server functions and class described in this page are defined in the 
+++sqlite++ library. That is, server codes using them must include a 
+statement such as:
+
+  (module a-module-name
+     ...
+     (library sqlite)
+     ...)
+
+== Examples ==
+
+<example>sqlite</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(class sqlite ...)++===
+<class> sqlite
+
+<fields>
+^  fields  ^   access  ^   type      ^  default value     ^  short description           ^
+| path     |    r      |   string    |  ++":memory:"++    | the path of the dababase.    |
+</fields>
+
+The instances of the class ::sqlite hold SQLite databases. A database
+may be permanently stored on a disk or loaded in memory. The class attribute
+++path++ is the location on the disk where the database is stored. The
+special path ++:memory:++ denotes in-memory databases. When an instance
+is created a SQLite database is //opened//.
+
+Example:
+
+  (define db1 (instantiate::sqlite (path "/tmp/foo.db")))
+  (define db2 (instantiate::sqlite))
+</class>
+
+=== ++(sqlite-close db)++ ===
+<function> sqlite-close
+
+<arguments>
+^  arguments  ^   type          ^  short description           ^
+| db          |  ::sqlite       | a database.                  |
+</arguments>
+
+This function closes a database previously opened by creating an instance
+of the class ::sqlite.
+
+Example:
+
+  (let ((db (instantiate::sqlite)))
+     (sqlite-exec db "CREATE TABLE table1 (x INTEGER, y INTEGER)")
+     (sqlite-exec db "INSERT INTO table1 VALUES( ~a, ~a )" 1 4)
+     (sqlite-close db))
+</function>
+
+=== ++(sqlite-format fmt arg<sub>0</sub> ...) ===
+<function> sqlite-format
+<arguments>
+^  arguments       ^   type          ^  short description              ^
+| fmt              |  string         | the description of the format.  |
+| arg<sub>0</sub>  |  obj            | the first argument.             |
+| ...              |  ...            | ...                             |
+</arguments>
+
+The function ++sqlite-format++ constructs a string of characters
+representing an SQLite commands. This function acts as ++format++. It
+is augmented with three additional escape sequence: ++~q++,
+++~k++, and ++~l++. The first one build a string of characters
+where the characters denoting SQL strings (i.e., the character
+++'++) is automatically escaped. The escape character ++~k++
+introduces a list of SQL strings. The escape character ++~l++
+introduces a SQL list.
+
+Examples:
+
+  (module example
+     (library sqlite))
+
+  (sqlite-format "~a" "foo'bar") &#8658; "foo'bar"
+  (sqlite-format "~q" "foo'bar") &#8658; "'foo''bar'"
+  (sqlite-format "~a" '("foo'bar" "foo")) &#8658; "(foo'bar foo)"
+  (sqlite-format "~k" '("foo'bar" "foo")) &#8658; "'foo''bar','foo'"
+  (sqlite-format "~l" '("foo'bar" "foo")) &#8658; "foo'bar,foo"
+
+</function>
+
+=== ++(sqlite-exec db fmt arg<sub>0</sub> ...) ===
+<function> sqlite-exec
+<arguments>
+^  arguments       ^   type          ^  short description              ^
+| db               |  ::sqlite       | the database.                   |
+| fmt              |  string         | the description of the format.  |
+| arg<sub>0</sub>  |  obj            | the first argument.             |
+| ...              |  ...            | ...                             |
+</arguments>
+
+The function ++sqlite-exec++ //executes// an SQLite command. The
+command is the built by implicitly invoking ++sqlite-format++ on
+++fmt++ and the optional ++arg<sub>0</sub> arguments. This function
+returns a possibly list empty.  The elements of the list are filled by
+the SQLite engine. In particular, on a query, each element of the list
+is a vector denoting a row of the searched tables.
+
+  (module example
+     (library sqlite))
+
+  (define *db* (instantiate::sqlite))
+
+  (sqlite-exec *db* "CREATE TABLE foo (x INTEGER, y INTEGER)")
+  (for-each (lambda (x)
+  		(sqlite-exec *db*  "INSERT INTO foo VALUES(~A, ~A)" x (* x x)))
+	     (iota 10))
+  (sqlite-exec *db* "SELECT * FROM foo")
+     &#8658; '(#("0" "0")
+	#("1" "1")
+	#("2" "4")
+	#("3" "9")
+	#("4" "16")
+	#("5" "25")
+	#("6" "36")
+	#("7" "49")
+	#("8" "64")
+	#("9" "81"))
+
+</function>
+
+=== ++(sqlite-eval db proc fmt arg<sub>0</sub> ...) ===
+<function> sqlite-eval
+<arguments>
+^  arguments       ^   type          ^  short description              ^
+| db               |  ::sqlite       | the database.                   |
+| proc             |  procedure      | the result constructor.         |
+| fmt              |  string         | the description of the format.  |
+| arg<sub>0</sub>  |  obj            | the first argument.             |
+| ...              |  ...            | ...                             |
+</arguments>
+
+The function ++sqlite-eval++ invokes a SQLite command built by
+implicitly invoking ++sqlite-format++ on ++fmt++ on and the optional
+++arg<sub>0</sub>++, ... arguments. The result of the function is
+built by applying ++proc++ to the first value returned by the
+SQLite call.  
+</function>
+
+=== ++(sqlite-map db proc fmt arg<sub>0</sub> ...) ===
+<function> sqlite-map
+<arguments>
+^  arguments       ^   type          ^  short description              ^
+| db               |  ::sqlite       | the database.                   |
+| proc             |  procedure      | the results constructor.        |
+| fmt              |  string         | the description of the format.  |
+| arg<sub>0</sub>  |  obj            | the first argument.             |
+| ...              |  ...            | ...                             |
+</arguments>
+
+The function ++sqlite-map++ invokes a SQLite command built by
+implicitly invoking ++sqlite-format++ on ++string+ and the optional
+++arg<sub>0</sub>++, ... arguments. The result is a list whose
+elements are built by applying ++proc++ to all the values
+returned by the SQLite call.  
+
+Examples:
+  (module example
+     (library sqlite))
+
+  (define *db* (instantiate::sqlite))
+
+  (sqlite-exec *db* "CREATE TABLE foo (x INTEGER, y INTEGER)")
+  (for-each (lambda (x)
+                (sqlite-exec *db*  "INSERT INTO foo VALUES(~A, ~A)" x (* x x)))
+            (iota 10))
+  (sqlite-map *db* 
+    (lambda (s1 s2) (+ (string->integer s1) (string->integer s2))) 
+    "SELECT * FROM foo")
+     &#8658; (0 2 6 12 20 30 42 56 72 90)
+
+</function>
+
+=== ++(sqlite-last-insert-rowid db) ===
+<function> sqlite-last-insert-rowid
+<arguments>
+^  arguments       ^   type          ^  short description              ^
+| db               |  ::sqlite       | the database.                   |
+</arguments>
+
+Returns the SQLite //rowid// of the last inserted row.
+</function>
+
+</server>
+</library>
+</doc>
+

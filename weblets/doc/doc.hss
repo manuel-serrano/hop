@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon May  8 06:34:31 2006 (serrano)                */
+/*    Last change :  Mon May  8 19:31:06 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -20,7 +20,8 @@ $(define header-color "#fffff0")
 $(define title-color "#ddd")
 $(define pagearea-color "#fff")
 $(define table-header-background "#6357da")
-$(define table-class-header-background "#da6357")
+$(define table-header-markup-background "#d8a62a")
+$(define table-header-class-background "#71d830")
 $(define table-header-foreground "#fff")
 $(define table-background "#d8d7ff")
 $(define popup-menu-color "#eeeeee")
@@ -477,8 +478,12 @@ div.doc-arguments th {
   padding: 2px;
 }
 
+div.markup div.doc-arguments th {
+  background-color: $table-header-markup-background;
+}
+
 div.doc-fields th {
-  background-color: $table-class-header-background;
+  background-color: $table-header-class-background;
   color: $table-header-foreground;
   padding: 2px;
 }

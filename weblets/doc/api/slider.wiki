@@ -156,6 +156,6 @@ It is defined as:
 </style>
 
 == See also ==
-<see-also><SLIDER></see-also>
+<see-also><SLIDER>, hop-slider</see-also>
 
 </doc>

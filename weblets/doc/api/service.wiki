@@ -145,7 +145,7 @@ the currently available weblets. These are automatically
 <procedure> with-hop
 <arguments>
 ^  arguments       ^   type       ^  short description              ^
-| host             |  string      | a remote server name.           |
+| host             |  string      | a URL of a remote server.       |
 | svc              |  service     | the invoked service.            |
 | v<sub>0</sub>    |  obj         | the first argument.             |
 | ...              |  ...         | ...                             |
@@ -226,7 +226,7 @@ host is specified using the :host argument.
 <example>Invoking a remote service from the server</example>
 
 ~~ In this last example, we show how server to server service invocation
-may transmit compound value. In the example above, one service sends
+may transmit compound values. In the example above, one service sends
 an HTML tree. The other one sends a list of strings.
 
 <example>Invoking remote services from the server</example>
