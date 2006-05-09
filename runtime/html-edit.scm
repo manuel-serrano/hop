@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Sun May  7 22:57:08 2006 (eg)                     */
+;*    Last change :  Tue May  9 15:18:22 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -26,14 +26,13 @@
 (define *icons-dir*  (make-file-path (hop-share-directory) "editor"))
 (define *popups-dir* *icons-dir*)
 
-(define *styles* '((" --style--" "")
-		   ("Title 1" "h1") ("Title 2" "h2") ("Title 3" "h3")
+(define *styles* '(("Title 1" "h1") ("Title 2" "h2") ("Title 3" "h3")
 		   ("Title 4" "h4") ("Title 5" "h5") ("Title 6" "h6")
 		   ("Address" "address") ("Paragraph" "p")))
 
-(define *fonts* '(" --font--"
-		  "Serif" "Sans Serif" "Arial" "Tahoma" "Verdana" "Courier New"
-		  "Georgia" "Times New Roman" "Impact" "Comic Sans MS"))
+(define *fonts* '("Sans Serif" "Serif" "Monospace"
+		  "Arial" "Tahoma" "Verdana" "Courier New" "Georgia"
+		  "Times New Roman" "Impact" "Comic Sans MS"))
 
 
 (define (make-palette id)
@@ -191,6 +190,8 @@
 		   :id id :name name body)
        ;; Create an iframe for rich text editing
        (<IFRAME> :id (string-append "hop-edit" id) :frameborder 0
+		 :onmouseover "hop_edit_in_iframe = true"
+		 :onmouseout  "hop_edit_in_iframe = false"
 		 :width width :height height)
        (<SCRIPT> (format "hop_edit_init(~s, ~s, ~s, ~s)" id *popups-dir*
 			 submit cancel)))))

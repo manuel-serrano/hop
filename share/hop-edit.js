@@ -3,13 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Apr 10 11:43:00 2006                          */
-/*    Last change :  Sun May  7 22:41:39 2006 (eg)                     */
+/*    Last change :  Tue May  9 15:38:12 2006 (eg)                     */
 /*    -------------------------------------------------------------    */
 /*    <EDITOR> JavaScript support                                      */
 /*=====================================================================*/
 
 var hop_edit_popups_dir;
 var hop_edit_src;
+var hop_edit_in_iframe = true; 
 
 /*---------------------------------------------------------------------*/
 /*    hop_edit_init ...                                                */
@@ -43,7 +44,7 @@ function hop_edit_init(id, popups_dir, submit, cancel)
 						hop_edit_keypress_hdlr(e, id);
 					    },
 					    true);
-    // Install an evnt handler to copy back iframe content to textarea if submitting
+    // Install an event hdler to copy back iframe content to textarea if submitting
     for (var i=0; i < document.forms.length; i++) {
     	document.forms[i].addEventListener("submit",
 					   function (e) { 
@@ -51,6 +52,14 @@ function hop_edit_init(id, popups_dir, submit, cancel)
 					   },
 					   true);
     }
+    // Initialize Selection boxes
+    hop_edit_style_set(id, "p");
+    hop_edit_font_set(id, "Sans Serif");
+    hop_edit_fontsize_set(id, 1);
+    hop_edit_update_interface(id);
+    
+    // Launch the handler in charge of interface updating
+    window.setInterval(function() {hop_edit_update_interface(id)}, 250);
 }
 
 /*---------------------------------------------------------------------*/
@@ -65,6 +74,7 @@ function hop_edit_keypress_hdlr(e, id)
 	  case 98:  hop_edit_action(id, "bold"); break;
 	  case 105: hop_edit_action(id, "italic"); break;
 	  case 117: hop_edit_action(id, "underline"); break;
+	  case 113: hop_edit_update_interface2(id); break;
 	  default: propagate = true;
 	}
 	if (!propagate) {
@@ -308,5 +318,49 @@ function hop_edit_view_source(id)
 	fonts.disabled   = false;
 	fsizes.disabled  = false;
 	hop_edit_src     = false;
+    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_edit_update_interface ...                                    */
+/*---------------------------------------------------------------------*/
+
+function hop_edit_update_interface(id)
+{
+    if (hop_edit_in_iframe) {
+	var doc  = document.getElementById("hop-edit" + id).contentDocument;
+	var font = doc.queryCommandValue("fontname");
+	var size = doc.queryCommandValue("fontsize"); 
+	var fmt  = doc.queryCommandValue("formatblock"); 
+	
+	// Get Back Style, Font and Size ans manage Firefox irregularities
+	if (fmt  == "" || fmt == "p") fmt  = "Paragraph";
+	if (fmt == "address") fmt = "Address";
+	if (fmt[0] == "h") fmt = "Title " + fmt[1];
+
+	if (font == "" || font == "sans-serif") font = "Sans Serif";
+	if (font == "tt") font = "Monospace";
+	
+	if (size == "") size = "3";
+	
+	// Set the selection boxes to the correct values
+	document.getElementById("hop-edit-fs-" + id).value = size;
+	document.getElementById("hop-edit-fonts-" + id).value = font;
+	document.getElementById("hop-edit-styles-" + id).value = fmt;
+
+	//    alert("FMT /" +font+ "/" + size + "/" + fmt + "/");
+    }
+}
+
+
+function hop_edit_update_interface2(id)
+{
+    if (hop_edit_in_iframe) {
+	var doc  = document.getElementById("hop-edit" + id).contentDocument;
+	var font = doc.queryCommandValue("fontname");
+	var size = doc.queryCommandValue("fontsize"); 
+	var fmt  = doc.queryCommandValue("formatblock"); 
+	
+	alert("FMT /" +font+ "/" + size + "/" + fmt + "/");
     }
 }
