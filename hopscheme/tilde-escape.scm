@@ -15,9 +15,12 @@
 (define (new-scheme-expr p expr)
    (let* ((proxy (list 'begin #f))
 	  (part (list 'part expr
-		      (lambda (js-expr)
-			 (set-cdr! proxy (js->hop js-expr))
-			 ";"))))
+		      (lambda (js-expr stmt-form?)
+			 (set-cdr! proxy
+				   (js->hop (if stmt-form?
+						js-expr
+						(string-append js-expr ";"))))
+			 (if stmt-form? ";" "")))))
       (hashtable-update! *rev-scheme-exprs*
 			 p
 			 (lambda (old-l)

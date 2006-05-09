@@ -71,6 +71,7 @@
    (verbose "  collecting")
    (overload traverse collect (Node
 			       Decl
+			       Set!
 			       Program
 			       Scope
 			       Lambda)
@@ -82,14 +83,27 @@
 (define-pmethod (Decl-collect symbol-table is-global?)
    (let* ((id this.id)
 	  (var (local-symbol-var symbol-table id)))
-      ;; already declared (most likely by 'define')
       (if var
-	  (set! this.var var)
+	  ;; already declared (most likely by 'define')
+	  (begin
+	     (set! this.var var)
+	     ;; we don't want two decls for one var -> mark this Decl.
+	     (set! this.transform-to-Var-ref #t))
 	  (let ((new-var (new-node Var id)))
 	     (if is-global?
 		 (set! new-var.is-global? #t))
 	     (set! this.var new-var)
 	     (symbol-var-set! symbol-table id new-var)))))
+
+(define-pmethod (Set!-collect symbol-table is-global?)
+   (this.traverse2 symbol-table is-global?)
+   (if this.lvalue.transform-to-Var-ref
+       (let* ((lvalue this.lvalue)
+	      (id lvalue.id)
+	      (var lvalue.var)
+	      (var-ref (new-node Var-ref id)))
+	  (set! var-ref.var var)
+	  (set! this.lvalue var-ref))))
 
 (define-pmethod (Program-collect symbol-table is-global?)
    (let ((local-scope (make-scope)))

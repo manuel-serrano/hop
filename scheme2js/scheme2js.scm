@@ -14,9 +14,12 @@
 	   node-elimination
 	   traverse
 	   inline
+	   constant-propagation
+	   var-propagation
 	   capture
 	   protobject
 	   liveness
+	   rm-unused-vars
 	   verbose)
    (main my-main)
    (export (scheme2js top-level::pair-nil js-interface::pair-nil config)
@@ -24,7 +27,7 @@
 	   (default-scheme2js-config)))
 
 ;; TODO: automate this...
-(define *version* 0.1)
+(define *version* 0.2)
 
 (define (default-scheme2js-config)
    (let ((ht (make-hashtable)))
@@ -36,6 +39,8 @@
 		  (optimize-tail-rec #t)
 		  (do-inlining #t)
 		  (inline-globals #f)
+		  (constant-propagation #t)
+		  (var-propagation #t)
 		  (optimize-calls #t)
 		  (optimize-var-number #f)
 		  (optimize-boolify #t)
@@ -154,19 +159,22 @@
       (if (eq? (config 'debug-stage) 'symbol) (dot-out tree))
       (node-elimination! tree)
       (if (eq? (config 'debug-stage) 'node-elim1) (dot-out tree))
-      (side-effect tree)
-      (if (eq? (config 'debug-stage) 'side) (dot-out tree))
       (tail-rec! tree)
       (if (eq? (config 'debug-stage) 'tail) (dot-out tree))
-      (capture! tree)
-      (if (eq? (config 'debug-stage) 'capture) (dot-out tree))
       (inline! tree)
       (if (eq? (config 'debug-stage) 'inline) (dot-out tree))
+      (constant-propagation! tree)
+      (if (eq? (config 'debug-stage) 'constant-propagation) (dot-out tree))
+      (var-propagation! tree)
+      (if (eq? (config 'debug-stage) 'var-propagation) (dot-out tree))
+      (rm-unused-vars! tree)
+      (if (eq? (config 'debug-stage) 'rm-unused-vars) (dot-out tree))
+      (capture! tree)
+      (if (eq? (config 'debug-stage) 'capture) (dot-out tree))
       (statements! tree)
       (if (eq? (config 'debug-stage) 'statements) (dot-out tree))
       (node-elimination! tree)
       (if (eq? (config 'debug-stage) 'node-elim2) (dot-out tree))
-      ;(liveness tree)
       (let ((compiled (compile tree)))
 	 (if (eq? (config 'debug-stage) 'compiled) (dot-out tree))
 	 (verbose "--- compiled")

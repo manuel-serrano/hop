@@ -130,6 +130,8 @@
    
    (define-node (Node))
    (proto-traverses Node)
+   (set! Node.proto.clone pobject-clone)
+   (set! Node.proto.deep-clone pobject-deep-clone)
 
    (define-node (Const value)
       (set! this.value value))
@@ -157,14 +159,15 @@
 
    ;; a Part represents a functional part of a program. Besides of free variables
    ;; the generated code should be fully functionally.
-   ;; if a function is given, the function is called after code-generation with
-   ;; the generated code as parameter. The returned string is then used as result
-   ;; of the Part.
+   ;; the given function is called after code-generation with
+   ;; the generated code and a flag telling, if the code is in statement-form
+   ;; as parameter. The returned string is then used as result of the Part.
    ;; A part is *not* a scope. Two parts at the same level can therefore share
    ;; variables.
-   (define-node (Part body . Lfun)
+   (define-node (Part body prefer-statement-form? fun)
       (set! this.body body)
-      (set! this.fun (if (null? Lfun) (lambda (x) x) (car Lfun))))
+      (set! this.prefer-statement-form? prefer-statement-form?)
+      (set! this.fun fun))
    (set! Part.proto (empty-pobject Node))
    (proto-traverses Part body)
 
@@ -249,16 +252,12 @@
 
    ;; optimization-nodes
 
-   ;; label is either a symbol or #f
-   (define-node (Tail-rec formals vaarg body label)
-      (set! this.formals formals)
-      (set! this.vaarg vaarg)
+   (define-node (Tail-rec body label)
       (set! this.body body)
       (set! this.label label))
    (set! Tail-rec.proto (empty-pobject Scope))
-   (proto-traverses Tail-rec (formals) ?vaarg body)
+   (proto-traverses Tail-rec body)
 
-   ;; label is either a symbol or #f
    (define-node (Tail-rec-call label)
       (set! this.label label))
    (set! Tail-rec-call.proto (new Node))

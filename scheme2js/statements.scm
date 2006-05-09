@@ -30,7 +30,8 @@
 				       Return
 				       Closure-alloc
 				       Label
-				       Break)
+				       Break
+				       Set!)
 	     (set! (node 'Node).proto.default-traverse-value #f)
 	     (tree.traverse)
 	     (delete! (node 'Node).proto.default-traverse-value)))
@@ -65,9 +66,10 @@
       res))
 
 (define-pmethod (Part-mark-statements)
-   (this.body.traverse)
-   (mark-node! this #t)
-   #t)
+   (let* ((body-res (this.body.traverse))
+	  (res (or body-res this.prefer-statement-form?)))
+      (mark-node! this res)
+      res))
 
 (define-pmethod (Lambda-mark-statements)
    (this.body.traverse)
@@ -134,6 +136,11 @@
    (mark-node! this #t)
    #t)
 
+(define-pmethod (Set!-mark-statements)
+   (let ((res (this.val.traverse)))
+      (mark-node! this res)
+      res))
+   
 (define (transform-statements! tree::pobject)
    (verbose "  transform-statements")
    (overload traverse! transform-statements! (Node
@@ -181,7 +188,20 @@
    (set! this.body (this.body.traverse! state-var statement-form?)))
 
 (define-pmethod (Part-transform-statements! state-var statement-form?)
-   (set! this.body (this.body.traverse! state-var #t))
+   (if state-var
+       (error "Part-transform-statements!"
+	      "Parts must not have state-vars: "
+	      #f))
+   (if (and statement-form?                 ;; surrounding wants us to be stmt
+	    (not (marked-node? this))       ;; we aren't yet stmt
+	    (not this.prefer-statement-form?))  ;; and user prefers no stmt
+       (begin
+	  ;; stay non-stmt, but mark node, so we add a ";" when compiling.
+	  (set! this.statement-expression? #t)
+	  (set! this.body (this.body.traverse! #f #f)))
+       (begin
+	  (set! this.body (this.body.traverse! #f statement-form?))
+	  (mark-node! this statement-form?)))
    this)
 
 (define-pmethod (Value-transform-statements! state-var statement-form?)
