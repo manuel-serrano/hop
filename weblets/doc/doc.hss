@@ -642,7 +642,7 @@ table.search-result th {
 }
 
 table.search-result span.descr {
-  font-size: $x-small;
+  font-size: xx-small;
   width: 100%;
 }
 
@@ -662,7 +662,7 @@ table.search-result td.entry:hover {
 }
 
 table.search-result span.search-label {
-  font-size: small;
+  font-size: x-small;
   font-weight: bold;
   font-style: italic;
   color: $deep-orange;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Apr 26 13:10:53 2006 (serrano)                */
+;*    Last change :  Tue May  9 08:53:28 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -106,10 +106,11 @@
 	 (when active
 	    (if (pair? autopred)
 		(begin
-		   (hop-verb 2 "Autoload " path " on " (cadr autopred) "\n")
+		   (hop-verb 2 "Setting autoload " path " on " (cadr autopred)
+			     "\n")
 		   (autoload path (eval (cadr autopred))))
 		(begin
-		   (hop-verb 2 "Autoload " path " on " url "\n")
+		   (hop-verb 2 "Setting autoload " path " on " url "\n")
 		   (autoload path (autoload-prefix url)))))))
    (for-each (lambda (dir)
 		(for-each maybe-autoload (find-weblets dir)))

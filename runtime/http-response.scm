@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon May  8 11:49:22 2006 (serrano)                */
+;*    Last change :  Tue May  9 09:18:23 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -360,6 +360,13 @@
 		  (else
 		   (loop (+fx i 1)))))))))
     
+;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-abort ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-abort socket)
+   (with-trace 3 'http-response::http-response-abort
+      'http-response-abort))
+      
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-remote ...                         */
 ;*---------------------------------------------------------------------*/

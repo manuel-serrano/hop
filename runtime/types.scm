@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon May  8 06:00:36 2006 (serrano)                */
+;*    Last change :  Tue May  9 09:17:56 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -58,6 +58,8 @@
 	      (content-type::bstring (default "text/html"))
 	      (request::obj (default #unspecified))
 	      (bodyp::bool read-only (default #t)))
+
+	   (class http-response-abort::%http-response)
 	   
 	   (class http-response-remote::%http-response
 	      (http::bstring read-only)

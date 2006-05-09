@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sat Apr  1 18:25:50 2006 (serrano)                */
+;*    Last change :  Tue May  9 08:59:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -329,13 +329,14 @@
 ;*---------------------------------------------------------------------*/
 (define (autoload-prefix string)
    (let* ((p string)
-	  (p/ (string-append string "/")))
+	  (p/ (string-append string "/"))
+	  (lp (string-length p)))
       (lambda (req)
 	 (with-access::http-request req (path)
 	    (let ((i (string-index path #\?))
-		  (l (string-length path))
-		  (lp (string-length p)))
+		  (l (string-length path)))
 	       (if (=fx i -1)
 		   (and (substring-at? path p 0)
 			(or (=fx l lp) (eq? (string-ref path lp) #\/)))
-		   (substring-at? path p 0 i)))))))
+		   (and (>=fx i lp)
+			(substring-at? path p 0 i))))))))

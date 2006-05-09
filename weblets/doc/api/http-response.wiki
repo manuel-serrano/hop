@@ -15,6 +15,7 @@ in the documentation for the ++with-hop++ form.
 === server ===
 
   (abstract-class %http-response::%http-message ...)
+  (class http-response-abort::%http-response ...)
   (class http-response-remote::%http-response ...)
   (class http-response-filter::%http-response ...)
   (class http-response-authentication::%http-response ...)
@@ -48,6 +49,17 @@ in the documentation for the ++with-hop++ form.
 </fields>
 
 This abstract class is the super class of all responses.
+</class>
+
+=== ++(class http-response-abort::%http-response ...)++ ===
+<class> http-response-abort
+<fields>
+^  fields              ^   access  ^   type      ^  default value     ^  short description                          ^
+| ...                  |    ...    |   ...       |     ...            | fields from ::%http-response                |
+</field>
+
+This class is used to represent //aborted request//. This might be used in
+case of //denial of services// attack to the server.
 </class>
 
 === ++(class http-response-remote::%http-response ...)++ ===

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon Apr  3 10:52:20 2006 (serrano)                */
+;*    Last change :  Tue May  9 09:19:57 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -123,8 +123,16 @@
 (let ((host (hostname)))
    (hop-http-response-remote-hook-add!
     (lambda (req resp)
-       (if (not (hop-proxy-authentication))
-	   resp
+       (cond
+	  ((and (not (hop-proxy-remote)) (not (http-request-localclientp req)))
+	   (instantiate::http-response-abort))
+	  ((and (http-request-localclientp req)
+		(not (hop-proxy-authentication)))
+	   resp)
+	  ((and (not (http-request-localclientp req))
+		(not (hop-proxy-remote-authentication)))
+	   resp)
+	  (else
 	   (with-access::http-request req (user host port path header)
 	      (if (or (not (users-added?)) (user? user))
 		  resp
@@ -134,7 +142,7 @@
 				.
 				,(format "Basic realm=\"Hop proxy (~a) authentication\""
 					 host))))
-		     (body "Protected Area! Authentication required."))))))))
+		     (body "Protected Area! Authentication required.")))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user authentication                                              */
