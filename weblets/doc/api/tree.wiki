@@ -51,8 +51,8 @@ using //Trees// must include in their header, the following statement:
 | :folderc      |  string    |   ++#f++     | an image for closed folders.               |
 | :open         |  boolean   |   ++#f++     | is the tree starts open?                   |
 | :multiselect  |  boolean   |   ++#f++     | does the tree supports multi-selection?    |
-| :onselect     |  function  |     _        | a function to invoke on user selection.    |
-| :onunselect   |  function  |     _        | a function to invoke on user unselection.  |
+| :onselect     |  function  |     _        | a function to invoke on selection.         |
+| :onunselect   |  function  |     _        | a function to invoke on unselection.       |
 | body          |  element   |  empty       | the body.                    |
 </arguments>
 

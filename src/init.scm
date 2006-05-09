@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue May  9 09:19:57 2006 (serrano)                */
+;*    Last change :  Tue May  9 12:03:11 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -124,13 +124,15 @@
    (hop-http-response-remote-hook-add!
     (lambda (req resp)
        (cond
-	  ((and (not (hop-proxy-remote)) (not (http-request-localclientp req)))
+	  ((and (not (hop-proxy-allow-remote-client))
+		(not (http-request-localclientp req)))
 	   (instantiate::http-response-abort))
 	  ((and (http-request-localclientp req)
 		(not (hop-proxy-authentication)))
 	   resp)
 	  ((and (not (http-request-localclientp req))
-		(not (hop-proxy-remote-authentication)))
+		(not (hop-proxy-remote-authentication))
+		(not (hop-proxy-authentication)))
 	   resp)
 	  (else
 	   (with-access::http-request req (user host port path header)

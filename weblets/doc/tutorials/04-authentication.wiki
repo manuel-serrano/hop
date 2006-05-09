@@ -1,0 +1,9 @@
+<doc> Access control
+
+== Description ==
+
+This tutorial shows how //access control// can be programmed in HOP. It teaches
+how to protect local resources and how to request user authentication.
+
+
+</doc>

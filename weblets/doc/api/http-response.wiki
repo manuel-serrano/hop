@@ -80,7 +80,8 @@ case of //denial of services// attack to the server.
 </fields>
 
 This class denotes responses to remote web servers. These are used when the HOP server is used
-as proxy.
+as proxy. Remote responses can be enables or disabled using the 
+++hop-proxy++ and ++hop-proxy-allow-remote-clients++.
 </class>
 
 === ++(class http-response-filter::%http-response ...)++ ===

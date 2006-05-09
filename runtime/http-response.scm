@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue May  9 09:18:23 2006 (serrano)                */
+;*    Last change :  Tue May  9 13:41:37 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -24,7 +24,8 @@
 	    __hop_http-lib
 	    __hop_http-error
 	    __hop_http-filter
-	    __hop_js-lib)
+	    __hop_js-lib
+	    __hop_user)
 
    (export  (generic http-response ::%http-response ::socket)
 	    (generic scheme->response ::obj ::http-request)
@@ -202,38 +203,40 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-file socket)
    (with-trace 3 'http-response::http-response-file
-      (with-access::http-response-file r (start-line header content-type server file bodyp)
-	 ;; the file is never read so it can be open it with a tiny buffer
-	 (let ((p (socket-output socket))
-	       (pf (open-input-file file 1)))
-	    (if (not (input-port? pf))
-		(raise
-		 (if (not (file-exists? file))
-		     (make-&io-file-not-found-error #f #f
-						    'http-response
-						    "File not found"
-						    file)
-		     (make-&io-port-error #f #f
-					  'http-response
-					  "Cannot open file"
-					  file)))
-		(begin
-		   (http-write-line p start-line)
-		   (http-write-header p header)
-		   (http-write-line p "Connection: close")
-		   (when content-type
-		      (http-write-line p "Content-Type: " content-type))
-		   (when server
-		      (http-write-line p "Server: " server))
-		   (http-write-line p "Content-Length: " (file-size file))
-		   (http-write-line p)
-		   ;; the body
-		   (with-trace 4 'http-response-file
-		      (when bodyp
-			 (unwind-protect
-			    (send-chars pf p)
-			    (close-input-port pf))))
-		   (flush-output-port p)))))))
+      (with-access::http-response-file r (start-line header content-type server file bodyp request)
+	 (if (user-authorized-path? (http-request-user request) file)
+	     ;; the file is never read so it can be open it with a tiny buffer
+	     (let ((p (socket-output socket))
+		   (pf (open-input-file file 1)))
+		(if (not (input-port? pf))
+		    (raise
+		     (if (not (file-exists? file))
+			 (make-&io-file-not-found-error #f #f
+							'http-response
+							"File not found"
+							file)
+			 (make-&io-port-error #f #f
+					      'http-response
+					      "Cannot open file"
+					      file)))
+		    (begin
+		       (http-write-line p start-line)
+		       (http-write-header p header)
+		       (http-write-line p "Connection: close")
+		       (when content-type
+			  (http-write-line p "Content-Type: " content-type))
+		       (when server
+			  (http-write-line p "Server: " server))
+		       (http-write-line p "Content-Length: " (file-size file))
+		       (http-write-line p)
+		       ;; the body
+		       (with-trace 4 'http-response-file
+			  (when bodyp
+			     (unwind-protect
+				(send-chars pf p)
+				(close-input-port pf))))
+		       (flush-output-port p))))
+	     (user-access-denied request)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cgi-env ...                                                  */
@@ -288,32 +291,34 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-cgi socket)
    (with-trace 3 'http-response::http-response-cgi
-      (with-access::http-response-cgi r (start-line header content-type server cgibin bodyp)
-	 (let ((p (socket-output socket)))
-	    (http-write-line p start-line)
-	    (http-write-header p header)
-	    (http-write-line p "Connection: close")
-	    (when content-type
-	       (http-write-line p "Content-Type: " content-type))
-	    (when server
-	       (http-write-line p "Server: " server))
-	    (http-write-line p)
-	    ;; the body
-	    (with-trace 4 'http-response-cgi-process
-	       (let* ((pi (socket-input socket))
-		      (cl (http-response-cgi-content-length r))
-		      (body (read-chars (elong->fixnum cl) pi))
-		      (env (hop-cgi-env socket r cgibin "" 'POST))
-		      (proc (apply run-process cgibin output: pipe: input: pipe: env)))
-		  (fprint (process-input-port proc) body "\r\n")
-		  (close-output-port (process-input-port proc))
-		  ;; parse the cgi acknowledge
-		  (http-read-header (process-output-port proc))
-		  ;; send the result of the request
-		  (when bodyp
-		     (send-chars (process-output-port proc) p)
-		     (close-input-port (process-output-port proc)))
-		  (flush-output-port p)))))))
+      (with-access::http-response-cgi r (start-line header content-type server cgibin bodyp request)
+	 (if (user-authorized-path? (http-request-user request) cgibin)
+	     (let ((p (socket-output socket)))
+		(http-write-line p start-line)
+		(http-write-header p header)
+		(http-write-line p "Connection: close")
+		(when content-type
+		   (http-write-line p "Content-Type: " content-type))
+		(when server
+		   (http-write-line p "Server: " server))
+		(http-write-line p)
+		;; the body
+		(with-trace 4 'http-response-cgi-process
+		   (let* ((pi (socket-input socket))
+			  (cl (http-response-cgi-content-length r))
+			  (body (read-chars (elong->fixnum cl) pi))
+			  (env (hop-cgi-env socket r cgibin "" 'POST))
+			  (proc (apply run-process cgibin output: pipe: input: pipe: env)))
+		      (fprint (process-input-port proc) body "\r\n")
+		      (close-output-port (process-input-port proc))
+		      ;; parse the cgi acknowledge
+		      (http-read-header (process-output-port proc))
+		      ;; send the result of the request
+		      (when bodyp
+			 (send-chars (process-output-port proc) p)
+			 (close-input-port (process-output-port proc)))
+		      (flush-output-port p))))
+	     (user-access-denied request)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-put ...                            */
