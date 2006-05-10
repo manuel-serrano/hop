@@ -71,9 +71,9 @@ to a specific value.
 ^  arguments  ^   type    ^  short description          ^
 | slider      |  slider   | the slider.                 |
 </arguments>
-</procedure>
 
 This function returns the current value of the slider.
+</procedure>
 
 === ++(slider-value-set! slider value)++ ===
 <procedure> slider-value-set!
@@ -117,7 +117,6 @@ slider. The expression ++this.value++ returns the current value of the slider.
 
 </client>
 
-
 == Style ==
 <style>
 
@@ -160,6 +159,6 @@ It is defined as:
 </style>
 
 == See also ==
-<see-also><SLIDER>, hop-slider</see-also>
+<see-also><SLIDER>, slider-</see-also>
 
 </doc>

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Wed May 10 07:28:34 2006 (serrano)                */
+;*    Last change :  Wed May 10 13:20:08 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -28,6 +28,8 @@
    '((timeout-start hop_timeout)
      (timeout-clear! hop_clear_timeout)
      (timeout-reset! hop_timeout_reset)
+     (tooltip-hide hop_tooltip_hide)
+     (tooltip-show hop_tooltip_show)
      (base64-encode base64_encode)
      (base64-decode base64_decode)
      (slider-value hop_slider_value_get)
