@@ -11,7 +11,6 @@ modifying, and removing cookies.
 
   (http-cookie-get string)
 
-
 === Client ===
 
   (cookie-get string)
@@ -61,6 +60,19 @@ document.
 
 This function associates a new string with the cookie ++name++ on the
 current document.
+
+~~ Cookies can automatically be stored on document at load time. If an
+answer to a client request contains a Set-Cookie: field, this forces
+the client to associate a cookie with the document it will build for
+displaying the request. For instance, the following HOP response stores
+a cookie named ++Foo++ with value ++"foo"++ and that will last one minute
+one the client:
+
+  (instantiate::http-response-string
+     (body "Cookie \"Foo\" installed")
+     (header '(("Set-Cookie:" . "Foo=\"foo\"; Max-Age=60"))))
+
+
 </procedure>
 
 === ++(cookie-remove! name value)++ ===

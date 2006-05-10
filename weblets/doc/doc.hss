@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed May 10 07:05:09 2006 (serrano)                */
+/*    Last change :  Wed May 10 10:49:08 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -513,7 +513,8 @@ doc span.doc-keyword {
 }
 
 doc div.doc-arguments span.doc-keyword,
-doc div.doc-arguments span.doc-type {
+doc div.doc-arguments span.doc-type,
+doc div.doc-arguments tt {
   font-size: $x-small;
 }
 

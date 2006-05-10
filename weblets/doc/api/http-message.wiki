@@ -16,12 +16,12 @@ The ++%http-message++ class is the super class of all HOP messages.
 <class> %http-message
 
 <fields>
-^  fields              ^   access  ^   type     ^  default value  ^  short description            ^
-| date                 |  r        |  date      |                 | the date of the message       |
-| socket               |  r/w      |  socket    |                 | the connection socket         |
-| header               |  r/w      |  socket    |                 | the parsed header             |
-| content-length       |  r        |  long      |                 | the length of the content     |
-| char-encoding        |  r        |  obj       |                 | the character encoding        |
+^  fields              ^   access  ^   type     ^  default value  ^  short description          ^
+| date                 |  r        |  date      |                 | the date of the message     |
+| socket               |  r/w      |  socket    |                 | the connection socket       |
+| header               |  r/w      |  socket    |                 | the header                  |
+| content-length       |  r        |  long      |                 | the length of the content   |
+| char-encoding        |  r        |  obj       |                 | the character encoding      |
 </fields>
 </class>
 

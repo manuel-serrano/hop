@@ -18,7 +18,7 @@ times in an invocation. A typical ++<HEAD>++ looks like:
      ...
      (<SCRIPT> :type "text/javascript" ~(a piece of code))
      ...
-     (<STYLE> :type "text/css" {cascadeing style sheet elements})
+     (<STYLE> :type "text/css" {cascading style sheet elements})
      ...)
 
 

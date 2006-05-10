@@ -1,0 +1,95 @@
+<doc> RSS
+
+== Description ==
+
+This tutorial shows how the various HOP facilities for downloading and
+parsing XML documents can be used to implement RSS readers. This
+tutorial builds a function ++rss->html++ that accepts the URL of a RSS
+feeds a build a HOP tree for representing it.  It rests on the server
+function ++with-url++ to manage the connection with the remote host
+and on the function ++rss-parse++ to build the tree.
+
+== Utility functions ==
+
+The ++rss-parse++ function excepts to be invoked with tree constructors 
+for building the its representation of the RSS feeds. With start
+providing implementation for these constructors. It this simple
+version, we implement them as simple ,(<APIREF> "HTML" "html.wiki")
+elements:
+
+<example>
+  (define (make-rss channel items)
+     (<DIV>
+        :style "border: 1px solid black; background: #ddd" channel
+        (map (lambda (i) (<DIV> i)) items)))
+
+  (define (make-channel link title)
+     (<BIG> (<STRONG> (<A> :href link title))))
+
+  (define (make-item link title date subject descr)
+     (<DIV>
+        :style "border: 1px solid #ccc; margin: 1px; padding: 2px;"
+        (<A> :href link title)
+        (if date (list "(" date ")") "")
+        (if subject (<I> subject))
+        descr))
+</example>
+
+== ++rss->html++ v1 ==
+
+The function ++rss->html++ simply opens a connection and parses the
+read character. A simple implementation can be:
+
+<example>
+   (define (rss->html-v1 url)
+      (with-url url
+         (lambda (h)
+            (with-input-from-string h
+               (lambda ()
+                  (rss-parse (current-input-port) -1 make-rss make-channel make-item))))))
+</example>
+
+This compact implementation suffers one problem. The internal machinery for
+++with-url++ reads the characters available on the HTTP connection. It builds
+a string of characters that is sent to the call-back. This string is
+parsed for building the HTML tree. In consequence, the characters of the
+HTTP request are read twice. In order to avoid this double parsing a second
+solution that gets rid of ++with-url++ can be envisioned.
+
+== ++rss->html++ v2 ==
+
+In addition to ++with-url++, HOP provides a lower level library function
+for dealing with HTTP request, namely the function ++http-send-request++.
+
+<example>
+  (define (rss->html-v2 url)
+     (multiple-value-bind (_ _ host port path)
+        (url-parse url)
+        (http-send-request
+         (instantiate::http-request
+            (host host)
+            (port port)
+            (path path))
+         (lambda (status clength p)
+	    (if (=fx status 200)
+		(rss-parse p clength make-rss make-channel make-item)
+		"Error")))))
+</example>
+
+== Putting together ==
+
+Provided with our previous function, the RSS reader is straighforward.
+On this example, we extract information available for the Linux
+kernel.
+
+<example>
+  (<HTML>
+     (<HEAD>
+        (<STYLE> :type "text/css" "table { font-size: xx-small }"))
+     (<BODY>
+        (<DIV>
+           :style "font-size: xx-small"
+	   (rss->html-v2 "kernel.org/kdist/rss.xml"))))
+</example>
+
+</doc>

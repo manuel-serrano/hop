@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed May 10 07:49:35 2006 (serrano)                */
+;*    Last change :  Wed May 10 11:49:04 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -40,6 +40,7 @@
    (export  (the-current-request::obj)
 	    (hop::%http-response ::http-request)
 	    (hop-to-hop ::bstring ::int ::obj ::hop-service . ::obj)
+	    (with-url ::bstring ::procedure #!optional (fail raise))
 	    (with-remote-host ::bstring ::hop-service ::pair-nil ::procedure ::procedure)
 	    (generic with-hop-response obj proc fail)))
 
@@ -171,6 +172,49 @@
 					      (read-string p))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    make-http-callback ...                                           */
+;*---------------------------------------------------------------------*/
+(define (make-http-callback req success fail)
+   (lambda (status clength p)
+      (when (>elong clength #e0)
+	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
+      (case status
+	 ((200)
+	  (success (read-string p)))
+	 ((201)
+	  (success (json->hop p)))
+	 ((202)
+	  (success (string->obj (read p))))
+	 ((401 407)
+	  (fail (user-access-denied req)))
+	 (else
+	  (fail
+	   (instantiate::&error
+	      (proc 'wih-hop)
+	      (msg (format "Illegal status `~a'" status))
+	      (obj (read p))))))))
+
+;*---------------------------------------------------------------------*/
+;*    with-url ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (with-url url success #!optional (fail raise))
+   (set! hop-to-hop-id (-fx hop-to-hop-id 1))
+   (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
+	     ": " url "\n")
+   (with-trace 2 'with-url
+      (trace-item "url=" url)
+      (multiple-value-bind (_ userinfo host port path)
+	 (url-parse url)
+	 (let ((r (instantiate::http-request
+		       (id hop-to-hop-id)
+		       (userinfo userinfo)
+		       (host host)
+		       (port port)
+		       (path path))))
+	    (trace-item "remote path=" path)
+	    (http-send-request r (make-http-callback r success fail))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    with-remote-host ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (with-remote-host url service args success fail)
@@ -185,34 +229,14 @@
 	     (with-hop-response (apply (hop-service-proc service) args)
 				success fail)
 	     (let* ((path (apply make-hop-service-url service args))
-		    (req (instantiate::http-request
-			    (id hop-to-hop-id)
-			    (userinfo userinfo)
-			    (host host)
-			    (port port)
-			    (path path))))
+		    (r (instantiate::http-request
+			  (id hop-to-hop-id)
+			  (userinfo userinfo)
+			  (host host)
+			  (port port)
+			  (path path))))
 		(trace-item "remote path=" path)
-		(http-send-request req
-				   (lambda (status clength p)
-				      (when (>elong clength #e0)
-					 (input-port-fill-barrier-set!
-					  p clength))
-				      (case status
-					 ((200)
-					  (success (read-string p)))
-					 ((201)
-					  (success (json->hop p)))
-					 ((202)
-					  (success (string->obj (read p))))
-					 ((401 407)
-					  (fail (user-access-denied req)))
-					 (else
-					  (fail
-					   (instantiate::&error
-					      (proc 'wih-hop)
-					      (msg (format "Illegal status `~a'"
-							   status))
-					      (obj (read p)))))))))))))
+		(http-send-request r (make-http-callback r success fail)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-response ...                                            */
