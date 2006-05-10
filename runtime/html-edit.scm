@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Tue May  9 15:18:22 2006 (eg)                     */
+;*    Last change :  Wed May 10 19:59:18 2006 (eg)                     */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -47,10 +47,8 @@
        (let ((col (format "rgb(~a,~a,~a)" r g b)))
 	 (Loop r g (+ b #x66)
 	       (cons
-		(<DIV> :style (string-append
-			         "width:10px;height:10px;"
-				 "background:" col ";"
-				 "border:1px inset gray;margin:1px;float:left;")
+		(<DIV> :class "hop-edit-palette-item"
+		       :style (string-append "background:" col)
 		       :onclick (format "hop_edit_colorize(~s,~s)" id col))
 	      res)))))))
 
@@ -73,7 +71,7 @@
     (let ((icon (make-file-path *icons-dir* (string-append image ".png"))))
       (<TD> :style "width: 22px"
 	(<IMG> :src icon :class "hop-edit-button" :id (format "~a-but-~a" id name)
-	       :border 0 :style "width:16px;height:16px" :title tooltip
+	       :border 0  :title tooltip
 	       :onclick (format "hop_edit_action(~s, ~s)" id name)
 	       :onmouseover "if (!hop_edit_src) className='hop-edit-button-over'"
 	       :onmouseout  "if (!hop_edit_src) className='hop-edit-button'"))))
@@ -82,7 +80,6 @@
   (define (<STYLES>)
     (<TD> :width 50
 	  (<SELECT> :id (string-append "hop-edit-styles-" id)
-	   :style "height: 20px; background: #ddf; border: 1px solid #aaa"
 	   (map (lambda (x)
 		  (<OPTION> :onclick (format "hop_edit_style_set(~s,~s)"
 					     id (cadr x))
@@ -92,7 +89,6 @@
   (define (<FONTS>)
     (<TD> :width 65
 	  (<SELECT> :id (string-append "hop-edit-fonts-" id)
-	   :style "height: 20px; background: #ddf; border: 1px solid #aaa"
 	   (map (lambda (x)
 		  (<OPTION> :onclick (format "hop_edit_font_set(~s,~s)" id x) x))
 		*fonts*))))
@@ -100,17 +96,13 @@
   (define (<FONT-SIZES>)
     (<TD> :width 20
 	  (<SELECT> :id (string-append "hop-edit-fs-" id)
-	   :style "height: 20px; background: #ddf; border: 1px solid #aaa"
 	   (map (lambda (x)
 		  (<OPTION> :onclick (format "hop_edit_fontsize_set(~s,~s)" id x) x))
 		'(1 2 3 4 5 6 7)))))
 
   (define (<PALETTE>)
     (let ((palette (string-append id "-palette")))
-      (<DIV> :style (string-append "display:none;position:absolute;"
-				   "border: 2px ridge #555; padding:4px;"
-				   "background:#eee;cursor:pointer;width:100;")
-	     :id palette
+      (<DIV> :class "hop-edit-palette" :id palette
 	     :onclick "this.style.display = 'none'"
 	     (<DIV> (make-palette id)))))
   
@@ -134,6 +126,8 @@
 	  (<ICON> "subscript" "Subscript" "ed-subscript")
 	  (<ICON> "superscript" "Superscript" "ed-superscript")
 	  (<SEPARATOR>)
+	  (<ICON> "inserthorizontalrule" "Intert horizontal line" "ed-hrule")
+	  (<SEPARATOR>)
 	  (<ICON> "justifyleft"   "Left alignment" 	"ed-justify-left")
 	  (<ICON> "justifycenter" "Center alignment" 	"ed-justify-center")
 	  (<ICON> "justifyright"  "Right alignment"	"ed-justify-right")
@@ -150,8 +144,7 @@
 	  (<FILER>)))
     
      ;; Second line of the toolbar
-     (<TABLE> :cellpadding 0 :cellspacing 0 :class "hop-edit-toolbars"
-	      :width width 
+     (<TABLE> :cellpadding 0 :cellspacing 0 :class "hop-edit-toolbars" :width width 
 	 (<TR> :style (format "height: 26px; background-image: url(~s);" bg)
 	  (<SPACER>)
           (<ICON> "viewsource"  "Alternate view" "ed-html")
@@ -163,10 +156,12 @@
 	  (<ICON> "hilitecolor" "Background" "ed-background")
 	  (<SEPARATOR>)
 	  (<ICON> "insertlink"  "Insert link" "ed-link")
+	  (<ICON> "unlink"	"Delete link" "ed-unlink")
+	  (<SEPARATOR>)
 	  (<ICON> "insertimage" "Insert image" "ed-image")
 	  (<ICON> "inserttable" "Insert table" "ed-table")
 	  (<FILER>))))))
-     
+
 
 ;*---------------------------------------------------------------------*/
 ;*    <EDITOR> ...                                                     */
