@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Fri May  5 21:32:32 2006 (serrano)                */
+;*    Last change :  Wed May 10 07:03:44 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -65,13 +65,13 @@
 			:title "Hit [Return] to search"
 			:size 20
 			:onkeyup ~(if (= event.keyCode 13)
-				      (hop-iwindow-open
+				      (iwindow-open
 				       "Hop Weblets Hz Query"
 				       ($search this.value)
 				       false false
 				       430 300
 				       (- window.innerWidth 450) 100))))
-	       (<TD> (<BUTTON> :onclick ~(hop-iwindow-open
+	       (<TD> (<BUTTON> :onclick ~(iwindow-open
 					  "Hop Weblets Hz Query"
 					  ($searcho)
 					  false false
@@ -79,7 +79,7 @@
 					  (- window.innerWidth 450) 100)
 			       :title "Show weblets update"
 			       "Update"))
-	       (<TD> (<BUTTON> :onclick ~(hop-iwindow-open
+	       (<TD> (<BUTTON> :onclick ~(iwindow-open
 					  "Hop Weblets Hz Query"
 					  ($searchn)
 					  false false
@@ -217,7 +217,7 @@
 	     :class "action"
 	     (<SPAN>
 		:title "Run the weblet in a new window"
-		:onclick ~(hop-iwindow-open
+		:onclick ~(iwindow-open
 			   "Preferences"
 			   $(format "~a/~a/preferences" (hop-service-base) name)
 			   false false

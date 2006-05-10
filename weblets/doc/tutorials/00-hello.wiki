@@ -24,11 +24,12 @@ In this example, we define a ,(<APIREF> "service" "service.wiki") named
        (<A> :href "http://hop/hop/hello" "click me")))
 </example>
 
-This automatically binds the URL ++hop/hello++ to the service. That
-is, let's assume that ++hop++ is running and that it waits connections
-to be established on the port ++8080++. The URL ,(<TT>
+This automatically binds the URL ++/hop/hello++ to the service. The prefix
+++/hop++ is used for all the URLs associated with services.
+Let's assume that ++hop++ is running and that it waits connections
+to be established on the port ++8080++. The actual URL ,(<TT>
 "http://localhost:8080/hop/hello") refers to our previously defined
-service. HOP predefines the alias //hop// for ++localhost:8080++
+service. Since HOP predefines the alias //hop// for ++localhost:8080++
 hence, the URL ,(<TT> "http://hop/hop/hello") also refers to our
 service.
 

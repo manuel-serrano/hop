@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Fri May  5 21:13:11 2006 (serrano)                */
+;*    Last change :  Wed May 10 06:50:52 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -25,7 +25,7 @@
 ;*    hz ...                                                           */
 ;*---------------------------------------------------------------------*/
 (define-service (hz)
-   (let* ((req (the-current-request)))
+   (let ((req (the-current-request)))
       (if (users-added?)
 	  (multiple-value-bind (user mode)
 	     (hz-get-access req)
@@ -33,8 +33,8 @@
 		      (symbol? mode)
 		      (user-authorized-service? user 'hz))
 		 (hz-main req user mode)
-		 (hz-authenticate req))))
-      (hz-main req #f 'local)))
+		 (hz-authenticate req)))
+	  (hz-main req #f 'local))))
 
 ;*---------------------------------------------------------------------*/
 ;*    logout ...                                                       */
@@ -42,7 +42,7 @@
 (define (logout req)
    (let ((path (http-request-path req)))
       ~(let ((path $path))
-	  (hop_cookie_remove "hop_hz" path)
+	  (cookie-remove! "hop_hz" path)
 	  (set! location path))))
 
 ;*---------------------------------------------------------------------*/

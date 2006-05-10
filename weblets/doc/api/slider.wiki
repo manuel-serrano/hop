@@ -4,6 +4,10 @@
 
 The //slider// widget enables graphical integer selection.
 
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markups presented in this page are not yet supported on
+client side programming. They are only supported on server side.])
+
 == Synopsis ==
 
 === Server ===
@@ -12,10 +16,10 @@ The //slider// widget enables graphical integer selection.
 
 === Client ===
 
-  (hop-slider-value slider)
-  (hop-slider-value-set! slider value)
-  (hop-slider-onchange slider)
-  (hop-slider-onchange-set! slider proc)
+  (slider-value slider)
+  (slider-value-set! slider value)
+  (slider-onchange slider)
+  (slider-onchange-set! slider proc)
 
 === Requirements ===
 
@@ -60,8 +64,8 @@ to a specific value.
 == Client Definitions ==
 <client>
 
-=== ++(hop-slider-value slider)++ ===
-<procedure> hop-slider-value
+=== ++(slider-value slider)++ ===
+<procedure> slider-value
 
 <arguments>
 ^  arguments  ^   type    ^  short description          ^
@@ -71,8 +75,8 @@ to a specific value.
 
 This function returns the current value of the slider.
 
-=== ++(hop-slider-value-set! slider value)++ ===
-<procedure> hop-slider-value-set!
+=== ++(slider-value-set! slider value)++ ===
+<procedure> slider-value-set!
 
 <arguments>
 ^  arguments  ^   type    ^  short description          ^
@@ -84,8 +88,8 @@ This function sets a new value to a slider.
 
 </procedure>
 
-=== ++(hop-slider-onchange slider)++ ===
-<procedure> hop-slider-onchange
+=== ++(slider-onchange slider)++ ===
+<procedure> slider-onchange
 
 <arguments>
 ^  arguments  ^   type    ^  short description          ^
@@ -96,8 +100,8 @@ This function returns the current function that is invoked each time
 the slider changes its value.
 </procedure>
 
-=== ++(hop-slider-onchange-set! slider proc)++ ===
-<procedure> hop-slider-onchange-set!
+=== ++(slider-onchange-set! slider proc)++ ===
+<procedure> slider-onchange-set!
 
 <arguments>
 ^  arguments  ^   type      ^  short description               ^

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Wed May  3 07:26:00 2006 (serrano)                */
+/*    Last change :  Wed May 10 07:05:17 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -239,7 +239,7 @@ table.hop-tree-leaf {
 }
 
 /*--- window ----------------------------------------------------------*/
-hop-iwindow {
+iwindow {
   opacity: 0.95;
   background: white;
   font-size: small;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Fri May  5 21:14:13 2006 (serrano)                */
+;*    Last change :  Wed May 10 07:03:33 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -229,7 +229,7 @@
 		  (<VBOX-BLOCK> "&nbsp;")
 		  (<VBOX-BLOCK> (<BUTTON>
 				   :title "Build the db by files inspection"
-				   :onclick ~(hop-iwindow-open
+				   :onclick ~(iwindow-open
 					      "Repository"
 					      ($hz/build-repository)
 					      false false

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Fri May  5 21:02:04 2006 (serrano)                */
+;*    Last change :  Wed May 10 08:52:26 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -49,35 +49,39 @@
 ;*    doc/example ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/example expr)
-   (with-handler
-      (lambda (e)
-	 (http-internal-error e "Error in source code"))
-      (instantiate::http-response-hop
-	 (content-type "text/html")
-	 (bodyp #t)
-	 (xml (with-input-from-string expr
-		 (lambda ()
-		    (let loop ((v #f))
-		       (let ((e (hop-read)))
-			  (if (eof-object? e)
-			      v
-			      (loop (eval e)))))))))))
+   (if (authorized-service? (the-current-request) 'doc)
+       (with-handler
+	  (lambda (e)
+	     (http-internal-error e "Error in source code"))
+	  (instantiate::http-response-hop
+	     (content-type "text/html")
+	     (bodyp #t)
+	     (xml (with-input-from-string expr
+		     (lambda ()
+			(let loop ((v #f))
+			   (let ((e (hop-read)))
+			      (if (eof-object? e)
+				  v
+				  (loop (eval e))))))))))
+       (user-access-denied (the-current-request))))
    
 ;*---------------------------------------------------------------------*/
 ;*    doc/example-file ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/example-file path)
-   (with-handler
-      (lambda (e)
-	 (http-internal-error e "Error in source code"))
-      (instantiate::http-response-hop
-	 (content-type "text/html")
-	 (bodyp #t)
-	 (xml (with-input-from-file (make-file-path (doc-dir) "examples" path)
-		 (lambda ()
-		    (let loop ((v #f))
-		       (let ((e (hop-read)))
-			  (if (eof-object? e)
-			      v
-			      (loop (eval e)))))))))))
+   (if (authorized-service? (the-current-request) 'doc)
+       (with-handler
+	  (lambda (e)
+	     (http-internal-error e "Error in source code"))
+	  (instantiate::http-response-hop
+	     (content-type "text/html")
+	     (bodyp #t)
+	     (xml (with-input-from-file (make-file-path (doc-dir) "examples" path)
+		     (lambda ()
+			(let loop ((v #f))
+			   (let ((e (hop-read)))
+			      (if (eof-object? e)
+				  v
+				  (loop (eval e))))))))))
+       (user-access-denied (the-current-request))))
    

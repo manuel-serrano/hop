@@ -29,7 +29,6 @@ header, the following statement:
 | string      |  string  | The string for which the chesum is computed.    |
 </arguments>
 
-,(<P>)
 This procedure returns a string denoting an hexadecimal integer.
 </function>
 </procedure>

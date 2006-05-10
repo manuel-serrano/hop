@@ -6,6 +6,10 @@ The //sorttable// widgets look like regular ++<TABLE>++s. They differ from
 the latter by allowing interactive columns sorting. User clicks on header
 dynamically sort the table.
 
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markups presented in this page are not yet supported on
+client side programming. They are only supported on server side.])
+
 == Synopsis ==
 
 === server ===

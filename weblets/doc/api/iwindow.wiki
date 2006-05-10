@@ -9,8 +9,8 @@ contain partial HTML tree or entire documents.
 
 === Client ===
 
-  (hop-iwindow-open arg ...)
-  (hop-iwindow-close win)
+  (iwindow-open arg ...)
+  (iwindow-close win)
 
 === Requirements ===
 
@@ -25,13 +25,13 @@ must include in their header, the following statement:
 
 == Examples ==
 
-<example>hop-iwindow</example>
+<example>iwindow</example>
 
 == Client Definitions ==
 <client>
 
-=== ++(hop-iwindow-open id o [t] [c] [w h] [x y])++ ===
-<procedure> hop-iwindow-open
+=== ++(iwindow-open id o [t] [c] [w h] [x y])++ ===
+<procedure> iwindow-open
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
@@ -47,7 +47,7 @@ must include in their header, the following statement:
 
 ,(<P>)
 This client-side procedure opens a window. If a window opened under the same
-identifier has already been opened, ++hop-iwindow-open++ returns that window.
+identifier has already been opened, ++iwindow-open++ returns that window.
 Otherwise, it creates a new window.
 
 The content of the window can either be:
@@ -59,8 +59,8 @@ The content of the window can either be:
 
 </procedure>
 
-=== ++(hop-iwindow-close obj)++ ===
-<procedure> hop-iwindow-close
+=== ++(iwindow-close obj)++ ===
+<procedure> iwindow-close
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
@@ -76,8 +76,8 @@ This client-side procedure closes an //iwindow//.
 == Style ==
 <style>
 
-=== ++.hop-iwindow++ ===
-<css> .hop-iwindow
+=== ++.iwindow++ ===
+<css> .iwindow
 
 The visual configuration of the body of the window.
 
@@ -93,6 +93,6 @@ It is defined as:
 </style>
 
 == See also ==
-<see-also>TOOLTIP, hop-iwindow</see-also>
+<see-also>TOOLTIP, iwindow</see-also>
 
 </doc>

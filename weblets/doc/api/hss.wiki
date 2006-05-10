@@ -6,7 +6,7 @@ The functions described in the page manages HOP cascade style sheets
 (hss). See the documentation on 
 ,(<SPAN> 
     :class "href" 
-    :onclick ~(hop-notepad-select "doc-notepad" "doc-hss")
+    :onclick ~(notepad-select "doc-notepad" "doc-hss")
     "HSS") 
 for a general presentation of HSS.
 

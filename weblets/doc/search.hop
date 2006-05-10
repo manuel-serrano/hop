@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Sun May  7 20:22:00 2006 (serrano)                */
+;*    Last change :  Wed May 10 07:02:54 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -218,7 +218,27 @@
 	 :onclick ~(with-hop ($service $p)
 		      (lambda (r)
 			 (let ((el (document.getElementById $id)))
-			    (set! el.innerHTML r))))
+			    (set! el.innerHTML r)
+			    (let ((eo (and $k (document.getElementById $k))))
+			       (if eo
+				   (let ((po eo.offsetTop))
+				      (if (> po 50)
+					  (window.scrollTo 0 (- po 50)))
+				      (let* ((p eo.parentNode)
+					     (ob p.style.border.background))
+					 (hop-fx-fade-background
+					  p
+					  500
+					  40
+					  (vector "#fffd6b"
+						  "#ffff6f"
+						  "#ffff8f"
+						  "#ffffaf"
+						  "#ffffdf"
+						  "#ffffdf"
+						  (if (eq? ob #unspecified)
+						      "transparent"
+						      ob))))))))))
 	 (<SPAN> :class "descr" (html-string-encode k))))
    
    (define (char0 str)
@@ -275,7 +295,7 @@
 		    (lambda (r)
 		       (let ((el (document.getElementById $id)))
 			  (set! el.innerHTML r))
-		       (hop-iwindow-close "doc/search"))))))
+		       (iwindow-close "doc/search"))))))
 	 (else
 	  (let ((l2 (sort l1 (lambda (a b) (string<? (car a) (car b))))))
 	     (<TABLE>

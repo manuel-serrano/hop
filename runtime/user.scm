@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Apr 14 10:04:59 2006 (serrano)                */
+;*    Last change :  Tue May  9 15:18:12 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -206,7 +206,7 @@
 	 ((string=? path ".")
 	  #f)
 	 (else
-	  (let ((hopaccess (make-file-name path ".hopaccess")))
+	  (let ((hopaccess (make-file-name path (hop-hopaccess))))
 	     (if (file-exists? hopaccess)
 		 hopaccess
 		 (loop (dirname path))))))))
@@ -225,8 +225,14 @@
 				directories)))
 	    (let ((hopaccess (find-hopaccess path)))
 	       (or (not hopaccess)
-		   (member (user-name user)
-			   (with-input-from-file hopaccess read)))))))
+		   (let ((access (with-input-from-file hopaccess read)))
+		      (cond
+			 ((eq? access '*)
+			  #t)
+			 ((list? access)
+			  (member (user-name user) access))
+			 (else
+			  #f))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    authorized-path? ...                                             */

@@ -8,5 +8,5 @@
    (<HEAD> :jscript "hop-iwindow.js" :css "hop-iwindow.css")
    (<BODY>
       (<BUTTON>
-	 :onclick ~(hop-iwindow-open "iota" $iwindow/iota)
+	 :onclick ~(iwindow-open "iota" $iwindow/iota)
 	 "clickme")))

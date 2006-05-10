@@ -1,0 +1,81 @@
+<doc> URL processing
+
+== Description ==
+
+This page describes the facilities supported by HOP for decoding and
+parsing URLs.
+
+== Synopsis ==
+
+=== Server ===
+
+  (url-encode url)
+  (url-parse url)
+
+== Examples ==
+
+<example>url-</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(url-encode url) ===
+<function> url-encode
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| url         |  string         | the URL.                       |
+</arguments>
+
+Encodes a URL according to the HTTP conventions so that characters 
+are no longer interpreted as arguments delimiters. Since the encoding
+is similar to the one used for encoding XML strings 
+(see ++xml-string-encode++), encoded URLs can be decoded using
+++xml-string-decode++.
+
+~~ Example:
+
+  (url-encode "www.kernel.org?a0=val0&a1=val1&a2=val2")
+,(begin "&#8658;")
+,(<OBJ->STRING> (url-encode "www.kernel.org?a0=val0&a1=val1&a2=val2"))
+
+  (url-encode "www.kernel.org \"foo\""
+,(begin "&#8658;")
+,(<OBJ->STRING> (url-encode "www.kernel.org \"foo\""))
+</function>
+
+=== ++(url-parse url) ===
+<function> url-parse
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| url         |  string         | the URL.                       |
+</arguments>
+
+Parses a URL in order to decompose it. This function returns a multiple
+value composed of:
+
+  - the protocol used.
+  - the user information.
+  - the host.
+  - the port.
+  - the path.
+
+~~ Example:
+
+  (multiple-value-bind (proto uinfo host port path)
+     (url-parse "https://foo:bar@nowhere.org:4567/tmp/")
+     (list proto uinfo host port path))
+,(begin "&#8658;")
+,(<OBJ->STRING>
+  (multiple-value-bind (proto uinfo host port path)
+     (url-parse "https://foo:bar@nowhere.org:4567/tmp/")
+     (list proto uinfo host port path)))
+</function> 
+</server>
+
+== See also ==
+<see-also>url-, xml-string-decode</see-also>
+
+
+</doc>

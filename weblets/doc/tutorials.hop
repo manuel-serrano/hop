@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Fri May  5 21:02:36 2006 (serrano)                */
+;*    Last change :  Wed May 10 07:03:02 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -145,7 +145,7 @@
 			:size 20
 			:title "Hit [Return] to search"
 			:onkeyup ~(if (= event.keyCode 13)
-				      (hop-iwindow-open
+				      (iwindow-open
 				       "tutorial/search"
 				       ($(service (value)
 					    (tutorial-search id syntax value))
@@ -181,7 +181,7 @@
 			      :onclick
 			      ~(with-hop ($(service () (doc-page (cdr v) syntax)))
 				  (lambda (h)
-				     (hop-iwindow-close "tutorial/search")
+				     (iwindow-close "tutorial/search")
 				     (let ((e (document.getElementById $id)))
 					(set! e.innerHTML h))))
 			      (car v)))))

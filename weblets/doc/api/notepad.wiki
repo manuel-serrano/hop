@@ -9,6 +9,11 @@ several pads (++<NPTAB>++). Each //pad// contains a header (++<NPTABHEAD>++)
 which is always visible and a body. The body is only visible when
 the pad is selected. Only one pad is selected at a time.
 
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markups presented in this page are not yet supported on
+client side programming. They are only supported on server side.])
+
 == Synopsis ==
 
 === Server ===
@@ -20,7 +25,7 @@ the pad is selected. Only one pad is selected at a time.
 
 === Client ===
   
-  (hop-notepad-select notepad pad)
+  (notepad-select notepad pad)
 
 === Requirements ===
 
@@ -103,8 +108,8 @@ Creates a tab header.
 == Client Definitions ==
 <client>
 
-=== ++(hop-notepad-select notepad tab)++ ===
-<procedure> hop-notepad-select
+=== ++(notepad-select notepad tab)++ ===
+<procedure> notepad-select
 
 <arguments>
 ^  arguments  ^   type               ^  short description  ^
@@ -165,6 +170,6 @@ It is defined as:
 </style>
 
 == See also ==
-<see-also><NOTEPAD></see-also>
+<see-also><NOTEPAD>, notepad-select!</see-also>
 
 </doc>

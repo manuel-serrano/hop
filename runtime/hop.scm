@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon May  8 12:03:09 2006 (serrano)                */
+;*    Last change :  Wed May 10 07:49:35 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -180,9 +180,7 @@
    (with-trace 2 'with-hop
       (trace-item "url=" url " service=" (hop-service-id service))
       (multiple-value-bind (_ userinfo host port path)
-	 (url-parse (if (substring-at? url "http" 0)
-			url
-			(string-append "http://" url)))
+	 (url-parse url)
 	 (if (and (is-local? host) (=fx port (hop-port)))
 	     (with-hop-response (apply (hop-service-proc service) args)
 				success fail)

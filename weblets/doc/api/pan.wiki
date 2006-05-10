@@ -7,6 +7,10 @@ is a container. It is built using the ++<PANED>++ constructor. A
 //paned// contains two ++<PAN>++s whose size can be interactively
 adjusted. 
 
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markups presented in this page are not yet supported on
+client side programming. They are only supported on server side.])
+
 == Synopsis ==
 
 === Server ===
@@ -16,7 +20,10 @@ adjusted.
 
 === Client ===
   
-  (hop-notepad-select notepad pad)
+  (paned-fraction paned)
+  (paned-fraction-set! paned integer)
+  (paned-onresize paned)
+  (paned-onresize-set! paned procedure)
 
 === Requirements ===
 
@@ -70,8 +77,8 @@ This markup creates //pan//s.
 == Client Definitions ==
 <client>
 
-=== ++(hop-paned-fraction paned)++ ===
-<procedure> hop-paned-fraction
+=== ++(paned-fraction paned)++ ===
+<procedure> paned-fraction
 
 <arguments>
 ^  arguments  ^   type            ^  short description          ^
@@ -81,8 +88,8 @@ This markup creates //pan//s.
 This function returns the current fraction of the //paned//.
 </procedure>
 
-=== ++(hop-paned-fraction-set! paned fraction)++ ===
-<procedure> hop-paned-fraction-set!
+=== ++(paned-fraction-set! paned fraction)++ ===
+<procedure> paned-fraction-set!
 
 <arguments>
 ^  arguments  ^   type            ^  short description          ^
@@ -93,8 +100,8 @@ This function returns the current fraction of the //paned//.
 This function sets a new fraction to the //paned//.
 </procedure>
 
-=== ++(hop-paned-onresize paned)++ ===
-<procedure> hop-paned-onresize
+=== ++(paned-onresize paned)++ ===
+<procedure> paned-onresize
 
 <arguments>
 ^  arguments  ^   type            ^  short description          ^
@@ -104,8 +111,8 @@ This function sets a new fraction to the //paned//.
 This function returns the current ++onresize++ function of the //paned//.
 </procedure>
 
-=== ++(hop-paned-onresize-set! paned onresize)++ ===
-<procedure> hop-paned-onresize-set!
+=== ++(paned-onresize-set! paned onresize)++ ===
+<procedure> paned-onresize-set!
 
 <arguments>
 ^  arguments  ^   type            ^  short description          ^

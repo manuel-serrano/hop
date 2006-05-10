@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon May  8 06:04:10 2006 (serrano)                */
+/*    Last change :  Wed May 10 08:51:39 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -88,18 +88,6 @@ function hop_service_url_varargs( service, args ) {
       }
 
       return url;
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_set_cookie ...                                               */
-/*---------------------------------------------------------------------*/
-function hop_set_cookie( http ) {
-   try {
-      var cookie = http.getResponseHeader( "set-cookie" );
-      document.cookie = cookie;
-   } catch( e ) {
-      ;
    }
 }
 
@@ -505,6 +493,19 @@ function hop_tooltip_hide() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_set_cookie ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_set_cookie( http ) {
+   try {
+      var cookie = http.getResponseHeader( "set-cookie" );
+      if( cookie )
+	 document.cookie = cookie;
+   } catch( e ) {
+      ;
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_cookie_remove ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_cookie_remove( name, path, domain ) {
@@ -596,7 +597,7 @@ function hop_element_y( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_timeout ...                                                  */
 /*---------------------------------------------------------------------*/
-function hop_timeout( id, timeout, proc , eager ) {
+function hop_timeout( id, timeout, proc ,eager ) {
    window[ id ] = setInterval( proc, timeout );
    window[ id ].proc = proc;
    window[ id ].timeout = timeout;
@@ -607,7 +608,7 @@ function hop_timeout( id, timeout, proc , eager ) {
 /*---------------------------------------------------------------------*/
 /*    hop_timeout_reset ...                                            */
 /*---------------------------------------------------------------------*/
-function hop_timeout_reset( id, proc, timeout ) {
+function hop_timeout_reset( id, timeout, proc ) {
    var p = proc ? proc : window[ id ].proc;
    var t = timeout ? timeout : window[ id ].timeout;
    clearInterval( window[ id ] );
@@ -620,6 +621,7 @@ function hop_timeout_reset( id, proc, timeout ) {
 /*---------------------------------------------------------------------*/
 function hop_clear_timeout( id ) {
    clearInterval( window[ id ] );
+   window[ id ] = false;
 }
 
 /*---------------------------------------------------------------------*/

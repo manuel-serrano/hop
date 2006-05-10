@@ -15,7 +15,6 @@ need to implement low-level operations on URLs.
 
   (cgi-args->list url)
   (cgi-fetch-arg url name)
-  (cgi-url-encode url)
   (cgi-multipart->list tmp port length boundary)
   (cgi-post-arg-field key field)
 
@@ -39,7 +38,10 @@ the ++URL++.
 
 ~~ Example:
 
-~~ ++(cgi-args->list "a0=val0&a1=val1&a2=val2") =>++ ++,(<OBJ->STRING> (cgi-args->list "a0=val0&a1=val1&a2=val2"))++
+  (cgi-args->list "a0=val0&a1=val1&a2=val2")
+,(begin "&#8658;")
+,(<OBJ->STRING> (cgi-args->list "a0=val0&a1=val1&a2=val2"))
+
 </function>
 
 === ++(cgi-fetch-arg name url) ===
@@ -58,23 +60,9 @@ is a string, is returned.
 
 ~~ Example:
 
-~~ ++(cgi-fetch-arg "a1" "www.kernel.org?a0=val0&a1=val1&a2=val2") =>++ ++,(<OBJ->STRING> (cgi-fetch-arg "a1" "www.kernel.org?a0=val0&a1=val1&a2=val2"))++
-</function>
-
-=== ++(cgi-url-encode url) ===
-<function> cgi-url-encode
-
-<arguments>
-^  arguments  ^   type          ^  short description             ^
-| url         |  string         | the URL.                       |
-</arguments>
-
-Encodes a URL according to the HTTP conventions so that characters 
-are no longer interpreted as arguments delimiters.
-
-~~ Example:
-
-~~ ++(cgi-url-encode "www.kernel.org?a0=val0&a1=val1&a2=val2") =>++ ++,(<OBJ->STRING> (cgi-url-encode "www.kernel.org?a0=val0&a1=val1&a2=val2"))++
+  (cgi-fetch-arg "a1" "www.kernel.org?a0=val0&a1=val1&a2=val2")
+,(begin "&#8658;")
+ ,(<OBJ->STRING> (cgi-fetch-arg "a1" "www.kernel.org?a0=val0&a1=val1&a2=val2"))
 </function>
 
 === ++(cgi-multipart->list tmp port length boundary)++ ===

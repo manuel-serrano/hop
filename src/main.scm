@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Apr 26 13:17:24 2006 (serrano)                */
+;*    Last change :  Tue May  9 16:56:43 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -174,7 +174,7 @@
 	    #f)
 	 (let ((hp (hop req)))
 	    (hop-verb 4 (hop-color req req " EXEC")
-		      ": " hp
+		      ": " (find-runtime-type hp)
 		      " "
 		      (if (user? (http-request-user req))
 			  (user-name (http-request-user req))

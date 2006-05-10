@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Sat May  6 14:40:53 2006 (serrano)                */
+;*    Last change :  Wed May 10 07:28:34 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -25,27 +25,27 @@
 ;*    *hop-aliases* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *hop-aliases*
-   '((hop-timeout-start! hop_timeout)
-     (hop-timeout-clear! hop_clear_timeout)
-     (hop-timeout-reset! hop_timeout_reset)
+   '((timeout-start hop_timeout)
+     (timeout-clear! hop_clear_timeout)
+     (timeout-reset! hop_timeout_reset)
      (base64-encode base64_encode)
      (base64-decode base64_decode)
-     (hop-slider-value hop_slider_value_get)
-     (hop-slider-value-set! hop_slider_value_set)
-     (hop-slider-onchange hop_slider_onchange_get)
-     (hop-slider-onchange-set! hop_slider_onchange_set)
-     (hop-notepad-select hop_notepad_select)
-     (hop-iwindow-open hop_iwindow_open)
-     (hop-iwindow-close hop_iwindow_close)
-     (hop-paned-fraction hop_paned_fraction_get)
-     (hop-paned-fraction-set! hop_paned_fraction_set)
-     (hop-paned-onresize hop_paned_onresize_get)
-     (hop-paned-onresize-set! hop_paned_onresize_set)
-     (hop-tree-open hop_tree_open)
-     (hop-tree-close hop_tree_close)
-     (hop-tree-toggle hop_tree_toggle)
-     (hop-tree-reset! hop_tree_reset)
-     (hop-tree-selection hop_tree_selection)
+     (slider-value hop_slider_value_get)
+     (slider-value-set! hop_slider_value_set)
+     (slider-onchange hop_slider_onchange_get)
+     (slider-onchange-set! hop_slider_onchange_set)
+     (notepad-select hop_notepad_select)
+     (iwindow-open hop_iwindow_open)
+     (iwindow-close hop_iwindow_close)
+     (paned-fraction hop_paned_fraction_get)
+     (paned-fraction-set! hop_paned_fraction_set)
+     (paned-onresize hop_paned_onresize_get)
+     (paned-onresize-set! hop_paned_onresize_set)
+     (tree-open hop_tree_open)
+     (tree-close hop_tree_close)
+     (tree-toggle hop_tree_toggle)
+     (tree-reset! hop_tree_reset)
+     (tree-selection hop_tree_selection)
      (hop-fx-repeat hop_fx_repeat)
      (hop-fx-fade-background hop_fx_fade_background)
      (dom-has-attributes? dom_has_attributes)
@@ -172,6 +172,9 @@
      (<PAN> dom_create_pan)
      (<PANED> dom_create_paned)
      (<SLIDER> dom_create_slider)
-     (<SORTTABLE> dom_create_sorttable)))
+     (<SORTTABLE> dom_create_sorttable)
+     (cookie-remove! hop_cookie_remove)
+     (cookie-get hop_cookie_get_value)
+     (cookie-set! hop_cookie_set_value)))
 
 

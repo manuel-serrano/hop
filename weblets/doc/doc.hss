@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon May  8 19:31:06 2006 (serrano)                */
+/*    Last change :  Wed May 10 07:05:09 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -341,7 +341,7 @@ table.api-index span.href:hover {
 }
 
 /*--- window ----------------------------------------------------------*/
-hop-iwindow {
+iwindow {
   opacity: $doc-opacity;
   font-size: $small;
   background-color: white;
@@ -389,6 +389,10 @@ doc span.href {
   font-size: $small;
 }
 
+pre {
+  max-width: 120em;
+}
+  
 doc pre span.href, 
 doc toc span.href, 
 doc pre span.doc-keyword, 
@@ -436,6 +440,7 @@ doc textarea.example {
 
 doc pre.source {
   background-color: $source-background;
+  overflow: auto;
 }
 
 doc h1, tutorial h1 {

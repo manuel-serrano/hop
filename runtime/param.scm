@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May  8 06:09:56 2006 (serrano)                */
+;*    Last change :  Tue May  9 15:17:37 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -103,6 +103,9 @@
 	    
 	    (hop-authorize-request-hook::procedure)
 	    (hop-authorize-request-hook-set! ::procedure)
+
+	    (hop-hopaccess::bstring)
+	    (hop-hopaccess-set! ::bstring)
 	    
 	    (hop-char-encoding::symbol)
 	    (hop-char-encoding-set! ::symbol)
@@ -502,6 +505,12 @@
       (if (or (not (procedure? v)) (not (correct-arity? v 2)))
 	  (error 'hop-authorized-request "Illegal value" v)
 	  v)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hopaccess ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hopaccess
+   ".hopaccess")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-char-encoding ...                                            */
