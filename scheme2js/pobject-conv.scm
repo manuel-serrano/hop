@@ -40,7 +40,9 @@
    (nodes-init!)
    (new-node Program
 	(new-node Part
-	     (scheme->pobject prog (location prog)))))
+		  (scheme->pobject prog (location prog))
+		  #t ;; we want the main-part in statement-form
+		  (lambda (x stmt-form?) x))))
    
 (define (expr-list->Body expr-list)
    (new-node Body (expr-list->Begin expr-list)))
@@ -144,6 +146,7 @@
 	  ((part ?expr (and ?fun (? procedure?)))
 	   (new-node Part
 		(scheme->pobject expr (location (cdr exp)))
+		#f ;; don't prefer statement-form
 		fun))
 	  ((?operator . ?operands)
 	   (new-node Call

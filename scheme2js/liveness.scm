@@ -30,8 +30,8 @@
 
 (define-pmethod (Decl-clean)
    (let ((var this.var))
-      (delete! var.live-begin)
-      (delete! var.live-end)))
+      (delete! var.live-begin-stack)
+      (delete! var.live-end-stack)))
 
 (define-pmethod (Node-liveness nesting)
    (this.traverse1 (cons this nesting)))
@@ -39,20 +39,15 @@
 (define-pmethod (Lambda-liveness nesting)
    (hashtable-for-each this.free-vars
 		       (lambda (var ignored)
-			  (delete! var.live-begin)
-			  (delete! var.live-end)
+			  (delete! var.live-begin-stack)
+			  (delete! var.live-end-stack)
 			  (set! var.free? #t)))
    (pcall this Node-liveness nesting))
 
 (define-pmethod (Var-ref-liveness nesting)
-   (define (advance-list l n)
-      (if (=fx n 0)
-	  l
-	  (advance-list (cdr l) (-fx n 1))))
-   
    (let* ((var this.var)
-	  (live-begin var.live-begin)
-	  (live-end var.live-end))
+	  (live-begin-stack var.live-begin-stack)
+	  (live-end-stack var.live-end-stack))
       (cond
 	 (var.captured?
 	  'do-nothing)
@@ -60,22 +55,22 @@
 	  'do-nothing)
 	 (var.free?
 	  'do-nothing)
-	 ((not live-begin)
+	 ((not live-begin-stack)
 	  (begin
-	     (set! var.live-begin (cons this nesting))
-	     (set! var.live-end (cons this nesting))))
+	     (set! var.live-begin-stack (cons this nesting))
+	     (set! var.live-end-stack (cons this nesting))))
 	 ;; common case (same level)
-	 ((eq? nesting (cdr live-begin))
-	  (set! var.live-end (cons this nesting)))
+	 ((eq? nesting (cdr live-begin-stack))
+	  (set! var.live-end-stack (cons this nesting)))
 	 (else
-	  (let* ((begin-length (length live-begin))
+	  (let* ((begin-length (length live-begin-stack))
 		 (this-list (cons this nesting))
 		 (this-length (length this-list))
 		 (min-length (min begin-length this-length))
-		 (shorted-begin (advance-list live-begin (-fx begin-length
-							      min-length)))
-		 (shorted-this (advance-list this-list (-fx this-length
-							    min-length))))
+		 (shorted-begin (list-tail live-begin-stack
+					   (-fx begin-length min-length)))
+		 (shorted-this (list-tail this-list
+					  (-fx this-length min-length))))
 	     (let loop ((s-begin shorted-begin)
 			(s-end shorted-this))
 		(cond
@@ -89,8 +84,8 @@
 		    ;; the x is not used in the 'then'-branch.
 		    ;; this simple analysis marks it as used
 		    ;; even in the 'then'-branch.
-		    (set! var.live-begin s-begin)
-		    (set! var.live-end s-end))
+		    (set! var.live-begin-stack s-begin)
+		    (set! var.live-end-stack s-end))
 		   (else (loop (cdr s-begin)
 			       (cdr s-end))))))))))
 
@@ -100,12 +95,18 @@
 (define-pmethod (Decl-rev-liveness)
    (let ((var this.var))
       (if var.live-begin
-	  (let* ((begin-node (car var.live-begin))
+	  (error "Decl-rev-liveness"
+		 "Recursive nodes or 2 Decls for one var: "
+		 var.id))
+      (if var.live-begin-stack
+	  (let* ((begin-node (car var.live-begin-stack))
 		 (begin-node-vars begin-node.live-begin-vars)
-		 (end-node (car var.live-end))
+		 (end-node (car var.live-end-stack))
 		 (end-node-vars end-node.live-end-vars))
 	     ;; switch from lists to nodes, as we don't need the lists anymore, and
 	     ;; this helps debugging (not, that we would need it ;)
+	     (delete! var.live-begin-stack)
+	     (delete! var.live-end-stack)
 	     (set! var.live-begin begin-node)
 	     (set! var.live-end end-node)
 	     ;; reverse-pointer from the begin/end-node to the var.

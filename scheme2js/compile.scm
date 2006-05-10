@@ -12,7 +12,7 @@
 	   var
 	   gen-code
 	   statements
-	   collect-vars
+	   locals
 	   liveness
 	   constants
 	   verbose
@@ -24,7 +24,8 @@
    (if (config 'optimize-consts)
        (constants! tree))
 
-   (collect-vars tree)
+   (locals tree
+	   #f)   ;; don't collect formals
 
    (gen-var-names tree)
    (gen-code tree))
@@ -88,19 +89,16 @@
 	   (node.compile))
 	l))
 
-(define *prog* #f)
-
 (define-pmethod (Program-compile)
-   (set! *prog* this)
    (this.body.compile))
 
 (define-pmethod (Part-compile)
-   (define (split-globals collected-vars)
+   (define (split-globals local-vars)
       ;; HACK; TODO: outer-vars are for now just global vars.
       ;;    should be all vars that are visible to the outside of the part
       (let ((outer-vars (make-eq-hashtable))
 	    (part-vars (make-eq-hashtable)))
-	 (hashtable-for-each collected-vars
+	 (hashtable-for-each local-vars
 			     (lambda (var ignored)
 				(hashtable-put! (if var.is-global?
 						    outer-vars
@@ -110,9 +108,10 @@
 	 (cons outer-vars part-vars)))
 
    (let* ((outer/part-vars (if (config 'encapsulate-parts)
-			       (split-globals this.collected-vars)
-			       (cons this.collected-vars #f)))
+			       (split-globals this.local-vars)
+			       (cons this.local-vars #f)))
 	  (outer-vars (car outer/part-vars))
+	  (outer-vars? (not (= 0 (hashtable-size outer-vars))))
 	  (part-vars (cdr outer/part-vars))
 	  (part-filter-fun this.fun)
 	  (compiled-body (if (and part-vars
@@ -120,20 +119,29 @@
 			     (let* ((fun (new-node Lambda '() #f this.body))
 				    (call (new-node Call fun '())))
 				(mark-statement-form! call #t)
-				(set! fun.collected-vars part-vars)
+				(set! fun.local-vars part-vars)
 				(call.compile))
-			     (this.body.compile))))
-      (part-filter-fun (gen-code-begin
-			(list
-			 (gen-code-var-decls
-			  (map! (lambda (var)
-				   var.compiled)
-				(hashtable-key-list outer-vars)))
-			 compiled-body)
-			#t))))
+			     (this.body.compile)))
+	  (whole-is-stmt-form? (and outer-vars?
+				    (statement-form? this)))
+	  (compiled-part (if outer-vars?
+			     (gen-code-begin
+			      (list
+				(gen-code-var-decls
+				 (map! (lambda (var)
+					  var.compiled)
+				       (hashtable-key-list outer-vars)))
+				compiled-body)
+			      #t)
+			     compiled-body)))
+
+      (let ((res (part-filter-fun compiled-part whole-is-stmt-form?)))
+	 (if (not whole-is-stmt-form?)
+	     (string-append res ";")
+	     res))))
 
 (define-pmethod (Lambda-compile)
-   (let ((locals this.collected-vars)
+   (let ((locals this.local-vars)
 	 (ht (make-hashtable)))
       ;; ht will contain the var-names. (unify local-names)
       (hashtable-for-each locals
@@ -195,8 +203,9 @@
    (let* ((label this.label)
 	  (body (gen-code-begin (list (this.body.compile)
 				      (gen-code-break label))
-				#t)))
-      (gen-code-while ((new-node Const #t).compile)
+				#t))
+	  (true (new-node Const #t)))
+      (gen-code-while (true.compile)
 		      body
 		      label)))
 

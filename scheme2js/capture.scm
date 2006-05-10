@@ -6,6 +6,9 @@
    (import protobject
 	   nodes
 	   side
+	   locals
+	   free-vars
+	   captured-vars
 	   tail
 	   verbose)
    (export (capture! tree::pobject)))
@@ -36,11 +39,16 @@
 
 (define (capture! tree::pobject)
    (verbose "capture")
-   (locals tree)
+   (locals tree
+	   #t)   ;; collect formals    
    (free-vars tree)
-   (tail-exprs tree #f)
+   (tail-exprs tree
+	       #f) ;; intermediate nodes are not tail.
    (side-effect tree)
-   (collect-captured tree)
+   (captured-vars tree)
+
+   (tail-rec-escapes tree)
+
    (latest-allocation tree)
    (allocate-captured! tree))
 
@@ -51,183 +59,33 @@
 							    (symbol->string v.id)))
 					  (hashtable-key-list ht)))))
 
-(define (locals tree::pobject)
-   (verbose " locals (collect)")
-   (overload traverse locals (Node
-			      (Program Fun-locals)
-			      (Lambda Fun-locals)
-			      (Tail-rec Fun-locals)
-			      Decl)
+(define (tail-rec-escapes tree)
+   (verbose " latest allocation")
+   (overload traverse tail-rec-escapes (Node
+					Lambda
+					Tail-rec
+					Decl)
 	     (tree.traverse #f)))
 
-(define-pmethod (Node-locals ht)
+(define-pmethod (Node-tail-rec-escapes ht)
    (this.traverse1 ht))
 
-(define-pmethod (Fun-locals ht)
-   (let ((new-ht (make-eq-hashtable)))
-      (set! this.local-vars new-ht)
-      (this.traverse1 new-ht)
-      (debug-var-ht-property this 'local-vars_s new-ht)))
+(define-pmethod (Lambda-tail-rec-escapes ht)
+   (this.traverse1 #f))
 
-(define-pmethod (Decl-locals ht)
-   (hashtable-put! ht this.var #t))
+(define-pmethod (Tail-rec-tail-rec-escapes ht)
+   (let ((rec-escapes (make-eq-hashtable)))
+      (set! this.escapes rec-escapes)
+      (this.traverse1 rec-escapes)))
 
-(define (free-vars tree::pobject)
-   (verbose " free vars")
-   (overload traverse capt-fun (Node
-				(Program Fun-capt-fun)
-				(Lambda Fun-capt-fun)
-				(Tail-rec Fun-capt-fun)
-				Var-ref)
-	     (tree.traverse #f (make-eq-hashtable))))
-
-(define-pmethod (Node-capt-fun local-scope free-vars)
-   (this.traverse2 local-scope free-vars))
-
-(define-pmethod (Fun-capt-fun local-scope free-vars)
-   (let ((local-vars this.local-vars)
-	 (fun-free-vars (make-eq-hashtable)))
-      
-      ;; store all free vars in fun-free-vars
-      (this.traverse2 local-vars fun-free-vars)
-
-      ;; fun-free-vars might contain local vars.
-      ;; remove them.
-      (hashtable-for-each local-vars
-			  (lambda (key val)
-			     (hashtable-remove! fun-free-vars key)))
-      
-      ;; store remaining free vars
-      (if (> (hashtable-size fun-free-vars) 0)
-	  (begin
-	     (set! this.free-vars? #t)
-	     (set! this.free-vars fun-free-vars))
-	  (set! this.free-vars *empty-hashtable*))
-
-      (debug-var-ht-property this 'free-vars_s fun-free-vars)
-      
-      ;; pass free vars to parent-fun.
-      (hashtable-for-each fun-free-vars
-			  (lambda (key val)
-			     (hashtable-put! free-vars key #t)))))
-
-(define-pmethod (Var-ref-capt-fun local-scope free-vars)
-   (let ((var this.var))
-      (unless (hashtable-get local-scope var)
-	 (hashtable-put! free-vars var #t))))
-
-
-(define (collect-captured tree::pobject)
-   (verbose " collect captured")
-   (overload traverse cc (Node
-			  Program
-			  Lambda
-			  Tail-rec
-			  Call
-			  Set!
-			  Var-ref)
-	     (tree.traverse '())))
-
-(define (mark-closure! proc)
-   (unless proc.closure? ;; already done
-      (set! proc.closure? #t)
-      (let ((captured-vars (make-eq-hashtable)))
-	 (set! proc.captured-vars captured-vars)
-	 (hashtable-for-each proc.free-vars
-			     (lambda (key val)
-				(hashtable-put! captured-vars key #t)
-				(set! key.captured? #t)))
-	 (debug-var-ht-property proc 'captured-vars_s captured-vars))))
-
-(define (in-visible-vars var visible-vars)
-   (any? (lambda (ht) (hashtable-contains? ht var))
-	 visible-vars))
-
-(define (indirect-fun-call proc-var-ref visible-vars)
-   (let ((single-val proc-var-ref.var.single-value))
-      (if (and single-val
-	       (inherits-from? single-val (node 'Lambda)))
-	  (let* ((proc single-val)
-		 (free-vars proc.free-vars)
-		 (captured-vars (make-eq-hashtable)))
-	     (hashtable-for-each free-vars
-				 (lambda (key val)
-				    (if (not (in-visible-vars key
-							      visible-vars))
-					(begin
-					   (hashtable-put! captured-vars key #t)
-					   (set! key.captured? #t)))))
-
-	     (debug-var-ht-property proc 'captured-vars_s captured-vars)
-
-	     (if (> (hashtable-size captured-vars) 0)
-		 (begin
-		    (set! proc.closure? #t)
-		    (set! proc.captured-vars captured-vars)))))))
-
-(define-pmethod (Node-cc visible-vars)
-   (this.traverse1 visible-vars))
-
-(define-pmethod (Program-cc visible-vars)
-   (let ((imported-ht (make-eq-hashtable)))
-      (for-each (lambda (var)
-		   (hashtable-put! imported-ht var #t))
-		this.imported)
-      (pcall this Scope-cc (cons imported-ht visible-vars))))
-
-(define-pmethod (Lambda-cc visible-vars)
-   (if this.free-vars?
-       (mark-closure! this))
-   (this.traverse1 (cons this.local-vars visible-vars)))
-
-;; a tail-rec can't capture anything, but can have local vars captured.
-(define-pmethod (Tail-rec-cc visible-vars)
-   (this.traverse1 (cons this.local-vars visible-vars))
-   (let ((captured-locals (make-eq-hashtable)))
-      (hashtable-for-each this.local-vars
-			  (lambda (var val)
-			     (if var.captured?
-				 (hashtable-put! captured-locals var #t))))
-      (set! this.captured-locals captured-locals)
-      (debug-var-ht-property this 'captured-locals_s captured-locals)))
-
-(define-pmethod (Scope-cc visible-vars)
-   (this.traverse1 (cons this.local-vars visible-vars)))
-
-;; this is the only place, where we allow capturing functions.
-(define-pmethod (Call-cc visible-vars)
-   (let ((operator this.operator)
-	 (operands this.operands))
-      (cond
-	 ((inherits-from? operator (node 'Lambda))
-	      (pcall operator Scope-cc visible-vars))
-	 ((inherits-from? operator (node 'Var-ref))
-	  (indirect-fun-call operator visible-vars))
-	 (else
-	  (operator.traverse visible-vars)))
-      (for-each (lambda (node)
-		   (node.traverse visible-vars))
-		operands)))
-
-(define-pmethod (Set!-cc visible-vars)
-   (let ((var this.lvalue.var)
-	 (val this.val))
-      ;; if this is the single assignment, we can ignore it.
-      (if (and var.single-value
-	       (inherits-from? val (node 'Lambda)))
-	  (pcall val Scope-cc visible-vars)
-	  (val.traverse visible-vars))))
-
-(define-pmethod (Var-ref-cc visible-vars)
-   (let ((single-val this.var.single-value))
-      (if (and single-val
-	       (inherits-from? single-val (node 'Lambda)))
-	  (mark-closure! single-val))))
+(define-pmethod (Decl-tail-rec-escapes ht)
+   (if (and ht
+	    this.var.captured?)
+       (hashtable-put! ht this.var #t)))
 
 (define (latest-allocation tree)
    (verbose " latest allocation")
    (overload traverse latest (Node
-			      Program
 			      Var-ref
 			      Lambda
 			      If
@@ -239,7 +97,7 @@
 			      Set!
 			      Call)
 	     (set! (node 'Node).proto.default-traverse-value '())
-	     (tree.traverse #f #f)
+	     (tree.traverse '())
 	     (delete! (node 'Node).proto.default-traverse-value)))
 
 (define (latest-merge . Ls)
@@ -251,55 +109,62 @@
 		Ls)
       (hashtable-key-list ht)))
    
-(define-pmethod (Node-latest captured-locals already-allocated?)
-   (this.traverse2 captured-locals already-allocated?))
+(define-pmethod (Node-latest tail-rec-escapes)
+   (this.traverse1 tail-rec-escapes))
 
-(define-pmethod (Program-latest captured-locals already-allocated?)
-   (this.traverse2 #f #t))
+(define-pmethod (Lambda-latest tail-rec-escapes)
+   (define (latest-for-surrounding)
+      (let ((free-vars-list (hashtable-key-list this.free-vars)))
+	 (let loop ((escapes tail-rec-escapes)
+		    (res '()))
+	    (if (null? escapes)
+		res
+		(loop (cdr escapes)
+		      (append! (filter (lambda (var)
+					  (hashtable-contains? (car escapes)
+							       var))
+				       free-vars-list)
+			       res))))))
+      
+   (this.traverse1 '())
+   (let ((latest-for-surrounding-L (latest-for-surrounding)))
+      (if (not (null? latest-for-surrounding-L))
+	  (set! this.latest latest-for-surrounding-L))
+      latest-for-surrounding-L))
 
-;; only indirectly called.
-(define-pmethod (Fun-latest captured-locals already-allocated?)
-   (let* ((latest-for-surrounding
-	   (if already-allocated?
-	       '()
-	       (filter (lambda (var)
-			  (hashtable-contains? captured-locals var))
-		       (hashtable-key-list this.free-vars)))))
-      (if (not (null? latest-for-surrounding))
-	  (set! this.latest latest-for-surrounding))
-      latest-for-surrounding))
+(define-pmethod (Tail-rec-latest tail-rec-escapes)
+   (let* ((escapes this.escapes)
+	  (new-rec-escapes (if (> (hashtable-size escapes) 0)
+			       (cons escapes tail-rec-escapes)
+			       tail-rec-escapes))
+	  (body-latest (this.body.traverse new-rec-escapes))
+	  (surrounding-latest (filter (lambda (var)
+					 (not (hashtable-contains? escapes
+								   var)))
+				      body-latest)))
+      (if (not (= (length surrounding-latest) (length body-latest)))
+	  (set! this.has-latest? #t))
+      (set! this.latest surrounding-latest)
+      surrounding-latest))
 
-(define-pmethod (Lambda-latest captured-locals already-allocated?)
-   (this.traverse2 #f #t)
-   (pcall this Fun-latest captured-locals already-allocated?))
-
-(define-pmethod (Tail-rec-latest captured-locals already-allocated?)
-   (let ((captured-locals this.captured-locals))
-      (if (> (hashtable-size captured-locals) 0)
-	  ;; don't go into formals and vaargs
-	  (this.body.traverse captured-locals #f)
-	  (this.traverse2 #f #t)))
-   (pcall this Fun-latest captured-locals already-allocated?))
-
-(define-pmethod (If-latest captured-locals already-allocated?)
-   (let* ((test-latest (this.test.traverse captured-locals already-allocated?))
-	  (then-latest (this.then.traverse captured-locals already-allocated?))
-	  (else-latest (this.else.traverse captured-locals already-allocated?))
+(define-pmethod (If-latest tail-rec-escapes)
+   (let* ((test-latest (this.test.traverse tail-rec-escapes))
+	  (then-latest (this.then.traverse tail-rec-escapes))
+	  (else-latest (this.else.traverse tail-rec-escapes))
 	  (merged-latest (latest-merge test-latest then-latest else-latest))
 	  (test-latest? (not (null? test-latest)))
 	  (then-latest? (not (null? then-latest)))
 	  (else-latest? (not (null? else-latest))))
-      (if (and (not already-allocated?)
+      (if (and tail-rec-escapes
 	       (and test-latest? (or then-latest? else-latest?)))
 	       ;; then-latest? and else-latest? can be latest in their branches.
 	  (set! this.latest merged-latest))
       merged-latest))
 
-(define-pmethod (Case-latest captured-locals already-allocated?)
-   (let* ((key-latest (this.key.traverse captured-locals already-allocated?))
+(define-pmethod (Case-latest tail-rec-escapes)
+   (let* ((key-latest (this.key.traverse tail-rec-escapes))
 	  (clauses-latest (map (lambda (clause)
-				  (clause.traverse captured-locals
-						   already-allocated?))
+				  (clause.traverse tail-rec-escapes))
 			       this.clauses))
 	  (merged-latest (apply latest-merge (cons key-latest clauses-latest)))
 	  (key-latest? (not (null? key-latest)))
@@ -307,19 +172,19 @@
 				 (map (lambda (latest)
 					 (not (null? latest)))
 				      clauses-latest))))
-      (if (and (not already-allocated?)
+      (if (and tail-rec-escapes
 	       (and key-latest? clauses-latest?))
 	  (set! this.latest merged-latest))
       merged-latest))
 
-(define-pmethod (Clause-latest captured-locals already-allocated?)
-   (this.expr.traverse captured-locals already-allocated?))
+(define-pmethod (Clause-latest tail-rec-escapes)
+   (this.expr.traverse tail-rec-escapes))
 
-(define-pmethod (Begin-latest captured-locals already-allocated?)
-   (if already-allocated?
+(define-pmethod (Begin-latest tail-rec-escapes)
+   (if (not tail-rec-escapes)
        (begin
 	  (for-each (lambda (node)
-		       (node.traverse captured-locals already-allocated?))
+		       (node.traverse #f))
 		    this.exprs)
 	  '())
        (let loop ((exprs this.exprs)
@@ -330,40 +195,36 @@
 		 (if (> latest-sub-exprs-count 1)
 		     (set! this.latest merged))
 		 merged)
-	      (let ((sub-latest ((car exprs).traverse captured-locals #f)))
+	      (let ((sub-latest ((car exprs).traverse tail-rec-escapes)))
 		 (loop (cdr exprs)
 		       (latest-merge sub-latest merged)
 		       (if (null? sub-latest)
 			   latest-sub-exprs-count
 			   (+fx latest-sub-exprs-count 1))))))))
 
-(define-pmethod (Set!-latest captured-locals already-allocated?)
-   (let* ((lvalue-latest (this.lvalue.traverse captured-locals
-					       already-allocated?))
-	  (val-latest (this.val.traverse captured-locals
-					 already-allocated?))
+(define-pmethod (Set!-latest tail-rec-escapes)
+   (let* ((lvalue-latest (this.lvalue.traverse tail-rec-escapes))
+	  (val-latest (this.val.traverse tail-rec-escapes))
 	  (merged-latest (latest-merge lvalue-latest val-latest)))
-      (if (and (not already-allocated?)
+      (if (and tail-rec-escapes
 	       (not (null? lvalue-latest)))
 	  (set! this.latest merged-latest))
       merged-latest))
 
-(define-pmethod (Bind-exit-latest captured-locals already-allocated?)
-   (let* ((escape-latest (this.escape.traverse captured-locals
-					       already-allocated?))
-	  (body-latest (this.body.traverse captured-locals
-					   already-allocated?))
+(define-pmethod (Bind-exit-latest tail-rec-escapes)
+   (let* ((escape-latest (this.escape.traverse tail-rec-escapes))
+	  (body-latest (this.body.traverse tail-rec-escapes))
 	  (merged-latest (latest-merge escape-latest body-latest)))
-      (if (and (not already-allocated?)
+      (if (and tail-rec-escapes
 	       (not (null? escape-latest)))
 	  (set! this.latest merged-latest))
       merged-latest))
 
-(define-pmethod (Call-latest captured-locals already-allocated?)
-   (if already-allocated?
+(define-pmethod (Call-latest tail-rec-escapes)
+   (if (not tail-rec-escapes)
        (begin
 	  (for-each (lambda (node)
-		       (node.traverse captured-locals already-allocated?))
+		       (node.traverse #f))
 		    (cons this.operator this.operands))
 	  '())
        (let loop ((ops (cons this.operator this.operands))
@@ -374,16 +235,17 @@
 		 (if (>fx latest-ops-count 1)
 		     (set! this.latest merged))
 		 merged)
-	      (let ((op-latest ((car ops).traverse captured-locals #f)))
+	      (let ((op-latest ((car ops).traverse tail-rec-escapes)))
 		 (loop (cdr ops)
 		       (latest-merge op-latest merged)
 		       (if (null? op-latest)
 			   latest-ops-count
 			   (+fx latest-ops-count 1))))))))
 
-(define-pmethod (Var-ref-latest captured-locals already-allocated?)
-   (if (and (not already-allocated?)
-	    (hashtable-contains? captured-locals this.var))
+(define-pmethod (Var-ref-latest tail-rec-escapes)
+   (if (any? (lambda (ht)
+		(hashtable-contains? ht this.var))
+	     tail-rec-escapes)
        (let ((latest (list this.var)))
 	  (set! this.latest latest)
 	  latest)
@@ -393,18 +255,36 @@
    (verbose " allocate captured")
    (overload traverse! alloc! (Node
 			       Tail-rec)
-	     (tree.traverse! #t #f)))
+	     (tree.traverse! #t)))
 
-(define-pmethod (Node-alloc! already-allocated? surrounding-tail-rec)
-   (if (and (not already-allocated?)
-	    this.latest)
-       (let ((body (this.traverse! #t #f)))
-	  (new-node Closure-alloc this.latest body))
-       (this.traverse2! already-allocated? surrounding-tail-rec)))
+(define (diff-vars latest already-allocated)
+   (define (difference l1 l2)
+      (let ((ht (make-eq-hashtable)))
+	 (for-each (lambda (x) (hashtable-put! ht x #t)) l1)
+	 (for-each (lambda (x) (hashtable-remove! ht x)) l2)
+	 (hashtable-key-list ht)))
 
-(define-pmethod (Tail-rec-alloc! already-allocated? surrounding-tail-rec)
-   (let ((captured-locals this.captured-locals))
-      (if (> (hashtable-size captured-locals) 0)
-	  (set! this.body (this.body.traverse! #f this))
-	  (set! this.body (this.body.traverse! #t this))))
-   (pcall this Node-alloc! already-allocated? surrounding-tail-rec))
+   (and latest
+	(not (eq? already-allocated #t))
+	(let ((diff (difference latest already-allocated)))
+	   (and (not (null? diff))
+		diff))))
+   
+(define-pmethod (Node-alloc! already-allocated)
+   (let ((diff (diff-vars this.latest already-allocated)))
+      (delete! this.latest)
+      (if diff
+	  (let ((new-this (this.traverse1! #t)))
+	     (new-node Closure-alloc diff new-this))
+	  (this.traverse1! already-allocated))))
+
+(define-pmethod (Tail-rec-alloc! already-allocated)
+   (if this.has-latest?
+       (set! this.body (this.body.traverse! this.latest))
+       (set! this.body (this.body.traverse! #t)))
+   (delete! this.has-latest?)
+   (let ((diff (diff-vars this.latest already-allocated)))
+      (delete! this.latest)
+      (if diff
+	  (new-node Closure-alloc diff this)
+	  this)))

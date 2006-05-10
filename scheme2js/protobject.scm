@@ -1,6 +1,7 @@
-
 (module protobject
    (include "protobject.sch")
+   ;; HACK: see TODO below
+   (include "tools.sch")
    (export
     (class pobject
        (type::pclass read-only)
@@ -22,7 +23,10 @@
     (pobject-dot-out po::pobject)
     (pclass-constructor var::pobject)
     (inherits-from? var type)
-    (pobject-name po::pobject)))
+    (pobject-name po::pobject)
+    (pobject-for-each proc po::pobject)
+    (pobject-clone this::pobject . Lcopy-props?)
+    (pobject-deep-clone this::pobject cloned-ht)))
 
 (define (make-props-hashtable)
    (make-hashtable #unspecified #unspecified (lambda (x y)
@@ -115,6 +119,55 @@
 (define (pobject-name po::pobject)
    (with-access::pobject po (type)
       (pclass-name type)))
+
+(define (pobject-for-each proc po::pobject)
+   (with-access::pobject po (props)
+      (hashtable-for-each props proc)))
+
+(define-pmethod (pobject-clone . Lcopy-props?)
+   (let ((copy-props? (or (null? Lcopy-props?)
+			  (car Lcopy-props?)))
+	 (new-node (empty-pobject (pobject-type this))))
+      (if copy-props?
+	  (pobject-for-each (lambda (prop val)
+			       (pfield-set! new-node prop val))
+			    this))
+      new-node))
+
+(define-pmethod (pobject-deep-clone cloned-ht)
+   (define (deep-clone val)
+      (cond
+	 ((hashtable-get cloned-ht val)
+	  =>
+	  (lambda (cloned-val)
+	     cloned-val))
+	 ((and (pobject? val)
+	       (pfield val 'deep-clone))
+	  (pcall val (pfield val 'deep-clone) cloned-ht))
+	 ((hashtable? val)
+	  (let ((clone (make-eq-hashtable))) ;; TODO how to know ??
+	     (hashtable-put! cloned-ht val clone)
+	     (hashtable-for-each val
+				 (lambda (key ht-val)
+				    (hashtable-put! clone
+						    (deep-clone key)
+						    (deep-clone ht-val))))
+	     clone))
+	 ((list? val)
+	  (map deep-clone val))
+	 ((pair? val)
+	  (cons (deep-clone (car val))
+		(deep-clone (cdr val))))
+	 (else
+	  val)))
+
+   (or (hashtable-get cloned-ht this)
+       (let ((cloned-this (empty-pobject (pobject-type this))))
+	  (hashtable-put! cloned-ht this cloned-this)
+	  (pobject-for-each (lambda (prop val)
+			       (pfield-set! cloned-this prop (deep-clone val)))
+			    this)
+	  cloned-this)))
 
 (define-method (object-display po::pobject . port)
    (if (eq? po *no-proto*)
@@ -237,7 +290,7 @@
 						  ">")))
 				    (display* "|"
 					      field-id
-					      key
+					      (mangle key)
 					      (tostring val obj-id field-id))
 				    (set! counter (+ counter 1))
 				    (hashtable-put! already-printed

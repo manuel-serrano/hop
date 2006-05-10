@@ -801,7 +801,7 @@ function sc_isCharLowerCase(c) /// export
     { return sc_isCharOfClass(c.val, SC_LOWER_CLASS); }
 
 function sc_char2integer(c) /// export
-    { return c.val.valharCodeAt(0); }
+    { return c.val.charCodeAt(0); }
 function sc_char2string(c) /// export
     { return new sc_String(c.val); }
 function sc_char2symbol(c) /// export

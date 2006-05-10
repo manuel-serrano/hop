@@ -1,122 +1,172 @@
 (module inline
    (include "protobject.sch")
    (include "nodes.sch")
+   (include "tools.sch")
    (option (loadq "protobject-eval.sch"))
    (import protobject
 	   config
 	   nodes
 	   var
 	   side
+	   locals
+	   use-count
+	   nested-funs
+	   fun-size
 	   transform-util
 	   verbose)
    (export (inline! tree::pobject)))
 
-(define *second-pass* #t)
+(define (can-be-inlined? var)
+   (and (or (config 'inline-globals)
+	    (not var.is-global?))
+	var.single-value
+	(inherits-from? var.single-value (node 'Lambda))
+	(not var.single-value.closure?)))
+   
+(define (good-for-inlining? var nested-counter)
+   (and (can-be-inlined? var)
+	(< nested-counter 1)
+	(or (= var.uses 1)
+	    (and (not var.single-value.nested-funs?)
+		 (< var.single-value.size 50)))))
 
 (define (inline! tree)
    (if (config 'do-inlining)
        (begin
 	  (verbose "inlining")
-	  (constant-propagation! tree)
-	  (clean! tree)
-	  (let ((inlined-funs? (inline-funs! tree)))
-	     (if (and inlined-funs?
-		      *second-pass*)
+	  (side-effect tree)
+	  (use-count tree)
+	  (if (single-use! tree)
+	      (begin
+		 (inline-funs! tree)
+		 (side-effect tree)
+		 (use-count tree)))
+	  (fun-size tree)
+	  (nested-funs tree)
+	  (locals tree
+		  #t)   ;; collect formals.
+	  (if (clone-funs tree)
+	      (inline-funs! tree))
+	  )))
+
+(define (single-use! tree)
+   (define single-use-inline-count 0)
+   
+   (define-pmethod (Node-single-use!)
+      (this.traverse0!))
+
+   (define-pmethod (Set!-single-use!)
+      (let ((var this.lvalue.var))
+	 (if (and (= var.uses 1)
+		  (can-be-inlined? var))
+	     (set! this.val (new-node Const 'inlined)))
+	 (this.traverse0!)))
+
+   (define-pmethod (Call-single-use!)
+      (if (inherits-from? this.operator (node 'Var-ref))
+	  (let* ((op this.operator)
+		 (var op.var))
+	     (if (and (= var.uses 1)
+		      (can-be-inlined? var))
 		 (begin
-		    (constant-propagation! tree)
-		    (clean! tree)))))))
+		    (set! single-use-inline-count (+ single-use-inline-count 1))
+		    (set! this.operator var.single-value)))))
+      (this.traverse0!))
+   
+   (verbose " clone-funs")
+   (overload traverse! single-use! (Node
+				   Set!
+				   Call)
+	     (tree.traverse!))
+   (> single-use-inline-count 0))
 
-;; currently only single-assig propagation:
-;;  if a value is assigned only once, we can safely propagate this value.
-(define (constant-propagation! tree)
-   (verbose " constant-propagation")
-   (side-effect tree)
-   ;; we propagate functions only, if they are used once.
-   (use-count tree)
-   (propagate! tree))
+(define (clone-fun fun)
+   (define to-clone (make-eq-hashtable))
+   
+   (define label-ht (make-eq-hashtable))
+   (define (label-map label)
+      (or (hashtable-get label-ht label)
+	  (let ((label-replacement (gensym 'label)))
+	     (hashtable-put! label-ht label-replacement label-replacement)
+	     (hashtable-put! label-ht label label-replacement)
+	     label-replacement)))
+   
+   (define (to-clone-add! ht)
+      (hashtable-for-each ht
+			  (lambda (key val)
+			     (hashtable-put! to-clone key #t))))
+   
+   (define-pmethod (Var-deep-clone cloned-ht)
+      (if (hashtable-get to-clone this)
+	  (pcall this pobject-deep-clone cloned-ht)
+	  this))
 
-(define (use-count tree)
-   (overload traverse use-count (Node
-				 Var-ref
-				 Set!)
-	     (tree.traverse)))
+   (define-pmethod (Lambda-deep-clone cloned-ht)
+      (to-clone-add! this.local-vars)
+      (pcall this pobject-deep-clone cloned-ht))
 
-(define-pmethod (Node-use-count)
-   (this.traverse0))
+   (define-pmethod (Call-deep-clone cloned-ht)
+      (let ((cloned-fun this.cloned-fun))
+	 (delete! this.cloned-fun)
+	 (let ((res (pcall this pobject-deep-clone cloned-ht)))
+	    (if cloned-fun
+		(set! this.cloned-fun cloned-fun))
+	    res)))
 
-(define-pmethod (Var-ref-use-count)
-   (let ((var this.var))
-      (if var.uses
-	  (set! var.uses (+ var.uses 1))
-	  (set! var.uses 1))))
+   (define-pmethod (Tail-rec-deep-clone cloned-ht)
+      (let ((res (pcall this pobject-deep-clone cloned-ht)))
+	 (set! res.label (label-map res.label))
+	 res))
 
-;; don't count lvalue of 'set!'s
-(define-pmethod (Set!-use-count)
-   (this.val.traverse))
+   (define-pmethod (Tail-rec-call-deep-clone cloned-ht)
+      (let ((res (pcall this pobject-deep-clone cloned-ht)))
+	 (set! res.label (label-map res.label))
+	 res))
 
+   (define-pmethod (Label-deep-clone cloned-ht)
+      (let ((res (pcall this pobject-deep-clone cloned-ht)))
+	 (set! res.id (label-map res.id))
+	 res))
 
-(define (propagate! tree)
-   (verbose " propagate")
-   (overload traverse! propagate! (Node
-				   Var-ref
-				   Call
-				   Set!)
-	     (tree.traverse!)))
+   (define-pmethod (Break-deep-clone cloned-ht)
+      (let ((res (pcall this pobject-deep-clone cloned-ht)))
+	 (set! res.label (label-map res.label))
+	 res))
 
-(define-pmethod (Node-propagate!)
-   (this.traverse0!))
+   (to-clone-add! fun.local-vars)
+   (overload deep-clone deep-clone (Var
+				    Lambda
+				    Call
+				    Tail-rec
+				    Tail-rec-call
+				    Label
+				    Break)
+	     (pcall fun pobject-deep-clone (make-eq-hashtable))))
 
-(define-pmethod (Var-ref-propagate!)
-   (let ((single-value this.var.single-value))
-      (if (and single-value
-	       (inherits-from? single-value (node 'Const))
-	       (or (config 'inline-globals)
-		   (not this.var.is-global?)))
-	  (begin
-	     (set! this.var.inlined? #t)
-	     (new-node Const single-value.value))
-	  this)))
+(define (clone-funs tree)
+   (define clone-funs-counter 0)
+   
+   (define-pmethod (Node-clone-funs nested-counter)
+      (this.traverse1 nested-counter))
 
-(define-pmethod (Call-propagate!)
-   (let ((op this.operator))
-      (if (inherits-from? op (node 'Var-ref))
-	  (let* ((var op.var)
-		 (single-value var.single-value))
-	     (if (and single-value
-		      (inherits-from? single-value (node 'Lambda))
-		      (not single-value.closure?)
-		      (eq? var.uses 1))
-		 (begin
-		    (set! this.operator op.var.single-value)
-		    (set! op.var.inlined? #t)
-		    (pcall this Call-propagate!))
-		 (this.traverse0!)))
-	  (this.traverse0!))))
+   (define-pmethod (Call-clone-funs nested-counter)
+      (this.traverse1 nested-counter)
+      (if (inherits-from? this.operator (node 'Var-ref))
+	  (let* ((op this.operator)
+		 (var op.var))
+	     (if (good-for-inlining? var nested-counter)
+		 (let* ((single-value var.single-value)
+			(cloned (clone-fun single-value)))
+		    (set! clone-funs-counter (+ clone-funs-counter 1))
+		    (set! this.cloned-fun cloned)
+		    (cloned.traverse (+ nested-counter 1)))))))
 
-(define-pmethod (Set!-propagate!)
-   (set! this.val (this.val.traverse!))
-   this)
+   (verbose " clone-funs")
+   (overload traverse clone-funs (Node
+				  Call)
+	     (tree.traverse 0))
+   (> clone-funs-counter 0))
 
-
-(define (clean! tree)
-   (verbose " clean")
-   (overload traverse! clean! (Node
-			       Set!)
-	     (tree.traverse!)))
-
-(define-pmethod (Node-clean!)
-   (this.traverse0!))
-
-(define-pmethod (Set!-clean!)
-   (let ((lvar this.lvalue.var))
-      (cond
-	 (lvar.inlined?
-	  (new-node Const #unspecified))
-	 ((and (not lvar.uses)
-	       (not (inherits-from? lvar (node 'JS-Var)))
-	       (not lvar.is-global?))
-	  (this.val.traverse!))
-	 (else (this.traverse0!)))))
 
 (define (inline-funs! tree)
    (define *inlined-funs* #f)
@@ -130,25 +180,28 @@
       (this.traverse1! label))
 
    (define-pmethod (Call-inline! label)
-      (let ((op this.operator))
-	 (if (inherits-from? op (node 'Lambda))
-	     (let* ((fun op)
-		    (assigs (parameter-assigs this.operands
-					      fun.formals
-					      fun.vaarg
-					      #f ;; don't take reference
-					      *id->js-var*))
-		    (traversed-assigs (map (lambda (node)
-					      (node.traverse! label))
-					   assigs))
-		    (label (new-node Label fun.body (gensym 'inlined)))
-		    (traversed-label (label.traverse! label)))
-		(set! *inlined-funs* #t)
-		(new-node Begin (append! traversed-assigs
-				    (list (if traversed-label.used
-					      traversed-label
-					      traversed-label.body)))))
-	     (this.traverse1! label))))
+      (if this.cloned-fun
+	  (begin
+	     (set! this.operator this.cloned-fun)
+	     (delete! this.cloned-fun)))
+      (if (inherits-from? this.operator (node 'Lambda))
+	  (let* ((fun this.operator)
+		 (assigs (parameter-assigs this.operands
+					   fun.formals
+					   fun.vaarg
+					   #f ;; don't take reference
+					   *id->js-var*))
+		 (traversed-assigs (map (lambda (node)
+					   (node.traverse! label))
+					assigs))
+		 (label (new-node Label fun.body (gensym 'inlined)))
+		 (traversed-label (label.traverse! label)))
+	     (set! *inlined-funs* #t)
+	     (new-node Begin (append! traversed-assigs
+				      (list (if traversed-label.used
+						traversed-label
+						traversed-label.body)))))
+	  (this.traverse1! label)))
 
    (define-pmethod (Lambda-inline! label)
       (this.traverse1! #f))
@@ -161,7 +214,6 @@
 		 (set! label.used #t)
 		 ((new-node Break this.val label).traverse! label)))
 	  (this.traverse1! label)))
-
 
    ;;=====================================================
    ;; method-start
