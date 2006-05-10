@@ -1,0 +1,79 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/home/widgets.hop                */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
+;*    Last change :  Wed May 10 17:15:29 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The HOME widgets.                                                */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hophome_widgets
+
+   (import hophome_config)
+   
+   (export (<HOME> . obj)
+	   (<ZIMG> src1 src2)))
+
+;*---------------------------------------------------------------------*/
+;*    <HOME> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<HOME> . obj)
+   (<HTML>
+      (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css" 
+	      :jscript "hop-sorttable.js" :css "hop-sorttable.css" 
+	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
+	      :jscript "hop-fx.js"
+	      :css (format "~a/home.hss" (home-dir)))
+      (<BODY>
+	 (<CENTER>
+	    (<TABLE>
+	       :class "home"
+	       (<TR>
+		  (<TD>
+		     :valign "top"
+		     (<IMG> :class "logo"
+			    :src (format "~a/icons/logo.png"
+					 (hop-share-directory))))
+		  (<TD>
+		     :valign "top"
+		     (<TABLE>
+			(<TR>
+			   (<TD>
+			      (<DIV> :id "title"
+				     "Hop Home Page")))
+			(<TR>
+			   (<TD>
+			      obj))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <ZIMG> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<ZIMG> s1 s2)
+   (let ((id (xml-make-id))
+	 (p1 (make-file-path (home-dir) "icons" s1))
+	 (p2 (make-file-path (home-dir) "icons" s2)))
+      (<IMG> :id id
+	     :src p1
+	     :onmouseover ~(set! (document.getElementById $id).src $p2)
+	     :onmouseout ~(set! (document.getElementById $id).src $p1)
+	     :onclick ~(let ((frame (document.createElement "iframe"))
+			     (t (document.getElementById $id)))
+			  (set! frame.className "demos")
+			  (set! frame.src "home/demos/minesweeper"
+				(set! frame.style.border "0")
+				(set! frame.style.width "200px")
+				(set! frame.style.height "200px")
+				(iwindow-open "Minesweeper"
+					      frame
+					      false false
+					      200 200
+					      (+ event.pageX 100)
+					      (- event.pageY 10)))))))
+				     
+	     

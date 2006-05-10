@@ -92,4 +92,40 @@ kernel.
 	   (rss->html-v2 "kernel.org/kdist/rss.xml"))))
 </example>
 
+== A fancier interface ==
+
+Using the set of widgets provided by HOP, it is easy to enhance the graphical
+user interface of our RSS reader. Several widgets could be used such
+as ++<TABSLIDER>++ or ++<TREE>++. This tutorial uses fold lists (++<FL>++).
+This widget manages a list of items than can interactively be folded and
+unfolded.
+
+<example>
+  (define (make-rss channel items)
+     (<FL> items))
+
+  (define (make-channel link title)
+     (<STRONG> (<A> :href link title)))
+
+  (define (make-item link title date subject descr)
+     (<FLITEM>
+        (<FLHEAD> title)
+        (<DIV>
+           :style "background: #ddd; border: 1px solid black"
+           (<A> :href link title)
+           (if date (list "(" date ")") "")
+           (if subject (<I> subject))
+           descr)))
+
+  (<HTML>
+     (<HEAD> 
+        :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+        (<STYLE> :type "text/css" "table { font-size: xx-small }"))
+     (<BODY>
+        (<DIV>
+           :style "font-size: small"
+           (rss->html-v2 "kernel.org/kdist/rss.xml"))))
+</example>
+ 
+
 </doc>

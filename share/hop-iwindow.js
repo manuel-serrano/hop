@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Fri May  5 13:28:53 2006 (serrano)                */
+/*    Last change :  Wed May 10 17:21:06 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -250,7 +250,7 @@ function make_hop_iwindow( id, class ) {
     <TD class='hop-iwindow-shadow-se'>&nbsp;</TD>\
   </TR>\
 </TABLE>";
-  
+
    document.body.appendChild( win );
    
    win.el_title = document.getElementById( id + "-title" );

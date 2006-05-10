@@ -1,0 +1,43 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/home/home.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed May 10 16:18:48 2006                          */
+;*    Last change :  Wed May 10 16:29:41 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOP home page weblet.                                            */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hophome
+   (library hopwiki)
+   (import  hophome_config
+	    hophome_widgets
+	    hophome_demo))
+
+;*---------------------------------------------------------------------*/
+;*    home ...                                                         */
+;*---------------------------------------------------------------------*/
+(define-service (home)
+   (home-main (the-current-request)))
+
+;*---------------------------------------------------------------------*/
+;*    home-main ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (home-main req)
+   (<HOME>
+      (<NOTEPAD>
+	 :id "home-notepad"
+	 (<NPHEAD> "")
+	 (<NPTAB> :id "download"
+		  (<NPTABHEAD> "Download")
+		  "not yet")
+	 (<NPTAB> :id "demo"
+		  (<NPTABHEAD> "Demonstrations")
+		  (<DEMO> req))
+	 (<NPTAB> :id "documentation"
+		  (<NPTABHEAD> "Documentations")
+		  "docs"))))

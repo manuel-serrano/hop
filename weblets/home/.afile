@@ -1,0 +1,10 @@
+;; /users/serrano/prgm/project/hop/weblets/home
+;; Wed May 10 16:31:58 2006
+
+(
+  (hophome_config "./config.hop")
+  (hophome_demo "./demo.hop")
+  (hophome "./home.hop")
+  (hophome_widgets "./widgets.hop")
+)
+

@@ -1,0 +1,58 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/home/demo.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed May 10 16:29:57 2006                          */
+;*    Last change :  Wed May 10 17:33:10 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOME page demonstration                                          */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hophome_demo
+   (import hophome_config
+	   hophome_widgets)
+   (export (<DEMO> request)))
+
+;*---------------------------------------------------------------------*/
+;*    <DEMO> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<DEMO> req)
+   (<DIV>
+      :class "demo" ""
+      (<DIV>
+	 :class "toolbar"
+	 :align "center"
+	 :width "100%"
+	 :id "demo"
+	 (<TABLE>
+	    :class "toolbar"
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> "mines-32x32.png" "mines-48x48.png")))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> "games1-32x32.png" "games1-48x48.png")))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> "games2-32x32.png" "games2-48x48.png")))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> "term-32x32.png" "term-48x48.png")))))))
+
+;*---------------------------------------------------------------------*/
+;*    home/demos/minesweeper ...                                       */
+;*---------------------------------------------------------------------*/
+(define-service (home/demos/minesweeper)
+   (<HTML>
+      (<BODY>
+	 "toto")))
+	  
+   
