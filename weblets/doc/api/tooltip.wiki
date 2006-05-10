@@ -2,7 +2,7 @@
 
 == Description ==
 
-This page described the HOP API for tooltips. A tooltip, is a static
+This page describes the HOP API for tooltips. A tooltip, is a static
 HTML tree that is by hidden and that pops up when the mouse flies over
 reactive regions.
 

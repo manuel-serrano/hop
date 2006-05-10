@@ -1,0 +1,86 @@
+<doc> Tabslider
+
+== Description ==
+
+This page describes the ++<TABSLIDER>++ widget.
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markups presented in this page are not yet supported on
+client side programming. They are only available on server side.])
+
+== Synopsis ==
+
+=== Server ===
+
+  (<TABSLIDER> args ...)
+  (<TSPAN> args ...)
+  (<TSPHEAD> args ...)
+
+=== Requirements ===
+
+Client codes using //tabsliders// need to load the script ++hop-tabslider.js++.
+They also need to load the ++hop-tabslider.css++ style sheet.  Hence, documents
+using //tabsliders// must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-tabslider.js" :css "hop-tabslider.css")
+
+
+== Examples ==
+
+<example><TABSLIDER></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<TABSLIDER>++ ===
+<markup> <TABSLIDER>
+
+<arguments>
+^  attributes  ^   type             ^   default    ^  short description      ^
+| :id          |  string            |  //random//  | element identifier.     |
+| :width       |  dimension         |              | the width.              |
+| :height      |  dimension         |              | the height.             |
+| :index       |  integer           |      0       | the selected tab.       |
+| body         |  ++<TSPAN>++ list  |              | the list of items.      |
+</arguments>
+
+</markup>
+
+=== ++<TSPAN>++ ===
+<markup> <TSPAN>
+
+<arguments>
+^  attributes  ^   type      ^   default    ^  short description           ^
+| :id          |  string     |  //random//  | element identifier.          |
+| body         | HTML tree   |              | the body.                    |
+</arguments>
+
+</markup>
+
+=== ++<TSHEAD>++ ===
+<markup> <TSHEAD>
+
+<arguments>
+^  attributes  ^   type      ^   default    ^  short description           ^
+| :id          |  string     |  //random//  | element identifier.          |
+| body         | HTML tree   |              | the body.                    |
+</arguments>
+
+</markup>
+</server>
+
+== Style ==
+<style>
+
+This section describes the various CSS elements used to configure
+//tabsliders//.
+
+<share>hop-tabslider.css</share>
+
+</style>
+
+== See also ==
+<see-also><TABSLIDER></see-also>
+
+</doc>

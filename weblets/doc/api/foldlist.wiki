@@ -1,0 +1,89 @@
+<doc> Folding lists
+
+== Description ==
+
+This page describes the //folding list// (++<FL>++) widget. A folding is
+a list as ++<OL>++ and ++<UL>++ but items can be interactively //folded// an
+//unfolded//.
+
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markups presented in this page are not yet supported on
+client side programming. They are only available on server side.])
+
+== Synopsis ==
+
+=== Server ===
+
+  (<FL> args ...)
+  (<FLITEM> args ...)
+  (<FLHEAD> args ...)
+
+=== Requirements ===
+
+Client codes using //foldlists// need to load the script ++hop-foldlist.js++.
+They also need to load the ++hop-foldlist.css++ style sheet.  Hence, documents
+using //foldlists// must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-foldlist.js" :css "hop-foldlist.css")
+
+
+== Examples ==
+
+<example><FL></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<FL>++ ===
+<markup> <FL>
+
+<arguments>
+^  attributes  ^   type              ^   default    ^  short description      ^
+| :id          |  string             |  //random//  | element identifier.     |
+| :spacing     |  integer            |      0       |                         |
+| :icono       |  string             |  //false//   | the open image.         |
+| :iconc       |  string             |  //false//   | the close image.        |
+| body         |  ++<FLITEM>++ list  |              | the list of items.      |
+</arguments>
+
+</markup>
+
+=== ++<FLITEM>++ ===
+<markup> <FLITEM>
+
+<arguments>
+^  attributes  ^   type      ^   default    ^  short description           ^
+| :id          |  string     |  //random//  | element identifier.          |
+| body         | HTML tree   |              | the body.                    |
+</arguments>
+
+</markup>
+
+=== ++<FLHEAD>++ ===
+<markup> <FLHEAD>
+
+<arguments>
+^  attributes  ^   type      ^   default    ^  short description           ^
+| :id          |  string     |  //random//  | element identifier.          |
+| body         | HTML tree   |              | the body.                    |
+</arguments>
+
+</markup>
+</server>
+
+== Style ==
+<style>
+
+This section describes the various CSS elements used to configure
+//foldlists//.
+
+<share>hop-foldlist.css</share>
+
+</style>
+
+== See also ==
+<see-also><FL></see-also>
+
+</doc>

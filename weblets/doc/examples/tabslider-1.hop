@@ -1,0 +1,71 @@
+;; A simple tabslider
+(<HTML>
+   (<HEAD>
+      :css "hop-tabslider.css" :jscript "hop-tabslider.js"
+      (<STYLE> :type "text/css" {
+  div.hop-tabslider {
+    width: 100%;
+    font-family: Tahoma, Verdana;
+    font-size: 10px;
+    overflow: auto;
+    background: #412c41;
+  }
+  
+  div.hop-tabslider > span {
+    width: 75px;
+    border: 1px solid black;
+    font-family: Tahoma, Verdana;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: bold;
+    -moz-border-radius-topRight: 0.3em;
+  }
+  
+  div.hop-tabslider span.hop-tabslider-head-inactive {
+    background: #ccc;
+    color: black;
+  }
+  
+  div.hop-tabslider span.hop-tabslider-head-active {
+    color: #f78241;
+    background: #dedeff;
+    border-bottom-color: #dedeff;
+  }
+  
+  div.hop-tabslider span:hover {
+    color: #f78241;
+  }
+  
+  div.hop-tabslider-content {
+    border: 0;
+    border-left: 1px solid black;
+    background: #dedeff;
+    font-family: inherit;
+    font-size: inherit;
+    padding-left: 5px;
+  }
+
+  table.content {
+     font-size: xx-small;
+  }
+}))	   
+   (<BODY>
+      (<TABSLIDER>
+	 :width "300px"
+	 :height "300px"
+	 (map (lambda (i)
+		 (let ((enum (iota i 1)))
+		    (<TSPAN>
+		       (<TSHEAD> i)
+		       (<TABLE>
+			  :class "content"
+			  :border 1
+			  (<TR> (<TD> i) (map <TH> enum))
+			  (map (lambda (v1)
+				  (<TR>
+				     (cons (<TH> v1)
+					   (map (lambda (v2)
+						   (<TD> (* v1 v2)))
+						enum))))
+			       enum)))))
+	      (iota 4 2)))))

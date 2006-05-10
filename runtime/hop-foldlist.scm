@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Thu Apr 27 08:10:45 2006 (serrano)                */
+;*    Last change :  Wed May 10 14:25:44 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -27,40 +27,9 @@
 		   (open (default #f)))
 	    (class html-flhead::xml-element))
 
-   (export  (<FOLD-ITEM> . ::obj)
-	    (<FL> . ::obj)
+   (export  (<FL> . ::obj)
 	    (<FLITEM> . ::obj)
 	    (<FLHEAD> . ::obj)))
-
-
-;*---------------------------------------------------------------------*/
-;*    <FOLD-ITEM> ...                                                  */
-;*---------------------------------------------------------------------*/
-(define-xml-compound <FOLD-ITEM> ((id #unspecified string)
-				  (class #f)
-				  (title #f)
-				  (icono #f)
-				  (iconc #f)
-				  body)
-  (let ((iditem (symbol->string (gensym "fi")))
-	(open   (or icono (make-file-name (hop-icons-directory)
-					  "triangle-down.png")))
-	(closed (or iconc (make-file-name (hop-icons-directory)
-					  "triangle-right.png")))
-	(cls    (if class
-		    (string-append "hop-fold-item " class)
-		    "hop-fold-item")))
-    (list
-    (<UL> :class cls
-	   (<LI> (<SPAN> :onclick (format "hop_fold_item_toggle(~s, ~s, ~s)"
-					  iditem open closed)
-			 :class "hop-fl-item"
-			 title)
-		 (<DIV> :onclick " alert('inside'); return true"
-			:class "hop-fl-item"
-			:id iditem :style "display:none" body)))
-     (<SCRIPT> :type "text/javascript"
-	       (format "hop_fold_item_icon_set(~s, ~s)" iditem closed)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FL> ...                                                         */

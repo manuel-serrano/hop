@@ -32,6 +32,7 @@ function hop_tabslider_select(item)
 	    title.className = "hop-tabslider-head-inactive";
 	}
     }
+    
     /* Set the height of the selected item */
     selected.style.height = totalHeight - titlesHeight;
 }
