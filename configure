@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Apr 25 09:57:49 2006 (serrano)                */
+#*    Last change :  Thu May 11 09:29:27 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -38,6 +38,8 @@ mimetypes=/etc/mime.types
 #*---------------------------------------------------------------------*/
 version="1.2.1"
 devel=pre
+
+url="http://hop.inria.fr/"
 
 etcdir=$prefix/etc
 bindir=$prefix/bin;
@@ -283,6 +285,7 @@ echo ";* Automatically generated file (don't edit) */" > $configure
 
 cat etc/configure.scm.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@SHAREDIR@|$sharedir|" \

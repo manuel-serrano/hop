@@ -1,0 +1,90 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/hop/hop.hss                     */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 24 13:57:44 2005                          */
+/*    Last change :  Thu May 11 09:36:32 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    DOC HOP CSS                                                      */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    User configuration                                               */
+/*---------------------------------------------------------------------*/
+$(define font-family "Lucida Grande, Verdana, Lucida, Helvetica, Arial")
+$(define typewriter "Bitstream Vera Sans Mono, Andale Mono, monospace")
+$(define border-color "#bbb")
+$(define home-color "#f9f9f9")
+$(define header-color "#fffff0")
+$(define title-color "#ddd")
+$(define table-header-background "#6357da")
+$(define table-header-markup-background "#d8a62a")
+$(define table-header-class-background "#71d830")
+$(define table-header-foreground "#fff")
+$(define table-background "#d8d7ff")
+$(define hop-opacity "0.97")
+$(define deep-blue "#00a")
+$(define deep-green "#0a0")
+$(define deep-magenta "#7a459e")
+$(define deep-magenta2 "#4a346c")
+$(define deep-orange "#ffae2b")
+
+/*---------------------------------------------------------------------*/
+/*    Common CSS rules                                                 */
+/*---------------------------------------------------------------------*/
+body {
+  background-color: #e0e0e0;
+  font-family: $font-family;
+  overflow: scroll;
+}
+
+img.logo {
+  padding: 20px;
+}
+
+/*--- table -----------------------------------------------------------*/
+table.hop {
+  width: 45em;
+  margin-top: 50px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background-color: white;
+  -moz-border-radius: 0.5em;
+}
+
+div#title {
+  width: 35em;
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+
+div#result {
+  text-align: center;
+  width: 30em;
+  font-weight: bold;
+  font-size: large;
+  color: red;
+  border-top: 1px solid $border-color;
+  margin-top: 10px;
+  padding-top: 10px;
+}  
+
+td.logo {
+  border: 1px outset transparent;
+}
+  
+td.logo:hover {
+  border: 1px outset #777;
+  background-color: #e7e7e7;
+}
+
+td.legend span {
+  font-size: small;
+  font-weight: bold;
+  font-family: $font-family;
+  cursor: default;
+}

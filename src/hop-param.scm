@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue May  9 12:00:46 2006 (serrano)                */
+;*    Last change :  Thu May 11 07:06:10 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -89,4 +89,3 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-proxy-remote-authentication
    #t)
-

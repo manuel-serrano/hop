@@ -1,42 +1,30 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/home/home.hop                   */
+;*    serrano/prgm/project/hop/weblets/hop/config.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
-;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu May 11 06:28:11 2006 (serrano)                */
+;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
+;*    Last change :  Thu May 11 09:38:23 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    HOP home page weblet.                                            */
+;*    Hop configuration                                                */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hophome
-   (import  hophome_config
-	    hophome_widgets
-	    hophome_demo))
+(module hophop_config
+   (export (hop-date)
+	   (hop-author)
+	   (hop-dir)))
 
 ;*---------------------------------------------------------------------*/
-;*    home ...                                                         */
+;*    Version                                                          */
 ;*---------------------------------------------------------------------*/
-(define-service (home)
-   (home-main (the-current-request)))
+(define (hop-date) "2006")
+(define (hop-author) "M. Serrano")
 
 ;*---------------------------------------------------------------------*/
-;*    home-main ...                                                    */
+;*    hop-dir                                                          */
 ;*---------------------------------------------------------------------*/
-(define (home-main req)
-   (<HOME>
-      (<NOTEPAD>
-	 :id "home-notepad"
-	 (<NPHEAD> "")
-	 (<NPTAB> :id "download"
-		  (<NPTABHEAD> "Download")
-		  "not yet")
-	 (<NPTAB> :id "demo"
-		  (<NPTABHEAD> "Demonstrations")
-		  (<DEMO> req))
-	 (<NPTAB> :id "documentation"
-		  (<NPTABHEAD> "Documentations")
-		  "docs"))))
+(define-parameter hop-dir (dirname (the-loading-file)))
+

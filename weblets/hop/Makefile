@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/home/Makefile                   */
+#*    serrano/prgm/project/hop/weblets/hop/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu May 11 06:26:47 2006 (serrano)                */
+#*    Last change :  Thu May 11 06:39:12 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -15,8 +15,8 @@
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
-HOP_POP         = home.hop config.hop widgets.hop demo.hop
-POPULATION	= Makefile home.info .afile home.hss $(HOP_POP)
+HOP_POP         = hop.hop config.hop
+POPULATION	= Makefile hop.info .afile hop.hss $(HOP_POP)
 
 build: .afile
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed May 10 07:44:13 2006 (serrano)                */
+;*    Last change :  Thu May 11 08:57:08 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -71,10 +71,12 @@
 ;*    hop-service-path? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-service-path? path)
-   (let ((l1 (string-length (hop-service-base))))
+   (let ((l1 (string-length (hop-service-base)))
+	 (lp (string-length path)))
       (and (substring-at? path (hop-service-base) 0)
-	   (>fx (string-length path) l1)
-	   (char=? (string-ref path l1) #\/))))
+	   (or (=fx lp l1)
+	       (and (>fx lp l1)
+		    (char=? (string-ref path l1) #\/))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-request-service-name ...                                     */
@@ -259,7 +261,7 @@
    (let ((l (string-length p)))
       (let loop ((i (+fx 1 (string-length (hop-service-base))))
 		 (r::long 0))
-	 (if (=fx i l)
+	 (if (>=fx i l)
 	     (bit-and r (-fx (bit-lsh 1 29) 1))
 	     (let ((c (string-ref p i)))
 		(if (char=? c #\?)
@@ -272,14 +274,22 @@
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
    (when (http-request-localhostp req)
-      (with-access::http-request req (path)
-	 (when (hop-service-path? path)
-	    (mutex-lock! *service-mutex*)
-	    (let ((svc (hashtable-get *service-table* path)))
-	       (mutex-unlock! *service-mutex*)
-	       (when (hop-service? svc)
-		  (with-access::hop-service svc (id %exec)
-		     (scheme->response (%exec req) req))))))))
+      (let loop ()
+	 (with-access::http-request req (path)
+	    (when (hop-service-path? path)
+	       (mutex-lock! *service-mutex*)
+	       (let ((svc (hashtable-get *service-table* path)))
+		  (mutex-unlock! *service-mutex*)
+		  (if (hop-service? svc)
+		      (with-access::hop-service svc (id %exec)
+			 (scheme->response (%exec req) req))
+		      (let ((init (hop-initial-weblet)))
+			 (when (and (string? init)
+				    (string=? path (hop-service-base)))
+			    (set! path (string-append (hop-service-base)
+						      "/"
+						      init))
+			    (loop))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */
@@ -301,4 +311,3 @@
 		(loop (+fx i 1))))))
       (mutex-unlock! *service-mutex*)
       svc))
-			       

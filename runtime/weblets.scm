@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue May  9 08:53:28 2006 (serrano)                */
+;*    Last change :  Thu May 11 08:46:40 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -98,6 +98,19 @@
 ;; 	autoload-weblets ...
 ;; ----------------------------------------------------------------------
 (define (autoload-weblets dirs)
+   (define (install-autoload-prefix path url)
+      (hop-verb 2 "Setting autoload " path " on " url "\n")
+      (autoload path (autoload-prefix url)))
+   (define (is-service-base? req)
+      (with-access::http-request req (path)
+	 (let ((base (hop-service-base)))
+	    (and (substring-at? base path 0)
+		 (let ((lp (string-length path))
+		       (lb (string-length base)))
+		    (or (=fx lp lb)
+			(and (=fx lp (+fx lb 1))
+			     (char=? (string-ref path (-fx lp 1))
+				     #\/))))))))
    (define (maybe-autoload x)
       (let ((url (make-file-name (hop-service-base) (cadr (assoc 'name x))))
 	    (path (cadr (assq 'weblet x)))
@@ -109,9 +122,7 @@
 		   (hop-verb 2 "Setting autoload " path " on " (cadr autopred)
 			     "\n")
 		   (autoload path (eval (cadr autopred))))
-		(begin
-		   (hop-verb 2 "Setting autoload " path " on " url "\n")
-		   (autoload path (autoload-prefix url)))))))
+		(install-autoload-prefix path url)))))
    (for-each (lambda (dir)
 		(for-each maybe-autoload (find-weblets dir)))
 	     dirs))
