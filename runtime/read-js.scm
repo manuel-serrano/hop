@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Mon May  8 06:06:52 2006 (serrano)                */
+;*    Last change :  Sat May 13 15:56:56 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
@@ -35,13 +35,22 @@
 		 (if (>fx bra-open 0)
 		     (cons "}" (ignore))
 		     '()))
+;* 		((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"") */
+;* 		 (let ((s (the-substring 1 (-fx (the-length) 1))))     */
+;* 		    (cons (string-append "\"" (string-for-read s) "\"") */
+;* 			  (ignore))))                                  */
+;* 		((: "\'" (* (or (out #a000 #\\ #\') (: #\\ all))) "\'") */
+;* 		 (let ((s (the-substring 1 (-fx (the-length) 1))))     */
+;* 		    (cons (string-append "\'" (string-for-read s) "\'") */
+;* 			  (ignore))))                                  */
+;; MS: fix 13 may 2006, get rid of string-for-read.		
 		((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
 		 (let ((s (the-substring 1 (-fx (the-length) 1))))
-		    (cons (string-append "\"" (string-for-read s) "\"")
+		    (cons (string-append "\"" s "\"")
 			  (ignore))))
 		((: "\'" (* (or (out #a000 #\\ #\') (: #\\ all))) "\'")
 		 (let ((s (the-substring 1 (-fx (the-length) 1))))
-		    (cons (string-append "\'" (string-for-read s) "\'")
+		    (cons (string-append "\'" s "\'")
 			  (ignore))))
 		((: "//" (* all))
 		 (ignore))

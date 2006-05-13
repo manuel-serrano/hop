@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Sat May 13 15:23:11 2006 (serrano)                */
+;*    Last change :  Sat May 13 15:26:30 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -50,11 +50,11 @@
 		  (<ZIMG> (make-service-url home/demos/sudoku)
 			  "games1-32x32.png" "games1-48x48.png"
 			  500 420)))
-	    (<TR>
-	       (<TD>
-		  :align "left"
-		  (<ZIMG> "hop/home/demos/tetris"
-			  "games2-32x32.png" "games2-48x48.png")))
+;* 	    (<TR>                                                      */
+;* 	       (<TD>                                                   */
+;* 		  :align "left"                                        */
+;* 		  (<ZIMG> "hop/home/demos/tetris"                      */
+;* 			  "games2-32x32.png" "games2-48x48.png")))     */
 	    (<TR>
 	       (<TD>
 		  :align "left"

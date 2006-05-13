@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Apr 24 14:33:19 2006 (serrano)                */
+;*    Last change :  Sat May 13 15:45:03 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -302,16 +302,8 @@
       ;; strings with newline in them in addition to compute
       ;; the string, we have to count the number of newline
       ;; in order to increment the line-num variable strings
-      ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (the-substring 1 (-fx (the-length) 1))))
-	  (if (bigloo-strict-r5rs-strings)
-	      (let ((str (the-substring 1 (-fx (the-length) 1))))
-		 (escape-scheme-string str))
-	      (let ((str (the-substring 0 (-fx (the-length) 1))))
-		 (escape-C-string str)))))
-      ;; foreign strings of char
-      ((: "#\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (the-substring 1 (-fx (the-length) 1))))
+      ((: (? #\#) "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
+       (let ((str (the-substring 0 (-fx (the-length) 1))))
 	  (escape-C-string str)))
       ;; ucs2 strings
       ((: "#u\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
