@@ -8,6 +8,14 @@
    (<HTML>
       (<HEAD>
 	 :dir *repl-directory*
+	 :jscript "hop-iwindow.js" :css "hop-iwindow.css"
+	 :jscript "hop-notepad.js" :css "hop-notepad.css"
+	 :jscript "hop-tree.js" :css "hop-tree.css"
+	 :jscript "hop-tabslider.js" :css "hop-tabslider.css"
+	 :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+	 :jscript "hop-paned.js" :css "hop-paned.css"
+	 :jscript "hop-sorttable.js" :css "hop-sorttable.css"
+	 :jscript "hop-dom.js" :jscript "hop-fx.js" :jscript "base64.js"
 	 :css "repl.hss")
       (<BODY>
 	 (<DIV>
@@ -34,6 +42,7 @@
 ;; (define els (document.getElementsByTagName \"h1\"))
 ;; (define el (array-ref els 0))
 ;; (el.style.setProperty \"color\" \"red\" \"\")
+;; you can also try (iwindow-open 'home '/hop/home 'home)
 :=> ")))))
 
 (define-service (home/demos/repl/compile s)

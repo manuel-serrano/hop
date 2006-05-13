@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Sat May 13 14:17:01 2006 (serrano)                */
+/*    Last change :  Sat May 13 16:31:39 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -49,13 +49,25 @@ function hop_iwindow_maximize( id ) {
 	 win.oldtop = win.style.top;
 	 win.oldleft = win.style.left;
 
-	 win.el_main.style.width = window.innerWidth -
-	    win.el_shadow_box.offsetWidth;
-	 win.el_main.style.height = window.innerHeight -
-	    win.el_shadow_box.offsetHeight;
+	 if( win.user_parent ) {
+	    var p = win.parentNode;
+	    
+	    win.el_main.style.width = p.offsetWidth -
+	       win.el_shadow_box.offsetWidth;
+	    win.el_main.style.height = p.offsetHeight -
+	       win.el_shadow_box.offsetHeight;
 
-	 win.style.top = 0;
-	 win.style.left = 0;
+	    win.style.top = hop_element_y( p ) + 1;
+	    win.style.left = hop_element_x( p ) + 1;
+	 } else {
+	    win.el_main.style.width = window.innerWidth -
+	       win.el_shadow_box.offsetWidth - 2;
+	    win.el_main.style.height = window.innerHeight -
+	       win.el_shadow_box.offsetHeight - 2;
+
+	    win.style.top = 0;
+	    win.style.left = 0;
+	 }
       }
    }
 
@@ -370,7 +382,8 @@ function hop_iwindow_open( id, obj, title, class, width, height, x, y, parent ) 
 	 if( (obj instanceof String) || (typeof obj == "string") ) {
 	    hop( obj, cb );
 	 } else {
-	    alert( "*** Hop Error, Illegal `iwindow' content -- " + obj );
+	    alert( "*** Hop Error, Illegal `iwindow' content -- " + obj
+	       + " (" + typeof obj + ")" );
 	 }
       }
    }
