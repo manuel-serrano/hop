@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed May 10 17:28:56 2006 (serrano)                */
+/*    Last change :  Sat May 13 15:14:42 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -145,66 +145,6 @@ div#result {
   padding-top: 10px;
 }  
 
-/*--- popup-menu ------------------------------------------------------*/
-div.popup-menu {
-  cursor: pointer;
-  display: none;
-  font-size: $x-small;
-  font-weight: bold;
-  font-family: sans serif;
-  position: absolute;
-  min-width : 18em;
-  max-height: 400px;
-  overflow: auto;
-  z-index: 10;
-  background-color: $popup-menu-color;
-  border: $popup-menu-border;
-  -moz-opacity: $home-opacity;
-}
-
-div.popup-menu tt {
-  font-size: $x-small;
-}
-
-table.popup-menu {
-  width: 18em;
-  font-weight: normal;
-  font-size: $x-small;
-}
-
-table.popup-menu td tt:hover {
-  text-decoration: underline;
-  color: blue;
-}
-
-/*--- fold list -------------------------------------------------------*/
-.hop-fl {
-  width: 100%;
-  padding: 0;
-  margin: 0;
-}
-
-.hop-fl IMG.hop-fl-img {
-  margin-left: 5px;
-  padding: 2px;
-  cursor: pointer;
-}
-
-.hop-fl SPAN.hop-fl-head {
-  font-weight: bold;
-  cursor: pointer;
-  margin: 0;
-  font-size: $small;
-}
-
-.hop-fl SPAN.hop-fl-head:hover {
-  color: $deep-blue;
-}
-
-.hop-fl DIV.hop-fl-item {
-  margin: 0;
-}
-
 /*--- notepad ---------------------------------------------------------*/
 div.hop-notepad-title {
   background-color: transparent;
@@ -291,14 +231,25 @@ span.edit:hover {
 
 /*--- window ----------------------------------------------------------*/
 iwindow {
-  opacity: $home-opacity;
   font-size: $small;
   background-color: white;
   z-index: 11;
 }
 
+/*---------------------------------------------------------------------*/
+/*    Presentation                                                     */
+/*---------------------------------------------------------------------*/
+div.presentation {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url( "icons/logo-bg-128x128.jpeg" );
+  min-width: 200;
+  min-height: 200;
+}
 
-/*--- demo ------------------------------------------------------------*/
+/*---------------------------------------------------------------------*/
+/*    Demo                                                             */
+/*---------------------------------------------------------------------*/
 $(hop-hss-type! "demo" "div.demo")
 $(define demo-background "#496bce")
 $(define toolbar-opacity "0.9")
@@ -310,7 +261,7 @@ demo {
   background-color: #496bce;
   overflow: auto;
   border: 2px double #aaa;
-  z-index: 10;
+  z-index: 1001;
 }
   
 demo div.toolbar {
@@ -340,4 +291,13 @@ table.toolbar td {
   border: 0;
   padding: 0;
   margin: 0;
+}
+
+span.icon {
+  position: absolute;
+  visibility: hidden;
+  background-color: #ffffcc;
+  border: 1px solid black;
+  padding: 2px;
+  cursor: default;
 }

@@ -30,7 +30,7 @@ must include in their header, the following statement:
 == Client Definitions ==
 <client>
 
-=== ++(iwindow-open id o [t] [c] [w h] [x y])++ ===
+=== ++(iwindow-open id o [t] [c] [w h] [x y] [p])++ ===
 <procedure> iwindow-open
 
 <arguments>
@@ -43,9 +43,10 @@ must include in their header, the following statement:
 | h           |  integer  | the optional height.                            |
 | x           |  integer  | the optional X coordinate.                      |
 | y           |  integer  | the optional Y coordinate.                      |
+| p           |  obj      | an optional parent (defaults to the document).  |
 </arguments>
 
-,(<P>)
+~~
 This client-side procedure opens a window. If a window opened under the same
 identifier has already been opened, ++iwindow-open++ returns that window.
 Otherwise, it creates a new window.
@@ -57,6 +58,14 @@ The content of the window can either be:
   * a procedure denoting a service.
 
 
+~~ When the optional parent ++p++ is provided, the dragging of the window is
+bound in the graphical space used by the parent.
+
+~~ Each time a window title is clicked, its raised to the front of all
+windows. For that, they use CSS ++z-index++ that varies from 0 to 999.
+Applications that have to display elements in the top of Iwindows must
+specify a ++z-index++ greater than 1000.
+
 </procedure>
 
 === ++(iwindow-close obj)++ ===
@@ -67,7 +76,7 @@ The content of the window can either be:
 | obj         |   obj     | A window identifier or a window itself.         |
 </arguments>
 
-,(<P>)
+~~
 This client-side procedure closes an //iwindow//.
 
 </procedure>
@@ -88,7 +97,7 @@ The visual configuration of the body of the window.
 The file ++hop-iwindow.css++ contains the default graphical configuration.
 It is defined as:
 
-,(<P>)
+~~
 <share>hop-iwindow.css</share>
 </style>
 

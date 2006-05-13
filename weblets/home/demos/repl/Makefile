@@ -1,12 +1,12 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/home/Makefile                   */
+#*    serrano/prgm/project/hop/weblets/home/demos/repl/Makefile        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
-#*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu May 11 10:15:59 2006 (serrano)                */
+#*    Creation    :  Fri Mar  3 10:30:36 2006                          */
+#*    Last change :  Thu May 11 13:32:18 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
-#*    The Makefile of the HZ weblet                                    */
+#*    Makefile of a HOP demo                                           */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
@@ -15,10 +15,13 @@
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
-HOP_POP         = home.hop config.hop widgets.hop demo.hop
-POPULATION	= Makefile home.info .afile home.hss $(HOP_POP) demos
+FILES      = repl.hop
+POPULATION = Makefile $(FILES)
+DESTDIR    = $(HOPDEMOSDIR)/$(DEMO)
 
-build: .afile
-
-.afile: $(HOP_POP)
-	afile -suffix hop $(POPULATION) demos/*/*.hop > .afile
+#*---------------------------------------------------------------------*/
+#*    install                                                          */
+#*---------------------------------------------------------------------*/
+install:
+	mkdir -p $(DESTDIR)
+	install -m a+r $(POPULATION) $(DESTDIR)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon May  8 11:02:44 2006 (serrano)                */
+;*    Last change :  Fri May 12 18:15:51 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -76,7 +76,7 @@
        "false")
       ((null? obj)
        "null")
-      ((list? obj)
+      ((pair? obj)
        (let ((car (hop->json (car obj)))
 	     (cdr (hop->json (cdr obj))))
 	  (format "new sc_Pair( ~a, ~a )" car cdr)))

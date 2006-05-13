@@ -2,6 +2,14 @@
 
 == Description ==
 
+The ++<DELAY>++ markup delay the execution of a function. It is
+generally deployed when one has to implement a page with a content
+that has to be updated over the time. For instance, each time a
+container exposes its content. The ++<DELAY>++ markup is supposed to
+be used in conjunction of container markups such as ++<NOTEPAD>++s,
+++<TREE>++s, ++<FL>++ss, or ++<TABSLIDER>++s.
+
+
 == Synopsis ==
 
 === server ===
@@ -28,10 +36,6 @@
 The ++body++ of the delayed execution is a //thunk//. That is a procedure
 accepting no parameter. This procedure is executed once, when the object
 is to be displayed. 
-
-,(<P>)
-The ++<DELAY>++ markup is supposed to be used in conjunction of 
-on-demand ++<NOTEPAD>++s and ++<TREE>++s.
 
 </markup>
 

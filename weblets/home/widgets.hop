@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu May 11 06:29:23 2006 (serrano)                */
+;*    Last change :  Sat May 13 15:08:18 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -16,8 +16,7 @@
 
    (import hophome_config)
    
-   (export (<HOME> . obj)
-	   (<ZIMG> src1 src2)))
+   (export (<HOME> . obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HOME> ...                                                       */
@@ -48,29 +47,5 @@
 			   (<TD>
 			      obj))))))))))
 
-;*---------------------------------------------------------------------*/
-;*    <ZIMG> ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (<ZIMG> s1 s2)
-   (let ((id (xml-make-id))
-	 (p1 (make-file-path (home-dir) "icons" s1))
-	 (p2 (make-file-path (home-dir) "icons" s2)))
-      (<IMG> :id id
-	     :src p1
-	     :onmouseover ~(set! (document.getElementById $id).src $p2)
-	     :onmouseout ~(set! (document.getElementById $id).src $p1)
-	     :onclick ~(let ((frame (document.createElement "iframe"))
-			     (t (document.getElementById $id)))
-			  (set! frame.className "demos")
-			  (set! frame.src "home/demos/minesweeper"
-				(set! frame.style.border "0")
-				(set! frame.style.width "200px")
-				(set! frame.style.height "200px")
-				(iwindow-open "Minesweeper"
-					      frame
-					      false false
-					      200 200
-					      (+ event.pageX 100)
-					      (- event.pageY 10)))))))
 				     
 	     

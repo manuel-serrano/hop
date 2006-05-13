@@ -1,0 +1,53 @@
+(module hophome_demos-source
+   (export (home/demos/source)))
+
+(define *source-directory* (dirname (the-loading-file)))
+
+(define (file->string f)
+   (with-input-from-file f
+      (lambda ()
+	 (html-string-encode (read-string (current-input-port))))))
+
+(define (directory->tree dir shape open disp)
+   (<TREE>
+      :open open
+      (<TRHEAD> shape)
+      (<TRBODY>
+	 (map (lambda (f)
+		 (let ((qf (make-file-name dir f)))
+		    (if (directory? qf)
+			(directory->tree qf (make-file-name shape f) #f disp)
+			(<TRLEAF>
+			   (<TT> 
+			      :onclick (let ((svc (if (member (suffix f) '("png" "gif" "jpeg"))
+						      (service ()
+							 (<DIV>
+							    :class "img"
+							    :align "center"
+							    (<IMG> :inline #t :src qf)))
+						      (service () (<PRE> (file->string qf))))))
+					   ~(with-hop ($svc)
+					       (lambda (h)
+						  (set! $disp.innerHTML h))))
+			      f)))))
+	      (directory->list dir)))))
+
+(define-service (home/demos/source)
+   (<HTML>
+      (<HEAD>
+	 :dir *source-directory*
+	 :css "hop-paned.css" :css "hop-tree.css"
+	 :jscript "hop-paned.js" :jscript "hop-tree.js"
+	 :css "source.hss")
+      (<BODY>
+	 (<H3> "Source code browser")
+	 (let ((disp (<DIV> :class "file" ""))
+	       (d (dirname (dirname *source-directory*))))
+	    (<PANED>
+	       :fraction 40
+	       (<PAN>
+		  (<DIV>
+		     :class "tree"
+		     (directory->tree d (basename d) #t disp)))
+	       (<PAN>
+		  disp))))))

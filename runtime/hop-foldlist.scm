@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Wed May 10 14:25:44 2006 (serrano)                */
+;*    Last change :  Sat May 13 08:09:01 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -17,14 +17,16 @@
 	    "xml.sch")
 
    (import  __hop_param
-	    __hop_xml)
+	    __hop_xml
+	    __hop_service
+	    __hop_types)
 
    (static  (class html-foldlist::xml-element
-		   (spacing (default 0))
-		   (icono (default #f))
-		   (iconc (default #f)))
+	       (spacing (default 0))
+	       (icono (default #f))
+	       (iconc (default #f)))
 	    (class html-flitem::xml-element
-		   (open (default #f)))
+	       (open (default #f)))
 	    (class html-flhead::xml-element))
 
    (export  (<FL> . ::obj)
@@ -77,30 +79,57 @@
      (open open)
      (body body)))
 
-;;;
-;;;    xml-write ::html-flitem ...
-;;;
+;*---------------------------------------------------------------------*/
+;*    xml-write ::html-flitem ...                                      */
+;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-flitem p encoding)
-  (with-access::html-flitem obj (body id parent open)
-     (let ((tmp    body)
-	   (icono (or (html-foldlist-icono parent)
-		      (make-file-name (hop-icons-directory)
+   (with-access::html-flitem obj (body id parent open)
+      (let ((tmp   body)
+	    (icono (or (html-foldlist-icono parent)
+		       (make-file-name (hop-icons-directory)
 				       "triangle-down.png")))
-	   (iconc (or (html-foldlist-iconc parent)
-		      (make-file-name (hop-icons-directory)
-				      "triangle-right.png"))))
-       (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s)'>" id icono iconc)
-       (fprintf p "<td><img class='hop-fl-img' id=~s src=~s></td><td width='100%'>"
-		(string-append id "-img") (if open icono iconc))       
-       (when (and (pair? tmp)
-		  (xml-element? (car tmp))
-		  (eq? (xml-element-markup (car tmp)) 'flhead))
-	 (xml-write (car tmp) p encoding)
-	 (set! tmp (cdr tmp)))
-       (fprintf p "</td></tr><tr><td></td><td><div id='~a' style='display:~a'>"
-		id (if open "block" "none"))
-       (xml-write tmp p encoding)
-       (display "</div></td></tr>" p))))
+	    (iconc (or (html-foldlist-iconc parent)
+		       (make-file-name (hop-icons-directory)
+				       "triangle-right.png"))))
+	 (cond
+	    ((not (pair? body))
+	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s)'>"
+		      id icono iconc))
+	    ((and (pair? body)
+		  (xml-delay? (car body))
+		  (null? (cdr body)))
+	     (fprintf p
+		      "<tr onclick='hop_fold_item_toggle_service(~s,~s,~s,~s)'>"
+		      id icono iconc
+		      (hop-service-path
+		       (procedure->service
+			(xml-delay-thunk (car body)))))
+	     (set-car! body ""))
+	    ((and (pair? body)
+		  (pair? (cdr body))
+		  (xml-delay? (cadr body))
+		  (null? (cddr body)))
+	     (fprintf p
+		      "<tr onclick='hop_fold_item_toggle_service(~s,~s,~s,~s)'>"
+		      id icono iconc
+		      (hop-service-path
+		       (procedure->service
+			(xml-delay-thunk (cadr body)))))
+	     (set-car! (cdr body) ""))
+	    (else
+	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s)'>"
+		      id icono iconc)))
+	 (fprintf p "<td><img class='hop-fl-img' id=~s src=~s></td><td width='100%'>"
+		  (string-append id "-img") (if open icono iconc))
+	 (when (and (pair? tmp)
+		    (xml-element? (car tmp))
+		    (eq? (xml-element-markup (car tmp)) 'flhead))
+	    (xml-write (car tmp) p encoding)
+	    (set! tmp (cdr tmp)))
+	 (fprintf p "</td></tr><tr><td></td><td><div id='~a' style='display:~a'>"
+		  id (if open "block" "none"))
+	 (xml-write tmp p encoding)
+	 (display "</div></td></tr>" p))))
   
 ;*---------------------------------------------------------------------*/
 ;*    <FLHEAD> ...                                                     */

@@ -1,0 +1,62 @@
+(module hophome_demos-wiki
+   (library hopwiki)
+   (export (home/demos/wiki)))
+
+(define wikiedit-event
+   (instantiate::hop-event
+      (name "wikiedit")))
+
+(define *wiki-directory* (dirname (the-loading-file)))
+
+(define-service (wikiedit/update src)
+   (broadcast-hop-event! wikiedit-event (wikiedit-compile src)))
+
+(define *wikiedit-syntax*
+   (instantiate::wiki-syntax
+      (section1 (lambda expr (<DIV> :class "section1" expr)))
+      (section2 (lambda expr (<DIV> :class "section2" expr)))
+      (plugins (lambda (id)
+		  (case id
+		     ((<block>) wikiedit-block)
+		     ((<center>) wikiedit-center))))))
+
+(define (wikiedit-block port title expr)
+   (apply <DIV> :class "block" (<SPAN> :class "title" title) "\n" expr))
+
+(define (wikiedit-center port title expr)
+   (<DIV> :align "center" expr))
+
+(define-service (wikiedit/view)
+   (let ((d (<DIV> :class "view" "")))
+      (<HTML>
+	 (<HEAD> :dir *wiki-directory* :css "wiki.hss")
+	 (<BODY>
+	    :class "view"
+	    d
+	    (<HOP-EVENT>
+	       :event wikiedit-event
+	       :handler ~(set! $d.innerHTML event.responseText))))))
+
+(define (wikiedit-compile src)
+   (let ((o (with-handler
+	       (lambda (e)
+		  (<SPAN> :class "error" (html-string-encode src)))
+	       (wiki-string->hop src *wikiedit-syntax*))))
+      (with-output-to-string
+	 (lambda ()
+	    (xml-write o (current-output-port) (hop-char-encoding))))))
+
+(define-service (home/demos/wiki)
+   (<HTML>
+      (<HEAD> :dir *wiki-directory* :css "wiki.hss")
+      (<BODY>
+	 (<H1> "Live editor")
+	 (<TEXTAREA>
+	    :class "playground"
+	    :rows 10 :cols 60
+	    :onkeyup ~(with-hop ($wikiedit/update this.value))
+	    "Please, ++type in++ //characters// according the **Hop** wiki syntax.")
+	 (<H1> "Live view")
+	 (<IFRAME>
+	    :class "view"
+	    :src (make-service-url wikiedit/view)))))

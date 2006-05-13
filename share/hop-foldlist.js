@@ -3,24 +3,40 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Tue Mar  7 17:50:28 2006 (eg)                     */
+/*    Last change :  Sat May 13 08:09:09 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
-/*    HOP fold-item implemenetation                                    */
+/*    HOP fold-item implementation                                     */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
 /*     hop_fold_item_toggle ...                                        */
 /*---------------------------------------------------------------------*/
-function hop_fold_item_toggle(id, open, close)
-{
-    var el  = document.getElementById(id);
-    var img = document.getElementById(id + "-img");
-    
-    if (el.style.display == "block") {
-	el.style.display = "none";
-	img.src = close;
-    } else {
-	el.style.display = "block";
-	img.src = open;
-    }
+function hop_fold_item_toggle( id, open, close ) {
+   var el = document.getElementById( id );
+   var img = document.getElementById( id + "-img" );
+   
+   if( el.style.display == "block" ) {
+      el.style.display = "none";
+      img.src = close;
+   } else {
+      el.style.display = "block";
+      img.src = open;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*     hop_fold_item_toggle_service ...                                */
+/*---------------------------------------------------------------------*/
+function hop_fold_item_toggle_service( id, open, close, svc ) {
+   var el = document.getElementById( id );
+   var img = document.getElementById( id + "-img" );
+
+   if( el.style.display == "block" ) {
+      el.style.display = "none";
+      img.src = close;
+   } else {
+      hop( svc, function( h ) { el.innerHTML = h.responseText } );
+      el.style.display = "block";
+      img.src = open;
+   }
 }

@@ -2,6 +2,7 @@
    (import  hopscheme_aliases)
    (library hop
 	    scheme2js)
+   (export (compile-hop-client e))
    (import hopscheme-config))
 
 ;; ===========================================================================
@@ -29,6 +30,9 @@
 (hop-make-escape-set! new-scheme-expr)
 
 
+(define (compile-hop-client e)
+   (scheme2js (list e) (hopscheme-aliases) (hopscheme-config)))
+
 ;; ===========================================================================
 ;; and one, once an expression has been read.
 ;; ===========================================================================
@@ -38,9 +42,8 @@
    (let ((rev-scheme-exprs (hashtable-get *rev-scheme-exprs* p)))
       (when rev-scheme-exprs
 	 (hashtable-remove! *rev-scheme-exprs* p)
-;	 (print "compiling (reverse): " rev-scheme-exprs)
 	 (with-output-to-string
 	    (lambda ()
-	       (scheme2js (reverse! rev-scheme-exprs) (hopscheme-aliases) (hopscheme-config)))))))
+	       (for-each compile-hop-client (reverse! rev-scheme-exprs)))))))
 
 (hop-read-post-hook-set! post-compile)

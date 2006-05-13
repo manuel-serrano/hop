@@ -24,17 +24,17 @@
 	 (let ((tree (directory->tree "t" d (basename d))))
 	    (list
 	     (<BUTTON>
-		:onclick ~(hop-tree-open $tree)
+		:onclick ~(tree-open $tree)
 		"Open tree")
 	     (<BUTTON>
-		:onclick ~(hop-tree-close $tree)
+		:onclick ~(tree-close $tree)
 		"Close tree")
 	     (<BUTTON>
 		:onclick
-		~(alert "selection=" (hop-tree-selection $tree))
+		~(alert "selection=" (tree-selection $tree))
 		"Show current selection")
 	     (<BUTTON>
-		:onclick ~(hop-tree-reset! $tree)
+		:onclick ~(tree-reset! $tree)
 		"Reset selection")
 	     (<BR>)
 	     (<BR>)

@@ -3,10 +3,15 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed May 10 17:21:06 2006 (serrano)                */
+/*    Last change :  Sat May 13 14:17:01 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    hop_iwindow_zindex ...                                           */
+/*---------------------------------------------------------------------*/
+var hop_iwindow_zindex = 0;
 
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_close ...                                            */
@@ -96,6 +101,24 @@ function hop_iwindow_iconify( id ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_iwindow_raise ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_iwindow_raise( win ) {
+   if( hop_iwindow_zindex < 1000 ) {
+      win.style.setProperty( "z-index", ++hop_iwindow_zindex, "" );
+   } else {
+      var w = document.getElementsByName( "hop-iwindow" );
+      var i;
+
+      for( i = 0; i < w.length; i++ ) {
+	 if( w[ i ].style[ "z-index" ] > 0 ) w[ i ].style[ "z-index" ]--;
+      }
+      win.style.setProperty( "z-index", 999, "" );
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_iwindow_drag ...                                             */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_drag( event, win ) {
@@ -103,6 +126,8 @@ function hop_iwindow_drag( event, win ) {
    var dy = event.clientY - hop_element_y( win );
    var ocursor = win.el_handle.style.cursor;
 
+   hop_iwindow_raise( win );
+   
    win.el_main.style.height = win.el_main.offsetHeight;
    win.el_main.style.width = win.el_main.offsetWidth;
 
@@ -110,10 +135,24 @@ function hop_iwindow_drag( event, win ) {
    win.el_handle.style.cursor = "move";
 
    document.onmousemove = function( event ) {
-      if( (event.clientX - dx) > 0 )
-        win.style.left = event.clientX - dx;
-      if( (event.clientY - dy) > 0 )
-        win.style.top = event.clientY - dy;
+      var nx = (event.clientX - dx);
+      var ny = (event.clientY - dy);
+
+      if( win.user_parent ) {
+	 var p = win.parentNode;
+	 var px = hop_element_x( p );
+	 var py = hop_element_y( p );
+      
+	 if( (nx > px) && ((nx + win.offsetWidth) < px + p.offsetWidth) ) {
+	    win.style.left = nx;
+	 }
+	 if( (ny > py) && ((ny + win.offsetHeight) < py + p.offsetHeight) ) {
+	    win.style.top = ny;
+	 }
+      } else {
+	 if( nx > 0 ) win.style.left = nx;
+	 if( ny > 0 ) win.style.top = ny;
+      }
    }
 
    document.onmouseup = function( event ) {
@@ -183,11 +222,12 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
 /*---------------------------------------------------------------------*/
 /*    make_hop_iwindow ...                                             */
 /*---------------------------------------------------------------------*/
-function make_hop_iwindow( id, class ) {
+function make_hop_iwindow( id, class, parent ) {
    var win = document.createElement( "div" );
    
    win.id = id;
    win.className = class;
+   win.name = "hop-iwindow";
 
    var t = "\
 <TABLE id='" + id + "-main' class='hop-iwindow' \
@@ -251,7 +291,12 @@ function make_hop_iwindow( id, class ) {
   </TR>\
 </TABLE>";
 
-   document.body.appendChild( win );
+   if( parent )
+      parent.appendChild( win );
+   else
+      document.body.appendChild( win );
+
+   win.user_parent = parent;
    
    win.el_title = document.getElementById( id + "-title" );
    win.el_handle = document.getElementById( id + "-title" );
@@ -286,14 +331,14 @@ function make_hop_iwindow( id, class ) {
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_open ...                                             */
 /*---------------------------------------------------------------------*/
-function hop_iwindow_open( id, obj, title, class, width, height, x, y ) {
+function hop_iwindow_open( id, obj, title, class, width, height, x, y, parent ) {
    var win = document.getElementById( id );
    var isnew = false;
 
    class = class ? class : "hop-iwindow";
 
    if( !win ) {
-      win = make_hop_iwindow( id, class );
+      win = make_hop_iwindow( id, class, parent );
       isnew = true;
    } else {
       win.style.display = "block";
@@ -351,6 +396,7 @@ function hop_iwindow_open( id, obj, title, class, width, height, x, y ) {
    }
    
    win.el_body.style.display = "block";
+   hop_iwindow_raise( win );
 
    return win;
 }

@@ -1,0 +1,61 @@
+body {
+  background: #ddf;
+}
+
+h1 {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+div.main {
+  background: #ddf;
+}
+
+table {
+  font-size: xx-small;
+}
+
+div.entry {
+  background: #ccc; 
+  border: 1px solid black;
+}
+
+tt {
+  cursor: default;
+}
+
+pre {
+  font-family: Bitstream Vera Sans Mono, Andale Mono, monospace;
+  width: 100%;
+  height: 100%;
+}
+
+div.tree {
+  background: white;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  font-size: xx-small;
+}
+  
+div.file {
+  background: white;
+  min-width: 300px;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  font-size: xx-small;
+}
+
+div.img {
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+table.hop-tree {
+  font-size: 10px;
+}
+
+table.hop-tree-leaf {
+  font-size: 10px;
+}

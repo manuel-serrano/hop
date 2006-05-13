@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Wed May 10 17:33:10 2006 (serrano)                */
+;*    Last change :  Sat May 13 15:23:11 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -14,7 +14,13 @@
 ;*---------------------------------------------------------------------*/
 (module hophome_demo
    (import hophome_config
-	   hophome_widgets)
+	   hophome_widgets
+	   hophome_demos-minesweeper
+	   hophome_demos-sudoku
+	   hophome_demos-repl
+	   hophome_demos-rss
+	   hophome_demos-source
+	   hophome_demos-wiki)
    (export (<DEMO> request)))
 
 ;*---------------------------------------------------------------------*/
@@ -22,37 +28,97 @@
 ;*---------------------------------------------------------------------*/
 (define (<DEMO> req)
    (<DIV>
-      :class "demo" ""
+      :class "demo"
+      :id "demo-playground"
+      :align "left"
       (<DIV>
 	 :class "toolbar"
 	 :align "center"
 	 :width "100%"
-	 :id "demo"
+	 :id "toolbar-demo"
 	 (<TABLE>
 	    :class "toolbar"
 	    (<TR>
 	       (<TD>
 		  :align "left"
-		  (<ZIMG> "mines-32x32.png" "mines-48x48.png")))
+		  (<ZIMG> (make-service-url home/demos/minesweeper)
+			  "mines-32x32.png" "mines-48x48.png"
+			  320 320)))
 	    (<TR>
 	       (<TD>
 		  :align "left"
-		  (<ZIMG> "games1-32x32.png" "games1-48x48.png")))
+		  (<ZIMG> (make-service-url home/demos/sudoku)
+			  "games1-32x32.png" "games1-48x48.png"
+			  500 420)))
 	    (<TR>
 	       (<TD>
 		  :align "left"
-		  (<ZIMG> "games2-32x32.png" "games2-48x48.png")))
+		  (<ZIMG> "hop/home/demos/tetris"
+			  "games2-32x32.png" "games2-48x48.png")))
 	    (<TR>
 	       (<TD>
 		  :align "left"
-		  (<ZIMG> "term-32x32.png" "term-48x48.png")))))))
-
+		  (<ZIMG> (make-service-url home/demos/rss)
+			  "news-32x32.png" "news-48x48.png"
+			  570 370)))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/repl)
+			  "term-32x32.png" "term-48x48.png"
+			  540 370)))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/source)
+			  "computer-32x32.png" "computer-48x48.png"
+			  700 500)))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/wiki)
+			  "wiki-32x32.png" "wiki-48x48.png"
+			  390 450)))))))
 ;*---------------------------------------------------------------------*/
-;*    home/demos/minesweeper ...                                       */
+;*    <ZIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-service (home/demos/minesweeper)
-   (<HTML>
-      (<BODY>
-	 "toto")))
-	  
-   
+(define (<ZIMG> svc s1 s2 . r)
+   (let ((id (xml-make-id))
+	 (p1 (make-file-path (home-dir) "icons" s1))
+	 (p2 (make-file-path (home-dir) "icons" s2))
+	 (w (if (pair? r) (car r) "200"))
+	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
+	 (t (string-capitalize (basename svc))))
+      (<IMG> :id id
+	     :src p1
+	     :title t
+	     :onmouseover ~(set! (document.getElementById $id).src $p2)
+	     :onmouseout ~(set! (document.getElementById $id).src $p1)
+	     :onclick ~(let ((frame (document.createElement "iframe"))
+			     (t (document.getElementById $id))
+			     (p (document.getElementById "demo-playground")))
+			  (set! frame.className "demos")
+			  (set! frame.src $svc)
+			  (set! frame.style.border "0")
+			  (set! frame.style.width "100%")
+			  (set! frame.style.height "100%")
+			  (let* ((w (iwindow-open $t
+						  frame
+						  false false
+						  $w $h
+						  (+ 60 (hop_element_x p))
+						  (+ 10 (hop_element_y p))
+						  p))
+				 (i (<SPAN> :class "icon" $t)))
+			     (set! i.onmousedown
+				   (lambda (e)
+				      (set! i.style.visibility "hidden")
+				      (set! w.style.display "block")))
+			     (set! w.iconify
+				   (lambda ()
+				      (set! i.style.top w.style.top)
+				      (set! i.style.left w.style.left)
+				      (set! i.style.visibility "visible")
+				      (set! w.style.display "none")))
+			     (dom-append-child! p i)
+			     w)))))

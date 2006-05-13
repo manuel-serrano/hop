@@ -1,0 +1,53 @@
+(module hophome_demos-repl
+   (export (home/demos/repl)))
+
+(define *repl-directory* (dirname (the-loading-file)))
+
+;; main function
+(define-service (home/demos/repl)
+   (<HTML>
+      (<HEAD>
+	 :dir *repl-directory*
+	 :css "repl.hss")
+      (<BODY>
+	 (<DIV>
+	    :align "center"
+	    (<H1> "Welcome to the HOP client side interpreter...")
+	    (<TEXTAREA>
+	       :class "repl"
+	       :rows 22 :cols 80
+	       :onkeyup ~(if (= event.keyCode 13)
+			     (let* ((t this)
+				    (e t.value)
+				    (i (e.lastIndexOf ":=> ")))
+				(if (>= i 0)
+				    (let ((s (e.substr (+ i 4) e.length)))
+				       (with-hop ($home/demos/repl/compile s)
+					  (lambda (h)
+					     (if (pair? h)
+						 (let ((e (eval (car h))))
+						    (set! t.value
+							  (+ t.value
+							     e
+							     "\n:=> "))))))))))
+	       ";; Try to cut an paste the following lines, without the semi-colons
+;; (define els (document.getElementsByTagName \"h1\"))
+;; (define el (array-ref els 0))
+;; (el.style.setProperty \"color\" \"red\" \"\")
+:=> ")))))
+
+(define-service (home/demos/repl/compile s)
+   (with-handler
+      (lambda (e) #f)
+      (with-input-from-string s
+	 (lambda ()
+	    (let* ((e (hop-read (current-input-port)))
+		   (j (with-handler
+			 (lambda (e)
+			    (with-error-to-string
+			       (lambda ()
+				  (error-notify e))))
+			 (with-output-to-string
+			    (lambda ()
+			       (compile-hop-client e))))))
+	       (cons j s))))))
