@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Fri May 12 17:37:32 2006 (serrano)                */
+;*    Last change :  Sun May 14 18:30:36 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -21,8 +21,56 @@
 ;*    home ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define-service (home)
-   (home-main (the-current-request)))
+   (let ((req (the-current-request)))
+      (let ((agent (assq 'user-agent: (http-request-header req))))
+         (if (and (pair? agent)
+		  (string? (cdr agent))
+                  (or (substring-ci-at? (cdr agent) "Mozilla" 0)
+		      (substring-ci-at? (cdr agent) "Opera" 0)
+		      (substring-ci-at? (cdr agent) "Konqueror" 0)))
+	     (home-main req)
+	     (http-service-error
+	      req
+	      'hop
+	      "Your browser is not capable enough for displaying this page.
+We suggest to give Firefox a try.")))))
 
+;*---------------------------------------------------------------------*/
+;*    wiki-cache ...                                                   */
+;*---------------------------------------------------------------------*/
+(define wiki-cache
+   (instantiate::cache
+      (path (make-file-path (hop-rc-directory)
+			    "cache"
+			    (string-append "home-"
+					   (integer->string (hop-port)))))
+      (out (lambda (o p)
+	      (xml-write o p (hop-char-encoding))))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki->hop ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (wiki->hop file)
+   (let* ((path (make-file-name (home-dir) file))
+	  (cache (cache-get wiki-cache path)))
+      (if (string? cache)
+	  (with-input-from-file cache
+	     (lambda ()
+		(read-string)))
+	  (let ((m1 (eval-find-module 'hophome))
+		(m2 (eval-module)))
+	     (unwind-protect
+		(begin
+		   (eval-module-set! m1)
+		   (let* ((wiki (wiki-file->hop path))
+			  (cache (cache-put! wiki-cache path wiki)))
+		      (if (string? cache)
+			  (with-input-from-file cache
+			     (lambda ()
+				(read-string)))
+			  wiki)))
+		(eval-module-set! m2))))))
+					   
 ;*---------------------------------------------------------------------*/
 ;*    home-main ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -30,20 +78,40 @@
    (<HOME>
       (<NOTEPAD>
 	 :id "home-notepad"
+	 :inline #f
 	 (<NPHEAD> "")
 	 (<NPTAB> :id "Presentation"
 		  (<NPTABHEAD> "Presentation")
-		  (<DIV>
-		     :class "presentation"
-		     "not yet"))
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "presentation.wiki")))))
 	 (<NPTAB> :id "download"
 		  (<NPTABHEAD> "Download")
-		  "not yet")
+		  (<DIV>
+		     :class "hop-tab"
+		     "not yet"))
 	 (<NPTAB> :id "demo"
 		  (<NPTABHEAD> "Demonstrations")
 		  (<DIV>
 		     :align "center"
-		     (<DEMO> req)))
+		     (<DELAY>
+			(lambda ()
+			   (<DEMO> req)))))
 	 (<NPTAB> :id "documentation"
 		  (<NPTABHEAD> "Documentations")
-		  "docs"))))
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "docs.wiki")))))
+	 (<NPTAB> :id "license"
+		  (<NPTABHEAD> "License")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "license.wiki"))))))))
+
+

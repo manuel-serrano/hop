@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri May  5 21:45:05 2006 (serrano)                */
+;*    Last change :  Sun May 14 18:13:45 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -81,19 +81,28 @@
 				  (<TD>
 				     (<DIV> :id "glop"
 					    (<NOTEPAD>
+					       :inline #f
 					       (<NPHEAD> "")
 					       (<NPTAB>
 						  (<NPTABHEAD> "Misc")
-						  (<MISC>))
+						  (<DELAY>
+						     (lambda ()
+							(<MISC>))))
 					       (<NPTAB>
 						  (<NPTABHEAD> "Weblets")
-						  (<WEBLETS>))
+						  (<DELAY>
+						     (lambda ()
+							(<WEBLETS>))))
 					       (<NPTAB>
 						  (<NPTABHEAD> "Caches")
-						  (<CACHES>))
+						  (<DELAY>
+						     (lambda ()
+							(<CACHES>))))
 					       (<NPTAB>
 						  (<NPTABHEAD> "Traffic")
-						  (<TRAFFIC>))))))))))))))))
+						  (<DELAY>
+						     (lambda ()
+							(<TRAFFIC>))))))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <MISC> ...                                                       */
@@ -193,8 +202,9 @@
 	       (<DIV>
 		  :class "caches"
 		  (map (lambda (c)
-			  (<SPAN>
+			  (<DIV>
 			     :class "cache-link"
+			     :width "100%"
 			     :onclick ~(with-hop ($(service () (info-cache c)))
 					  (lambda (h)
 					     (set! $d.innerHTML h)))

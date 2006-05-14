@@ -1,0 +1,13 @@
+== Installation Guides ==
+
+== Development Guides ==
+
+  * [[/hop/doc|Development kit APIs & Tutorials]]
+
+== Technical Papers ==
+
+  * ,(<A> :href (make-file-name (home-dir) "articles/hop-lang/article.html")
+          "Hop, a langage for programming the Web")
+  * ,(<A> :href (make-file-name (home-dir) "articles/scheme2js/article.html")
+          "Compiling HOP client side code")
+

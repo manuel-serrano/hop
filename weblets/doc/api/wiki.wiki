@@ -17,6 +17,7 @@ tree. Some additional functions apply some treatments on these trees.
 === Server ===
 
   (wiki-string->hop string [syntax])
+  (wiki-file->hop string [syntax])
   (wiki-input-port->hop iport [syntax])
   (hop-wiki->toc expr :ul :li :max-depth)
   (class wiki-syntax ...)
@@ -49,7 +50,6 @@ statement such as:
 | syntax      |  ::wiki-syntax  |      _       | a wiki syntax descriptor.    |
 </arguments>
 
-,(<P>)
 Parses a string according to the HOP
 ,(<SPAN> :class "href" 
          :onclick ~(hop_notepad_select "doc-notepad" "doc-wiki") 
@@ -58,6 +58,19 @@ It returns a tree.
 
 </function>
 
+
+=== ++(wiki-file-->hop file [syntax]) ===
+<function> wiki-file->hop
+
+<arguments>
+^  arguments  ^   type          ^   default    ^  short description                  ^
+| file        |  string         |      _       | the name of the file to be parsed.  |
+| syntax      |  ::wiki-syntax  |      _       | an wiki syntax descriptor.          |
+</arguments>
+
+This function is provided for convenience, it is a simple
+wrapper that uses ++wiki-input-port->hop++.
+</function>
 
 === ++(wiki-input-port->hop iport [syntax]) ===
 <function> wiki-input-port->hop
@@ -68,7 +81,6 @@ It returns a tree.
 | syntax      |  ::wiki-syntax  |      _       | an wiki syntax descriptor.   |
 </arguments>
 
-,(<P>)
 Parses an input port according to the HOP 
 ,(<SPAN> :class "href" 
 :onclick ~(hop_notepad_select "doc-notepad" "doc-wiki") 
@@ -87,7 +99,6 @@ Parses an input port according to the HOP
 | :max-depth  |  integer        |    ++3++     | an optional depth.           |
 </arguments>
 
-,(<P>)
 This function takes as argument (++expr++) a tree as returned by 
 ++hop-string->hop++ and ++hop-input-port->hop++ and builds a new object
 representing a //table of contents// for that tree. A //TOC// table is
@@ -137,8 +148,6 @@ scans nested sections at a maximum depth of ++3++.
 </fields>
 </class>
 
-,(<P>)
-
 The ++plugins++ field controls plugins. It is bound to a function of one
 argument that returns either ++#f++ or a function of three arguments.
 When an opening markup is found by the HOP wiki parser, it invokes the
@@ -147,7 +156,7 @@ of this call is a function of three arguments, it parses all the remaining
 characters until the closing markup. Otherwise, it ignores the opening
 markup. 
 
-,(<P>)
+~~
 The following instantiation builds a Wiki parser that supports the
 plugin named  ++<center>++. That first parameter (++port++) is bound to
 the current port containing the parsed characters. It may be used to

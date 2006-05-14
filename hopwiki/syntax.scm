@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue May  2 21:13:03 2006 (serrano)                */
+;*    Last change :  Sun May 14 17:05:28 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -70,6 +70,7 @@
 	       (plugins::procedure (default (lambda (id) #f))))
 	    
 	    (wiki-string->hop ::bstring #!optional syntax)
+	    (wiki-file->hop ::bstring #!optional syntax)
 	    (wiki-input-port->hop ::input-port #!optional syntax)))
 
 ;*---------------------------------------------------------------------*/
@@ -90,6 +91,14 @@
 		  '()
 		  '()
 		  0))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-file->hop ...                                               */
+;*---------------------------------------------------------------------*/
+(define (wiki-file->hop file #!optional syntax)
+   (with-input-from-file file
+      (lambda ()
+	 (wiki-input-port->hop (current-input-port) syntax))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-input-port->hop ...                                         */

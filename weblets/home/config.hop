@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Wed May 10 16:21:33 2006 (serrano)                */
+;*    Last change :  Sun May 14 17:00:22 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
@@ -17,7 +17,8 @@
 	   (home-date)
 	   (home-author)
 	   (home-dir)
-	   (home-rc-directory)))
+	   (home-rc-directory)
+	   (home-articles-url-base)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
@@ -35,3 +36,10 @@
 ;*    home-rc-directory ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-rc-directory (make-file-name (hop-rc-directory) "home"))
+
+;*---------------------------------------------------------------------*/
+;*    home-articles-url-base ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter home-articles-url-base
+   "http://www.inria.fr/mimosa/Manuel.Serrano/publi")
+   

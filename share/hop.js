@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed May 10 08:51:39 2006 (serrano)                */
+/*    Last change :  Sat May 13 17:12:19 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -279,6 +279,7 @@ function hop_inner( method, service, success, failure, sync, mute ) {
       vis.title = service;
 
       var img = document.createElement( "img" );
+      img.classname = "hop-busy-anim";
       img.src = hop_busy_anim;
       
       vis.appendChild( img );

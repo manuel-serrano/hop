@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Sat May 13 15:08:18 2006 (serrano)                */
+;*    Last change :  Sat May 13 17:42:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -25,6 +25,7 @@
    (<HTML>
       (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css" 
 	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
+	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
 	      :css (format "~a/home.hss" (home-dir)))
       (<BODY>
 	 (<CENTER>

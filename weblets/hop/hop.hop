@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu May 11 09:39:37 2006 (serrano)                */
+;*    Last change :  Sun May 14 17:39:46 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -31,12 +31,12 @@
 	 (<TR>
 	    (map (lambda (e)
 		    (<HTD> (car e) (cadr e) (caddr e)))
-		 '(("home.png" "home" "hop/home")
-		   ("system.png" "hz" "hop/hz")
-		   ("password.png" "password" "hop/password")
-		   ("edu.png" "doc" "hop/doc")
-		   ("info.png" "info" "hop/info")
-		   ("control.png" "webfilter" "hop/webfilter")))))))
+		 '(("home.png" "home" "/hop/home")
+		   ("system.png" "hz" "/hop/hz")
+		   ("password.png" "password" "/hop/password")
+		   ("edu.png" "doc" "/hop/doc")
+		   ("info.png" "info" "/hop/info")
+		   ("control.png" "webfilter" "/hop/webfilter")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HTD> ...                                                        */

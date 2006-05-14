@@ -25,11 +25,20 @@ These functions handle HOP server //caches//.
 <class> cache
 
 <fields>
-^  fields       ^   type    ^  default value  ^  short description           ^
-|  max-entries  |  integer  |      128        |  maximum number of entries   |
-| max-file-size |  long     |   #e100000      | largest possible cached file |
+^  fields       ^   type      ^  default value  ^  short description           ^
+| path          |  string     |      _          | a file name                  | 
+| out           |  procedure  |   ++display++   | a procedure                  | 
+| max-entries   |  integer    |      128        | maximum number of entries    |
+| max-file-size |  long       |   #e100000      | largest possible cached file |
 </fields>
 </class>
+
+This class specifies //cache//entries. The argument ++out++ is 
+a procedure of two arguments that specify how the value stored in
+the cache should be displayed. A good candidate is:
+
+  (lambda (o p) (xml-write o p (hop-char-encoding)))
+
 
 === ++(registered-caches)++ ===
 <function> registered-caches

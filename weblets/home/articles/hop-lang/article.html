@@ -1,0 +1,2885 @@
+<!-- 95% W3C COMPLIANT, 95% CSS FREE, RAW HTML -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1">
+<title>Hop, a Language for Programming the Web</title>
+ <style type="text/css">
+  <!--
+  pre { font-family: monospace }
+  tt { font-family: monospace }
+  code { font-family: monospace }
+  p.flushright { text-align: right }
+  p.flushleft { text-align: left }
+  span.sc { font-variant: small-caps }
+  span.sf { font-family: sans-serif }
+  span.skribetitle { font-family: sans-serif; font-weight: bolder; font-size: x-large; }
+  span.refscreen { }
+  span.refprint { display: none; }
+/*=====================================================================*/
+/*    serrano/diffusion/article/hop-lang/css/article.css               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Fri Jun 10 09:15:18 2005                          */
+/*    Last change :  Thu Dec  1 14:31:27 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Mail Article CSS                                                 */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Default settings                                                 */
+/*---------------------------------------------------------------------*/
+body {
+  display: block;
+  width: 45em;
+  margin: auto;
+  font-family: PostAntiqua;
+}
+
+p {
+  text-align: justify;
+}
+
+ul {
+  text-align: justify;
+}
+
+ol {
+  text-align: justify;
+}
+
+div.section {
+  margin-bottom: 1em;
+}
+
+div.abstract {
+  margin: 1em;
+  padding: 1px 10px 1px 10px;
+  background: #eef;
+  font-size: medium;
+  font-family: Trebuchet ms;
+  font-style: italic;
+  border: 1px dotted black;
+}
+
+div.footnote {
+  font-size: small;
+}
+
+div.skribesectiontitle {
+  padding-top: 0;
+  padding-bottom: 0em;
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+div.section-atitle h3 {
+  border-top: thin solid black;
+  border-bottom: thin solid black;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+div.document-title {
+  font-family: PostAntiqua;
+}
+
+div.document-title-title {
+  text-align: right;
+  font-weight: bold;
+  font-size: 30pt;
+  border-top: thin solid black;
+  border-bottom: medium solid black;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-top: 10px;
+  padding-top: 10px;
+
+}
+
+div.document-title-authors {
+  margin-bottom: 2em;
+}
+
+span.document-author {
+  display: block;
+  text-align: right;
+  margin-bottom: 1em;
+}
+
+span.document-author span {
+  font-style: italic;
+}
+
+span.document-author span.document-author-name {
+  font-weight: bold;
+  font-size: large;
+  font-style: normal;
+  display: block;
+}
+
+span.document-author span.document-author-url {
+  font-style: normal;
+  display: block;
+}
+
+span.document-author span.document-author-email {
+  font-style: normal;
+  display: block;
+}
+
+div.prog-border {
+  border: 1px solid #aaa;
+}
+
+pre.scheme {
+  background-color: #ffffee;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.uscheme {
+  background-color: #eeffee;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.repl {
+  background-color: #eff;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.c {
+  background-color: #eeffff;
+  border: thin solid black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.display {
+  background-color: #ffeeee;
+  border: thin solid black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+center.show {
+  background-color: #ffeeff;
+  border: thin solid black;
+  padding: 2pt;
+  margin: 0;
+  font-style: normal;
+  text-align: left;
+}
+
+center.show ul {
+  padding: 2pt;
+  padding-left: 14pt;
+  margin: 0;
+}
+
+div.references table {
+  font-size: small;
+}
+
+div.references table td {
+  font-size: small;
+}
+
+div.references table th {
+  font-size: small;
+}
+
+table.api-table {
+  border: none;
+  background-color: #ffe;
+}
+
+tr.api-table-prototype {
+   background-color: #ffc;
+}
+
+tr.api-table-header {
+   background-color: #fcf;
+}
+
+div.section#appendix p {
+   margin-left: 5%;
+}
+
+div.plan {
+  border: 1px dotted red;
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 5px;
+  color: #d00;
+  font-family: sans-serif;
+  font-style: italic;
+  font-size: small;
+  background: #eee;
+}
+
+/*---------------------------------------------------------------------*/
+/*    prgm ...                                                         */
+/*---------------------------------------------------------------------*/
+pre {
+  padding-left: 2px;
+  margin: 0;
+}
+
+pre.bigloo {
+  background-color: #dff;
+}
+
+pre.lhtml {
+  background-color: #fdf;
+}
+
+pre.hop {
+  background-color: #ffc;
+}
+
+pre.html {
+  background-color: #ccf;
+}
+
+pre.server {
+  background-color: #eee;
+  color: #007;
+}
+
+pre.client {
+  background-color: #eee;
+  color: #033;
+}
+
+pre.syntax {
+  background-color: #dfd;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Printing configuration                                           */
+/*---------------------------------------------------------------------*/
+@media print {
+/*--- Markup configuration --------------------------------------------*/
+pre {
+  font-size: 8pt;
+  font-family: courier;
+  line-height: 95%;
+}
+
+div.prog-border {
+  border: 0;
+}
+
+pre.prog {
+  font-size: 6pt;
+  line-height: 100%;
+}
+
+center.break-page-before {
+  page-break-before: always;
+}
+
+table.api-table {
+  border: 1px solid black;
+  padding: 10px;
+}
+
+table.api-table tr.api td {
+  padding-top: 5px;
+}
+
+table.api-table th {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+table.api-table td {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.api-table-prototype {
+  display: none;
+}
+
+.api-table-header {
+  display: none;
+}
+
+span.refscreen {
+  display: none;
+}
+
+span.refprint {
+  display: inline;
+}
+
+div.abstract {
+  border: none;
+  line-height: 100%;
+}
+
+div.section#Table-of-contents {
+  display: none;
+}
+
+div.section#Postscript-download {
+  display: none;
+}
+
+span.document-author span.document-author-name {
+  font-size: 13pt;
+  font-family: sans-serif;
+  font-weight: normal;
+}
+
+a {
+  text-decoration: none;
+}
+
+pre.scheme {
+  background-color: #ffffee;
+  border: none;
+}
+
+pre.uscheme {
+  background-color: #eeffee;
+  border: none;
+}
+
+pre.repl {
+  background-color: #eff;
+  border: none;
+}
+
+div.skribe-ending {
+  display: none;
+}
+
+div.print-plan {
+  display: none;
+}
+
+div.section-atitle h3 {
+  border-top: 0;
+  border-bottom: 0;
+}
+}
+/*=====================================================================*/
+/*    serrano/diffusion/article/hop-lang/css/sigplan.css               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Dec  1 11:00:10 2005                          */
+/*    Last change :  Wed Dec 14 13:46:49 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    The SIGPLAN CSS                                                  */
+/*=====================================================================*/
+
+@media print {
+  div.document-title {
+    font-family: Palatino;
+/*     -moz-column-count: 1;                                           */
+    width: 100%;
+    text-align: center;
+  }
+
+  div.document-title-title {
+/*     width: 42pc;                                                    */
+    font-weight: bold;
+    font-size: 20pt;
+    text-align: center;
+    line-height: 120%;
+    border: 0;
+  }
+
+  div.document-title-authors {
+    display: table;
+/*     width: 42pc;                                                    */
+    text-align: center;
+    margin-bottom: 1.8cm;
+  }
+
+  div.document-authors {
+    width: 100%;
+    display: table-row;
+    text-align: center;
+  }
+
+  span.document-author {
+    text-align: center;
+    display: table-cell;
+    width: 50%;
+  }
+
+  span.document-author span.document-author-name {
+    font-size: large;
+    font-family: Palatino;
+    padding-bottom: 0.5em;
+  }
+
+  span.document-author span.document-author-affiliation {
+    font-style: normal;
+  }
+
+  span.document-author tt {
+    font-family: mono, sans-serif;
+    font-size: 8pt;
+  }
+
+  div.skribe-body {
+/*     -moz-column-count: 2;                                           */
+/*     -moz-column-rule: none;                                         */
+/*     -moz-column-gap: 2pc;                                           */
+/*     width: 42pc;                                                    */
+  }
+ 
+  body, div.abstract {
+    font-size: 9pt;
+    line-height: 110%;
+    font-family: Palatino;
+    font-style: normal;
+    padding: 0;
+    margin-top: 1in;
+    margin-left: .70in;
+    margin-right: .70in;
+    margin-bottom: 1in;
+  }
+
+  div.abstract {
+    font-size: 9pt;
+    line-height: 110%;
+    font-family: Palatino;
+    font-style: normal;
+    padding: 0;
+    margin-top: 1in;
+/*     margin-left: .70in;                                             */
+/*     margin-right: .70in;                                            */
+  }
+
+  div.abstract {
+    margin: 0;
+  }
+
+  div.section#References {
+/*     font-size: x-small;                                             */
+  }
+  
+  div.section#References table {
+    font-size: inherit;
+  }
+
+  @page { 
+    size: 8.5in 11in; 
+    margin-bottom: 5cm;
+  }
+}
+  -->
+ </style>
+</head>
+
+<body class="document">
+<div id="Hop-a-Language-for-Programming-the-Web-title" class="document-title">
+<div id="Hop-a-Language-for-Programming-the-Web-title" class="document-title-title">
+Hop, a Language for Programming the Web</div>
+<div id="Hop-a-Language-for-Programming-the-Web-title" class="document-title-authors">
+<div class="document-authors">
+<span id="author1180" class="document-author">
+<span class="document-author-name" id="author1180">Manuel Serrano</span>
+<span class="document-author-affiliation" id="author1180">Inria Sophia Antipolis</span>
+<span class="document-author-email" id="author1180"><a href="http://www.inria.fr/mimosa/Manuel.Serrano" class="http"><tt id='tt1179'
+>http://www.inria.fr/mimosa/Manuel.Serrano</tt></a></span>
+</span
+<span id="author1182" class="document-author">
+<span class="document-author-name" id="author1182">Erick Gallesio</span>
+<span class="document-author-affiliation" id="author1182">Université de Nice - Sophia Antipolis</span>
+<span class="document-author-email" id="author1182"><a href="mailto:Erick.Gallesio&#x40;unice.fr" class="mailto"><tt id='tt1850'
+>Erick.Gallesio&#x40;unice.fr</tt></a></span>
+</span
+</div></div>
+</div>
+<div class="skribe-body">
+<div class="section" id="Abstract"><!-- Abstract -->
+<a name="Abstract"></a>
+<div class="abstract-atitle"><h3><font color="black">Abstract</font>
+</h3></div><div class="abstract">
+<p id='paragraph1183'
+>Hop is a new higher-order language designed for programming
+interactive web applications such as web agendas, web galleries,
+etc. It exposes a programming model based on two computation
+levels. The first one is in charge of executing the logic of an
+application while the second one is in charge of executing the
+graphical user interface. Hop separates the logic and the graphical
+user interface but it packages them together and it supports strong
+collaborations between the two engines. The two execution flows
+communicate through function calls and event loops. Both ends
+can initiate communications.</p><p id='paragraph1184'
+>The paper presents the main constructions of Hop. It sketches
+its implementation and it presents an example of a simple web
+application written in Hop.</p></div><br>
+</div>
+<div class="section" id="Table-of-contents"><!-- Table of contents -->
+<a name="Table-of-contents"></a>
+<div class="section-atitle"><h3><font color="black">Table of contents</font>
+</h3></div><div class="section">
+<table cellspacing="1" cellpadding="1" width="100%" class="toc">
+<tbody>
+ <tr><td valign="top" align="left">1</td><td colspan="4" width="100%"><a href="article.html#Introduction">Introduction</a></td></tr>
+ <tr><td></td><td valign="top" align="left">1.1</td><td colspan="3" width="100%"><a href="article.html#The-HOP-programming-language">The HOP programming language</a></td></tr>
+ <tr><td></td><td valign="top" align="left">1.2</td><td colspan="3" width="100%"><a href="article.html#Overview-of-the-paper">Overview of the paper</a></td></tr>
+ <tr><td valign="top" align="left">2</td><td colspan="4" width="100%"><a href="article.html#Overall-language-design">Overall language design</a></td></tr>
+ <tr><td></td><td valign="top" align="left">2.1</td><td colspan="3" width="100%"><a href="article.html#Rationale">Rationale</a></td></tr>
+ <tr><td></td><td valign="top" align="left">2.2</td><td colspan="3" width="100%"><a href="article.html#A-dual-core-execution">A dual core execution</a></td></tr>
+ <tr><td></td><td valign="top" align="left">2.3</td><td colspan="3" width="100%"><a href="article.html#A-dual-language">A dual language</a></td></tr>
+ <tr><td></td><td valign="top" align="left">2.4</td><td colspan="3" width="100%"><a href="article.html#Objectives">Objectives</a></td></tr>
+ <tr><td valign="top" align="left">3</td><td colspan="4" width="100%"><a href="article.html#The-HOP-dual-syntax">The HOP dual syntax</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.1</td><td colspan="3" width="100%"><a href="article.html#The-syntax-of-the-main-stratum">The syntax of the main stratum</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.2</td><td colspan="3" width="100%"><a href="article.html#The-syntax-of-the-GUI-stratum">The syntax of the GUI stratum</a></td></tr>
+ <tr><td valign="top" align="left">4</td><td colspan="4" width="100%"><a href="article.html#The-HOP-dual-evaluation">The HOP dual evaluation</a></td></tr>
+ <tr><td></td><td valign="top" align="left">4.1</td><td colspan="3" width="100%"><a href="article.html#Dual-Execution">Dual Execution</a></td></tr>
+ <tr><td></td><td valign="top" align="left">4.2</td><td colspan="3" width="100%"><a href="article.html#The-Elaboration-time">The Elaboration time</a></td></tr>
+ <tr><td></td><td valign="top" align="left">4.3</td><td colspan="3" width="100%"><a href="article.html#HOP-services">HOP services</a></td></tr>
+ <tr><td></td><td valign="top" align="left">4.4</td><td colspan="3" width="100%"><a href="article.html#HOP-Event-loops">HOP Event loops</a></td></tr>
+ <tr><td valign="top" align="left">5</td><td colspan="4" width="100%"><a href="article.html#Example">Example</a></td></tr>
+ <tr><td valign="top" align="left">6</td><td colspan="4" width="100%"><a href="article.html#Implementation">Implementation</a></td></tr>
+ <tr><td></td><td valign="top" align="left">6.1</td><td colspan="3" width="100%"><a href="article.html#Implementation-of-Services">Implementation of Services</a></td></tr>
+ <tr><td></td><td valign="top" align="left">6.2</td><td colspan="3" width="100%"><a href="article.html#Implementation-of-Events">Implementation of Events</a></td></tr>
+ <tr><td valign="top" align="left">7</td><td colspan="4" width="100%"><a href="article.html#Discussion-and-Related-work">Discussion and Related work</a></td></tr>
+ <tr><td></td><td valign="top" align="left">7.1</td><td colspan="3" width="100%"><a href="article.html#Design-consideration">Design consideration</a></td></tr>
+ <tr><td></td><td valign="top" align="left">7.2</td><td colspan="3" width="100%"><a href="article.html#Related-work">Related work</a></td></tr>
+ <tr><td valign="top" align="left">8</td><td colspan="4" width="100%"><a href="article.html#Conclusion">Conclusion</a></td></tr>
+ <tr><td valign="top" align="left">9</td><td colspan="4" width="100%"><a href="article.html#References">References</a></td></tr>
+ <tr><td valign="top" align="left"></td><td colspan="4" width="100%"><a href="article.html#Appendix-A:-The-formal-syntax-of-HOP">Appendix A: The formal syntax of HOP</a></td></tr>
+</tbody>
+</table>
+</div><br>
+</div>
+<div class="section" id="Introduction"><!-- Introduction -->
+<a name="Introduction"></a>
+<div class="section-atitle"><h3><font color="black">1 Introduction</font>
+</h3></div><div class="section">
+<p id='paragraph1187'
+>The recent evolution of the web makes it suitable for replacing
+traditional graphical user interfaces (henceforth GUIs). The
+combination of fast HTML rendering of modern web browsers (such as
+Gecko 20051111, shipped with Firefox 1.5), generalized
+support of CSS2 [<a href="article.html#w3c:css2" class="inbound">14</a>], yet expected to be rapidly
+supplanted by CSS3, and the recent adoption of asynchronous
+transactions (aka Ajax, the acronym of <em id='emph1186'
+>Asynchronous JavaScript
+and XML</em>), makes web applications nearly as fancy and reactive as
+traditional GUIs. Some famous applications such as Google/suggest,
+Google/map, or Zimbra's mailer demonstrate that web applications have
+bridged the gap with traditional GUIs.</p><p id='paragraph1189'
+>In addition to allowing reactive and graphically pleasing
+interfaces, web applications are <em id='emph1188'
+>de facto</em> distributed.
+Implementing an application with a web interface, makes it instantly
+open to the world and accessible from much more than one computer. The
+web also partially solves the problem of platform compatibility
+because it physically separates the rendering engine from the
+computation engine. Therefore, the client does not have to make
+assumption on the server hardware configuration, and vice
+versa. Lastly, HTML is highly durable. While traditional graphical
+toolkits evolve continuously, obsoleting existing interfaces and
+breaking backward compatibility, modern web browsers that render on
+the edge web pages are still able to correctly display the web pages
+of the early nineteens.</p><p id='paragraph1190'
+>For these reasons, the web is arguably ready to escape the
+beaten track of n-tiers applications, CGI scripting and interaction
+based on HTML forms. However, we think that it still lacks programming
+abstractions that minimize the overwhelming amount of technologies that
+need to be mastered when web programming is involved. As a step in this
+direction, we propose Hop, a higher order language aimed at programming
+interactive web applications. It is built on top of HTML, CSS, and
+JavaScript that are considered, in this work, as assembly languages.</p><!-- The HOP programming language -->
+<a name="The-HOP-programming-language"></a>
+<div class="subsection-atitle"><h3>1.1 The HOP programming language</h3></div><div class="subsection">
+<p id='paragraph1192'
+>Hop is mainly designed for programming small- to medium-
+sized <em id='emph1191'
+>interactive applications</em> across the web. It is
+designed as a general-purpose web programming language which targets
+applications such as electronic agendas, photographs
+browsers, music players, mailer clients, operating system
+administration tools, and so on. In addition to enabling programming
+distributed applications over the web, Hop is also convenient for
+implementing applications that run on a single computer, on behalf of
+a single user.</p><p id='paragraph1193'
+>In contrast with most web-oriented languages and frameworks
+such as PHP and Ruby On Rails, the design of Hop is not
+database-centric. That is, while its standard library provides APIs
+for managing databases, Hop is not specially tuned for programming
+applications that access databases via the web. Hop is designed for
+programming various kinds of applications that need graphical user
+interfaces amongst which some might access databases.</p><p id='paragraph1194'
+>Hop follows the path opened by Tcl/Tk, Java/Swing, or
+C/GTK+ but it differs from its ancestors by enforcing a strict
+separation between the programming of the interface from the
+programming of the logic of the applications. For that, it exposes a
+dual core execution model where one core executes the computations
+needed by the logic of the program while the second core executes the
+computations needed by the graphical interface. Each core is
+programmed in a dedicated syntax and semantics that we call a
+stratum. We have deliberately provided Hop with a stratified
+language approach in order to emphasize the duality of these
+programs. However, despite its dual syntax, Hop tightly links the
+code of the interface and the code of the logic:</p><ul class="itemize" id='itemize1199'
+><li>it brings closer source codes implementing the logic of
+the program and source codes implementing graphical management.</li>
+<li>it packages an application in a single location (e.g., a file).</li>
+<li>it supports function calls that traverse the strata.</li>
+<li>it supports data exchange between the strata.</li>
+</ul><p id='paragraph1200'
+>Hop helps programming web applications because:</p><ul class="itemize" id='itemize1208'
+><li>it eases the deployment of applications by hiding URLs
+and by packaging the components of an application in a single
+place.</li>
+<li>it eases the control flow of the web application by allowing
+symmetric communications that can be initiated by both ends.</li>
+<li>it supports efficient event loops that avoid busy waiting.</li>
+<li>it eases the communication between servers and clients
+by supporting transparent function calls and partially shared name spaces.</li>
+<li>it provides a library of pre-defined widgets.</li>
+<li>it allows users to implement their own set of widgets
+that can be combined with the standard library for implementing complex
+GUIs.</li>
+<li>it minimizes the learning curve by resting on traditional 
+web technologies and terminologies.</li>
+</ul><p id='paragraph1209'
+>Hop does not address security issues, yet.</p></div>
+<!-- Overview of the paper -->
+<a name="Overview-of-the-paper"></a>
+<div class="subsection-atitle"><h3>1.2 Overview of the paper</h3></div><div class="subsection">
+<p id='paragraph1210'
+>The paper is organized as follows. The Section <a href="article.html#Overall-language-design" class="inbound"><span class="refscreen">Overall language design</span><span class="refprint">2</span></a> informally presents the stratified
+language design. Section <a href="article.html#The-HOP-dual-syntax" class="inbound"><span class="refscreen">The HOP dual syntax</span><span class="refprint">3</span></a> presents
+its syntax. The following Section <a href="article.html#The-HOP-dual-evaluation" class="inbound"><span class="refscreen">The HOP dual evaluation</span><span class="refprint">4</span></a> presents
+its semantics. It zooms in the function calls, and it presents
+the Hop's event loop. Section <a href="article.html#Example" class="inbound"><span class="refscreen">Example</span><span class="refprint">5</span></a> presents
+an example of Hop programming. It shows a simplistic IMAP web client. 
+Section <a href="article.html#Implementation" class="inbound"><span class="refscreen">Implementation</span><span class="refprint">6</span></a> sketches the current
+implementation of Hop. Section <a href="article.html#Discussion-and-Related-work" class="inbound"><span class="refscreen">Discussion and Related work</span><span class="refprint">7</span></a> discusses
+some weaknesses of the current system and the solutions we are up to
+apply. This section also envisions future work.</p></div>
+</div><br>
+</div>
+<div class="section" id="Overall-language-design"><!-- Overall language design -->
+<a name="Overall-language-design"></a>
+<div class="section-atitle"><h3><font color="black">2 Overall language design</font>
+</h3></div><div class="section">
+<p id='paragraph1211'
+>In this section, we present the rational of Hop. We
+informally present its execution model and its dual syntax.  
+This section only gives the intuition of what programming
+with Hop means. The technical presentations are left for Sections
+<a href="article.html#The-HOP-dual-syntax" class="inbound"><span class="refscreen">The HOP dual syntax</span><span class="refprint">3</span></a> and <a href="article.html#The-HOP-dual-evaluation" class="inbound"><span class="refscreen">The HOP dual evaluation</span><span class="refprint">4</span></a>.</p><!-- Rationale -->
+<a name="Rationale"></a>
+<div class="subsection-atitle"><h3>2.1 Rationale</h3></div><div class="subsection">
+<p id='paragraph1215'
+>Hop fosters a model where the <em id='emph1212'
+>main</em> computation of
+an application is executed on a <em id='emph1213'
+>server</em> and the graphical
+user interface is executed on remote <em id='emph1214'
+>clients</em>. From the user
+point of view, a Hop program is executed within a web browser and
+it is associated with a well known URL. Once the program starts, the
+server and the clients continuously communicate. The exchanges are
+implemented by remote function calls and event loops. We do not reckon
+that frequent communications between the server and the client is a
+drawback since for most applications the server and the client are
+likely to be hosted on the same physical computer.</p></div>
+<!-- A dual core execution -->
+<a name="A-dual-core-execution"></a>
+<div class="subsection-atitle"><h3>2.2 A dual core execution</h3></div><div class="subsection">
+<p id='paragraph1218'
+>A Hop program is executed simultaneously on several engines.
+The <em id='emph1216'
+>main</em> engine is dedicated to executing the logic of the
+program.  It executes CPU demanding computations and operations that
+require system privileges for accessing files or other resources.  The
+other engines, henceforth called <em id='emph1217'
+>GUI engines</em>, are dedicated to
+executing actions related to the programming of the graphical user
+interfaces. Engines are mapped to actual physical computers. More than one 
+engines can be mapped to a single computer.</p><p id='paragraph1222'
+>When a Hop program starts, it first executes on the main
+engine. This elaborates the description of a graphical user interface
+that is sent to a GUI engine. From that moment, the execution flows
+from the GUI engine to the main engine and vice versa. The GUI engines
+may invoke <em id='emph1219'
+>services</em> from the main engine by the means of
+function calls. The main engine may <em id='emph1220'
+>signal</em> events to the GUI
+engines. Each event carries an identity and a value. Events are
+handled asynchronously. They are used by the main engine to notify GUI
+engines when a new information is available. They are a means for
+implementing <em id='emph1221'
+>pushing</em> on the web.</p></div>
+<!-- A dual language -->
+<a name="A-dual-language"></a>
+<div class="subsection-atitle"><h3>2.3 A dual language</h3></div><div class="subsection">
+<p id='paragraph1224'
+>In order to reflect the dual execution of Hop programs we
+have deliberately chosen to provide the language with two linguistic
+strata. The first stratum is dedicated to programming the 
+<em id='emph1223'
+>main</em> engines. The second stratum is dedicated to programming
+graphical user interfaces.</p><p id='paragraph1225'
+>Both strata provide different facilities. On the one hand, the
+main stratum provides an API for accessing the file system and the
+other resources of the computer that hosts it, but it does not
+support any facility for handling graphical user interfaces. On the
+other hand, the GUI strata is provided with a full set of
+functionalities for dealing with graphical interactions but it has
+drastically restricted accesses to the resources of the computer it
+executes on.</p><p id='paragraph1228'
+>In order to strongly differentiate the two strata, we have
+chosen to deploy two different syntaxes. The main stratum is expressed
+in a Lisp-like syntax. The GUI stratum is expressed in a
+JavaScript-like syntax. Despite this difference both languages belong
+to the same family. They are both functional programming
+languages. They both support garbage collection. They both rest on
+dynamic type checking and side effects. They both support exceptions
+and objects. They both support variable arity functions and n-ary
+functions that can be invoked with packed arguments (i.e., they both
+support Lisp's <font color="blue"><tt id='tt1226'
+>apply</tt></font> function invocation). Etc. In a whole
+Hop program, the GUI stratum is nested inside the main stratum. The
+next sections detail how the two strata are combined to produce
+coherent Hop programs.</p><p id='paragraph1229'
+>The authors of this paper are aware that proposing a
+programming language exposing two distinguished syntaxes is
+controversial. The authors do not pretend that this is the best of all
+possible designs. In particular, because they still lack deep
+experience, they cannot claim that a dual syntax is preferable to a
+unified syntax. For this reason, they are conducing an experiment
+which consists in providing Hop with a unified syntax. The pros and
+cons of both approaches are presented in Section <a href="article.html#Design-consideration" class="inbound"><span class="refscreen">Design consideration</span><span class="refprint">7.1</span></a>.</p></div>
+<!-- Objectives -->
+<a name="Objectives"></a>
+<div class="subsection-atitle"><h3>2.4 Objectives</h3></div><div class="subsection">
+<p id='paragraph1230'
+>As presented in Section <a href="article.html#The-HOP-dual-syntax" class="inbound"><span class="refscreen">The HOP dual syntax</span><span class="refprint">3</span></a>, Hop uses a compact syntax that is close to the syntax used in
+traditional XML authoring. However, it is a complete programming language that
+subsumes many web technologies. As such, it allows the implementation of
+libraries that can be combined for implementing complex
+applications.</p><p id='paragraph1231'
+>For the sake of the example and for giving the intuition of
+what Hop programming looks like, here is a complete Hop program
+:</p><DIV class='prog-border'><pre class="hop" id='prog1241'
+>(<strong id='bold1851'
+>let</strong> ((def (<font color="#1919af"><strong id='bold1852'
+>&lt;DIV&gt;</strong></font> <font color="red">&quot;&quot;</font>))
+      (svc (<strong id='bold1855'
+>service</strong> (w)
+              (<font color="#1919af"><strong id='bold1856'
+>&lt;P&gt;</strong></font> (sql-exec db <font color="red">&quot;SELECT * FROM dict WHERE (def=~a)&quot;</font> w)))))
+  (<font color="#1919af"><strong id='bold1859'
+>&lt;HTML&gt;</strong></font>
+    (<font color="#1919af"><strong id='bold1861'
+>&lt;BODY&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold1863'
+>&lt;TABLE&gt;</strong></font>
+        (<font color="#1919af"><strong id='bold1865'
+>&lt;TR&gt;</strong></font>
+          (<font color="#1919af"><strong id='bold1867'
+>&lt;TD&gt;</strong></font> <font color="red">&quot;search&quot;</font>)
+          (<font color="#1919af"><strong id='bold1870'
+>&lt;TD&gt;</strong></font> (<font color="#1919af"><strong id='bold1872'
+>&lt;INPUT&gt;</strong></font>
+                   <strong id='bold1874'
+>:type</strong> <font color="red">&quot;text&quot;</font>
+                   <strong id='bold1877'
+>:onkeyup</strong> <font color="red"><strong id='bold1879'
+>{</strong></font>
+                      hop( <font color="#00cf00"><strong id='bold1881'
+>$svc</strong></font>( this.value ), hop_replace_inner( <font color="#00cf00"><strong id='bold1883'
+>$def</strong></font> ) )
+                   <font color="red"><strong id='bold1885'
+>}</strong></font>)))
+        (<font color="#1919af"><strong id='bold1887'
+>&lt;TR&gt;</strong></font>
+           (<font color="#1919af"><strong id='bold1889'
+>&lt;TD&gt;</strong></font> <strong id='bold1891'
+>:colspan</strong> 2 def))))))
+                  
+</pre>
+</DIV><p id='paragraph1244'
+>This program acts similarly to Google/suggest. The client
+displays an input box. It interactively reacts to key press
+events. Each time a new character is entered, the client invokes a
+service on the server which searches in a database the definition of the
+word sent by the client. On success, the definition is displayed back
+in the client display. The most important part of this example is the
+<font color="blue"><tt id='tt1242'
+>service</tt></font> construction that is explained in Section <a href="article.html#HOP-services" class="inbound"><span class="refscreen">HOP services</span><span class="refprint">4.3</span></a></p></div>
+</div><br>
+</div>
+<div class="section" id="The-HOP-dual-syntax"><!-- The HOP dual syntax -->
+<a name="The-HOP-dual-syntax"></a>
+<div class="section-atitle"><h3><font color="black">3 The HOP dual syntax</font>
+</h3></div><div class="section">
+<p id='paragraph1245'
+>This section presents the dual syntax of Hop. It first presents
+the syntax of the main stratum. Then, it presents the syntax of the
+GUI stratum. The formal definition of the syntax is given
+in the Appendix.</p><!-- The syntax of the main stratum -->
+<a name="The-syntax-of-the-main-stratum"></a>
+<div class="subsection-atitle"><h3>3.1 The syntax of the main stratum</h3></div><div class="subsection">
+<p id='paragraph1247'
+>At first glance, the syntax of the main stratum of Hop is a
+mere variation around HTML involving superficial modifications.
+It merely introduces an extra open parenthesis before any
+markup and replaces the closing markup with the single closing
+parenthesis. It also encloses string literals within <tt id='tt1246'
+>&quot;</tt> characters.
+Therefore, the HTML expression:</p><DIV class='prog-border'><pre class="html" id='prog1248'
+><font color="#1919af"><strong id='bold1893'
+>&lt;HTML</strong></font><font color="#1919af"><strong id='bold1895'
+>&gt;</strong></font>
+   <font color="#1919af"><strong id='bold1897'
+>&lt;BODY</strong></font><font color="#1919af"><strong id='bold1899'
+>&gt;</strong></font>
+      <font color="#1919af"><strong id='bold1901'
+>&lt;B</strong></font><font color="#1919af"><strong id='bold1903'
+>&gt;</strong></font>A plain text<font color="#1919af"><strong id='bold1905'
+>&lt;/B</strong></font><font color="#1919af"><strong id='bold1907'
+>&gt;</strong></font>
+   <font color="#1919af"><strong id='bold1909'
+>&lt;/BODY</strong></font><font color="#1919af"><strong id='bold1911'
+>&gt;</strong></font>
+<font color="#1919af"><strong id='bold1913'
+>&lt;/HTML</strong></font><font color="#1919af"><strong id='bold1915'
+>&gt;</strong></font>
+</pre>
+</DIV><p id='paragraph1249'
+>is written in Hop, as:</p><DIV class='prog-border'><pre class="hop" id='prog1251'
+>(<font color="#1919af"><strong id='bold1917'
+>&lt;HTML&gt;</strong></font>
+   (<font color="#1919af"><strong id='bold1919'
+>&lt;BODY&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold1921'
+>&lt;B&gt;</strong></font> <font color="red">&quot;A plain text&quot;</font>)))
+</pre>
+</DIV><p id='paragraph1253'
+>In Hop, attributes are introduced by an identifier starting
+with a colon character (<tt id='tt1252'
+>:</tt>) and their value is separated from
+the name by white spaces. Hence the HTML document:</p><br class="figure" id='A simple HTML file.'
+><a name="A-simple-HTML-file."></a>
+<DIV class='prog-border'><pre class="html" id='prog1254'
+><font color="#1919af"><strong id='bold1924'
+>&lt;HTML</strong></font><font color="#1919af"><strong id='bold1926'
+>&gt;</strong></font>
+   <font color="#1919af"><strong id='bold1928'
+>&lt;BODY</strong></font><font color="#1919af"><strong id='bold1930'
+>&gt;</strong></font>
+      <font color="#1919af"><strong id='bold1932'
+>&lt;TABLE</strong></font> width=<font color="red">&quot;100%&quot;</font><font color="#1919af"><strong id='bold1935'
+>&gt;</strong></font>
+         <font color="#1919af"><strong id='bold1937'
+>&lt;TR</strong></font><font color="#1919af"><strong id='bold1939'
+>&gt;</strong></font> <font color="#1919af"><strong id='bold1941'
+>&lt;TD</strong></font><font color="#1919af"><strong id='bold1943'
+>&gt;</strong></font>0<font color="#1919af"><strong id='bold1945'
+>&lt;/TD</strong></font><font color="#1919af"><strong id='bold1947'
+>&gt;</strong></font><font color="#1919af"><strong id='bold1949'
+>&lt;/TR</strong></font><font color="#1919af"><strong id='bold1951'
+>&gt;</strong></font>
+         <font color="#1919af"><strong id='bold1953'
+>&lt;TR</strong></font><font color="#1919af"><strong id='bold1955'
+>&gt;</strong></font> <font color="#1919af"><strong id='bold1957'
+>&lt;TD</strong></font><font color="#1919af"><strong id='bold1959'
+>&gt;</strong></font>1<font color="#1919af"><strong id='bold1961'
+>&lt;/TD</strong></font><font color="#1919af"><strong id='bold1963'
+>&gt;</strong></font><font color="#1919af"><strong id='bold1965'
+>&lt;/TR</strong></font><font color="#1919af"><strong id='bold1967'
+>&gt;</strong></font>
+         <font color="#1919af"><strong id='bold1969'
+>&lt;TR</strong></font><font color="#1919af"><strong id='bold1971'
+>&gt;</strong></font> <font color="#1919af"><strong id='bold1973'
+>&lt;TD</strong></font><font color="#1919af"><strong id='bold1975'
+>&gt;</strong></font>2<font color="#1919af"><strong id='bold1977'
+>&lt;/TD</strong></font><font color="#1919af"><strong id='bold1979'
+>&gt;</strong></font><font color="#1919af"><strong id='bold1981'
+>&lt;/TR</strong></font><font color="#1919af"><strong id='bold1983'
+>&gt;</strong></font>
+         <font color="#1919af"><strong id='bold1985'
+>&lt;TR</strong></font><font color="#1919af"><strong id='bold1987'
+>&gt;</strong></font> <font color="#1919af"><strong id='bold1989'
+>&lt;TD</strong></font><font color="#1919af"><strong id='bold1991'
+>&gt;</strong></font>3<font color="#1919af"><strong id='bold1993'
+>&lt;/TD</strong></font><font color="#1919af"><strong id='bold1995'
+>&gt;</strong></font><font color="#1919af"><strong id='bold1997'
+>&lt;/TR</strong></font><font color="#1919af"><strong id='bold1999'
+>&gt;</strong></font>
+      <font color="#1919af"><strong id='bold2001'
+>&lt;/TABLE</strong></font><font color="#1919af"><strong id='bold2003'
+>&gt;</strong></font>
+   <font color="#1919af"><strong id='bold2005'
+>&lt;/BODY</strong></font><font color="#1919af"><strong id='bold2007'
+>&gt;</strong></font>
+<font color="#1919af"><strong id='bold2009'
+>&lt;/HTML</strong></font><font color="#1919af"><strong id='bold2011'
+>&gt;</strong></font>
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 1:</strong> A simple HTML file.</small></center><br><p id='paragraph1255'
+>In Hop, this document is written,</p><br class="figure" id='A simple HOP program.'
+><a name="A-simple-HOP-program."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1258'
+>(<font color="#1919af"><strong id='bold2013'
+>&lt;HTML&gt;</strong></font>
+   (<font color="#1919af"><strong id='bold2015'
+>&lt;BODY&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold2017'
+>&lt;TABLE&gt;</strong></font> <strong id='bold2019'
+>:width</strong> <font color="red">&quot;100%&quot;</font>
+         (<font color="#1919af"><strong id='bold2022'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2024'
+>&lt;TD&gt;</strong></font> 0))
+         (<font color="#1919af"><strong id='bold2026'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2028'
+>&lt;TD&gt;</strong></font> 1))
+         (<font color="#1919af"><strong id='bold2030'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2032'
+>&lt;TD&gt;</strong></font> 2))
+         (<font color="#1919af"><strong id='bold2034'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2036'
+>&lt;TD&gt;</strong></font> 3)))))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 2:</strong> A simple HOP program.</small></center><br><p id='paragraph1259'
+>In spite of the strong resemblance, there is a very important
+difference between the semantics of the two sources. While, the
+HTML source can be interpreted as the external representation of a
+tree, the Hop source is actually a computer program that can be
+evaluated in order to produce a document. This is detailed in 
+Section <a href="article.html#The-HOP-dual-evaluation" class="inbound"><span class="refscreen">The HOP dual evaluation</span><span class="refprint">4</span></a>.</p></div>
+<!-- The syntax of the GUI stratum -->
+<a name="The-syntax-of-the-GUI-stratum"></a>
+<div class="subsection-atitle"><h3>3.2 The syntax of the GUI stratum</h3></div><div class="subsection">
+<p id='paragraph1266'
+>The GUI stratum is composed of <em id='emph1260'
+>GUI expressions</em>. They
+are nested inside <em id='emph1261'
+>main expressions</em>. They are syntactically delimited
+by curly braces (<font color="blue"><tt id='tt1262'
+>{</tt></font> and <font color="blue"><tt id='tt1264'
+>}</tt></font>). The GUI
+expressions are used as values of attributes. Their syntax follows the
+syntax of JavaScript.</p><DIV class='prog-border'><pre class="hop" id='prog1269'
+>(<font color="#1919af"><strong id='bold2038'
+>&lt;HTML&gt;</strong></font>
+   (<font color="#1919af"><strong id='bold2040'
+>&lt;BODY&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold2042'
+>&lt;BUTTON&gt;</strong></font>
+         <strong id='bold2044'
+>:onclick</strong> <font color="red"><strong id='bold2046'
+>{</strong></font> alert( Math.atan( 1 ) * 4 ) <font color="red"><strong id='bold2048'
+>}</strong></font>
+         <font color="red">&quot;Click me to see an approximation of PI&quot;</font>)))
+</pre>
+</DIV><p id='paragraph1276'
+>The character <font color="blue"><tt id='tt1270'
+>$</tt></font> escapes from the GUI stratum back to
+the main stratum. It introduces an expression of the main stratum
+inside an expression of the GUI stratum. The expression following the
+<font color="blue"><tt id='tt1272'
+>$</tt></font> is parsed according to the syntax of the main stratum. It
+allows any expression of the main stratum to be nested inside an
+expression of the GUI stratum. There is no limit to the nesting
+level. The character <font color="blue"><tt id='tt1274'
+>$</tt></font> is the only extension to the genuine 
+JavaScript syntax. For the sake of the example, let us consider a re-writing of
+the previous example where the approximation of &#960; is
+moved to the main stratum:</p><DIV class='prog-border'><pre class="hop" id='prog1279'
+>(<font color="#1919af"><strong id='bold2051'
+>&lt;HTML&gt;</strong></font>
+   (<font color="#1919af"><strong id='bold2053'
+>&lt;BODY&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold2055'
+>&lt;BUTTON&gt;</strong></font>
+         <strong id='bold2057'
+>:onclick</strong> <font color="red"><strong id='bold2059'
+>{</strong></font> alert( <font color="#00cf00"><strong id='bold2061'
+>$</strong></font>(* 4 (atan 1)) ) <font color="red"><strong id='bold2063'
+>}</strong></font>
+         <font color="red">&quot;Click me to see an approximation of PI&quot;</font>)))
+</pre>
+</DIV><p id='paragraph1280'
+>Note that these two programs are likely to show different
+approximations since no provision is taken to guarantee that the
+precision of the arithmetic of the main stratum and the precision of
+the GUI stratum are the same.</p></div>
+</div><br>
+</div>
+<div class="section" id="The-HOP-dual-evaluation"><!-- The HOP dual evaluation -->
+<a name="The-HOP-dual-evaluation"></a>
+<div class="section-atitle"><h3><font color="black">4 The HOP dual evaluation</font>
+</h3></div><div class="section">
+<p id='paragraph1283'
+>Hop brings abstraction to HTML. While HTML is a mere
+syntax that carries no semantics, Hop is a programming language.
+While a HTML expression denotes a <em id='emph1281'
+>tree</em>, a Hop
+expression is evaluated in order to produce a <em id='emph1282'
+>value</em>. While
+HTML markups are syntactic elements, in Hop, they are
+functions. More precisely, the meaning of the Hop expression:</p><DIV class='prog-border'><pre class="hop" id='prog1291'
+>   (<em id='it1284'
+>fun</em> <em id='it1287'
+>a<sub id='sub1286'
+><font size="-3">0</font></sub></em> <em id='it1290'
+>a<sub id='sub1289'
+><font size="-3">1</font></sub></em>...)
+</pre>
+</DIV><p id='paragraph1305'
+>is the application of the function <font color="blue"><tt id='tt1293'
+><em id='it1292'
+>fun</em></tt></font>
+to the arguments <font color="blue"><tt id='tt1298'
+><em id='it1297'
+>a<sub id='sub1296'
+><font size="-3">0</font></sub></em></tt></font>, <font color="blue"><tt id='tt1303'
+><em id='it1302'
+>a<sub id='sub1301'
+><font size="-3">1</font></sub></em></tt></font>. Provided with 
+this semantics, we can reconsider the previous Hop expression:</p><DIV class='prog-border'><pre class="hop" id='prog1307'
+>   (<font color="#1919af"><strong id='bold2066'
+>&lt;B&gt;</strong></font> <font color="red">&quot;A plain text&quot;</font>)
+</pre>
+</DIV><p id='paragraph1322'
+>This expression is actually the call of the function
+<font color="blue"><tt id='tt1308'
+>&lt;B&gt;</tt></font> with the literal string <font color="blue"><tt id='tt1310'
+>&quot;A plain text&quot;</tt></font> as
+argument. It should be noted that Hop identifiers may use more
+characters than most programming languages. In particular, the
+characters <font color="blue"><tt id='tt1312'
+>&lt;</tt></font> and <font color="blue"><tt id='tt1314'
+>&gt;</tt></font> are legal identifiers
+characters, as letters, digits, <font color="blue"><tt id='tt1316'
+>_</tt></font>, <font color="blue"><tt id='tt1318'
+>?</tt></font>, <font color="blue"><tt id='tt1320'
+>!</tt></font>,
+and many others (see the Appendix).</p><p id='paragraph1323'
+>Hop is unsurprisingly based on the Scheme algorithmic
+programming language [<a href="article.html#scheme:r5rs" class="inbound">8</a>] for which familiarity
+is assumed in the rest of this paper. Hop extends Scheme in
+many directions. It supports object-oriented programming, exceptions,
+modules, and multi-threading. It comes with various tools and libraries such
+as tools for constructing parsers and libraries for programming
+networks, multi-media applications, and so on. In addition to these
+features traditionally offered by programming languages, Hop
+supports original constructions specially designed for programming web
+applications. Since this paper focuses on web programming, it is
+voluntary swallow on the constructions that are not strictly related
+to this topic.</p><p id='paragraph1324'
+>In the rest of this section, we present the Hop evaluation model.
+First, in Section <a href="article.html#Dual-Execution" class="inbound"><span class="refscreen">Dual Execution</span><span class="refprint">4.1</span></a>
+we present how a program is spawned. Then, in Section
+<a href="article.html#The-Elaboration-time" class="inbound"><span class="refscreen">The Elaboration time</span><span class="refprint">4.2</span></a>, we present how GUI expressions are
+built. Then, the Section <a href="article.html#HOP-services" class="inbound"><span class="refscreen">HOP services</span><span class="refprint">4.3</span></a> constitutes
+the heart of this paper. It presents how the two strata collaborate.</p><!-- Dual Execution -->
+<a name="Dual-Execution"></a>
+<div class="subsection-atitle"><h3>4.1 Dual Execution</h3></div><div class="subsection">
+<p id='paragraph1326'
+>The execution of a Hop program differs from the execution of
+traditional computer programs. In order to be executed, a Hop
+program has to be first loaded on a <em id='emph1325'
+>HOP server</em>. This server
+conforms to the HTTP protocol [<a href="article.html#rfc:http" class="inbound">3</a>]. It binds
+the program to an URL provided by the administrator of the
+server. This URL is used by clients (i.e., web browsers) to start the
+program.</p><p id='paragraph1328'
+>A Hop program constructs a <em id='emph1327'
+>response</em> to a HTTP
+request. In general, this response is a XML document but in some
+situations it can be any other data structures. For the sake of
+simplicity, in this paper, we focus on HTML responses only but all
+the presented techniques also directly apply to XML.</p><p id='paragraph1331'
+>The execution of a Hop program is distributed. One part is
+executed on the <em id='emph1329'
+>server</em> which evaluates the expressions of
+the main stratum. The second part is executed on the <em id='emph1330'
+>client</em>
+which evaluates the expressions of the GUI stratum. In general the
+execution flow switches from a server to a client and vice versa but
+Hop also allows two (or more) execution flows to run in parallel.
+The client communicates with the server via remote function calls.
+The server communicates to the client via signals. Both communication
+means allow compound values to be carried.</p></div>
+<!-- The Elaboration time -->
+<a name="The-Elaboration-time"></a>
+<div class="subsection-atitle"><h3>4.2 The Elaboration time</h3></div><div class="subsection">
+<p id='paragraph1333'
+>The purpose of most Hop programs is to build HTML pages that
+are visualized by web browsers. The phase of the execution on the
+server where the HTML pages are constructed is called <em id='emph1332'
+>elaboration</em>. It takes place before any execution can start
+on the client.</p><p id='paragraph1334'
+>Hop represents HTML pages as trees. The Hop libraries of
+the two strata provide functions for constructing and manipulating
+them. In both strata, the trees are first class values. Hence,
+they can be passed as argument to functions, returned as
+results, and stored into data structures and variables. For the sake of
+the example, Figure <a href="article.html#Using-variables-in-HOP-programs." class="inbound">3</a>
+is a re-writing of the Hop program presented
+Figure <a href="article.html#A-simple-HOP-program." class="inbound">2</a> where the four rows of
+the table are bound to local variables.</p><br class="figure" id='Using variables in HOP programs.'
+><a name="Using-variables-in-HOP-programs."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1337'
+>(<strong id='bold2069'
+>let</strong> ((row0 (<font color="#1919af"><strong id='bold2070'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2072'
+>&lt;TD&gt;</strong></font> 0)))
+      (row1 (<font color="#1919af"><strong id='bold2074'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2076'
+>&lt;TD&gt;</strong></font> 1)))
+      (row2 (<font color="#1919af"><strong id='bold2078'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2080'
+>&lt;TD&gt;</strong></font> 2)))
+      (row3 (<font color="#1919af"><strong id='bold2082'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2084'
+>&lt;TD&gt;</strong></font> 3))))
+   (<font color="#1919af"><strong id='bold2086'
+>&lt;HTML&gt;</strong></font>
+      (<strong id='bold2088'
+>let</strong> ((table (<font color="#1919af"><strong id='bold2089'
+>&lt;TABLE&gt;</strong></font> row0 row1 row2 row3)))
+         (<font color="#1919af"><strong id='bold2091'
+>&lt;BODY&gt;</strong></font> table))))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 3:</strong> Using variables in HOP programs.</small></center><br><p id='paragraph1338'
+>The interest of such an approach is better understood when some
+abstraction is used. In the example of Figure 
+<a href="article.html#Using-HOP-naming-conventions." class="inbound">4</a> a function is defined for
+automating the construction of the rows of the table.</p><br class="figure" id='Using HOP naming conventions.'
+><a name="Using-HOP-naming-conventions."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1341'
+>(<font color="#6959cf"><strong id='bold2093'
+>define</strong></font> (<font color="#1919af"><strong id='bold2095'
+>&lt;ROW&gt;</strong></font> v<font color="#6959cf"><strong id='bold2097'
+>)</strong></font>
+   (<font color="#1919af"><strong id='bold2099'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2101'
+>&lt;TD&gt;</strong></font> v)))
+
+(<font color="#1919af"><strong id='bold2103'
+>&lt;HTML&gt;</strong></font>
+   (<strong id='bold2105'
+>let</strong> ((table (<font color="#1919af"><strong id='bold2106'
+>&lt;TABLE&gt;</strong></font> (<font color="#1919af"><strong id='bold2108'
+>&lt;ROW&gt;</strong></font> 0) (<font color="#1919af"><strong id='bold2110'
+>&lt;ROW&gt;</strong></font> 1) (<font color="#1919af"><strong id='bold2112'
+>&lt;ROW&gt;</strong></font> 2) (<font color="#1919af"><strong id='bold2114'
+>&lt;ROW&gt;</strong></font> 3))))
+      (<font color="#1919af"><strong id='bold2116'
+>&lt;BODY&gt;</strong></font> table)))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 4:</strong> Using HOP naming conventions.</small></center><br><p id='paragraph1346'
+>Note that the Hop convention is to surround the name of the
+functions that build HTML trees by the <font color="blue"><tt id='tt1342'
+>&lt;</tt></font> and <font color="blue"><tt id='tt1344'
+>&gt;</tt></font>
+characters and to use upper case letters. This example implicitly
+unveils that Hop standard HTML markups are implemented as regular
+functions. It also shows that defining a new markup in a user program
+is no more complex than defining a function.</p><p id='paragraph1349'
+>As presented in Section <a href="article.html#The-syntax-of-the-GUI-stratum" class="inbound"><span class="refscreen">The syntax of the GUI stratum</span><span class="refprint">3.2</span></a>, any
+expression of the main stratum can be nested in an expression of the GUI
+stratum after an escaping <font color="blue"><tt id='tt1347'
+>$</tt></font> character. At elaboration time,
+the escaping main stratum expressions are evaluated and the resulting
+values are injected in the response. In consequence, when the
+response is shipped to the client it is totally stripped of main
+stratum expressions. Let's consider the Hop source of
+Figure <a href="article.html#A-program-before-elaboration." class="inbound">5</a> before elaboration.</p><br class="figure" id='A program before elaboration.'
+><a name="A-program-before-elaboration."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1358'
+><em id='it2118'
+> 1: </em><a name="1" class="mark"></a>(<font color="#6959cf"><strong id='bold2119'
+>define</strong></font> x <font color="red">&quot;out&quot;</font><font color="#6959cf"><strong id='bold2122'
+>)</strong></font> 
+<em id='it2124'
+> 2: </em><a name="2" class="mark"></a>(<font color="#6959cf"><strong id='bold2125'
+>define</strong></font> y (vector 1 2 3<font color="#6959cf"><strong id='bold2127'
+>)</strong></font>) 
+<em id='it2129'
+> 3: </em>
+<em id='it2130'
+> 4: </em>(<font color="#1919af"><strong id='bold2131'
+>&lt;HTML&gt;</strong></font>
+<em id='it2133'
+> 5: </em>   (<font color="#1919af"><strong id='bold2134'
+>&lt;BODY&gt;</strong></font>
+<em id='it2136'
+> 6: </em><a name="6" class="mark"></a>      (<font color="#1919af"><strong id='bold2137'
+>&lt;SCRIPT&gt;</strong></font> <font color="red"><strong id='bold2139'
+>{</strong></font> var x = 0 <font color="red"><strong id='bold2141'
+>}</strong></font>) 
+<em id='it2143'
+> 7: </em><a name="7" class="mark"></a>      (<font color="#1919af"><strong id='bold2144'
+>&lt;P&gt;</strong></font> <strong id='bold2146'
+>:onmouseover</strong> <font color="red"><strong id='bold2148'
+>{</strong></font> alert( <font color="red">&quot;over=&quot;</font> + x++ ) <font color="red"><strong id='bold2151'
+>}</strong></font> 
+<em id='it2153'
+> 8: </em><a name="8" class="mark"></a>           <strong id='bold2154'
+>:onmouseout</strong> <font color="red"><strong id='bold2156'
+>{</strong></font> alert( <font color="#00cf00"><strong id='bold2158'
+>$x</strong></font> ) <font color="red"><strong id='bold2160'
+>}</strong></font> 
+<em id='it2162'
+> 9: </em><a name="9" class="mark"></a>           <strong id='bold2163'
+>:onclick</strong> <font color="red"><strong id='bold2165'
+>{</strong></font> alert( <font color="#00cf00"><strong id='bold2167'
+>$y</strong></font> ) <font color="red"><strong id='bold2169'
+>}</strong></font> 
+<em id='it2171'
+>10: </em>           <font color="red">&quot;foo&quot;</font>)))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 5:</strong> A program before elaboration.</small></center><br><p id='paragraph1369'
+>The two strata use separate name spaces, hence, a variable from
+the main stratum and a variable from the GUI stratum can hold
+the same name without conflicting. In other words, the variables
+defined line <em id='it1359'
+><i id='line-ref'
+><a href="article.html#1" class="inbound">1</a></i></em> and line <em id='it1360'
+><i id='line-ref'
+><a href="article.html#6" class="inbound">6</a></i></em> of Figure <a href="article.html#A-program-before-elaboration." class="inbound">5</a> are different. The elaboration phase replaces the
+occurrences of the variable <font color="blue"><tt id='tt1361'
+>x</tt></font> that belongs to the main
+stratum line <em id='it1363'
+><i id='line-ref'
+><a href="article.html#8" class="inbound">8</a></i></em> with the value <font color="blue"><tt id='tt1364'
+>&quot;out&quot;</tt></font>
+but it leaves the variable <font color="blue"><tt id='tt1366'
+>x</tt></font> that belongs to the GUI stratum
+line <em id='it1368'
+><i id='line-ref'
+><a href="article.html#7" class="inbound">7</a></i></em> as shown in Figure <a href="article.html#The-program-after-elaboration." class="inbound">6</a>.</p><br class="figure" id='The program after elaboration.'
+><a name="The-program-after-elaboration."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1376'
+><em id='it2173'
+> 4: </em>(<font color="#1919af"><strong id='bold2174'
+>&lt;HTML&gt;</strong></font>
+<em id='it2176'
+> 5: </em>   (<font color="#1919af"><strong id='bold2177'
+>&lt;BODY&gt;</strong></font>
+<em id='it2179'
+> 6: </em>      (<font color="#1919af"><strong id='bold2180'
+>&lt;SCRIPT&gt;</strong></font> <font color="red"><strong id='bold2182'
+>{</strong></font> var x = 0 <font color="red"><strong id='bold2184'
+>}</strong></font>)
+<em id='it2186'
+> 7: </em>      (<font color="#1919af"><strong id='bold2187'
+>&lt;P&gt;</strong></font> <strong id='bold2189'
+>:onmouseover</strong> <font color="red"><strong id='bold2191'
+>{</strong></font> alert( <font color="red">&quot;over=&quot;</font> + x++ ) <font color="red"><strong id='bold2194'
+>}</strong></font>
+<em id='it2196'
+> 8: </em>           <strong id='bold2197'
+>:onmouseout</strong> <font color="red"><strong id='bold2199'
+>{</strong></font> alert( <font color="red">&quot;out&quot;</font> ) <font color="red"><strong id='bold2202'
+>}</strong></font>
+<em id='it2204'
+> 9: </em>           <strong id='bold2205'
+>:onclick</strong> <font color="red"><strong id='bold2207'
+>{</strong></font> alert( [1, 2, 3] ) <font color="red"><strong id='bold2209'
+>}</strong></font>
+<em id='it2211'
+>10: </em>           <font color="red">&quot;foo&quot;</font>)))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 6:</strong> The program after elaboration.</small></center><br><p id='paragraph1384'
+>As it can be seen here, the variable <font color="blue"><tt id='tt1377'
+>y</tt></font> which is bound to
+a Hop vector in Figure <a href="article.html#A-program-before-elaboration." class="inbound">5</a>, line <em id='it1379'
+><i id='line-ref'
+><a href="article.html#2" class="inbound">2</a></i></em> is replaced with a JavaScript vector in Figure <a href="article.html#The-program-after-elaboration." class="inbound">6</a>, line <em id='it1380'
+><i id='line-ref'
+><a href="article.html#9" class="inbound">9</a></i></em>. This shows that the elaboration can
+inject complex data structures in the response. In particular, it can
+inject tree branches that are under construction. This is illustrated
+by the next example that shows that a HTML tree can be used when
+constructing a document in the main Hop program (line <em id='it1381'
+><i id='line-ref'
+><a href="article.html#4" class="inbound">4</a></i></em> of
+Figure <a href="article.html#Injecting-a-tree-branch." class="inbound">7</a>) <em id='emph1382'
+>and</em> can also be
+injected in the GUI stratum (line <em id='it1383'
+><i id='line-ref'
+><a href="article.html#7" class="inbound">7</a></i></em>). The following example
+constructs a HTML page that swaps the two items of the unordered list
+each time the button is clicked.</p><br class="figure" id='Injecting a tree branch.'
+><a name="Injecting-a-tree-branch."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1390'
+><em id='it2213'
+> 1: </em>(<strong id='bold2214'
+>let</strong> ((el (<font color="#1919af"><strong id='bold2215'
+>&lt;UL&gt;</strong></font> (<font color="#1919af"><strong id='bold2217'
+>&lt;LI&gt;</strong></font> <font color="red">&quot;foo&quot;</font>) (<font color="#1919af"><strong id='bold2220'
+>&lt;LI&gt;</strong></font> <font color="red">&quot;bar&quot;</font>))))
+<em id='it2223'
+> 2: </em>   (<font color="#1919af"><strong id='bold2224'
+>&lt;HTML&gt;</strong></font>
+<em id='it2226'
+> 3: </em>      (<font color="#1919af"><strong id='bold2227'
+>&lt;BODY&gt;</strong></font>
+<em id='it2229'
+> 4: </em><a name="4" class="mark"></a>         el
+<em id='it2230'
+> 5: </em>         (<font color="#1919af"><strong id='bold2231'
+>&lt;BUTTON&gt;</strong></font>
+<em id='it2233'
+> 6: </em>            <strong id='bold2234'
+>:onclick</strong> <font color="red"><strong id='bold2236'
+>{</strong></font>
+<em id='it2238'
+> 7: </em><a name="7" class="mark"></a>               var p = <font color="#00cf00"><strong id='bold2239'
+>$el</strong></font> 
+<em id='it2241'
+> 8: </em>               var c0 = p.childNodes[ 0 ]
+<em id='it2242'
+> 9: </em>               var c1 = p.childNodes[ 1 ]
+<em id='it2243'
+>10: </em>               p.appendChild( p.replaceChild( c1, c0 ) )
+<em id='it2244'
+>11: </em>            <font color="red"><strong id='bold2245'
+>}</strong></font> <font color="red">&quot;swap me&quot;</font>))))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 7:</strong> Injecting a tree branch.</small></center><br></div>
+<!-- HOP services -->
+<a name="HOP-services"></a>
+<div class="subsection-atitle"><h3>4.3 HOP services</h3></div><div class="subsection">
+<p id='paragraph1391'
+>This section presents one of the main technical novelty
+brought by Hop, namely the Hop remote services.</p><!-- HOP service definition -->
+<a name="HOP-service-definition"></a>
+<div class="subsubsection-atitle"><h4>4.3.1 HOP service definition</h4></div><div class="subsubsection">
+<p id='paragraph1392'
+>HTML's URLs play a role similar to functions in
+programming languages. Let us consider the following HTML page (for
+simplicity, expressed in the Hop syntax):</p><DIV class='prog-border'><pre class="hop" id='prog1410'
+>(<font color="#1919af"><strong id='bold2248'
+>&lt;HTML&gt;</strong></font>
+   <font color="darkmagenta"><em id='it2250'
+>;; a link to google portal</em></font>
+   (<font color="#1919af"><strong id='bold2252'
+>&lt;A&gt;</strong></font> <strong id='bold2254'
+>:href</strong> <font color="red">&quot;http://www.google.com&quot;</font> <font color="red">&quot;Google Portal&quot;</font>)
+   <font color="darkmagenta"><em id='it2258'
+>;; a google request</em></font>
+   (<font color="#1919af"><strong id='bold2260'
+>&lt;FORM&gt;</strong></font> <strong id='bold2262'
+>:action</strong> <font color="red">&quot;http://www.google.com/search&quot;</font>
+           (<font color="#1919af"><strong id='bold2265'
+>&lt;INPUT&gt;</strong></font> <strong id='bold2267'
+>:type</strong> <font color="red">&quot;text&quot;</font> <strong id='bold2270'
+>:name</strong> <font color="red">&quot;q&quot;</font> <strong id='bold2273'
+>:value</strong> <font color="red">&quot;&quot;</font>)
+           (<font color="#1919af"><strong id='bold2276'
+>&lt;INPUT&gt;</strong></font> <strong id='bold2278'
+>:type</strong> <font color="red">&quot;submit&quot;</font> <strong id='bold2281'
+>:name</strong> <font color="red">&quot;btnG&quot;</font> <strong id='bold2284'
+>:value</strong> <font color="red">&quot;search&quot;</font>)))
+</pre>
+</DIV><p id='paragraph1414'
+>The URL <tt id='tt1411'
+>http://www.google.com</tt> actually denotes a
+function named <font color="blue"><tt id='tt1412'
+>www.google.com</tt></font> whose signature is: </p><DIV class='prog-border'><pre class="hop" id='prog1415'
+>   unit &#8594; HTMLtree
+</pre>
+</DIV><p id='paragraph1422'
+>It is called when a user clicks on the hyper link implemented by
+the <font color="blue"><tt id='tt1416'
+>&lt;A&gt;</tt></font> markup. Similarly, the URL <tt id='tt1418'
+>http://www.google.com/search</tt> denotes another function. It is
+called when the user clicks the <tt id='tt1419'
+>submit</tt> button. This one accepts
+a parameter named <font color="blue"><tt id='tt1420'
+>q</tt></font> whose signature is:</p><DIV class='prog-border'><pre class="hop" id='prog1423'
+>   string &#8594; HTMLtree
+</pre>
+</DIV><p id='paragraph1427'
+>Hop transparently binds URLs to special functions called
+<em id='emph1424'
+>services</em>. These reside on the server and
+they are called from the clients. They are defined by the form <font color="blue"><tt id='tt1425'
+>define-service</tt></font> whose syntax is:</p><DIV class='prog-border'><pre class="server" id='prog1434'
+>   (define-service (<em id='it1428'
+>&lt;ident&gt;</em> <em id='it1429'
+>&lt;ident&gt;</em><sub id='sub1432'
+><small><small><em id='it1430'
+>0</em></small></small></sub> ...)
+      <em id='it1433'
+>&lt;expression&gt;</em>)
+</pre>
+</DIV><p id='paragraph1448'
+><font color="blue"><tt id='tt1436'
+><em id='it1435'
+>&lt;Ident&gt;</em></tt></font> is the name of the service and 
+<font color="blue"><tt id='tt1442'
+><em id='it1438'
+>&lt;ident&gt;</em><sub id='sub1441'
+><small><small><small><em id='it1439'
+>0</em></small></small></small></sub></tt></font>, ... are 
+its parameters. The form <font color="blue"><tt id='tt1444'
+>define-service</tt></font> is similar to the Scheme
+function definition form <font color="blue"><tt id='tt1446'
+>define</tt></font> but in addition to binding a function
+to an identifier in the server, it also binds it to an URL that
+can be used in client pages. Let us consider the following example which
+is a complete Hop program:</p><br class="figure" id='A complete HOP program defining two services.'
+><a name="A-complete-HOP-program-defining-two-services."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1467'
+><em id='it2287'
+> 1: </em><a name="1" class="mark"></a>(<font color="#6959cf"><strong id='bold2288'
+>define-service</strong></font> (portal<font color="#6959cf"><strong id='bold2290'
+>)</strong></font> 
+<em id='it2292'
+> 2: </em>   <font color="darkmagenta"><em id='it2293'
+>;; produce a web page containing a big lambda character</em></font>
+<em id='it2295'
+> 3: </em>   (<font color="#1919af"><strong id='bold2296'
+>&lt;HTML&gt;</strong></font>
+<em id='it2298'
+> 4: </em>      (<font color="#1919af"><strong id='bold2299'
+>&lt;BODY&gt;</strong></font>
+<em id='it2301'
+> 5: </em>         (<font color="#1919af"><strong id='bold2302'
+>&lt;CENTER&gt;</strong></font> (<font color="#1919af"><strong id='bold2304'
+>&lt;B&gt;</strong></font> (<font color="#1919af"><strong id='bold2306'
+>&lt;BIG&gt;</strong></font> (<font color="#1919af"><strong id='bold2308'
+>&lt;BIG&gt;</strong></font> (<font color="#1919af"><strong id='bold2310'
+>&lt;BIG&gt;</strong></font> (<font color="#1919af"><strong id='bold2312'
+>&lt;BIG&gt;</strong></font> <font color="red">&quot;&amp;#955;&quot;</font>)))))))))
+<em id='it2315'
+> 6: </em>
+<em id='it2316'
+> 7: </em><a name="7" class="mark"></a>(<font color="#6959cf"><strong id='bold2317'
+>define-service</strong></font> (rev q<font color="#6959cf"><strong id='bold2319'
+>)</strong></font> 
+<em id='it2321'
+> 8: </em>   <font color="darkmagenta"><em id='it2322'
+>;; produce a web page made of the reverse of the argument</em></font>
+<em id='it2324'
+> 9: </em>   (<font color="#1919af"><strong id='bold2325'
+>&lt;HTML&gt;</strong></font>
+<em id='it2327'
+>10: </em>      (<font color="#1919af"><strong id='bold2328'
+>&lt;BODY&gt;</strong></font>
+<em id='it2330'
+>11: </em>         (<font color="#1919af"><strong id='bold2331'
+>&lt;CENTER&gt;</strong></font> (<font color="#1919af"><strong id='bold2333'
+>&lt;B&gt;</strong></font> (list-&gt;string (reverse (string-&gt;list q))))))))
+<em id='it2335'
+>12: </em>
+<em id='it2336'
+>13: </em><a name="13" class="mark"></a>(<font color="#1919af"><strong id='bold2337'
+>&lt;HTML&gt;</strong></font> 
+<em id='it2339'
+>14: </em>   <font color="darkmagenta"><em id='it2340'
+>;; a link to our Hop portal</em></font>
+<em id='it2342'
+>15: </em><a name="15" class="mark"></a>   (<font color="#1919af"><strong id='bold2343'
+>&lt;A&gt;</strong></font> <strong id='bold2345'
+>:href</strong> portal <font color="red">&quot;portal&quot;</font>) 
+<em id='it2348'
+>16: </em>   <font color="darkmagenta"><em id='it2349'
+>;; a HOP request</em></font>
+<em id='it2351'
+>17: </em><a name="17" class="mark"></a>   (<font color="#1919af"><strong id='bold2352'
+>&lt;FORM&gt;</strong></font> <strong id='bold2354'
+>:action</strong> rev 
+<em id='it2356'
+>18: </em>           (<font color="#1919af"><strong id='bold2357'
+>&lt;INPUT&gt;</strong></font> <strong id='bold2359'
+>:type</strong> <font color="red">&quot;text&quot;</font> <strong id='bold2362'
+>:name</strong> <font color="red">&quot;q&quot;</font> <strong id='bold2365'
+>:value</strong> <font color="red">&quot;&quot;</font>)
+<em id='it2368'
+>19: </em>           (<font color="#1919af"><strong id='bold2369'
+>&lt;INPUT&gt;</strong></font> <strong id='bold2371'
+>:type</strong> <font color="red">&quot;submit&quot;</font> <strong id='bold2374'
+>:name</strong> <font color="red">&quot;btnG&quot;</font> <strong id='bold2377'
+>:value</strong> <font color="red">&quot;reverse&quot;</font>)))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 8:</strong> A complete HOP program defining two services.</small></center><br><p id='paragraph1477'
+>When this program is executed, it first binds two services:
+<font color="blue"><tt id='tt1468'
+>portal</tt></font> line <em id='it1470'
+><i id='line-ref'
+><a href="article.html#1" class="inbound">1</a></i></em> and <font color="blue"><tt id='tt1471'
+>rev</tt></font> line <em id='it1473'
+><i id='line-ref'
+><a href="article.html#7" class="inbound">7</a></i></em>. Then,
+line <em id='it1474'
+><i id='line-ref'
+><a href="article.html#13" class="inbound">13</a></i></em>, it elaborates an answer which is a HTML tree
+containing, line <em id='it1475'
+><i id='line-ref'
+><a href="article.html#15" class="inbound">15</a></i></em>, a call to the first service and,
+line <em id='it1476'
+><i id='line-ref'
+><a href="article.html#17" class="inbound">17</a></i></em> a call to the second service.</p><p id='paragraph1480'
+>Similarly to anonymous functions, Hop supports anonymous
+services. They are introduced by the form <font color="blue"><tt id='tt1478'
+>service</tt></font>:</p><DIV class='prog-border'><pre class="server" id='prog1486'
+>   (service (<em id='it1481'
+>&lt;ident&gt;</em><sub id='sub1484'
+><small><small><em id='it1482'
+>0</em></small></small></sub> ...)
+      <em id='it1485'
+>&lt;expression&gt;</em>)
+</pre>
+</DIV><p id='paragraph1495'
+>Anonymous services are illustrated on the example presented
+Figure <a href="article.html#An-example-of-anonymous-services." class="inbound">9</a>.  This Hop program
+manages a dynamic list of items. The form started at line <em id='it1487'
+><i id='line-ref'
+><a href="article.html#5" class="inbound">5</a></i></em>
+adds new entries. Clicking the submit button of line <em id='it1488'
+><i id='line-ref'
+><a href="article.html#8" class="inbound">8</a></i></em>,
+calls the anonymous service defined line <em id='it1489'
+><i id='line-ref'
+><a href="article.html#6" class="inbound">6</a></i></em>. On the
+server, this service recursively calls the function <font color="blue"><tt id='tt1490'
+>loop</tt></font>,
+defined line <em id='it1492'
+><i id='line-ref'
+><a href="article.html#1" class="inbound">1</a></i></em>, with the value of the input entry of line <em id='it1493'
+><i id='line-ref'
+><a href="article.html#7" class="inbound">7</a></i></em> added to the list.  The forms
+of line <em id='it1494'
+><i id='line-ref'
+><a href="article.html#13" class="inbound">13</a></i></em> works in a similar way but instead of adding
+elements they remove elements one at a time.</p><br class="figure" id='An example of anonymous services.'
+><a name="An-example-of-anonymous-services."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1519'
+><em id='it2380'
+> 1: </em><a name="1" class="mark"></a>(<strong id='bold2381'
+>let</strong> loop ((items (list <font color="red">&quot;foo&quot;</font> <font color="red">&quot;bar&quot;</font> <font color="red">&quot;gee&quot;</font>))) 
+<em id='it2385'
+> 2: </em>   (<font color="#1919af"><strong id='bold2386'
+>&lt;HTML&gt;</strong></font>
+<em id='it2388'
+> 3: </em>      (<font color="#1919af"><strong id='bold2389'
+>&lt;BODY&gt;</strong></font>
+<em id='it2391'
+> 4: </em>         (<font color="#1919af"><strong id='bold2392'
+>&lt;H3&gt;</strong></font> <font color="red">&quot;To do list&quot;</font>)
+<em id='it2395'
+> 5: </em><a name="5" class="mark"></a>         (<font color="#1919af"><strong id='bold2396'
+>&lt;FORM&gt;</strong></font> 
+<em id='it2398'
+> 6: </em><a name="6" class="mark"></a>            <strong id='bold2399'
+>:action</strong> (<strong id='bold2401'
+>service</strong> (new) (loop (cons new items))) 
+<em id='it2402'
+> 7: </em><a name="7" class="mark"></a>            (<font color="#1919af"><strong id='bold2403'
+>&lt;INPUT&gt;</strong></font> <strong id='bold2405'
+>:name</strong> <font color="red">&quot;new&quot;</font> <strong id='bold2408'
+>:type</strong> <font color="red">&quot;text&quot;</font> <strong id='bold2411'
+>:size</strong> 40) 
+<em id='it2413'
+> 8: </em><a name="8" class="mark"></a>            (<font color="#1919af"><strong id='bold2414'
+>&lt;INPUT&gt;</strong></font> <strong id='bold2416'
+>:type</strong> <font color="red">&quot;submit&quot;</font> <strong id='bold2419'
+>:value</strong> <font color="red">&quot;add new item&quot;</font>)) 
+<em id='it2422'
+> 9: </em>         (<font color="#1919af"><strong id='bold2423'
+>&lt;TABLE&gt;</strong></font>
+<em id='it2425'
+>10: </em>            (map (<strong id='bold2426'
+>lambda</strong> (item)
+<em id='it2427'
+>11: </em>                    (<font color="#1919af"><strong id='bold2428'
+>&lt;TR&gt;</strong></font>
+<em id='it2430'
+>12: </em>                       (<font color="#1919af"><strong id='bold2431'
+>&lt;TD&gt;</strong></font> item)
+<em id='it2433'
+>13: </em><a name="13" class="mark"></a>                       (<font color="#1919af"><strong id='bold2434'
+>&lt;TD&gt;</strong></font> (<font color="#1919af"><strong id='bold2436'
+>&lt;FORM&gt;</strong></font> 
+<em id='it2438'
+>14: </em>                                <strong id='bold2439'
+>:action</strong> (<strong id='bold2441'
+>service</strong> () (loop (delete! item items)))
+<em id='it2442'
+>15: </em>                                (<font color="#1919af"><strong id='bold2443'
+>&lt;INPUT&gt;</strong></font> <strong id='bold2445'
+>:type</strong> <font color="red">&quot;submit&quot;</font> <strong id='bold2448'
+>:value</strong> <font color="red">&quot;remove&quot;</font>)))))
+<em id='it2451'
+>16: </em>                 items)))))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 9:</strong> An example of anonymous services.</small></center><br></div>
+<!-- HOP service calls -->
+<a name="HOP-service-calls"></a>
+<div class="subsubsection-atitle"><h4>4.3.2 HOP service calls</h4></div><div class="subsubsection">
+<p id='paragraph1521'
+>The service calls presented in Section <a href="article.html#HOP-service-definition" class="inbound"><span class="refscreen">HOP service definition</span><span class="refprint">4.3.1</span></a> suffer a strong restriction: they can only produce
+complete web pages. By the definition of HTTP and HTML they can hardly be
+used to compute partial results. In order to work around this
+limitation, web browsers have introduced a new communication
+means which enables clients to call services from
+servers and which enables clients to handle, as they wish, the results
+of the calls. The term <em id='emph1520'
+>Ajax</em> has been coined for denoting programs 
+using this capacity. This section, presents its support in Hop.</p><p id='paragraph1526'
+>In addition to the <font color="blue"><tt id='tt1522'
+>&lt;A&gt;</tt></font> and <font color="blue"><tt id='tt1524'
+>&lt;FORM&gt;</tt></font> function
+invocations, any Hop service can be called, from the GUI stratum, with
+the following form:</p><DIV class='prog-border'><pre class="html" id='prog1534'
+>  hop( <em id='it1527'
+>service</em>(<em id='it1528'
+>arg</em><sub id='sub1531'
+><small><small><small><em id='it1529'
+>0</em></small></small></small></sub>, ...), <em id='it1532'
+>[success]</em>, <em id='it1533'
+>[failure]</em>)
+</pre>
+</DIV><p id='paragraph1554'
+>The <font color="blue"><tt id='tt1535'
+>hop</tt></font> form calls the service <font color="blue"><tt id='tt1538'
+><em id='it1537'
+>service</em></tt></font> with the arguments, <font color="blue"><tt id='tt1544'
+><em id='it1540'
+>arg</em><sub id='sub1543'
+><small><small><small><em id='it1541'
+>0</em></small></small></small></sub></tt></font>, .... When the call completes, on success, the
+optional GUI call-back procedure <font color="blue"><tt id='tt1547'
+><em id='it1546'
+>success</em></tt></font> is called. On
+failure, the optional call-back <font color="blue"><tt id='tt1550'
+><em id='it1549'
+>failure</em></tt></font> is called. Both
+call-back procedures accept one argument which is the result of the
+evaluation of the service on the main stratum. The example of Figure
+<a href="article.html#An-example-of-function-call." class="inbound">10</a> shows an example of service call. In the
+GUI stratum, it invokes a service that returns the local date of the
+server which is displayed in a dialog box (line <em id='it1552'
+><i id='line-ref'
+><a href="article.html#8" class="inbound">8</a></i></em>). The
+declaration of line <em id='it1553'
+><i id='line-ref'
+><a href="article.html#5" class="inbound">5</a></i></em> inserts the code of the Hop GUI
+library in the GUI stratum.</p><br class="figure" id='An example of function call.'
+><a name="An-example-of-function-call."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1558'
+><em id='it2452'
+> 1: </em>(<font color="#6959cf"><strong id='bold2453'
+>define-service</strong></font> (server-date<font color="#6959cf"><strong id='bold2455'
+>)</strong></font>
+<em id='it2457'
+> 2: </em>   (current-date))
+<em id='it2458'
+> 3: </em>
+<em id='it2459'
+> 4: </em>(<font color="#1919af"><strong id='bold2460'
+>&lt;HTML&gt;</strong></font>
+<em id='it2462'
+> 5: </em><a name="5" class="mark"></a>   (<font color="#1919af"><strong id='bold2463'
+>&lt;HEAD&gt;</strong></font> (<font color="#1919af"><strong id='bold2465'
+>&lt;HOP-HEAD&gt;</strong></font>)) 
+<em id='it2467'
+> 6: </em>   (<font color="#1919af"><strong id='bold2468'
+>&lt;BUTTON&gt;</strong></font>
+<em id='it2470'
+> 7: </em>      <strong id='bold2471'
+>:onclick</strong> <font color="red"><strong id='bold2473'
+>{</strong></font> hop( <font color="#00cf00"><strong id='bold2475'
+>$server-date</strong></font>(),
+<em id='it2477'
+> 8: </em><a name="8" class="mark"></a>                      function( msg ) <font color="red"><strong id='bold2478'
+>{</strong></font> alert( msg ) <font color="red"><strong id='bold2480'
+>}</strong></font> ) <font color="red"><strong id='bold2482'
+>}</strong></font> 
+<em id='it2484'
+> 9: </em>      <font color="red">&quot;Server time&quot;</font>))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 10:</strong> An example of function call.</small></center><br><p id='paragraph1559'
+>The same Hop program can be written using an
+anonymous service (see Figure <a href="article.html#An-example-of-anonymous-function-call." class="inbound">11</a>).</p><br class="figure" id='An example of anonymous function call.'
+><a name="An-example-of-anonymous-function-call."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1563'
+><em id='it2486'
+>1: </em>(<font color="#1919af"><strong id='bold2487'
+>&lt;HTML&gt;</strong></font>
+<em id='it2489'
+>2: </em>   (<font color="#1919af"><strong id='bold2490'
+>&lt;HEAD&gt;</strong></font> (<font color="#1919af"><strong id='bold2492'
+>&lt;HOP-HEAD&gt;</strong></font>))
+<em id='it2494'
+>3: </em>   (<font color="#1919af"><strong id='bold2495'
+>&lt;BUTTON&gt;</strong></font>
+<em id='it2497'
+>4: </em>      <strong id='bold2498'
+>:onclick</strong> <font color="red"><strong id='bold2500'
+>{</strong></font> hop( <font color="#00cf00"><strong id='bold2502'
+>$</strong></font>(<strong id='bold2504'
+>service</strong> () (current-date))(),
+<em id='it2505'
+>5: </em>                      function( msg ) <font color="red"><strong id='bold2506'
+>{</strong></font> alert( msg ) <font color="red"><strong id='bold2508'
+>}</strong></font> ) <font color="red"><strong id='bold2510'
+>}</strong></font>
+<em id='it2512'
+>6: </em>      <font color="red">&quot;Server time&quot;</font>))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 11:</strong> An example of anonymous function call.</small></center><br><p id='paragraph1564'
+>Programs can define arbitrary complex call-backs however,
+Hop predefines some call-backs that have proven to be useful in common
+situations. In particular the call-back:</p><DIV class='prog-border'><pre class="html" id='prog1566'
+>   hop_replace: <SPAN class='type'><tt id='tt1565'
+>HTMLtree &#8594; unit</tt></SPAN>
+</pre>
+</DIV><p id='paragraph1567'
+>replaces the current document with the value returned by the remote
+service call. The function:</p><DIV class='prog-border'><pre class="html" id='prog1570'
+>   hop_replace_inner: <SPAN class='type'><tt id='tt1568'
+>HTMLElement &#8594;</tt></SPAN>
+      <SPAN class='type'><tt id='tt1569'
+>HTMLtree &#8594; unit</tt></SPAN>
+</pre>
+</DIV><p id='paragraph1573'
+>accepts an HTML element as argument and returns a function
+(i.e., a call-back) that replaces the content of this element with the
+value returned by the call. The next example uses it. It builds a HTML
+page containing a table. When any element of this table is clicked,
+the service <font color="blue"><tt id='tt1571'
+>rev10</tt></font> is called with a JavaScript vector as
+argument. This creates a new HTML table whose elements are built from
+the elements found in the argument. The new table replaces the initial
+one.</p><br class="figure" id='Arguments of function calls.'
+><a name="Arguments-of-function-calls."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1578'
+><em id='it2514'
+> 1: </em>(<font color="#6959cf"><strong id='bold2515'
+>define-service</strong></font> (rev10 vec<font color="#6959cf"><strong id='bold2517'
+>)</strong></font>
+<em id='it2519'
+> 2: </em>   (<font color="#1919af"><strong id='bold2520'
+>&lt;U&gt;</strong></font>
+<em id='it2522'
+> 3: </em>      (<font color="#1919af"><strong id='bold2523'
+>&lt;TABLE&gt;</strong></font>
+<em id='it2525'
+> 4: </em>         (<font color="#1919af"><strong id='bold2526'
+>&lt;TR&gt;</strong></font> (map (<strong id='bold2528'
+>lambda</strong> (e) (<font color="#1919af"><strong id='bold2529'
+>&lt;TD&gt;</strong></font> (+ 10 e)))
+<em id='it2531'
+> 5: </em>                    (reverse (vector-&gt;list vec))))))))
+<em id='it2532'
+> 6: </em>
+<em id='it2533'
+> 7: </em>(<font color="#1919af"><strong id='bold2534'
+>&lt;HTML&gt;</strong></font>
+<em id='it2536'
+> 8: </em>   (<font color="#1919af"><strong id='bold2537'
+>&lt;HEAD&gt;</strong></font> (<font color="#1919af"><strong id='bold2539'
+>&lt;HOP-HEAD&gt;</strong></font>))
+<em id='it2541'
+> 9: </em>   (<strong id='bold2542'
+>let</strong> ((el (<font color="#1919af"><strong id='bold2543'
+>&lt;DIV&gt;</strong></font> (<font color="#1919af"><strong id='bold2545'
+>&lt;U&gt;</strong></font> (<font color="#1919af"><strong id='bold2547'
+>&lt;TABLE&gt;</strong></font> (<font color="#1919af"><strong id='bold2549'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2551'
+>&lt;TD&gt;</strong></font> 1) (<font color="#1919af"><strong id='bold2553'
+>&lt;TD&gt;</strong></font> 2) (<font color="#1919af"><strong id='bold2555'
+>&lt;TD&gt;</strong></font> 3)))))))
+<em id='it2557'
+>10: </em>      (<font color="#1919af"><strong id='bold2558'
+>&lt;BUTTON&gt;</strong></font>
+<em id='it2560'
+>11: </em>         <strong id='bold2561'
+>:onclick</strong> <font color="red"><strong id='bold2563'
+>{</strong></font> hop( <font color="#00cf00"><strong id='bold2565'
+>$rev10</strong></font>( new Array( 1, 2, 3 ) ),
+<em id='it2567'
+>12: </em>                         hop_replace_inner( <font color="#00cf00"><strong id='bold2568'
+>$el</strong></font> ) ) <font color="red"><strong id='bold2570'
+>}</strong></font>
+<em id='it2572'
+>13: </em>         el)))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 12:</strong> Arguments of function calls.</small></center><br><p id='paragraph1581'
+>This example also shows that complex data structures can be
+sent through the <font color="blue"><tt id='tt1579'
+>hop</tt></font> remote service call and how
+the elaboration (see Section <a href="article.html#The-Elaboration-time" class="inbound"><span class="refscreen">The Elaboration time</span><span class="refprint">4.2</span></a>) and
+remote service calls can be combined to produce non trivial
+programs. An additional example of Hop remote service call is
+presented in Section <a href="article.html#Example" class="inbound"><span class="refscreen">Example</span><span class="refprint">5</span></a>.</p></div>
+</div>
+<!-- HOP Event loops -->
+<a name="HOP-Event-loops"></a>
+<div class="subsection-atitle"><h3>4.4 HOP Event loops</h3></div><div class="subsection">
+<p id='paragraph1582'
+>Hop provides two different kinds of event loops. The first
+ones are used to initiate, in the GUI stratum, computations at regular
+time intervals. Since, they are roughly equivalent to the JavaScript timer
+facilities, we only present them with the example shown Figure <a href="article.html#HOP-timer-loops." class="inbound">13</a>. This program polls every five seconds the
+server time which is updated on the client display.</p><br class="figure" id='HOP timer loops.'
+><a name="HOP-timer-loops."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1588'
+><em id='it2573'
+> 1: </em>(<font color="#1919af"><strong id='bold2574'
+>&lt;HTML&gt;</strong></font>
+<em id='it2576'
+> 2: </em>   (<font color="#1919af"><strong id='bold2577'
+>&lt;HEAD&gt;</strong></font> (<font color="#1919af"><strong id='bold2579'
+>&lt;HOP-HEAD&gt;</strong></font>))
+<em id='it2581'
+> 3: </em>   (<font color="#1919af"><strong id='bold2582'
+>&lt;BODY&gt;</strong></font>
+<em id='it2584'
+> 4: </em>      (<strong id='bold2585'
+>let</strong> ((clock (<font color="#1919af"><strong id='bold2586'
+>&lt;DIV&gt;</strong></font> <font color="red">&quot;&quot;</font>)))
+<em id='it2589'
+> 5: </em>         (<font color="#1919af"><strong id='bold2590'
+>&lt;TIMEOUT-EVENT&gt;</strong></font>
+<em id='it2592'
+> 6: </em>            <strong id='bold2593'
+>:timeout</strong> 5000
+<em id='it2595'
+> 7: </em>            <strong id='bold2596'
+>:handler</strong> <font color="red"><strong id='bold2598'
+>{</strong></font> hop( <font color="#00cf00"><strong id='bold2600'
+>$</strong></font>(<strong id='bold2602'
+>service</strong> () (current-date)),
+<em id='it2603'
+> 8: </em>                            hop_replace_inner( <font color="#00cf00"><strong id='bold2604'
+>$clock</strong></font> ) ) <font color="red"><strong id='bold2606'
+>}</strong></font>
+<em id='it2608'
+> 9: </em>            clock))))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 13:</strong> HOP timer loops.</small></center><br><p id='paragraph1593'
+>Hop also provides an event mechanism which prevents client
+to busy wait. These events are first declared on the server, that is
+in the main stratum of a Hop program. In the GUI stratum, clients
+register to these events by the means of the dedicated markup <font color="blue"><tt id='tt1589'
+>&lt;HOP-EVENT&gt;</tt></font>.  When a server emits an event, registered clients are
+notified. The implementation of <font color="blue"><tt id='tt1591'
+>&lt;HOP-EVENT&gt;</tt></font> liberates clients
+from checking periodically event notifications. This is, to our
+knowledge, another technical innovations brough by Hop.</p><p id='paragraph1596'
+>Events are instances of the <font color="blue"><tt id='tt1594'
+>hop-event</tt></font> class. The function 
+of the main stratum that signals an event has the following prototype:</p><DIV class='prog-border'><pre class="server" id='prog1598'
+>   signal-hop-event!: <SPAN class='type'><tt id='tt1597'
+>event &#215; &lt;value&gt; &#8594; unit</tt></SPAN>
+</pre>
+</DIV><p id='paragraph1601'
+>The markup <font color="blue"><tt id='tt1599'
+>&lt;HOP-EVENT&gt;</tt></font> has the following shape:</p><DIV class='prog-border'><pre class="html" id='prog1604'
+>(&lt;HOP-EVENT&gt;
+   :event <em id='it1602'
+>a-hop-event</em>
+   :handler <font color="red"><strong id='bold2609'
+>{</strong></font> <em id='it1603'
+>a-client-code</em> <font color="red"><strong id='bold2611'
+>}</strong></font>)
+</pre>
+</DIV><p id='paragraph1605'
+>For the sake of the example, let us study a variation over the
+example of Figure <a href="article.html#HOP-timer-loops." class="inbound">13</a>. In this second
+version, the server initiates the communication with the client. That
+is, the client does not explicitly polls the server. It displays the
+server time when the server signals the event.</p><br class="figure" id='HOP timer loops without client busy wait.'
+><a name="HOP-timer-loops-without-client-busy-wait."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1619'
+><em id='it2613'
+> 1: </em><a name="1" class="mark"></a>(<font color="#6959cf"><strong id='bold2614'
+>define</strong></font> evt (<strong id='bold2616'
+>instantiate</strong><font color="#00cf00"><strong id='bold2617'
+>::hop-event</strong></font> (name <font color="red">&quot;server time event&quot;</font><font color="#6959cf"><strong id='bold2620'
+>)</strong></font>)) 
+<em id='it2622'
+> 2: </em>
+<em id='it2623'
+> 3: </em><a name="3" class="mark"></a>(<font color="#ad4386"><strong id='bold2624'
+>thread-start!</strong></font> 
+<em id='it2626'
+> 4: </em> (<font color="#ad4386"><strong id='bold2627'
+>make-thread</strong></font>
+<em id='it2629'
+> 5: </em>  (<strong id='bold2630'
+>lambda</strong> ()
+<em id='it2631'
+> 6: </em>     (<strong id='bold2632'
+>let</strong> loop ()
+<em id='it2633'
+> 7: </em>        (sleep! 5000)
+<em id='it2634'
+> 8: </em>        (signal-hop-event! evt (current-time))
+<em id='it2635'
+> 9: </em>        (loop)))))
+<em id='it2636'
+>10: </em>
+<em id='it2637'
+>11: </em>(<font color="#1919af"><strong id='bold2638'
+>&lt;HTML&gt;</strong></font>
+<em id='it2640'
+>12: </em>   (<font color="#1919af"><strong id='bold2641'
+>&lt;HEAD&gt;</strong></font> (<font color="#1919af"><strong id='bold2643'
+>&lt;HOP-HEAD&gt;</strong></font>))
+<em id='it2645'
+>13: </em>   (<font color="#1919af"><strong id='bold2646'
+>&lt;BODY&gt;</strong></font>
+<em id='it2648'
+>14: </em>      (<strong id='bold2649'
+>let</strong> ((clock (<font color="#1919af"><strong id='bold2650'
+>&lt;DIV&gt;</strong></font> <font color="red">&quot;&quot;</font>)))
+<em id='it2653'
+>15: </em>         (<font color="#1919af"><strong id='bold2654'
+>&lt;HOP-EVENT&gt;</strong></font>
+<em id='it2656'
+>16: </em>            <strong id='bold2657'
+>:event</strong> evt
+<em id='it2659'
+>17: </em><a name="17" class="mark"></a>            <strong id='bold2660'
+>:handler</strong> <font color="red"><strong id='bold2662'
+>{</strong></font> hop_replace_inner( clock )( event ) <font color="red"><strong id='bold2664'
+>}</strong></font> 
+<em id='it2666'
+>18: </em>            clock))))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 14:</strong> HOP timer loops without client busy wait.</small></center><br><p id='paragraph1633'
+>Line <em id='it1620'
+><i id='line-ref'
+><a href="article.html#3" class="inbound">3</a></i></em> a thread is spawned on
+the server. This thread pauses during 5 seconds and then signals the
+event <font color="blue"><tt id='tt1621'
+>evt</tt></font> defined line <em id='it1623'
+><i id='line-ref'
+><a href="article.html#1" class="inbound">1</a></i></em>. The event
+is intercepted on the GUI stratum line <em id='it1624'
+><i id='line-ref'
+><a href="article.html#17" class="inbound">17</a></i></em>. In the <font color="blue"><tt id='tt1625'
+>:handler</tt></font> block, following the JavaScript tradition of event
+handling, the variable <font color="blue"><tt id='tt1627'
+>event</tt></font> is automatically bound to the
+event that has been intercepted. The content of the <font color="blue"><tt id='tt1629'
+>clock</tt></font> 
+<font color="blue"><tt id='tt1631'
+>&lt;DIV&gt;</tt></font> is replaced with the value carried by the event.</p><p id='paragraph1638'
+>One may object that we have not eliminated the busy wait but
+moved it to the server. While, undubitably true, this is not a
+weakness of Hop. The point of this example is to show that
+<em id='emph1634'
+>clients</em> may avoid busy waiting server events using the
+<font color="blue"><tt id='tt1635'
+>&lt;HOP-EVENT&gt;</tt></font> markups. It is up to the server to implement the
+appropriate signaling mechanism. The point of this section is only
+to show that the Hop notification implements a server <em id='emph1637'
+>push</em>
+method.</p></div>
+</div><br>
+</div>
+<div class="section" id="Example"><!-- Example -->
+<a name="Example"></a>
+<div class="section-atitle"><h3><font color="black">5 Example</font>
+</h3></div><div class="section">
+<p id='paragraph1639'
+>In this section, we show a small Hop application. We present
+an overly simplified IMAP client that uses a web interface. As shown
+in the screenshot of Figure <a href="article.html#Webmail-a-screenshot-of-the-simple-HOP-webmail-in-Firefox." class="inbound">15</a>, it
+presents a table with two columns. The left column displays the list of
+folders found on the IMAP servers. The upper right column shows the
+list of messages of the selected folder. The lower right column shows
+the body of the selected message. The application is interactive. Folders and
+messages are accessed on-demand using mouse clicks.</p><br class="figure" id='Webmail, a screenshot of the simple HOP webmail in Firefox.'
+><a name="Webmail-a-screenshot-of-the-simple-HOP-webmail-in-Firefox."></a>
+<center id='center1641'
+><img src="webmail-short.png" border="0" alt="" width="80%"></center>
+<br>
+<center><small><strong>Fig. 15:</strong> Webmail, a screenshot of the simple HOP webmail in Firefox.</small></center><br><p id='paragraph1644'
+>Hop provides a library for accessing IMAP servers.  All the
+function that belong to this API are prefixed with <font color="blue"><tt id='tt1642'
+>imap-</tt></font>. This API being self explanatory it is not discussed here. In
+order to make the application as compact as possible, we don't provide
+the IMAP client with a GUI for connecting to the IMAP server. Instead,
+the connection to the IMAP server is held in a global variable:</p><DIV class='prog-border'><pre class="hop" id='prog1649'
+>(<font color="#6959cf"><strong id='bold2667'
+>define</strong></font> login
+   (imap-login
+      (make-client-socket <font color="red">&quot;imap-acm.org&quot;</font> 993<font color="#6959cf"><strong id='bold2670'
+>)</strong></font>
+      <font color="red">&quot;foo&quot;</font> <font color="red">&quot;XXX&quot;</font>))
+</pre>
+</DIV><p id='paragraph1654'
+>Then, comes the heart of the application. It uses two Hop widgets,
+<font color="blue"><tt id='tt1650'
+>&lt;TREE&gt;</tt></font> and <font color="blue"><tt id='tt1652'
+>&lt;PANED&gt;</tt></font> which are popular widgets in traditional
+GUI programming and which are supported by Hop. This is presented
+Figure <a href="article.html#Webmail-main-program." class="inbound">16</a>.</p><br class="figure" id='Webmail, main program.'
+><a name="Webmail-main-program."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1681'
+>(<strong id='bold2674'
+>let</strong> ((folder (<font color="#1919af"><strong id='bold2675'
+>&lt;DIV&gt;</strong></font>))
+      (message (<font color="#1919af"><strong id='bold2677'
+>&lt;DIV&gt;</strong></font>)))
+   (<font color="#6959cf"><strong id='bold2679'
+>define</strong></font> message-show ...<font color="#6959cf"><strong id='bold2681'
+>)</strong></font>
+   (<font color="#6959cf"><strong id='bold2683'
+>define</strong></font> folder-summary ...<font color="#6959cf"><strong id='bold2685'
+>)</strong></font>
+   (<font color="#6959cf"><strong id='bold2687'
+>define</strong></font> (<font color="#1919af"><strong id='bold2689'
+>&lt;IMAP-TREE&gt;</strong></font> login<font color="#6959cf"><strong id='bold2691'
+>)</strong></font> ...)
+   (<font color="#1919af"><strong id='bold2693'
+>&lt;HTML&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold2695'
+>&lt;HEAD&gt;</strong></font>
+         (<font color="#1919af"><strong id='bold2697'
+>&lt;HOP-HEAD&gt;</strong></font>
+            <strong id='bold2699'
+>:css</strong> <font color="red">&quot;hop-paned.css&quot;</font> <strong id='bold2702'
+>:css</strong> <font color="red">&quot;hop-tree.css&quot;</font> <strong id='bold2705'
+>:css</strong> <font color="red">&quot;hop-mail.css&quot;</font>
+            <strong id='bold2708'
+>:jscript</strong> <font color="red">&quot;hop-paned.js&quot;</font> <strong id='bold2711'
+>:jscript</strong> <font color="red">&quot;hop-tree.js&quot;</font>))
+      (<font color="#1919af"><strong id='bold2714'
+>&lt;BODY&gt;</strong></font>
+         (<font color="#1919af"><strong id='bold2716'
+>&lt;PANED&gt;</strong></font>
+            <strong id='bold2718'
+>:fraction</strong> 30
+            (<font color="#1919af"><strong id='bold2720'
+>&lt;PAN&gt;</strong></font>
+               (<font color="#1919af"><strong id='bold2722'
+>&lt;IMAP-TREE&gt;</strong></font> login))
+            (<font color="#1919af"><strong id='bold2724'
+>&lt;PAN&gt;</strong></font>
+               (<font color="#1919af"><strong id='bold2726'
+>&lt;TABLE&gt;</strong></font>
+                  <strong id='bold2728'
+>:width</strong> <font color="red">&quot;100%&quot;</font> <strong id='bold2731'
+>:border</strong> <font color="red">&quot;2px&quot;</font>
+                  (<font color="#1919af"><strong id='bold2734'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2736'
+>&lt;TD&gt;</strong></font> <strong id='bold2738'
+>:class</strong> <font color="red">&quot;folder&quot;</font> <strong id='bold2741'
+>:valign</strong> 'top folder))
+                  (<font color="#1919af"><strong id='bold2743'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2745'
+>&lt;TD&gt;</strong></font> <strong id='bold2747'
+>:class</strong> <font color="red">&quot;message&quot;</font> <strong id='bold2750'
+>:valign</strong> 'top message))))))))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 16:</strong> Webmail, main program.</small></center><br><p id='paragraph1688'
+>The two <font color="blue"><tt id='tt1682'
+>&lt;DIV&gt;</tt></font>s, <font color="blue"><tt id='tt1684'
+>folder</tt></font> and <font color="blue"><tt id='tt1686'
+>message</tt></font> respectively contain the list of folders and the body
+of the selected message. The left column of the application is a tree
+whose label is the name of the IMAP server and whose leaves are
+labeled with the names of the folders.</p><DIV class='prog-border'><pre class="hop" id='prog1694'
+>(<font color="#6959cf"><strong id='bold2752'
+>define</strong></font> (<font color="#1919af"><strong id='bold2754'
+>&lt;IMAP-TREE&gt;</strong></font> login<font color="#6959cf"><strong id='bold2756'
+>)</strong></font>
+   (<font color="#1919af"><strong id='bold2758'
+>&lt;TREE&gt;</strong></font>
+    (<font color="#1919af"><strong id='bold2760'
+>&lt;TRHEAD&gt;</strong></font>
+      (socket-hostname login))
+    (<font color="#1919af"><strong id='bold2762'
+>&lt;TRBODY&gt;</strong></font>
+      (map (<strong id='bold2764'
+>lambda</strong> (f)
+              (<font color="#1919af"><strong id='bold2765'
+>&lt;TRLEAF&gt;</strong></font>
+               (<font color="#1919af"><strong id='bold2767'
+>&lt;TT&gt;</strong></font>
+                 <strong id='bold2769'
+>:class</strong> <font color="red">&quot;summary&quot;</font>
+                 <strong id='bold2772'
+>:onclick</strong> <font color="red"><strong id='bold2774'
+>{</strong></font>
+                    hop(<font color="#00cf00"><strong id='bold2776'
+>$folder-summary</strong></font>(<font color="#00cf00"><strong id='bold2778'
+>$f</strong></font>),
+                        hop_replace_inner(<font color="#00cf00"><strong id='bold2780'
+>$folder</strong></font>))
+                 <font color="red"><strong id='bold2782'
+>}</strong></font> f)))
+           (imap-folders login)))))
+</pre>
+</DIV><p id='paragraph1701'
+>When a leaf of this tree is clicked-in, the service of the main
+stratum <font color="blue"><tt id='tt1695'
+>folder-summary</tt></font> is invoked with the name of the folder.
+The result of this function call fills the <font color="blue"><tt id='tt1697'
+>folder</tt></font> <font color="blue"><tt id='tt1699'
+>&lt;DIV&gt;</tt></font>.
+This is presented in Figure <a href="article.html#Webmail-showing-the-messages-of-a-folder." class="inbound">17</a>.</p><br class="figure" id='Webmail, showing the messages of a folder.'
+><a name="Webmail-showing-the-messages-of-a-folder."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1708'
+>(<font color="#6959cf"><strong id='bold2784'
+>define</strong></font> folder-summary
+   (<strong id='bold2786'
+>service</strong> (folder<font color="#6959cf"><strong id='bold2787'
+>)</strong></font>
+      (imap-folder-select login folder)
+      (<font color="#1919af"><strong id='bold2789'
+>&lt;TABLE&gt;</strong></font>
+        <strong id='bold2791'
+>:class</strong> <font color="red">&quot;summary&quot;</font>
+        (map (<strong id='bold2794'
+>lambda</strong> (mh)
+                (<font color="#1919af"><strong id='bold2795'
+>&lt;TR&gt;</strong></font>
+                  <strong id='bold2797'
+>:onclick</strong> <font color="red"><strong id='bold2799'
+>{</strong></font>
+                     hop(<font color="#00cf00"><strong id='bold2801'
+>$message-show</strong></font>(<font color="#00cf00"><strong id='bold2803'
+>$folder,</strong></font> <font color="#00cf00"><strong id='bold2805'
+>$</strong></font>(car mh)),
+                         hop_replace_inner(<font color="#00cf00"><strong id='bold2807'
+>$message</strong></font>))
+                  <font color="red"><strong id='bold2809'
+>}</strong></font>
+                  (<font color="#1919af"><strong id='bold2811'
+>&lt;TD&gt;</strong></font> (imap-header-get mh 'subject))
+                  (<font color="#1919af"><strong id='bold2813'
+>&lt;TD&gt;</strong></font> (imap-header-get mh 'from))
+                  (<font color="#1919af"><strong id='bold2815'
+>&lt;TD&gt;</strong></font> (imap-header-get mh 'date))))
+              (imap-folder-headers login)))))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 17:</strong> Webmail, showing the messages of a folder.</small></center><br><p id='paragraph1715'
+>The service <font color="blue"><tt id='tt1709'
+>folder-summary</tt></font> builds a table with three columns
+containing respectively the subject, the author, and the emission date
+of the message. When such a message is clicked, the service
+<font color="blue"><tt id='tt1711'
+>message-show</tt></font> is called with two parameters, the folder name and
+the message identifier. The result is used to fills the <font color="blue"><tt id='tt1713'
+>message</tt></font>
+box.</p><DIV class='prog-border'><pre class="hop" id='prog1718'
+><em id='it2817'
+>3: </em>(<font color="#6959cf"><strong id='bold2818'
+>define</strong></font> message-show
+<em id='it2820'
+>4: </em>   (<strong id='bold2821'
+>service</strong> (folder msg<font color="#6959cf"><strong id='bold2822'
+>)</strong></font>
+<em id='it2824'
+>5: </em>      (imap-folder-select login folder)
+<em id='it2825'
+>6: </em>      (<font color="#1919af"><strong id='bold2826'
+>&lt;PRE&gt;</strong></font> (imap-message-body login msg))))
+</pre>
+</DIV></div><br>
+</div>
+<div class="section" id="Implementation"><!-- Implementation -->
+<a name="Implementation"></a>
+<div class="section-atitle"><h3><font color="black">6 Implementation</font>
+</h3></div><div class="section">
+<p id='paragraph1719'
+>This section sketches the implementation of services and
+events. Readers not interested in such technical details may freely
+skip this section.</p><!-- Implementation of Services -->
+<a name="Implementation-of-Services"></a>
+<div class="subsection-atitle"><h3>6.1 Implementation of Services</h3></div><div class="subsection">
+<p id='paragraph1721'
+>Hop is currently implemented as a web server. It accepts
+HTTP requests and it selects, according to the URL, the appropriate
+treatment to execute. Services are implemented as couples containing
+one function and one URL. That is, each time a service (anonymous or
+not) is declared, a new unique URL is generated, a new function is
+created and the couple <em id='emph1720'
+>{URL, function}</em> is stored inside a
+table on the server.  When a request is intercepted, this table is
+scanned for selecting the appropriate service to execute. When a
+service is used in the GUI stratum, it is compiled to JavaScript. Let
+us assume the following Hop expression:</p><DIV class='prog-border'><pre class="hop" id='prog1725'
+>(<font color="#1919af"><strong id='bold2828'
+>&lt;BUTTON&gt;</strong></font>
+    <strong id='bold2830'
+>:onclick</strong> <font color="red"><strong id='bold2832'
+>{</strong></font> hop( <font color="#00cf00"><strong id='bold2834'
+>$</strong></font>(<strong id='bold2836'
+>service</strong> (x y) (+ x y))(1, 2)) 
+    <font color="red"><strong id='bold2837'
+>}</strong></font> <font color="red">&quot;Click this link&quot;</font>)
+</pre>
+</DIV><p id='paragraph1726'
+>The elaboration yields the following HTML document:</p><DIV class='prog-border'><pre class="html" id='prog1727'
+><font color="#1919af"><strong id='bold2840'
+>&lt;BUTTON</strong></font> onclick='hop(
+  function() {
+    return hop_service_url(<font color="red">&quot;/hop/???/4-57604278&quot;</font>,
+                           [<font color="red">&quot;x&quot;</font>, <font color="red">&quot;y&quot;</font>],
+                           arguments )
+  }(1, 2) )'<font color="#1919af"><strong id='bold2845'
+>&gt;</strong></font>
+  <font color="red">&quot;Click this link&quot;</font>
+<font color="#1919af"><strong id='bold2848'
+>&lt;/BUTTON</strong></font><font color="#1919af"><strong id='bold2850'
+>&gt;</strong></font>
+</pre>
+</DIV><p id='paragraph1730'
+>The dynamically created URL <font color="blue"><tt id='tt1728'
+>/hop/???/4-57604278</tt></font> is
+the unique identifier associated with the service. The current
+implementation of Hop is not able to reclaim these URLs. That is,
+it keeps alive for ever all the services and their URL. It never collects URLs
+because we don't think that it exists a universal criteria allowing
+URL reclaim. Obviously, we could adopt a solution based on time
+stamping. For instance, we could arbitrarily decide to collect URL
+after two or three hours. We are reluctant to adopt such a solution
+but we are aware that this weakness has to be overcame in the next
+versions of Hop. We are investigating a solution where the server
+functions representing the services are encoded in the URL. More
+precisely according to this solution it would be no longer necessary
+to store the whole function on the server. Instead, only the
+continuation would be encoded and sent to the client (i.e., the state
+of the execution stack when the service was created). If this approach
+succeeds, it will remove the need for the table which binds URLs to
+functions.</p><p id='paragraph1739'
+>The JavaScript functions <font color="blue"><tt id='tt1731'
+>hop</tt></font> and <font color="blue"><tt id='tt1733'
+>hop_service_url</tt></font> are
+defined in the standard Hop GUI stratum library. They are shipped with 
+every generated page. As presented in Section <a href="article.html#HOP-service-calls" class="inbound"><span class="refscreen">HOP service calls</span><span class="refprint">4.3.2</span></a> the function <font color="blue"><tt id='tt1735'
+>hop</tt></font> calls asynchronously 
+a service. The function <font color="blue"><tt id='tt1737'
+>hop_service_url</tt></font> maps a service to
+a URL. It can be defined as:</p><DIV class='prog-border'><pre class="hop" id='prog1743'
+>function hop_service_url( service, formals, args ) <font color="red"><strong id='bold2852'
+>{</strong></font>
+   var len = formals.length;
+
+   if( len == 0 ) <font color="red"><strong id='bold2854'
+>{</strong></font>
+      return service;
+   <font color="red"><strong id='bold2856'
+>}</strong></font> else <font color="red"><strong id='bold2858'
+>{</strong></font>
+      var url = service + <font color="red">&quot;?hop-encoding=hop&quot;</font>;
+      var i;
+
+      for( i = 0; i &lt; len; i++ ) {
+         url += <font color="red">&quot;&amp;&quot;</font> + formals[ i ] + <font color="red">&quot;=&quot;</font> + hop_serialize( args[ i ] );
+      <font color="red"><strong id='bold2863'
+>}</strong></font>
+
+      return url;
+   <font color="red"><strong id='bold2865'
+>}</strong></font>
+<font color="red"><strong id='bold2867'
+>}</strong></font>
+</pre>
+</DIV><p id='paragraph1746'
+>The function <font color="blue"><tt id='tt1744'
+>hop_serialize</tt></font> marshals JavaScript values
+in a format compatible with the main stratum of Hop.</p></div>
+<!-- Implementation of Events -->
+<a name="Implementation-of-Events"></a>
+<div class="subsection-atitle"><h3>6.2 Implementation of Events</h3></div><div class="subsection">
+<p id='paragraph1766'
+>The current implementation of the <font color="blue"><tt id='tt1747'
+>&lt;HOP-EVENT&gt;</tt></font> markup
+relies on services invocation. Waiting for an event is implemented as
+invoking a service that returns only when the event is emitted. More
+precisely, when an event <font color="blue"><tt id='tt1749'
+>e1</tt></font> is created, the server
+automatically generates a service <font color="blue"><tt id='tt1752'
+>svc<sub id='sub1751'
+>e1</sub></tt></font>. The markup
+<font color="blue"><tt id='tt1754'
+>&lt;HOP-EVENT&gt;</tt></font> is compiled, during the elaboration stage, as
+an invocation of <font color="blue"><tt id='tt1757'
+>svc<sub id='sub1756'
+>e1</sub></tt></font> (see Section <a href="article.html#HOP-service-calls" class="inbound"><span class="refscreen">HOP service calls</span><span class="refprint">4.3.2</span></a>). This call completes when the
+server emits the signal <font color="blue"><tt id='tt1759'
+>e1</tt></font>. At that time, the client
+receives the value associated with the event. It first re-invokes the
+service <font color="blue"><tt id='tt1762'
+>svc<sub id='sub1761'
+>e1</sub></tt></font> for waiting for other values and, in
+parallel, it handles the received value. Assuming the library function
+<font color="blue"><tt id='tt1764'
+>hop_event</tt></font> whose definition looks like:</p><DIV class='prog-border'><pre class="html" id='prog1768'
+>function hop_event( event, event_handler ) <font color="red"><strong id='bold2869'
+>{</strong></font>
+  var http = new XMLHttpRequest();
+  var url = <font color="red">&quot;hop_event_wait?event=&quot;</font> + event;
+
+  http.open( <font color="red">&quot;GET&quot;</font>, url, true );
+  http.onreadystatechange = function() <font color="red"><strong id='bold2873'
+>{</strong></font>
+    <strong id='bold2875'
+>if</strong>( http.readyState == 4 &amp;&amp; http.status == 200 ) <font color="red"><strong id='bold2876'
+>{</strong></font>
+       <font color="darkmagenta"><em id='it2878'
+>// invokes the user handler</em></font>
+       event_handler( http );
+       <font color="darkmagenta"><em id='it2880'
+>// recursively call the function in </em></font>
+       <font color="darkmagenta"><em id='it2882'
+>// order to wait new results</em></font>
+       hop_event( event, event_handler );
+    <font color="red"><strong id='bold2884'
+>}</strong></font>
+  <font color="red"><strong id='bold2886'
+>}</strong></font>
+  http.send( null );
+<font color="red"><strong id='bold2888'
+>}</strong></font>
+</pre>
+</DIV><p id='paragraph1771'
+>The expression <font color="blue"><tt id='tt1769'
+>(&lt;HOP-EVENT&gt; evt handler)</tt></font> is then compiled 
+to:</p><DIV class='prog-border'><pre class="html" id='prog1772'
+>hop_event( evt, handler );
+</pre>
+</DIV><p id='paragraph1775'
+>This implementation prevents the client from busy waiting events
+for the server because invoking a service using an <font color="blue"><tt id='tt1773'
+>XMLHttpRequest</tt></font> is an asynchronous operation that does not involve
+polling. Surprisingly, this simple technics appeared robust and it
+allows to implement passive wait on the client quite easily. It has been 
+suggested by Marc Feeley who deserves most of its credit.</p></div>
+</div><br>
+</div>
+<div class="section" id="Discussion-and-Related-work"><!-- Discussion and Related work -->
+<a name="Discussion-and-Related-work"></a>
+<div class="section-atitle"><h3><font color="black">7 Discussion and Related work</font>
+</h3></div><div class="section">
+<p id='paragraph1776'
+>In this section we discuss the design orientation of Hop and we
+present some related and future work.</p><!-- Design consideration -->
+<a name="Design-consideration"></a>
+<div class="subsection-atitle"><h3>7.1 Design consideration</h3></div><div class="subsection">
+<p id='paragraph1777'
+>The design choice of two strata is probably controversial. At
+first glance, it may look like a bad idea.  On the one hand, it
+requires new comers to tame two syntaxes and it requires programming
+environments that handle a dual syntax. On the other hand, the two
+strata intrinsically exist and Hop programming rests on them.  By
+design, expressions which are intended for servers are evaluated in an
+environment that differs from expressions intended for clients. For
+instance, an expression of the server may access a file while an
+expression of the client may access the width in pixels of a graphical
+display. The opposite is meaningless: the server has no notion of
+interface and, for security reasons, the client has no notion of
+files. Hence, we think that using a single syntax for programming the
+two strata could be prone to error because it would be harder for the
+programmer to grasp, in a glimpse, where an expression is supposed to
+execute.</p><p id='paragraph1778'
+>There is a dissymmetry between the server code and client
+code. In general, the main components of a Hop program concern the
+server while the client code is small and scattered all along the
+program. Most client codes consist in a simple expression such as a
+simple function call. We think that the dual syntax has the advantage
+of emphasizing the separation between the server code and client code.</p><p id='paragraph1779'
+>Another argument in favor of the dual language approach is
+the closeness of Scheme and JavaScript. Both languages support dynamic
+type checking, higher order functions, variable arity functions, automatic
+memory reclaim, full polymorphism. So, there is no intellectual gap between
+the two languages and switching from one to another is easy.</p><p id='paragraph1780'
+>Lastly, JavaScript is a popular language. Many programmers are
+used to it. The main strata of Hop is close to HTML. So, the
+learning curve of Hop should be considered as low for programmers
+familiar with web authoring.</p><p id='paragraph1783'
+>For the reasons presented above, we have decided to give the
+dual syntax a chance. However, we don't have a dogmatic position on
+this subject. In parallel to the dual syntax endeavor, we are
+conducting experiments with a variant of Hop that exposes a unique
+Lisp-like syntax.  We are developing a compiler from Scheme to
+JavaScript which enables running Scheme code on the clients. Its
+description is out of the scope of this present paper. Provided
+with this compiler, the client stratum is denoted by the <font color="blue"><tt id='tt1781'
+>~(</tt></font>
+escape sequence. Escaped GUI expressions are translated on-the-fly
+into JavaScript expressions. Using this version of Hop the example of 
+Section <a href="article.html#Objectives" class="inbound"><span class="refscreen">Objectives</span><span class="refprint">2.4</span></a> is written:</p><DIV class='prog-border'><pre class="hop" id='prog1795'
+>(<strong id='bold2890'
+>let</strong> ((def (<font color="#1919af"><strong id='bold2891'
+>&lt;DIV&gt;</strong></font> <font color="red">&quot;&quot;</font>))
+      (svc (<strong id='bold2894'
+>service</strong> (w)
+              (<font color="#1919af"><strong id='bold2895'
+>&lt;P&gt;</strong></font> (sql-exec db <font color="red">&quot;SELECT * FROM dict WHERE (def=~a)&quot;</font> w)))))
+  (<font color="#1919af"><strong id='bold2898'
+>&lt;HTML&gt;</strong></font>
+    (<font color="#1919af"><strong id='bold2900'
+>&lt;BODY&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold2902'
+>&lt;TABLE&gt;</strong></font>
+        (<font color="#1919af"><strong id='bold2904'
+>&lt;TR&gt;</strong></font>
+          (<font color="#1919af"><strong id='bold2906'
+>&lt;TD&gt;</strong></font> <font color="red">&quot;search&quot;</font>)
+          (<font color="#1919af"><strong id='bold2909'
+>&lt;TD&gt;</strong></font> (<font color="#1919af"><strong id='bold2911'
+>&lt;INPUT&gt;</strong></font>
+                   <strong id='bold2913'
+>:type</strong> <font color="red">&quot;text&quot;</font>
+                   <strong id='bold2916'
+>:onkeyup</strong> <font color="red"><strong id='bold2918'
+>~</strong></font>(with-hop (<font color="#00cf00"><strong id='bold2920'
+>$svc</strong></font> this.value)
+                                (<strong id='bold2922'
+>lambda</strong> (html)
+                                   (<strong id='bold2923'
+>set!</strong> <font color="#00cf00"><strong id='bold2924'
+>$def.innerHTML</strong></font> html))))))
+        (<font color="#1919af"><strong id='bold2926'
+>&lt;TR&gt;</strong></font>
+           (<font color="#1919af"><strong id='bold2928'
+>&lt;TD&gt;</strong></font> <strong id='bold2930'
+>:colspan</strong> 2 def))))))
+                  
+</pre>
+</DIV><p id='paragraph1796'
+>This unified syntax is appealing because it smoothly blends the
+two strata. However, it does not eliminate the need for a stratified
+model. Hence, at least for this present paper, we have considered that
+using the dual-syntax better illustrates the originality of the Hop 
+programming model.</p><p id='paragraph1797'
+>Independently of the syntax, one could argue against the
+stratified approach. That is, one could argue against a model that
+separates the computations needed for the logic of an application from
+the computations needed for its graphical animations. As a matter of
+taste, we think that the model fostered by the web and followed by
+Hop outcomes the traditional application model. We think that this
+split model ensures longer lifetimes for applications because it
+allows to benefit from the progresses and innovations of the client
+platforms more easily than a monolithic model. For these reasons, we
+think that the architecture promoted by Hop deserves, at least, an
+endeavor.</p></div>
+<!-- Related work -->
+<a name="Related-work"></a>
+<div class="subsection-atitle"><h3>7.2 Related work</h3></div><div class="subsection">
+<p id='paragraph1804'
+>Hop is a linguistic approach to web programming. It
+emphasizes compactness of programs and interactivity of
+applications. It proposes a lightweight approach based on functional
+programming. By contrast to previous studies, it does not enforce an
+interaction model based on forms submissions [<a href="article.html#gfkf:esop2003" class="inbound">6</a>,<a href="article.html#gfkf:ase04" class="inbound">5</a>]. It follows an opposite direction to
+previous studies that aimed at easing CGI programming in traditional
+programming languages. The Meijer's CGI library [<a href="article.html#meijer:jfp00" class="inbound">10</a>] is a functional representative of this kind. Hop also
+distinguishes from early works such as the <tt id='tt1798'
+>&lt;bigwig&gt;</tt> project
+[<a href="article.html#ss:popl00" class="inbound">12</a>,<a href="article.html#bmss:jcn99" class="inbound">1</a>] that are aimed for larger web
+applications where <em id='emph1799'
+>sessions</em>, <em id='emph1800'
+>database integration</em>,
+<em id='emph1801'
+>security</em>, <em id='emph1802'
+>static checking of dynamic web pages</em>,
+and <em id='emph1803'
+>concurrency</em> are important issues. Hop proposes a
+solution for authoring web pages, programming the interactions between
+the servers and the clients, and programming the reactions of the user
+interfaces. In that sense, it is unrelated to languages such as
+Mozilla's XUL or Microsoft XAML that focus on the programming of the
+clients. XUL is the programming language of the Mozilla which is, in
+addition to being a web browser, an whole execution
+environment. Hop is independent of any browser. It can be used for
+implementing applications that need server- and client-
+programming. It can also be used for implementing applications that
+execute totally on a server. For instance, it can be used for
+implementing servers delivering music or for implementing tunneling via
+HTTP. This kind of applications is out of scope of languages such as XUL.</p><p id='paragraph1807'
+>As far as we know, the closest work to Hop is due to Philip
+Wadler and his colleagues. The Links<a href="#footnote-footnote1806"><sup><small>1</small></sup></a>  programming
+language shares the goal of Hop. As Hop, Links is a functional
+language that manages transparent function calls across the web. In
+contrast to Hop, it relies on a single syntax approach. That is,
+the GUI stratum of Links programs is compiled to JavaScript before
+being executed on the client. Links seems less advanced than Hop because,
+as far as we can tell, it does not support construction similar to
+service calls and it does not support event loops.</p><!-- Database orientation -->
+<a name="Database-orientation"></a>
+<div class="subsubsection-atitle"><h4>7.2.1 Database orientation</h4></div><div class="subsubsection">
+<p id='paragraph1808'
+>Until recently, most of the web applications have adopted
+the same architecture. On the one hand, a server hosts a database and
+scripts that access it. On the other hand, a client, i.e., a browser,
+implements the user interface to this server. This architecture is so
+widely spread than many solutions have been conceived for easing the
+development and maintenance of such applications. In the first place,
+libraries have been developed. Windows ASP and Java JSP are two
+representatives of such libraries. Because a language tuned for a
+particular kind of applications might ease the development, languages
+such as PHP have appeared. A PHP program is composed of static HTML
+parts and PHP expressions that dynamically generate, on the server,
+new HTML nodes. Databases are tightly integrated in the language and
+in consequence, one might very concisely produce HTML documents from
+database queries.</p><p id='paragraph1814'
+>Since the rise of Ajax applications, new solutions try
+to combine the compactness of PHP for programming databases accesses
+and the programming of reactive graphical interfaces. The largely
+advertised <em id='it1809'
+>Ruby On Rails</em> is one of these solutions: it defines
+itself as "a full-stack framework for developing <em id='emph1810'
+>database-backed web applications</em> according to the
+Model-View-Control pattern". In a Rails application, the user
+interacts with an Ajax <em id='emph1811'
+>view</em> of the database.  Requests to
+this database are handled by a <em id='emph1812'
+>controller</em> which is built on
+a <em id='emph1813'
+>model</em> which dynamically maps the tables of the database to
+Ruby classes. This framework favors convention over configuration and
+by this way tries to eliminate as much as possible the need for
+hand-written code. Most of the code of a Rail application is
+automatically generated from templates and database
+introspection. Ruby on Rails goes beyond the objectives of a
+programming language and is particulary efficient for the kind of
+applications it is envisioned for.</p><p id='paragraph1815'
+>Hop and Rails automatically generate URLs for server
+services.  In Hop they are mapped to services (see Section <a href="article.html#HOP-services" class="inbound"><span class="refscreen">HOP services</span><span class="refprint">4.3</span></a>).  In Rails they are mapped to Ruby
+methods. Contrarily to Hop, Rails does not support direct
+parameters passing. Hop mainly eases the development of the
+communication components of reactive web applications.  This facet is
+not addressed by the previously mentioned system.</p></div>
+<!-- Functional programming -->
+<a name="Functional-programming"></a>
+<div class="subsubsection-atitle"><h4>7.2.2 Functional programming</h4></div><div class="subsubsection">
+<p id='paragraph1817'
+>As Hop, WASH/CGI is a linguistic approach to programming the
+web.  It concentrates on CGI programming so it addresses problems
+specific to this model such as persistency. Namely, WASH/CGI manages
+sessions. This problem is eliminated by the design of Hop which
+assumes an evaluator that is hosted by a full-fledged web server.
+Contrarily to CGI, the execution of a Hop application is not split
+into several execution chunks. WASH/CGI focuses on interactions based
+on HTML forms. In particular, inspired by Hanus' Curry [<a href="article.html#hanus:padl01" class="inbound">7</a>], it automatically handles the <tt id='tt1816'
+>action</tt>
+attributes of this HTML markup. That is, WASH/CGI replaces the URL
+of the HTML forms with an Haskell function. WASH/CGI transparently
+associates a private URL and it automatically feeds the function
+with the actual values found in the form.  Hop's services can be
+viewed as a generalization of this approach because they can be used
+in forms but also everywhere a reference to a server is used, in any
+JavaScript code, and in any event loop. Contrarily to Hop, WASH/CGI
+does not support remote service call nor it supports event
+loop and passive event waiting.</p></div>
+<!-- Sessions and Continuations -->
+<a name="Sessions-and-Continuations"></a>
+<div class="subsubsection-atitle"><h4>7.2.3 Sessions and Continuations</h4></div><div class="subsubsection">
+<p id='paragraph1825'
+>We have learned in the late nineteens from C. Queinnec, that
+most web applications have to deal with continuations. In his early
+publication [<a href="article.html#queinnec:icfp00" class="inbound">11</a>] he has shown that a browser
+is a device that can call continuations multiply and
+simultaneously. Hence, he has concluded that an operator for capturing
+and restoring continuations is a natural tool of choice for
+implementing web pages. This point has been deeply developed and throughly
+studied by the PLT Scheme team in various publications
+[<a href="article.html#gfkf:esop2003" class="inbound">6</a>].
+
+Scheme is one of the seldom languages to support continuations. The
+<tt id='tt1818'
+>call/cc</tt> (whose actual name is <em id='emph1819'
+>call-with-current-continuation</em>) facility reifies a continuation
+into a function that can be called as any other function. Being a
+superset of Scheme [<a href="article.html#scheme:r5rs" class="inbound">8</a>] Hop supports <tt id='tt1820'
+>call/cc</tt> so it naturally supports the programming model advocated by
+C. Queinnec.
+
+However, direct support for continuations as offered by <tt id='tt1821'
+>call/cc</tt> is arguably too low level.  Explicit manipulation of
+continuations can make programs very hard to understand, even for
+experts.  So, we think that more restricted constructions that better
+fit the needs of the web programming should be studied in the spirit
+of the <tt id='tt1822'
+>send/suspend</tt> and <tt id='tt1823'
+>send/finish</tt> functions of the
+<span class="sf">CONTINUE</span> server [<a href="article.html#krishnamurthi:padl03" class="inbound">9</a>].</p><p id='paragraph1827'
+>Code mobility is a field that we are investigating. We are
+envisioning mobile code from server to client and vice versa. We are
+also considering mobility intra servers. In this approach, we could
+imagine spawning roaming agents processing remote data and carrying
+minimal sets of information. We could also imagine implementing load
+balancing of servers with mobility. Precisely, we are planning to
+adapt the technics developed by S. Epardaud [<a href="article.html#epardaud:sfp04" class="inbound">2</a>] and Germain <em id='emph1826'
+>et al.</em> [<a href="article.html#gmf:lispecoop05" class="inbound">4</a>] to Hop. In this context, the technical solutions
+delivered by the ACUTE experiment [<a href="article.html#sewell:icfp05" class="inbound">13</a>] are
+likely to be useful.</p></div>
+</div>
+</div><br>
+</div>
+<div class="section" id="Conclusion"><!-- Conclusion -->
+<a name="Conclusion"></a>
+<div class="section-atitle"><h3><font color="black">8 Conclusion</font>
+</h3></div><div class="section">
+<p id='paragraph1829'
+>Hop is a new computer language designed for programming web
+applications.  It relies on two strata. The first one is used for
+programming the <em id='emph1828'
+>server</em> side and for constructing graphical
+user interfaces. The second one is used for programming the animations
+of these interfaces and the interactions with users. The paper
+discusses this design choice that uses two different syntaxes inside a
+single program. It presents several examples of Hop programs. In
+particular, it shows the programming of an simplified IMAP
+client. This fifty lines long program displays interactively the
+messages stored on an IMAP server.</p><p id='paragraph1832'
+>Hop abstracts many operations required by the web. So, for
+users not reluctant to functional programming, it makes the
+programming of these applications easier than most of the other
+languages we are aware of.  Its main strengths are its ability to
+package a whole web application in a single bundle (e.g., a single
+file), its support for functions whose calls traverse the web, and its
+event notification mechanism. To our knowledge, Hop is one the very
+first languages to propose a <em id='emph1830'
+>global</em> solution to the web
+programming.  Hop is one of the first language to support server
+<em id='emph1831'
+>and</em> client programming, to manage communications initiated
+from both sides, and to support HTML authoring.</p></div><br>
+</div>
+
+
+<div class="section" id="References"><!-- References -->
+<a name="References"></a>
+<div class="section-atitle"><h3><font color="black">9 References</font>
+</h3></div><div class="section">
+<font size="-1"><table><tbody>
+<tr><td id="bmss:jcn99" align="right" valign="top"><a name="bmss:jcn99">[1]</a></td><td id="bmss:jcn99" align="left" valign="top">Braband, C. and Møller, Sandholm, A. and Schwartzbach M.I. -- <strong id='bold2932'
+>A runtime system for interactive Web services</strong> -- Journal of Computer Networks, 1999.</td></tr>
+<tr><td id="epardaud:sfp04" align="right" valign="top"><a name="epardaud:sfp04">[2]</a></td><td id="epardaud:sfp04" align="left" valign="top">Epardaud, S. -- <a href="http://www.inria.fr/mimosa/Stephane.Epardaud" class="http"><strong id='bold2933'
+>Mobile Reactive Programming in ULM</strong></a> -- Utah, USA, Sep, 2004.</td></tr>
+<tr><td id="rfc:http" align="right" valign="top"><a name="rfc:http">[3]</a></td><td id="rfc:http" align="left" valign="top">Fielding, R. et al. -- <a href="http://www.faqs.org/rfcs/rfc2616.html" class="http"><strong id='bold2934'
+>Hypertext Transfer Protocol</strong></a> -- RFC 2616, The Internet Society, , 1999.</td></tr>
+<tr><td id="gmf:lispecoop05" align="right" valign="top"><a name="gmf:lispecoop05">[4]</a></td><td id="gmf:lispecoop05" align="left" valign="top">Germain, G. and Monnier, S. and Feeley, M. -- <a href="http://lisp-ecoop05.bknr.net/submission/19654" class="http"><strong id='bold2935'
+>Termite: a Lisp for Distributed Computing</strong></a> -- 2nd European LISP and Scheme Workshop, Glasgow, UK, , 2005.</td></tr>
+<tr><td id="gfkf:ase04" align="right" valign="top"><a name="gfkf:ase04">[5]</a></td><td id="gfkf:ase04" align="left" valign="top">Graunke, P. and Findler, R. and Krishnamurthi, S. and Felleisen, M. -- <a href="citeseer.ist.psu.edu/graunke01automatically.html"><strong id='bold2936'
+>Automatically restructuring programs for the Web</strong></a> -- 2004.</td></tr>
+<tr><td id="gfkf:esop2003" align="right" valign="top"><a name="gfkf:esop2003">[6]</a></td><td id="gfkf:esop2003" align="left" valign="top">Graunke, P. and Findler, R.B., and Krishnamurthi, S. and Felleisen, M. -- <a href="http://www.cs.brown.edu/ sk/Publications/Papers/Published/gfkf-modeling-web-inter/" class="http"><strong id='bold2937'
+>Modeling Web Interactions</strong></a> -- European Symposium on Programming, Poland, 2003.</td></tr>
+<tr><td id="hanus:padl01" align="right" valign="top"><a name="hanus:padl01">[7]</a></td><td id="hanus:padl01" align="left" valign="top">Hanus, M. -- <strong id='bold2938'
+>High-level server side Web scripting in Curry</strong> -- Practical Aspects of Declarative Languages, Las Vegas, NV, USA, 2001.</td></tr>
+<tr><td id="scheme:r5rs" align="right" valign="top"><a name="scheme:r5rs">[8]</a></td><td id="scheme:r5rs" align="left" valign="top">Kelsey, R. and Clinger, W. and Rees, J. -- <a href="http://www.inria.fr/mimosa/fp/Bigloo/doc/r5rs.html" class="http"><strong id='bold2939'
+>The Revised(5) Report on the Algorithmic Language Scheme</strong></a> -- Higher-Order and Symbolic Computation, 11(1), Sep, 1998.</td></tr>
+<tr><td id="krishnamurthi:padl03" align="right" valign="top"><a name="krishnamurthi:padl03">[9]</a></td><td id="krishnamurthi:padl03" align="left" valign="top">Krishnamurthi, S. -- <strong id='bold2940'
+>The CONTINUE Server (or, How I Administered PADL 2002 and 2003).</strong> -- Practical Aspects of Declarative Languages, New Orleans, LA, USA, Jan, 2003, pp. 2--16.</td></tr>
+<tr><td id="meijer:jfp00" align="right" valign="top"><a name="meijer:jfp00">[10]</a></td><td id="meijer:jfp00" align="left" valign="top">Meijer, E. -- <strong id='bold2941'
+>Server-Side web scripting in Haskell</strong> -- Journal of Functional Programming, 10(1), 2000.</td></tr>
+<tr><td id="queinnec:icfp00" align="right" valign="top"><a name="queinnec:icfp00">[11]</a></td><td id="queinnec:icfp00" align="left" valign="top">Queinnec, C. -- <strong id='bold2942'
+>The influence of browsers on evaluators</strong> -- Int'l Conf. on Functional Programming, Montréal, Canada, Sep, 2000, pp. 23--33.</td></tr>
+<tr><td id="ss:popl00" align="right" valign="top"><a name="ss:popl00">[12]</a></td><td id="ss:popl00" align="left" valign="top">Sandholm, A. and Schwartzbach, M.I -- <strong id='bold2943'
+>A type system for dynamic Web documents</strong> -- Boston, MA, USA, Jan, 2000, pp. 290--301.</td></tr>
+<tr><td id="sewell:icfp05" align="right" valign="top"><a name="sewell:icfp05">[13]</a></td><td id="sewell:icfp05" align="left" valign="top">Sewell, P. et al. -- <strong id='bold2944'
+>Acute: High-level programming language design for distributed computation</strong> -- Int'l Conf. on Functional Programming, Tallinn, Estonia, Sep, 2005.</td></tr>
+<tr><td id="w3c:css2" align="right" valign="top"><a name="w3c:css2">[14]</a></td><td id="w3c:css2" align="left" valign="top">World Wide Web Consortium -- <a href="http://www.w3.org/TR/CSS2/" class="http"><strong id='bold2945'
+>Cascading Style Sheets, level 2 CSS2 Specification</strong></a> -- REC-CSS2-19980512, W3C Recommendation, May, 1998.</td></tr>
+</tbody></table>
+</font></div><br>
+</div>
+<div class="section" id="Appendix-A:-The-formal-syntax-of-HOP"><!-- Appendix A: The formal syntax of HOP -->
+<a name="Appendix-A:-The-formal-syntax-of-HOP"></a>
+<div class="section-atitle"><h3><font color="black">Appendix A: The formal syntax of HOP</font>
+</h3></div><div class="section">
+<p id='paragraph1834'
+>The figure <a href="article.html#The-EBNF-HOP-syntax." class="inbound">18</a> presents the syntax of
+Hop in EBNF form.</p><br class="figure" id='The EBNF HOP syntax.'
+><a name="The-EBNF-HOP-syntax."></a>
+<DIV class='prog-border'><pre class="syntax" id='prog1849'
+><em id='it2947'
+><font color="#1919af">&lt;comment&gt;</font></em> &#8594; <font color="red"><strong id='bold2948'
+>;</strong></font>  <em id='it2950'
+>&lt;all subsequent characters up to a line break&gt;</em>
+
+<em id='it2952'
+><font color="#1919af">&lt;expression&gt;</font></em> &#8594; <em id='it2954'
+><font color="#1919af">&lt;main-expression&gt;</font></em>
+  | <em id='it2956'
+><font color="#1919af">&lt;gui-expression&gt;</font></em>
+
+<em id='it2958'
+><font color="#1919af">&lt;main-expression&gt;</font></em> &#8594; <em id='it2960'
+><font color="#1919af">&lt;literal&gt;</font></em>
+  | <em id='it2962'
+><font color="#1919af">&lt;identifier&gt;</font></em>
+  | <em id='it2964'
+><font color="#1919af">&lt;attribute&gt;</font></em>
+  | <font color="red"><strong id='bold2965'
+>(</strong></font><em id='it2968'
+><font color="#1919af">&lt;expression&gt;</font></em> <em id='it2970'
+><font color="#1919af">&lt;expression&gt;</font></em><sup id='sup1836'
+><font size="-2">*</font></sup><font color="red"><strong id='bold2971'
+>)</strong></font>
+
+<em id='it2974'
+><font color="#1919af">&lt;gui-expression&gt;</font></em> &#8594; <font color="red"><strong id='bold2975'
+>{</strong></font> <em id='it2978'
+><font color="#1919af">&lt;javascript&gt;</font></em><sup id='sup1838'
+><font size="-2">+</font></sup> <font color="red"><strong id='bold2979'
+>}</strong></font>
+
+<em id='it2982'
+><font color="#1919af">&lt;javascript&gt;</font></em> | <em id='it2983'
+>&lt;any JavaScript expression but $ is not allowed in identifiers&gt;</em>
+  | <font color="red"><strong id='bold2984'
+>$</strong></font> <em id='it2987'
+><font color="#1919af">&lt;expression&gt;</font></em>
+
+<em id='it2989'
+><font color="#1919af">&lt;identifier&gt;</font></em> &#8594; <em id='it2991'
+><font color="#1919af">&lt;initial-identifier&gt;</font></em> | <em id='it2993'
+><font color="#1919af">&lt;letter&gt;</font></em> | <em id='it2995'
+><font color="#1919af">&lt;digit&gt;</font></em> | <em id='it2997'
+><font color="#1919af">&lt;special&gt;</font></em>
+<em id='it2999'
+><font color="#1919af">&lt;initial-identifier&gt;</font></em> &#8594; <em id='it3001'
+><font color="#1919af">&lt;letter&gt;</font></em> | <em id='it3003'
+><font color="#1919af">&lt;special&gt;</font></em>
+<em id='it3005'
+><font color="#1919af">&lt;letter&gt;</font></em> &#8594; <font color="red"><strong id='bold3006'
+>a</strong></font> | <font color="red"><strong id='bold3008'
+>b</strong></font> | ... | <font color="red"><strong id='bold3010'
+>z</strong></font> | <font color="red"><strong id='bold3012'
+>A</strong></font> | <font color="red"><strong id='bold3014'
+>B</strong></font> | ... | <font color="red"><strong id='bold3016'
+>Z</strong></font>
+<em id='it3019'
+><font color="#1919af">&lt;digit&gt;</font></em> &#8594; <font color="red"><strong id='bold3020'
+>0</strong></font> | <font color="red"><strong id='bold3022'
+>1</strong></font> | ... | <font color="red"><strong id='bold3024'
+>9</strong></font>
+<em id='it3027'
+><font color="#1919af">&lt;special&gt;</font></em> &#8594;  <font color="red"><strong id='bold3028'
+>_</strong></font> | <font color="red"><strong id='bold3030'
+>+</strong></font> | <font color="red"><strong id='bold3032'
+>-</strong></font> | <font color="red"><strong id='bold3034'
+>/</strong></font> | <font color="red"><strong id='bold3036'
+>*</strong></font> | <font color="red"><strong id='bold3038'
+>?</strong></font> | <font color="red"><strong id='bold3040'
+>&gt;</strong></font> | <font color="red"><strong id='bold3042'
+>&lt;</strong></font> | <font color="red"><strong id='bold3044'
+>=</strong></font> | <font color="red"><strong id='bold3046'
+>!</strong></font> | <font color="red"><strong id='bold3048'
+>%</strong></font> | <font color="red"><strong id='bold3050'
+>~</strong></font> | <font color="red"><strong id='bold3052'
+>&#x40;</strong></font> | <font color="red"><strong id='bold3054'
+>^</strong></font> | <font color="red"><strong id='bold3056'
+>&amp;</strong></font> | <font color="red"><strong id='bold3058'
+>\</strong></font>
+
+<em id='it3061'
+><font color="#1919af">&lt;attribute&gt;</font></em> &#8594; <font color="red"><strong id='bold3062'
+>:</strong></font> <em id='it3065'
+><font color="#1919af">&lt;identifier&gt;</font></em>
+
+<em id='it3067'
+><font color="#1919af">&lt;literal&gt;</font></em> &#8594; <em id='it3069'
+><font color="#1919af">&lt;number&gt;</font></em>
+  | <em id='it3071'
+><font color="#1919af">&lt;character&gt;</font></em>
+  | <em id='it3073'
+><font color="#1919af">&lt;string&gt;</font></em>
+  | <em id='it3075'
+><font color="#1919af">&lt;boolean&gt;</font></em>
+
+<em id='it3077'
+><font color="#1919af">&lt;number&gt;</font></em> &#8594; <em id='it3079'
+><font color="#1919af">&lt;digit&gt;</font></em><sup id='sup1840'
+><font size="-2">+</font></sup>
+  | <em id='it3081'
+><font color="#1919af">&lt;digit&gt;</font></em><sup id='sup1842'
+><font size="-2">+</font></sup> <font color="red"><strong id='bold3082'
+>.</strong></font> <em id='it3085'
+><font color="#1919af">&lt;digit&gt;</font></em><sup id='sup1844'
+><font size="-2">*</font></sup>
+  | <font color="red"><strong id='bold3086'
+>.</strong></font> <em id='it3089'
+><font color="#1919af">&lt;digit&gt;</font></em><sup id='sup1846'
+><font size="-2">+</font></sup>
+
+<em id='it3091'
+><font color="#1919af">&lt;character&gt;</font></em> &#8594; <font color="red"><strong id='bold3092'
+>#</strong></font><font color="red"><strong id='bold3094'
+>\</strong></font> <em id='it3096'
+>&lt;any character&gt;</em>
+
+<em id='it3098'
+><font color="#1919af">&lt;string&gt;</font></em> &#8594; <font color="red"><strong id='bold3099'
+>&quot;</strong></font> <em id='it3102'
+><font color="#1919af">&lt;string-element&gt;</font></em><sup id='sup1848'
+><font size="-2">*</font></sup> <font color="red"><strong id='bold3103'
+>&quot;</strong></font>
+<em id='it3106'
+><font color="#1919af">&lt;string-element&gt;</font></em> &#8594; <em id='it3107'
+>&lt;any character other than &quot; or \&gt;</em>
+  | <font color="red"><strong id='bold3108'
+>\</strong></font><font color="red"><strong id='bold3110'
+>&quot;</strong></font> | <font color="red"><strong id='bold3112'
+>\</strong></font><font color="red"><strong id='bold3114'
+>\</strong></font>
+<em id='it3117'
+><font color="#1919af">&lt;boolean&gt;</font></em> &#8594; <font color="red"><strong id='bold3118'
+>#t</strong></font> | <font color="red"><strong id='bold3120'
+>#f</strong></font>
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 18:</strong> The EBNF HOP syntax.</small></center><br></div><br>
+</div>
+<div class="footnotes" id="Hop-a-Language-for-Programming-the-Web-footnote"><div class="footnote"><br><br>
+<hr width='20%' size='2' align='left'>
+<a name="footnote-footnote1806"><sup><small>1</small></sup></a>:  <a href="http://homepages.inf.ed.ac.uk/wadler/links"><tt id='tt1805'
+>http://homepages.inf.ed.ac.uk/wadler/links</tt></a>.
+<br>
+<div></div>
+</div>
+<div class="skribe-ending">
+<hr> 
+<p class="ending" id='paragraph3127'
+><font size="-1">
+This <span class="sc">Html</span> page has been produced by 
+<a href="http://www.inria.fr/mimosa/fp/Skribe" class="http">Skribe</a>.
+<br/>
+Last update <em id='it3125'
+>Sat May 13 17:38:14 2006</em>.</font></p></div>
+</body>
+</html>
