@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun May 14 07:40:29 2006 (serrano)                */
+#*    Last change :  Mon May 15 21:41:29 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -24,7 +24,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 POPULATION	= Makefile LICENSE configure
 POPDIRS		= runtime hopscheme scheme2js hopwiki src \
                   etc share \
-                  contribs weblets demos
+                  weblets # demos contribs
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -76,7 +76,6 @@ ude:
 #*---------------------------------------------------------------------*/
 install: install-quick
 	(cd weblets && $(MAKE) install)
-	(cd demos && $(MAKE) install)
 
 install-quick: hop-dirs install-init etc-hoprc
 	(cd runtime && $(MAKE) install) && \
@@ -121,7 +120,6 @@ uninstall:
 	(cd scheme2js; $(MAKE) uninstall)
 	(cd hopscheme; $(MAKE) uninstall)
 	(cd hopwiki; $(MAKE) uninstall)
-	(cd demos; $(MAKE) uninstall)
 	/bin/rm -rf $(HOPFILDIR)
 
 #*---------------------------------------------------------------------*/
