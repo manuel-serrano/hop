@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Sun May 14 17:00:22 2006 (serrano)                */
+;*    Last change :  Mon May 15 21:14:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
@@ -18,7 +18,13 @@
 	   (home-author)
 	   (home-dir)
 	   (home-rc-directory)
-	   (home-articles-url-base)))
+	   (home-hop-stable-version)
+	   (home-hop-devel-version)
+	   (home-articles-url-base)
+	   (home-ftp-hop-url)
+	   (home-ftp-bigloo-url)
+	   (home-bigloo-url)
+	   (home-source-url)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
@@ -38,8 +44,50 @@
 (define-parameter home-rc-directory (make-file-name (hop-rc-directory) "home"))
 
 ;*---------------------------------------------------------------------*/
+;*    home-hop-stable-version ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter home-hop-stable-version
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    home-hop-devel-version ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter home-hop-devel-version
+   (let ((e (with-input-from-file (make-file-name (home-dir) "release.info") 
+	       read)))
+      (format "hop-~a-~a~a"
+	      (cadr (assq 'version e))
+	      (let ((c (assq 'devel e)))
+		 (if c (cadr c) ""))
+	      (let ((c (assq 'minor e)))
+		 (if c (cadr c) "")))))
+
+;*---------------------------------------------------------------------*/
 ;*    home-articles-url-base ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-articles-url-base
    "http://www.inria.fr/mimosa/Manuel.Serrano/publi")
-   
+
+;*---------------------------------------------------------------------*/
+;*    home-ftp-hop-url ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter home-ftp-hop-url
+   "ftp://ftp-sop.inria.fr/mimosa/fp/Hop")
+
+;*---------------------------------------------------------------------*/
+;*    home-ftp-bigloo-url ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter home-ftp-bigloo-url
+   "ftp://ftp-sop.inria.fr/mimosa/fp/Bigloo")
+
+;*---------------------------------------------------------------------*/
+;*    home-bigloo-url ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter home-bigloo-url
+   "http://www.inria.fr/mimosa/fp/Bigloo")
+
+;*---------------------------------------------------------------------*/
+;*    home-source-url ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter home-source-url
+   "http://hop.inria.fr:4000")

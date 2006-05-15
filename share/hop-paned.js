@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Fri Apr 28 08:07:17 2006 (serrano)                */
+/*    Last change :  Mon May 15 16:53:42 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -103,7 +103,7 @@ function hop_paned_onresize_set( paned, onresize ) {
 /*---------------------------------------------------------------------*/
 function hop_make_vpaned( parent, id, fraction, pan1, pan2 ) {
    var document = parent.ownerDocument || parent.document;
-   var paned, tr, td1, td2, cursor, div;
+   var paned, tbody, tr, td1, td2, cursor, div;
    // the paned
    paned = document.createElement( "table" );
    paned.className = "hop-vpaned"
@@ -116,9 +116,13 @@ function hop_make_vpaned( parent, id, fraction, pan1, pan2 ) {
 
    parent.appendChild( paned );
 
+   // the table body
+   tbody = document.createElement( "tbody" );
+   paned.appendChild( tbody );
+   
    // the table row
    tr = document.createElement( "tr" );
-   paned.appendChild( tr );
+   tbody.appendChild( tr );
 
    // the table cells
    td1 = document.createElement( "td" );

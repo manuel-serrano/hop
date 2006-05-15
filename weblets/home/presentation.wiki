@@ -15,6 +15,7 @@ indifferently as a regular Web server or a Web proxy.
     * dealing with //network// connections.
     * parsing //wiki// documents.
     * supporting various protocols such as IMAP, ICALENDAR, ...
+    * supporting various formats such as EXIF, ID3, ...
     * parsing and generating //XML// documents.
     * ...
 
@@ -25,7 +26,7 @@ to spreading HOP to the Web, it also serves as a //meta-demonstration//.
 
 == Release information ==
 
-~~ The current HOP version is **,(<SPAN> :style "color: red" (hop-version))**.
+~~ The current HOP version is **,(<SPAN> :style "color: red" (home-hop-devel-version))**.
 
 ~~ It can run on any platform that supports a complete **Java SDK 1.4**. 
 For better performance, it can run in native mode on

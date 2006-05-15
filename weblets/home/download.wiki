@@ -1,0 +1,28 @@
+== Getting Hop ==
+
+The latest ,(<SPAN> :style { color: red; font-weight: bold } "development") 
+version of is
+,(let ((file (string-append (home-hop-devel-version) ".tar.gz")))
+   (<A> :href (format (make-file-name (home-ftp-hop-url) file)) file))
+
+~~ ,(if (home-hop-stable-version)
+        [The last ,(<SPAN> :style { color: #d4a625; font-weight: bold } "stable")
+version is ,(let ((file (string-append (home-hop-stable-version) ".tar.gz")))
+                (<A> :href (make-file-name (home-ftp-hop-url) file) file)).])
+
+~~ All HOP versions may be downloaded from:
+,(<A> :href (home-ftp-hop-url) (home-ftp-hop-url)).
+
+== Getting Bigloo ==
+
+In order to install HOP, the ,(<A> :href (home-bigloo-url) "Bigloo") compiler 
+has first to be installed. Bigloo version 2.8 or higher is required for 
+compiling HOP.
+
+~~ Bigloo versions may be downloaded
+from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
+
+== Browsing the code ==
+
+The HOP source code may be browsed 
+,(<A> :href (home-source-url) "here").

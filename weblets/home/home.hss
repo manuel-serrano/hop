@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon May 15 11:22:00 2006 (serrano)                */
+/*    Last change :  Mon May 15 20:53:08 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -219,6 +219,11 @@ span.edit:hover {
 span.edit:hover {
   text-decoration: underline;
   color: $deep-blue;
+}
+
+span.uptime {
+  color: #333;
+  font-weight: bold;
 }
 
 /*---------------------------------------------------------------------*/

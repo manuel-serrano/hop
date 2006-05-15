@@ -1,7 +1,7 @@
 
    HOP, a web development kit
    
-   Copyright (c) 2006 Manuel Serrano and INRIA
+   Copyright (c) 2006 INRIA
                                                                      
      Bug descriptions, user reports, comments or suggestions are      
      welcome. Send them to                                           
@@ -15,7 +15,7 @@
    the Free Software Foundation; either version 2 of the License, or 
    (at your option) any later version. More precisely,
 
-      - The server, the compiler and the tools are distributed under the 
+      The server, the compiler, and the tools are distributed under the 
       terms of the GNU General Public License.
 
    This program is distributed in the hope that it will be useful,   

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Sat May 13 16:31:39 2006 (serrano)                */
+/*    Last change :  Mon May 15 16:56:03 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -234,11 +234,11 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
 /*---------------------------------------------------------------------*/
 /*    make_hop_iwindow ...                                             */
 /*---------------------------------------------------------------------*/
-function make_hop_iwindow( id, class, parent ) {
+function make_hop_iwindow( id, klass, parent ) {
    var win = document.createElement( "div" );
    
    win.id = id;
-   win.className = class;
+   win.className = klass;
    win.name = "hop-iwindow";
 
    var t = "\
@@ -343,14 +343,14 @@ function make_hop_iwindow( id, class, parent ) {
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_open ...                                             */
 /*---------------------------------------------------------------------*/
-function hop_iwindow_open( id, obj, title, class, width, height, x, y, parent ) {
+function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) {
    var win = document.getElementById( id );
    var isnew = false;
 
-   class = class ? class : "hop-iwindow";
+   klass = klass ? klass : "hop-iwindow";
 
    if( !win ) {
-      win = make_hop_iwindow( id, class, parent );
+      win = make_hop_iwindow( id, klass, parent );
       isnew = true;
    } else {
       win.style.display = "block";
@@ -359,7 +359,8 @@ function hop_iwindow_open( id, obj, title, class, width, height, x, y, parent ) 
    /* start hidden otherwise we loose the border on drag! */
    win.el_body.style.display = "none";
 
-   if( obj instanceof HTMLElement ) {
+   if( (obj instanceof HTMLElement) ||
+       (obj instanceof Object && obj.propertyIsEnumerable( "innerHTML" )) ) {
       var c = win.el_body.childNodes;
       var i = c.length;
 
@@ -370,10 +371,10 @@ function hop_iwindow_open( id, obj, title, class, width, height, x, y, parent ) 
       win.el_body.appendChild( obj );
    } else {
       var cb = function( http ) {
-	          if( http.responseText != null ) {
-		     win.el_body.innerHTML = http.responseText;
-		     hop_js_eval( http );
-		  }
+     	         if( http.responseText != null ) {
+	           win.el_body.innerHTML = http.responseText;
+	           hop_js_eval( http );
+	         }
                };
 
       if( typeof obj == "function" ) {
