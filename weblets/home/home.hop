@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon May 15 21:11:23 2006 (serrano)                */
+;*    Last change :  Mon May 15 21:33:31 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -75,7 +75,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (home)
    (let ((req (the-current-request)))
-      (let ((agent (assq 'user-agent: (http-request-header req))))
+      (let ((agent (assq :user-agent (http-request-header req))))
          (if (and (pair? agent)
 		  (string? (cdr agent))
                   (or (substring-ci-at? (cdr agent) "Mozilla" 0)

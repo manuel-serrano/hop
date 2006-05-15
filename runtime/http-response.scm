@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue May  9 13:41:37 2006 (serrano)                */
+;*    Last change :  Mon May 15 21:34:57 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -150,7 +150,9 @@
 	    (when (>elong content-length #e0)
 	       (http-write-line p "Content-Length: " content-length))
 	    (http-write-line p)
-	    (when bodyp (display (hop->json body) p))
+	    ;; the body
+	    (with-trace 4 'http-response-js
+	       (when bodyp (display (hop->json body) p)))
 	    (flush-output-port p)))))
       
 ;*---------------------------------------------------------------------*/
