@@ -56,7 +56,7 @@ This abstract class is the super class of all responses.
 <fields>
 ^  fields              ^   access  ^   type      ^  default value     ^  short description                          ^
 | ...                  |    ...    |   ...       |     ...            | fields from ::%http-response                |
-</field>
+</fields>
 
 This class is used to represent //aborted request//. This might be used in
 case of //denial of services// attack to the server.

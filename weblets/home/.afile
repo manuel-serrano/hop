@@ -1,5 +1,5 @@
 ;; /users/serrano/prgm/project/hop/weblets/home
-;; Sun May 14 18:36:34 2006
+;; Mon May 15 11:17:09 2006
 
 (
   (hophome_config "./config.hop")
@@ -12,5 +12,6 @@
   (hophome_demos-wiki "./demos/wiki/wiki.hop")
   (hophome "./home.hop")
   (hophome_widgets "./widgets.hop")
+  (hophome_wiki "./wiki.hop")
 )
 

@@ -1,7 +1,7 @@
----------------------------------------------------------------------
+
    HOP, a web development kit
    
-   Copyright (c) 2006 Manuel Serrano
+   Copyright (c) 2006 Manuel Serrano and INRIA
                                                                      
      Bug descriptions, user reports, comments or suggestions are      
      welcome. Send them to                                           
@@ -27,4 +27,4 @@
    License along with this program; if not, write to the Free        
    Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,   
    MA 02111-1307, USA.                                               
----------------------------------------------------------------------
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sun May 14 18:30:36 2006 (serrano)                */
+;*    Last change :  Mon May 15 06:47:26 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -15,7 +15,8 @@
 (module hophome
    (import  hophome_config
 	    hophome_widgets
-	    hophome_demo))
+	    hophome_demo
+	    hophome_wiki))
 
 ;*---------------------------------------------------------------------*/
 ;*    home ...                                                         */
@@ -36,52 +37,15 @@
 We suggest to give Firefox a try.")))))
 
 ;*---------------------------------------------------------------------*/
-;*    wiki-cache ...                                                   */
-;*---------------------------------------------------------------------*/
-(define wiki-cache
-   (instantiate::cache
-      (path (make-file-path (hop-rc-directory)
-			    "cache"
-			    (string-append "home-"
-					   (integer->string (hop-port)))))
-      (out (lambda (o p)
-	      (xml-write o p (hop-char-encoding))))))
-
-;*---------------------------------------------------------------------*/
-;*    wiki->hop ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (wiki->hop file)
-   (let* ((path (make-file-name (home-dir) file))
-	  (cache (cache-get wiki-cache path)))
-      (if (string? cache)
-	  (with-input-from-file cache
-	     (lambda ()
-		(read-string)))
-	  (let ((m1 (eval-find-module 'hophome))
-		(m2 (eval-module)))
-	     (unwind-protect
-		(begin
-		   (eval-module-set! m1)
-		   (let* ((wiki (wiki-file->hop path))
-			  (cache (cache-put! wiki-cache path wiki)))
-		      (if (string? cache)
-			  (with-input-from-file cache
-			     (lambda ()
-				(read-string)))
-			  wiki)))
-		(eval-module-set! m2))))))
-					   
-;*---------------------------------------------------------------------*/
 ;*    home-main ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (home-main req)
    (<HOME>
       (<NOTEPAD>
 	 :id "home-notepad"
-	 :inline #f
 	 (<NPHEAD> "")
 	 (<NPTAB> :id "Presentation"
-		  (<NPTABHEAD> "Presentation")
+		  (<NPTABHEAD> "Main")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV>
@@ -93,14 +57,12 @@ We suggest to give Firefox a try.")))))
 		     :class "hop-tab"
 		     "not yet"))
 	 (<NPTAB> :id "demo"
-		  (<NPTABHEAD> "Demonstrations")
+		  (<NPTABHEAD> "Demos")
 		  (<DIV>
 		     :align "center"
-		     (<DELAY>
-			(lambda ()
-			   (<DEMO> req)))))
+		     (<DEMO> req)))
 	 (<NPTAB> :id "documentation"
-		  (<NPTABHEAD> "Documentations")
+		  (<NPTABHEAD> "Docs")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV>
@@ -112,6 +74,13 @@ We suggest to give Firefox a try.")))))
 		     (lambda ()
 			(<DIV>
 			   :class "hop-tab"
-			   (wiki->hop "license.wiki"))))))))
+			   (wiki->hop "license.wiki")))))
+	 (<NPTAB> :id "faq"
+		  (<NPTABHEAD> "Faq")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "faq.wiki"))))))))
 
 

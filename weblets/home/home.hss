@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sun May 14 07:55:44 2006 (serrano)                */
+/*    Last change :  Mon May 15 11:22:00 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -236,11 +236,16 @@ iwindow {
 /*    Presentation                                                     */
 /*---------------------------------------------------------------------*/
 div.hop-tab {
+  background: white;
   background-repeat: no-repeat;
   background-position: center;
-  background-image: url( "icons/logo-bg-128x128.jpeg" );
+  background-position: center 50px;
+  background-image: url( "icons/logo-bg-128x128.png" );
   min-width: 200;
   min-height: 200;
+  margin: 5px;
+  border: 1px solid $border-color;
+  padding: 2px;
 }
 
 /*---------------------------------------------------------------------*/

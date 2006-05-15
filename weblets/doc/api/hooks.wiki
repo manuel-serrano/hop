@@ -9,7 +9,7 @@ information needed to serve the client. Then, it applies all the
 ::%http-response class. If the answer is an instance of ::http-response-remote
 it applies the //remote// hooks. Otherwise, it applies the //local// hooks.
 
-,(<P>)
+~~
 A hook is a function accepting two parameters:
   - a request descriptor (an instance of ::http-request).
   - a response descriptor (an instance of ::%http-response).
