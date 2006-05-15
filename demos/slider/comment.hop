@@ -1,5 +1,0 @@
-(<P> [This demo uses three ,(htmlize "<SLIDER>") widgets. When
-the value of a slider changes, its callback is called. In each
-callback, the ,(<CODE> "setcolor") JavasScript function is
-called. This function changes the background of the
-,(<CODE> "colbox") ,(htmlize "<DIV>").])
