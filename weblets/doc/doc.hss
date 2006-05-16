@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue May 16 11:33:46 2006 (serrano)                */
+/*    Last change :  Tue May 16 14:41:53 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -114,7 +114,6 @@ textarea {
   border: 1px solid $border-color;
   color: blue;
 }
-
 
 table.doc {
   width: 45em;
@@ -538,7 +537,7 @@ doc toc {
   margin-left: 5px;
   min-width: 280px;
   float: right; 
-/*   clear: both;                                                      */
+  clear: both;
   background-color: $popup-menu-color; 
   border: $popup-menu-border;
   -moz-opacity: $doc-opacity;

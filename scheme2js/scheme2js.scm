@@ -40,7 +40,7 @@
 		  (do-inlining #t)
 		  (inline-globals #f)
 		  (constant-propagation #t)
-		  (var-propagation #t)
+		  (var-propagation #f)
 		  (optimize-calls #t)
 		  (optimize-var-number #f)
 		  (optimize-boolify #t)

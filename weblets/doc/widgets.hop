@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue May 16 11:09:37 2006 (serrano)                */
+;*    Last change :  Tue May 16 14:41:46 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -114,7 +114,7 @@
 					 (iwindow-open
 					  "doc/search"
 					  ($keypress this.value)
-					  false "menu"
+					  false "hop-iwindow menu"
 					  500 300
 					  (- window.innerWidth 550) 10))
 			   :title "Hit [return] to search"))))))
