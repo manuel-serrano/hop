@@ -5,6 +5,15 @@
    (export (<HOP-SCHEME-HEAD> . obj))
    (eval (export-all)))
 
+(define sscript-cache
+   (instantiate::cache
+      (path (make-file-path (hop-rc-directory)
+			    "cache"
+			    (string-append "sscript-"
+					   (integer->string (hop-port)))))
+      (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))
+
+;*---------------------------------------------------------------------*/
 (define (hop-file path file)
    (let ((p (find-file/path file path)))
       (if (string? p)
@@ -13,23 +22,27 @@
 
 ;*---------------------------------------------------------------------*/
 (define (compile-scheme-file file)
-   (let* ((tmp-name (string-append (symbol->string (gensym 'tmpFile)) ".js"))
-	  (tmp-file-name (make-file-name "/tmp" tmp-name)))
-      (scheme2js-compile-files! (list file)          ;; input-files
-				tmp-file-name        ;; output-file
+   (with-output-to-string
+      (lambda ()
+	 (scheme2js-compile-files! (list file)          ;; input-files
+				"-"                  ;; output-file
 				'()                  ;; js-interface
-				(hopscheme-config))  ;; config
-      tmp-file-name))
+				(hopscheme-config)))))  ;; config
 
 
 ;*---------------------------------------------------------------------*/
 (define (hop-sscript file dir)
    (if (= (string-length file) 0)
        (error '<HOP-SCHEME-HEAD> "Illegal sscript" file)
-       (compile-scheme-file
-	(if (char=? (string-ref file 0) (file-separator))
-	    file
-	    (hop-file dir file)))))
+       (let* ((path (if (char=? (string-ref file 0) (file-separator))
+			file
+			(hop-file dir file)))
+	      (cached (cache-get sscript-cache path)))
+	  (if cached
+	      cached
+	      (let* ((compiled (compile-scheme-file path))
+		     (cached (cache-put! sscript-cache path compiled)))
+		 cached)))))
 
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SCHEME-HEAD> . obj)
