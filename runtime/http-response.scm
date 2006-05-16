@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon May 15 21:34:57 2006 (serrano)                */
+;*    Last change :  Tue May 16 09:07:44 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -140,7 +140,7 @@
    (with-trace 3 'http-response::http-response-js
       (with-access::http-response-js r (start-line header content-type server content-length body bodyp)
 	 (let ((p (socket-output socket)))
-	    (http-write-line p "HTTP/1.1 201 Eval Ok")
+	    (http-write-line p "HTTP/1.1 200 Ok")
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
 	    (when content-type
@@ -149,6 +149,7 @@
 	       (http-write-line p "Server: " server))
 	    (when (>elong content-length #e0)
 	       (http-write-line p "Content-Length: " content-length))
+	    (http-write-line p "Hop-Json: true")
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Wed May 10 06:50:52 2006 (serrano)                */
+;*    Last change :  Tue May 16 05:19:34 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -134,3 +134,69 @@
 				   (make-directory d)))
 			     (hz-preferences-save prefs))))))
 
+;*---------------------------------------------------------------------*/
+;*    hz/list ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    Returns the list of available weblets. This does not needs       */
+;*    authentication when used on a local server.                      */
+;*---------------------------------------------------------------------*/
+(define-service (hz/list)
+   (let ((req (the-current-request)))
+      (if (or (http-request-localhostp req) (not (users-added?)))
+	  (hz-list req)
+	  (multiple-value-bind (user mode)
+	     (hz-get-access req)
+	     (if (and (user? user)
+		      (symbol? mode)
+		      (user-authorized-service? user 'hz))
+		 (hz-list req user mode)
+		 (hz-authenticate req))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-list ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (hz-list req)
+   (let ((db (hz-get-db (hz-db-path 'local))))
+      (<HTML>
+	 (<HEAD> :dir (hz-dir)
+		 :jscript "hop-notepad.js" :css "hop-notepad.css"
+		 :jscript "hop-paned.js" :css "hop-paned.css"
+		 :jscript "hop-tree.js" :css "hop-tree.css"
+		 :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+		 :jscript "hop-iwindow.js" :css "hop-iwindow.css"
+		 :css "hz.hss")
+	 (<BODY>
+	    :class "hz-list"
+	    (<TREE>
+	       :id "main-tree"
+	       :open #t
+	       (<TRHEAD>
+		  (let ((dt (hz-db-sync-date db)))
+		     (format "~a ~a ~a"
+			     (date-day dt)
+			     (month-aname (date-month dt))
+			     (date-year dt))))
+	       (<TRBODY>
+		  (map (lambda (c)
+			  (<TREE>
+			     (<TRHEAD> :value c c)
+			     (<TRBODY>
+				(<DELAY>
+				   (lambda ()
+				      (let* ((icon (cond
+						      ((assoc c (hz-category-icons)) => cdr)
+						      (else "file.png")))
+					     (ifile (make-file-path (hz-dir) "icons" icon)))
+					 (map (lambda (e)
+						 (<TRLEAF>
+						    :file ifile
+						    (<SPAN>
+						       :class "weblet"
+						       (dbhz-name e)
+						       " -- "
+						       (<SPAN> :class "sdescr" (dbhz-sdescr e)))))
+					      (hz-db-get-entries-by-category db c))))))))
+		       (hz-db-get-categories db))))))))
+   
+      
+   

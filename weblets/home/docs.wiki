@@ -1,5 +1,7 @@
 == Installation Guides ==
 
+  * [[/hop/home/install|HOP Installation page]]
+
 == Development Guides ==
 
   * [[/hop/doc|Development kit APIs & Tutorials]]

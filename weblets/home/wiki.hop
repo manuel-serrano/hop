@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May 15 06:46:38 2006                          */
-;*    Last change :  Mon May 15 06:50:30 2006 (serrano)                */
+;*    Last change :  Tue May 16 05:31:35 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME wiki manager                                            */
@@ -13,9 +13,10 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hophome_wiki
-   (import  hophome_config)
+   (import  hophome_config
+	    hophome)
    (library hopwiki)
-   (export (wiki->hop file)))
+   (export  (wiki->hop file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-cache ...                                                   */
@@ -39,7 +40,7 @@
 	  (with-input-from-file cache
 	     (lambda ()
 		(read-string)))
-	  (let ((m1 (eval-find-module 'hophome_config))
+	  (let ((m1 (eval-find-module 'hophome))
 		(m2 (eval-module)))
 	     (unwind-protect
 		(begin

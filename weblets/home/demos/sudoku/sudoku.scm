@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/demos/widgets/sudoku/sudoku.jscm        */
+;*    .../prgm/project/hop/weblets/home/demos/sudoku/sudoku.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Tue Mar 28 17:04:33 2006 (eg)                     */
+;*    Last change :  Tue May 16 09:21:32 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/

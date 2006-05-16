@@ -17,9 +17,9 @@
 	    (<CENTER> (<B> "A remote of Notepad")))
 	 (<NPTAB>
 	    (<NPTABHEAD> "Readme")
-	    [In this notepad, the server date is updated each time the tab is selected.])
+	    "In this notepad, the server date is updated each time the tab is selected.")
 	 (<NPTAB>
 	    (<NPTABHEAD> "Server date")
 	    (<DELAY>
 	       (lambda ()
-		  (current-date)))))))
+		  (date)))))))

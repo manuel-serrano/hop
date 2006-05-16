@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon May 15 20:53:08 2006 (serrano)                */
+/*    Last change :  Tue May 16 05:15:53 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -235,6 +235,24 @@ iwindow {
   font-size: small;
   background-color: white;
   z-index: 11;
+}
+
+/*--- hr --------------------------------------------------------------*/
+hr {
+  border-top: 1px solid $border-color;
+  border-bottom: 0;
+  border-left: 0;
+  border-right: 0;
+}
+
+/*--- iframe ----------------------------------------------------------*/
+iframe.hz {
+  width: 98%;
+  height: 450px;
+  overflow: auto;
+  border: 1px solid $border-color;
+  margin: 5px;
+  padding: 2px;
 }
 
 /*---------------------------------------------------------------------*/

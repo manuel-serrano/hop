@@ -134,7 +134,8 @@ the server to the client.
                                  (lambda (h)
                                     (let ((table (<TABLE>
                                                      :border 1
-                                                     (map (lambda (x) (<TR> (<TD> x))) h))))
+					             (<TBODY>
+                                                       (map (lambda (x) (<TR> (<TD> x))) h)))))
                                        (if (dom-has-child-nodes? $show)
                                            (dom-remove-child! $show (car (dom-child-nodes $show))))
                                        (dom-append-child! $show table)))))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon May 15 17:11:54 2006 (serrano)                */
+/*    Last change :  Tue May 16 09:35:24 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -394,10 +394,11 @@ function with_hop( service, success, failure ) {
 	       function( http ) {
                  switch( http.status ) {
 		    case 200:
-		       success( http.responseText );
-		       return;
-		    case 201:
-		       success( eval( http.responseText ) );
+		       if( http.getResponseHeader( "Hop-Json" ) ) {
+			  success( eval( http.responseText ) );
+		       } else {
+			  success( http.responseText );
+		       }
 		       return;
 		    case 202:
 		       success( hop_unserialize( http.responseText ) );

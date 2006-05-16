@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon May 15 21:33:31 2006 (serrano)                */
+;*    Last change :  Tue May 16 05:53:16 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -104,6 +104,11 @@ We suggest to give Firefox a try.")))))
 			(<DIV>
 			   :class "hop-tab"
 			   (wiki->hop "presentation.wiki")))))
+	 (<NPTAB> :id "demo"
+		  (<NPTABHEAD> "Demos")
+		  (<DIV>
+		     :align "center"
+		     (<DEMO> req)))
 	 (<NPTAB> :id "download"
 		  (<NPTABHEAD> "Download")
 		  (<DIV>
@@ -113,11 +118,6 @@ We suggest to give Firefox a try.")))))
 			   (<DIV>
 			      :class "hop-tab"
 			      (wiki->hop "download.wiki"))))))
-	 (<NPTAB> :id "demo"
-		  (<NPTABHEAD> "Demos")
-		  (<DIV>
-		     :align "center"
-		     (<DEMO> req)))
 	 (<NPTAB> :id "documentation"
 		  (<NPTABHEAD> "Docs")
 		  (<DELAY>
@@ -125,13 +125,13 @@ We suggest to give Firefox a try.")))))
 			(<DIV>
 			   :class "hop-tab"
 			   (wiki->hop "docs.wiki")))))
-	 (<NPTAB> :id "license"
-		  (<NPTABHEAD> "License")
+	 (<NPTAB> :id "weblets"
+		  (<NPTABHEAD> "Weblets")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV>
 			   :class "hop-tab"
-			   (wiki->hop "license.wiki")))))
+			   (wiki->hop "weblets.wiki")))))
 	 (<NPTAB> :id "faq"
 		  (<NPTABHEAD> "Faq")
 		  (<DELAY>
@@ -152,4 +152,11 @@ We suggest to give Firefox a try.")))))
 			    ,(<SPAN> :class "uptime" (home-statistics))
 			    times.])))))))
 
-
+;*---------------------------------------------------------------------*/
+;*    home/install ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-service (home/install)
+   (<HTML>
+      (<HEAD> :css (make-file-name (home-dir) "home.hss"))
+      (<BODY> :style "background: white; font-size: small"
+	      (wiki->hop "install.wiki"))))

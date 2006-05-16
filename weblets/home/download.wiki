@@ -26,3 +26,7 @@ from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
 
 The HOP source code may be browsed 
 ,(<A> :href (home-source-url) "here").
+
+== License ==
+
+##license.wiki##

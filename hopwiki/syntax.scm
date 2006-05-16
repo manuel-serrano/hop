@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sun May 14 17:05:28 2006 (serrano)                */
+;*    Last change :  Tue May 16 05:24:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -540,7 +540,7 @@
 			   (with-input-from-string expr
 			      (lambda ()
 				 (eval (read)))))
-			(let ((dir (input-port-name (the-port))))
+			(let ((dir (dirname (input-port-name (the-port)))))
 			   (find-file/path name (list "." dir))))))
 	  (cond
 	     ((and (string? path) (file-exists? path))
