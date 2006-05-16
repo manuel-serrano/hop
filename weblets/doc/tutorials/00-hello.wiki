@@ -1,0 +1,135 @@
+<doc> Hello World!
+
+== Description ==
+
+This tutorial shows how to implement a minimalist HOP program. It
+involves only //server// programming. It teaches how to program a HOP
+,(<APIREF> (<I> "weblet") "service.wiki") that displays the string
+++Hello World!++ in web browser.
+
+== Defining the service ==
+
+In this example, we define a ,(<APIREF> "service" "service.wiki") named
+++hello++. A named service is defined using the 
+,(<APIREF> "define-service" "service.wiki") special form. 
+
+<example>
+  (define-service (hello)
+     (<HTML>
+        (<BODY>
+           "Hello World!")))
+
+  (<HTML>
+    (<BODY>
+       (<A> :href "http://hop/hop/hello" "click me")))
+</example>
+
+This automatically binds the URL ++/hop/hello++ to the service. The prefix
+++/hop++ is used for all the URLs associated with services.
+Let's assume that ++hop++ is running and that it waits connections
+to be established on the port ++8080++. The actual URL ,(<TT>
+"http://localhost:8080/hop/hello") refers to our previously defined
+service. Since HOP predefines the alias //hop// for ++localhost:8080++
+hence, the URL ,(<TT> "http://hop/hop/hello") also refers to our
+service.
+
+~~ Once, you have evaluated the code above once, the service ++hello++
+being bound, you can directly go to the URL [[http://hop/hop/hello]]
+in your browser.
+
+== Storing the service on a file ==
+
+There is two main ways for storing and loading services on files. The first
+one consists in loading the file defining the service on HOP startup. The
+second one, more efficient, consists in placing the definition in a file
+that is //autoloaded// by HOP.
+
+=== Load on startup ===
+
+On startup, HOP loads the RC file:
+,(let ((path (make-file-name (hop-rc-directory) (hop-rc-file))))
+    (if (file-exists? path)
+	(<FL>
+	   (<FLITEM>
+	      (<FLHEAD> path)
+	      (with-input-from-file path
+		 (lambda ()
+		    (<PRE>
+		       :style "max-width: 80em overflow: auto"
+		       :class "source"
+		       (decorate-api-code
+			(read-string (current-input-port))))))))
+	path))
+This file may contain definition of services so the definition
+above might directly be located on that file. In order to avoiding
+cluttering that file with too many definitions, it might be a good
+idea to store the definition on another file and to
+,(<APIREF> "hop-load" "read.wiki") it from the RC file.
+
+=== Autoload ===
+
+On startup, the HOP server scans the disk of the local computer in order
+to find all the ,(<APIREF> (<I> "weblets") "service.wiki") currently 
+[[http://hop/hop/hz|available]]. For this, it scans the directories returned by
+++(,(<APIREF> "hop-autoload-directories" "service.wiki"))++. The current
+weblets path is:
+
+,(<DIV> :align "center"
+        (<PRE> 
+	   (with-output-to-string 
+	      (lambda () 
+		 (print "(")
+		 (for-each (lambda (v) (display " ") (write v) (newline))
+			   (hop-autoload-directories))
+		 (display ")")))))
+
+HOP scans the subdirectories in this path. For each subdirectory ++DIR++,
+HOP checks if a file named ++DIR.hop++ exists. If it exists, then HOP
+adds an //autoload// rule on a weblet named ++DIR++. That is, if HOP
+has to server a request of the form ,(<TT> "http://hop/hop/DIR"), then it
+loads the previously mentioned file and it executes the service ++DIR++.
+
+~~ In consequence, for creating a pervasive ++hello++ service, a file named
+++hello/hello.hop++ containing the declaration given above has to be saved
+in the ,(<APIREF> "autoload" "service.wiki") path.
+
+== Adding text decorations ==
+
+We improve the visual presentation by adding decorations to the displayed
+text. The world //Hello// is now displayed using a bold font and the
+text is centered.
+
+<example>
+  (define-service (hello)
+     (<HTML>
+        (<BODY>
+           (<DIV> :align "center" 
+                  (<B> "Hello ") "World!"))))
+
+  (<HTML>
+    (<BODY>
+       (<A> :href "http://hop/hop/hello" "click me")))
+</example>
+
+== Adding a parameter to the service ==
+
+We now add a parameter to the service.
+
+<example>
+  (define-service (hello who)
+     (<HTML>
+        (<BODY>
+           (<DIV> :align "center" 
+                  (<B> "Hello ") who "!"))))
+
+  (<HTML>
+    (<BODY>
+       (<A> :href "http://hop/hop/hello?who=foo" "click me")))
+</example>
+
+~~ Note that in this example, the parameter is specified in the URL
+after the question mark (++?++). This conforms to the
+[[http://www.w3.org/Protocols/rfc2616/rfc2616.html|HTTP]] URL
+encoding.
+
+</doc>

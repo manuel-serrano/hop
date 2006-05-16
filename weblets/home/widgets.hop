@@ -1,0 +1,52 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/home/widgets.hop                */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
+;*    Last change :  Mon May 15 06:54:19 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The HOME widgets.                                                */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hophome_widgets
+
+   (import hophome_config)
+   
+   (export (<HOME> . obj)))
+
+;*---------------------------------------------------------------------*/
+;*    <HOME> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<HOME> . obj)
+   (<HTML>
+      (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css" 
+	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
+	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+	      :css (make-file-name (home-dir) "home.hss"))
+      (<BODY>
+	 (<CENTER>
+	    (<TABLE>
+	       :class "home"
+	       (<TR>
+		  (<TD>
+		     :valign "top"
+		     (<IMG> :class "logo"
+			    :src (format "~a/icons/logo.png"
+					 (hop-share-directory))))
+		  (<TD>
+		     :valign "top"
+		     (<TABLE>
+			(<TR>
+			   (<TD>
+			      (<DIV> :id "title"
+				     "Hop Home Page")))
+			(<TR>
+			   (<TD>
+			      obj))))))))))
+
+				     
+	     

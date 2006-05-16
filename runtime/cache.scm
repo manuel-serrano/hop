@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Mon Apr  3 10:08:53 2006 (serrano)                */
+;*    Last change :  Sun May 14 18:37:22 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -119,7 +119,8 @@
 ;*    Removes all the entry from the cache                             */
 ;*---------------------------------------------------------------------*/
 (define (cache-clear c::cache)
-   (with-access::%cache c (%table %head %tail current-entries)
+   (with-access::%cache c (%table %head %tail current-entries max-entries)
+      (set! %table (make-hashtable (*fx 4 max-entries)))
       (set! %head #f)
       (set! %tail #f)
       (set! current-entries 0))
@@ -148,17 +149,34 @@
        (bigloo-type-error 'cache-get '%cache c)
        (with-access::%cache c (%table %head %tail validity)
 	  (let ((ce (hashtable-get %table path)))
-	     (when (validity ce path)
-		(with-access::cache-entry ce (path %prev %next)
-		   (when %prev
-		      (cache-entry-%next-set! %prev %next)
-		      (if %next
-			  (cache-entry-%prev-set! %next %prev)
-			  (set! %tail %prev))
-		      (set! %next %head)
-		      (cache-entry-%prev-set! %head ce)
-		      (set! %head ce))
-		   path))))))
+	     (cond
+		((validity ce path)
+		 (with-access::cache-entry ce (path %prev %next)
+		    (when %prev
+		       (if %next
+			   (begin
+			      (cache-entry-%prev-set! %next %prev)
+			      (cache-entry-%next-set! %prev %next))
+			   (begin
+			      (cache-entry-%next-set! %prev #f)
+			      (set! %tail %prev)))
+		       (set! %prev #f)
+		       (set! %next %head)
+		       (cache-entry-%prev-set! %head ce)
+		       (set! %head ce))
+		    path))
+		((cache-entry? ce)
+		 (hashtable-remove! %table path)
+		 (with-access::cache-entry ce (path %prev %next)
+		    (if %prev
+			(cache-entry-%next-set! %prev %next)
+			(set! %head %next))
+		    (if %next
+			(cache-entry-%prev-set! %next %prev)
+			(set! %tail #f))
+		    #f))
+		(else
+		 #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-put! ...                                                   */
@@ -183,12 +201,13 @@
 		(set! current-entries (+fx 1 current-entries))
 		(begin
 		   (hashtable-remove! %table (cache-entry-upath %tail))
-		   (set! %tail (cache-entry-%prev %tail))))
-	    (if %tail
+		   (set! %tail (cache-entry-%prev %tail))
+		   (cache-entry-%next-set! %tail #f)))
+	    (if %head
 		(begin
-		   (cache-entry-%next-set! %tail ce)
-		   (cache-entry-%prev-set! ce %tail)
-		   (set! %tail ce))
+		   (cache-entry-%next-set! ce %head)
+		   (cache-entry-%prev-set! %head ce)
+		   (set! %head ce))
 		(begin
 		   (set! %head ce)
 		   (set! %tail ce)))

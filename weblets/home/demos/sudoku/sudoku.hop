@@ -1,0 +1,220 @@
+;*=====================================================================*/
+;*    .../prgm/project/hop/weblets/home/demos/sudoku/sudoku.hop        */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Erick Gallesio                                    */
+;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
+;*    Last change :  Tue May 16 10:30:08 2006 (serrano)                */
+;*    -------------------------------------------------------------    */
+;*    Sudoku HOP demo                                                  */
+;*=====================================================================*/
+
+(module hophome_demos-sudoku
+   (export home/demos/sudoku))
+
+(define *sudoku-directory* (dirname (the-loading-file)))
+
+;;; ======================================================================
+;;;	STklos dotimes ...
+;;; ======================================================================
+(define-macro (dotimes bindings . body)
+  (apply (lambda (var count . result)
+	   (let ((limit  (gensym))
+		 (result (if (null? result) (list '#unspecified) result)))
+	     `(let ((,limit ,count))
+		(do ((,var 0 (+ ,var 1)))
+		    ((>= ,var ,limit) ,@result)
+		  ,@body))))
+	 bindings))
+
+;;; ======================================================================
+;;; 	array-ref ...
+;;; ======================================================================
+(define (array-ref m i j)
+  (vector-ref (vector-ref m i) j))
+
+;;; ======================================================================
+;;; 	array-set! ...
+;;; ======================================================================
+(define (array-set! m i j val)
+  (vector-set! (vector-ref m i) j val))
+
+;;; ======================================================================
+;;; 	random-not ...
+;;; ======================================================================
+(define (random-not range forbid)
+  ;; Return a random number which is different from forbid
+  (let Loop ((n (random range)))
+    (if (= n forbid)
+	(Loop (random range))
+	n)))
+
+(define (show-board board)
+  (dotimes (i 9)
+    (dotimes (j 9)
+      (let ((val (array-ref board i j)))
+	(display (if (negative? val) " " "  "))
+	(display val))
+      (if (or (= j 2) (= j 5)) (display " ")))
+    (newline)
+    (if (or (= i 2) (= i 5)) (newline))))
+
+
+;;; ======================================================================
+;;; 	init-sudoku ...
+;;; ======================================================================
+(define (init-sudoku level)
+  (define board (vector (vector 4 3 6 1 8 2 7 5 9)
+			 (vector 5 1 7 9 3 6 8 4 2)
+			 (vector 9 2 8 4 7 5 6 1 3)
+			 (vector 2 8 3 5 1 4 9 6 7)
+			 (vector 6 7 5 2 9 8 4 3 1)
+			 (vector 1 4 9 3 6 7 5 2 8)
+			 (vector 7 9 4 6 2 1 3 8 5)
+			 (vector 3 5 1 8 4 9 2 7 6)
+			 (vector 8 6 2 7 5 3 1 9 4)))
+
+  (define count-cells '#(unused 36 34 32 31 30))
+  
+  (define (board-switch proc)
+    (dotimes (i 3)
+      (dotimes (j 3)
+	(let* ((n1  (random 3))
+	       (n2  (random-not 3 n1))
+	       (off (* i 3)))
+	  (proc (+ off n1)
+		(+ off n2))))))
+
+  (define (exchange-board n1 n2)
+    (dotimes (i 9)
+      (dotimes (j 9)
+	(let ((item (array-ref board i j)))
+	  (when (= item n1)
+	    (array-set! board i j n2))
+	  (when (= item n2)
+	    (array-set! board i j n1))))))
+
+  (define (reveal-cells)
+    (let ((max-in-group   (if (= level 1) 5 4))
+	  (group-visibles (make-vector 9 0))
+	  (find-group     (lambda (i j)
+			    (+ (* (quotient i 3) 3)
+			       (quotient j 3)))))
+      
+      (dotimes (i (vector-ref count-cells level))
+	(let Loop ()
+	  (let* ((row (random 9))
+		 (col (random 9))
+		 (blk (find-group row col))
+		 (itm (array-ref board row col))
+		 (vis (vector-ref group-visibles blk)))
+	    (cond
+	      ((negative? itm)
+	       ;; already revealed
+	       (Loop))
+	      ((= (vector-ref group-visibles blk) max-in-group)
+	       ;; too much revealed in this group
+	       (Loop))
+	      (else
+	       ;; reveal this cell
+	       (array-set! board row col (- itm))
+	       (vector-set! group-visibles blk (+ vis 1)))))))))
+
+  ;; Rows switching
+  (board-switch (lambda (n1 n2)
+		  (let ((row1 (vector-ref board n1))
+			(row2 (vector-ref board n2)))
+		    (vector-set! board n1 row2)
+		    (vector-set! board n2 row1))))
+
+  ;; Columns switching
+  (board-switch (lambda (n1 n2)
+		  (dotimes (i 9)
+		    (let ((tmp (array-ref board i n1)))
+		      (array-set! board i n1 (array-ref board i n2))
+		      (array-set! board i n2 tmp)))))
+
+  ;; Add some shuffle to all that stuff
+  (dotimes (i 30)
+    (let* ((n1 (random 9))
+	   (n2 (random-not 9 n1)))
+      (exchange-board (+ n1 1)  (+ n2 1))))
+
+  ;; Reveal some cells
+  (reveal-cells)
+
+  ;; Return the computed board
+  board)
+
+
+;;; ======================================================================
+;;; 	board->html ...
+;;; ======================================================================
+(define (board->html board level)
+  (define (show-cell id i j)
+    (let ((item (array-ref board i j)))
+      (if (negative? item)
+	  (<SPAN> :class "sudoku-cell-given" :id id (- item))
+	  (<SPAN> :class "sudoku-cell-unknown" :id id))))
+  (list 
+   (<DIV> :class "sudoku-board"
+     (map (lambda (x)
+	    (<DIV> :class "sudoku-group"
+		   (map (lambda (y)
+			  (let* ((i  (+ (* (quotient x 3) 3) (quotient y 3)))
+				 (j  (+ (* (remainder x 3) 3) (remainder y 3)))
+				 (id (format "sudoku-~a-~a" i j)))
+			    (<DIV> :class "sudoku-cell" 
+				   :onclick ~(click-cell $id)
+				   (show-cell id i j))))
+			(iota 9))))
+	  (iota 9)))
+   (<DIV> "Game level: " level "/5")))
+
+
+;;; ======================================================================
+;;; 	run-sudoku ...
+;;; ======================================================================
+(define-service (home/demos/sudoku)
+  (let* ((level 1)
+	 (board (init-sudoku level)))
+    (<HTML>
+     (<HEAD>
+	:dir *sudoku-directory*
+	(<HOP-SCHEME-HEAD> :sscript (make-file-name *sudoku-directory* "sudoku.scm"))
+	:css "sudoku.hss")
+     (<BODY>
+      (<DIV> :class "sudoku-title" (<IMG> :src
+					  (make-file-name *sudoku-directory*
+							  "sudoku.png")))
+      (<DIV> :class "sudoku-panel"
+	 (<H2>  "Menu")
+	 (<DIV> :class "sudoku-menu"
+	   (<DIV> 
+	      "Level: " [,(<A> "1") ,(<A> "2") ,(<A> "3") ,(<A> "4") ,(<A> "5")])
+
+	   (<DIV>
+	      "Show errors: " (<INPUT> :type "radio" :name "err" :checked "checked"
+				       :style "cursor: pointer"
+				       :onclick ~(set! *show-errors* #t)
+				       "yes")
+			       " "
+			       (<INPUT> :type "radio" :name "err"
+					:style "cursor: pointer"
+					:onclick ~(set! *show-errors* #f)
+					"no"))
+	   (<DIV> :style "cursor: pointer" :onclick ~(show-solution)
+		  "Show-solution")
+	   (<DIV> :style "cursor: pointer" :onclick ~(window.print)
+		  "Print the board"))
+	 (<H2> "Help")
+	 (<DIV> :class "sudoku-help"
+	    (<DIV> "- Click on a cell and enter a number")
+	    (<DIV> "- You can use arrows to move on the board")
+	    (<DIV> "- Use \"h\" or \"?\" to view the value of selected cell")
+	    (<DIV> "- Numbers in red are misplaced")))
+     (board->html board level)
+     (<SCRIPT>
+         ~(begin
+	    (set! *show-errors* #t)
+	    (set! *board* $board)
+	    (set! document.onkeydown key-event)))))))

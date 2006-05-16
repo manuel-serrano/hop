@@ -1,0 +1,87 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/doc/services.hop                */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
+;*    Last change :  Tue May 16 11:04:08 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOP doc services                                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc_services
+
+   (library hopwiki)
+   
+   (import  hopdoc_wiki
+	    hopdoc_widgets
+	    hopdoc_config)
+   
+   (export  doc/edit
+	    doc/example
+	    doc/example-file))
+
+;*---------------------------------------------------------------------*/
+;*    doc/edit ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-service (doc/edit path)
+   (let ((editor (<TEXTAREA>
+		    :class "editor"
+		    :rows 70 :cols 80
+		    (with-input-from-file path read-string))))
+      (<DOC>
+	 (<BUTTON>
+	    :onclick ~(if (confirm "Save the document?")
+			  (with-hop ($(service (body)
+					 (with-output-to-file path
+					    (lambda ()
+					       (display body))))
+				      $editor.value)))
+	    "Save")
+	 (<DIV>
+	    :align "center"
+	    editor))))
+   
+;*---------------------------------------------------------------------*/
+;*    doc/example ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (doc/example expr)
+   (if (authorized-service? (the-current-request) 'doc/example)
+       (with-handler
+	  (lambda (e)
+	     (http-internal-error e "Error in source code"))
+	  (instantiate::http-response-hop
+	     (content-type "text/html")
+	     (bodyp #t)
+	     (xml (with-input-from-string expr
+		     (lambda ()
+			(let loop ((v #f))
+			   (let ((e (hop-read)))
+			      (if (eof-object? e)
+				  v
+				  (loop (eval e))))))))))
+       (user-access-denied (the-current-request))))
+   
+;*---------------------------------------------------------------------*/
+;*    doc/example-file ...                                             */
+;*---------------------------------------------------------------------*/
+(define-service (doc/example-file path)
+   (if (authorized-service? (the-current-request) 'doc/example)
+       (with-handler
+	  (lambda (e)
+	     (http-internal-error e "Error in source code"))
+	  (instantiate::http-response-hop
+	     (content-type "text/html")
+	     (bodyp #t)
+	     (xml (with-input-from-file (make-file-path (doc-dir) "examples" path)
+		     (lambda ()
+			(let loop ((v #f))
+			   (let ((e (hop-read)))
+			      (if (eof-object? e)
+				  v
+				  (loop (eval e))))))))))
+       (user-access-denied (the-current-request))))
+   

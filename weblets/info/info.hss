@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Apr  3 10:59:01 2006 (serrano)                */
+/*    Last change :  Sun May 14 17:44:58 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
@@ -18,7 +18,7 @@ body {
   font-family: arial;
 }
 
-img {
+table.info img {
   padding: 20px;
 }
 
@@ -178,12 +178,12 @@ div.cache-info {
   padding: 2px;
 }
 
-span.cache-link {
+div.cache-link {
   cursor: pointer;
   color: #008;
 }
 
-span.cache-link:hover {
+div.cache-link:hover {
   text-decoration: underline;
 }
 

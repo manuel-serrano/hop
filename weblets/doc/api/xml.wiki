@@ -1,0 +1,191 @@
+<doc> XML
+
+== Description ==
+
+This page describes the server side facilities for parsing, encoding, and
+decoding XML data structure. It also presents facilities for handling
+HTML.
+
+== Synopsis ==
+
+=== Server ===
+
+  (xml-parse arg ...)
+  (xml-string-encode string)
+  (xml-string-decode string)
+  (xml-string-decode! string)
+
+  (html-parse arg ...)
+  (html-string-encode string)
+  (html-string-decode string)
+
+  (rss-parse arg ...)
+
+== Examples ==
+
+<example>xml-parse, xml-string, html-parse, html-string, rss-parse</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(xml-parse port [length] [proc] [specials] [strict])++ ===
+<function> xml-parse
+
+<arguments>
+^  arguments  ^   type          ^  default   ^  short description             ^
+| port        |  input-port     |            | the input port to be parsed.   |
+| length      |  integer        |    -1      | the length of the input.       |
+| proc        |  procedure      |  ++list++  | a constructor.                 |
+| specials    |  list           |  ++'()++   | special markups.               |
+| strict      |  boolean        |  //true//  | strict XML conformance.        |
+</arguments>
+
+This function parses a input stream in order to build an XML tree representing
+the document. The meaning of the arguments is:
+
+  * ++port++, the input port from which the characters are read.
+  * ++length++, a maximum number of characters to be parsed. This is useful
+ when reading HTTP characters stream that don't end with //end of file//
+ markers.
+  * ++proc++, a procedure of three arguments that is applied to build the
+ nodes of the built XML tree. The three arguments are:
+    - the name of the markup.
+    - the list of attributes.
+    - the children of the node.
+  * ++specials++, a list of special //stand alone// markups. That is a list
+ of markups that don't accept closing markups (for instance HTML ++<BR>++).
+  * ++strict++, if true enforce strict XML parsing. Otherwise tries to recover
+ from simple syntactic errors.
+</function>
+
+=== ++(xml-string-encode string)++ ===
+<function> xml-string-encode
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| string      |  string         | a string to be encoded.        |
+</arguments>
+
+Encodes the string in order to quote special meta characters (see also
+++url-encode++).
+
+~~ Example:
+
+  (xml-string-encode "www.kernel.org \"foo\" &foo; &git; 'bar'"
+,(begin "&#8658;")
+,(<OBJ->STRING> (xml-string-encode "www.kernel.org \"foo\" &foo; &git; 'bar'"))
+</function>
+
+=== ++(xml-string-decode string)++ ===
+<function> xml-string-decode
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| string      |  string         | a string to be decoded.        |
+</arguments>
+
+Decodes the XML ++string++ into a newly allocated string.
+
+~~ Example:
+
+  (xml-string-decode "www.kernel.org%20%22foo%22%20&foo;%20&git;%20%27bar%27")
+,(begin "&#8658;")
+,(<OBJ->STRING> (xml-string-decode "www.kernel.org%20%22foo%22%20&foo;%20&git;%20%27bar%27"))
+
+</function>
+
+=== ++(xml-string-decode! string)++ ===
+<function> xml-string-decode!
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| string      |  string         | a string to be decoded.        |
+</arguments>
+
+Decodes the XML ++string++ is place. That is, the parameter ++string++
+is modified by this function.
+</function>
+
+=== ++(html-parse port [length] [proc])++ ===
+<function> html-parse
+
+<arguments>
+^  arguments  ^   type          ^  default   ^  short description             ^
+| port        |  input-port     |            | the input port to be parsed.   |
+| length      |  integer        |    -1      | the length of the input.       |
+| proc        |  procedure      |  ++list++  | a constructor.                 |
+</arguments>
+
+This function parses a input stream and builds a tree for representing
+the parsed HTML document. It is a wrapper of ++xml-parse++. The meaning of
+its arguments is:
+
+  * ++port++, the input port from which the characters are read.
+  * ++length++, a maximum number of characters to be parsed. This is useful
+ when reading HTTP characters stream that don't end with //end of file//
+ markers.
+  * ++proc++, a procedure of three arguments that is applied to build the
+ nodes of the built HTML tree. The three arguments are:
+    - the name of the markup.
+    - the list of attributes.
+    - the children of the node.
+</function>
+
+=== ++(html-string-encode string)++ ===
+<function> html-string-encode
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| string      |  string         | a string to be encoded.        |
+</arguments>
+</function>
+
+=== ++(html-string-decode string)++ ===
+<function> html-string-decode
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| string      |  string         | a string to be decoded.        |
+</arguments>
+</function>
+
+=== ++(rss-parse port length rss channel item)++ ===
+<function> rss-parse
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| port        |  input-port     | the input port to be parsed.   |
+| length      |  integer        | the length of the input.       |
+| rss         |  procedure      | a constructor.                 |
+| channel     |  procedure      | a constructor.                 |
+| item        |  procedure      | a constructor.                 |
+</arguments>
+
+This function parses a input stream and builds a tree for representing
+the parsed RSS document. It is a wrapper of ++xml-parse++. The meaning 
+of its arguments is:
+
+  * ++port++, the input port from which the characters are read.
+  * ++length++, a maximum number of characters to be parsed. This is useful
+ when reading HTTP characters stream that don't end with //end of file//
+ markers.
+  * ++rss++, a procedure of two arguments that is applied to build the
+ nodes representing the RSS. The two arguments are:
+    - the channel.
+    - the list of items.
+  * ++channel++, a procedure of two arguments:
+    - a URL.
+    - a title.
+  * ++item++, a procedure of five arguments:
+    - a URL.
+    - a title.
+    - a date.
+    - a subject.
+    - a description.
+</function>
+
+</server>
+
+== See also ==
+<see-also>xml-parse, html-parser, xml-string-, html-string, rss-parse</see-also>
+</doc>

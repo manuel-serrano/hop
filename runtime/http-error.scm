@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Mar 24 11:44:08 2006 (serrano)                */
+;*    Last change :  Sun May 14 07:39:09 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -23,7 +23,7 @@
 	    __hop_configure
 	    __hop_types
 	    __hop_xml
-	    __hop_html-extra
+	    __hop_hop-extra
 	    __hop_service
 	    __hop_misc)
    
@@ -102,7 +102,7 @@
 			    (class #f)
 			    (style "" string)
 			    body)
-   (let* ((default "vertical-align: top; text-align: left; font-weight: bold")
+   (let* ((default "vertical-align: middle; text-align: left; font-weight: bold")
 	  (add (cond
 		  ((not class)
 		   "")
@@ -121,7 +121,9 @@
   border-top: 1px solid #bbb;
   font-family: sans-serif;")
 		  ((string=? class "dump")
-		   "padding-top: 20px;"))))
+		   "padding-top: 20px;")
+		  (else
+		   ""))))
       (apply <TD> :id (xml-make-id id 'ETD) :style (string-append style default add) body)))
 
 ;*---------------------------------------------------------------------*/
@@ -146,12 +148,11 @@
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
-	      (<HEAD>
-		 (<HOP-HEAD> :css
-			     (format "http://~a:~a/~a/hop-error.hss"
-				     (hostname)
-				     (hop-port)
-				     (hop-share-directory))))
+	      (<HEAD> :css
+		      (format "http://~a:~a/~a/hop-error.hss"
+			      (hostname)
+			      (hop-port)
+			      (hop-share-directory)))
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -175,8 +176,7 @@
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
-	      (<HEAD>
-		 (<HOP-HEAD> :css "hop-error.hss"))
+	      (<HEAD> :css "hop-error.hss")
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -234,8 +234,7 @@
       (instantiate::http-response-hop
 	 (start-line "HTTP/1.0 501 Internal Server Error")
 	 (xml (<HTML>
-		 (<HEAD>
-		    (<HOP-HEAD> :css "hop-error.hss"))
+		 (<HEAD> :css "hop-error.hss")
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
@@ -265,6 +264,7 @@
 		     (<ETD>
 			:class "request-info"
 			(<TABLE>
+			   (<COLGROUP> (<COL> :width "0*"))
 			   (<TR>
 			      (<TH> :align 'right "host:")
 			      (<ETD> (<TT> (http-request-host req))))
@@ -280,8 +280,7 @@
       (instantiate::http-response-hop
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (xml (<HTML>
-		 (<HEAD>
-		    (<HOP-HEAD> :css "hop-error.hss"))
+		 (<HEAD> :css "hop-error.hss")
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
@@ -309,7 +308,7 @@
    (let ((s (with-error-to-string (lambda () (warning-notify e)))))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 400 Bad Request")
-	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>")))))
+	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>" s)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-warning ...                                                 */
@@ -318,8 +317,7 @@
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 200 ok")
       (xml (<HTML>
-	      (<HEAD>
-		 (<HOP-HEAD> :css "hop-error.hss"))
+	      (<HEAD> :css "hop-error.hss")
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -349,12 +347,11 @@
       (instantiate::http-response-hop
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
-		 (<HEAD>
-		    (<HOP-HEAD> :css
-				(format "http://~a:~a/~a/hop-error.hss"
-					(hostname)
-					(hop-port)
-					(hop-share-directory))))
+		 (<HEAD> :css
+			 (format "http://~a:~a/~a/hop-error.hss"
+				 (hostname)
+				 (hop-port)
+				 (hop-share-directory)))
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>

@@ -1,0 +1,327 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/home/home.hss                   */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 24 13:57:44 2005                          */
+/*    Last change :  Tue May 16 05:15:53 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    DOC HOP CSS                                                      */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    User configuration                                               */
+/*---------------------------------------------------------------------*/
+$(define font-family "Lucida Grande, Verdana, Lucida, Helvetica, Arial")
+$(define typewriter "Bitstream Vera Sans Mono, Andale Mono, monospace")
+$(define border-color "#bbb")
+$(define home-color "#f9f9f9")
+$(define header-color "#fffff0")
+$(define title-color "#ddd")
+$(define pagearea-color "#fff")
+$(define table-header-background "#6357da")
+$(define table-header-markup-background "#d8a62a")
+$(define table-header-class-background "#71d830")
+$(define table-header-foreground "#fff")
+$(define table-background "#d8d7ff")
+$(define popup-menu-color "#eeeeee")
+$(define popup-menu-border "1px solid #bbb")
+$(define server-code-background "#eeeeff")
+$(define client-code-background "#eeffee")
+$(define keyword-color "#bb0088")
+$(define type-color "#00bb00")
+$(define example-background "#eeffdd")
+$(define edit-background "#ffffee")
+$(define source-background "#eeffff")
+$(define home-opacity "0.97")
+$(define deep-blue "#00a")
+$(define deep-green "#0a0")
+$(define deep-magenta "#7a459e")
+$(define deep-magenta2 "#4a346c")
+$(define deep-orange "#ffae2b")
+
+$(define server-color "#00a")
+$(define client-color "#070")
+$(define style-color "#a00")
+
+$(define button-margin "margin-left: 4px; 
+  margin-right: 4px; 
+  margin-top: 2px;
+  margin-bottom: 2px")
+$(define button-padding "padding-left: 5px; 
+  padding-right: 5px;
+  padding-top: 0;
+  padding-bottom: 0")
+
+/*---------------------------------------------------------------------*/
+/*    Common CSS rules                                                 */
+/*---------------------------------------------------------------------*/
+body {
+  background-color: #e0e0e0;
+  font-family: $font-family;
+  overflow: scroll;
+}
+
+img.logo {
+  padding: 20px;
+}
+
+tt {
+  font-family: $typewriter;
+  font-size: small;
+  color: #300;
+}
+
+h1 {
+  font-size: 100%;
+}
+
+/*--- forms -----------------------------------------------------------*/
+button {
+  border-width: 1px;
+  $button-margin;
+  $button-padding;
+}
+
+button[disabled] {
+  border-width: 1px;
+  $button-margin;
+  $button-padding;
+}
+
+button:hover {
+  background-color: #eee;
+  border-color: #999;
+}
+
+button:focus {
+  background-color: #eee;
+  border-color: #999;
+  color: blue;
+}
+
+input {
+  border: 1px solid $border-color;
+}
+
+input[type=text] {
+  color: blue;
+}
+
+input[type=radio]#share {
+  color: red;
+}
+
+table.home {
+  width: 45em;
+  margin-top: 50px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background-color: white;
+  -moz-border-radius: 0.5em;
+}
+
+div#title {
+  width: 35em;
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+
+div#result {
+  text-align: center;
+  width: 30em;
+  font-weight: bold;
+  font-size: large;
+  color: red;
+  border-top: 1px solid $border-color;
+  margin-top: 10px;
+  padding-top: 10px;
+}  
+
+/*--- notepad ---------------------------------------------------------*/
+div.hop-notepad-title {
+  background-color: transparent;
+  padding: 0 10px 20px 0;
+}
+
+div.hop-notepad-tabs {
+  background-color: transparent;
+  clear: left;
+  text-align: left;
+  padding: 0;
+  padding-left: 10px;
+  padding-right: 5%;
+  margin-left: 10px;
+}
+
+div.hop-notepad-tabs > span {
+  font-size: small;
+  border-color: $border-color;
+  margin: 0 4px 0 0;
+}
+
+div.hop-notepad-tabs > span.hop-nptab-active {
+  background-color: $home-color;
+  border-bottom-color: $home-color;
+}
+
+div.hop-notepad-body {
+  border-color: $border-color;
+}
+
+div.hop-notepad-body {
+  border-left: 1px solid $border-color;
+  border-right: 1px solid $border-color;
+  border-bottom: 1px solid $border-color;
+  padding: 10px;
+  font-size: small;
+  background-color: $home-color;
+}
+
+div.hop-notepad-body-tab {
+  border-color: blue;
+  background-color: $home-color;
+}  
+
+table.hop-doc {
+  font-size: small;
+}
+
+table.hop-doc th {
+  vertical-align: top;
+}
+  
+table.hop-doc th:after {
+  content: ":";
+}
+
+table.hop-doc td {
+  font-family: monospace;
+  font-size: large;
+  vertical-align: bottom;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Misc                                                             */
+/*---------------------------------------------------------------------*/
+span.parse-error {
+  color: red;
+  font-weight: bold;
+}
+
+span.edit:hover {
+  cursor: default;
+}
+
+span.edit:hover {
+  text-decoration: underline;
+  color: $deep-blue;
+}
+
+span.uptime {
+  color: #333;
+  font-weight: bold;
+}
+
+/*---------------------------------------------------------------------*/
+/*    widgets                                                          */
+/*---------------------------------------------------------------------*/
+
+/*--- window ----------------------------------------------------------*/
+iwindow {
+  font-size: small;
+  background-color: white;
+  z-index: 11;
+}
+
+/*--- hr --------------------------------------------------------------*/
+hr {
+  border-top: 1px solid $border-color;
+  border-bottom: 0;
+  border-left: 0;
+  border-right: 0;
+}
+
+/*--- iframe ----------------------------------------------------------*/
+iframe.hz {
+  width: 98%;
+  height: 450px;
+  overflow: auto;
+  border: 1px solid $border-color;
+  margin: 5px;
+  padding: 2px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Presentation                                                     */
+/*---------------------------------------------------------------------*/
+div.hop-tab {
+  background: white;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-position: center 50px;
+  background-image: url( "icons/logo-bg-128x128.png" );
+  min-width: 200;
+  min-height: 200;
+  margin: 5px;
+  border: 1px solid $border-color;
+  padding: 2px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Demo                                                             */
+/*---------------------------------------------------------------------*/
+$(hop-hss-type! "demo" "div.demo")
+$(define demo-background "#496bce")
+$(define toolbar-opacity "0.9")
+$(define toolbar-background (color-lighter "#496bce"))
+
+demo {
+  width: 800;
+  height: 600;
+  background-color: #496bce;
+  overflow: auto;
+  border: 2px double #aaa;
+  z-index: 1001;
+}
+  
+demo div.toolbar {
+  position: relative;
+  left: 0px;
+  top: 50px;
+  width: 50px;
+  height: 500px;
+  background: $toolbar-background;
+  border-right: 1px outset #ccc;
+  border-top: 1px outset #ccc;
+  border-bottom: 1px outset #ccc;
+  opacity: $toolbar-opacity;
+  z-index: 15;
+}
+
+table.toolbar {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+table.toolbar td {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+span.icon {
+  position: absolute;
+  visibility: hidden;
+  background-color: #ffffcc;
+  border: 1px solid black;
+  padding: 2px;
+  cursor: default;
+}

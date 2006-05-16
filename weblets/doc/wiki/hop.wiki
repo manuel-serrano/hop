@@ -1,0 +1,15 @@
+This example builds a multiplication tables.
+
+,(let ((enum (iota 9 1)))
+    (<TABLE>
+       (<TR> (<TD>) (map <TH> enum))
+       (map (lambda (v1)
+	       (<TR>
+		  (cons (<TH> v1)
+			(map (lambda (v2)
+				(<TD> (* v1 v2)))
+			     enum))))
+	    enum)))
+
+The second example reverses a given word:
+,(list->string (reverse (string->list "Inria"))).

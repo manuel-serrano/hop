@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Thu Nov 10 08:24:14 2005 (serrano)                */
-/*    Copyright   :  2005 Manuel Serrano                               */
+/*    Last change :  Tue May 16 08:03:58 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
 /*=====================================================================*/
@@ -32,7 +32,6 @@ function hop_vpaned_fraction_set( paned, fraction ) {
 
    if( paned.fraction != fraction ) {
       paned.fraction = fraction;
-      
       if( paned.onresize != undefined ) {
 	 paned.onresize();
       }
@@ -68,6 +67,16 @@ function hop_hpaned_fraction_set( paned, fraction ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_paned_fraction_set ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_paned_fraction_set( paned, fraction ) {
+   if( paned.className == "hop-vpaned" )
+      hop_vpaned_fraction_set( paned, fraction );
+   else 
+      hop_hpaned_fraction_set( paned, fraction );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_paned_fraction_get ...                                       */
 /*---------------------------------------------------------------------*/
 function hop_paned_fraction_get( paned ) {
@@ -93,7 +102,7 @@ function hop_paned_onresize_set( paned, onresize ) {
 /*---------------------------------------------------------------------*/
 function hop_make_vpaned( parent, id, fraction, pan1, pan2 ) {
    var document = parent.ownerDocument || parent.document;
-   var paned, tr, td1, td2, cursor, div;
+   var paned, tbody, tr, td1, td2, cursor, div;
    // the paned
    paned = document.createElement( "table" );
    paned.className = "hop-vpaned"
@@ -106,9 +115,13 @@ function hop_make_vpaned( parent, id, fraction, pan1, pan2 ) {
 
    parent.appendChild( paned );
 
+   // the table body
+   tbody = document.createElement( "tbody" );
+   paned.appendChild( tbody );
+   
    // the table row
    tr = document.createElement( "tr" );
-   paned.appendChild( tr );
+   tbody.appendChild( tr );
 
    // the table cells
    td1 = document.createElement( "td" );
@@ -152,6 +165,8 @@ function hop_make_vpaned( parent, id, fraction, pan1, pan2 ) {
       document.addEventListener( "mousemove", mousemove, true );
       document.addEventListener( "mouseup", delmousemove, true );
       document.addEventListener( "onblur", delmousemove, true );
+      e.preventDefault();
+      e.stopPropagation();
    }
    
    // re-parent the two pans

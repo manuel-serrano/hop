@@ -1,0 +1,175 @@
+<doc> Notepad widget
+
+== Description ==
+
+These markups implement //Notepads// in HOP documents. A //notepad// 
+is a container. It is built using the ++<NOTEPAD>++ constructor. A
+//notepad// contains a header (++<NPHEAD>++) and one or
+several pads (++<NPTAB>++). Each //pad// contains a header (++<NPTABHEAD>++)
+which is always visible and a body. The body is only visible when
+the pad is selected. Only one pad is selected at a time.
+
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markups presented in this page are not yet supported on
+client side programming. They are only supported on server side.])
+
+== Synopsis ==
+
+=== Server ===
+
+  (<NOTEPAD> arg ...)
+  (<NPHEAD> arg ...)
+  (<NPTAB> arg ...)
+  (<NPTABHEAD> arg ...)
+
+=== Client ===
+  
+  (notepad-select notepad pad)
+
+=== Requirements ===
+
+Client codes using //Notepads// need to load the script ++hop-notepad.js++.
+They also need to load the ++hop-notepad.css++ style sheet. Hence, documents
+using //Notepads// must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css")
+
+
+== Examples ==
+
+<example><NOTEPAD></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<NOTEPAD>++ ===
+<markup> <NOTEPAD>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| :inline      |  boolean  |   ++#t++     | inline or on-demand?        |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This function creates a //notepad//. Its first child can be 
+++<NPHEAD>++. Its others children are all ++<NPTAB>++.
+,(<P>)
+A //notepad// may be //inlined// or //on-demand//. Clients received all
+the bodies of a inlined notepad at a time. That is, the unselected tab's body
+are present in the client. The pad's body of on-demand //notepad// are sent
+to the client only when the pad is selected. Tabs body of on-demand 
+//notepad// must use the ++<DELAY>++ markup.
+
+</markup>
+
+=== ++<NPHEAD>++ ===
+<markup> <NPHEAD>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This function creates an optional //notepad// header.
+</markup>
+
+=== ++<NPTAB>++ ===
+<markup> <NPTAB>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This function creates a //tab//. The first child of //tab// __must__
+be a ++<NPTABHEAD>++.
+
+</markup>
+
+=== ++<NPTABHEAD>++ ===
+<markup> <NPTABHEAD>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+Creates a tab header.
+
+</markup>
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(notepad-select notepad tab)++ ===
+<procedure> notepad-select
+
+<arguments>
+^  arguments  ^   type               ^  short description  ^
+| notepad     |  notepad or string   | the notepad.        |
+| tab         |  tab or string       | the tab.            |
+</arguments>
+
+This function selects a //tab// in a //notepad//.
+</procedure>
+</client>
+
+== Style ==
+<style>
+This section describes the various CSS elements used to configure
+//Notepads//.
+
+=== ++div.hop-notepad-title++ ===
+<css> div.hop-notepad-title 
+
+This element specifies the graphical configuration of the title (the
+++<NPHEAD>++ body) of the //Notepad//.
+</css>
+
+=== ++div.hop-notepad-body++ ===
+<css> div.hop-notepad-body 
+
+The overall body of the //Notepad//.
+</css>
+
+=== ++div.hop-notepad-tab++ ===
+<css> div.hop-notepad-tab 
+
+The box containing each tab body.
+</css>
+
+=== ++div.hop-notepad-tabs++ ===
+<css> div.hop-notepad-tabs 
+
+The horizontal box containing all tabs.
+</css>
+
+=== ++div.hop-notepad-tabs > span++ ===
+<css> div.hop-notepad-tabs > span
+
+The tab span. The active //tab// (i.e., the tab currently selected) is 
+denoted by the ++hop-nptab-active++ class. The inactives //tabs// are denoted 
+by the ++hop-nptab-inactive++ class.
+
+</css>
+
+=== ++hop-notepad.css++ ===
+
+The file ++hop-notepad.css++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share>hop-notepad.css</share>
+</style>
+
+== See also ==
+<see-also><NOTEPAD>, notepad-select!</see-also>
+
+</doc>

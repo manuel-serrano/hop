@@ -1,0 +1,17 @@
+;; A simple foldlist
+(<HTML>
+   (<HEAD> :jscript "hop-foldlist.js" :css "hop-foldlist.css")
+   (<BODY>
+      (<H3> "A list with standard icons")
+      (<FL>
+	 (<FLITEM>
+	    (<FLHEAD> "One") [This is the content of the first list item])
+	 (<FLITEM>
+	    (<FLHEAD> "Two") :open #t [This one is open by default])
+	 (<FLITEM>
+	    (<FLHEAD> "Three")
+	    [This is the content of the third list item]
+	    (<TABLE>
+	       (map (lambda (x)
+		       (<TR> (<TD> x) (<TD> (* x x))))
+		    (iota 10)))))))

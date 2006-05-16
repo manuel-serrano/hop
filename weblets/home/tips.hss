@@ -1,0 +1,22 @@
+body {
+  background: #fff;
+  font-size: 9px;
+  font-family: Lucida Grande, Verdana, Lucida, Helvetica, Arial;
+}
+
+p {
+  text-align: justify;
+}
+  
+h1 {
+  font-size: 120%;
+}
+
+h2 {
+  font-size: 105%;
+}
+
+p.descr {
+  color: #444;
+  margin-left: 10px;
+}

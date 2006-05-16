@@ -1,0 +1,53 @@
+<doc> HOP server Miscellaneous parameters
+
+== Description ==
+
+These server parameters give global information on the running HOP.
+
+== Synopsis ==
+
+=== server ===
+
+  (hop-uptime)
+  (hop-verbose)
+  (hop-verbose-set! arg)
+  (hop-session)
+  (hop-session-set! arg)
+
+
+== Server Definitions ==
+<server>
+
+=== ++hop-uptime++ ===
+<parameter> hop-uptime
+
+<arguments>
+^  access  ^   type    ^  current value      ^  short description            ^
+|   r      |  date     |  ++,(hop-uptime)++  | The running HOP up time.      |
+</arguments>
+</parameter>
+
+=== ++hop-verbose++ ===
+<parameter> hop-verbose
+<parameter> hop-verbose-set!
+
+<arguments>
+^  access  ^   type    ^  current value       ^  short description            ^
+|   r/w    |  integer  |  ++,(hop-verbose)++  | The verbosity.                |
+</arguments>
+</parameter>
+</parameter>
+
+=== ++hop-session++ ===
+<parameter> hop-session
+<parameter> hop-session-set!
+
+<arguments>
+^  access  ^   type    ^  current value       ^  short description            ^
+|   r/w    |  integer  |  ++,(hop-session)++  | The current session identifier. |
+</arguments>
+</parameter>
+</parameter>
+</server>
+
+</doc>

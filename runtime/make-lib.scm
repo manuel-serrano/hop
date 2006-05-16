@@ -37,15 +37,15 @@
 	   __hop_http-response
 	   __hop_http-shoutcast
 	   __hop_http-error
-	   __hop_html-extra
-	   __hop_html-inline
-	   __hop_html-paned
-	   __hop_html-tabslider
-	   __hop_html-notepad
-	   __hop_html-slider
-	   __hop_html-tree
-	   __hop_html-foldlist
-	   __hop_html-window
+	   __hop_hop-extra
+	   __hop_hop-inline
+	   __hop_hop-paned
+	   __hop_hop-tabslider
+	   __hop_hop-notepad
+	   __hop_hop-slider
+	   __hop_hop-tree
+	   __hop_hop-foldlist
+	   __hop_hop-window
 	   __hop_html-editor
 	   __hop_event
 	   __hop_color

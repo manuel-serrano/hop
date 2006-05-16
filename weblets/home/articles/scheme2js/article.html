@@ -1,0 +1,2382 @@
+<!-- 95% W3C COMPLIANT, 95% CSS FREE, RAW HTML -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1">
+<title>Compiling Scheme to JavaScript</title>
+ <style type="text/css">
+  <!--
+  pre { font-family: monospace }
+  tt { font-family: monospace }
+  code { font-family: monospace }
+  p.flushright { text-align: right }
+  p.flushleft { text-align: left }
+  span.sc { font-variant: small-caps }
+  span.sf { font-family: sans-serif }
+  span.skribetitle { font-family: sans-serif; font-weight: bolder; font-size: x-large; }
+  span.refscreen { }
+  span.refprint { display: none; }
+/*=====================================================================*/
+/*    serrano/diffusion/article/hop-lang/css/article.css               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Fri Jun 10 09:15:18 2005                          */
+/*    Last change :  Thu Dec  1 14:31:27 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Mail Article CSS                                                 */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Default settings                                                 */
+/*---------------------------------------------------------------------*/
+body {
+  display: block;
+  width: 45em;
+  margin: auto;
+  font-family: PostAntiqua;
+}
+
+p {
+  text-align: justify;
+}
+
+ul {
+  text-align: justify;
+}
+
+ol {
+  text-align: justify;
+}
+
+div.section {
+  margin-bottom: 1em;
+}
+
+div.abstract {
+  margin: 1em;
+  padding: 1px 10px 1px 10px;
+  background: #eef;
+  font-size: medium;
+  font-family: Trebuchet ms;
+  font-style: italic;
+  border: 1px dotted black;
+}
+
+div.footnote {
+  font-size: small;
+}
+
+div.skribesectiontitle {
+  padding-top: 0;
+  padding-bottom: 0em;
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+div.section-atitle h3 {
+  border-top: thin solid black;
+  border-bottom: thin solid black;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+div.document-title {
+  font-family: PostAntiqua;
+}
+
+div.document-title-title {
+  text-align: right;
+  font-weight: bold;
+  font-size: 30pt;
+  border-top: thin solid black;
+  border-bottom: medium solid black;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-top: 10px;
+  padding-top: 10px;
+
+}
+
+div.document-title-authors {
+  margin-bottom: 2em;
+}
+
+span.document-author {
+  display: block;
+  text-align: right;
+  margin-bottom: 1em;
+}
+
+span.document-author span {
+  font-style: italic;
+}
+
+span.document-author span.document-author-name {
+  font-weight: bold;
+  font-size: large;
+  font-style: normal;
+  display: block;
+}
+
+span.document-author span.document-author-url {
+  font-style: normal;
+  display: block;
+}
+
+span.document-author span.document-author-email {
+  font-style: normal;
+  display: block;
+}
+
+div.prog-border {
+  border: 1px solid #aaa;
+}
+
+pre.scheme {
+  background-color: #ffffee;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.uscheme {
+  background-color: #eeffee;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.repl {
+  background-color: #eff;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.c {
+  background-color: #eeffff;
+  border: thin solid black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.display {
+  background-color: #ffeeee;
+  border: thin solid black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+center.show {
+  background-color: #ffeeff;
+  border: thin solid black;
+  padding: 2pt;
+  margin: 0;
+  font-style: normal;
+  text-align: left;
+}
+
+center.show ul {
+  padding: 2pt;
+  padding-left: 14pt;
+  margin: 0;
+}
+
+div.references table {
+  font-size: small;
+}
+
+div.references table td {
+  font-size: small;
+}
+
+div.references table th {
+  font-size: small;
+}
+
+table.api-table {
+  border: none;
+  background-color: #ffe;
+}
+
+tr.api-table-prototype {
+   background-color: #ffc;
+}
+
+tr.api-table-header {
+   background-color: #fcf;
+}
+
+div.section#appendix p {
+   margin-left: 5%;
+}
+
+div.plan {
+  border: 1px dotted red;
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 5px;
+  color: #d00;
+  font-family: sans-serif;
+  font-style: italic;
+  font-size: small;
+  background: #eee;
+}
+
+/*---------------------------------------------------------------------*/
+/*    prgm ...                                                         */
+/*---------------------------------------------------------------------*/
+pre {
+  padding-left: 2px;
+  margin: 0;
+}
+
+pre.bigloo {
+  background-color: #dff;
+}
+
+pre.lhtml {
+  background-color: #fdf;
+}
+
+pre.hop {
+  background-color: #ffc;
+}
+
+pre.html {
+  background-color: #ccf;
+}
+
+pre.server {
+  background-color: #eee;
+  color: #007;
+}
+
+pre.client {
+  background-color: #eee;
+  color: #033;
+}
+
+pre.syntax {
+  background-color: #dfd;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Printing configuration                                           */
+/*---------------------------------------------------------------------*/
+@media print {
+/*--- Markup configuration --------------------------------------------*/
+pre {
+  font-size: 8pt;
+  font-family: courier;
+  line-height: 95%;
+}
+
+div.prog-border {
+  border: 0;
+}
+
+pre.prog {
+  font-size: 6pt;
+  line-height: 100%;
+}
+
+center.break-page-before {
+  page-break-before: always;
+}
+
+table.api-table {
+  border: 1px solid black;
+  padding: 10px;
+}
+
+table.api-table tr.api td {
+  padding-top: 5px;
+}
+
+table.api-table th {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+table.api-table td {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.api-table-prototype {
+  display: none;
+}
+
+.api-table-header {
+  display: none;
+}
+
+span.refscreen {
+  display: none;
+}
+
+span.refprint {
+  display: inline;
+}
+
+div.abstract {
+  border: none;
+  line-height: 100%;
+}
+
+div.section#Table-of-contents {
+  display: none;
+}
+
+div.section#Postscript-download {
+  display: none;
+}
+
+span.document-author span.document-author-name {
+  font-size: 13pt;
+  font-family: sans-serif;
+  font-weight: normal;
+}
+
+a {
+  text-decoration: none;
+}
+
+pre.scheme {
+  background-color: #ffffee;
+  border: none;
+}
+
+pre.uscheme {
+  background-color: #eeffee;
+  border: none;
+}
+
+pre.repl {
+  background-color: #eff;
+  border: none;
+}
+
+div.skribe-ending {
+  display: none;
+}
+
+div.print-plan {
+  display: none;
+}
+
+div.section-atitle h3 {
+  border-top: 0;
+  border-bottom: 0;
+}
+}
+/*=====================================================================*/
+/*    serrano/diffusion/article/hop-lang/css/sigplan.css               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Dec  1 11:00:10 2005                          */
+/*    Last change :  Wed Dec 14 13:46:49 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    The SIGPLAN CSS                                                  */
+/*=====================================================================*/
+
+@media print {
+  div.document-title {
+    font-family: Palatino;
+/*     -moz-column-count: 1;                                           */
+    width: 100%;
+    text-align: center;
+  }
+
+  div.document-title-title {
+/*     width: 42pc;                                                    */
+    font-weight: bold;
+    font-size: 20pt;
+    text-align: center;
+    line-height: 120%;
+    border: 0;
+  }
+
+  div.document-title-authors {
+    display: table;
+/*     width: 42pc;                                                    */
+    text-align: center;
+    margin-bottom: 1.8cm;
+  }
+
+  div.document-authors {
+    width: 100%;
+    display: table-row;
+    text-align: center;
+  }
+
+  span.document-author {
+    text-align: center;
+    display: table-cell;
+    width: 50%;
+  }
+
+  span.document-author span.document-author-name {
+    font-size: large;
+    font-family: Palatino;
+    padding-bottom: 0.5em;
+  }
+
+  span.document-author span.document-author-affiliation {
+    font-style: normal;
+  }
+
+  span.document-author tt {
+    font-family: mono, sans-serif;
+    font-size: 8pt;
+  }
+
+  div.skribe-body {
+/*     -moz-column-count: 2;                                           */
+/*     -moz-column-rule: none;                                         */
+/*     -moz-column-gap: 2pc;                                           */
+/*     width: 42pc;                                                    */
+  }
+ 
+  body, div.abstract {
+    font-size: 9pt;
+    line-height: 110%;
+    font-family: Palatino;
+    font-style: normal;
+    padding: 0;
+    margin-top: 1in;
+    margin-left: .70in;
+    margin-right: .70in;
+    margin-bottom: 1in;
+  }
+
+  div.abstract {
+    font-size: 9pt;
+    line-height: 110%;
+    font-family: Palatino;
+    font-style: normal;
+    padding: 0;
+    margin-top: 1in;
+/*     margin-left: .70in;                                             */
+/*     margin-right: .70in;                                            */
+  }
+
+  div.abstract {
+    margin: 0;
+  }
+
+  div.section#References {
+/*     font-size: x-small;                                             */
+  }
+  
+  div.section#References table {
+    font-size: inherit;
+  }
+
+  @page { 
+    size: 8.5in 11in; 
+    margin-bottom: 5cm;
+  }
+}
+  -->
+ </style>
+</head>
+
+<body class="document">
+<div id="Compiling-Scheme-to-JavaScript-title" class="document-title">
+<div id="Compiling-Scheme-to-JavaScript-title" class="document-title-title">
+Compiling Scheme to JavaScript</div>
+<div id="Compiling-Scheme-to-JavaScript-title" class="document-title-authors">
+<div class="document-authors">
+<span id="author1207" class="document-author">
+<span class="document-author-name" id="author1207">Florian Loitsch</span>
+<span class="document-author-affiliation" id="author1207">Inria Sophia Antipolis</span>
+<span class="document-author-email" id="author1207"><a href="http://www.inria.fr/mimosa/Florian.Loitsch" class="http"><tt id='tt1206'
+>http://www.inria.fr/mimosa/Florian.Loitsch</tt></a></span>
+</span
+<span id="author1209" class="document-author">
+<span class="document-author-name" id="author1209">Manuel Serrano</span>
+<span class="document-author-affiliation" id="author1209">Inria Sophia Antipolis</span>
+<span class="document-author-email" id="author1209"><a href="http://www.inria.fr/mimosa/Manuel.Serrano" class="http"><tt id='tt1208'
+>http://www.inria.fr/mimosa/Manuel.Serrano</tt></a></span>
+</span
+</div></div>
+</div>
+<div class="skribe-body">
+<div class="section" id="Abstract"><!-- Abstract -->
+<a name="Abstract"></a>
+<div class="abstract-atitle"><h3><font color="black">Abstract</font>
+</h3></div><div class="abstract">
+<p id='paragraph1213'
+>This paper presents <span class="sc">Scm2Js</span> a compiler that translates a variant
+of the Scheme programming language into JavaScript. On the one hand,
+some Scheme features are missing, amongst which the most important are
+the lack of support for continuations, the absence of exact numbers, and
+a partial treatment of tail recursions. On the other hand, some
+extensions are added for improving the connection between Scheme and
+JavaScript. In particular, <span class="sc">Scm2Js</span> extends Scheme with the
+JavaScript <em id='emph1212'
+>dot-notation</em> which enables compact class
+accesses. Scheme code and JavaScript can be mixed because they both
+access functions and variables of the other language and because they
+share, at runtime, a common memory.</p><p id='paragraph1216'
+>The codes produced by <span class="sc">Scm2Js</span> are fast because for most programs
+they have performance comparable to equivalent hand-written JavaScript
+programs. Hence, one may use <span class="sc">Scm2Js</span> for replacing JavaScript with
+Scheme. For instance, one may implement web libraries or HTML actions
+in Scheme. The paper shows how this can be done in context of Hop,
+a programming language dedicated to interactive web development.</p></div><br>
+</div>
+<div class="section" id="Table-of-contents"><!-- Table of contents -->
+<a name="Table-of-contents"></a>
+<div class="section-atitle"><h3><font color="black">Table of contents</font>
+</h3></div><div class="section">
+<table cellspacing="1" cellpadding="1" width="100%" class="toc">
+<tbody>
+ <tr><td valign="top" align="left">1</td><td colspan="4" width="100%"><a href="article.html#Introduction">Introduction</a></td></tr>
+ <tr><td valign="top" align="left">2</td><td colspan="4" width="100%"><a href="article.html#SCM2JS-and-R5RS">SCM2JS and R5RS</a></td></tr>
+ <tr><td valign="top" align="left">3</td><td colspan="4" width="100%"><a href="article.html#SCM2JS-Compiler">SCM2JS Compiler</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.1</td><td colspan="3" width="100%"><a href="article.html#Scheme-vs.-JavaScript">Scheme vs. JavaScript</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.2</td><td colspan="3" width="100%"><a href="article.html#Data-Types">Data Types</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.3</td><td colspan="3" width="100%"><a href="article.html#Flow-Control">Flow Control</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.4</td><td colspan="3" width="100%"><a href="article.html#Optimizations">Optimizations</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.5</td><td colspan="3" width="100%"><a href="article.html#Benchmarks">Benchmarks</a></td></tr>
+ <tr><td valign="top" align="left">4</td><td colspan="4" width="100%"><a href="article.html#JavaScript-Integration">JavaScript Integration</a></td></tr>
+ <tr><td valign="top" align="left">5</td><td colspan="4" width="100%"><a href="article.html#Hop-integration">Hop integration</a></td></tr>
+ <tr><td></td><td valign="top" align="left">5.1</td><td colspan="3" width="100%"><a href="article.html#The-syntaxes-of-Hop">The syntaxes of Hop</a></td></tr>
+ <tr><td></td><td valign="top" align="left">5.2</td><td colspan="3" width="100%"><a href="article.html#Hop-elaboration">Hop elaboration</a></td></tr>
+ <tr><td></td><td valign="top" align="left">5.3</td><td colspan="3" width="100%"><a href="article.html#Hop-services">Hop services</a></td></tr>
+ <tr><td></td><td valign="top" align="left">5.4</td><td colspan="3" width="100%"><a href="article.html#Hop-Scheme">Hop Scheme</a></td></tr>
+ <tr><td></td><td valign="top" align="left">5.5</td><td colspan="3" width="100%"><a href="article.html#External-Scheme-Files">External Scheme Files</a></td></tr>
+ <tr><td></td><td valign="top" align="left">5.6</td><td colspan="3" width="100%"><a href="article.html#Conclusion">Conclusion</a></td></tr>
+ <tr><td valign="top" align="left">6</td><td colspan="4" width="100%"><a href="article.html#Related-Work">Related Work</a></td></tr>
+ <tr><td valign="top" align="left">7</td><td colspan="4" width="100%"><a href="article.html#Future-Work">Future Work</a></td></tr>
+ <tr><td valign="top" align="left">8</td><td colspan="4" width="100%"><a href="article.html#Conclusion">Conclusion</a></td></tr>
+ <tr><td valign="top" align="left">9</td><td colspan="4" width="100%"><a href="article.html#References">References</a></td></tr>
+</tbody>
+</table>
+</div><br>
+</div>
+<div class="section" id="Introduction"><!-- Introduction -->
+<a name="Introduction"></a>
+<div class="section-atitle"><h3><font color="black">1 Introduction</font>
+</h3></div><div class="section">
+<p id='paragraph1218'
+>JavaScript is a popular scripting language. It is embedded in
+many applications such as PDF viewers, integrated development
+environments, graphical applications. It has given birth to dialects
+that are also successful (for instance, ActionScript, the language for
+programming Flash applications). Its large deployment is mainly due to
+its use as scripting language for web pages. Nearly every modern site
+uses JavaScript now, and all mainstream internet browsers are capable
+of interpreting JavaScript. As Web browsers are installed on nearly
+every computer, JavaScript interpreters are ubiquitous.</p><p id='paragraph1219'
+>Contrary to what its name suggests, JavaScript is a functional
+language whose design has been influenced by the Scheme programming
+language [<a href="article.html#scheme:r5rs" class="inbound">10</a>]. However, these two languages are separated
+by their syntaxes, the Scheme support for continuations, the JavaScript
+support of object layer based on prototypes, and some other minor
+technical differences. Since this is not an incredibly difficult task, we
+have found it appealing to craft a compiler from Scheme to JavaScript for
+replacing the latter with the former, in particular, in active web
+pages.</p><p id='paragraph1220'
+>However, for this replacement to be effective two requirements
+must be fulfilled.</p><ul class="itemize" id='itemize1224'
+><li>Using Scheme instead of JavaScript should impose no
+performance penalty. That is the performance of compiled Scheme codes
+must be comparable to equivalent hand-written JavaScript codes. We
+are considering performance as a potential issue even if we have
+noticed tremendous differences of performance depending on the
+hardware architecture and the JavaScript interpreter used for
+testing. For instance, we have found that running JavaScript programs within
+Firefox on the ultimate generation of Intel processors is about ten times
+faster than running the same programs within Safari. This tends to
+demonstrate that most users are not paying much attention to performance.</li>
+<li>Scheme and JavaScript must be tightly integrated. That
+is all bindings must be available from one language to the other.
+The data structure must also be usable indifferently in both language.
+For web programming this is of prime importance. In JavaScript, the
+DOM (the <em id='emph1222'
+>Document Object model</em> is a standardized way of
+representing a visualized HTML document using an object hierarchy)
+is interfaced with classes. For enabling easy access to the DOM,
+Scheme programs must be able to access JavaScript classes with a
+lightweight and intuitive syntax.</li>
+</ul><p id='paragraph1228'
+>For enabling the <span class="sc">Scm2Js</span> compiler to meet these two
+requirements we have decided to give up on full Scheme compliance.
+Section <a href="article.html#SCM2JS-and-R5RS" class="inbound"><span class="refscreen">SCM2JS and R5RS</span><span class="refprint">2</span></a> presents the difference of the source
+language of <span class="sc">Scm2Js</span> and the official Scheme language as defined by
+its standard [<a href="article.html#scheme:r5rs" class="inbound">10</a>]. Section
+<a href="article.html#SCM2JS-Compiler" class="inbound"><span class="refscreen">SCM2JS Compiler</span><span class="refprint">3</span></a> discusses the Scheme to JavaScript compilation
+per se. It shows how Scheme data structures are mapped to JavaScript.
+It presents the most significant aspect of the compilation of the 
+control flow. Then it concludes with a performance study. The following
+Section <a href="article.html#JavaScript-Integration" class="inbound"><span class="refscreen">JavaScript Integration</span><span class="refprint">4</span></a> presents the integration
+of Scheme and JavaScript. An example of embedding of <span class="sc">Scm2Js</span> 
+is then provided in Section <a href="article.html#Hop-integration" class="inbound"><span class="refscreen">Hop integration</span><span class="refprint">5</span></a>
+which presents how it is used in the context of the Hop programming
+language. The remaining sections discuss related and future work.</p></div><br>
+</div>
+<div class="section" id="SCM2JS-and-R5RS"><!-- SCM2JS and R5RS -->
+<a name="SCM2JS-and-R5RS"></a>
+<div class="section-atitle"><h3><font color="black">2 SCM2JS and R5RS</font>
+</h3></div><div class="section">
+<p id='paragraph1234'
+><span class="sc">Scm2Js</span> is not conform to the <span class="sc">R<sup id='sup1231'
+><font size="-3">5</font></sup>rs</span>. There are mainly three reasons
+for the non-conformance of <span class="sc">Scm2Js</span>: extensions to the Scheme language,
+short-comings (mainly motivated by efficiency reasons) and missing features.</p><p id='paragraph1236'
+><span class="sc">Scm2Js</span> should integrate easily with JavaScript. During the
+creation of a comfortable interface we were led to extend the Scheme language
+by the "dot-notation" as explained in Section <a href="article.html#JavaScript-Integration" class="inbound"><span class="refscreen">JavaScript Integration</span><span class="refprint">4</span></a>.</p><p id='paragraph1244'
+><span class="sc">R<sup id='sup1238'
+><font size="-3">5</font></sup>rs</span> requires compliant Scheme implementations to be properly
+tail-recursive. <span class="sc">Scm2Js</span> correctly translates some common recursive function
+calls into iterative statements (see Section <a href="article.html#Flow-Control" class="inbound"><span class="refscreen">Flow Control</span><span class="refprint">3.3</span></a>), but
+fails to cover all cases. Instead of implementing some expensive techniques,
+like trampolines, 
+we decided to leave the remaining tail-recursive calls untouched. Efficiency
+made us violate another <span class="sc">R<sup id='sup1242'
+><font size="-3">5</font></sup>rs</span> requirement. JavaScript does not have any
+fixed point number type, and instead of reimplementing a integer type we
+decided to map Scheme's exact numbers to JavaScript's floating point numbers.</p><p id='paragraph1256'
+><span class="sc">Scm2Js</span> is not (yet) feature complete either. It misses hygienic macros
+(although <font color="blue"><tt id='tt1246'
+>define-macro</tt></font> can be used as replacement) and it does not
+implement the complete  Scheme runtime library: most importantly
+<font color="blue"><tt id='tt1248'
+>call/cc</tt></font> and <font color="blue"><tt id='tt1250'
+>eval</tt></font> are not available. <font color="blue"><tt id='tt1252'
+>eval</tt></font>, on one
+hand, could be easily implemented in the form of a library without any changes
+to the compiler. <font color="blue"><tt id='tt1254'
+>call/cc</tt></font>, on the other hand, would require either a
+transformation to Continuation Passing Style, or exception handling mechanisms
+as described in [<a href="article.html#sekiguchi:portable" class="inbound">14</a>]. Both techniques would induce
+a certain overhead on the compiled program.</p></div><br>
+</div>
+<div class="section" id="SCM2JS-Compiler"><!-- SCM2JS Compiler -->
+<a name="SCM2JS-Compiler"></a>
+<div class="section-atitle"><h3><font color="black">3 SCM2JS Compiler</font>
+</h3></div><div class="section">
+<p id='paragraph1258'
+>JavaScript and Scheme are related languages, but the compilation from
+one to another is not so trivial. In [<a href="article.html#loitsch:js2scm" class="inbound">9</a>] we already
+presented a JavaScript to Scheme compiler. This section introduces the inverse
+compiler, <span class="sc">Scm2Js</span>, and the important points of such a compilation.</p><p id='paragraph1260'
+>We will begin with a short comparison of the two languages, then continue
+with the chosen data type mapping in Section <a href="article.html#Data-Types" class="inbound"><span class="refscreen">Data Types</span><span class="refprint">3.2</span></a>.
+We will discuss flow control compilation in Section
+<a href="article.html#Flow-Control" class="inbound"><span class="refscreen">Flow Control</span><span class="refprint">3.3</span></a>. Section <a href="article.html#Optimizations" class="inbound"><span class="refscreen">Optimizations</span><span class="refprint">3.4</span></a>
+presents some optimizations we implemented in <span class="sc">Scm2Js</span>, and Section
+<a href="article.html#Benchmarks" class="inbound"><span class="refscreen">Benchmarks</span><span class="refprint">3.5</span></a> shows some benchmarks which confirm that all these
+efforts weren't fruitless.</p><!-- Scheme vs. JavaScript -->
+<a name="Scheme-vs.-JavaScript"></a>
+<div class="subsection-atitle"><h3>3.1 Scheme vs. JavaScript</h3></div><div class="subsection">
+<p id='paragraph1271'
+>This section discusses the differences (and similarities) of JavaScript
+and Scheme. We limit this comparison to the most significant parts of the two
+languages. JavaScript has been inspired by Scheme, and most of the similarities
+are hence not astounding. The following list enumerates some of the shared
+features:
+<ul class="itemize" id='itemize1270'
+><li>types are dynamically checked,</li>
+<li>functions are first class citizens,</li>
+<li>lexical scoping,</li>
+<li>automatic memory management,</li>
+<li>an <em id='it1265'
+>eval</em> function, which allows one to compile
+		and run code at run-time, and</li>
+<li>n-ary and var-arg functions with an <font color="blue"><tt id='tt1267'
+>apply</tt></font>
+		primitive that allows to indirectly call these functions on a
+		list or array of arguments.</li>
+</ul></p><p id='paragraph1272'
+>In other areas JavaScript is however quite different from Scheme. The
+move from Lisp-style syntax to C-like syntax is certainly the most striking
+difference, and Section <a href="article.html#Optimizations" class="inbound"><span class="refscreen">Optimizations</span><span class="refprint">3.4</span></a> mentions the
+expression to statement pass which has been implemented as a consequence of the
+C-like syntax. Other changes have nevertheless far greater impact on the
+development of a Scheme to JavaScript compiler. Especially JavaScript's
+peculiar syntactic scoping of variables makes the compilation difficult. In
+JavaScript a variable declaration is valid for a complete function block
+wherever the declaration is located. Section <a href="article.html#Flow-Control" class="inbound"><span class="refscreen">Flow Control</span><span class="refprint">3.3</span></a> shows why
+this behavior complicates the compilation.</p><p id='paragraph1273'
+>As we will see in the next section, the data types aren't equal
+either. JavaScript has less data types, and the matching types are not always
+equivalent. JavaScript strings, for instance, are (contrary to Scheme strings)
+immutable, and JavaScript numbers are always floating point (whereas Scheme has
+exact numbers too).</p><p id='paragraph1280'
+>Another difference is the lack of <font color="blue"><tt id='tt1274'
+>call/cc</tt></font> in JavaScript. The existing
+<font color="blue"><tt id='tt1276'
+>try/catch</tt></font> partially compensates for the absence, but is not as powerful
+as <font color="blue"><tt id='tt1278'
+>call/cc</tt></font></p></div>
+<!-- Data Types -->
+<a name="Data-Types"></a>
+<div class="subsection-atitle"><h3>3.2 Data Types</h3></div><div class="subsection">
+<p id='paragraph1285'
+>JavaScript has basically four main types: booleans, numbers, strings,
+and objects. Functions are of type object and don't have their proper data
+type. The JavaScript specification [<a href="article.html#ecmascript" class="inbound">8</a>] additionally cites
+<font color="blue"><tt id='tt1281'
+>undefined</tt></font> and <font color="blue"><tt id='tt1283'
+>null</tt></font> as respective types. Scheme, despite
+being a smaller language, uses four more types: pairs, vectors, characters and
+symbols.</p><p id='paragraph1317'
+><span class="sc">Scm2Js</span> maps Scheme's
+<ul class="itemize" id='itemize1316'
+><li>booleans to booleans.</li>
+<li>functions to JavaScript functions.</li>
+<li>numbers to JavaScript numbers. Even though this mapping seems
+obvious, it makes <span class="sc">Scm2Js</span> non conform to <span class="sc">R<sup id='sup1291'
+><font size="-3">5</font></sup>rs</span>. JavaScript's numbers
+are always floating point, whereas Scheme differentiates exact and inexact
+numbers.</li>
+<li>pairs to the JavaScript "class" <font color="blue"><tt id='tt1294'
+>sc_Pair</tt></font> with fields
+<font color="blue"><tt id='tt1296'
+>car</tt></font> and <font color="blue"><tt id='tt1298'
+>cdr</tt></font>. The empty list is represented by <font color="blue"><tt id='tt1300'
+>null</tt></font>.</li>
+<li>vectors to JavaScript <font color="blue"><tt id='tt1303'
+>Array</tt></font>s.<a href="#footnote-footnote1305"><sup><small>1</small></sup></a></li>
+<li>characters to the "class" <font color="blue"><tt id='tt1307'
+>sc_Char</tt></font>, holding a JavaScript
+string of length 1.</li>
+<li>strings to a new JavaScript "class", <font color="blue"><tt id='tt1310'
+>sc_String</tt></font>. It is
+not possible to reuse JavaScript's strings, as they are immutable.
+<font color="blue"><tt id='tt1312'
+>sc_String</tt></font> itself holds one of these immutable strings, and replaces it,
+when necessary.</li>
+<li>symbols to strings.</li>
+</ul></p><p id='paragraph1337'
+>JavaScript's typing rules are less restrictive than Scheme's rules. Due to
+implicit conversions many operations that are errors in Scheme are valid
+expressions in JavaScript. <span class="sc">Scm2Js</span> takes advantage of <span class="sc">R<sup id='sup1320'
+><font size="-3">5</font></sup>rs</span>' liberal
+error handling. Implementations are rarely forced to detect and signal
+errors, but are free to handle most errors the way they want to. In particular
+"[...] it is an error for a procedure to be passed an argument that the
+procedure is not explicitly specified to handle [...]. Implementations may
+extend a procedure's domain of definition to include such arguments". In our
+case, errors are handled by JavaScript. If an operation yields an error
+according to the JavaScript specification, an error is signaled. If however
+JavaScript is able to handle an expression that would be invalid in Scheme, no
+error is reported. The following examples demonstrate this behavior:
+<font color="blue"><tt id='tt1322'
+>(car '())</tt></font> is an invalid expression in Scheme. <span class="sc">Scm2Js</span> compiles this
+expression to <font color="blue"><tt id='tt1325'
+>null.car</tt></font>. As <font color="blue"><tt id='tt1327'
+>null</tt></font> doesn't have any
+fields, JavaScript throws an exception. The compiled version hence raises an
+error. In the following (invalid) code snippet we try to add a symbol to a
+number: <font color="blue"><tt id='tt1329'
+>(+ 3 'sym)</tt></font>. The translated code would be <font color="blue"><tt id='tt1331'
+>3 + 'sym'</tt></font>
+which is a valid JavaScript expression concatenating the two strings
+<font color="blue"><tt id='tt1333'
+>&quot;3&quot;</tt></font> and <font color="blue"><tt id='tt1335'
+>&quot;sym&quot;</tt></font>. In this case no error will be detected.</p><p id='paragraph1340'
+>Similar missed errors happen when functions are not passed the correct
+number of arguments, in which case either missing arguments are filled with
+a special <font color="blue"><tt id='tt1338'
+>#unspecified</tt></font> value, or additional arguments are ignored.</p></div>
+<!-- Flow Control -->
+<a name="Flow-Control"></a>
+<div class="subsection-atitle"><h3>3.3 Flow Control</h3></div><div class="subsection">
+<p id='paragraph1349'
+>Scheme has only few flow-control constructs, and all of them have
+similar counterparts in JavaScript. A direct mapping is however impossible.
+<span class="sc">R<sup id='sup1342'
+><font size="-3">5</font></sup>rs</span> requires Scheme implementations to be properly
+tail-recursive. JavaScript on the other hand doesn't even mention this
+feature. Mapping Scheme function calls naively to JavaScript function calls is
+hence dependent on the JavaScript implementation and not
+always<a href="#footnote-footnote1345"><sup><small>2</small></sup></a>
+conform. Two popular solutions are <em id='emph1346'
+>trampolines</em> and Henry Baker's
+"Cheney on the M.T.A." [<a href="article.html#baker:trampoline" class="inbound">6</a>]. The
+concept of trampolines needs the modification of all call
+locations. Tail calls are replaced by instructions that save the
+call target and arguments in global variables, followed by a <font color="blue"><tt id='tt1347'
+>return</tt></font>.
+Non tail calls, on the other
+hand, are wrapped into an iterative loop. Initially the original call target is
+executed. Once the function returns the trampoline checks for the existence of
+a function in the global variable that temporarily holds the tail call
+targets. If this variable is not empty the stored function is executed, and the
+trampoline waits for the next return.</p><p id='paragraph1350'
+>Even though trampolines solve the initial
+problem of rapidly growing stacks, they are inefficient. Tail calls need to
+manipulate the global variables, whereas non tail call must be wrapped into an
+iterative loops. An optimized version of trampolines is presented in
+[<a href="article.html#so:babel01" class="inbound">11</a>]. Instead of returning at every tail call, the program
+is allowed to stack a constant number of tail calls. Only when the limit is
+reached the continuation is stored in the global variables, and the trampoline
+is used.</p><p id='paragraph1351'
+>"Cheney on the M.T.A.", on the other hand, transforms the program into
+Continuation Passing Style (CPS) first, and thereby eliminates the need for
+stacks. In the paper the authors propose to use the stack as short term
+memory. Whenever the stack reaches the stack limit a garbage collection is
+performed, and the program restarts with an empty stack. The stack
+becomes the youngest generation in a generational garbage collector.</p><p id='paragraph1356'
+>All these techniques introduce some performance penalty and we therefore
+decided not to implement any. For now <span class="sc">Scm2Js</span> just tries to compile
+tail-recursive calls into iterative JavaScript statements. This approach is
+however incomplete as it is impossible to statically determine all
+call-targets. <span class="sc">Scm2Js</span> is able to transform the most common recursive calls
+(like <font color="blue"><tt id='tt1354'
+>let loop</tt></font> constructs) but leaves other more difficult tail
+recursive calls untouched.</p><p id='paragraph1361'
+>Even when the call-targets have been determined the tail-rec to iterative
+transformation is not trivial. A <font color="blue"><tt id='tt1357'
+>let loop</tt></font> construct, for
+instance, is mapped to JavaScript's <font color="blue"><tt id='tt1359'
+>while</tt></font> statement.</p><p id='paragraph1362'
+>Example:</p><font size="-2"><center id='center1368'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6d6ff"><pre class="prog" id='prog1366'
+>(<strong id='bold2116'
+>let</strong> loop ((x 1))
+  (<strong id='bold2117'
+>if</strong> (&gt; x 10)
+      'done
+      (loop (+ x 1))))
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1370'
+>is compiled as:</p><font size="-2"><center id='center1401'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6ffd6"><pre class="prog" id='prog1399'
+><font color="#106010"><u id='underline1397'
+><strong id='bold1396'
+>var</strong></u></font> res = undefined;
+<font color="#106010"><u id='underline1394'
+><strong id='bold1393'
+>var</strong></u></font> x = <font color="#bb0000">1</font>;
+<font color="#106010"><u id='underline1390'
+><strong id='bold1389'
+>while</strong></u></font> (<font color="#106010"><u id='underline1387'
+><strong id='bold1386'
+>true</strong></u></font>) {
+  <font color="#106010"><u id='underline1384'
+><strong id='bold1383'
+>if</strong></u></font> (&gt; x <font color="#bb0000">10</font>)
+     res = <font color="#500000">&quot;done&quot;</font>;
+  <font color="#106010"><u id='underline1379'
+><strong id='bold1378'
+>else</strong></u></font> {
+    x = x + <font color="#bb0000">1</font>;
+    <font color="#106010"><u id='underline1375'
+><strong id='bold1374'
+>continue</strong></u></font>;
+  }
+  <font color="#106010"><u id='underline1372'
+><strong id='bold1371'
+>break</strong></u></font>;
+}
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1403'
+>This simple mapping is efficient but it may break down when closures are
+built in the body of the loop:</p><font size="-2"><center id='center1408'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6d6ff"><pre class="prog" id='prog1406'
+><em id='it2118'
+>1: </em>(<strong id='bold2119'
+>let</strong> loop ((x 1))
+<em id='it2120'
+>2: </em><a name="2" class="mark"></a>  (store! (<strong id='bold2121'
+>lambda</strong> () x)) 
+<em id='it2122'
+>3: </em>  (loop (+ x 1)))
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1417'
+>In this example the loop variable <font color="blue"><tt id='tt1410'
+>x</tt></font> is captured by anonymous
+functions in line <em id='it1412'
+><i id='line-ref'
+><a href="article.html#2" class="inbound">2</a></i></em>. The captured <font color="blue"><tt id='tt1413'
+>x</tt></font> is however
+freshly allocated at each recursive call and is hence different for each of
+these functions. An invocation of two different closures would yield two
+different results. The previous transformation on the other hand hoists loop
+variables outside the loop, which implies a shared <font color="blue"><tt id='tt1415'
+>x</tt></font> for all
+anonymous functions:</p><font size="-2"><center id='center1447'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6ffd6"><pre class="prog" id='prog1445'
+><em id='it2123'
+>1: </em><font color="#106010"><u id='underline1443'
+><strong id='bold1442'
+>var</strong></u></font> res = undefined;
+<em id='it2124'
+>2: </em><a name="2" class="mark"></a><font color="#106010"><u id='underline1440'
+><strong id='bold1439'
+>var</strong></u></font> x = <font color="#bb0000">1</font>; <font color="#202020"><em id='it1436'
+></em></font>
+<em id='it2125'
+>3: </em><font color="#106010"><u id='underline1434'
+><strong id='bold1433'
+>while</strong></u></font> (<font color="#106010"><u id='underline1431'
+><strong id='bold1430'
+>true</strong></u></font>) {
+<em id='it2126'
+>4: </em>  store(<font color="#101060"><u id='underline1428'
+><strong id='bold1427'
+>function</strong></u></font>() { <font color="#106010"><u id='underline1425'
+><strong id='bold1424'
+>return</strong></u></font> x; });
+<em id='it2127'
+>5: </em><a name="5" class="mark"></a>  x = x + <font color="#bb0000">1</font>; <font color="#202020"><em id='it1421'
+></em></font>
+<em id='it2128'
+>6: </em>  <font color="#106010"><u id='underline1419'
+><strong id='bold1418'
+>continue</strong></u></font>;
+<em id='it2129'
+>7: </em>}
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1457'
+><font color="blue"><tt id='tt1449'
+>x</tt></font> is now outside the loop (line <em id='it1451'
+><i id='line-ref'
+><a href="article.html#2" class="inbound">2</a></i></em>) and it's value
+is physically modified at each iteration (line <em id='it1452'
+><i id='line-ref'
+><a href="article.html#5" class="inbound">5</a></i></em>). As the
+variable is allocated outside the loop all anonymous functions reference the
+same <font color="blue"><tt id='tt1453'
+>x</tt></font>. As this variable is physically changed during each iteration,
+all anonymous functions return the same result (i.e. the final value of
+<font color="blue"><tt id='tt1455'
+>x</tt></font>) when executed.</p><p id='paragraph1460'
+>In JavaScript locally declared variables are visible within the whole function
+body, and declaring a new variable within the <font color="blue"><tt id='tt1458'
+>while</tt></font> body doesn't solve
+this issue. The following code demonstrates this unfruitful attempt:</p><font size="-2"><center id='center1492'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6ffd6"><pre class="prog" id='prog1490'
+><font color="#106010"><u id='underline1488'
+><strong id='bold1487'
+>var</strong></u></font> res = undefined;
+<font color="#106010"><u id='underline1485'
+><strong id='bold1484'
+>var</strong></u></font> x = <font color="#bb0000">1</font>;
+<font color="#106010"><u id='underline1481'
+><strong id='bold1480'
+>while</strong></u></font> (<font color="#106010"><u id='underline1478'
+><strong id='bold1477'
+>true</strong></u></font>) {
+  <font color="#106010"><u id='underline1475'
+><strong id='bold1474'
+>var</strong></u></font> tmp_x = x;
+  store(<font color="#101060"><u id='underline1472'
+><strong id='bold1471'
+>function</strong></u></font>() { <font color="#106010"><u id='underline1469'
+><strong id='bold1468'
+>return</strong></u></font> tmp_x; });
+  x = x + <font color="#bb0000">1</font>;
+  <font color="#106010"><u id='underline1465'
+><strong id='bold1464'
+>continue</strong></u></font>;
+  <font color="#106010"><u id='underline1462'
+><strong id='bold1461'
+>break</strong></u></font>;
+}
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1500'
+>Even though <font color="blue"><tt id='tt1494'
+>tmp_x</tt></font> is declared inside the <font color="blue"><tt id='tt1496'
+>while</tt></font> construct,
+the peculiar JavaScript scoping rule makes it visible with the complete
+function. In practice this means that the order and location of variable
+declarations is ignored and that there exists never more than one variable of
+the same name. Once a variable has been declared future declarations of
+variables of the same name are ignored. In our case this means that the
+anonymous functions share the same variable (this time <font color="blue"><tt id='tt1498'
+>tmp_x</tt></font>)
+again.</p><p id='paragraph1503'
+>There are only two ways of creating new scopes in JavaScript:
+functions and the <font color="blue"><tt id='tt1501'
+>with</tt></font> construct. Indeed anonymous functions solve
+the captured variable problem:</p><font size="-2"><center id='center1535'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6ffd6"><pre class="prog" id='prog1533'
+><font color="#106010"><u id='underline1531'
+><strong id='bold1530'
+>var</strong></u></font> res = undefined;
+<font color="#106010"><u id='underline1528'
+><strong id='bold1527'
+>var</strong></u></font> x = <font color="#bb0000">1</font>;
+<font color="#106010"><u id='underline1524'
+><strong id='bold1523'
+>while</strong></u></font> (<font color="#106010"><u id='underline1521'
+><strong id='bold1520'
+>true</strong></u></font>) {
+  (<font color="#101060"><u id='underline1518'
+><strong id='bold1517'
+>function</strong></u></font>(x) {
+    store(<font color="#101060"><u id='underline1515'
+><strong id='bold1514'
+>function</strong></u></font>() { <font color="#106010"><u id='underline1512'
+><strong id='bold1511'
+>return</strong></u></font> x; });
+  })(x);
+  x = x + <font color="#bb0000">1</font>;
+  <font color="#106010"><u id='underline1508'
+><strong id='bold1507'
+>continue</strong></u></font>;
+  <font color="#106010"><u id='underline1505'
+><strong id='bold1504'
+>break</strong></u></font>;
+}
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1543'
+>Although they partially defeat the purpose of the iterative <font color="blue"><tt id='tt1537'
+>while</tt></font>
+statement (i.e. removing the unnecessary applications), they don't fill the
+stack and are hence a great improvement over recursive function calls.
+It is furthermore possible to limit the anonymous function to parts of the
+loop-body. If the captured variable is only used within one branch of an
+<font color="blue"><tt id='tt1539'
+>if</tt></font> it is not necessary to invoke the function in the other branch.
+Anonymous functions are however too limiting: some JavaScript constructs don't
+work over function boundaries, and in particular the <font color="blue"><tt id='tt1541'
+>continue</tt></font> statement
+must not be moved inside another function.</p><p id='paragraph1552'
+>JavaScript's <font color="blue"><tt id='tt1544'
+>with</tt></font> statement on the other hand fullfills all our
+requirements. <font color="blue"><tt id='tt1546'
+>with</tt></font> takes an object as parameter and pushes it on the
+execution context stack. Every field of the pushed object becomes a local variable
+limited to the <font color="blue"><tt id='tt1548'
+>with</tt></font> scope. It is hence sufficient to create an empty
+object, store the captured variables in the fields of this object, and finally
+use the <font color="blue"><tt id='tt1550'
+>with</tt></font> construct to push it on the execution context stack.</p><font size="-2"><center id='center1590'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6ffd6"><pre class="prog" id='prog1588'
+><font color="#106010"><u id='underline1586'
+><strong id='bold1585'
+>var</strong></u></font> res = undefined;
+<font color="#106010"><u id='underline1583'
+><strong id='bold1582'
+>var</strong></u></font> x = <font color="#bb0000">1</font>;
+<font color="#106010"><u id='underline1579'
+><strong id='bold1578'
+>while</strong></u></font> (<font color="#106010"><u id='underline1576'
+><strong id='bold1575'
+>true</strong></u></font>) {
+  <font color="#106010"><u id='underline1573'
+><strong id='bold1572'
+>var</strong></u></font> tmp = <font color="#106010"><u id='underline1570'
+><strong id='bold1569'
+>new</strong></u></font> Object;
+  tmp.x = x;
+  <font color="#106010"><u id='underline1567'
+><strong id='bold1566'
+>with</strong></u></font>(tmp) {
+    store(<font color="#101060"><u id='underline1564'
+><strong id='bold1563'
+>function</strong></u></font>() { <font color="#106010"><u id='underline1561'
+><strong id='bold1560'
+>return</strong></u></font> x; });
+  }
+  x = x + <font color="#bb0000">1</font>;
+  <font color="#106010"><u id='underline1557'
+><strong id='bold1556'
+>continue</strong></u></font>;
+  <font color="#106010"><u id='underline1554'
+><strong id='bold1553'
+>break</strong></u></font>;
+}
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1592'
+>Some benchmarks indicate that, depending on the interpreter, pushing an
+empty object on the execution context stack is slightly slower or faster than
+function calls.</p></div>
+<!-- Optimizations -->
+<a name="Optimizations"></a>
+<div class="subsection-atitle"><h3>3.4 Optimizations</h3></div><div class="subsection">
+<p id='paragraph1594'
+>This section discusses common optimizations and compiler techniques and
+shows how they apply to our compiler <span class="sc">Scm2Js</span>. Due to the high level of
+JavaScript only few optimizations are applicable. It is for instance not easy
+to take advantage of a typing pass as one can't pass typing information to
+JavaScript interpreters. We did however implement (amongst others) an inlining
+optimization.</p><p id='paragraph1599'
+><span class="sc">Scm2Js</span>'s inlining is done in two steps. A first pass inlines user
+functions, whereas a second pass inlines runtime procedures. The first pass is
+rather rudimentary but fulfills its design goal, to inline all <font color="blue"><tt id='tt1596'
+>let
+loop</tt></font> expressions. When a variable is bound to a function and when it is only
+used once in functional position, then it is inlined. The first
+condition avoids us to do a control flow analysis, whereas the second condition
+avoids code growth.<a href="#footnote-footnote1598"><sup><small>3</small></sup></a> Even though this optimization is
+quite limited, it reduces the execution time of some benchmarks to less than
+50%</p><p id='paragraph1622'
+>A straightforward compilation of Scheme programs to JavaScript programs
+maps Scheme calls to JavaScript calls. In many cases this translation
+introduces an overhead. In particular binary operations like <font color="blue"><tt id='tt1600'
+>+</tt></font>,
+<font color="blue"><tt id='tt1602'
+>-</tt></font>,or <font color="blue"><tt id='tt1604'
+>%</tt></font> are far less efficient if called via a runtime
+function. A second pass therefore replaces function calls to specific library
+functions with the more efficient version: <font color="blue"><tt id='tt1606'
+>sc_plus(x, y)</tt></font> would become
+<font color="blue"><tt id='tt1608'
+>(x + y)</tt></font>. Other examples for this optimizations are all list
+primitives (<font color="blue"><tt id='tt1610'
+>car</tt></font>, <font color="blue"><tt id='tt1612'
+>cons</tt></font>,
+<font color="blue"><tt id='tt1614'
+>null?</tt></font>, etc.) and vector functions  (<font color="blue"><tt id='tt1616'
+>vector-ref</tt></font>,
+<font color="blue"><tt id='tt1618'
+>vector-set!</tt></font> or <font color="blue"><tt id='tt1620'
+>vector-length</tt></font>). This optimization is especially
+important as it gives a speed improvement of up to a factor of 25.</p><p id='paragraph1646'
+>We conclude this section with a problem many Scheme compiler encounter:
+Scheme is expression based, whereas JavaScript is statement based. Some
+JavaScript constructs can only be used at specific locations. It is for instance
+not possible to use a <font color="blue"><tt id='tt1623'
+>while</tt></font> loop at the right hand side of an
+assignment. <span class="sc">Scm2Js</span> introduces temporary variables to store the intermediate
+results of such statements. Interestingly these statements are mostly the
+result of optimizations. JavaScript has an equivalent expression for most
+statements: the if statement <font color="blue"><tt id='tt1626'
+>if (test) s1 else s2</tt></font> can be replaced by
+the conditional operator <font color="blue"><tt id='tt1628'
+>test ? e1 : e2</tt></font> and the block statement
+<font color="blue"><tt id='tt1630'
+>{ s1 s2 }</tt></font> by the sequence expression (<font color="blue"><tt id='tt1632'
+>e1, e2</tt></font>).
+The tail-rec pass however introduces some statement-only <font color="blue"><tt id='tt1634'
+>while</tt></font>
+loops and makes the technique necessary. Some other JavaScript statements
+without equivalent expressions are <font color="blue"><tt id='tt1636'
+>continue</tt></font>, <font color="blue"><tt id='tt1638'
+>return</tt></font>,
+<font color="blue"><tt id='tt1640'
+>break</tt></font>, <font color="blue"><tt id='tt1642'
+>throw</tt></font>, and <font color="blue"><tt id='tt1644'
+>try</tt></font>.</p></div>
+<!-- Benchmarks -->
+<a name="Benchmarks"></a>
+<div class="subsection-atitle"><h3>3.5 Benchmarks</h3></div><div class="subsection">
+<br class="figure" id='benchsP4'
+><a name="benchsP4"></a>
+<center id='center1649'
+><img src="html/P4.png" border="0" alt="" width="70%"></center>
+<br>
+<center><small><strong>Fig. 1:</strong> <span class="sc">Scm2Js</span> compiled Scheme code interpreted by Firefox, Opera and
+		      Konqueror on a Pentium 4 running Linux. Scores are
+		      relative to handwritten JavaScript files, which are the
+		      1.0 mark. Lower is better.</small></center><br><br class="figure" id='benchsMacG4'
+><a name="benchsMacG4"></a>
+<center id='center1652'
+><img src="html/macG4.png" border="0" alt="" width="70%"></center>
+<br>
+<center><small><strong>Fig. 2:</strong> <span class="sc">Scm2Js</span> interpreted by Firefox, Opera and Safari
+		      vs. JavaScript on a Apple G4 running Mac OS X. Lower is
+		      better.</small></center><br><br class="figure" id='benchsMacX86'
+><a name="benchsMacX86"></a>
+<center id='center1655'
+><img src="html/macX86.png" border="0" alt="" width="70%"></center>
+<br>
+<center><small><strong>Fig. 3:</strong> <span class="sc">Scm2Js</span> interpreted by Firefox, Opera and Safari
+		      vs. JavaScript on a Apple Intel Core Duo running Mac OS
+		      X.
+		      Lower is better.</small></center><br><p id='paragraph1679'
+>In order to evaluate the performance of <span class="sc">Scm2Js</span> we ran several benchmarks
+under three Internet browsers on three different architectures:
+<ul class="itemize" id='itemize1678'
+><li><p id='paragraph1657'
+>Linux/x86: an Intel Pentium 4 3.40GHz, 1GB, running Linux
+			 2.6.15.</p><p id='paragraph1662'
+>The used browsers were:
+	       <ul class="itemize" id='itemize1661'
+><li>Firefox 1.5.0.1,</li>
+<li>Opera 9.0 pre2, and</li>
+<li>Konqueror 3.5.1</li>
+</ul></p></li>
+<li><p id='paragraph1664'
+>Apple/G4: a PowerPC G4 1.67GHz, 2GB, running Mac OS X 10.4.5.</p><p id='paragraph1669'
+>We used the following browsers:
+	      <ul class="itemize" id='itemize1668'
+><li>Firefox 1.5.0.1,</li>
+<li>Opera 9 build 3303, and</li>
+<li>Safari 2.0.3 (417.9.2)</li>
+</ul></p></li>
+<li><p id='paragraph1671'
+>Apple/Core: a Intel Core Duo 2GHz, 1GB, running Mac OS X 10.4.5.</p><p id='paragraph1676'
+>We used the following browsers:
+	      <ul class="itemize" id='itemize1675'
+><li>Firefox pre 1.5.0.2,</li>
+<li>Opera 9 build 3278, and</li>
+<li>Safari 2.0.3 (417.9.2)</li>
+</ul></p></li>
+</ul></p><p id='paragraph1684'
+>It turned out, that the choice of browser has far more impact on the
+performance than the architecture. <tt id='tt1680'
+>Firefox</tt> and <tt id='tt1681'
+>Opera</tt> are
+sometimes up to ten times faster than <tt id='tt1682'
+>Safari</tt> or <tt id='tt1683'
+>Konqueror</tt>. The
+fastest architecture Intel Core Duo is however only four times as fast as
+the PowerPC G4. More importantly, the browsers behave similar on the
+different platforms.</p><p id='paragraph1685'
+>Each program was run 10 times, and the minimum time was collected. The time
+measurement was done by a small script, which launched the benchmarks. Any time
+spent on the preparation (parsing, precompiling, etc.) was hence not measured.</p><p id='paragraph1687'
+>Every benchmark has been written in Scheme and JavaScript. We then compiled
+the Scheme versions using <span class="sc">Scm2Js</span> and measured the execution times of both
+the JavaScript code and the compiled version.</p><p id='paragraph1688'
+>Figure <a href="article.html#benchsP4" class="inbound">1</a>, <a href="article.html#benchsMacG4" class="inbound">2</a> and
+<a href="article.html#benchsMacX86" class="inbound">3</a> present the ratio of the JavaScript time by the
+execution time of the compiled program (resp. on the Pentium 4, Apple G4 and
+Apple Intel Core Duo). A value of 1.0 therefore represents the reference time
+of the handwritten JavaScript code. Any value lower (resp. higher) than 1.0
+means that the compiled Scheme code ran faster (resp. slower) than this code.</p><p id='paragraph1699'
+>In general the compiled code is nearly as fast as the handcrafted version.
+Even under the worst condition <span class="sc">Scm2Js</span> is only about six times slower than the
+JavaScript version (benchmark <tt id='tt1690'
+>Nested</tt> under Firefox on the Pentium 4 in
+figure <a href="article.html#benchsP4" class="inbound">1</a>). <tt id='tt1691'
+>Nested</tt> consists of several nested
+loops incrementing a counter in the most nested loop. <span class="sc">Scm2Js</span> introduces a
+temporary variable for each loop, and uses this variable twice per
+iteration. This more than doubles the size of the loop bodies with a respective
+performance penalty. Apparently <tt id='tt1693'
+>Opera</tt> handles this case much better
+than <tt id='tt1694'
+>Firefox</tt>. <tt id='tt1695'
+>Firefox</tt> is about three
+times faster than <tt id='tt1696'
+>Opera</tt> when run on the JavaScript files, but
+<tt id='tt1697'
+>Opera</tt> degrades more gracefully and beats <tt id='tt1698'
+>Firefox</tt> on the
+compiled files.</p><p id='paragraph1701'
+>The <tt id='tt1700'
+>Quicksort</tt> benchmark suffers from the same problem: a very small
+loop iterates over an array to find elements smaller or greater than a certain
+pivot.</p><p id='paragraph1705'
+>In less extreme cases, <span class="sc">Scm2Js</span> performs quite well, though, and the
+rudimentary inlining even allows <span class="sc">Scm2Js</span> to beat the handwritten JavaScript
+in some cases (in particular the <tt id='tt1704'
+>Bague</tt> benchmark).</p></div>
+</div><br>
+</div>
+<div class="section" id="JavaScript-Integration"><!-- JavaScript Integration -->
+<a name="JavaScript-Integration"></a>
+<div class="section-atitle"><h3><font color="black">4 JavaScript Integration</font>
+</h3></div><div class="section">
+<p id='paragraph1722'
+><span class="sc">Scm2Js</span> provides a complete JavaScript-Scheme
+interface. That is JavaScript code can access Scheme variables and call Scheme
+functions, and inversely Scheme code can use JavaScript values. When passing
+values from one language to another, conversions must take place. In particular
+JavaScript strings and Scheme strings are not of the same type. As JavaScript
+strings are immutable, it was not possible to directly map Scheme strings to
+them. Scheme symbols, on the other hand, are immutable too, and in the current
+version symbols are compiled to JavaScript strings, whereas Scheme strings are
+translated into a new class <font color="blue"><tt id='tt1707'
+>sc_String</tt></font>. If a Scheme string should be
+used as JavaScript string a call to <font color="blue"><tt id='tt1709'
+>string-&gt;symbol</tt></font> is hence
+necessary<a href="#footnote-footnote1711"><sup><small>4</small></sup></a>, whereas a JavaScript string can be converted to a Scheme string by
+the means of <font color="blue"><tt id='tt1712'
+>symbol-&gt;string</tt></font>. Pairs and 
+characters don't have any conversion routines (as there are not any equivalent
+data types in JavaScript), and it is mostly convenient to just use their
+compiled representation. Pairs by accessing their <font color="blue"><tt id='tt1714'
+>car</tt></font> and <font color="blue"><tt id='tt1716'
+>cdr</tt></font>
+fields, and characters by accessing the <font color="blue"><tt id='tt1718'
+>val</tt></font> field of the
+<font color="blue"><tt id='tt1720'
+>sc_Char</tt></font> class.</p><p id='paragraph1730'
+>Functions are already mostly interchangeable, but to ease the integration
+of Scheme functions in the context of JavaScript we added the
+<font color="blue"><tt id='tt1723'
+>this</tt></font>-extension. If a function is used as method, JavaScript sets a
+<font color="blue"><tt id='tt1725'
+>this</tt></font> variable<a href="#footnote-footnote1729"><sup><small>5</small></sup></a> to the object on which the method was called. Take for
+instance the code in Figure <a href="article.html#this" class="inbound">4</a>.</p><br class="figure" id='this'
+><a name="this"></a>
+<pre class="prog" id='prog1750'
+><em id='it2130'
+>1: </em><a name="1" class="mark"></a><font color="#101060"><u id='underline1748'
+><strong id='bold1747'
+>function</strong></u></font> f() { print(<font color="#106010"><u id='underline1745'
+><strong id='bold1744'
+>this</strong></u></font>.x); }; <font color="#202020"><em id='it1742'
+>// prints 3</em></font>
+<em id='it2131'
+>2: </em><font color="#106010"><u id='underline1740'
+><strong id='bold1739'
+>var</strong></u></font> o = <font color="#106010"><u id='underline1737'
+><strong id='bold1736'
+>new</strong></u></font> Object;
+<em id='it2132'
+>3: </em>o.x = <font color="#bb0000">3</font>;
+<em id='it2133'
+>4: </em>o.f = f;
+<em id='it2134'
+>5: </em><a name="5" class="mark"></a>o.f();<font color="#202020"><em id='it1733'
+></em></font>
+</pre>
+<br>
+<center><small><strong>Fig. 4:</strong> JavaScript's <font color="blue"><tt id='tt1731'
+>this</tt></font> keyword represents the object
+				 on which the method has been called.</small></center><br><p id='paragraph1771'
+>As <font color="blue"><tt id='tt1751'
+>f</tt></font> is called as method of <font color="blue"><tt id='tt1753'
+>o</tt></font>, (line <em id='it1755'
+><i id='line-ref'
+><a href="article.html#5" class="inbound">5</a></i></em>)
+<font color="blue"><tt id='tt1756'
+>this</tt></font> will be set to <font color="blue"><tt id='tt1758'
+>o</tt></font> within the function <font color="blue"><tt id='tt1760'
+>f</tt></font>
+(line <em id='it1762'
+><i id='line-ref'
+><a href="article.html#1" class="inbound">1</a></i></em>). The <font color="blue"><tt id='tt1763'
+>this</tt></font>-extension brings the
+<font color="blue"><tt id='tt1765'
+>this</tt></font> variable to Scheme functions. Code within a procedure may
+reference <font color="blue"><tt id='tt1767'
+>this</tt></font> and hence access the object's field on which it has
+been called. Using <font color="blue"><tt id='tt1769'
+>this</tt></font> outside the scope of methods doesn't make
+much sense (even though the JavaScript specification gives a sense to this
+case), and it should therefore be only used if a Scheme function is going to
+represent a method.</p><p id='paragraph1776'
+>In order to use JavaScript objects within Scheme two runtime primitives
+<font color="blue"><tt id='tt1772'
+>js-field</tt></font> and <font color="blue"><tt id='tt1774'
+>js-field-set!</tt></font> have been added. They allow to
+respectively retrieve or set the fields of JavaScript objects. The use of these
+functions is not optimal though. Accessing (or changing) fields is too verbose
+and cumbersome. The equivalent of the short JavaScript expression</p><font size="-2"><center id='center1779'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6ffd6"><pre class="prog" id='prog1777'
+>x.y.z = a.b
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1781'
+>would be:</p><font size="-2"><center id='center1784'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6d6ff"><pre class="prog" id='prog1782'
+>(js-field-set! (js-field x 'y) 'z (js-field a 'b))
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1791'
+>We introduced therefore JavaScript's dot-notation into Scheme. In addition
+to <font color="blue"><tt id='tt1786'
+>js-field-set!</tt></font> and <font color="blue"><tt id='tt1788'
+>js-field</tt></font> <span class="sc">Scm2Js</span> makes it possible
+to directly access fields by concatenation the object, a dot and the
+field-name. The previous example becomes:</p><font size="-2"><center id='center1795'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6d6ff"><pre class="prog" id='prog1793'
+>(<strong id='bold2135'
+>set!</strong> x.y.z a.b)
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1809'
+>The dot-notation leads us to the first way of referencing JavaScript
+variables from within Scheme: the runtime Scheme variable <font color="blue"><tt id='tt1797'
+>*js*</tt></font> holds
+all global variables. If one wants to access JavaScript's global <font color="blue"><tt id='tt1799'
+>alert</tt></font>
+function, it is sufficient to retrieve  the <font color="blue"><tt id='tt1801'
+>alert</tt></font> field of the
+<font color="blue"><tt id='tt1803'
+>*js*</tt></font> variable: <font color="blue"><tt id='tt1805'
+>(js-field *js* 'alert)</tt></font> or using the dot-notation
+<font color="blue"><tt id='tt1807'
+>*js*.alert</tt></font>.</p><p id='paragraph1835'
+>Internally <font color="blue"><tt id='tt1810'
+>*js*</tt></font> is set to JavaScript's global <font color="blue"><tt id='tt1812'
+>this</tt></font>
+object. As such it automatically contains all global
+variables.<a href="#footnote-footnote1816"><sup><small>6</small></sup></a> The <font color="blue"><tt id='tt1817'
+>*js*</tt></font> object is also an easy way of
+making Scheme values available to JavaScript code. Just by assigning a new
+field of <font color="blue"><tt id='tt1819'
+>*js*</tt></font> users can create a new global variable and thereby
+export a Scheme value.<a href="#footnote-footnote1833"><sup><small>7</small></sup></a> In addition to this
+explicit exports <span class="sc">Scm2Js</span> automatically declares all global Scheme variables
+as global Javascript variables. The global variables are declared under their
+mangled form, which means that only a subset of variables are exported under
+their Scheme names.</p><p id='paragraph1839'
+>In a certain way the <font color="blue"><tt id='tt1836'
+>*js*</tt></font> variable resembles explicit casts of
+statically typed languages like Java or C. The programmer is explicitly telling
+the compiler he is going to do something dangerous, but that he is aware of the
+risk. Indeed, <span class="sc">Scm2Js</span> can't verify if the JavaScript variable exists,
+or if the variable name has been mistyped.</p><p id='paragraph1853'
+>A more secure method uses the <font color="blue"><tt id='tt1840'
+>js</tt></font> keyword. Whenever
+<span class="sc">Scm2Js</span> encounters a <font color="blue"><tt id='tt1843'
+>(js . A-LIST)</tt></font> expression in the
+top-level it adds the a-list's bindings to the symbol-table. These symbols are
+resolved at compile time and accesses to these variables are therefore checked
+by the compiler. This approach has the additional advantage of better
+integration into the code. The A-list allows
+to alias JavaScript variables with typical Scheme symbols. In the following
+example <font color="blue"><tt id='tt1845'
+>A_GLOBAL</tt></font> would be aliased to <font color="blue"><tt id='tt1847'
+>*global*</tt></font> and
+<font color="blue"><tt id='tt1849'
+>setEvent</tt></font> to <font color="blue"><tt id='tt1851'
+>event-set!</tt></font>:</p><font size="-2"><center id='center1856'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6d6ff"><pre class="prog" id='prog1854'
+>(js (event-set! setEvent) (*global* A_GLOBAL))
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1860'
+>In some cases even the indirect access over the <font color="blue"><tt id='tt1858'
+>*js*</tt></font> variable is
+not dynamic enough. Scheme code snippets can be compiled separately and it is
+often desirable to access variables of other pieces. These snippets might be
+the event handlers scattered around an HTML file, or complete libraries.</p><p id='paragraph1861'
+>The previous interfaces can both be used to bind the separated pieces, but
+both come with their respective disadvantages. The safe method requires the
+developer to write import clauses. Especially in the case of event handlers,
+these clauses can become cumbersome.</p><p id='paragraph1869'
+>Accessing variables of different parts over the <font color="blue"><tt id='tt1862'
+>*js*</tt></font> variable is
+not optimal either. Global Scheme variables become members of the global
+JavaScript variables under their mangled name. Even though they are hence
+accessible over the <font color="blue"><tt id='tt1864'
+>*js*</tt></font> variable the programmer would need to know
+the mangled variable name. As the mangling function should stay compiler intern
+we implemented a third option: every unbound
+variable is automatically considered to be an imported global variable. If
+<span class="sc">Scm2Js</span> needs to mangle the name the mangling will be the same for
+both modules, otherwise the variable access could either reference a global
+JavaScript variable, a "compatible" Scheme variable. Also, this model
+combines some advantages of the previous approaches: imported variables don't
+need to be declared, but can't be used instantly, and they can be accessed
+directly (without redirection by the <font color="blue"><tt id='tt1867'
+>*js*</tt></font> variable). This flexibility
+comes at a price, though.  Allowing unbound symbols removes an important safety
+net as any unbound symbol will be considered to be a global imported
+variable. That is, the compiler is no longer able to display
+"unbound variable" error messages. Figure <a href="article.html#dom" class="inbound">5</a>
+demonstrates this smooth integration of JavaScript into Scheme on a small
+example that manipulates the DOM. The given Scheme program dynamically adds new
+HTML elements into an existing tree.</p><br class="figure" id='dom'
+><a name="dom"></a>
+<pre class="prog" id='prog1897'
+><em id='it2136'
+> 1: </em>(<font color="#6959cf"><strong id='bold2137'
+>define</strong></font> (<font color="#6959cf"><strong id='bold2139'
+>table-create!</strong></font> . rows)
+<em id='it2141'
+> 2: </em><a name="2" class="mark"></a>   (<strong id='bold2142'
+>let</strong> ((table (document.createElement 'TABLE))) 
+<em id='it2143'
+> 3: </em>      (for-each (<strong id='bold2144'
+>lambda</strong> (row)
+<em id='it2145'
+> 4: </em><a name="4" class="mark"></a>                   (table.appendChild row)) 
+<em id='it2146'
+> 5: </em>                rows)
+<em id='it2147'
+> 6: </em>      table))
+<em id='it2148'
+> 7: </em>
+<em id='it2149'
+> 8: </em>(<font color="#6959cf"><strong id='bold2150'
+>define</strong></font> (<font color="#6959cf"><strong id='bold2152'
+>row-create!</strong></font> header? . cell-texts)
+<em id='it2154'
+> 9: </em><a name="9" class="mark"></a>   (<strong id='bold2155'
+>let</strong> ((row (document.createElement (<strong id='bold2156'
+>if</strong> header? 'TH 'TR)))) 
+<em id='it2157'
+>10: </em>      (for-each (<strong id='bold2158'
+>lambda</strong> (cell-text)
+<em id='it2159'
+>11: </em><a name="11" class="mark"></a>                   (<strong id='bold2160'
+>let</strong> ((c (document.createElement 'TD))) 
+<em id='it2161'
+>12: </em>                      (<strong id='bold2162'
+>set!</strong> c.innerHTML cell-text)
+<em id='it2163'
+>13: </em><a name="13" class="mark"></a>                      (row.appendChild c))) 
+<em id='it2164'
+>14: </em>                cell-texts)
+<em id='it2165'
+>15: </em>      row))
+<em id='it2166'
+>16: </em>
+<em id='it2167'
+>17: </em>(<font color="#6959cf"><strong id='bold2168'
+>define</strong></font> (<font color="#6959cf"><strong id='bold2170'
+>div-fill!</strong></font> div-id)
+<em id='it2172'
+>18: </em><a name="18" class="mark"></a>   (<strong id='bold2173'
+>let*</strong> ((nb-images document.images.length) 
+<em id='it2174'
+>19: </em><a name="19" class="mark"></a>          (nb-forms document.forms.length) 
+<em id='it2175'
+>20: </em>          (head-row (row-create!  #t 'Tag 'Count))
+<em id='it2176'
+>21: </em>          (image-row (row-create! #f 'Image nb-images))
+<em id='it2177'
+>22: </em>          (form-row (row-create! #f 'Form nb-forms))
+<em id='it2178'
+>23: </em>          (table (table-create! head-row image-row form-row)))
+<em id='it2179'
+>24: </em><a name="24" class="mark"></a>      ((document.getElementById div-id).appendChild table))) 
+</pre>
+<br>
+<center><small><strong>Fig. 5:</strong> A Scheme program manipulating the DOM tree. The given program
+dynamically adds an HTML table, that contains statistics (the number of
+images and forms) about the current document. In
+line <em id='it1870'
+><i id='line-ref'
+><a href="article.html#18" class="inbound">18</a></i></em>, and <em id='it1871'
+><i id='line-ref'
+><a href="article.html#19" class="inbound">19</a></i></em> the number of images and forms of the current
+document are retrieved. Using the <font color="blue"><tt id='tt1872'
+>createElement</tt></font> method of
+the <font color="blue"><tt id='tt1874'
+>document</tt></font> variable we then construct new table tags
+(line <em id='it1876'
+><i id='line-ref'
+><a href="article.html#2" class="inbound">2</a></i></em>, <em id='it1877'
+><i id='line-ref'
+><a href="article.html#9" class="inbound">9</a></i></em>, and <em id='it1878'
+><i id='line-ref'
+><a href="article.html#11" class="inbound">11</a></i></em>). These tags
+are subsequently combined via <font color="blue"><tt id='tt1879'
+>appendChild</tt></font>
+(line <em id='it1881'
+><i id='line-ref'
+><a href="article.html#4" class="inbound">4</a></i></em>, and <em id='it1882'
+><i id='line-ref'
+><a href="article.html#13" class="inbound">13</a></i></em>), and
+finally appended to the <font color="blue"><tt id='tt1883'
+>div</tt></font> tag that has been given as parameter
+(line <em id='it1885'
+><i id='line-ref'
+><a href="article.html#24" class="inbound">24</a></i></em>).</small></center><br></div><br>
+</div>
+<div class="section" id="Hop-integration"><!-- Hop integration -->
+<a name="Hop-integration"></a>
+<div class="section-atitle"><h3><font color="black">5 Hop integration</font>
+</h3></div><div class="section">
+<p id='paragraph1903'
+>In this section we present an example of <span class="sc">Scm2Js</span> embedding. We show
+how it can be used in the context of Hop. Hop is a functional language
+designed for programming webapplications [<a href="article.html#sg:hop-lang" class="inbound">13</a>]. It exposes
+a distributed model made of two <em id='emph1899'
+>strata</em>. The first stratum, named the
+<em id='emph1900'
+>main</em> stratum, is intended for programming server-side
+computations. The second stratum, named the <em id='emph1901'
+>client</em> or <em id='emph1902'
+>GUI</em> stratum, is intended for programming client-side
+computations. The two strata execute on different computers. They do
+not share memory but they share their namespace and they communicate
+via function calls and events.</p><p id='paragraph1904'
+>A Hop program first starts on a server. This initial step
+elaborates an HTML tree that is sent to the client, typically a web
+browser. User interactions on the client side may lead to the invocation of
+functions on the server which, in turn, elaborates new HTML trees that are
+sent back to the client.</p><p id='paragraph1908'
+>In the current version of Hop, the main strata is programmed
+in a variant of Scheme and the client strata is programmed in
+JavaScript. The <span class="sc">Scm2Js</span> compiler allows to use Scheme for both
+stratum. This section presents the integration of <span class="sc">Scm2Js</span> in
+Hop. It first presents a compact overview of Hop (Sections <a href="article.html#The-syntaxes-of-Hop" class="inbound"><span class="refscreen">The syntaxes of Hop</span><span class="refprint">5.1</span></a>, <a href="article.html#Hop-elaboration" class="inbound"><span class="refscreen">Hop elaboration</span><span class="refprint">5.2</span></a>, and
+<a href="article.html#Hop-services" class="inbound"><span class="refscreen">Hop services</span><span class="refprint">5.3</span></a>).  Then, it focuses on the
+integration of <span class="sc">Scm2Js</span>
+(Section <a href="article.html#Hop-Scheme" class="inbound"><span class="refscreen">Hop Scheme</span><span class="refprint">5.4</span></a> and Section
+<a href="article.html#External-Scheme-Files" class="inbound"><span class="refscreen">External Scheme Files</span><span class="refprint">5.5</span></a>) and its impact on the GUI stratum.</p><!-- The syntaxes of Hop -->
+<a name="The-syntaxes-of-Hop"></a>
+<div class="subsection-atitle"><h3>5.1 The syntaxes of Hop</h3></div><div class="subsection">
+<p id='paragraph1910'
+>Hop rests on the closeness of the syntaxes of Scheme and
+HTML.  A simple syntactic transformation turns HTML documents
+into Hop programs. Hop adds an extra open parenthesis before
+opening markups and replaces closing markups with single closing
+parentheses. In addition Hop attributes are introduced by an identifier
+starting with a colon character (<tt id='tt1909'
+>:</tt>) and their value is
+separated from the name by white spaces. Hence the HTML document
+of Figure <a href="article.html#A-simple-HTML-file." class="inbound">6</a> is written as shown Figure
+<a href="article.html#A-simple-HOP-program." class="inbound">7</a> in Hop.</p><br class="figure" id='A simple HTML file.'
+><a name="A-simple-HTML-file."></a>
+<DIV class='prog-border'><pre class="html" id='prog1911'
+><font color="#1919af"><strong id='bold2180'
+>&lt;HTML</strong></font><font color="#1919af"><strong id='bold2182'
+>&gt;</strong></font>
+   <font color="#1919af"><strong id='bold2184'
+>&lt;BODY</strong></font><font color="#1919af"><strong id='bold2186'
+>&gt;</strong></font>
+      <font color="#1919af"><strong id='bold2188'
+>&lt;TABLE</strong></font> width=<font color="red">&quot;100%&quot;</font><font color="#1919af"><strong id='bold2191'
+>&gt;</strong></font>
+         <font color="#1919af"><strong id='bold2193'
+>&lt;TR</strong></font><font color="#1919af"><strong id='bold2195'
+>&gt;</strong></font> <font color="#1919af"><strong id='bold2197'
+>&lt;TD</strong></font><font color="#1919af"><strong id='bold2199'
+>&gt;</strong></font>0<font color="#1919af"><strong id='bold2201'
+>&lt;/TD</strong></font><font color="#1919af"><strong id='bold2203'
+>&gt;</strong></font><font color="#1919af"><strong id='bold2205'
+>&lt;/TR</strong></font><font color="#1919af"><strong id='bold2207'
+>&gt;</strong></font>
+         <font color="#1919af"><strong id='bold2209'
+>&lt;TR</strong></font><font color="#1919af"><strong id='bold2211'
+>&gt;</strong></font> <font color="#1919af"><strong id='bold2213'
+>&lt;TD</strong></font><font color="#1919af"><strong id='bold2215'
+>&gt;</strong></font>1<font color="#1919af"><strong id='bold2217'
+>&lt;/TD</strong></font><font color="#1919af"><strong id='bold2219'
+>&gt;</strong></font><font color="#1919af"><strong id='bold2221'
+>&lt;/TR</strong></font><font color="#1919af"><strong id='bold2223'
+>&gt;</strong></font>
+         <font color="#1919af"><strong id='bold2225'
+>&lt;TR</strong></font><font color="#1919af"><strong id='bold2227'
+>&gt;</strong></font> <font color="#1919af"><strong id='bold2229'
+>&lt;TD</strong></font><font color="#1919af"><strong id='bold2231'
+>&gt;</strong></font>2<font color="#1919af"><strong id='bold2233'
+>&lt;/TD</strong></font><font color="#1919af"><strong id='bold2235'
+>&gt;</strong></font><font color="#1919af"><strong id='bold2237'
+>&lt;/TR</strong></font><font color="#1919af"><strong id='bold2239'
+>&gt;</strong></font>
+         <font color="#1919af"><strong id='bold2241'
+>&lt;TR</strong></font><font color="#1919af"><strong id='bold2243'
+>&gt;</strong></font> <font color="#1919af"><strong id='bold2245'
+>&lt;TD</strong></font><font color="#1919af"><strong id='bold2247'
+>&gt;</strong></font>3<font color="#1919af"><strong id='bold2249'
+>&lt;/TD</strong></font><font color="#1919af"><strong id='bold2251'
+>&gt;</strong></font><font color="#1919af"><strong id='bold2253'
+>&lt;/TR</strong></font><font color="#1919af"><strong id='bold2255'
+>&gt;</strong></font>
+      <font color="#1919af"><strong id='bold2257'
+>&lt;/TABLE</strong></font><font color="#1919af"><strong id='bold2259'
+>&gt;</strong></font>
+   <font color="#1919af"><strong id='bold2261'
+>&lt;/BODY</strong></font><font color="#1919af"><strong id='bold2263'
+>&gt;</strong></font>
+<font color="#1919af"><strong id='bold2265'
+>&lt;/HTML</strong></font><font color="#1919af"><strong id='bold2267'
+>&gt;</strong></font>
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 6:</strong> A simple HTML file.</small></center><br><br class="figure" id='A simple HOP program.'
+><a name="A-simple-HOP-program."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1914'
+>(<font color="#1919af"><strong id='bold2269'
+>&lt;HTML&gt;</strong></font>
+   (<font color="#1919af"><strong id='bold2271'
+>&lt;BODY&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold2273'
+>&lt;TABLE&gt;</strong></font> <strong id='bold2275'
+>:width</strong> <font color="red">&quot;100%&quot;</font>
+         (<font color="#1919af"><strong id='bold2278'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2280'
+>&lt;TD&gt;</strong></font> 0))
+         (<font color="#1919af"><strong id='bold2282'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2284'
+>&lt;TD&gt;</strong></font> 1))
+         (<font color="#1919af"><strong id='bold2286'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2288'
+>&lt;TD&gt;</strong></font> 2))
+         (<font color="#1919af"><strong id='bold2290'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2292'
+>&lt;TD&gt;</strong></font> 3)))))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 7:</strong> A simple HOP program.</small></center><br><p id='paragraph1919'
+>In the plain version of Hop, the JavaScript expressions
+of the GUI stratum are delimited by opening and closing curly braces
+(<font color="blue"><tt id='tt1915'
+>{</tt></font> and <font color="blue"><tt id='tt1917'
+>}</tt></font>). For the sake of the example, Figure
+<a href="article.html#Blending-Scheme-and-JavaScript-syntax." class="inbound">8</a>  shows a
+program that displays the local time of the client.</p><br class="figure" id='Blending Scheme and JavaScript syntax.'
+><a name="Blending-Scheme-and-JavaScript-syntax."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1925'
+>(<font color="#1919af"><strong id='bold2294'
+>&lt;HTML&gt;</strong></font>
+   (<font color="#1919af"><strong id='bold2296'
+>&lt;BODY&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold2298'
+>&lt;P&gt;</strong></font> <font color="red">&quot;The current date is: &quot;</font>)
+      (<font color="#1919af"><strong id='bold2301'
+>&lt;SPAN&gt;</strong></font> <strong id='bold2303'
+>:id</strong> <font color="red">&quot;date&quot;</font> <font color="red">&quot;&quot;</font>)
+      (<font color="#1919af"><strong id='bold2307'
+>&lt;SCRIPT&gt;</strong></font> <font color="red"><strong id='bold2309'
+>{</strong></font>
+          var el = document.getElementById( <font color="red">&quot;date&quot;</font> );
+          el.innerHTML = new Date() + &quot;&quot;;
+      <font color="red"><strong id='bold2312'
+>}</strong></font>)))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 8:</strong> Blending Scheme and JavaScript syntax.</small></center><br></div>
+<!-- Hop elaboration -->
+<a name="Hop-elaboration"></a>
+<div class="subsection-atitle"><h3>5.2 Hop elaboration</h3></div><div class="subsection">
+<p id='paragraph1938'
+>The HTML tree that forms an answer is computed by the expressions
+of the main stratum. That is, it is <em id='emph1926'
+>elaborated</em> on the server. During
+that stage, values can be <em id='emph1927'
+>injected</em> inside expressions of the
+GUI stratum. This is denoted by the escape character <font color="blue"><tt id='tt1928'
+>$</tt></font> inside
+curly braces. The expression following a <font color="blue"><tt id='tt1930'
+>$</tt></font> belongs to the main
+stratum. It is evaluated during the elaboration. Its results is inserted
+in the expression of the GUI stratum. Simple atomic values such as strings
+or numbers as well as compound values such as vectors, references
+to HTML nodes, and, as presented in Section 
+<a href="article.html#Hop-services" class="inbound"><span class="refscreen">Hop services</span><span class="refprint">5.3</span></a>, functions can
+be inserted. The source code of Figure 
+<a href="article.html#Elaborating-a-HTML-tree." class="inbound">9</a> illustrates this capacity. First,
+line <em id='it1932'
+><i id='line-ref'
+><a href="article.html#1" class="inbound">1</a></i></em> a HTML <font color="blue"><tt id='tt1933'
+>span</tt></font> element is declared. It is inserted
+in the answer line <em id='it1935'
+><i id='line-ref'
+><a href="article.html#5" class="inbound">5</a></i></em>. A reference to this element is injected
+in the expression of the GUI stratum line <em id='it1936'
+><i id='line-ref'
+><a href="article.html#7" class="inbound">7</a></i></em>. In this example, a second
+expression is injected line <em id='it1937'
+><i id='line-ref'
+><a href="article.html#8" class="inbound">8</a></i></em>.</p><br class="figure" id='Elaborating a HTML tree.'
+><a name="Elaborating-a-HTML-tree."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1946'
+><em id='it2314'
+> 1: </em><a name="1" class="mark"></a>(<strong id='bold2315'
+>let</strong> ((el (<font color="#1919af"><strong id='bold2316'
+>&lt;SPAN&gt;</strong></font> <strong id='bold2318'
+>:id</strong> <font color="red">&quot;date&quot;</font> <font color="red">&quot;&quot;</font>))) 
+<em id='it2322'
+> 2: </em>   (<font color="#1919af"><strong id='bold2323'
+>&lt;HTML&gt;</strong></font>
+<em id='it2325'
+> 3: </em>      (<font color="#1919af"><strong id='bold2326'
+>&lt;BODY&gt;</strong></font>
+<em id='it2328'
+> 4: </em>         (<font color="#1919af"><strong id='bold2329'
+>&lt;P&gt;</strong></font> <font color="red">&quot;The current date is: &quot;</font>)
+<em id='it2332'
+> 5: </em><a name="5" class="mark"></a>         a-span 
+<em id='it2333'
+> 6: </em>         (<font color="#1919af"><strong id='bold2334'
+>&lt;SCRIPT&gt;</strong></font> <font color="red"><strong id='bold2336'
+>{</strong></font>
+<em id='it2338'
+> 7: </em><a name="7" class="mark"></a>             (<font color="#00cf00"><strong id='bold2339'
+>$el</strong></font>).innerHTML = <font color="red">&quot;client time: &quot;</font> + new Date() + 
+<em id='it2342'
+> 8: </em><a name="8" class="mark"></a>                               <font color="red">&quot; -- server time: &quot;</font> + <font color="#00cf00"><strong id='bold2344'
+>$</strong></font>(current-date); 
+<em id='it2346'
+> 9: </em>           <font color="red"><strong id='bold2347'
+>}</strong></font>))))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 9:</strong> Elaborating a HTML tree.</small></center><br></div>
+<!-- Hop services -->
+<a name="Hop-services"></a>
+<div class="subsection-atitle"><h3>5.3 Hop services</h3></div><div class="subsection">
+<p id='paragraph1952'
+>The expressions of the two strata of a Hop
+program are evaluated in different heaps and environments. That is, they
+do not share data. However, they may communicate by the means of 
+<em id='emph1947'
+>service invocations</em>. A service is a function declared on the
+server. It is defined using the <font color="blue"><tt id='tt1948'
+>define-service</tt></font> form. As any
+function it may accept several arguments. A service is invoked from
+the GUI stratum with a special <font color="blue"><tt id='tt1950'
+>hop</tt></font> form:</p><font size="-2"><center id='center1963'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6d6ff"><pre class="prog" id='prog1961'
+>hop( <em id='it1953'
+>service</em>( a<sub id='sub1955'
+><font size="-3">0</font></sub>, a<sub id='sub1957'
+><font size="-3">1</font></sub>, a<sub id='sub1959'
+><font size="-3">2</font></sub>, ...), <em id='it1960'
+>callback</em> )
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph1975'
+>The values a<sub id='sub1966'
+><font size="-3">0</font></sub>, a<sub id='sub1968'
+><font size="-3">1</font></sub>, a<sub id='sub1970'
+><font size="-3">2</font></sub>, ... are the actual arguments sent to
+the service.  Once the server has completed the evaluation of the service's
+body, i.e., when it has completed the elaboration of the
+answer, it applies, on the client, the <font color="blue"><tt id='tt1972'
+><em id='it1971'
+>callback</em></tt></font>
+function on the service's answer (converted to a string).
+The code of Figure <a href="article.html#Service-invocation." class="inbound">10</a>
+shows an example where a table of contents is build on the server from
+information sent by the client. In addition to illustrating the
+service call line <em id='it1974'
+><i id='line-ref'
+><a href="article.html#11" class="inbound">11</a></i></em>, this example also shows that compound
+data such as vectors may transit from client and server and vice
+versa.</p><br class="figure" id='Service invocation.'
+><a name="Service-invocation."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1984'
+><em id='it2349'
+> 1: </em>(<font color="#6959cf"><strong id='bold2350'
+>define-service</strong></font> (make-toc sections<font color="#6959cf"><strong id='bold2352'
+>)</strong></font>
+<em id='it2354'
+> 2: </em>   (<font color="#1919af"><strong id='bold2355'
+>&lt;OL&gt;</strong></font> (vector-map <font color="#1919af"><strong id='bold2357'
+>&lt;LI&gt;</strong></font> sections)))
+<em id='it2359'
+> 3: </em>
+<em id='it2360'
+> 4: </em>(<font color="#1919af"><strong id='bold2361'
+>&lt;HTML&gt;</strong></font>
+<em id='it2363'
+> 5: </em>   (map (<strong id='bold2364'
+>lambda</strong> (i)
+<em id='it2365'
+> 6: </em>           (<font color="#1919af"><strong id='bold2366'
+>&lt;H1&gt;</strong></font> i (map (<strong id='bold2368'
+>lambda</strong> (j) (<font color="#1919af"><strong id='bold2369'
+>&lt;H2&gt;</strong></font> j)) (iota i))))
+<em id='it2371'
+> 7: </em>        (iota 3))
+<em id='it2372'
+> 8: </em>   (<strong id='bold2373'
+>let</strong> ((toc (<font color="#1919af"><strong id='bold2374'
+>&lt;DIV&gt;</strong></font> <font color="red">&quot;Toc: &quot;</font>)))
+<em id='it2377'
+> 9: </em>      (<font color="#1919af"><strong id='bold2378'
+>&lt;BUTTON&gt;</strong></font> <strong id='bold2380'
+>:onclick</strong> <font color="red"><strong id='bold2382'
+>{</strong></font>
+<em id='it2384'
+>10: </em>                   var hs = document.getElementByTags( <font color="red">&quot;h1&quot;</font> );
+<em id='it2386'
+>11: </em><a name="11" class="mark"></a>                   hop( <font color="#00cf00"><strong id='bold2387'
+>$make-toc</strong></font>( hs ), 
+<em id='it2389'
+>12: </em>                        function( res ) <font color="red"><strong id='bold2390'
+>{</strong></font> (<font color="#00cf00"><strong id='bold2392'
+>$toc</strong></font>).innerHTML = res; } );
+<em id='it2394'
+>13: </em>                <font color="red"><strong id='bold2395'
+>}</strong></font> <font color="red">&quot;Click to view the table of contents&quot;</font>)))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 10:</strong> Service invocation.</small></center><br></div>
+<!-- Hop Scheme -->
+<a name="Hop-Scheme"></a>
+<div class="subsection-atitle"><h3>5.4 Hop Scheme</h3></div><div class="subsection">
+<p id='paragraph1988'
+>The <span class="sc">Scm2Js</span> compiler lets us replace JavaScript with
+Scheme in Hop programs. In this new version, the curly braces are
+replaced with the <font color="blue"><tt id='tt1986'
+>~</tt></font> escape character that introduces
+expressions of the client stratum. During the elaboration stage, Scheme
+client expressions are compiled on the fly into JavaScript. The source
+code of Figure <a href="article.html#Service-invocation-in-Scheme." class="inbound">11</a> is a direct
+re-writing of Figure <a href="article.html#Service-invocation." class="inbound">10</a>.</p><br class="figure" id='Service invocation in Scheme.'
+><a name="Service-invocation-in-Scheme."></a>
+<DIV class='prog-border'><pre class="hop" id='prog1999'
+><em id='it2398'
+> 1: </em>(<font color="#1919af"><strong id='bold2399'
+>&lt;HTML&gt;</strong></font>
+<em id='it2401'
+> 2: </em>   (map (<strong id='bold2402'
+>lambda</strong> (i)
+<em id='it2403'
+> 3: </em>           (<font color="#1919af"><strong id='bold2404'
+>&lt;H1&gt;</strong></font> i (map (<strong id='bold2406'
+>lambda</strong> (j) (<font color="#1919af"><strong id='bold2407'
+>&lt;H2&gt;</strong></font> j)) (iota i))))
+<em id='it2409'
+> 4: </em>        (iota 3))
+<em id='it2410'
+> 5: </em>   (<strong id='bold2411'
+>let</strong> ((toc (<font color="#1919af"><strong id='bold2412'
+>&lt;DIV&gt;</strong></font> <font color="red">&quot;Toc: &quot;</font>)))
+<em id='it2415'
+> 6: </em>      (<font color="#1919af"><strong id='bold2416'
+>&lt;BUTTON&gt;</strong></font> <strong id='bold2418'
+>:onclick</strong>
+<em id='it2420'
+> 7: </em>                <font color="red"><strong id='bold2421'
+>~</strong></font>(<strong id='bold2423'
+>let</strong> ((hs (document.getElementByTags <font color="red">&quot;h1&quot;</font>)))
+<em id='it2425'
+> 8: </em>                    (hop (<font color="#00cf00"><strong id='bold2426'
+>$make-toc</strong></font> hs)
+<em id='it2428'
+> 9: </em>                         (<strong id='bold2429'
+>lambda</strong> (res)
+<em id='it2430'
+>10: </em>                            (<strong id='bold2431'
+>set!</strong> <font color="#00cf00"><strong id='bold2432'
+>$toc.innerHTML</strong></font> res))))
+<em id='it2434'
+>11: </em>                <font color="red">&quot;Click to view the table of contents&quot;</font>)))
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 11:</strong> Service invocation in Scheme.</small></center><br><p id='paragraph2001'
+>As it can be noticed, the dot-notation of <span class="sc">Scm2Js</span> is strongly
+relevant in the context of Hop. It enables a compact notation for reading 
+and writing fields of instances which are frequent in Hop.</p><p id='paragraph2005'
+>In combination with <span class="sc">Scm2Js</span>, we have added a new construction to
+Hop, namely the <font color="blue"><tt id='tt2003'
+>with-hop</tt></font> form. Its syntax is:</p><font size="-2"><center id='center2016'
+><table cellspacing="0" class="color" cellpadding="0" width="95%"><tbody>
+<tr><td bgcolor="#d6d6ff"><pre class="prog" id='prog2014'
+>(with-hop (<em id='it2006'
+>service</em> a<sub id='sub2008'
+><font size="-3">0</font></sub> a<sub id='sub2010'
+><font size="-3">1</font></sub> a<sub id='sub2012'
+><font size="-3">2</font></sub> ...) <em id='it2013'
+>continuation</em>)
+</pre>
+</td></tr>
+</tbody></table></center>
+</font><p id='paragraph2038'
+>This form invokes the <font color="blue"><tt id='tt2019'
+><em id='it2018'
+>service</em></tt></font> with the arguments
+ a<sub id='sub2022'
+><font size="-3">0</font></sub>, a<sub id='sub2024'
+><font size="-3">1</font></sub>, a<sub id='sub2026'
+><font size="-3">2</font></sub>, .... On completion of the invocation, the
+continuation is applied. Contrary to the <font color="blue"><tt id='tt2027'
+>hop</tt></font> service
+invocation presented in Section <a href="article.html#Hop-services" class="inbound"><span class="refscreen">Hop services</span><span class="refprint">5.3</span></a>, the
+value sent to the continuation is no longer a string but any simple or
+compound data type. In particular, Hop is able to automatically
+create, on demand, classes on the client. That is, when an instance is
+returned to the client as a result of a service invocation, in
+addition to sending the object, Hop also sends to the client the code
+required for declaring the class anteriorly. This enables Hop
+expressions to access objects independently of the strata. This is
+illustrated in the example of Figure <a href="article.html#whop" class="inbound">12</a>. In this
+example, a class <font color="blue"><tt id='tt2029'
+>software</tt></font> is declared in the main stratum
+(line <em id='it2031'
+><i id='line-ref'
+><a href="article.html#24" class="inbound">24</a></i></em>). Instances are created in the service <font color="blue"><tt id='tt2032'
+>query-by-name</tt></font> and sent back to the client (line <em id='it2034'
+><i id='line-ref'
+><a href="article.html#10" class="inbound">10</a></i></em>).  On the
+GUI stratum (line <em id='it2035'
+><i id='line-ref'
+><a href="article.html#27" class="inbound">27</a></i></em>, <em id='it2036'
+><i id='line-ref'
+><a href="article.html#28" class="inbound">28</a></i></em>, and <em id='it2037'
+><i id='line-ref'
+><a href="article.html#29" class="inbound">29</a></i></em>) the value
+returned by that service is directly accessed as a class instance.</p><br class="figure" id='whop'
+><a name="whop"></a>
+<DIV class='prog-border'><pre class="hop" id='prog2072'
+><em id='it2436'
+> 1: </em>(<font color="#1919af"><strong id='bold2437'
+>module</strong></font> example
+<em id='it2439'
+> 2: </em>   (<font color="#1919af"><strong id='bold2440'
+>library</strong></font> sqlite<font color="#1919af"><strong id='bold2442'
+>)</strong></font>
+<em id='it2444'
+> 3: </em><a name="3" class="mark"></a>   (<strong id='bold2445'
+>class</strong> software 
+<em id='it2446'
+> 4: </em>      name<font color="#00cf00"><strong id='bold2447'
+>::string</strong></font>
+<em id='it2449'
+> 5: </em>      author<font color="#00cf00"><strong id='bold2450'
+>::string</strong></font>
+<em id='it2452'
+> 6: </em>      version<font color="#00cf00"><strong id='bold2453'
+>::string</strong></font>
+<em id='it2455'
+> 7: </em>      license<font color="#00cf00"><strong id='bold2456'
+>::string</strong></font><font color="#1919af"><strong id='bold2458'
+>)</strong></font>)
+<em id='it2460'
+> 8: </em>
+<em id='it2461'
+> 9: </em><a name="9" class="mark"></a>(<font color="#6959cf"><strong id='bold2462'
+>define-service</strong></font> (query-by-name name<font color="#6959cf"><strong id='bold2464'
+>)</strong></font> 
+<em id='it2466'
+>10: </em><a name="10" class="mark"></a>   (sqlite-select make-software <font color="red">&quot;softwares WHERE (name = ~a)&quot;</font> name)) 
+<em id='it2468'
+>11: </em>
+<em id='it2469'
+>12: </em>(<strong id='bold2470'
+>let</strong> ((name (<font color="#1919af"><strong id='bold2471'
+>&lt;INPUT&gt;</strong></font>))
+<em id='it2473'
+>13: </em>      (version (<font color="#1919af"><strong id='bold2474'
+>&lt;INPUT&gt;</strong></font>))
+<em id='it2476'
+>14: </em>      (license (<font color="#1919af"><strong id='bold2477'
+>&lt;INPUT&gt;</strong></font>)))
+<em id='it2479'
+>15: </em>   (<font color="#1919af"><strong id='bold2480'
+>&lt;HTML&gt;</strong></font>
+<em id='it2482'
+>16: </em>      (<font color="#1919af"><strong id='bold2483'
+>&lt;BODY&gt;</strong></font>
+<em id='it2485'
+>17: </em>         (<font color="#1919af"><strong id='bold2486'
+>&lt;TABLE&gt;</strong></font>
+<em id='it2488'
+>18: </em>            (<font color="#1919af"><strong id='bold2489'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2491'
+>&lt;TD&gt;</strong></font> name))
+<em id='it2493'
+>19: </em>            (<font color="#1919af"><strong id='bold2494'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2496'
+>&lt;TD&gt;</strong></font> version))
+<em id='it2498'
+>20: </em>            (<font color="#1919af"><strong id='bold2499'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold2501'
+>&lt;TD&gt;</strong></font> license)))
+<em id='it2503'
+>21: </em>         (<font color="#1919af"><strong id='bold2504'
+>&lt;INPUT&gt;</strong></font>
+<em id='it2506'
+>22: </em>            <strong id='bold2507'
+>:type</strong> 'text
+<em id='it2509'
+>23: </em>            <strong id='bold2510'
+>:onkeyup</strong> <font color="red"><strong id='bold2512'
+>~</strong></font>(<strong id='bold2514'
+>if</strong> (= event.keyCode 13)
+<em id='it2515'
+>24: </em><a name="24" class="mark"></a>                          (<strong id='bold2516'
+>with-hop</strong> (<font color="#00cf00"><strong id='bold2517'
+>$query-by-name</strong></font> this.value) 
+<em id='it2519'
+>25: </em><a name="25" class="mark"></a>                             (<strong id='bold2520'
+>lambda</strong> (o) 
+<em id='it2521'
+>26: </em>                                (<strong id='bold2522'
+>when</strong> o 
+<em id='it2523'
+>27: </em><a name="27" class="mark"></a>                                   (<strong id='bold2524'
+>set!</strong> <font color="#00cf00"><strong id='bold2525'
+>$name.value</strong></font> o.name) 
+<em id='it2527'
+>28: </em><a name="28" class="mark"></a>                                   (<strong id='bold2528'
+>set!</strong> <font color="#00cf00"><strong id='bold2529'
+>$version.value</strong></font> o.value) 
+<em id='it2531'
+>29: </em><a name="29" class="mark"></a>                                   (<strong id='bold2532'
+>set!</strong> <font color="#00cf00"><strong id='bold2533'
+>$license.value</strong></font> o.value))))))))) 
+</pre>
+</DIV><br>
+<center><small><strong>Fig. 12:</strong> This example illustrates the exchanges
+of compound values from a server to a client. In this example, a class is
+declared on the server (line <em id='it2039'
+><i id='line-ref'
+><a href="article.html#3" class="inbound">3</a></i></em>). The service 
+<font color="blue"><tt id='tt2040'
+>query-by-name</tt></font> (line <em id='it2042'
+><i id='line-ref'
+><a href="article.html#9" class="inbound">9</a></i></em>) queries a database in order
+to return instances of the class <font color="blue"><tt id='tt2043'
+>software</tt></font> to the client. 
+Automatically, Hop declares the class <font color="blue"><tt id='tt2045'
+>software</tt></font>
+on the client. So, in the client code, the value received in the
+continuation (line <em id='it2047'
+><i id='line-ref'
+><a href="article.html#25" class="inbound">25</a></i></em>) is tested and the fields revelant to the
+application are directly extracted 
+(line <em id='it2048'
+><i id='line-ref'
+><a href="article.html#27" class="inbound">27</a></i></em>, <em id='it2049'
+><i id='line-ref'
+><a href="article.html#28" class="inbound">28</a></i></em>, and <em id='it2050'
+><i id='line-ref'
+><a href="article.html#29" class="inbound">29</a></i></em>).</small></center><br></div>
+<!-- External Scheme Files -->
+<a name="External-Scheme-Files"></a>
+<div class="subsection-atitle"><h3>5.5 External Scheme Files</h3></div><div class="subsection">
+<p id='paragraph2075'
+>The previous section detailed only one way of inserting Scheme code into
+Hop documents. Another way consists of including complete Scheme files
+(usually libraries) in the <font color="blue"><tt id='tt2073'
+>&lt;HEAD&gt;</tt></font> section of the page. Figure
+(ref :figure &quot;file-include&quot;) shows
+an example where two files are included: one JavaScript file, and one Scheme
+file. The Scheme file is compiled on the fly and then sent the same way as the
+JavaScript file.</p><br class="figure" id='file-include'
+><a name="file-include"></a>
+<pre class="prog" id='prog2081'
+>(&lt;HTML&gt;
+   (&lt;HEAD&gt;
+     (&lt;HOP-HEAD&gt; <strong id='bold2535'
+>:jscript</strong> <font color="red">&quot;jslib.js&quot;</font>)
+     (&lt;HOP-SCHEME-HEAD&gt; <strong id='bold2538'
+>:sscript</strong> <font color="red">&quot;schemelib.scm&quot;</font>))
+   (&lt;BODY&gt; <font color="red">&quot;some body text&quot;</font>))
+</pre>
+<br>
+<center><small><strong>Fig. 13:</strong> A Hop document includes a JavaScript and a Scheme file.</small></center><br><p id='paragraph2086'
+>We mentioned in Section <a href="article.html#JavaScript-Integration" class="inbound"><span class="refscreen">JavaScript Integration</span><span class="refprint">4</span></a> that there are different
+ways of interfacing with Scheme code. Either the safe interface using
+<font color="blue"><tt id='tt2082'
+>js</tt></font> directives, the explicit mode accessing the <font color="blue"><tt id='tt2084'
+>*js*</tt></font>
+variable, or the unsafe way where all unbound symbols are considered to be
+implicitly imported global variables.</p><p id='paragraph2087'
+>In the context of Hop we opted for the unsafe interface. It is the
+easiest way of combining external files and injected code. Even if external
+file came with a header file a safe compilation would still be extremely
+difficult. Scheme code in Hop files is often out of order (the code for a
+button click might be before the main script with important initializations and
+declarations) and all injected Scheme expressions are compiled upfront when the
+file is loaded. The out of order compilation implies potentially undefined
+variables at early locations, and the upfront compilation means that we don't
+have any relationship between the different Scheme pieces. Two Scheme
+expressions might be part of the same page (and should hence share the same
+variables) or might be completely separated entities (or even dead code). The
+unsafe interface has however advantages too, and we found it comfortable to use
+JavaScript libraries without the hassle of import/export declarations.</p></div>
+<!-- Conclusion -->
+<a name="Conclusion"></a>
+<div class="subsection-atitle"><h3>5.6 Conclusion</h3></div><div class="subsection">
+<p id='paragraph2088'
+>Replacing JavaScript with Scheme on the client stratum has its
+pros and cons. On the positive side, it enforces the cohesion between
+the two strata. Scheme and JavaScript are similar languages but
+they promote slightly different programming styles. For instance,
+Scheme promotes recursions and higher-order operators, while
+JavaScript promotes loops and iterators. Hence, while replacing
+JavaScript with Scheme does not bring new functionality to Hop, it,
+undoubtably, makes programs look nicer. A single, coherent syntax
+is used which gives the feeling of a continum from the server to the
+client and vice-versa. Switching from server programming to client programming
+does not require much intellectual effort.</p><p id='paragraph2089'
+>On the dark side, it could be argued that using a single
+syntax, inside a single source code, for expressions evaluated in
+different environments and libraries is prone to error. The early
+experiments tend to show that is not a dramatic drawback. Only the
+experience will tell if using a single syntax for both strata is a
+benefit.</p></div>
+</div><br>
+</div>
+<div class="section" id="Related-Work"><!-- Related Work -->
+<a name="Related-Work"></a>
+<div class="section-atitle"><h3><font color="black">6 Related Work</font>
+</h3></div><div class="section">
+<p id='paragraph2090'
+>Several different projects have tried to replace JavaScript on the client
+side. The attempts can be divided into three categories: either by enhancing
+the Internet browsers with their language of choice, by compiling to already
+existing plugins (in particular the Java Virtual Machine), or by compiling
+directly to JavaScript.</p><p id='paragraph2092'
+>The most famous and successful extensions to browsers are the Java and the
+Flash plugin. The Java extension [<a href="article.html#java-plugin" class="inbound">2</a>] integrates a JVM
+into the browser, and allows to run arbitrary<a href="#footnote-footnote2091"><sup><small>8</small></sup></a> code within it. Macromedia's Flash plugin
+[<a href="article.html#flash-plugin" class="inbound">1</a>] on the other hand is specialized in displaying
+animations. Since release 5 Flash comes with an integrated scripting language
+ActionScript [<a href="article.html#Moock:2002:AFM" class="inbound">7</a>], which is based on ECMAScript.</p><p id='paragraph2095'
+>A more <span class="sc">Scm2Js</span> related project is OpenScheme [<a href="article.html#openscheme" class="inbound">4</a>].
+Similar to <span class="sc">Scm2Js</span> it allows to use Scheme as scripting language on the
+client side. It achieves this through the means of a plugin (available for
+either Internet Explorer or Netscape compatible browsers) that is capable of
+interpreting Scheme code. With this plugin developers can directly send Scheme
+code to the client.</p><p id='paragraph2096'
+>Most projects don't write their own plugins, though, but reuse the existing
+Java extension. Any language that can be compiled to Java Byte Code can be
+interpreted by the Java plugin, and is hence executable by the browser. Bigloo
+[<a href="article.html#ss:icfp02" class="inbound">12</a>] amongst many others can benefit from this approach
+to deliver so called applets with web-pages.</p><p id='paragraph2099'
+>The Java plugin is however not installed on every client, and a JavaScript
+based approach reaches a far bigger user base. <tt id='tt2097'
+>lisp2JavaScript</tt>
+[<a href="article.html#lisptojavascript" class="inbound">3</a>]  is a prototype of compiling lisp-like languages
+to JavaScript. <tt id='tt2098'
+>ParenScript</tt> [<a href="article.html#parenscript" class="inbound">5</a>] is an already more
+mature attempt with a complete macro environment or lisp-style iterations. The
+language itself is largely based on JavaScript (with a LISP syntax), which
+makes a direct translation straight-forward.</p></div><br>
+</div>
+<div class="section" id="Future-Work"><!-- Future Work -->
+<a name="Future-Work"></a>
+<div class="section-atitle"><h3><font color="black">7 Future Work</font>
+</h3></div><div class="section">
+<p id='paragraph2109'
+><span class="sc">Scm2Js</span> has reached a usable state and it can be used as JavaScript
+replacement now. There is however still room for improvement and we would like
+to address the following issues in the future:
+<ul class="itemize" id='itemize2108'
+><li>increase performance. We think that an improved version of our
+inlining pass, and some peephole optimizations could have a positive impact on
+performance.</li>
+<li>improve the runtime. Some functions like <font color="blue"><tt id='tt2102'
+>eval</tt></font> are still
+missing, even though their implementation is straightforward.</li>
+<li>implement <font color="blue"><tt id='tt2105'
+>call/cc</tt></font>. We hope to be able to create
+serializable continuations, which would allow us to research migration between
+Web browsers.</li>
+</ul></p></div><br>
+</div>
+<div class="section" id="Conclusion"><!-- Conclusion -->
+<a name="Conclusion"></a>
+<div class="section-atitle"><h3><font color="black">8 Conclusion</font>
+</h3></div><div class="section">
+<p id='paragraph2112'
+>In this paper we have presented <span class="sc">Scm2Js</span>, a Scheme to JavaScript
+compiler. We enumerated some differences between these two languages, and
+showed how they affect an efficient compilation. We detailed in particular
+the tail recursive loop translation. Several benchmarks demonstrate the
+usability of our compiler. <span class="sc">Scm2Js</span> compiled Scheme code is generally not more
+than twice as slow as handcrafted JavaScript code.</p><p id='paragraph2113'
+>We introduced the JavaScript and Hop integration. On the client side the
+JavaScript interface allows to exchange data between Scheme and JavaScript
+code, and an extension eases the use of JavaScript values within Scheme
+code. On the server-side we are able to replace JavaScript completely with
+Scheme.</p><p id='paragraph2114'
+>As Hop itself is a variant of the Scheme language it is now possible to
+write sophisticated web applications exclusively in Scheme.</p></div><br>
+</div>
+<div class="section" id="References"><!-- References -->
+<a name="References"></a>
+<div class="section-atitle"><h3><font color="black">9 References</font>
+</h3></div><div class="section">
+<font size="-1"><table><tbody>
+<tr><td id="flash-plugin" align="right" valign="top"><a name="flash-plugin">[1]</a></td><td id="flash-plugin" align="left" valign="top"><a href="http://www.macromedia.com/shockwave" class="http"><strong id='bold2542'
+>http://www.macromedia.com/shockwave</strong></a>.</td></tr>
+<tr><td id="java-plugin" align="right" valign="top"><a name="java-plugin">[2]</a></td><td id="java-plugin" align="left" valign="top"><a href="www.java.com/getjava/"><strong id='bold2543'
+>www.java.com/getjava/</strong></a>.</td></tr>
+<tr><td id="lisptojavascript" align="right" valign="top"><a name="lisptojavascript">[3]</a></td><td id="lisptojavascript" align="left" valign="top"><a href="http://www.cryptopunk.com/wip/lisptojavascript.html" class="http"><strong id='bold2544'
+>http://www.cryptopunk.com/wip/lisptojavascript.html</strong></a>.</td></tr>
+<tr><td id="openscheme" align="right" valign="top"><a name="openscheme">[4]</a></td><td id="openscheme" align="left" valign="top"><a href="http://gd.tuwien.ac.at/languages/OpenScheme/nposm.htm" class="http"><strong id='bold2545'
+>http://gd.tuwien.ac.at/languages/OpenScheme/nposm.htm</strong></a>.</td></tr>
+<tr><td id="parenscript" align="right" valign="top"><a name="parenscript">[5]</a></td><td id="parenscript" align="left" valign="top"><a href="http://blogs.bl0rg.net/netzstaub/archives/000525.html" class="http"><strong id='bold2546'
+>http://blogs.bl0rg.net/netzstaub/archives/000525.html</strong></a>.</td></tr>
+<tr><td id="baker:trampoline" align="right" valign="top"><a name="baker:trampoline">[6]</a></td><td id="baker:trampoline" align="left" valign="top">Baker, H. -- <strong id='bold2547'
+>CONS Should Not CONS Its Arguments, Part II: Cheney on the M.T.A &lt;1&gt;</strong> --  Notices, 30(9), Sep, 1995, pp. 17-20.</td></tr>
+<tr><td id="Moock:2002:AFM" align="right" valign="top"><a name="Moock:2002:AFM">[7]</a></td><td id="Moock:2002:AFM" align="left" valign="top">Colin Moock -- <strong id='bold2548'
+>ActionScript for Flash MX: The Definitive Guide</strong> -- <em id='it2549'
+></em>, , 2002, pp. 1104 (est.).</td></tr>
+<tr><td id="ecmascript" align="right" valign="top"><a name="ecmascript">[8]</a></td><td id="ecmascript" align="left" valign="top">ECMA -- <a href="http://www.ecma-international.org/publications/standards/Ecma-262.htm" class="http"><strong id='bold2550'
+>ECMA-262: ECMAScript Language Specification</strong></a> -- 1999.</td></tr>
+<tr><td id="loitsch:js2scm" align="right" valign="top"><a name="loitsch:js2scm">[9]</a></td><td id="loitsch:js2scm" align="left" valign="top">Florian Loitsch -- <a href="http://repository.readscheme.org/ftp/papers/sw2005/loitsch.pdf" class="http"><strong id='bold2551'
+>Javascript to Scheme Compilation</strong></a> -- 2005 Workshop on Scheme and Functional Programming, September, 2005.</td></tr>
+<tr><td id="scheme:r5rs" align="right" valign="top"><a name="scheme:r5rs">[10]</a></td><td id="scheme:r5rs" align="left" valign="top">Kelsey, R. and Clinger, W. and Rees, J. -- <a href="http://www.inria.fr/mimosa/fp/Bigloo/doc/r5rs.html" class="http"><strong id='bold2552'
+>The Revised(5) Report on the Algorithmic Language Scheme</strong></a> -- Higher-Order and Symbolic Computation, 11(1), Sep, 1998.</td></tr>
+<tr><td id="so:babel01" align="right" valign="top"><a name="so:babel01">[11]</a></td><td id="so:babel01" align="left" valign="top">Schinz, M. and Odersky, M. -- <strong id='bold2553'
+>Tail call elimination of the Java Virtual Machine</strong> -- Proceedings of Babel&amp;aps01, Florence, Italy, Sep, 2001.</td></tr>
+<tr><td id="ss:icfp02" align="right" valign="top"><a name="ss:icfp02">[12]</a></td><td id="ss:icfp02" align="left" valign="top">Serpette, B. and Serrano, M. -- <a href="http://www.inria.fr/mimosa/Manuel.Serrano" class="http"><strong id='bold2554'
+>Compiling Scheme to JVM bytecode: a performance study</strong></a> -- 7th Int&amp;apsl Conf. on Functional Programming, Pittsburgh, Pensylvanie, USA, Oct, 2002.</td></tr>
+<tr><td id="sg:hop-lang" align="right" valign="top"><a name="sg:hop-lang">[13]</a></td><td id="sg:hop-lang" align="left" valign="top">Serrano, M. and Gallesio, E. -- <strong id='bold2555'
+>HOP, a language for programming the Web</strong> -- 2006.</td></tr>
+<tr><td id="sekiguchi:portable" align="right" valign="top"><a name="sekiguchi:portable">[14]</a></td><td id="sekiguchi:portable" align="left" valign="top">Tatsurou Sekiguchi and Takahiro Sakamoto and Akinori Yonezawa -- <a href="citeseer.ist.psu.edu/sekiguchi01portable.html"><strong id='bold2556'
+>Portable Implementation of Continuation Operators in Imperative Languages by Exception Handling</strong></a> -- Lecture Notes in Computer Science, 20222001, pp. 217+.</td></tr>
+</tbody></table>
+</font></div><br>
+</div>
+<div class="footnotes" id="Compiling-Scheme-to-JavaScript-footnote"><div class="footnote"><br><br>
+<hr width='20%' size='2' align='left'>
+<a name="footnote-footnote1305"><sup><small>1</small></sup></a>: Despite being
+called "Array", this data-type is an object and consists, similar to all
+JavaScript objects, of a hashtable.
+<br>
+<a name="footnote-footnote1345"><sup><small>2</small></sup></a>: Actually all important JavaScript interpreters are known
+<strong id='bold1344'
+>not</strong> to be tail-recursive.
+<br>
+<a name="footnote-footnote1598"><sup><small>3</small></sup></a>: Future versions will probably inline too if the
+function's size is under a certain constant.
+<br>
+<a name="footnote-footnote1711"><sup><small>4</small></sup></a>: It is obviously possible to directly use a symbol
+instead.
+<br>
+<a name="footnote-footnote1729"><sup><small>5</small></sup></a>: Actually <font color="blue"><tt id='tt1727'
+>this</tt></font> is not a variable,
+but a keyword.
+<br>
+<a name="footnote-footnote1816"><sup><small>6</small></sup></a>: The <font color="blue"><tt id='tt1814'
+>*js*</tt></font> variable is, under its mangled name, a
+field of this object too.
+<br>
+<a name="footnote-footnote1833"><sup><small>7</small></sup></a>: This approach even allows to create global
+variables that are only accessible through the global object: <font color="blue"><tt id='tt1821'
+>(set!
+*js*.new-global 'val)</tt></font> sets the global variable <font color="blue"><tt id='tt1823'
+>new-global</tt></font> to
+<font color="blue"><tt id='tt1825'
+>'val'</tt></font>. <font color="blue"><tt id='tt1827'
+>new-global</tt></font> is however parsed as
+<font color="blue"><tt id='tt1829'
+>new - global</tt></font> and it is hence impossible to reference the variable
+without the use of the global <font color="blue"><tt id='tt1831'
+>this</tt></font> object.
+<br>
+<a name="footnote-footnote2091"><sup><small>8</small></sup></a>: The interpreted code
+is contained by security measures. But the engine itself is capable of
+executing any code.
+<br>
+<div></div>
+</div>
+<div class="skribe-ending">
+<hr> 
+<p class="ending" id='paragraph2562'
+><font size="-1">
+This <span class="sc">Html</span> page has been produced by 
+<a href="http://www.inria.fr/mimosa/fp/Skribe" class="http">Skribe</a>.
+<br/>
+Last update <em id='it2560'
+>Sat May 13 17:44:39 2006</em>.</font></p></div>
+</body>
+</html>

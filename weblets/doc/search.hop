@@ -1,0 +1,373 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/doc/search.hop                  */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
+;*    Last change :  Wed May 10 07:02:54 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The DOC source search engine.                                    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc_search
+   
+   (import hopdoc_config
+	   hopdoc_widgets
+	   hopdoc_wiki
+	   hopdoc_services
+	   hopdoc_api)
+
+   (export (make-doc-tables offset . markups)
+	   (search-see-also name dir pattern)
+	   (search-examples port title expr*)
+	   (search-table value service id table offset columns)
+	   (search-docs dir)
+	   (search-libraries dir)
+	   (search-tutorials dir value)))
+
+;*---------------------------------------------------------------------*/
+;*    make-doc-tables ...                                              */
+;*---------------------------------------------------------------------*/
+(define (make-doc-tables offset . markups)
+   
+   (let ((menu (make-vector 27 '()))
+	 (table (make-hashtable))
+	 (dir (doc-api-dir)))
+      
+      (define (mmap-search mm path kmpt markup)
+	 (let ((mlen (fixnum->elong (string-length markup))))
+	    (let loop ((o #e0))
+	       (let ((n (kmp-mmap kmpt mm o)))
+		  (when (>elong n #e0)
+		     (let* ((s (+elong n mlen))
+			    (mk (get-def mm s))
+			    (i (char->offset (string-ref mk offset))))
+			;; add to the menu table
+			(vector-set!
+			 menu i (cons (cons mk path) (vector-ref menu i)))
+			;; add to the markup table
+			(hashtable-put! table mk path)
+			(loop (+ s (string-length mk)))))))))
+      
+      (if (null? (cdr markups))
+	  (let ((t (kmp-table (car markups))))
+	     (for-each (lambda (f)
+			  (when (is-suffix? f (doc-suffix))
+			     (let* ((path (make-file-name dir f))
+				    (mm (and (file-exists? path)
+					     (open-mmap path :write #f))))
+				(when (mmap? mm)
+				   (unwind-protect
+				      (mmap-search mm path t (car markups))
+				      (close-mmap mm))))))
+		       (directory->list dir)))
+	  (for-each (lambda (f)
+		       (when (is-suffix? f (doc-suffix))
+			  (let* ((path (make-file-name dir f))
+				 (mm (and (file-exists? path)
+					  (open-mmap path :write #f))))
+			     (when (mmap? mm)
+				(unwind-protect
+				   (for-each (lambda (m)
+						(let ((t (kmp-table m)))
+						   (mmap-search mm path t m)))
+					     markups)
+				   (close-mmap mm))))))
+		    (directory->list dir)))
+      
+      (values menu table)))
+
+;*---------------------------------------------------------------------*/
+;*    get-def ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (get-def mm offset)
+   (let ((len (mmap-length mm)))
+      (let loop ((start offset))
+	 (cond
+	    ((=elong start len)
+	     (error 'make-doc-tables "Can't find markup" start))
+	    ((char=? (mmap-ref mm start) #\Space)
+	     (loop (+elong start #e1)))
+	    (else
+	     (let loop ((end (+elong start #e1)))
+		(if (=elong end len)
+		    (mmap-substring mm start len)
+		    (let ((c (mmap-ref mm end)))
+		       (if (or (char=? c #\Newline) (char=? c #\Space))
+			   (mmap-substring mm start end)
+			   (loop (+elong end #e1)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    search-see-also ...                                              */
+;*---------------------------------------------------------------------*/
+(define (search-see-also name dir patterns)
+   (unique
+    (append-map (lambda (pat) (search-see-also-pattern name dir pat))
+		(string-split patterns ", "))
+    (lambda (x) x)))
+
+;*---------------------------------------------------------------------*/
+;*    search-see-also-pattern ...                                      */
+;*---------------------------------------------------------------------*/
+(define (search-see-also-pattern name dir pattern)
+   (let* ((kmpt (kmp-table pattern))
+	  (bname (basename name)))
+      (filter-map  (lambda (f)
+		      (when (and (is-suffix? f (doc-suffix))
+				 (not (string=? f bname)))
+			 (let* ((path (make-file-name dir f))
+				(mm (and (file-exists? path)
+					 (open-mmap path :write #f))))
+			    (when (mmap? mm)
+			       (unwind-protect
+				  (when (>elong (kmp-mmap kmpt mm #e0) #e0)
+				     path)
+				  (close-mmap mm))))))
+		   (directory->list dir))))
+
+;*---------------------------------------------------------------------*/
+;*    search-examples ...                                              */
+;*---------------------------------------------------------------------*/
+(define (search-examples port title* _)
+   (let ((res (append-map (lambda (key)
+			     (let ((len (string-length key)))
+				(let loop ((i 0))
+				   (cond
+				      ((=fx i len)
+				       (search-example port key _))
+				      ((char=? (string-ref key i) #\space)
+				       (loop (+fx i 1)))
+				      (else
+				       (search-example port
+						       (substring key i len)
+						       _))))))
+			  (string-split title* ","))))
+      (when (pair? res)
+	 (apply <FL> res))))
+
+;*---------------------------------------------------------------------*/
+;*    search-example ...                                               */
+;*---------------------------------------------------------------------*/
+(define (search-example port title _)
+   (let ((kmpt (kmp-table title))
+	 (dir (make-file-path (doc-dir) "examples"))
+	 (t (make-hashtable 128)))
+      (filter-map (lambda (f)
+		     (when (and (is-suffix? f "hop")
+				(not (hashtable-get t f)))
+			(hashtable-put! t f #t)
+			(example-file dir f kmpt)))
+		  (sort (directory->list dir) string<?))))
+
+;*---------------------------------------------------------------------*/
+;*    example-file ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (example-file dir file kmpt)
+   (let* ((path (make-file-name dir file))
+	  (mm (open-mmap path :write #f)))
+      (when (mmap? mm)
+	 (unwind-protect
+	    (when (> (kmp-mmap kmpt mm #e0) 0)
+	       (<EXAMPLE-FILE> path))
+	    (close-mmap mm)))))
+
+;*---------------------------------------------------------------------*/
+;*    <EXAMPLE-FILE> ...                                               */
+;*---------------------------------------------------------------------*/
+(define (<EXAMPLE-FILE> path)
+   (let ((p (open-input-file path)))
+      (when (input-port? p)
+	 (unwind-protect
+	    (let ((h (read-line p))
+		  (id1 (xml-make-id 'pre))
+		  (id2 (xml-make-id 'textarea)))
+	       (if (substring-at? h ";;" 0)
+		   (<FLITEM>
+		      (<FLHEAD>
+			 (wiki-string->hop
+			  (substring h 2 (string-length h))
+			  (doc-wiki-syntax)))
+		      (<EXAMPLE> (read-string p)))
+		   (let ((code (string-append h "\n" (read-string p))))
+		      (<FLITEM>
+			 (<FLHEAD> (prefix (basename path)))
+			 (<EXAMPLE> code)))))
+	    (close-input-port p)))))
+
+;*---------------------------------------------------------------------*/
+;*    unique ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (unique lst getkey)
+   (let ((t (make-hashtable 128)))
+      (for-each (lambda (l)
+		   (hashtable-put! t (getkey l) l))
+		lst)
+      (hashtable->list t)))
+
+;*---------------------------------------------------------------------*/
+;*    search-table ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (search-table value service id table offset columns)
+
+   (define (<ENTRY> k p)
+      (<TD>
+	 :class "entry"
+	 :onclick ~(with-hop ($service $p)
+		      (lambda (r)
+			 (let ((el (document.getElementById $id)))
+			    (set! el.innerHTML r)
+			    (let ((eo (and $k (document.getElementById $k))))
+			       (if eo
+				   (let ((po eo.offsetTop))
+				      (if (> po 50)
+					  (window.scrollTo 0 (- po 50)))
+				      (let* ((p eo.parentNode)
+					     (ob p.style.border.background))
+					 (hop-fx-fade-background
+					  p
+					  500
+					  40
+					  (vector "#fffd6b"
+						  "#ffff6f"
+						  "#ffff8f"
+						  "#ffffaf"
+						  "#ffffdf"
+						  "#ffffdf"
+						  (if (eq? ob #unspecified)
+						      "transparent"
+						      ob))))))))))
+	 (<SPAN> :class "descr" (html-string-encode k))))
+   
+   (define (char0 str)
+      (let ((c (char-upcase (string-ref str offset))))
+	 (if (char-alphabetic? c)
+	     c
+	     #\?)))
+   
+   (define (<LABEL> c)
+      (<TD> (<SPAN> :class "search-label" (string c))))
+   
+   (define (list->entries lst)
+      (let* ((c0 (char0 (caar lst)))
+	     (res (cons (<LABEL> c0) lst)))
+	 (let loop ((c c0)
+		    (prev res)
+		    (lst lst)
+		    (len 1))
+	    (if (null? lst)
+		(list-split! res
+			     (inexact->exact (ceiling (/ len columns)))
+			     (<TD> "&nbsp;"))
+		(let ((c1 (char0 (caar lst))))
+		   (if (char=? c c1)
+		       (begin
+			  (set-car! lst (apply <ENTRY> (car lst)))
+			  (loop c lst (cdr lst) (+fx len 1)))
+		       (begin
+			  (set-cdr! prev (cons (<LABEL> c1) lst))
+			  (loop c1 (cdr prev) lst (+fx len 1)))))))))
+   
+   (let ((l1 (if (=fx (string-length value) 0)
+		 (hashtable-map table list)
+		 (let ((kt (kmp-table value)))
+		    (filter (lambda (x) x)
+			    (hashtable-map table
+					   (lambda (k p)
+					      (and (>= (kmp-string kt k 0) 0)
+						   (list k p)))))))))
+      (cond
+	 ((null? l1)
+	  (<TABLE>
+	     :class "search-result"
+	     (<COLGROUP> :span columns :width (format "~a%" (/ 100 columns)))
+	     (<TR> 
+		(<TH>
+		   :colspan columns
+		   (format "\"~a\" does not match any entry" value)))))
+	 ((and (pair? l1) (null? (cdr l1)))
+	  ;; only one element matches, jump to it
+	  (<SCRIPT> 
+	     ~(begin
+		 (with-hop ($service $(cadr (car l1)))
+		    (lambda (r)
+		       (let ((el (document.getElementById $id)))
+			  (set! el.innerHTML r))
+		       (iwindow-close "doc/search"))))))
+	 (else
+	  (let ((l2 (sort l1 (lambda (a b) (string<? (car a) (car b))))))
+	     (<TABLE>
+		:class "search-result"
+		(<COLGROUP> :span columns :width (format "~a%" (/ 100 columns)))
+		(<TR> 
+		   (<TH>
+		      :colspan columns
+		      (format "\"~a\" matches ~a entries" value (length l1))))
+		(apply map <TR> (list->entries l2))))))))
+
+;*---------------------------------------------------------------------*/
+;*    search-docs-inner ...                                            */
+;*---------------------------------------------------------------------*/
+(define (search-docs-inner dir key)
+   (let ((t (kmp-table key))
+	 (l (fixnum->elong (string-length key))))
+      (filter-map (lambda (f)
+		     (when (is-suffix? f "wiki")
+			(let* ((path (make-file-name dir f))
+			       (mm (and (file-exists? path)
+					(open-mmap path :write #f))))
+			   (when (mmap? mm)
+			      (unwind-protect
+				 (let ((r (kmp-mmap t mm #e0)))
+				    (and (>=elong r #e0)
+					 (let ((l (mmap-line mm (+elong r l))))
+					    (cons l (<APIREF> l f)))))
+				 (close-mmap mm))))))
+		  (directory->list dir))))
+
+;*---------------------------------------------------------------------*/
+;*    search-docs ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (search-docs dir)
+   (map cdr 
+	(sort (search-docs-inner dir "<doc> ")
+	      (lambda (a b) (string<? (car a) (car b))))))
+      
+;*---------------------------------------------------------------------*/
+;*    search-libraries ...                                             */
+;*---------------------------------------------------------------------*/
+(define (search-libraries dir)
+   (map cdr 
+	(sort (search-docs-inner dir "<library> ")
+	      (lambda (a b) (string<? (car a) (car b))))))
+      
+;*---------------------------------------------------------------------*/
+;*    mmap-line ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (mmap-line mm n)
+   (let ((ls (mmap-length mm)))
+      (let loop ((e n))
+	 (when (<elong e ls)
+	    (if (char=? (mmap-ref mm e) #\Newline)
+		(mmap-substring mm n e)
+		(loop (+elong e #e1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    search-tutorials ...                                             */
+;*---------------------------------------------------------------------*/
+(define (search-tutorials dir value)
+   (let ((t (kmp-table value)))
+      (filter-map (lambda (f)
+		     (when (is-suffix? f "wiki")
+			(let* ((path (make-file-name dir f))
+			       (mm (and (file-exists? path)
+					(open-mmap path :write #f))))
+			   (when (mmap? mm)
+			      (unwind-protect
+				 (let ((r (kmp-mmap t mm #e0)))
+				    (and (>=elong r #e0) path))
+				 (close-mmap mm))))))
+		  (directory->list dir))))
+

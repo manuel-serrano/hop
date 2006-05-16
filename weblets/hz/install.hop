@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/weblets/hz/install.hop              */
+;*    serrano/prgm/project/hop/weblets/hz/install.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Mon Mar 27 14:24:54 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:23:15 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */

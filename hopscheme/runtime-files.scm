@@ -16,20 +16,18 @@
 		       body)))))
    (if (http-response-hop? resp)
        (with-access::http-response-hop resp (xml)
-	  (let ((head (find-in-tree xml 'head)))
+	  (let ((head (find-in-tree xml 'head))
+		(jshead (<HEAD> :dir (hop-share-directory)
+				:jscript "runtime.js"
+				:jscript "hop-dom.js"
+				:jscript "runtime-interface.js")))
 	     (if head
 		 (with-access::xml-markup head (body)
-		    (set! body (cons (<HOP-HEAD> :jscript "runtime.js"
-						 :dir (hop-share-directory))
-				     (cons (<HOP-HEAD>
-					      :jscript "runtime-interface.js"
-					      :dir (hop-share-directory))
-					   body))))
+		    (set! body (append (xml-markup-body jshead) body)))
 		 (let ((html (find-in-tree xml 'html)))
 		    (when html
 		       (with-access::xml-markup html (body)
-			  (set! body (cons (<HEAD>) body)))
-		       (add-runtime-js-files req resp)))))))
+			  (set! body (cons jshead body)))))))))
    resp)
 
 (hop-http-response-local-hook-add! add-runtime-js-files)

@@ -25,7 +25,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-sscript file dir)
    (if (= (string-length file) 0)
-       (error '<HOP-HEAD> "Illegal sscript" file)
+       (error '<HOP-SCHEME-HEAD> "Illegal sscript" file)
        (compile-scheme-file
 	(if (char=? (string-ref file 0) (file-separator))
 	    file
@@ -42,7 +42,7 @@
 		 (filtered '()))
 	 (cond
 	    ((null? a)
-	     (apply <HOP-HEAD> (reverse! filtered)))
+	     (apply <HEAD> (reverse! filtered)))
 	    ((pair? (car a))
 	     (loop (append (car a) (cdr a))
 		   filtered))
@@ -51,7 +51,7 @@
 		   filtered))
 	    ((keyword? (car a))
 	     (if (null? (cdr a))
-		 (error '<HOP-HEAD> (format "Missing ~a value" (car a)) a)
+		 (error '<HOP-SCHEME-HEAD> (format "Missing ~a value" (car a)) a)
 		 (case (car a)
 		    ((:sscript)
 		     (set! mode :sscript)
@@ -76,4 +76,4 @@
 		 (loop (cdr a)
 		       (cons (car a) filtered)))))
 	    (else
-	     (error '<HOP-HEAD> (format "Illegal ~a argument" (car a)) a))))))
+	     (error '<HOP-SCHEME-HEAD> (format "Illegal ~a argument" (car a)) a))))))

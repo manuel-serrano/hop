@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Wed Mar 29 14:12:50 2006 (serrano)                */
+;*    Last change :  Wed May 10 07:03:44 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -24,10 +24,6 @@
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS> db)
    (let* ((entry (<DIV> :class "weblet" ""))
-	  (win (<FLOAT-WINDOW>
-		  :title "Hop Weblets Hz Query"
-		  :width 400
-		  :height 300))
 	  (<search> (lambda (fmt entries)
 		       (<TABLE>
 			  :class "search-result"
@@ -36,8 +32,9 @@
 				  (let ((s (service () (<WEBLET> db e))))
 				     (<TR>
 					(<TD> :onclick
-					      ~(hop ($s)
-						    (hop_replace_inner $entry))
+					      ~(with-hop ($s)
+						  (lambda (h)
+						     (set! $entry.innerHTML h)))
 					      (<SPAN>
 						 :class "name"
 						 (dbhz-name e)
@@ -59,7 +56,6 @@
 			 (<search> fmt (hz-db-query-update db))))))
       (<DIV>
 	 :class "weblets"
-	 win
 	 (<TABLE>
 	    :class "search"
 	    (<TR>
@@ -69,17 +65,26 @@
 			:title "Hit [Return] to search"
 			:size 20
 			:onkeyup ~(if (= event.keyCode 13)
-				      (hop_open_float_window
+				      (iwindow-open
+				       "Hop Weblets Hz Query"
 				       ($search this.value)
-				       $win (- window.innerWidth 410) 100))))
-	       (<TD> (<BUTTON> :onclick ~(hop_open_float_window
+				       false false
+				       430 300
+				       (- window.innerWidth 450) 100))))
+	       (<TD> (<BUTTON> :onclick ~(iwindow-open
+					  "Hop Weblets Hz Query"
 					  ($searcho)
-					  $win (- window.innerWidth 410) 100)
+					  false false
+					  430 300
+					  (- window.innerWidth 450) 100)
 			       :title "Show weblets update"
 			       "Update"))
-	       (<TD> (<BUTTON> :onclick ~(hop_open_float_window
+	       (<TD> (<BUTTON> :onclick ~(iwindow-open
+					  "Hop Weblets Hz Query"
 					  ($searchn)
-					  $win (- window.innerWidth 410) 100)
+					  false false
+					  430 300
+					  (- window.innerWidth 450) 100)
 			       :title "Show new available weblets"
 			       "New"))))
 	 (<PANED>
@@ -120,7 +125,9 @@
 							  :file ifile
 							  (<SPAN>
 							     :class "weblet"
-							     :onclick ~(hop ($s) (hop_replace_inner $entry))
+							     :onclick ~(with-hop ($s)
+									  (lambda (h)
+									     (set! $entry.innerHTML h)))
 							     (dbhz-name e)))))
 						 (hz-db-get-entries-by-category db c))))))))
 			  (hz-db-get-categories db)))))
@@ -132,9 +139,6 @@
 (define (<WEBLET> db weblet)
    (with-access::dbhz weblet (name version author sdescr hop date install
 				   minhop maxhop driver)
-      
-      (define prefwin
-	 (<FLOAT-WINDOW> :title "Preferences" :width 640 :height 400))
       
       (define action
 	 (service (action id)
@@ -168,8 +172,9 @@
 	    (<TD>
 	       :class "action"
 	       (<SPAN>
-		  :onclick ~(hop ($action "refresh" $id)
-				 (hop_replace_inner_id $id))
+		  :onclick ~(with-hop ($action "refresh" $id)
+			       (lambda (h)
+				  (set! (document.getElementById $id).innerHTML h)))
 		  act " completed"))))
       
       (define (<ACTION-INSTALL> id)
@@ -182,8 +187,9 @@
 	       :class "action"
 	       (<SPAN>
 		  :title "Install the weblet now"
-		  :onclick ~(hop ($action "install" $id)
-				 (hop_replace_inner_id $id))
+		  :onclick ~(with-hop ($action "install" $id)
+			       (lambda (h)
+				  (set! (document.getElementById $id).innerHTML h)))
 		  "Install"))))
       
       (define (<RUN> id)
@@ -211,9 +217,11 @@
 	     :class "action"
 	     (<SPAN>
 		:title "Run the weblet in a new window"
-		:onclick ~(hop_open_float_window
+		:onclick ~(iwindow-open
+			   "Preferences"
 			   $(format "~a/~a/preferences" (hop-service-base) name)
-			   $prefwin (/ (- window.innerWidth 640) 2) 50)
+			   false false
+			   640 400 (/ (- window.innerWidth 650) 2) 50)
 		"Preferences"))))
 
       (define (<UNINSTALL> id)
@@ -226,8 +234,9 @@
 	     :class "action"
 	     (<SPAN>
 		:title "Uninstall the weblet now"
-		:onclick ~(hop ($action "uninstall" $id)
-			       (hop_replace_inner_id $id))
+		:onclick ~(with-hop ($action "uninstall" $id)
+			     (lambda (h)
+				(set! (document.getElementById $id).innerHTML h)))
 		"Uninstall"))))
 
       (define (<UPDATE> id)
@@ -240,8 +249,9 @@
 	     :class "action"
 	     (<SPAN>
 		:title "Update the weblet now"
-		:onclick ~(hop ($action "update" $id)
-			       (hop_replace_inner_id $id))
+		:onclick ~(with-hop ($action "update" $id)
+			     (lambda (h)
+				(set! (document.getElementById $id).innerHTML h)))
 		"Update"
 		(<SPAN>
 		   :class "old-version"
@@ -299,7 +309,6 @@
 	     (<ACTION-UPDATE> id))))
 
       (list
-	 prefwin
 	 (<VBOX>
 	    (<VBOX-BLOCK>
 	       (<SPAN> :class "title" name " " version))

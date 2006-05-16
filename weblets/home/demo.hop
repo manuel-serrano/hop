@@ -1,0 +1,206 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/home/demo.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed May 10 16:29:57 2006                          */
+;*    Last change :  Mon May 15 11:23:54 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOME page demonstration                                          */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hophome_demo
+   (import hophome_config
+	   hophome_widgets
+	   hophome_demos-minesweeper
+	   hophome_demos-sudoku
+	   hophome_demos-repl
+	   hophome_demos-rss
+	   hophome_demos-source
+	   hophome_demos-wiki)
+   (export (<DEMO> request)))
+
+;*---------------------------------------------------------------------*/
+;*    <DEMO> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<DEMO> req)
+   (<DIV>
+      :class "demo"
+      :id "demo-playground"
+      :align "left"
+      (<DIV>
+	 :class "toolbar"
+	 :align "center"
+	 :width "100%"
+	 :id "toolbar-demo"
+	 (<TIPS> 550 500)
+	 (<TABLE>
+	    :class "toolbar"
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/minesweeper)
+			  "mines-32x32.png" "mines-48x48.png"
+			  320 320)))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/sudoku)
+			  "games1-32x32.png" "games1-48x48.png"
+			  500 420)))
+;* 	    (<TR>                                                      */
+;* 	       (<TD>                                                   */
+;* 		  :align "left"                                        */
+;* 		  (<ZIMG> "hop/home/demos/tetris"                      */
+;* 			  "games2-32x32.png" "games2-48x48.png")))     */
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/rss)
+			  "news-32x32.png" "news-48x48.png"
+			  570 370)))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/repl)
+			  "term-32x32.png" "term-48x48.png"
+			  540 370)))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/wiki)
+			  "wiki-32x32.png" "wiki-48x48.png"
+			  390 450)))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/source)
+			  "computer-32x32.png" "computer-48x48.png"
+			  700 500)))))))
+
+;*---------------------------------------------------------------------*/
+;*    home/demos/tips ...                                              */
+;*---------------------------------------------------------------------*/
+(define-service (home/demos/tips)
+   (<HTML>
+      (<HEAD> :css (make-file-name (home-dir) "tips.hss"))
+      (<H1> "This is the HOP demonstration playground.")
+      (<P> [It illustrates various features provided by HOP. It shows
+some of the HTML extensions provided by HOP (for instance for implementing
+this simple window manager). It shows how to programs application where
+,(<EM> "client") computations and ,(<EM> "server") computations are
+simultaneously involved. It also illustrates some of the HOP libraries
+such as libraries for accessing and parsing ressources over the network. This
+playground contains the following demonstrations:])
+      (<H2> "Minesweeper")
+      (<P> :class "descr" [This demonstration implements a simple
+ ,(<EM> "Minesweeper") game. It shows how to program client side applications
+ in HOP.])
+      (<H2> "Sudoku")
+      (<P> :class "descr" [This implements a ,(<EM> "Sudoku") matrix generator.
+ It programs show how client side and server side computations cohabite.])
+      (<H2> "Rss")
+      (<P> :class "descr" [This implements a ,(<EM> "RSS") reader. It
+ illustrates the HOP widget for ,(<EM> "fold lists"). It shows how to use
+ this widget can be used for implementing ,(<EM> "lazy") unfolding. In this
+ demonstration, RSS feeds are fetched from the network and parsed only
+ when items are unfolded. This demonstration also shows how to
+ program applications that uses third party servers.])
+      (<H2> "Repl")
+      (<P> :class "descr" [This is a HOP client side interpreter. Each time,
+ the \[return\] key is pressed. The expression after the prompt (the string
+ ,(<TT> ":=>")) is sent to the server for compilation. Once back, it is
+ evaluated on the client browser. The expressions may refer to the whole
+ HOP client side API. In particular, they can manipulate the current DOM.])
+      (<H2> "Wiki")
+      (<P> :class "descr" [This demonstration uses the HOP Wiki library. It
+also shows how HOP ,(<EM> "signals") can be deployed for allowing external
+clients to be notified by servers.])
+      (<H2> "Source")
+      (<P> :class "descr" [This demonstration uses HOP ,(<EM> "trees") and
+,(<EM> "pan"). It implements a simple file browser. This browsers may
+be used to access the whole source code of this playground.])))
+
+;*---------------------------------------------------------------------*/
+;*    <TIPS> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<TIPS> . r)
+   (let ((id (xml-make-id))
+	 (w (if (pair? r) (car r) "200"))
+	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
+	 (t (string-capitalize "Tips")))
+      (<SCRIPT>
+	 ~(let ((frame (document.createElement "iframe"))
+		(t (document.getElementById $id))
+		(p (document.getElementById "demo-playground")))
+	     (set! frame.className "demos")
+	     (set! frame.src $(make-service-url home/demos/tips))
+	     (set! frame.style.border "0")
+	     (set! frame.style.width "100%")
+	     (set! frame.style.height "100%")
+	     (let* ((w (iwindow-open $t
+				     frame
+				     false false
+				     $w $h
+				     (/ (- window.innerWidth $w) 2) 200
+				     p))
+		    (i (<SPAN> :class "icon" $t)))
+		(set! i.onmousedown
+		      (lambda (e)
+			 (set! i.style.visibility "hidden")
+			 (set! w.style.display "block")))
+		(set! w.iconify
+		      (lambda ()
+			 (set! i.style.top w.style.top)
+			 (set! i.style.left w.style.left)
+			 (set! i.style.visibility "visible")
+			 (set! w.style.display "none")))
+		(dom-append-child! p i)
+		w)))))
+
+;*---------------------------------------------------------------------*/
+;*    <ZIMG> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<ZIMG> svc s1 s2 . r)
+   (let ((id (xml-make-id))
+	 (p1 (make-file-path (home-dir) "icons" s1))
+	 (p2 (make-file-path (home-dir) "icons" s2))
+	 (w (if (pair? r) (car r) "200"))
+	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
+	 (t (string-capitalize (basename svc))))
+      (<IMG> :id id
+	     :src p1
+	     :title t
+	     :onmouseover ~(set! (document.getElementById $id).src $p2)
+	     :onmouseout ~(set! (document.getElementById $id).src $p1)
+	     :onclick ~(let ((frame (document.createElement "iframe"))
+			     (t (document.getElementById $id))
+			     (p (document.getElementById "demo-playground")))
+			  (set! frame.className "demos")
+			  (set! frame.src $svc)
+			  (set! frame.style.border "0")
+			  (set! frame.style.width "100%")
+			  (set! frame.style.height "100%")
+			  (let* ((w (iwindow-open $t
+						  frame
+						  false false
+						  $w $h
+						  (+ 60 (hop_element_x p))
+						  (+ 10 (hop_element_y p))
+						  p))
+				 (i (<SPAN> :class "icon" $t)))
+			     (set! i.onmousedown
+				   (lambda (e)
+				      (set! i.style.visibility "hidden")
+				      (set! w.style.display "block")))
+			     (set! w.iconify
+				   (lambda ()
+				      (set! i.style.top w.style.top)
+				      (set! i.style.left w.style.left)
+				      (set! i.style.visibility "visible")
+				      (set! w.style.display "none")))
+			     (dom-append-child! p i)
+			     w)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Feb  8 07:36:22 2006 (serrano)                */
+;*    Last change :  Tue May  2 13:31:02 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP jobs control                                                 */
@@ -41,10 +41,9 @@
 	(<TR> (<TH> "Repeat:") (<TD> (job-repeat j)))
 	(<TR> (<TH> "Interval:") (<TD> (job-interval j))))))
    (<HTML>
-    (<HEAD>
-     (<HOP-HEAD> :css "hop-notepad.css"
-		 :jscript "hop-notepad.js"
-		 :css "weblets/jobs/jobs.hss"))
+      (<HEAD> :css "hop-notepad.css"
+	      :jscript "hop-notepad.js"
+	      :css "weblets/jobs/jobs.hss")
     (<BODY>
      (<NOTEPAD>
       :id "notepad"

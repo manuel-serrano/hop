@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Thu Sep 29 10:38:27 2005 (serrano)                */
-/*    Copyright   :  2005 Manuel Serrano                               */
+/*    Last change :  Mon May 15 21:26:44 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
@@ -32,7 +32,7 @@ function hop_slider_value_set( slider, value ) {
 
    if( slider.value != value ) {
       var curw = slider.cursor.width;
-      var val = Math.round( (value/(slider.max-slider.min))*(100-curw) ) - slider.min;
+      var val = Math.round( ((value-slider.min)/(slider.max-slider.min))*(100-curw) );
       
       slider.value = value;
 
@@ -60,7 +60,7 @@ function hop_slider_value_get( slider ) {
 /*---------------------------------------------------------------------*/
 function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    var doc = (parent == undefined ? document : parent.ownerDocument || parent.document);
-   var slider, tr, tr2;
+   var slider, tbody, tr, tr2;
    var line1, line2, cursor;
    var td1, td3;
    var div;
@@ -88,18 +88,21 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    slider.style.setProperty( "border-spacing", "0", 0 );
    parent.appendChild( slider );
 
+   tbody = doc.createElement( "tbody" );
+   slider.appendChild( tbody );
+   
    tr = doc.createElement( "tr" );
    tr2 = doc.createElement( "tr" );
 
    if( cap == "top" ) {
-      slider.appendChild( tr2 );
-      slider.appendChild( tr );
+      tbody.appendChild( tr2 );
+      tbody.appendChild( tr );
    } else {
       if( cap == "bottom" ) {
-	 slider.appendChild( tr );
-	 slider.appendChild( tr2 );
+	 tbody.appendChild( tr );
+	 tbody.appendChild( tr2 );
       } else {
-	 slider.appendChild( tr );
+	 tbody.appendChild( tr );
       }
    }
 

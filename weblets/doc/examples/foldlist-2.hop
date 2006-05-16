@@ -1,0 +1,13 @@
+;; A dynamic foldlist
+(<HTML>
+   (<HEAD> :jscript "hop-foldlist.js" :css "hop-foldlist.css")
+   (<BODY>
+      (<H3> "A Dynamic list")
+      (<FL>
+	 (<FLITEM>
+	    (<FLHEAD> "Click me")
+	    (let ((c 0))
+	       (<DELAY>
+		  (lambda ()
+		     (set! c (+ c 1))
+		     (format "this item has been opened ~a times" c))))))))

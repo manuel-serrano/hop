@@ -1,0 +1,92 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/hop/hop.hop                     */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed May 10 16:18:48 2006                          */
+;*    Last change :  Sun May 14 17:39:46 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOP initial weblet.                                              */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hophop
+   (import hophop_config))
+
+;*---------------------------------------------------------------------*/
+;*    hop ...                                                          */
+;*---------------------------------------------------------------------*/
+(define-service (hop)
+   (hop-main (the-current-request)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-main ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hop-main req)
+   (<HOP>
+      (<TABLE>
+	 :class "directory"
+	 (<TR>
+	    (map (lambda (e)
+		    (<HTD> (car e) (cadr e) (caddr e)))
+		 '(("home.png" "home" "/hop/home")
+		   ("system.png" "hz" "/hop/hz")
+		   ("password.png" "password" "/hop/password")
+		   ("edu.png" "doc" "/hop/doc")
+		   ("info.png" "info" "/hop/info")
+		   ("control.png" "webfilter" "/hop/webfilter")))))))
+
+;*---------------------------------------------------------------------*/
+;*    <HTD> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<HTD> png name url)
+   (<TD>
+      :valign "top"
+      (<TABLE>
+	 :width "100%"
+	 :onclick ~(set! document.location $url)
+	 :title url
+	 (<TR>
+	    (<TD>
+	       :valign "top"
+	       :align "center"
+	       :class "logo"
+	       (<IMG> :class "logo"
+		      :src (format "~a/icons/~a" (hop-share-directory) png))))
+	 (<TR>
+	    (<TD>
+	       :valign "top"
+	       :align "center"
+	       :class "legend"
+	       (<SPAN> name))))))
+	    
+;*---------------------------------------------------------------------*/
+;*    <HOP> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<HOP> . obj)
+   (<HTML>
+      (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css" 
+	      :css (format "~a/hop.hss" (hop-dir)))
+      (<BODY>
+	 (<CENTER>
+	    (<TABLE>
+	       :class "hop"
+	       (<TR>
+		  (<TD>
+		     :valign "top"
+		     (<IMG> :class "logo"
+			    :src (format "~a/icons/logo.png"
+					 (hop-share-directory))))
+		  (<TD>
+		     :valign "top"
+		     (<TABLE>
+			(<TR>
+			   (<TD>
+			      (<DIV> :id "title" "Hop v" (hop-version))))
+			(<TR>
+			   (<TD>
+			      obj))))))))))
+				     
+	     

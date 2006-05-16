@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Tue Mar 28 17:01:13 2006 (serrano)                */
+/*    Last change :  Tue May 16 05:20:09 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -46,6 +46,10 @@ $(hop-hss-type! "preferences" "table.preferences")
 body {
   background: #e0e0e0;
   font-family: arial, sans serif;
+}
+
+body.hz-list {
+  background: transparent;
 }
 
 /*--- forms -----------------------------------------------------------*/
@@ -238,12 +242,13 @@ table.hop-tree-leaf {
   font-weight: bold;
 }
 
-/*--- window ----------------------------------------------------------*/
-float-window {
-  opacity: 0.95;
+img.hop-tree {
+  margin-right: 2px;
 }
 
-.hop-float-content {
+/*--- window ----------------------------------------------------------*/
+iwindow {
+  opacity: 0.95;
   background: white;
   font-size: small;
 }
@@ -406,6 +411,10 @@ table.build-repository th.bad {
   color: #f00;
 }
 
+span.sdescr {
+  color: #555;
+}
+
 /*--- weblets ---------------------------------------------------------*/
 weblets div.weblet {
   font-size: small;
@@ -509,6 +518,10 @@ table.search-result span.descr {
 table.search-result span.name {
   color: $deep-blue;
   font-weight: bold;
+}
+
+table.search-result span.name:hover {
+  text-decoration: underline;
 }
 
 table.search-result td {

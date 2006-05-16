@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Mar 21 13:55:54 2006 (serrano)                */
+;*    Last change :  Tue May 16 09:07:44 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -24,7 +24,8 @@
 	    __hop_http-lib
 	    __hop_http-error
 	    __hop_http-filter
-	    __hop_js-lib)
+	    __hop_js-lib
+	    __hop_user)
 
    (export  (generic http-response ::%http-response ::socket)
 	    (generic scheme->response ::obj ::http-request)
@@ -33,7 +34,8 @@
 	    (response-remote-start-line ::http-response-remote)
 	    (make-unchunks ::input-port)
 	    (response-chunks ::input-port ::output-port)
-	    (make-client-socket/timeout host port ::int ::obj)))
+	    (make-client-socket/timeout host port ::int ::obj)
+	    (response-is-xml?::bool ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-client-socket/timeout ...                                   */
@@ -110,6 +112,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-obj ...                            */
+;*    -------------------------------------------------------------    */
+;*    The class HTTP-RESPONS-OBJ being obsolete, this method will      */
+;*    be removed soon.                                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-obj socket)
    (with-trace 3 'http-response::http-response-obj
@@ -135,7 +140,7 @@
    (with-trace 3 'http-response::http-response-js
       (with-access::http-response-js r (start-line header content-type server content-length body bodyp)
 	 (let ((p (socket-output socket)))
-	    (http-write-line p start-line)
+	    (http-write-line p "HTTP/1.1 200 Ok")
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
 	    (when content-type
@@ -144,8 +149,11 @@
 	       (http-write-line p "Server: " server))
 	    (when (>elong content-length #e0)
 	       (http-write-line p "Content-Length: " content-length))
+	    (http-write-line p "Hop-Json: true")
 	    (http-write-line p)
-	    (when bodyp (display (scheme->javascript body) p))
+	    ;; the body
+	    (with-trace 4 'http-response-js
+	       (when bodyp (display (hop->json body) p)))
 	    (flush-output-port p)))))
       
 ;*---------------------------------------------------------------------*/
@@ -198,38 +206,40 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-file socket)
    (with-trace 3 'http-response::http-response-file
-      (with-access::http-response-file r (start-line header content-type server file bodyp)
-	 ;; the file is never read so it can be open it with a tiny buffer
-	 (let ((p (socket-output socket))
-	       (pf (open-input-file file 1)))
-	    (if (not (input-port? pf))
-		(raise
-		 (if (not (file-exists? file))
-		     (make-&io-file-not-found-error #f #f
-						    'http-response
-						    "File not found"
-						    file)
-		     (make-&io-port-error #f #f
-					  'http-response
-					  "File not found"
-					  file)))
-		(begin
-		   (http-write-line p start-line)
-		   (http-write-header p header)
-		   (http-write-line p "Connection: close")
-		   (when content-type
-		      (http-write-line p "Content-Type: " content-type))
-		   (when server
-		      (http-write-line p "Server: " server))
-		   (http-write-line p "Content-Length: " (file-size file))
-		   (http-write-line p)
-		   ;; the body
-		   (with-trace 4 'http-response-file
-		      (when bodyp
-			 (unwind-protect
-			    (send-chars pf p)
-			    (close-input-port pf))))
-		   (flush-output-port p)))))))
+      (with-access::http-response-file r (start-line header content-type server file bodyp request)
+	 (if (user-authorized-path? (http-request-user request) file)
+	     ;; the file is never read so it can be open it with a tiny buffer
+	     (let ((p (socket-output socket))
+		   (pf (open-input-file file 1)))
+		(if (not (input-port? pf))
+		    (raise
+		     (if (not (file-exists? file))
+			 (make-&io-file-not-found-error #f #f
+							'http-response
+							"File not found"
+							file)
+			 (make-&io-port-error #f #f
+					      'http-response
+					      "Cannot open file"
+					      file)))
+		    (begin
+		       (http-write-line p start-line)
+		       (http-write-header p header)
+		       (http-write-line p "Connection: close")
+		       (when content-type
+			  (http-write-line p "Content-Type: " content-type))
+		       (when server
+			  (http-write-line p "Server: " server))
+		       (http-write-line p "Content-Length: " (file-size file))
+		       (http-write-line p)
+		       ;; the body
+		       (with-trace 4 'http-response-file
+			  (when bodyp
+			     (unwind-protect
+				(send-chars pf p)
+				(close-input-port pf))))
+		       (flush-output-port p))))
+	     (user-access-denied request)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cgi-env ...                                                  */
@@ -284,32 +294,34 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-cgi socket)
    (with-trace 3 'http-response::http-response-cgi
-      (with-access::http-response-cgi r (start-line header content-type server cgibin bodyp)
-	 (let ((p (socket-output socket)))
-	    (http-write-line p start-line)
-	    (http-write-header p header)
-	    (http-write-line p "Connection: close")
-	    (when content-type
-	       (http-write-line p "Content-Type: " content-type))
-	    (when server
-	       (http-write-line p "Server: " server))
-	    (http-write-line p)
-	    ;; the body
-	    (with-trace 4 'http-response-cgi-process
-	       (let* ((pi (socket-input socket))
-		      (cl (http-response-cgi-content-length r))
-		      (body (read-chars (elong->fixnum cl) pi))
-		      (env (hop-cgi-env socket r cgibin "" 'POST))
-		      (proc (apply run-process cgibin output: pipe: input: pipe: env)))
-		  (fprint (process-input-port proc) body "\r\n")
-		  (close-output-port (process-input-port proc))
-		  ;; parse the cgi acknowledge
-		  (http-read-header (process-output-port proc))
-		  ;; send the result of the request
-		  (when bodyp
-		     (send-chars (process-output-port proc) p)
-		     (close-input-port (process-output-port proc)))
-		  (flush-output-port p)))))))
+      (with-access::http-response-cgi r (start-line header content-type server cgibin bodyp request)
+	 (if (user-authorized-path? (http-request-user request) cgibin)
+	     (let ((p (socket-output socket)))
+		(http-write-line p start-line)
+		(http-write-header p header)
+		(http-write-line p "Connection: close")
+		(when content-type
+		   (http-write-line p "Content-Type: " content-type))
+		(when server
+		   (http-write-line p "Server: " server))
+		(http-write-line p)
+		;; the body
+		(with-trace 4 'http-response-cgi-process
+		   (let* ((pi (socket-input socket))
+			  (cl (http-response-cgi-content-length r))
+			  (body (read-chars (elong->fixnum cl) pi))
+			  (env (hop-cgi-env socket r cgibin "" 'POST))
+			  (proc (apply run-process cgibin output: pipe: input: pipe: env)))
+		      (fprint (process-input-port proc) body "\r\n")
+		      (close-output-port (process-input-port proc))
+		      ;; parse the cgi acknowledge
+		      (http-read-header (process-output-port proc))
+		      ;; send the result of the request
+		      (when bodyp
+			 (send-chars (process-output-port proc) p)
+			 (close-input-port (process-output-port proc)))
+		      (flush-output-port p))))
+	     (user-access-denied request)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-put ...                            */
@@ -356,6 +368,13 @@
 		  (else
 		   (loop (+fx i 1)))))))))
     
+;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-abort ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-abort socket)
+   (with-trace 3 'http-response::http-response-abort
+      'http-response-abort))
+      
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-remote ...                         */
 ;*---------------------------------------------------------------------*/
@@ -452,22 +471,38 @@
    (if (eq? (http-request-method req) 'HOP) 'UTF-8 (hop-char-encoding)))
 
 ;*---------------------------------------------------------------------*/
+;*    response-is-xml? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (response-is-xml? p)
+   (cond
+      ((not (pair? p))
+       (xml? p))
+      ((xml? (car p))
+       #t)
+      ((pair? (car p))
+       (or (response-is-xml? (car p))
+	   (response-is-xml? (cdr p))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
 ;*    scheme->response ::obj ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (scheme->response obj::obj req)
    (cond
-      ((or (pair? obj) (number? obj) (symbol? obj) (boolean? obj) (date? obj))
-       (instantiate::http-response-hop
-	  (char-encoding (request-encoding req))
-	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
-	  (xml obj)))
       ((string? obj)
        (instantiate::http-response-string
 	  (char-encoding (request-encoding req))
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
 	  (body obj)))
+      ((response-is-xml? obj)
+       (instantiate::http-response-hop
+	  (char-encoding (request-encoding req))
+	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
+	  (xml obj)))
       (else
-       (http-response-void))))
+       (instantiate::http-response-js
+	  (body obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::%http-response ...                            */

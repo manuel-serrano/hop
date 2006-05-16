@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Mar 27 07:30:36 2006 (serrano)                */
+;*    Last change :  Tue May  2 13:32:07 2006 (serrano)                */
 ;*    Copyright   :  2006 Erick Gallesio                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Weblet configuration                                         */
@@ -26,12 +26,11 @@
 ;; ----------------------------------------------------------------------
 (define-service (webconf)
    (<HTML>
-      (<HEAD>
-	 (<HOP-HEAD> :jscript "hop-foldlist.js" "hop-window.js"
-		     :css "hop-foldlist.css" "hop-window.css")
-	 (<LINK> :rel "stylesheet"
-		 :type "text/css"
-		 :href (format "~a/webconf.hss" *webconf-directory*)))
+      (<HEAD> :jscript "hop-foldlist.js" "hop-window.js"
+	      :css "hop-foldlist.css" "hop-window.css"
+	      (<LINK> :rel "stylesheet"
+		      :type "text/css"
+		      :href (format "~a/webconf.hss" *webconf-directory*)))
       (<BODY>
          (<H1> "Weblets Configuration")
 	 ;; Create the About and Configuration windows (not displayed yet) 

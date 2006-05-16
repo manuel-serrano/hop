@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed Mar 22 17:58:31 2006 (serrano)                */
+/*    Last change :  Wed Apr 19 14:35:09 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    FLOAT-WINDOW implementation                                      */
 /*=====================================================================*/
@@ -77,10 +77,6 @@ function hop_open_float_window(serv, e, x, y, inframe)
     win.onResize      = resize;
     win.onResizeEnd   = end_resize;
 
-//    if (serv == null) {
-//	change_style();
-//	return
-//    }
     if (!win.inFrame) {
 	hop(serv, 
 	    function( http ) {
@@ -114,7 +110,11 @@ function hop_open_float_window(serv, e, x, y, inframe)
 \* ====================================================================== */
 function hop_close_float_window(id)
 {
-    var el = document.getElementById(id);
+    if(id instanceof HTMLElement)
+       el = id;
+    else
+       var el = document.getElementById(id);
+    
     el.style.display = "none";
 }
 

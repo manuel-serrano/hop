@@ -1,0 +1,52 @@
+<doc> Server parsing source code
+
+== Description ==
+
+These functions parses file according to the HOP syntax.
+
+== Synopsis ==
+
+  (hop-read [input-port])
+  (hop-load path [env])
+  (the-loading-file)
+  
+== Examples ==
+
+<example>hop-read, hop-load, the-loading-file</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(hop-read [port])++ ===
+<function> hop-read
+
+<arguments>
+^  arguments  ^   type      ^  short description          ^
+| port        | input-port  | the input port.             |
+</arguments>
+</function>
+
+The function ++hop-read++ reads an entire expression from an input port.
+
+=== ++(hop-load path [env])++ ===
+<function> hop-load
+
+<arguments>
+^  arguments  ^   type      ^  short description             ^
+| path       |  string      | the file name to be loaded.    |
+</arguments>
+
+This function loads the file ++path++. That is, it reads and evaluates
+all the expressions. The expressions are evaluated in the environment
+++env++. By default the current module's environment is used.
+
+</function>
+
+=== ++(the-loading-file)++ ===
+<function> the-loading-file
+
+This function returns the name of the file currently being loaded.
+
+</function>
+
+</doc>

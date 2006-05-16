@@ -1,0 +1,162 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/home/home.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Wed May 10 16:18:48 2006                          */
+;*    Last change :  Tue May 16 05:53:16 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    HOP home page weblet.                                            */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hophome
+   (import  hophome_config
+	    hophome_widgets
+	    hophome_demo
+	    hophome_wiki))
+
+;*---------------------------------------------------------------------*/
+;*    logs ...                                                         */
+;*---------------------------------------------------------------------*/
+(define *log*
+   (make-file-name (home-rc-directory) "LOG"))
+
+(define *statistics*
+   (if (file-exists? *log*)
+       (let ((m (open-mmap *log* :write #f)))
+	  (let loop ((i (-elong (mmap-length m) #e1))
+		     (c 0))
+	     (cond
+		((=elong i #e-1)
+		 (close-mmap m)
+		 c)
+		((char=? (mmap-ref m i) #\Newline)
+		 (loop (-elong i #e1) (+fx c 1)))
+		(else
+		 (loop (-elong i #e1) c)))))
+       0))
+
+(define *log-port*
+   (begin
+      (unless (directory? (home-rc-directory))
+	 (make-directory (home-rc-directory)))
+      (or (append-output-file *log*) (open-output-file *log*))))
+
+;*---------------------------------------------------------------------*/
+;*    home-statistics ...                                              */
+;*---------------------------------------------------------------------*/
+(define (home-statistics)
+   *statistics*)
+
+;*---------------------------------------------------------------------*/
+;*    *statistics-mutex* ...                                           */
+;*---------------------------------------------------------------------*/
+(define *statistics-mutex* (make-mutex "home"))
+
+;*---------------------------------------------------------------------*/
+;*    home-add-log! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (home-add-log! req)
+   (mutex-lock! *statistics-mutex*)
+   (set! *statistics* (+fx 1 *statistics*))
+   (display (current-date) *log-port*)
+   (display " " *log-port*)
+   (display " " *log-port*)
+   (display (http-request-socket req) *log-port*)
+   (newline *log-port*)
+   (flush-output-port *log-port*)
+   (mutex-unlock! *statistics-mutex*))
+
+;*---------------------------------------------------------------------*/
+;*    home ...                                                         */
+;*---------------------------------------------------------------------*/
+(define-service (home)
+   (let ((req (the-current-request)))
+      (let ((agent (assq :user-agent (http-request-header req))))
+         (if (and (pair? agent)
+		  (string? (cdr agent))
+                  (or (substring-ci-at? (cdr agent) "Mozilla" 0)
+		      (substring-ci-at? (cdr agent) "Opera" 0)
+		      (substring-ci-at? (cdr agent) "Konqueror" 0)))
+	     (home-main req)
+	     (http-service-error
+	      req
+	      'hop
+	      "Your browser is not capable enough for displaying this page.
+We suggest to give Firefox a try.")))))
+
+;*---------------------------------------------------------------------*/
+;*    home-main ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (home-main req)
+   (home-add-log! req) 
+   (<HOME>
+      (<NOTEPAD>
+	 :id "home-notepad"
+	 (<NPHEAD> "")
+	 (<NPTAB> :id "Presentation"
+		  (<NPTABHEAD> "Main")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "presentation.wiki")))))
+	 (<NPTAB> :id "demo"
+		  (<NPTABHEAD> "Demos")
+		  (<DIV>
+		     :align "center"
+		     (<DEMO> req)))
+	 (<NPTAB> :id "download"
+		  (<NPTABHEAD> "Download")
+		  (<DIV>
+		     :class "hop-tab"
+		     (<DELAY>
+			(lambda ()
+			   (<DIV>
+			      :class "hop-tab"
+			      (wiki->hop "download.wiki"))))))
+	 (<NPTAB> :id "documentation"
+		  (<NPTABHEAD> "Docs")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "docs.wiki")))))
+	 (<NPTAB> :id "weblets"
+		  (<NPTABHEAD> "Weblets")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "weblets.wiki")))))
+	 (<NPTAB> :id "faq"
+		  (<NPTABHEAD> "Faq")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "faq.wiki")))))
+	 (<NPTAB> :id "stats"
+		  (<NPTABHEAD> "Statistics")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   [The HOP server running this home page is up since
+			    ,(<SPAN> :class "uptime" (hop-uptime)).
+			    ,(<P>)
+			    The HOP home page has been served
+			    ,(<SPAN> :class "uptime" (home-statistics))
+			    times.])))))))
+
+;*---------------------------------------------------------------------*/
+;*    home/install ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-service (home/install)
+   (<HTML>
+      (<HEAD> :css (make-file-name (home-dir) "home.hss"))
+      (<BODY> :style "background: white; font-size: small"
+	      (wiki->hop "install.wiki"))))

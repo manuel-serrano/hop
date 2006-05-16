@@ -1,0 +1,315 @@
+<doc> Access Control
+
+== Description ==
+
+This page presents the facilities offered by HOP for programming
+users authentications and accesses restrictions.
+
+~~ Access restriction relies on some global parameters (as described
+above) that enable or disable control. It also relies on user
+declarations. 
+
+== Synopsis ==
+
+=== server parameters ===
+
+  (hop-proxy-authentication)
+  (hop-proxy-authentication-set! arg)
+  (hop-proxy-allow-remote-client)
+  (hop-proxy-allow-remote-client-set! arg)
+  (hop-proxy-remote-authentication)
+  (hop-proxy-remote-authentication-set! arg)
+
+
+=== server functions ===
+
+  (add-user! arg ...)
+  (users-added?)
+  (user-exists? string)
+  (find-user string string)
+  (find-user/encrypt string string procedure)
+  (find-authenticated-user string)
+  (user-authorized-request? obj request)
+  (user-authorized-path? obj string)
+  (authorized-path? obj string)
+  (user-authorized-service? obj symbol)
+  (authorized-service? request symbol)
+  (find-hopaccess string)
+  (user-access-denied request)
+
+
+== Server Definitions ==
+<server>
+
+=== ++hop-proxy-authentication++ ===
+<parameter> hop-proxy-authentication
+<parameter> hop-proxy-authentication-set!
+
+<arguments>
+^  access  ^   type    ^  current value                    ^  short description            ^
+|   r/w    |  bool     |  ++,(hop-proxy-authentication)++  | Is authentication requested for proxy responses. |
+</arguments>
+
+This parameter controls responses to proxy requests (::http-request). That is, when
+a request hits HOP, the server find out if it can locally answers it.
+If it cannot, it adopts a //proxy// behavior by transmitted this request
+to the target host. If the parameter ++hop-proxy-authentication++ is
+set to ++#t++, HOP will request user authentication in order
+to server the request.
+</parameter>
+</parameter>
+
+=== ++hop-proxy-remote-authentication++ ===
+<parameter> hop-proxy-remote-authentication
+<parameter> hop-proxy-remote-authentication-set!
+
+<arguments>
+^  access  ^   type    ^  current value                    ^  short description            ^
+|   r/w    |  bool     |  ++,(hop-proxy-authentication)++  | Is authentication requested for proxy responses. |
+</arguments>
+
+This parameter controls responses to proxy requests emitted from
+**remote clients**. That is, when a request from a remote client hits
+HOP, the server find out if it can locally answers it.  If it cannot,
+it adopts a //proxy// behavior by transmitted this request to the
+target host. If the parameter ++hop-proxy-remote-authentication++ is set to
+++#t++, HOP will request user authentication in order to server the
+request.  
+
+</parameter> 
+</parameter>
+
+=== ++hop-proxy-allow-remote-client++ ===
+<parameter> hop-proxy-allow-remote-client
+<parameter> hop-proxy-allow-remote-client-set!
+
+<arguments>
+^  access  ^   type    ^  current value                    ^  short description            ^
+|   r/w    |  bool     |  ++,(hop-proxy-allow-remote-client)++  | Are remote clients allowed for proxy responses. |
+</arguments>
+
+This parameter controls whenever remote clients can use the running
+HOP as proxy.
+</parameter>
+</parameter>
+
+=== ++(add-user! name option ...)++ ===
+<function> add-user!
+<arguments>
+^  argument     ^   type            ^   default    ^  short description                       ^
+| name          |  string           |              | the user name.                           |
+| :password     |  string           |              | the encrypted user password.             |
+| :groups       |  list of symbols  |   ++()++     | the list of groups the user belongs to.  |
+| :directories  |  obj              |   ++#f++     | the authorized directories.              |
+| :services     |  obj              |   ++#f++     | the authorized services.                 |
+</arguments>
+
+The function ++add-user!++ returns an opaque structure denoting a
+unique user. Here are the meaning of its optional arguments:
+
+  * :password - The user encrypted password. This encryption should
+ be computed using the
+ ,(<A> :href (format "http://localhost:~a/hop/password" (hop-port))
+       (<SPAN> :style "font-variant: small-caps" "Password")) weblet.
+  * :groups - The list of groups the user belongs to.
+  * :directories - The value of this option should either be:
+    * ++#f++, no directory can be visited by this user.
+    * ++'*++ (the symbol ++*++), all directories can be visited.
+    * a list of strings, each directory in the list can be visited.
+  * :services - The value of this option should either be:
+    * ++#f++, no ,(<APIREF> "service" "service.wiki")  can be executed for
+ this user.
+    * ++'*++ (the symbol ++*++), all ,(<APIREF> "services" "service.wiki")
+ can be executed.
+    * a list of service names (a list of symbols), each
+ ,(<APIREF> "service" "service.wiki") in the list can be executed.
+
+
+Examples:
+
+  ;; an administrator that can go everywhere and execute everthing
+  (add-user! "admin"
+             :groups '(admin exec bbdb)
+             :password "75874d556834ccb5361316184780089c"
+             :directories '*
+             :services '*)
+
+  ;; a guest that can only visit the /tmp/guest directory
+  (add-user! "guest"
+             :password "75874d556834ccb5361316184780089c"
+             :directories '("/tmp/guest"))
+
+</function>
+
+=== ++(users-added?)++ ===
+<function> users-added?
+This predicate returns ++#t++ if and only if a user has already be
+registered (i.e., the function ++add-user!++ has already been called).
+Otherwise, it returns ++#f++.
+</function>
+
+=== ++(user-exists? name)++ ===
+<function> user-exists?
+<arguments>
+^  argument     ^   type   ^   short description                       ^
+| name          |  string  | the user name.                            |
+</arguments>
+
+This predicate return ++#t++ if and only if the user named ++name++ exists.
+(i.e., a call to ++add-user!++ with ++name++ as value of the first parameter
+has already been executed). Otherwise, it returns ++#f++.
+</function>
+
+=== ++(find-user name password)++ ===
+<function> find-user
+<arguments>
+^  argument     ^   type   ^   short description                       ^
+| name          |  string  | the user name.                            |
+| password      |  string  | the encrypted user password.              |
+</arguments>
+
+This function returns a user named ++name++ whose encrypted password
+is ++password++. If such user is not found, the function returns ++#f++.
+
+~~ Example:
+  
+  (find-user "admin" "75874d556834ccb5361316184780089c")
+
+</function>
+
+=== ++(find-user/encrypt name password proc)++ ===
+<function> find-user/encrypt
+<arguments>
+^  argument     ^   type      ^   short description                       ^
+| name          |  string     | the user name.                            |
+| password      |  string     | the encrypted user password.              |
+| proc          |  procedure  | the encryption procedure.                 |
+</arguments>
+
+This function behaves similarly to ++find-user++ except that encryption
+is applied. That is, this function returns a user named ++name++ whose
+password ++p++ for which ++(string=? (proc p) (proc password))++ is
+true.
+
+~~ The function ++find-user/encrypt++ can be used by application that
+needs temporary authentications. For instance, let's assume an application
+that needs to grant accesses that last until the next day is arrived. One
+may used an encryption function such as:
+
+  (define (encrypt old-password)
+     (format "~a-~a" (date-day (current-date)) old-password))
+
+
+~~ This function is used by the
+,(<A> :href (format "http://localhost:~a/hop/hz" (hop-port))
+       (<SPAN> :style "font-variant: small-caps" "Hz")) weblet to handle
+user connections.
+</function>
+
+=== ++(find-authenticated-user uinfo)++ ===
+<function> find-authenticated-user
+<arguments>
+^  argument     ^   type   ^   short description                       ^
+| uinfo         |  string  | a user information.                       |
+</arguments>
+
+This functions search authenticated users from the ++userinfo++ field
+found in ::http-request objects.
+</function>
+
+=== ++(user-authorized-request? user request)++ ===
+<function> user-authorized-request?
+<arguments>
+^  argument     ^   type           ^   short description                    ^
+| user          |  obj             | the user.                              |
+| request       |  ::http-request  | the request.                           |
+</arguments>
+This predicate returns ++#t++ if and only if the ++request++ can be satisfied
+(i.e, the directory can be read and the service executed) for the ++user++.
+Otherwise, it returns ++#f++.
+</function>
+
+=== ++(user-authorized-path? user request)++ ===
+<function> user-authorized-path?
+<arguments>
+^  argument     ^   type           ^   short description                    ^
+| user          |  obj             | the user.                              |
+| path          |  string          | the path.                              |
+</arguments>
+This predicate returns ++#t++ if and only if the ++path++ can be read
+by the ++user++. Otherwise, it returns ++#f++.
+
+~~ A user can read the directory, if two condition are meet:
+  - the optional argument :directory that has been used when declaring
+ the user is compatible with ++path++. 
+  - if it exists a file named ++,(hop-hopaccess)++ that goes from the directory
+ containing the file ++path++ to the root of the file system, this file
+ must either contain the symbol ++*++ or a list of names containing
+ the name of the user.
+</function>
+
+=== ++(authorized-path? request request)++ ===
+<function> authorized-path?
+<arguments>
+^  argument     ^   type           ^   short description                    ^
+| request       |  ::http-request  | the request.                           |
+| path          |  string          | the path.                              |
+</arguments>
+This predicate returns ++#t++ if and only if the ++path++ can be read
+by the user authenticated in the ++request++. Otherwise, it returns ++#f++.
+
+~~ See the ++user-authorized-path?++.
+</function>
+
+=== ++(user-authorized-service? user request)++ ===
+<function> user-authorized-service?
+<arguments>
+^  argument     ^   type           ^   short description                    ^
+| user          |  obj             | the user.                              |
+| service       |  symbol          | the service name.                      |
+</arguments>
+This predicate returns ++#t++ if and only if the ++service++ can be executed
+by the ++user++. Otherwise, it returns ++#f++.
+</function>
+
+=== ++(authorized-service? request request)++ ===
+<function> authorized-service?
+<arguments>
+^  argument     ^   type           ^   short description                    ^
+| request       |  ::http-request  | the request.                           |
+| service       |  symbol          | the service name.                      |
+</arguments>
+This predicate returns ++#t++ if and only if the ++service++ can be executed
+by the user authenticated in the ++request++. Otherwise, it returns ++#f++.
+</function>
+
+=== ++(find-hopaccess path)++ ===
+<function> find-hopaccess
+<arguments>
+^  argument     ^   type           ^   short description                    ^
+| path          |  string          | the path.                              |
+</arguments>
+
+This function scans the file system in order to find a file named 
+++,(hop-hopaccess)++ from the root of the file system to the directory
+containing the file ++path++.
+
+</function>
+=== ++(user-access-denied request)++ ===
+<function> user-access-denied
+<arguments>
+^  argument     ^   type           ^   short description                    ^
+| request       |  ::http-request  | the request.                           |
+</arguments>
+
+This function builds an answer of type ::http-response-authentication in order
+to notify the client that an authentication is needed in order to  fulfill 
+the request.
+
+</function>
+
+</server>
+
+== See also ==
+<see-also>authentication, -user, user-</see-also>
+</doc>

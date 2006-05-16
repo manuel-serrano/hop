@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Sun Mar 26 08:13:11 2006 (serrano)                */
+;*    Last change :  Thu May 11 09:28:43 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -16,6 +16,7 @@
    (export (hop-configure ::bstring)
 	   (hop-name)
            (hop-version)
+	   (hop-url)
 	   (hop-bin-directory)
 	   (hop-lib-directory)
 	   (hop-etc-directory)
@@ -26,6 +27,7 @@
    
    (eval   (export hop-name)
 	   (export hop-version)
+	   (export hop-url)
 	   (export hop-etc-directory)
 	   (export hop-bin-directory)
 	   (export hop-lib-directory)
@@ -55,6 +57,8 @@
        (print (hop-weblets-directory)))
       ((--mimetypes)
        (print (hop-mime-types-file)))
+      ((--url)
+       (print (hop-url)))
       (else
        (with-output-to-port (current-error-port)
 	  (lambda ()
@@ -68,13 +72,15 @@
 	     (print "  [--sharedir]")
 	     (print "  [--contribsdir]")
              (print "  [--webletsdir]")
-             (print "  [--mimetypes]"))))))
+             (print "  [--mimetypes]")
+	     (print "  [--url]"))))))
 	     
 ;*---------------------------------------------------------------------*/
 ;*    Name and version                                                 */
 ;*---------------------------------------------------------------------*/
 (define (hop-name) "Hop")
 (define (hop-version) "@VERSION@")
+(define (hop-url) "@URL@")
 
 ;*---------------------------------------------------------------------*/
 ;*    Install directories ...                                          */

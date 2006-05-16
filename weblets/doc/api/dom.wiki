@@ -1,0 +1,403 @@
+<doc> Document Object Model (DOM)
+
+== Description ==
+
+HOP exposes a //Document Object Models// (DOM). It tries to comply as
+much as possible the W3C DOM Level 2 [[http://www.w3.org/DOM/|specification]].
+The DOM can be used either on the server and the client.
+
+~~ On the client side, functions handling DOM have aliases.
+On the client they could also be used as methods. This
+page only present the functional syntax. The method syntax can be deduced
+by applying the following syntactic transformations:
+
+  - Get rid of the prefix ++dom-++.
+  - If applicable, get rid of any punctuation mark (++!++ or ++?++) in the 
+ name.
+  - Get rid of the remaining dash (++-++) characters in the name and 
+ capitalize each letter following the eliminated dashes.
+  - Move the name of the function after the first argument.
+  - Insert a dot (++.++) in between the first argument and the name of the
+ function.
+
+Example:
+
+  (dom-parent-node node)
+
+
+should be written:
+
+  (doc.parentNode node)
+
+
+~~ On the client side, the functions that return several elements (such as
+++dom-child-nodes++) return //lists//. Their methods counterpart return
+vectors. 
+
+
+== Synopsis ==
+
+=== server & client ===
+
+  (dom-has-attributes? node)
+  (dom-get-attributes node)
+  (dom-has-attribute? node string)
+  (dom-get-attribute node string)
+  (dom-remove-attribute! node string)
+  (dom-set-attribute! node name value)
+  (dom-owner-document node)
+  (dom-has-child-nodes? node)
+  (dom-child-nodes node)
+  (dom-first-child node)
+  (dom-last-child node)
+  (dom-next-sibling node)
+  (dom-previous-sibling node)
+  (dom-node-name node)
+  (dom-node-type node)
+  (dom-parent-node node)
+  (dom-append-child! node new)
+  (dom-remove-child! node old)
+  (dom-clone-node node bool)
+  (dom-insert-before! node new ref)
+  (dom-replace-child! node new old)
+  (dom-get-element-by-id node string)
+  (dom-get-elements-by-tag-name node string)
+
+=== server only ===
+
+  (dom-normalize! node)
+
+
+== Examples ==
+<example>get-element-by-id, append-child, remove-child, parent-node</example>
+
+== Server & Client Definitions ==
+<server>
+
+=== ++(dom-has-attributes? node)++ ===
+<function> dom-has-attributes?
+<procedure> hasAttributes
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Returns ++#t++ if ++node++ has //attributes//. Otherwise, returns ++#f++.
+</procedure>
+</function>
+
+=== ++(dom-get-attributes node)++ ===
+<function> dom-get-attributes
+<procedure> getAttributes
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Returns the list of ++node++ //attributes//.
+</procedure>
+</function>
+
+=== ++(dom-has-attribute? node name)++ ===
+<function> dom-has-attribute?
+<procedure> hasAttribute
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| name             |  string      | the attribute name.              |
+</arguments>
+
+Returns ++#t++ if ++node++ has attribute ++name++. Otherwise, 
+returns ++#f++.
+</procedure>
+</function>
+
+=== ++(dom-get-attribute node name)++ ===
+<function> dom-get-attribute
+<procedure> getAttribute
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| name             |  string      | the attribute name.              |
+</arguments>
+
+Returns the value of attribute ++name++ of ++node++. If ++node++ does not
+have that attribute, the behavior is unspecified.
+</procedure>
+</function>
+
+=== ++(dom-remove-attribute! node name)++ ===
+<function> dom-remove-attribute!
+<procedure> removeAttribute
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| name             |  string      | the attribute name.              |
+</arguments>
+
+Removes the attribute ++name++ from ++node++. If ++node++ does not
+have that attribute, the behavior is unspecified.
+</procedure>
+</function>
+
+=== ++(dom-set-attribute! node name value)++ ===
+<function> dom-set-attribute!
+<procedure> setAttribute
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| name             |  string      | the attribute name.              |
+| value            |  obj         | any value.                       |
+</arguments>
+
+Sets a new ++value++ for the attribute ++name++ from ++node++. If ++node++ 
+does not have that attribute, the behavior is unspecified.
+</procedure>
+</function>
+
+=== ++(dom-owner-document node)++ ===
+<function> dom-owner-document
+<procedure> ownerDocument
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Returns the document that //owns// ++node++.
+</procedure>
+</function>
+
+=== ++(dom-has-child-nodes? node)++ ===
+<function> dom-has-child-nodes?
+<procedure> hasChildNodes
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Returns ++#t++ if ++node++ has child nodes. Otherwise, returns ++#f++.
+</procedure>
+</function>
+
+=== ++(dom-child-nodes node)++ ===
+<function> dom-child-nodes
+<procedure> childNodes
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Returns the list of children of ++node++.
+</procedure>
+</function>
+
+=== ++(dom-first-child node)++ ===
+=== ++(dom-last-child node)++ ===
+<function> dom-first-child
+<function> dom-last-child
+<procedure> firstChild
+<procedure> lastChild
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Returns the first (respectively the last) child of ++node++.
+</procedure>
+</procedure>
+</function>
+</function>
+
+=== ++(dom-next-sibling node)++ ===
+=== ++(dom-previous-sibling node)++ ===
+<function> dom-next-sibling
+<function> dom-previous-sibling
+<procedure> nextSibling
+<procedure> previousSibling
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Returns the next (respectively the previous) sibling of ++node++.
+</procedure>
+</procedure>
+</function>
+</function>
+
+=== ++(dom-node-name node)++ ===
+=== ++(dom-node-type node)++ ===
+<function> dom-node-name
+<function> dom-node-type
+<procedure> nodeName
+<procedure> nodeType
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Returns the name (respectively the type) of ++node++.
+</procedure>
+</procedure>
+</function>
+</function>
+
+=== ++(dom-parent-node node)++ ===
+<function> dom-parent-node
+<procedure> parentNode
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Returns the parent of ++node++.
+</procedure>
+</function>
+
+=== ++(dom-append-child! node child)++ ===
+=== ++(dom-remove-child! node child)++ ===
+<function> dom-append-child!
+<function> dom-remove-child!
+<procedure> appendChild
+<procedure> removeChild
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| child            |  element     | an element built by any markup.  |
+</arguments>
+
+Adds (respec. removes) a new ++child++ to (respec. from) ++node++.
+</procedure>
+</procedure>
+</function>
+</function>
+
+=== ++(dom-clone-node node deep)++ ===
+<function> dom-clone-node
+<procedure> cloneNode
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| deep             |  boolean     | deep or shallow cloning.         |
+</arguments>
+
+Clones ++node++. If the argument ++deep++ is ++#t++ the cloning is deep
+(i.e., children are recursively cloned too). Otherwise, it is shallow
+(i.e., children are not cloned).
+</procedure>
+</function>
+
+=== ++(dom-insert-before! node new ref)++ ===
+<function> dom-insert-before!
+<procedure> insertBefore
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| new              |  element     | an element built by any markup.  |
+| ref              |  element     | an element built by any markup.  |
+</arguments>
+
+Inserts a ++new++ node in the children list of ++node++, just after the
+element ++ref++. If the element ++ref++ is not the children list, the
+behavior is unspecified.
+</procedure>
+</function>
+
+=== ++(dom-replace-child! node new old)++ ===
+<function> dom-replace-child!
+<procedure> replaceChild
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| new              |  element     | an element built by any markup.  |
+| ref              |  element     | an element built by any markup.  |
+</arguments>
+
+Replaces the ++old++ with a ++new++ node in the children list of ++node++.
+If the element ++old++ is not the children list, nothing happens.
+</procedure>
+</function>
+
+=== ++(dom-get-element-by-id document id)++ ===
+<function> dom-get-element-by-id
+<procedure> getElementById
+
+<arguments>
+^  arguments       ^   type       ^  short description                      ^
+| document         |  element     | an element.                             |
+| id               |  string      | the seeked element's identifier.        |
+</arguments>
+
+Search an element in ++node++ children whose identifier is ++id++. The function
+++string=?++ that compare characters by characters is used to compare 
+identifiers. 
+
+~~ Note 1: On client code, ++node++ must a document, i.e., an element built
+by the ++<HTML>++ markup. This restriction does not apply to server code.
+
+~~ Note 2: normally identifier are unique so a document should not contain 
+two or more elements with the same identifier.
+</procedure>
+</function>
+
+=== ++(dom-get-elements-by-tag-name document name)++ ===
+<function> dom-get-elements-by-tag-name
+<procedure> getElementsByTagName
+
+<arguments>
+^  arguments       ^   type       ^  short description                      ^
+| document         |  element     | an element.                             |
+| name             |  string      | the seeked elements tag name.           |
+</arguments>
+
+Search all the elements in ++document++ whose tag name is ++id++. The
+tag name is the name of the markup that has been used to build the
+elements. The function ++string=?++ that compare characters by
+characters is used to compare identifiers.  
+
+~~ Note: On client code, ++node++ must a document, i.e., an element built
+by the ++<HTML>++ markup. This restriction does not apply to server code.
+</procedure>
+</function>
+
+</server>
+
+== Server only Definitions ==
+<server>
+
+=== ++(dom-normalize! node)++ ===
+<function> dom-normalize!
+
+<arguments>
+^  arguments       ^   type       ^  short description                      ^
+| node             |  element     | an element built by any markup.         |
+</arguments>
+
+Walk through a node children in order to cleanup the parent/child
+relationship. This function is only useful after internal surgery on
+the tree. In general, it should not be directly called by user source code.
+</function>
+
+</server>
+
+== See also ==
+<see-also>dom-, get-element-by-id</see-also>
+
+</doc>

@@ -1,0 +1,48 @@
+(module hophome_demos-rss
+   (export (home/demos/rss)))
+
+(define *rss-directory* (dirname (the-loading-file)))
+
+(define (make-rss channel items)
+   (<FL> items))
+
+(define (make-channel link title)
+   (<STRONG> (<A> :href link title)))
+
+(define (make-item link title date subject descr)
+   (<FLITEM>
+      (<FLHEAD> title)
+      (<DIV>
+	 :class "entry"
+	 (<A> :href link title)
+	 (if date (list "(" date ")") "")
+	 (if subject (<I> subject))
+	 descr)))
+
+(define (rss->html url)
+   (with-url url
+      (lambda (h)
+	 (with-input-from-string h
+	    (lambda ()
+	       (rss-parse (current-input-port) -1 make-rss make-channel make-item))))))
+
+;; main function
+(define-service (home/demos/rss)
+   (<HTML>
+      (<HEAD>
+	 :dir *rss-directory*
+	 :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+	 :css "rss.hss")
+      (<BODY>
+	 (<FL>
+	    (map (lambda (url)
+		    (<FLITEM>
+		       (<FLHEAD> (cadr url))
+		       (<DELAY>
+			  (lambda ()
+			     (rss->html (car url))))))
+		 '(("kernel.org/kdist/rss.xml" "Linux Kernel")
+		   ("http://lambda-the-ultimate.org/node/feed" "Lambda the Ultimate")
+		   ("http://www.gentoo-portage.com/RSSfeed" "Gentoo")
+		   ("http://rss.slashdot.org/Slashdot/slashdot" "Slashdot")
+		   ("http://rss.freshmeat.net/freshmeat/feeds/fm-releases-global" "Freshmeat")))))))

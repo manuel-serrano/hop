@@ -327,7 +327,7 @@ function sc_number2symbol(x, radix) { /// export
 }
     
 function sc_number2string(x, radix) { /// export
-    return new sc_String(sc_number2Symbol(x, radix));
+    return new sc_String(sc_number2symbol(x, radix));
 }
 
 function sc_string2number(s, radix) { /// export
@@ -1756,6 +1756,27 @@ function sc_isOutputPort(o) { /// export
 
 function sc_closeOutputPort(p) { /// export
     p.close();
+}
+
+function hop_bigloo_serialize_pair( l ) {
+   var res = "";
+   var len = 0;
+   
+   while (sc_isPair( l ) ) {
+      res += hop_serialize( l.car );
+      l = l.cdr;
+      len++;
+   }
+
+   if( l == null ) {
+      return hop_serialize_word( len + 1 ) + res + ".";
+   } else {
+      return hop_serialize_word( len ) + res;
+   }
+}
+
+sc_Pair.prototype.hop_bigloo_serialize = function() {
+   return '(' + hop_bigloo_serialize_pair( this );
 }
 
 sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {

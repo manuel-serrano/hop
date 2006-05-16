@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Sat Jan 21 17:24:26 2006 (serrano)                */
+/*    Last change :  Sun Apr 16 15:35:57 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP CSS                                                 */
@@ -17,7 +17,7 @@
   left: 0;
   position: absolute;
   visibility: hidden;
-  z-index: 10;
+  z-index: 100000;
   overflow: hidden;
   border-style: solid;
   border-width: 1px;

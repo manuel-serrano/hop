@@ -1,0 +1,75 @@
+<doc> Tooltips
+
+== Description ==
+
+This page describes the HOP API for tooltips. A tooltip, is a static
+HTML tree that is by hidden and that pops up when the mouse flies over
+reactive regions.
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markup presented in this page is not yet supported on
+client side programming. It is only supported on server side.])
+
+== Synopsis ==
+
+=== Server ===
+
+  (<TOOLTIP> args ...)
+
+=== Client ===
+
+  (tooltip-hide)
+
+== Examples ==
+
+<example><TOOLTIP></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<TOOLTIP>++ ===
+<markup> <TOOLTIP>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description           ^
+| :id          |  string   |  //random//  | element identifier.          |
+| :onclick     |  script   |              | the action to executed.      |
+| :onmouseout  |  script   |              | the action to executed.      |
+| body         |  xml      |              | the content of the tooltip.  |
+</arguments>
+
+The arguments :onclick and :onmouseout are scripts that are executed
+before hiding the tooltip.
+
+</markup>
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(tooltip-hide)++ ===
+<procedure> tooltip-hide
+
+This function hides the tooltip currently displayed.
+</procedure>
+
+
+== Style ==
+<style>
+
+This section describes the various CSS elements used to configure
+//tooltips//.
+
+=== ++.hoptooltip++ ===
+<css> .hoptooltip
+The visual settings for the tooltip.
+</css>
+
+<share>hop.css</share>
+
+</style>
+
+== See also ==
+<see-also><TOOLTIP>, tooltip</see-also>
+
+</doc>

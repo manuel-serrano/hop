@@ -1,0 +1,16 @@
+;; Forging services' URL
+(define-service (doc/demo/service arg)
+   (let ((req (the-current-request)))
+      (<TABLE>
+	 (<TR> (<TH> "make-hop-service-url")
+	       (<TD> (make-hop-service-url doc/demo/service arg)))
+	 (<TR> (<TH> "make-service-url")
+	       (<TD> (make-service-url doc/demo/service arg))))))
+
+(<HTML>
+   (let ((res (<SPAN> "")))
+      (<BODY>
+	 res
+	 (<SCRIPT> ~(with-hop ($doc/demo/service "foo")
+		       (lambda (h)
+			  (set! $res.innerHTML h)))))))

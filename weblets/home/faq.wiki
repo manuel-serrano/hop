@@ -1,0 +1,27 @@
+== What is HOP? ==
+
+  - HOP is a programming language dedicated to Web programming.
+  - HOP is an execution platform embedded inside a Web server.
+
+== What is HOP designed for? ==
+
+  - HOP is specially tuned for programming interactive Web applications.
+ It is **not** designed for programming n-tiers Web applications.
+
+== What kind of facilities are brought by HOP? ==
+
+  - Widgets for programming GUIs (e.g., //trees//, //notepads//, //sliders//,
+ ...).
+  - Library facilities for:
+    - Wiki parsing.
+    - Network handling.
+    - Database accesses.
+    - Imap connections.
+    - ...
+
+== Can the HOP Web server be used as an Apache replacement? ==
+
+  - Certainly **not**. The HOP Web server is not tuned for supporting
+ a large number of simultaneous connections. Typical it can handle up to
+ a hundred simultaneous requests. No test have been conducted in more
+ stressed environments.

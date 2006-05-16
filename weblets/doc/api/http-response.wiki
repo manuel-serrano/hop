@@ -1,0 +1,302 @@
+<doc> Server responses
+
+== Description ==
+
+The classes described in the page are used to represent the
+values ,(<APIREF> "services" "service.wiki") might answer
+to client requests.
+
+~~ When an answer is not a instance of ::%http-response, 
+automatic conversions take place. These are described
+in the documentation for the ++with-hop++ form.
+
+== Synopsis ==
+
+=== server ===
+
+  (abstract-class %http-response::%http-message ...)
+  (class http-response-abort::%http-response ...)
+  (class http-response-remote::%http-response ...)
+  (class http-response-filter::%http-response ...)
+  (class http-response-authentication::%http-response ...)
+  (abstract-class %http-response-local::%http-response ...)
+  (class http-response-hop::%http-response-local ...)
+  (class http-response-procedure::%http-response-local ...)
+  (class http-response-file::%http-response-local ...)
+  (class http-response-shoutcast::http-response-file ...)
+  (class http-response-string::%http-response-local ...)
+  (class http-response-js::%http-response-local ...)
+  (class http-response-cgi::%http-response-local ...)
+  (class http-response-persistent::%http-response ...)
+  (class http-response-put::%http-response-local ...)
+
+== Examples ==
+
+<example>http-response, http-message</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(abstract-class %http-response::%http-message ...)++ ===
+<class> %http-response
+
+<fields>
+^  fields              ^   access  ^   type      ^  default value     ^  short description                          ^
+| ...                  |    ...    |   ...       |     ...            | fields from ::%http-message                 |
+| content-type         |    r/w    |   string    |  ++"text/html"++   | the type of the response.                   |
+| request              |    r/w    |   obj       |  ++#unspecified++  | a request associated with the response.     |
+| bodyp                |    r      |   bool      |  ++#t++            | control the body delivery of the response.  |
+</fields>
+
+This abstract class is the super class of all responses.
+</class>
+
+=== ++(class http-response-abort::%http-response ...)++ ===
+<class> http-response-abort
+<fields>
+^  fields              ^   access  ^   type      ^  default value     ^  short description                          ^
+| ...                  |    ...    |   ...       |     ...            | fields from ::%http-response                |
+</fields>
+
+This class is used to represent //aborted request//. This might be used in
+case of //denial of services// attack to the server.
+</class>
+
+=== ++(class http-response-remote::%http-response ...)++ ===
+<class> http-response-remote
+
+<fields>
+^  fields              ^   access  ^   type      ^  default value     ^  short description                          ^
+| ...                  |    ...    |   ...       |     ...            | fields from ::%http-response                |
+| http                 |    r      |   string    |      _             | the HTTP version.                           |
+| host                 |    r      |   string    |      _             | the remote host name.                       |
+| port                 |    r      |   integer   |      _             | the remote host port.                       |
+| scheme               |    r      |   string    |      _             | the request scheme.                         |
+| method               |    r      |   symbol    |      _             | the request method.                         |
+| path                 |    r      |   string    |      _             | the requested path.                         |
+| userinfo             |    r      |   obj       |      _             | an optional authenticated information.      |
+| encoded-path         |    r      |   string    |      _             | the HTTP encoded requested path.            |
+| timeout              |    r      |   obj       |  ++#f++            | a request timeout.                          |
+</fields>
+
+This class denotes responses to remote web servers. These are used when the HOP server is used
+as proxy. Remote responses can be enables or disabled using the 
+++hop-proxy++ and ++hop-proxy-allow-remote-clients++.
+</class>
+
+=== ++(class http-response-filter::%http-response ...)++ ===
+<class> http-response-filter
+
+<fields>
+^  fields              ^   access  ^      type          ^  default value       ^  short description                 ^
+| ...                  |    ...    |  ...               |     ...              | fields from ::%http-response       |
+| response             |    r      |  ::%http-response  |      _               | the HTTP version.                  |
+| statusf              |    r/w    |  procedure         |  ++(lambda (x) x)++  | a status filtering function.       |
+| headerf              |    r/w    |  procedure         |  ++(lambda (x) x)++  | a header filtering function.       |
+| bodyf                |    r/w    |  procedure         |      _               | a body filtering function.         |
+</fields>
+
+The class ::http-response-filter is used to represent response //filters//.
+A response filter, wrap a regular response. That is, it behaves as
+the response described by the ++response++ field. In addition, it applies
+filtering the response of the response.
+
+,(<P>)
+Here is an example of ::http-response-filter automically //ungip//
+responses on the server side.
+
+   (define (unzip-response resp)
+      (instantiate::http-response-filter
+	 (response resp)
+	 (headerf (lambda (header)
+		     (let ((c (assq content-encoding: header)))
+			(if (equal? c '(content-encoding: . "gzip"))
+			    (delete c header)
+			    header))))
+	 (bodyf (lambda (ip op status header cl)
+		   (let ((c (assq content-encoding: header)))
+		      (if (equal? c '(content-encoding: . "gzip"))
+			  (let ((ipz (open-input-gzip-port ip)))
+			     (send-chars ipz op cl)
+			     (close-input-port ipz))
+			  (send-chars ip op cl))
+		      (flush-output-port op))))))
+
+
+,(<P>)
+In this second example, we use a ::http-response-filter for re-writting
+HTTP requests.
+
+<example>http-response-filter</example>
+</class>
+
+=== ++(class http-response-authentication::%http-response ...)++ ===
+<class> http-response-authentication
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value       ^  short description                 ^
+| ...                  |    ...    |        ...        |     ...              | fields from ::%http-response       |
+| server               |    r/w    |      string       |  ,(hop-server-name)  | the name of the server.            |
+| body                 |    r      |      obj          |       ++#f++         | an optional message.               |
+</fields>
+
+The class ::http-response-authentication is used to notify the client
+than an authentication is needed to answer the current request.
+</class>
+
+=== ++(abstract-class %http-response-local::%http-response ...)++ ===
+<class> %http-response-local
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                 ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response       |
+| server               |    r/w    |      string       |  ,(hop-server-name)   | the name of the server.            |
+| start-line           |    r      |      string       |  ++HTTP/1.1 200 Ok++  | the response header line.          |
+</fields>
+
+The abstract class ::%http-response-local is the super class of all
+local responses. A response is local if it is handled by
+the current server.
+
+</class>
+
+=== ++(class http-response-hop::%http-response-local ...)++ ===
+<class> http-response-hop
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                   ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local   |
+| xml                  |    r      |      obj          |      _                | the value of the answer.             |
+</fields>
+
+The class ::http-response-hop is used to return compound objects
+to clients. In particular, it is used to return HTML trees. The
+value ++xml++ might be any object built by any markup. It can also
+be a string or an number.
+</class>
+
+=== ++(class http-response-procedure::%http-response-local ...)++ ===
+<class> http-response-procedure
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
+| procedure            |    r      |       procedure   |      _                | the procedure producing the response body.  |
+</fields>
+
+The class ::http-response-procedure is used to construct dynamic 
+responses. When a response denoted by this class is served, the
+server invokes the fields ++procedure++ with an output port
+denoting the connection with the client.
+</class>
+
+=== ++(class http-response-file::%http-response-local ...)++ ===
+<class> http-response-file
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
+| file                 |    r      |       string      |      _                | the path of the file.                       |
+</fields>
+
+The class ::http-response-file is used to server files to
+client.
+</class>
+
+=== ++(class http-response-shoutcast::http-response-file)++ ===
+<class> http-response-shoutcast
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::http-response-file            |
+</fields>
+
+The class ::http-response-shoutcast is used to server files to
+client according to the [[http://www.shoutcast.com/|shoutcast]] protocol.
+</class>
+
+=== ++(class http-response-string::%http-response-local ...)++ ===
+<class> http-response-string
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
+| string               |    r      |       string      |      _                | the body.                                   |
+</fields>
+
+</class>
+
+=== ++(class http-response-js::%http-response-local ...)++ ===
+<class> http-response-js
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
+| body                 |    r      |       obj         |      _                | the object to be returned.                  |
+</fields>
+
+The class ::http-response-js is used to transmit values to
+client using the client ++with-hop++ service invocation.
+</class>
+
+=== ++(class http-response-cgi::%http-response-local ...)++ ===
+<class> http-response-cgi
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
+| cgibin               |    r      |       string      |      _                | the binary to execute.                      |
+</fields>
+
+</class>
+
+=== ++(class http-response-persistent::%http-response-local ...)++ ===
+<class> http-response-persistent
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
+</fields>
+
+</class>
+
+=== ++(class http-response-put::%http-response-local ...)++ ===
+<class> http-response-put
+
+<fields>
+^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
+| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
+| uri                  |    r      |       string      |      _                | the request.                                |
+</fields>
+
+,(<P>)
+Here is an example of function that constructs an answer
+for HTTP ++PUT++ and ++POST++ requests.
+
+  (lambda (req)
+     (let ((c (http-header-field (http-request-header req) content-type:)))
+	(if (and (string? c)
+		 (string=? c "application/x-www-form-urlencoded")
+		 (http-request-localhostp req))
+	    (case (http-request-method req)
+	       ((PUT)
+		(instantiate::http-response-put
+		   (request req)
+		   (content-length (http-request-content-length req))
+		   (uri (http-request-path req))))
+	       ((POST)
+		(instantiate::http-response-cgi
+		   (request req)
+		   (content-length (http-request-content-length req))
+		   (cgibin (http-request-path req))))
+	       (else
+		(instantiate::http-response-string
+		   (start-line "HTTP/1.0 501 Not Implemented"))))
+	    req)))
+
+</class>
+</server>
+
+== See also ==
+<see-also>http-request, http-response</see-also>
+</doc>

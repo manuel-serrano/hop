@@ -1,0 +1,30 @@
+;; A simple RSS reader
+(module rss-reader)
+
+(define (make-rss channel items)
+   (<DIV>
+      :style { border: 1px solid black; background: #ddd; } channel
+      (map (lambda (i) (<DIV> i)) items)))
+
+(define (make-channel link title)
+   (<BIG> (<STRONG> (<A> :href link title))))
+
+(define (make-item link title date subject descr)
+   (<DIV>
+      :style { border: 1px solid #ccc; margin: 1px; padding: 2px; }
+      (<A> :href link title)
+      (if date (list "(" date ")") "")
+      (if subject (<I> subject))
+      descr))
+
+(<HTML>
+   (<HEAD>
+      (<STYLE> :type "text/css" { table { font-size: xx-small } }))
+   (<BODY>
+      (<DIV>
+	 :style {font-size: xx-small}
+	 (with-url "http://kernel.org/kdist/rss.xml"
+	    (lambda (h)
+	       (with-input-from-string h
+		  (lambda ()
+		     (rss-parse (current-input-port) -1 make-rss make-channel make-item))))))))

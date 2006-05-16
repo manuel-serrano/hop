@@ -1,0 +1,242 @@
+<doc> Server Services
+
+== Description ==
+
+A //service// is a special function that resides on the server and that can be
+invoked from client. This page describes how to create and how to use 
+//services// on the servers and how to invoke them from servers and clients.
+
+== Synopsis ==
+
+=== Server ===
+
+  (service (arg ...) ...)
+  (define-service (name arg ...) ...)
+  (make-hop-service-url svc arg ...)
+  (make-service-url svc arg ...)
+  (procedure->service proc)
+
+  (hop-autoload-directories)
+  (hop-autoload-directories-add! path)
+  (hop-autoload-directories-set! list)
+
+
+=== Server & Client ===
+
+  (with-hop (svc arg ...) [success] [failure])
+
+
+== Examples ==
+<example>service</example>
+
+== Server Definitions ==
+<server>
+
+A service is a function on that resides on the server. In most cases,
+a service returns an HTML tree (i.e., any object constructed by any
+markup), a string, or a number. An instance of any subclass of
+::%http-response is also permitted as return value. Other values are
+automatically converted into instances of this class. See the
+description of ++with-hop++ for a detailed presentation of 
+automatic coercions that take place when a service is invoked. 
+
+=== ++(service (arg<sub>0</sub> ...) body)++ ===
+<function> service
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| arg<sub>0</sub>  |  symbol      | the first argument identifier.  |
+| body             |  expression  | the body of the service.        |
+</arguments>
+
+This special form defines an //anonymous// service on the client. That is,
+no public URL is associated with this service.
+
+</function>
+
+=== ++(define-service (name arg<sub>0</sub> ...) body)++ ===
+<function> define-service
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| name             |  symbol      | the name of the service.        |
+| arg<sub>0</sub>  |  symbol      | the first argument identifier.  |
+| body             |  expression  | the body of the service.        |
+</arguments>
+
+This special form defines an //named// service on the client. That is,
+no public URL is associated with this service. The ++name++ is a symbol
+containing only letters, digits and, at most, on slash (++/++) character.
+A service whose name contains no slash character is called a **//weblet//**.
+
+</function>
+
+=== ++(make-hop-service-url svc arg<sub>0</sub> ...)++ ===
+<function> make-hop-service-url
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| svc              |  service     | the service.                    |
+| arg<sub>0</sub>  |  symbol      | the first argument.             |
+</arguments>
+
+The function ++make-hop-service-url++ forges an URL from a service and
+from arguments. This name can be used on the server to invoke the service
+from a distant server (see ++http-send-request++).
+
+=== ++(make-service-url svc arg<sub>0</sub> ...)++ ===
+<function> make-service-url
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| svc              |  service     | the service.                    |
+| arg<sub>0</sub>  |  symbol      | the first argument.             |
+</arguments>
+
+The function ++make-service-url++ forges an URL from a service and
+from arguments that is suitable for invoking the service from a client.
+In particular, the URL can be used in client ++<FORM>++ markups.
+
+=== ++(procedure->service proc)++ ===
+<function> procedure->service
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| proc             |  procedure   | a procedure.                    |
+</arguments>
+
+The function ++procedure->service++ creates an anonymous service that
+wraps the procedure ++proc++.
+
+=== ++(hop-autoload-directories)++ ===
+=== ++(hop-autoload-directories-add! string)++ ===
+=== ++(hop-autoload-directories-set! list)++ ===
+<parameter> hop-autoload-directories
+<parameter> hop-autoload-directories-add!
+<parameter> hop-autoload-directories-set!
+
+This parameter specifies the path scanned by HOP on startup to find all
+the currently available weblets. These are automatically
+//autoloaded//. That is, they are automatically loaded on demand.
+
+~~ The current value of ++hop-autoload-directories++ is:
+
+,(<DIV> :align "center"
+        (<PRE> 
+	   (with-output-to-string 
+	      (lambda () 
+		 (print "(")
+		 (for-each (lambda (v) (display " ") (write v) (newline))
+			   (hop-autoload-directories))
+		 (display ")")))))
+</parameter>
+</parameter>
+</parameter>
+
+</server>
+
+== Server & Client Definitions ==
+<server>
+<client>
+
+
+=== (with-hop [:host host] (svc v<sub>0</sub> ...) [success] [fail]) ===
+<function> with-hop
+<procedure> with-hop
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| host             |  string      | a URL of a remote server.       |
+| svc              |  service     | the invoked service.            |
+| v<sub>0</sub>    |  obj         | the first argument.             |
+| ...              |  ...         | ...                             |
+| v<sub>n</sub>    |  obj         | the n<sup>th</sup> argument.    |
+| success          |  procedure   | a procedure of one argument.    |
+| fail             |  procedure   | a procedure of one argument.    |
+</arguments>
+
+The special form ++with-hop++ invokes the server service ++svc++ with
+arguments ++v<sub>0</sub>++, ... On success, it then invokes the
+function ++success++ with an object constructed from the service
+answer. On failure, it invokes ++failure++. 
+
+~~ When used from a server **only**, a remote ++host++ may be specified.
+In that particular case, the service is executed on the remote host.
+Otherwise, when ++with-hop++ is used from a server without specifying
+a remote ++host++, the service is executed locally. No remote ++host++
+might specified when used from a client. Only the server that has
+provided the page might be invoked in such a situation.
+
+~~ The evaluation of the service ++svc++ produce a response.  If its
+type is not an instance of ::%http-response HOP performs automatic
+casts for converting value into instance of ::%http-response. For an
+object ++res++, here are the rules that are applied:
+
+  * if ++res++ is an XML object (built by a markup), it is automatically
+ converted into an instance of ::http-response-hop.
+  * if ++res++ is a pair for which at least one element is an XML object, they
+ whole result is converted into an instance of ::http-response-hop.
+  * if ++res++ is a string, it is converted into an instance of 
+ ::http-response-string.
+  * otherwise, ++res++ is converted into an instance of ::http-response-js.
+
+
+If the response is an instance of ::http-response-js then result it is
+interpreted by the client object as a compound object (i.e., a list, a
+vector, ...). It it is an instance of the ::http-response-hop or
+::http-response-string, it is interpreted as a string.
+
+==== Examples =====
+
+We present various examples that illustrates the different ways to
+use the ++with-hop++ form.
+
+===== 1. Sending HTML tree from the server to the client =====
+
+In this first example, an anonymous service send a HTML table to
+a client. The return type of the service is an XML element, as
+constructed by any markup.
+
+<example>Sending a HTML Tree</example>
+
+===== 2. Sending Complex Values =====
+
+In this second example, the server send to the client a instance of a local
+class. In this example, the client receives a object that it discriminates
+(using the ++obj.x++ and ++obj.y++ expressions) for building a string
+that is injected inside the currently visualized HTML tree.
+
+<example>Sending complex values</example>
+
+===== 3. Invoking Services From The Server =====
+
+In this example, we invoke a service directly from the server. The form
+++with-hop++ is not protected with a ++~++ client escape marker. It is
+then evaluated as all expressions on the server.
+
+<example>Invoking a service from the server</example>
+
+===== 4. Invoking Services From Server To Server =====
+
+In this last example, ++with-hop++ is used to invoke a service from
+a remote service. As for the previous example, the form ++with-hop++
+is not protected with a ++~++ client escape marker, which means that it
+is evaluated on the server. Contrary to the previous address a remote
+host is specified using the :host argument.
+
+<example>Invoking a remote service from the server</example>
+
+~~ In this last example, we show how server to server service invocation
+may transmit compound values. In the example above, one service sends
+an HTML tree. The other one sends a list of strings.
+
+<example>Invoking remote services from the server</example>
+</procedure>
+</function>
+
+</client>
+</server>
+
+== See also ==
+<see-also>service, define-service, make-hop-service-url, make-service-url, procedure->service, hop-autoload, with-hop</see-also>
+
+</doc>

@@ -1,0 +1,174 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-iwindow.css                   */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Apr 19 15:17:45 2006                          */
+/*    Last change :  Fri May  5 13:28:30 2006 (serrano)                */
+/*    Copyright   :  2006 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    HOP IWINDOW CSS                                                  */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    main frame                                                       */
+/*---------------------------------------------------------------------*/
+div.hop-iwindow {
+  position: absolute;
+  background: none;
+}
+
+/*---------------------------------------------------------------------*/
+/*    shadow                                                           */
+/*---------------------------------------------------------------------*/
+table.hop-iwindow-shadow td.hop-iwindow-shadow-ne {
+  font-size: 2pt;
+  width: 8px;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-ne.png" );
+}
+
+table.hop-iwindow-shadow td.hop-iwindow-shadow-e {
+  font-size: 2pt;
+  width: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-e.png" );
+}
+
+table.hop-iwindow-shadow td.hop-iwindow-shadow-sw {
+  font-size: 2pt;
+  width: 8px;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-sw.png" );
+}
+
+table.hop-iwindow-shadow td.hop-iwindow-shadow-s {
+  font-size: 2pt;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-s.png" );
+}
+
+table.hop-iwindow-shadow td.hop-iwindow-shadow-se {
+  font-size: 2pt;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-se.png" );
+}
+
+/*---------------------------------------------------------------------*/
+/*    title line                                                       */
+/*---------------------------------------------------------------------*/
+table.hop-iwindow td.hop-iwindow-top {
+  height: 13px;
+  max-height: 13px;
+}
+
+table.hop-iwindow table.hop-iwindow-handle {
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+  border-top: 1px solid #555;
+  border-bottom: 1px solid black;
+  height: 13px;
+  background: #ddd;
+  cursor: default;
+}
+
+table.hop-iwindow td.hop-iwindow-iconify {
+  background-image: url( "icons/iwindow-icon.png" );
+  background-repeat: no-repeat;
+  background-position: left;
+  vertical-align: middle;
+  text-align: left;
+  width: 13px;
+}
+
+table.hop-iwindow td.hop-iwindow-maximize {
+  background-image: url( "icons/iwindow-maximize.png" );
+  background-repeat: no-repeat;
+  background-position: left;
+  vertical-align: middle;
+  text-align: left;
+  width: 13px;
+}
+
+table.hop-iwindow td.hop-iwindow-close {
+  background-image: url( "icons/iwindow-close.png" );
+  background-repeat: no-repeat;
+  background-position: right;
+  vertical-align: middle;
+  text-align: right;
+  width: 13px;
+}
+
+/*--- The title -------------------------------------------------------*/
+table.hop-iwindow td.hop-iwindow-up-title table {
+  font-size: 11px;
+  font-weight: bold;
+  color: orange;
+}
+
+table.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-left {
+  background-image: url( "icons/iwindow-title-left.png" );
+  background-repeat: no-repeat;
+  background-position: left;
+  vertical-align: middle;
+  text-align: left;
+  width: 10px;
+}
+
+table.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-middle {
+  background-image: url( "icons/iwindow-title.png" );
+  background-repeat: repeat;
+  background-position: center;
+  vertical-align: middle;
+  text-align: center;
+}
+
+table.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-right {
+  background-image: url( "icons/iwindow-title-right.png" );
+  background-repeat: no-repeat;
+  background-position: right;
+  vertical-align: middle;
+  text-align: right;
+  width: 10px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    body                                                             */
+/*---------------------------------------------------------------------*/
+table.hop-iwindow td.hop-iwindow-content {
+  border-left: 1px solid #555;
+  border-right: 1px solid #555;
+  background: white;
+}
+
+/*---------------------------------------------------------------------*/
+/*    bottom line                                                      */
+/*---------------------------------------------------------------------*/
+table.hop-iwindow tr.hop-iwindow-bottom td {
+  height: 4px;
+}
+
+table.hop-iwindow tr.hop-iwindow-bottom td table {
+  font-size: 2pt;
+}
+
+table.hop-iwindow td.hop-iwindow-bottom-left {
+  width: 25px;
+  background-image: url( "icons/iwindow-bottom-left.png" );
+  cursor: sw-resize;
+}
+
+table.hop-iwindow td.hop-iwindow-bottom-middle {
+  background-image: url( "icons/iwindow-bottom-middle.png" );
+  cursor: s-resize;
+}
+
+table.hop-iwindow td.hop-iwindow-bottom-right {
+  width: 25px;
+  background-image: url( "icons/iwindow-bottom-right.png" );
+  cursor: se-resize;
+}
+

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Thu Feb 16 09:09:31 2006 (serrano)                */
+/*    Last change :  Tue May 16 11:48:43 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -12,10 +12,19 @@
 /*---------------------------------------------------------------------*/
 /*    hop_notepad_remote ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_notepad_remote( service, tab, ghost, notepad ) {
+function hop_notepad_remote( service, notepad, tab ) {
    var success = function( http ) {
       if( http.responseText != null ) {
-	 var np = document.getElementById( notepad );
+	 var found = 0;
+	 var np = ((notepad instanceof HTMLElement) ||
+		   (notepad instanceof Object &&
+		    notepad.propertyIsEnumerable( "innerHTML" )))
+	           ? notepad : document.getElementById( notepad );
+	 var ta = ((tab instanceof HTMLElement) ||
+		   (tab instanceof Object &&
+		    tab.propertyIsEnumerable( "innerHTML" )))
+		   ? tab : document.getElementById( tab );
+	 var i;
 
 	 for( i = 0; i < np.childNodes.length; i++ ) {
 	    var c = np.childNodes[ i ];
@@ -24,8 +33,9 @@ function hop_notepad_remote( service, tab, ghost, notepad ) {
 	       for( j = 0; j < c.childNodes.length; j++ ) {
 		  var c2 = c.childNodes[ j ];
 
-		  if( c2.id == tab ) {
+		  if( c2 == ta ) {
 		     c2.className = "hop-nptab-active";
+		     found = j;
 		  } else {
 		     c2.className = "hop-nptab-inactive";
 		  }
@@ -38,14 +48,25 @@ function hop_notepad_remote( service, tab, ghost, notepad ) {
       }
    }
 
-   hop( service( tab ), success);
+   if( !notepad.remote_service ) notepad.remote_service = service;
+   
+   hop( service( tab ), success );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_notepad_inline ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_notepad_inline( tab, ghost, notepad ) {
-   var np = document.getElementById( notepad );
+function hop_notepad_inline( notepad, tab ) {
+   var found = 0;
+   var np = ((notepad instanceof HTMLElement) ||
+	     (notepad instanceof Object &&
+	      notepad.propertyIsEnumerable( "innerHTML" )))
+             ? notepad : document.getElementById( notepad );
+   var ta = ((tab instanceof HTMLElement) ||
+	     (tab instanceof Object &&
+	      tab.propertyIsEnumerable( "innerHTML" )))
+             ? tab : document.getElementById( tab );
+   var i;
 
    for( i = 0; i < np.childNodes.length; i++ ) {
       var c = np.childNodes[ i ];
@@ -55,8 +76,9 @@ function hop_notepad_inline( tab, ghost, notepad ) {
 	 for( j = 0; j < c.childNodes.length; j++ ) {
 	    c2 = c.childNodes[ j ];
 
-	    if( c2.id == tab ) {
+	    if( c2 == ta ) {
 	       c2.className = "hop-nptab-active";
+	       found = j;
 	    } else {
 	       c2.className = "hop-nptab-inactive";
 	    }
@@ -67,12 +89,32 @@ function hop_notepad_inline( tab, ghost, notepad ) {
 	 for( j = 0; j < c.childNodes.length; j++ ) {
 	    c2 = c.childNodes[ j ];
 
-	    if( c2.id == ghost ) {
+	    if( j == found ) {
 	       c2.style.display = "block";
 	    } else {
 	       c2.style.display = "none";
 	    }
 	 }
       }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_notepad_select ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_notepad_select( id1, id2 ) {
+   var notepad = ((id1 instanceof HTMLElement) ||
+		  (id1 instanceof Object &&
+		   id1.propertyIsEnumerable( "innerHTML" )))
+                 ? id1 : document.getElementById( id1 );
+   var tab = ((id2 instanceof HTMLElement) ||
+	      (id2 instanceof Object &&
+	       id2.propertyIsEnumerable( "innerHTML" )))
+	      ? id2 : document.getElementById( id2 );
+
+   if( notepad.remote_service != null ) {
+      hop_notepad_remote( notepad.remote_service, notepad, tab );
+   } else {
+      hop_notepad_inline( notepad, tab );
    }
 }

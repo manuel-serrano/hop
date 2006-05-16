@@ -1,0 +1,299 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/doc/widgets.hop                 */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
+;*    Last change :  Tue May 16 11:09:37 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The DOC widgets.                                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc_widgets
+
+   (import hopdoc_config
+	   hopdoc_wiki
+	   hopdoc_api
+	   hopdoc_services)
+   
+   (export (<DOC> . obj)
+	   (<POPUP> ::bstring)
+	   (<SEARCH-BAR> . obj)
+	   (char->offset c)
+	   (<SEARCH-POPUP-MENU> service table i)
+	   (<SEE-ALSO-LIST> service id lst)
+	   (<EXAMPLE> . expr)))
+
+;*---------------------------------------------------------------------*/
+;*    <DOC> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<DOC> . obj)
+   (<HTML>
+      (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css" 
+	      :jscript "hop-sorttable.js" :css "hop-sorttable.css" 
+	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
+	      :jscript "hop-fx.js"
+	      :css (format "~a/doc.hss" (doc-dir)))
+      (<BODY>
+	 (<CENTER>
+	    (<TABLE>
+	       :class "doc"
+	       (<TR>
+		  (<TD>
+		     :valign "top"
+		     (<IMG> :class "logo"
+			    :src (format "~a/icons/edu.png"
+					 (hop-share-directory))))
+		  (<TD>
+		     :valign "top"
+		     (<TABLE>
+			(<TR>
+			   (<TD>
+			      (<DIV> :id "title"
+				     "Hop Documentation Center")))
+			(<TR>
+			   (<TD>
+			      obj))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <POPUP> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<POPUP> id)
+   (<DIV>
+      :class "popup-menu"
+      :id id
+      ""))
+
+;*---------------------------------------------------------------------*/
+;*    <SEARCH-MENU> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<SEARCH-MENU> lbl click keypress popup)
+   
+   (define popup-letter-menu
+      ~(let ((el this)
+	     (menu $popup))
+	  (event.preventDefault)
+	  (event.stopPropagation)
+	  (with-hop ($click this.innerHTML)
+	     (lambda (h)
+		(if (> h.length 0)
+		    (begin
+		       (set! menu.innerHTML h)
+		       (set! menu.style.top (+ 12 (hop_element_y el)))
+		       (set! menu.style.left (- (hop_element_x el) 10))
+		       (set! menu.style.display "block"))
+		    (set! menu.style.display "none"))))
+	  #f))
+   
+   (let ((size (-fx 22 (string-length lbl))))
+      (<TABLE>
+	 :class "search-menu"
+	 (<TR>
+	    (<TD>
+	       :width "100%"
+	       (<TABLE>
+		  :class "search-menu-input"
+		  :width "100%"
+		  (<TR>
+		     (<TD>
+			:width "0*"
+			:class "search-menu-label"
+			:valign "center"
+			lbl ": ")
+		     (<TD>
+			:valign "bottom"
+			:width "0*"
+			(<INPUT>
+			   :style "width: 100%"
+			   :type "text"
+			   :onkeyup ~(if (= event.keyCode 13)
+					 (iwindow-open
+					  "doc/search"
+					  ($keypress this.value)
+					  false "menu"
+					  500 300
+					  (- window.innerWidth 550) 10))
+			   :title "Hit [return] to search"))))))
+	 (<TR>
+	    (<TD>
+	       (<TABLE>
+		  :class "search-menu-menu"
+		  (<COLGROUP> :span 27 :width "1em")
+		  (<TR>
+		     (map (lambda (i)
+			     (<TD>
+				:class "search-letter"
+				:onmousedown popup-letter-menu
+				(string (integer->char i))))
+			  (cons (char->integer #\?)
+				(iota 26 (char->integer #\A)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <SEARCH-BAR> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<SEARCH-BAR> . obj)
+   (let ((popup (<POPUP> (xml-make-id)))
+	 (width (round (* 100 (/ 1 (/ (length obj) 2))))))
+      (<DIV>
+	 :class "search-bar"
+	 popup
+	 (<TABLE>
+	    :class "develop-menu"
+	    (<COLGROUP> :colspan 3 :width (format "~a%" width))
+	    (<TR>
+	       (map (lambda (el)
+		       (<TD>
+			  (<SEARCH-MENU> (car el) (cadr el) (caddr el) popup)))
+		    (list-split obj 3)))))))
+
+;*---------------------------------------------------------------------*/
+;*    char->offset ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (char->offset c)
+   (cond
+      ((and (char>=? c #\A) (char<=? c #\Z))
+       (+fx 1 (-fx (char->integer c) (char->integer #\A))))
+      ((and (char>=? c #\a) (char<=? c #\z))
+       (+fx 1 (-fx (char->integer c) (char->integer #\a))))
+      (else
+       0)))
+
+;*---------------------------------------------------------------------*/
+;*    <SEARCH-POPUP-MENU> ...                                          */
+;*---------------------------------------------------------------------*/
+(define (<SEARCH-POPUP-MENU> service table pagearea i)
+   (let ((es (vector-ref table (char->offset (string-ref i 0))))
+	 (id (xml-make-id)))
+      (when (pair? es)
+	 (<TABLE>
+	    :class "popup-menu"
+	    :id id
+	    :onmouseup ~(let* ((n (document.getElementById $id))
+			       (p n.parentNode))
+			   (set! p.style.display "none"))
+	    (map (lambda (el)
+		    (<TR>
+		       (<TD>
+			  (<TT>
+			     :onmouseup
+			     ~(with-hop ($service $(cdr el))
+				 (lambda (r)
+				    (let* ((n (document.getElementById $id))
+					   (p n.parentNode))
+				       (set! p.style.display "none")
+				       (set! $pagearea.innerHTML r)
+				       (let ((eo (document.getElementById $(car el))))
+					  (if eo
+					      (let ((po eo.offsetTop))
+						 (if (> po 50)
+						     (window.scrollTo 0 (- po 50)))
+						 (let* ((p eo.parentNode)
+							(ob p.style.border.background))
+						    (hop-fx-fade-background
+						     p
+						     500
+						     40
+						     (vector "#fffd6b"
+							     "#ffff6f"
+							     "#ffff8f"
+							     "#ffffaf"
+							     "#ffffdf"
+							     "#ffffdf"
+							     (if (eq? ob #unspecified)
+								 "transparent"
+								 ob))))))))))
+			     (html-string-encode (car el))))))
+		 (sort es
+		       (lambda (a b)
+			  (string-ci<? (car a) (car b)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <SEE-ALSO-LIST> ...                                              */
+;*---------------------------------------------------------------------*/
+(define (<SEE-ALSO-LIST> service id lst)
+   (define (link f)
+      (<SPAN> :class "href"
+	      :title "View documentation"
+	      :onclick ~(with-hop ($service $f)
+			   (lambda (r)
+			      (let ((el (document.getElementById $id)))
+				 (set! el.innerHTML r))))
+	      (doc-page->name f)))
+   (<DIV>
+      :class "see-also" 
+      (cond
+	 ((null? lst)
+	  "")
+	 ((null? (cdr lst))
+	  (link (car lst)))
+	 (else
+	  (let loop ((l (sort lst string<?)))
+	     (if (null? (cdr l))
+		 (list (link (car l)))
+		 (cons* (link (car l)) ", " (loop (cdr l)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <RUN> ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<RUN> id)
+   (<BUTTON>
+      :onclick ~(let ((frame (document.createElement "iframe"))
+		      (t (document.getElementById $id)))
+		   (set! frame.src ($doc/example t.value))
+		   (set! frame.style.width "100%")
+		   (set! frame.style.height "100%")
+		   (set! frame.style.border "0")
+		   (iwindow-open "doc/example"
+				 frame
+				 false false
+				 640 480
+				 (+ event.pageX 100)
+				 (- event.pageY 100)))
+      "Run"))
+
+;*---------------------------------------------------------------------*/
+;*    <EDIT> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<EDIT> id1 id2)
+   (let ((id (xml-make-id 'edit)))
+      (<BUTTON>
+	 :id id
+	 :onclick ~(let ((e1 (document.getElementById $id1))
+			 (e2 (document.getElementById $id2))
+			 (b (document.getElementById $id)))
+		      (if b.edit
+			  (begin
+			     (set! b.edit #f)
+			     (set! b.innerHTML "cancel")
+			     (set! e2.style.width e1.offsetWidth)
+			     (set! e2.style.height e1.offsetHeight)
+			     (set! e2.style.top e1.offsetTop)
+			     (set! e2.style.left e1.offsetLeft)
+			     (set! e2.style.display "block")
+			     (set! e1.style.display "none"))
+			  (begin
+			     (set! b.edit #t)
+			     (set! b.innerHTML "edit")
+			     (set! e1.style.display "block")
+			     (set! e2.style.display "none"))))
+	 "Edit")))
+
+;*---------------------------------------------------------------------*/
+;*    <EXAMPLE> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<EXAMPLE> . code)
+   (let ((id1 (xml-make-id 'pre))
+	 (id2 (xml-make-id 'textarea))
+	 (api-code (decorate-api-wiki-code code)))
+      (list
+       (<RUN> id2)
+       (<EDIT> id1 id2)
+       (<DIV>
+	  :align "center"
+	  (<TEXTAREA> :class "example" :id id2 code)
+	  (<PRE> :class "example" :id id1 api-code "\n")))))
+

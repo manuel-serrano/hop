@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Mon Apr  3 07:03:49 2006 (serrano)                */
+#*    Last change :  Wed Apr 12 15:54:22 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the wiki library.                          */
@@ -28,7 +28,7 @@ TARGETNAME	= hopwiki
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_BGL_OBJECTS	= syntax
+_BGL_OBJECTS	= syntax toc
 
 _OBJECTS	= $(_BGL_OBJECTS)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Apr  3 14:37:46 2006 (serrano)                */
+;*    Last change :  Mon May  8 06:05:38 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -148,7 +148,7 @@
        (cons (<SCRIPT>
 		:id (xml-make-id id 'HOP-EVENT)
 		(format "hop_event_handler_set( ~a, \"~a\", function( event ) { ~a; return true; }, function( event ) { ~a; return true; } )"
-			(scheme->javascript (hop-event-%service event))
+			(hop->json (hop-event-%service event))
 			(string-for-read (hop-event-name event))
 			handler
 			(or failure "false")))
@@ -169,6 +169,6 @@
        (let ((id (xml-make-id id 'TIMEOUT-EVENT)))
 	  (cons (<SCRIPT>
 		   :id id
-		   (format "hop_timeout( \"~a\", function() { ~a; return true; }, ~a, ~a )"
-			   id handler timeout (if eager "true" "false")))
+		   (format "hop_timeout( ~a, ~a, function() { ~a; return true; }, ~a )"
+			   id timeout handler (if eager "true" "false")))
 		body)))))

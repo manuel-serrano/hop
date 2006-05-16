@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Mar 21 13:53:19 2006 (serrano)                */
+;*    Last change :  Tue May  9 09:17:56 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -58,6 +58,8 @@
 	      (content-type::bstring (default "text/html"))
 	      (request::obj (default #unspecified))
 	      (bodyp::bool read-only (default #t)))
+
+	   (class http-response-abort::%http-response)
 	   
 	   (class http-response-remote::%http-response
 	      (http::bstring read-only)
@@ -98,6 +100,7 @@
 	   (class http-response-string::%http-response-local
 	      (body::bstring read-only (default "")))
 
+	   ;; this class is obsolete. it should no longer be used
 	   (class http-response-obj::%http-response-local
 	      (body::obj read-only))
 	   

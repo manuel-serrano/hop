@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Mar 16 09:24:15 2006 (serrano)                */
+;*    Last change :  Thu May 11 08:57:08 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -27,7 +27,7 @@
 	    __hop_http-response
 	    __hop_cgi
 	    __hop_xml
-	    __hop_html-extra
+	    __hop_hop-extra
 	    __hop_js-lib)
    
    (static  (class %autoload
@@ -71,10 +71,12 @@
 ;*    hop-service-path? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-service-path? path)
-   (let ((l1 (string-length (hop-service-base))))
+   (let ((l1 (string-length (hop-service-base)))
+	 (lp (string-length path)))
       (and (substring-at? path (hop-service-base) 0)
-	   (>fx (string-length path) l1)
-	   (char=? (string-ref path l1) #\/))))
+	   (or (=fx lp l1)
+	       (and (>fx lp l1)
+		    (char=? (string-ref path l1) #\/))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-request-service-name ...                                     */
@@ -102,7 +104,7 @@
 		 path
 		 "?hop-encoding=hop"
 		 (map (lambda (f v)
-			 (format "&~a=~a" f (cgi-url-encode (obj->string v))))
+			 (format "&~a=~a" f (url-encode (obj->string v))))
 		      args vals)))))
 
 ;*---------------------------------------------------------------------*/
@@ -116,9 +118,7 @@
 		 path
 		 "?hop-encoding=none"
 		 (map (lambda (f v)
-			 (let ((a (if (string? v)
-				      (cgi-url-encode v)
-				      v)))
+			 (let ((a (if (string? v) (url-encode v) v)))
 			    (format "&~a=~a" f a)))
 		      args vals)))))
 
@@ -153,11 +153,11 @@
 ;*    %eval ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%eval exp cont)
-   (let ((s (scheme->javascript
+   (let ((s (hop->json
 	     (procedure->service (lambda (res) (cont res))))))
       (instantiate::http-response-hop
 	 (xml (<HTML>
-		 (<HOP-HEAD>)
+		 (<HEAD>)
 		 (<BODY>
 		    (<SCRIPT>
 		       (format "hop( ~a( eval( '~a' ) ), true )" s exp))))))))
@@ -190,9 +190,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    autoload-filter ...                                              */
 ;*    -------------------------------------------------------------    */
-;*    Autoload has to be the first filter. When the autoload matches,  */
-;*    it simply returns the request that is handled by the autoloaded  */
-;*    file.                                                            */
+;*    Autoload has to be the last filter. When the autoload matches,   */
+;*    it simply returns the hop-resume value that is handled by the    */
+;*    hop loop.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (autoload-filter req)
    (let loop ((al *autoloads*))
@@ -217,7 +217,7 @@
 			  (set! loaded #t))
 		       (mutex-unlock! mutex))
 		    ;; re-scan the filter list
-		    req)
+		    'hop-resume)
 		 (begin
 		    (mutex-lock! *autoload-mutex*)
 		    (let ((tail (cdr al)))
@@ -261,7 +261,7 @@
    (let ((l (string-length p)))
       (let loop ((i (+fx 1 (string-length (hop-service-base))))
 		 (r::long 0))
-	 (if (=fx i l)
+	 (if (>=fx i l)
 	     (bit-and r (-fx (bit-lsh 1 29) 1))
 	     (let ((c (string-ref p i)))
 		(if (char=? c #\?)
@@ -274,14 +274,22 @@
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
    (when (http-request-localhostp req)
-      (with-access::http-request req (path)
-	 (when (hop-service-path? path)
-	    (mutex-lock! *service-mutex*)
-	    (let ((svc (hashtable-get *service-table* path)))
-	       (mutex-unlock! *service-mutex*)
-	       (when (hop-service? svc)
-		  (with-access::hop-service svc (id %exec)
-		     (scheme->response (%exec req) req))))))))
+      (let loop ()
+	 (with-access::http-request req (path)
+	    (when (hop-service-path? path)
+	       (mutex-lock! *service-mutex*)
+	       (let ((svc (hashtable-get *service-table* path)))
+		  (mutex-unlock! *service-mutex*)
+		  (if (hop-service? svc)
+		      (with-access::hop-service svc (id %exec)
+			 (scheme->response (%exec req) req))
+		      (let ((init (hop-initial-weblet)))
+			 (when (and (string? init)
+				    (string=? path (hop-service-base)))
+			    (set! path (string-append (hop-service-base)
+						      "/"
+						      init))
+			    (loop))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */
@@ -291,6 +299,7 @@
       (hop-verb 2 (hop-color 1 1 " REG. SERVICE: ") svc " " path "\n")
       (mutex-lock! *service-mutex*)
       (hashtable-put! *service-table* path svc)
+      (hashtable-put! *service-table* (string-append path "/") svc)
       (let ((l (string-length path)))
 	 (let loop ((i (+fx (string-length (hop-service-base)) 1)))
 	    (cond
@@ -302,4 +311,3 @@
 		(loop (+fx i 1))))))
       (mutex-unlock! *service-mutex*)
       svc))
-			       

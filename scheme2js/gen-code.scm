@@ -61,14 +61,18 @@
 		  (symbol->string sym)
 		  "\""))
 
-(define (escaped-string s)
+(define (escaped-string.old s)
    (with-output-to-string
       (lambda ()
 	 (write s))))
 
+;; MS: 13 may 2006
+(define (escaped-string str)
+   (string-for-read str))
+
 ;; new Scheme-Char (unfortunately JS doesn't have chars)
 (define (gen-code-char c)
-   (string-append "(new sc_Char(" (escaped-string (string c)) "))"))
+   (string-append "(new sc_Char(\"" (escaped-string (string c)) "\"))"))
 
 ;; numbers
 (define (gen-code-number n)
@@ -77,7 +81,7 @@
 ;; to make a difference to symbols, strings are always
 ;; stored in Objects.
 (define (gen-code-string s)
-   (string-append "(new sc_String(" (escaped-string s) "))"))
+   (string-append "(new sc_String(\"" (escaped-string s) "\"))"))
 
 ;; JS's variables
 (define (gen-code-var v)

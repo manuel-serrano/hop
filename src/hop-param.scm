@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Mar 26 08:35:33 2006 (serrano)                */
+;*    Last change :  Thu May 11 07:06:10 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -33,7 +33,13 @@
 	    (hop-preload-libraries-set! ::pair-nil)
 
 	    (hop-proxy-authentication::bool)
-	    (hop-proxy-authentication-set! ::bool))
+	    (hop-proxy-authentication-set! ::bool)
+	    
+	    (hop-proxy-allow-remote-client::bool)
+	    (hop-proxy-allow-remote-client-set! ::bool)
+	    
+	    (hop-proxy-remote-authentication::bool)
+	    (hop-proxy-remote-authentication-set! ::bool))
    
    (eval    (export-exports)))
 
@@ -69,3 +75,17 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-proxy-authentication
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-proxy-allow-remote-client ...                                */
+;*    -------------------------------------------------------------    */
+;*    Accept or not to relay request from distant client?              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-proxy-allow-remote-client
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-proxy-remote-authentication ...                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-proxy-remote-authentication
+   #t)

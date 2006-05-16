@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/scheme2js/Makefile                      */
+#*    serrano/prgm/project/hop/hopscheme/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Wed Mar 15 12:20:27 2006 (eg)                     */
+#*    Last change :  Tue Apr 25 14:57:56 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
@@ -29,7 +29,7 @@ TARGETNAME	= hopscheme
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _BGL_OBJECTS	= hopscheme hop-scheme-head runtime-files dollar-escape \
-		  tilde-escape hopscheme-config
+		  tilde-escape hopscheme-config hop-aliases
 
 _OBJECTS	= $(_BGL_OBJECTS)
 

@@ -1,9 +1,0 @@
-(<HTML>
-   (<BODY>
-      [This example illustrate the use of the textual syntax.
-	    ,(<TABLE> (map (lambda (i)
-			      (<TR>
-				 (map <TD> (iota i))))
-			   (iota 10)))
-The \[ ... \] syntax is due to
-,(<A> :href "http://www.inria.fr/mimosa/fp/Skribe" "Skribe").]))

@@ -7,5 +7,6 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscheme_makelib
    (option  (set! *dlopen-init* #t))
-   (import hopscheme)
+   (import hopscheme
+	   tilde-escape)
    (eval (export-all)))

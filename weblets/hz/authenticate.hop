@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/private/hz/authenticate.hop             */
+;*    serrano/prgm/project/hop/weblets/hz/authenticate.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 11:31:17 2006                          */
-;*    Last change :  Mon Mar 27 13:10:24 2006 (serrano)                */
+;*    Last change :  Wed May 10 06:50:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ authentication                                                */
@@ -79,13 +79,13 @@
 		    (let ((date (new Date)))
 		       (date.setMinutes
 			(+ (date.getMinutes) $(hz-auto-logout-minute)))
-		       (hop_cookie_set_value "hop_hz"
-					     http.responseText
-					     $(http-request-path req)
-					     #f
-					     date)
+		       (cookie-set! "hop_hz"
+				    http
+				    $(http-request-path req)
+				    #f
+				    date)
 		       (set! location $(http-request-path req))))))
-       (hop svc cback)))
+       (with-hop svc cback)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-authenticate ...                                              */
@@ -97,8 +97,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-authenticate req)
    (<HTML>
-      (<HEAD>
-	 (<HOP-HEAD> :dir (hz-dir) :css "hz.hss"))
+      (<HEAD> :dir (hz-dir) :css "hz.hss")
       (<ABODY>
 	 (<DIV>
 	    :id "body"

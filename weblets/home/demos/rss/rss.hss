@@ -1,0 +1,21 @@
+body {
+  background: #ddf;
+}
+
+h1 {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+div.main {
+  background: #ddf;
+}
+
+table {
+  font-size: xx-small;
+}
+
+div.entry {
+  background: #ccc; 
+  border: 1px solid black;
+}

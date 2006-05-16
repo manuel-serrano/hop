@@ -10,8 +10,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_tabslider_select ...                                         */
 /*---------------------------------------------------------------------*/
-function hop_tabslider_select(item)
-{
+function hop_tabslider_select(item) {
     var parent       = item.parentNode;
     var totalHeight  = parent.offsetHeight;
     var titlesHeight = 0;
@@ -32,6 +31,7 @@ function hop_tabslider_select(item)
 	    title.className = "hop-tabslider-head-inactive";
 	}
     }
+    
     /* Set the height of the selected item */
     selected.style.height = totalHeight - titlesHeight;
 }
@@ -40,8 +40,7 @@ function hop_tabslider_select(item)
 /*---------------------------------------------------------------------*/
 /*    hop_tabslider_init ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_tabslider_init(id, index)
-{
+function hop_tabslider_init(id, index) {
     var ts = document.getElementById(id);
 
     window.addEventListener('load', 

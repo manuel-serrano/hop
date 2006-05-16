@@ -1,0 +1,184 @@
+<doc> Wiki facilities
+<library> Hopwiki
+
+== Description ==
+
+HOP provides facilities for easing //wiki// implementations. The main
+functions are wiki parser. They parse characters according to the
+HOP's 
+,(<SPAN> :class "href" 
+         :onclick ~(hop_notepad_select "doc-notepad" "doc-wiki") 
+         "wiki syntax") 
+and they build a HOP
+tree. Some additional functions apply some treatments on these trees.
+
+== Synopsis ==
+
+=== Server ===
+
+  (wiki-string->hop string [syntax])
+  (wiki-file->hop string [syntax])
+  (wiki-input-port->hop iport [syntax])
+  (hop-wiki->toc expr :ul :li :max-depth)
+  (class wiki-syntax ...)
+
+
+=== Requirements ===
+The server functions and class described in this page are defined in the 
+++hopwiki++ library. That is, server codes using them must include a 
+statement such as:
+
+  (module a-module-name
+     ...
+     (library hopwiki)
+     ...)
+
+
+== Examples ==
+
+<example>wiki</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(wiki-string->hop string [syntax]) ===
+<function> wiki-string->hop
+
+<arguments>
+^  arguments  ^   type          ^   default    ^  short description           ^
+| string      |  string         |      _       | the string to be parsed.     |
+| syntax      |  ::wiki-syntax  |      _       | a wiki syntax descriptor.    |
+</arguments>
+
+Parses a string according to the HOP
+,(<SPAN> :class "href" 
+         :onclick ~(hop_notepad_select "doc-notepad" "doc-wiki") 
+         "wiki syntax").
+It returns a tree.
+
+</function>
+
+
+=== ++(wiki-file-->hop file [syntax]) ===
+<function> wiki-file->hop
+
+<arguments>
+^  arguments  ^   type          ^   default    ^  short description                  ^
+| file        |  string         |      _       | the name of the file to be parsed.  |
+| syntax      |  ::wiki-syntax  |      _       | an wiki syntax descriptor.          |
+</arguments>
+
+This function is provided for convenience, it is a simple
+wrapper that uses ++wiki-input-port->hop++.
+</function>
+
+=== ++(wiki-input-port->hop iport [syntax]) ===
+<function> wiki-input-port->hop
+
+<arguments>
+^  arguments  ^   type          ^   default    ^  short description           ^
+| port        |  input-port     |      _       | the input port to be parsed. |
+| syntax      |  ::wiki-syntax  |      _       | an wiki syntax descriptor.   |
+</arguments>
+
+Parses an input port according to the HOP 
+,(<SPAN> :class "href" 
+:onclick ~(hop_notepad_select "doc-notepad" "doc-wiki") 
+"wiki syntax"). It returns a tree.
+
+</function>
+
+=== ++(hop-wiki->toc expr :max-depth) ===
+<function> hop-wiki->toc
+
+<arguments>
+^  arguments  ^   type          ^   default    ^  short description           ^
+| expr        |  obj            |      _       | an HOP tree.                 |
+| :ul         |  procedure      |   ++<UL>++   | an optional constructor.     |
+| :li         |  procedure      |   ++<LI>++   | an optional constructor.     |
+| :max-depth  |  integer        |    ++3++     | an optional depth.           |
+</arguments>
+
+This function takes as argument (++expr++) a tree as returned by 
+++hop-string->hop++ and ++hop-input-port->hop++ and builds a new object
+representing a //table of contents// for that tree. A //TOC// table is
+representing by a list which is, by default, built by the application
+of the function ++<UL>++. Each entry of this list is by default built
+by the constructor ++<LI>++. By default, the function ++hop-wiki->toc++
+scans nested sections at a maximum depth of ++3++.
+</function>
+
+=== ++(class wiki-syntax ...) ===
+<class> wiki-syntax
+<fields>
+^  fields   ^   access  ^   type      ^  default value         ^  short description                      ^
+| section1  |   r/w     |  procedure  |   ++list++             | the level 1 sections constructor.       |
+| section2  |   r/w     |  procedure  |   ++list++             | the level 2 sections constructor.       |
+| section3  |   r/w     |  procedure  |   ++list++             | the level 3 sections constructor.       |
+| section4  |   r/w     |  procedure  |   ++list++             | the level 4 sections constructor.       |
+| section5  |   r/w     |  procedure  |   ++list++             | the level 5 sections constructor.       |
+| h1        |   r/w     |  procedure  |   ++<H1>++             | the level 1 headings constructor.       |
+| h2        |   r/w     |  procedure  |   ++<H2>++             | the level 2 headings constructor.       |
+| h3        |   r/w     |  procedure  |   ++<H3>++             | the level 3 headings constructor.       |
+| h4        |   r/w     |  procedure  |   ++<H4>++             | the level 4 headings constructor.       |
+| h5        |   r/w     |  procedure  |   ++<H5>++             | the level 5 headings constructor.       |
+| hr        |   r/w     |  procedure  |   ++<HR>++             | the horizontal rules constructor.       |
+| p         |   r/w     |  procedure  |   ++<P>++              | the paragraphs constructor.             |
+| ol        |   r/w     |  procedure  |   ++<OL>++             | the ordered lists constructor.          |
+| ul        |   r/w     |  procedure  |   ++<UL>++             | the unordered lists constructor.        |
+| li        |   r/w     |  procedure  |   ++<LI>++             | the list entries constructor.           |
+| b         |   r/w     |  procedure  |   ++<B>++              | the //bold// constructor.               |
+| em        |   r/w     |  procedure  |   ++<EM>++             | the //emphasize// constructor.          |
+| u         |   r/w     |  procedure  |   ++<U>++              | the //underline// constructor.          |
+| del       |   r/w     |  procedure  |   ++<DEL>++            | the //delete// constructor.             |
+| sub       |   r/w     |  procedure  |   ++<SUB>++            | the //subscript// constructor.          |
+| sup       |   r/w     |  procedure  |   ++<SUP>++            | the //superscript// constructor.        |
+| tt        |   r/w     |  procedure  |   ++<TT>++             | the //type writer// constructor.        |
+| code      |   r/w     |  procedure  |   ++<CODE>++           | the //code// constructor.               |
+| math      |   r/w     |  procedure  |   ++<MATH>++           | the //math// constructor.               |
+| pre       |   r/w     |  procedure  |   ++<PRE>++            | the mono space paragraphs constructor.  |
+| table     |   r/w     |  procedure  |   ++<TABLE>++          | the tables constructor.                 |
+| tr        |   r/w     |  procedure  |   ++<TR>++             | the table rows constructor.             |
+| td        |   r/w     |  procedure  |   ++<TD>++             | the table data constructor.             |
+| th        |   r/w     |  procedure  |   ++<TH>++             | the table headings constructor.         |
+| href      |   r/w     |  procedure  |   ++(lambda (h n) (<A> :href h n))++ | the href constructor.     |
+| keyword   |   r/w     |  procedure  |   //identity//         | the keyword constructor.                |
+| type      |   r/w     |  procedure  |   //identity//         | the type constructor.                   |
+| plugins   |   r/w     |  procedure  |   ++(lambda (x) #f)++  | the plugins connector.                  |
+</fields>
+</class>
+
+The ++plugins++ field controls plugins. It is bound to a function of one
+argument that returns either ++#f++ or a function of three arguments.
+When an opening markup is found by the HOP wiki parser, it invokes the
+plugins function with the name of the markup as parameter. If the results
+of this call is a function of three arguments, it parses all the remaining
+characters until the closing markup. Otherwise, it ignores the opening
+markup. 
+
+~~
+The following instantiation builds a Wiki parser that supports the
+plugin named  ++<center>++. That first parameter (++port++) is bound to
+the current port containing the parsed characters. It may be used to
+retrieve the name of the file currently under parsing. The argument
+++title++ (not used in the example) is a string composed of the characters
+following the markup up to the end of line. The body is composed of the
+expressions that are parsed before the closing markup.
+
+
+   (instantiate::wiki-syntax
+      (plugins (lambda (id)
+		  (when (eq? id '<center>) wikiedit-center))))
+
+  (define (wikiedit-center port title expr)
+     (<DIV> :align "center" expr))
+
+
+</server>
+
+
+== See also ==
+<see-also>wiki</see-also>
+
+</library>
+</doc>

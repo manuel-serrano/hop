@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed Mar 29 11:53:03 2006 (serrano)                */
+;*    Last change :  Fri May  5 21:14:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -135,17 +135,17 @@
 			   :class "sync"
 			   :title "Synchronize HOP Weblets data"
 			   :onclick
-			   ~(hop ($sync)
-				 (lambda (h)
-				    (let ((d (document.createElement "div")))
-				       (set! d.innerHTML h.responseText)
-				       (set! d (array-ref d.childNodes 0))
-				       ($out.replaceChild
-					(array-ref d.childNodes 0)
-					(array-ref $out.childNodes 0))
-				       ($syncd.replaceChild
-					(array-ref d.childNodes 0)
-					(array-ref $syncd.childNodes 0)))))
+			   ~(with-hop ($sync)
+			       (lambda (h)
+				  (let ((d (document.createElement "div")))
+				     (set! d.innerHTML h)
+				     (set! d (array-ref d.childNodes 0))
+				     ($out.replaceChild
+				      (array-ref d.childNodes 0)
+				      (array-ref $out.childNodes 0))
+				     ($syncd.replaceChild
+				      (array-ref d.childNodes 0)
+				      (array-ref $syncd.childNodes 0)))))
 			   "Sync"))
 		  (<TH> "last sync date:") (<TD> syncd))))
 	 (<VBOX-SEPARATOR>)
@@ -198,7 +198,6 @@
 		   (de (or (find 'descr i) ""))
 		   (cat (or (find 'category i) "hop"))
 		   (o (hz-db-get-unmanaged db name cat)))
-	       (tprint "O=" o)
 	       (if (dbhz? o)
 		   (with-access::dbhz o (version)
 		      (unless (string=? version v)
@@ -217,7 +216,6 @@
 	 (when (directory? dir)
 	    (let ((info (make-file-name dir (string-append name ".info"))))
 	       (when (file-exists? info)
-		  (tprint "INFO=" info)
 		  (bind-exit (exit)
 		     (with-handler
 			(lambda (e)

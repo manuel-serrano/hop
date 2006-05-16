@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Mar 17 09:18:20 2006 (serrano)                */
+;*    Last change :  Wed May 10 07:04:32 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -112,3 +112,8 @@
 	 (hashtable-put! *hss-types* (string-upcase old) new)
 	 (hashtable-put! *hss-types* (string-downcase old) new)
 	 "")))
+
+;*---------------------------------------------------------------------*/
+;*    default hss type ...                                             */
+;*---------------------------------------------------------------------*/
+(hop-hss-type! "iwindow" "table.hop-iwindow td.hop-iwindow-content")

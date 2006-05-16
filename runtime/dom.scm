@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Thu Feb  2 16:11:02 2006 (serrano)                */
+;*    Last change :  Sat May  6 08:25:51 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -17,7 +17,7 @@
    (import __hop_xml)
 
    (export (%make-xml-document ::xml-document)
-	   (dom-attributes::pair-nil ::obj)
+	   (dom-get-attributes::pair-nil ::obj)
 	   (dom-owner-document node)
 	   (dom-child-nodes::pair-nil ::obj)
 	   (dom-first-child ::obj)
@@ -30,14 +30,14 @@
 	   (dom-previous-sibling node)
 	   (dom-append-child! ::xml-markup new)
 	   (generic dom-clone-node ::obj ::bool)
-	   (dom-has-attributes node)
-	   (dom-has-child-nodes node)
+	   (dom-has-attributes? node)
+	   (dom-has-child-nodes? node)
 	   (dom-insert-before! node new ref)
 	   (dom-normalize! node)
 	   (dom-remove-child! node old)
 	   (dom-replace-child! node new old)
 	   (generic dom-get-element-by-id obj ::bstring)
-	   (dom-get-elements-by-tag-name obj ::bstring)
+	   (dom-get-elements-by-tag-name::pair-nil obj ::bstring)
 	   (dom-get-attribute node ::bstring)
 	   (dom-has-attribute?::bool node ::bstring)
 	   (dom-remove-attribute! node name)
@@ -137,9 +137,9 @@
 	     #f)))))
 
 ;*---------------------------------------------------------------------*/
-;*    dom-attributes ...                                               */
+;*    dom-get-attributes ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (dom-attributes node)
+(define (dom-get-attributes node)
    (if (xml-markup? node)
        (with-access::xml-markup node (attributes)
 	  attributes)
@@ -334,15 +334,15 @@
 	  (body (dom-clone-node (xml-html-body node) deep)))))
        
 ;*---------------------------------------------------------------------*/
-;*    dom-has-attributes ...                                           */
+;*    dom-has-attributes? ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (dom-has-attributes node)
+(define (dom-has-attributes? node)
    (and (xml-markup? node) (pair? (xml-markup-attributes node))))
 
 ;*---------------------------------------------------------------------*/
-;*    dom-has-child-nodes ...                                          */
+;*    dom-has-child-nodes? ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (dom-has-child-nodes node)
+(define (dom-has-child-nodes? node)
    (and (xml-markup? node) (pair? (xml-markup-body node))))
 
 ;*---------------------------------------------------------------------*/
@@ -436,27 +436,22 @@
 			  (set-car! body new))
 			 (else
 			  (loop (cdr body))))))))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-elements-by-tag-name ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (dom-get-elements-by-tag-name obj name)
-   (when (xml-markup? obj)
-      (let ((sym (string->symbol (string-downcase name))))
-	 (let loop ((obj obj)
-		    (res '()))
-	    (let liip ((body (xml-markup-body obj))
-		       (res res))
-	       (cond
-		  ((null? body)
-		   (reverse! res))
-		  ((xml-markup? (car body))
-		   (if (eq? sym (xml-markup-markup (car body)))
-		       (liip (cdr body)
-			     (cons (car body) (loop (car body) res)))
-		       (liip (cdr body) (loop (car body) res))))
-		  (else
-		   (liip (cdr body) res))))))))
+(define (dom-get-elements-by-tag-name::pair-nil obj name)
+   (let ((sym (string->symbol (string-downcase name))))
+      (let loop ((obj obj))
+	 (cond
+	    ((pair? obj)
+	     (append-map loop obj))
+	    ((xml-markup? obj)
+	     (if (eq? sym (xml-markup-markup obj))
+		 (cons obj (loop (xml-markup-body obj)))
+		 (loop (xml-markup-body obj))))
+	    (else
+	     '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-attribute ...                                            */
@@ -464,7 +459,7 @@
 (define (dom-get-attribute node name)
    (when (xml-markup? node)
       (with-access::xml-markup node (attributes)
-	 (let ((c (assq (string->symbol name) attributes)))
+	 (let ((c (assoc name attributes)))
 	    (and (pair? c) (cdr c))))))
 
 ;*---------------------------------------------------------------------*/

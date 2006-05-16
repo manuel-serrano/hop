@@ -1,0 +1,56 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/home/wiki.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon May 15 06:46:38 2006                          */
+;*    Last change :  Tue May 16 05:31:35 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The HOME wiki manager                                            */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hophome_wiki
+   (import  hophome_config
+	    hophome)
+   (library hopwiki)
+   (export  (wiki->hop file)))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-cache ...                                                   */
+;*---------------------------------------------------------------------*/
+(define wiki-cache
+   (instantiate::cache
+      (path (make-file-path (hop-rc-directory)
+			    "cache"
+			    (string-append "home-"
+					   (integer->string (hop-port)))))
+      (out (lambda (o p)
+	      (xml-write o p (hop-char-encoding))))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki->hop ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (wiki->hop file)
+   (let* ((path (make-file-name (home-dir) file))
+	  (cache (cache-get wiki-cache path)))
+      (if (string? cache)
+	  (with-input-from-file cache
+	     (lambda ()
+		(read-string)))
+	  (let ((m1 (eval-find-module 'hophome))
+		(m2 (eval-module)))
+	     (unwind-protect
+		(begin
+		   (eval-module-set! m1)
+		   (let* ((wiki (wiki-file->hop path))
+			  (cache (cache-put! wiki-cache path wiki)))
+		      (if (string? cache)
+			  (with-input-from-file cache
+			     (lambda ()
+				(read-string)))
+			  wiki)))
+		(eval-module-set! m2))))))
+					   

@@ -1,0 +1,85 @@
+/*=====================================================================*/
+/*    .../prgm/project/hop/weblets/home/demos/sudoku/sudoku.hss        */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Erick Gallesio                                    */
+/*    Creation    :  Wed Mar 22 14:27:22 2006                          */
+/*    Last change :  Thu May 11 16:37:41 2006 (serrano)                */
+/*    -------------------------------------------------------------    */
+/*    Sudoku HOP demo                                                  */
+/*=====================================================================*/
+$(define cell-size 26)
+$(define cell-font 12)
+
+BODY {
+  margin: 1em;
+  font-family: Arial, sans-serif;
+  background: white;
+}
+
+H1 {
+  font-size: 120%;
+  text-align: center;
+}
+
+.sudoku-title {
+  padding: 5px 0px 2px 130px;
+}
+
+.sudoku-board {
+  width: $(format "~apx" (* 3 (+ 2 (* 3 (+ 4 cell-size)))));
+  height: $(format "~apx" (* 3 (+ 2 (* 3 (+ 4 cell-size)))));
+  border: 2px solid black;
+  text-align: center;
+}
+
+.sudoku-group {
+  width: $(format "~apx" (* 3 (+ 4 cell-size)));
+  height: $(format "~apx" (* 3 (+ 4 cell-size)));
+  border: 1px solid black;
+  float: left;
+}
+
+.sudoku-cell {
+  width: $(format "~apx" cell-size);
+  height: $(format "~apx" cell-size);
+  float: left;
+  border: 1px solid black;
+  padding: 1px; 
+  line-height: $(format "~apx" cell-size);
+  font-size: $(format "~apx" cell-font);
+  text-align: center;
+  cursor: default;
+}
+
+
+.sudoku-cell-given {
+  color: #7b67ee;
+}
+
+.sudoku-cell-unknown {
+  color: black;
+}
+
+.sudoku-panel {
+  position: absolute;
+  left: $(format "~apx" (+ 30 (* 3 (+ 2 (* 3 (+ 4 cell-size))))));
+  top: 84px;
+  border: 1px dotted grey;
+  padding: 2px 15px 2px 15px;
+  font-size: 10px;
+}
+
+.sudoku-panel H2 {
+  padding: 0;
+  margin: 5;
+  text-align: center;
+  color: #6A96FF
+}
+
+.sudoku-menu {
+  color: #941000;
+}
+
+.sudoku-help {
+}
+

@@ -1,0 +1,60 @@
+<doc> IMG markup
+
+== Description ==
+
+This page described the HOP markup ++<IMG>++. It differs from the original
+[[http://www.w3.org/TR/html4/|HTML]] one with one respect. It supports
+an addition attribute :inline that is used to specified if an image
+content should be kept on the server or if it should be //embedded//
+inside the HTML tree itself.
+
+== Synopsis ==
+
+=== server ===
+
+  (<IMG> ...)
+
+== Examples ==
+
+<example><IMG></example>
+
+== Server Definitions ==
+<server>
+
+=== <IMG> ===
+<markup> <IMG>
+
+<arguments>
+^  arguments    ^   type     ^   default    ^  short description                   ^
+| :id           |  string    |  //random//  | element identifier.                  |
+| :class        |  string    |     _        | element class name.                  |
+| :inline       |  boolean   |   ++#f++     | inline or remote?                    |
+| :src          |  string    |     _        | a file name.                         |
+| :lang         |  string    |     _        | language information.                |
+| :dir          |  string    |     _        | direction information.               |
+| :title        |  string    |     _        | element title.                       |
+| :style        |  string    |     _        | inline style information.            |
+| :onclick      |  script    |     _        | event handler.                       |
+| :ondblclick   |  script    |     _        | event handler.                       |
+| :onmousedown  |  script    |     _        | event handler.                       |
+| :onmouseup    |  script    |     _        | event handler.                       |
+| :onmouseover  |  script    |     _        | event handler.                       |
+| :onmousemove  |  script    |     _        | event handler.                       |
+| :onmouseout   |  script    |     _        | event handler.                       |
+| :onkeypress   |  script    |     _        | event handler.                       |
+| :onkeydown    |  script    |     _        | event handler.                       |
+| :onkeyup      |  script    |     _        | event handler.                       |
+</arguments>
+
+If the attribute :inline is ++#t++ then the image content 
+(which is read from the :file name) is embedded inside the markup
+itself. This prevents the client to address a new request
+to the server in order to get the actual bytes composing the image.
+
+</markup>
+</server>
+
+== See also ==
+<see-also><IMG></see-also>
+
+</doc>

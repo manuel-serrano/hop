@@ -1,0 +1,7 @@
+^                  Programming languages               ^^^
+^  name           ^       family         ^  type system  ^
+| **Scheme**      |  functional          |  dynamic      |
+| **JavaScript**  |  functional/object   |  dynamic      |
+| **ML**          |  functional          |  static       |
+| **SmallTalk**   |  object              |  dynamic      |
+| **C**           |  imperative          |  __unsafe__   |

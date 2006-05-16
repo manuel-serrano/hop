@@ -1,0 +1,20 @@
+;; A simple //Sorttable//
+(let ((vals '(("languages" ("hop" :lang "A") ("lisp" :lang "B") ("dylan" :lang "C"))
+	      ("architectures" "x86" "powerpc" "arm")
+	      ("linux" "gentoo" "debian" "ubuntu"))))
+   
+   (define (charrow c)
+      (<TR> (<TD> (<TT> (format "&amp;#~a;" c))) (<TD> (format "&#~a;" c))))
+   
+   (<HTML>
+      (<HEAD> :jscript "hop-sorttable.js" :css "hop-sorttable.css")
+      (<BODY>
+	 (<SORTTABLE>
+	    :border 1
+	    (<TR> (map (lambda (c) (<TH> (car c))) vals))
+	    (apply map (lambda (v1 v2 v3)
+			  (<TR> (<TD> v1) (<TD> v2) (<TD> v3)))
+		   (map cdr vals)))
+	 (<P> [Click the header of the table above. Note that the language
+		     column is not sortted lexicographically. The order is
+		     ,(<TT> "hop > lisp > dylan").]))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Mar 29 09:21:07 2006 (eg)                     */
+;*    Last change :  Sat May 13 15:45:03 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -22,9 +22,9 @@
 	    __hop_css)
    
    (export  (the-loading-file)
-	    (hop-read ::input-port)
+	    (hop-read #!optional (iport::input-port (current-input-port)))
 	    (hop-load ::bstring #!optional (env (interaction-environment)))
-	    (hop-load-port ::bstring port env)
+	    (hop-load-afile ::bstring)
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
    
@@ -302,16 +302,8 @@
       ;; strings with newline in them in addition to compute
       ;; the string, we have to count the number of newline
       ;; in order to increment the line-num variable strings
-      ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (the-substring 1 (-fx (the-length) 1))))
-	  (if (bigloo-strict-r5rs-strings)
-	      (let ((str (the-substring 1 (-fx (the-length) 1))))
-		 (escape-scheme-string str))
-	      (let ((str (the-substring 0 (-fx (the-length) 1))))
-		 (escape-C-string str)))))
-      ;; foreign strings of char
-      ((: "#\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (the-substring 1 (-fx (the-length) 1))))
+      ((: (? #\#) "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
+       (let ((str (the-substring 0 (-fx (the-length) 1))))
 	  (escape-C-string str)))
       ;; ucs2 strings
       ((: "#u\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
@@ -618,10 +610,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-read ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-read iport)
+(define (hop-read #!optional (iport::input-port (current-input-port)))
    (if (closed-input-port? iport)
        (error 'hop-read "Illegal closed input port" iport)
-       (read/rp *hop-grammar* iport '() 0 0 '() '())))
+       (begin
+	  ((hop-read-pre-hook) iport)
+	  (let ((e (read/rp *hop-grammar* iport '() 0 0 '() '())))
+	     ((hop-read-post-hook) iport)
+	     e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *the-loading-file* ...                                           */
@@ -673,38 +669,6 @@
 				exp))))))))
    
 ;*---------------------------------------------------------------------*/
-;*    hop-load-port ...                                                */
-;*---------------------------------------------------------------------*/
-(define (hop-load-port file-name port env)
-  (let ((t (current-thread))
-	(m (eval-module))
-	(f *the-loading-file*))
-    (unwind-protect
-     (begin
-       (hop-load-afile (dirname file-name))
-       (if (thread? t)
-	   (thread-specific-set! t file-name)
-	   (set! *the-loading-file* file-name))
-       (let loop ((last #unspecified))
-	 ((hop-read-pre-hook) port)
-	 (let ((sexp (hop-read port)))
-	   ((hop-read-post-hook) port)
-	   (if (eof-object? sexp)
-	       last
-	       (loop (with-handler
-		      (lambda (e)
-			(if (&warning? e)
-			    (begin
-			      (warning-notify e)
-			      #unspecified)
-			    (raise e)))
-		      (eval sexp env)))))))
-     (begin
-       (close-input-port port)
-       (eval-module-set! m)
-       (set! *the-loading-file* f)))))
-
-;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-load file-name #!optional (env (interaction-environment)))
@@ -716,7 +680,24 @@
 		    (obj file-name)))
 	  (let ((port (open-input-file path)))
 	     (if (input-port? port)
-		 (hop-load-port file-name port env)
+		 (let ((t (current-thread))
+		       (m (eval-module))
+		       (f *the-loading-file*))
+		    (unwind-protect
+		       (begin
+			  (hop-load-afile (dirname file-name))
+			  (if (thread? t)
+			      (thread-specific-set! t file-name)
+			      (set! *the-loading-file* file-name))
+			  (let loop ((last #unspecified))
+			     (let ((sexp (hop-read port)))
+				(if (eof-object? sexp)
+				    last
+				    (loop (eval sexp env))))))
+		       (begin
+			  (close-input-port port)
+			  (eval-module-set! m)
+			  (set! *the-loading-file* f))))
 		 (raise (instantiate::&io-port-error
 			   (proc 'hop-load)
 			   (msg "Can't open file")

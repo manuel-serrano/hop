@@ -4,7 +4,7 @@
 
 var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
-function encode64(input) {
+function base64_encode(input) {
    var output = "";
    var chr1, chr2, chr3;
    var enc1, enc2, enc3, enc4;
@@ -33,7 +33,7 @@ function encode64(input) {
    return output;
 }
 
-function decode64(input) {
+function base64_decode(input) {
    var output = "";
    var chr1, chr2, chr3;
    var enc1, enc2, enc3, enc4;

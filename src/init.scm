@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon Apr  3 10:52:20 2006 (serrano)                */
+;*    Last change :  Tue May 16 10:58:14 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -120,35 +120,40 @@
 ;*---------------------------------------------------------------------*/
 ;*    proxy authentication ...                                         */
 ;*---------------------------------------------------------------------*/
-(let ((host (hostname)))
-   (hop-http-response-remote-hook-add!
-    (lambda (req resp)
-       (if (not (hop-proxy-authentication))
-	   resp
-	   (with-access::http-request req (user host port path header)
-	      (if (or (not (users-added?)) (user? user))
-		  resp
-		  (instantiate::http-response-string
-		     (start-line "HTTP/1.0 407 Proxy Authentication Required")
-		     (header `((Proxy-Authenticate:
-				.
-				,(format "Basic realm=\"Hop proxy (~a) authentication\""
-					 host))))
-		     (body "Protected Area! Authentication required."))))))))
+(hop-http-response-remote-hook-add!
+ (lambda (req resp)
+    (cond
+       ((and (not (hop-proxy-allow-remote-client))
+	     (not (http-request-localclientp req)))
+	(instantiate::http-response-abort))
+       ((and (http-request-localclientp req)
+	     (not (hop-proxy-authentication)))
+	resp)
+       ((and (not (http-request-localclientp req))
+	     (not (hop-proxy-remote-authentication))
+	     (not (hop-proxy-authentication)))
+	resp)
+       (else
+	(with-access::http-request req (user host port path header)
+	   (if (or (not (users-added?)) (user? user))
+	       resp
+	       (instantiate::http-response-string
+		  (start-line "HTTP/1.0 407 Proxy Authentication Required")
+		  (header `((Proxy-Authenticate:
+			     .
+			     ,(format "Basic realm=\"Hop proxy (~a) authentication\""
+				      host))))
+		  (body "Protected Area! Authentication required."))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    user authentication                                              */
+;*    local authentication ...                                         */
 ;*---------------------------------------------------------------------*/
-(hop-filter-add-always-first!
- (lambda (req)
-    (with-access::http-request req (localhostp path method user)
-       (when (and localhostp (users-added?))
-	  (cond
-	     ((not (file-exists? path))
-	      req)
-	     ((user-authorized-request? user req)
-	      req)
-	     (else
-	      (user-access-denied req)))))))
+(hop-http-response-local-hook-add!
+ (lambda (req resp)
+    (if (http-response-file? resp)
+	(if (authorized-path? req (http-response-file-file resp))
+	    resp
+	    (user-access-denied req))
+	resp)))
  
 

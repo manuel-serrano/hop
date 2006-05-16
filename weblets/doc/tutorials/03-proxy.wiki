@@ -1,0 +1,128 @@
+<doc> Proxy hacking
+
+== Description ==
+
+The HOP programming environment rests on a programming language
+**and** a //web server//. This web server can also be configured for
+being used as a //web proxy//. That is, it may act simultaneously as a
+server and as a proxy. That is, when a request targeting a distant
+server hits the HOP proxy it may decide to respond by itself (for
+instance, when implementing caching) or it may redirect the request to
+another server. In addition to being used for implementing ,(<APIREF>
+(<I> "weblet") "service.wiki") as demonstrated in the other tutorials,
+a HOP server might also be used to filters remote requests. This
+tutorial focuses on this last aspect.
+
+== Transforming Web sites ==
+
+In order to illustrate the ability of HOP to filters HTTP request, we
+are going to solve two different problems. The first one consists in
+changing the content of a remote Web page. More precisely, we are
+going to modify the famous Web site of the 
+[[http://www.kernel.org|Linux kernel]] for changing all the occurrence
+of the word //Linux// with //Xunil//.
+
+~~ The ,(<APIREF> (<I> "hooking") "hooks.wiki") facilities of HOP are
+at the heart of the implementation. For this particular exercice we are
+only using hooks that are applied by HOP when it receives a request
+for a remote server. Such hooks are installed by the means of the
+++hop-http-response-remote-hook-add!++ function. That is, when HOP
+intercepts a request that targets a remote server, it builds an
+object of the class :http-response-remote. Then, it applies all
+the remote hook to the request //and// the response. For this example,
+the remote hook constructs a new response that filters the original one.
+
+~~ This new response //wraps// the initial one. It actually contact the
+remote server in order to fulfilled the initial request. It then filter
+the characters responded by the remote server. These filtered characters
+constitute the HOP respond.
+
+~~ For visualizing the effect of the filtering, you should:
+  - visit the web site //before// running the code.
+  - you should run the following code.
+  - re-visit the web site.
+
+<example>
+  (define (linux-kernel-hooking req resp)
+     (with-access::http-request req (host path localhostp)
+        (when (and (string=? host "www.kernel.org")
+                   (substring-at? path "/" 0))
+           (instantiate::http-response-filter
+              (response resp)
+              (bodyf (lambda (ip op s h cl)
+                        (let* ((s1 (if (=elong cl #e-1)
+                                       (read-string ip)
+                                       (read-chars (elong->fixnum cl) ip)))
+                               (s2 (pregexp-replace* "Linux" s1 "<span style='color: red'>Xunil</span>")))
+                           (display s2 op)
+                           (flush-output-port op))))))))
+
+  (hop-http-response-remote-hook-add!
+   (lambda (req resp)
+      (or (linux-kernel-hooking req resp)
+          resp)))
+
+  (<HTML>
+     (<BODY> "Remote hooking is now registered!")
+     (<BR>)
+     (<BR>)
+     (<A> :href "http://www.kernel.org" "http://www.kernel.org"))
+</example>
+
+The first part of the source code define the hook. As all hooks, it
+is implemented by a function of two arguments: the initial request and
+the respond built to fulfilled it. This hook checks that the destination
+if the URL of the Linux kernel Web site. For that it checks if the
+host of the request is ++www.kernel.org++. Then it checks if the path
+of the request is actually the path of the main Linux kernel page (the
+++/++ path). If one of these two conditions is not meet, the original
+respond is returned. Otherwise, a new response, an instance of
+the ::http-response-filter is built and returned. That filter executes
+the initial request and then, using regular expressions, it replace
+all the occurrences of the word //Linux// with //Xunil//.
+
+
+== Avoiding bouncing ==
+
+This second example rests on the HOP ,(<APIREF> (<I> "filtering")
+"filters.wiki") facility. When a request is received, filters are used
+for to determine if it can be handled locally or if it has to be
+transmitted to a remote server. Filters are registered by the means of
+the ++hop-filter-add!++ function.
+
+~~ In this particular example, we teach HOP how to intercept some
+requests sent to Google. More precisely, requests emitted when a user
+clicks on a result provided by Google are intercepted. Frequently
+these links do not directly point to the web site referenced to by
+Google. Instead, they point to the Google web site that re-directs
+the client to the correct URL. In order to avoid this useless indirection,
+a simple filter can isolate such Google indirection.
+
+~~ Let us assume that Google find that the url
+[[http://www.kernel.org]] satisfies your request. Instead of producing
+a page that contains a direct link to that URL, it will provide a page
+with a link to: [[http://www.google.com/url?q=http://www.kernel.org/]]
+Hence when the user click on that link, it first goes to the Google web
+site. That site, redirects the user to the actual destination. 
+
+<example>
+  (hop-filter-add!
+   (lambda (req)
+      (with-access::http-request req (host path)
+         (when (and (string=? host "www.google.com")
+                    (substring-at? path "/url" 0))
+            (let ((q (cgi-fetch-arg "q" path)))
+               (when q
+                  (instantiate::http-response-string
+                     (start-line "HTTP/1.0 301 Moved Permanently")
+                     (header (list (cons 'location: q))))))))))
+</example>
+
+This filter first check if the host referenced to in the request is
+++www.google.com++. If it is, it then check if the path of the request
+is ++/url++ and if that request is augmented with a 
+parameter ++q++. For that, it uses the function ++cgi-fetch-arg++ of
+the HOP standard api. In such a case, it redirect the client to
+the final destination.
+
+</doc>

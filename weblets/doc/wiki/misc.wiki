@@ -1,0 +1,2 @@
+HOP Wiki also supports <del>deleted</del> texts. It also supports
+<sup>superscript</sup> and <sub>subscript</sub> are supported.

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Mar 28 16:21:24 2006 (serrano)                */
+/*    Last change :  Tue May 16 11:42:04 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -20,6 +20,11 @@ if( window.HTMLFormElement == undefined ) {
 
 if( window.HTMLCollection == undefined ) {
    window.HTMLCollection = false;
+}
+
+if( !HTMLElement && /Konqueror|Safari|KHTML/.test(navigator.userAgent)) {
+  var HTMLElement = {}
+  HTMLElement.prototype = document.createElement('div').__proto__;
 }
 
 /*---------------------------------------------------------------------*/
@@ -88,18 +93,6 @@ function hop_service_url_varargs( service, args ) {
       }
 
       return url;
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_set_cookie ...                                               */
-/*---------------------------------------------------------------------*/
-function hop_set_cookie( http ) {
-   try {
-      var cookie = http.getResponseHeader( "set-cookie" );
-      document.cookie = cookie;
-   } catch( e ) {
-      ;
    }
 }
 
@@ -291,6 +284,7 @@ function hop_inner( method, service, success, failure, sync, mute ) {
       vis.title = service;
 
       var img = document.createElement( "img" );
+      img.classname = "hop-busy-anim";
       img.src = hop_busy_anim;
       
       vis.appendChild( img );
@@ -394,8 +388,26 @@ function hop( service, success, failure, sync ) {
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
 function with_hop( service, success, failure ) {
+   if( !success ) success = function( h ) { };
+   
    return hop( service,
-	       function( h ) { success( eval( h.responseText ) ) },
+	       function( http ) {
+                 switch( http.status ) {
+		    case 200:
+		       if( http.getResponseHeader( "Hop-Json" ) ) {
+			  success( eval( http.responseText ) );
+		       } else {
+			  success( http.responseText );
+		       }
+		       return;
+		    case 202:
+		       success( hop_unserialize( http.responseText ) );
+		       return;
+		    default:
+		       success( http );
+		       return;
+		    }
+		 }, 
 	       failure );
 }
 
@@ -448,6 +460,13 @@ function hop_tooltip_show( event, id, ux, uy ) {
    if( (el instanceof HTMLDivElement) &&
        (hop_current_tooltip != el) ) {
 
+      var p = el.parentNode;
+      
+      if( p != document.body ) {
+	 p.removeChild( el );
+	 document.body.appendChild( el );
+      }
+
       if( hop_current_tooltip instanceof HTMLDivElement ) {
 	 hop_current_tooltip.style.visibility = "hidden";
       }
@@ -477,6 +496,19 @@ function hop_tooltip_hide() {
    if( hop_current_tooltip instanceof HTMLDivElement ) {
       hop_current_tooltip.style.visibility = "hidden";
       hop_current_tooltip = null;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_set_cookie ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_set_cookie( http ) {
+   try {
+      var cookie = http.getResponseHeader( "set-cookie" );
+      if( cookie )
+	 document.cookie = cookie;
+   } catch( e ) {
+      ;
    }
 }
 
@@ -572,10 +604,10 @@ function hop_element_y( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_timeout ...                                                  */
 /*---------------------------------------------------------------------*/
-function hop_timeout( name, proc, timeout, eager ) {
-   window[ name ] = setInterval( proc, timeout );
-   window[ name ].proc = proc;
-   window[ name ].timeout = timeout;
+function hop_timeout( id, timeout, proc ,eager ) {
+   window[ id ] = setInterval( proc, timeout );
+   window[ id ].proc = proc;
+   window[ id ].timeout = timeout;
    
    if( eager == true ) proc();
 }
@@ -583,7 +615,7 @@ function hop_timeout( name, proc, timeout, eager ) {
 /*---------------------------------------------------------------------*/
 /*    hop_timeout_reset ...                                            */
 /*---------------------------------------------------------------------*/
-function hop_timeout_reset( id, proc, timeout ) {
+function hop_timeout_reset( id, timeout, proc ) {
    var p = proc ? proc : window[ id ].proc;
    var t = timeout ? timeout : window[ id ].timeout;
    clearInterval( window[ id ] );
@@ -596,6 +628,7 @@ function hop_timeout_reset( id, proc, timeout ) {
 /*---------------------------------------------------------------------*/
 function hop_clear_timeout( id ) {
    clearInterval( window[ id ] );
+   window[ id ] = false;
 }
 
 /*---------------------------------------------------------------------*/
@@ -805,3 +838,5 @@ var hopBehaviour = {
 };
 
 hopBehaviour.start();
+
+   

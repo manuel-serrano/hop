@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Mar 20 16:51:20 2006 (serrano)                */
+;*    Last change :  Thu May 11 08:51:54 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -90,7 +90,10 @@
 	    
 	    (hop-service-base::bstring)
 	    (hop-service-weblet-name::bstring)
-	    
+
+	    (hop-initial-weblet::bstring)
+	    (hop-initial-weblet-set! ::bstring)
+
 	    (hop-server-aliases::pair-nil)
 	    (hop-server-aliases-set! ::pair-nil)
 	    (hop-server-aliases-add! ::bstring)
@@ -103,6 +106,9 @@
 	    
 	    (hop-authorize-request-hook::procedure)
 	    (hop-authorize-request-hook-set! ::procedure)
+
+	    (hop-hopaccess::bstring)
+	    (hop-hopaccess-set! ::bstring)
 	    
 	    (hop-char-encoding::symbol)
 	    (hop-char-encoding-set! ::symbol)
@@ -427,9 +433,22 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-base ...                                             */
+;*    -------------------------------------------------------------    */
+;*    The prefix of all HOP weblets.                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-base
    "/hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-initial-weblet ...                                           */
+;*    -------------------------------------------------------------    */
+;*    This is the name of the weblet to execute when the URL           */
+;*      http://localhost:8080/(hop-service-base)                       */
+;*    has been intercepted. This is not to be confused with            */
+;*    HOP-SERVICE-BASE.                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-initial-weblet
+   "hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-weblet-weblet-name ...                               */
@@ -502,6 +521,12 @@
       (if (or (not (procedure? v)) (not (correct-arity? v 2)))
 	  (error 'hop-authorized-request "Illegal value" v)
 	  v)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hopaccess ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hopaccess
+   ".hopaccess")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-char-encoding ...                                            */

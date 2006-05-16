@@ -1,0 +1,164 @@
+<doc> Slider widget
+
+== Description ==
+
+The //slider// widget enables graphical integer selection.
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markups presented in this page are not yet supported on
+client side programming. They are only supported on server side.])
+
+== Synopsis ==
+
+=== Server ===
+
+  (<SLIDER> args ...)
+
+=== Client ===
+
+  (slider-value slider)
+  (slider-value-set! slider value)
+  (slider-onchange slider)
+  (slider-onchange-set! slider proc)
+
+=== Requirements ===
+
+Client codes using //Sliders// need to load the script ++hop-slider.js++.
+They also need to load the ++hop-slider.css++ style sheet.  Hence, documents
+using //sliders// must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-slider.js" :css "hop-slider.css")
+
+
+== Examples ==
+
+<example><SLIDER></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<SLIDER>++ ===
+<markup> <SLIDER>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| :value       |  integer  |   ++0++      | the default value.          |
+| :min         |  integer  |   ++0++      | the minimum value.          |
+| :max         |  integer  |   ++100++    | the maximum value.          |
+| :step        |  integer  |   ++1++      | the increment.              |
+| :caption     |  string   |   ++top++    | the caption location.       |
+| :onchange    |  script   |              | the action to executed.     |
+</arguments>
+
+The argument :onchange is a script that is invoked each time the
+slider is changed. In the scope of that script, the variable
+++this++ is bound to the //slider//.  The ++value++ field denotes the
+current value of the slider. This field can be set to force the slider
+to a specific value.  
+
+</markup>
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(slider-value slider)++ ===
+<procedure> slider-value
+
+<arguments>
+^  arguments  ^   type    ^  short description          ^
+| slider      |  slider   | the slider.                 |
+</arguments>
+
+This function returns the current value of the slider.
+</procedure>
+
+=== ++(slider-value-set! slider value)++ ===
+<procedure> slider-value-set!
+
+<arguments>
+^  arguments  ^   type    ^  short description          ^
+| slider      |  slider   | the slider.                 |
+| value       |  integer  | the new value.              |
+</arguments>
+
+This function sets a new value to a slider.
+
+</procedure>
+
+=== ++(slider-onchange slider)++ ===
+<procedure> slider-onchange
+
+<arguments>
+^  arguments  ^   type    ^  short description          ^
+| slider      |  slider   | the slider.                 |
+</arguments>
+
+This function returns the current function that is invoked each time
+the slider changes its value.
+</procedure>
+
+=== ++(slider-onchange-set! slider proc)++ ===
+<procedure> slider-onchange-set!
+
+<arguments>
+^  arguments  ^   type      ^  short description               ^
+| slider      |  slider     | the slider.                      |
+| proc        |  procedure  | the new //onchange// procedure.  |
+</arguments>
+
+This function sets a new ++onchange++ procedure to a slider. This procedure
+is invoked each time user action changes the value of the slider. When the
+procedure is invoked, the special variable ++this++ is bound to the current
+slider. The expression ++this.value++ returns the current value of the slider.
+</procedure>
+
+</client>
+
+== Style ==
+<style>
+
+This section describes the various CSS elements used to configure
+//Sliders//.
+
+=== ++table.hop-slider div.lineleft++ ===
+<css> table.hop-slider div.lineleft
+The left line of the slider.
+</css>
+
+=== ++table.hop-slider div.lineright++ ===
+<css> table.hop-slider div.lineright
+The right line of the slider.
+</css>
+
+=== ++table.hop-slider div.cursoron++ ===
+<css> table.hop-slider div.cursoron
+The active cursor.
+</css>
+
+=== ++table.hop-slider div.cursoroff++ ===
+<css> table.hop-slider div.cursoroff
+The inactive cursor.
+</css>
+
+=== ++table.hop-slider td.caption++ ===
+<css> table.hop-slider td.caption
+The cursor caption.
+</css>
+
+=== ++hop-slider.css++ ===
+
+The file ++hop-slider.css++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share>hop-slider.css</share>
+
+</style>
+
+== See also ==
+<see-also><SLIDER>, slider-</see-also>
+
+</doc>
