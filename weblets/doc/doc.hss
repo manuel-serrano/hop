@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed May 10 10:49:08 2006 (serrano)                */
+/*    Last change :  Tue May 16 11:33:46 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -342,9 +342,12 @@ table.api-index span.href:hover {
 
 /*--- window ----------------------------------------------------------*/
 iwindow {
-  opacity: $doc-opacity;
   font-size: $small;
   background-color: white;
+}
+
+iwindow.menu {
+  opacity: $doc-opacity;
 }
 
 /*--- page ------------------------------------------------------------*/
@@ -535,7 +538,7 @@ doc toc {
   margin-left: 5px;
   min-width: 280px;
   float: right; 
-  clear: both; 
+/*   clear: both;                                                      */
   background-color: $popup-menu-color; 
   border: $popup-menu-border;
   -moz-opacity: $doc-opacity;
@@ -593,6 +596,7 @@ api div.doc-title th {
 
 api doc pre {
   background-color: $server-code-background;
+  display: table;
 }
 
 api doc pre.example {

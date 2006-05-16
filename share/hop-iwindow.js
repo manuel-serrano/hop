@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Tue May 16 08:11:39 2006 (serrano)                */
+/*    Last change :  Tue May 16 11:45:31 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -17,7 +17,9 @@ var hop_iwindow_zindex = 0;
 /*    hop_iwindow_close ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_close( id ) {
-   var win = (id instanceof HTMLElement) ? id : document.getElementById( id );
+   var win = ((id instanceof HTMLElement) ||
+              (id instanceof Object && id.propertyIsEnumerable( "innerHTML" )))
+      ? id : document.getElementById( id );
 
    win.style.display = "none";
 
@@ -29,7 +31,9 @@ function hop_iwindow_close( id ) {
 /*    hop_iwindow_maximize ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_maximize( id ) {
-   var win = (id instanceof HTMLElement) ? id : document.getElementById( id );
+   var win = ((id instanceof HTMLElement) ||
+              (id instanceof Object && id.propertyIsEnumerable( "innerHTML" )))
+      ? id : document.getElementById( id );
 
    if( win.maximize ) {
       win.maximize();
@@ -79,7 +83,9 @@ function hop_iwindow_maximize( id ) {
 /*    hop_iwindow_iconify ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_iconify( id ) {
-   var win = (id instanceof HTMLElement) ? id : document.getElementById( id );
+   var win = ((id instanceof HTMLElement) ||
+              (id instanceof Object && id.propertyIsEnumerable( "innerHTML" )))
+      ? id : document.getElementById( id );
 
    if( win.iconifiedp ) {
       win.iconifiedp = false;

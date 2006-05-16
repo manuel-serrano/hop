@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Wed May 10 13:01:05 2006 (serrano)                */
+;*    Last change :  Tue May 16 11:04:08 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -49,7 +49,7 @@
 ;*    doc/example ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/example expr)
-   (if (authorized-service? (the-current-request) 'doc)
+   (if (authorized-service? (the-current-request) 'doc/example)
        (with-handler
 	  (lambda (e)
 	     (http-internal-error e "Error in source code"))
@@ -69,7 +69,7 @@
 ;*    doc/example-file ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/example-file path)
-   (if (authorized-service? (the-current-request) 'doc)
+   (if (authorized-service? (the-current-request) 'doc/example)
        (with-handler
 	  (lambda (e)
 	     (http-internal-error e "Error in source code"))
