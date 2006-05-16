@@ -277,7 +277,7 @@ div.hop-tab {
 $(hop-hss-type! "demo" "div.demo")
 $(define demo-background "#496bce")
 $(define toolbar-opacity "0.9")
-$(define toolbar-background (color-darker "#496bce"))
+$(define toolbar-background (color-lighter "#496bce"))
 
 demo {
   width: 800;
