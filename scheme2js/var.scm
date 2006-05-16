@@ -25,8 +25,6 @@
 
    (define-node (Var id)
       (set! this.id id))
-   (set! Var.proto.clone pobject-clone)
-   (set! Var.proto.deep-clone pobject-deep-clone)
 
    (define-pmethod (Var-reference)
       (let ((var-ref (new-node Var-ref this.id)))
