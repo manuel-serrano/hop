@@ -57,9 +57,7 @@
 		   (j (with-handler
 			 (lambda (e)
 			    (with-error-to-string
-			       (lambda ()
-				  (error-notify e))))
+			       (lambda () (error-notify e))))
 			 (with-output-to-string
-			    (lambda ()
-			       (compile-hop-client e))))))
+			    (lambda () (compile-hop-client e))))))
 	       (cons j s))))))
