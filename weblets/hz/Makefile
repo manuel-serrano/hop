@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Mar 30 09:58:57 2006 (serrano)                */
+#*    Last change :  Wed May 17 16:47:53 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -23,4 +23,4 @@ POPULATION	= Makefile hz.info \
 build: .afile
 
 .afile:
-	afile -suffix hop $(POPULATION) > .afile
+	$(AFILE) -suffix hop $(POPULATION) > .afile

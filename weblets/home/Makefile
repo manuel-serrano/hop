@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue May 16 05:30:21 2006 (serrano)                */
+#*    Last change :  Wed May 17 16:47:29 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -24,7 +24,7 @@ POPULATION	= Makefile home.info .afile home.hss tips.hss $(HOP_POP) \
 build: .afile license.wiki install.wiki release.info
 
 .afile: $(HOP_POP)
-	afile -suffix hop $(POPULATION) demos/*/*.hop > .afile
+	$(AFILE) -suffix hop $(POPULATION) demos/*/*.hop > .afile
 
 license.wiki: ../../LICENSE
 	cp $< $@
