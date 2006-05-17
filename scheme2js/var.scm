@@ -40,7 +40,8 @@
 
    (define-node (JS-Var scheme-id js-id)
       (set! this.id scheme-id)
-      (set! this.js-id js-id))
+      (set! this.js-id js-id)
+      (set! this.is-global? #t))
    (set! JS-Var.proto (empty-pobject Var))
    (set! JS-Var.proto.imported? #t)
 
