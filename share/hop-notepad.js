@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Tue May 16 11:48:43 2006 (serrano)                */
+/*    Last change :  Wed May 17 16:20:37 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -16,13 +16,9 @@ function hop_notepad_remote( service, notepad, tab ) {
    var success = function( http ) {
       if( http.responseText != null ) {
 	 var found = 0;
-	 var np = ((notepad instanceof HTMLElement) ||
-		   (notepad instanceof Object &&
-		    notepad.propertyIsEnumerable( "innerHTML" )))
+	 var np = hop_isHTMLElement( notepad )
 	           ? notepad : document.getElementById( notepad );
-	 var ta = ((tab instanceof HTMLElement) ||
-		   (tab instanceof Object &&
-		    tab.propertyIsEnumerable( "innerHTML" )))
+	 var ta = hop_isHTMLElement( tab )
 		   ? tab : document.getElementById( tab );
 	 var i;
 
@@ -58,13 +54,9 @@ function hop_notepad_remote( service, notepad, tab ) {
 /*---------------------------------------------------------------------*/
 function hop_notepad_inline( notepad, tab ) {
    var found = 0;
-   var np = ((notepad instanceof HTMLElement) ||
-	     (notepad instanceof Object &&
-	      notepad.propertyIsEnumerable( "innerHTML" )))
+   var np = hop_isHTMLElement( notepad )
              ? notepad : document.getElementById( notepad );
-   var ta = ((tab instanceof HTMLElement) ||
-	     (tab instanceof Object &&
-	      tab.propertyIsEnumerable( "innerHTML" )))
+   var ta = hop_isHTMLElement( tab )
              ? tab : document.getElementById( tab );
    var i;
 
@@ -103,13 +95,9 @@ function hop_notepad_inline( notepad, tab ) {
 /*    hop_notepad_select ...                                           */
 /*---------------------------------------------------------------------*/
 function hop_notepad_select( id1, id2 ) {
-   var notepad = ((id1 instanceof HTMLElement) ||
-		  (id1 instanceof Object &&
-		   id1.propertyIsEnumerable( "innerHTML" )))
+   var notepad = hop_isHTMLElement( id1 )
                  ? id1 : document.getElementById( id1 );
-   var tab = ((id2 instanceof HTMLElement) ||
-	      (id2 instanceof Object &&
-	       id2.propertyIsEnumerable( "innerHTML" )))
+   var tab = hop_isHTMLElement( id2 )
 	      ? id2 : document.getElementById( id2 );
 
    if( notepad.remote_service != null ) {

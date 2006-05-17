@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Wed May 10 07:07:13 2006 (serrano)                */
+;*    Last change :  Wed May 17 16:30:11 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -120,7 +120,7 @@
 	  (let ((el (document.getElementById "pad-api")))
 	     (set! el.innerHTML r)
 	     (let ((eo (and $k (document.getElementById $k))))
-		(if eo
+		(if (and eo (not (null? eo)))
 		    (let ((po eo.offsetTop))
 		       (if (> po 50)
 			   (window.scrollTo 0 (- po 50)))
