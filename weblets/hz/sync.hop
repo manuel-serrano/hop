@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Fri May  5 21:14:24 2006 (serrano)                */
+;*    Last change :  Wed May 17 08:41:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -229,7 +229,7 @@
 				  name
 				  (string-append name ".info"))))
 	    (unless (file-exists? i)
-	       (hz-db-remove-weblet o)))))
+	       (hz-db-remove-weblet db o)))))
    
    ;; check the file systems
    (for-each sync-dir (directory->list (hop-weblets-directory)))

@@ -11,21 +11,6 @@
 (define-service (wikiedit/update src)
    (broadcast-hop-event! wikiedit-event (wikiedit-compile src)))
 
-(define *wikiedit-syntax*
-   (instantiate::wiki-syntax
-      (section1 (lambda expr (<DIV> :class "section1" expr)))
-      (section2 (lambda expr (<DIV> :class "section2" expr)))
-      (plugins (lambda (id)
-		  (case id
-		     ((<block>) wikiedit-block)
-		     ((<center>) wikiedit-center))))))
-
-(define (wikiedit-block port title expr)
-   (apply <DIV> :class "block" (<SPAN> :class "title" title) "\n" expr))
-
-(define (wikiedit-center port title expr)
-   (<DIV> :align "center" expr))
-
 (define-service (wikiedit/view)
    (let ((d (<DIV> :class "view" "")))
       (<HTML>
@@ -41,7 +26,7 @@
    (let ((o (with-handler
 	       (lambda (e)
 		  (<SPAN> :class "error" (html-string-encode src)))
-	       (wiki-string->hop src *wikiedit-syntax*))))
+	       (wiki-string->hop src))))
       (with-output-to-string
 	 (lambda ()
 	    (xml-write o (current-output-port) (hop-char-encoding))))))
