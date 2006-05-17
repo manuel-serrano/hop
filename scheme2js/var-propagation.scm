@@ -34,6 +34,7 @@
 	       (inherits-from? val (node 'Var-ref))
 	       lvalue.var.single-value
 	       (not lvalue.var.muted?)
+	       (not (inherits-from? val.var (node 'JS-This-Var)))
 	       (not val.var.muted?)
 	       (or (config 'inline-globals)
 		   (and (not lvalue.var.is-global?)
