@@ -21,7 +21,8 @@
 	   (gen-code-call::bstring operator operands)
 	   (gen-code-unspecified::bstring)
 ;	   (gen-code-tail operator operands)
-	   (gen-code-bind-exit::bstring escape body)
+	   (gen-code-bind-exit::bstring escape body result-decl invoc-body)
+	   (gen-code-with-handler::bstring exception catch body)
 	   (gen-code-while::bstring test body label)
 	   (gen-code-continue::bstring label)
 	   (gen-code-break::bstring label)
@@ -168,22 +169,33 @@
        (string-append "{" (separated-list els "\n") "}\n")
        (string-append "(" (separated-list els ",\n") ")")))
 
-(define (gen-code-bind-exit escape body)
+(define (gen-code-bind-exit escape body result-decl invoc-body)
    (let ((escape-obj (gen-JS-sym 'escape_obj)))
       (string-append "{\n"
 		     "function " escape "(res) { "
 		     escape-obj ".res = res;"
+		     escape-obj ".bind-exit-marker = true;\n"
 		     "throw " escape-obj ";"
 		     "}\n"
 		     "var " escape-obj " = new Object();\n"
 		     "try {\n"
 		     body
 		     "} catch (exc) {\n"
-		     "if (exc === " escape-obj ")\n"
-		     "return exc.res;"
-		     "else throw exc;\n"
+		     "if (exc === " escape-obj ") {\n"
+		     result-decl " = exc.res;\n"
+		     invoc-body
+		     "\n} else throw exc;\n"
 		     "}\n"
 		     "}\n")))
+
+(define (gen-code-with-handler exception catch body)
+   (string-append "try {\n"
+		  body
+		  "} catch (" exception ") {\n"
+		  "if (!"exception".bind-exit-marker) {\n"
+		  catch
+		  "\n} else throw " exception ";\n"
+		  "}\n"))
 
 ;; ***  with trampoline  ***
 ; (define (gen-code-call operator operands)

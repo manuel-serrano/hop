@@ -141,6 +141,10 @@
 		(scheme->pobject expr (location (cddr exp)))))
 	  ((bind-exit (?escape) . ?body)
 	   (new-node Bind-exit (new-node Decl escape) (expr-list->Body body)))
+	  ((with-handler ?handler . ?body)
+	   (new-node With-handler
+		     (scheme->pobject handler (location (cdr exp)))
+		     (expr-list->Body body)))
 	  ((pragma ?str)
 	   (new-node Pragma str))
 	  ((part ?expr (and ?fun (? procedure?)))

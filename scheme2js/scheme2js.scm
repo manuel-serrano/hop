@@ -16,6 +16,7 @@
 	   inline
 	   constant-propagation
 	   var-propagation
+	   while
 	   capture
 	   protobject
 	   liveness
@@ -40,7 +41,8 @@
 		  (do-inlining #t)
 		  (inline-globals #f)
 		  (constant-propagation #t)
-		  (var-propagation #f)
+		  (var-propagation #t)
+		  (while #t)
 		  (optimize-calls #t)
 		  (optimize-var-number #f)
 		  (optimize-boolify #t)
@@ -171,10 +173,14 @@
       (if (eq? (config 'debug-stage) 'rm-unused-vars) (dot-out tree))
       (capture! tree)
       (if (eq? (config 'debug-stage) 'capture) (dot-out tree))
+      (node-elimination! tree)
+      (if (eq? (config 'debug-stage) 'node-elim2) (dot-out tree))
+      (while! tree)
+      (if (eq? (config 'debug-stage) 'while) (dot-out tree))
       (statements! tree)
       (if (eq? (config 'debug-stage) 'statements) (dot-out tree))
       (node-elimination! tree)
-      (if (eq? (config 'debug-stage) 'node-elim2) (dot-out tree))
+      (if (eq? (config 'debug-stage) 'node-elim3) (dot-out tree))
       (let ((compiled (compile tree)))
 	 (if (eq? (config 'debug-stage) 'compiled) (dot-out tree))
 	 (verbose "--- compiled")

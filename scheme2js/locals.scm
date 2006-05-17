@@ -26,6 +26,14 @@
 	     (this.traverse1 new-ht)
 	     ;; don't go into formals and vaarg.
 	     (this.body.traverse new-ht))))
+
+   (define-pmethod (With-handler-locals ht)
+      (let ((new-ht (make-eq-hashtable)))
+	 (set! this.local-vars new-ht)
+	 (if collect-formals?
+	     (this.exception.traverse new-ht))
+	 (this.catch.traverse ht)
+	 (this.body.traverse ht)))
    
    (define-pmethod (Decl-locals ht)
       (hashtable-put! ht this.var #t))
@@ -34,6 +42,7 @@
    (overload traverse locals (Node
 			      Part
 			      Lambda
+			      With-handler
 			      Decl)
 	     (tree.traverse #f)))
 
