@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu May 11 07:06:10 2006 (serrano)                */
+;*    Last change :  Wed May 17 08:48:16 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -39,7 +39,10 @@
 	    (hop-proxy-allow-remote-client-set! ::bool)
 	    
 	    (hop-proxy-remote-authentication::bool)
-	    (hop-proxy-remote-authentication-set! ::bool))
+	    (hop-proxy-remote-authentication-set! ::bool)
+
+	    (hop-close-request-syntax-error::bool)
+	    (hop-close-request-syntax-error-set! ::bool))
    
    (eval    (export-exports)))
 
@@ -88,4 +91,10 @@
 ;*    hop-proxy-remote-authentication ...                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-proxy-remote-authentication
+   #t)
+
+;*---------------------------------------------------------------------*/
+;*    hop-close-request-syntax-error ...                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-close-request-syntax-error
    #t)

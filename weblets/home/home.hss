@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue May 16 05:15:53 2006 (serrano)                */
+/*    Last change :  Wed May 17 10:01:09 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -118,7 +118,6 @@ table.home {
   padding: 10px;
   border: 1px solid $border-color;
   background-color: white;
-  -moz-border-radius: 0.5em;
 }
 
 div#title {
@@ -325,3 +324,31 @@ span.icon {
   padding: 2px;
   cursor: default;
 }
+
+/*---------------------------------------------------------------------*/
+/*    Download                                                         */
+/*---------------------------------------------------------------------*/
+table.download {
+  font-size: small;
+}
+
+table.download th {
+  text-align: left;
+  font-weight: normal;
+}
+
+table.download span.unstable {
+  font-weight: bold;
+  color: red;
+}
+
+table.download span.stable {
+  font-weight: bold;
+  color: #16b917;
+}
+
+table.download span.old {
+  font-weight: bold;
+  color: #ff8010;
+}
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue May 16 05:53:16 2006 (serrano)                */
+;*    Last change :  Wed May 17 10:00:05 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -118,13 +118,6 @@ We suggest to give Firefox a try.")))))
 			   (<DIV>
 			      :class "hop-tab"
 			      (wiki->hop "download.wiki"))))))
-	 (<NPTAB> :id "documentation"
-		  (<NPTABHEAD> "Docs")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV>
-			   :class "hop-tab"
-			   (wiki->hop "docs.wiki")))))
 	 (<NPTAB> :id "weblets"
 		  (<NPTABHEAD> "Weblets")
 		  (<DELAY>
@@ -132,6 +125,13 @@ We suggest to give Firefox a try.")))))
 			(<DIV>
 			   :class "hop-tab"
 			   (wiki->hop "weblets.wiki")))))
+	 (<NPTAB> :id "documentation"
+		  (<NPTABHEAD> "Docs")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "docs.wiki")))))
 	 (<NPTAB> :id "faq"
 		  (<NPTABHEAD> "Faq")
 		  (<DELAY>
@@ -139,6 +139,13 @@ We suggest to give Firefox a try.")))))
 			(<DIV>
 			   :class "hop-tab"
 			   (wiki->hop "faq.wiki")))))
+	 (<NPTAB> :id "Forum"
+		  (<NPTABHEAD> "Forum")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   "Not implemented yet"))))
 	 (<NPTAB> :id "stats"
 		  (<NPTABHEAD> "Statistics")
 		  (<DELAY>
@@ -160,3 +167,25 @@ We suggest to give Firefox a try.")))))
       (<HEAD> :css (make-file-name (home-dir) "home.hss"))
       (<BODY> :style "background: white; font-size: small"
 	      (wiki->hop "install.wiki"))))
+	  
+;*---------------------------------------------------------------------*/
+;*    downloads ...                                                    */
+;*---------------------------------------------------------------------*/
+(define *devel-tar-gz*
+   (string-append (home-hop-devel-version) ".tar.gz"))
+(define *devel-zip*
+   (string-append (home-hop-devel-version) ".zip"))
+(define *devel-tar-url*
+   (make-file-name (home-ftp-hop-url) *devel-tar-gz*))
+(define *devel-zip-url*
+   (make-file-name (home-ftp-hop-url) *devel-tar-gz*))
+   
+(define *stable-tar-gz*
+   "not avaiable")
+(define *stable-zip*
+   "not available")
+(define *stable-tar-url*
+   "/dev/null")
+(define *stable-zip-url*
+   "/dev/null")
+   

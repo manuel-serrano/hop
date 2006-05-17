@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Mon May 15 21:14:20 2006 (serrano)                */
+;*    Last change :  Wed May 17 10:01:49 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
@@ -47,7 +47,7 @@
 ;*    home-hop-stable-version ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-hop-stable-version
-   #f)
+   "not available yet")
 
 ;*---------------------------------------------------------------------*/
 ;*    home-hop-devel-version ...                                       */
