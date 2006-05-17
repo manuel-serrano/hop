@@ -17,7 +17,7 @@
 (define (extract-js-interface top-level js-interface)
    (define top-level-head (list 'dummy))
    (define extension-head (list 'dummy))
-   
+
    ;; split js-interface clauses, and normal expressions.
    (let loop ((to-parse top-level)
 	      (last-top-level top-level-head)
@@ -40,7 +40,7 @@
 		    (loop (cdr to-parse)
 			  (cdr last-top-level)
 			  last-extension))))))
-   
+
    ;; add our runtime in front of js-interface in front of the extension
    (let ((all-interfaces (append-map
 			  (lambda (js-interface-sexp)

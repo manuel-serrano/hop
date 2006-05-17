@@ -3,144 +3,17 @@
    (include "nodes.sch")
    (option (loadq "protobject-eval.sch"))
    (import protobject
+	   mark-statements
 	   nodes
 	   var
 	   verbose)
-   (export (statements! tree::pobject)
-	   (statement-form? o::pobject)
-	   (mark-statement-form! o::pobject statement-form?)))
+   (export (statements! tree::pobject)))
 
 (define (statements! tree::pobject)
    (verbose "statements")
    (mark-statements tree)
    (transform-statements! tree))
 
-(define (mark-statements tree::pobject)
-   (verbose "  mark-statements")
-   (overload traverse mark-statements (Node
-				       Part
-				       Lambda
-				       If
-				       Case
-				       Begin
-				       Bind-exit
-				       Call
-				       Tail-rec
-				       Tail-rec-call
-				       Return
-				       Closure-alloc
-				       Label
-				       Break
-				       Set!)
-	     (set! (node 'Node).proto.default-traverse-value #f)
-	     (tree.traverse)
-	     (delete! (node 'Node).proto.default-traverse-value)))
-
-(define (mark-statement-form! o statement-form?)
-   (mark-node! o statement-form?))
-
-(define (mark-node! o statement-form?)
-   (if statement-form?
-       (set! o.statement-form? #t)
-       (delete! o.statement-form?)))
-
-(define (statement-form? o::pobject)
-   (marked-node? o))
-
-(define (marked-node? o)
-   o.statement-form?)
-
-(define (list-mark-statements l)
-   (let loop ((l l)
-	      (res #f))
-      (if (null? l)
-	  res
-	  (loop (cdr l)
-		(if ((car l).traverse)
-		    #t
-		    res)))))
-
-(define-pmethod (Node-mark-statements)
-   (let ((res (this.traverse0)))
-      (mark-node! this res)
-      res))
-
-(define-pmethod (Part-mark-statements)
-   (let* ((body-res (this.body.traverse))
-	  (res (or body-res this.prefer-statement-form?)))
-      (mark-node! this res)
-      res))
-
-(define-pmethod (Lambda-mark-statements)
-   (this.body.traverse)
-   (mark-node! this #f)
-   #f)
-
-(define-pmethod (If-mark-statements)
-   (let* ((test-res (this.test.traverse))
-	  (then-res (this.then.traverse))
-	  (else-res (this.else.traverse))
-	  (res (or test-res then-res else-res)))
-      (mark-node! this res)
-      res))
-
-(define-pmethod (Case-mark-statements)
-   (this.key.traverse)
-   (map (lambda (node) (node.traverse)) this.clauses)
-   (mark-node! this #t)
-   #t)
-
-(define-pmethod (Begin-mark-statements)
-   (let ((res (list-mark-statements this.exprs)))
-      (mark-node! this res)
-      res))
-
-(define-pmethod (Bind-exit-mark-statements)
-   (this.body.traverse)
-   (mark-node! this #t)
-   #t)
-
-(define-pmethod (Call-mark-statements)
-   (let* ((operands-tmp (list-mark-statements this.operands))
-	  (operator-tmp (this.operator.traverse))
-	  (res (or operands-tmp operator-tmp)))
-      (mark-node! this res)
-      res))
-
-(define-pmethod (Tail-rec-mark-statements)
-   (this.body.traverse)
-   (mark-node! this #t)
-   #t)
-
-(define-pmethod (Tail-rec-call-mark-statements)
-   (mark-node! this #t)
-   #t)
-
-(define-pmethod (Return-mark-statements)
-   (this.val.traverse)
-   (mark-node! this #t)
-   #t)
-
-(define-pmethod (Closure-alloc-mark-statements)
-   (this.body.traverse)
-   (mark-node! this #t)
-   #t)
-
-(define-pmethod (Label-mark-statements)
-   (this.body.traverse)
-   (mark-node! this #t)
-   #t)
-
-(define-pmethod (Break-mark-statements)
-   (this.val.traverse)
-   (mark-node! this #t)
-   #t)
-
-(define-pmethod (Set!-mark-statements)
-   (let ((res (this.val.traverse)))
-      (mark-node! this res)
-      res))
-   
 (define (transform-statements! tree::pobject)
    (verbose "  transform-statements")
    (overload traverse! transform-statements! (Node
@@ -155,8 +28,10 @@
 					      Set!
 					      Begin
 					      Bind-exit
+					      With-handler
 					      Call
 					      Tail-rec
+					      While
 					      Tail-rec-call
 					      Return
 					      Closure-alloc
@@ -288,9 +163,15 @@
    this)
 
 (define-pmethod (Bind-exit-transform-statements! state-var statement-form?)
-   (this.body.traverse! state-var #t)
+   (set! this.body (this.body.traverse! state-var #t))
+   (set! this.invoc-body (this.invoc-body.traverse! state-var #t))
    this)
-   
+
+(define-pmethod (With-handler-transform-statements! state-var statement-form?)
+   (set! this.catch (this.catch.traverse! state-var #t))
+   (set! this.body (this.body.traverse! state-var #t))
+   this)
+
 (define-pmethod (Call-transform-statements! state-var statement-form?)
    (let ((prolog '()))
       (define (transform-optr/opnd expr)
@@ -300,7 +181,7 @@
 		    (expr-state-var optr/opnd-var-decl.var)
 		    (new-expr (expr.traverse! expr-state-var #t)))
 		(set! prolog (cons new-expr prolog))
-		(expr-state-var.reference))
+		optr/opnd-var-decl)
 	     (expr.traverse! #f #f)))
 
       (set! this.operator (transform-optr/opnd this.operator))
@@ -327,6 +208,16 @@
 
 (define-pmethod (Tail-rec-transform-statements! state-var statement-form?)
    (this.traverse2! state-var #t))
+
+(define-pmethod (While-transform-statements! state-var statement-form?)
+   (if (marked-node? this.test)
+       (error "While-transform-statements!"
+	      "while-test must not be statement-form"
+	      #f))
+   
+   (set! this.test (this.test.traverse! #f #f))
+   (set! this.body (this.body.traverse! state-var #t))
+   this)
 
 (define-pmethod (Tail-rec-call-transform-statements! state-var statement-form?)
    this)

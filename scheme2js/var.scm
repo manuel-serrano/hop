@@ -8,6 +8,11 @@
 	   (Decl-of-new-Var id)))
 
 (define (var-init!)
+   (define nodes (or (thread-parameter '*nodes*)
+		     (make-hashtable)))
+   
+   (thread-parameter-set! '*nodes* nodes)
+   
    ;;HACK HACK HACK: begins in begins..
    (define-macro (define-node signature . Lrest)
       (let ((name (car signature))
@@ -18,13 +23,15 @@
 					     'pobject-id
 					     `(pmethod ,(cdr signature)
 						       ,@Lrest)))))
-		(hashtable-put! *nodes* ',name ,tmp)
+		(hashtable-put! nodes ',name ,tmp)
 		,tmp))))
 ;	     (define-pclass ,signature ,@Lrest)
 ;	     (hashtable-put! *nodes* ',name ,name))))
 
    (define-node (Var id)
       (set! this.id id))
+   (set! Var.proto.clone pobject-clone)
+   (set! Var.proto.deep-clone pobject-deep-clone)
 
    (define-pmethod (Var-reference)
       (let ((var-ref (new-node Var-ref this.id)))
@@ -40,7 +47,8 @@
 
    (define-node (JS-Var scheme-id js-id)
       (set! this.id scheme-id)
-      (set! this.js-id js-id))
+      (set! this.js-id js-id)
+      (set! this.is-global? #t))
    (set! JS-Var.proto (empty-pobject Var))
    (set! JS-Var.proto.imported? #t)
 
