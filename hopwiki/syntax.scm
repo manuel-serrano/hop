@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue May 16 05:24:42 2006 (serrano)                */
+;*    Last change :  Wed May 17 09:34:10 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -283,6 +283,10 @@
 		   (add-expr! (the-html-string))
 		   (ignore)))))
 
+      ;; continuation lines
+      ((: #\\ (? #\Return) #\Newline)
+       (ignore))
+      
       ;; a blank line: end of expr
       ((bol (: (? #\Return) #\Newline))
        (let ((st (in-bottom-up-state (lambda (n _) (expr? n)))))

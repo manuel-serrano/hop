@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Tue May 16 14:49:31 2006 (serrano)                */
+;*    Last change :  Wed May 17 10:23:16 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
@@ -32,7 +32,6 @@
   (let* ((tmp (cell.id.split "-")) ;; id is "sudoku-row-col"
 	 (row (vector-ref tmp 1))
 	 (col (vector-ref tmp 2)))
-     (alert "border: " *board* " row: " row)
     (vector-ref (vector-ref *board* row) col)))
 
 (define (set-cell-value! cell v)

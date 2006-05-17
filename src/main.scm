@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May  9 16:56:43 2006 (serrano)                */
+;*    Last change :  Wed May 17 09:23:26 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -112,7 +112,8 @@
       (let ((req (with-handler
 		    (lambda (e)
 		       (when (&error? e) (error-notify e))
-		       (unless (socket-down? sock)
+		       (unless (or (socket-down? sock)
+				   (hop-close-request-syntax-error))
 			  (with-handler
 			     (lambda (e) #unspecified)
 			     (unless (&io-sigpipe-error? e)
@@ -121,6 +122,9 @@
 					     e)))
 				   (http-response resp sock)))))
 		       (socket-close sock)
+		       (hop-verb 1 (hop-color id id " CLOSING")
+				 " " (trace-color 1 (find-runtime-type e))
+				 "\n")
 		       #f)
 		    (http-parse-request sock id))))
 	 (when (http-request? req)
