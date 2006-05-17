@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed May 17 10:19:23 2006 (serrano)                */
+#*    Last change :  Wed May 17 10:21:24 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -69,9 +69,7 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/icons/* $(HOPSHAREDIR)/icons && \
 	mkdir -p $(HOPSHAREDIR)/editor && \
 	chmod a+rx $(HOPSHAREDIR)/editor && \
-	install -m a+r $(BUILDSHAREDIR)/editor/* $(HOPSHAREDIR)/editor \
-
-
+	install -m a+r $(BUILDSHAREDIR)/editor/* $(HOPSHAREDIR)/editor
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

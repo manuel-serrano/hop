@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Tue May 16 14:51:54 2006 (serrano)                */
+;*    Last change :  Wed May 17 10:22:11 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
@@ -218,4 +218,4 @@
 	    (set! *show-errors* #t)
 	    (set! *board* $board)
 	    (set! document.documentElement.onkeydown key-event)
-	    '(set! document.onkeydown key-event)))))))
+	    (set! document.onkeydown key-event)))))))
