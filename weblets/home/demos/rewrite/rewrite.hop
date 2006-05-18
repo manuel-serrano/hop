@@ -1,0 +1,38 @@
+(module hophome_demos-rewrite
+   (export (home/demos/rewrite)))
+
+(define *rewrite-directory* (dirname (the-loading-file)))
+
+(define-service (home/demos/rewrite)
+   (let ((url (<INPUT> :size 60 :value "http://www.kernel.org"))
+	 (o (<INPUT> :size 30 :value "Linux"))
+	 (n (<INPUT> :size 30 :value "Xinul")))
+      (<HTML>
+	 (<HEAD> :dir *rewrite-directory* :css "rewrite.hss")
+	 (<BODY>
+	    (<H1> "Rewrite the following URL")
+	    url
+	    (<DIV> "(This demo works best with pages with few or no CSS)")
+	    (<H1> "Replace:")
+	    o
+	    (<H1> "With:")
+	    n
+	    (<BUTTON>
+	       "Rewrite now"
+	       :onclick ~(window.open ($home/demos/rewrite/doit $url.value
+								$o.value
+								$n.value)
+				      $url.value))))))
+
+;*---------------------------------------------------------------------*/
+;*    home/demos/rewrite/doit ...                                      */
+;*---------------------------------------------------------------------*/
+(define-service (home/demos/rewrite/doit url old new)
+   (with-url url
+      (lambda (h)
+	 (pregexp-replace*
+	  old h
+	  (format "<span style='color: red'>~a</span>" new)))))
+
+	       
+	       
