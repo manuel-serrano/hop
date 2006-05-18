@@ -42,7 +42,7 @@
 		  (inline-globals #f)
 		  (constant-propagation #t)
 		  (var-propagation #t)
-		  (while #t)
+		  (while #f)
 		  (optimize-calls #t)
 		  (optimize-var-number #f)
 		  (optimize-boolify #t)
