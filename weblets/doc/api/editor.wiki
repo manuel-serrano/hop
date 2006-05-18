@@ -18,12 +18,12 @@ client side programming. They are only supported on server side.])
 
 === Requirements ===
 
-Client codes using //Sliders// need to load the script ++hop-slider.js++.
-They also need to load the ++hop-slider.css++ style sheet.  Hence, documents
-using //sliders// must include in their header, the following statement:
+Client codes using //Editors// need to load the script ++hop-editor.js++.
+They also need to load the ++hop-editor.css++ style sheet.  Hence, documents
+using //editors// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-edit.js" :css "hop-edit.css")
+  (<HEAD> :jscript "hop-editor.js" :css "hop-editor.css")
 
 
 == Examples ==
@@ -39,21 +39,25 @@ using //sliders// must include in their header, the following statement:
 <arguments>
 ^  attributes  ^   type    ^   default    ^  short description          ^
 | :id          |  string   |  //random//  | element identifier.         |
+| :class       |  string   |  //random//  | the element class.          |
+| :width       |  dim      |    100%      | the element width.          |
+| :height      |  dim      |    600px     | the element height.         |
+| :name        |  string   |  //random//  | the name of the editor.     |
+| :submit      |  script   |              | the submit procedure.       |
+| :cancel      |  script   |              | the cancel procedure.       |
+| body         |   xml     |              | the initial content.        |
 </arguments>
 
 </markup>
 </server>
 
-== Client Definitions ==
-<client>
+=== ++hop-editor.css++ ===
 
-=== ++hop-edit.css++ ===
-
-The file ++hop-edit.css++ contains the default graphical configuration.
+The file ++hop-editor.css++ contains the default graphical configuration.
 It is defined as:
 
 ~~
-<share>hop-edit.css</share>
+<share>hop-editor.css</share>
 
 </style>
 

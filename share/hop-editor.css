@@ -1,0 +1,86 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-edit.css                      */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Erick Gallesio                                    */
+/*    Creation    :  Mon Apr 10 11:43:00 2006                          */
+/*    Last change :  Wed May 10 19:58:12 2006 (eg)                     */
+/*    -------------------------------------------------------------    */
+/*    EDITOR CSS                                                       */
+/*=====================================================================*/
+
+.hop-editor {
+    border: 1px inset #ccc;
+    background: #fff;
+}
+    
+.hop-edit-toolbars {
+    border: 1px solid #666;
+}
+
+.hop-edit-button {
+    border: 0px solid transparent; 
+    margin: 1px; 
+    padding: 2px; 
+    background: transparent; 
+}
+
+.hop-edit-button-over { 
+    border: 1px solid #999999; 
+    margin: 0; 
+    padding: 2px;
+    background: #C8EBFF;
+}
+
+.hop-editor SELECT {
+    font-size: 80%;
+    background: #ddf; 
+    border: 1px solid #aaa
+}
+
+.hop-edit-palette {
+    display: none;
+    position: absolute;
+    border: 2px ridge #555; 
+    padding:4px;
+    background:#eee;
+    cursor:pointer;
+    width:100;
+}
+
+.hop-edit-palette-item {
+    width:10px;
+    height:10px;
+    border:1px inset gray;
+    margin:1px;
+    float:left;
+}
+
+
+/*****   P o p u p   W i n d o w s  *****/
+
+.hop-edit-popup {
+    background: #ccc;
+}
+
+.hop-edit-popup-title {
+    background: #ddf; 
+    color: #000; 
+    font-weight: bold; 
+    font-size: 120%; 
+    padding: 3px 10px; 
+    margin-bottom: 10px;
+    border-bottom: 1px solid black; 
+    letter-spacing: 2px;
+}
+
+
+.hop-edit-popup-label {
+    text-align: right; 
+}
+
+.hop-edit-popup-buttons {
+    margin-top: 1em; 
+    border-top: 1px solid #999;
+    padding: 2px; 
+    text-align: right;
+}

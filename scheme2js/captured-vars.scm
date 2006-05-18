@@ -8,7 +8,7 @@
 	   verbose)
    (export (captured-vars tree::pobject)))
 
-;; free-vars must be executed before using captured-vars
+;; free-vars and locals must be executed before using captured-vars
 
 (define (captured-vars tree::pobject)
    (verbose " collect captured")
@@ -18,6 +18,7 @@
 			  Lambda
 			  Call
 			  Set!
+			  (With-handler Scope-cc)
 			  Var-ref)
 	     (tree.traverse '())))
 

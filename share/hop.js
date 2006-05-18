@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu May 18 10:04:37 2006 (serrano)                */
+/*    Last change :  Thu May 18 10:22:14 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -246,7 +246,7 @@ function hop_failure_alert( http ) {
 /*    hop ...                                                          */
 /*---------------------------------------------------------------------*/
 function hop_inner( method, service, success, failure, sync, mute ) {
-   var http = new XMLHttpRequest();
+   var http = hop_make_xml_http_request();
    var vis = false;
 
    if( !mute ) {

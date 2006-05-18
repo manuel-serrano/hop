@@ -1,6 +1,6 @@
 (<HTML>
    (<HEAD>
-      :jscript "hop-edit.js" :css "hop-edit.css")
+      :jscript "hop-editor.js" :css "hop-editor.css")
    (<BODY>
       :style "background: #7782D9"
       (<EDITOR>
