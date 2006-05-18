@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue May 16 14:41:53 2006 (serrano)                */
+/*    Last change :  Thu May 18 17:30:53 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -39,8 +39,7 @@ $(define deep-green "#0a0")
 $(define deep-magenta "#7a459e")
 $(define deep-magenta2 "#4a346c")
 $(define deep-orange "#ffae2b")
-$(define small "small")
-$(define x-small "x-small")
+$(define inner-href-color "#5c35a4")
 
 $(define server-color "#00a")
 $(define client-color "#070")
@@ -70,7 +69,7 @@ img.logo {
 
 tt {
   font-family: $typewriter;
-  font-size: $small;
+  font-size: small;
   color: #300;
 }
 
@@ -148,7 +147,7 @@ div#result {
 div.popup-menu {
   cursor: pointer;
   display: none;
-  font-size: $x-small;
+  font-size: x-small;
   font-weight: bold;
   font-family: sans serif;
   position: absolute;
@@ -162,18 +161,18 @@ div.popup-menu {
 }
 
 div.popup-menu tt {
-  font-size: $x-small;
+  font-size: x-small;
 }
 
 table.popup-menu {
   width: 18em;
   font-weight: normal;
-  font-size: $x-small;
+  font-size: x-small;
 }
 
 table.popup-menu td tt:hover {
+  color: $inner-href-color;
   text-decoration: underline;
-  color: blue;
 }
 
 /*--- fold list -------------------------------------------------------*/
@@ -193,7 +192,7 @@ table.popup-menu td tt:hover {
   font-weight: bold;
   cursor: pointer;
   margin: 0;
-  font-size: $small;
+  font-size: small;
 }
 
 .hop-fl SPAN.hop-fl-head:hover {
@@ -221,7 +220,7 @@ div.hop-notepad-tabs {
 }
 
 div.hop-notepad-tabs > span {
-  font-size: $small;
+  font-size: small;
   border-color: $border-color;
   margin: 0 4px 0 0;
 }
@@ -240,7 +239,7 @@ div.hop-notepad-body {
   border-right: 1px solid $border-color;
   border-bottom: 1px solid $border-color;
   padding: 10px;
-  font-size: $small;
+  font-size: small;
   background-color: $doc-color;
 }
 
@@ -250,7 +249,7 @@ div.hop-notepad-body-tab {
 }  
 
 table.hop-doc {
-  font-size: $small;
+  font-size: small;
 }
 
 table.hop-doc th {
@@ -282,6 +281,7 @@ span.edit:hover {
 span.edit:hover {
   text-decoration: underline;
   color: $deep-blue;
+  color: $inner-href-color;
 }
 
 /*---------------------------------------------------------------------*/
@@ -337,11 +337,12 @@ table.api-index span.href {
 
 table.api-index span.href:hover {
   text-decoration: underline;
+  color: $inner-href-color;
 }
 
 /*--- window ----------------------------------------------------------*/
 iwindow {
-  font-size: $small;
+  font-size: small;
   background-color: white;
 }
 
@@ -372,7 +373,7 @@ div.doc-title th {
 }
 
 div.doc-title td {
-  font-size: $x-small;
+  font-size: x-small;
 }
 
 doc pre, doc textarea {
@@ -380,7 +381,7 @@ doc pre, doc textarea {
   width: 95%;
   text-align: left;
   padding: 2px;
-  font-size: $x-small;
+  font-size: x-small;
   font-family: $typewriter;
 }
 
@@ -388,7 +389,7 @@ doc span.href {
   font-family: $typewriter;
   cursor: default;
   color: $deep-blue;
-  font-size: $small;
+  font-size: small;
 }
 
 pre {
@@ -401,7 +402,7 @@ doc pre span.doc-keyword,
 doc toc span.doc-keyword, 
 doc pre span.doc-type,
 doc toc span.doc-type {
-  font-size: $x-small;
+  font-size: x-small;
 }
 
 doc span.href-markup {
@@ -418,6 +419,7 @@ doc span.href-client {
 
 doc span.href:hover {
   text-decoration: underline;
+  color: $inner-href-color;
 }
 
 doc div.example {
@@ -469,7 +471,7 @@ div.doc-arguments, div.doc-fields {
 
 div.doc-arguments table, div.doc-fields table {
   width: 95%;
-  font-size: $x-small;
+  font-size: x-small;
   border-collapse: collapse;
   background-color: $table-background;
 }
@@ -506,29 +508,30 @@ doc span.doc-link {
 
 doc span.doc-link:hover {
   text-decoration: underline;
+  color: $inner-href-color;
 }
   
 doc span.doc-keyword {
   font-family: $typewriter;
-  font-size: $small;
+  font-size: small;
   color: $keyword-color;
 }
 
 doc div.doc-arguments span.doc-keyword,
 doc div.doc-arguments span.doc-type,
 doc div.doc-arguments tt {
-  font-size: $x-small;
+  font-size: x-small;
 }
 
 doc div.doc-fields span.doc-keyword,
 doc div.doc-fields span.doc-type,
 doc div.doc-fields tt {
-  font-size: $x-small;
+  font-size: x-small;
 }
 
 doc span.doc-type {
   font-family: $typewriter;
-  font-size: $small;
+  font-size: small;
   color: $type-color;
 }
 
@@ -553,7 +556,7 @@ doc toc ul {
 }
 
 doc toc ul li {
-  font-size: $x-small;
+  font-size: x-small;
 }
 
 doc toc li:before {
@@ -577,11 +580,11 @@ doc toc ul ul li a {
   
 doc toc li a:hover {
   text-decoration: underline;
-  color: $deep-blue;
+  color: $inner-href-color;
 }
 
 toc tt {
-  font-size: $x-small;
+  font-size: x-small;
 }
 
 /*---------------------------------------------------------------------*/
@@ -636,12 +639,12 @@ textarea.editor {
 
 /*--- search ----------------------------------------------------------*/
 span.search-result {
-  font-size: $small;
+  font-size: small;
   font-weight: bold;
 }
 
 table.search-result {
-  font-size: $small;
+  font-size: small;
   width: 100%;
 }
 
@@ -668,6 +671,7 @@ table.search-result td {
 table.search-result td.entry:hover {
   text-decoration: underline;
   color: $deep-blue;
+  color: $inner-href-color;
 }
 
 table.search-result span.search-label {
@@ -699,15 +703,15 @@ tutorials div.tutorial-title th {
 tutorials select.tutorial-selector {
   margin-right: 1em;
   border: 1px solid $border-color;
-  font-size: $small;
+  font-size: small;
 }
 
 tutorials div.tutorial-title span.label {
-  font-size: $small;
+  font-size: small;
 }
 
 tutorials div.tutorial-title input {
-  font-size: $small;
+  font-size: small;
 }
 
 tutorials div.doc-title th {
@@ -715,7 +719,7 @@ tutorials div.doc-title th {
 }
 
 tutorials div.example button {
-  font-size: $x-small;
+  font-size: x-small;
 }
 
 /*---------------------------------------------------------------------*/
@@ -758,7 +762,7 @@ wiki div.doc-title th {
 }
 
 wiki doc table {
-  font-size: $x-small;
+  font-size: x-small;
   border: 1px solid $border-color;
 }
 

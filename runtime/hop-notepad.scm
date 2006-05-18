@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May  8 06:06:01 2006 (serrano)                */
+;*    Last change :  Thu May 18 17:20:20 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -26,7 +26,8 @@
 
    (static  (class xml-nphead-element::xml-element)
 	    (class xml-nptabhead-element::xml-element)
-	    (class xml-nptab-element::xml-element))
+	    (class xml-nptab-element::xml-element
+	       (head::xml-nptabhead-element read-only)))
    
    (export  (<NOTEPAD> . ::obj)
 	    (<NPHEAD> . ::obj)
@@ -34,79 +35,63 @@
 	    (<NPTABHEAD> . ::obj)))
    
 ;*---------------------------------------------------------------------*/
-;*    notepad-inline ...                                               */
+;*    nptab-get-body ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (notepad-inline id attr head tabs)
-   (define (mark-nptab! i tab)
-      (let* ((tid (xml-element-id tab))
-	     (gid (xml-make-id #unspecified 'NOTEPAD-INLINE))
-	     (ghost (cadr (xml-element-body tab)))
-	     (cla (if (=fx i 1) "hop-nptab-active" "hop-nptab-inactive"))
-	     (click (format "hop_notepad_inline( \"~a\", \"~a\" )" id tid)))
-	 (with-access::xml-element tab (attributes)
-	    (set! attributes
-		  (cons* (cons "class" cla)
-			 (cons "onclick" click)
-			 attributes)))
-	 (<DIV> :class "hop-notepad-body-tab"
-		:id gid
-		:style (if (=fx i 1) "display: block" "display: none")
-		(xml-ghost-body (cadr (xml-element-body tab))))))
-   (let* ((tids (map mark-nptab! (iota (length tabs) 1) tabs))
-	  (content  (list head
-			  (<DIV> :class "hop-notepad-tabs" tabs)
-			  (<DIV> :class "hop-notepad-body" tids))))
-      (apply <DIV> :id id :class "hop-notepad" (append attr content))))
+(define (nptab-get-body tab)
+   (with-access::xml-nptab-element tab (body)
+      (if (and (xml-delay? (car body)) (null? (cdr body)))
+	  ((xml-delay-thunk (car body)))
+	  body)))
 
 ;*---------------------------------------------------------------------*/
-;*    notepad-remote ...                                               */
+;*    notepad ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (notepad-remote id::bstring attr head tabs)
-   (define (mark-nptab! i tab)
-      (let* ((tid (xml-element-id tab))
-	     (cla (if (=fx i 1) "hop-nptab-active" "hop-nptab-inactive"))
-	     (ghost (cadr (xml-element-body tab)))
-	     (gid (xml-element-id ghost))
-	     (svc (hop->json
-		   (procedure->service
-		    (lambda (tid)
-		       (let loop ((tabs tabs))
-			  (cond
-			     ((null? tabs)
-			      (error 'notepad "Can't find tab" tid))
-			     ((string=? tid (xml-element-id (car tabs)))
-			      (let* ((tab (cadr (xml-element-body (car tabs))))
-				     (el (xml-ghost-body tab)))
-				 (if (xml-delay? el)
-				     ((xml-delay-thunk el))
-				     el)))
-			     (else
-			      (loop (cdr tabs)))))))))
-	     (click (format "hop_notepad_remote( ~a, \"~a\", \"~a\" )"
-			    svc
-			    id tid)))
+(define (notepad id attrs head tabs)
+   (define svc
+      (hop->json
+       (procedure->service
+	(lambda (i)
+	   (nptab-get-body (list-ref tabs i))))))
+   (define (make-tab-div tab i)
+      (let* ((click (format "hop_notepad_inner_select( document.getElementById( \"~a\" ), ~a )"
+			    id i)))
 	 (with-access::xml-element tab (attributes)
 	    (set! attributes
-		  (cons* (cons "class" cla)
-			 (cons "onclick" click)
-			 attributes)))))
-   (let* ((default-tab (car tabs))
-	  (default-el (xml-ghost-body (cadr (xml-element-body default-tab))))
-	  (default-body (if (xml-delay? default-el)
-			    ((xml-delay-thunk default-el))
-			    default-el))
-	  (content (list head
-			 (<DIV> :class "hop-notepad-tabs" tabs)
-			 (<DIV> :class "hop-notepad-body" default-body))))
-      (for-each mark-nptab! (iota (length tabs) 1) tabs)
-      (apply <DIV> :id id :class "hop-notepad" (append attr content))))
+		  (cons* (cons "onclick" click)
+			 (cons "class" (if (=fx i 0)
+					   "hop-nptab-active"
+					   "hop-nptab-inactive"))
+			 attributes)))
+	 (with-access::xml-nptab-element tab (attributes body)
+	    (when (and (xml-delay? (car (xml-element-body tab)))
+		       (null? (cdr (xml-element-body tab))))
+	       (set! attributes (cons (cons "lang" "delay") attributes)))
+	    (<DIV> :class "hop-notepad-body-tab"
+		   :style (if (=fx i 0) "display: block" "display: none")
+		   (cond
+		      ((=fx i 0)
+		       (nptab-get-body tab))
+		      ((and (xml-delay? (car body)) (null? (cdr body)))
+		       ;; we must not eagerly evaluate the tab...
+		       "")
+		      (else
+		       body))))))
+   (let ((bodies (map (lambda (t i) (make-tab-div t i))
+		      tabs (iota (length tabs)))))
+      (apply <DIV>
+	     :id id
+	     :class "hop-notepad"
+	     :lang svc
+	     (or head (<NOSCRIPT> :style "display: none;"))
+	     (<DIV> :class "hop-notepad-tabs" tabs)
+	     (<DIV> :class "hop-notepad-body" bodies)
+	     attrs)))
    
 ;*---------------------------------------------------------------------*/
 ;*    <NOTEPAD> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <NOTEPAD> ((id #unspecified string)
-				(inline #t)
-				(attr)
+				(attrs)
 				body)
    (let ((id (xml-make-id id 'NOTEPAD))
 	 head)
@@ -115,13 +100,11 @@
 	     (set! head (car body))
 	     (set! body (filter xml-nptab-element? (cdr body))))
 	  (begin
-	     (set! head (<NPHEAD> ""))
+	     (set! head #f)
 	     (set! body (filter xml-nptab-element? body))))
       (if (null? body)
 	  (error '<NOTEPAD> "Missing <NPTAB> elements" id)
-	  (if inline
-	      (notepad-inline id attr head body)
-	      (notepad-remote id attr head body)))))
+	  (notepad id attrs head body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <NPHEAD> ...                                                     */
@@ -151,11 +134,32 @@
 ;*    <NPTAB> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <NPTAB> ((id #unspecified string)
+			      (selected #f)
 			      (attr)
 			      body)
-   (if (and (pair? body) (xml-nptabhead-element? (car body)))
+   (cond
+      ((null? body)
+       (error '<NPTAB> "Missing <NPTABHEAD> " id))
+      ((not (xml-nptabhead-element? (car body)))
+       (error '<NPTAB> "Illegal <NPTABHEAD> " (car body)))
+      (else
        (instantiate::xml-nptab-element
 	  (markup 'SPAN)
 	  (id (xml-make-id id 'NPTAB))
-	  (attributes (append! attr '((class . "hop-notepad-tab"))))
-	  (body (list (car body) (<GHOST> (cdr body)))))))
+	  (attributes attr)
+	  (head (car body))
+	  (body (cdr body))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-nptab-element p encoding)
+   (with-access::xml-nptab-element obj (id head attributes)
+      (display "<span id=\"" p)
+      (display id p)
+      (display "\"" p)
+      (xml-write-attributes attributes p)
+      (display ">" p)
+      (xml-write head p encoding)
+      (display "</span>" p)))
+

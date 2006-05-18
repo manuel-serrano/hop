@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed May 17 10:00:05 2006 (serrano)                */
+;*    Last change :  Thu May 18 16:36:07 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -111,13 +111,11 @@ We suggest to give Firefox a try.")))))
 		     (<DEMO> req)))
 	 (<NPTAB> :id "download"
 		  (<NPTABHEAD> "Download")
-		  (<DIV>
-		     :class "hop-tab"
-		     (<DELAY>
-			(lambda ()
-			   (<DIV>
-			      :class "hop-tab"
-			      (wiki->hop "download.wiki"))))))
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "download.wiki")))))
 	 (<NPTAB> :id "weblets"
 		  (<NPTABHEAD> "Weblets")
 		  (<DELAY>

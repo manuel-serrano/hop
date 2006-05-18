@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Sat Oct  1 06:03:16 2005 (serrano)                */
-/*    Copyright   :  2005 Manuel Serrano                               */
+/*    Last change :  Thu May 18 16:22:18 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad                                                      */
 /*=====================================================================*/
@@ -73,18 +73,18 @@ div.hop-notepad-tabs > span {
   text-decoration: none;
 }
 
-div.hop-notepad-tabs > span.hop-nptab-active {
+div.hop-notepad-tabs span.hop-nptab-active {
   color: black;
   background: #dedeff;
   border-bottom-color: #dedeff;
 }
 
-div.hop-notepad-tabs > span.hop-nptab-inactive {
+div.hop-notepad-tabs span.hop-nptab-inactive {
   background: white;
   color: black;
 }
 
-div.hop-notepad-tabs > span.hop-nptab-inactive:hover {
+div.hop-notepad-tabs span.hop-nptab-inactive:hover {
   color: #8381de;
 }
 

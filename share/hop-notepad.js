@@ -3,106 +3,69 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Thu May 18 05:34:48 2006 (serrano)                */
+/*    Last change :  Thu May 18 17:26:48 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
-/*    hop_notepad_remote ...                                           */
+/*    hop_notepad_inner_toggle ...                                     */
 /*---------------------------------------------------------------------*/
-function hop_notepad_remote( service, notepad, tab ) {
-   var success = function( http ) {
-      if( http.responseText != null ) {
-	 var found = 0;
-	 var np = hop_is_html_element( notepad )
-	           ? notepad : document.getElementById( notepad );
-	 var ta = hop_is_html_element( tab )
-		   ? tab : document.getElementById( tab );
-	 var i;
+function hop_notepad_inner_toggle( np, to, tabs, bodies ) {
+   /* disactive last selected tab */
+   tabs.childNodes[ np.active_tab ].className = "hop-nptab-inactive";
+   bodies.childNodes[ np.active_tab ].style.display = "none";
 
-	 for( i = 0; i < np.childNodes.length; i++ ) {
-	    var c = np.childNodes[ i ];
+   /* active the new selected tab */
+   tabs.childNodes[ to ].className = "hop-nptab-active";
+   bodies.childNodes[ to ].style.display = "block";
 
-	    if( c.className == "hop-notepad-tabs" ) {
-	       for( j = 0; j < c.childNodes.length; j++ ) {
-		  var c2 = c.childNodes[ j ];
-
-		  if( c2 == ta ) {
-		     c2.className = "hop-nptab-active";
-		     found = j;
-		  } else {
-		     c2.className = "hop-nptab-inactive";
-		  }
-	       }
-	    }
-	    if( c.className == "hop-notepad-body" ) {
-	       hop_replace_inner( c )( http );
-	    }
-	 }
-      }
-   }
-
-   if( !notepad.remote_service ) notepad.remote_service = service;
-   
-   hop( service( tab ), success );
+   /* store for next time */
+   np.active_tab = to;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_notepad_inline ...                                           */
+/*    hop_notepad_inner_select ...                                     */
 /*---------------------------------------------------------------------*/
-function hop_notepad_inline( notepad, tab ) {
-   var found = 0;
-   var np = hop_is_html_element( notepad )
-             ? notepad : document.getElementById( notepad );
-   var ta = hop_is_html_element( tab )
-             ? tab : document.getElementById( tab );
-   var i;
+function hop_notepad_inner_select( np, to ) {
+   var tabs = np.childNodes[ 1 ];
+   var bodies = np.childNodes[ 2 ];
 
-   for( i = 0; i < np.childNodes.length; i++ ) {
-      var c = np.childNodes[ i ];
-      var c2;
+   /* at creation time, tab 0 is active */
+   if( np.active_tab == undefined ) np.active_tab = 0;
 
-      if( c.className == "hop-notepad-tabs" ) {
-	 for( j = 0; j < c.childNodes.length; j++ ) {
-	    c2 = c.childNodes[ j ];
+   /* invoke remote tab */
+   if( tabs.childNodes[ to ].lang == "delay" ) {
+      if( np.svc == undefined ) np.svc = eval( np.lang );
 
-	    if( c2 == ta ) {
-	       c2.className = "hop-nptab-active";
-	       found = j;
-	    } else {
-	       c2.className = "hop-nptab-inactive";
-	    }
-	 }
-      }
-	    
-      if( c.className == "hop-notepad-body" ) {
-	 for( j = 0; j < c.childNodes.length; j++ ) {
-	    c2 = c.childNodes[ j ];
-
-	    if( j == found ) {
-	       c2.style.display = "block";
-	    } else {
-	       c2.style.display = "none";
-	    }
-	 }
-      }
+      hop( np.svc( to ),
+	   function( http ) {
+	      hop_replace_inner( bodies.childNodes[ to ] )( http );
+	      hop_notepad_inner_toggle( np, to, tabs, bodies );
+           } );
+   } else {
+      hop_notepad_inner_toggle( np, to, tabs, bodies );
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_notepad_select ...                                           */
+/*    -------------------------------------------------------------    */
+/*    This is a user function that might be invoked with NOTEPAD       */
+/*    and PAN or IDENTs.                                               */
 /*---------------------------------------------------------------------*/
 function hop_notepad_select( id1, id2 ) {
-   var notepad = hop_is_html_element( id1 )
-                 ? id1 : document.getElementById( id1 );
-   var tab = hop_is_html_element( id2 )
-	      ? id2 : document.getElementById( id2 );
+   var np = hop_is_html_element( id1 ) ? id1 : document.getElementById( id1 );
+   var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );
+   var tabs = np.childNodes[ 1 ];
+   var i;
 
-   if( notepad.remote_service != null ) {
-      hop_notepad_remote( notepad.remote_service, notepad, tab );
-   } else {
-      hop_notepad_inline( notepad, tab );
+   for( i = 0; i < tabs.childNodes.length; i++ ) {
+      if( tabs.childNodes[ i ] == tab ) {
+	 return hop_notepad_inner_select( np, i );
+      }
    }
+
+   alert( "*** Hop Error: hop_notepad_select -- Can't find pad `" + id2 + "'");
 }

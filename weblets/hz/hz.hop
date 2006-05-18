@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue May 16 05:19:34 2006 (serrano)                */
+;*    Last change :  Thu May 18 17:01:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -78,7 +78,6 @@
 		  (<VBOX-SEPARATOR>)
 		  (<VBOX-BLOCK>
 		     (<NOTEPAD>
-			:inline #f
 			(<NPHEAD> "")
 			(<NPTAB>
 			   (<NPTABHEAD> "Sync")

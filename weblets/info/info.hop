@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun May 14 18:13:45 2006 (serrano)                */
+;*    Last change :  Thu May 18 15:50:06 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -81,7 +81,6 @@
 				  (<TD>
 				     (<DIV> :id "glop"
 					    (<NOTEPAD>
-					       :inline #f
 					       (<NPHEAD> "")
 					       (<NPTAB>
 						  (<NPTABHEAD> "Misc")

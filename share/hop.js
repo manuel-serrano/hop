@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu May 18 10:22:14 2006 (serrano)                */
+/*    Last change :  Thu May 18 15:45:13 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -777,7 +777,7 @@ function hop_serialize_date( item ) {
 document.getElementsByClass = function( className ) {
    var all = document.getElementsByTagName( "*" );
    var res = new Array();
-   var n   = 0;
+   var n = 0;
     
    for( var i = 0; i < all.length; i++ ) {
       if( all[ i ].className == className ) {
