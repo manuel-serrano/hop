@@ -145,7 +145,7 @@
 	    (var (set! this.var var))
 	    ((config 'unresolved=JS)
 	     (js-symbol-add! this.id (string->symbol (mangle-JS-sym this.id)))
-	     (verbose "Unresolved symbol " this.id " assumed to be a JS-var")
+	     (verbose "Unresolved symbol '" this.id "' assumed to be a JS-var")
 	     (pcall this Var-ref-resolve symbol-table))
 	    (else
 	     (error #f "Unresolved symbol: " this.id)))))

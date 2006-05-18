@@ -32,20 +32,22 @@
 
 (define (inline! tree)
    (if (config 'do-inlining)
-       (begin
+       (let ((called-inline-funs? #f))
 	  (verbose "inlining")
 	  (side-effect tree)
 	  (use-count tree)
 	  (if (single-use! tree)
 	      (begin
 		 (inline-funs! tree)
+		 (set! called-inline-funs? #t)
 		 (side-effect tree)
 		 (use-count tree)))
 	  (fun-size tree)
 	  (nested-funs tree)
 	  (locals tree
 		  #t)   ;; collect formals.
-	  (if (clone-funs tree)
+	  (if (or (clone-funs tree)
+		  (not called-inline-funs?))
 	      (inline-funs! tree))
 	  )))
 

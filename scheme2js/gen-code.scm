@@ -1,6 +1,7 @@
 (module gen-code
    (include "tools.sch")
-   (import gen-js)
+   (import gen-js
+	   config)
    (export (gen-code-pair::bstring fst snd)
 	   (gen-code-nil::bstring)
 	   (gen-code-vector::bstring els)
@@ -31,9 +32,13 @@
 	   (gen-code-label::bstring id body)
 	   (gen-code-boolify::bstring test)
 	   (gen-code-pragma::bstring str)
-	   (gen-code-keyword::bstring kw)))
+	   (gen-code-keyword::bstring kw)
+	   (gen-code-string-val s)
+	   (gen-code-symbol-without-prefix sym)))
 
 (define *tmp-var* "tmp") ;; can't conflict, as all vars are starting with 'sc_
+
+(define *symbol-prefix* "\\u1E9C") ;; "\\u1E9D\\u1E9E\\u1E9F")
 
 (define (gen-code-pair fst snd)
    (string-append "(new sc_Pair(" fst "," snd "))"))
@@ -56,11 +61,24 @@
        "true"
        "false"))
 
-;; use native strings as symbols
+;; use native strings as symbols (maybe prefix them)
 (define (gen-code-symbol sym)
-   (string-append "\""
-		  (symbol->string sym)
-		  "\""))
+   (if (config 'mutable-strings)
+       (string-append "\""
+		      (symbol->string sym)
+		      "\"")
+       (string-append "\""
+		      (string-append *symbol-prefix* (symbol->string sym))
+		      "\"")))
+
+(define (gen-code-symbol-without-prefix sym)
+   (if (config 'mutable-strings)
+       (error gen-code-symbol-without-prefix
+	      "should only be used, when compiling immutable strings"
+	      sym))
+       (string-append "\""
+		      (symbol->string sym)
+		      "\""))
 
 (define (escaped-string.old s)
    (with-output-to-string
@@ -82,7 +100,17 @@
 ;; to make a difference to symbols, strings are always
 ;; stored in Objects.
 (define (gen-code-string s)
-   (string-append "(new sc_String(\"" (escaped-string s) "\"))"))
+   (if (config 'mutable-strings)
+       (string-append "(new sc_String(\"" (escaped-string s) "\"))")
+       (string-append "\"" (escaped-string s) "\"")))
+
+(define (gen-code-string-val s)
+   (if (not (config 'mutable-strings))
+       (error gen-code-string-val
+	      "should only be used, when compiling mutable strings"
+	      s))
+   (string-append "\"" (escaped-string s) "\""))
+   
 
 ;; JS's variables
 (define (gen-code-var v)
@@ -174,7 +202,7 @@
       (string-append "{\n"
 		     "function " escape "(res) { "
 		     escape-obj ".res = res;"
-		     escape-obj ".bind-exit-marker = true;\n"
+		     escape-obj ".bindExitMarker = true;\n"
 		     "throw " escape-obj ";"
 		     "}\n"
 		     "var " escape-obj " = new Object();\n"
@@ -192,7 +220,7 @@
    (string-append "try {\n"
 		  body
 		  "} catch (" exception ") {\n"
-		  "if (!"exception".bind-exit-marker) {\n"
+		  "if (!"exception".bindExitMarker) {\n"
 		  catch
 		  "\n} else throw " exception ";\n"
 		  "}\n"))

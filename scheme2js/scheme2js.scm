@@ -110,6 +110,9 @@
       (("--no-js-dot-notation"
 	(help "disallows the access of JS-fields with dots."))
        (hashtable-put! config-ht 'direct-js-object-access #f))
+      (("--mutable-strings"
+	(help "use mutable strings."))
+       (hashtable-put! config-ht 'mutable-strings #t))
       (("--encapsulate-parts"
 	(help "encapsulates subparts, so they don't flood the surrounding scope with local vars."))
        (hashtable-put! config-ht 'encapsulate-parts #t))
