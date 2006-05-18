@@ -117,27 +117,23 @@
 
    (define-pmethod (Tail-rec-apply-patterns!)
       (define (apply-while-pattern! body tail-rec-label then-continue?)
-	 (let* ((break-label (gensym 'break))
-		(continue-label-node (new-node Label
-					       (if then-continue?
-						   body.then
-						   body.else)
-					       tail-rec-label))
-		(while (new-node While
+	 (let* ((while (new-node While
 				 (if then-continue?
 				     body.test
 				     (new-node Call
 					       ((*id->js-var* 'not).reference)
 					       (list body.test)))
-				 continue-label-node))
+				 (if then-continue?
+				     body.then
+				     body.else)))
 		(bnode (new-node Begin
 				 (list while (if then-continue?
 						 body.else
 						 body.then))))
-		(break-label-node (new-node Label bnode break-label)))
+		(break-label (new-node Label bnode (gensym 'break))))
 	    (set! while.break-label break-label)
 	    (set! while.continue-label this.label)
-	    break-label-node))
+	    break-label))
 
       (this.traverse0!)
       (let ((body this.body)
@@ -175,9 +171,114 @@
 					Tail-rec)
 	     (tree.traverse!)))
 
+(define (while-tail tree)
+   (verbose " while-tail")
+   (overload traverse tail (Node
+			    Program
+			    (Part Inter-tail)
+			    (Const Value-tail)
+			    (Var-ref Value-tail)
+			    (Scope Inter-tail)
+			    Lambda
+			    If
+			    Case
+			    Clause
+			    (Set! Enclosing-tail)
+			    Begin
+			    Bind-exit
+			    With-handler
+			    (Call Enclosing-tail)
+			    (Tail-rec Inter-tail)
+			    While
+			    (Tail-rec-call Value-tail)
+			    Return
+			    (Closure-alloc Inter-tail)
+			    (Label Inter-tail)
+			    Break
+			    (Pragma Value-tail))
+	     (tree.traverse #f)))
+
+(define-pmethod (Node-tail tail?)
+   (error #f "tail. forgot node-type" this))
+
+(define-pmethod (Value-tail tail?)
+   (set! this.while-tail? tail?))
+   
+(define-pmethod (Inter-tail tail?)
+   (set! this.while-tail? #f)
+   (this.traverse1 tail?))
+
+(define-pmethod (Enclosing-tail tail?)
+   (set! this.while-tail? tail?)
+   (this.traverse1 #f))
+
+(define-pmethod (Program-tail tail?)
+   (set! this.while-tail? #f)
+   (this.traverse1 #f))
+
+(define-pmethod (Lambda-tail tail?)
+   (set! this.while-tail? tail?)
+   (this.traverse1 #f))
+
+(define-pmethod (If-tail tail?)
+   (set! this.while-tail? #f)
+   (this.test.traverse #f)
+   (this.then.traverse tail?)
+   (this.else.traverse tail?))
+
+(define-pmethod (Case-tail tail?)
+   (set! this.while-tail? #f)
+   (this.key.traverse #f)
+   (for-each (lambda (clause)
+		(clause.traverse tail?))
+	     this.clauses))
+
+(define-pmethod (Clause-tail tail?)
+   (set! this.while-tail? #f)
+   (for-each (lambda (const)
+		(const.traverse #f))
+	     this.consts)
+   (this.expr.traverse tail?))
+
+(define-pmethod (Begin-tail tail?)
+   (set! this.while-tail? #f)
+   (let loop ((exprs this.exprs))
+      (cond
+	 ((null? exprs) 'do-nothing)
+	 ((null? (cdr exprs))
+	  ((car exprs).traverse tail?))
+	 (else
+	  ((car exprs).traverse #f)
+	  (loop (cdr exprs))))))
+
+(define-pmethod (Bind-exit-tail tail?)
+   (set! this.while-tail? #f)
+   (this.escape.traverse #f)
+   (this.body.traverse tail?)
+   (this.result-decl.traverse #f)
+   (this.invoc-body.traverse tail?))
+
+(define-pmethod (With-handler-tail tail?)
+   (set! this.while-tail? #f)
+   (this.exception.traverse #f)
+   (this.catch.traverse tail?)
+   (this.body.traverse tail?))
+
+(define-pmethod (Return-tail tail?)
+   (set! this.while-tail? #f)
+   (this.val.traverse #f))
+
+(define-pmethod (Break-tail tail?)
+   (set! this.while-tail? #f)
+   (this.val.traverse #f))
+
+(define-pmethod (While-tail tail?)
+   (set! this.while-tail? #f)
+   (this.test.traverse #f)
+   (this.body.traverse #t))
+
 (define (finish-transformation! tree)
-   (tail-exprs tree
-	       #f) ;; intermediate-nodes are not tail
+   (while-tail tree)
    (overload traverse! finish! (Node
 				While
 				Tail-rec
@@ -185,7 +286,7 @@
 	     (tree.traverse! #f #f)))
 
 (define-pmethod (Node-finish! continue-label break-label)
-   (if (and this.tail?
+   (if (and this.while-tail?
 	    break-label)
        (new-node Break (this.traverse2! #f #f) break-label)
        (this.traverse2! continue-label break-label)))

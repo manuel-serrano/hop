@@ -217,12 +217,12 @@
 		      label)))
 
 (define-pmethod (While-compile)
-   (let* ((label this.continue-label)
-	  (test (this.test.compile))
+   ;; while nodes shouldn't need their label.
+   (let* ((test (this.test.compile))
 	  (body (this.body.compile)))
       (gen-code-while test
 		      body
-		      label)))
+		      #f)))
 
 (define-pmethod (Tail-rec-call-compile)
    (gen-code-continue this.label))

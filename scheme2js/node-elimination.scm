@@ -4,7 +4,8 @@
    (option (loadq "protobject-eval.sch"))
    (import protobject
 	   nodes
-	   verbose)
+	   verbose
+	   mark-statements)
    (export (node-elimination! tree::pobject)))
 
 (define (node-elimination! tree::pobject)
@@ -48,7 +49,8 @@
 ;; if Begin only contains one entry, replace it by this entry.
 ;; if a Begin contains another Begin merge them.
 (define-pmethod (Begin-node-elimination!)
-   (let ((exprs this.exprs))
+   (let ((exprs this.exprs)
+	 (statement? (statement-form? this)))
       (cond
 	 ((null? exprs)
 	  (new-node Const #unspecified))
@@ -76,9 +78,16 @@
 		     (head exprs)
 		     (last #f)) ;; last-pair, that is in the 'accepted' list
 	     (cond
-		((null? exprs) ;; should never happen
-		 (new-node Const #unspecified))
-		((null? (cdr exprs))
+		((null? exprs) ;; should only happen if statement
+		 (cond
+		    ((not last) ;; no element got through our weeding
+		     (new-node Const #unspecified))
+		    ((null? (cdr head)) ;; only one element got through
+		     (car head))
+		    (else
+		     (set! this.exprs head)
+		     this)))
+		((and (not statement?) (null? (cdr exprs)))
 		 (if last
 		     (begin
 			(set! this.exprs head)
@@ -102,8 +111,11 @@
 		     (inherits-from? (car exprs) (node 'Tail-rec-call)))
 		 ;; remove remaining els
 		 (set-cdr! exprs '())
-		 ;; and try again
-		 (loop exprs head last))
+		 (if last
+		     (begin
+			(set! this.exprs head)
+			this)
+		     (car exprs)))
 		(else
 		 (loop (cdr exprs)
 		       head          ;; keep head

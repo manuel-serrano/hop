@@ -230,7 +230,9 @@
 
 (define-pmethod (Label-transform-statements! state-var statement-form?)
    (set! this.state-var state-var)
-   (this.body.traverse! state-var #t))
+   (set! this.body (this.body.traverse! state-var #t))
+   this)
 
 (define-pmethod (Break-transform-statements! state-var statement-form?)
-   (set! this.val (this.val.traverse! this.label.state-var #t)))
+   (set! this.val (this.val.traverse! this.label.state-var #t))
+   this)
