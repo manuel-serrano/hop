@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed May 17 16:18:57 2006 (serrano)                */
+/*    Last change :  Thu May 18 05:34:20 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -13,7 +13,7 @@
 /*    dom_add_child ...                                                */
 /*---------------------------------------------------------------------*/
 function dom_add_child( node, e ) {
-   if( hop_isHTMLElement( e ) ) {
+   if( hop_is_html_element( e ) ) {
       node.appendChild( e );
    } else {
       if( (e instanceof String) || (typeof e == "string") ) {

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed May 17 10:21:24 2006 (serrano)                */
+#*    Last change :  Thu May 18 05:25:48 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -20,7 +20,7 @@ include ../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-error.hss hop-paned.js hop-table.js hop.css \
-                  hop.js hop-dom.js hop-fx.js \
+                  hop-autoconf.js hop.js hop-dom.js hop-fx.js \
                   md5.js base64.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css \
                   hop-notepad.css hop-slider.js hop-tabslider.js \
@@ -37,6 +37,7 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 install:
 	mkdir -p $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.scm $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-autoconf.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-dom.js $(HOPSHAREDIR) && \
@@ -76,6 +77,7 @@ install:
 #*---------------------------------------------------------------------*/
 uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop.scm && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-autoconf.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop.hss && \

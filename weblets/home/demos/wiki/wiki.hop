@@ -44,4 +44,6 @@
 	 (<H1> "Live view")
 	 (<IFRAME>
 	    :class "view"
-	    :src (make-service-url wikiedit/view)))))
+	    :src (make-service-url wikiedit/view))
+	 (<A> :href (make-service-url wikiedit/view) "Additional view"))))
+	       

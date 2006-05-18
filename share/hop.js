@@ -3,37 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed May 17 16:17:40 2006 (serrano)                */
+/*    Last change :  Thu May 18 10:04:37 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
 /*=====================================================================*/
-
-/*---------------------------------------------------------------------*/
-/*    DOMFormElement ...                                               */
-/*---------------------------------------------------------------------*/
-var undefined;
-
-if( window.HTMLFormElement == undefined ) {
-   window.HTMLFormElement = window.HTMLForm;
-}
-
-if( window.HTMLCollection == undefined ) {
-   window.HTMLCollection = false;
-}
-
-if( !HTMLElement && /Konqueror|Safari|KHTML/.test(navigator.userAgent)) {
-  var HTMLElement = {}
-  HTMLElement.prototype = document.createElement('div').__proto__;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_isHTMLElement ...                                            */
-/*---------------------------------------------------------------------*/
-function hop_isHTMLElement( obj ) {
-   return (obj instanceof HTMLElement)
-      || (obj instanceof Object && (typeof obj.innerHTML == "string"));
-}
 
 /*---------------------------------------------------------------------*/
 /*    hop_busy_anim ...                                                */
@@ -217,7 +191,6 @@ function hop_js_eval( http ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    hop_default_failure ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_default_failure( http ) {
@@ -255,7 +228,6 @@ function hop_default_failure( http ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    hop_failure_alert ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_failure_alert( http ) {
@@ -463,7 +435,7 @@ var hop_current_tooltip;
 function hop_tooltip_show( event, id, ux, uy ) {
    var el;
 
-   if( id instanceof HTMLElement ) {
+   if( hop_is_html_element( id ) ) {
       el = id;
    } else {
       if( (id instanceof String) || (typeof id == "string") ) {
@@ -473,8 +445,7 @@ function hop_tooltip_show( event, id, ux, uy ) {
       }
    }
 
-   if( (el instanceof HTMLDivElement) &&
-       (hop_current_tooltip != el) ) {
+   if( hop_is_html_element( el ) && (hop_current_tooltip != el) ) {
 
       var p = el.parentNode;
       
@@ -483,7 +454,7 @@ function hop_tooltip_show( event, id, ux, uy ) {
 	 document.body.appendChild( el );
       }
 
-      if( hop_current_tooltip instanceof HTMLDivElement ) {
+      if( hop_is_html_element( hop_current_tooltip ) ) {
 	 hop_current_tooltip.style.visibility = "hidden";
       }
 
@@ -509,7 +480,7 @@ function hop_tooltip_show( event, id, ux, uy ) {
 /*    hop_tooltip_hide ...                                             */
 /*---------------------------------------------------------------------*/
 function hop_tooltip_hide() {
-   if( hop_current_tooltip instanceof HTMLDivElement ) {
+   if( hop_is_html_element( hop_current_tooltip ) ) {
       hop_current_tooltip.style.visibility = "hidden";
       hop_current_tooltip = null;
    }

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Wed May 17 16:20:37 2006 (serrano)                */
+/*    Last change :  Thu May 18 05:34:48 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -16,9 +16,9 @@ function hop_notepad_remote( service, notepad, tab ) {
    var success = function( http ) {
       if( http.responseText != null ) {
 	 var found = 0;
-	 var np = hop_isHTMLElement( notepad )
+	 var np = hop_is_html_element( notepad )
 	           ? notepad : document.getElementById( notepad );
-	 var ta = hop_isHTMLElement( tab )
+	 var ta = hop_is_html_element( tab )
 		   ? tab : document.getElementById( tab );
 	 var i;
 
@@ -54,9 +54,9 @@ function hop_notepad_remote( service, notepad, tab ) {
 /*---------------------------------------------------------------------*/
 function hop_notepad_inline( notepad, tab ) {
    var found = 0;
-   var np = hop_isHTMLElement( notepad )
+   var np = hop_is_html_element( notepad )
              ? notepad : document.getElementById( notepad );
-   var ta = hop_isHTMLElement( tab )
+   var ta = hop_is_html_element( tab )
              ? tab : document.getElementById( tab );
    var i;
 
@@ -95,9 +95,9 @@ function hop_notepad_inline( notepad, tab ) {
 /*    hop_notepad_select ...                                           */
 /*---------------------------------------------------------------------*/
 function hop_notepad_select( id1, id2 ) {
-   var notepad = hop_isHTMLElement( id1 )
+   var notepad = hop_is_html_element( id1 )
                  ? id1 : document.getElementById( id1 );
-   var tab = hop_isHTMLElement( id2 )
+   var tab = hop_is_html_element( id2 )
 	      ? id2 : document.getElementById( id2 );
 
    if( notepad.remote_service != null ) {
