@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu May 18 15:58:52 2006 (serrano)                */
+;*    Last change :  Fri May 19 06:55:53 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -160,8 +160,7 @@
 	    (<UL> . ::obj)
 	    (<VAR> . ::obj)
 	    
-	    (<DELAY> . ::obj)
-	    (<GHOST> . ::obj)))
+	    (<DELAY> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
@@ -539,23 +538,6 @@
 	  (id (xml-make-id id 'DELAY))
 	  (thunk (car body)))
        (error '<DELAY> "Illegal delay's thunk" (car body))))
-
-;*---------------------------------------------------------------------*/
-;*    <GHOST> ...                                                      */
-;*---------------------------------------------------------------------*/
-(define-xml-compound <GHOST> ((id #unspecified string)
-			      body)
-   (cond
-      ((null? body)
-       (error '<GHOST> "Illegal empty ghost body" body))
-      ((pair? (cdr body))
-       (instantiate::xml-ghost
-	  (id (xml-make-id id 'GHOST))
-	  (body body)))
-      (else
-       (instantiate::xml-ghost
-	  (id (xml-make-id id 'GHOST))
-	  (body (car body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    IMG ...                                                          */

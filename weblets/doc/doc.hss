@@ -171,7 +171,7 @@ table.popup-menu {
 }
 
 table.popup-menu td tt:hover {
-  color: $inner-href-color;
+/*   color: $inner-href-color;                                         */
   text-decoration: underline;
 }
 
@@ -280,8 +280,8 @@ span.edit:hover {
 
 span.edit:hover {
   text-decoration: underline;
-  color: $deep-blue;
-  color: $inner-href-color;
+/*   color: $deep-blue;                                                */
+/*   color: $inner-href-color;                                         */
 }
 
 /*---------------------------------------------------------------------*/
@@ -337,7 +337,7 @@ table.api-index span.href {
 
 table.api-index span.href:hover {
   text-decoration: underline;
-  color: $inner-href-color;
+/*   color: $inner-href-color;                                         */
 }
 
 /*--- window ----------------------------------------------------------*/
@@ -419,7 +419,7 @@ doc span.href-client {
 
 doc span.href:hover {
   text-decoration: underline;
-  color: $inner-href-color;
+/*   color: $inner-href-color;                                         */
 }
 
 doc div.example {
@@ -508,7 +508,7 @@ doc span.doc-link {
 
 doc span.doc-link:hover {
   text-decoration: underline;
-  color: $inner-href-color;
+/*   color: $inner-href-color;                                         */
 }
   
 doc span.doc-keyword {
@@ -580,7 +580,7 @@ doc toc ul ul li a {
   
 doc toc li a:hover {
   text-decoration: underline;
-  color: $inner-href-color;
+/*   color: $inner-href-color;                                         */
 }
 
 toc tt {
@@ -670,8 +670,8 @@ table.search-result td {
 
 table.search-result td.entry:hover {
   text-decoration: underline;
-  color: $deep-blue;
-  color: $inner-href-color;
+/*   color: $deep-blue;                                                */
+/*   color: $inner-href-color;                                         */
 }
 
 table.search-result span.search-label {
