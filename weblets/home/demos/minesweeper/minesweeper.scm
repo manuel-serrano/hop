@@ -1,5 +1,5 @@
 (define (img-path file)
-   (string-append *minesweeper-directory* file))
+   (symbol-append *minesweeper-directory* file))
 
 (define *game-over* #f)
 
@@ -9,24 +9,24 @@
 (define *missing-cells* 0)
 
 
-(define *blank-img* (img-path "blank.gif"))
+(define *blank-img* (img-path 'blank.gif))
 (define *revealed-imgs* (make-vector 8))
 (let loop ((i 0))
    (if (< i 8)
        (begin
 	  (vector-set! *revealed-imgs* i
-		       (img-path (string-append "revealed"
-						(number->string i)
-						".gif")))
+		       (img-path (symbol-append 'revealed
+						(number->symbol i)
+						'.gif)))
 	  (loop (+ i 1)))))
 
-(define *bomb-flagged-img* (img-path "bombflagged.gif"))
-(define *bomb-revealed-img* (img-path "bombrevealed.gif"))
-(define *bomb-misflagged-img* (img-path "bombmisflagged.gif"))
-(define *bomb-death-img* (img-path "bombdeath.gif"))
+(define *bomb-flagged-img* (img-path 'bombflagged.gif))
+(define *bomb-revealed-img* (img-path 'bombrevealed.gif))
+(define *bomb-misflagged-img* (img-path 'bombmisflagged.gif))
+(define *bomb-death-img* (img-path 'bombdeath.gif))
 
 (define (remaining-bombs-update!)
-   (set! (document.getElementById "remaining").innerHTML (- *nb-mines* *nb-marked-bombs*)))
+   (set! (document.getElementById 'remaining).innerHTML (- *nb-mines* *nb-marked-bombs*)))
    
 (define (cell x y)
    (vector-ref *cells* (+ (* x *width*) y)))
@@ -76,7 +76,7 @@
        (for-each-cell (lambda (cell)
 			 (reveal! cell))))
    ;; avoids the "image dragging" in most cases.
-   (alert (if won? "You won" "You lost")))
+   (alert (string->symbol (if won? "You won" "You lost"))))
 
 (define (nb-neighbor-mines cell)
    (let ((nb-neighbors 0))
@@ -153,7 +153,7 @@
       (set! this.bomb-marked? #f)
       (set! this.revealed? #f))
    
-   (let ((cell (document.createElement "img")))
+   (let ((cell (document.createElement 'img)))
       (set! cell.src *blank-img*)
       (set! cell.onclick cell-mouse-down)
       (set! cell.mine (js-new Mine))
@@ -168,16 +168,16 @@
 		   v))
 
 (define (board-init!)
-   (let ((board-div (document.getElementById "board"))
+   (let ((board-div (document.getElementById 'board))
 	 (line-div #f))
-      (set! board-div.style.visibility "hidden")
+      (set! board-div.style.visibility 'hidden)
       (for-each-cell (lambda (cell)
 			(if (= cell.mine.y 0)
 			     (begin
-				(set! line-div (document.createElement "div"))
+				(set! line-div (document.createElement 'div))
 				(board-div.appendChild line-div)))
 			 (line-div.appendChild cell)))
-      (set! board-div.style.visibility "visible")))
+      (set! board-div.style.visibility 'visible)))
 
 (define (game-start!)
    (set! *missing-cells* (- (* *width* *height*) *nb-mines*))

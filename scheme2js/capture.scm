@@ -94,7 +94,6 @@
 			      Begin
 			      Tail-rec
 			      Bind-exit
-			      With-handler
 			      Set!
 			      Call)
 	     (set! (node 'Node).proto.default-traverse-value '())
@@ -213,26 +212,11 @@
       merged-latest))
 
 (define-pmethod (Bind-exit-latest tail-rec-escapes)
-   ;; we don't need to go into the result-decl.
    (let* ((escape-latest (this.escape.traverse tail-rec-escapes))
 	  (body-latest (this.body.traverse tail-rec-escapes))
-	  (invoc-body-latest (this.invoc-body.traverse tail-rec-escapes))
-	  (merged-latest (latest-merge escape-latest
-				       body-latest
-				       invoc-body-latest)))
+	  (merged-latest (latest-merge escape-latest body-latest)))
       (if (and tail-rec-escapes
-	       (not (null? escape-latest))) ;; implies body or invoc-body-latest
-	  (set! this.latest merged-latest))
-      merged-latest))
-
-(define-pmethod (With-handler-latest tail-rec-escapes)
-   ;; we don't need to go into the exception-var-decl
-   (let* ((catch-latest (this.catch.traverse tail-rec-escapes))
-	  (body-latest (this.body.traverse tail-rec-escapes))
-	  (merged-latest (latest-merge catch-latest body-latest)))
-      (if (and tail-rec-escapes
-	       (not (or (null? catch-latest)
-			(null? body-latest))))
+	       (not (null? escape-latest)))
 	  (set! this.latest merged-latest))
       merged-latest))
 

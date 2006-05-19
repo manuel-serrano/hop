@@ -24,10 +24,8 @@
 			    (Set! Enclosing-tail)
 			    Begin
 			    Bind-exit
-			    With-handler
 			    (Call Enclosing-tail)
 			    (Tail-rec Inter-tail)
-			    (While Inter-tail)
 			    (Tail-rec-call Value-tail)
 			    Return
 			    (Closure-alloc Inter-tail)
@@ -94,14 +92,6 @@
 (define-pmethod (Bind-exit-tail tail? inter-tail?)
    (set! this.tail? (and inter-tail? tail?))
    (this.escape.traverse #f inter-tail?)
-   (this.body.traverse tail? inter-tail?)
-   (this.result-decl.traverse #f inter-tail?)
-   (this.invoc-body.traverse tail? inter-tail?))
-
-(define-pmethod (With-handler-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.exception.traverse #f inter-tail?)
-   (this.catch.traverse tail? inter-tail?)
    (this.body.traverse tail? inter-tail?))
 
 (define-pmethod (Return-tail tail? inter-tail?)

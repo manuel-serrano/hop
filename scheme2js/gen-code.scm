@@ -1,7 +1,6 @@
 (module gen-code
    (include "tools.sch")
-   (import gen-js
-	   config)
+   (import gen-js)
    (export (gen-code-pair::bstring fst snd)
 	   (gen-code-nil::bstring)
 	   (gen-code-vector::bstring els)
@@ -22,8 +21,7 @@
 	   (gen-code-call::bstring operator operands)
 	   (gen-code-unspecified::bstring)
 ;	   (gen-code-tail operator operands)
-	   (gen-code-bind-exit::bstring escape body result-decl invoc-body)
-	   (gen-code-with-handler::bstring exception catch body)
+	   (gen-code-bind-exit::bstring escape body)
 	   (gen-code-while::bstring test body label)
 	   (gen-code-continue::bstring label)
 	   (gen-code-break::bstring label)
@@ -32,13 +30,9 @@
 	   (gen-code-label::bstring id body)
 	   (gen-code-boolify::bstring test)
 	   (gen-code-pragma::bstring str)
-	   (gen-code-keyword::bstring kw)
-	   (gen-code-string-val s)
-	   (gen-code-symbol-without-prefix sym)))
+	   (gen-code-keyword::bstring kw)))
 
 (define *tmp-var* "tmp") ;; can't conflict, as all vars are starting with 'sc_
-
-(define *symbol-prefix* "\\u1E9C") ;; "\\u1E9D\\u1E9E\\u1E9F")
 
 (define (gen-code-pair fst snd)
    (string-append "(new sc_Pair(" fst "," snd "))"))
@@ -61,24 +55,11 @@
        "true"
        "false"))
 
-;; use native strings as symbols (maybe prefix them)
+;; use native strings as symbols
 (define (gen-code-symbol sym)
-   (if (config 'mutable-strings)
-       (string-append "\""
-		      (symbol->string sym)
-		      "\"")
-       (string-append "\""
-		      (string-append *symbol-prefix* (symbol->string sym))
-		      "\"")))
-
-(define (gen-code-symbol-without-prefix sym)
-   (if (config 'mutable-strings)
-       (error gen-code-symbol-without-prefix
-	      "should only be used, when compiling immutable strings"
-	      sym))
-       (string-append "\""
-		      (symbol->string sym)
-		      "\""))
+   (string-append "\""
+		  (symbol->string sym)
+		  "\""))
 
 (define (escaped-string.old s)
    (with-output-to-string
@@ -100,17 +81,7 @@
 ;; to make a difference to symbols, strings are always
 ;; stored in Objects.
 (define (gen-code-string s)
-   (if (config 'mutable-strings)
-       (string-append "(new sc_String(\"" (escaped-string s) "\"))")
-       (string-append "\"" (escaped-string s) "\"")))
-
-(define (gen-code-string-val s)
-   (if (not (config 'mutable-strings))
-       (error gen-code-string-val
-	      "should only be used, when compiling mutable strings"
-	      s))
-   (string-append "\"" (escaped-string s) "\""))
-   
+   (string-append "(new sc_String(\"" (escaped-string s) "\"))"))
 
 ;; JS's variables
 (define (gen-code-var v)
@@ -197,33 +168,22 @@
        (string-append "{" (separated-list els "\n") "}\n")
        (string-append "(" (separated-list els ",\n") ")")))
 
-(define (gen-code-bind-exit escape body result-decl invoc-body)
+(define (gen-code-bind-exit escape body)
    (let ((escape-obj (gen-JS-sym 'escape_obj)))
       (string-append "{\n"
 		     "function " escape "(res) { "
 		     escape-obj ".res = res;"
-		     escape-obj ".bindExitMarker = true;\n"
 		     "throw " escape-obj ";"
 		     "}\n"
 		     "var " escape-obj " = new Object();\n"
 		     "try {\n"
 		     body
 		     "} catch (exc) {\n"
-		     "if (exc === " escape-obj ") {\n"
-		     result-decl " = exc.res;\n"
-		     invoc-body
-		     "\n} else throw exc;\n"
+		     "if (exc === " escape-obj ")\n"
+		     "return exc.res;"
+		     "else throw exc;\n"
 		     "}\n"
 		     "}\n")))
-
-(define (gen-code-with-handler exception catch body)
-   (string-append "try {\n"
-		  body
-		  "} catch (" exception ") {\n"
-		  "if (!"exception".bindExitMarker) {\n"
-		  catch
-		  "\n} else throw " exception ";\n"
-		  "}\n"))
 
 ;; ***  with trampoline  ***
 ; (define (gen-code-call operator operands)

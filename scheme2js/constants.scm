@@ -6,7 +6,7 @@
    (export (constants! tree::pobject))
    (import protobject
 	   nodes
-	   mark-statements
+	   statements
 	   var
 	   verbose))
 

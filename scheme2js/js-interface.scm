@@ -1,7 +1,8 @@
 (module js-interface
-   (include "runtime/runtime_mapping.sch")
-   (import verbose
-	   config)
+   (include "runtime_mapping_hack.sch")
+   (include "runtime/runtime_mapping.alist")
+
+   (import verbose)
    (export (extract-js-interface::pair top-level::pair-nil js-interface::pair-nil)))
 
 (define (paired-interface interface)
@@ -16,7 +17,7 @@
 (define (extract-js-interface top-level js-interface)
    (define top-level-head (list 'dummy))
    (define extension-head (list 'dummy))
-
+   
    ;; split js-interface clauses, and normal expressions.
    (let loop ((to-parse top-level)
 	      (last-top-level top-level-head)
@@ -39,17 +40,13 @@
 		    (loop (cdr to-parse)
 			  (cdr last-top-level)
 			  last-extension))))))
-
+   
    ;; add our runtime in front of js-interface in front of the extension
-   ;; add 'js in front of our built-in interfaces, so they ressemble the
-   ;; extracted js-clauses.
    (let ((all-interfaces (append-map
 			  (lambda (js-interface-sexp)
 			     (map paired-interface
 				   (cdr js-interface-sexp)))
-			  (cons (cons 'js (if (config 'mutable-strings)
-					      *mutable-runtime-var-mapping*
-					      *immutable-runtime-var-mapping*))
+			  (cons *runtime-var-mapping*
 				(cons (cons 'js js-interface)
 				      ;; remove the 'dummy
 				      (cdr extension-head))))))

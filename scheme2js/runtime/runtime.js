@@ -1,7 +1,5 @@
 var sc_JS_GLOBALS = this; /// export *js*
 
-var sc_SYMBOL_PREFIX = "\u1E9C"; // "\u1E9D\u1E9E\u1E9F";
-
 var with_hop; /// export with-hop
 
 function sc_alert() { /// export
@@ -20,18 +18,10 @@ function sc_typeof( x ) { /// export
    return typeof x;
 }
 
-function sc_error_mutable() {  /// export
-    sc_print_mutable("**ERROR**");
+function sc_error() {  /// export
+    sc_print("**ERROR**");
     for (var i = 0; i < arguments.length; i++) {
-	sc_print_mutable(arguments[i]);
-    }
-    throw "ERROR";
-}
-
-function sc_error_immutable() {  /// export
-    sc_print_immutable("**ERROR**");
-    for (var i = 0; i < arguments.length; i++) {
-	sc_print_immutable(arguments[i]);
+	sc_print(arguments[i]);
     }
     throw "ERROR";
 }
@@ -64,21 +54,22 @@ function sc_remProp(sym, key) { /// export remprop!
 	delete ht[key];
 }
 
-var sc_gensym_mutable = function() { /// export
+function sc_Trampoline(f) {
+    this.f = f;
+}
+
+function sc_trampoline(res) {
+    while (res instanceof sc_Trampoline)
+	res = res.f();
+    return res;
+}
+
+var sc_gensym = function() { /// export
     var counter = 1000;
     return function(sym) {
 	counter++;
 	if (!sym) sym = "";
 	return "s" + counter + "~" + sym + "^sC-GeNsYm ";
-    };
-}();
-
-var sc_gensym_immutable = function() { /// export
-    var counter = 1000;
-    return function(sym) {
-	counter++;
-	if (!sym) sym = sc_SYMBOL_PREFIX;
-	return sym + "s" + counter + "~" + "^sC-GeNsYm ";
     };
 }();
 
@@ -328,25 +319,22 @@ function sc_inexact2exact(x) { /// export
     return x;
 }
 
-function sc_number2symbol_mutable(x, radix) { /// export
+function sc_number2symbol(x, radix) { /// export
     if (radix)
 	return x.toString(radix);
     else
 	return x.toString();
 }
-
-function sc_number2string_mutable(x, radix) { /// export
-    return new sc_String(sc_number2symbol_mutable(x, radix));
-}
-
-function sc_number2symbol_immutable(x, radix) { /// export
-    return sc_SYMBOL_PREFIX + sc_number2string_immutable(x, radix);
-}
     
-var sc_number2string_immutable = sc_number2symbol_mutable; /// export
+function sc_number2string(x, radix) { /// export
+    return new sc_String(sc_number2symbol(x, radix));
+}
 
+function sc_string2number(s, radix) { /// export
+    sc_symbol2number(s.val, radix);
+}
 
-function sc_symbol2number_mutable(s, radix) { /// export
+function sc_symbol2number(s, radix) { /// export
     // first test, if there aren't any trailing chars
     // (which are ignored by parseFloat/parseInt)
     if (+s || +s === 0) {
@@ -357,16 +345,6 @@ function sc_symbol2number_mutable(s, radix) { /// export
     } else
 	return false;
 }
-
-function sc_string2number_mutable(s, radix) { /// export
-    sc_symbol2number(s.val, radix);
-}
-
-function sc_symbol2number_immutable(s, radix) { /// export
-    return sc_SYMBOL_PREFIX + sc_string2number_immutable(s, radix);
-}
-
-var sc_string2number_immutable = sc_symbol2number_mutable; /// export
 
 function sc_not(b) { /// export
     return b === false;
@@ -656,43 +634,23 @@ function sc_assoc(o, al) { /// export
     return false;
 }
 
-function sc_isSymbol_mutable(s) { /// export
+function sc_isSymbol(s) { /// export
     return (typeof s === "string");
 }
 
-function sc_isSymbol_immutable(s) { /// export
-    return (typeof s === "string") &&
-	(s.charAt(0) === sc_SYMBOL_PREFIX);
-}
-
-function sc_symbol2string_mutable(s) { /// export
+function sc_symbol2string(s) { /// export
     return new sc_String(s);
 }
 
-function sc_symbol2string_immutable(s) { /// export
-    return s.slice(1);
-}
-
-function sc_string2symbol_mutable(s) { /// export
+function sc_string2symbol(s) { /// export
     return s.val;
 }
 
-function sc_string2symbol_immutable(s) { /// export
-    return sc_SYMBOL_PREFIX + s;
-}
-
-function sc_symbolAppend_mutable() { /// export
+function sc_symbolAppend() { /// export
     return "".concat.apply("", arguments);
 }
 
-function sc_symbolAppend_immutable() { /// export
-    var res = sc_SYMBOL_PREFIX;
-    for (var i = 0; i < arguments.length; i++)
-	res += arguments[i].slice(1);
-    return res;
-}
-
-/* can be used for mutable strings and characters */
+/* can be used for strings and characters */
 function sc_isCharStringEqual(cs1, cs2) { return cs1.val === cs2.val; }
 function sc_isCharStringLess(cs1, cs2) { return cs1.val < cs2.val; }
 function sc_isCharStringGreater(cs1, cs2) { return cs1.val > cs2.val; }
@@ -844,14 +802,10 @@ function sc_isCharLowerCase(c) /// export
 
 function sc_char2integer(c) /// export
     { return c.val.charCodeAt(0); }
-function sc_char2string_mutable(c) /// export
+function sc_char2string(c) /// export
     { return new sc_String(c.val); }
-function sc_char2string_immutable(c) /// export
+function sc_char2symbol(c) /// export
     { return c.val; }
-function sc_char2symbol_mutable(c) /// export
-    { return c.val; }
-function sc_char2symbol_immutable(c) /// export
-    { return sc_SYMBOL_PREFIX + c.val; }
 function sc_integer2char(n) /// export
     { return new sc_Char(String.fromCharCode(n)); }
 
@@ -890,165 +844,84 @@ sc_String.prototype.hop_bigloo_serialize = function() {
    return hop_bigloo_serialize( this.val );
 }
 
-function sc_isString_mutable(s) { /// export
+function sc_isString(s) { /// export
     return (s instanceof sc_String);
 }
 
-function sc_isString_immutable(s) { /// export
-    return (typeof s === "string") &&
-	(s.charAt(0) !== sc_SYMBOL_PREFIX);
-}
-
-function sc_makeString_mutable(k, c) { /// export
-    return new sc_String(sc_makeString_immutable(k, c));
-}
-
-function sc_makeString_immutable(k, c) { /// export
+function sc_makeString(k, c) { /// export
     var fill;
     if (c)
 	fill = c.val;
     else
 	fill = " ";
-    return sc_makeJSStringOfLength(k, fill);
+    return new sc_String(sc_makeJSStringOfLength(k, fill));
 }
 
-function sc_string_mutable() { /// export
+function sc_string() { /// export
     for (var i = 0; i < arguments.length; i++)
 	arguments[i] = arguments[i].val;
     return new sc_String("".concat.apply("", arguments));
 }
 
-function sc_string_immutable() { /// export
-    for (var i = 0; i < arguments.length; i++)
-	arguments[i] = arguments[i].val;
-    return "".concat.apply("", arguments);
-}
-
-function sc_stringLength_mutable(s) { /// export
+function sc_stringLength(s) { /// export
     return s.val.length;
 }
 
-function sc_stringLength_immutable(s) { /// export
-    return s.length;
-}
-
-function sc_stringRef_mutable(s, k) { /// export
+function sc_stringRef(s, k) { /// export
     return s.val.charAt(k);
 }
 
-function sc_stringRef_immutable(s, k) { /// export
-    return s.charAt(k);
-}
-
-function sc_stringSet_mutable(s, k, c) { /// export string-set!
+function sc_stringSet(s, k, c) { /// export string-set!
     var start = s.val.slice(0, k);
     var end = s.val.slice(k+1);
     s.val = start.concat(c.val, end);
 }
 
-/* there's no stringSet in the immutable version
-function sc_stringSet_immutable(s, k, c)
-*/
+var sc_isStringEqual = sc_isCharStringEqual; /// export string=?
+var sc_isStringLess = sc_isCharStringLess; /// export string<?
+var sc_isStringGreater = sc_isCharStringGreater; /// export string>?
+var sc_isStringLessEqual = sc_isCharStringLessEqual; /// export string<=?
+var sc_isStringGreaterEqual = sc_isCharStringGreaterEqual; /// export string>=?
+var sc_isStringCIEqual = sc_isCharStringCIEqual; /// export string-ci=?
+var sc_isStringCILess = sc_isCharStringCILess; /// export string-ci<?
+var sc_isStringCIGreater = sc_isCharStringCIGreater; /// export string-ci>?
+var sc_isStringCILessEqual = sc_isCharStringCILessEqual; /// export string-ci<=?
+var sc_isStringCIGreaterEqual = sc_isCharStringCIGreaterEqual; /// export string-ci>=?
 
-var sc_isStringEqual_mutable = sc_isCharStringEqual; /// export string=?
-var sc_isStringLess_mutable = sc_isCharStringLess; /// export string<?
-var sc_isStringGreater_mutable = sc_isCharStringGreater; /// export string>?
-var sc_isStringLessEqual_mutable = sc_isCharStringLessEqual; /// export string<=?
-var sc_isStringGreaterEqual_mutable = sc_isCharStringGreaterEqual; /// export string>=?
-var sc_isStringCIEqual_mutable = sc_isCharStringCIEqual; /// export string-ci=?
-var sc_isStringCILess_mutable = sc_isCharStringCILess; /// export string-ci<?
-var sc_isStringCIGreater_mutable = sc_isCharStringCIGreater; /// export string-ci>?
-var sc_isStringCILessEqual_mutable = sc_isCharStringCILessEqual; /// export string-ci<=?
-var sc_isStringCIGreaterEqual_mutable = sc_isCharStringCIGreaterEqual; /// export string-ci>=?
-
-function sc_isStringEqual_immutable(s1, s2) { /// export string=?
-    return s1 === s2;
-}
-function sc_isStringLess_immutable(s1, s2) { /// export string<?
-    return s1 < s2;
-}
-function sc_isStringGreater_immutable(s1, s2) { /// export string>?
-    return s1 > s2;
-}
-function sc_isStringLessEqual_immutable(s1, s2) { /// export string<=?
-    return s1 <= s2;
-}
-function sc_isStringGreaterEqual_immutable(s1, s2) { /// export string>=?
-    return s1 >= s2;
-}
-function sc_isStringCIEqual_immutable(s1, s2) { /// export string-ci=?
-    return s1.toLowerCase() === s2.toLowerCase();
-}
-function sc_isStringCILess_immutable(s1, s2) { /// export string-ci<?
-    return s1.toLowerCase() < s2.toLowerCase();
-}
-function sc_isStringCIGreater_immutable(s1, s2) { /// export string-ci>?
-    return s1.toLowerCase() > s2.toLowerCase();
-}
-function sc_isStringCILessEqual_immutable(s1, s2) { /// export string-ci<=?
-    return s1.toLowerCase() <= s2.toLowerCase();
-}
-function sc_isStringCIGreaterEqual_immutable(s1, s2) { /// export string-ci>=?
-    return s1.toLowerCase() >= s2.toLowerCase();
-}
-
-function sc_substring_mutable(s, start, end) { /// export
+function sc_substring(s, start, end) { /// export
     return new sc_String(s.val.substring(start, end));
 }
 
-function sc_substring_immutable(s, start, end) { /// export
-    return s.substring(start, end);
-}
-
-function sc_stringAppend_mutable() { /// export
+function sc_stringAppend() { /// export
     for (var i = 0; i < arguments.length; i++)
 	arguments[i] = arguments[i].val;
     return new sc_String("".concat.apply("", arguments));
 }
 
-function sc_stringAppend_immutable() { /// export
-    return "".concat.apply("", arguments);
-}
-
-function sc_string2list_mutable(s) { /// export
-    return sc_string2list_immutable(s.val);
-}
-
-function sc_string2list_immutable(s) { /// export
+function sc_string2list(s) { /// export
+    var val = s.val;
     var res = null;
-    for (var i = s.length - 1; i >= 0; i--)
-	res = sc_cons(s.charAt(i), res);
+    for (var i = val.length - 1; i >= 0; i--)
+	res = sc_cons(val.charAt(i), res);
     return res;
 }
 
-function sc_list2string_mutable(l) { /// export
-    return new sc_String(sc_list2string_immutable(l));
-}
-
-function sc_list2string_immutable(l) { /// export
+function sc_list2string(l) { /// export
     var a = new Array();
     while(l != null) {
 	a.push(l.car.val);
 	l = l.cdr;
     }
-    return "".concat.apply("", a);
+    return new sc_String("".concat.apply("", a));
 }
 
-function sc_stringCopy_mutable(s) { /// export
+function sc_stringCopy(s) { /// export
     return new sc_String(s.val);
 }
 
-function sc_stringCopy_immutable(s) { /// export
-    return s;
-}
-
-function sc_stringFill_mutable(s, c) { /// export string-fill!
+function sc_stringFill(s, c) { /// export string-fill!
     s.val = sc_makeJSStringOfLength(s.val.length, c.val);
 }
-
-/* there's no string-fill in the immutable version
-function sc_stringFill_immutable(s, c)
-*/
 
 var sc_Vector = Array;
 
@@ -1306,29 +1179,19 @@ sc_Keyword.lazy = new Object;
 sc_Keyword.prototype.toString = function() {
     return ":" + this.val;
 }
-sc_Keyword.prototype.toJSString = function() {
-    return this.val;
-}
 
 function sc_isKeyword(o) { /// export
     return (o instanceof sc_Keyword);
 }
 
-function sc_keyword2string_mutable(o) { /// export
+function sc_keyword2string(o) { /// export
     return new sc_String(o.val);
 }
 
-function sc_keyword2string_immutable(o) { /// export
-    return o.val;
-}
-
-function sc_string2keyword_mutable(o) { /// export
+function sc_string2keyword(o) { /// export
     return new sc_Keyword(o.val);
 }
 
-function sc_string2keyword_immutable(o) { /// export
-    return new sc_Keyword(o);
-}
 
 
 // ======================== I/O =======================
@@ -1379,11 +1242,11 @@ sc_ErrorInputPort.isCharReady = function() {
 
 /* .............. String port ..........................*/
 
-function sc_StringInputPort(jsStr) {
+function sc_StringInputPort(str) {
     // we are going to do some charAts on the str.
     // instead of recreating all the time a String-object, we
-    // create one in the beginning. (not sure, if this is really an optim)
-    str = new String(jsStr);
+    // create one in the beginning.
+    str = new String(str.val);
     this.str = str;
     this.pos = 0;
 }
@@ -1743,10 +1606,7 @@ sc_Reader.prototype.read = function() {
     case 8/*QUOTE*/:
 	return readQuote.call(this);
     case 11/*STRING*/:
-	if (this.mutableStrings)
-	    return new sc_String(token.val);
-	else
-	    return token.val;
+	return new sc_String(token.val);
     case 20/*CHAR*/:
 	return new sc_Char(token.val);
     case 14/*VECTOR_BEGIN*/:
@@ -1755,13 +1615,9 @@ sc_Reader.prototype.read = function() {
 	return readReference.call(this, token.val);
     case 19/*STORE*/:
 	return storeRefence.call(this, token.val);
-    case 9/*ID*/:
-	if (this.mutableStrings)
-	    return token.val;
-	else
-	    return sc_SYMBOL_PREFIX + token.val;
     case 0/*EOF*/:
     case 12/*NUMBER*/:
+    case 9/*ID*/:
     case 15/*TRUE*/:
     case 16/*FALSE*/:
     case 17/*UNSPECIFIED*/:
@@ -1771,14 +1627,7 @@ sc_Reader.prototype.read = function() {
     }
 };
 
-function sc_read_mutable(port) { /// export
-    if (port === undefined) // we assume the port hasn't been given.
-	port = SC_DEFAULT_IN; // THREAD: shared var...
-    var reader = new sc_Reader(new sc_Tokenizer(port));
-    reader.mutableStrings = true;
-    return reader.read();
-}
-function sc_read_immutable(port) { /// export
+function sc_read(port) { /// export
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
     var reader = new sc_Reader(new sc_Tokenizer(port));
@@ -1842,11 +1691,7 @@ function sc_openOutputFile(s) { /// export
 
 /* ----------------------------------------------------------------------------*/
 
-function sc_withInputFromString_mutable(s, thunk) { /// export
-    return sc_withInputFromString_immutable(s.val, thunk);
-}
-
-function sc_withInputFromString_immutable(s, thunk) { /// export
+function sc_withInputFromString(s, thunk) { /// export
     var tmp = SC_DEFAULT_IN; // THREAD: shared var.
     SC_DEFAULT_IN = new sc_StringInputPort(s);
     var tmp2 = thunk();
@@ -1856,17 +1701,13 @@ function sc_withInputFromString_immutable(s, thunk) { /// export
 }
 
 
-function sc_withOutputToString_mutable(thunk) { /// export
-    return new sc_String(sc_withOutputToString_immutable(thunk));
-}
-
-function sc_withOutputToString_immutable(thunk) { /// export
+function sc_withOutputToString(thunk) { /// export
     var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
     var outp = new sc_StringOutputPort();
     SC_DEFAULT_OUT = outp;
     var tmp2 = thunk();
     SC_DEFAULT_OUT = tmp;
-    return outp.close();
+    return new sc_String(outp.close());
 }
 
 /* ----------------------------------------------------------------------------*/
@@ -1969,15 +1810,7 @@ sc_Vector.prototype.writeOrDisplay = function(p, writeOrDisplay) {
 /* ------------------ write ---------------------------------------------------*/
 
 // write
-function sc_write_mutable(o, p) { /// export
-    String.prototype.doWrite = String_prototype_doWrite_mutable;
-    if (p === undefined) // we assume not given
-	p = SC_DEFAULT_OUT;
-    sc_doWrite(p, o);
-}
-
-function sc_write_immutable(o, p) { /// export
-    String.prototype.doWrite = String_prototype_doWrite_immutable;
+function sc_write(o, p) { /// export
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
     sc_doWrite(p, o);
@@ -1996,8 +1829,24 @@ function sc_doWrite(p, o) {
 	return o.doWrite(p);
 }
 
-function sc_escapeWriteString(s) {
+Number.prototype.doWrite = function(p) {
+    p.appendJSString(this.toString());
+}
+String.prototype.doWrite = function(p) {
+    p.appendJSString(this.toString());
+}
+Function.prototype.doWrite = function(p) {
+    p.appendJSString("#<procedure " + this.getHash() + ">");
+}
+Boolean.prototype.doWrite = function(p) {
+    p.appendJSString(this.toString());
+}
+sc_Pair.prototype.doWrite = function(p) {
+    this.writeOrDisplay(p, sc_doWrite);
+}
+sc_String.prototype.doWrite = function(p) {
     var res = "";
+    var s = this.val;
     var j = 0;
     for (i = 0; i < s.length; i++) {
 	switch (s.charAt(i)) {
@@ -2021,35 +1870,9 @@ function sc_escapeWriteString(s) {
 	}
     }
     res += s.substring(j, i);
+    p.appendJSString('"' + res + '"');
 }
-
-Number.prototype.doWrite = function(p) {
-    p.appendJSString(this.toString());
-}
-String_prototype_doWrite_mutable = function(p) {
-    // TODO: handle escape-chars symbols
-    p.appendJSString(this);
-}
-String_prototype_doWrite_immutable = function(p) {
-    // TODO: handle escape-chars symbols
-
-    if (this.charAt(0) !== sc_SYMBOL_PREFIX)
-	p.appendJSString('"' + sc_escapeWriteString(this) + '"');
-    else
-	p.appendJSString(this.slice(1));
-}
-Function.prototype.doWrite = function(p) {
-    p.appendJSString("#<procedure " + this.getHash() + ">");
-}
-Boolean.prototype.doWrite = function(p) {
-    p.appendJSString(this.toString());
-}
-sc_Pair.prototype.doWrite = function(p) {
-    this.writeOrDisplay(p, sc_doWrite);
-}
-sc_String.prototype.doWrite = function(p) {
-    p.appendJSString('"' + sc_escapeWriteString(this.val) + '"');
-}
+ 		    
 sc_Char.prototype.doWrite = function(p) {
     var entry = sc_Char.char2readable[this.val];
     if (entry)
@@ -2070,15 +1893,7 @@ sc_Keyword.prototype.doWrite = function(p) {
 /* ------------------ display ---------------------------------------------------*/
 
 // display
-function sc_display_mutable(o, p) { /// export
-    String.prototype.doDisplay = String_prototype_doDisplay_mutable;
-    if (p === undefined) // we assume not given
-	p = SC_DEFAULT_OUT;
-    sc_doDisplay(p, o);
-}
-
-function sc_display_immutable(o, p) { /// export
-    String.prototype.doDisplay = String_prototype_doDisplay_immutable;
+function sc_display(o, p) { /// export
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
     sc_doDisplay(p, o);
@@ -2098,8 +1913,7 @@ function sc_doDisplay(p, o) {
 }
 
 Number.prototype.doDisplay = Number.prototype.doWrite;
-String_prototype_doDisplay_mutable = String_prototype_doWrite_mutable;
-String_prototype_doDisplay_immutable = String_prototype_doWrite_immutable;
+String.prototype.doDisplay = String.prototype.doWrite;
 Function.prototype.doDisplay = Function.prototype.doWrite;
 Boolean.prototype.doDisplay = Boolean.prototype.doWrite;
 sc_Pair.prototype.doDisplay = function(p) {
@@ -2135,16 +1949,7 @@ function sc_writeChar(c, p) { /// export
 
 /* ------------------ write-circle ---------------------------------------------------*/
 
-function sc_writeCircle_immutable(o, p) { /// export
-    String.prototype.doWriteCircle = String_prototype_doWriteCirce_immutable;
-    sc_writeCirce(o, p);
-}
-function sc_writeCircle_mutable(o, p) { /// export
-    String.prototype.doWriteCircle = String_prototype_doWriteCirce_mutable;
-    sc_writeCirce(o, p);
-}
-
-function sc_writeCircle(o, p) {
+function sc_writeCircle(o, p) { /// export
     var symb = sc_gensym("writeCircle");
     var nbPointer = new Object();
     nbPointer.nb = 0;
@@ -2207,8 +2012,7 @@ function sc_doWriteCircle(p, o, symb) {
 
 // extra arguments (in our case 'symb') are going to be lost. so no prob.
 Number.prototype.doWriteCircle = Number.prototype.doWrite;
-String_prototype_doWriteCircle_mutable = String_prototype_doWrite_mutable;
-String_prototype_doWriteCircle_immutable = String_prototype_doWrite_immutable;
+String.prototype.doWriteCircle = String.prototype.doWrite;
 Function.prototype.doWriteCircle = Function.prototype.doWrite;
 Boolean.prototype.doWriteCircle = Boolean.prototype.doWrite;
 
@@ -2294,26 +2098,14 @@ sc_Struct.prototype.doWriteCircle = sc_Struct.prototype.doWrite;
 
 /* ------------------ print ---------------------------------------------------*/
 
-function sc_print_mutable(s) { /// export
+function sc_print(s) { /// export
     if (arguments.length === 1) {
-	sc_display_mutable(s);
+	sc_display(s);
 	sc_newline();
     }
     else {
 	for (var i = 0; i < arguments.length; i++)
-	    sc_display_mutable(arguments[i]);
-	sc_newline();
-    }
-}
-
-function sc_print_immutable(s) { /// export
-    if (arguments.length === 1) {
-	sc_display_immutable(s);
-	sc_newline();
-    }
-    else {
-	for (var i = 0; i < arguments.length; i++)
-	    sc_display_immutable(arguments[i]);
+	    sc_display(arguments[i]);
 	sc_newline();
     }
 }

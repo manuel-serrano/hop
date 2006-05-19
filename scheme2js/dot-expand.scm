@@ -3,11 +3,6 @@
 	   config
 	   expand))
 
-(define (field-name sym)
-   (if (config 'mutable-strings)
-       `(quote ,sym)
-       (symbol->string sym)))
-
 (define (split-dot id)
    (let ((splitted (map! string->symbol
 			 (string-split (symbol->string id) "."))))
@@ -33,23 +28,23 @@
 	      (splitted (cdr splitted)))
       (if (null? splitted)
 	  res
-	  (loop `(js-field ,res ,(field-name (car splitted)))
+	  (loop `(js-field ,res ',(car splitted))
 		(cdr splitted)))))
 
 (define (set!-dot-expand splitted val-L)
    (let loop ((res (car splitted))
 	      (splitted (cdr splitted)))
       (if (null? (cdr splitted))
-	  `(js-field-set! ,res ,(field-name (car splitted)) ,@val-L)
-	  (loop `(js-field ,res ,(field-name (car splitted)))
+	  `(js-field-set! ,res ',(car splitted) ,@val-L)
+	  (loop `(js-field ,res ',(car splitted))
 		(cdr splitted)))))
 
 (define (delete!-dot-expand splitted)
    (let loop ((res (car splitted))
 	      (splitted (cdr splitted)))
       (if (null? (cdr splitted))
-	  `(js-field-delete! ,res ,(field-name (car splitted)))
-	  (loop `(js-field ,res ,(field-name (car splitted)))
+	  `(js-field-delete! ,res ',(car splitted))
+	  (loop `(js-field ,res ',(car splitted))
 		(cdr splitted)))))
 
 (define (expand-indirect-accesses! x)
@@ -99,7 +94,7 @@
       (((and (? dotted-symbol?) ?x-dot-f) . ?args)
        (multiple-value-bind (o f)
 	  (split-last (split-dot x-dot-f))
-	  `(js-method-call ,(get-dot-expand o) ,(field-name f) ,@args)))
+	  `(js-method-call ,(get-dot-expand o) ',f ,@args)))
       ;((get-x).f ...)
       (((and (? pair?) ?p) (and (? starts-with-dot?) ?f) . ?args)
        (let* ((o (gensym 'o))

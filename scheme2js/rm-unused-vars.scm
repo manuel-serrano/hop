@@ -16,8 +16,6 @@
    (overload traverse! rm! (Node
 			   Set!
 			   Lambda
-			   Bind-exit
-			   With-handler
 			   Decl)
 	     (tree.traverse!)))
 
@@ -32,19 +30,6 @@
 
 (define-pmethod (Lambda-rm!)
    ;; don't go into formals (they must not be removed)
-   (set! this.body (this.body.traverse!))
-   this)
-
-(define-pmethod (Bind-exit-rm!)
-   ;; don't go into escape-var (must not be removed)
-   (set! this.body (this.body.traverse!))
-   ;; don't go into result-decl-var (must not be removed)
-   (set! this.invoc-body (this.invoc-body.traverse!))
-   this)
-
-(define-pmethod (With-handler-rm!)
-   ;; don't go into exception-var (must not be removed)
-   (set! this.catch (this.catch.traverse!))
    (set! this.body (this.body.traverse!))
    this)
 
