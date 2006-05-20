@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sat May 20 10:30:12 2006 (serrano)                */
+;*    Last change :  Sat May 20 20:34:59 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -23,15 +23,8 @@
 	   __hop_service
 	   __hop_misc)
    
-   (export  (weblets-config-directory)
-	    (find-weblets-in-directory ::string)
-	    (get-weblet-infos ::string ::string)
-	    (get-weblet-config ::string)
-	    (get-weblet-config-value ::string ::symbol ::obj)
-	    
-	    (autoload-weblets ::pair-nil)
-
-	    (<WEBLET-ABOUT> . args)))
+   (export  (find-weblets-in-directory ::string)
+	    (autoload-weblets ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-weblets ...                                             */
@@ -72,8 +65,7 @@
 (define (find-weblets-in-directory dir)
    
    (define (get-weblet-details dir name)
-      (let* ((conf (get-weblet-config name))
-	     (infos (get-weblet-infos dir name))
+      (let* ((infos (get-weblet-infos dir name))
 	     (main (assoc 'main-file infos))
 	     (weblet (make-file-path dir
 				     name
@@ -81,7 +73,7 @@
 					 (cadr main)
 					 (string-append name ".hop")))))
 	 (when (file-exists? weblet)
-	    `((name ,name) (weblet ,weblet) ,@conf ,@infos))))
+	    `((name ,name) (weblet ,weblet) ,@infos))))
    
    (let Loop ((files (directory->list dir))
 	      (res '()))
@@ -92,57 +84,11 @@
 		 (Loop (cdr files) (cons web res))
 		 (Loop (cdr files) res))))))
 
-;; ----------------------------------------------------------------------
-;; 	weblets-config-directory ...
-;; ----------------------------------------------------------------------
-(define (weblets-config-directory)
-   (make-file-name (hop-rc-directory) "weblets-conf"))
-
-;; ----------------------------------------------------------------------
-;; 	get-weblet-infos ...
-;; ----------------------------------------------------------------------
+;*---------------------------------------------------------------------*/
+;*    get-weblet-infos ...                                             */
+;*---------------------------------------------------------------------*/
 (define (get-weblet-infos dir name)
    (let ((file  (make-file-path dir name (string-append name ".info"))))
       (if (file-exists? file)
 	  (with-input-from-file file read)
 	  '())))
-
-;; ----------------------------------------------------------------------
-;; 	get-weblet-config ...
-;; ----------------------------------------------------------------------
-(define (get-weblet-config name)
-   (let ((file (make-file-name (weblets-config-directory)
-			       (string-append name ".conf"))))
-      (if (file-exists? file)
-	  (with-input-from-file file read)
-	  '((active #t)))))
-
-;; ----------------------------------------------------------------------
-;; 	get-weblet-config-value ...
-;; ----------------------------------------------------------------------
-(define (get-weblet-config-value name key default)
-   (let* ((conf (get-weblet-config name))
-	  (v (assoc key conf)))
-      (if v (cadr v) default)))
-
-;; ----------------------------------------------------------------------
-;; 	WEBLET-ABOUT ...
-;; ----------------------------------------------------------------------
-(define-xml-compound <WEBLET-ABOUT> ((id #unspecified string)
-				     (title #f)
-				     (subtitle #f)
-				     (version #f)
-				     (icon #f)
-				     body)
-   
-   (cons* 
-    (<TABLE> :width "100%" 
-	     (<TR>
-		(<TD> :valign "top" :align "left"
-		      (<IMG> :src icon)
-		      (<TD> :valign "top" :align "right"
-			    (when title (<H2> title))
-			    (when subtitle (<H3> subtitle))
-			    (when version
-			       (<H4> (format "(version ~A)" version)))))))
-    body))

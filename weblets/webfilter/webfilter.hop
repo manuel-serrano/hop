@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat May 20 10:08:08 2006 (serrano)                */
+;*    Last change :  Sat May 20 19:52:53 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -362,22 +362,6 @@ Google, each containing a forward pointer to the found wanted URL.])))
 					       (<NPTAB>
 						  (<NPTABHEAD> "Flash")
 						  (<FLASH>))))))))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    webfilter/about ...                                              */
-;*---------------------------------------------------------------------*/
-(define-service (webfilter/about)
-   (<WEBLET-ABOUT>
-      :title "webfilter"
-      :subtitle "Filters Web traffic."
-      :icon (format "~a/icons/control.png" (hop-share-directory))
-      :version (hop-version)
-      (<P> [This weblet filters Web traffic:])
-      (<UL>
-	 (<LI> "It filters HTTP headers.")
-	 (<LI> "It bans domains according to blacklists.")
-	 (<LI> "It prevents Google bouncing.")
-	 (<LI> "It disables Flash script auto-play."))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-headers-rewrite ...                                         */

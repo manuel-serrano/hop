@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sat May 20 10:52:47 2006 (serrano)                */
+;*    Last change :  Sat May 20 11:30:07 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -24,16 +24,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    *weblets-table* ...                                              */
 ;*---------------------------------------------------------------------*/
-(define *weblets-table*
-   (let ((t (make-hashtable 20)))
-      (hashtable-put! t "hop" #t)
-      (for-each (lambda (w) (hashtable-put! t w #t)) (hop-builtin-weblets))
-      t))
+(define *weblets-table* #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-main ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-main req)
+   (let ((t (make-hashtable 20)))
+      (hashtable-put! t "hop" #t)
+      (for-each (lambda (w) (hashtable-put! t w #t)) (hop-builtin-weblets))
+      (set! *weblets-table* t))
    (<HOP>
       (<TABLE>
 	 :class "directory"

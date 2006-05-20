@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat May 20 10:52:58 2006 (serrano)                */
+/*    Last change :  Sat May 20 11:31:03 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -94,7 +94,7 @@ table.directory {
 }
 
 table.weblets {
-  width: 100%;
+/*   width: 100%;                                                      */
 }
 
 table.directory th.title {
