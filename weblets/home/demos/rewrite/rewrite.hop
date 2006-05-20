@@ -12,7 +12,7 @@
 	 (<BODY>
 	    (<H1> "Rewrite the following URL")
 	    url
-	    (<DIV> "(This demo works best with pages with few or no CSS)")
+	    (<DIV> "(This demo works better with pages with few or no CSS)")
 	    (<H1> "Replace:")
 	    o
 	    (<H1> "With:")

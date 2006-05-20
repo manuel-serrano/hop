@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Thu May 18 17:01:42 2006 (serrano)                */
+;*    Last change :  Sat May 20 09:39:53 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -185,7 +185,10 @@
 				      (let* ((icon (cond
 						      ((assoc c (hz-category-icons)) => cdr)
 						      (else "file.png")))
-					     (ifile (make-file-path (hz-dir) "icons" icon)))
+					     (ifile (make-file-path (hz-dir)
+								    "etc"
+								    "icons"
+								    icon)))
 					 (map (lambda (e)
 						 (<TRLEAF>
 						    :file ifile

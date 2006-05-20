@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Thu May 18 18:21:33 2006 (serrano)                */
+;*    Last change :  Sat May 20 09:52:44 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -178,8 +178,8 @@ be used to access the whole source code of this playground.])))
 ;*---------------------------------------------------------------------*/
 (define (<ZIMG> svc s1 s2 . r)
    (let ((id (xml-make-id))
-	 (p1 (make-file-path (home-dir) "icons" s1))
-	 (p2 (make-file-path (home-dir) "icons" s2))
+	 (p1 (format "~a/etc/icons/~a" (home-dir) s1))
+	 (p2 (format "~a/etc/icons/~a" (home-dir) s2))
 	 (w (if (pair? r) (car r) "200"))
 	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
 	 (t (string-capitalize (basename svc))))

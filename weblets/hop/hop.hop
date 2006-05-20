@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sun May 14 17:39:46 2006 (serrano)                */
+;*    Last change :  Sat May 20 10:52:47 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -22,45 +22,75 @@
    (hop-main (the-current-request)))
 
 ;*---------------------------------------------------------------------*/
+;*    *weblets-table* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *weblets-table*
+   (let ((t (make-hashtable 20)))
+      (hashtable-put! t "hop" #t)
+      (for-each (lambda (w) (hashtable-put! t w #t)) (hop-builtin-weblets))
+      t))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-main ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-main req)
    (<HOP>
       (<TABLE>
 	 :class "directory"
-	 (<TR>
-	    (map (lambda (e)
-		    (<HTD> (car e) (cadr e) (caddr e)))
-		 '(("home.png" "home" "/hop/home")
-		   ("system.png" "hz" "/hop/hz")
-		   ("password.png" "password" "/hop/password")
-		   ("edu.png" "doc" "/hop/doc")
-		   ("info.png" "info" "/hop/info")
-		   ("control.png" "webfilter" "/hop/webfilter")))))))
+	 (<TR> (<TH> :class "title" "Builtin Weblets"))
+	 (<TR> (<TD> (<TABLE> :class "weblets"
+			      (<TR> (map (lambda (x)
+					    (<HTD> (hop-weblets-directory) x))
+					 (hop-builtin-weblets))))))
+	 (<TR> (<TD> "&nbsp;"))
+	 (<TR> (<TH> :class "title" "Additional Weblets"))
+	 (<TR> (<TH> (<TABLE> :class "weblets" (hop-additional-weblets)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-additional-weblets ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hop-additional-weblets)
+   (let* ((w (append-map find-weblets-in-directory (hop-autoload-directories)))
+	  (fw (filter-map (lambda (a)
+			     (let ((n (cadr (assq 'name a)))
+				   (w (cadr (assq 'weblet a))))
+				(unless (hashtable-get *weblets-table* n)
+				   (hashtable-put! *weblets-table* n #t)
+				   (<HTD> (dirname (dirname w)) n))))
+			  (sort w (lambda (a b)
+				     (let ((namea (cadr (assq 'name a)))
+					   (nameb (cadr (assq 'name b))))
+					(string<? namea nameb)))))))
+      (map <TR> (list-split! fw 6 (<TD> "")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HTD> ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (<HTD> png name url)
-   (<TD>
-      :valign "top"
-      (<TABLE>
-	 :width "100%"
-	 :onclick ~(set! document.location $url)
-	 :title url
-	 (<TR>
-	    (<TD>
-	       :valign "top"
-	       :align "center"
-	       :class "logo"
-	       (<IMG> :class "logo"
-		      :src (format "~a/icons/~a" (hop-share-directory) png))))
-	 (<TR>
-	    (<TD>
-	       :valign "top"
-	       :align "center"
-	       :class "legend"
-	       (<SPAN> name))))))
+(define (<HTD> base hz)
+   (let ((url (format "/hop/~a" hz))
+	 (logo (format "~a/~a/etc/logo.png" base hz)))
+      (<TD>
+	 :valign "top"
+	 (<TABLE>
+	    :width "100%"
+	    :onclick ~(set! document.location $url)
+	    :title url
+	    (<TR>
+	       (<TD>
+		  :valign "top"
+		  :align "center"
+		  :class "logo"
+		  (<IMG> :class "logo"
+			 :src (if (file-exists? logo)
+				  logo
+				  (string-append (hop-dir)
+						 "/etc/default.png")))))
+	    (<TR>
+	       (<TD>
+		  :valign "top"
+		  :align "center"
+		  :class "legend"
+		  (<SPAN> hz)))))))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    <HOP> ...                                                        */
@@ -77,8 +107,7 @@
 		  (<TD>
 		     :valign "top"
 		     (<IMG> :class "logo"
-			    :src (format "~a/icons/logo.png"
-					 (hop-share-directory))))
+			    :src (format "~a/etc/logo.png" (hop-dir))))
 		  (<TD>
 		     :valign "top"
 		     (<TABLE>

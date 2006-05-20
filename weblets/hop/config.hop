@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Thu May 11 09:38:23 2006 (serrano)                */
+;*    Last change :  Sat May 20 09:44:52 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop configuration                                                */
@@ -15,6 +15,7 @@
 (module hophop_config
    (export (hop-date)
 	   (hop-author)
+	   (hop-builtin-weblets)
 	   (hop-dir)))
 
 ;*---------------------------------------------------------------------*/
@@ -23,6 +24,12 @@
 (define (hop-date) "2006")
 (define (hop-author) "M. Serrano")
 
+;*---------------------------------------------------------------------*/
+;*    hop-builtin-weblets ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-builtin-weblets
+   '("home" "hz" "password" "doc" "info" "webfilter"))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-dir                                                          */
 ;*---------------------------------------------------------------------*/

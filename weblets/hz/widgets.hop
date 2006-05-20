@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/private/hz/widgets.hop                  */
+;*    serrano/prgm/project/hop/weblets/hz/widgets.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:47:11 2006                          */
-;*    Last change :  Sat Mar 25 09:37:27 2006 (serrano)                */
+;*    Last change :  Sat May 20 09:54:07 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Various hz widgets                                               */
@@ -13,6 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hz_widgets
+   (import hz_config)
    (export <ABODY>
 	   <VBOX>
 	   <VBOX-BLOCK>
@@ -30,8 +31,8 @@
 	       (<TD>
 		  :class "logo"
 		  (<IMG> :class "logo"
-			 :src (format "~a/icons/system.png"
-				      (hop-share-directory))))
+			 :src (format "~a/etc/logo.png"
+				      (hz-dir))))
 	       (<TD>
 		  :class "main"
 		  :valign 'top
