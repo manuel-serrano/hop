@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sat May 20 20:34:59 2006 (serrano)                */
+;*    Last change :  Sun May 21 09:10:17 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -46,15 +46,13 @@
    (define (maybe-autoload x)
       (let ((url (make-file-name (hop-service-base) (cadr (assoc 'name x))))
 	    (path (cadr (assq 'weblet x)))
-	    (active (cadr (assq 'active x)))
 	    (autopred (assq 'autoload x)))
-	 (when active
-	    (if (pair? autopred)
-		(begin
-		   (hop-verb 2 "Setting autoload " path " on " (cadr autopred)
-			     "\n")
-		   (autoload path (eval (cadr autopred))))
-		(install-autoload-prefix path url)))))
+	 (if (pair? autopred)
+	     (begin
+		(hop-verb 2 "Setting autoload " path " on "
+			  (cadr autopred) "\n")
+		(autoload path (eval (cadr autopred))))
+	     (install-autoload-prefix path url))))
    (for-each (lambda (dir)
 		(for-each maybe-autoload (find-weblets-in-directory dir)))
 	     dirs))
