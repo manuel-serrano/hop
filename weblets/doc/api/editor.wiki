@@ -18,9 +18,9 @@ client side programming. They are only supported on server side.])
 
 === Requirements ===
 
-Client codes using //Sliders// need to load the script ++hop-slider.js++.
-They also need to load the ++hop-slider.css++ style sheet.  Hence, documents
-using //sliders// must include in their header, the following statement:
+Client codes using //Editors// need to load the script ++hop-edit.js++.
+They also need to load the ++hop-edit.css++ style sheet.  Hence, documents
+using //editors// must include in their header, the following statement:
 
 
   (<HEAD> :jscript "hop-edit.js" :css "hop-edit.css")
@@ -37,9 +37,22 @@ using //sliders// must include in their header, the following statement:
 <markup> <EDITOR>
 
 <arguments>
-^  attributes  ^   type    ^   default    ^  short description          ^
-| :id          |  string   |  //random//  | element identifier.         |
+^  attributes  ^   type     ^   default    ^  short description          ^
+| :id          |  string    |  //random//  | element identifier.         |
+| :width       |  dimension  |  //100%//    | the width                   |
+| :heigh       |  dimension  |  //600px//   | the height                  |
+| :name        |  string    |              | name (used in forms only)   |
+| :submit      |  function  |  see below   | action associated to submit button  |
+| :cancel      |  function  |  see below   | action associated to cancel button  |
 </arguments>
+
+By default, the **submit** and **cancel** client functions are associated to 
+functions which try to find if the editor is embedded in a form. 
+If this is the case, these functions do the right job. Otherwise, they do
+nothing. 
+
+~~Summit and Cancel functions are called with the element 
+identifier of the editor as parameter. 
 
 </markup>
 </server>
@@ -54,8 +67,6 @@ It is defined as:
 
 ~~
 <share>hop-edit.css</share>
-
-</style>
 
 == See also ==
 <see-also><EDITOR></see-also>

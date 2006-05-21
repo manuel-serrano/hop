@@ -1,3 +1,5 @@
+;; A simple editor where Submit button pops an alert window
+;; (Cancel button does nothing)
 (<HTML>
    (<HEAD>
       :jscript "hop-edit.js" :css "hop-edit.css")
@@ -8,4 +10,8 @@
 	 :submit ~(lambda (id)
 		     (alert "CONTENT: " (document.getElementById id).value))
 	 ;; What follows is the initial content of the editor.
-	 (<B> "Hello, ") "world"))) 
+	 (<B> "Hello, ") "world"
+	 (<BR>)
+	 (<IMG> :src (make-file-path (hop-icons-directory)
+				     "logo.png")))))
+      

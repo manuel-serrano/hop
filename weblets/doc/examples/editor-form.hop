@@ -1,0 +1,19 @@
+;; An editor in a form
+
+(<HTML>
+   (<HEAD>
+      :jscript "hop-edit.js" :css "hop-edit.css")
+   (<BODY>
+      :style "background: #7782D9"
+      (<FORM> :action (service (title content)
+			 (<HTML>
+			    (<BODY>
+			       (<B> title)
+			       (<HR>)
+			       (<DIV> :style "background:#ccc; margin 30px"
+				      content))))
+	      
+	      (<B> "Enter a title: ")
+	      (<INPUT> :name "title")
+	      (<EDITOR> :width "100%" :height "300px" :name "content"))))
+		  
