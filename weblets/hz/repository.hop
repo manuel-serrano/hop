@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Mon May 22 07:55:17 2006 (serrano)                */
+;*    Last change :  Mon May 22 13:00:12 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -195,7 +195,7 @@
    (<HTML>
       (<HEAD> :dir (hz-dir) 
 	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
-	      :css "hz.hss"))
+	      :css "hz.hss")
       (let ((author (<INPUT> :type 'text :size 30))
 	    (category (<INPUT> :type 'text :size 20))
 	    (hop (<INPUT> :type 'text :size "100%"))
