@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Thu May 18 16:42:57 2006 (serrano)                */
+/*    Last change :  Mon May 22 12:38:54 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -537,6 +537,11 @@ div.weblets table.search-result td:hover {
 /*--- preferences -----------------------------------------------------*/
 preferences {
   font-size: small;
+}
+
+preferences col.col1 {
+  width: 30%;
+  border: 1px solid red;
 }
 
 preferences th {

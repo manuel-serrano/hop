@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sat May 20 11:30:07 2006 (serrano)                */
+;*    Last change :  Mon May 22 12:45:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -19,7 +19,10 @@
 ;*    hop ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (hop)
-   (hop-main (the-current-request)))
+   (let ((req (the-current-request)))
+      (if (or (not (users-added?)) (authorized-service? req 'hop))
+	  (hop-main req)
+	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *weblets-table* ...                                              */

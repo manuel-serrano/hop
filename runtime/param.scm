@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 22 12:04:29 2006 (serrano)                */
+;*    Last change :  Mon May 22 12:15:26 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -147,7 +147,10 @@
 	    (hop-read-post-hook-set! ::procedure)
 	    
 	    (hop-path-access-control::procedure)
-	    (hop-path-access-control-set! ::procedure)))
+	    (hop-path-access-control-set! ::procedure)
+
+	    (hop-service-access-control::procedure)
+	    (hop-service-access-control-set! ::procedure)))
 
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Mon May 22 10:05:32 2006 (serrano)                */
+;*    Last change :  Mon May 22 12:48:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -30,11 +30,13 @@
 	 ((users-added?)
 	  (multiple-value-bind (user mode)
 	     (hz-get-access req)
-	     (if (and (user? user)
+	     (cond
+		((and (user? user)
 		      (symbol? mode)
-		      (user-authorized-service? user 'hz))
-		 (hz-main req user mode)
-		 (hz-authenticate req))))
+		      (authorized-service? req 'hz))
+		 (hz-main req user mode))
+		(else
+		 (hz-authenticate req)))))
 	 ((http-request-localhostp req)
 	  (hz-main req #f 'local))
 	 (else
@@ -145,7 +147,10 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hz/list)
    (let ((req (the-current-request)))
-      (if (or (http-request-localhostp req) (not (users-added?)))
+      (if (or (http-request-localhostp req)
+	      (not (users-added?))
+	      (authorized-service? req 'hz)
+	      (authorized-service? req 'hz/list))
 	  (hz-list req)
 	  (multiple-value-bind (user mode)
 	     (hz-get-access req)

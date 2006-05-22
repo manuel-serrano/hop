@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon May 22 12:07:46 2006 (serrano)                */
+;*    Last change :  Mon May 22 12:14:18 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -255,7 +255,8 @@
 ;*    authorized-service? ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (authorized-service? req service)
-   (user-authorized-service? (http-request-user req) service))
+   (or ((hop-service-access-control) req service)
+       (user-authorized-service? (http-request-user req) service)))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-request? ...                                     */

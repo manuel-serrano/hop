@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Tue Mar 28 17:05:53 2006 (serrano)                */
+;*    Last change :  Mon May 22 12:39:01 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
@@ -88,6 +88,9 @@
       `(define (,id #!key onclick)
 	  (<TABLE>
 	     :class "preferences"
+	     (<COLGROUP>
+		(<COL> :width "30%" :class "col1")
+		(<COL> :class "col2"))
 	     (when onclick
 		(<TR> (<TD>
 			 :class "save"

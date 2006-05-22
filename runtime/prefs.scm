@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Mon May  8 06:06:41 2006 (serrano)                */
+;*    Last change :  Mon May 22 12:41:29 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -54,7 +54,7 @@
    (<INPUT>
       :class "pref_saved"
       :type "text"
-      :size "100%"
+      :size "90%"
       :value (get)
       :title title
       :onkeyup (format "{ if ( event.keyCode == 13 ) {
