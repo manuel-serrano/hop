@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon May 22 12:45:42 2006 (serrano)                */
+;*    Last change :  Mon May 22 14:34:02 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -35,6 +35,7 @@
 (define (hop-main req)
    (let ((t (make-hashtable 20)))
       (hashtable-put! t "hop" #t)
+      (hashtable-put! t "home" #t)
       (for-each (lambda (w) (hashtable-put! t w #t)) (hop-builtin-weblets))
       (set! *weblets-table* t))
    (<HOP>
@@ -42,9 +43,11 @@
 	 :class "directory"
 	 (<TR> (<TH> :class "title" "Builtin Weblets"))
 	 (<TR> (<TD> (<TABLE> :class "weblets"
-			      (<TR> (map (lambda (x)
-					    (<HTD> (hop-weblets-directory) x))
-					 (hop-builtin-weblets))))))
+			      (<TR> (cons
+				     (<HOME> (hop-weblets-directory))
+				     (map (lambda (x)
+					     (<HTD> (hop-weblets-directory) x))
+					  (hop-builtin-weblets)))))))
 	 (<TR> (<TD> "&nbsp;"))
 	 (<TR> (<TH> :class "title" "Additional Weblets"))
 	 (<TR> (<TH> (<TABLE> :class "weblets" (hop-additional-weblets)))))))
@@ -65,6 +68,35 @@
 					   (nameb (cadr (assq 'name b))))
 					(string<? namea nameb)))))))
       (map <TR> (list-split! fw 6 (<TD> "")))))
+
+;*---------------------------------------------------------------------*/
+;*    <HOME> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<HOME> base)
+   (let ((url (hop-url))
+	 (logo (format "~a/home/etc/logo.png" base)))
+      (<TD>
+	 :valign "top"
+	 (<TABLE>
+	    :width "100%"
+	    :onclick ~(set! document.location $url)
+	    :title url
+	    (<TR>
+	       (<TD>
+		  :valign "top"
+		  :align "center"
+		  :class "logo"
+		  (<IMG> :class "logo"
+			 :src (if (file-exists? logo)
+				  logo
+				  (string-append (hop-dir)
+						 "/etc/default.png")))))
+	    (<TR>
+	       (<TD>
+		  :valign "top"
+		  :align "center"
+		  :class "legend"
+		  (<SPAN> "home")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HTD> ...                                                        */

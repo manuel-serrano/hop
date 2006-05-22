@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Sat May 20 09:44:52 2006 (serrano)                */
+;*    Last change :  Mon May 22 14:32:55 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop configuration                                                */
@@ -28,10 +28,9 @@
 ;*    hop-builtin-weblets ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-builtin-weblets
-   '("home" "hz" "password" "doc" "info" "webfilter"))
+   '("hz" "password" "doc" "info" "webfilter"))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-dir                                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-dir (dirname (the-loading-file)))
-

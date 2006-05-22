@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Mon May 22 14:06:53 2006 (serrano)                */
+;*    Last change :  Mon May 22 14:59:48 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -238,7 +238,7 @@
 					      false false
 					      640 400
 					      (/ (- window.innerWidth 640) 2) 50)
-				   "Build Repository DB")) 
+				   "Build/Update Repository DB"))
 		  (<VBOX-BLOCK> "&nbsp;")
 		  (<VBOX-BLOCK>
 		     (<SPAN> :class "title" "Add/Update/Remove Weblet entry"))
