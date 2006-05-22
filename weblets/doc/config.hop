@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Thu May  4 08:17:57 2006 (serrano)                */
+;*    Last change :  Mon May 22 08:12:59 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Doc configuration                                                */
@@ -19,6 +19,7 @@
 	   (doc-dir)
 	   (doc-api-dir)
 	   (doc-wiki-dir)
+	   (doc-core-dir)
 	   (doc-hss-dir)
 	   (doc-tutorials-dir)
 	   (doc-rc-directory)
@@ -55,6 +56,11 @@
 ;*    doc-wiki-dir                                                     */
 ;*---------------------------------------------------------------------*/
 (define-parameter doc-wiki-dir (make-file-name (doc-dir) "wiki"))
+
+;*---------------------------------------------------------------------*/
+;*    doc-core-dir                                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter doc-core-dir (make-file-name (doc-dir) "core"))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-hss-dir                                                      */

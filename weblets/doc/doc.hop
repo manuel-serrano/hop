@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Mon May  8 06:35:30 2006 (serrano)                */
+;*    Last change :  Mon May 22 08:13:06 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -45,6 +45,14 @@
 		(<NPTAB> :id "doc-api"
 			 (<NPTABHEAD> "API")
 			 (<API>))
+		(<NPTAB> :id "doc-core"
+			 (<NPTABHEAD> "Core language")
+			 (<DIV>
+			    :class "wiki"
+			    (doc-page
+			     (make-file-name (doc-core-dir) "core.wiki")
+			     (make-wiki-request-syntax (doc-wiki-syntax)
+						       req))))
 		(<NPTAB> :id "doc-libraries"
 			 (<NPTABHEAD> "Libraries")
 			 (<LIBRARIES>))

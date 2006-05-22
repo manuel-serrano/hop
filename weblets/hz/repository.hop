@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Wed May 10 07:03:33 2006 (serrano)                */
+;*    Last change :  Mon May 22 07:55:17 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -79,7 +79,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hz->info path name)
    (let ((p (open-input-gzip-file path))
-	 (info (string-append name ".info")))
+	 (info (make-file-name "etc" (string-append name ".info"))))
       (when (input-port? p)
 	 (unwind-protect
 	    (let loop ()

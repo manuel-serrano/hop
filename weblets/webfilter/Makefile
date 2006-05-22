@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Sat May 20 10:07:28 2006 (serrano)                */
+#*    Last change :  Mon May 22 08:01:58 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
@@ -18,7 +18,7 @@ include ../../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile webfilter.hss webfilter.hop webfilter.info \
+POPULATION	= Makefile webfilter.hss webfilter.hop etc/webfilter.info \
                   etc/logo.png BLACKLIST
 
 build:

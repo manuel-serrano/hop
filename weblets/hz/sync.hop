@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed May 17 08:41:42 2006 (serrano)                */
+;*    Last change :  Mon May 22 07:56:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -214,14 +214,14 @@
    (define (sync-dir name)
       (let ((dir (make-file-name (hop-weblets-directory) name)))
 	 (when (directory? dir)
-	    (let ((info (make-file-name dir (string-append name ".info"))))
-	       (when (file-exists? info)
+	    (let ((if (make-file-path dir "etc" (string-append name ".info"))))
+	       (when (file-exists? if)
 		  (bind-exit (exit)
 		     (with-handler
 			(lambda (e)
 			   (exception-notify e)
 			   (exit #f))
-			(sync-info db name exit info))))))))
+			(sync-info db name exit if))))))))
 
    (define (sync-dbhz o)
       (with-access::dbhz o (name)
