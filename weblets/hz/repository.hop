@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Mon May 22 13:40:50 2006 (serrano)                */
+;*    Last change :  Mon May 22 14:06:53 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -22,6 +22,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hz/create db name author category hop version minhop maxhop sdescr descr)
    (let ((db (hz-get-repository-db)))
+      (hz-db-sync-date-update! db (current-date))
       (hz-db-add-entry db (hz-db-sync-stamp db)
 		       name author category hop
 		       version minhop maxhop
@@ -36,6 +37,7 @@
 (define-service (hz/update name author category hop version minhop maxhop sdescr descr)
    (let* ((db (hz-get-repository-db))
 	  (e (hz-db-get-entry-by-name-category db name category)))
+      (hz-db-sync-date-update! db (current-date))
       (hz-db-update-entry db (hz-db-sync-stamp db)
 			  name author category hop
 			  version minhop maxhop
@@ -48,6 +50,7 @@
 ;*    remove ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/remove name category)
+   (hz-db-sync-date-update! db (current-date))
    (hz-db-remove-entry (hz-get-repository-db) name category))
 
 ;*---------------------------------------------------------------------*/
@@ -160,6 +163,8 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hz/build-repository)
    (let ((db (hz-get-repository-db)))
+      ;; mark the date
+      (hz-db-sync-date-update! db (current-date))
       ;; update the sync stamp
       (hz-db-sync-stamp-inc! db)
       ;; get the new weblets
