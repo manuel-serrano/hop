@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Wed Mar 22 14:34:59 2006 (serrano)                */
+#*    Last change :  Mon May 22 12:05:36 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -58,7 +58,7 @@ $(DOTNET_OBJ_EDIR)/%.obj: %.scm
 heap-c: .afile $(HEAP_FILE)
 heap-jvm: .afile .jfile $(HEAPJVM_FILE)
 
-$(HEAP_FILE): make-lib.scm
+$(HEAP_FILE): make-lib.scm .afile 
 	@ $(RM) -f $(HEAP_FILE)
 	@ $(call compile2,BIGLOO,BCFLAGS,BHFLAGS,$< -addheap $@ -heap-library $(TARGETNAME))
 	@ $(call done,$(COLOR),"",$@,"...done.")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 22 11:09:29 2006 (serrano)                */
+;*    Last change :  Mon May 22 11:44:20 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -42,11 +42,8 @@
 	    (hop-proxy-remote-authentication-set! ::bool)
 
 	    (hop-close-request-syntax-error::bool)
-	    (hop-close-request-syntax-error-set! ::bool)
+	    (hop-close-request-syntax-error-set! ::bool))
 
-	    (hop-authorize-path::procedure)
-	    (hop-authorize-path-set! ::procedure))
-   
    (eval    (export-exports)))
 
 ;*---------------------------------------------------------------------*/
@@ -101,13 +98,3 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-close-request-syntax-error
    #t)
-
-;*---------------------------------------------------------------------*/
-;*    hop-authorize-path ...                                           */
-;*    -------------------------------------------------------------    */
-;*    This parameter enables user customization of path access         */
-;*    control.                                                         */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-authorize-path
-   (lambda (req path)
-      #f))

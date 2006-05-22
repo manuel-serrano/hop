@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu May 11 08:51:54 2006 (serrano)                */
+;*    Last change :  Mon May 22 12:04:29 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -144,7 +144,11 @@
 	    (hop-read-pre-hook-set! ::procedure)
 	    
 	    (hop-read-post-hook::procedure)
-	    (hop-read-post-hook-set! ::procedure)))
+	    (hop-read-post-hook-set! ::procedure)
+	    
+	    (hop-path-access-control::procedure)
+	    (hop-path-access-control-set! ::procedure)))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-uptime ...                                                   */
@@ -613,3 +617,22 @@
 	  (error 'hop-read-post-hook-set! "Illegal value" v)
 	  v)))
 
+;*---------------------------------------------------------------------*/
+;*    hop-path-access-control ...                                      */
+;*    -------------------------------------------------------------    */
+;*    This parameter enables user customization of path access         */
+;*    control.                                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-path-access-control
+   (lambda (req path)
+      #f))
+
+;*---------------------------------------------------------------------*/
+;*    hop-service-access-control ...                                   */
+;*    -------------------------------------------------------------    */
+;*    This parameter enables user customization of path access         */
+;*    control.                                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-service-access-control
+   (lambda (req svc)
+      #f))

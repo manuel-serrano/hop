@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon May 22 11:31:08 2006 (serrano)                */
+;*    Last change :  Mon May 22 12:10:23 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -29,59 +29,68 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-shoutcast socket)
    (with-trace 3 'http-response::http-response-shoutcast
-      (with-access::http-response-file r (start-line header content-type file)
-	 (let ((p (socket-output socket))
-	       (pf (open-input-file file)))
-	    (if (not (input-port? pf))
-		(raise
-		 (if (not (file-exists? file))
-		     (make-&io-file-not-found-error #f #f
-						    'http-response
-						    "File not found"
-						    file)
-		     (make-&io-port-error #f #f
-					  'http-response
-					  "File not found"
-					  file)))
-		(let* ((size (file-size file))
-		       (psize #e10240)
-		       (id3 (mp3-id3 file))
-		       (name (icy-name id3 file))
-		       (title (format "StreamTitle='~a';"
-				      (icy-title id3 file)))
-		       (l (string-length title))
-		       (l16 (+fx (/fx l 16) 1))
-		       (clen (+elong size
-				     (+elong
-				      (fixnum->elong (+fx 1 l))
-				      (/elong size psize)))))
-		   ;; regular header
-		   (http-write-line p start-line)
-		   (http-write-header p header)
-		   (http-write-line p "Connection: close")
-		   (http-write-line p "Content-Length: " clen)
-		   (when content-type
-		      (http-write-line p "Content-Type: " content-type))
-		   ;; shoutcast headers
-		   (http-write-line p "icy-metaint: " psize)
-		   (http-write-line p "icy-name: " name)
-		   (http-write-line p)
-		   ;; the body
-		   (with-trace 4 'http-response-file
-		      (unwind-protect
-			 (let ((pad (make-string (*fx l16 16) #a000)))
-			    (blit-string! title 0 pad 0 l)
-			    (send-chars pf p psize)
-			    (display (integer->char l16) p)
-			    (display pad p)
-			    (let loop ((offset psize))
-			       (when (<elong offset size)
-				  (send-chars pf p psize)
-				  (display #a000 p)
-				  (loop (+elong offset psize)))))
-			 (begin
-			    (close-input-port pf)
-			    (flush-output-port p))))))))))
+      (with-access::http-response-shoutcast r (request file)
+	 (if (authorized-path? request file)
+	     (shoutcast r socket)
+	     (user-access-denied request)))))
+
+;*---------------------------------------------------------------------*/
+;*    shoutcast ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (shoutcast r::http-response-shoutcast socket)
+   (with-access::http-response-file r (start-line header content-type file)
+      (let ((p (socket-output socket))
+	    (pf (open-input-file file)))
+	 (if (not (input-port? pf))
+	     (raise
+	      (if (not (file-exists? file))
+		  (make-&io-file-not-found-error #f #f
+						 'http-response
+						 "File not found"
+						 file)
+		  (make-&io-port-error #f #f
+				       'http-response
+				       "File not found"
+				       file)))
+	     (let* ((size (file-size file))
+		    (psize #e10240)
+		    (id3 (mp3-id3 file))
+		    (name (icy-name id3 file))
+		    (title (format "StreamTitle='~a';"
+				   (icy-title id3 file)))
+		    (l (string-length title))
+		    (l16 (+fx (/fx l 16) 1))
+		    (clen (+elong size
+				  (+elong
+				   (fixnum->elong (+fx 1 l))
+				   (/elong size psize)))))
+		;; regular header
+		(http-write-line p start-line)
+		(http-write-header p header)
+		(http-write-line p "Connection: close")
+		(http-write-line p "Content-Length: " clen)
+		(when content-type
+		   (http-write-line p "Content-Type: " content-type))
+		;; shoutcast headers
+		(http-write-line p "icy-metaint: " psize)
+		(http-write-line p "icy-name: " name)
+		(http-write-line p)
+		;; the body
+		(with-trace 4 'http-response-file
+		   (unwind-protect
+		      (let ((pad (make-string (*fx l16 16) #a000)))
+			 (blit-string! title 0 pad 0 l)
+			 (send-chars pf p psize)
+			 (display (integer->char l16) p)
+			 (display pad p)
+			 (let loop ((offset psize))
+			    (when (<elong offset size)
+			       (send-chars pf p psize)
+			       (display #a000 p)
+			       (loop (+elong offset psize)))))
+		      (begin
+			 (close-input-port pf)
+			 (flush-output-port p)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    icy-name ...                                                     */
