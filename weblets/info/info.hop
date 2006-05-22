@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat May 20 19:52:33 2006 (serrano)                */
+;*    Last change :  Mon May 22 10:43:31 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -51,7 +51,7 @@
    (let ((req (the-current-request))
 	 (hook (traffic-hook)))
       (hop-http-response-remote-hook-add! hook)
-      (if (not (user-authorized-service? (http-request-user req) 'info))
+      (if (not (user-authorized-service? (http-request-user req) 'admin))
 	  (user-access-denied req)
 	  (<HTML>
 	     (<HEAD> :css "hop-notepad.css" "hop-sorttable.css"

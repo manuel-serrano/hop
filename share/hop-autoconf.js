@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Sun May 21 09:37:26 2006 (serrano)                */
+/*    Last change :  Mon May 22 11:01:39 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -35,16 +35,18 @@ if( window.HTMLCollection == undefined ) {
 /*---------------------------------------------------------------------*/
 /*    hop_is_html_element ...                                          */
 /*---------------------------------------------------------------------*/
+var hop_is_html_element;
+
 if( window.HTMLElement == undefined ) {
    var hop_has_html_element = false;
    
-   function hop_is_html_element( obj ) {
+   hop_is_html_element = function hop_is_html_element( obj ) {
       return (obj instanceof Object && (typeof obj.innerHTML == "string"));
    } 
 } else {
    var hop_has_html_element = true;
    
-   function hop_is_html_element( obj ) {
+   hop_is_html_element = function hop_is_html_element( obj ) {
       return (obj instanceof HTMLElement);
    }
 }
@@ -53,25 +55,24 @@ if( window.HTMLElement == undefined ) {
 /*    function                                                         */
 /*    hop_make_xml_http_request ...                                    */
 /*---------------------------------------------------------------------*/
+var hop_make_xml_http_request;
+
 if( window.XMLHttpRequest != undefined ) {
-   function hop_make_xml_http_request() {
+   hop_make_xml_http_request = function hop_make_xml_http_request() {
       return new XMLHttpRequest();
    }
 } else {
    if( window.ActiveXObject != undefined ) {
-      function hop_make_xml_http_request() {
+      hop_make_xml_http_request = function hop_make_xml_http_request() {
 	 return new ActiveXObject( "Microsoft.XMLHTTP" );
       }
    } else {
       if( XMLHttpRequest != undefined ) {
-	 function hop_make_xml_http_request() {
+	 hop_make_xml_http_request = function hop_make_xml_http_request() {
 	    return new XMLHttpRequest();
 	 }
       } else {
-	 /* some browsers such as opera 9.0b get confused if the */
-	 /* variable is defined as a global function             */
-	 var hop_make_xml_http_request = function() {
-	    alert( "PAS GLOP" );
+	 hop_make_xml_http_request = function hop_make_xml_http_request() {
 	    alert( "*** ERROR: Don't know how to create XMLHttpRequest" );
 	 }
       }
