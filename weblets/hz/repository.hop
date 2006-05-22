@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Mon May 22 13:00:12 2006 (serrano)                */
+;*    Last change :  Mon May 22 13:12:15 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -79,13 +79,13 @@
 ;*---------------------------------------------------------------------*/
 (define (hz->info path name)
    (let ((p (open-input-gzip-file path))
-	 (info (make-file-name "etc" (string-append name ".info"))))
+	 (info (make-file-path name "etc" (string-append name ".info"))))
       (when (input-port? p)
 	 (unwind-protect
 	    (let loop ()
 	       (let ((h (tar-read-header p)))
 		  (when (tar-header? h)
-		     (if (string=? (basename (tar-header-name h)) info)
+		     (if (string=? (tar-header-name h) info)
 			 (read p)
 			 (begin
 			    (tar-read-block h p)

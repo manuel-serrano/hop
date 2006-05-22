@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Mon May 22 07:58:28 2006 (serrano)                */
+;*    Last change :  Mon May 22 13:16:46 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -51,7 +51,7 @@
 ;*    hz-repository ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-parameter hz-repository
-   "/users/hop/hop/repository")
+   (make-file-name (hz-rc-directory) "repository"))
    
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-inspector-url ...                                          */
