@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon May 22 12:10:11 2006 (serrano)                */
+;*    Last change :  Mon May 22 13:40:10 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -149,7 +149,7 @@
 	       (http-write-line p "Server: " server))
 	    (when (>elong content-length #e0)
 	       (http-write-line p "Content-Length: " content-length))
-	    (http-write-line p "Hop-Json: true")
+	    (http-write-line p "hop-json: true")
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js

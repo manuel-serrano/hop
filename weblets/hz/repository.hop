@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Mon May 22 13:12:15 2006 (serrano)                */
+;*    Last change :  Mon May 22 13:40:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -54,9 +54,7 @@
 ;*    hz/query-entry ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/query-entry val)
-   (let ((entry (hz-db-get-entry-by-name (hz-get-repository-db) val)))
-      (instantiate::http-response-js
-	 (body entry))))
+   (hz-db-get-entry-by-name (hz-get-repository-db) val))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/repository ...                                                */
