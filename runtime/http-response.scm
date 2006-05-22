@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon May 22 13:40:10 2006 (serrano)                */
+;*    Last change :  Mon May 22 17:07:21 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -239,7 +239,7 @@
 				(send-chars pf p)
 				(close-input-port pf))))
 		       (flush-output-port p))))
-	     (user-access-denied request)))))
+	     (http-response (user-access-denied request) socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cgi-env ...                                                  */
@@ -321,7 +321,7 @@
 			 (send-chars (process-output-port proc) p)
 			 (close-input-port (process-output-port proc)))
 		      (flush-output-port p))))
-	     (user-access-denied request)))))
+	     (http-response (user-access-denied request) socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-put ...                            */
