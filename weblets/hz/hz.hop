@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Mon May 22 14:04:42 2006 (serrano)                */
+;*    Last change :  Mon May 22 14:13:15 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -164,7 +164,7 @@
 ;*    hz-list ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (hz-list req)
-   (let ((db (hz-get-repository-db)))))
+   (let ((db (hz-get-repository-db)))
       (<HTML>
 	 (<HEAD> :dir (hz-dir)
 		 :jscript "hop-notepad.js" :css "hop-notepad.css"
