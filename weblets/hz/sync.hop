@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Mon May 22 07:56:56 2006 (serrano)                */
+;*    Last change :  Mon May 22 16:04:12 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -97,8 +97,11 @@
 			  db
 			  (vector-ref v ni) (vector-ref v ci))))
 		   (if (dbhz? o)
-		       (with-access::dbhz o (version)
+		       (with-access::dbhz o (version install)
 			  (when (string>? (vector-ref v vi) version)
+			     (list-set! vals
+					(hz-db-install-column-index)
+					install)
 			     (apply hz-db-update-entry db vals)))
 		       (apply hz-db-add-entry db (cons stamp (cdr vals))))))
 	     

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Sat May 20 09:40:24 2006 (serrano)                */
+;*    Last change :  Mon May 22 15:29:54 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -220,11 +220,9 @@
 	     :class "action"
 	     (<SPAN>
 		:title "Run the weblet in a new window"
-		:onclick ~(iwindow-open
-			   "Preferences"
+		:onclick ~(window.open
 			   $(format "~a/~a/preferences" (hop-service-base) name)
-			   false false
-			   640 400 (/ (- window.innerWidth 650) 2) 50)
+			   $name)
 		"Preferences"))))
 
       (define (<UNINSTALL> id)
