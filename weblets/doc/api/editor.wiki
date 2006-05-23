@@ -51,6 +51,11 @@ using //editors// must include in their header, the following statement:
 </markup>
 </server>
 
+== Style ==
+<style>
+This section describes the various CSS elements used to configure
+//Editors//.
+
 === ++hop-editor.css++ ===
 
 The file ++hop-editor.css++ contains the default graphical configuration.

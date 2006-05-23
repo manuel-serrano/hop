@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon May 22 14:34:02 2006 (serrano)                */
+;*    Last change :  Tue May 23 09:14:36 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -20,7 +20,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hop)
    (let ((req (the-current-request)))
-      (if (or (not (users-added?)) (authorized-service? req 'hop))
+      (if (authorized-service? req 'hop)
 	  (hop-main req)
 	  (user-access-denied req))))
 
@@ -42,7 +42,10 @@
       (<TABLE>
 	 :class "directory"
 	 (<TR> (<TH> :class "title" "Builtin Weblets"))
-	 (<TR> (<TD> (<TABLE> :class "weblets"
+	 (<TR> (<TD> :align "left"
+		     (<TABLE> :class "weblets"
+			      (<COLGROUP>
+				 (<COL> :span 6 :width "16%"))
 			      (<TR> (cons
 				     (<HOME> (hop-weblets-directory))
 				     (map (lambda (x)
@@ -50,7 +53,11 @@
 					  (hop-builtin-weblets)))))))
 	 (<TR> (<TD> "&nbsp;"))
 	 (<TR> (<TH> :class "title" "Additional Weblets"))
-	 (<TR> (<TH> (<TABLE> :class "weblets" (hop-additional-weblets)))))))
+	 (<TR> (<TH> :align "left"
+		     (<TABLE> :class "weblets"
+			      (<COLGROUP>
+				 (<COL> :span 6 :width "16%"))
+			      (hop-additional-weblets)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-additional-weblets ...                                       */

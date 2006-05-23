@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Mon May 22 16:08:35 2006 (serrano)                */
+;*    Last change :  Tue May 23 05:22:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -27,9 +27,10 @@
 ;*    doc ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (doc)
-   (if (and (users-added?) (not (authorized-service? req 'doc)))
-       (user-access-denied req)
-       (doc-main (the-current-request))))
+   (let ((req (the-current-request)))
+      (if (authorized-service? req 'doc)
+	  (doc-main req)
+	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-main ...                                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Apr 26 13:17:40 2006 (serrano)                */
+;*    Last change :  Tue May 23 07:38:33 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -157,7 +157,8 @@
    (if (string? path)
        (when (file-exists? path)
 	  (hop-verb 2 "Loading `" path "'...\n")
-	  (hop-load path))))
+	  (hop-load path)
+	  (hop-rc-loaded!))))
       
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-rc ...                                                  */

@@ -90,8 +90,7 @@ sake of the example, let us study the implementation of the authentication of
      (let ((req (the-current-request)))
         (if (users-added?)
             (let ((user (hz-get-access req)))
-	       (if (and (user? user)
-		        (user-authorized-service? user 'hz))
+	       (if (and (user? user) (authorized-service? req 'hz))
 		   (hz-main req user)
 		   (hz-authenticate req)))
             (hz-main req #f 'local))))
@@ -190,6 +189,50 @@ In order to log out, users use:
         ~(let ((path $path))
 	    (cookie-remove! "hop_hz" path)
 	    (set! location path))))
+</code>
+
+== Granting access globally ==
+
+Access can be granted //globally// using the ++hop-path-access-control++
+and ++hop-service-access-control++ parameters. These two parameters
+return procedure acception two parameters:
+
+  - the current request (++the-current-request++),
+  - either a string denoting the path ++hop-path-access-control++ or a
+ symbol denoting the service name of ++hop-service-access-control++.
+
+
+The function ++authorized-path?++ checks is a path can be served. In order
+to take its decision, this function first checks if:
+  - there is an authenticated user associated with the request,
+  - if that user is granted the permission to access the file,
+  - if one the groups the user belongs to is granted the permission to 
+ access the file.
+
+
+If this first test fails, the procedure of ++hop-path-access-control++
+is invoked in order to check if the file is //globally//
+authorized. The function ++authorized-service?++ acts in a similar way
+for executing services.
+
+~~ For the sake of the example, let us consider a HOP sessions that grants
+access to the directory ++/tmp++ for all requests event those were no
+user is authenticated. This can be implemented as:
+
+<code>
+  (hop-path-access-control-set!
+    (lambda (req path)
+       (substring-at? path "/tmp" 0)))
+</code>
+
+~~ We can modify the previous example for granting access to ++/tmp++ only
+for requests associated with an authenticated user:
+
+<code>
+  (hop-path-access-control-set!
+    (lambda (req path)
+       (and (substring-at? path "/tmp" 0)
+            (user? (http-request-user req)))))
 </code>
 
 </doc>

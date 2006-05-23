@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon May 22 13:40:20 2006 (serrano)                */
+/*    Last change :  Tue May 23 09:06:22 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -249,35 +249,35 @@ function hop_inner( method, service, success, failure, sync, mute ) {
    var http = hop_make_xml_http_request();
    var vis = false;
 
-   if( !mute ) {
+   if( mute != true ) {
       vis = document.createElement( "div" );
-      vis.style.setProperty( "position", "absolute", "" );
-      vis.style.setProperty( "top", "5", "" );
-      vis.style.setProperty( "right", "5", "" );
-      vis.style.setProperty( "z-index", "100", "" );
-      vis.style.setProperty( "background", "#eeeeee", "" );
-      vis.style.setProperty( "-moz-opacity", "0.7", "" );
-      vis.style.setProperty( "border-color", "black", "" );
-      vis.style.setProperty( "border-style", "outset", "" );
-      vis.style.setProperty( "border-width", "1px", "" );
-      vis.style.setProperty( "padding", "2px", "" );
+      
+      hop_style_set( vis, "position", "absolute" );
+      hop_style_set( vis, "top", "5" );
+      hop_style_set( vis, "right", "5" );
+      hop_style_set( vis, "z-index", "100" );
+      hop_style_set( vis, "background", "#eeeeee" );
+      hop_style_set( vis, "-moz-opacity", "0.7" );
+      hop_style_set( vis, "border-color", "black" );
+      hop_style_set( vis, "border-style", "outset" );
+      hop_style_set( vis, "border-width", "1px" );
+      hop_style_set( vis, "padding", "2px" );
+      
       vis.title = service;
 
       var img = document.createElement( "img" );
       img.classname = "hop-busy-anim";
       img.src = hop_busy_anim;
-      
+
       vis.appendChild( img );
       document.body.appendChild( vis );
    }
-
-   http.open( method, service, (sync != true) );
 
    http.onreadystatechange = function() {
       if( http.readyState == 4 ) {
 	 var status;
 
-	 if( !mute ) {
+	 if( mute != true ) {
 	    document.body.removeChild( vis );
 	 }
 
@@ -319,7 +319,7 @@ function hop_inner( method, service, success, failure, sync, mute ) {
 	       alert( "*** Hop Authentication Error " + http.status + ": `"
 			 + http.responseText + "'" );
 	       break;
-	    
+
 	    default:
 	       if( (status > 200) && (status < 300) ) {
  	          if( success ) {
@@ -336,8 +336,11 @@ function hop_inner( method, service, success, failure, sync, mute ) {
       }
    }
 
+   http.open( method, service, (sync != true) );
+
    http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
 /*    http.setTimeouts = 1000;                                         */
+
    http.send( null );
 
    return http;
