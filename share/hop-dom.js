@@ -39,7 +39,7 @@ function dom_create( tag, args ) {
       var k = args[ i - 1 ];
       
       if( sci_isKeyword( k ) ) {
-	 el.setAttribute( sci_keyword2string( k ), args[ i ] );
+	 el.setAttribute( k.toJSString(), args[ i ] );
 	 i -= 2;
       } else {
 	 dom_add_child( el, args[ i ] );

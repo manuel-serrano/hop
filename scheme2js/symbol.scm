@@ -74,6 +74,7 @@
 			       Set!
 			       Program
 			       Scope
+			       With-handler
 			       Lambda)
 	     (tree.traverse symbol-table #f)))
 
@@ -115,6 +116,13 @@
       (set! this.scope local-scope)
       (this.traverse2 (add-scope symbol-table local-scope) #f)))
 
+(define-pmethod (With-handler-collect symbol-table is-global?)
+   (let ((local-scope (make-scope)))
+      (set! this.scope local-scope) ;; just for the exception
+      (this.exception.traverse (add-scope symbol-table local-scope) #f)
+      (this.catch.traverse symbol-table is-global?)
+      (this.body.traverse symbol-table is-global?)))
+
 (define-pmethod (Lambda-collect symbol-table is-global?)
    (let ((local-scope (make-scope)))
       (set! this.scope local-scope)
@@ -137,7 +145,7 @@
 	    (var (set! this.var var))
 	    ((config 'unresolved=JS)
 	     (js-symbol-add! this.id (string->symbol (mangle-JS-sym this.id)))
-	     (verbose "Unresolved symbol " this.id " assumed to be a JS-var")
+	     (verbose "Unresolved symbol '" this.id "' assumed to be a JS-var")
 	     (pcall this Var-ref-resolve symbol-table))
 	    (else
 	     (error #f "Unresolved symbol: " this.id)))))
@@ -150,7 +158,12 @@
    (define-pmethod (Scope-resolve symbol-table)
       ;; if 'this' is a Lambda, we will revisit the formals, but they are
       ;; optimized anyways.
-      (pcall this Node-resolve (add-scope symbol-table this.scope)))
+      (this.traverse1 (add-scope symbol-table this.scope)))
+
+   (define-pmethod (With-handler-resolve symbol-table)
+      ;; don't need to revisit the exception-var-decl
+      (this.catch.traverse (add-scope symbol-table this.scope))
+      (this.body.traverse symbol-table))
    
    (define-pmethod (Let-form-resolve symbol-table)
       (let* ((extended-table (add-scope symbol-table this.scope))
@@ -173,5 +186,6 @@
 			       Var-ref
 			       Decl
 			       Scope
+			       With-handler
 			       Let-form)
 	     (tree.traverse symbol-table)))

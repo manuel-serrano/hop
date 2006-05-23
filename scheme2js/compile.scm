@@ -11,7 +11,7 @@
 	   nodes
 	   var
 	   gen-code
-	   statements
+	   mark-statements
 	   locals
 	   liveness
 	   constants
@@ -38,8 +38,8 @@
    ;;              method, that adds the location to the output.
    (overload compile-gen-code compile
 	     (Node Program Part Node Const Var-ref Lambda
-		   If Case Clause Set! Begin Bind-exit
-		   Call Tail-rec Tail-rec-call Return
+		   If Case Clause Set! Begin Bind-exit With-handler
+		   Call Tail-rec While Tail-rec-call Return
 		   Closure-alloc Label Break Pragma)
 	     (overload compile location (Node)
 		       (tree.compile))))
@@ -188,7 +188,14 @@
 
 (define-pmethod (Bind-exit-compile)
    (gen-code-bind-exit (this.escape.compile)
-		       (this.body.compile)))
+		       (this.body.compile)
+		       (this.result-decl.compile)
+		       (this.invoc-body.compile)))
+
+(define-pmethod (With-handler-compile)
+   (gen-code-with-handler (this.exception.compile)
+			  (this.catch.compile)
+			  (this.body.compile)))
 
 (define-pmethod (Call-compile)
    (check-stmt-form
@@ -208,6 +215,14 @@
       (gen-code-while (true.compile)
 		      body
 		      label)))
+
+(define-pmethod (While-compile)
+   ;; while nodes shouldn't need their label.
+   (let* ((test (this.test.compile))
+	  (body (this.body.compile)))
+      (gen-code-while test
+		      body
+		      #f)))
 
 (define-pmethod (Tail-rec-call-compile)
    (gen-code-continue this.label))

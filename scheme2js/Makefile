@@ -34,7 +34,7 @@ _BGL_OBJECTS	= capture compile constants expanders \
 	tail-rec tail transform-util traverse var expand verbose \
 	dot-expand allocate-names config locals use-count nested-funs \
 	constant-propagation fun-size rm-unused-vars captured-vars \
-	free-vars var-propagation
+	free-vars var-propagation mark-statements while
 
 _OBJECTS	= $(_BGL_OBJECTS)
 
@@ -68,6 +68,9 @@ include ../etc/Makefile.library
 
 build: $(BACKEND) runtime-build
 
+scheme2js: $(OBJECTS)
+	$(BIGLOO) -o $@ $^
+
 native: heap-c lib-c
 jvm: heap-jvm lib-jvm
 dotnet: heap-jvm lib-dotnet
@@ -82,12 +85,12 @@ uninstall: runtime-uninstall
 
 SCHEME2JS_RUNTIME = runtime
 
-runtime-build: $(SCHEME2JS_RUNTIME)/runtime-interface.js $(SCHEME2JS_RUNTIME)/runtime_mapping.alist
+runtime-build: $(SCHEME2JS_RUNTIME)/runtime-interface.js $(SCHEME2JS_RUNTIME)/runtime_mapping.sch
 
 $(SCHEME2JS_RUNTIME)/exporter: $(SCHEME2JS_RUNTIME)/exporter.scm
 	$(BIGLOO) -o $@ $^
 
-$(SCHEME2JS_RUNTIME)/runtime_mapping.alist: $(SCHEME2JS_RUNTIME)/runtime.js $(SCHEME2JS_RUNTIME)/exporter
+$(SCHEME2JS_RUNTIME)/runtime_mapping.sch: $(SCHEME2JS_RUNTIME)/runtime.js $(SCHEME2JS_RUNTIME)/exporter
 	$(SCHEME2JS_RUNTIME)/exporter $< mapping > $@
 
 $(SCHEME2JS_RUNTIME)/runtime-interface.js: $(SCHEME2JS_RUNTIME)/runtime.js $(SCHEME2JS_RUNTIME)/exporter
@@ -95,7 +98,7 @@ $(SCHEME2JS_RUNTIME)/runtime-interface.js: $(SCHEME2JS_RUNTIME)/runtime.js $(SCH
 
 runtime-clean:
 	/bin/rm -f $(SCHEME2JS_RUNTIME)/exporter
-	/bin/rm -f $(SCHEME2JS_RUNTIME)/runtime_mapping.alist
+	/bin/rm -f $(SCHEME2JS_RUNTIME)/runtime_mapping.sch
 	/bin/rm -f $(SCHEME2JS_RUNTIME)/runtime-interface.js
 	/bin/rm -f $(SCHEME2JS_RUNTIME)/*.o
 
@@ -130,62 +133,93 @@ ude:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependency                                              */
 #*---------------------------------------------------------------------*/
-scheme2js.scm: $(SCHEME2JS_RUNTIME)/runtime_mapping.alist
+scheme2js.scm: $(SCHEME2JS_RUNTIME)/runtime_mapping.sch
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
 o/var.o ./var.class: ./nodes.sch ./protobject.sch 
+o/locals.o locals.class: ./tools.sch ./nodes.sch ./protobject.sch 
+o/rm-unused-vars.o ./rm-unused-vars.class: ./tools.sch ./nodes.sch       \
+      ./protobject.sch 
 o/statements.o ./statements.class: ./nodes.sch ./protobject.sch 
 o/constants.o constants.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/protobject.o protobject.class: ./protobject.sch 
+o/protobject.o protobject.class: ./tools.sch ./protobject.sch 
 o/traverse.o ./traverse.class: ./nodes.sch ./protobject.sch 
-o/tail-rec.o tail-rec.class: ./nodes.sch ./protobject.sch 
+o/tail-rec.o tail-rec.class: ./tools.sch ./nodes.sch ./protobject.sch 
 o/transform-util.o transform-util.class: ./nodes.sch ./protobject.sch 
 o/liveness.o liveness.class: ./nodes.sch ./protobject.sch 
-o/collect-vars.o collect-vars.class: ./tools.sch ./nodes.sch             \
-      ./protobject.sch 
 o/symbol.o ./symbol.class: ./nodes.sch ./protobject.sch 
-o/pobject-conv.o pobject-conv.class: ./protobject.sch 
+o/allocate-names.o ./allocate-names.class: ./tools.sch ./nodes.sch       \
+      ./protobject.sch 
+o/pobject-conv.o pobject-conv.class: ./nodes.sch ./protobject.sch 
 o/gen-code.o ./gen-code.class: ./tools.sch 
+o/while.o while.class: ./tools.sch ./nodes.sch ./protobject.sch 
 o/nodes.o nodes.class: ./protobject.sch 
 o/compile.o ./compile.class: ./compile-optimized-boolify.scm             \
       ./compile-optimized-call.scm ./tools.sch ./nodes.sch               \
       ./protobject.sch 
+o/mark-statements.o ./mark-statements.class: ./nodes.sch                 \
+      ./protobject.sch 
 o/traverse.o traverse.class: ./nodes.sch ./protobject.sch 
 o/transform-util.o ./transform-util.class: ./nodes.sch ./protobject.sch 
-o/inline.o ./inline.class: ./nodes.sch ./protobject.sch 
+o/inline.o ./inline.class: ./tools.sch ./nodes.sch ./protobject.sch 
 o/compile.o compile.class: ./compile-optimized-boolify.scm               \
       ./compile-optimized-call.scm ./tools.sch ./nodes.sch               \
       ./protobject.sch 
+o/use-count.o ./use-count.class: ./nodes.sch ./protobject.sch 
 o/nodes.o ./nodes.class: ./protobject.sch 
+o/captured-vars.o ./captured-vars.class: ./tools.sch ./nodes.sch         \
+      ./protobject.sch 
 o/symbol.o symbol.class: ./nodes.sch ./protobject.sch 
+o/while.o ./while.class: ./tools.sch ./nodes.sch ./protobject.sch 
+o/var-propagation.o var-propagation.class: ./nodes.sch ./protobject.sch 
+o/nested-funs.o ./nested-funs.class: ./tools.sch ./nodes.sch             \
+      ./protobject.sch 
+o/free-vars.o ./free-vars.class: ./tools.sch ./nodes.sch                 \
+      ./protobject.sch 
 o/statements.o statements.class: ./nodes.sch ./protobject.sch 
+o/fun-size.o ./fun-size.class: ./nodes.sch ./protobject.sch 
 o/node-elimination.o node-elimination.class: ./nodes.sch                 \
       ./protobject.sch 
-o/js-interface.o js-interface.class: ./runtime/runtime_mapping.alist     \
-      ./runtime_mapping_hack.sch 
-o/protobject.o ./protobject.class: ./protobject.sch 
+o/js-interface.o js-interface.class: ./runtime/runtime_mapping.sch 
+o/protobject.o ./protobject.class: ./tools.sch ./protobject.sch 
 o/capture.o ./capture.class: ./tools.sch ./nodes.sch ./protobject.sch 
 o/tail.o ./tail.class: ./nodes.sch ./protobject.sch 
-o/collect-vars.o ./collect-vars.class: ./tools.sch ./nodes.sch           \
-      ./protobject.sch 
 o/capture.o capture.class: ./tools.sch ./nodes.sch ./protobject.sch 
-o/pobject-conv.o ./pobject-conv.class: ./protobject.sch 
-o/inline.o inline.class: ./nodes.sch ./protobject.sch 
+o/use-count.o use-count.class: ./nodes.sch ./protobject.sch 
+o/constant-propagation.o ./constant-propagation.class: ./nodes.sch       \
+      ./protobject.sch 
+o/pobject-conv.o ./pobject-conv.class: ./nodes.sch ./protobject.sch 
+o/inline.o inline.class: ./tools.sch ./nodes.sch ./protobject.sch 
+o/free-vars.o free-vars.class: ./tools.sch ./nodes.sch ./protobject.sch 
 o/tail.o tail.class: ./nodes.sch ./protobject.sch 
 o/gen-code.o gen-code.class: ./tools.sch 
 o/node-elimination.o ./node-elimination.class: ./nodes.sch               \
       ./protobject.sch 
-o/tail-rec.o ./tail-rec.class: ./nodes.sch ./protobject.sch 
+o/constant-propagation.o constant-propagation.class: ./nodes.sch         \
+      ./protobject.sch 
+o/rm-unused-vars.o rm-unused-vars.class: ./tools.sch ./nodes.sch         \
+      ./protobject.sch 
+o/tail-rec.o ./tail-rec.class: ./tools.sch ./nodes.sch ./protobject.sch 
+o/nested-funs.o nested-funs.class: ./tools.sch ./nodes.sch               \
+      ./protobject.sch 
+o/locals.o ./locals.class: ./tools.sch ./nodes.sch ./protobject.sch 
 o/var.o var.class: ./nodes.sch ./protobject.sch 
 o/liveness.o ./liveness.class: ./nodes.sch ./protobject.sch 
+o/side.o ./side.class: ./nodes.sch ./protobject.sch 
 o/constants.o ./constants.class: ./tools.sch ./nodes.sch                 \
       ./protobject.sch 
-o/side.o ./side.class: ./nodes.sch ./protobject.sch 
-o/js-interface.o ./js-interface.class: ./runtime/runtime_mapping.alist   \
-      ./runtime_mapping_hack.sch 
+o/captured-vars.o captured-vars.class: ./tools.sch ./nodes.sch           \
+      ./protobject.sch 
+o/fun-size.o fun-size.class: ./nodes.sch ./protobject.sch 
+o/mark-statements.o mark-statements.class: ./nodes.sch ./protobject.sch 
+o/js-interface.o ./js-interface.class: ./runtime/runtime_mapping.sch 
+o/var-propagation.o ./var-propagation.class: ./nodes.sch                 \
+      ./protobject.sch 
+o/allocate-names.o allocate-names.class: ./tools.sch ./nodes.sch         \
+      ./protobject.sch 
 o/side.o side.class: ./nodes.sch ./protobject.sch 
 
 #bdepend stop

@@ -99,10 +99,61 @@
 	       (args (separated-list (map-node-compile (cddr operands))
 				     ", ")))
 	   (string-append o "[" field "](" args ")"))))
-	   
+
+(define (symbolAppend_immutable-op operands)
+   (define (sliced-symbols operands)
+      (map (lambda (operand)
+	      (if (instance-of? operand (node 'Const))
+		  (if (symbol? operand.value)
+		      (gen-code-symbol-without-prefix operand.value)
+		      (error "symbolAppend_immutable-op"
+			     "symbol-append requires symbols as arguments"
+			     operand.value))
+		  (string-append (operand.compile) ".slice(1)"))) ;; sc_SYMBOL_PREFIX_LENGTH
+	   operands))
+
+   (let ((nb-operands (length operands)))
+      (cond
+	 ((= nb-operands 0) "'\\u1E9C'") ;; sc_SYMBOL_PREFIX
+	 ((= nb-operands 1) ((car operands).compile))
+	 (else
+	  (let ((compiled-first-operand ((car operands).compile))
+		(without-prefixes (sliced-symbols (cdr operands))))
+	     (let loop ((res compiled-first-operand)
+			(rest without-prefixes))
+		(if (null? rest)
+		    (string-append "(" res ")")
+		    (loop (string-append res "+" (car rest))
+			  (cdr rest)))))))))
+
+(define (stringAppend_mutable-op operands)
+   (define (string-vals operands)
+      (map (lambda (operand)
+	      (if (instance-of? operand (node 'Const))
+		  (if (string? operand.value)
+		      (gen-code-string-val operand.value)
+		      (error "stringAppend_mutable-op"
+			     "string-append requires strings as arguments"
+			     operand.value))
+		  (string-append (operand.compile) ".val")))
+	   operands))
+
+   (let ((nb-operands (length operands)))
+      (cond
+	 ((= nb-operands 0) "(new sc_String(''))")
+	 ((= nb-operands 1) ((car operands).compile))
+	 (else
+	  (let ((vals (string-vals operands)))
+	     (let loop ((res (car vals))
+			(rest (cdr vals)))
+		(if (null? rest)
+		    (string-append "(new sc_String(" res "))")
+		    (loop (string-append res "+" (car rest))
+			  (cdr rest)))))))))
+
+   
 (define *optimizable-operators*
    `(
-     ;; TODO: add string-append
     (sci_isEq ,(infix-op 2 2 "==="))
     (sci_isEqv ,(infix-op 2 2 "==="))
 
@@ -169,19 +220,46 @@
 
     (sci_isNull ,(postfix-op " === null"))
 
-    (sci_isSymbol ,(hole-op 1 "typeof " 'hole " === 'string'"))
+    (sci_isSymbol_mutable ,(hole-op 1 "typeof " 'hole " === 'string'"))
 
-    (sci_isString ,(postfix-op " instanceof sc_String"))
-    (sci_isStringEqual ,(hole-op 2 'str1 ".val === " 'str2 ".val"))
-    (sci_isStringLess ,(hole-op 2 'str1 ".val < " 'str2 ".val"))
-    (sci_isStringGreater ,(hole-op 2 'str1 ".val > " 'str2 ".val"))
-    (sci_isStringLessEqual ,(hole-op 2 'str1 ".val <= " 'str2 ".val"))
-    (sci_isStringGreaterEqual ,(hole-op 2 'str1 ".val >= " 'str2 ".val"))
-    (sci_symbolAppend ,(infix-op 0 #f "+" "''"))
-    (sci_symbol2string ,(hole-op 1 "new sc_String(" 'sym ")"))
-    (sci_string2symbol ,(postfix-op ".val"))
-    (sci_char2symbol ,(postfix-op ".val"))
-    (sci_char2string ,(hole-op 1 "new sc_string(" 'char ".val)"))
+    (sci_isString_mutable ,(postfix-op " instanceof sc_String"))
+    (sci_isStringEqual_mutable ,(hole-op 2 'str1 ".val === " 'str2 ".val"))
+    (sci_isStringLess_mutable ,(hole-op 2 'str1 ".val < " 'str2 ".val"))
+    (sci_isStringGreater_mutable ,(hole-op 2 'str1 ".val > " 'str2 ".val"))
+    (sci_isStringLessEqual_mutable ,(hole-op 2 'str1 ".val <= " 'str2 ".val"))
+    (sci_isStringGreaterEqual_mutable ,(hole-op 2 'str1 ".val >= " 'str2 ".val"))
+    (sci_isStringCIEqual_mutable ,(hole-op 2 'str1 ".val.toLowerCase() === " 'str2 ".val.toLowerCase()"))
+    (sci_isStringCILess_mutable ,(hole-op 2 'str1 ".val.toLowerCase() < " 'str2 ".val.toLowerCase()"))
+    (sci_isStringCIGreater_mutable ,(hole-op 2 'str1 ".val.toLowerCase() > " 'str2 ".val.toLowerCase()"))
+    (sci_isStringCILessEqual_mutable ,(hole-op 2 'str1 ".val.toLowerCase() <= " 'str2 ".val.toLowerCase()"))
+    (sci_isStringCIGreaterEqual_mutable ,(hole-op 2 'str1 ".val.toLowerCase() >= " 'str2 ".val.toLowerCase()"))
+
+    (sci_isStringEqual_immutable ,(hole-op 2 'str1 " === " 'str2))
+    (sci_isStringLess_immutable ,(hole-op 2 'str1 " < " 'str2))
+    (sci_isStringGreater_immutable ,(hole-op 2 'str1 " > " 'str2))
+    (sci_isStringLessEqual_immutable ,(hole-op 2 'str1 " <= " 'str2))
+    (sci_isStringGreaterEqual_immutable ,(hole-op 2 'str1 " >= " 'str2))
+    (sci_isStringCIEqual_immutable ,(hole-op 2 'str1 ".toLowerCase() === " 'str2 ".toLowerCase()"))
+    (sci_isStringCILess_immutable ,(hole-op 2 'str1 ".toLowerCase() < " 'str2 ".toLowerCase()"))
+    (sci_isStringCIGreater_immutable ,(hole-op 2 'str1 ".toLowerCase() > " 'str2 ".toLowerCase()"))
+    (sci_isStringCILessEqual_immutable ,(hole-op 2 'str1 ".toLowerCase() <= " 'str2 ".toLowerCase()"))
+    (sci_isStringCIGreaterEqual_immutable ,(hole-op 2 'str1 ".toLowerCase() >= " 'str2 ".toLowerCase()"))
+
+    (sci_symbolAppend_mutable ,(infix-op 0 #f "+" "''"))
+    (sci_symbolAppend_immutable ,symbolAppend_immutable-op)
+    (sci_symbol2string_mutable ,(hole-op 1 "new sc_String(" 'sym ")"))
+    (sci_symbol2string_immutable ,(postfix-op ".slice(1)")) ;; sc_SYMBOL_PREFIX_LENGTH
+    (sci_string2symbol_mutable ,(postfix-op ".val"))
+    (sci_string2symbol_immutable
+     ,(prefix-op "'\\u1E9C' +")) ;; sc_SYMBOL_PREFIX
+    (sci_char2symbol_mutable ,(postfix-op ".val"))
+    (sci_char2symbol_immutable
+     ,(hole-op 1 "'\\u1E9C' + " 'c ".val")) ;; sc_SYMBOL_PREFIX
+    (sci_char2string_mutable ,(hole-op 1 "new sc_string(" 'char ".val)"))
+    (sci_char2string_immutable ,(postfix-op ".val"))
+
+    (sci_stringAppend_mutable ,stringAppend_mutable-op)
+    (sci_stringAppend_immutable ,(infix-op 0 #f "+" "''"))
 
     (sci_isVector ,(postfix-op " instanceof sc_Vector"))
     (sci_vector ,vector-op)
@@ -212,7 +290,7 @@
    (if (inherits-from? operator (node 'Var-ref))
        (let* ((var operator.var)
 	      (id var.js-id)
-	      (optimize-fun (and (not operator.var.muted?)
+	      (optimize-fun (and (not var.muted?)
 				 id
 				 (assq id *optimizable-operators*))))
 	  (and optimize-fun ((cadr optimize-fun) operands)))))

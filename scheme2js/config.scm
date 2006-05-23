@@ -3,15 +3,13 @@
 	   (config-set! conf value)
 	   (config conf)))
 
-(define *config* #unspecified)
-
 (define (config-init! . Lconfig)
-   (set! *config* (if (null? Lconfig)
-			(make-hashtable)
-			(car Lconfig))))
+   (thread-parameter-set! '*config* (if (null? Lconfig)
+					(make-hashtable)
+					(car Lconfig))))
 
 (define (config conf)
-   (hashtable-get *config* conf))
+   (hashtable-get (thread-parameter '*config*) conf))
 
 (define (config-set! conf value)
-   (hashtable-put! *config* conf value))
+   (hashtable-put! (thread-parameter '*config*) conf value))

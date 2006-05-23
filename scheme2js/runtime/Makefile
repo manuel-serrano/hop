@@ -1,13 +1,15 @@
-all: runtime_mapping.alist runtime-interface.js
+all: runtime_mapping.sch runtime-interface.js
 
 exporter: exporter.scm
 	bigloo -o $@ $^
 
-runtime_mapping.alist: runtime.js exporter
+runtime_mapping.sch: runtime.js exporter
 	./exporter $< mapping > $@
 
 runtime-interface.js: runtime.js exporter
 	./exporter $< interface > $@
 
 clean:
-	rm -f exporter runtime_mapping.alist runtime-interface.js *.o
+	rm -f exporter;
+	rm -f *.o;
+	rm -f runtime_mapping.sch runtime-interface.js

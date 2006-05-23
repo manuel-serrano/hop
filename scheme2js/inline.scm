@@ -32,20 +32,22 @@
 
 (define (inline! tree)
    (if (config 'do-inlining)
-       (begin
+       (let ((called-inline-funs? #f))
 	  (verbose "inlining")
 	  (side-effect tree)
 	  (use-count tree)
 	  (if (single-use! tree)
 	      (begin
 		 (inline-funs! tree)
+		 (set! called-inline-funs? #t)
 		 (side-effect tree)
 		 (use-count tree)))
 	  (fun-size tree)
 	  (nested-funs tree)
 	  (locals tree
 		  #t)   ;; collect formals.
-	  (if (clone-funs tree)
+	  (if (or (clone-funs tree)
+		  (not called-inline-funs?))
 	      (inline-funs! tree))
 	  )))
 
@@ -123,6 +125,10 @@
 	 (set! res.label (label-map res.label))
 	 res))
 
+   (define-pmethod (With-handler-deep-clone cloned-ht)
+      (to-clone-add! this.local-vars)
+      (pcall this pobject-deep-clone cloned-ht))
+   
    (define-pmethod (Label-deep-clone cloned-ht)
       (let ((res (pcall this pobject-deep-clone cloned-ht)))
 	 (set! res.id (label-map res.id))
@@ -139,6 +145,7 @@
 				    Call
 				    Tail-rec
 				    Tail-rec-call
+				    With-handler
 				    Label
 				    Break)
 	     (pcall fun pobject-deep-clone (make-eq-hashtable))))
@@ -186,11 +193,13 @@
 	     (delete! this.cloned-fun)))
       (if (inherits-from? this.operator (node 'Lambda))
 	  (let* ((fun this.operator)
-		 (assigs (parameter-assigs this.operands
-					   fun.formals
-					   fun.vaarg
-					   #f ;; don't take reference
-					   *id->js-var*))
+		 (assigs-mapping (parameter-assig-mapping this.operands
+							  fun.formals
+							  fun.vaarg
+							  *id->js-var*))
+		 (assigs (map (lambda (p)
+				 (new-node Set! (car p) (cdr p)))
+			      assigs-mapping))
 		 (traversed-assigs (map (lambda (node)
 					   (node.traverse! label))
 					assigs))

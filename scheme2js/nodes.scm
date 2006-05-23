@@ -4,7 +4,6 @@
 	   verbose)
    (option (loadq "protobject-eval.sch"))
    (export (node n::symbol)
-	   *nodes*
 	   (nodes-init!)))
 
 (define-macro (debug-print . L)
@@ -108,11 +107,15 @@
    `(begin
        ,@(map gen-traverse (iota 3))))
 
-(define *nodes* (make-hashtable))
 (define (node n)
-   (hashtable-get *nodes* n))
+   (hashtable-get (thread-parameter '*nodes*) n))
 
 (define (nodes-init!)
+   (define nodes (or (thread-parameter '*nodes*)
+		     (make-hashtable)))
+   
+   (thread-parameter-set! '*nodes* nodes)
+   
    ;;HACK HACK HACK: begins in begins..
    (define-macro (define-node signature . Lrest)
       (let ((name (car signature))
@@ -123,7 +126,7 @@
 					     'pobject-id
 					     `(pmethod ,(cdr signature)
 						       ,@Lrest)))))
-		(hashtable-put! *nodes* ',name ,tmp)
+		(hashtable-put! nodes ',name ,tmp)
 		,tmp))))
 ;	     (define-pclass ,signature ,@Lrest)
 ;	     (hashtable-put! *nodes* ',name ,name))))
@@ -239,15 +242,26 @@
 
    (define-node (Bind-exit escape body)
       (set! this.escape escape)
-      (set! this.body body))
+      (set! this.body body)
+      (let ((s (gensym 'bind-exit)))
+	 (set! this.result-decl (new Decl s))
+	 (set! this.invoc-body (new Var-ref s))))
    (set! Bind-exit.proto (empty-pobject Scope))
-   (proto-traverses Bind-exit escape body)
+   (proto-traverses Bind-exit escape body result-decl invoc-body)
 
    (define-node (Call operator operands)
       (set! this.operator operator)
       (set! this.operands operands))
    (set! Call.proto (new Node))
    (proto-traverses Call operator (operands))
+
+   (define-node (With-handler handler body)
+      (let ((s (gensym 'exception)))
+	 (set! this.exception (new Decl s))
+	 (set! this.catch (new Call handler (list (new Var-ref s)))))
+      (set! this.body body))
+   (set! With-handler.proto (new Node))
+   (proto-traverses With-handler exception catch body)
 
 
    ;; optimization-nodes
@@ -289,5 +303,42 @@
    (define-node (Pragma str)
       (set! this.str str))
    (set! Pragma.proto (new Node))
-   (proto-traverses Pragma))
+   (proto-traverses Pragma)
+
+   ;; ++ and --
+   (define-node (Post-op lvalue op expr)
+      (set! this.lvalue lvalue)
+      (set! this.op op)
+      (set! this.expr expr))
+   (set! Post-op.proto (new Node))
+   (proto-traverses Post-op lvalue expr)
+
+   ;; something like x += ... or x -= ... or x ||= ...
+   (define-node (Op-set! lvalue operator operands)
+      (set! this.lvalue lvalue)
+      (set! this.operator operands)
+      (set! this.operands operands))
+   (set! Op-set!.proto (new Node))
+   (proto-traverses Post-op lvalue expr)
+
+   ;; x && y
+   (define-node (And left right)
+      (set! this.left left)
+      (set! this.right right))
+   (set! And.proto (new Node))
+   (proto-traverses And left right)
+
+   ;; x || y
+   (define-node (Or left right)
+      (set! this.left left)
+      (set! this.right right))
+   (set! Or.proto (new Node))
+   (proto-traverses Or left right)
+
+   (define-node (While test body)
+      (set! this.test test)
+      (set! this.body body))
+   (set! While.proto (new Node))
+   (proto-traverses While test body)
+   )
    

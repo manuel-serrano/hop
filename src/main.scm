@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 17 09:23:26 2006 (serrano)                */
+;*    Last change :  Wed May 17 11:19:22 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -133,10 +133,16 @@
 				 (lambda (m)
 				    (http-response
 				     (http-service-unavailable m) sock))
-				 req
-				 (let ((host (http-request-host req)))
-				    (lambda (p)
-				       (can-connect? reply-pool host))))))))
+				 req)))))
+;*---------------------------------------------------------------------*/
+;*    MS: 17may 06                                                     */
+;*    -------------------------------------------------------------    */
+;*    This is not the good time to execute this test. The              */
+;*    HTTP-RESPONSE-REMOTE should be in charge.                        */
+;*---------------------------------------------------------------------*/
+;* 				 (let ((host (http-request-host req))) */
+;* 				    (lambda (p)                        */
+;* 				       (can-connect? reply-pool host)))))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    http-debug ...                                                   */
