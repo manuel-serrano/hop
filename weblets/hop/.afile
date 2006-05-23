@@ -1,0 +1,8 @@
+;; /users/serrano/prgm/project/hop/weblets/hop
+;; Tue May 23 13:44:09 2006
+
+(
+  (hophop_config "./config.hop")
+  (hophop "./hop.hop")
+)
+

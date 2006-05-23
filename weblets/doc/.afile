@@ -1,0 +1,15 @@
+;; /users/serrano/prgm/project/hop/weblets/doc
+;; Tue May 23 13:44:09 2006
+
+(
+  (hopdoc_api "./api.hop")
+  (hopdoc_config "./config.hop")
+  (hopdoc "./doc.hop")
+  (hopdoc_libraries "./libraries.hop")
+  (hopdoc_search "./search.hop")
+  (hopdoc_services "./services.hop")
+  (hopdoc_tutorials "./tutorials.hop")
+  (hopdoc_widgets "./widgets.hop")
+  (hopdoc_wiki "./wiki.hop")
+)
+
