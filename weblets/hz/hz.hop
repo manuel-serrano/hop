@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue May 16 05:19:34 2006 (serrano)                */
+;*    Last change :  Mon May 22 14:13:15 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -26,15 +26,21 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hz)
    (let ((req (the-current-request)))
-      (if (users-added?)
+      (cond
+	 ((users-added?)
 	  (multiple-value-bind (user mode)
 	     (hz-get-access req)
-	     (if (and (user? user)
+	     (cond
+		((and (user? user)
 		      (symbol? mode)
-		      (user-authorized-service? user 'hz))
-		 (hz-main req user mode)
-		 (hz-authenticate req)))
-	  (hz-main req #f 'local))))
+		      (authorized-service? req 'hz))
+		 (hz-main req user mode))
+		(else
+		 (hz-authenticate req)))))
+	 ((http-request-localhostp req)
+	  (hz-main req #f 'local))
+	 (else
+	  (user-access-denied req)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    logout ...                                                       */
@@ -78,7 +84,6 @@
 		  (<VBOX-SEPARATOR>)
 		  (<VBOX-BLOCK>
 		     (<NOTEPAD>
-			:inline #f
 			(<NPHEAD> "")
 			(<NPTAB>
 			   (<NPTABHEAD> "Sync")
@@ -142,7 +147,10 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hz/list)
    (let ((req (the-current-request)))
-      (if (or (http-request-localhostp req) (not (users-added?)))
+      (if (or (http-request-localhostp req)
+	      (not (users-added?))
+	      (authorized-service? req 'hz)
+	      (authorized-service? req 'hz/list))
 	  (hz-list req)
 	  (multiple-value-bind (user mode)
 	     (hz-get-access req)
@@ -156,7 +164,7 @@
 ;*    hz-list ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (hz-list req)
-   (let ((db (hz-get-db (hz-db-path 'local))))
+   (let ((db (hz-get-repository-db)))
       (<HTML>
 	 (<HEAD> :dir (hz-dir)
 		 :jscript "hop-notepad.js" :css "hop-notepad.css"
@@ -186,7 +194,10 @@
 				      (let* ((icon (cond
 						      ((assoc c (hz-category-icons)) => cdr)
 						      (else "file.png")))
-					     (ifile (make-file-path (hz-dir) "icons" icon)))
+					     (ifile (make-file-path (hz-dir)
+								    "etc"
+								    "icons"
+								    icon)))
 					 (map (lambda (e)
 						 (<TRLEAF>
 						    :file ifile
@@ -197,6 +208,3 @@
 						       (<SPAN> :class "sdescr" (dbhz-sdescr e)))))
 					      (hz-db-get-entries-by-category db c))))))))
 		       (hz-db-get-categories db))))))))
-   
-      
-   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Mon May 15 06:54:19 2006 (serrano)                */
+;*    Last change :  Sat May 20 09:51:10 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -35,8 +35,7 @@
 		  (<TD>
 		     :valign "top"
 		     (<IMG> :class "logo"
-			    :src (format "~a/icons/logo.png"
-					 (hop-share-directory))))
+			    :src (format "~a/etc/logo.png" (home-dir))))
 		  (<TD>
 		     :valign "top"
 		     (<TABLE>

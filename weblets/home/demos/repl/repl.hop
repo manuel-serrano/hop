@@ -65,5 +65,4 @@
 			       (lambda () (error-notify e))))
 			 (with-output-to-string
 			    (lambda () (compile-hop-client e))))))
-	       (tprint j)
 	       (cons j s))))))

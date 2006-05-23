@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue May  9 13:42:22 2006 (serrano)                */
+;*    Last change :  Mon May 22 17:07:37 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -30,9 +30,9 @@
 (define-method (http-response r::http-response-shoutcast socket)
    (with-trace 3 'http-response::http-response-shoutcast
       (with-access::http-response-shoutcast r (request file)
-	 (if (user-authorized-path? (http-request-user request) file)
+	 (if (authorized-path? request file)
 	     (shoutcast r socket)
-	     (user-access-denied request)))))
+	     (http-response (user-access-denied request) socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    shoutcast ...                                                    */

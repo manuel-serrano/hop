@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Wed May 10 07:03:02 2006 (serrano)                */
+;*    Last change :  Thu May 18 18:02:33 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -84,8 +84,8 @@
 		(substring l 6 (string-length l))
 		(let ((i (string-index l "-")))
 		   (if (>fx i 0)
-		       (substring x (+fx i 1) (-fx (string-length l) 5))
-		       (substring x 0 (-fx (string-length l) 5)))))))))
+		       (substring l (+fx i 1) (-fx (string-length l) 5))
+		       (substring l 0 (-fx (string-length l) 5)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TUTORIALS-MAIN> ...                                             */

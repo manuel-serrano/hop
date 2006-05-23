@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Mon May 15 11:23:54 2006 (serrano)                */
+;*    Last change :  Sat May 20 09:52:44 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -20,7 +20,8 @@
 	   hophome_demos-repl
 	   hophome_demos-rss
 	   hophome_demos-source
-	   hophome_demos-wiki)
+	   hophome_demos-wiki
+	   hophome_demos-rewrite)
    (export (<DEMO> request)))
 
 ;*---------------------------------------------------------------------*/
@@ -77,6 +78,12 @@
 	    (<TR>
 	       (<TD>
 		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/rewrite)
+			  "utilities-32x32.png" "utilities-48x48.png"
+			  500 220)))
+	    (<TR>
+	       (<TD>
+		  :align "left"
 		  (<ZIMG> (make-service-url home/demos/source)
 			  "computer-32x32.png" "computer-48x48.png"
 			  700 500)))))))
@@ -119,6 +126,11 @@ playground contains the following demonstrations:])
       (<P> :class "descr" [This demonstration uses the HOP Wiki library. It
 also shows how HOP ,(<EM> "signals") can be deployed for allowing external
 clients to be notified by servers.])
+      (<H2> "Rewrite")
+      (<P> :class "descr" [This demonstration shows how the client and the
+server can cooperate to operate on distant documents. In this simple
+demonstration remote pages are changed on-the-fly by the server that acts
+as a proxy.])
       (<H2> "Source")
       (<P> :class "descr" [This demonstration uses HOP ,(<EM> "trees") and
 ,(<EM> "pan"). It implements a simple file browser. This browsers may
@@ -166,8 +178,8 @@ be used to access the whole source code of this playground.])))
 ;*---------------------------------------------------------------------*/
 (define (<ZIMG> svc s1 s2 . r)
    (let ((id (xml-make-id))
-	 (p1 (make-file-path (home-dir) "icons" s1))
-	 (p2 (make-file-path (home-dir) "icons" s2))
+	 (p1 (format "~a/etc/icons/~a" (home-dir) s1))
+	 (p2 (format "~a/etc/icons/~a" (home-dir) s2))
 	 (w (if (pair? r) (car r) "200"))
 	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
 	 (t (string-capitalize (basename svc))))

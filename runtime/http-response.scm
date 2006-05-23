@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue May 16 09:07:44 2006 (serrano)                */
+;*    Last change :  Mon May 22 17:07:21 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -149,7 +149,7 @@
 	       (http-write-line p "Server: " server))
 	    (when (>elong content-length #e0)
 	       (http-write-line p "Content-Length: " content-length))
-	    (http-write-line p "Hop-Json: true")
+	    (http-write-line p "hop-json: true")
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js
@@ -207,7 +207,7 @@
 (define-method (http-response r::http-response-file socket)
    (with-trace 3 'http-response::http-response-file
       (with-access::http-response-file r (start-line header content-type server file bodyp request)
-	 (if (user-authorized-path? (http-request-user request) file)
+	 (if (authorized-path? request file)
 	     ;; the file is never read so it can be open it with a tiny buffer
 	     (let ((p (socket-output socket))
 		   (pf (open-input-file file 1)))
@@ -239,7 +239,7 @@
 				(send-chars pf p)
 				(close-input-port pf))))
 		       (flush-output-port p))))
-	     (user-access-denied request)))))
+	     (http-response (user-access-denied request) socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cgi-env ...                                                  */
@@ -295,7 +295,7 @@
 (define-method (http-response r::http-response-cgi socket)
    (with-trace 3 'http-response::http-response-cgi
       (with-access::http-response-cgi r (start-line header content-type server cgibin bodyp request)
-	 (if (user-authorized-path? (http-request-user request) cgibin)
+	 (if (authorized-path? request cgibin)
 	     (let ((p (socket-output socket)))
 		(http-write-line p start-line)
 		(http-write-header p header)
@@ -321,7 +321,7 @@
 			 (send-chars (process-output-port proc) p)
 			 (close-input-port (process-output-port proc)))
 		      (flush-output-port p))))
-	     (user-access-denied request)))))
+	     (http-response (user-access-denied request) socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-put ...                            */

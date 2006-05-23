@@ -7,7 +7,7 @@ users authentications and accesses restrictions.
 
 ~~ Access restriction relies on some global parameters (as described
 above) that enable or disable control. It also relies on user
-declarations. 
+declarations.
 
 == Synopsis ==
 
@@ -19,6 +19,10 @@ declarations.
   (hop-proxy-allow-remote-client-set! arg)
   (hop-proxy-remote-authentication)
   (hop-proxy-remote-authentication-set! arg)
+  (hop-path-access-control)
+  (hop-path-access-control-set! proc)
+  (hop-service-access-control)
+  (hop-service-access-control-set! proc)
 
 
 === server functions ===
@@ -90,6 +94,65 @@ request.
 
 This parameter controls whenever remote clients can use the running
 HOP as proxy.
+</parameter>
+</parameter>
+
+=== ++hop-path-access-control++ ===
+<parameter> hop-path-access-control
+<parameter> hop-path-access-control-set!
+
+<arguments>
+^  access  ^   type    ^    short description                       ^
+|   r/w    |  bool     |  A procedure that returns ++#t++ for allowed paths. |
+</arguments>
+
+~~ Note: this parameter can only be changed while the HOP runtime command
+file (++hop-rc-file++) file is loaded.
+
+~~ The parameter ++hop-path-access-control++ enables global control over
+access path restriction. It is bound to procedure of two
+arguments. The first one is a ::http-request and the second a path.
+When applied to an actual request and an actual path, if this
+procedure returns ++#t++ the file denoted by the path is allowed to be
+served.  Otherwise it is allowed if and only if the authenticated user
+is granted the permission to read that file.
+
+~~ The parameter ++hop-path-access-control++ defaults to:
+
+   (lambda (req path)
+      (any? (lambda (p)
+	       (substring-at? path p 0))
+	    (hop-path)))
+
+</parameter>
+</parameter>
+
+=== ++hop-service-access-control++ ===
+<parameter> hop-service-access-control
+<parameter> hop-service-access-control-set!
+
+<arguments>
+^  access  ^   type   ^    short description                       ^
+|   r/w    |  bool    |  A procedure that returns ++#t++ for allowed services. |
+</arguments>
+
+~~ Note: this parameter can only be changed while the HOP runtime command
+file (++hop-rc-file++) file is loaded.
+
+~~ The parameter ++hop-service-access-control++ enables global control
+over service path restriction. it is bound to procedure of
+two arguments. The first one is a ::http-request. The second one is a
+service identifier. When applied to an actual request and an actual
+service identifier, if this procedure returns ++#t++ the service
+denoted by the identifier is allowed to be executed. Otherwise the
+execution is allowed if and only if the authenticated user is granted
+the permission to execute such a service.
+
+~~ The parameter ++hop-service-access-control++ defaults to:
+
+   (lambda (req service)
+      #f)
+
 </parameter>
 </parameter>
 
@@ -236,8 +299,6 @@ Otherwise, it returns ++#f++.
 | user          |  obj             | the user.                              |
 | path          |  string          | the path.                              |
 </arguments>
-This predicate returns ++#t++ if and only if the ++path++ can be read
-by the ++user++. Otherwise, it returns ++#f++.
 
 ~~ A user can read the directory, if two condition are meet:
   - the optional argument :directory that has been used when declaring
@@ -255,8 +316,11 @@ by the ++user++. Otherwise, it returns ++#f++.
 | request       |  ::http-request  | the request.                           |
 | path          |  string          | the path.                              |
 </arguments>
+
 This predicate returns ++#t++ if and only if the ++path++ can be read
-by the user authenticated in the ++request++. Otherwise, it returns ++#f++.
+by the user authenticated in the ++request++ or if the procedure bound
+to the parameter ++hop-path-access-control++ applied to the current
+request and current path returns ++#t++. Otherwise, it returns ++#f++.
 
 ~~ See the ++user-authorized-path?++.
 </function>
@@ -279,8 +343,13 @@ by the ++user++. Otherwise, it returns ++#f++.
 | request       |  ::http-request  | the request.                           |
 | service       |  symbol          | the service name.                      |
 </arguments>
-This predicate returns ++#t++ if and only if the ++service++ can be executed
-by the user authenticated in the ++request++. Otherwise, it returns ++#f++.
+
+This predicate returns ++#t++ if and only if the ++service++ can be
+executed by the user authenticated in the ++request++ or if the
+procedure bound to the parameter ++hop-service-access-control++
+applied to the current request and current path returns ++#t++.
+Otherwise, it returns ++#f++.
+
 </function>
 
 === ++(find-hopaccess path)++ ===

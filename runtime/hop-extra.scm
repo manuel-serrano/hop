@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri May  5 08:58:15 2006 (serrano)                */
+;*    Last change :  Thu May 18 05:25:18 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -101,11 +101,15 @@
 				       :href (hop-file dir "hop.css"))
 			       (map! (lambda (file) (hop-css file dir))
 				     (reverse! css))))
-		    (jscript (cons (<SCRIPT>
-				      :type "text/javascript"
-				      :src (hop-file dir "hop.js"))
-				   (map! (lambda (file) (hop-jscript file dir))
-					 (reverse! jscript)))))
+		    (jscript (cons* (<SCRIPT>
+				       :type "text/javascript"
+				       :src (hop-file dir "hop-autoconf.js"))
+				    (<SCRIPT>
+				       :type "text/javascript"
+				       :src (hop-file dir "hop.js"))
+				    (map! (lambda (file)
+					     (hop-jscript file dir))
+					  (reverse! jscript)))))
 		 (if favicon
 		     (cons (<LINK> :rel "shortcut icon" :href favicon)
 			   (append! (append! rest css) jscript))

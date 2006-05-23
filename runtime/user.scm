@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Tue May 16 10:58:16 2006 (serrano)                */
+;*    Last change :  Mon May 22 12:14:18 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -238,7 +238,8 @@
 ;*    authorized-path? ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (authorized-path? req path)
-   (user-authorized-path? (http-request-user req) path))
+   (or ((hop-path-access-control) req path)
+       (user-authorized-path? (http-request-user req) path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-service? ...                                     */
@@ -254,7 +255,8 @@
 ;*    authorized-service? ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (authorized-service? req service)
-   (user-authorized-service? (http-request-user req) service))
+   (or ((hop-service-access-control) req service)
+       (user-authorized-service? (http-request-user req) service)))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-request? ...                                     */

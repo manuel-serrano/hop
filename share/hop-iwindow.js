@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Tue May 16 11:45:31 2006 (serrano)                */
+/*    Last change :  Tue May 23 10:07:11 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -17,9 +17,7 @@ var hop_iwindow_zindex = 0;
 /*    hop_iwindow_close ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_close( id ) {
-   var win = ((id instanceof HTMLElement) ||
-              (id instanceof Object && id.propertyIsEnumerable( "innerHTML" )))
-      ? id : document.getElementById( id );
+   var win = hop_is_html_element( id ) ? id : document.getElementById( id );
 
    win.style.display = "none";
 
@@ -31,9 +29,7 @@ function hop_iwindow_close( id ) {
 /*    hop_iwindow_maximize ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_maximize( id ) {
-   var win = ((id instanceof HTMLElement) ||
-              (id instanceof Object && id.propertyIsEnumerable( "innerHTML" )))
-      ? id : document.getElementById( id );
+   var win = hop_is_html_element( id ) ? id : document.getElementById( id );
 
    if( win.maximize ) {
       win.maximize();
@@ -83,9 +79,7 @@ function hop_iwindow_maximize( id ) {
 /*    hop_iwindow_iconify ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_iconify( id ) {
-   var win = ((id instanceof HTMLElement) ||
-              (id instanceof Object && id.propertyIsEnumerable( "innerHTML" )))
-      ? id : document.getElementById( id );
+   var win = hop_is_html_element( id ) ? id : document.getElementById( id );
 
    if( win.iconifiedp ) {
       win.iconifiedp = false;
@@ -124,7 +118,7 @@ function hop_iwindow_iconify( id ) {
 /*---------------------------------------------------------------------*/
 function hop_iwindow_raise( win ) {
    if( hop_iwindow_zindex < 1000 ) {
-      win.style.setProperty( "z-index", ++hop_iwindow_zindex, "" );
+      hop_style_set( win, "z-index", ++hop_iwindow_zindex );
    } else {
       var w = document.getElementsByName( "hop-iwindow" );
       var i;
@@ -132,7 +126,7 @@ function hop_iwindow_raise( win ) {
       for( i = 0; i < w.length; i++ ) {
 	 if( w[ i ].style[ "z-index" ] > 0 ) w[ i ].style[ "z-index" ]--;
       }
-      win.style.setProperty( "z-index", 999, "" );
+      hop_style_set( win, "z-index", 999 );
    }
 }
 
@@ -242,7 +236,7 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
 /*---------------------------------------------------------------------*/
 function make_hop_iwindow( id, klass, parent ) {
    var win = document.createElement( "div" );
-   
+
    win.id = id;
    win.className = klass;
    win.name = "hop-iwindow";
@@ -364,9 +358,7 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
 
    /* start hidden otherwise we loose the border on drag! */
    win.el_body.style.display = "none";
-
-   if( (obj instanceof HTMLElement) ||
-       (obj instanceof Object && obj.propertyIsEnumerable( "innerHTML" )) ) {
+   if( hop_is_html_element( obj ) ) {
       var c = win.el_body.childNodes;
       var i = c.length;
 

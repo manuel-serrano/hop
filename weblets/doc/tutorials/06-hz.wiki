@@ -1,0 +1,37 @@
+<doc> Releasing with HZ
+
+== Description ==
+
+This tutorial shows how to release a HOP weblet with the HOP distribution
+system, namely ,(<A> :href "http://localhost:8080/hop/hz"
+      (<SPAN> :style {font-variant: small-caps} "Hz")).
+
+~~ A ,(<A> :href "http://localhost:8080/hop/hz"
+      (<SPAN> :style {font-variant: small-caps} "Hz")) package is actually
+a tarball file (a [[http://www.gnu.org/software/gzip/gzip.html|gzipped]] tar 
+file) containing the source code of the weblet
+plus some utility files and some contribution files (e.g., icons needed
+by your application).
+
+== Requirements ==
+
+In order to build HOP ++.hz++ file, you need:
+
+  - an operational HOP.
+  - the GNU [[http://www.gnu.org/software/tar/|tar]] utility.
+
+
+Let's assume a weblet named ++foo++. The package ++foo.hz++ must contain:
+
+  - ++foo.hop++: The source file that contains the definition of the 
+ ,(<APIREF> "service" "service.wiki") ++foo++.
+  - optional additional ++.hop++ files, ++.hss++, and ++.css++ files.
+  - ++.afile++: this file is needed if the weblet uses several source files.
+  - ++etc/foo.info++: this file contains meta information on the package
+ (e.g., the revision number, the author, etc.).
+  - ++etc/logo.png++: the logo (a 48x48 image) of the weblet.   
+
+== The weblet ==
+
+
+</doc>

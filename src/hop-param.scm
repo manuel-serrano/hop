@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed May 17 08:48:16 2006 (serrano)                */
+;*    Last change :  Mon May 22 11:44:20 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -43,7 +43,7 @@
 
 	    (hop-close-request-syntax-error::bool)
 	    (hop-close-request-syntax-error-set! ::bool))
-   
+
    (eval    (export-exports)))
 
 ;*---------------------------------------------------------------------*/

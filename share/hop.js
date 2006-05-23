@@ -3,29 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed May 17 15:29:42 2006 (serrano)                */
+/*    Last change :  Tue May 23 09:06:22 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
 /*=====================================================================*/
-
-/*---------------------------------------------------------------------*/
-/*    DOMFormElement ...                                               */
-/*---------------------------------------------------------------------*/
-var undefined;
-
-if( window.HTMLFormElement == undefined ) {
-   window.HTMLFormElement = window.HTMLForm;
-}
-
-if( window.HTMLCollection == undefined ) {
-   window.HTMLCollection = false;
-}
-
-if( !HTMLElement && /Konqueror|Safari|KHTML/.test(navigator.userAgent)) {
-  var HTMLElement = {}
-  HTMLElement.prototype = document.createElement('div').__proto__;
-}
 
 /*---------------------------------------------------------------------*/
 /*    hop_busy_anim ...                                                */
@@ -209,7 +191,6 @@ function hop_js_eval( http ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    hop_default_failure ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_default_failure( http ) {
@@ -247,7 +228,6 @@ function hop_default_failure( http ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    hop_failure_alert ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_failure_alert( http ) {
@@ -266,38 +246,38 @@ function hop_failure_alert( http ) {
 /*    hop ...                                                          */
 /*---------------------------------------------------------------------*/
 function hop_inner( method, service, success, failure, sync, mute ) {
-   var http = new XMLHttpRequest();
+   var http = hop_make_xml_http_request();
    var vis = false;
 
-   if( !mute ) {
+   if( mute != true ) {
       vis = document.createElement( "div" );
-      vis.style.setProperty( "position", "absolute", "" );
-      vis.style.setProperty( "top", "5", "" );
-      vis.style.setProperty( "right", "5", "" );
-      vis.style.setProperty( "z-index", "100", "" );
-      vis.style.setProperty( "background", "#eeeeee", "" );
-      vis.style.setProperty( "-moz-opacity", "0.7", "" );
-      vis.style.setProperty( "border-color", "black", "" );
-      vis.style.setProperty( "border-style", "outset", "" );
-      vis.style.setProperty( "border-width", "1px", "" );
-      vis.style.setProperty( "padding", "2px", "" );
+      
+      hop_style_set( vis, "position", "absolute" );
+      hop_style_set( vis, "top", "5" );
+      hop_style_set( vis, "right", "5" );
+      hop_style_set( vis, "z-index", "100" );
+      hop_style_set( vis, "background", "#eeeeee" );
+      hop_style_set( vis, "-moz-opacity", "0.7" );
+      hop_style_set( vis, "border-color", "black" );
+      hop_style_set( vis, "border-style", "outset" );
+      hop_style_set( vis, "border-width", "1px" );
+      hop_style_set( vis, "padding", "2px" );
+      
       vis.title = service;
 
       var img = document.createElement( "img" );
       img.classname = "hop-busy-anim";
       img.src = hop_busy_anim;
-      
+
       vis.appendChild( img );
       document.body.appendChild( vis );
    }
-
-   http.open( method, service, (sync != true) );
 
    http.onreadystatechange = function() {
       if( http.readyState == 4 ) {
 	 var status;
 
-	 if( !mute ) {
+	 if( mute != true ) {
 	    document.body.removeChild( vis );
 	 }
 
@@ -339,7 +319,7 @@ function hop_inner( method, service, success, failure, sync, mute ) {
 	       alert( "*** Hop Authentication Error " + http.status + ": `"
 			 + http.responseText + "'" );
 	       break;
-	    
+
 	    default:
 	       if( (status > 200) && (status < 300) ) {
  	          if( success ) {
@@ -356,8 +336,11 @@ function hop_inner( method, service, success, failure, sync, mute ) {
       }
    }
 
+   http.open( method, service, (sync != true) );
+
    http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
 /*    http.setTimeouts = 1000;                                         */
+
    http.send( null );
 
    return http;
@@ -397,9 +380,9 @@ function with_hop( service, success, failure ) {
                  switch( http.status ) {
 		    case 200:
 		       if( http.propertyIsEnumerable( "getResponseHeader" ) ) {
-			  json = http.getResponseHeader( "Hop-Json" );
+			  json = http.getResponseHeader( "hop-json" );
 		       } else {
-			  json = (http.getAllResponseHeaders().indexOf( "Hop-Json" ) >= 0);
+			  json = (http.getAllResponseHeaders().indexOf( "hop-json" ) >= 0);
 		       }
 
 		       if( json ) {
@@ -455,7 +438,7 @@ var hop_current_tooltip;
 function hop_tooltip_show( event, id, ux, uy ) {
    var el;
 
-   if( id instanceof HTMLElement ) {
+   if( hop_is_html_element( id ) ) {
       el = id;
    } else {
       if( (id instanceof String) || (typeof id == "string") ) {
@@ -465,8 +448,7 @@ function hop_tooltip_show( event, id, ux, uy ) {
       }
    }
 
-   if( (el instanceof HTMLDivElement) &&
-       (hop_current_tooltip != el) ) {
+   if( hop_is_html_element( el ) && (hop_current_tooltip != el) ) {
 
       var p = el.parentNode;
       
@@ -475,7 +457,7 @@ function hop_tooltip_show( event, id, ux, uy ) {
 	 document.body.appendChild( el );
       }
 
-      if( hop_current_tooltip instanceof HTMLDivElement ) {
+      if( hop_is_html_element( hop_current_tooltip ) ) {
 	 hop_current_tooltip.style.visibility = "hidden";
       }
 
@@ -501,7 +483,7 @@ function hop_tooltip_show( event, id, ux, uy ) {
 /*    hop_tooltip_hide ...                                             */
 /*---------------------------------------------------------------------*/
 function hop_tooltip_hide() {
-   if( hop_current_tooltip instanceof HTMLDivElement ) {
+   if( hop_is_html_element( hop_current_tooltip ) ) {
       hop_current_tooltip.style.visibility = "hidden";
       hop_current_tooltip = null;
    }
@@ -798,7 +780,7 @@ function hop_serialize_date( item ) {
 document.getElementsByClass = function( className ) {
    var all = document.getElementsByTagName( "*" );
    var res = new Array();
-   var n   = 0;
+   var n = 0;
     
    for( var i = 0; i < all.length; i++ ) {
       if( all[ i ].className == className ) {

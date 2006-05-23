@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun May 14 18:13:45 2006 (serrano)                */
+;*    Last change :  Tue May 23 05:25:00 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -51,8 +51,7 @@
    (let ((req (the-current-request))
 	 (hook (traffic-hook)))
       (hop-http-response-remote-hook-add! hook)
-      (if (not (user-authorized-service? (http-request-user req) 'info))
-	  (user-access-denied req)
+      (if (authorized-service? req 'admin)
 	  (<HTML>
 	     (<HEAD> :css "hop-notepad.css" "hop-sorttable.css"
 		     :css (format "~a/info.hss" info-dir)
@@ -69,8 +68,7 @@
 		      :class "info"
 		      (<TR>
 			 (<TD>
-			    (<IMG> :src (format "~a/icons/info.png"
-						(hop-share-directory))))
+			    (<IMG> :src (format "~a/etc/logo.png" info-dir)))
 			 (<TD>
 			    (<TABLE>
 			       (<TR>
@@ -81,7 +79,6 @@
 				  (<TD>
 				     (<DIV> :id "glop"
 					    (<NOTEPAD>
-					       :inline #f
 					       (<NPHEAD> "")
 					       (<NPTAB>
 						  (<NPTABHEAD> "Misc")
@@ -102,7 +99,8 @@
 						  (<NPTABHEAD> "Traffic")
 						  (<DELAY>
 						     (lambda ()
-							(<TRAFFIC>))))))))))))))))))
+							(<TRAFFIC>)))))))))))))))
+	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <MISC> ...                                                       */
@@ -246,17 +244,3 @@
 	     :handler { hop_append( $traffic )( event ) }
 	     :event info-event)
 	  (<SORTTABLE> traffic)))))
-
-;*---------------------------------------------------------------------*/
-;*    info/about service ...                                           */
-;*---------------------------------------------------------------------*/
-(define-service (info/about)
-  (<WEBLET-ABOUT> :title "info"
-		  :subtitle "Displays Hop Informations"
-		  :icon (format "~a/icons/info.png" (hop-share-directory))
-		  :version (hop-version)
-    (<P> [This weblets displays:])
-    (<UL>
-       (<LI> "General informations on the running hop enegine")
-       (<LI> "The list of all the loaded weblets")
-       (<LI> "The generated traffic when hop is used as a proxy"))))

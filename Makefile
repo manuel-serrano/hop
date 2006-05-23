@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue May 16 15:57:55 2006 (serrano)                */
+#*    Last change :  Wed May 17 16:37:41 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -166,14 +166,14 @@ distrib:
           if [ -f .hoprelease ]; then \
              . .hoprelease; \
              rm -f .hoprelease; \
-             if [ $$ver = $$version -a $$dev == $$devel ]; then \
-               min=`expr $$minor + 1`; \
-             fi \
           fi && \
           if [ "$$dev " = " " ]; then \
             distrib=$$ver; \
           else \
-            distrib=$$ver-$$dev$$min; \
+            distrib=$$ver-$$dev$$minor; \
+          fi && \
+          if [ $$ver = $$version -a $$dev == $$devel ]; then \
+            min=`expr $$minor + 1`; \
           fi && \
           echo "version=$$ver" > .hoprelease; \
           echo "devel=$$dev" >> .hoprelease; \

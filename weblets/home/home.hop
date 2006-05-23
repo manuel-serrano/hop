@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed May 17 10:00:05 2006 (serrano)                */
+;*    Last change :  Tue May 23 05:23:51 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -75,89 +75,70 @@
 ;*---------------------------------------------------------------------*/
 (define-service (home)
    (let ((req (the-current-request)))
-      (let ((agent (assq :user-agent (http-request-header req))))
-         (if (and (pair? agent)
-		  (string? (cdr agent))
-                  (or (substring-ci-at? (cdr agent) "Mozilla" 0)
-		      (substring-ci-at? (cdr agent) "Opera" 0)
-		      (substring-ci-at? (cdr agent) "Konqueror" 0)))
-	     (home-main req)
-	     (http-service-error
-	      req
-	      'hop
-	      "Your browser is not capable enough for displaying this page.
-We suggest to give Firefox a try.")))))
-
-;*---------------------------------------------------------------------*/
-;*    home-main ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (home-main req)
-   (home-add-log! req) 
-   (<HOME>
-      (<NOTEPAD>
-	 :id "home-notepad"
-	 (<NPHEAD> "")
-	 (<NPTAB> :id "Presentation"
-		  (<NPTABHEAD> "Main")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV>
-			   :class "hop-tab"
-			   (wiki->hop "presentation.wiki")))))
-	 (<NPTAB> :id "demo"
-		  (<NPTABHEAD> "Demos")
-		  (<DIV>
-		     :align "center"
-		     (<DEMO> req)))
-	 (<NPTAB> :id "download"
-		  (<NPTABHEAD> "Download")
-		  (<DIV>
-		     :class "hop-tab"
+      (home-add-log! req) 
+      (<HOME>
+	 (<NOTEPAD>
+	    :id "home-notepad"
+	    (<NPHEAD> "")
+	    (<NPTAB> :id "Presentation"
+		     (<NPTABHEAD> "Main")
 		     (<DELAY>
 			(lambda ()
 			   (<DIV>
 			      :class "hop-tab"
-			      (wiki->hop "download.wiki"))))))
-	 (<NPTAB> :id "weblets"
-		  (<NPTABHEAD> "Weblets")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV>
-			   :class "hop-tab"
-			   (wiki->hop "weblets.wiki")))))
-	 (<NPTAB> :id "documentation"
-		  (<NPTABHEAD> "Docs")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV>
-			   :class "hop-tab"
-			   (wiki->hop "docs.wiki")))))
-	 (<NPTAB> :id "faq"
-		  (<NPTABHEAD> "Faq")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV>
-			   :class "hop-tab"
-			   (wiki->hop "faq.wiki")))))
-	 (<NPTAB> :id "Forum"
-		  (<NPTABHEAD> "Forum")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV>
-			   :class "hop-tab"
-			   "Not implemented yet"))))
-	 (<NPTAB> :id "stats"
-		  (<NPTABHEAD> "Statistics")
-		  (<DELAY>
-		     (lambda ()
-			(<DIV>
-			   :class "hop-tab"
-			   [The HOP server running this home page is up since
-			    ,(<SPAN> :class "uptime" (hop-uptime)).
-			    ,(<P>)
-			    The HOP home page has been served
-			    ,(<SPAN> :class "uptime" (home-statistics))
-			    times.])))))))
+			      (wiki->hop "presentation.wiki")))))
+	    (<NPTAB> :id "demo"
+		     (<NPTABHEAD> "Demos")
+		     (<DIV>
+			:align "center"
+			(<DEMO> req)))
+	    (<NPTAB> :id "download"
+		     (<NPTABHEAD> "Download")
+		     (<DELAY>
+			(lambda ()
+			   (<DIV>
+			      :class "hop-tab"
+			      (wiki->hop "download.wiki")))))
+	    (<NPTAB> :id "weblets"
+		     (<NPTABHEAD> "Weblets")
+		     (<DELAY>
+			(lambda ()
+			   (<DIV>
+			      :class "hop-tab"
+			      (wiki->hop "weblets.wiki")))))
+	    (<NPTAB> :id "documentation"
+		     (<NPTABHEAD> "Docs")
+		     (<DELAY>
+			(lambda ()
+			   (<DIV>
+			      :class "hop-tab"
+			      (wiki->hop "docs.wiki")))))
+	    (<NPTAB> :id "faq"
+		     (<NPTABHEAD> "Faq")
+		     (<DELAY>
+			(lambda ()
+			   (<DIV>
+			      :class "hop-tab"
+			      (wiki->hop "faq.wiki")))))
+	    (<NPTAB> :id "Forum"
+		     (<NPTABHEAD> "Forum")
+		     (<DELAY>
+			(lambda ()
+			   (<DIV>
+			      :class "hop-tab"
+			      "Not implemented yet"))))
+	    (<NPTAB> :id "stats"
+		     (<NPTABHEAD> "Statistics")
+		     (<DELAY>
+			(lambda ()
+			   (<DIV>
+			      :class "hop-tab"
+			      [The HOP server running this home page is up since
+				   ,(<SPAN> :class "uptime" (hop-uptime)).
+				   ,(<P>)
+				   The HOP home page has been served
+				   ,(<SPAN> :class "uptime" (home-statistics))
+				   times.]))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/install ...                                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat May 13 16:04:50 2006 (serrano)                */
+;*    Last change :  Fri May 19 06:55:53 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -62,6 +62,7 @@
 	    
  	    (generic xml-write ::obj ::output-port ::symbol)
 	    (generic xml-write-attribute attr::obj id p)
+	    (xml-write-attributes ::pair-nil ::output-port)
 
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
@@ -159,8 +160,7 @@
 	    (<UL> . ::obj)
 	    (<VAR> . ::obj)
 	    
-	    (<DELAY> . ::obj)
-	    (<GHOST> . ::obj)))
+	    (<DELAY> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
@@ -302,9 +302,7 @@
 ;*    xml-write ::xml-delay ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-delay p encoding)
-   (with-access::xml-delay obj (thunk value)
-      (unless value (set! value (thunk)))
-      (xml-write value p encoding)))
+   (error 'xml-write "Illegal <DELAY> object" obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
@@ -540,23 +538,6 @@
 	  (id (xml-make-id id 'DELAY))
 	  (thunk (car body)))
        (error '<DELAY> "Illegal delay's thunk" (car body))))
-
-;*---------------------------------------------------------------------*/
-;*    <GHOST> ...                                                      */
-;*---------------------------------------------------------------------*/
-(define-xml-compound <GHOST> ((id #unspecified string)
-			      body)
-   (cond
-      ((null? body)
-       (error '<GHOST> "Illegal empty ghost body" body))
-      ((pair? (cdr body))
-       (instantiate::xml-ghost
-	  (id (xml-make-id id 'GHOST))
-	  (body body)))
-      (else
-       (instantiate::xml-ghost
-	  (id (xml-make-id id 'GHOST))
-	  (body (car body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    IMG ...                                                          */

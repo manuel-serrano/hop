@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Nov 16 13:24:06 2004                          */
-;*    Last change :  Mon Mar 20 07:21:04 2006 (serrano)                */
+;*    Last change :  Thu May 18 05:47:50 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hop_thread                                                       */
@@ -41,7 +41,8 @@
    (export  (hop-current-thread)
 	    (thread-data ::obj)
 	    (make-threads-pool ::symbol ::int ::int)
-	    (pool-thread-execute ::pool ::procedure ::procedure ::obj #!optional pred)))
+	    (pool-thread-execute ::pool ::procedure ::procedure ::obj #!optional pred)
+	    (pool-thread-available::int ::pool)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-current-thread ...                                           */
@@ -187,3 +188,11 @@
       (if (thread? t)
 	  (execute! t thunk message)
 	  (err message))))
+
+;*---------------------------------------------------------------------*/
+;*    pool-thread-available ...                                        */
+;*---------------------------------------------------------------------*/
+(define (pool-thread-available pool)
+   (with-access::eager-pool pool (id free use condv mutex)
+      (length free)))
+

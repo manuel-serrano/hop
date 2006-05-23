@@ -18,12 +18,12 @@ client side programming. They are only supported on server side.])
 
 === Requirements ===
 
-Client codes using //Editors// need to load the script ++hop-edit.js++.
-They also need to load the ++hop-edit.css++ style sheet.  Hence, documents
+Client codes using //Editors// need to load the script ++hop-editor.js++.
+They also need to load the ++hop-editor.css++ style sheet.  Hence, documents
 using //editors// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-edit.js" :css "hop-edit.css")
+  (<HEAD> :jscript "hop-editor.js" :css "hop-editor.css")
 
 
 == Examples ==
@@ -37,13 +37,15 @@ using //editors// must include in their header, the following statement:
 <markup> <EDITOR>
 
 <arguments>
-^  attributes  ^   type     ^   default    ^  short description          ^
-| :id          |  string    |  //random//  | element identifier.         |
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
 | :width       |  dimension  |  //100%//    | the width                   |
 | :heigh       |  dimension  |  //600px//   | the height                  |
 | :name        |  string    |              | name (used in forms only)   |
 | :submit      |  function  |  see below   | action associated to submit button  |
 | :cancel      |  function  |  see below   | action associated to cancel button  |
+| :cancel      |  script   |              | the cancel procedure.       |
+| body         |   xml     |              | the initial content.        |
 </arguments>
 
 By default, the **submit** and **cancel** client functions are associated to 
@@ -57,16 +59,20 @@ identifier of the editor as parameter.
 </markup>
 </server>
 
-== Client Definitions ==
-<client>
+== Style ==
+<style>
+This section describes the various CSS elements used to configure
+//Editors//.
 
-=== ++hop-edit.css++ ===
+=== ++hop-editor.css++ ===
 
-The file ++hop-edit.css++ contains the default graphical configuration.
+The file ++hop-editor.css++ contains the default graphical configuration.
 It is defined as:
 
 ~~
-<share>hop-edit.css</share>
+<share>hop-editor.css</share>
+
+</style>
 
 == See also ==
 <see-also><EDITOR></see-also>

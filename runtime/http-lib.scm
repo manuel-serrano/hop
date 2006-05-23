@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Sat Mar 18 10:09:47 2006 (serrano)                */
+;*    Last change :  Mon May 22 16:54:47 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -463,7 +463,9 @@
 		       (let ((k (car h))
 			     (v (cdr h)))
 			  (if (keyword? k)
-			      (http-write-line p (keyword->string! k) ": " v)
+			      (begin
+				 (trace-item (keyword->string! k) ": " v)
+				 (http-write-line p (keyword->string! k) ": " v))
 			      (error 'http-write-header
 				     "Illegal header"
 				     h)))

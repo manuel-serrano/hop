@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Wed May 10 07:03:33 2006 (serrano)                */
+;*    Last change :  Mon May 22 14:59:48 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -22,6 +22,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hz/create db name author category hop version minhop maxhop sdescr descr)
    (let ((db (hz-get-repository-db)))
+      (hz-db-sync-date-update! db (current-date))
       (hz-db-add-entry db (hz-db-sync-stamp db)
 		       name author category hop
 		       version minhop maxhop
@@ -36,6 +37,7 @@
 (define-service (hz/update name author category hop version minhop maxhop sdescr descr)
    (let* ((db (hz-get-repository-db))
 	  (e (hz-db-get-entry-by-name-category db name category)))
+      (hz-db-sync-date-update! db (current-date))
       (hz-db-update-entry db (hz-db-sync-stamp db)
 			  name author category hop
 			  version minhop maxhop
@@ -48,15 +50,14 @@
 ;*    remove ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/remove name category)
+   (hz-db-sync-date-update! db (current-date))
    (hz-db-remove-entry (hz-get-repository-db) name category))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/query-entry ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/query-entry val)
-   (let ((entry (hz-db-get-entry-by-name (hz-get-repository-db) val)))
-      (instantiate::http-response-js
-	 (body entry))))
+   (hz-db-get-entry-by-name (hz-get-repository-db) val))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/repository ...                                                */
@@ -79,13 +80,13 @@
 ;*---------------------------------------------------------------------*/
 (define (hz->info path name)
    (let ((p (open-input-gzip-file path))
-	 (info (string-append name ".info")))
+	 (info (make-file-path name "etc" (string-append name ".info"))))
       (when (input-port? p)
 	 (unwind-protect
 	    (let loop ()
 	       (let ((h (tar-read-header p)))
 		  (when (tar-header? h)
-		     (if (string=? (basename (tar-header-name h)) info)
+		     (if (string=? (tar-header-name h) info)
 			 (read p)
 			 (begin
 			    (tar-read-block h p)
@@ -162,6 +163,8 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hz/build-repository)
    (let ((db (hz-get-repository-db)))
+      ;; mark the date
+      (hz-db-sync-date-update! db (current-date))
       ;; update the sync stamp
       (hz-db-sync-stamp-inc! db)
       ;; get the new weblets
@@ -195,7 +198,7 @@
    (<HTML>
       (<HEAD> :dir (hz-dir) 
 	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
-	      :css "hz.hss"))
+	      :css "hz.hss")
       (let ((author (<INPUT> :type 'text :size 30))
 	    (category (<INPUT> :type 'text :size 20))
 	    (hop (<INPUT> :type 'text :size "100%"))
@@ -235,7 +238,7 @@
 					      false false
 					      640 400
 					      (/ (- window.innerWidth 640) 2) 50)
-				   "Build Repository DB")) 
+				   "Build/Update Repository DB"))
 		  (<VBOX-BLOCK> "&nbsp;")
 		  (<VBOX-BLOCK>
 		     (<SPAN> :class "title" "Add/Update/Remove Weblet entry"))

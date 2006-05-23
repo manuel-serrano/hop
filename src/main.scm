@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 17 11:19:22 2006 (serrano)                */
+;*    Last change :  Mon May 22 17:06:35 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -95,10 +95,13 @@
 (define (handle-connection accept-pool::pool reply-pool::pool s::socket n::int)
    (let ((sock (socket-accept s)))
       (hop-verb 1 (hop-color n n " CONNECT")
-		": " sock " [" (current-date) "]\n")
+		" (" (pool-thread-available accept-pool)
+		"/" (hop-max-accept-thread) "): "
+		(socket-hostname sock) " [" (current-date) "]\n")
       (when (socket? sock)
 	 (pool-thread-execute accept-pool
-			      (http-connect sock reply-pool n)
+			      (lambda ()
+				 (http-connect sock reply-pool n))
 			      (lambda (m)
 				 (http-response
 				  (http-service-unavailable m) sock))
@@ -108,32 +111,39 @@
 ;*    http-connect ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (http-connect sock reply-pool id)
-   (lambda ()
-      (let ((req (with-handler
-		    (lambda (e)
-		       (when (&error? e) (error-notify e))
-		       (unless (or (socket-down? sock)
-				   (hop-close-request-syntax-error))
-			  (with-handler
-			     (lambda (e) #unspecified)
-			     (unless (&io-sigpipe-error? e)
-				(let ((resp ((or (hop-http-request-error)
-						 http-request-error)
-					     e)))
-				   (http-response resp sock)))))
-		       (socket-close sock)
-		       (hop-verb 1 (hop-color id id " CLOSING")
-				 " " (trace-color 1 (find-runtime-type e))
-				 "\n")
-		       #f)
-		    (http-parse-request sock id))))
-	 (when (http-request? req)
-	    (pool-thread-execute reply-pool
-				 (http-process req sock)
-				 (lambda (m)
-				    (http-response
-				     (http-service-unavailable m) sock))
-				 req)))))
+   (let ((req (with-handler
+		 (lambda (e)
+		    (when (&error? e) (error-notify e))
+		    (unless (or (socket-down? sock)
+				(hop-close-request-syntax-error))
+		       (with-handler
+			  (lambda (e) #unspecified)
+			  (unless (&io-sigpipe-error? e)
+			     (let ((resp ((or (hop-http-request-error)
+					      http-request-error)
+					  e)))
+				(http-response resp sock)))))
+		    (socket-close sock)
+		    (hop-verb 1 (hop-color id id " CLOSING")
+			      " " (trace-color 1 (find-runtime-type e))
+			      "\n")
+		    #f)
+		 (http-parse-request sock id))))
+      (when (http-request? req)
+	 (with-access::http-request req (method scheme host port path)
+	    (hop-verb 2 (hop-color req req " PROCESS")
+		      " (" (pool-thread-available reply-pool)
+		      "/" (hop-max-reply-thread) "): "
+		      method " "
+		      scheme "://" host ":" port (string-for-read path)
+		      "\n"))	    
+	 (pool-thread-execute reply-pool
+			      (lambda ()
+				 (http-process req sock))
+			      (lambda (m)
+				 (http-response
+				  (http-service-unavailable m) sock))
+			      req))))
 ;*---------------------------------------------------------------------*/
 ;*    MS: 17may 06                                                     */
 ;*    -------------------------------------------------------------    */
@@ -155,49 +165,43 @@
 ;*    http-process ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (http-process req sock)
-   (lambda ()
-      (with-access::http-request req (method scheme host port path)
-	 (hop-verb 2 (hop-color req req " PROCESS") ": "
-		   method " "
-		   scheme "://" host ":" port (string-for-read path)
-		   "\n"))
-      (with-handler
-	 (lambda (e)
-	    (with-handler
-	       (lambda (e) #f)
-	       (hop-verb 1 (hop-color req req " ERROR")
-			 " " (trace-color 1 e) "\n")
-	       (if (http-response-string? e)
-		   (http-response e sock)
-		   (begin
-		      (cond
-			 ((&error? e)
-			  (error-notify e))
-			 ((&warning? e)
-			  (warning-notify e)))
-		      (unless (&io-sigpipe-error? e)
-			 (let ((resp ((or (hop-http-response-error)
-					  http-response-error)
-				      e req)))
-			    (http-response resp sock))))))
-	    (socket-close sock)
-	    #f)
-	 (let ((hp (hop req)))
-	    (hop-verb 4 (hop-color req req " EXEC")
-		      ": " (find-runtime-type hp)
-		      " "
-		      (if (user? (http-request-user req))
-			  (user-name (http-request-user req))
-			  "anonymous") "\n")
-	    (let ((rep (http-response hp sock)))
-	       (hop-verb 2 (hop-color req req " RESPONSE") ": "
-			 rep
-			 " [" (current-date) "]"
-			 (if (http-response-persistent? rep)
-			     " persistent\n"
-			     "\n"))
-	       (unless (http-response-persistent? rep)
-		  (socket-close sock)))))))
+   (with-handler
+      (lambda (e)
+	 (with-handler
+	    (lambda (e) #f)
+	    (hop-verb 1 (hop-color req req " ERROR")
+		      " " (trace-color 1 e) "\n")
+	    (if (http-response-string? e)
+		(http-response e sock)
+		(begin
+		   (cond
+		      ((&error? e)
+		       (error-notify e))
+		      ((&warning? e)
+		       (warning-notify e)))
+		   (unless (&io-sigpipe-error? e)
+		      (let ((resp ((or (hop-http-response-error)
+				       http-response-error)
+				   e req)))
+			 (http-response resp sock))))))
+	 (socket-close sock)
+	 #f)
+      (let ((hp (hop req)))
+	 (hop-verb 4 (hop-color req req " EXEC")
+		   ": " (find-runtime-type hp)
+		   " "
+		   (if (user? (http-request-user req))
+		       (user-name (http-request-user req))
+		       "anonymous") "\n")
+	 (let ((rep (http-response hp sock)))
+	    (hop-verb 2 (hop-color req req " RESPONSE") ": "
+		      rep
+		      " [" (current-date) "]"
+		      (if (http-response-persistent? rep)
+			  " persistent\n"
+			  "\n"))
+	    (unless (http-response-persistent? rep)
+	       (socket-close sock))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    can-connect? ...                                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Mon May  8 06:35:30 2006 (serrano)                */
+;*    Last change :  Tue May 23 05:22:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -27,35 +27,44 @@
 ;*    doc ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (doc)
-   (doc-main (the-current-request)))
+   (let ((req (the-current-request)))
+      (if (authorized-service? req 'doc)
+	  (doc-main req)
+	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-main ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (doc-main req)
-   (if (and (users-added?) (not (authorized-service? req 'doc)))
-       (user-access-denied req)
-       (let ((prefs (make-file-name (doc-rc-directory) "doc.prefs")))
-	  (thread-start! (make-thread (lambda () (setup-api-tables!))))
-	  (when (file-exists? prefs) (doc-preferences-load prefs))
-	  (<DOC>
-	     (<NOTEPAD>
-		:id "doc-notepad"
-		(<NPHEAD> "")
-		(<NPTAB> :id "doc-api"
-			 (<NPTABHEAD> "API")
-			 (<API>))
-		(<NPTAB> :id "doc-libraries"
-			 (<NPTABHEAD> "Libraries")
-			 (<LIBRARIES>))
-		(<NPTAB> :id "doc-wiki"
-			 (<NPTABHEAD> "Wiki syntax")
-			 (<DIV>
-			    :class "wiki"
-			    (doc-page
-			     (make-file-name (doc-wiki-dir) "syntax.wiki")
-			     (make-wiki-request-syntax (doc-wiki-syntax)
-						       req))))
-		(<NPTAB> :id "doc-tutorials"
-			 (<NPTABHEAD> "Tutorials")
-			 (<TUTORIALS> req)))))))
+   (let ((prefs (make-file-name (doc-rc-directory) "doc.prefs")))
+      (thread-start! (make-thread (lambda () (setup-api-tables!))))
+      (when (file-exists? prefs) (doc-preferences-load prefs))
+      (<DOC>
+	 (<NOTEPAD>
+	    :id "doc-notepad"
+	    (<NPHEAD> "")
+	    (<NPTAB> :id "doc-api"
+		     (<NPTABHEAD> "API")
+		     (<API>))
+	    (<NPTAB> :id "doc-core"
+		     (<NPTABHEAD> "Core language")
+		     (<DIV>
+			:class "wiki"
+			(doc-page
+			 (make-file-name (doc-core-dir) "core.wiki")
+			 (make-wiki-request-syntax (doc-wiki-syntax)
+						   req))))
+	    (<NPTAB> :id "doc-libraries"
+		     (<NPTABHEAD> "Libraries")
+		     (<LIBRARIES>))
+	    (<NPTAB> :id "doc-wiki"
+		     (<NPTABHEAD> "Wiki syntax")
+		     (<DIV>
+			:class "wiki"
+			(doc-page
+			 (make-file-name (doc-wiki-dir) "syntax.wiki")
+			 (make-wiki-request-syntax (doc-wiki-syntax)
+						   req))))
+	    (<NPTAB> :id "doc-tutorials"
+		     (<NPTABHEAD> "Tutorials")
+		     (<TUTORIALS> req))))))

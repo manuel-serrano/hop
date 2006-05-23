@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Tue May 16 05:20:09 2006 (serrano)                */
+/*    Last change :  Mon May 22 12:38:54 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -147,24 +147,25 @@ foot table.foot-logo {
 div.hop-notepad-title {
   background: transparent;
   padding: 0 10px 20px 0;
-  border-color: red;
 }
 
 div.hop-notepad-tabs {
   background: transparent;
   clear: left;
   text-align: left;
-  padding: 10px 0 0 5%;
+  padding: 0;
+  padding-left: 10px;
+  padding-right: 5%;
   margin-left: 10px;
-  border-color: red;
 }
 
 div.hop-notepad-tabs > span {
   font-size: small;
   border-color: $border-color;
+  margin: 0 4px 0 0;
 }
 
-div.hop-notepad-tabs > span.hop-nptab-active {
+div.hop-notepad-tabs span.hop-nptab-active {
   background-color: $info-color;
   border-bottom-color: $info-color;
 }
@@ -536,6 +537,11 @@ div.weblets table.search-result td:hover {
 /*--- preferences -----------------------------------------------------*/
 preferences {
   font-size: small;
+}
+
+preferences col.col1 {
+  width: 30%;
+  border: 1px solid red;
 }
 
 preferences th {

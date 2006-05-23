@@ -1,0 +1,72 @@
+<doc> Editor widget
+
+== Description ==
+
+The //editor// widget enables client side wysiwyg.
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markups presented in this page are not yet supported on
+client side programming. They are only supported on server side.])
+
+== Synopsis ==
+
+=== Server ===
+
+  (<EDITOR>> args ...)
+
+=== Client ===
+
+=== Requirements ===
+
+Client codes using //Editors// need to load the script ++hop-editor.js++.
+They also need to load the ++hop-editor.css++ style sheet.  Hence, documents
+using //editors// must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-editor.js" :css "hop-editor.css")
+
+
+== Examples ==
+
+<example><EDITOR></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<EDITOR>++ ===
+<markup> <EDITOR>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| :class       |  string   |  //random//  | the element class.          |
+| :width       |  dim      |    100%      | the element width.          |
+| :height      |  dim      |    600px     | the element height.         |
+| :name        |  string   |  //random//  | the name of the editor.     |
+| :submit      |  script   |              | the submit procedure.       |
+| :cancel      |  script   |              | the cancel procedure.       |
+| body         |   xml     |              | the initial content.        |
+</arguments>
+
+</markup>
+</server>
+
+== Style ==
+<style>
+This section describes the various CSS elements used to configure
+//Editors//.
+
+=== ++hop-editor.css++ ===
+
+The file ++hop-editor.css++ contains the default graphical configuration.
+It is defined as:
+
+~~
+<share>hop-editor.css</share>
+
+</style>
+
+== See also ==
+<see-also><EDITOR></see-also>
+
+</doc>

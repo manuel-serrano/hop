@@ -1,12 +1,12 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/webconf/Makefile                */
+#*    serrano/prgm/project/hop/weblets/home/demos/repl/Makefile        */
 #*    -------------------------------------------------------------    */
-#*    Author      :  Erick Gallesio                                    */
-#*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Mar 29 11:46:51 2006 (serrano)                */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Fri Mar  3 10:30:36 2006                          */
+#*    Last change :  Wed May 17 15:49:08 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
-#*    The Makefile of the password weblet                              */
+#*    Makefile of a HOP demo                                           */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
@@ -15,12 +15,13 @@
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
-#*---------------------------------------------------------------------*/
-#*    POPULATION                                                       */
-#*---------------------------------------------------------------------*/
-POPULATION	= Makefile webconf.hss webconf.hop \
-		  configure.png webconf.info
+FILES      = repl.hop
+POPULATION = Makefile $(FILES)
+DESTDIR    = $(HOPDEMOSDIR)/$(DEMO)
 
-build:
-
-clean:
+#*---------------------------------------------------------------------*/
+#*    install                                                          */
+#*---------------------------------------------------------------------*/
+install:
+	mkdir -p $(DESTDIR)
+	install -m a+r $(POPULATION) $(DESTDIR)

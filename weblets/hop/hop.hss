@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu May 11 09:36:32 2006 (serrano)                */
+/*    Last change :  Tue May 23 09:17:12 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -40,6 +40,10 @@ body {
 }
 
 img.logo {
+  background: transparent;
+}
+
+td.logo {
   padding: 20px;
 }
 
@@ -88,3 +92,12 @@ td.legend span {
   font-family: $font-family;
   cursor: default;
 }
+
+table.directory th.title {
+  text-align: left;
+  font-weight: bold;
+  font-size: large;
+  border-bottom: 1px solid $border-color;
+  color: #00a;
+}
+  

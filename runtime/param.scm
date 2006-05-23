@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu May 11 08:51:54 2006 (serrano)                */
+;*    Last change :  Tue May 23 07:42:21 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -144,7 +144,15 @@
 	    (hop-read-pre-hook-set! ::procedure)
 	    
 	    (hop-read-post-hook::procedure)
-	    (hop-read-post-hook-set! ::procedure)))
+	    (hop-read-post-hook-set! ::procedure)
+	    
+	    (hop-path-access-control::procedure)
+	    (hop-path-access-control-set! ::procedure)
+
+	    (hop-service-access-control::procedure)
+	    (hop-service-access-control-set! ::procedure)
+
+	    (hop-rc-loaded!)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-uptime ...                                                   */
@@ -613,3 +621,71 @@
 	  (error 'hop-read-post-hook-set! "Illegal value" v)
 	  v)))
 
+;*---------------------------------------------------------------------*/
+;*    *hop-rc-loaded* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *hop-rc-loaded* #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-path-access-control ...                                      */
+;*    -------------------------------------------------------------    */
+;*    This parameter enables user customization of path access         */
+;*    control.                                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-path-access-control
+   (lambda (req path)
+      (any? (lambda (p)
+	       (substring-at? path p 0))
+	    (hop-path)))
+   (lambda (v)
+      (cond
+	 (*hop-rc-loaded*
+	  (error 'define-parameter
+		 "Parameter can only be set in rc file"
+		 'hop-path-access-control-set!))
+	 ((not (procedure? v))
+	  (error 'hop-path-access-control-set!
+		 (bigloo-type-error-msg "Type"
+					'procedure
+					(find-runtime-type v))
+		 v))
+	 ((not (correct-arity? v 2))
+	  (error 'hop-path-access-control-set!
+		 "arity two procedure expected"
+		 v))
+	 (else
+	  v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-service-access-control ...                                   */
+;*    -------------------------------------------------------------    */
+;*    This parameter enables user customization of path access         */
+;*    control.                                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-service-access-control
+   (lambda (req svc)
+      #f)
+   (lambda (v)
+      (cond
+	 (*hop-rc-loaded*
+	  (error 'define-parameter
+		 "Parameter can only be set in rc file"
+		 'hop-service-access-control-set!))
+	 ((not (procedure? v))
+	  (error 'hop-path-access-control-set!
+		 (bigloo-type-error-msg "Type"
+					'procedure
+					(find-runtime-type v))
+		 v))
+	 ((not (correct-arity? v 2))
+	  (error 'hop-service-access-control-set!
+		 "arity two procedure expected"
+		 v))
+	 (else
+	  v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-rc-loaded! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (hop-rc-loaded!)
+   (set! *hop-rc-loaded* #t))

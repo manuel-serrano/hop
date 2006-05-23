@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue May 16 10:58:14 2006 (serrano)                */
+;*    Last change :  Mon May 22 12:08:09 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -144,16 +144,5 @@
 			     ,(format "Basic realm=\"Hop proxy (~a) authentication\""
 				      host))))
 		  (body "Protected Area! Authentication required."))))))))
-
-;*---------------------------------------------------------------------*/
-;*    local authentication ...                                         */
-;*---------------------------------------------------------------------*/
-(hop-http-response-local-hook-add!
- (lambda (req resp)
-    (if (http-response-file? resp)
-	(if (authorized-path? req (http-response-file-file resp))
-	    resp
-	    (user-access-denied req))
-	resp)))
  
 

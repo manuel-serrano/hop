@@ -50,18 +50,11 @@ using //Notepads// must include in their header, the following statement:
 <arguments>
 ^  attributes  ^   type    ^   default    ^  short description          ^
 | :id          |  string   |  //random//  | element identifier.         |
-| :inline      |  boolean  |   ++#t++     | inline or on-demand?        |
 | body         |  element  |  empty       | the body.                   |
 </arguments>
 
 This function creates a //notepad//. Its first child can be 
 ++<NPHEAD>++. Its others children are all ++<NPTAB>++.
-,(<P>)
-A //notepad// may be //inlined// or //on-demand//. Clients received all
-the bodies of a inlined notepad at a time. That is, the unselected tab's body
-are present in the client. The pad's body of on-demand //notepad// are sent
-to the client only when the pad is selected. Tabs body of on-demand 
-//notepad// must use the ++<DELAY>++ markup.
 
 </markup>
 
@@ -88,6 +81,11 @@ This function creates an optional //notepad// header.
 
 This function creates a //tab//. The first child of //tab// __must__
 be a ++<NPTABHEAD>++.
+
+A //nptab// may be //inlined// or //on-demand//. Inlined nptabs
+receive their content at creation time. On-demand nptabs ask the
+server a new content each time they are selected. Tabs body of
+on-demand //notepad// must use the ++<DELAY>++ markup.
 
 </markup>
 
@@ -151,8 +149,8 @@ The box containing each tab body.
 The horizontal box containing all tabs.
 </css>
 
-=== ++div.hop-notepad-tabs > span++ ===
-<css> div.hop-notepad-tabs > span
+=== ++div.hop-notepad-tabs > span > span++ ===
+<css> div.hop-notepad-tabs > span > span
 
 The tab span. The active //tab// (i.e., the tab currently selected) is 
 denoted by the ++hop-nptab-active++ class. The inactives //tabs// are denoted 

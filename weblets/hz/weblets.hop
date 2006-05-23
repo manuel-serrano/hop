@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Wed May 10 07:03:44 2006 (serrano)                */
+;*    Last change :  Mon May 22 15:29:54 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -109,7 +109,10 @@
 					 (let* ((icon (cond
 							 ((assoc c (hz-category-icons)) => cdr)
 							 (else "file.png")))
-						(ifile (make-file-path (hz-dir) "icons" icon)))
+						(ifile (make-file-path (hz-dir)
+								       "etc"
+								       "icons"
+								       icon)))
 					    (map (lambda (e)
 						    (let ((s (service ()
 								;; we have to reload the entry
@@ -168,7 +171,7 @@
 	    (<TD>
 	       :class "icon"
 	       (<IMG>
-		  :src (make-file-path (hz-dir) "icons" "apply.png")))
+		  :src (make-file-path (hz-dir) "etc" "icons" "apply.png")))
 	    (<TD>
 	       :class "action"
 	       (<SPAN>
@@ -182,7 +185,7 @@
 	    (<TD>
 	       :class "icon"
 	       (<IMG>
-		  :src (make-file-path (hz-dir) "icons" "package.png")))
+		  :src (make-file-path (hz-dir) "etc" "icons" "package.png")))
 	    (<TD>
 	       :class "action"
 	       (<SPAN>
@@ -197,7 +200,7 @@
 	  (<TD>
 	     :class "icon"
 	     (<IMG>
-		:src (make-file-path (hz-dir) "icons" "run.png")))
+		:src (make-file-path (hz-dir) "etc" "icons" "run.png")))
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
@@ -212,16 +215,14 @@
 	  (<TD>
 	     :class "icon"
 	     (<IMG>
-		:src (make-file-path (hz-dir) "icons" "config.png")))
+		:src (make-file-path (hz-dir) "etc" "icons" "config.png")))
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
 		:title "Run the weblet in a new window"
-		:onclick ~(iwindow-open
-			   "Preferences"
+		:onclick ~(window.open
 			   $(format "~a/~a/preferences" (hop-service-base) name)
-			   false false
-			   640 400 (/ (- window.innerWidth 650) 2) 50)
+			   $name)
 		"Preferences"))))
 
       (define (<UNINSTALL> id)
@@ -229,7 +230,7 @@
 	  (<TD>
 	     :class "icon"
 	     (<IMG>
-		:src (make-file-path (hz-dir) "icons" "delete.png")))
+		:src (make-file-path (hz-dir) "etc" "icons" "delete.png")))
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
@@ -244,7 +245,7 @@
 	  (<TD>
 	     :class "icon"
 	     (<IMG>
-		:src (make-file-path (hz-dir) "icons" "update.png")))
+		:src (make-file-path (hz-dir) "etc" "icons" "update.png")))
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
@@ -286,7 +287,7 @@
 	    (<TD>
 	       :class "icon"
 	       (<IMG>
-		  :src (make-file-path (hz-dir) "icons" "warning.png")))
+		  :src (make-file-path (hz-dir) "etc" "icons" "warning.png")))
 	    (<TD>
 	       (<SPAN>
 		  "HOP " (hop-version) " incompatible, required " msg))))

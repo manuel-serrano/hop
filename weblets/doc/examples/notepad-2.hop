@@ -1,4 +1,4 @@
-;; //Inline// notepad vs //on-demand// notpad
+;; //Inline// tabs vs //on-demand// tabs
 (<HTML>
    (<HEAD> :css "hop-notepad.css" :jscript "hop-notepad.js")
    (<BODY>
@@ -12,12 +12,11 @@
 	    (<NPTABHEAD> "Server date")
 	    (current-date)))
       (<NOTEPAD>
-	 :inline #f
 	 (<NPHEAD>
 	    (<CENTER> (<B> "A remote of Notepad")))
 	 (<NPTAB>
-	    (<NPTABHEAD> "Readme")
-	    "In this notepad, the server date is updated each time the tab is selected.")
+	    (<NPTABHEAD> "Creation date")
+	    (date))
 	 (<NPTAB>
 	    (<NPTABHEAD> "Server date")
 	    (<DELAY>
