@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu May 18 05:25:18 2006 (serrano)                */
+;*    Last change :  Wed May 24 13:12:04 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -27,7 +27,8 @@
 	    __hop_hop)
 
    (export  (<HEAD> . ::obj)
-	    (<HOP-FOOT-LOGO> . ::obj)
+	    (<FOOT> . ::obj)
+	    (<FOOT-BUTTON> . ::obj)
 	    
 	    (<TOOLTIP> . ::obj)
 	    (<SORTTABLE> . ::obj)))
@@ -179,49 +180,45 @@
 	 (body (cons meta body)))))
 
 ;*---------------------------------------------------------------------*/
-;*    <HOP-FOOT-LOGO> ...                                              */
-;*    -------------------------------------------------------------    */
-;*    This do not use CSS because we want them to be correctly         */
-;*    displayed even when no CSS is specified.                         */
+;*    <FOOT> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <HOP-FOOT-LOGO> ((id #unspecified string)
-				      (img (<IMG> :inline #t
-						  :src (make-file-path
-							(hop-share-directory)
-							"icons"
-							"foot-logo.png")))
-				      body)
-   :hss-type "div.hop-foot-logo"
-   (let ((r (if (null? body)
-		(<SPAN> :style "font-size: 22px;
-                                font-style: normal;
-                                font-family: Futura_Poster, Blippo, Cooper, Eras-UltraBlk, RoostHeavy, Sinaloa, Arial, Verda, sans serif;
-                                font-weight: bold;"
-			(hop-name)
-			(<SPAN> :style "font-size: 7px; font-stretch: ultra-condensed; font-family: sans serif; margin-right: 2px; margin-left: -1px; vertical-align: bottom"
-				(hop-version)))
-		body)))
-      (<DIV> :style
-	     (format "width: 84px; height: 27px;
-                      overflow: hidden;
-                      background-color: white;
-                      border: 2px outset #777;
-                      padding: 0; padding: 0;
-                      background-image: url( '~a/icons/logo-bg.png' );"
-		     (hop-share-directory))
-	     :class "hop-foot-logo"
-	     (if (not img)
-		 r
-		 (<TABLE> :style "width: 100%; font-size: x-small;"
-			  :border-collapse "collapse" 
-			  :border 0
-			  :cellspacing 0
-			  :cellpadding 0
-			  (<TR>
-			     (<TD> :align 'left img)
-			     (<TD> :align 'center r)))))))
-		   
+(define-xml-compound <FOOT> ((id #unspecified string)
+			     (class "foot" string)
+			     body)
+   (<DIV>
+      :id (xml-make-id id 'FOOT)
+      :class class
+      (<DIV>
+	 :align "center"
+	 :class "foot-buttons"
+	 (<FOOT-BUTTON>
+	    :href "http://hop.inria.fr"
+	    :title "HOP home page"
+	    :src "hop.png")
+	 body)))
 
+;*---------------------------------------------------------------------*/
+;*    <FOOT-BUTTON> ...                                                */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <FOOT-BUTTON> ((id #unspecified string)
+				    (class "foot-button")
+				    (href #f string)
+				    (title #f string)
+				    (path #f)
+				    (src #f))
+   (<A>
+      :class class
+      :href href
+      :title title
+      (<IMG> :alt title
+	     :src (cond
+		     ((string? path)
+		      path)
+		     ((string? src)
+		      (format "~a/buttons/~a" (hop-share-directory) src))
+		     (else
+		      (error '<FOOT-BUTTON> "Illegal source" src))))))
+				     
 ;*---------------------------------------------------------------------*/
 ;*    <TOOLTIP> ...                                                    */
 ;*---------------------------------------------------------------------*/

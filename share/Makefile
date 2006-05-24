@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu May 18 10:32:44 2006 (serrano)                */
+#*    Last change :  Wed May 24 12:55:44 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -29,7 +29,7 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-window.js hop-window.css \
                   hop-iwindow.js hop-iwindow.css \
                   hop-editor.js hop-editor.css \
-                  hop.scm icons editor Makefile
+                  hop.scm icons buttons editor Makefile
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -68,6 +68,9 @@ install:
 	mkdir -p $(HOPSHAREDIR)/icons && \
 	chmod a+rx $(HOPSHAREDIR)/icons && \
 	install -m a+r $(BUILDSHAREDIR)/icons/* $(HOPSHAREDIR)/icons && \
+	mkdir -p $(HOPSHAREDIR)/buttons && \
+	chmod a+rx $(HOPSHAREDIR)/buttons && \
+	install -m a+r $(BUILDSHAREDIR)/buttons/* $(HOPSHAREDIR)/buttons && \
 	mkdir -p $(HOPSHAREDIR)/editor && \
 	chmod a+rx $(HOPSHAREDIR)/editor && \
 	install -m a+r $(BUILDSHAREDIR)/editor/* $(HOPSHAREDIR)/editor
@@ -106,6 +109,7 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/base64.js && \
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \
 	/bin/rm -rf $(HOPSHAREDIR)/icons && \
+	/bin/rm -rf $(HOPSHAREDIR)/buttons && \
 	/bin/rm -rf $(HOPSHAREDIR)/editor 
 
 

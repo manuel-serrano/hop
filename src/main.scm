@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May 22 17:06:35 2006 (serrano)                */
+;*    Last change :  Wed May 24 08:05:32 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -94,14 +94,21 @@
 ;*---------------------------------------------------------------------*/
 (define (handle-connection accept-pool::pool reply-pool::pool s::socket n::int)
    (let ((sock (socket-accept s)))
-      (hop-verb 1 (hop-color n n " CONNECT")
+      (hop-verb 1 (hop-color n n " CONNECT"))
+      (hop-verb 2
 		" (" (pool-thread-available accept-pool)
-		"/" (hop-max-accept-thread) "): "
+		"/" (hop-max-accept-thread)
+		"-" 
+		(pool-thread-available reply-pool)
+		"/" (hop-max-reply-thread)
+		")")
+      (hop-verb 1
+		": "
 		(socket-hostname sock) " [" (current-date) "]\n")
       (when (socket? sock)
 	 (pool-thread-execute accept-pool
 			      (lambda ()
-				 (http-connect sock reply-pool n))
+				 (http-connect sock accept-pool reply-pool n))
 			      (lambda (m)
 				 (http-response
 				  (http-service-unavailable m) sock))
@@ -110,7 +117,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-connect ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (http-connect sock reply-pool id)
+(define (http-connect sock accept-pool reply-pool id)
    (let ((req (with-handler
 		 (lambda (e)
 		    (when (&error? e) (error-notify e))
@@ -132,14 +139,18 @@
       (when (http-request? req)
 	 (with-access::http-request req (method scheme host port path)
 	    (hop-verb 2 (hop-color req req " PROCESS")
-		      " (" (pool-thread-available reply-pool)
+		      " ("
+		      (pool-thread-available accept-pool)
+		      "/" (hop-max-accept-thread)
+		      "-" 
+		      (pool-thread-available reply-pool)
 		      "/" (hop-max-reply-thread) "): "
 		      method " "
 		      scheme "://" host ":" port (string-for-read path)
-		      "\n"))	    
+		      "\n"))
 	 (pool-thread-execute reply-pool
 			      (lambda ()
-				 (http-process req sock))
+				 (http-process req sock accept-pool reply-pool))
 			      (lambda (m)
 				 (http-response
 				  (http-service-unavailable m) sock))
@@ -164,13 +175,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-process ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (http-process req sock)
+(define (http-process req sock accept-pool reply-pool)
    (with-handler
       (lambda (e)
 	 (with-handler
 	    (lambda (e) #f)
-	    (hop-verb 1 (hop-color req req " ERROR")
-		      " " (trace-color 1 e) "\n")
+	    (hop-verb 1 (hop-color req req " ERROR"))
+	    (hop-verb 2
+		      " (" (pool-thread-available accept-pool)
+		      "/" (hop-max-accept-thread)
+		      "-" 
+		      (pool-thread-available reply-pool)
+		      "/" (hop-max-reply-thread)
+		      ")")
+	    (hop-verb 1 ": " (trace-color 1 e) "\n")
 	    (if (http-response-string? e)
 		(http-response e sock)
 		(begin
@@ -188,13 +206,25 @@
 	 #f)
       (let ((hp (hop req)))
 	 (hop-verb 4 (hop-color req req " EXEC")
-		   ": " (find-runtime-type hp)
+		   " ("
+		   (pool-thread-available accept-pool)
+		   "/" (hop-max-accept-thread)
+		   "-" 
+		   (pool-thread-available reply-pool)
+		   "/" (hop-max-reply-thread) "): "
+		   (find-runtime-type hp)
 		   " "
 		   (if (user? (http-request-user req))
 		       (user-name (http-request-user req))
 		       "anonymous") "\n")
 	 (let ((rep (http-response hp sock)))
-	    (hop-verb 2 (hop-color req req " RESPONSE") ": "
+	    (hop-verb 2 (hop-color req req " RESPONSE")
+		      " ("
+		      (pool-thread-available accept-pool)
+		      "/" (hop-max-accept-thread)
+		      "-" 
+		      (pool-thread-available reply-pool)
+		      "/" (hop-max-reply-thread) "): "
 		      rep
 		      " [" (current-date) "]"
 		      (if (http-response-persistent? rep)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Sat May 20 09:52:44 2006 (serrano)                */
+;*    Last change :  Wed May 24 07:17:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -185,6 +185,7 @@ be used to access the whole source code of this playground.])))
 	 (t (string-capitalize (basename svc))))
       (<IMG> :id id
 	     :src p1
+	     :inline #t
 	     :title t
 	     :onmouseover ~(set! (document.getElementById $id).src $p2)
 	     :onmouseout ~(set! (document.getElementById $id).src $p1)

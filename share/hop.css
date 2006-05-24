@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Sun Apr 16 15:35:57 2006 (serrano)                */
+/*    Last change :  Wed May 24 13:12:33 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP CSS                                                 */
@@ -34,4 +34,29 @@
 
 .hopmailto:hover {
   text-decoration: underline;
+}
+
+/*--- buttons ---------------------------------------------------------*/
+div.foot {
+  margin-top: 10px;
+  background: transparent;
+  text-align: center;
+}
+
+div.foot a.foot-button {
+  opacity: 0.5;
+  background-color: transparent;
+  color: transparent;
+  text-decoration: none;
+}
+
+div.foot a.foot-button:hover {
+  opacity: 1;
+}
+
+div.foot a.foot-button img {
+  border: 0;
+  background: transparent;
+  padding-left: 5px;
+  padding-right: 5px;
 }

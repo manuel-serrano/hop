@@ -45,5 +45,7 @@
 	 (<IFRAME>
 	    :class "view"
 	    :src (make-service-url wikiedit/view))
-	 (<A> :href (make-service-url wikiedit/view) "Additional view"))))
+	 (<SPAN> :class "click"
+		 :onclick ~(window.open $(make-service-url wikiedit/view))
+		 "Additional view"))))
 	       

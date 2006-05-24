@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue May 23 05:25:28 2006 (serrano)                */
+;*    Last change :  Wed May 24 15:12:44 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -332,7 +332,8 @@ Google, each containing a forward pointer to the found wanted URL.])))
 		     :css (format "~a/webfilter.hss" webfilter-dir)
 		     :jscript "hop-notepad.js" "hop-sorttable.js")
 	     (<BODY>
-		(<CENTER>
+		(<DIV>
+		   :align "center"
 		   (<TABLE>
 		      :class "webfilter"
 		      (<TR>
@@ -360,7 +361,8 @@ Google, each containing a forward pointer to the found wanted URL.])))
 						  (<GOOGLE>))
 					       (<NPTAB>
 						  (<NPTABHEAD> "Flash")
-						  (<FLASH>)))))))))))))
+						  (<FLASH>)))))))))))
+		(<FOOT>)))
 	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue May 23 09:14:36 2006 (serrano)                */
+;*    Last change :  Wed May 24 15:09:02 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -142,7 +142,8 @@
       (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css" 
 	      :css (format "~a/hop.hss" (hop-dir)))
       (<BODY>
-	 (<CENTER>
+	 (<DIV>
+	    :align "center"
 	    (<TABLE>
 	       :class "hop"
 	       (<TR>
@@ -158,6 +159,11 @@
 			      (<DIV> :id "title" "Hop v" (hop-version))))
 			(<TR>
 			   (<TD>
-			      obj))))))))))
+			      obj)))))))
+	 (<FOOT>
+	    (<FOOT-BUTTON>
+	       :href "http://www.gnu.org/licenses/gpl.html"
+	       :title "Gnu GPL"
+	       :src "gpl.png")))))
 				     
 	     

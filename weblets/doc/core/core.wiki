@@ -1,141 +1,87 @@
-<doc> HOP Wiki syntax
+<doc> HOP core language
 
-== Basic Text Formatting ==
+This document presents the core constructions of the HOP programming language.
+It does not present the APIs which are already presented in the ++API++ tab.
 
-=== Bold, Italic, and Underline ===
-,(meta-wiki-example "basic.wiki")
+== Server Side core language ==
 
-=== Mono Space ===
-,(meta-wiki-example "tt.wiki")
+This section presents the HOP constructions that are only applicable to
+server-side programming.
 
-=== Misc ===
-,(meta-wiki-example "misc.wiki")
+=== Modules ===
+On the server side the ,(<APIREF> "weblets" "service.wiki") are organized into
+//modules//. Modules structure the program. A module //export// variables,
+functions, and classes. A module might //import// another module. In
+that case, it may access to the imported variables, functions, and classes.
 
-== Links ==
+~~ In this text we use the classical conventions. The sign ,(<TT> "+")
+denotes a non empty repetition. The sign ++*++ denotes a possibly
+empty repetition.  The sign ++|++ denotes the alternative. The
+syntactic structure of a module is as follows:
 
-HOP Wiki only supports external links. No effort is made to
-automatically recognize links in a regular text. Links are enclosed
-inside double angle parenthesis.
+  (module <ident> <clause>+ ...)
 
-,(meta-wiki-example "link.wiki")
-
-
-== Sectioning ==
-HOP supports 5 section levels. They starts by a double equal sign
-at the beginning of line.
-
-,(meta-wiki-example "section.wiki")
-
-More than 5 consecutive equal signs at the beginning of a line, introduce
-an horizontal rule.
-
-HOP, does not automatically compute table of contents but it supports
-,(<APIREF> "facilities" "wiki.wiki") for producing such tables.
-
-== Text Layout ==
-
-=== Paragraph ===
-
-The sequence ,(<TT> "~~") located at the beginning of a line starts
-a new paragraph.
-
-~~
-,(meta-wiki-example "paragraph.wiki")
-
-=== Verbatim ===
-
-Non parsed, pre-formated blocks are introduced by indenting lines
-with two space characters.
-
-  This blocks can be
-     used for representing
-     computer programs
-       or anything else that needs
-       pre-formated indentations.
+  <expression>*
 
 
-These blocks end with two consecutive empty lines.
+A single file cannot contain more than one module. The syntax for the clauses
+is:
 
-=== Lists ===
+  <clause> := <import>
+     | <library>
+     | <export>
+     | <static>
 
-HOP Wiki supports order and unorder lists. They are created by lines indent
-with at least two space character and followed by a ++-++ character
-for ordered lists and by a ++*++ character for unordered ones.
+  <import> := (import <ident>+)
+  <library> := (library <ident>+)
 
-~~
-,(meta-wiki-example "lists.wiki")
+  <export> := (export <class-or-binding>+)
+  <class-or-binding> := <variable>
+     | <function>
+     | <class>
 
-=== Tables ===
+  <variable> := <ident>
+  <function> := (<ident>+)
 
-Tables starts by the character ++^++ (for a header) or ++|++ (for a regular
-data) in column 1. A table ends with two consecutive blank lines.
-Table cells may be centered (if they start and end with two space characters).
-They may be left aligned (if they end with two space characters) or right
-aligned (if they start with two space characters). A cell may span over
-several columns (when it is followed by one or several empty cells).
-
-~~
-,(meta-wiki-example "tables.wiki")
-
-== Embedding HOP ==
-
-HOP wiki syntax supports embedded HOP expressions. An HOP expressions
-starts with the sequence comma and parenthesis (i.e., ,(<TT> ",(")) and its
-ends with a closing parenthesis. 
-
-~~
-The full power of HOP is available inside HOP wiki.
-
-~~
-,(meta-wiki-example "hop.wiki")
+  <class> := (class <ident> <class-field>)
+  <class-field> := <ident>
+     | (<ident> <class-attribute>+)
+  <class-attribute> := read-only
+     | (default <expression>)
 
 
-== Syntax Plugins ==
+Here is an example of a module named ++foo++ that uses the library
+++hopwiki++, that imports the module named ++bar++, and that exports the 
+function ++fun-foo++, the variable ++var-foo++, and the class ++class-foo++.
 
-HOP wiki supports //plugins//. A plugin invocation starts with an
-opening markup (i.e., a word starting with a ++<++ character and ending with a
-++>++ character) at the beginning of a line. The invocation ends with a
-closing markup (i.e., a word starting with the sequence ++</++ and
-ending with a ++>++ character). The closing markup must either be
-on the same line as the opening markup or at the beginning of a line.
-All characters following a closing markup are ignored.
-
-~~
-A plugin is implemented by the means of a function accepting three parameters.
-
-  - an input port
-  - a title
-  - a body
+  (module foo
+     (library hopwiki)
+     (import bar)
+     (export (fun-foo x)
+             var-foo
+             (class class-foo
+                (name read-only)
+                (x (default 0))
+                (y (default 0)))))
 
 
-The title is composed of all the characters following the opening markup
-up to the end of line or up to the closing markup for one-line plugins.
-The body of the plugin is composed of the characters composing the lines
-in between the opening and closing markups. The body and the title
-may use the wiki the syntax.
+=== Classes and Objects === 
 
-~~ 
-,(meta-wiki-example "plugin.wiki")
+The server side HOP object model is inspired by the
+[[http://en.wikipedia.org/wiki/Common_Lisp_Object_System|Common Lisp Object System]].  
+Contrary to languages such as SmallTalk or Java, in
+that model, //methods// are not attached to classes but to //generic
+functions//. This enables code to add new functionalities to
+pre-existing data structures (objects). The HOP declination uses
+single inheritance and single dispatch. That is, a class may inherit
+from exactly one class and only the first argument of method explored
+to resolve the late binding.
 
-The developer documentation for the ,(<APIREF> "Wiki library" "wiki.wiki")
-shows how to implement Wiki plugins.
-
-== Playground ==
-
-,(<BUTTON> 
-    :onclick ~(let ((frame (document.createElement "iframe")))
-		 (window.open ($doc/example-file "wiki.hop")
-			      "Wiki playground"
-			      "width=640, height=480, top=100, left=100"))
-    "run the playground")
+~~ Server side classes are defined in the module declaration. A class may either
+be //exported// in which case all the weblet might create objects of class,
+declare subclasses, generic functions, and methods.
 
 
-== Credits ==
-
-HOP boroughs its wiki syntax from several projects. The three mains are:
-
-  * [[http://wiki.splitbrain.org|DokuWiki]]
-  * [[http://www.methods.co.nz/asciidoc/|AsciiDoc]]
-  * [[http://fr.wikipedia.org/wiki/MediaWiki|MediaWiki]]
+== Client Side core language ==
 
 </doc>

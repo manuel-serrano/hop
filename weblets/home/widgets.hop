@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Sat May 20 09:51:10 2006 (serrano)                */
+;*    Last change :  Wed May 24 16:07:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -28,7 +28,8 @@
 	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
 	      :css (make-file-name (home-dir) "home.hss"))
       (<BODY>
-	 (<CENTER>
+	 (<DIV>
+	    :align "center"
 	    (<TABLE>
 	       :class "home"
 	       (<TR>
@@ -45,7 +46,43 @@
 				     "Hop Home Page")))
 			(<TR>
 			   (<TD>
-			      obj))))))))))
-
+			      obj)))))))
+	 (<FOOT>
+	    (<FOOT-BUTTON>
+	       :href "http://www.inria.fr"
+	       :title "INRIA"
+	       :src "inria.png")
+	    (<FOOT-BUTTON>
+	       :href "http://www.gnu.org/licenses/gpl.html"
+	       :title "Gnu GPL"
+	       :src "gpl.png")
+	    (<FOOT-BUTTON>
+	       :href "http://www.mozilla.org/"
+	       :title "Firefox"
+	       :src "firefox-80x15.png")
+	    (<FOOT-BUTTON>
+	       :href "http://www.mozilla.org/"
+	       :title "Mozilla"
+	       :src "mozilla-80x15.png")
+	    (<FOOT-BUTTON>
+	       :href "http://www.opera.com"
+	       :title "Opera"
+	       :src "opera-80x15.png")
+	    (<FOOT-BUTTON>
+	       :href "http://www.konqueror.org/"
+	       :title "Konqueror"
+	       :src "konqueror-80x15.png")
+	    (<FOOT-BUTTON>
+	       :href "http://jigsaw.w3.org/css-validator/check/referer"
+	       :title "Valid CSS"
+	       :src "html401-80x15.png")
+	    (<FOOT-BUTTON>
+	       :href "http://validator.w3.org/check/referer"
+	       :title "Valid XHTML"
+	       :src "xhtml-80x15.png")
+	    (<FOOT-BUTTON>
+	       :href "http://jigsaw.w3.org/css-validator/check/referer"
+	       :title "Valid CSS"
+	       :src "css-80x15.png")))))
 				     
 	     
