@@ -1,7 +1,115 @@
 <doc> HOP core language
 
+== Presentation ==
+
 This document presents the core constructions of the HOP programming language.
 It does not present the APIs which are already presented in the ++API++ tab.
+
+~~ HOP is functional expression based programming language. That is:
+  * All HOP expression as a value.
+  * Functions are first class values. They can be passed as argument,
+ returned as result, or stored in data structure.
+
+
+~~ HOP uses a lexical scoping discipline, that is the functions capture their
+definition environment for their free variables. 
+
+~~ HOP is safe because it checks types and array bounds. Contrary to
+languages such as [[http://caml.inria.fr/|ML]], HOP checks types at runtime. 
+
+== Syntax ==
+
+~~ In this text we use the classical conventions. The sign ,(<TT> "+")
+denotes a non empty repetition. The sign ++*++ denotes a possibly
+empty repetition.  The sign ++?++ denotes an optional occurrence.
+The sign ++|++ denotes the alternative.
+
+~~ HOP expressions are either atoms, quotes, or lists. 
+
+  <expression> := <atom> 
+     | <quote>
+     | <list>
+
+
+An atom is a syntactic elements described by the following grammar:
+
+  <atom> := <number>
+     | <ident>
+     | <keyword>
+     | <string>
+     | <boolean>
+     | <character>
+     | #unspecified
+    
+  <ident> := [a-zA-Z<>/?|!@%^&*-_=+][a-zA-Z0-9<>/?|!@%^&*-_=+]*
+
+  <keyword> := :<ident>
+
+  <character> := # \ "a character"
+     | #\Newline
+     | #\Space
+     | #\Return
+     | #\Tab
+
+  <boolean> := #t | #f
+
+
+Quotes are:
+
+  <quote> := '<ident>
+     | <literal-vector>
+
+  <literal-vector> := '#(<expression>*>)
+
+
+Lists are:
+
+  <list> := (<expression>*)
+
+
+In addition to these syntactic elements, server-side expressions may use
+//client-side// embedding:
+
+  <server-expression> := <expression>
+     | ~<client-expression>
+
+
+Symmetrically, client-side expressions may use //server-side// embedding:
+
+  <client-expression> := <expression>
+     | $<server-expression>
+
+
+== Definitions ==  
+
+HOP supports definitions of variables, functions, and services:
+
+  <definition> := <define-variable>
+     | <define-function>
+     | <define-service>
+
+  <definition-variable> := (define <ident> <expression>)
+
+  <definition-function> := (define (<ident> <ident> ...) <expression>)
+
+  <definition-service> := (define-service (<ident> <ident> ...) <expression>)
+
+
+== Basic constructions ==
+
+The sequence of HOP expressions is:
+
+  <sequence> := (begin <expression> ...)
+
+The alternative is:
+
+  <alternative> := (if <expression> <expression> <expression>?)
+
+
+HOP support derivative conditional constructions:
+
+  <alternative-cond> := (cond ((<expression> <expression)+))
+  <alternative-case> := (case <expression> ((<atom>+ <expression)+))
 
 == Server Side core language ==
 
@@ -14,10 +122,7 @@ On the server side the ,(<APIREF> "weblets" "service.wiki") are organized into
 functions, and classes. A module might //import// another module. In
 that case, it may access to the imported variables, functions, and classes.
 
-~~ In this text we use the classical conventions. The sign ,(<TT> "+")
-denotes a non empty repetition. The sign ++*++ denotes a possibly
-empty repetition.  The sign ++|++ denotes the alternative. The
-syntactic structure of a module is as follows:
+~~ The syntactic structure of a module is as follows:
 
   (module <ident> <clause>+ ...)
 
@@ -42,6 +147,7 @@ is:
 
   <variable> := <ident>
   <function> := (<ident>+)
+     | (generic <ident>+)
 
   <class> := (class <ident> <class-field>)
   <class-field> := <ident>
@@ -81,6 +187,40 @@ to resolve the late binding.
 be //exported// in which case all the weblet might create objects of class,
 declare subclasses, generic functions, and methods.
 
+~~ For the sake of the example, here is a simple source code that defines 
+two classes:
+
+  (module example
+     (static (class point x y))
+     (export (class point3d::point z))
+     (export (generic to-string ::object)))
+
+  (define-generic (to-string obj)
+     (with-output-to-string (lambda () (display obj))))
+
+  (define-method (to-string obj::point)
+     (with-access::point obj (x y)
+        (format "point:~a-~a" x y)))
+
+  (define-method (to-string obj::point3d)
+     (with-access::point3d obj (z)
+        (format "~a-~a" (call-next-method) z)))
+
+
+The form ++define-generic++ defines a new generic function. The form
+++define-method++ adds a method to a generic function. The generic function
+must be visible by the module declaring the method. The form ++with-access++
+opens an object up. Objects are creates with the ++instantiate++ form. Here
+is an expression creating an instance of the ++point3d++:
+
+  (instantiate::point3d
+     (z 10)
+     (x 0)
+     (y 5))
+
+
+Class fields that are provided with a default value are not required  by
+++instantiate++.
 
 == Client Side core language ==
 
