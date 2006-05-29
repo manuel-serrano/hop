@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Tue May 23 10:07:11 2006 (serrano)                */
+/*    Last change :  Mon May 29 17:20:10 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -143,7 +143,7 @@ function hop_iwindow_drag( event, win ) {
    win.el_main.style.height = win.el_main.offsetHeight;
    win.el_main.style.width = win.el_main.offsetWidth;
 
-   win.el_body.style.display = "none";
+   win.el_body.style.visibility = "hidden";
    win.el_handle.style.cursor = "move";
 
    document.onmousemove = function( event ) {
@@ -170,7 +170,7 @@ function hop_iwindow_drag( event, win ) {
    document.onmouseup = function( event ) {
       document.onmousemove = false;
       win.el_handle.style.cursor = ocursor;
-      win.el_body.style.display = "block";
+      win.el_body.style.visibility = "visible";
 
       /* user event */
       if( win.ondrag ) win.ondrag();
