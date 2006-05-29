@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Mon May 22 12:38:54 2006 (serrano)                */
+/*    Last change :  Mon May 29 08:04:49 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -454,6 +454,15 @@ weblets table.weblet tr.lastrow td {
 }
 
 weblets table.weblet td.update {
+  font-size: x-small;
+}
+
+weblets table.weblet p.sdescr {
+  font-weight: bold;
+}
+
+weblets table.weblet .sdescr {
+  font-style: italic;
   font-size: x-small;
 }
 

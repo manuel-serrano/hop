@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Fri May 12 18:15:51 2006 (serrano)                */
+;*    Last change :  Mon May 29 10:45:41 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -130,7 +130,13 @@
 ;*    hop->json ::xml ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->json obj::xml)
-   (format "document.getElementById( \"~a\" )" (xml-id obj)))
+   (error 'hop->json "Cannot translate xml element" xml))
+
+;*---------------------------------------------------------------------*/
+;*    hop->json ::xml ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (hop->json obj::xml-element)
+   (format "document.getElementById( \"~a\" )" (xml-element-id obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */

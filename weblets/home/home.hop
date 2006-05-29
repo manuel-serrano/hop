@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue May 23 05:23:51 2006 (serrano)                */
+;*    Last change :  Mon May 29 12:14:44 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -89,9 +89,11 @@
 			      (wiki->hop "presentation.wiki")))))
 	    (<NPTAB> :id "demo"
 		     (<NPTABHEAD> "Demos")
-		     (<DIV>
-			:align "center"
-			(<DEMO> req)))
+		     (<DELAY>
+			(lambda ()
+			   (<DIV>
+			      :align "hop-tab"
+			      (<DEMO> req)))))
 	    (<NPTAB> :id "download"
 		     (<NPTABHEAD> "Download")
 		     (<DELAY>
@@ -126,7 +128,17 @@
 			(lambda ()
 			   (<DIV>
 			      :class "hop-tab"
-			      "Not implemented yet"))))
+			      "This is not implemented yet. Until it is
+implemented you can send comments and remarks to "
+			      (<SPAN>
+				 :style "text-decoration: underline"
+				 :onmouseover
+				 { title =
+			            (this.innerHTML.replace( " ", "." )
+					+ String.fromCharCode( 0x41 - 1 )
+					+ "Inria.fr") }
+				 "Manuel Serrano")
+			      "."))))
 	    (<NPTAB> :id "stats"
 		     (<NPTABHEAD> "Statistics")
 		     (<DELAY>

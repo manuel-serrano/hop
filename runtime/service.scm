@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu May 11 08:57:08 2006 (serrano)                */
+;*    Last change :  Mon May 29 14:01:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -104,7 +104,7 @@
 		 path
 		 "?hop-encoding=hop"
 		 (map (lambda (f v)
-			 (format "&~a=~a" f (url-encode (obj->string v))))
+			 (format "&amp;~a=~a" f (url-encode (obj->string v))))
 		      args vals)))))
 
 ;*---------------------------------------------------------------------*/
@@ -119,7 +119,7 @@
 		 "?hop-encoding=none"
 		 (map (lambda (f v)
 			 (let ((a (if (string? v) (url-encode v) v)))
-			    (format "&~a=~a" f a)))
+			    (format "&amp;~a=~a" f a)))
 		      args vals)))))
 
 ;*---------------------------------------------------------------------*/

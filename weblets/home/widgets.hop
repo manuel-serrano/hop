@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Wed May 24 16:07:20 2006 (serrano)                */
+;*    Last change :  Mon May 29 11:58:59 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -26,7 +26,8 @@
       (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css" 
 	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
 	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
-	      :css (make-file-name (home-dir) "home.hss"))
+	      :css (make-file-name (home-dir) "home.hss")
+	      (<TITLE> "Hop Home page"))
       (<BODY>
 	 (<DIV>
 	    :align "center"
@@ -36,6 +37,7 @@
 		  (<TD>
 		     :valign "top"
 		     (<IMG> :class "logo"
+			    :alt "Home page logo" 
 			    :src (format "~a/etc/logo.png" (home-dir))))
 		  (<TD>
 		     :valign "top"
@@ -47,9 +49,11 @@
 			(<TR>
 			   (<TD>
 			      obj)))))))
-	 (<FOOT>
+	 (<DIV>
+	    :align "center"
+	    :class "foot"
 	    (<FOOT-BUTTON>
-	       :href "http://www.inria.fr"
+	       :href "http://www.inria.fr/mimosa"
 	       :title "INRIA"
 	       :src "inria.png")
 	    (<FOOT-BUTTON>
@@ -59,30 +63,26 @@
 	    (<FOOT-BUTTON>
 	       :href "http://www.mozilla.org/"
 	       :title "Firefox"
-	       :src "firefox-80x15.png")
+	       :src "firefox.png")
 	    (<FOOT-BUTTON>
 	       :href "http://www.mozilla.org/"
 	       :title "Mozilla"
-	       :src "mozilla-80x15.png")
+	       :src "mozilla.png")
 	    (<FOOT-BUTTON>
 	       :href "http://www.opera.com"
 	       :title "Opera"
-	       :src "opera-80x15.png")
+	       :src "opera.png")
 	    (<FOOT-BUTTON>
 	       :href "http://www.konqueror.org/"
 	       :title "Konqueror"
-	       :src "konqueror-80x15.png")
-	    (<FOOT-BUTTON>
-	       :href "http://jigsaw.w3.org/css-validator/check/referer"
-	       :title "Valid CSS"
-	       :src "html401-80x15.png")
+	       :src "konqueror.png")
 	    (<FOOT-BUTTON>
 	       :href "http://validator.w3.org/check/referer"
-	       :title "Valid XHTML"
-	       :src "xhtml-80x15.png")
+	       :title "Valid CSS"
+	       :src "html401.png")
 	    (<FOOT-BUTTON>
 	       :href "http://jigsaw.w3.org/css-validator/check/referer"
 	       :title "Valid CSS"
-	       :src "css-80x15.png")))))
+	       :src "css.png")))))
 				     
 	     

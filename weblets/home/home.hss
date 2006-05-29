@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed May 24 13:04:33 2006 (serrano)                */
+/*    Last change :  Mon May 29 07:52:21 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -260,11 +260,10 @@ iframe.hz {
 div.hop-tab {
   background: white;
   background-repeat: no-repeat;
-  background-position: center;
-  background-position: center 50px;
+  background-position: 50% 50px;
   background-image: url( "icons/logo-bg-128x128.png" );
-  min-width: 200;
-  min-height: 200;
+  min-width: 200px;
+  min-height: 200px;
   margin: 5px;
   border: 1px solid $border-color;
   padding: 2px;
@@ -279,8 +278,8 @@ $(define toolbar-opacity "0.9")
 $(define toolbar-background (color-lighter "#496bce"))
 
 demo {
-  width: 800;
-  height: 600;
+  width: 800px;
+  height: 600px;
   background-color: #496bce;
   overflow: auto;
   border: 2px double #aaa;
@@ -352,3 +351,9 @@ table.download span.old {
   color: #ff8010;
 }
 
+/*---------------------------------------------------------------------*/
+/*    Foot                                                             */
+/*---------------------------------------------------------------------*/
+div.foot {
+  margin-top: 5px;
+}

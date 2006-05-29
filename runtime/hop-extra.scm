@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed May 24 13:12:04 2006 (serrano)                */
+;*    Last change :  Mon May 29 10:58:28 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -27,6 +27,7 @@
 	    __hop_hop)
 
    (export  (<HEAD> . ::obj)
+	    (head-parse args)
 	    (<FOOT> . ::obj)
 	    (<FOOT-BUTTON> . ::obj)
 	    
@@ -91,30 +92,15 @@
       (let loop ((a args))
 	 (cond
 	    ((null? a)
-	     (cons
-	      (<META> :http-equiv "Content-Type"
-		      :content "text/html"
-		      :charset (if (eq? (hop-char-encoding) 'UTF-8)
-				   "UTF-8"
-				   "ISO-8859-1"))
-	      (let ((css (cons (<LINK> :rel "stylesheet"
-				       :type "text/css"
-				       :href (hop-file dir "hop.css"))
-			       (map! (lambda (file) (hop-css file dir))
-				     (reverse! css))))
-		    (jscript (cons* (<SCRIPT>
-				       :type "text/javascript"
-				       :src (hop-file dir "hop-autoconf.js"))
-				    (<SCRIPT>
-				       :type "text/javascript"
-				       :src (hop-file dir "hop.js"))
-				    (map! (lambda (file)
-					     (hop-jscript file dir))
-					  (reverse! jscript)))))
-		 (if favicon
-		     (cons (<LINK> :rel "shortcut icon" :href favicon)
-			   (append! (append! rest css) jscript))
-		     (append! (append! rest css) jscript)))))
+	     (let ((css (map! (lambda (file) (hop-css file dir))
+			      (reverse css)))
+		   (jscript (map! (lambda (file) (hop-jscript file dir))
+				  (reverse jscript))))
+		(values dir
+			(if favicon
+			    (cons (<LINK> :rel "shortcut icon" :href favicon)
+				  (append (append rest css) jscript))
+			    (append rest (append css jscript))))))
 	    ((pair? (car a))
 	     (loop (append (car a) (cdr a))))
 	    ((null? (car a))
@@ -167,17 +153,26 @@
 ;*    <HEAD> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
-   (let ((body (head-parse args))
-	 (meta (<META> :http-equiv "Content-Type"
-		       :content "text/html"
-		       :charset (if (eq? (hop-char-encoding) 'UTF-8)
-				    "UTF-8"
-				    "ISO-8859-1"))))
-      (instantiate::xml-markup
-	 (markup 'head)
-	 (attributes '())
-	 (id (xml-make-id))
-	 (body (cons meta body)))))
+   (multiple-value-bind (dir body)
+      (head-parse args)
+      (let ((meta (<META> :http-equiv "Content-Type"
+			  :content (if (eq? (hop-char-encoding) 'UTF-8)
+				       "text/html; charset=UTF-8"
+				       "text/html; charset=ISO-8859-1")))
+	    (css (<LINK> :rel "stylesheet"
+			 :type "text/css"
+			 :href (hop-file dir "hop.css")))
+	    (jscripts (list
+		       (<SCRIPT>
+			  :type "text/javascript"
+			  :src (hop-file dir "hop-autoconf.js"))
+		       (<SCRIPT>
+			  :type "text/javascript"
+			  :src (hop-file dir "hop.js")))))
+	 (instantiate::xml-markup
+	    (markup 'head)
+	    (attributes '())
+	    (body (cons* meta css (append jscripts body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FOOT> ...                                                       */

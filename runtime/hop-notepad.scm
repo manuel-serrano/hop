@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu May 18 17:20:20 2006 (serrano)                */
+;*    Last change :  Mon May 29 11:57:46 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -81,7 +81,7 @@
       (apply <DIV>
 	     :id id
 	     :class "hop-notepad"
-	     :lang svc
+	     :onkeyup (format "return ~a;" svc)
 	     (or head (<NOSCRIPT> :style "display: none;"))
 	     (<DIV> :class "hop-notepad-tabs" tabs)
 	     (<DIV> :class "hop-notepad-body" bodies)

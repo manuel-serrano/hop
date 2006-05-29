@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Mon May 22 15:29:54 2006 (serrano)                */
+;*    Last change :  Mon May 29 08:04:02 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -140,7 +140,7 @@
 ;*    <WEBLET> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLET> db weblet)
-   (with-access::dbhz weblet (name version author sdescr hop date install
+   (with-access::dbhz weblet (name version author sdescr descr hop date install
 				   minhop maxhop driver)
       
       (define action
@@ -319,7 +319,8 @@
 		  :class "weblet"
 		  (<TR> (<TD> "By " author))
 		  (<TR> (<TD> "&nbsp;"))
-		  (<TR> (<TD> (<P> sdescr)))
+		  (<TR> (<TD> (<P> :class "sdescr" sdescr)))
+		  (<TR> (<TD> (<P> :class "descr" descr)))
 		  (<TR> (<TD> "&nbsp;"))
 		  (<TR> (<TD>
 			   :class "action"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri May 19 06:55:53 2006 (serrano)                */
+;*    Last change :  Mon May 29 13:27:44 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -24,8 +24,7 @@
 	    __hop_misc)
    
    (export  (class xml
-	       (%xml-constructor)
-	       (id::bstring read-only (default "_")))
+	       (%xml-constructor))
 
 	    (class css::xml)
 	    
@@ -34,10 +33,8 @@
 	       (then read-only)
 	       (otherwise read-only))
 	    
-	    (class xml-ghost::xml
-	       (body read-only))
-	    
 	    (class xml-delay::xml
+	       (id read-only (default #unspecified))
 	       (thunk::procedure read-only)
 	       (value::obj (default #f)))
 
@@ -46,11 +43,14 @@
 	       (attributes::pair-nil (default '()))
 	       body::pair-nil)
 
+	    (class xml-html::xml-markup
+	       (prelude read-only (default "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n")))
+
 	    (class xml-element::xml-markup
+	       (id read-only (default #unspecified))
 	       (parent (default #unspecified)))
 
-	    (class xml-html::xml-markup
-	       (prelude read-only (default "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">")))
+	    (class xml-empty-element::xml-element)
 
 	    (generic %xml-constructor ::xml)
 	    (xml-constructor-add! ::symbol ::procedure)
@@ -179,7 +179,13 @@
 ;*    %xml-constructor ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-generic (%xml-constructor o::xml)
-   (with-access::xml o (id)
+   o)
+
+;*---------------------------------------------------------------------*/
+;*    %xml-constructor ::xml-element ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (%xml-constructor o::xml-element)
+   (with-access::xml-element o (id)
       (let ((hook (hashtable-get *xml-constructors* id)))
 	 (when (procedure? hook)
 	    (hook o)))
@@ -293,12 +299,6 @@
 	  (xml-write otherwise p encoding))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write ::xml-ghost ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-ghost p encoding)
-   #unspecified)
-
-;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-delay ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-delay p encoding)
@@ -309,42 +309,72 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-markup p encoding)
    (with-access::xml-element obj (markup attributes body)
-      (when (pair? body)
-	 (display "<" p)
-	 (display markup p)
-	 (xml-write-attributes attributes p)
-	 (display ">" p)
-	 (for-each (lambda (b) (xml-write b p encoding)) body)
-	 (display "</" p)
-	 (display markup p)
-	 (display ">" p))))
+      (display "<" p)
+      (display markup p)
+      (xml-write-attributes attributes p)
+      (cond
+	 ((or (pair? body) (memq markup '(script)))
+	  (display ">" p)
+	  (for-each (lambda (b) (xml-write b p encoding)) body)
+	  (display "</" p)
+	  (display markup p)
+	  (display ">\n" p))
+	 ((memq markup '(meta link))
+	  (display ">\n" p))
+	 (else
+	  (display "/>\n" p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-element ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-element p encoding)
    (with-access::xml-element obj (markup id attributes body)
-      (if (and (null? body)
-	       (null? attributes)
-	       (memq markup '(br img input)))
-	  (begin
-	     (display "<" p)
-	     (display markup p)
-	     (display " id=\"" p)
-	     (display id p)
-	     (display "\"/>" p))
-	  (begin
-	     (display "<" p)
-	     (display markup p)
-	     (display " id=\"" p)
-	     (display id p)
-	     (display "\"" p)
-	     (xml-write-attributes attributes p)
-	     (display ">" p)
-	     (for-each (lambda (b) (xml-write b p encoding)) body)
-	     (display "</" p)
-	     (display markup p)
-	     (display ">" p)))))
+      (cond
+	 ((and (null? body) (null? attributes))
+	  (display "<" p)
+	  (display markup p)
+	  (display " id=\"" p)
+	  (display id p)
+	  (display "\">" p)
+	  (display "</" p)
+	  (display markup p)
+	  (display ">" p))
+	 ((null? body)
+	  (display "<" p)
+	  (display markup p)
+	  (display " id=\"" p)
+	  (display id p)
+	  (display "\"" p)
+	  (xml-write-attributes attributes p)
+	  (display ">" p)
+	  (display "</" p)
+	  (display markup p)
+	  (display ">" p))
+	 (else
+	  (display "<" p)
+	  (display markup p)
+	  (display " id=\"" p)
+	  (display id p)
+	  (display "\"" p)
+	  (xml-write-attributes attributes p)
+	  (display ">" p)
+	  (for-each (lambda (b) (xml-write b p encoding)) body)
+	  (display "</" p)
+	  (display markup p)
+	  (display ">" p)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-empty-element ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-empty-element p encoding)
+   (with-access::xml-empty-element obj (markup id attributes)
+      (display "<" p)
+      (display markup p)
+      (display " id=\"" p)
+      (display id p)
+      (display "\"" p)
+      (xml-write-attributes attributes p)
+      (display "/>\n" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-html ...                                         */
@@ -439,10 +469,10 @@
 (define-xml-element <ACRONYM>)
 (define-xml-element <ADDRESS>)
 (define-xml-element <APPLET>)
-(define-xml-element <AREA>)
+(define-xml xml-empty-element #t <AREA>)
 (define-xml-element <B>)
-(define-xml-element <BASE>)
-(define-xml-element <BASEFONT>)
+(define-xml xml-empty-element #t <BASE>)
+(define-xml xml-empty-element #t <BASEFONT>)
 (define-xml-element <BDO>)
 (define-xml-element <BIG>)
 (define-xml-element <BLOCKQUOTE>)
@@ -454,7 +484,7 @@
 (define-xml-element <CENTER>)
 (define-xml-element <CITE>)
 (define-xml-element <CODE>)
-(define-xml-element <COL>)
+(define-xml xml-empty-element #t <COL>)
 (define-xml-element <COLGROUP>)
 (define-xml-element <DD>)
 (define-xml-element <DEL>)
@@ -467,7 +497,7 @@
 (define-xml-element <FIELDSET>)
 (define-xml-element <FONT>)
 (define-xml-element <FORM>)
-(define-xml-element <FRAME>)
+(define-xml xml-empty-element #t <FRAME>)
 (define-xml-element <FRAMESET>)
 (define-xml-element <H1>)
 (define-xml-element <H2>)
@@ -475,22 +505,22 @@
 (define-xml-element <H4>)
 (define-xml-element <H5>)
 (define-xml-element <H6>)
-(define-xml-element <HR>)
-(define-xml xml-html <HTML>)
+(define-xml xml-empty-element #t <HR>)
+(define-xml xml-html #f <HTML>)
 (define-xml-element <I>)
 (define-xml-element <IFRAME>)
-(define-xml-element <INPUT>)
+(define-xml xml-empty-element #t <INPUT>)
 (define-xml-element <INS>)
 (define-xml-element <ISINDEX>)
 (define-xml-element <KBD>)
 (define-xml-element <LABEL>)
 (define-xml-element <LEGEND>)
 (define-xml-element <LI>)
-(define-xml-element <LINK>)
+(define-xml-markup <LINK>)
 (define-xml-element <MAP>)
 (define-xml-element <MARQUEE>)
 (define-xml-element <MENU>)
-(define-xml-element <META>)
+(define-xml-markup <META>)
 (define-xml-element <NOFRAMES>)
 (define-xml-element <NOSCRIPT>)
 (define-xml-element <OBJECT>)
@@ -498,18 +528,18 @@
 (define-xml-element <OPTGROUP>)
 (define-xml-element <OPTION>)
 (define-xml-element <P>)
-(define-xml-element <PARAM>)
+(define-xml xml-empty-element #t <PARAM>)
 (define-xml-element <PRE>)
 (define-xml-element <Q>)
 (define-xml-element <S>)
 (define-xml-element <SAMP>)
-(define-xml-element <SCRIPT>)
+(define-xml-markup <SCRIPT>)
 (define-xml-element <SELECT>)
 (define-xml-element <SMALL>)
 (define-xml-element <SPAN>)
 (define-xml-element <STRIKE>)
 (define-xml-element <STRONG>)
-(define-xml xml-markup <STYLE>)
+(define-xml-markup <STYLE>)
 (define-xml-element <SUB>)
 (define-xml-element <SUP>)
 (define-xml-element <TABLE>)
@@ -519,7 +549,7 @@
 (define-xml-element <TFOOT>)
 (define-xml-element <TH>)
 (define-xml-element <THEAD>)
-(define-xml xml-markup <TITLE>)
+(define-xml-markup <TITLE>)
 (define-xml-element <TR>)
 (define-xml-element <TT>)
 (define-xml-element <U>)
@@ -560,10 +590,10 @@
 				(close-input-port p))
 			     src))
 		      src)))
-	  (instantiate::xml-element
+	  (instantiate::xml-empty-element
 	     (markup 'img)
 	     (id (xml-make-id id 'img))
 	     (attributes (cons `(src . ,src) attributes))
-	     (body body)))))
+	     (body '())))))
 	  
 

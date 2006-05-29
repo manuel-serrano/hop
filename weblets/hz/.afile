@@ -1,5 +1,5 @@
-;; /users/serrano/prgm/project/hop/weblets/hz
-;; Mon Mar 27 18:26:38 2006
+;; /mnt/users/eg/Projects/hop/weblets/hz
+;; Fri May 19 11:22:41 2006
 
 (
   (hz_authenticate "./authenticate.hop")

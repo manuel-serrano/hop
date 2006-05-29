@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Wed May 17 10:22:11 2006 (serrano)                */
+;*    Last change :  Mon May 29 07:41:05 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
@@ -210,7 +210,7 @@
 	 (<DIV> :class "sudoku-help"
 	    (<DIV> "- Click on a cell and enter a number")
 	    (<DIV> "- You can use arrows to move on the board")
-	    (<DIV> "- Use \"h\" or \"?\" to view the value of selected cell")
+	    (<DIV> "- Use \"h\" or \"?\" to reveal the value of the selected cell")
 	    (<DIV> "- Numbers in red are misplaced")))
      (board->html board level)
      (<SCRIPT>

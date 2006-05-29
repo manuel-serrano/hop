@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 12 15:53:32 2006                          */
-;*    Last change :  Fri Apr 14 07:43:17 2006 (serrano)                */
+;*    Last change :  Mon May 29 13:58:39 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki toc                                                         */
@@ -24,7 +24,9 @@
 (define (hop-wiki->toc obj #!key (ul <UL>) (li <LI>) (max-depth 3))
    (multiple-value-bind (res _)
       (inner-toc obj ul li max-depth)
-      res))
+      (if (pair? res)
+	  (ul res)
+	  res)))
 
 ;*---------------------------------------------------------------------*/
 ;*    inner-toc ...                                                    */
@@ -32,15 +34,15 @@
 (define (inner-toc obj ul li max-depth)
    (let loop ((obj obj)
 	      (res '())
-	      (level 0))
+	      (depth 0))
       (cond
 	 ((not (pair? obj))
 	  (values (reverse! res) '()))
 	 ((pair? (car obj))
-	  (loop (append (car obj) (cdr obj)) res level))
+	  (loop (append (car obj) (cdr obj)) res depth))
 	 ((and (xml-element? (car obj))
 	       (eq? (xml-element-markup (car obj)) 'div))
-	  (loop (append (xml-element-body (car obj)) (cdr obj)) res level))
+	  (loop (append (xml-element-body (car obj)) (cdr obj)) res depth))
 	 ((null? (cdr obj))
 	  (values (reverse! res) '()))
 	 (else
@@ -48,27 +50,25 @@
 		(snd (cadr obj)))
 	     (cond
 		((is-section? fst snd)
-		 (let ((depth (section-depth fst snd)))
-		    (if (>fx depth max-depth)
-			(loop (cddr obj) res level)
-			(cond
-			   ((=fx depth level)
-			    (let* ((mark (section-mark fst snd))
-				   (a (<A> :href (string-append "#" mark)
-					   (section-title fst snd))))
-			       (loop (cddr obj) (cons (li a) res) level)))
-			   ((>fx depth level)
-			    (multiple-value-bind (res2 rest)
-			       (loop obj '() depth)
-			       (if (pair? res2)
-				   (loop rest (cons (ul res2) res) level)
-				   (loop rest res level))))
-			   (else
-			    (values (reverse! res) obj))))))
+		 (let ((d (section-depth fst snd)))
+		    (cond
+		       ((>fx d max-depth)
+			(loop (cddr obj) res depth))
+		       ((<=fx d depth)
+			(values (reverse! res) obj))
+		       (else
+			(let* ((mark (section-mark fst snd))
+			       (a (<A> :href (string-append "#" mark)
+				       (section-title fst snd))))
+			   (multiple-value-bind (res2 rest)
+			      (loop (cddr obj) '() d)
+			      (if (pair? res2)
+				  (loop rest (cons (li a (ul res2)) res) depth)
+				  (loop rest (cons (li a) res) depth))))))))
 		((and (xml-element? fst) (eq? (xml-element-markup fst) 'div))
-		 (loop (append (xml-element-body fst) (cdr obj)) res level))
+		 (loop (append (xml-element-body fst) (cdr obj)) res depth))
 		(else
-		 (loop (cdr obj) res level))))))))
+		 (loop (cdr obj) res depth))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    is-section? ...                                                  */
