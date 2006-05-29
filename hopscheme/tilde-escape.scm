@@ -16,13 +16,18 @@
 
 (define (new-scheme-expr p expr)
    (let* ((proxy (list 'begin #f))
-	  (part (list 'part expr
-		      (lambda (js-expr stmt-form?)
-			 (set-cdr! proxy
-				   (js->hop (if stmt-form?
-						js-expr
-						(string-append js-expr ";"))))
-			 (if stmt-form? ";" "")))))
+	  (part
+	   (list 'part expr
+		 (lambda (p)
+		    (cons (open-output-string)
+			  (lambda (string-port stmt-form?)
+			     (let ((js-expr (close-output-port string-port)))
+				(set-cdr! proxy
+					  (js->hop (if stmt-form?
+						       js-expr
+						       (string-append js-expr
+								      ";"))))
+				(if stmt-form? (display ";" p)))))))))
       (hashtable-update! *rev-scheme-exprs*
 			 p
 			 (lambda (old-l)
@@ -34,7 +39,10 @@
 
 
 (define (compile-hop-client e)
-   (scheme2js (list e) (hopscheme-aliases) (hopscheme-config)))
+   (let ((s-port (open-output-string)))
+      (unwind-protect
+	 (scheme2js (list e) (hopscheme-aliases) (hopscheme-config) s-port)
+	 (close-output-port s-port))))
 
 ;; ===========================================================================
 ;; and one, once an expression has been read.
@@ -45,8 +53,6 @@
    (let ((rev-scheme-exprs (hashtable-get *rev-scheme-exprs* p)))
       (when rev-scheme-exprs
 	 (hashtable-remove! *rev-scheme-exprs* p)
-	 (with-output-to-string
-	    (lambda ()
-	       (for-each compile-hop-client (reverse! rev-scheme-exprs)))))))
+	 (for-each compile-hop-client (reverse! rev-scheme-exprs)))))
 
 (hop-read-post-hook-set! post-compile)

@@ -23,8 +23,11 @@
 	   rm-unused-vars
 	   verbose)
    (main my-main)
-   (export (scheme2js top-level::pair-nil js-interface::pair-nil config)
-	   (scheme2js-compile-files! in-files::pair out-file::bstring js-interface::pair-nil config)
+   (export (scheme2js top-level::pair-nil js-interface::pair-nil config p)
+	   (scheme2js-compile-files! in-files::pair
+				     out-file::bstring
+				     js-interface::pair-nil
+				     config)
 	   (default-scheme2js-config)))
 
 ;; TODO: automate this...
@@ -46,6 +49,7 @@
 		  (optimize-calls #t)
 		  (optimize-var-number #f)
 		  (optimize-boolify #t)
+		  (optimize-set! #t)
 		  (encapsulate-parts #f)
 		  (print-locations #f)))
       ht))
@@ -150,7 +154,7 @@
       (else
        (set! *in-files* (cons else *in-files*)))))
 
-(define (scheme2js top-level js-interface config-ht)
+(define (scheme2js top-level js-interface config-ht p)
    (config-init! config-ht)
    (let* ((tmp (extract-js-interface top-level js-interface))
 	  (top-level-s (cons 'begin (car tmp))) ;; top-level-s plitted
@@ -184,21 +188,19 @@
       (if (eq? (config 'debug-stage) 'statements) (dot-out tree))
       (node-elimination! tree)
       (if (eq? (config 'debug-stage) 'node-elim3) (dot-out tree))
-      (let ((compiled (compile tree)))
+      (let* ((compiled (compile tree p)))
 	 (if (eq? (config 'debug-stage) 'compiled) (dot-out tree))
 	 (verbose "--- compiled")
-	 (unless (config 'debug-stage)
-	    (print compiled))
 	 )))
 
 (define (scheme2js-compile-files! in-files out-file js-interface config-ht)
    ;; we need this for "verbose" outputs.
    (config-init! config-ht)
-   (let ((top-level (read-files (reverse! in-files))))
-      (if (string=? "-" out-file)
-	  (scheme2js top-level '() config-ht)
-	  (with-output-to-file out-file
-	     (lambda () (scheme2js top-level js-interface config-ht))))))
+   (let ((top-level (read-files (reverse! in-files)))
+	 (out-port (if (string=? "-" out-file)
+		       (current-output-port)
+		       (open-output-file out-file))))
+      (scheme2js top-level js-interface config-ht out-port)))
 
 (define (my-main args)
    (let ((config-ht (default-scheme2js-config)))

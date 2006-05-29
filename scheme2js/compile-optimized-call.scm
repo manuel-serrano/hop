@@ -1,155 +1,189 @@
+(directives
+   (include "tools.sch"))
+
 ;; part of compile-module
 (define (infix-op nb-operands-min nb-operands-max infix-operator . Ldefault-val)
-   (lambda (operands)
+   (lambda (p operands)
       (let ((nb-operands (length operands)))
 	 (and (>=fx nb-operands nb-operands-min)
 	      (or (not nb-operands-max)
 		  (<=fx nb-operands nb-operands-max))
 	      (if (=fx nb-operands 0)
-		  (car Ldefault-val)
-		  (let ((comp-operands (map-node-compile operands)))
-		     (let loop ((res (car comp-operands))
-				(rest (cdr comp-operands)))
-			(if (null? rest)
-			    (string-append "(" res ")")
-			    (loop (string-append res infix-operator (car rest))
-				  (cdr rest))))))))))
+		  (p-display p (car Ldefault-val))
+		  (begin
+		     (p-display p "(")
+		     ((car operands).compile p)
+		     (let loop ((rest (cdr operands)))
+			(unless (null? rest)
+			   (p-display p infix-operator)
+			   ((car rest).compile p)
+			   (loop (cdr rest))))
+		     (p-display p ")")
+		     #t))))))
 
 (define (postfix-op postfix-operator)
-   (lambda (operands)
+   (lambda (p operands)
       (and (pair? operands)
 	   (null? (cdr operands))
-	   (string-append "(" ((car operands).compile) postfix-operator ")"))))
+	   (begin
+	      (p-display p "(")
+	      ((car operands).compile p)
+	      (p-display p postfix-operator ")")
+	      #t))))
 
 (define (prefix-op prefix-operator)
-   (lambda (operands)
+   (lambda (p operands)
       (and (pair? operands)
 	   (null? (cdr operands))
-	   (string-append "(" prefix-operator ((car operands).compile) ")"))))
+	   (begin
+	      (p-display p "(" prefix-operator)
+	      ((car operands).compile p)
+	      (p-display p ")")
+	      #t))))
 
 (define (hole-op nb-holes . pattern)
-   (lambda (operands)
+   (lambda (p operands)
       (and (=fx (length operands) nb-holes)
-	   (let ((comp-operands (map-node-compile operands)))
-	      (let loop ((res "")
-			 (pattern pattern)
-			 (operands comp-operands))
+	   (begin
+	      (p-display p "(")
+	      (let loop ((pattern pattern)
+			 (operands operands))
 		 (cond
-		    ((null? pattern) (string-append "(" res ")"))
+		    ((null? pattern)
+		     'do-nothing)
 		    ((string? (car pattern))
-		     (loop (string-append res (car pattern))
-			   (cdr pattern)
+		     (p-display p (car pattern))
+		     (loop (cdr pattern)
 			   operands))
 		    ((number? (car pattern))
-		     (loop (string-append res (list-ref comp-operands
-							(car pattern)))
-			   (cdr pattern)
+		     ((list-ref operands (car pattern)).compile p)
+		     (loop (cdr pattern)
 			   operands))
 		    (else
-		     (loop (string-append res (car operands))
-			   (cdr pattern)
-			   (cdr operands)))))))))
+		     ((car operands).compile p)
+		     (loop (cdr pattern)
+			   (cdr operands)))))
+	      (p-display p ")")
+	      #t))))
 
-(define (minus-op operands)
+(define (minus-op p operands)
    (cond
       ((null? operands) #f)
       ((null? (cdr operands))
-       (string-append "(-" ((car operands).compile) ")"))
+       (p-display p "(- ")
+       ((car operands).compile p)
+       (p-display p ")")
+       #t)
       (else
-       ((infix-op 1 #f "-") operands))))
+       ((infix-op 1 #f "-") p operands))))
 
-(define (div-op operands)
+(define (div-op p operands)
    (cond
       ((null? operands) #f)
       ((null? (cdr operands))
-       (string-append "(1/" ((car operands).compile) ")"))
+       (p-display p "(1/")
+       ((car operands).compile p)
+       (p-display p ")")
+       #t)
       (else
-       ((infix-op 1 #f "/") operands))))
+       ((infix-op 1 #f "/") p operands))))
 
-(define (vector-op operands)
-   (let ((args (separated-list (map-node-compile operands) ", ")))
-      (string-append "[" args "]")))
+(define (vector-op p operands)
+   (p-display p "[")
+   (compile-separated-list p operands ", ")
+   (p-display p "]")
+   #t)
 		  
-(define (id operand)
+(define (id p operand)
    (and (pair? operand)
 	(null? (cdr operand))
-	(operand.compile)))
+	(begin
+	   (operand.compile p)
+	   #t)))
 
-(define (jsNew-op operands)
+(define (jsNew-op p operands)
    (and (not (null? operands))
-	(let* ((c ((car operands).compile))
-	       (args (separated-list (map-node-compile (cdr operands))
-				     ", ")))
-	   (string-append "new " c "(" args ")"))))
+	(begin
+	   (p-display p "new ")
+	   ((car operands).compile p)
+	   (p-display p "(")
+	   (compile-separated-list p (cdr operands) ", ")
+	   (p-display p ")")
+	   #t)))
 
-(define (jsCall-op operands)
-   (and (not (null? operands))
-	(not (null? (cdr operands)))
-	(let* ((o ((car operands).compile))
-	       (f ((cadr operands).compile))
-	       (args-w/ ((infix-op 0 #f ", " "") (cddr operands))) ;; with parenthesis
-	       (args (substring args-w/ 1 (- (string-length args-w/) 1))))
-	   (string-append f ".call(" o ", " args ")"))))
-
-(define (jsMethodCall-op operands)
+(define (jsCall-op p operands)
    (and (not (null? operands))
 	(not (null? (cdr operands)))
-	(let* ((o ((car operands).compile))
-	       (field ((cadr operands).compile))
-	       (args (separated-list (map-node-compile (cddr operands))
-				     ", ")))
-	   (string-append o "[" field "](" args ")"))))
+	(begin
+	   ((cadr operands).compile p)
+	   (p-display p ".call(")
+	   ((car operands.compile) p)
+	   (for-each (lambda (n)
+			(p-display p ", ")
+			(n.compile p))
+		     (cddr operands))
+	   (p-display p ")")
+	   #t)))
 
-(define (symbolAppend_immutable-op operands)
-   (define (sliced-symbols operands)
-      (map (lambda (operand)
-	      (if (instance-of? operand (node 'Const))
-		  (if (symbol? operand.value)
-		      (gen-code-symbol-without-prefix operand.value)
-		      (error "symbolAppend_immutable-op"
-			     "symbol-append requires symbols as arguments"
-			     operand.value))
-		  (string-append (operand.compile) ".slice(1)"))) ;; sc_SYMBOL_PREFIX_LENGTH
-	   operands))
+(define (jsMethodCall-op p operands)
+   (and (not (null? operands))
+	(not (null? (cdr operands)))
+	(begin
+	   ((car operands).compile p)
+	   (p-display p "[")
+	   ((cadr operands).compile p)
+	   (p-display p "](")
+	   (compile-separated-list p (cddr operands) ", ")
+	   (p-display p ")")
+	   #t)))
 
+(define (symbolAppend_immutable-op p operands)
    (let ((nb-operands (length operands)))
       (cond
 	 ((= nb-operands 0) "'\\u1E9C'") ;; sc_SYMBOL_PREFIX
-	 ((= nb-operands 1) ((car operands).compile))
+	 ((= nb-operands 1) ((car operands).compile p))
 	 (else
-	  (let ((compiled-first-operand ((car operands).compile))
-		(without-prefixes (sliced-symbols (cdr operands))))
-	     (let loop ((res compiled-first-operand)
-			(rest without-prefixes))
-		(if (null? rest)
-		    (string-append "(" res ")")
-		    (loop (string-append res "+" (car rest))
-			  (cdr rest)))))))))
+	  (p-display p "(")
+	  ((car operands).compile p)
+	  (for-each (lambda (operand)
+		       (p-display p "+")
+		       (if (instance-of? operand (node 'Const))
+			   (if (symbol? operand.value)
+			       operand.value
+			       (error "symbolAppend_immutable-op"
+				      "symbol-append requires symbols as arguments"
+				      operand.value))
+			   (begin
+			      (operand.compile p)
+			      (p-display p ".slice(1)"))))
+		    (cdr operands))
+	  (p-display p ")")
+	  #t))))
 
-(define (stringAppend_mutable-op operands)
-   (define (string-vals operands)
-      (map (lambda (operand)
-	      (if (instance-of? operand (node 'Const))
-		  (if (string? operand.value)
-		      (gen-code-string-val operand.value)
-		      (error "stringAppend_mutable-op"
-			     "string-append requires strings as arguments"
-			     operand.value))
-		  (string-append (operand.compile) ".val")))
-	   operands))
+(define (stringAppend_mutable-op p operands)
+   (define (string-val operand)
+      (if (instance-of? operand (node 'Const))
+	  (if (string? operand.value)
+	      (p-display p "\"" (string-for-read operand.value) "\"")
+	      (error "stringAppend_mutable-op"
+		     "string-append requires strings as arguments"
+		     operand.value))
+	  (begin
+	     (operand.compile p)
+	     (p-display p ".val"))))
 
    (let ((nb-operands (length operands)))
       (cond
 	 ((= nb-operands 0) "(new sc_String(''))")
-	 ((= nb-operands 1) ((car operands).compile))
+	 ((= nb-operands 1) ((car operands).compile p))
 	 (else
-	  (let ((vals (string-vals operands)))
-	     (let loop ((res (car vals))
-			(rest (cdr vals)))
-		(if (null? rest)
-		    (string-append "(new sc_String(" res "))")
-		    (loop (string-append res "+" (car rest))
-			  (cdr rest)))))))))
+	  (p-display p "(new sc_String(")
+	  (string-val (car operands))
+	  (for-each (lambda (n)
+		       (p-display p "+")
+		       (string-val n))
+		    (cdr operands))
+	  (p-display p "))")))))
 
    
 (define *optimizable-operators*
@@ -285,7 +319,8 @@
     (sci_jsMethodCall ,jsMethodCall-op)
 ))
 
-(define (compile-optimized-call operator::pobject
+(define (compile-optimized-call p
+				operator::pobject
 				operands::pair-nil)
    (if (inherits-from? operator (node 'Var-ref))
        (let* ((var operator.var)
@@ -293,4 +328,4 @@
 	      (optimize-fun (and (not var.muted?)
 				 id
 				 (assq id *optimizable-operators*))))
-	  (and optimize-fun ((cadr optimize-fun) operands)))))
+	  (and optimize-fun ((cadr optimize-fun) p operands)))))

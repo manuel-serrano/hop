@@ -42,7 +42,7 @@
 	(new-node Part
 		  (scheme->pobject prog (location prog))
 		  #t ;; we want the main-part in statement-form
-		  (lambda (x stmt-form?) x))))
+		  (lambda (p) (cons p (lambda (p stmt-form?) 'do-nothing))))))
    
 (define (expr-list->Body expr-list)
    (new-node Body (expr-list->Begin expr-list)))

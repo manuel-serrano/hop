@@ -8,8 +8,7 @@
 	   nodes
 	   var
 	   verbose
-	   gen-js
-	   gen-code)
+	   gen-js)
    (export (gen-var-names tree)))
 
 (define (gen-var-names tree)
@@ -46,12 +45,12 @@
 	 ((and (config 'optimize-var-number)
 	       use-generic-name?)
 	  (if (null? *reusable-var-names*)
-	      (set! this.compiled (gen-code-var 'var))
+	      (set! this.compiled (gen-JS-sym 'var))
 	      (begin
 		 (set! this.compiled (car *reusable-var-names*))
 		 (set! *reusable-var-names* (cdr *reusable-var-names*)))))
 	 (else
-	  (set! this.compiled (gen-code-var this.id)))))
+	  (set! this.compiled (gen-JS-sym this.id)))))
 
    ; (define-pmethod (Var-allocate-name)
    ;    (let ((compiled this.compiled))

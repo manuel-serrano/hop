@@ -18,3 +18,10 @@
       ((null? (cdr els)) (car els))
       ;; otherwise add "," between elements
       (else (string-append (car els) sep (separated-list (cdr els) sep)))))
+
+(define-macro (p-display p . Largs)
+   `(begin
+       ,@(map (lambda (arg)
+		 `(display ,arg ,p))
+	      Largs)))
+
