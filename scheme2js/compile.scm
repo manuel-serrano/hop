@@ -105,7 +105,7 @@
        (p-display p "))"))
       ((eq? const #unspecified) (p-display p "undefined"))
       ((keyword? const)
-       (p-display p "(new sc_Keyword('" const "'))"))
+       (p-display p "(new sc_Keyword('" (keyword->string const) "'))"))
       (else (error #f "forgot Const-type: " const))))
    
 (define-pmethod (Const-compile p)
