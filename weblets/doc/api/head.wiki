@@ -1,4 +1,4 @@
-<doc> HEAD markup
+<doc> HEAD and FOOT markups
 
 == Description ==
 
@@ -27,10 +27,12 @@ times in an invocation. A typical ++<HEAD>++ looks like:
 === server ===
 
   (<HEAD> ...)
+  (<FOOT> ...)
+  (<FOOT-BUTTON> ...)
 
 == Examples ==
 
-<example><HEAD></example>
+<example><HEAD>, <FOOT>, <FOOT-BUTTON></example>
 
 == Server Definitions ==
 <server>
@@ -71,9 +73,65 @@ overrides the previous ones).
  area of the web browser. Image files using relative names are searched
  in the //search path// as specified with the :dir attribute.
 </markup>
+
+=== <FOOT> ===
+<markup> <FOOT>
+<arguments>
+| :id          |  string   |  //random//  | element identifier.         |
+| :class       |  string   |  ++foot+     | element class.              |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This introduces a standard HOP foot in the produced HTML page. This contains
+at least the HOP button. The ++body++ may contain elements build with
+++<FOOT-BUTTON>++.
+
+</markup>
+
+=== <FOOT-BUTTON> ===
+<markup> <FOOT-BUTTON>
+<arguments>
+| :id          |  string   |  //random//  | element identifier.         |
+| :class       |  string   |  ++foot+     | element class.              |
+| href         |  string   |              | a URL to go when clicked.   |
+| title        |  string   |              | the button title.           |
+| path         |  string   |              | the image absolute path.    |
+| src          |  string   |              | the image relative path.    |
+</arguments>
+
+This markup introduce a small button. It should use alternatively an
+absolute ++path++ or a //relative// ++src++ path. The absolute path
+must refer to a user image. The relative path must refer to an image
+name as provided by the standard HOP distribution (in the
+,(make-file-name (hop-share-directory) "buttons") directory).
+</markup>
 </server>
 
+== Style ==
+<style>
+This section describes the CSS elements used to configure
+//foot// and //foot-button//.
+
+=== ++div.foot++ ===
+<css> div.foot
+
+The ++<DIV>++ element holding the foot buttons.
+</css>
+
+=== ++div.foot a.foot-button++ ===
+<css> div.foot a.foot-button
+
+The ++<A>++ element of the foot button.
+</css>
+
+=== ++div.foot a.foot-button img++ ===
+<css> div.foot a.foot-button img
+
+The ++<IMG>++ element of the foot button.
+</css>
+
+
 == See also ==
-<see-also><HEAD>, <BODY>, <HTML></see-also>
+<see-also><HEAD>, <FOOT>, <FOOT-BUTTON></see-also>
 
 </doc>

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Mon May 22 13:16:46 2006 (serrano)                */
+;*    Last change :  Tue May 30 15:17:22 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -17,8 +17,8 @@
 	   (hz-date)
 	   (hz-author)
 	   (hz-rc-directory::bstring)
-	   (hz-master-hop)
 	   (hz-sync-hops)
+	   (hz-local-repository)
 	   (hz-dir)
 	   (hz-db)
 	   (hz-session-key::bstring)
@@ -59,14 +59,14 @@
 (define-parameter hz-db-inspector-url "/hop/websql/manage-base?base=")
 
 ;*---------------------------------------------------------------------*/
-;*    Master servers ...                                               */
-;*---------------------------------------------------------------------*/
-(define-parameter hz-master-hop "http://hop.inria.fr")
-
-;*---------------------------------------------------------------------*/
-;*    Sync servers... ...                                              */
+;*    hz-sync-hops                                                     */
 ;*---------------------------------------------------------------------*/
 (define-parameter hz-sync-hops '("http://hop.inria.fr"))
+
+;*---------------------------------------------------------------------*/
+;*    hz-local-repository ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-local-repository #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db                                                            */
@@ -101,8 +101,8 @@
    "Setup"
    ("Automatic log out" integer hz-auto-logout-minute)
    ("Hops" expr hz-sync-hops)
+   ("Local repository" expr hz-local-repository)
    
    "Master administration"
-   ("HZ master" string hz-master-hop)
    ("Database inspector" string hz-db-inspector-url))
 

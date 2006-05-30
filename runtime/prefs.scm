@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Mon May 22 12:41:29 2006 (serrano)                */
+;*    Last change :  Tue May 30 08:20:52 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -37,7 +37,7 @@
       (integer
        (text-editor "An integer" get (service (v) (set (string->integer v)) #t)))
       (string
-       (text-editor "A string" get (service (v) (set v) #t)))
+       (text-editor "A string" get (service (v) (tprint "GLOP: " v ) (set v) #t)))
       (expr
        (sexp-editor get set))
       (bool
@@ -56,7 +56,7 @@
       :type "text"
       :size "90%"
       :value (get)
-      :title title
+      :title (string-append title " (hit [return] to validate)")
       :onkeyup (format "{ if ( event.keyCode == 13 ) {
                             hop( ~a( this.value ) );
                             this.className = 'pref_applied';

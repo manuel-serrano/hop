@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu May 18 10:30:42 2006 (serrano)                */
+#*    Last change :  Tue May 30 10:33:16 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -12,7 +12,7 @@
 do: build
 
 #*---------------------------------------------------------------------*/
-#*    Standard Bigloo configuration                                    */
+#*    Standard Hop configuration                                       */
 #*---------------------------------------------------------------------*/
 include ../etc/Makefile.hopconfig
 include ../etc/Makefile.version

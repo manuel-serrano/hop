@@ -47,7 +47,7 @@ file ++config.hss++ for setting the graphical configuration.
 ~~ ,(<SPAN> :style { color: red; font-weight: bold }
             [In the rest of this text, we assume that
 all the files are created in a directory named
-,(<TT> :style {color: red} "roman").])
+,(<TT> :style {color: red} "\"roman\"").])
 
 ~~ The file ++roman.hop++ is implemented as:
 
@@ -64,7 +64,8 @@ all the files are created in a directory named
           (<TABLE> 
               (<TR> 
                  (<TD> :class "roman" num) 
-                 (<TD> :class "arabic" (roman->arabic num)))))))
+                 (<TD> :class "arabic" (roman->arabic num))))
+          (<FOOT>))))
 </code>
 
 The variable ++roman-dir++ is bound to the directory name that contains the
@@ -75,6 +76,11 @@ function ++the-loading-file++ always returns the name of the file //currently//
 in load. Hence, only when the file ++roman.hop++ is currently in load
 the evaluation of ++(the-loading-file)++ returns the actual path of that
 file. Further invocations of this function will return different values.
+
+~~ The use of the markup ++<FOOT>++ insert the HOP button at the end of the
+page. Inserting the HOP button advertise that the Web page is actually served
+by a HOP server. This promotes HOP. The more it gets promoted the better
+its support will be.
 
 ~~ The file ++convert.hop++ contains the definition of the actual conversion
 (++roman->arabic++). It definition is:
@@ -180,5 +186,22 @@ This should produce an output similar to:
 The last step consists in releasing the package. For this, go to the HOP
 [[http://hop.inria.fr|home page]], select the ++weblets++ tab and upload
 the ++roman.hz++ file.
+
+~~ Alternatively you can choose not to be registered on the global HOP
+weblet database. That is, you can distribute your package on your local
+servers. You can use the service ++hz/install-ondemand++ to automate the
+installation of your ++.hz++ file. For that, add a link such as:
+
+<code>
+  (<A> :href "http://hop/hop/hz/install-ondemand?name=roman&url=http://computer/path/.../roman.hz")
+</code>
+
+in your page. When clicked, this link spawns the 
+,(<A> :href "http://localhost:8080/hop/hz"
+      (<SPAN> :style {font-variant: small-caps} "Hz")) weblet on the user host
+computer. It fetches and installs your ++roman.hz++ file on that computer.
+This technique requires two additional fields in the ++roman.info++ file.
+  - The ++category++ of the weblet. It can be any string of characters. 
+  - The ++url++ where to download the ++roman.hz++ file.
 
 </doc>

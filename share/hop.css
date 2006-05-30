@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Mon May 29 07:51:44 2006 (serrano)                */
+/*    Last change :  Mon May 29 17:44:18 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP CSS                                                 */
@@ -44,7 +44,7 @@ div.foot {
 }
 
 a.foot-button {
-  opacity: 0.5;
+  opacity: 0.3;
   background-color: inherit;
   color: inherit;
   text-decoration: none;

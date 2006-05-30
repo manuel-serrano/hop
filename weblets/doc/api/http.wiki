@@ -19,19 +19,24 @@ are used to address remote not HOP HTTP servers.
 == Server Definitions ==
 <server>
 
-=== ++(with-url url success [fail])++ ===
+=== ++(with-url url success [:fail] [:header])++ ===
 <function> with-url
 <arguments>
 ^  arguments  ^   type      ^  default    ^  short description             ^
 | url         |  string     |             | a URL of a remote server.      |
 | success     |  procedure  |             | a procedure of one argument.   |
 | fail        |  procedure  |  ++raise++  | a procedure of one argument.   |
+| header      |  list       |  ++()++     | an optional header list.       |
 </arguments>
 
 The function ++with-url++ opens an HTTP connection with the remote
 server pointed to in the ++URL++. On success, it then invokes the
 function ++success++ with an object constructed from the service
 answer. On failure, it invokes ++failure++.
+
+~~ The argument ++header++ can be used for sending extra information such 
+as authentication to the remote host. It syntax is a list of pairs whose
+first element is a keyword and the second element a string of characters.
 
 ~~ The function ++with-url++ follows rules similar to the ++with-hop++ form
 interpreting the result of the HTTP transaction. It checks the status

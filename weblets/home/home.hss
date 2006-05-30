@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon May 29 14:46:11 2006 (serrano)                */
+/*    Last change :  Mon May 29 18:15:23 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -247,7 +247,7 @@ hr {
 /*--- iframe ----------------------------------------------------------*/
 iframe.hz {
   width: 98%;
-  height: 450px;
+  height: 370px;
   overflow: auto;
   border: 1px solid $border-color;
   margin: 5px;
@@ -356,4 +356,20 @@ table.download span.old {
 /*---------------------------------------------------------------------*/
 div.foot {
   margin-top: 5px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    submit                                                           */
+/*---------------------------------------------------------------------*/
+div.submit {
+  margin-top: 5px;
+  font-size: small;
+}
+
+div.submit table.submit {
+  font-size: inherit;
+}
+
+div.submit table.submit input {
+  font-size: inherit;
 }

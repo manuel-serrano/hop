@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Mon May 29 11:58:59 2006 (serrano)                */
+;*    Last change :  Tue May 30 09:05:33 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -68,6 +68,10 @@
 	       :href "http://www.mozilla.org/"
 	       :title "Mozilla"
 	       :src "mozilla.png")
+	    (<FOOT-BUTTON>
+	       :href "http://www.apple.com/macosx/features/safari/"
+	       :title "Safari"
+	       :src "safari.png")
 	    (<FOOT-BUTTON>
 	       :href "http://www.opera.com"
 	       :title "Opera"

@@ -8,6 +8,30 @@ weblets through a visual web interface.
 
 ============================================================================
 
-== Available weblets ==
+== Contribute ===
+
+You can contribute to the HOP effort by providing your own weblet.
+Provided weblets are manually checked. Conform weblets are entered in
+the ,(<A> :href "http://localhost:8080/hop/hz" (<SPAN> :style
+{font-variant: small-caps} "Hz")) database and they are instantly
+available to the whole HOP community.
+
+,(<FORM>
+   :action home/submit-hz
+   :method 'post
+   :enctype "multipart/form-data"
+   (<DIV>
+      :class "submit"
+      (<TABLE>
+	 :class "submit"
+	 (<TR>
+	    (<TD> (<INPUT> :type 'submit
+			   :value "Submit a Hz package"))
+	    (<TD> (<INPUT> :type 'file
+			   :name "file"
+			   :size 40))))))
+
+== Available weblets (through ,(<A> :href "http://localhost:8080/hop/hz"
+      (<SPAN> :style {font-variant: small-caps} "Hz"))) ==
 
 ,(<IFRAME> :class "hz" :src "/hop/hz/list")

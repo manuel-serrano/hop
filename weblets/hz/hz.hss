@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Mon May 29 08:04:49 2006 (serrano)                */
+/*    Last change :  Tue May 30 11:15:00 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -269,6 +269,12 @@ vbox span.title {
   font-weight: bold;
 }
 
+vbox a span.title {
+  font-weight: bold;
+  text-decoration: underline;
+  cursor: default;
+}
+
 /*--- sync ------------------------------------------------------------*/
 sync button.sync {
   margin-left: 20px;
@@ -301,6 +307,7 @@ table.sync-result th {
 
 table.sync-result span.descr {
   font-size: x-small;
+  color: #333;
 }
 
 table.sync-result span.name {
@@ -464,6 +471,11 @@ weblets table.weblet p.sdescr {
 weblets table.weblet .sdescr {
   font-style: italic;
   font-size: x-small;
+}
+
+weblets table.weblet a.home {
+  font-family: mono space;
+  font-size: xx-small;
 }
 
 weblets span.title {

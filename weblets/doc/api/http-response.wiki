@@ -101,7 +101,7 @@ A response filter, wrap a regular response. That is, it behaves as
 the response described by the ++response++ field. In addition, it applies
 filtering the response of the response.
 
-,(<P>)
+~~
 Here is an example of ::http-response-filter automically //ungip//
 responses on the server side.
 
@@ -123,7 +123,7 @@ responses on the server side.
 		      (flush-output-port op))))))
 
 
-,(<P>)
+~~
 In this second example, we use a ::http-response-filter for re-writting
 HTTP requests.
 
@@ -269,7 +269,7 @@ client using the client ++with-hop++ service invocation.
 | uri                  |    r      |       string      |      _                | the request.                                |
 </fields>
 
-,(<P>)
+~~
 Here is an example of function that constructs an answer
 for HTTP ++PUT++ and ++POST++ requests.
 

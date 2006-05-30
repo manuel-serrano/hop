@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Mon May 29 08:04:02 2006 (serrano)                */
+;*    Last change :  Tue May 30 16:49:29 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -141,13 +141,17 @@
 ;*---------------------------------------------------------------------*/
 (define (<WEBLET> db weblet)
    (with-access::dbhz weblet (name version author sdescr descr hop date install
-				   minhop maxhop driver)
+				   minhop maxhop driver home)
       
       (define action
 	 (service (action id)
 	    (cond
 	       ((string=? action "install")
-		(hz-install weblet)
+		(if (string=? driver "hz")
+		    (hz-install weblet)
+		    (begin
+		       (hz-install-ondemand db #f name driver)
+		       (set! install version)))
 		;; db update
 		(hz-db-update-weblet db weblet)
 		(<ACTION-DONE> id action))
@@ -156,6 +160,10 @@
 		(hz-uninstall weblet)
 		;; db update
 		(hz-db-update-weblet db weblet)
+		(<ACTION-DONE> id action))
+	       ((string=? action "remove")
+		(hz-uninstall weblet)
+		(hz-db-remove-weblet db weblet)
 		(<ACTION-DONE> id action))
 	       ((string=? action "refresh")
 		(<ACTION> id))
@@ -225,6 +233,21 @@
 			   $name)
 		"Preferences"))))
 
+      (define (<REMOVE> id)
+	 (list
+	  (<TD>
+	     :class "icon"
+	     (<IMG>
+		:src (make-file-path (hz-dir) "etc" "icons" "remove.png")))
+	  (<TD>
+	     :class "action"
+	     (<SPAN>
+		:title "Remove the weblet now"
+		:onclick ~(with-hop ($action "remove" $id)
+			     (lambda (h)
+				(set! (document.getElementById $id).innerHTML h)))
+		"Remove"))))
+
       (define (<UNINSTALL> id)
 	 (list
 	  (<TD>
@@ -272,6 +295,16 @@
 	    (<TD> "&nbsp;")
 	    (<UNINSTALL> id)))
       
+      (define (<ACTION-REMOVE> id)
+	 (<TR>
+	    (<RUN> id)
+	    (<TD> "&nbsp;")
+	    (<PREF> id)
+	    (<TD> "&nbsp;")
+	    (<UNINSTALL> id)
+	    (<TD> "&nbsp;")
+	    (<REMOVE> id)))
+      
       (define (<ACTION-UPDATE> id)
 	 (<TR>
 	    (<RUN> id)
@@ -305,14 +338,20 @@
 	    ((or (not install) (string-null? install))
 	     (<ACTION-INSTALL> id))
 	    ((string=? version install)
-	     (<ACTION-UNINSTALL> id))
+	     (if (string=? driver "hz")
+		 (<ACTION-UNINSTALL> id)
+		 (<ACTION-REMOVE> id)))
 	    (else
 	     (<ACTION-UPDATE> id))))
 
       (list
 	 (<VBOX>
 	    (<VBOX-BLOCK>
-	       (<SPAN> :class "title" name " " version))
+	       (if (string=? home "")
+		   (<SPAN> :class "title" name " " version)
+		   (<A> :href home
+			:title home
+			(<SPAN> :class "title" name " " version))))
 	    (<VBOX-SEPARATOR>)
 	    (<VBOX-BLOCK>
 	       (<TABLE>
