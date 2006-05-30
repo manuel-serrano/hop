@@ -176,7 +176,7 @@ SQLite call.
 </arguments>
 
 The function ++sqlite-map++ invokes a SQLite command built by
-implicitly invoking ++sqlite-format++ on ++string+ and the optional
+implicitly invoking ++sqlite-format++ on ++string++ and the optional
 ++arg<sub>0</sub>++, ... arguments. The result is a list whose
 elements are built by applying ++proc++ to all the values
 returned by the SQLite call.  
