@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Wed May 31 14:47:29 2006 (serrano)                */
+;*    Last change :  Wed May 31 14:52:11 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
@@ -62,7 +62,7 @@
 	  (version (cadr (assq 'major e))))
       (if (and state minor)
 	  (format "hop-~a-~a~a" version state minor)
-	  "not available")))
+	  #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    home-articles-url-base ...                                       */

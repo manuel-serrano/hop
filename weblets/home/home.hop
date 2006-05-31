@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed May 31 13:45:05 2006 (serrano)                */
+;*    Last change :  Wed May 31 14:53:11 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -178,7 +178,10 @@ implemented you can send comments and remarks to "
 ;*    downloads ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define *devel-tar-gz*
-   (string-append (home-hop-devel-version) ".tar.gz"))
+   (if (string? (home-hop-devel-version))
+       (string-append (home-hop-devel-version) ".tar.gz")
+       "not available"))
+
 (define *devel-zip*
    (string-append (home-hop-devel-version) ".zip"))
 (define *devel-tar-url*
