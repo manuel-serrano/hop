@@ -47,7 +47,7 @@ it uses three complementary techniques.
  following authenticate the request as belonging to user named ++user++,
  whose unencrypted password is ++456789++.
   - The header of an [[http://www.w3.org/Protocols/rfc2616/rfc2616.html|HTTP]]
- request may contains two authentication fields:
+ request may contain two authentication fields:
    * authorization:
    * proxy-authorization:
  theses contain unencrypted user authentication.
