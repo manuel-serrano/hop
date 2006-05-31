@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed May 31 14:53:11 2006 (serrano)                */
+;*    Last change :  Wed May 31 17:30:13 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -183,18 +183,33 @@ implemented you can send comments and remarks to "
        "not available"))
 
 (define *devel-zip*
-   (string-append (home-hop-devel-version) ".zip"))
+   (if (string? (home-hop-devel-version))
+       (string-append (home-hop-devel-version) ".zip")
+       "not available"))
+
 (define *devel-tar-url*
-   (make-file-name (home-ftp-hop-url) *devel-tar-gz*))
+   (if (string? *devel-tar-gz*)
+       (make-file-name (home-ftp-hop-url) *devel-tar-gz*)
+       "not available"))
+
 (define *devel-zip-url*
-   (make-file-name (home-ftp-hop-url) *devel-tar-gz*))
+   (if (string? *devel-tar-gz*)
+       (make-file-name (home-ftp-hop-url) *devel-tar-gz*)
+       "not available"))
    
 (define *stable-tar-gz*
-   (string-append (home-hop-stable-version) ".tar.gz"))
+   (if (string? (home-hop-stable-version))
+       (string-append (home-hop-stable-version) ".tar.gz")
+       "not available"))
+
 (define *stable-zip*
    "not available")
+
 (define *stable-tar-url*
-   (make-file-name (home-ftp-hop-url) *stable-tar-gz*))
+   (if (string? *stable-tar-gz*)
+       (make-file-name (home-ftp-hop-url) *stable-tar-gz*)
+       "not available"))
+
 (define *stable-zip-url*
    "/dev/null")
    
