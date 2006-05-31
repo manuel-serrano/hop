@@ -50,7 +50,7 @@ it uses three complementary techniques.
  request may contain two authentication fields:
    * authorization:
    * proxy-authorization:
- theses contain unencrypted user authentication.
+ these contain unencrypted user authentication.
   - //Cookies// may hold users authentication.
 
 
