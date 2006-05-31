@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Mon May 29 13:16:18 2006 (serrano)                */
+;*    Last change :  Wed May 31 06:37:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -62,13 +62,13 @@
 			      obj)))))))
 	 (<FOOT>
 	    (<FOOT-BUTTON>
-	       :href "http://www.inria.fr/mimosa"
-	       :title "INRIA"
-	       :src "inria.png")
-	    (<FOOT-BUTTON>
 	       :href "http://www.gnu.org/licenses/gpl.html"
 	       :title "Gnu GPL"
 	       :src "gpl.png")
+	    (<FOOT-BUTTON>
+	       :href "http://www.inria.fr/mimosa"
+	       :title "INRIA"
+	       :src "inria.png")
 	    (<FOOT-BUTTON>
 	       :href "http://validator.w3.org/check/referer"
 	       :title "Valid CSS"

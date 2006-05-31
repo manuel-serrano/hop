@@ -90,9 +90,9 @@ HOP supports definitions of variables, functions, and services:
 
   <definition-variable> := (define <ident> <expression>)
 
-  <definition-function> := (define (<ident> <ident> ...) <expression>)
+  <definition-function> := (define (<ident> <ident>*) <expression>)
 
-  <definition-service> := (define-service (<ident> <ident> ...) <expression>)
+  <definition-service> := (define-service (<ident> <ident>*) <expression>)
 
 
 == Basic constructions ==
@@ -101,15 +101,48 @@ The sequence of HOP expressions is:
 
   <sequence> := (begin <expression> ...)
 
+
 The alternative is:
 
   <alternative> := (if <expression> <expression> <expression>?)
 
 
-HOP support derivative conditional constructions:
+HOP supports derivative conditional constructions:
 
   <alternative-cond> := (cond ((<expression> <expression)+))
   <alternative-case> := (case <expression> ((<atom>+ <expression)+))
+
+
+Local variables are introduced with the ++let++ constructions:
+
+  <local-var> := <let> | <let*> | <letrec>
+
+  <let> := (let (<bindings>*) <expression>)
+  <let*> := (let* (<bindings>*) <expression>)
+  <letrec> := (letrec (<bindings>*) <expression>)
+
+  <binding> := <symbol>
+     | (<symbol> <expression>)
+
+
+The ++let++ construction binds independent variable. The ++let*++ is
+equivalent to a cascade of nested ++let++s. The ++letrec++ allows
+recursive definitions of lexical variables.
+
+Anonymous functions are introduced by ++lambda++ expression:
+
+  <lambda> := (lambda (<ident>*) <expression>)
+
+
+Loops are either defined with //named let// or anonymous functions:
+
+  <named-let> := (let <symbol> (<binding>*) <expression>)
+
+
+Function applications are defined as:
+
+  <funcall> := (<expression> <expression>*)
+
 
 == Server Side core language ==
 
