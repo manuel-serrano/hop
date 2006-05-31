@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed May 31 14:25:59 2006 (serrano)                */
+#*    Last change :  Wed May 31 14:26:13 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -184,7 +184,7 @@ distrib:
           echo "major=$$version" > .hoprelease; \
           echo "state=$$devel" >> .hoprelease; \
           echo "minor=$$min" >> .hoprelease; \
-          (cd weblets/home && make) && make OPT="-m 'build $distrib'" revision && \
+          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
           $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
           mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
           tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
