@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed May 31 17:30:13 2006 (serrano)                */
+;*    Last change :  Wed May 31 17:45:39 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -179,27 +179,27 @@ implemented you can send comments and remarks to "
 ;*---------------------------------------------------------------------*/
 (define *devel-tar-gz*
    (if (string? (home-hop-devel-version))
-       (string-append (home-hop-devel-version) ".tar.gz")
+       (string-append "hop-" (home-hop-devel-version) ".tar.gz")
        "not available"))
 
 (define *devel-zip*
    (if (string? (home-hop-devel-version))
-       (string-append (home-hop-devel-version) ".zip")
+       (string-append "hop-" (home-hop-devel-version) ".zip")
        "not available"))
 
 (define *devel-tar-url*
    (if (string? *devel-tar-gz*)
-       (make-file-name (home-ftp-hop-url) *devel-tar-gz*)
+       (make-file-name "hop-" (home-ftp-hop-url) *devel-tar-gz*)
        "not available"))
 
 (define *devel-zip-url*
    (if (string? *devel-tar-gz*)
-       (make-file-name (home-ftp-hop-url) *devel-tar-gz*)
+       (make-file-name "hop-" (home-ftp-hop-url) *devel-tar-gz*)
        "not available"))
    
 (define *stable-tar-gz*
    (if (string? (home-hop-stable-version))
-       (string-append (home-hop-stable-version) ".tar.gz")
+       (string-append "hop-" (home-hop-stable-version) ".tar.gz")
        "not available"))
 
 (define *stable-zip*
@@ -207,7 +207,7 @@ implemented you can send comments and remarks to "
 
 (define *stable-tar-url*
    (if (string? *stable-tar-gz*)
-       (make-file-name (home-ftp-hop-url) *stable-tar-gz*)
+       (make-file-name "hop-" (home-ftp-hop-url) *stable-tar-gz*)
        "not available"))
 
 (define *stable-zip-url*
