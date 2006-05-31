@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr 27 08:12:16 2006 (serrano)                */
+;*    Last change :  Wed May 31 13:38:40 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -80,14 +80,32 @@
 (define-xml-compound <TSPAN> ((id #unspecified string)
 			      body)
    ;; Check that body is well formed
-   (unless (and (pair? body) (>= (length body) 2))
-      (error '<TSPAGE> "Illegal body, at least two elements needed" body))
-   
-   (instantiate::html-tspage
-      (markup 'tspan)
-      (id (xml-make-id id 'TSPAN))
-      (body (list (car body)
-		  (apply <DIV> :class "hop-tabslider-content" (cdr body))))))
+   (cond
+      ((or (null? body) (null? (cdr body)))
+       (error '<TSPAN> "Illegal body, at least two elements needed" body))
+      ((and (xml-delay? (cadr body)) (null? (cddr body)))
+       ;; a delayed tspan
+       (instantiate::html-tspage
+	  (markup 'tspan)
+	  (id (xml-make-id id 'TSPAN))
+	  (body (list (car body)
+		      (<DIV>
+			 :class "hop-tabslider-content"
+			 :lang "delay"
+			 :onkeyup (format "return ~a;"
+					  (hop->json
+					   (procedure->service
+					    (xml-delay-thunk (cadr body)))))
+			 "delayed tab")))))
+      (else
+       ;; an eager static tspan
+       (instantiate::html-tspage
+	  (markup 'tspan)
+	  (id (xml-make-id id 'TSPAN))
+	  (body (list (car body)
+		      (apply <DIV>
+			     :class "hop-tabslider-content"
+			     (cdr body))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tspan ...                                       */
@@ -98,4 +116,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TSHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-alias <TSHEAD> <SPAN> :class "hop-tabslider-head")
+(define-xml-alias <TSHEAD> <SPAN>
+   :class "hop-tabslider-head"
+   :onclick "hop_tabslider_select( this )")

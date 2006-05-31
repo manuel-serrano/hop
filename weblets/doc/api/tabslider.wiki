@@ -56,6 +56,9 @@ using //tabsliders// must include in their header, the following statement:
 | body         | HTML tree   |              | the body.                    |
 </arguments>
 
+When the body of the <TSPAN> is an object built with the <DELAY> markup, 
+then the item is re-computed each time it is re-open.
+
 </markup>
 
 === ++<TSHEAD>++ ===

@@ -53,6 +53,13 @@
       (<TABSLIDER>
 	 :width "300px"
 	 :height "300px"
+	 (<TSPAN>
+	    (<TSHEAD> "A lazy tab")
+	    (let ((i 0))
+	       (<DELAY>
+		  (lambda ()
+		     (set! i (+ 1 i))
+		     (format "This tab has been selected ~a times." i)))))
 	 (map (lambda (i)
 		 (let ((enum (iota i 1)))
 		    (<TSPAN>
