@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Wed May 31 13:40:39 2006 (serrano)                */
+/*    Last change :  Wed May 31 13:42:02 2006 (serrano)                */
 /*    Copyright   :  2006 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
@@ -46,7 +46,6 @@ function hop_tabslider_select( item ) {
    selected.style.height = totalHeight - titlesHeight;
 }
 
-
 /*---------------------------------------------------------------------*/
 /*    hop_tabslider_init ...                                           */
 /*---------------------------------------------------------------------*/
@@ -59,15 +58,3 @@ function hop_tabslider_init( id, ind ) {
                             },
 			    false );
 }
-
-
-/* {*---------------------------------------------------------------------*} */
-/* {*    Plug the tabsliders behaviour ...                                *} */
-/* {*---------------------------------------------------------------------*} */
-/* hopBehaviour.register('hop-tabslider-head',                         */
-/* 		      function (el) {                                  */
-/* 			  el.onclick = function(){                     */
-/* 			      hop_tabslider_select(this)               */
-/* 			  }                                            */
-/* 			  // hop_tabslider_select(el.parentNode.childNodes[0]); */
-/* 		      });                                              */

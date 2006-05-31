@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon May 29 18:23:00 2006 (serrano)                */
+;*    Last change :  Wed May 31 13:45:05 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -187,11 +187,11 @@ implemented you can send comments and remarks to "
    (make-file-name (home-ftp-hop-url) *devel-tar-gz*))
    
 (define *stable-tar-gz*
-   "not avaiable")
+   (string-append (home-hop-stable-version) ".tar.gz"))
 (define *stable-zip*
    "not available")
 (define *stable-tar-url*
-   "/dev/null")
+   (make-file-name (home-ftp-hop-url) *stable-tar-gz*))
 (define *stable-zip-url*
    "/dev/null")
    

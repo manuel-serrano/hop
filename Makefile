@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue May 30 17:46:45 2006 (serrano)                */
+#*    Last change :  Wed May 31 14:23:05 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -160,28 +160,31 @@ distrib:
           echo "*** ERROR: $(HOPTMPDIR)/hop$(HOPRELEASE) exists!"; \
           exit 1; \
         else \
-          ver=$(HOPRELEASE); \
-          dev=$(HOPDEVEL); \
-          min=1; \
+          version=$(HOPRELEASE); \
+          devel=$(HOPDEVEL); \
           if [ -f .hoprelease ]; then \
              . .hoprelease; \
              rm -f .hoprelease; \
-          fi && \
-          if [ "$$dev " = " " ]; then \
-            distrib=$$ver; \
+          fi; \
+          if [ "$$devel " = " " ]; then \
+            distrib=$$version; \
+            min=; \
           else \
-            if [ $$dev == $$devel ]; then \
-              distrib=$$ver-$$dev$$minor; \
+            if [ $$version != $$major ]; then \
+              min=1; \
             else \
-              distrib=$$ver-$$dev$$min; \
+              if [ $$devel == $$state ]; then \
+                min=`expr $$minor + 1`; \
+              else \
+                min=1; \
+              fi; \
             fi; \
-          fi && \
-          if [ $$ver = $$version -a $$dev == $$devel ]; then \
-            min=`expr $$minor + 1`; \
-          fi && \
-          echo "version=$$ver" > .hoprelease; \
-          echo "devel=$$dev" >> .hoprelease; \
+            distrib=$$version-$$devel$$min; \
+          fi; \
+          echo "major=$$version" > .hoprelease; \
+          echo "state=$$devel" >> .hoprelease; \
           echo "minor=$$min" >> .hoprelease; \
+          (cd weblets/home && make) && make revision && \
           $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
           mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
           tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
