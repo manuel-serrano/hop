@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu May 18 05:25:18 2006 (serrano)                */
+;*    Last change :  Mon May 29 10:58:28 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -27,7 +27,9 @@
 	    __hop_hop)
 
    (export  (<HEAD> . ::obj)
-	    (<HOP-FOOT-LOGO> . ::obj)
+	    (head-parse args)
+	    (<FOOT> . ::obj)
+	    (<FOOT-BUTTON> . ::obj)
 	    
 	    (<TOOLTIP> . ::obj)
 	    (<SORTTABLE> . ::obj)))
@@ -90,30 +92,15 @@
       (let loop ((a args))
 	 (cond
 	    ((null? a)
-	     (cons
-	      (<META> :http-equiv "Content-Type"
-		      :content "text/html"
-		      :charset (if (eq? (hop-char-encoding) 'UTF-8)
-				   "UTF-8"
-				   "ISO-8859-1"))
-	      (let ((css (cons (<LINK> :rel "stylesheet"
-				       :type "text/css"
-				       :href (hop-file dir "hop.css"))
-			       (map! (lambda (file) (hop-css file dir))
-				     (reverse! css))))
-		    (jscript (cons* (<SCRIPT>
-				       :type "text/javascript"
-				       :src (hop-file dir "hop-autoconf.js"))
-				    (<SCRIPT>
-				       :type "text/javascript"
-				       :src (hop-file dir "hop.js"))
-				    (map! (lambda (file)
-					     (hop-jscript file dir))
-					  (reverse! jscript)))))
-		 (if favicon
-		     (cons (<LINK> :rel "shortcut icon" :href favicon)
-			   (append! (append! rest css) jscript))
-		     (append! (append! rest css) jscript)))))
+	     (let ((css (map! (lambda (file) (hop-css file dir))
+			      (reverse css)))
+		   (jscript (map! (lambda (file) (hop-jscript file dir))
+				  (reverse jscript))))
+		(values dir
+			(if favicon
+			    (cons (<LINK> :rel "shortcut icon" :href favicon)
+				  (append (append rest css) jscript))
+			    (append rest (append css jscript))))))
 	    ((pair? (car a))
 	     (loop (append (car a) (cdr a))))
 	    ((null? (car a))
@@ -166,62 +153,67 @@
 ;*    <HEAD> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
-   (let ((body (head-parse args))
-	 (meta (<META> :http-equiv "Content-Type"
-		       :content "text/html"
-		       :charset (if (eq? (hop-char-encoding) 'UTF-8)
-				    "UTF-8"
-				    "ISO-8859-1"))))
-      (instantiate::xml-markup
-	 (markup 'head)
-	 (attributes '())
-	 (id (xml-make-id))
-	 (body (cons meta body)))))
+   (multiple-value-bind (dir body)
+      (head-parse args)
+      (let ((meta (<META> :http-equiv "Content-Type"
+			  :content (if (eq? (hop-char-encoding) 'UTF-8)
+				       "text/html; charset=UTF-8"
+				       "text/html; charset=ISO-8859-1")))
+	    (css (<LINK> :rel "stylesheet"
+			 :type "text/css"
+			 :href (hop-file dir "hop.css")))
+	    (jscripts (list
+		       (<SCRIPT>
+			  :type "text/javascript"
+			  :src (hop-file dir "hop-autoconf.js"))
+		       (<SCRIPT>
+			  :type "text/javascript"
+			  :src (hop-file dir "hop.js")))))
+	 (instantiate::xml-markup
+	    (markup 'head)
+	    (attributes '())
+	    (body (cons* meta css (append jscripts body)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    <HOP-FOOT-LOGO> ...                                              */
-;*    -------------------------------------------------------------    */
-;*    This do not use CSS because we want them to be correctly         */
-;*    displayed even when no CSS is specified.                         */
+;*    <FOOT> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <HOP-FOOT-LOGO> ((id #unspecified string)
-				      (img (<IMG> :inline #t
-						  :src (make-file-path
-							(hop-share-directory)
-							"icons"
-							"foot-logo.png")))
-				      body)
-   :hss-type "div.hop-foot-logo"
-   (let ((r (if (null? body)
-		(<SPAN> :style "font-size: 22px;
-                                font-style: normal;
-                                font-family: Futura_Poster, Blippo, Cooper, Eras-UltraBlk, RoostHeavy, Sinaloa, Arial, Verda, sans serif;
-                                font-weight: bold;"
-			(hop-name)
-			(<SPAN> :style "font-size: 7px; font-stretch: ultra-condensed; font-family: sans serif; margin-right: 2px; margin-left: -1px; vertical-align: bottom"
-				(hop-version)))
-		body)))
-      (<DIV> :style
-	     (format "width: 84px; height: 27px;
-                      overflow: hidden;
-                      background-color: white;
-                      border: 2px outset #777;
-                      padding: 0; padding: 0;
-                      background-image: url( '~a/icons/logo-bg.png' );"
-		     (hop-share-directory))
-	     :class "hop-foot-logo"
-	     (if (not img)
-		 r
-		 (<TABLE> :style "width: 100%; font-size: x-small;"
-			  :border-collapse "collapse" 
-			  :border 0
-			  :cellspacing 0
-			  :cellpadding 0
-			  (<TR>
-			     (<TD> :align 'left img)
-			     (<TD> :align 'center r)))))))
-		   
+(define-xml-compound <FOOT> ((id #unspecified string)
+			     (class "foot" string)
+			     body)
+   (<DIV>
+      :id (xml-make-id id 'FOOT)
+      :class class
+      (<DIV>
+	 :align "center"
+	 :class "foot-buttons"
+	 (<FOOT-BUTTON>
+	    :href "http://hop.inria.fr"
+	    :title "HOP home page"
+	    :src "hop.png")
+	 body)))
 
+;*---------------------------------------------------------------------*/
+;*    <FOOT-BUTTON> ...                                                */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <FOOT-BUTTON> ((id #unspecified string)
+				    (class "foot-button")
+				    (href #f string)
+				    (title #f string)
+				    (path #f)
+				    (src #f))
+   (<A>
+      :class class
+      :href href
+      :title title
+      (<IMG> :alt title
+	     :src (cond
+		     ((string? path)
+		      path)
+		     ((string? src)
+		      (format "~a/buttons/~a" (hop-share-directory) src))
+		     (else
+		      (error '<FOOT-BUTTON> "Illegal source" src))))))
+				     
 ;*---------------------------------------------------------------------*/
 ;*    <TOOLTIP> ...                                                    */
 ;*---------------------------------------------------------------------*/

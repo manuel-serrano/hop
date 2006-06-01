@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed May 17 09:34:10 2006 (serrano)                */
+;*    Last change :  Thu Jun  1 08:10:52 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -402,7 +402,7 @@
 		 (if (char=? c #\*)
 		     (enter-block! id (wiki-syntax-ul syn) #f)
 		     (enter-block! id (wiki-syntax-ol syn) #f))))
-	  (enter-expr! 'li (wiki-syntax-li syn) val))
+	  (enter-block! 'li (wiki-syntax-li syn) val))
        (ignore))
 
       ;; comments

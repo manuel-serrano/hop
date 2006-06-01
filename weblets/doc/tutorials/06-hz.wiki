@@ -1,37 +1,237 @@
-<doc> Releasing with HZ
+<doc> Releasing a HZ package
 
 == Description ==
 
-This tutorial shows how to release a HOP weblet with the HOP distribution
+This tutorial shows how to release a HOP weblet with the HOP package
 system, namely ,(<A> :href "http://localhost:8080/hop/hz"
       (<SPAN> :style {font-variant: small-caps} "Hz")).
 
 ~~ A ,(<A> :href "http://localhost:8080/hop/hz"
       (<SPAN> :style {font-variant: small-caps} "Hz")) package is actually
-a tarball file (a [[http://www.gnu.org/software/gzip/gzip.html|gzipped]] tar 
-file) containing the source code of the weblet
-plus some utility files and some contribution files (e.g., icons needed
-by your application).
+a tarball file (a [[http://www.gnu.org/software/gzip/gzip.html|gzipped]] 
+[[http://www.gnu.org/software/tar/|tar]] file) containing the source code 
+of the weblet plus some utility files and some contribution files (e.g., 
+the icons of the application).
 
 == Requirements ==
 
-In order to build HOP ++.hz++ file, you need:
+In order to build and test HOP ++.hz++ file, you need:
 
   - an operational HOP.
   - the GNU [[http://www.gnu.org/software/tar/|tar]] utility.
+  - if the application contains more than one source code, the
+ ++bglafile++ tool (that comes with the installation of the
+ [[http://www.inria.fr/mimosa/fp/Bigloo|Bigloo]] compiler).
 
 
-Let's assume a weblet named ++foo++. The package ++foo.hz++ must contain:
+A package ++XXX.hz++ must, at least, contain:
 
-  - ++foo.hop++: The source file that contains the definition of the 
- ,(<APIREF> "service" "service.wiki") ++foo++.
-  - optional additional ++.hop++ files, ++.hss++, and ++.css++ files.
+  - ++XXX.hop++: The source file that contains the definition of the 
+ ,(<APIREF> "service" "service.wiki") ++XXX++. Note that the definition of
+ the service  ++XXX++ __must__ be present in the file ++XXX.hop++.
+  - optional additional sources (++.hop++ files), ++.hss++, and ++.css++ files.
   - ++.afile++: this file is needed if the weblet uses several source files.
-  - ++etc/foo.info++: this file contains meta information on the package
+  - ++etc/foo.info++: this file contains the package meta information 
  (e.g., the revision number, the author, etc.).
   - ++etc/logo.png++: the logo (a 48x48 image) of the weblet.   
 
 == The weblet ==
 
+For the sake of the example, we are going to build a ++roman.hz++ package
+for a weblet that converts roman number into their arabic representations.
+For this we are assuming two source file: the file ++roman.hop++ that 
+contains the definition of the weblet and ++config.hop++ the source code
+that implements the actual conversion. The package will also use the
+file ++config.hss++ for setting the graphical configuration.
+
+~~ ,(<SPAN> :style { color: red; font-weight: bold }
+            [In the rest of this text, we assume that
+all the files are created in a directory named
+,(<TT> :style {color: red} "\"roman\"").])
+
+~~ The file ++roman.hop++ is implemented as:
+
+<code>
+  (module roman
+     (import roman-convert))
+  
+  (define roman-dir (dirname (the-loading-file)))
+  
+  (define-service (roman num)
+     (<HTML>
+       (<HEAD> :dir roman-dir :css "roman.hss")
+       (<BODY>
+          (<TABLE> 
+              (<TR> 
+                 (<TD> :class "roman" num) 
+                 (<TD> :class "arabic" (roman->arabic num))))
+          (<FOOT>))))
+
+  (define-service (roman/preferences)
+     (if (not (authorized-service? (the-current-request) 'admin))
+         (user-access-denied req)
+         (<HTML>
+            (<BODY>
+              "No preference for this weblet"))))
+</code>
+
+The variable ++roman-dir++ is bound to the directory name that contains the
+source file ++roman.hop++, once installed. Note it is not possible to 
+eliminate the variable definition and to substitute the expression 
+++(dirname (the-loading-file))++ in the ++<HEAD>++ statement. Indeed, the 
+function ++the-loading-file++ always returns the name of the file //currently//
+in load. Hence, only when the file ++roman.hop++ is currently in load
+the evaluation of ++(the-loading-file)++ returns the actual path of that
+file. Further invocations of this function will return different values.
+
+~~ The use of the markup ++<FOOT>++ insert the HOP button at the end of the
+page. Inserting the HOP button advertise that the Web page is actually served
+by a HOP server. This promotes HOP. The more it gets promoted the better
+its support will be.
+
+~~ Each weblet **should** provide a ++XXX/preferences++ service. This is used
+to configure the weblet. Even if not reflected by the current example to
+supports no customization, in general, it is a good idea to automate the
+generation of the preferences with parameters (see ++define-parameter++
+and ++define-preferences++).
+
+~~ The file ++convert.hop++ contains the definition of the actual conversion
+(++roman->arabic++). It definition is:
+
+<code>
+  (module roman-convert 
+     (export (roman->arabic r)))
+
+  (define (digit-roman->arabic digit)
+      (case digit
+         ((#\m #\M) 1000)
+         ((#\d #\D) 500)
+         ((#\c #\C) 100)
+         ((#\l #\L) 50)
+         ((#\x #\X) 10)
+         ((#\v #\V) 5)
+         ((#\i #\I) 1)
+         (else (error 'roman->arabic "Illegal char" digit))))
+
+  (define (roman->arabic r)
+     (let ((len (string-length r)))
+        (let loop ((indice 0))
+           (cond
+              ((= indice len)
+               0)
+              ((= indice (- len 1))
+               (digit-roman->arabic (string-ref r indice)))
+              (else
+               (let ((x (digit-roman->arabic (string-ref r indice)))
+                     (y (digit-roman->arabic (string-ref r (+ 1 indice)))))
+                  (if (< x y)
+                      (+ (- x) (loop (+ 1 indice)))
+                      (+ x (loop (+ 1 indice))))))))))
+</code>
+
+The package contains several source files, hence it has to be provided with
+a ++.afile++. For this, we can execute the following command:
+
+<code>
+    bglafile -suffix hop roman.hop convert.hop > .afile
+</code>
+
+This produces a file such as:
+
+<code>
+  ;; automatically generated, don't edit
+  ;; /users/serrano/prgm/project/hop/weblets/roman
+  ;; Mon May 24 08:26:38 2006
+  
+  (
+    (roman "./roman.hop")
+    (roman-convert "./convert.hop")
+  )
+</code>
+
+This tells HOP where to find the source file containing
+the definition of the modules ++roman++ and ++roman-convert++.
+
+~~ Then, a file ++etc/roman.info++ is needed. It can be defined as:
+
+<code>
+  (
+    (name "roman")
+    (author "M. Serrano")
+    (version "0.0.1")
+    (sdescr "HOP weblet for translating roman to arabic numbers")
+  )
+</code>
+
+~~ The last step is optional. It consists in providing a logo for the weblet.
+Copy any 48x48 ++.png++ file into the file ++etc/logo.png++.
+
+== Building the package ==
+
+The whole package is now ready. We have to build the ++.hz++ file. For
+that, we move up to the parent of the directory ++roman++ and we issue
+the command:
+
+<code>
+    tar cvfz roman.hz roman
+</code>
+
+This builds the ++roman.hz++ file. You can test the file with:
+
+<code>
+    tar tvfz roman.hz
+</code>
+
+This should produce an output similar to:
+
+<code>
+  drwxr-x--- serrano/users     2006-05-24 08:45:39 roman/
+  drwxr-x--- serrano/users     2006-05-24 08:45:33 roman/etc/
+   rw-r----- serrano/users     2006-05-24 08:45:27 roman/etc/logo.png
+   rw-r----- serrano/users     2006-05-24 08:45:33 roman/etc/roman.info
+   rw-r----- serrano/users     2006-05-24 08:45:34 roman/.afile
+   rw-r----- serrano/users     2006-05-24 08:45:37 roman/roman.hop
+   rw-r----- serrano/users     2006-05-24 08:45:39 roman/convert.hop
+</code>
+
+== Releasing the package ==
+
+The last step consists in releasing the package. For this, go to the HOP
+[[http://hop.inria.fr|home page]], select the ++weblets++ tab and upload
+the ++roman.hz++ file.
+
+~~ Alternatively you can choose not to be registered on the global HOP
+weblet database. That is, you can distribute your package on your local
+servers. You can use the service ++hz/install-ondemand++ to automate the
+installation of your ++.hz++ file. For that, add a link such as:
+
+<code>
+  (<A> :href "http://hop/hop/hz/install-ondemand?name=roman&url=http://computer/path/.../roman.hz")
+</code>
+
+in your page. When clicked, this link spawns the 
+,(<A> :href "http://localhost:8080/hop/hz"
+      (<SPAN> :style {font-variant: small-caps} "Hz")) weblet on the user host
+computer. It fetches and installs your ++roman.hz++ file on that computer.
+This technique requires two additional fields in the ++roman.info++ file.
+  - The ++category++ of the weblet. It can be any string of characters. 
+  - The ++url++ where to download the ++roman.hz++ file.
+
+== The .info file ==
+
+The ++.info++ file contains packages //meta data//. It is a list of
+associations. Each association is a key and a value. The currently knows
+keys are:
+
+  * ++name++, the name of the weblet.
+  * ++author++, the author of the weblet.
+  * ++version++, the version of the weblet.
+  * ++sdescr++, a one-liner description.
+  * ++descr++, a description of the weblet.
+  * ++home++, a URL describing the weblet.
+  * ++category++, the category the weblet belongs to.
+  * ++hop++, the HOP server that releases the weblet.
+  * ++minhop++, the minimal HOP version able to run the weblet.
+  * ++maxhop++, the maximal HOP version able to run the weblet.
 
 </doc>

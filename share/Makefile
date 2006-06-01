@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu May 18 10:32:44 2006 (serrano)                */
+#*    Last change :  Wed May 31 07:03:44 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -26,10 +26,9 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-notepad.css hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
-                  hop-window.js hop-window.css \
                   hop-iwindow.js hop-iwindow.css \
                   hop-editor.js hop-editor.css \
-                  hop.scm icons editor Makefile
+                  hop.scm icons buttons editor Makefile
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -59,8 +58,6 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-foldlist.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-iwindow.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-iwindow.css $(HOPSHAREDIR) && \
-	install -m a+r $(BUILDSHAREDIR)/hop-window.js $(HOPSHAREDIR) && \
-	install -m a+r $(BUILDSHAREDIR)/hop-window.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-editor.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-editor.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
@@ -68,6 +65,9 @@ install:
 	mkdir -p $(HOPSHAREDIR)/icons && \
 	chmod a+rx $(HOPSHAREDIR)/icons && \
 	install -m a+r $(BUILDSHAREDIR)/icons/* $(HOPSHAREDIR)/icons && \
+	mkdir -p $(HOPSHAREDIR)/buttons && \
+	chmod a+rx $(HOPSHAREDIR)/buttons && \
+	install -m a+r $(BUILDSHAREDIR)/buttons/* $(HOPSHAREDIR)/buttons && \
 	mkdir -p $(HOPSHAREDIR)/editor && \
 	chmod a+rx $(HOPSHAREDIR)/editor && \
 	install -m a+r $(BUILDSHAREDIR)/editor/* $(HOPSHAREDIR)/editor
@@ -99,13 +99,12 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop-foldlist.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-iwindow.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-iwindow.css && \
-	/bin/rm -f $(HOPSHAREDIR)/hop-window.js && \
-	/bin/rm -f $(HOPSHAREDIR)/hop-window.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-editor.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-editor.css && \
 	/bin/rm -f $(HOPSHAREDIR)/base64.js && \
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \
 	/bin/rm -rf $(HOPSHAREDIR)/icons && \
+	/bin/rm -rf $(HOPSHAREDIR)/buttons && \
 	/bin/rm -rf $(HOPSHAREDIR)/editor 
 
 

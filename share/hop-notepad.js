@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Thu May 18 17:26:48 2006 (serrano)                */
+/*    Last change :  Mon May 29 11:57:39 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -37,9 +37,7 @@ function hop_notepad_inner_select( np, to ) {
 
    /* invoke remote tab */
    if( tabs.childNodes[ to ].lang == "delay" ) {
-      if( np.svc == undefined ) np.svc = eval( np.lang );
-
-      hop( np.svc( to ),
+      hop( np.onkeyup()( to ),
 	   function( http ) {
 	      hop_replace_inner( bodies.childNodes[ to ] )( http );
 	      hop_notepad_inner_toggle( np, to, tabs, bodies );

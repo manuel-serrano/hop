@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue May 23 09:06:22 2006 (serrano)                */
+/*    Last change :  Tue May 30 13:28:20 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -379,13 +379,7 @@ function with_hop( service, success, failure ) {
 
                  switch( http.status ) {
 		    case 200:
-		       if( http.propertyIsEnumerable( "getResponseHeader" ) ) {
-			  json = http.getResponseHeader( "hop-json" );
-		       } else {
-			  json = (http.getAllResponseHeaders().indexOf( "hop-json" ) >= 0);
-		       }
-
-		       if( json ) {
+		       if( hop_is_http_json( http ) ) {
 			  success( eval( http.responseText ) );
 		       } else {
 			  success( http.responseText );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Wed May 17 10:01:49 2006 (serrano)                */
+;*    Last change :  Wed May 31 17:45:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
@@ -47,20 +47,22 @@
 ;*    home-hop-stable-version ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-hop-stable-version
-   "not available yet")
+   "1.3.1")
 
 ;*---------------------------------------------------------------------*/
 ;*    home-hop-devel-version ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-hop-devel-version
-   (let ((e (with-input-from-file (make-file-name (home-dir) "release.info") 
-	       read)))
-      (format "hop-~a-~a~a"
-	      (cadr (assq 'version e))
-	      (let ((c (assq 'devel e)))
-		 (if c (cadr c) ""))
-	      (let ((c (assq 'minor e)))
-		 (if c (cadr c) "")))))
+   (let* ((e (with-input-from-file (make-file-name (home-dir) "release.info") 
+		read))
+	  (state (let ((c (assq 'state e)))
+		    (if (and (pair? c) (pair? (cdr c))) (cadr c) #f)))
+	  (minor (let ((c (assq 'minor e)))
+		    (if (and (pair? c) (pair? (cdr c))) (cadr c) #f)))
+	  (version (cadr (assq 'major e))))
+      (if (and state minor)
+	  (format "~a-~a~a" version state minor)
+	  #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    home-articles-url-base ...                                       */

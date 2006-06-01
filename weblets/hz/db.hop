@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Mon May 22 16:05:16 2006 (serrano)                */
+;*    Last change :  Tue May 30 16:57:53 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -28,7 +28,8 @@
 	      (descr::bstring (info "BLOB"))
 	      date::date
 	      (driver::bstring (default "hz"))
-	      (install::bstring (default "")))
+	      (install::bstring (default ""))
+	      (home::bstring (default "")))
 	   (hz-db-path mode)
 	   (hz-db-columns)
 	   (hz-db-install-column-index)
@@ -41,6 +42,7 @@
 	   (hz-db->list db)
 	   (hz-get-repository-db)
 	   (hz-db-get-entry-by-name db name)
+	   (hz-db-get-entry-by-name-driver db name driver)
 	   (hz-db-get-entry-by-name-category db name category)
 	   (hz-db-get-unmanaged db name category)
 	   (hz-db-get-all-unmanaged db)
@@ -55,7 +57,8 @@
 	   (hz-db-query db key)
 	   (hz-db-query-uninstalled db)
 	   (hz-db-query-update db)
-	   (hz-db-query-new db)))
+	   (hz-db-query-new db)
+	   (hz-info->dbhz-args info category mtime stamp install driver)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-path ...                                                   */
@@ -135,6 +138,11 @@
 	  (let ((names (map string->symbol cols)))
 	     (for-each (lambda (f)
 			  (unless (memq (class-field-name f) names)
+			     (tprint "ALTER: "
+			      (sqlite-format 
+			       "ALTER TABLE weblets ADD COLUMN ~a ~a"
+			       (class-field-name f)
+			       (class-field-sqlite-type f)))
 			     (sqlite-exec db
 				"ALTER TABLE weblets ADD COLUMN ~a ~a"
 				(class-field-name f)
@@ -210,9 +218,9 @@
 	 *hz-db*)))
 
 ;*---------------------------------------------------------------------*/
-;*    new-dbhz ...                                                     */
+;*    inst-dbhz ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (new-dbhz s n a c h v mi ma sd d dt dr i)
+(define (inst-dbhz s n a c h v mi ma sd d dt dr i hm)
    (instantiate::dbhz
       (stamp s)
       (name n)
@@ -226,20 +234,29 @@
       (descr d)
       (date (seconds->date (string->elong dt)))
       (driver dr)
-      (install (if (string? i) i ""))))
+      (install (if (string? i) i ""))
+      (home (if (string? hm) hm ""))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-get-entry-by-name ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-get-entry-by-name db name)
-   (sqlite-eval db new-dbhz
+   (sqlite-eval db inst-dbhz
       "SELECT ~a FROM weblets WHERE (name = ~q)" (hz-db-row) name))
+
+;*---------------------------------------------------------------------*/
+;*    hz-db-get-entry-by-name-driver ...                               */
+;*---------------------------------------------------------------------*/
+(define (hz-db-get-entry-by-name-driver db name driver)
+   (sqlite-eval db inst-dbhz
+      "SELECT ~a FROM weblets WHERE (name = ~q) AND (driver = ~q)"
+      (hz-db-row) name driver))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-get-entry-by-name-category ...                             */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-get-entry-by-name-category db name category)
-   (sqlite-eval db new-dbhz
+   (sqlite-eval db inst-dbhz
       "SELECT ~a FROM weblets WHERE (name = ~q) AND (category = ~q)"
       (hz-db-row) name category))
 
@@ -247,16 +264,16 @@
 ;*    hz-db-get-unmanaged ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-get-unmanaged db name category)
-   (sqlite-eval db new-dbhz
-      "SELECT ~a FROM weblets WHERE (name = ~q) AND (category = ~q) AND (driver != 'hz')"
+   (sqlite-eval db inst-dbhz
+      "SELECT ~a FROM weblets WHERE (name = ~q) AND (category = ~q) AND (driver = 'unmanaged')"
       (hz-db-row) name category))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-get-all-unmanaged ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-get-all-unmanaged db)
-   (sqlite-map db new-dbhz
-      "SELECT ~a FROM weblets WHERE (driver != 'hz')" (hz-db-row)))
+   (sqlite-map db inst-dbhz
+      "SELECT ~a FROM weblets WHERE (driver = 'unmanaged')" (hz-db-row)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-add-entry ...                                              */
@@ -302,7 +319,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-db-remove-entry db name category)
    (sqlite-exec db
-      "DELETE FROM weblets WHERE( name = ~q ) AND (category = ~q)"
+      "DELETE FROM weblets WHERE (name = ~q) AND (category = ~q)"
       name category))
 
 ;*---------------------------------------------------------------------*/
@@ -311,7 +328,7 @@
 (define (hz-db-remove-weblet db o)
    (with-access::dbhz o (name category driver)
       (sqlite-exec db
-	 "DELETE FROM weblets WHERE( name = ~q ) AND (category = ~q) AND (driver = ~q)"
+	 "DELETE FROM weblets WHERE (name = ~q) AND (category = ~q) AND (driver = ~q)"
 	 name category driver)))
 
 ;*---------------------------------------------------------------------*/
@@ -325,7 +342,7 @@
 ;*    hz-db-get-entries-by-category ...                                */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-get-entries-by-category db category)
-   (sqlite-map db new-dbhz
+   (sqlite-map db inst-dbhz
       "SELECT ~a FROM weblets WHERE (category = ~q) ORDER BY name ASC"
       (hz-db-row) category))
 
@@ -333,7 +350,7 @@
 ;*    hz-db-query ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-query db key)
-   (sqlite-map db new-dbhz
+   (sqlite-map db inst-dbhz
       "SELECT * FROM weblets WHERE (name LIKE '%~a%') || (author LIKE '%~a%') || (sdescr LIKE '%~a%') || (descr LIKE '%~a%') ORDER BY name ASC"
       key key key key))
    
@@ -341,20 +358,44 @@
 ;*    hz-db-query-uninstalled ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-query-uninstalled db)
-   (sqlite-map db new-dbhz
+   (sqlite-map db inst-dbhz
       "SELECT * FROM weblets WHERE (install = '') || (install ISNULL) ORDER BY name ASC"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-query-update ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-query-update db)
-   (sqlite-map db new-dbhz
+   (sqlite-map db inst-dbhz
       "SELECT * FROM weblets WHERE (install != '') AND (install < version) ORDER BY name ASC"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-query-new ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-query-new db)
-   (sqlite-map db new-dbhz
+   (sqlite-map db inst-dbhz
       "SELECT * FROM weblets WHERE (install = '') AND (stamp = ~a) ORDER BY name ASC"
       (hz-db-sync-stamp db)))
+
+;*---------------------------------------------------------------------*/
+;*    hz-info->dbhz-args ...                                           */
+;*---------------------------------------------------------------------*/
+(define (hz-info->dbhz-args info category mtime stamp install driver)
+   (bind-exit (exit)
+      (define (find val lst)
+	 (cond
+	    ((assq val lst) => cadr)
+	    (else #f)))
+      (list stamp
+	    (or (find 'name info) (exit #f))
+	    (or (find 'author info) (exit #f))
+	    (or category (find 'category info) (exit #f))
+	    (or (find 'hop info) "unknown")
+	    (or (find 'version info) (exit #f))
+	    (or (find 'minhop info) "")
+	    (or (find 'maxhop info) "")
+	    (or (find 'sdescr info) (exit #f))
+	    (or (find 'descr info) "")
+	    mtime
+	    driver
+	    install
+	    (or (find 'home info) ""))))

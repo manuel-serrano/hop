@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 15:24:40 2005                          */
-;*    Last change :  Wed Apr 12 17:38:53 2006 (serrano)                */
+;*    Last change :  Mon May 29 10:49:28 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML macros                                                       */
@@ -12,9 +12,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-element ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (define-xml element id . exp)
-   (define (define-xml-ident id el exp)
-      `(define (,id . args)
+(define-pervasive-macro (define-xml type with-id name . exp)
+   (define (define-xml-constructor name el exp)
+      `(define (,name . args)
 	  (let loop ((args args)
 		     (attr '())
 		     (body '())
@@ -22,24 +22,55 @@
 	     (cond
 		((null? args)
 		 ,(if (null? exp)
-		      `(,(symbol-append 'instantiate:: element)
+		      `(,(symbol-append 'instantiate:: type)
 			(markup ',(string->symbol
 				   (string-downcase
 				    (symbol->string el))))
 			(attributes attr)
-			(id (xml-make-id id ',el))
 			(body (reverse! body)))
 		      `(begin ,@exp)))
 		((keyword? (car args))
 		 (if (null? (cdr args))
-		     (error ',id "attribute value missing" (car args))
+		     (error ',name "attribute value missing" (car args))
+		     (loop (cddr args)
+			   (cons (cons (keyword->string (car args))
+				       (cadr args))
+				 attr)
+			   body
+			   id)))
+		((null? (car args))
+		 (loop (cdr args) attr body id))
+		((pair? (car args))
+		 (loop (append (car args) (cdr args)) attr body id))
+		(else
+		 (loop (cdr args) attr (cons (car args) body) id))))))
+   (define (define-xml-constructor-with-id name el exp)
+      `(define (,name . args)
+	  (let loop ((args args)
+		     (attr '())
+		     (body '())
+		     (id   #unspecified))
+	     (cond
+		((null? args)
+		 ,(if (null? exp)
+		      `(,(symbol-append 'instantiate:: type)
+			(markup ',(string->symbol
+				   (string-downcase
+				    (symbol->string el))))
+			(id (xml-make-id id ',el))
+			(attributes attr)
+			(body (reverse! body)))
+		      `(begin ,@exp)))
+		((keyword? (car args))
+		 (if (null? (cdr args))
+		     (error ',name "attribute value missing" (car args))
 		     (if (eq? (car args) :id)
 			 (if (string? (cadr args))
 			     (loop (cddr args)
 				   attr
 				   body
 				   (cadr args))
-			     (bigloo-type-error ',id
+			     (bigloo-type-error ',name
 						"string"
 						(cadr args)))
 			 (loop (cddr args)
@@ -54,8 +85,9 @@
 		 (loop (append (car args) (cdr args)) attr body id))
 		(else
 		 (loop (cdr args) attr (cons (car args) body) id))))))
-   (let ((s (symbol->string id)))
-      (if (and (>fx (string-length s) 2)
+   (let ((s (symbol->string name)))
+      (cond
+	 ((and (>fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\<)
 	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
 	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1))))
@@ -66,9 +98,20 @@
 		    (set! exp (remq! (car css) exp))
 		    `(begin
 			(hop-hss-type! ,(symbol->string el) ,new)
-			,(define-xml-ident id el exp)))
-		 (define-xml-ident id el exp)))
-	  (error 'define-xml "Illegal identifier" id))))
+			,(if with-id
+			     (define-xml-constructor-with-id name el exp)
+			     (define-xml-constructor name el exp))))
+		 (if with-id
+		     (define-xml-constructor-with-id name el exp)
+		     (define-xml-constructor name el exp)))))
+	 (else
+	  (error 'define-xml "Illegal identifier" name)))))
+
+;*---------------------------------------------------------------------*/
+;*    define-xml-markup ...                                            */
+;*---------------------------------------------------------------------*/
+(define-pervasive-macro (define-xml-markup name . exp)
+   `(define-xml xml-markup #f ,name ,@exp))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-element ...                                           */
@@ -78,7 +121,7 @@
       (if (null? exp)
 	  `(define (,id . args)
 	      (%make-xml-element ',el args))
-	  `(define-xml xml-element ,el ,@exp)))
+	  `(define-xml xml-element #t ,el ,@exp)))
    (let ((s (symbol->string id)))
       (if (and (>fx (string-length s) 2)
 		   (char=? (string-ref s 0) #\<)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Sun May 14 18:37:22 2006 (serrano)                */
+;*    Last change :  Thu Jun  1 08:23:22 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -101,6 +101,7 @@
 ;*---------------------------------------------------------------------*/
 (define (cache-entry-valid? ce path)
    (and (cache-entry? ce)
+	(file-exists? (cache-entry-path ce))
 	(=elong (cache-entry-mtime ce) (file-modification-time path))))
 
 ;*---------------------------------------------------------------------*/
@@ -191,6 +192,14 @@
 		       (path cpath)
 		       (upath upath)
 		       (mtime (file-modification-time upath)))))
+	    ;; make sure that the cache path exists
+	    (cond
+	       ((not (file-exists? path))
+		(mkdir-p path))
+	       ((not (directory? path))
+		(delete-file path)
+		(mkdir-p path)))
+	    ;; put the file in the cache
 	    (let ((p (open-output-file cpath)))
 	       (when (output-port? p)
 		  (unwind-protect

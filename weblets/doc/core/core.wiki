@@ -1,141 +1,260 @@
-<doc> HOP Wiki syntax
+<doc> HOP core language
 
-== Basic Text Formatting ==
+== Presentation ==
 
-=== Bold, Italic, and Underline ===
-,(meta-wiki-example "basic.wiki")
+This document presents the core constructions of the HOP programming language.
+It does not present the APIs which are already presented in the ++API++ tab.
 
-=== Mono Space ===
-,(meta-wiki-example "tt.wiki")
-
-=== Misc ===
-,(meta-wiki-example "misc.wiki")
-
-== Links ==
-
-HOP Wiki only supports external links. No effort is made to
-automatically recognize links in a regular text. Links are enclosed
-inside double angle parenthesis.
-
-,(meta-wiki-example "link.wiki")
+~~ HOP is functional expression based programming language. That is:
+  * All HOP expression as a value.
+  * Functions are first class values. They can be passed as argument,
+ returned as result, or stored in data structure.
 
 
-== Sectioning ==
-HOP supports 5 section levels. They starts by a double equal sign
-at the beginning of line.
+~~ HOP uses a lexical scoping discipline, that is the functions capture their
+definition environment for their free variables. 
 
-,(meta-wiki-example "section.wiki")
+~~ HOP is safe because it checks types and array bounds. Contrary to
+languages such as [[http://caml.inria.fr/|ML]], HOP checks types at runtime. 
 
-More than 5 consecutive equal signs at the beginning of a line, introduce
-an horizontal rule.
+== Syntax ==
 
-HOP, does not automatically compute table of contents but it supports
-,(<APIREF> "facilities" "wiki.wiki") for producing such tables.
+~~ In this text we use the classical conventions. The sign ,(<TT> "+")
+denotes a non empty repetition. The sign ++*++ denotes a possibly
+empty repetition.  The sign ++?++ denotes an optional occurrence.
+The sign ++|++ denotes the alternative.
 
-== Text Layout ==
+~~ HOP expressions are either atoms, quotes, or lists. 
 
-=== Paragraph ===
-
-The sequence ,(<TT> "~~") located at the beginning of a line starts
-a new paragraph.
-
-~~
-,(meta-wiki-example "paragraph.wiki")
-
-=== Verbatim ===
-
-Non parsed, pre-formated blocks are introduced by indenting lines
-with two space characters.
-
-  This blocks can be
-     used for representing
-     computer programs
-       or anything else that needs
-       pre-formated indentations.
+  <expression> := <atom> 
+     | <quote>
+     | <list>
 
 
-These blocks end with two consecutive empty lines.
+An atom is a syntactic elements described by the following grammar:
 
-=== Lists ===
+  <atom> := <number>
+     | <ident>
+     | <keyword>
+     | <string>
+     | <boolean>
+     | <character>
+     | #unspecified
+    
+  <ident> := [a-zA-Z<>/?|!@%^&*-_=+][a-zA-Z0-9<>/?|!@%^&*-_=+]*
 
-HOP Wiki supports order and unorder lists. They are created by lines indent
-with at least two space character and followed by a ++-++ character
-for ordered lists and by a ++*++ character for unordered ones.
+  <keyword> := :<ident>
 
-~~
-,(meta-wiki-example "lists.wiki")
+  <character> := # \ "a character"
+     | #\Newline
+     | #\Space
+     | #\Return
+     | #\Tab
 
-=== Tables ===
-
-Tables starts by the character ++^++ (for a header) or ++|++ (for a regular
-data) in column 1. A table ends with two consecutive blank lines.
-Table cells may be centered (if they start and end with two space characters).
-They may be left aligned (if they end with two space characters) or right
-aligned (if they start with two space characters). A cell may span over
-several columns (when it is followed by one or several empty cells).
-
-~~
-,(meta-wiki-example "tables.wiki")
-
-== Embedding HOP ==
-
-HOP wiki syntax supports embedded HOP expressions. An HOP expressions
-starts with the sequence comma and parenthesis (i.e., ,(<TT> ",(")) and its
-ends with a closing parenthesis. 
-
-~~
-The full power of HOP is available inside HOP wiki.
-
-~~
-,(meta-wiki-example "hop.wiki")
+  <boolean> := #t | #f
 
 
-== Syntax Plugins ==
+Quotes are:
 
-HOP wiki supports //plugins//. A plugin invocation starts with an
-opening markup (i.e., a word starting with a ++<++ character and ending with a
-++>++ character) at the beginning of a line. The invocation ends with a
-closing markup (i.e., a word starting with the sequence ++</++ and
-ending with a ++>++ character). The closing markup must either be
-on the same line as the opening markup or at the beginning of a line.
-All characters following a closing markup are ignored.
+  <quote> := '<ident>
+     | <literal-vector>
 
-~~
-A plugin is implemented by the means of a function accepting three parameters.
-
-  - an input port
-  - a title
-  - a body
+  <literal-vector> := '#(<expression>*>)
 
 
-The title is composed of all the characters following the opening markup
-up to the end of line or up to the closing markup for one-line plugins.
-The body of the plugin is composed of the characters composing the lines
-in between the opening and closing markups. The body and the title
-may use the wiki the syntax.
+Lists are:
 
-~~ 
-,(meta-wiki-example "plugin.wiki")
-
-The developer documentation for the ,(<APIREF> "Wiki library" "wiki.wiki")
-shows how to implement Wiki plugins.
-
-== Playground ==
-
-,(<BUTTON> 
-    :onclick ~(let ((frame (document.createElement "iframe")))
-		 (window.open ($doc/example-file "wiki.hop")
-			      "Wiki playground"
-			      "width=640, height=480, top=100, left=100"))
-    "run the playground")
+  <list> := (<expression>*)
 
 
-== Credits ==
+In addition to these syntactic elements, server-side expressions may use
+//client-side// embedding:
 
-HOP borrows its wiki syntax from several projects. The three mains are:
+  <server-expression> := <expression>
+     | ~<client-expression>
 
-  * [[http://wiki.splitbrain.org|DokuWiki]]
-  * [[http://www.methods.co.nz/asciidoc/|AsciiDoc]]
-  * [[http://fr.wikipedia.org/wiki/MediaWiki|MediaWiki]]
+
+Symmetrically, client-side expressions may use //server-side// embedding:
+
+  <client-expression> := <expression>
+     | $<server-expression>
+
+
+== Definitions ==  
+
+HOP supports definitions of variables, functions, and services:
+
+  <definition> := <define-variable>
+     | <define-function>
+     | <define-service>
+
+  <definition-variable> := (define <ident> <expression>)
+
+  <definition-function> := (define (<ident> <ident>*) <expression>)
+
+  <definition-service> := (define-service (<ident> <ident>*) <expression>)
+
+
+== Basic constructions ==
+
+The sequence of HOP expressions is:
+
+  <sequence> := (begin <expression> ...)
+
+
+The alternative is:
+
+  <alternative> := (if <expression> <expression> <expression>?)
+
+
+HOP supports derivative conditional constructions:
+
+  <alternative-cond> := (cond ((<expression> <expression)+))
+  <alternative-case> := (case <expression> ((<atom>+ <expression)+))
+
+
+Local variables are introduced with the ++let++ constructions:
+
+  <local-var> := <let> | <let*> | <letrec>
+
+  <let> := (let (<bindings>*) <expression>)
+  <let*> := (let* (<bindings>*) <expression>)
+  <letrec> := (letrec (<bindings>*) <expression>)
+
+  <binding> := <symbol>
+     | (<symbol> <expression>)
+
+
+The ++let++ construction binds independent variable. The ++let*++ is
+equivalent to a cascade of nested ++let++s. The ++letrec++ allows
+recursive definitions of lexical variables.
+
+Anonymous functions are introduced by ++lambda++ expression:
+
+  <lambda> := (lambda (<ident>*) <expression>)
+
+
+Loops are either defined with //named let// or anonymous functions:
+
+  <named-let> := (let <symbol> (<binding>*) <expression>)
+
+
+Function applications are defined as:
+
+  <funcall> := (<expression> <expression>*)
+
+
+== Server Side core language ==
+
+This section presents the HOP constructions that are only applicable to
+server-side programming.
+
+=== Modules ===
+On the server side the ,(<APIREF> "weblets" "service.wiki") are organized into
+//modules//. Modules structure the program. A module //export// variables,
+functions, and classes. A module might //import// another module. In
+that case, it may access to the imported variables, functions, and classes.
+
+~~ The syntactic structure of a module is as follows:
+
+  (module <ident> <clause>+ ...)
+
+  <expression>*
+
+
+A single file cannot contain more than one module. The syntax for the clauses
+is:
+
+  <clause> := <import>
+     | <library>
+     | <export>
+     | <static>
+
+  <import> := (import <ident>+)
+  <library> := (library <ident>+)
+
+  <export> := (export <class-or-binding>+)
+  <class-or-binding> := <variable>
+     | <function>
+     | <class>
+
+  <variable> := <ident>
+  <function> := (<ident>+)
+     | (generic <ident>+)
+
+  <class> := (class <ident> <class-field>)
+  <class-field> := <ident>
+     | (<ident> <class-attribute>+)
+  <class-attribute> := read-only
+     | (default <expression>)
+
+
+Here is an example of a module named ++foo++ that uses the library
+++hopwiki++, that imports the module named ++bar++, and that exports the 
+function ++fun-foo++, the variable ++var-foo++, and the class ++class-foo++.
+
+  (module foo
+     (library hopwiki)
+     (import bar)
+     (export (fun-foo x)
+             var-foo
+             (class class-foo
+                (name read-only)
+                (x (default 0))
+                (y (default 0)))))
+
+
+=== Classes and Objects === 
+
+The server side HOP object model is inspired by the
+[[http://en.wikipedia.org/wiki/Common_Lisp_Object_System|Common Lisp Object System]].  
+Contrary to languages such as SmallTalk or Java, in
+that model, //methods// are not attached to classes but to //generic
+functions//. This enables code to add new functionalities to
+pre-existing data structures (objects). The HOP declination uses
+single inheritance and single dispatch. That is, a class may inherit
+from exactly one class and only the first argument of method explored
+to resolve the late binding.
+
+~~ Server side classes are defined in the module declaration. A class may either
+be //exported// in which case all the weblet might create objects of class,
+declare subclasses, generic functions, and methods.
+
+~~ For the sake of the example, here is a simple source code that defines 
+two classes:
+
+  (module example
+     (static (class point x y))
+     (export (class point3d::point z))
+     (export (generic to-string ::object)))
+
+  (define-generic (to-string obj)
+     (with-output-to-string (lambda () (display obj))))
+
+  (define-method (to-string obj::point)
+     (with-access::point obj (x y)
+        (format "point:~a-~a" x y)))
+
+  (define-method (to-string obj::point3d)
+     (with-access::point3d obj (z)
+        (format "~a-~a" (call-next-method) z)))
+
+
+The form ++define-generic++ defines a new generic function. The form
+++define-method++ adds a method to a generic function. The generic function
+must be visible by the module declaring the method. The form ++with-access++
+opens an object up. Objects are creates with the ++instantiate++ form. Here
+is an expression creating an instance of the ++point3d++:
+
+  (instantiate::point3d
+     (z 10)
+     (x 0)
+     (y 5))
+
+
+Class fields that are provided with a default value are not required  by
+++instantiate++.
+
+== Client Side core language ==
 
 </doc>

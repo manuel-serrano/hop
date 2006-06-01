@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May  8 06:06:15 2006 (serrano)                */
+;*    Last change :  Mon May 29 10:49:36 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -82,7 +82,7 @@
 ;*    <TRHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-element <TRHEAD>)   
-(define-xml html-trbody <TRBODY>)
+(define-xml html-trbody #t <TRBODY>)
    
 ;*---------------------------------------------------------------------*/
 ;*    <TRLEAF> ...                                                     */

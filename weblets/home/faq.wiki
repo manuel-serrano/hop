@@ -1,12 +1,15 @@
 == What is HOP? ==
 
   - HOP is a programming language dedicated to Web programming.
-  - HOP is an execution platform embedded inside a Web server.
+  - HOP is an execution platform embedded inside a Web **broker** (i.e.,
+ a mid a Web server and a Web proxy).
 
 == What is HOP designed for? ==
 
   - HOP is specially tuned for programming interactive Web applications.
- It is **not** designed for programming n-tiers Web applications.
+ It is designed for programming applications such as MP3 player, agendas,
+ photograph galleries, etc. It is **not** designed for programming n-tiers Web 
+ applications.
 
 == What kind of facilities are brought by HOP? ==
 
@@ -25,3 +28,13 @@
  a large number of simultaneous connections. Typical it can handle up to
  a hundred simultaneous requests. No test have been conducted in more
  stressed environments.
+
+== Why are HOP markups surrounded with < and >? ==
+
+It is a strict matter of conventions. HOP naming conventions are:
+  - predicates name ends with a question mark (?).
+  - imperative functions (functions performing side effects) name end s
+ with an exclamation mark (!).
+  - markups name starts with an less-than sign (<) and ends with a 
+ greater-than sign (>).
+

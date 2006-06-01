@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed May 10 11:49:04 2006 (serrano)                */
+;*    Last change :  Wed May 31 07:06:47 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -34,13 +34,12 @@
 	    __hop_hop-tree
 	    __hop_hop-extra
 	    __hop_hop-foldlist
-	    __hop_hop-window
 	    __hop_event)
    
    (export  (the-current-request::obj)
 	    (hop::%http-response ::http-request)
 	    (hop-to-hop ::bstring ::int ::obj ::hop-service . ::obj)
-	    (with-url ::bstring ::procedure #!optional (fail raise))
+	    (with-url ::bstring ::procedure #!key (fail raise) (header '()))
 	    (with-remote-host ::bstring ::hop-service ::pair-nil ::procedure ::procedure)
 	    (generic with-hop-response obj proc fail)))
 
@@ -197,12 +196,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-url ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (with-url url success #!optional (fail raise))
+(define (with-url url success #!key (fail raise) (header '()))
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
 	     ": " url "\n")
    (with-trace 2 'with-url
       (trace-item "url=" url)
+      (trace-item "header=" header)
       (multiple-value-bind (_ userinfo host port path)
 	 (url-parse url)
 	 (let ((r (instantiate::http-request
@@ -210,6 +210,7 @@
 		       (userinfo userinfo)
 		       (host host)
 		       (port port)
+		       (header header)
 		       (path path))))
 	    (trace-item "remote path=" path)
 	    (http-send-request r (make-http-callback r success fail))))))

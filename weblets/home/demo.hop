@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Sat May 20 09:52:44 2006 (serrano)                */
+;*    Last change :  Mon May 29 11:05:32 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -35,7 +35,6 @@
       (<DIV>
 	 :class "toolbar"
 	 :align "center"
-	 :width "100%"
 	 :id "toolbar-demo"
 	 (<TIPS> 550 500)
 	 (<TABLE>
@@ -43,15 +42,15 @@
 	    (<TR>
 	       (<TD>
 		  :align "left"
-		  (<ZIMG> (make-service-url home/demos/minesweeper)
-			  "mines-32x32.png" "mines-48x48.png"
-			  320 320)))
-	    (<TR>
-	       (<TD>
-		  :align "left"
 		  (<ZIMG> (make-service-url home/demos/sudoku)
 			  "games1-32x32.png" "games1-48x48.png"
 			  500 420)))
+	    (<TR>
+	       (<TD>
+		  :align "left"
+		  (<ZIMG> (make-service-url home/demos/minesweeper)
+			  "mines-32x32.png" "mines-48x48.png"
+			  320 320)))
 ;* 	    (<TR>                                                      */
 ;* 	       (<TD>                                                   */
 ;* 		  :align "left"                                        */
@@ -102,13 +101,13 @@ this simple window manager). It shows how to programs application where
 simultaneously involved. It also illustrates some of the HOP libraries
 such as libraries for accessing and parsing ressources over the network. This
 playground contains the following demonstrations:])
+      (<H2> "Sudoku")
+      (<P> :class "descr" [This implements a ,(<EM> "Sudoku") game.
+ The programs show how client side and server side computations coexist])
       (<H2> "Minesweeper")
       (<P> :class "descr" [This demonstration implements a simple
  ,(<EM> "Minesweeper") game. It shows how to program client side applications
  in HOP.])
-      (<H2> "Sudoku")
-      (<P> :class "descr" [This implements a ,(<EM> "Sudoku") matrix generator.
- It programs show how client side and server side computations cohabite.])
       (<H2> "Rss")
       (<P> :class "descr" [This implements a ,(<EM> "RSS") reader. It
  illustrates the HOP widget for ,(<EM> "fold lists"). It shows how to use
@@ -145,6 +144,7 @@ be used to access the whole source code of this playground.])))
 	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
 	 (t (string-capitalize "Tips")))
       (<SCRIPT>
+	 :type "text/javascript"
 	 ~(let ((frame (document.createElement "iframe"))
 		(t (document.getElementById $id))
 		(p (document.getElementById "demo-playground")))
@@ -185,7 +185,9 @@ be used to access the whole source code of this playground.])))
 	 (t (string-capitalize (basename svc))))
       (<IMG> :id id
 	     :src p1
+	     :inline #t
 	     :title t
+	     :alt t
 	     :onmouseover ~(set! (document.getElementById $id).src $p2)
 	     :onmouseout ~(set! (document.getElementById $id).src $p1)
 	     :onclick ~(let ((frame (document.createElement "iframe"))

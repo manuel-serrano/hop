@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu May 18 17:30:53 2006 (serrano)                */
+/*    Last change :  Mon May 29 14:11:44 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -116,7 +116,7 @@ textarea {
 
 table.doc {
   width: 45em;
-  margin-top: 50px;
+  margin-top: 40px;
   padding: 10px;
   border: 1px solid $border-color;
   background-color: white;
@@ -576,6 +576,7 @@ doc toc li a {
 
 doc toc ul ul li a {
   font-weight: normal;
+  margin-left: 2px;
 }
   
 doc toc li a:hover {
@@ -632,9 +633,9 @@ api doc style h2 {
 
 /*--- editor ----------------------------------------------------------*/
 textarea.editor {
-  -moz-border-radius: 0.5em;
   border: 1px solid $border-color;
   padding: 10px;
+  -moz-border-radius: 0.5em;
 }
 
 /*--- search ----------------------------------------------------------*/
@@ -744,6 +745,40 @@ libraries div.libraries-title {
 }
 
 libraries table.api-index {
+}
+
+/*---------------------------------------------------------------------*/
+/*    core                                                             */
+/*---------------------------------------------------------------------*/
+$(hop-hss-type! "core" "div.core")
+
+core {
+  background: white;
+  padding: 2px;
+  border: 1px solid $border-color;
+}
+
+core div.doc-title th {
+  color: #ff5b1b;
+}
+
+core doc table {
+  font-size: x-small;
+  border: 1px solid $border-color;
+}
+
+core doc table th {
+  border-bottom: 1px solid $border-color;
+  background: $table-background;
+}
+
+core doc table td, core table th {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+core doc pre.example {
+  overflow: visible;
 }
 
 /*---------------------------------------------------------------------*/

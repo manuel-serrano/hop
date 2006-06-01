@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Tue May 16 11:04:08 2006 (serrano)                */
+;*    Last change :  Mon May 29 13:17:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -27,16 +27,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    doc/edit ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-service (doc/edit path)
+(define-service (doc/edit file)
    (let ((editor (<TEXTAREA>
 		    :class "editor"
 		    :rows 70 :cols 80
-		    (with-input-from-file path read-string))))
+		    (with-input-from-file file read-string))))
       (<DOC>
 	 (<BUTTON>
 	    :onclick ~(if (confirm "Save the document?")
 			  (with-hop ($(service (body)
-					 (with-output-to-file path
+					 (with-output-to-file file
 					    (lambda ()
 					       (display body))))
 				      $editor.value)))
@@ -68,7 +68,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    doc/example-file ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-service (doc/example-file path)
+(define-service (doc/example-file file)
    (if (authorized-service? (the-current-request) 'doc/example)
        (with-handler
 	  (lambda (e)
@@ -76,7 +76,7 @@
 	  (instantiate::http-response-hop
 	     (content-type "text/html")
 	     (bodyp #t)
-	     (xml (with-input-from-file (make-file-path (doc-dir) "examples" path)
+	     (xml (with-input-from-file (make-file-path (doc-dir) "examples" file)
 		     (lambda ()
 			(let loop ((v #f))
 			   (let ((e (hop-read)))

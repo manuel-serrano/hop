@@ -50,3 +50,9 @@ iframe.view {
   padding: 0;
   margin: 0;
 }
+
+span.click {
+  text-decoration: underline;
+  cursor: default;
+  font-size: small;
+}

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue May 23 05:23:51 2006 (serrano)                */
+;*    Last change :  Thu Jun  1 08:33:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -75,70 +75,88 @@
 ;*---------------------------------------------------------------------*/
 (define-service (home)
    (let ((req (the-current-request)))
-      (home-add-log! req) 
-      (<HOME>
-	 (<NOTEPAD>
-	    :id "home-notepad"
-	    (<NPHEAD> "")
-	    (<NPTAB> :id "Presentation"
-		     (<NPTABHEAD> "Main")
-		     (<DELAY>
-			(lambda ()
-			   (<DIV>
-			      :class "hop-tab"
-			      (wiki->hop "presentation.wiki")))))
-	    (<NPTAB> :id "demo"
-		     (<NPTABHEAD> "Demos")
-		     (<DIV>
-			:align "center"
-			(<DEMO> req)))
-	    (<NPTAB> :id "download"
-		     (<NPTABHEAD> "Download")
-		     (<DELAY>
-			(lambda ()
-			   (<DIV>
-			      :class "hop-tab"
-			      (wiki->hop "download.wiki")))))
-	    (<NPTAB> :id "weblets"
-		     (<NPTABHEAD> "Weblets")
-		     (<DELAY>
-			(lambda ()
-			   (<DIV>
-			      :class "hop-tab"
-			      (wiki->hop "weblets.wiki")))))
-	    (<NPTAB> :id "documentation"
-		     (<NPTABHEAD> "Docs")
-		     (<DELAY>
-			(lambda ()
-			   (<DIV>
-			      :class "hop-tab"
-			      (wiki->hop "docs.wiki")))))
-	    (<NPTAB> :id "faq"
-		     (<NPTABHEAD> "Faq")
-		     (<DELAY>
-			(lambda ()
-			   (<DIV>
-			      :class "hop-tab"
-			      (wiki->hop "faq.wiki")))))
-	    (<NPTAB> :id "Forum"
-		     (<NPTABHEAD> "Forum")
-		     (<DELAY>
-			(lambda ()
-			   (<DIV>
-			      :class "hop-tab"
-			      "Not implemented yet"))))
-	    (<NPTAB> :id "stats"
-		     (<NPTABHEAD> "Statistics")
-		     (<DELAY>
-			(lambda ()
-			   (<DIV>
-			      :class "hop-tab"
-			      [The HOP server running this home page is up since
-				   ,(<SPAN> :class "uptime" (hop-uptime)).
-				   ,(<P>)
-				   The HOP home page has been served
-				   ,(<SPAN> :class "uptime" (home-statistics))
-				   times.]))))))))
+      (home-add-log! req)
+      (home-main req)))
+
+;*---------------------------------------------------------------------*/
+;*    home-main ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (home-main req)
+   (<HOME>
+      (<NOTEPAD>
+	 :id "home-notepad"
+	 (<NPHEAD> "")
+	 (<NPTAB> :id "Presentation"
+		  (<NPTABHEAD> "Main")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "presentation.wiki")))))
+	 (<NPTAB> :id "demo"
+		  (<NPTABHEAD> "Demos")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :align "hop-tab"
+			   (<DEMO> req)))))
+	 (<NPTAB> :id "download"
+		  (<NPTABHEAD> "Download")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "download.wiki")))))
+	 (<NPTAB> :id "weblets"
+		  (<NPTABHEAD> "Weblets")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "weblets.wiki")))))
+	 (<NPTAB> :id "documentation"
+		  (<NPTABHEAD> "Docs")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "docs.wiki")))))
+	 (<NPTAB> :id "faq"
+		  (<NPTABHEAD> "Faq")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   (wiki->hop "faq.wiki")))))
+	 (<NPTAB> :id "Forum"
+		  (<NPTABHEAD> "Forum")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   "This is not implemented yet. Until it is
+implemented you can send comments and remarks to "
+			   (<SPAN>
+			      :style "text-decoration: underline"
+			      :onmouseover
+			      { title =
+			   (this.innerHTML.replace( " ", "." )
+						  + String.fromCharCode( 0x41 - 1 )
+						  + "Inria.fr") }
+			      "Manuel Serrano")
+			   "."))))
+	 (<NPTAB> :id "stats"
+		  (<NPTABHEAD> "Statistics")
+		  (<DELAY>
+		     (lambda ()
+			(<DIV>
+			   :class "hop-tab"
+			   [The HOP (v,(hop-version)) server running this home page is up since
+				,(<SPAN> :class "uptime" (hop-uptime)).
+				,(<P>)
+				The HOP home page has been served
+				,(<SPAN> :class "uptime" (home-statistics))
+				times.])))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/install ...                                                 */
@@ -148,25 +166,50 @@
       (<HEAD> :css (make-file-name (home-dir) "home.hss"))
       (<BODY> :style "background: white; font-size: small"
 	      (wiki->hop "install.wiki"))))
-	  
+
+;*---------------------------------------------------------------------*/
+;*    home/submit-hz ...                                               */
+;*---------------------------------------------------------------------*/
+(define-service (home/submit-hz file)
+   (let ((path (cgi-post-arg-field :file file)))
+      (home-main (the-current-request))))
+
 ;*---------------------------------------------------------------------*/
 ;*    downloads ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define *devel-tar-gz*
-   (string-append (home-hop-devel-version) ".tar.gz"))
+   (if (string? (home-hop-devel-version))
+       (string-append "hop-" (home-hop-devel-version) ".tar.gz")
+       "not available"))
+
 (define *devel-zip*
-   (string-append (home-hop-devel-version) ".zip"))
+   (if (string? (home-hop-devel-version))
+       (string-append "hop-" (home-hop-devel-version) ".zip")
+       "not available"))
+
 (define *devel-tar-url*
-   (make-file-name (home-ftp-hop-url) *devel-tar-gz*))
+   (if (string? *devel-tar-gz*)
+       (make-file-name (home-ftp-hop-url) *devel-tar-gz*)
+       "not available"))
+
 (define *devel-zip-url*
-   (make-file-name (home-ftp-hop-url) *devel-tar-gz*))
+   (if (string? *devel-tar-gz*)
+       (make-file-name (home-ftp-hop-url) *devel-tar-gz*)
+       "not available"))
    
 (define *stable-tar-gz*
-   "not avaiable")
+   (if (string? (home-hop-stable-version))
+       (string-append "hop-" (home-hop-stable-version) ".tar.gz")
+       "not available"))
+
 (define *stable-zip*
    "not available")
+
 (define *stable-tar-url*
-   "/dev/null")
+   (if (string? *stable-tar-gz*)
+       (make-file-name(home-ftp-hop-url) *stable-tar-gz*)
+       "not available"))
+
 (define *stable-zip-url*
    "/dev/null")
    

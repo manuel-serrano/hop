@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Sat May  6 08:25:51 2006 (serrano)                */
+;*    Last change :  Mon May 29 10:51:01 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -45,6 +45,7 @@
    
    (export (class xml-document::xml-markup
 	      (%make-xml-document)
+	      (id read-only)
 	      (%idtable read-only (default (make-hashtable))))))
 
 ;*---------------------------------------------------------------------*/
@@ -55,7 +56,8 @@
       (let loop ((body body))
 	 (for-each (lambda (obj)
 		      (when (xml-markup? obj)
-			 (hashtable-put! %idtable (xml-markup-id obj) obj)
+			 (when (xml-element? obj)
+			    (hashtable-put! %idtable (xml-element-id obj) obj))
 			 (loop (xml-markup-body obj))))
 		   body))
       doc))
@@ -88,14 +90,6 @@
    (with-access::xml-if obj (then otherwise)
       (or (dom-get-element-by-id* then id)
 	  (dom-get-element-by-id* otherwise id))))
-
-;*---------------------------------------------------------------------*/
-;*    dom-get-element-by-id ::xml-ghost ...                            */
-;*---------------------------------------------------------------------*/
-(define-method (dom-get-element-by-id obj::xml-ghost id)
-   (if (eq? id (xml-ghost-id obj))
-       obj
-       (dom-get-element-by-id* (xml-ghost-body obj) id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-element-by-id ::xml-delay ...                            */
@@ -256,7 +250,7 @@
       (let ((doc (dom-owner-document node)))
 	 (when (xml-document? doc)
 	    (with-access::xml-document doc (%idtable)
-	       (let ((id (xml-markup-id new)))
+	       (let ((id (xml-element-id new)))
 		  (hashtable-remove! %idtable id)
 		  (hashtable-put! %idtable id new)))))
       (set! body (cons new (remq! new body)))))
@@ -289,12 +283,6 @@
 	  (test (dom-clone-node (xml-if-test xml-if) deep))
 	  (then (dom-clone-node (xml-if-then xml-if) deep))
 	  (otherwise (dom-clone-node (xml-if-otherwise xml-if) deep)))))
-
-;*---------------------------------------------------------------------*/
-;*    dom-clone-node ::xml-ghost ...                                   */
-;*---------------------------------------------------------------------*/
-(define-method (dom-clone-node node::xml-ghost deep::bool)
-   (duplicate::xml-ghost node))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-clone-node ::xml-delay ...                                   */
@@ -351,10 +339,10 @@
 (define (dom-insert-before! node new ref)
    (and (xml-element? node)
 	(with-access::xml-element node (parent)
-	   (and (xml-markup? parent)
+	   (and (xml-element? parent)
 		(with-access::xml-markup parent (body)
 		   (let ((doc (dom-owner-document node))
-			 (id (xml-markup-id new)))
+			 (id (xml-element-id new)))
 		      (when (xml-document? doc)
 			 (with-access::xml-document doc (%idtable)
 			    (hashtable-remove! %idtable id)
@@ -409,7 +397,7 @@
       (let ((doc (dom-owner-document node)))
 	 (when (xml-document? doc)
 	    (with-access::xml-document doc (%idtable)
-	       (hashtable-remove! %idtable (xml-markup-id old)))))
+	       (hashtable-remove! %idtable (xml-element-id old)))))
       (with-access::xml-markup node (body)
 	 (set! body (remq! old body))
 	 old)))
@@ -420,7 +408,7 @@
 (define (dom-replace-child! node new old)
    (and (xml-element? node)
 	(with-access::xml-element node (parent)
-	   (and (xml-markup? parent)
+	   (and (xml-element? parent)
 		(with-access::xml-markup parent (body)
 		   (let loop ((body (remq! new body)))
 		      (cond
@@ -428,7 +416,7 @@
 			  (error 'dom-replace-child "old not a child" node))
 			 ((eq? (car body) old)
 			  (let ((doc (dom-owner-document node))
-				(id (xml-markup-id new)))
+				(id (xml-element-id new)))
 			     (when (xml-document? doc)
 				(with-access::xml-document doc (%idtable)
 				   (hashtable-remove! %idtable id)

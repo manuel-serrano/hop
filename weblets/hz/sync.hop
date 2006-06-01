@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Mon May 22 16:04:12 2006 (serrano)                */
+;*    Last change :  Tue May 30 17:07:03 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -22,6 +22,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/getsync ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    This is used by the remote HOP when it has to serve because      */
+;*    it is requested a sync.                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/getsync)
    (let* ((path (hz-db-path 'repository))
@@ -82,6 +85,7 @@
 		 (ni (list-index cols "name"))
 		 (ci (list-index cols "category"))
 		 (vi (list-index cols "version"))
+		 (hi (list-index cols "hop"))
 		 (names (map car (hz-db-columns)))
 		 (indexes (map (lambda (n)
 				  (list-index cols (symbol->string n)))
@@ -96,9 +100,11 @@
 		      (o (hz-db-get-entry-by-name-category
 			  db
 			  (vector-ref v ni) (vector-ref v ci))))
+		   (list-set! vals hi host)
 		   (if (dbhz? o)
-		       (with-access::dbhz o (version install)
+		       (with-access::dbhz o (version install hop)
 			  (when (string>? (vector-ref v vi) version)
+			     (set! hop host)
 			     (list-set! vals
 					(hz-db-install-column-index)
 					install)
@@ -206,13 +212,15 @@
 		      (unless (string=? version v)
 			 (set! version v)
 			 (hz-db-update-weblet db o)))
-		   (hz-db-add-entry
-		    db (hz-db-sync-stamp db)
-		    name a cat ""
-		    v "" ""
-		    sd de
-		    (number->string (date->seconds (current-date)))
-		    "unmanaged" v))))))
+		   (apply hz-db-add-entry
+			  db
+			  (hz-info->dbhz-args
+			   i
+			   cat
+			   (number->string (date->seconds (current-date)))
+			   (hz-db-sync-stamp db)
+			   v
+			   "unmanaged")))))))
    
    (define (sync-dir name)
       (let ((dir (make-file-name (hop-weblets-directory) name)))

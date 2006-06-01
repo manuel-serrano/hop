@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Tue May 23 05:22:24 2006 (serrano)                */
+;*    Last change :  Wed May 24 15:16:10 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -49,7 +49,7 @@
 	    (<NPTAB> :id "doc-core"
 		     (<NPTABHEAD> "Core language")
 		     (<DIV>
-			:class "wiki"
+			:class "core"
 			(doc-page
 			 (make-file-name (doc-core-dir) "core.wiki")
 			 (make-wiki-request-syntax (doc-wiki-syntax)

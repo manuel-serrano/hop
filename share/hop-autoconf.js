@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue May 23 10:12:23 2006 (serrano)                */
+/*    Last change :  Mon May 29 14:39:25 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -49,7 +49,6 @@ if( window.HTMLElement == undefined ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    hop_make_xml_http_request ...                                    */
 /*---------------------------------------------------------------------*/
 var hop_make_xml_http_request;
@@ -77,6 +76,25 @@ if( window.XMLHttpRequest != undefined ) {
 	    alert( "*** ERROR: Don't know how to create XMLHttpRequest" );
 	 }
       }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_is_http_json ...                                             */
+/*---------------------------------------------------------------------*/
+var hop_is_http_json;
+var hop_is_http_json_autoconf = hop_make_xml_http_request();
+
+if( (hop_is_http_json_autoconf.propertyIsEnumerable != undefined)
+    && hop_is_http_json_autoconf.propertyIsEnumerable( "getResponseHeader" )
+    && hop_is_http_json_autoconf.getResponseHeader != undefined ) {
+   hop_is_http_json = function hop_is_http_json( http ) {
+      return http.getResponseHeader( "hop-json" );
+   }
+} else {
+   hop_is_http_json = function hop_is_http_json( http ) {
+      return (http.getAllResponseHeaders().indexOf( "hop-json" ) >= 0);
    }
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Mon May 22 14:59:48 2006 (serrano)                */
+;*    Last change :  Tue May 30 16:57:55 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -20,7 +20,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    create ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/create db name author category hop version minhop maxhop sdescr descr)
+(define-service (hz/create db name author category hop version minhop maxhop sdescr descr home)
    (let ((db (hz-get-repository-db)))
       (hz-db-sync-date-update! db (current-date))
       (hz-db-add-entry db (hz-db-sync-stamp db)
@@ -29,12 +29,13 @@
 		       sdescr descr
 		       (number->string (date->seconds (current-date)))
 		       "hz"
-		       #f)))
+		       #f
+		       home)))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    update ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/update name author category hop version minhop maxhop sdescr descr)
+(define-service (hz/update name author category hop version minhop maxhop sdescr descr home)
    (let* ((db (hz-get-repository-db))
 	  (e (hz-db-get-entry-by-name-category db name category)))
       (hz-db-sync-date-update! db (current-date))
@@ -44,7 +45,8 @@
 			  sdescr descr
 			  (number->string (date->seconds (current-date)))
 			  "hz"
-			  (and (dbhz? e) (dbhz-install e)))))
+			  (and (dbhz? e) (dbhz-install e))
+			  home)))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove ...                                                       */
@@ -96,26 +98,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz->dbhz ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hz->dbhz path category name)
+(define (hz->dbhz path category name stamp)
    (let ((info (hz->info path name)))
       (when (pair? info)
-	 (bind-exit (exit)
-	    (define (find val lst)
-	       (cond
-		  ((assq val lst) => cadr)
-		  (else #f)))
-	    (list (or (find 'name info) (exit #f))
-		  (or (find 'author info) (exit #f))
-		  category
-		  (or (find 'hop info) (hz-master-hop))
-		  (or (find 'version info) (exit #f))
-		  (or (find 'minhop info) "")
-		  (or (find 'maxhop info) "")
-		  (or (find 'sdescr info) (exit #f))
-		  (or (find 'descr info) "")
-		  (number->string (file-modification-time path))
-		  "hz"
-		  "")))))
+	 (hz-info->dbhz-args info
+			     category
+			     (number->string (file-modification-time path))
+			     stamp
+			     ""
+			     "hz"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    build-repository-file ...                                        */
@@ -130,20 +121,20 @@
 		   (stamp (hz-db-sync-stamp db)))
 		(cond
 		   ((not old)
-		    (let ((n (hz->dbhz path dir name)))
+		    (let ((n (hz->dbhz path dir name stamp)))
 		       (if (pair? n)
 			   (begin
-			      (apply hz-db-add-entry db (cons stamp n))
+			      (apply hz-db-add-entry db n)
 			      (list view "" ""))
 			   (list "" "" view))))
 		   ((=second (date->seconds (dbhz-date old))
 			     (file-modification-time path))
 		    'ok)
 		   (else
-		    (let ((n (hz->dbhz path dir name)))
+		    (let ((n (hz->dbhz path dir name stamp)))
 		       (if (pair? n)
 			   (begin
-			      (apply hz-db-update-entry db (cons stamp n))
+			      (apply hz-db-update-entry db n)
 			      (list "" view ""))
 			   (list "" "" view))))))
 	     (list "" "" view)))))
@@ -203,6 +194,7 @@
 	    (category (<INPUT> :type 'text :size 20))
 	    (hop (<INPUT> :type 'text :size "100%"))
 	    (version (<INPUT> :type 'text :size 10))
+	    (home (<INPUT> :type 'text :size 50))
 	    (minhop (<INPUT> :type 'text :size 10))
 	    (maxhop (<INPUT> :type 'text :size 10))
 	    (sdescr (<INPUT> :type 'text :size 50))
@@ -214,6 +206,7 @@
 			     (set! $category.value "")
 			     (set! $hop.value "")
 			     (set! $version.value "")
+			     (set! $home.value "")
 			     (set! $minhop.value "")
 			     (set! $maxhop.value "")
 			     (set! $sdescr.value "")
@@ -251,7 +244,7 @@
 						(document.getElementById "name")
 						$author $category $hop
 						$version $minhop $maxhop
-						$sdescr $descr)
+						$sdescr $descr $home)
 					(lambda (h) (reset!)))
 				    "create"))
 			 (update (<BUTTON>
@@ -262,7 +255,7 @@
 						(document.getElementById "name")
 						$author $category $hop
 						$version $minhop $maxhop
-						$sdescr $descr))
+						$sdescr $descr $home))
 				    "update"))
 			 (remove (<BUTTON>
 				    :title "Remove a new Weblet entry"
@@ -305,7 +298,9 @@
 						     (if (or (= k 13) (= $sdescr.value.length 0))
 							 (set! $sdescr.value old.sdescr))
 						     (if (or (= k 13) (= $descr.value.length 0))
-							 (set! $descr.value old.descr)))
+							 (set! $descr.value old.descr))
+						     (if (or (= k 13) (= $home.value.length 0))
+							 (set! $home.value old.home)))
 						  (begin
 						     (set! e.style.color "blue")
 						     (set! $remove.disabled #t)
@@ -319,6 +314,7 @@
 			   (<TABLE>
 			      :class "weblets"
 			      (<TR> (<TH> "weblet: ") (<TD> weblet))
+			      (<TR> (<TH> "home: ") (<TD> home))
 			      (<TR> (<TH> "author: ") (<TD> author))
 			      (<TR> (<TH> "category: ") (<TD> category))
 			      (<TR> (<TH> "hop: ") (<TD> hop))

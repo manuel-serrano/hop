@@ -16,15 +16,19 @@
 		       body)))))
    (if (http-response-hop? resp)
        (with-access::http-response-hop resp (xml)
-	  (let ((head (find-in-tree xml 'head))
-		(jshead (<HEAD> :dir (hop-share-directory)
-				:jscript "runtime.js"
-				:jscript "hop-dom.js"
-				:jscript "runtime-interface.js")))
+	  (let ((head (find-in-tree xml 'head)))
 	     (if head
-		 (with-access::xml-markup head (body)
-		    (set! body (append (xml-markup-body jshead) body)))
-		 (let ((html (find-in-tree xml 'html)))
+		 (multiple-value-bind (dir hbody)
+		    (head-parse '(:jscript "runtime.js"
+			          :jscript "hop-dom.js"
+				  :jscript "runtime-interface.js"))
+		    (with-access::xml-markup head (body)
+		       (set! body (append body hbody))))
+		 (let ((html (find-in-tree xml 'html))
+		       (jshead (<HEAD> :dir (hop-share-directory)
+				       :jscript "runtime.js"
+				       :jscript "hop-dom.js"
+				       :jscript "runtime-interface.js")))
 		    (when html
 		       (with-access::xml-markup html (body)
 			  (set! body (cons jshead body)))))))))

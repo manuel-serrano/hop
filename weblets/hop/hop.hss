@@ -43,7 +43,7 @@ img.logo {
   background: transparent;
 }
 
-td.logo {
+img.logo {
   padding: 20px;
 }
 
@@ -83,7 +83,7 @@ td.logo {
   
 td.logo:hover {
   border: 1px outset #777;
-  background-color: #e7e7e7;
+  background-color: #f7f7f7;
 }
 
 td.legend span {

@@ -1,0 +1,25 @@
+;; //Parameters// and //Preferences//
+(define-parameter load-dir
+   (dirname (the-loading-file)))
+
+(define-parameter rc-dir
+   "/tmp"
+   (lambda (v)
+      (set! rc-file-path (make-file-name (rc-dir) v))
+      v))
+
+(define-parameter rc-file
+   "foo.rc"
+   (lambda (v)
+      (set! rc-file-path (make-file-name (rc-dir) v))
+      v))
+
+(define rc-file-path
+   (make-file-name (rc-dir) (rc-file)))
+
+(define-preferences preferences
+   "Path"
+   ("Load dir" load-dir)
+   ("RC dir" string rc-dir)
+   ("RC file" string rc-file))
+

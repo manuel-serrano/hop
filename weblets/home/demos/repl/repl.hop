@@ -49,8 +49,8 @@
 ;;   (define el (array-ref els 0))
 ;;   (el.style.setProperty \"color\" \"red\" \"\")
 ;; you can also try:
-;;   (dom-append-child! document.body (<TABLE> :border 1 (<TR> (<TD> 'foo))))
-;;   (iwindow-open 'home '/hop/home 'home)
+;;   (dom-append-child! document.body (<TABLE> :border 1 (<TR> (<TD> \"foo\"))))
+;;   (iwindow-open 'home \"/hop/home\" \"home\")
 :=> ")))))
 
 (define-service (home/demos/repl/compile s)

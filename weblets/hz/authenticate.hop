@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 11:31:17 2006                          */
-;*    Last change :  Wed May 10 06:50:42 2006 (serrano)                */
+;*    Last change :  Tue May 30 07:51:57 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ authentication                                                */
@@ -111,10 +111,10 @@
 				 :name "password" :size 30))
 			(local (<INPUT>
 				  :type "radio" :id "local" :name "mode"
-				  :value "local" :checked #t "local"))
+				  :value "local" :checked #t))
 			(share (<INPUT>
 				  :type "radio" :id "share" :name "mode"
-				  :value "share" "share")))
+				  :value "share")))
 		     (<DIV>
 			:class "authentication"
 			(<TABLE>
@@ -129,7 +129,7 @@
 			      (<TD> :colspan 3 "&nbsp;"))
 			   (<TR>
 			      (<TH> "Mode:")
-			      (<TD> :class "mode" local share)
+			      (<TD> :class "mode" "local " local " share "share)
 			      (<TD> :class "login"
 				    (<BUTTON>
 				       :title "Login with identify and mode"

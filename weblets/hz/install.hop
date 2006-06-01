@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Fri May  5 21:23:15 2006 (serrano)                */
+;*    Last change :  Tue May 30 17:25:41 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -18,12 +18,14 @@
 	   hz_db)
    
    (export (hz-install ::dbhz)
-	   (hz-uninstall ::dbhz)))
+	   (hz-uninstall ::dbhz)
+	   (hz-install-ondemand db req ::bstring ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/get ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/get hz)
+   (tprint "hz/get: hz=" hz " rep="  (hz-repository))
    (instantiate::http-response-file
       (file (make-file-name (hz-repository) hz))))
 
@@ -41,6 +43,7 @@
 			(host host)
 			(port port)
 			(path (make-hop-service-url hz/get hzpath)))))
+	    (tprint "path=" (http-request-path req))
 	    (http-send-request
 	     req
 	     (lambda (status clength p)
@@ -125,3 +128,54 @@
 	     (for-each (lambda (f) (rm-rf (make-file-name path f))) files)
 	     (delete-directory path))
 	  (delete-file path))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-install-ondemand ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hz-install-ondemand db req name url)
+   (with-url url
+      (lambda (h)
+	 (let ((p (open-input-string h))
+	       (base (make-file-name (hop-rc-directory) "weblets")))
+	    (unwind-protect
+	       (hz-untar -1 p base)
+	       (close-input-port p))
+	    (let* ((hzdir (make-file-name base name))
+		   (info (make-file-path hzdir
+					 "etc"
+					 (string-append name ".info"))))
+	       (if (not (file-exists? info))
+		   (begin
+		      (rm-rf hzdir)
+		      (error 'hz/install-ondemand
+			     "Can't find info file"
+			     info))
+		   (let* ((i (with-input-from-file info read))
+			  (v (cond
+				((assq 'version i) => cadr)
+				(else (error
+				       'hz/install-ondemand
+				       "Illegal info file, missing version"
+				       i))))
+			  (c (cond
+				((assq 'category i) => cadr)
+				(else (error
+				       'hz/install-ondemand
+				       "Illegal info file, missing category"
+				       i))))
+			  (n (hz-info->dbhz-args i
+						 #f
+						 (number->string
+						  (date->seconds
+						   (current-date)))
+						 (hz-db-sync-stamp db)
+						 v
+						 url)))
+		      (let ((o (hz-db-get-entry-by-name-driver db name url)))
+			 (when (dbhz? o)
+			    (hz-db-remove-weblet db o)))
+		      (apply hz-db-add-entry db n)
+		      (hz-db-close db)
+		      #t)))))
+      :header (if (http-request? req) (http-request-header req) '())
+      :fail (lambda (h) h)))

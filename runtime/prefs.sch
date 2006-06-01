@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Mon May 22 12:39:01 2006 (serrano)                */
+;*    Last change :  Tue May 30 08:07:51 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
@@ -49,7 +49,8 @@
       `(define (,id file)
 	  (with-output-to-file file
 	     (lambda ()
-		,@(map make-save-clause clauses)))))
+		,@(map make-save-clause clauses)))
+	  file))
 
    (define (make-value-clause lbl value)
       `(<TR>

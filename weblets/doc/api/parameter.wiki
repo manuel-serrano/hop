@@ -1,0 +1,94 @@
+<doc> Parameters and Preferences
+
+== Description ==
+
+This page describes the form ++define-parameter++ and ++define-preferences++.
+These are used for user server-side customizations and configurations.
+
+== Synopsis ==
+
+=== Server ===
+
+  (define-parameter name obj [proc])
+  (define-preferences name ...)
+
+== Examples ==
+<example>define-parameter</example>
+
+== Server Definitions ==
+<server>
+
+=== ++(define-parameter name obj [proc])++ ===
+<function> define-parameter
+
+<arguments>
+^  arguments       ^   type       ^  short description                   ^
+| name             |  symbol      | the name of the parameter.           |
+| obj              |  obj         | the initial value of the parameter.  |
+| proc             |  procedure   | an optional setter.                  |
+</arguments>
+
+This special form defines a //parameter//. A parameter is a global data
+structure accessed by two functions: a //getter// and a //setter// which are
+named after ++name++.
+
+  * The getter is named ++name++. It is a function of no argument.
+  * The setter is named ++name-//set!//++. It is a function of one argument,
+ the new value of the parameter. When the optional setter ++proc++ is 
+provided, the new value of the parameter is the result of the application
+of ++proc++ to the argument.
+
+</function>
+
+=== ++(define-preferences name clause<sub>0</sub>...)++ ===
+<function> define-preferences
+
+<arguments>
+^  arguments          ^   type       ^  short description                   ^
+| name                |  symbol      | the name of the preferences.         |
+| clause<sub>0</sub>  |  clause      | a preference clause.                 |
+| ...                 |  ...         | ...                                  |
+</arguments>
+
+The clauses are used to save, load, and edit the preferences. The meaning
+of the clauses is defined by:
+
+  * ,(<TT> "--"): a separator in the preferences editor.
+  * A string: a plain label in the preferences editor. Nothing is saved nor 
+ loaded.
+  * ++(//string// //value//): this denotes a labeled non editable value. 
+ Nothing is saved nor loaded.
+  * ++(//string// //type// //symbol//)++. This denotes the customization of
+ a parameter.
+  * ++(//string// //type// //getter// //setter//)++. This denotes the
+ customization of a user value. The argument ++//getter//++ is a function
+ of no parameter. It fetches the value to be saved. The argument ++//setter//++
+ is a function of one parameter. It installed in-memory a value.
+
+
+The ++//type//++ of the last two clauses can be one of:
+
+  * ++integer++: a numeral value.
+  * ++string++: a string of characters.
+  * ++expr++: any HOP value.
+  * ++bool++: a //yes-no// value.
+  * ++(bool //yes-label// //no-label//)++: a //yes-no// value with user 
+ specified //yes// and //no// labels.
+
+
+This special form defines three functions named after ++name++.
+
+  * ++name//-load//++: this is a function of one argument, a file name. It
+ loads previously saved preferences.
+  * ++name//-save//++: this is a function of one argument, a file name. It 
+ saves preferences in a file.
+  * ++name//-edit//++: this is a function of no argument. It produces a
+ graphical user interface for letting users configuring arguments.
+</function>
+
+</server>
+
+== See also ==
+<see-also>define-parameter, define-preferences</see-also>
+
+</doc>

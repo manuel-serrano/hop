@@ -1,0 +1,72 @@
+<doc> Exceptions
+
+== Description ==
+
+This page description the HOP machinery for raising and catching exceptions.
+The constructions are available on the server //and// the client.
+
+== Synopsis ==
+
+=== Server & Client ===
+
+  (raise exception)
+  (error proc msg obj)
+  (with-handler handler body)
+
+== Examples ==
+<example>with-handler, raise</example>
+
+== Definitions ==
+<server>
+<client>
+
+=== ++(raise exception)++ ===
+<function> raise
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| exception        |  obj         | the exception.                  |
+</arguments>
+
+This function //raises// an exception. That is, it escapes from the
+current computation. If the raise call is executed in the dynamic extent
+of a ++with-handler++ form, it executes the handler, otherwise, it
+terminates the current thread.
+</function>
+
+=== ++(error proc msg obj)++ ===
+<function> error
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| proc             |  obj         | a name.                         |
+| msg              |  obj         | a message.                      |
+| obj              |  obj         | a value.                        |
+</arguments>
+
+This procedure ++raise++s a freshly allocated exception denoting the error.
+</function>
+
+=== ++(with-handler handler body)++ ===
+<function> with-handler
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| handler          |  procedure   | the exception handler.          |
+| body             |              | the protected body.             |
+</arguments>
+
+The form ++with-handler++ evaluates its ++body++. If an exception is
+++raise++d, the computation is suspended and the ++handler++ is executed in 
+the continuation of the ++with-handler++ form. I.e., if the ++handler++
+is executed, the value is produces is the value of the whole 
+++with-handler++ form.
+
+~~ The handler is a procedure of one argument. When the handler
+is invoked, it argument is bound to the ++raise++d exception.
+</function>
+
+</client>
+</server>
+
+</doc>

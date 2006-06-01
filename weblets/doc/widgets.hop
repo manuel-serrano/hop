@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Sat May 20 10:03:23 2006 (serrano)                */
+;*    Last change :  Wed May 31 06:37:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -37,15 +37,18 @@
 	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
 	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
 	      :jscript "hop-fx.js"
-	      :css (format "~a/doc.hss" (doc-dir)))
+	      :css (format "~a/doc.hss" (doc-dir))
+	      (<TITLE> "Hop documentation center (APIs & libraries)"))
       (<BODY>
-	 (<CENTER>
+	 (<DIV>
+	    :align "center"
 	    (<TABLE>
 	       :class "doc"
 	       (<TR>
 		  (<TD>
 		     :valign "top"
 		     (<IMG> :class "logo"
+			    :alt "Hop Doc logo"
 			    :src (format "~a/etc/logo.png" (doc-dir))))
 		  (<TD>
 		     :valign "top"
@@ -56,7 +59,24 @@
 				     "Hop Documentation Center")))
 			(<TR>
 			   (<TD>
-			      obj))))))))))
+			      obj)))))))
+	 (<FOOT>
+	    (<FOOT-BUTTON>
+	       :href "http://www.gnu.org/licenses/gpl.html"
+	       :title "Gnu GPL"
+	       :src "gpl.png")
+	    (<FOOT-BUTTON>
+	       :href "http://www.inria.fr/mimosa"
+	       :title "INRIA"
+	       :src "inria.png")
+	    (<FOOT-BUTTON>
+	       :href "http://validator.w3.org/check/referer"
+	       :title "Valid CSS"
+	       :src "html401.png")
+	    (<FOOT-BUTTON>
+	       :href "http://jigsaw.w3.org/css-validator/check/referer"
+	       :title "Valid CSS"
+	       :src "css.png")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <POPUP> ...                                                      */
@@ -101,7 +121,7 @@
 		     (<TD>
 			:width "0*"
 			:class "search-menu-label"
-			:valign "center"
+			:valign "middle"
 			lbl ": ")
 		     (<TD>
 			:valign "bottom"
@@ -142,7 +162,7 @@
 	 popup
 	 (<TABLE>
 	    :class "develop-menu"
-	    (<COLGROUP> :colspan 3 :width (format "~a%" width))
+	    (<COLGROUP> :span 3 :width (format "~a%" width))
 	    (<TR>
 	       (map (lambda (el)
 		       (<TD>
