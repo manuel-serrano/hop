@@ -21,6 +21,7 @@ The rest of this document details each of these steps.
  changed once the installation process is initiated). Alternatively,
  instead of setting these `configure' variables, you may use the
  ++--prefix++ option.
+
   - Configure HOP for your machine by invoking:
     ./configure
 
@@ -72,14 +73,24 @@ Within a CSS2/DOM2/EcmaScript (aka Javacript) compliant web browser
 If the test succeeds, you should be presented with several icons. Clicking
 each of them spawns a HOP weblet.
 
-== 8. Uninstalling HOP ==
+== 8. Using HOP as a Web proxy ==
+
+HOP can be used as a Web proxy. Once you have configured your browser to
+use it as a proxy, you will be to access HOP weblet using URLs such as:
+
+    http://hop/hop
+    http://hop/hop/doc
+    ...
+
+
+== 9. Uninstalling HOP ==
 
 With the super user privilege, execute the command:
 
     make install
 
 
-== 9. Unconfiguring and Cleaning HOP ==
+== 10. Unconfiguring and Cleaning HOP ==
 
 Issue the command:
 

@@ -30,7 +30,8 @@ Let's assume that ++hop++ is running and that it waits connections
 to be established on the port ++8080++. The actual URL ,(<TT>
 "http://localhost:8080/hop/hello") refers to our previously defined
 service. Since HOP predefines the alias //hop// for ++localhost:8080++
-hence, the URL ,(<TT> "http://hop/hop/hello") also refers to our
+hence, provided you have configured your browser for using HOP has
+your web proxy, the URL ,(<TT> "http://hop/hop/hello") also refers to our
 service.
 
 ~~ Once, you have evaluated the code above once, the service ++hello++

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed May 31 17:52:31 2006 (serrano)                */
+;*    Last change :  Thu Jun  1 08:33:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -151,7 +151,7 @@ implemented you can send comments and remarks to "
 		     (lambda ()
 			(<DIV>
 			   :class "hop-tab"
-			   [The HOP server running this home page is up since
+			   [The HOP (v,(hop-version)) server running this home page is up since
 				,(<SPAN> :class "uptime" (hop-uptime)).
 				,(<P>)
 				The HOP home page has been served

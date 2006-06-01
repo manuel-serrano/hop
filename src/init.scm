@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon May 22 12:08:09 2006 (serrano)                */
+;*    Last change :  Thu Jun  1 08:25:57 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -29,6 +29,11 @@
 	  (set! port (hop-port))))))
 
 ;*---------------------------------------------------------------------*/
+;*    *hss-mutex* ...                                                  */
+;*---------------------------------------------------------------------*/
+(define *hss-mutex* (make-mutex 'hss))
+
+;*---------------------------------------------------------------------*/
 ;*    hss-cache ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define hss-cache
@@ -44,24 +49,26 @@
 ;*---------------------------------------------------------------------*/
 (define (hss-response req)
    (with-access::http-request req (path method header)
-      (let ((cache (cache-get hss-cache path))
-	    (mime (mime-type path "text/css")))
-	 (if (string? cache)
-	     (instantiate::http-response-file
-		(content-type mime)
-		(bodyp (eq? method 'GET))
-		(file cache))
-	     (let* ((hss (hop-load-hss path))
-		    (cache (cache-put! hss-cache path hss)))
-		(if (string? cache)
-		    (instantiate::http-response-file
-		       (content-type mime)
-		       (bodyp (eq? method 'GET))
-		       (file cache))
-		    (instantiate::http-response-hop
-		       (content-type mime)
-		       (bodyp (eq? method 'GET))
-		       (xml hss))))))))
+      (with-lock *hss-mutex*
+	 (lambda ()
+	    (let ((cache (cache-get hss-cache path))
+		  (mime (mime-type path "text/css")))
+	       (if (string? cache)
+		   (instantiate::http-response-file
+		      (content-type mime)
+		      (bodyp (eq? method 'GET))
+		      (file cache))
+		   (let* ((hss (hop-load-hss path))
+			  (cache (cache-put! hss-cache path hss)))
+		      (if (string? cache)
+			  (instantiate::http-response-file
+			     (content-type mime)
+			     (bodyp (eq? method 'GET))
+			     (file cache))
+			  (instantiate::http-response-hop
+			     (content-type mime)
+			     (bodyp (eq? method 'GET))
+			     (xml hss))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-filter ...                                                   */
