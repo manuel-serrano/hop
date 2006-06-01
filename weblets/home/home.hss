@@ -261,7 +261,7 @@ div.hop-tab {
   background: white;
   background-repeat: no-repeat;
   background-position: 50% 50px;
-  background-image: url( "icons/logo-bg-128x128.png" );
+  background-image: url( "etc/icons/logo-bg-128x128.png" );
   min-width: 200px;
   min-height: 200px;
   margin: 5px;
