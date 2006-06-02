@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 24 08:05:32 2006 (serrano)                */
+;*    Last change :  Fri Jun  2 10:14:03 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -70,14 +70,14 @@
       (let ((s (make-server-socket (hop-port)))
 	    (ap (make-threads-pool 'accpt (hop-max-accept-thread) -1))
 	    (rp (make-threads-pool 'reply (hop-max-reply-thread) -1)))
-	 (let loop ()
+	 (let loop ((n 1))
 	    (with-handler
 	       (lambda (e)
 		  (exception-notify e))
-	       (let liip ((n 1))
+	       (let liip ((n n))
 		  (handle-connection ap rp s n)
 		  (liip (+fx n 1))))
-	    (loop)))))
+	    (loop n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */

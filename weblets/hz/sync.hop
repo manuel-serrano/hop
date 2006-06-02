@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Tue May 30 17:07:03 2006 (serrano)                */
+;*    Last change :  Fri Jun  2 14:44:41 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -117,6 +117,7 @@
 ;*    <SYNC> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<SYNC> db)
+   (tprint "<SYNC>")
    (sync-unmanaged! db)
    (let ((out (<DIV> (show-updates (hz-db-query-update db)
 				   (hz-db-query-new db))))
@@ -191,7 +192,7 @@
 ;*    sync-unmanaged! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (sync-unmanaged! db)
-   
+
    (define (find val lst)
       (cond
 	 ((assq val lst) => cadr)
@@ -225,19 +226,20 @@
    (define (sync-dir name)
       (let ((dir (make-file-name (hop-weblets-directory) name)))
 	 (when (directory? dir)
-	    (let ((if (make-file-path dir "etc" (string-append name ".info"))))
-	       (when (file-exists? if)
+	    (let ((f (make-file-path dir "etc" (string-append name ".info"))))
+	       (when (file-exists? f)
 		  (bind-exit (exit)
 		     (with-handler
 			(lambda (e)
 			   (exception-notify e)
 			   (exit #f))
-			(sync-info db name exit if))))))))
+			(sync-info db name exit f))))))))
 
    (define (sync-dbhz o)
       (with-access::dbhz o (name)
 	 (let ((i (make-file-path (hop-weblets-directory)
 				  name
+				  "etc"
 				  (string-append name ".info"))))
 	    (unless (file-exists? i)
 	       (hz-db-remove-weblet db o)))))

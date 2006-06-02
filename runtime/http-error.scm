@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun May 14 07:39:09 2006 (serrano)                */
+;*    Last change :  Fri Jun  2 13:57:22 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -31,6 +31,7 @@
 	    (http-response-error::%http-response ::&error ::http-request)
 	    (http-unknown-host host)
 	    (http-file-not-found file)
+	    (http-service-not-found file)
 	    (http-permission-denied file)
 	    (http-method-error obj)
 	    (http-parse-error obj)
@@ -191,6 +192,38 @@
 				(<TR> (<ETD> :class "msg"
 					    (<SPAN> :class "filenotfound"
 						    file)))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-service-not-found ...                                       */
+;*---------------------------------------------------------------------*/
+(define (http-service-not-found file)
+   (instantiate::http-response-hop
+      (start-line "HTTP/1.0 404 Not Found")
+      (xml (<HTML>
+	      (<HEAD> :css "hop-error.hss")
+	      (<BODY>
+		 (<CENTER>
+		    (<ETABLE>
+		       (<TR>
+			  (<ETD>
+			     (<EIMG> :src (format "~a/icons/notfound.png"
+						  (hop-share-directory))))
+			  (<ETD>
+			     (<TABLE>
+				:style "35em"
+				(<TR> (<ETD> :class "title"
+					     "Invalidated service!"
+					     ))
+				(<TR> (<ETD> :class "msg"
+					     (<SPAN> :class "filenotfound"
+						     file)))
+				(<TR> (<ETD> :class "dump"
+					     (<SPAN> "You are trying to executed an invalidated service!
+<br><br>
+This is generally due to a restart of the server.
+On restart the server invalidates all anonymous services that hence
+can no longer be executed.<br><br>
+Reloading the page is the only workaround.")))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-permission-denied ...                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Jun  1 08:25:57 2006 (serrano)                */
+;*    Last change :  Fri Jun  2 12:19:27 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -120,7 +120,7 @@
 		     (bodyp (eq? method 'GET))
 		     (file path)))))
 	     ((HOPEVT HOP)
-	      (http-file-not-found path))
+	      (http-service-not-found path))
 	     (else
 	      req))))))
 

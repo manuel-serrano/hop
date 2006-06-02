@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Tue May 30 17:25:41 2006 (serrano)                */
+;*    Last change :  Fri Jun  2 15:56:11 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -25,7 +25,6 @@
 ;*    hz/get ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/get hz)
-   (tprint "hz/get: hz=" hz " rep="  (hz-repository))
    (instantiate::http-response-file
       (file (make-file-name (hz-repository) hz))))
 
@@ -43,7 +42,6 @@
 			(host host)
 			(port port)
 			(path (make-hop-service-url hz/get hzpath)))))
-	    (tprint "path=" (http-request-path req))
 	    (http-send-request
 	     req
 	     (lambda (status clength p)

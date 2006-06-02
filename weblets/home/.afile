@@ -1,5 +1,6 @@
+;; automatically generated, don't edit
 ;; /users/serrano/prgm/project/hop/weblets/home
-;; Thu Jun  1 08:33:55 2006
+;; Fri Jun  2 09:41:08 2006
 
 (
   (hophome_config "./config.hop")
