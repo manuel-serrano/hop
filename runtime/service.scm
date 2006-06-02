@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue May 30 17:14:07 2006 (serrano)                */
+;*    Last change :  Fri Jun  2 08:43:18 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -296,7 +296,7 @@
 ;*---------------------------------------------------------------------*/
 (define (register-service! svc)
    (with-access::hop-service svc (path)
-      (hop-verb 2 (hop-color 1 1 " REG. SERVICE: ") svc " " path "\n")
+      (hop-verb 2 (hop-color 1 "" " REG. SERVICE: ") svc " " path "\n")
       (mutex-lock! *service-mutex*)
       (hashtable-put! *service-table* path svc)
       (hashtable-put! *service-table* (string-append path "/") svc)

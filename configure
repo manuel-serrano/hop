@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jun  1 12:07:41 2006 (serrano)                */
+#*    Last change :  Fri Jun  2 08:55:46 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -57,7 +57,7 @@ repository=$HOME/prgm/project/hop/devel/repository
 bigloorequired=2.8a
 bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
-svn=ssh://skribe@saxo.essi.fr/hop
+svn=ssh://hop@hop.inria.fr/hop
 
 if [ $USER = "serrano" ]; then
   distribdir=$HOME/prgm/distrib
