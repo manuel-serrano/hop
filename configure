@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jun  2 08:55:46 2006 (serrano)                */
+#*    Last change :  Sat Jun  3 13:48:53 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -200,6 +200,22 @@ if [ $? != "0" ]; then
   echo "   $bigloorequired"
   echo "or more recent is required. It may be downloaded at:"
   echo "   $bigloourl"
+  exit 1;
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Then check if bglafile exists this is a good indicator of a      */
+#*    correct Bigloo installation.                                     */
+#*---------------------------------------------------------------------*/
+$afile runtime/*.scm > /dev/null 2> /dev/null
+
+if [ $? != "0" ]; then
+  echo "*** ERROR:configure:$afile. Aborting"
+  echo ""
+  echo "This error is due to a bad Bigloo installation. It might be that"
+  echo "you have installed Bigloo but not ran \"ldconfig\" afterward."
+  echo "In such a case, binaries produced by Bigloo cannot be executed"
+  echo "because the loader cannot find the Bigloo dynamic library."
   exit 1;
 fi
 

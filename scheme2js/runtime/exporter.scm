@@ -134,4 +134,5 @@
 	      (cdr args))))
    (if (eq? *mode* 'map)
        (extract-mapping! (cadr args))
-       (extract-interface! (cadr args))))
+       (extract-interface! (cadr args)))
+   (exit 0))

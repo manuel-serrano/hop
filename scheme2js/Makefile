@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Mon May 29 14:13:10 2006 (serrano)                */
+#*    Last change :  Sat Jun  3 13:55:27 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -86,17 +86,17 @@ SCHEME2JS_RUNTIME = runtime
 
 runtime-build: $(SCHEME2JS_RUNTIME)/runtime-interface.js $(SCHEME2JS_RUNTIME)/runtime_mapping.sch
 
-$(SCHEME2JS_RUNTIME)/exporter: $(SCHEME2JS_RUNTIME)/exporter.scm
-	$(BIGLOO) -o $@ $^
+$(SCHEME2JS_RUNTIME)/runtime_mapping.sch: $(SCHEME2JS_RUNTIME)/runtime.js \
+                                          $(SCHEME2JS_RUNTIME)/exporter.scm
+	$(BIGLOO) -i $(SCHEME2JS_RUNTIME)/exporter.scm $< mapping > $@ \
+         || ($(RM) -f $@ && exit 1)
 
-$(SCHEME2JS_RUNTIME)/runtime_mapping.sch: $(SCHEME2JS_RUNTIME)/runtime.js $(SCHEME2JS_RUNTIME)/exporter
-	$(SCHEME2JS_RUNTIME)/exporter $< mapping > $@
-
-$(SCHEME2JS_RUNTIME)/runtime-interface.js: $(SCHEME2JS_RUNTIME)/runtime.js $(SCHEME2JS_RUNTIME)/exporter
-	$(SCHEME2JS_RUNTIME)/exporter $< interface > $@
+$(SCHEME2JS_RUNTIME)/runtime-interface.js: $(SCHEME2JS_RUNTIME)/runtime.js \
+                                           $(SCHEME2JS_RUNTIME)/exporter.scm
+	$(BIGLOO) -i $(SCHEME2JS_RUNTIME)/exporter.scm $< interface > $@ \
+         || ($(RM) -f $@ && exit 1)
 
 runtime-clean:
-	/bin/rm -f $(SCHEME2JS_RUNTIME)/exporter
 	/bin/rm -f $(SCHEME2JS_RUNTIME)/runtime_mapping.sch
 	/bin/rm -f $(SCHEME2JS_RUNTIME)/runtime-interface.js
 	/bin/rm -f $(SCHEME2JS_RUNTIME)/*.o
