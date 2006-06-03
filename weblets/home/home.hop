@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu Jun  1 08:33:20 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 09:27:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -90,6 +90,7 @@
 		  (<NPTABHEAD> "Main")
 		  (<DELAY>
 		     (lambda ()
+			(download-versions-set!)
 			(<DIV>
 			   :class "hop-tab"
 			   (wiki->hop "presentation.wiki")))))
@@ -104,9 +105,10 @@
 		  (<NPTABHEAD> "Download")
 		  (<DELAY>
 		     (lambda ()
+			(download-versions-set!)
 			(<DIV>
 			   :class "hop-tab"
-			   (wiki->hop "download.wiki")))))
+			   (wiki->hop-no-cache "download.wiki")))))
 	 (<NPTAB> :id "weblets"
 		  (<NPTABHEAD> "Weblets")
 		  (<DELAY>
@@ -156,7 +158,13 @@ implemented you can send comments and remarks to "
 				,(<P>)
 				The HOP home page has been served
 				,(<SPAN> :class "uptime" (home-statistics))
-				times.])))))))
+				times.
+				,(let ((f (make-file-path (home-dir) "motd")))
+				    (if (file-exists? f)
+					(<DIV>
+					   :class "motd"
+					   (with-input-from-file f read-string))
+					""))])))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/install ...                                                 */
@@ -177,39 +185,55 @@ implemented you can send comments and remarks to "
 ;*---------------------------------------------------------------------*/
 ;*    downloads ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define *devel-tar-gz*
-   (if (string? (home-hop-devel-version))
-       (string-append "hop-" (home-hop-devel-version) ".tar.gz")
-       "not available"))
+(define *devel-tar-gz* #unspecified)
+(define *devel-zip* #unspecified)
+(define *devel-tar-url* #unspecified)
+(define *devel-zip-url* #unspecified)
+(define *stable-tar-gz* #unspecified)
+(define *stable-zip* #unspecified)
+(define *stable-tar-url* #unspecified)
+(define *stable-zip-url* #unspecified)
 
-(define *devel-zip*
-   (if (string? (home-hop-devel-version))
-       (string-append "hop-" (home-hop-devel-version) ".zip")
-       "not available"))
+;*---------------------------------------------------------------------*/
+;*    download-versions-set! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (download-versions-set!)
+   (let ((devel-version (home-hop-devel-version)))
 
-(define *devel-tar-url*
-   (if (string? *devel-tar-gz*)
-       (make-file-name (home-ftp-hop-url) *devel-tar-gz*)
-       "not available"))
+      (set! *devel-tar-gz*
+	    (if (string? devel-version)
+		(string-append "hop-" devel-version ".tar.gz")
+		"not available"))
+      
+      (set! *devel-zip*
+	    (if (string? devel-version)
+		(string-append "hop-" devel-version ".zip")
+		"not available"))
+      
+      (set! *devel-tar-url*
+	    (if (string? *devel-tar-gz*)
+		(make-file-name (home-ftp-hop-url) *devel-tar-gz*)
+		"not available"))
+      
+      (set! *devel-zip-url*
+	    (if (string? *devel-tar-gz*)
+		(make-file-name (home-ftp-hop-url) *devel-tar-gz*)
+		"not available"))
+      
+      (set! *stable-tar-gz*
+	    (if (string? (home-hop-stable-version))
+		(string-append "hop-" (home-hop-stable-version) ".tar.gz")
+		"not available"))
+      
+      (set! *stable-zip*
+	    "not available")
+      
+      (set! *stable-tar-url*
+	    (if (string? *stable-tar-gz*)
+		(make-file-name(home-ftp-hop-url) *stable-tar-gz*)
+		"not available"))
+      
+      (set! *stable-zip-url*
+	    "/dev/null")))
+      
 
-(define *devel-zip-url*
-   (if (string? *devel-tar-gz*)
-       (make-file-name (home-ftp-hop-url) *devel-tar-gz*)
-       "not available"))
-   
-(define *stable-tar-gz*
-   (if (string? (home-hop-stable-version))
-       (string-append "hop-" (home-hop-stable-version) ".tar.gz")
-       "not available"))
-
-(define *stable-zip*
-   "not available")
-
-(define *stable-tar-url*
-   (if (string? *stable-tar-gz*)
-       (make-file-name(home-ftp-hop-url) *stable-tar-gz*)
-       "not available"))
-
-(define *stable-zip-url*
-   "/dev/null")
-   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Wed May 31 17:45:20 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 09:15:18 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
@@ -52,7 +52,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    home-hop-devel-version ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-parameter home-hop-devel-version
+(define (home-hop-devel-version)
    (let* ((e (with-input-from-file (make-file-name (home-dir) "release.info") 
 		read))
 	  (state (let ((c (assq 'state e)))

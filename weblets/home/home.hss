@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon May 29 18:15:23 2006 (serrano)                */
+/*    Last change :  Sat Jun  3 09:30:51 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -223,6 +223,17 @@ span.edit:hover {
 span.uptime {
   color: #333;
   font-weight: bold;
+}
+
+div.motd {
+  font-size: small;
+  font-style: italic;
+  background-color: #eef;
+  border: 1px dashed $border-color;
+  margin: 5px;
+  margin-top: 20px;
+  padding: 2px;
+  text-align: justify;
 }
 
 /*---------------------------------------------------------------------*/
