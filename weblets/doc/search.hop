@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Wed May 10 07:02:54 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 06:30:02 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -18,7 +18,8 @@
 	   hopdoc_widgets
 	   hopdoc_wiki
 	   hopdoc_services
-	   hopdoc_api)
+	   hopdoc_api
+	   hopdoc_weblets)
 
    (export (make-doc-tables offset . markups)
 	   (search-see-also name dir pattern)
@@ -26,6 +27,7 @@
 	   (search-table value service id table offset columns)
 	   (search-docs dir)
 	   (search-libraries dir)
+	   (search-weblets)
 	   (search-tutorials dir value)))
 
 ;*---------------------------------------------------------------------*/
@@ -341,6 +343,50 @@
 (define (search-libraries dir)
    (map cdr 
 	(sort (search-docs-inner dir "<library> ")
+	      (lambda (a b) (string<? (car a) (car b))))))
+
+;*---------------------------------------------------------------------*/
+;*    search-weblets-documentation ...                                 */
+;*---------------------------------------------------------------------*/
+(define (search-weblets-documentation dir)
+   (filter-map (lambda (f)
+		  (let ((path (make-file-path dir
+					      f
+					      "etc"
+					      (string-append f ".wiki"))))
+		     (and (file-exists? path) path)))
+	       (directory->list dir)))
+
+;*---------------------------------------------------------------------*/
+;*    search-weblets-inner ...                                         */
+;*---------------------------------------------------------------------*/
+(define (search-weblets-inner)
+   (map (let* ((key "<doc> ")
+	       (t (kmp-table key))
+	       (l (fixnum->elong (string-length key))))
+	   (lambda (path)
+	      (when (is-suffix? path "wiki")
+		 (let* ((mm (and (file-exists? path)
+				 (open-mmap path :write #f))))
+		    (when (mmap? mm)
+		       (unwind-protect
+			  (let ((r (kmp-mmap t mm #e0)))
+			     (and (>=elong r #e0)
+				  (let ((l (mmap-line mm (+elong r l))))
+				     (cons l (<WEBLETREF> l path)))))
+			  (close-mmap mm)))))))
+	(append (search-weblets-documentation
+		 (hop-weblets-directory))
+		(search-weblets-documentation
+		 (make-file-name (hop-rc-directory) "weblets"))
+		(directory->list (doc-weblets-dir)))))
+
+;*---------------------------------------------------------------------*/
+;*    search-weblets ...                                               */
+;*---------------------------------------------------------------------*/
+(define (search-weblets)
+   (map cdr
+	(sort (search-weblets-inner)
 	      (lambda (a b) (string<? (car a) (car b))))))
       
 ;*---------------------------------------------------------------------*/

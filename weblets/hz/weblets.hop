@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Fri Jun  2 14:25:14 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 05:47:57 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -234,6 +234,21 @@
 			   $name)
 		"Preferences"))))
 
+      (define (<DOC> id)
+	 (list
+	  (<TD>
+	     :class "icon"
+	     (<IMG>
+		:src (make-file-path (hz-dir) "etc" "icons" "doc.png")))
+	  (<TD>
+	     :class "action"
+	     (<SPAN>
+		:title "Run the weblet in a new window"
+		:onclick ~(window.open
+			   $(format "~a/~a/documentation" (hop-service-base) name)
+			   $name)
+		"Documentation"))))
+
       (define (<REMOVE> id)
 	 (list
 	  (<TD>
@@ -286,13 +301,17 @@
 	 (<TR>
 	    (<RUN> id)
 	    (<TD> "&nbsp;")
-	    (<PREF> id)))
+	    (<PREF> id)
+	    (<TD> "&nbsp;")
+	    (<DOC> id)))
       
       (define (<ACTION-UNINSTALL> id)
 	 (<TR>
 	    (<RUN> id)
 	    (<TD> "&nbsp;")
 	    (<PREF> id)
+	    (<TD> "&nbsp;")
+	    (<DOC> id)
 	    (<TD> "&nbsp;")
 	    (<UNINSTALL> id)))
       
@@ -301,6 +320,8 @@
 	    (<RUN> id)
 	    (<TD> "&nbsp;")
 	    (<PREF> id)
+	    (<TD> "&nbsp;")
+	    (<DOC> id)
 	    (<TD> "&nbsp;")
 	    (<UNINSTALL> id)
 	    (<TD> "&nbsp;")
@@ -311,6 +332,8 @@
 	    (<RUN> id)
 	    (<TD> "&nbsp;")
 	    (<PREF> id)
+	    (<TD> "&nbsp;")
+	    (<DOC> id)
 	    (<TD> "&nbsp;")
 	    (<UPDATE> id)
 	    (<TD> "&nbsp;")

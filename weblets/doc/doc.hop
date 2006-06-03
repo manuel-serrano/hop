@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Wed May 24 15:16:10 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 07:37:52 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -21,6 +21,7 @@
 	    hopdoc_services
 	    hopdoc_tutorials
 	    hopdoc_libraries
+	    hopdoc_weblets
 	    hopdoc_search))
 
 ;*---------------------------------------------------------------------*/
@@ -29,17 +30,31 @@
 (define-service (doc)
    (let ((req (the-current-request)))
       (if (authorized-service? req 'doc)
-	  (doc-main req)
+	  (doc-main req #f)
+	  (user-access-denied req))))
+
+;*---------------------------------------------------------------------*/
+;*    doc/weblet ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-service (doc/weblet weblet)
+   (let ((req (the-current-request)))
+      (if (authorized-service? req 'doc)
+	  (begin
+	     (setup-api-tables!)
+	     (doc-main req (<SCRIPT>
+			      :type "text/javascript"
+			      (select-weblet-pad-on-load weblet))))
 	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-main ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (doc-main req)
+(define (doc-main req script)
    (let ((prefs (make-file-name (doc-rc-directory) "doc.prefs")))
       (thread-start! (make-thread (lambda () (setup-api-tables!))))
       (when (file-exists? prefs) (doc-preferences-load prefs))
       (<DOC>
+	 script
 	 (<NOTEPAD>
 	    :id "doc-notepad"
 	    (<NPHEAD> "")
@@ -65,6 +80,11 @@
 			 (make-file-name (doc-wiki-dir) "syntax.wiki")
 			 (make-wiki-request-syntax (doc-wiki-syntax)
 						   req))))
+	    (<NPTAB> :id "doc-weblets"
+		     (<NPTABHEAD> "Weblets")
+		     (<WEBLETS> req))
 	    (<NPTAB> :id "doc-tutorials"
 		     (<NPTABHEAD> "Tutorials")
 		     (<TUTORIALS> req))))))
+
+

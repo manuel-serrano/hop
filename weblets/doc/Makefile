@@ -3,10 +3,10 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon May 29 14:13:30 2006 (serrano)                */
+#*    Last change :  Sat Jun  3 05:58:32 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
-#*    The Makefile of the HZ weblet                                    */
+#*    The Makefile of the DOC weblet                                   */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
@@ -16,7 +16,7 @@ include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
 HOP_POP         = doc.hop config.hop \
-                  api.hop tutorials.hop libraries.hop \
+                  api.hop tutorials.hop libraries.hop weblets.hop \
                   search.hop widgets.hop wiki.hop services.hop
 POPULATION	= Makefile .afile doc.hss \
                   examples api core wiki tutorials etc/doc.info etc/logo.png \

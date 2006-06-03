@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon May 29 14:11:44 2006 (serrano)                */
+/*    Last change :  Sat Jun  3 06:03:52 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -745,6 +745,30 @@ libraries div.libraries-title {
 }
 
 libraries table.api-index {
+}
+
+/*---------------------------------------------------------------------*/
+/*    weblets                                                          */
+/*---------------------------------------------------------------------*/
+$(hop-hss-type! "weblets" "div.weblets")
+
+weblets {
+  background: white;
+  padding: 2px;
+  border: 1px solid $border-color;
+}
+
+weblets div.weblets-title {
+  padding: 3px;
+  padding-left: 7px;
+  margin-bottom: 10px;
+  color: #165292;
+  font-weight: bold;
+  font-size: large;
+  border-bottom: 1px solid $border-color;
+}
+
+weblets table.api-index {
 }
 
 /*---------------------------------------------------------------------*/

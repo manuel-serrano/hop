@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Mon May 29 17:20:10 2006 (serrano)                */
+/*    Last change :  Fri Jun  2 20:39:39 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -349,7 +349,7 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
 
    klass = klass ? klass : "hop-iwindow";
 
-   if( !win ) {
+   if( win == null ) {
       win = make_hop_iwindow( id, klass, parent );
       isnew = true;
    } else {
