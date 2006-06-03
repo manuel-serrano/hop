@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Sun Apr 16 15:27:32 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 08:46:52 2006 (serrano)                */
 ;*    Copyright   :  2003-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -74,7 +74,7 @@
 		    (let ((body (read-chars (elong->fixnum content-length) pi)))
 		       (cons path
 			     (cgi-args->list body))))))
-	    ((HOP GET PUT HOPEVT)
+	    ((GET PUT)
 	     (http-request-url-cgi-args encoded-path))
 	    (else
 	     (error 'http-request-cgi-args "Not a cgi request" method)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Jun  2 12:19:27 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 08:46:15 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -84,15 +84,23 @@
 	      (cond
 		 ((not (file-exists? path))
 		  (let ((i (string-index path #\?)))
-		     (if (>fx i 0)
+		     (cond
+			((>fx i 0)
 			 (let ((p (substring path 0 i)))
-			    (if (file-exists? p)
+			    (cond
+			       ((file-exists? p)
 				(instantiate::http-response-file
 				   (content-type (mime-type p "text/plain"))
 				   (bodyp (eq? method 'GET))
-				   (file p))
-				(http-file-not-found p)))
-			 (http-file-not-found path))))
+				   (file p)))
+			       ((hop-service-path? p)
+				(http-service-not-found p))
+			       (else
+				(http-file-not-found p)))))
+			((hop-service-path? path)
+			 (http-service-not-found path))
+			(else
+			 (http-file-not-found path)))))
 		 ((is-suffix? (http-request-path req) "hop")
 		  (let ((rep (hop-load (http-request-path req))))
 		     (cond
@@ -119,8 +127,6 @@
 		     (content-type (mime-type path "text/plain"))
 		     (bodyp (eq? method 'GET))
 		     (file path)))))
-	     ((HOPEVT HOP)
-	      (http-service-not-found path))
 	     (else
 	      req))))))
 

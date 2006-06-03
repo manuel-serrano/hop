@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jan 19 10:18:40 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 08:47:06 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -65,10 +65,6 @@
        (http-parse-method-request 'PUT (the-port) id))
       ((: "TRACE" SP)
        (http-parse-method-request 'TRACE (the-port) id))
-      ((: "HOP" SP)
-       (http-parse-method-request 'HOP (the-port) id))
-      ((: "HOPEVT" SP)
-       (http-parse-method-request 'HOPEVT (the-port) id))
       ((: (+ (in ("AZaz"))) SP)
        (raise (instantiate::&hop-method-error
 		 (proc 'request-line-grammar)

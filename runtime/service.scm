@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Jun  2 12:18:40 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 08:44:41 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -38,6 +38,7 @@
 	       (loaded::bool (default #f))))
    
    (export  (get-service-url::bstring)
+	    (hop-service-path? ::bstring)
 	    (make-hop-service-url::bstring ::hop-service . o)
 	    (make-service-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)

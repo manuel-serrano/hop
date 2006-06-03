@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jun  2 15:10:32 2006 (serrano)                */
+/*    Last change :  Sat Jun  3 08:55:15 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -365,7 +365,7 @@ function hop( service, success, failure, sync ) {
       resume_failure = failure;
    }
    
-   return hop_inner( "HOP", service, success, failure, sync );
+   return hop_inner( "GET", service, success, failure, sync );
 }
 
 /*---------------------------------------------------------------------*/
@@ -401,7 +401,7 @@ function with_hop( service, success, failure ) {
 /*    hop_event_hander_set ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_event_handler_set( svc, evt, success, failure ) {
-   return hop_inner( "HOPEVT",
+   return hop_inner( "GET",
 		     svc( evt ),
 		     function( http ) {
                         http.eventName = evt;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Sun May  7 16:58:35 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 08:54:29 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -47,13 +47,14 @@
 			     `(,proc)
 			     `(let ((,ca (http-request-cgi-args ,req)))
 				 ,(if (pair? args)
-				     `(if (or (eq? (http-request-method ,req) 'HOP)
-					      (equal? (cgi-arg "hop-encoding" ,ca) "hop"))
-					  (,proc ,@(map (lambda (a)
-							   `(serialized-cgi-arg
-							     ,(symbol->string a)
-							     ,ca))
-							args))
+				     `(if (equal? (cgi-arg "hop-encoding" ,ca) "hop")
+					  (begin
+					     (http-request-char-encoding-set! ,req 'UTF-8)
+					     (,proc ,@(map (lambda (a)
+							      `(serialized-cgi-arg
+								,(symbol->string a)
+								,ca))
+							   args)))
 					  (,proc ,@(map (lambda (a)
 							   `(cgi-arg
 							     ,(symbol->string a)

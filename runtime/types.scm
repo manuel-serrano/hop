@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue May  9 09:17:56 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 08:55:43 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -33,7 +33,7 @@
 	      (socket (default #f))
 	      (header::pair-nil (default '()))
 	      (content-length::elong read-only (default #e-1))
-	      (char-encoding read-only (default #f)))
+	      (char-encoding (default #f)))
 	   
 	   (class http-request::%http-message
 	      (user (default #f))
