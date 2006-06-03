@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Fri Jun  2 14:44:41 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 15:20:17 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -117,7 +117,6 @@
 ;*    <SYNC> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<SYNC> db)
-   (tprint "<SYNC>")
    (sync-unmanaged! db)
    (let ((out (<DIV> (show-updates (hz-db-query-update db)
 				   (hz-db-query-new db))))
