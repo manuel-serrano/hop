@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed May 31 07:04:15 2006 (serrano)                */
+#*    Last change :  Mon Jun  5 12:10:08 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -32,7 +32,8 @@ _OBJECTS	= param misc types thread \
                   read-js css js-lib cgi \
                   hop service \
                   job mime user cache \
-                  http-lib http-response http-shoutcast http-error \
+                  http-lib http-request \
+                  http-response http-shoutcast http-error \
                   http-filter hop-extra hop-notepad hop-tree hop-slider \
                   hop-paned hop-tabslider hop-inline hop-foldlist \
                   hop-editor \

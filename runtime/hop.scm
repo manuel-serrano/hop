@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed May 31 07:06:47 2006 (serrano)                */
+;*    Last change :  Mon Jun  5 13:46:32 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -73,7 +73,7 @@
 			   (bodyp (not (eq? method 'HEAD)))
 			   (content-length content-length)
 			   (request req)
-			   (timeout (hop-connection-timeout))))
+			   (remote-timeout (hop-connection-timeout))))
 		    (rp2 (hop-run-hook
 			  (hop-http-response-remote-hooks) m rp)))
 		(hop-request-hook m rp2)))

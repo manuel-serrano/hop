@@ -46,6 +46,7 @@ in the documentation for the ++with-hop++ form.
 | content-type         |    r/w    |   string    |  ++"text/html"++   | the type of the response.                   |
 | request              |    r/w    |   obj       |  ++#unspecified++  | a request associated with the response.     |
 | bodyp                |    r      |   bool      |  ++#t++            | control the body delivery of the response.  |
+| timeout              |    r/w    |   integer   |  ++-1++            | a timeout for controlling outputs.          |
 </fields>
 
 This abstract class is the super class of all responses.
@@ -76,7 +77,7 @@ case of //denial of services// attack to the server.
 | path                 |    r      |   string    |      _             | the requested path.                         |
 | userinfo             |    r      |   obj       |      _             | an optional authenticated information.      |
 | encoded-path         |    r      |   string    |      _             | the HTTP encoded requested path.            |
-| timeout              |    r      |   obj       |  ++#f++            | a request timeout.                          |
+| remote-timeout       |    r      |   obj       |  ++#f++            | a connection timeout.                       |
 </fields>
 
 This class denotes responses to remote web servers. These are used when the HOP server is used

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed May 31 07:04:49 2006 (serrano)                */
+;*    Last change :  Mon Jun  5 12:09:55 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -34,6 +34,7 @@
 	   __hop_hop
 	   __hop_service
 	   __hop_http-lib
+	   __hop_http-request
 	   __hop_http-response
 	   __hop_http-shoutcast
 	   __hop_http-error

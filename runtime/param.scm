@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 29 18:20:56 2006 (serrano)                */
+;*    Last change :  Mon Jun  5 17:40:19 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -151,6 +151,15 @@
 
 	    (hop-service-access-control::procedure)
 	    (hop-service-access-control-set! ::procedure)
+
+	    (hop-input-timeout::long)
+	    (hop-input-timeout-set! ::long)
+
+	    (hop-input-body-timeout::long)
+	    (hop-input-body-timeout-set! ::long)
+
+	    (hop-output-timeout::long)
+	    (hop-output-timeout-set! ::long)
 
 	    (hop-rc-loaded!)))
 
@@ -579,8 +588,8 @@
    10)
 
 (define-parameter hop-connection-timeout
-   ;; a number of micro seconds before the connection fails
-   (*fx 1 1000000))
+   ;; a number of seconds before the connection fails
+   1)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-weblets ...                                                  */
@@ -689,3 +698,15 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-rc-loaded!)
    (set! *hop-rc-loaded* #t))
+
+;*---------------------------------------------------------------------*/
+;*    IO timeouts (in seconds) ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-input-timeout
+   10)
+
+(define-parameter hop-input-body-timeout
+   60)
+
+(define-parameter hop-output-timeout
+   60)
