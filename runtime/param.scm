@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jun  5 17:40:19 2006 (serrano)                */
+;*    Last change :  Tue Jun  6 18:55:16 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -87,8 +87,13 @@
 	    
 	    (hop-server-hostname::bstring)
 	    (hop-server-ip::bstring)
+
+	    (hop-max-url-length::int)
+	    (hop-max-url-length-set! ::int)
 	    
 	    (hop-service-base::bstring)
+	    (hop-serialized-service-prefix::bstring)
+	    
 	    (hop-service-weblet-name::bstring)
 
 	    (hop-initial-weblet::bstring)
@@ -449,13 +454,28 @@
    (host (hostname)))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-max-url-length ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-url-length
+   (* 4 1024))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-service-base ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    The prefix of all HOP weblets.                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-base
-   "/hop")
+   "/hop"
+   (lambda (v)
+      (hop-serialized-service-prefix-set! (make-file-path v "svc" ""))
+      v))
 
+;*---------------------------------------------------------------------*/
+;*    hop-serialized-service-prefix ...                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-serialized-service-prefix
+   (make-file-path (hop-service-base) "svc" ""))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-initial-weblet ...                                           */
 ;*    -------------------------------------------------------------    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Tue May 30 14:35:10 2006 (serrano)                */
+;*    Last change :  Tue Jun  6 11:32:17 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -48,8 +48,9 @@
 ;*---------------------------------------------------------------------*/
 (define (http-parse-error-message c port)
    (if (char? c)
-       (string-for-read
-	(string-append "{" (string c) "}" (http-read-line port)))
+       (let ((line (http-read-line port)))
+	  (string-for-read
+	   (string-append "{" (string c) "}" (if (string? line) line ""))))
        c))
 
 ;*---------------------------------------------------------------------*/

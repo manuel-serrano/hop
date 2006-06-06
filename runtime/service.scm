@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Jun  3 15:30:12 2006 (serrano)                */
+;*    Last change :  Tue Jun  6 18:56:27 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -47,7 +47,8 @@
 	    (autoload ::bstring ::procedure . hooks)
 	    (autoload-filter ::http-request)
 	    (service-filter ::http-request)
-	    (register-service!::hop-service ::hop-service)))
+	    (register-service!::hop-service ::hop-service)
+	    (service->string ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
@@ -281,9 +282,28 @@
 	       (mutex-lock! *service-mutex*)
 	       (let ((svc (hashtable-get *service-table* path)))
 		  (mutex-unlock! *service-mutex*)
-		  (if (hop-service? svc)
-		      (with-access::hop-service svc (id %exec)
-			 (scheme->response (%exec req) req))
+		  (cond
+		     ((hop-service? svc)
+		      (with-access::hop-service svc (%exec)
+			 (scheme->response (%exec req) req)))
+		     ((substring-at? path (hop-serialized-service-prefix) 0)
+		      (let* ((sp (substring path
+					    (string-length
+					     (hop-serialized-service-prefix))
+					    (string-length path)))
+			     (len (string-length sp)))
+			 (if (<fx len 33)
+			     (http-corrupted-service-error req)
+			     (let ((sum (substring sp 0 32))
+				   (rest (substring sp 32 len)))
+				(if (string=? sum (md5sum rest))
+				    (let ((s (string->obj rest)))
+				       (if (not (=fx (car s) (hop-session)))
+					   (http-invalidated-service-error req)
+					   (let ((e (cdr s)))
+					      (scheme->response (e req) req))))
+				    (http-corrupted-service-error req))))))
+		     (else
 		      (let ((init (hop-initial-weblet)))
 			 (when (and (string? init)
 				    (substring-at? path (hop-service-base) 0)
@@ -296,7 +316,7 @@
 			    (set! path (string-append (hop-service-base)
 						      "/"
 						      init))
-			    (loop))))))))))
+			    (loop)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */
@@ -318,3 +338,34 @@
 		(loop (+fx i 1))))))
       (mutex-unlock! *service-mutex*)
       svc))
+
+;*---------------------------------------------------------------------*/
+;*    service->string ...                                              */
+;*---------------------------------------------------------------------*/
+(define (service->string proc)
+   (cond-expand
+      (bigloo2.8a
+       #f)
+      (bigloo-c
+       (let ((str (obj->string (cons (hop-session) proc))))
+	  (when (<fx (string-length str) (hop-max-url-length))
+	     (let* ((sum (md5sum str))
+		    (ustr (url-encode (string-append sum str))))
+		(when (<fx (string-length ustr) (hop-max-url-length))
+		   ustr)))))
+      
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    Register procedure serializer/unserializer... ...                */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo2.8a
+    #unspecified)
+   (bigloo-c
+    (register-procedure-serialization
+     $procedure-entry->string
+     $string->procedure-entry))
+   (else
+    #unspecified))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Sat Jun  3 08:54:29 2006 (serrano)                */
+;*    Last change :  Tue Jun  6 18:04:39 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -39,39 +39,55 @@
 	  (exec (gensym 'exec))
 	  (hop (gensym 'hop))
 	  (path (gensym 'path))
+	  (svc (gensym 'svc))
 	  (vargs (if (list? args) (service-js-arguments args) #f)))
-      `(let* ((,url ,svcurl)
-	      (,proc (lambda ,args ,@body))
+      `(let* ((,proc (lambda ,args ,@body))
 	      (,exec (lambda (,req)
 			,(if (null? args)
 			     `(,proc)
 			     `(let ((,ca (http-request-cgi-args ,req)))
 				 ,(if (pair? args)
-				     `(if (equal? (cgi-arg "hop-encoding" ,ca) "hop")
-					  (begin
-					     (http-request-char-encoding-set! ,req 'UTF-8)
-					     (,proc ,@(map (lambda (a)
-							      `(serialized-cgi-arg
-								,(symbol->string a)
-								,ca))
-							   args)))
-					  (,proc ,@(map (lambda (a)
-							   `(cgi-arg
-							     ,(symbol->string a)
-							     ,ca))
-							args)))
-				     `(,proc (error '$service/filter
-						    "not implement"
-						    "yet")))))))
-	      (,path (make-file-name (hop-service-base) ,url))
-	      (svc (instantiate::hop-service
-		      (id (string->symbol ,url))
-		      (path ,path)
-		      (args ',args)
-		      (%exec ,exec)
-		      (proc ,proc)
-		      (javascript ,(jscript vargs path)))))
-	  (register-service! svc))))
+				      `(if (equal? (cgi-arg "hop-encoding" ,ca) "hop")
+					   (begin
+					      (http-request-char-encoding-set! ,req 'UTF-8)
+					      (,proc ,@(map (lambda (a)
+							       `(serialized-cgi-arg ,(symbol->string a) ,ca))
+							    args)))
+					   (,proc ,@(map (lambda (a)
+							    `(cgi-arg ,(symbol->string a) ,ca))
+							 args)))
+				      `(,proc (error '$service/filter "not implement" "yet"))))))))
+	  ,(if (string? svcurl)
+	       `(let* ((,url ,svcurl)
+		       (,path (make-file-name (hop-service-base) ,url))
+		       (svc (instantiate::hop-service
+			       (id (string->symbol ,url))
+			       (path ,path)
+			       (args ',args)
+			       (%exec ,exec)
+			       (proc ,proc)
+			       (javascript ,(jscript vargs path)))))
+		   (register-service! svc))
+	       `(let ((,url (service->string ,exec)))
+		   (if (string? ,url)
+		       (let ((,path (make-file-path (hop-service-base) "svc" ,url)))
+			  (instantiate::hop-service
+			     (id 'svc)
+			     (path ,path)
+			     (args ',args)
+			     (%exec ,exec)
+			     (proc ,proc)
+			     (javascript ,(jscript vargs path))))
+		       (let* ((,url (get-service-url))
+			      (,path (make-file-name (hop-service-base) ,url))
+			      (svc (instantiate::hop-service
+				      (id (string->symbol ,url))
+				      (path ,path)
+				      (args ',args)
+				      (%exec ,exec)
+				      (proc ,proc)
+				      (javascript ,(jscript vargs path)))))
+			  (register-service! svc))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-service ...                                               */
