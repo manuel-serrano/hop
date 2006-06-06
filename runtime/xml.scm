@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon May 29 13:27:44 2006 (serrano)                */
+;*    Last change :  Tue Jun  6 12:31:17 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -477,7 +477,7 @@
 (define-xml-element <BIG>)
 (define-xml-element <BLOCKQUOTE>)
 (define-xml-element <BODY>)
-(define-xml-element <BR>)
+(define-xml xml-empty-element #t <BR>)
 (define-xml-element <BUTTON>)
 (define-xml-element <CANVAS>)
 (define-xml-element <CAPTION>)
