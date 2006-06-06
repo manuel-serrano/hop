@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Jun  5 17:39:57 2006 (serrano)                */
+;*    Last change :  Mon Jun  5 18:27:07 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -21,6 +21,7 @@
 	    __hop_types
 	    __hop_misc
 	    __hop_xml
+	    __hop_hop-extra
 	    __hop_http-lib
 	    __hop_http-error
 	    __hop_http-filter
@@ -226,40 +227,62 @@
 (define-method (http-response r::http-response-file socket)
    (with-trace 3 'http-response::http-response-file
       (with-access::http-response-file r (start-line header content-type server file bodyp request timeout)
+	 (tprint "http-response-file: " file " "
+		 (authorized-path? request file))
 	 (if (authorized-path? request file)
 	     ;; the file is never read so it can be open it with a tiny buffer
 	     (let ((p (socket-output socket))
-		   (pf (open-input-file file 1)))
-		(when (>fx timeout 0) (output-port-timeout-set! p timeout))
-		(if (not (input-port? pf))
-		    (raise
-		     (if (not (file-exists? file))
-			 (make-&io-file-not-found-error #f #f
-							'http-response
-							"File not found"
-							file)
-			 (make-&io-port-error #f #f
-					      'http-response
-					      "Cannot open file"
-					      file)))
-		    (begin
-		       (http-write-line p start-line)
-		       (http-write-header p header)
-		       (http-write-line p "Connection: close")
-		       (when content-type
-			  (http-write-line p "Content-Type: " content-type))
-		       (when server
-			  (http-write-line p "Server: " server))
-		       (http-write-line p "Content-Length: " (file-size file))
-		       (http-write-line p)
-		       ;; the body
-		       (with-trace 4 'http-response-file
-			  (when bodyp
-			     (unwind-protect
-				(send-chars pf p)
-				(close-input-port pf))))
-		       (flush-output-port p))))
+		   (pf (open-input-file file)))
+		(cond
+		   ((not (input-port? pf))
+		    (let ((rep (if (file-exists? pf)
+				   (http-permission-denied file)
+				   (http-file-not-found file))))
+		       (http-response rep socket)))
+		   ((directory? file)
+		    (let ((rep (response-directory r file)))
+		       (http-response rep socket)))
+		   (else
+		    (when (>fx timeout 0)
+		       (output-port-timeout-set! p timeout))
+		    (http-write-line p start-line)
+		    (http-write-header p header)
+		    (http-write-line p "Connection: close")
+		    (when content-type
+		       (http-write-line p "Content-Type: " content-type))
+		    (when server
+		       (http-write-line p "Server: " server))
+		    (http-write-line p "Content-Length: " (file-size file))
+		    (http-write-line p)
+		    ;; the body
+		    (with-trace 4 'http-response-file
+		       (when bodyp
+			  (unwind-protect
+			     (send-chars pf p)
+			     (close-input-port pf))))
+		    (flush-output-port p))))
 	     (http-response (user-access-denied request) socket)))))
+
+;*---------------------------------------------------------------------*/
+;*    response-directory ...                                           */
+;*---------------------------------------------------------------------*/
+(define (response-directory rep dir)
+   (instantiate::http-response-hop
+      (char-encoding (request-encoding (%http-response-request rep)))
+      (request (%http-response-request rep))
+      (xml (if (%http-response-bodyp rep)
+	       (<HTML>
+		  (<HEAD> (<TITLE> dir))
+		  (<BODY>
+		     (<H1> dir)
+		     (<PRE> (map (lambda (f)
+				    (let ((path (make-file-name dir f)))
+				       (<A> :href path
+					 (if (directory? path)
+					     (string-append f "/\n")
+					     (string-append f "\n")))))
+				 (sort (directory->list dir) string<?)))))
+	       '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cgi-env ...                                                  */
