@@ -25,10 +25,10 @@
    
 (define (good-for-inlining? var nested-counter)
    (and (can-be-inlined? var)
-	(< nested-counter 1)
-	(or (= var.uses 1)
-	    (and (not var.single-value.nested-funs?)
-		 (< var.single-value.size 50)))))
+ 	(< nested-counter 1)
+ 	(or (= var.uses 1)
+ 	    (and (not var.single-value.nested-funs?)
+ 		 (< var.single-value.size 50)))))
 
 (define (inline! tree)
    (if (config 'do-inlining)
@@ -129,14 +129,9 @@
       (to-clone-add! this.local-vars)
       (pcall this pobject-deep-clone cloned-ht))
    
-   (define-pmethod (Label-deep-clone cloned-ht)
+   (define-pmethod (Labelled-deep-clone cloned-ht)
       (let ((res (pcall this pobject-deep-clone cloned-ht)))
 	 (set! res.id (label-map res.id))
-	 res))
-
-   (define-pmethod (Break-deep-clone cloned-ht)
-      (let ((res (pcall this pobject-deep-clone cloned-ht)))
-	 (set! res.label (label-map res.label))
 	 res))
 
    (to-clone-add! fun.local-vars)
@@ -146,8 +141,7 @@
 				    Tail-rec
 				    Tail-rec-call
 				    With-handler
-				    Label
-				    Break)
+				    Labelled)
 	     (pcall fun pobject-deep-clone (make-eq-hashtable))))
 
 (define (clone-funs tree)
@@ -179,14 +173,14 @@
    (define *inlined-funs* #f)
    (define *id->js-var* #unspecified)
 
-   (define-pmethod (Node-inline! label)
-      (this.traverse1! label))
+   (define-pmethod (Node-inline! labelled)
+      (this.traverse1! labelled))
 
-   (define-pmethod (Program-inline! label)
+   (define-pmethod (Program-inline! labelled)
       (set! *id->js-var* this.id->js-var)
-      (this.traverse1! label))
+      (this.traverse1! labelled))
 
-   (define-pmethod (Call-inline! label)
+   (define-pmethod (Call-inline! labelled)
       (if this.cloned-fun
 	  (begin
 	     (set! this.operator this.cloned-fun)
@@ -201,28 +195,28 @@
 				 (new-node Set! (car p) (cdr p)))
 			      assigs-mapping))
 		 (traversed-assigs (map (lambda (node)
-					   (node.traverse! label))
+					   (node.traverse! labelled))
 					assigs))
-		 (label (new-node Label fun.body (gensym 'inlined)))
-		 (traversed-label (label.traverse! label)))
+		 (return-labelled (new-node Labelled fun.body (gensym 'inlined)))
+		 (traversed-labelled (return-labelled.traverse! return-labelled)))
 	     (set! *inlined-funs* #t)
 	     (new-node Begin (append! traversed-assigs
-				      (list (if traversed-label.used
-						traversed-label
-						traversed-label.body)))))
-	  (this.traverse1! label)))
+				      (list (if traversed-labelled.used
+						traversed-labelled
+						traversed-labelled.body)))))
+	  (this.traverse1! labelled)))
 
-   (define-pmethod (Lambda-inline! label)
+   (define-pmethod (Lambda-inline! labelled)
       (this.traverse1! #f))
 
-   (define-pmethod (Return-inline! label)
-      (if label
+   (define-pmethod (Return-inline! labelled)
+      (if labelled
 	  (if this.tail?
-	      (this.val.traverse! label)
+	      (this.val.traverse! labelled)
 	      (begin
-		 (set! label.used #t)
-		 ((new-node Break this.val label).traverse! label)))
-	  (this.traverse1! label)))
+		 (set! labelled.used #t)
+		 ((new-node Break this.val labelled).traverse! labelled)))
+	  (this.traverse1! labelled)))
 
    ;;=====================================================
    ;; method-start

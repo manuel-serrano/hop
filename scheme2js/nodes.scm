@@ -288,15 +288,15 @@
    (set! Closure-alloc.proto (new Node))
    (proto-traverses Closure-alloc body)
 
-   (define-node (Label body id)
+   (define-node (Labelled body label)
       (set! this.body body)
-      (set! this.id id))
-   (set! Label.proto (new Node))
-   (proto-traverses Label body)
-
-   (define-node (Break val label)
-      (set! this.val val)
       (set! this.label label))
+   (set! Labelled.proto (new Node))
+   (proto-traverses Labelled body)
+
+   (define-node (Break val labelled)
+      (set! this.val val)
+      (set! this.labelled labelled))
    (set! Break.proto (new Node))
    (proto-traverses Break val)
 

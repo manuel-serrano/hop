@@ -130,10 +130,10 @@
 				 (list while (if then-continue?
 						 body.else
 						 body.then))))
-		(break-label (new-node Label bnode (gensym 'break))))
-	    (set! while.break-label break-label)
+		(break-labelled (new-node Labelled bnode (gensym 'break))))
+	    (set! while.break-labelled break-labelled)
 	    (set! while.continue-label this.label)
-	    break-label))
+	    break-labelled))
 
       (this.traverse0!)
       (let ((body this.body)
@@ -193,7 +193,7 @@
 			    (Tail-rec-call Value-tail)
 			    Return
 			    (Closure-alloc Inter-tail)
-			    (Label Inter-tail)
+			    (Labelled Inter-tail)
 			    Break
 			    (Pragma Value-tail))
 	     (tree.traverse #f)))
@@ -285,19 +285,19 @@
 				Tail-rec-call)
 	     (tree.traverse! #f #f)))
 
-(define-pmethod (Node-finish! continue-label break-label)
+(define-pmethod (Node-finish! continue-label break-labelled)
    (if (and this.while-tail?
-	    break-label)
-       (new-node Break (this.traverse2! #f #f) break-label)
-       (this.traverse2! continue-label break-label)))
+	    break-labelled)
+       (new-node Break (this.traverse2! #f #f) break-labelled)
+       (this.traverse2! continue-label break-labelled)))
 
-(define-pmethod (While-finish! continue-label break-label)
-   (this.traverse2! this.continue-label this.break-label))
+(define-pmethod (While-finish! continue-label break-labelled)
+   (this.traverse2! this.continue-label this.break-labelled))
 
-(define-pmethod (Tail-rec-finish! continue-label break-label)
+(define-pmethod (Tail-rec-finish! continue-label break-labelled)
    (this.traverse2! #f #f))
 
-(define-pmethod (Tail-rec-call-finish! continue-label break-label)
+(define-pmethod (Tail-rec-call-finish! continue-label break-labelled)
    (if (and continue-label
 	    (eq? this.label continue-label))
        (new-node Const #unspecified)

@@ -35,7 +35,7 @@
 					      Tail-rec-call
 					      Return
 					      Closure-alloc
-					      Label
+					      Labelled
 					      Break
 					      (Pragma Value-transform-statements!))
 	     (tree.traverse! #f #t)))
@@ -230,11 +230,11 @@
 (define-pmethod (Closure-alloc-transform-statements! state-var statement-form?)
    (this.traverse2! state-var #t))
 
-(define-pmethod (Label-transform-statements! state-var statement-form?)
+(define-pmethod (Labelled-transform-statements! state-var statement-form?)
    (set! this.state-var state-var)
    (set! this.body (this.body.traverse! state-var #t))
    this)
 
 (define-pmethod (Break-transform-statements! state-var statement-form?)
-   (set! this.val (this.val.traverse! this.label.state-var #t))
+   (set! this.val (this.val.traverse! this.labelled.state-var #t))
    this)

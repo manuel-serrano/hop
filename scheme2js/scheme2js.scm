@@ -125,6 +125,9 @@
       (("--optimize-var-number"
 	(help "reduce used variables by reusing existing vars."))
        (hashtable-put! config-ht 'optimize-var-number #t))
+      (("--optimize-while"
+	(help "unstable while-optim."))
+       (hashtable-put! config-ht 'while #t))
       (("--no-inlining"
 	(help "don't inline at all"))
        (hashtable-put! config-ht 'do-inlining #f))

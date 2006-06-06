@@ -38,7 +38,7 @@
 	     (Node Program Part Node Const Var-ref Lambda
 		   If Case Clause Set! Begin Bind-exit With-handler
 		   Call Tail-rec While Tail-rec-call Return
-		   Closure-alloc Label Break Pragma)
+		   Closure-alloc Labelled Break Pragma)
 	     (tree.compile p)))
 
 (define *tmp-var* "tmp") ;; can't conflict, as all vars are starting with 'sc_
@@ -398,16 +398,16 @@
    (this.body.compile p)
    (p-display p "\n}"))
 
-(define-pmethod (Label-compile p)
-   (p-display p (mangle-JS-sym this.id) ":{\n")
+(define-pmethod (Labelled-compile p)
+   (p-display p (mangle-JS-sym this.label) ":{\n")
    (this.body.compile p)
    (p-display p "\n}"))
 
 (define-pmethod (Break-compile p)
    (p-display p "{\n")
    (this.val.compile p)
-   (if this.label
-       (p-display p "break " (mangle-JS-sym this.label) ";\n")
+   (if this.labelled
+       (p-display p "break " (mangle-JS-sym this.labelled.label) ";\n")
        (p-display p "break;\n"))
    (p-display p "}\n"))
 
