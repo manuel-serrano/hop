@@ -29,7 +29,7 @@ TARGETNAME	= scheme2js
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _BGL_OBJECTS	= capture compile constants expanders \
-	gen-code gen-js inline js-interface liveness node-elimination \
+	gen-js inline js-interface liveness node-elimination \
 	nodes pobject-conv protobject scheme2js side statements symbol \
 	tail-rec tail transform-util traverse var expand verbose \
 	dot-expand allocate-names config locals use-count nested-funs \
@@ -50,7 +50,7 @@ BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
 SOURCES		= $(_OBJECTS:%=%.scm)
 
 INCLUDES	= nodes.sch protobject.sch tools.sch \
-	compile-optimized-boolify.scm compile-optimized-call.scm
+	compile-optimized-boolify.scm compile-optimized-call.scm compile-optimized-set.scm
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */

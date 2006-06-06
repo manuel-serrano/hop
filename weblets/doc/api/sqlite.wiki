@@ -118,8 +118,8 @@ Examples:
 
 The function ++sqlite-exec++ //executes// an SQLite command. The
 command is the built by implicitly invoking ++sqlite-format++ on
-++fmt++ and the optional ++arg<sub>0</sub> arguments. This function
-returns a possibly list empty.  The elements of the list are filled by
+++fmt++ and the optional ++arg<sub>0</sub>++ arguments. This function
+returns a possibly empty list.  The elements of the list are filled by
 the SQLite engine. In particular, on a query, each element of the list
 is a vector denoting a row of the searched tables.
 
@@ -176,7 +176,7 @@ SQLite call.
 </arguments>
 
 The function ++sqlite-map++ invokes a SQLite command built by
-implicitly invoking ++sqlite-format++ on ++string+ and the optional
+implicitly invoking ++sqlite-format++ on ++string++ and the optional
 ++arg<sub>0</sub>++, ... arguments. The result is a list whose
 elements are built by applying ++proc++ to all the values
 returned by the SQLite call.  

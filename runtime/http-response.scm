@@ -44,6 +44,10 @@
    (bigloo2.8a (define (output-port-timeout-set! p t) #f))
    (else #unspecified))
 
+(cond-expand
+   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
+   (else #unspecified))
+
 ;*---------------------------------------------------------------------*/
 ;*    make-client-socket/timeout ...                                   */
 ;*---------------------------------------------------------------------*/

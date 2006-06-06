@@ -359,7 +359,7 @@ function sc_symbol2number_mutable(s, radix) { /// export
 }
 
 function sc_string2number_mutable(s, radix) { /// export
-    sc_symbol2number(s.val, radix);
+    sc_symbol2number_mutable(s.val, radix);
 }
 
 function sc_symbol2number_immutable(s, radix) { /// export
@@ -828,6 +828,7 @@ var sc_isCharCILessEqual = sc_isCharStringCILessEqual; /// export char-ci<=?
 var sc_isCharCIGreaterEqual = sc_isCharStringCIGreaterEqual; /// export char-ci>=?
 
 var SC_NUMBER_CLASS = "0123456789";
+var SC_WHITESPACE_CLASS = ' \r\n\t\f';
 var SC_LOWER_CLASS = 'abcdefghijklmnopqrstuvwxyz';
 var SC_UPPER_CLASS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -837,6 +838,11 @@ function sc_isCharAlphabetic(c)  /// export
 	  sc_isCharOfClass(c.val, SC_UPPER_CLASS); }
 function sc_isCharNumeric(c) /// export
     { return sc_isCharOfClass(c.val, SC_NUMBER_CLASS); }
+function sc_isCharWhitespace(c) /// export
+    {
+	var tmp = c.val;
+	return tmp === " " || tmp === "\r" || tmp === "\n" || tmp === "\t" || tmp === "\f";
+    }
 function sc_isCharUpperCase(c) /// export
     { return sc_isCharOfClass(c.val, SC_UPPER_CLASS); }
 function sc_isCharLowerCase(c) /// export
@@ -1017,7 +1023,7 @@ function sc_string2list_mutable(s) { /// export
 function sc_string2list_immutable(s) { /// export
     var res = null;
     for (var i = s.length - 1; i >= 0; i--)
-	res = sc_cons(s.charAt(i), res);
+	res = sc_cons(new sc_Char(s.charAt(i)), res);
     return res;
 }
 
@@ -1449,7 +1455,7 @@ sc_Tokenizer.prototype.nextToken = function() {
 	    (c >= "0" && c <= "9");
     }
     function isWhitespace(c) {
-	return c === " " || c === "\n" || c === "\t";
+	return c === " " || c === "\r" || c === "\n" || c === "\t" || c === "\f";
     };
     function isWhitespaceOrEOF(c) {
 	return isWhitespace(c) || c === SC_EOF_OBJECT;
@@ -1940,7 +1946,8 @@ sc_Pair.prototype.hop_bigloo_serialize = function() {
 
 sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {
     var isP = sc_isPair(this.cdr);
-    p.appendJSString("(");
+    if (!inList)
+	p.appendJSString("(");
     writeOrDisplay(p, this.car);
     if (sc_isPair(this.cdr)) {
 	writeOrDisplay(p, " ");
@@ -2002,7 +2009,9 @@ function sc_escapeWriteString(s) {
     for (i = 0; i < s.length; i++) {
 	switch (s.charAt(i)) {
 	case "\0": res += s.substring(j, i) + "\\0"; j = i + 1; break;
+	    /* \a is not recognized and will escape all 'a' chars.
 	case "\a": res += s.substring(j, i) + "\\a"; j = i + 1; break;
+	    */
 	case "\b": res += s.substring(j, i) + "\\b"; j = i + 1; break;
 	case "\f": res += s.substring(j, i) + "\\f"; j = i + 1; break;
 	case "\n": res += s.substring(j, i) + "\\n"; j = i + 1; break;
@@ -2021,13 +2030,13 @@ function sc_escapeWriteString(s) {
 	}
     }
     res += s.substring(j, i);
+    return res;
 }
 
 Number.prototype.doWrite = function(p) {
     p.appendJSString(this.toString());
 }
 String_prototype_doWrite_mutable = function(p) {
-    // TODO: handle escape-chars symbols
     p.appendJSString(this);
 }
 String_prototype_doWrite_immutable = function(p) {
@@ -2098,8 +2107,14 @@ function sc_doDisplay(p, o) {
 }
 
 Number.prototype.doDisplay = Number.prototype.doWrite;
+
 String_prototype_doDisplay_mutable = String_prototype_doWrite_mutable;
-String_prototype_doDisplay_immutable = String_prototype_doWrite_immutable;
+String_prototype_doDisplay_immutable = function(p) {
+    if (this.charAt(0) !== sc_SYMBOL_PREFIX)
+	p.appendJSString(this);
+    else
+	p.appendJSString(this.slice(1));
+}
 Function.prototype.doDisplay = Function.prototype.doWrite;
 Boolean.prototype.doDisplay = Boolean.prototype.doWrite;
 sc_Pair.prototype.doDisplay = function(p) {
@@ -2329,12 +2344,12 @@ var SC_ERROR_OUT = new sc_ErrorOutputPort();
 function initRuntime() {
     function escapeHTML(s) {
 	var tmp = s;
-	tmp = tmp.replace("&", "&amp;");
-	tmp = tmp.replace("<", "&lt;");
-	tmp = tmp.replace(">", "&gt;");
-	tmp = tmp.replace(" ", "&nbsp;");
-	tmp = tmp.replace("\n", "<br />");
-	tmp = tmp.replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp");
+	tmp = tmp.replace(/&/g, "&amp;");
+	tmp = tmp.replace(/</g, "&lt;");
+	tmp = tmp.replace(/>/g, "&gt;");
+	tmp = tmp.replace(/ /g, "&nbsp;");
+	tmp = tmp.replace(/\n/g, "<br />");
+	tmp = tmp.replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp");
 	return tmp;
 	
     }

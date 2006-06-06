@@ -70,8 +70,20 @@
 			   sci_isOutputPort
 			   ))
 
-(define (compile-optimized-boolify compiled::bstring n)
-   (if (inherits-from? n (node 'Call))
+(define (compile-optimized-if-boolify p n)
+   (if (and (inherits-from? n.else (node 'Const))
+	    (not n.else.value))
+       (begin
+	  (p-display p "(")
+	  (n.test.compile p)
+	  (p-display p "&&")
+	  (compile-optimized-boolify p n.then)
+	  (p-display p ")"))
+       (compile-unoptimized-boolify p n)))
+
+(define (compile-optimized-boolify p n)
+   (cond
+      ((inherits-from? n (node 'Call))
        (let ((op n.operator))
 	  (if (inherits-from? op (node 'Var-ref))
 	      (let* ((var op.var)
@@ -79,7 +91,10 @@
 		 (if (and (not var.muted?)
 			  id
 			  (memq id *bool-operators*))
-		     compiled
-		     (gen-code-boolify compiled)))
-	      (gen-code-boolify compiled)))
-       (gen-code-boolify compiled)))
+		     (n.compile p)
+		     (compile-unoptimized-boolify p n)))
+	      (compile-unoptimized-boolify p n))))
+      ((inherits-from? n (node 'If))
+       (compile-optimized-if-boolify p n))
+      (else
+       (compile-unoptimized-boolify p n))))

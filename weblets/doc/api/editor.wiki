@@ -53,7 +53,7 @@ functions which try to find if the editor is embedded in a form.
 If this is the case, these functions do the right job. Otherwise, they do
 nothing. 
 
-~~Summit and Cancel functions are called with the element 
+~~Submit and Cancel functions are called with the element 
 identifier of the editor as parameter. 
 
 </markup>

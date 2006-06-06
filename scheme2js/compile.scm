@@ -4,13 +4,14 @@
    (include "tools.sch")
    (include "compile-optimized-call.scm")
    (include "compile-optimized-boolify.scm")
+   (include "compile-optimized-set.scm")
    (option (loadq "protobject-eval.sch"))
-   (export (compile::bstring tree::pobject))
+   (export (compile tree::pobject p))
    (import protobject
+	   gen-js
 	   config
 	   nodes
 	   var
-	   gen-code
 	   mark-statements
 	   locals
 	   liveness
@@ -18,7 +19,7 @@
 	   verbose
 	   allocate-names))
 
-(define (compile::bstring tree::pobject)
+(define (compile tree::pobject p)
    (verbose "Compiling")
    (liveness tree)
    (if (config 'optimize-consts)
@@ -28,71 +29,120 @@
 	   #f)   ;; don't collect formals
 
    (gen-var-names tree)
-   (gen-code tree))
+   (gen-code tree p))
 
 
-(define (gen-code tree)
+(define (gen-code tree p)
    (verbose "  generating code")
-   ;; small HACK: XXX-compile is stored in XXX.prototype.compile-gen-code
-   ;;             XXX.prototype.compile is actually filled with the "location"
-   ;;              method, that adds the location to the output.
-   (overload compile-gen-code compile
+   (overload compile compile
 	     (Node Program Part Node Const Var-ref Lambda
 		   If Case Clause Set! Begin Bind-exit With-handler
 		   Call Tail-rec While Tail-rec-call Return
 		   Closure-alloc Label Break Pragma)
-	     (overload compile location (Node)
-		       (tree.compile))))
+	     (tree.compile p)))
 
-(define-pmethod (Node-location)
-   (let ((compil (this.compile-gen-code)))
-      (if (and (config 'print-locations)
-	       this.loc)
-	  (string-append compil "/*" (with-output-to-string
-					(lambda () (display this.loc)))
-			 "*/")
-	  compil)))
+(define *tmp-var* "tmp") ;; can't conflict, as all vars are starting with 'sc_
+(define *symbol-prefix* "\\u1E9C") ;; "\\u1E9D\\u1E9E\\u1E9F")
 
-(define (check-stmt-form expr node)
-   (if (statement-form? node)
-       (string-append expr ";")
-       expr))
+(define-macro (check-stmt-form node p . Lbody)
+   `(begin
+       ,@Lbody
+       (if (statement-form? ,node)
+	   (display ";\n" ,p))))
+
+(define (compile-separated-list p els sep . Ldefault)
+   (define (iter els sep default)
+      (cond
+	 ((null? els) (if default
+			  (p-display p default)))
+	 ;; last element is displayed verbatim
+	 ((null? (cdr els))
+	  ((car els).compile p))
+	 ;; otherwise add "," between elements
+	 (else
+	  ((car els).compile p)
+	  (p-display p sep)
+	  (iter (cdr els) sep default))))
+   (iter els sep (and (not (null? Ldefault)) (car Ldefault))))
 
 (define-pmethod (Node-compile)
    (error #f "forgot node-type: " this))
 
-(define (compile-const const)
+(define (small-list/pair? l)
+   (define (smaller? l n)
+      (cond
+	 ((< n 0) #f)
+	 ((null? l) #t)
+	 ((not (pair? l)) #t)
+	 (else
+	  (smaller? (cdr l) (- n 1)))))
+
+   (smaller? l 5))
+
+(define (compile-const const p)
    (cond
-      ((null? const) (gen-code-nil))
-      ((boolean? const) (gen-code-bool const))
-      ((symbol? const) (gen-code-symbol const))
-      ((char? const) (gen-code-char const))
-      ((number? const) (gen-code-number const))
-      ((string? const) (gen-code-string const))
-      ((vector? const) (gen-code-vector (map compile-const
-					    (vector->list const))))
+      ((null? const) (p-display p "null"))
+      ((boolean? const) (if const
+			    (p-display p "true")
+			    (p-display p "false")))
+      ((symbol? const)
+       (p-display p "\"")
+       (if (not (config 'mutable-strings))
+	   (display *symbol-prefix* p))
+       (p-display p const)
+       (p-display p "\""))
+      ((char? const)
+       (p-display p "(new sc_Char(\"" (string-for-read (string const)) "\"))"))
+      ((number? const)
+       (p-display p const))
+      ((string? const)
+       (if (config 'mutable-strings)
+	   (p-display p "(new sc_String(\"" (string-for-read const) "\"))")
+	   (p-display p "\"" (string-for-read const) "\"")))
+      ((vector? const)
+       (p-display p "(new sc_Vector([")
+       (let loop ((i 0))
+	  (unless (>= i (vector-length const))
+	     (if (not (= i 0))
+		 (p-display p ", "))
+	     (compile-const (vector-ref const i) p)
+	     (loop (+ i 1))))
+       (p-display p "]))"))
       ((pair? const)
-       (gen-code-pair (compile-const (car const))
-		      (compile-const (cdr const))))
-      ((eq? const #unspecified) (gen-code-unspecified))
-      ((keyword? const) (gen-code-keyword const))
+       (if (small-list/pair? const)
+	   (begin
+	      (p-display p "(new sc_Pair(")
+	      (compile-const (car const) p)
+	      (p-display p ",")
+	      (compile-const (cdr const) p)
+	      (p-display p "))"))
+	   (begin
+	      (p-display p "sc_list(")
+	      (compile-const (car const) p)
+	      (for-each (lambda (e)
+			   (p-display p ", ")
+			   (compile-const e p))
+			(cdr const))
+	      (p-display p ")"))))
+      ((eq? const #unspecified) (p-display p "undefined"))
+      ((keyword? const)
+       (p-display p "(new sc_Keyword('" (keyword->string const) "'))"))
       (else (error #f "forgot Const-type: " const))))
    
-(define-pmethod (Const-compile)
-   (check-stmt-form (compile-const this.value) this))
+(define-pmethod (Const-compile p)
+   (check-stmt-form
+    this p
+    (compile-const this.value p)))
 
-(define-pmethod (Var-ref-compile)
-   (check-stmt-form this.var.compiled this))
+(define-pmethod (Var-ref-compile p)
+   (check-stmt-form
+    this p
+    (p-display p this.var.compiled)))
 
-(define (map-node-compile l)
-   (map (lambda (node)
-	   (node.compile))
-	l))
+(define-pmethod (Program-compile p)
+   (this.body.compile p))
 
-(define-pmethod (Program-compile)
-   (this.body.compile))
-
-(define-pmethod (Part-compile)
+(define-pmethod (Part-compile p)
    (define (split-globals local-vars)
       ;; HACK; TODO: outer-vars are for now just global vars.
       ;;    should be all vars that are visible to the outside of the part
@@ -107,40 +157,57 @@
 						#t)))
 	 (cons outer-vars part-vars)))
 
+   ;; TODO part-filter-fun / this.fun
    (let* ((outer/part-vars (if (config 'encapsulate-parts)
 			       (split-globals this.local-vars)
 			       (cons this.local-vars #f)))
 	  (outer-vars (car outer/part-vars))
 	  (outer-vars? (not (= 0 (hashtable-size outer-vars))))
 	  (part-vars (cdr outer/part-vars))
+
 	  (part-filter-fun this.fun)
-	  (compiled-body (if (and part-vars
+	  (part-filter-port/close (part-filter-fun p))
+	  (part-filter-port (car part-filter-port/close))
+	  (part-filter-close (cdr part-filter-port/close))
+	  
+	  (whole-is-stmt-form? (and outer-vars?
+				    (statement-form? this)))
+
+	  (new-body (if (and part-vars
 				  (> (hashtable-size part-vars) 0))
 			     (let* ((fun (new-node Lambda '() #f this.body))
 				    (call (new-node Call fun '())))
 				(mark-statement-form! call #t)
 				(set! fun.local-vars part-vars)
-				(call.compile))
-			     (this.body.compile)))
-	  (whole-is-stmt-form? (and outer-vars?
-				    (statement-form? this)))
-	  (compiled-part (if outer-vars?
-			     (gen-code-begin
-			      (list
-				(gen-code-var-decls
-				 (map! (lambda (var)
-					  var.compiled)
-				       (hashtable-key-list outer-vars)))
-				compiled-body)
-			      #t)
-			     compiled-body)))
+				call)
+			     this.body)))
+      (if outer-vars?
+	  (begin
+	     (p-display part-filter-port "\n{\n")
+	     (hashtable-for-each outer-vars
+				 (lambda (var ignored)
+				    (p-display part-filter-port
+					       "var " var.compiled ";\n")))
+	     (new-body.compile part-filter-port)
+	     (p-display part-filter-port "\n}\n"))
+	  (new-body.compile part-filter-port))
 
-      (let ((res (part-filter-fun compiled-part whole-is-stmt-form?)))
-	 (if (not whole-is-stmt-form?)
-	     (string-append res ";")
-	     res))))
+      (part-filter-close part-filter-port whole-is-stmt-form?)
 
-(define-pmethod (Lambda-compile)
+      (if (not whole-is-stmt-form?)
+	  (p-display p ";"))))
+
+      
+
+(define-pmethod (Lambda-compile p)
+   (define (vaarg-code vaarg nb-args)
+      (let ((L vaarg.compiled))
+	 (p-display p "var " L " = null;\n"
+		    "for (var " *tmp-var* " = arguments.length - 1;"
+		    *tmp-var* ">=" (number->string nb-args) ";"
+		    *tmp-var* "--) {\n")
+	 (p-display p L " = sc_cons(arguments[" *tmp-var* "], " L ");\n}\n")))
+
    (let ((locals this.local-vars)
 	 (ht (make-hashtable)))
       ;; ht will contain the var-names. (unify local-names)
@@ -148,101 +215,201 @@
 			  (lambda (var ignored)
 			     (hashtable-put! ht var.compiled #t)))
       (check-stmt-form
-       (gen-code-function (map-node-compile this.formals)
-			  (and this.vaarg (this.vaarg.compile))
-			  (this.body.compile)
-			  (hashtable-key-list ht)
-			  (statement-form? this))
-       this)))
+       this p
+       (if (statement-form? this) (p-display p "("))
+       (p-display p "function(")
+       (compile-separated-list p this.formals ", ")
+       (p-display p ")\n{\n")
+       (if this.vaarg
+	   (vaarg-code this.vaarg.var (length this.formals)))
+       (hashtable-for-each ht
+			   (lambda (var ignored)
+			      (p-display p "var " var ";\n")))
+       (this.body.compile p)
+       (p-display p "\n}\n")
+       (if (statement-form? this) (p-display p ")")))))
 
-(define (boolify compiled node)
+(define (compile-unoptimized-boolify p node)
+   (p-display p "(")
+   (node.compile p)
+   (p-display p "!== false)"))
+   
+(define (compile-boolified p node)
    (if (config 'optimize-boolify)
-       (compile-optimized-boolify compiled node)
-       (gen-code-boolify compiled)))
+       (compile-optimized-boolify p node)
+       (compile-unoptimized-boolify p node)))
 
-(define-pmethod (If-compile)
-   (gen-code-if (boolify (this.test.compile) this.test)
-		(this.then.compile)
-		(this.else.compile)
-		(statement-form? this)))
+(define-pmethod (If-compile p)
+   (if (statement-form? this)
+       (begin
+	  (p-display p "if (")
+	  (compile-boolified p this.test)
+	  (p-display p ") ")
+	  (this.then.compile p)
+	  (p-display p "\nelse\n")
+	  (this.else.compile p))
+       (begin
+	  (p-display p "(")
+	  (compile-boolified p this.test)
+	  (p-display p "?\n")
+	  (this.then.compile p)
+	  (p-display p ":\n")
+	  (this.else.compile p)
+	  (p-display p ")"))))
 
-(define-pmethod (Case-compile)
-   (gen-code-switch (this.key.compile)
-		    (map-node-compile this.clauses)))
+(define-pmethod (Case-compile p)
+   (p-display p "switch (")
+   (this.key.compile p)
+   (p-display p ") {\n")
+   (for-each (lambda (clause)
+		(clause.compile p)
+		(p-display p "\n"))
+	     this.clauses)
+   (p-display p "}\n"))
 
-(define-pmethod (Clause-compile)
+(define-pmethod (Clause-compile p)
    (if this.default-clause?
-       (gen-code-default-clause (this.expr.compile))
-       (gen-code-clause (map-node-compile this.consts)
-			(this.expr.compile))))
+       (begin
+	  (p-display p "default: ")
+	  (this.expr.compile p)
+	  (p-display p "\nbreak;"))
+       (begin
+	  (for-each (lambda (const)
+		       (p-display p "case ")
+		       (const.compile p)
+		       (p-display p ":\n"))
+		    this.consts)
+	  (this.expr.compile p)
+	  (p-display p "\nbreak;"))))
 
-(define-pmethod (Set!-compile)
-   (check-stmt-form (gen-code-assign (this.lvalue.compile)
-				     (this.val.compile)
-				     (not (statement-form? this)))
-		    this))
+(define (compile-unoptimized-set! p n)
+   (p-display p "(")
+   (n.lvalue.compile p)
+   (p-display p " = ")
+   (n.val.compile p)
+   (p-display p ")"))
 
-(define-pmethod (Begin-compile)
-   (gen-code-begin (map-node-compile this.exprs)
-		   (statement-form? this)))
-
-(define-pmethod (Bind-exit-compile)
-   (gen-code-bind-exit (this.escape.compile)
-		       (this.body.compile)
-		       (this.result-decl.compile)
-		       (this.invoc-body.compile)))
-
-(define-pmethod (With-handler-compile)
-   (gen-code-with-handler (this.exception.compile)
-			  (this.catch.compile)
-			  (this.body.compile)))
-
-(define-pmethod (Call-compile)
+(define-pmethod (Set!-compile p)
    (check-stmt-form
+    this p
+    (if (config 'optimize-set!)
+	(compile-optimized-set! p this)
+	(compile-unoptimized-set! p this))))
+
+(define-pmethod (Begin-compile p)
+   (if (statement-form? this)
+       (begin
+	  (p-display p "\n{\n")
+	  (for-each (lambda (n)
+		       (n.compile p))
+		    this.exprs)
+	  (p-display p "}\n"))
+       (begin
+	  (p-display p "(")
+	  (compile-separated-list p this.exprs ", ")
+	  (p-display p ")"))))
+
+(define-pmethod (Bind-exit-compile p)
+   (let ((escape-obj (gen-JS-sym 'escape_obj)))
+      (p-display p
+		 "{\n"
+		 "function ")
+      (this.escape.compile p)
+      (p-display p
+		 "(res) { "
+		 escape-obj ".res = res;"
+		 escape-obj ".bindExitMarker = true;\n"
+		 "throw " escape-obj ";"
+		 "}\n"
+		 "var " escape-obj " = new Object();\n"
+		 "try {\n")
+      (this.body.compile p)
+      (p-display p "} catch (exc) {\n"
+		 "if (exc === " escape-obj ") {\n")
+      (this.result-decl.compile p)
+      (p-display p " = exc.res;\n")
+      (this.invoc-body.compile p)
+      (p-display p
+		 "\n} else throw exc;\n"
+		 "}\n"
+		 "}\n")))
+
+(define-pmethod (With-handler-compile p)
+   (let ((exception this.exception.compiled))
+      (p-display p "try {\n")
+      (this.body.compile p)
+      (p-display p
+		 "} catch (" exception ") {\n"
+		 "if (!" exception ".bindExitMarker) {\n")
+      (this.catch.compile p)
+      (p-display p
+		 "\n} else throw " exception ";\n"
+		 "}\n")))
+
+(define-pmethod (Call-compile p)
+   (check-stmt-form
+    this p
     (let ((operator this.operator))
-       (or (and (config 'optimize-calls)
-		(compile-optimized-call operator this.operands))
-	   (gen-code-call (this.operator.compile)
-			  (map-node-compile this.operands))))
-    this))
+       (unless (and (config 'optimize-calls)
+		    (compile-optimized-call p operator this.operands))
+	  (p-display p "(")
+	  (this.operator.compile p)
+	  (p-display p "(")
+	  (compile-separated-list p this.operands ", ")
+	  (p-display p "))")))))
 
-(define-pmethod (Tail-rec-compile)
-   (let* ((label this.label)
-	  (body (gen-code-begin (list (this.body.compile)
-				      (gen-code-break label))
-				#t))
-	  (true (new-node Const #t)))
-      (gen-code-while (true.compile)
-		      body
-		      label)))
+(define-pmethod (Tail-rec-compile p)
+   (let ((label (and this.label (mangle-JS-sym this.label))))
+      (if label (p-display p label ": "))
+      (p-display p "while (true) {")
+      (this.body.compile p)
+      (if label
+	  (p-display p "break " label ";\n")
+	  (p-display p "break;\n"))
+      (p-display p "}\n")))
 
-(define-pmethod (While-compile)
+(define-pmethod (While-compile p)
    ;; while nodes shouldn't need their label.
-   (let* ((test (this.test.compile))
-	  (body (this.body.compile)))
-      (gen-code-while test
-		      body
-		      #f)))
+   (p-display p "while (")
+   (this.test.compile p)
+   (p-display p ") {\n")
+   (this.body.compile p)
+   (p-display p "}\n"))
 
-(define-pmethod (Tail-rec-call-compile)
-   (gen-code-continue this.label))
+(define-pmethod (Tail-rec-call-compile p)
+   (let ((label (and this.label (mangle-JS-sym this.label))))
+      (if label
+	  (p-display p "continue " label ";\n")
+	  (p-display p "continue;\n"))))
 
-(define-pmethod (Return-compile)
-   (gen-code-return (this.val.compile)))
+(define-pmethod (Return-compile p)
+   (p-display p "return ")
+   (this.val.compile p)
+   (p-display p ";\n"))
 
-(define-pmethod (Closure-alloc-compile)
-   (gen-code-closure-alloc (map (lambda (var)
-				   var.compiled)
-				this.allocated-vars)
-			   (this.body.compile)))
+(define-pmethod (Closure-alloc-compile p)
+   (p-display p
+	      "{\n"
+	      "var " *tmp-var* " = new Object();\n")
+   (for-each (lambda (var)
+		(p-display p *tmp-var* "." var.compiled " = undefined;\n"))
+	     this.allocated-vars)
+   (p-display p "with(" *tmp-var* ")")
+   (this.body.compile p)
+   (p-display p "\n}"))
 
-(define-pmethod (Label-compile)
-   (gen-code-label this.id (this.body.compile)))
+(define-pmethod (Label-compile p)
+   (p-display p (mangle-JS-sym this.id) ":{\n")
+   (this.body.compile p)
+   (p-display p "\n}"))
 
-(define-pmethod (Break-compile)
-   (gen-code-begin (list (this.val.compile)
-			 (gen-code-break this.label.id))
-		   #t))
+(define-pmethod (Break-compile p)
+   (p-display p "{\n")
+   (this.val.compile p)
+   (if this.label
+       (p-display p "break " (mangle-JS-sym this.label) ";\n")
+       (p-display p "break;\n"))
+   (p-display p "}\n"))
 
-(define-pmethod (Pragma-compile)
-   (gen-code-pragma this.str))
+(define-pmethod (Pragma-compile p)
+   (p-display p "(" this.str ")"))

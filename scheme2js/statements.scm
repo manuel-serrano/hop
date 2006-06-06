@@ -137,14 +137,15 @@
 	  (mark-node! new-val #t)
 	  (mark-node! bnode #t)
 	  bnode))
-      (state-var
-       (set! this.val (this.val.traverse! #f #f))
-       (let* ((unspec-assig (state-var.assig (new-node Const #unspecified)))
-	      (bnode (new-node Begin `(,this ,unspec-assig))))
-	  (mark-node! this statement-form?)
-	  (mark-node! unspec-assig statement-form?)
-	  (mark-node! bnode statement-form?)
-	  bnode))
+      ;; result of assignment is unspecified. We don't need to set it to #unspecified...
+;       (state-var
+;        (set! this.val (this.val.traverse! #f #f))
+;        (let* ((unspec-assig (state-var.assig (new-node Const #unspecified)))
+; 	      (bnode (new-node Begin `(,this ,unspec-assig))))
+; 	  (mark-node! this statement-form?)
+; 	  (mark-node! unspec-assig statement-form?)
+; 	  (mark-node! bnode statement-form?)
+; 	  bnode))
       (else
        (set! this.val (this.val.traverse! #f #f))
        (mark-node! this statement-form?)
@@ -201,6 +202,7 @@
 	 (if (not (null? prolog))
 	     (let ((bnode (new-node Begin (append! prolog (list new-this)))))
 		(mark-node! bnode #t)
+		(mark-node! new-this #t)
 		bnode)
 	     (begin
 		(mark-node! new-this statement-form?)

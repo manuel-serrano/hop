@@ -132,7 +132,7 @@ shows how to implement Wiki plugins.
 
 == Credits ==
 
-HOP boroughs its wiki syntax from several projects. The three mains are:
+HOP borrows its wiki syntax from several projects. The three mains are:
 
   * [[http://wiki.splitbrain.org|DokuWiki]]
   * [[http://www.methods.co.nz/asciidoc/|AsciiDoc]]
