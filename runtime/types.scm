@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Jun  6 17:58:32 2006 (serrano)                */
+;*    Last change :  Wed Jun  7 17:37:04 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -123,7 +123,9 @@
 	      (%exec::procedure read-only)
 	      (proc::procedure read-only)
 	      (javascript::bstring read-only)
-	      (expiration read-only (default #f)))
+	      (creation::elong read-only)
+	      (timeout::long read-only (default -1))
+	      (ttl::long (default -1)))
 
 	   (http-request-hook-add! ::http-request ::procedure)))
    

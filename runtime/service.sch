@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Tue Jun  6 18:04:39 2006 (serrano)                */
+;*    Last change :  Wed Jun  7 17:40:39 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    $service/filter ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro ($service/filter svcurl args . body)
+(define-pervasive-macro ($service/filter svcurl timeout ttl args . body)
    (define (service-js-arguments formals)
       (if (null? formals)
 	  "[]"
@@ -56,38 +56,20 @@
 					   (,proc ,@(map (lambda (a)
 							    `(cgi-arg ,(symbol->string a) ,ca))
 							 args)))
-				      `(,proc (error '$service/filter "not implement" "yet"))))))))
-	  ,(if (string? svcurl)
-	       `(let* ((,url ,svcurl)
-		       (,path (make-file-name (hop-service-base) ,url))
-		       (svc (instantiate::hop-service
-			       (id (string->symbol ,url))
-			       (path ,path)
-			       (args ',args)
-			       (%exec ,exec)
-			       (proc ,proc)
-			       (javascript ,(jscript vargs path)))))
-		   (register-service! svc))
-	       `(let ((,url (service->string ,exec)))
-		   (if (string? ,url)
-		       (let ((,path (make-file-path (hop-service-base) "svc" ,url)))
-			  (instantiate::hop-service
-			     (id 'svc)
-			     (path ,path)
-			     (args ',args)
-			     (%exec ,exec)
-			     (proc ,proc)
-			     (javascript ,(jscript vargs path))))
-		       (let* ((,url (get-service-url))
-			      (,path (make-file-name (hop-service-base) ,url))
-			      (svc (instantiate::hop-service
-				      (id (string->symbol ,url))
-				      (path ,path)
-				      (args ',args)
-				      (%exec ,exec)
-				      (proc ,proc)
-				      (javascript ,(jscript vargs path)))))
-			  (register-service! svc))))))))
+				      `(,proc (error '$service/filter "not implement" "yet")))))))
+	      (,url ,svcurl)
+	      (,path (make-file-name (hop-service-base) ,url))
+	      (svc (instantiate::hop-service
+		      (id (string->symbol ,url))
+		      (path ,path)
+		      (args ',args)
+		      (%exec ,exec)
+		      (proc ,proc)
+		      (javascript ,(jscript vargs path))
+		      (creation (date->seconds (current-date)))
+		      (timeout ,timeout)
+		      (ttl ,ttl))))
+	  (register-service! svc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-service ...                                               */
@@ -98,15 +80,43 @@
       (if (not (and (pair? decl) (every? symbol? decl)))
 	  (error 'define-service "Illegal service declaration" decl)
 	  `(define ,id
-	      ($service/filter ,(symbol->string id) ,args ,@body)))))
+	      ($service/filter ,(symbol->string id) -1 -1 ,args ,@body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (service args . body)
-   (if (not (or (symbol? args) (every? symbol? args)))
-       (error 'service "Illegal service declaration" args)
-       `($service/filter (get-service-url) ,args ,@body)))
+(define-pervasive-macro (service . args)
+   (let loop ((a args)
+	      (tmt '(hop-service-default-timeout))
+	      (ttl -1))
+      (cond
+	 ((or (symbol? (car a))
+	      (and (list? (car a)) (every? symbol? (car a))))
+	  (if (null? (cdr a))
+	      (error 'service
+		     "Illegal service (empty body)"
+		     (cons 'service args))
+	      `($service/filter (get-service-url) ,tmt ,ttl ,(car a) ,@(cdr a))))
+	 ((eq? (car a) :timeout)
+	  (if (null? (cdr a))
+	      (error 'service
+		     "Illegal service declaration (missing timeout)"
+		     (cons 'service args))
+	      (loop (cddr a)
+		    (cadr a)
+		    ttl)))
+	 ((eq? (car a) :ttl)
+	  (if (null? (cdr a))
+	      (error 'service
+		     "Illegal service declaration (missing ttl)"
+		     (cons 'service args))
+	      (loop (cddr a)
+		    tmt
+		    (cadr a))))
+	 (else
+	  (error 'service
+		 "Illegal service declaration"
+		 (cons 'service args))))))
 	      
 ;*---------------------------------------------------------------------*/
 ;*    $roundtrip ...                                                   */

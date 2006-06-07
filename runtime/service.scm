@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Jun  6 18:56:27 2006 (serrano)                */
+;*    Last change :  Wed Jun  7 17:46:46 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -13,10 +13,10 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_service
-
+   
    (include "eval-macro.sch"
 	    "service.sch")
-
+   
    (library web)
    
    (import  __hop_param
@@ -47,13 +47,13 @@
 	    (autoload ::bstring ::procedure . hooks)
 	    (autoload-filter ::http-request)
 	    (service-filter ::http-request)
-	    (register-service!::hop-service ::hop-service)
-	    (service->string ::procedure)))
+	    (register-service!::hop-service ::hop-service)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define *service-table-mutex* (make-mutex "hop-service-table"))
+(define *service-serialize-mutex* (make-mutex "hop-service-serialize"))
 
 ;*---------------------------------------------------------------------*/
 ;*    *service-table-count* ...                                        */
@@ -284,31 +284,20 @@
 		  (mutex-unlock! *service-mutex*)
 		  (cond
 		     ((hop-service? svc)
-		      (with-access::hop-service svc (%exec)
+		      (with-access::hop-service svc (%exec ttl)
+			 (cond
+			    ((=fx ttl 1)
+			     (unregister-service! svc))
+			    ((>fx ttl 1)
+			     (set! ttl (-fx ttl 1))))
 			 (scheme->response (%exec req) req)))
-		     ((substring-at? path (hop-serialized-service-prefix) 0)
-		      (let* ((sp (substring path
-					    (string-length
-					     (hop-serialized-service-prefix))
-					    (string-length path)))
-			     (len (string-length sp)))
-			 (if (<fx len 33)
-			     (http-corrupted-service-error req)
-			     (let ((sum (substring sp 0 32))
-				   (rest (substring sp 32 len)))
-				(if (string=? sum (md5sum rest))
-				    (let ((s (string->obj rest)))
-				       (if (not (=fx (car s) (hop-session)))
-					   (http-invalidated-service-error req)
-					   (let ((e (cdr s)))
-					      (scheme->response (e req) req))))
-				    (http-corrupted-service-error req))))))
 		     (else
 		      (let ((init (hop-initial-weblet)))
 			 (when (and (string? init)
 				    (substring-at? path (hop-service-base) 0)
 				    (let ((l1 (string-length path))
-					  (l2 (string-length (hop-service-base))))
+					  (l2 (string-length
+					       (hop-service-base))))
 				       (or (=fx l1 l2)
 					   (and (=fx l1 (+fx l2 1))
 						(char=? (string-ref path l2)
@@ -323,49 +312,45 @@
 ;*---------------------------------------------------------------------*/
 (define (register-service! svc)
    (with-access::hop-service svc (path)
-      (hop-verb 2 (hop-color 1 "" " REG. SERVICE: ") svc " " path "\n")
+      (let ((sz (hashtable-size *service-table*)))
+	 (hop-verb 2 (hop-color 1 "" " REG. SERVICE")
+		   "(" (/fx sz 2) "): "
+		   svc " " path "\n")
+	 (mutex-lock! *service-mutex*)
+	 (hashtable-put! *service-table* path svc)
+	 (hashtable-put! *service-table* (string-append path "/") svc)
+	 (let ((l (string-length path)))
+	    (let loop ((i (+fx (string-length (hop-service-base)) 1)))
+	       (cond
+		  ((>=fx i l)
+		   (hop-weblets-set! (cons svc (hop-weblets))))
+		  ((char=? (string-ref path i) #\/)
+		   #unspecified)
+		  (else
+		   (loop (+fx i 1))))))
+	 (when (=fx (remainder sz (hop-service-flush-pace)) 0)
+	    (flush-expired-services!))
+	 (mutex-unlock! *service-mutex*)
+	 svc)))
+
+;*---------------------------------------------------------------------*/
+;*    flush-expired-services! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (flush-expired-services!)
+   (hashtable-filter! *service-table*
+		      (lambda (key svc)
+			 (with-access::hop-service svc (creation timeout path)
+			    (or (<=fx timeout 0)
+				(<second (date->seconds (current-date))
+					 (+second creation timeout)))))))
+			       
+			 
+;*---------------------------------------------------------------------*/
+;*    unregister-service! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (unregister-service! svc)
+   (with-access::hop-service svc (path)
       (mutex-lock! *service-mutex*)
-      (hashtable-put! *service-table* path svc)
-      (hashtable-put! *service-table* (string-append path "/") svc)
-      (let ((l (string-length path)))
-	 (let loop ((i (+fx (string-length (hop-service-base)) 1)))
-	    (cond
-	       ((>=fx i l)
-		(hop-weblets-set! (cons svc (hop-weblets))))
-	       ((char=? (string-ref path i) #\/)
-		#unspecified)
-	       (else
-		(loop (+fx i 1))))))
-      (mutex-unlock! *service-mutex*)
-      svc))
-
-;*---------------------------------------------------------------------*/
-;*    service->string ...                                              */
-;*---------------------------------------------------------------------*/
-(define (service->string proc)
-   (cond-expand
-      (bigloo2.8a
-       #f)
-      (bigloo-c
-       (let ((str (obj->string (cons (hop-session) proc))))
-	  (when (<fx (string-length str) (hop-max-url-length))
-	     (let* ((sum (md5sum str))
-		    (ustr (url-encode (string-append sum str))))
-		(when (<fx (string-length ustr) (hop-max-url-length))
-		   ustr)))))
-      
-      (else
-       #f)))
-
-;*---------------------------------------------------------------------*/
-;*    Register procedure serializer/unserializer... ...                */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo2.8a
-    #unspecified)
-   (bigloo-c
-    (register-procedure-serialization
-     $procedure-entry->string
-     $string->procedure-entry))
-   (else
-    #unspecified))
+      (hashtable-remove! *service-table* path)
+      (hashtable-remove! *service-table* (string-append path "/"))
+      (mutex-unlock! *service-mutex*)))
