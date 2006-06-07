@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jun  2 13:57:22 2006 (serrano)                */
+;*    Last change :  Tue Jun  6 18:49:08 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -38,6 +38,8 @@
 	    (http-bad-request obj)
 	    (http-internal-error ::&error ::obj)
 	    (http-service-error ::http-request ::symbol ::bstring)
+	    (http-invalidated-service-error ::http-request)
+	    (http-corrupted-service-error ::http-request)
 	    (http-warning msg #!optional dump)
 	    (http-internal-warning e)
 	    (http-service-unavailable obj)))
@@ -333,6 +335,65 @@ Reloading the page is the only workaround.")))))))))))))
 				      (<ETD> :class "dump"
 					     (<PRE>
 						(html-string-encode m)))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-invalidated-service-error ...                               */
+;*---------------------------------------------------------------------*/
+(define (http-invalidated-service-error req)
+   (instantiate::http-response-hop
+      (start-line "HTTP/1.0 404 Not Found")
+      (xml (<HTML>
+	      (<HEAD> :css "hop-error.hss")
+	      (<BODY>
+		 (<CENTER>
+		    (<ETABLE>
+		       (<TR>
+			  (<ETD>
+			     (<EIMG> :src (format "~a/icons/notfound.png"
+						  (hop-share-directory))))
+			  (<ETD>
+			     (<TABLE>
+				:style "35em"
+				(<TR> (<ETD> :class "title"
+					     "Invalidated service!"
+					     ))
+				(<TR> (<ETD> :class "msg"
+					     (<SPAN> :class "filenotfound"
+						     (<TT> "(service ...)"))))
+				(<TR> (<ETD> :class "dump"
+					     (<SPAN> "You are trying to executed an invalidated service!
+<br><br>
+This is generally due to a restart of the server.
+On restart the server invalidates all anonymous services that hence
+can no longer be executed.<br><br>
+Reloading the page is the only workaround.")))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-corrupted-service-error ...                                 */
+;*---------------------------------------------------------------------*/
+(define (http-corrupted-service-error req)
+   (instantiate::http-response-hop
+      (start-line "HTTP/1.0 404 Not Found")
+      (xml (<HTML>
+	      (<HEAD> :css "hop-error.hss")
+	      (<BODY>
+		 (<CENTER>
+		    (<ETABLE>
+		       (<TR>
+			  (<ETD>
+			     (<EIMG> :src (format "~a/icons/notfound.png"
+						  (hop-share-directory))))
+			  (<ETD>
+			     (<TABLE>
+				:style "35em"
+				(<TR> (<ETD> :class "title"
+					     "Corrupted service!"
+					     ))
+				(<TR> (<ETD> :class "msg"
+					     (<SPAN> :class "filenotfound"
+						     (<TT> "(service ...)"))))
+				(<TR> (<ETD> :class "dump"
+					     (<SPAN> "You are trying to executed an corrupted service!")))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-internal-warning ...                                        */

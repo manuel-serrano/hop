@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Jun  5 18:27:07 2006 (serrano)                */
+;*    Last change :  Wed Jun  7 17:45:22 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -227,8 +227,6 @@
 (define-method (http-response r::http-response-file socket)
    (with-trace 3 'http-response::http-response-file
       (with-access::http-response-file r (start-line header content-type server file bodyp request timeout)
-	 (tprint "http-response-file: " file " "
-		 (authorized-path? request file))
 	 (if (authorized-path? request file)
 	     ;; the file is never read so it can be open it with a tiny buffer
 	     (let ((p (socket-output socket))

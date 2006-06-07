@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jun  5 17:40:19 2006 (serrano)                */
+;*    Last change :  Wed Jun  7 17:37:30 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -87,8 +87,9 @@
 	    
 	    (hop-server-hostname::bstring)
 	    (hop-server-ip::bstring)
-	    
+
 	    (hop-service-base::bstring)
+	    
 	    (hop-service-weblet-name::bstring)
 
 	    (hop-initial-weblet::bstring)
@@ -151,6 +152,12 @@
 
 	    (hop-service-access-control::procedure)
 	    (hop-service-access-control-set! ::procedure)
+
+	    (hop-service-default-timeout::long)
+	    (hop-service-default-timeout-set! ::long)
+	    
+	    (hop-service-flush-pace::long)
+	    (hop-service-flush-pace-set! ::long)
 
 	    (hop-input-timeout::long)
 	    (hop-input-timeout-set! ::long)
@@ -455,7 +462,7 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-base
    "/hop")
-
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-initial-weblet ...                                           */
 ;*    -------------------------------------------------------------    */
@@ -692,6 +699,18 @@
 		 v))
 	 (else
 	  v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-service-default-timeout ...                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-service-default-timeout
+   (* 2 24 60))
+
+;*---------------------------------------------------------------------*/
+;*    hop-service-flush-pace ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-service-flush-pace
+   2)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

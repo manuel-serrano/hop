@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Jun  3 15:30:12 2006 (serrano)                */
+;*    Last change :  Wed Jun  7 17:46:46 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -13,10 +13,10 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_service
-
+   
    (include "eval-macro.sch"
 	    "service.sch")
-
+   
    (library web)
    
    (import  __hop_param
@@ -53,6 +53,7 @@
 ;*    mutexes ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define *service-table-mutex* (make-mutex "hop-service-table"))
+(define *service-serialize-mutex* (make-mutex "hop-service-serialize"))
 
 ;*---------------------------------------------------------------------*/
 ;*    *service-table-count* ...                                        */
@@ -281,14 +282,22 @@
 	       (mutex-lock! *service-mutex*)
 	       (let ((svc (hashtable-get *service-table* path)))
 		  (mutex-unlock! *service-mutex*)
-		  (if (hop-service? svc)
-		      (with-access::hop-service svc (id %exec)
-			 (scheme->response (%exec req) req))
+		  (cond
+		     ((hop-service? svc)
+		      (with-access::hop-service svc (%exec ttl)
+			 (cond
+			    ((=fx ttl 1)
+			     (unregister-service! svc))
+			    ((>fx ttl 1)
+			     (set! ttl (-fx ttl 1))))
+			 (scheme->response (%exec req) req)))
+		     (else
 		      (let ((init (hop-initial-weblet)))
 			 (when (and (string? init)
 				    (substring-at? path (hop-service-base) 0)
 				    (let ((l1 (string-length path))
-					  (l2 (string-length (hop-service-base))))
+					  (l2 (string-length
+					       (hop-service-base))))
 				       (or (=fx l1 l2)
 					   (and (=fx l1 (+fx l2 1))
 						(char=? (string-ref path l2)
@@ -296,25 +305,52 @@
 			    (set! path (string-append (hop-service-base)
 						      "/"
 						      init))
-			    (loop))))))))))
+			    (loop)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (register-service! svc)
    (with-access::hop-service svc (path)
-      (hop-verb 2 (hop-color 1 "" " REG. SERVICE: ") svc " " path "\n")
+      (let ((sz (hashtable-size *service-table*)))
+	 (hop-verb 2 (hop-color 1 "" " REG. SERVICE")
+		   "(" (/fx sz 2) "): "
+		   svc " " path "\n")
+	 (mutex-lock! *service-mutex*)
+	 (hashtable-put! *service-table* path svc)
+	 (hashtable-put! *service-table* (string-append path "/") svc)
+	 (let ((l (string-length path)))
+	    (let loop ((i (+fx (string-length (hop-service-base)) 1)))
+	       (cond
+		  ((>=fx i l)
+		   (hop-weblets-set! (cons svc (hop-weblets))))
+		  ((char=? (string-ref path i) #\/)
+		   #unspecified)
+		  (else
+		   (loop (+fx i 1))))))
+	 (when (=fx (remainder sz (hop-service-flush-pace)) 0)
+	    (flush-expired-services!))
+	 (mutex-unlock! *service-mutex*)
+	 svc)))
+
+;*---------------------------------------------------------------------*/
+;*    flush-expired-services! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (flush-expired-services!)
+   (hashtable-filter! *service-table*
+		      (lambda (key svc)
+			 (with-access::hop-service svc (creation timeout path)
+			    (or (<=fx timeout 0)
+				(<second (date->seconds (current-date))
+					 (+second creation timeout)))))))
+			       
+			 
+;*---------------------------------------------------------------------*/
+;*    unregister-service! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (unregister-service! svc)
+   (with-access::hop-service svc (path)
       (mutex-lock! *service-mutex*)
-      (hashtable-put! *service-table* path svc)
-      (hashtable-put! *service-table* (string-append path "/") svc)
-      (let ((l (string-length path)))
-	 (let loop ((i (+fx (string-length (hop-service-base)) 1)))
-	    (cond
-	       ((>=fx i l)
-		(hop-weblets-set! (cons svc (hop-weblets))))
-	       ((char=? (string-ref path i) #\/)
-		#unspecified)
-	       (else
-		(loop (+fx i 1))))))
-      (mutex-unlock! *service-mutex*)
-      svc))
+      (hashtable-remove! *service-table* path)
+      (hashtable-remove! *service-table* (string-append path "/"))
+      (mutex-unlock! *service-mutex*)))
