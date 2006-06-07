@@ -124,27 +124,35 @@
 		      (break-cycle var))
 		   vars))
 
-      ;; replaces vars. the given ht contains v1->v2 mappings.
-      ;; if during traversal of 'n' v1 is encountered it is replaced by v2
-      ;; this procedure stops at function boundaries.
-      (define (replace-vars! n ht)
-	 (define-pmethod (Node-replace-vars)
-	    (this.traverse0))
-	 (define-pmethod (Var-ref-replace-vars)
-	    (let ((replacement (hashtable-get ht this.var)))
-	       (if replacement
-		   (set! this.var replacement))))
-	 (define-pmethod (Lambda-replace-vars)
-	    'do-nothing)
-	 (overload traverse replace-vars (Node
-					  Var-ref
-					  Lambda)
-		   (n.traverse))
-	 n)
-
+      ;; creates break-var, and breaks cycle (decreasing rev-dep.
+      ;; ex: var x should be broken:
+      ;;         tmp-x.new-val <- x.new-val
+      ;;         x.new-val <- tmp-x
+      ;; (modulo taking the reference....)
+      ;; At the same time x does become completely independent of any other
+      ;; variable. (except tmp-x, which is going to be treated at the very
+      ;; beginning anyways).
+      (define (break-var-decl cyclic-var)
+	 (let ((new-var-decl (Decl-of-new-Var cyclic-var.id)))
+	       (set! new-var-decl.var.new-val cyclic-var.new-val)
+	       (set! cyclic-var.new-val (new-var-decl.var.reference))
+	       ;; the cyclic-var is not cyclic anymore, and doesn't depend on
+	       ;; any variables anymore. We therefore remove the cyclic-var
+	       ;; from the revdeps of its "ex"-dependencies.
+	       ;; We don't add these references to the break-vars, as these are
+	       ;; going to be treated differently anyways, and are going to be
+	       ;; assigned first. (As we know, that they don't have any revdeps.
+	       (hashtable-for-each cyclic-var.referenced-vars
+				   (lambda (v ignored)
+				      (hashtable-remove! v.rev-referenced-vars
+							 cyclic-var)))
+	       ;; and we replace the deps by an empty hashtable.
+	       (set! cyclic-var.referenced-vars (make-eq-hashtable))
+	       new-var-decl))
+	 
       ;; breaks dependency cycles and returns an ordered list of "Set!"s.
-      ;; the given vars are referenced (so not directly put into these "Set!"s.
-      ;; the "new-val" within the given vars is deleted.
+      ;; the given vars are referenced (so not directly put into these "Set!"s).
+      ;; the "new-val"-field within the given vars is deleted.
       (define (non-cyclic-assigs vars)
 	 (define (clean-var! var)
 	    (delete! var.new-val)
@@ -166,54 +174,40 @@
 	 (let* ((cyclic-vars (filter (lambda (var)
 					var.cyclic-var?)
 				     vars))
+		(break-var-decls (map break-var-decl cyclic-vars))
+		;; now that we have introduced the break-vars we can search for
+		;; rev-independant variables. IE vars, that are not used by
+		;; anyone else.
 		(indeps (filter (lambda (var)
-				   (= (hashtable-size var.rev-referenced-vars)
-				      0))
-				vars))
-		(pending (append! indeps cyclic-vars))
+                                   (= (hashtable-size var.rev-referenced-vars)
+                                      0))
+                                vars)))
 
-		;; the replacement-ht contains a mapping var1->var2. var1 are
-		;; the cycle vars, that have been "broken". and var2 is their
-		;; replacement var. (in our previous case: var1=x and
-		;; var2=tmp-x)
-		;; once we made the assignments of the tmp-vars, we replace all
-		;; these variable-references by their tmp-references.
-		(replacement-ht (make-eq-hashtable)))
+	    ;; the indeps will be our pending set.
 
-	    ;; change the new-val in the vars. If tmp-x is the tmp-var of x,
-	    ;; then tmp-var.new-val <- x.new-val, and x.new-val receives
-	    ;; tmp-var.
-	    ;; (modulo reference-probs...)
-	    (for-each (lambda (v)
-			 (let ((new-var-decl (Decl-of-new-Var v.id)))
-			    (hashtable-put! replacement-ht v new-var-decl.var)
-			    (set! v.break-var new-var-decl)
-			    (set! new-var-decl.var.new-val v.new-val)
-			    (set! v.new-val (new-var-decl.var.reference))))
-		      cyclic-vars)
-
-	    ;; mark all pending vars as pending?
+	    ;; mark all indeps vars as pending?
 	    (for-each (lambda (var)
 			 (set! var.pending? #t))
-		      pending)
+		      indeps)
 
-	    ;; the rev-res is initially filled with the tmp-assignments. We
-	    ;; then add the pending-vars one by one.
+	    ;; We must treat the break-vars independantly, as the assignment
+	    ;; must not take a reference, but directly use the Decl.
+	    ;; the rev-res is therefore initially filled with these
+	    ;; tmp-assignments. We then add the pending-vars one by one.
 	    ;; Once we added a pending, we remove its deps in the tree.
 	    ;; if this leads to free another var, we add it to the pendings.
-	    (let loop ((pending pending)
-		       (rev-res (map (lambda (var)
-					(let* ((break-var var.break-var)
-					       (val break-var.var.new-val))
-					   (clean-var! break-var.var)
+	    (let loop ((pending indeps)
+		       (rev-res (map (lambda (break-var-decl)
+					(let* ((val break-var-decl.var.new-val))
+					   (clean-var! break-var-decl.var)
 					   (new-node Set!
-						     break-var
+						     break-var-decl
 						     val)))
-				     cyclic-vars)))
+				     break-var-decls)))
 	       (if (null? pending)
 		   (reverse! rev-res)
 		   (let* ((var (car pending))
-			  (new-val (replace-vars! var.new-val replacement-ht)))
+			  (new-val var.new-val))
 		      ;; remove rev-deps.
 		      (hashtable-for-each var.referenced-vars
 					  (lambda (v ignored)

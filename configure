@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jun  1 12:07:41 2006 (serrano)                */
+#*    Last change :  Mon Jun  5 18:30:25 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -37,7 +37,7 @@ mimetypes=/etc/mime.types
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="1.3.2"
-devel=pre
+devel=rc
 
 url="http://hop.inria.fr/"
 
@@ -57,7 +57,7 @@ repository=$HOME/prgm/project/hop/devel/repository
 bigloorequired=2.8a
 bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
-svn=ssh://skribe@saxo.essi.fr/hop
+svn=ssh://hop@hop.inria.fr/hop
 
 if [ $USER = "serrano" ]; then
   distribdir=$HOME/prgm/distrib
@@ -200,6 +200,22 @@ if [ $? != "0" ]; then
   echo "   $bigloorequired"
   echo "or more recent is required. It may be downloaded at:"
   echo "   $bigloourl"
+  exit 1;
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Then check if bglafile exists this is a good indicator of a      */
+#*    correct Bigloo installation.                                     */
+#*---------------------------------------------------------------------*/
+$afile runtime/*.scm > /dev/null 2> /dev/null
+
+if [ $? != "0" ]; then
+  echo "*** ERROR:configure:$afile. Aborting"
+  echo ""
+  echo "This error is due to a bad Bigloo installation. It might be that"
+  echo "you have installed Bigloo but not ran \"ldconfig\" afterward."
+  echo "In such a case, binaries produced by Bigloo cannot be executed"
+  echo "because the loader cannot find the Bigloo dynamic library."
   exit 1;
 fi
 

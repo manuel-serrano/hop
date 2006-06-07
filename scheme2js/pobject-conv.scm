@@ -52,15 +52,21 @@
 
 (define (lambda->pobject formals-vaarg body)
    (define (split-formals-vaarg! formals-vaarg)
-      (and (pair? formals-vaarg)
-	   (let* ((p (last-pair formals-vaarg))
-		  (vaarg (cdr p)))
-	      (set-cdr! p '())
-	      (and (not (null? vaarg))
-		   vaarg))))
-
-   (let ((vaarg (split-formals-vaarg! formals-vaarg))
-	 (formals formals-vaarg)) ;; just an alias
+      (cond
+	 ((null? formals-vaarg)
+	  (cons '() #f))
+	 ((not (pair? formals-vaarg))
+	  (cons '() formals-vaarg))
+	 (else
+	  (let* ((p (last-pair formals-vaarg))
+		 (vaarg (cdr p)))
+	     (set-cdr! p '()) ;; physically truncate the list
+	     (cons formals-vaarg
+		   (and (not (null? vaarg)) vaarg))))))
+      
+   (let* ((formals/vaarg (split-formals-vaarg! formals-vaarg))
+	  (formals (car formals/vaarg))
+	  (vaarg (cdr formals/vaarg)))
       (new-node Lambda
 	   (location-map (lambda (formal loc)
 			    (attach-location (new-node Decl formal) loc))

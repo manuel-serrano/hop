@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue May  9 09:17:56 2006 (serrano)                */
+;*    Last change :  Mon Jun  5 13:42:49 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -33,7 +33,7 @@
 	      (socket (default #f))
 	      (header::pair-nil (default '()))
 	      (content-length::elong read-only (default #e-1))
-	      (char-encoding read-only (default #f)))
+	      (char-encoding (default #f)))
 	   
 	   (class http-request::%http-message
 	      (user (default #f))
@@ -57,7 +57,8 @@
 	   (abstract-class %http-response::%http-message
 	      (content-type::bstring (default "text/html"))
 	      (request::obj (default #unspecified))
-	      (bodyp::bool read-only (default #t)))
+	      (bodyp::bool read-only (default #t))
+	      (timeout::int (default -1)))
 
 	   (class http-response-abort::%http-response)
 	   
@@ -70,7 +71,7 @@
 	      (path::bstring read-only)
 	      (userinfo read-only)
 	      (encoded-path::bstring read-only)
-	      (timeout read-only (default #f)))
+	      (remote-timeout read-only (default #f)))
 
 	   (class http-response-filter::%http-response
 	      (response::%http-response read-only)

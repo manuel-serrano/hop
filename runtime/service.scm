@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue May 30 17:14:07 2006 (serrano)                */
+;*    Last change :  Sat Jun  3 15:30:12 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -38,6 +38,7 @@
 	       (loaded::bool (default #f))))
    
    (export  (get-service-url::bstring)
+	    (hop-service-path? ::bstring)
 	    (make-hop-service-url::bstring ::hop-service . o)
 	    (make-service-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
@@ -285,7 +286,13 @@
 			 (scheme->response (%exec req) req))
 		      (let ((init (hop-initial-weblet)))
 			 (when (and (string? init)
-				    (string=? path (hop-service-base)))
+				    (substring-at? path (hop-service-base) 0)
+				    (let ((l1 (string-length path))
+					  (l2 (string-length (hop-service-base))))
+				       (or (=fx l1 l2)
+					   (and (=fx l1 (+fx l2 1))
+						(char=? (string-ref path l2)
+							#\/)))))
 			    (set! path (string-append (hop-service-base)
 						      "/"
 						      init))
@@ -296,7 +303,7 @@
 ;*---------------------------------------------------------------------*/
 (define (register-service! svc)
    (with-access::hop-service svc (path)
-      (hop-verb 2 (hop-color 1 1 " REG. SERVICE: ") svc " " path "\n")
+      (hop-verb 2 (hop-color 1 "" " REG. SERVICE: ") svc " " path "\n")
       (mutex-lock! *service-mutex*)
       (hashtable-put! *service-table* path svc)
       (hashtable-put! *service-table* (string-append path "/") svc)

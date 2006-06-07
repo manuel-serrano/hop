@@ -46,4 +46,6 @@ version 7 will improve the situation.
 == Requirement ==
 
 The [[http://www.inria.fr/mimosa/fp/Bigloo|Bigloo]] compiler is the only
-requirement to install HOP.
+strict requirement to install HOP. However, most weblets (Hop applications)
+use [[http://www.sqlite.org|SQLite]] for managing databases. Hence, it
+is recommended to install it prior to Bigloo.

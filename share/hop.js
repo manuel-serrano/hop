@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue May 30 13:28:20 2006 (serrano)                */
+/*    Last change :  Sat Jun  3 08:55:15 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -198,8 +198,9 @@ function hop_default_failure( http ) {
    var div = document.getElementById( "hop_default_failure" );
 
    t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
-   t = t.replace( /<(head|meta|link)[^>]*>/g, "<div style='display: none'>" );
-   t = t.replace( /<\/(head|meta|link)>/g, "</div>" );
+   t = t.replace( /<head[^>]*>/g, "<div style='display: none'>" );
+   t = t.replace( /<\/head>/g, "</div>" );
+   t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
    t = t.replace( /<html[^>]*>/g, "<div style='width: 45em; overflow: auto; cursor: pointer;' onclick='document.body.removeChild( document.getElementById( \"hop_default_failure\" ) )' title='Click to hide this message'>" );
    t = t.replace( /<\/html>/g, "</div>" );
    t = t.replace( /<body[^>]*>/g, "<div style='background: transparent; font-family: sans serif; -moz-opacity: 0.87'>" );
@@ -207,20 +208,20 @@ function hop_default_failure( http ) {
    t = t.replace( /&lt;/g, "<" );
    t = t.replace( /&gt;/g, ">" );
    t = t.replace( /&quot;/g, "\"" );
-
+   
    if( !div ) {
       div = document.createElement( "div" );
       div.id = "hop_default_failure";
       div.style.setProperty( "position", "absolute", "" );
       div.style.setProperty( "top", "100", "" );
-      div.style.setProperty( "z-index", "100", "" );
+      div.style.setProperty( "z-index", "10000", "" );
       div.style.setProperty( "width", "100%", "" );
       div.style.setProperty( "padding", "0", "" );
       div.align = "center";
       div.style.setProperty( "background", "transparent", "" );
 
       div.innerHTML = t;
-      
+
       document.body.appendChild( div );
    } else {
       div.innerHTML = t;
@@ -364,7 +365,7 @@ function hop( service, success, failure, sync ) {
       resume_failure = failure;
    }
    
-   return hop_inner( "HOP", service, success, failure, sync );
+   return hop_inner( "GET", service, success, failure, sync );
 }
 
 /*---------------------------------------------------------------------*/
@@ -400,7 +401,7 @@ function with_hop( service, success, failure ) {
 /*    hop_event_hander_set ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_event_handler_set( svc, evt, success, failure ) {
-   return hop_inner( "HOPEVT",
+   return hop_inner( "GET",
 		     svc( evt ),
 		     function( http ) {
                         http.eventName = evt;
@@ -645,25 +646,25 @@ function hop_bigloo_serialize( item ) {
    
    if( item == null )
       return ".";
-   
-   if( item instanceof HTMLCollection )
-      return hop_serialize_array( item );
-      
+
    if( item instanceof Date )
       return hop_serialize_date( item );
-
-   if( item instanceof HTMLInputElement )
-      return hop_serialize( item.value );
-
-   if( item instanceof HTMLTextAreaElement )
-      return hop_serialize( item.value );
-
-   if( item instanceof HTMLSelectElement )
-      return hop_serialize( item.value );
 
    if( (item instanceof Object) &&
        (typeof item.hop_bigloo_serialize == "function") )
       return item.hop_bigloo_serialize();
+
+   if( (HTMLCollection != undefined) && (item instanceof HTMLCollection) )
+      return hop_serialize_array( item );
+      
+   if( (HTMLInputElement != undefined) && (item instanceof HTMLInputElement) )
+      return hop_serialize( item.value );
+
+   if( (HTMLTextAreaElement != undefined) && (item instanceof HTMLTextAreaElement) )
+      return hop_serialize( item.value );
+
+   if( (HTMLSelectElement != undefined) && (item instanceof HTMLSelectElement) )
+      return hop_serialize( item.value );
 
    alert( "*** Hop Error, Can't serialize element: `" + item +
 	  "' (" + tname + "). Ignoring value." );

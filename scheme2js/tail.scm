@@ -31,7 +31,7 @@
 			    (Tail-rec-call Value-tail)
 			    Return
 			    (Closure-alloc Inter-tail)
-			    (Label Inter-tail)
+			    (Labelled Inter-tail)
 			    Break
 			    (Pragma Value-tail))
 	     (tree.traverse #f intermediate-nodes-are-tail?)))
@@ -110,4 +110,4 @@
 
 (define-pmethod (Break-tail tail? inter-tail?)
    (set! this.tail? tail?)
-   (this.val.traverse this.label.tail? inter-tail?))
+   (this.val.traverse this.labelled.tail? inter-tail?))

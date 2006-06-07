@@ -28,7 +28,7 @@
 				       Tail-rec-call
 				       Return
 				       Closure-alloc
-				       Label
+				       Labelled
 				       Break
 				       Set!)
 	     (set! (node 'Node).proto.default-traverse-value #f)
@@ -140,7 +140,7 @@
    (mark-node! this #t)
    #t)
 
-(define-pmethod (Label-mark-statements)
+(define-pmethod (Labelled-mark-statements)
    (this.body.traverse)
    (mark-node! this #t)
    #t)

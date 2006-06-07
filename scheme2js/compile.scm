@@ -38,7 +38,7 @@
 	     (Node Program Part Node Const Var-ref Lambda
 		   If Case Clause Set! Begin Bind-exit With-handler
 		   Call Tail-rec While Tail-rec-call Return
-		   Closure-alloc Label Break Pragma)
+		   Closure-alloc Labelled Break Pragma)
 	     (tree.compile p)))
 
 (define *tmp-var* "tmp") ;; can't conflict, as all vars are starting with 'sc_
@@ -68,6 +68,17 @@
 (define-pmethod (Node-compile)
    (error #f "forgot node-type: " this))
 
+(define (small-list/pair? l)
+   (define (smaller? l n)
+      (cond
+	 ((< n 0) #f)
+	 ((null? l) #t)
+	 ((not (pair? l)) #t)
+	 (else
+	  (smaller? (cdr l) (- n 1)))))
+
+   (smaller? l 5))
+
 (define (compile-const const p)
    (cond
       ((null? const) (p-display p "null"))
@@ -93,16 +104,26 @@
        (let loop ((i 0))
 	  (unless (>= i (vector-length const))
 	     (if (not (= i 0))
-		 (p-display ", "))
+		 (p-display p ", "))
 	     (compile-const (vector-ref const i) p)
 	     (loop (+ i 1))))
-       (p-display "]))"))
+       (p-display p "]))"))
       ((pair? const)
-       (p-display p "(new sc_Pair(")
-       (compile-const (car const) p)
-       (p-display p ",")
-       (compile-const (cdr const) p)
-       (p-display p "))"))
+       (if (small-list/pair? const)
+	   (begin
+	      (p-display p "(new sc_Pair(")
+	      (compile-const (car const) p)
+	      (p-display p ",")
+	      (compile-const (cdr const) p)
+	      (p-display p "))"))
+	   (begin
+	      (p-display p "sc_list(")
+	      (compile-const (car const) p)
+	      (for-each (lambda (e)
+			   (p-display p ", ")
+			   (compile-const e p))
+			(cdr const))
+	      (p-display p ")"))))
       ((eq? const #unspecified) (p-display p "undefined"))
       ((keyword? const)
        (p-display p "(new sc_Keyword('" (keyword->string const) "'))"))
@@ -200,7 +221,7 @@
        (compile-separated-list p this.formals ", ")
        (p-display p ")\n{\n")
        (if this.vaarg
-	   (vaarg-code this.vaarg (length this.formals)))
+	   (vaarg-code this.vaarg.var (length this.formals)))
        (hashtable-for-each ht
 			   (lambda (var ignored)
 			      (p-display p "var " var ";\n")))
@@ -377,16 +398,16 @@
    (this.body.compile p)
    (p-display p "\n}"))
 
-(define-pmethod (Label-compile p)
-   (p-display p (mangle-JS-sym this.id) ":{\n")
+(define-pmethod (Labelled-compile p)
+   (p-display p (mangle-JS-sym this.label) ":{\n")
    (this.body.compile p)
-   (p-display "\n}"))
+   (p-display p "\n}"))
 
 (define-pmethod (Break-compile p)
    (p-display p "{\n")
    (this.val.compile p)
-   (if this.label
-       (p-display p "break " (mangle-JS-sym this.label) ";\n")
+   (if this.labelled
+       (p-display p "break " (mangle-JS-sym this.labelled.label) ";\n")
        (p-display p "break;\n"))
    (p-display p "}\n"))
 

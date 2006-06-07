@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Thu May 11 09:30:27 2006 (serrano)                */
+#*    Last change :  Mon Jun  5 12:16:47 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -22,7 +22,7 @@ EXEC		= hop
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hop-param parseargs main http-request init
+MODULES		= hop-param parseargs main init
 
 INCLUDES	= eval-macro.sch compiler-macro.sch
 

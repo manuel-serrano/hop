@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/src/http-request.scm                    */
+;*    serrano/prgm/project/hop/runtime/http-request.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jan 19 10:18:40 2006 (serrano)                */
+;*    Last change :  Mon Jun  5 12:14:39 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -16,10 +16,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hop_http-request
+(module __hop_http-request
+
+   (library web)
    
-   (library web
-	    hop)
+   (import  __hop_param
+	    __hop_configure
+	    __hop_types
+	    __hop_http-lib
+	    __hop_user
+	    __hop_misc)
    
    (export  (http-parse-request::http-request ::socket ::int)))
 	   
@@ -33,20 +39,30 @@
 	     (msg msg))))
 
 ;*---------------------------------------------------------------------*/
+;*    input-port-timeout-set! ...                                      */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
+   (else #unspecified))
+
+;*---------------------------------------------------------------------*/
 ;*    http-parse-request ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-request sock id)
-   (let* ((req (read/rp request-line-grammar (socket-input sock) id))
-	  (localc (string=? (socket-local-address sock)
-			    (socket-host-address sock)))
-	  (localh (is-local? (http-request-host req))))
-      (with-access::http-request req (socket localclientp localhostp user userinfo)
-	 (set! socket sock)
-	 (set! localclientp localc)
-	 (set! localhostp localh)
-	 (when (and (not user) localhostp (string? userinfo))
-	    (set! user (find-authenticated-user userinfo)))
-	 req)))
+   (let ((port (socket-input sock)))
+      (when (> (hop-input-timeout) 0)
+	 (input-port-timeout-set! port (hop-input-timeout)))
+      (let* ((req (read/rp request-line-grammar port id))
+	     (localc (string=? (socket-local-address sock)
+			       (socket-host-address sock)))
+	     (localh (is-local? (http-request-host req))))
+	 (with-access::http-request req (socket localclientp localhostp user userinfo)
+	    (set! socket sock)
+	    (set! localclientp localc)
+	    (set! localhostp localh)
+	    (when (and (not user) localhostp (string? userinfo))
+	       (set! user (find-authenticated-user userinfo)))
+	    req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-line-grammar ...                                         */
@@ -65,10 +81,6 @@
        (http-parse-method-request 'PUT (the-port) id))
       ((: "TRACE" SP)
        (http-parse-method-request 'TRACE (the-port) id))
-      ((: "HOP" SP)
-       (http-parse-method-request 'HOP (the-port) id))
-      ((: "HOPEVT" SP)
-       (http-parse-method-request 'HOPEVT (the-port) id))
       ((: (+ (in ("AZaz"))) SP)
        (raise (instantiate::&hop-method-error
 		 (proc 'request-line-grammar)

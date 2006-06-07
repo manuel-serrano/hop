@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon May 22 17:07:21 2006 (serrano)                */
+;*    Last change :  Mon Jun  5 18:27:07 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -21,6 +21,7 @@
 	    __hop_types
 	    __hop_misc
 	    __hop_xml
+	    __hop_hop-extra
 	    __hop_http-lib
 	    __hop_http-error
 	    __hop_http-filter
@@ -38,10 +39,23 @@
 	    (response-is-xml?::bool ::obj)))
 
 ;*---------------------------------------------------------------------*/
+;*    output-port-timeout-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo2.8a (define (output-port-timeout-set! p t) #f))
+   (else #unspecified))
+
+(cond-expand
+   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
+   (else #unspecified))
+
+;*---------------------------------------------------------------------*/
 ;*    make-client-socket/timeout ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (make-client-socket/timeout host port timeout::int msg::obj)
-   (let ((tmt (if (>fx  timeout 0) timeout (hop-connection-timeout))))
+   (let ((tmt (if (>fx  timeout 0)
+		  (*fx 1000000 timeout)
+		  (*fx 1000000 (hop-connection-timeout)))))
       (let loop ((ttl (hop-connection-ttl)))
 	 (let ((res (with-handler
 		       (lambda (e)
@@ -73,8 +87,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-authentication socket)
    (with-trace 3 'http-response::http-response-authentication
-      (with-access::http-response-authentication r (header content-type body server)
+      (with-access::http-response-authentication r (header content-type body server timeout)
 	 (let ((p (socket-output socket)))
+	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
 	    (http-write-line p "HTTP/1.0 401 Unauthorized")
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -91,8 +106,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-string socket)
    (with-trace 3 'http-response::http-response-string
-      (with-access::http-response-string r (start-line header content-type server content-length bodyp body char-encoding)
+      (with-access::http-response-string r (start-line header content-type server content-length bodyp body char-encoding timeout)
 	 (let ((p (socket-output socket)))
+	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -118,8 +134,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-obj socket)
    (with-trace 3 'http-response::http-response-obj
-      (with-access::http-response-obj r (start-line header content-type server content-length body bodyp)
+      (with-access::http-response-obj r (start-line header content-type server content-length body bodyp timeout)
 	 (let ((p (socket-output socket)))
+	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -138,8 +155,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-js socket)
    (with-trace 3 'http-response::http-response-js
-      (with-access::http-response-js r (start-line header content-type server content-length body bodyp)
+      (with-access::http-response-js r (start-line header content-type server content-length body bodyp timeout)
 	 (let ((p (socket-output socket)))
+	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
 	    (http-write-line p "HTTP/1.1 200 Ok")
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -161,8 +179,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop socket)
    (with-trace 3 'http-response::http-response-hop
-      (with-access::http-response-hop r (start-line header content-type server content-length xml char-encoding bodyp)
+      (with-access::http-response-hop r (start-line header content-type server content-length xml char-encoding bodyp timeout)
 	 (let ((p (socket-output socket)))
+	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -184,8 +203,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-procedure socket)
    (with-trace 3 'http-response::http-response-procedure
-      (with-access::http-response-procedure r (start-line header content-type server content-length proc bodyp)
+      (with-access::http-response-procedure r (start-line header content-type server content-length proc bodyp timeout)
 	 (let ((p (socket-output socket)))
+	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -206,40 +226,63 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-file socket)
    (with-trace 3 'http-response::http-response-file
-      (with-access::http-response-file r (start-line header content-type server file bodyp request)
+      (with-access::http-response-file r (start-line header content-type server file bodyp request timeout)
+	 (tprint "http-response-file: " file " "
+		 (authorized-path? request file))
 	 (if (authorized-path? request file)
 	     ;; the file is never read so it can be open it with a tiny buffer
 	     (let ((p (socket-output socket))
-		   (pf (open-input-file file 1)))
-		(if (not (input-port? pf))
-		    (raise
-		     (if (not (file-exists? file))
-			 (make-&io-file-not-found-error #f #f
-							'http-response
-							"File not found"
-							file)
-			 (make-&io-port-error #f #f
-					      'http-response
-					      "Cannot open file"
-					      file)))
-		    (begin
-		       (http-write-line p start-line)
-		       (http-write-header p header)
-		       (http-write-line p "Connection: close")
-		       (when content-type
-			  (http-write-line p "Content-Type: " content-type))
-		       (when server
-			  (http-write-line p "Server: " server))
-		       (http-write-line p "Content-Length: " (file-size file))
-		       (http-write-line p)
-		       ;; the body
-		       (with-trace 4 'http-response-file
-			  (when bodyp
-			     (unwind-protect
-				(send-chars pf p)
-				(close-input-port pf))))
-		       (flush-output-port p))))
+		   (pf (open-input-file file)))
+		(cond
+		   ((not (input-port? pf))
+		    (let ((rep (if (file-exists? pf)
+				   (http-permission-denied file)
+				   (http-file-not-found file))))
+		       (http-response rep socket)))
+		   ((directory? file)
+		    (let ((rep (response-directory r file)))
+		       (http-response rep socket)))
+		   (else
+		    (when (>fx timeout 0)
+		       (output-port-timeout-set! p timeout))
+		    (http-write-line p start-line)
+		    (http-write-header p header)
+		    (http-write-line p "Connection: close")
+		    (when content-type
+		       (http-write-line p "Content-Type: " content-type))
+		    (when server
+		       (http-write-line p "Server: " server))
+		    (http-write-line p "Content-Length: " (file-size file))
+		    (http-write-line p)
+		    ;; the body
+		    (with-trace 4 'http-response-file
+		       (when bodyp
+			  (unwind-protect
+			     (send-chars pf p)
+			     (close-input-port pf))))
+		    (flush-output-port p))))
 	     (http-response (user-access-denied request) socket)))))
+
+;*---------------------------------------------------------------------*/
+;*    response-directory ...                                           */
+;*---------------------------------------------------------------------*/
+(define (response-directory rep dir)
+   (instantiate::http-response-hop
+      (char-encoding (request-encoding (%http-response-request rep)))
+      (request (%http-response-request rep))
+      (xml (if (%http-response-bodyp rep)
+	       (<HTML>
+		  (<HEAD> (<TITLE> dir))
+		  (<BODY>
+		     (<H1> dir)
+		     (<PRE> (map (lambda (f)
+				    (let ((path (make-file-name dir f)))
+				       (<A> :href path
+					 (if (directory? path)
+					     (string-append f "/\n")
+					     (string-append f "\n")))))
+				 (sort (directory->list dir) string<?)))))
+	       '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cgi-env ...                                                  */
@@ -294,9 +337,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-cgi socket)
    (with-trace 3 'http-response::http-response-cgi
-      (with-access::http-response-cgi r (start-line header content-type server cgibin bodyp request)
+      (with-access::http-response-cgi r (start-line header content-type server cgibin bodyp request timeout)
 	 (if (authorized-path? request cgibin)
 	     (let ((p (socket-output socket)))
+		(when (>fx timeout 0) (output-port-timeout-set! p timeout))
 		(http-write-line p start-line)
 		(http-write-header p header)
 		(http-write-line p "Connection: close")
@@ -328,7 +372,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-put socket)
    (with-trace 3 'http-response::http-response-put
-      (with-access::http-response-put r (start-line header content-type server uri bodyp)
+      (with-access::http-response-put r (start-line header content-type server uri bodyp timeout)
 	 (let ((l (string-length uri)))
 	    (let loop ((i 0))
 	       (cond
@@ -336,12 +380,15 @@
 		   (http-response
 		    (instantiate::http-response-string
 		       (start-line "HTTP/1.0 400 Bad Request")
-		       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request ~a</body></html>" uri)))
+		       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request ~a</body></html>" uri))
+		       (timeout timeout))
 		    socket))
 		  ((char=? (string-ref uri i) #\?)
 		   (let ((cmd (substring uri 0 i))
 			 (args (substring uri (+fx i 1) l))
 			 (p (socket-output socket)))
+		      (when (>fx timeout 0)
+			 (output-port-timeout-set! p timeout))
 		      (http-write-line p start-line)
 		      (http-write-header p header)
 		      (http-write-line p "Connection: close")
@@ -380,11 +427,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-remote socket)
    (with-trace 3 'http-response::http-response-remote
-      (with-access::http-response-remote r (host port header content-length timeout request)
-	 (trace-item "remotehost=" host " remoteport=" port " timeout=" timeout)
+      (with-access::http-response-remote r (host port header content-length timeout request timeout remote-timeout)
+	 (trace-item "remotehost=" host " remoteport=" port " remote-timeout=" remote-timeout)
 	 (let* ((host (or (hop-proxy-host) host))
 		(port (or (hop-proxy-port) port))
-		(remote (make-client-socket/timeout host port timeout request))
+		(remote (make-client-socket/timeout host
+						    port
+						    remote-timeout
+						    request))
 		(rp (socket-output remote))
 		(sp (socket-input socket)))
 	    (hop-verb 4
@@ -468,7 +518,7 @@
 ;*    request-encoding ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (request-encoding req)
-   (if (eq? (http-request-method req) 'HOP) 'UTF-8 (hop-char-encoding)))
+   (or (http-request-method req) (hop-char-encoding)))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-is-xml? ...                                             */
@@ -535,6 +585,9 @@
 	 (let* ((remote (make-client-socket/timeout host port timeout req))
 		(rp (socket-output remote))
 		(ip (socket-input remote)))
+	    (when (> timeout 0)
+	       (output-port-timeout-set! rp timeout)
+	       (input-port-timeout-set! ip timeout))
 	    (trace-item "remote=" remote)
 	    (unwind-protect
 	       (begin
