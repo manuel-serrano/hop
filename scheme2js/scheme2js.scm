@@ -1,5 +1,6 @@
 (module scheme2js
    (option (loadq "protobject-eval.sch"))
+   (include "version.sch")
    (import config
 	   compile
 	   pobject-conv
@@ -29,9 +30,6 @@
 				     js-interface::pair-nil
 				     config)
 	   (default-scheme2js-config)))
-
-;; TODO: automate this...
-(define *version* 20060602)
 
 (define (default-scheme2js-config)
    (let ((ht (make-hashtable)))
