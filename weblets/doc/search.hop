@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Sat Jun  3 06:30:02 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 10:07:05 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -361,25 +361,25 @@
 ;*    search-weblets-inner ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (search-weblets-inner)
-   (map (let* ((key "<doc> ")
-	       (t (kmp-table key))
-	       (l (fixnum->elong (string-length key))))
-	   (lambda (path)
-	      (when (is-suffix? path "wiki")
-		 (let* ((mm (and (file-exists? path)
-				 (open-mmap path :write #f))))
-		    (when (mmap? mm)
-		       (unwind-protect
-			  (let ((r (kmp-mmap t mm #e0)))
-			     (and (>=elong r #e0)
-				  (let ((l (mmap-line mm (+elong r l))))
-				     (cons l (<WEBLETREF> l path)))))
-			  (close-mmap mm)))))))
-	(append (search-weblets-documentation
-		 (hop-weblets-directory))
-		(search-weblets-documentation
-		 (make-file-name (hop-rc-directory) "weblets"))
-		(directory->list (doc-weblets-dir)))))
+   (filter-map (let* ((key "<doc> ")
+		      (t (kmp-table key))
+		      (l (fixnum->elong (string-length key))))
+		  (lambda (path)
+		     (when (is-suffix? path "wiki")
+			(let* ((mm (and (file-exists? path)
+					(open-mmap path :write #f))))
+			   (when (mmap? mm)
+			      (unwind-protect
+				 (let ((r (kmp-mmap t mm #e0)))
+				    (and (>=elong r #e0)
+					 (let ((l (mmap-line mm (+elong r l))))
+					    (cons l (<WEBLETREF> l path)))))
+				 (close-mmap mm)))))))
+	       (append (search-weblets-documentation
+			(hop-weblets-directory))
+		       (search-weblets-documentation
+			(make-file-name (hop-rc-directory) "weblets"))
+		       (directory->list (doc-weblets-dir)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    search-weblets ...                                               */

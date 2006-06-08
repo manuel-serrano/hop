@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Jun  7 17:37:30 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 09:29:00 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -159,14 +159,14 @@
 	    (hop-service-flush-pace::long)
 	    (hop-service-flush-pace-set! ::long)
 
-	    (hop-input-timeout::long)
-	    (hop-input-timeout-set! ::long)
+	    (hop-request-header-timeout::long)
+	    (hop-request-header-timeout-set! ::long)
 
-	    (hop-input-body-timeout::long)
-	    (hop-input-body-timeout-set! ::long)
+	    (hop-request-body-timeout::long)
+	    (hop-request-body-timeout-set! ::long)
 
-	    (hop-output-timeout::long)
-	    (hop-output-timeout-set! ::long)
+	    (hop-response-timeout::long)
+	    (hop-response-timeout-set! ::long)
 
 	    (hop-rc-loaded!)))
 
@@ -710,7 +710,7 @@
 ;*    hop-service-flush-pace ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-flush-pace
-   2)
+   100)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */
@@ -721,11 +721,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    IO timeouts (in seconds) ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-input-timeout
+(define-parameter hop-request-header-timeout
    10)
 
-(define-parameter hop-input-body-timeout
+(define-parameter hop-request-body-timeout
    60)
 
-(define-parameter hop-output-timeout
+(define-parameter hop-response-timeout
    60)

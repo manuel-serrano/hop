@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Jun  7 17:45:22 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 10:29:01 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -89,7 +89,8 @@
    (with-trace 3 'http-response::http-response-authentication
       (with-access::http-response-authentication r (header content-type body server timeout)
 	 (let ((p (socket-output socket)))
-	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
+	    (when (>fx timeout 0)
+	       (output-port-timeout-set! p timeout))
 	    (http-write-line p "HTTP/1.0 401 Unauthorized")
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -108,7 +109,8 @@
    (with-trace 3 'http-response::http-response-string
       (with-access::http-response-string r (start-line header content-type server content-length bodyp body char-encoding timeout)
 	 (let ((p (socket-output socket)))
-	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
+	    (when (>fx timeout 0)
+	       (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -136,7 +138,8 @@
    (with-trace 3 'http-response::http-response-obj
       (with-access::http-response-obj r (start-line header content-type server content-length body bodyp timeout)
 	 (let ((p (socket-output socket)))
-	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
+	    (when (>fx timeout 0)
+	       (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -157,7 +160,8 @@
    (with-trace 3 'http-response::http-response-js
       (with-access::http-response-js r (start-line header content-type server content-length body bodyp timeout)
 	 (let ((p (socket-output socket)))
-	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
+	    (when (>fx timeout 0)
+	       (output-port-timeout-set! p timeout))
 	    (http-write-line p "HTTP/1.1 200 Ok")
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -181,7 +185,8 @@
    (with-trace 3 'http-response::http-response-hop
       (with-access::http-response-hop r (start-line header content-type server content-length xml char-encoding bodyp timeout)
 	 (let ((p (socket-output socket)))
-	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
+	    (when (>fx timeout 0)
+	       (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -205,7 +210,8 @@
    (with-trace 3 'http-response::http-response-procedure
       (with-access::http-response-procedure r (start-line header content-type server content-length proc bodyp timeout)
 	 (let ((p (socket-output socket)))
-	    (when (>fx timeout 0) (output-port-timeout-set! p timeout))
+	    (when (>fx timeout 0)
+	       (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: close")
@@ -338,7 +344,8 @@
       (with-access::http-response-cgi r (start-line header content-type server cgibin bodyp request timeout)
 	 (if (authorized-path? request cgibin)
 	     (let ((p (socket-output socket)))
-		(when (>fx timeout 0) (output-port-timeout-set! p timeout))
+		(when (>fx timeout 0)
+		   (output-port-timeout-set! p timeout))
 		(http-write-line p start-line)
 		(http-write-header p header)
 		(http-write-line p "Connection: close")
@@ -454,6 +461,9 @@
 		  (with-trace 4 'http-response-body
 		     (let* ((ip (socket-input remote))
 			    (op (socket-output socket)))
+			(when (>fx timeout 0)
+			   (input-port-timeout-set! ip timeout)
+			   (output-port-timeout-set! op timeout))
 			(multiple-value-bind (http-version status-code phrase)
 			   (http-parse-status-line ip)
 			   ;; WARNING: phrase contains its terminal \r\n hence
@@ -744,8 +754,3 @@
 		    (begin
 		       (set! state 'trailer)
 		       (loop)))))))))
-
-
-
-
-

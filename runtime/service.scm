@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Jun  7 17:46:46 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 07:26:02 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -58,7 +58,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    *service-table-count* ...                                        */
 ;*---------------------------------------------------------------------*/
-(define *service-table-count* 0)
+(define *service-table-count* 1)
 
 ;*---------------------------------------------------------------------*/
 ;*    get-service-url ...                                              */
@@ -290,7 +290,8 @@
 			     (unregister-service! svc))
 			    ((>fx ttl 1)
 			     (set! ttl (-fx ttl 1))))
-			 (scheme->response (%exec req) req)))
+			 (unless (service-expired? svc)
+			    (scheme->response (%exec req) req))))
 		     (else
 		      (let ((init (hop-initial-weblet)))
 			 (when (and (string? init)
@@ -313,7 +314,7 @@
 (define (register-service! svc)
    (with-access::hop-service svc (path)
       (let ((sz (hashtable-size *service-table*)))
-	 (hop-verb 2 (hop-color 1 "" " REG. SERVICE")
+	 (hop-verb 2 (hop-color 1 "" "REG. SERVICE ")
 		   "(" (/fx sz 2) "): "
 		   svc " " path "\n")
 	 (mutex-lock! *service-mutex*)
@@ -328,10 +329,19 @@
 		   #unspecified)
 		  (else
 		   (loop (+fx i 1))))))
-	 (when (=fx (remainder sz (hop-service-flush-pace)) 0)
+	 (when (=fx (remainder sz *service-table-count*) 0)
 	    (flush-expired-services!))
 	 (mutex-unlock! *service-mutex*)
 	 svc)))
+
+;*---------------------------------------------------------------------*/
+;*    service-expired? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (service-expired? svc)
+   (with-access::hop-service svc (creation timeout path)
+      (and (>fx timeout 0)
+	   (>second (date->seconds (current-date))
+		    (+second creation timeout)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    flush-expired-services! ...                                      */
@@ -339,11 +349,7 @@
 (define (flush-expired-services!)
    (hashtable-filter! *service-table*
 		      (lambda (key svc)
-			 (with-access::hop-service svc (creation timeout path)
-			    (or (<=fx timeout 0)
-				(<second (date->seconds (current-date))
-					 (+second creation timeout)))))))
-			       
+			 (not (service-expired? svc)))))
 			 
 ;*---------------------------------------------------------------------*/
 ;*    unregister-service! ...                                          */

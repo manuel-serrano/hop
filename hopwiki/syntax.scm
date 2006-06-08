@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Jun  1 08:10:52 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 10:24:52 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -23,7 +23,8 @@
 	       (expr::pair-nil (default '()))
 	       value::obj)
 	    (class expr::state)
-	    (class block::state))
+	    (class block::state
+	       (is-subblock read-only (default #f))))
    
    (export  (class wiki-syntax
 	       (section1::procedure (default list))
@@ -165,12 +166,13 @@
 		      (value value))))
 	    (set! state (cons st state))))
       
-      (define (enter-block! st fun value)
+      (define (enter-block! st fun value s)
 	 (let ((st (instantiate::block
 		      (markup st)
 		      (syntax fun)
 		      (expr '())
-		      (value value))))
+		      (value value)
+		      (is-subblock s))))
 	    (set! state (cons st state))))
       
       (define (is-state? condition)
@@ -236,7 +238,7 @@
 		       (wiki-syntax-td syn))))
 	    (unless (is-state? 'table)
 	       (set! trcount 0)
-	       (enter-block! 'table (wiki-syntax-table syn) #f))
+	       (enter-block! 'table (wiki-syntax-table syn) #f #t))
 	    (enter-expr! 'tr
 			 (lambda exp
 			    (let ((cl (if (even? trcount)
@@ -290,16 +292,15 @@
       ;; a blank line: end of expr
       ((bol (: (? #\Return) #\Newline))
        (let ((st (in-bottom-up-state (lambda (n _) (expr? n)))))
-	  (when st
-	     (unwind-state! st)))
+	  (when st (unwind-state! st)))
        (add-expr! (the-html-string))
        (ignore))
 
       ;; two consecutive blank lines: end of block
       ((bol (= 2 (: (? #\Return) #\Newline)))
-       (let ((st (in-state (lambda (n _) (block? n)))))
-	  (when st
-	     (unwind-state! st)))
+       (let ((st (in-state (lambda (n _)
+			      (and (block? n) (not (block-is-subblock n)))))))
+	  (when st (unwind-state! st)))
        (add-expr! (the-html-string))
        (ignore))
 
@@ -374,6 +375,7 @@
 					 (reverse! (cdr rev)))
 				  (apply (wiki-syntax-pre syn)
 					 (reverse! rev)))))
+			#f
 			#f))
        (add-expr! (the-html-substring 2 (the-length)))
        (ignore))
@@ -400,9 +402,9 @@
 				     s)))))))
 		 (when st (unwind-state! st))
 		 (if (char=? c #\*)
-		     (enter-block! id (wiki-syntax-ul syn) #f)
-		     (enter-block! id (wiki-syntax-ol syn) #f))))
-	  (enter-block! 'li (wiki-syntax-li syn) val))
+		     (enter-block! id (wiki-syntax-ul syn) #f #f)
+		     (enter-block! id (wiki-syntax-ol syn) #f #f))))
+	  (enter-block! 'li (wiki-syntax-li syn) val #t))
        (ignore))
 
       ;; comments

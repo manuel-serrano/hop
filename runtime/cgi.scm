@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Mon Jun  5 12:28:24 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 10:03:22 2006 (serrano)                */
 ;*    Copyright   :  2003-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -24,13 +24,6 @@
 	    (http-request-cgi-args::pair-nil ::http-request)
 	    (cgi-arg::obj ::bstring ::pair-nil)
 	    (serialized-cgi-arg name args)))
-
-;*---------------------------------------------------------------------*/
-;*    input-port-timeout-set! ...                                      */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
-   (else #unspecified))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-url-cgi-args ...                                    */
@@ -72,8 +65,6 @@
 				     (string-length
 				      "multipart/form-data; boundary=")
 				     (string-length ctype))))
-		       (when (> (hop-input-body-timeout) 0)
-			  (input-port-timeout-set! pi (hop-input-body-timeout)))
 		       (cons path
 			     (cgi-multipart->list
 			      (hop-upload-directory)

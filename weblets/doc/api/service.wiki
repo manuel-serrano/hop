@@ -40,11 +40,13 @@ automatically converted into instances of this class. See the
 description of ++with-hop++ for a detailed presentation of 
 automatic coercions that take place when a service is invoked. 
 
-=== ++(service (arg<sub>0</sub> ...) body)++ ===
+=== ++(service [:timeout tm] [:ttl tl] (arg<sub>0</sub> ...) body)++ ===
 <function> service
 
 <arguments>
 ^  arguments       ^   type       ^  short description              ^
+| :timeout         |  integer     | An optional timeout.            |
+| :ttl             |  integer     | An optional time-to-live.       |
 | arg<sub>0</sub>  |  symbol      | the first argument identifier.  |
 | body             |  expression  | the body of the service.        |
 </arguments>
@@ -52,6 +54,11 @@ automatic coercions that take place when a service is invoked.
 This special form defines an //anonymous// service on the client. That is,
 no public URL is associated with this service.
 
+~~ The :timeout argument controls how long this service is valid. When
+the timeout (a number of seconds) is expired the service is invalidated.
+
+~~ the :ttl argument controls how many the service can be invoked
+before being invalidated.
 </function>
 
 === ++(define-service (name arg<sub>0</sub> ...) body)++ ===
