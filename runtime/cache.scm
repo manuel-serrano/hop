@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Thu Jun  1 08:23:22 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 14:47:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -59,15 +59,6 @@
 	  (delete-file path))))
 
 ;*---------------------------------------------------------------------*/
-;*    mkdir-p ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (mkdir-p path)
-   (or (make-directory path)
-       (begin
-	  (mkdir-p (dirname path))
-	  (make-directory path))))
-	       
-;*---------------------------------------------------------------------*/
 ;*    *all-caches* ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define *all-caches* '())
@@ -90,7 +81,7 @@
 (define (%cache-new c::%cache)
    (with-access::%cache c (path %table max-entries register)
       (rm-rf path)
-      (unless (mkdir-p path)
+      (unless (make-directories path)
 	 (error 'instantiate::cache "Can't create directory" path))
       (set! %table (make-hashtable (*fx 4 max-entries)))
       (when register
@@ -195,10 +186,10 @@
 	    ;; make sure that the cache path exists
 	    (cond
 	       ((not (file-exists? path))
-		(mkdir-p path))
+		(make-directories path))
 	       ((not (directory? path))
 		(delete-file path)
-		(mkdir-p path)))
+		(make-directories path)))
 	    ;; put the file in the cache
 	    (let ((p (open-output-file cpath)))
 	       (when (output-port? p)
