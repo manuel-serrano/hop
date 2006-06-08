@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jun  8 10:03:13 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 11:35:10 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -75,6 +75,8 @@
 		     id)
       ((: "GET" SP)
        (http-parse-method-request 'GET (the-port) id))
+      ((: "HOP" SP)
+       (http-parse-method-request 'HOP (the-port) id))
       ((: "HEAD" SP)
        (http-parse-method-request 'HEAD (the-port) id))
       ((: "POST" SP)

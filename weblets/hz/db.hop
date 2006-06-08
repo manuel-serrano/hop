@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Fri Jun  2 15:55:24 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 11:51:29 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -145,11 +145,6 @@
 	  (let ((names (map string->symbol cols)))
 	     (for-each (lambda (f)
 			  (unless (memq (class-field-name f) names)
-			     (tprint "ALTER: "
-			      (sqlite-format 
-			       "ALTER TABLE weblets ADD COLUMN ~a ~a"
-			       (class-field-name f)
-			       (class-field-sqlite-type f)))
 			     (sqlite-exec db
 				"ALTER TABLE weblets ADD COLUMN ~a ~a"
 				(class-field-name f)
