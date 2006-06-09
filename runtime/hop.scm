@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Jun  5 13:46:32 2006 (serrano)                */
+;*    Last change :  Fri Jun  9 08:44:27 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -255,8 +255,7 @@
 	       (lambda ()
 		  (xml-write obj
 			     (current-output-port)
-			     (or encoding
-				 (hop-char-encoding)))))))
+			     (or encoding (hop-char-encoding)))))))
       (success s)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Thu Jun  8 11:40:08 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 12:22:16 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -47,7 +47,6 @@
 		    (path (make-hop-service-url hz/getsync)))))
 	 (http-send-request req
 			    (lambda (s clength p)
-			       (define v (read p))
 			       (case s
 				  ((200)
 				   (read p))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Jun  8 10:29:01 2006 (serrano)                */
+;*    Last change :  Fri Jun  9 08:46:48 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -526,7 +526,7 @@
 ;*    request-encoding ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (request-encoding req)
-   (or (http-request-method req) (hop-char-encoding)))
+   (or (http-request-char-encoding req) (hop-char-encoding)))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-is-xml? ...                                             */
