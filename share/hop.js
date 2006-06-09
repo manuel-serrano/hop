@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Jun  3 08:55:15 2006 (serrano)                */
+/*    Last change :  Fri Jun  9 17:15:53 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -21,7 +21,7 @@ function hop_service_url( service, formals, args ) {
    var len = formals.length;
 
    if( len == 0 ) {
-      return service;
+      return service + "?hop-encoding=hop";
    } else {
       var url = service + "?hop-encoding=hop";
       var i;

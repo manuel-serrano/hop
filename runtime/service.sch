@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Wed Jun  7 17:40:39 2006 (serrano)                */
+;*    Last change :  Fri Jun  9 17:08:08 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -43,20 +43,18 @@
 	  (vargs (if (list? args) (service-js-arguments args) #f)))
       `(let* ((,proc (lambda ,args ,@body))
 	      (,exec (lambda (,req)
-			,(if (null? args)
-			     `(,proc)
-			     `(let ((,ca (http-request-cgi-args ,req)))
-				 ,(if (pair? args)
-				      `(if (equal? (cgi-arg "hop-encoding" ,ca) "hop")
-					   (begin
-					      (http-request-char-encoding-set! ,req 'UTF-8)
-					      (,proc ,@(map (lambda (a)
-							       `(serialized-cgi-arg ,(symbol->string a) ,ca))
-							    args)))
-					   (,proc ,@(map (lambda (a)
-							    `(cgi-arg ,(symbol->string a) ,ca))
-							 args)))
-				      `(,proc (error '$service/filter "not implement" "yet")))))))
+			(let ((,ca (http-request-cgi-args ,req)))
+			   ,(if (or (null? args) (list? args))
+				`(if (equal? (cgi-arg "hop-encoding" ,ca) "hop")
+				     (begin
+					(http-request-char-encoding-set! ,req 'UTF-8)
+					(,proc ,@(map (lambda (a)
+							 `(serialized-cgi-arg ,(symbol->string a) ,ca))
+						      args)))
+				     (,proc ,@(map (lambda (a)
+						      `(cgi-arg ,(symbol->string a) ,ca))
+						   args)))
+				`(,proc (error '$service/filter "not implement" "yet"))))))
 	      (,url ,svcurl)
 	      (,path (make-file-name (hop-service-base) ,url))
 	      (svc (instantiate::hop-service
