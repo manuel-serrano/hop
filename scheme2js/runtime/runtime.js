@@ -1972,15 +1972,14 @@ sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {
 	p.appendJSString(")");
 };
 sc_Vector.prototype.writeOrDisplay = function(p, writeOrDisplay) {
-    var a = this.val;
-    if (a.length === 0)
+    if (this.length === 0)
 	p.appendJSString("#()");
 
     p.appendJSString("#(");
-    writeOrDisplay(p, a[0]);
-    for (var i = 1; i < a.length; i++) {
+    writeOrDisplay(p, this[0]);
+    for (var i = 1; i < this.length; i++) {
 	p.appendJSString(" ");
-	writeOrDisplay(p, a[i]);
+	writeOrDisplay(p, this[i]);
     }
     p.appendJSString(")");
 };
@@ -2212,8 +2211,8 @@ sc_Vector.prototype.prepWriteCircle = function(symb, nbPointer) {
 	this[symb + "nb"] = nbPointer.nb++;
     } else {
 	this[symb] = 0;
-	for (var i = 0; i < this.val.length; i++)
-	    sc_prepWriteCircle(this.val[i], symb, nbPointer);
+	for (var i = 0; i < this.length; i++)
+	    sc_prepWriteCircle(this[i], symb, nbPointer);
     }
 };
 // TODO: not correct
@@ -2309,9 +2308,8 @@ sc_Vector.prototype.doWriteCircle = function(p, symb) {
 	p.appendJSString('#' + this[symb + "nb"] + '=');
     }
     p.appendJSString("#(");
-    var a = this.val;
-    for (var i = 0; i < a.length; i++) {
-	sc_doWriteCircle(p, a[i], symb);
+    for (var i = 0; i < this.length; i++) {
+	sc_doWriteCircle(p, this[i], symb);
 	p.appendJSString(" ");
     }
     p.appendJSString(")");
