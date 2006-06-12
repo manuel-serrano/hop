@@ -399,7 +399,7 @@ function sc_isPair(p) { /// export
 }
 
 function sc_isPairEqual(p1, p2) {
-    return (sc_isEqual(o1.car, o2.car) && sc_isEqual(o1.cdr, o2.cdr));
+    return (sc_isEqual(p1.car, p2.car) && sc_isEqual(p1.cdr, p2.cdr));
 }
 
 function sc_cons(car, cdr) { /// export
