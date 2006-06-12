@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Thu Jun  8 22:59:47 2006 (eg)                     */
+;*    Last change :  Mon Jun 12 11:03:49 2006 (eg)                     */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -111,17 +111,24 @@
        (hz-install-from-url req name url)))))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-direct-install-pad ...                                        */
+;*    hz-direct-install-tab ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (hz-direct-install-pad)
+(define (hz-direct-install-tab)
+  (define (find-weblet-name url)
+    (let* ((guess (prefix (basename url)))
+	   (index (string-index guess "-")))
+      (if (> index 0)
+	  (substring guess 0 index)
+	  guess)))
+  
   (<DIV> :class "hz-ondemand-install"
-    (<FORM> :action (service (name url)
-		       (hz-direct-install (the-current-request) name url))
-	(<TABLE>
-         (<TR> (<TD> "Weblet name:")
-               (<TD> (<INPUT> :name "name")))
-         (<TR> (<TD> "Weblet URL:")
-               (<TD> (<INPUT> :name "url"))))
+    (<FORM> :action (service (url)
+		       (hz-direct-install (the-current-request)
+					  (find-weblet-name url)
+					  url))
+	(<B> "Weblet URL: ")
+	(<INPUT> :name "url")
+	(<BR>)
         (<BUTTON> :onclick ~(submit) "Install"))))
 
 
@@ -169,7 +176,7 @@
 				 (<WEBLETS> db))))
 			(<NPTAB>
 			   (<NPTABHEAD> "Direct install")
-			   (hz-direct-install-pad))
+			   (hz-direct-install-tab))
 			(<NPTAB>
 			   (<NPTABHEAD> "Preferences")
 			   (<PREFERENCES> prefs))))))))))
