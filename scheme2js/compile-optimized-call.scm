@@ -209,7 +209,9 @@
     (sci_bitAnd ,(infix-op 2 2 "&"))
     (sci_bitOr ,(infix-op 2 2 "|"))
     (sci_bitXor ,(infix-op 2 2 "^"))
-    
+    (sci_bitLsh ,(infix-op 2 2 "<<"))
+    (sci_bitRsh ,(infix-op 2 2 ">>"))
+    (sci_bitUrsh ,(infix-op 2 2 ">>>"))
     
     (sci_exact2inexact ,id)
     (sci_inexact2exact ,id)

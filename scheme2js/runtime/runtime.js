@@ -1262,6 +1262,18 @@ function sc_bitXor(x, y) { /// export
     return x ^ y;
 }
 
+function sc_bitLsh(x, y) { /// export
+    return x << y;
+}
+
+function sc_bitRsh(x, y) { /// export
+    return x >> y;
+}
+
+function sc_bitUrsh(x, y) { /// export
+    return x >>> y;
+}
+
 function sc_jsField(o, field) { /// export
     return o[field];
 }
