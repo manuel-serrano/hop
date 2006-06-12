@@ -335,7 +335,7 @@
 		 "}\n")))
 
 (define-pmethod (With-handler-compile p)
-   (let ((exception this.exception.compiled))
+   (let ((exception this.exception.var.compiled))
       (p-display p "try {\n")
       (this.body.compile p)
       (p-display p
