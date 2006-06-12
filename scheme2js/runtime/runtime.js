@@ -939,11 +939,11 @@ function sc_stringLength_immutable(s) { /// export
 }
 
 function sc_stringRef_mutable(s, k) { /// export
-    return s.val.charAt(k);
+    return new sc_Char(s.val.charAt(k));
 }
 
 function sc_stringRef_immutable(s, k) { /// export
-    return s.charAt(k);
+    return new sc_Char(s.charAt(k));
 }
 
 function sc_stringSet_mutable(s, k, c) { /// export string-set!
