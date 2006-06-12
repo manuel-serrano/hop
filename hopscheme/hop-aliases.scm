@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Wed May 10 13:20:08 2006 (serrano)                */
+;*    Last change :  Sat Jun 10 06:26:27 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -73,6 +73,7 @@
      (dom-replace-child! dom_replace_child)
      (dom-get-element-by-id dom_get_element_by_id)
      (dom-get-elements-by-tag-name dom_get_elements_by_tag_name)
+     (dom-element-eval hop_element_eval)
      (<A> dom_create_a)
      (<ABBR> dom_create_abbr)
      (<ACRONYM> dom_create_acronym)
