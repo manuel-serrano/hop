@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Thu Jun  8 12:22:16 2006 (serrano)                */
+;*    Last change :  Mon Jun 12 14:08:32 2006 (eg)                     */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -221,27 +221,36 @@
 			   (hz-db-sync-stamp db)
 			   v
 			   "unmanaged")))))))
+
+   (define (try-sync-info name file)
+     (and (file-exists? file)
+	  (bind-exit (exit)
+	    (with-handler
+	       (lambda (e)
+		 (exception-notify e)
+		 (exit #f))
+	       (sync-info db name exit file)))
+	  #t))
    
    (define (sync-dir name)
       (let ((dir (make-file-name (hop-weblets-directory) name)))
 	 (when (directory? dir)
-	    (let ((f (make-file-path dir "etc" (string-append name ".info"))))
-	       (when (file-exists? f)
-		  (bind-exit (exit)
-		     (with-handler
-			(lambda (e)
-			   (exception-notify e)
-			   (exit #f))
-			(sync-info db name exit f))))))))
-
+	   (or (try-sync-info name (make-file-path dir
+						   "etc"
+						   "weblet-info"))
+	       (try-sync-info name (make-file-path dir
+						   "etc"
+						   (string-append name ".info")))))))
    (define (sync-dbhz o)
-      (with-access::dbhz o (name)
-	 (let ((i (make-file-path (hop-weblets-directory)
+     (with-access::dbhz o (name)
+	(let* ((d (make-file-path (hop-weblets-directory)
 				  name
-				  "etc"
-				  (string-append name ".info"))))
-	    (unless (file-exists? i)
-	       (hz-db-remove-weblet db o)))))
+				  "etc"))
+	       (i (make-file-path d "weblet-info"))
+	       (j (make-file-path d (string-append name ".info"))))
+	  (unless (or (file-exists? i)  (file-exists? j))
+	    (hz-db-remove-weblet db o)))))
+
    
    ;; check the file systems
    (for-each sync-dir (directory->list (hop-weblets-directory)))
