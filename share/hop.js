@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jun  9 17:15:53 2006 (serrano)                */
+/*    Last change :  Sat Jun 10 08:23:56 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -169,13 +169,13 @@ function hop_eval( proc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_js_eval ...                                                  */
 /*---------------------------------------------------------------------*/
-function hop_js_eval( http ) {
+function hop_js_eval( h ) {
    var res = undefined;
    
    if( http.responseText != null ) {
       var node = document.createElement( "div" );
       
-      node.innerHTML = http.responseText;
+      node.innerHTML = h;
 
       /* evaluate the inner JS scripts */
       var scripts = node.getElementsByTagName( "script" );
@@ -188,6 +188,37 @@ function hop_js_eval( http ) {
    }
 
    return res;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_element_eval ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_element_eval( node ) {
+   var res;
+   var scripts = node.getElementsByTagName( "script" );
+
+   for ( var j = 0; j < scripts.length; j++ ) {
+      if( scripts[ j ].childNodes.length > 0 ) {
+	 res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+      }
+   }
+
+   return res;
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_js_eval ...                                                  */
+/*---------------------------------------------------------------------*/
+function hop_js_eval( http ) {
+   if( http.responseText != null ) {
+      var node = document.createElement( "div" );
+      
+      node.innerHTML = http.responseText;
+
+      return hop_element_eval( node );
+   }
+
+   return false;
 }
 
 /*---------------------------------------------------------------------*/
