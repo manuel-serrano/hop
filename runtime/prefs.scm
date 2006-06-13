@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Tue May 30 08:20:52 2006 (serrano)                */
+;*    Last change :  Thu Jun  8 14:43:40 2006 (eg)                     */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -37,7 +37,7 @@
       (integer
        (text-editor "An integer" get (service (v) (set (string->integer v)) #t)))
       (string
-       (text-editor "A string" get (service (v) (tprint "GLOP: " v ) (set v) #t)))
+       (text-editor "A string" get (service (v) (set v) #t)))
       (expr
        (sexp-editor get set))
       (bool
@@ -96,8 +96,8 @@
 		  :name name
 		  :onclick (format
 			    "hop(~a(true)); this.className = 'pref_applied';"
-			    (hop->json svc))
-		  yes-string))
+			    (hop->json svc)))
+		  yes-string)
 	    (<TD> 
 	       (<INPUT>
 		  :type "radio"
@@ -105,6 +105,6 @@
 		  :name name
 		  :onclick (format
 			    "hop(~a(false)); this.className = 'pref_applied';"
-			    (hop->json svc))
-		  no-string))))))
-      
+			    (hop->json svc)))
+		  no-string)))))
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue May 30 16:29:04 2006 (serrano)                */
+;*    Last change :  Mon Jun 12 11:03:49 2006 (eg)                     */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -47,23 +47,7 @@
 ;*    hz/install-ondemand ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/install-ondemand name url)
-   (let ((req (the-current-request)))
-      (let ((req (the-current-request)))
-	 (cond
-	    ((users-added?)
-	     (multiple-value-bind (user mode)
-		(hz-get-access req)
-		(cond
-		   ((and (user? user)
-			 (symbol? mode)
-			 (user-authorized-service? user 'hz))
-		    (hz-ondemand req user mode name url))
-		   (else
-		    (hz-authenticate req)))))
-	    ((http-request-localhostp req)
-	     (hz-ondemand req #f 'local name url))
-	    (else
-	     (user-access-denied req))))))
+  (hz-install-from-url (the-current-request) name url))
 
 ;*---------------------------------------------------------------------*/
 ;*    logout ...                                                       */
@@ -83,6 +67,70 @@
       (when (file-exists? prefs) (hz-preferences-load prefs))
       (when (hz-install-ondemand db req name url)
 	 (hz-main req user mode))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-install-from-url ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hz-install-from-url req name url)
+  (cond
+     ((users-added?)
+      (multiple-value-bind (user mode)
+	 (hz-get-access req)
+	 (cond
+	    ((and (user? user)
+		  (symbol? mode)
+		  (user-authorized-service? user 'hz))
+	     (hz-ondemand req user mode name url))
+	    (else
+	     (hz-authenticate req)))))
+     ((http-request-localhostp req)
+      (hz-ondemand req #f 'local name url))
+     (else
+      (user-access-denied req))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-direct-install ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hz-direct-install req name url)
+  (cond
+    ((string=? name "")
+     (error 'hz "name is empty" name))
+    ((string=? url "")
+     (error 'hz "URL is empty" url))
+    (else
+     (let* ((prefix (format "http://~a:~a" (hostname) (hop-port)))
+	    (req    (the-current-request))
+	    (url (cond
+		   ((substring=? "http://" url 7)
+		    url)
+		   ((substring=? "file://" url 7)
+		    (string-append prefix
+				   (substring url 7 (string-length url))))
+		   (else
+		    (string-append prefix url)))))
+       (hz-install-from-url req name url)))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-direct-install-tab ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hz-direct-install-tab)
+  (define (find-weblet-name url)
+    (let* ((guess (prefix (basename url)))
+	   (index (string-index guess "-")))
+      (if (> index 0)
+	  (substring guess 0 index)
+	  guess)))
+  
+  (<DIV> :class "hz-ondemand-install"
+    (<FORM> :action (service (url)
+		       (hz-direct-install (the-current-request)
+					  (find-weblet-name url)
+					  url))
+	(<B> "Weblet URL: ")
+	(<INPUT> :name "url")
+	(<BR>)
+        (<BUTTON> :onclick ~(submit) "Install"))))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-main ...                                                      */
@@ -126,6 +174,9 @@
 			   (<DELAY>
 			      (lambda ()
 				 (<WEBLETS> db))))
+			(<NPTAB>
+			   (<NPTABHEAD> "Direct install")
+			   (hz-direct-install-tab))
 			(<NPTAB>
 			   (<NPTABHEAD> "Preferences")
 			   (<PREFERENCES> prefs))))))))))

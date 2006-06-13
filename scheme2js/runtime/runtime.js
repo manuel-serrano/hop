@@ -399,7 +399,7 @@ function sc_isPair(p) { /// export
 }
 
 function sc_isPairEqual(p1, p2) {
-    return (sc_isEqual(o1.car, o2.car) && sc_isEqual(o1.cdr, o2.cdr));
+    return (sc_isEqual(p1.car, p2.car) && sc_isEqual(p1.cdr, p2.cdr));
 }
 
 function sc_cons(car, cdr) { /// export
@@ -939,11 +939,11 @@ function sc_stringLength_immutable(s) { /// export
 }
 
 function sc_stringRef_mutable(s, k) { /// export
-    return s.val.charAt(k);
+    return new sc_Char(s.val.charAt(k));
 }
 
 function sc_stringRef_immutable(s, k) { /// export
-    return s.charAt(k);
+    return new sc_Char(s.charAt(k));
 }
 
 function sc_stringSet_mutable(s, k, c) { /// export string-set!
@@ -1260,6 +1260,18 @@ function sc_bitOr(x, y) { /// export
 
 function sc_bitXor(x, y) { /// export
     return x ^ y;
+}
+
+function sc_bitLsh(x, y) { /// export
+    return x << y;
+}
+
+function sc_bitRsh(x, y) { /// export
+    return x >> y;
+}
+
+function sc_bitUrsh(x, y) { /// export
+    return x >>> y;
 }
 
 function sc_jsField(o, field) { /// export
@@ -1960,15 +1972,14 @@ sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {
 	p.appendJSString(")");
 };
 sc_Vector.prototype.writeOrDisplay = function(p, writeOrDisplay) {
-    var a = this.val;
-    if (a.length === 0)
+    if (this.length === 0)
 	p.appendJSString("#()");
 
     p.appendJSString("#(");
-    writeOrDisplay(p, a[0]);
-    for (var i = 1; i < a.length; i++) {
+    writeOrDisplay(p, this[0]);
+    for (var i = 1; i < this.length; i++) {
 	p.appendJSString(" ");
-	writeOrDisplay(p, a[i]);
+	writeOrDisplay(p, this[i]);
     }
     p.appendJSString(")");
 };
@@ -2200,8 +2211,8 @@ sc_Vector.prototype.prepWriteCircle = function(symb, nbPointer) {
 	this[symb + "nb"] = nbPointer.nb++;
     } else {
 	this[symb] = 0;
-	for (var i = 0; i < this.val.length; i++)
-	    sc_prepWriteCircle(this.val[i], symb, nbPointer);
+	for (var i = 0; i < this.length; i++)
+	    sc_prepWriteCircle(this[i], symb, nbPointer);
     }
 };
 // TODO: not correct
@@ -2297,9 +2308,8 @@ sc_Vector.prototype.doWriteCircle = function(p, symb) {
 	p.appendJSString('#' + this[symb + "nb"] + '=');
     }
     p.appendJSString("#(");
-    var a = this.val;
-    for (var i = 0; i < a.length; i++) {
-	sc_doWriteCircle(p, a[i], symb);
+    for (var i = 0; i < this.length; i++) {
+	sc_doWriteCircle(p, this[i], symb);
 	p.appendJSString(" ");
     }
     p.appendJSString(")");

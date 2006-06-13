@@ -31,7 +31,7 @@ A package ++XXX.hz++ must, at least, contain:
  the service  ++XXX++ __must__ be present in the file ++XXX.hop++.
   - optional additional sources (++.hop++ files), ++.hss++, and ++.css++ files.
   - ++.afile++: this file is needed if the weblet uses several source files.
-  - ++etc/foo.info++: this file contains the package meta information 
+  - ++etc/weblet-info++: this file contains the package meta information 
  (e.g., the revision number, the author, etc.).
   - ++etc/logo.png++: the logo (a 48x48 image) of the weblet.   
 
@@ -172,7 +172,7 @@ This produces a file such as:
 This tells HOP where to find the source file containing
 the definition of the modules ++roman++ and ++roman-convert++.
 
-~~ Then, a file ++etc/roman.info++ is needed. It can be defined as:
+~~ Then, a file ++etc/weblet-info++ is needed. It can be defined as:
 
 <code>
   (
@@ -208,15 +208,15 @@ This should produce an output similar to:
   drwxr-x--- serrano/users     2006-05-24 08:45:39 roman/
   drwxr-x--- serrano/users     2006-05-24 08:45:33 roman/etc/
    rw-r----- serrano/users     2006-05-24 08:45:27 roman/etc/logo.png
-   rw-r----- serrano/users     2006-05-24 08:45:33 roman/etc/roman.info
+   rw-r----- serrano/users     2006-05-24 08:45:33 roman/etc/weblet-info
    rw-r----- serrano/users     2006-05-24 08:45:34 roman/.afile
    rw-r----- serrano/users     2006-05-24 08:45:37 roman/roman.hop
    rw-r----- serrano/users     2006-05-24 08:45:39 roman/convert.hop
 </code>
 
-== The .info file ==
+== The weblet-info file ==
 
-The ++.info++ file contains packages //meta data//. It is a list of
+The ++weblet-info++ file contains packages //meta data//. It is a list of
 associations. Each association is a key and a value. The currently knows
 keys are:
 
@@ -241,7 +241,7 @@ to provide his package with a file ++etc/XXX.wiki++ and implement the
 
 <code>
    (define-service (XXX/documentation)
-      (let* ((file (string-append (hopcal-dir) "/etc/XXX.wiki"))
+      (let* ((file (string-append (XXX-dir) "/etc/XXX.wiki"))
              (url (format "/hop/doc/weblet?weblet=~a" file)))
          (instantiate::http-response-string
             (start-line "HTTP/1.0 301 Moved Permanently")
@@ -273,7 +273,7 @@ in your page. When clicked, this link spawns the
 ,(<A> :href "http://localhost:8080/hop/hz"
       (<SPAN> :style {font-variant: small-caps} "Hz")) weblet on the user host
 computer. It fetches and installs your ++roman.hz++ file on that computer.
-This technique requires two additional fields in the ++roman.info++ file.
+This technique requires two additional fields in the ++weblet-info++ file.
   - The ++category++ of the weblet. It can be any string of characters. 
   - The ++url++ where to download the ++roman.hz++ file.
 
