@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Jun 12 10:05:16 2006 (serrano)                */
+/*    Last change :  Tue Jun 13 10:53:11 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -167,9 +167,9 @@ function hop_eval( proc ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_element_eval ...                                             */
+/*    hop_node_eval ...                                                */
 /*---------------------------------------------------------------------*/
-function hop_element_eval( node ) {
+function hop_node_eval( node ) {
    var res;
    var scripts = node.getElementsByTagName( "script" );
 
@@ -191,7 +191,7 @@ function hop_js_eval( http ) {
       
       node.innerHTML = http.responseText;
 
-      return hop_element_eval( node );
+      return hop_node_eval( node );
    }
 
    return false;

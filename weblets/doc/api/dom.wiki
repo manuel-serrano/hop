@@ -54,6 +54,7 @@ vectors.
   (dom-previous-sibling node)
   (dom-node-name node)
   (dom-node-type node)
+  (dom-node-eval node)
   (dom-parent-node node)
   (dom-append-child! node new)
   (dom-remove-child! node old)
@@ -252,6 +253,18 @@ Returns the name (respectively the type) of ++node++.
 </procedure>
 </procedure>
 </function>
+</function>
+
+=== ++(dom-node-eval node)++ ===
+<function> dom-node-eval
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Evaluates all the scripts children of ++node++. It returns the last
+evaluated value.
 </function>
 
 === ++(dom-parent-node node)++ ===
