@@ -2,9 +2,9 @@
 
 ,(<TABLE>
    :class "download"
-   (<TR> (<TH> [The latest ,(<SPAN> :class "unstable" "unstable") version of is:])
+   (<TR> (<TH> [The latest ,(<SPAN> :class "unstable" "unstable") version is:])
          (<TD> (<A> :href *devel-tar-url* *devel-tar-gz*)))
-   (<TR> (<TH> [The latest ,(<SPAN> :class "stable" "stable") version of is:])
+   (<TR> (<TH> [The latest ,(<SPAN> :class "stable" "stable") version is:])
          (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*)))
    (<TR> :colspan 2 (<TD> "&nbsp;"))
    (<TR> (<TH> [Pre-compiled ,(<SPAN> :class "stable" "stable") JVM bytecodes:])

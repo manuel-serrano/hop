@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jun  5 12:09:37 2006 (serrano)                */
+;*    Last change :  Tue Jun 13 16:15:17 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -73,9 +73,10 @@
 	    (with-handler
 	       (lambda (e)
 		  (exception-notify e))
-	       (let liip ((n n))
+	       (let liip ()
 		  (handle-connection ap rp s n)
-		  (liip (+fx n 1))))
+		  (set! n (+fx n 1))
+		  (liip)))
 	    (loop n)))))
 
 ;*---------------------------------------------------------------------*/

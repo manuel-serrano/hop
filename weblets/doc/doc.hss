@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Jun  3 06:03:52 2006 (serrano)                */
+/*    Last change :  Tue Jun 13 12:15:44 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -383,6 +383,7 @@ doc pre, doc textarea {
   padding: 2px;
   font-size: x-small;
   font-family: $typewriter;
+  overflow: auto;
 }
 
 doc span.href {
@@ -604,6 +605,12 @@ api doc pre {
 
 api doc pre.example {
   background-color: $example-background;
+}
+
+api doc div.example {
+  width: 100%;
+  max-width: 100em;
+  overflow: auto;
 }
 
 api doc pre.source {
