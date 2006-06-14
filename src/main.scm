@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jun  5 12:09:37 2006 (serrano)                */
+;*    Last change :  Tue Jun 13 10:57:47 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -38,6 +38,72 @@
 		     (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))
 	 (else
 	  `(hop-verb ,@(map (lambda (x) (e x e))) (cdr x))))))
+
+;*---------------------------------------------------------------------*/
+;*    log-response ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (log-response port req resp)
+  (define (two-digits n)
+    (when (< n 10)
+      (display #\0 port))
+    (display n port))
+
+  (with-access::http-request req (socket host user method encoded-path http header)
+     ;; distant host address and user
+     (fprintf port "~a - ~a "
+	      (socket-host-address socket)
+	      (or user "-"))
+     ;; date
+     (display "[" port)
+     (let* ((d   (current-date))
+	    (tz  (if (= 1 (date-is-dst d))
+		     (- (date-timezone d) 3600)
+		     (date-timezone d))))
+       (two-digits (date-day d))    (display "/" port)
+       (two-digits (date-month d))  (display "/" port)
+       (display (date-year d) port) (display ":" port)
+       (two-digits (date-hour d))   (display ":" port)
+       (two-digits (date-minute d)) (display ":" port)
+       (two-digits (date-second d)) (display " " port)
+       (display (if (> tz 0) "+" "-") port)
+       (two-digits (quotient  (abs tz) 3600))
+       (two-digits (remainder (abs tz) 3600)))
+     (display "] " port)
+     ;; request
+     (fprintf port "\"~a ~a ~a\" " method encoded-path http)
+     ;; Return code
+     (let* ((str (%http-response-local-start-line resp))
+	    (len (string-length str)))
+       (let Loop ((i  0)
+		  (sp 0))
+	 (cond
+	   ((or (>= i len) (>= sp 2))
+	    #f)
+	   ((char=? (string-ref str i) #\space)
+	    (Loop (+ i 1) (+ sp 1)))
+	   ((= sp 1)
+	    (display (string-ref str i) port)
+	    (Loop (+ i 1) sp))
+	   (else
+	    (Loop (+ i 1) sp)))))
+     (display " " port)
+     ;; Content-length
+     (let ((hdrs (%http-response-local-header resp)))
+       (cond
+	 ((http-response-file? resp)
+	  (display (file-size (http-response-file-file resp)) port))
+	 ((>elong (%http-response-content-length resp) #e0)
+	  (display (%http-response-content-length resp) port))
+	 (else
+	  (display "-" port))))
+     ;; Long version (add User-Agent and Referer)
+     (let ((agent   (assoc :user-agent header))
+	   (referer (assoc :referer header)))
+       (when (and (pair? agent) (pair? referer))
+	 (fprintf port " ~s ~s" (cdr referer) (cdr agent))))
+     (newline port)
+     (flush-output-port port)))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
@@ -220,6 +286,12 @@
 		       (user-name (http-request-user req))
 		       "anonymous") "\n")
 	 (let ((rep (http-response hp sock)))
+	   ;; Eventually log this request
+	   (when (%http-response-local? hp)
+	     (let ((p (hop-log-file)))
+	      (when (output-port? p)
+		(log-response p req hp))))
+	   
 	    (hop-verb 2 (hop-color req req " RESPONSE")
 		      " ("
 		      (pool-thread-available accept-pool)

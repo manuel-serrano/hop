@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue May 23 07:38:33 2006 (serrano)                */
+;*    Last change :  Mon Jun 12 21:16:12 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -37,7 +37,8 @@
 	 (rc-file #unspecified)
 	 (mime-file #unspecified)
 	 (libraries '())
-	 (exprs '()))
+	 (exprs '())
+	 (log-file #f))
       (args-parse (cdr args)
          ((("-h" "--help") (help "This message"))
           (args-parse-usage #f)
@@ -97,6 +98,8 @@
 	  (set! exprs (cons string exprs)))
 	 (("--repl" (help "Starts a repl"))
 	  (set! replp #t))
+	 (("--log-file" ?file (help "Use <FILE> as log file"))
+	  (set! log-file file))
 	 ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
 	  (hop-path-set! (cons path (hop-path))))
 	 ((("-l" "--library") ?library (help "Preload additional <LIBRARY>"))
@@ -108,6 +111,11 @@
 	  (print "Unknown argument: " else)
 	  (args-parse-usage #f)
 	  (exit 1)))
+      (when log-file
+	(let ((p (append-output-file log-file)))
+	  (unless p
+	    (error 'hop "Cannot open log file" log-file))
+	  (hop-log-file-set! p)))      
       (when mimep
 	 (load-mime-types (hop-mime-types-file))
 	 (load-mime-types (if (string? mime-file)

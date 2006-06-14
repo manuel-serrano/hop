@@ -1,5 +1,6 @@
+;; automatically generated, don't edit
 ;; /mnt/users/eg/Projects/hop/weblets/hz
-;; Fri May 19 11:22:41 2006
+;; Mon Jun 12 17:11:56 2006
 
 (
   (hz_authenticate "./authenticate.hop")
