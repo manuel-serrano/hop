@@ -94,7 +94,9 @@
       ((char? const)
        (p-display p "(new sc_Char(\"" (string-for-read (string const)) "\"))"))
       ((number? const)
-       (p-display p const))
+       (if (positive? const)
+	   (p-display p const)
+	   (p-display p "(" const ")")))
       ((string? const)
        (if (config 'mutable-strings)
 	   (p-display p "(new sc_String(\"" (string-for-read const) "\"))")
@@ -335,7 +337,7 @@
 		 "}\n")))
 
 (define-pmethod (With-handler-compile p)
-   (let ((exception this.exception.compiled))
+   (let ((exception this.exception.var.compiled))
       (p-display p "try {\n")
       (this.body.compile p)
       (p-display p
