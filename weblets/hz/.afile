@@ -1,5 +1,6 @@
-;; /mnt/users/eg/Projects/hop/weblets/hz
-;; Fri May 19 11:22:41 2006
+;; automatically generated, don't edit
+;; /users/serrano/prgm/project/hop/weblets/hz
+;; Thu Jun 15 14:23:05 2006
 
 (
   (hz_authenticate "./authenticate.hop")
