@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Jun  9 17:13:49 2006 (serrano)                */
+;*    Last change :  Thu Jun 15 11:24:44 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -158,7 +158,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-js socket)
    (with-trace 3 'http-response::http-response-js
-      (with-access::http-response-js r (start-line header content-type server content-length body bodyp timeout)
+      (with-access::http-response-js r (start-line header content-type server content-length value bodyp timeout)
 	 (let ((p (socket-output socket)))
 	    (when (>fx timeout 0)
 	       (output-port-timeout-set! p timeout))
@@ -175,7 +175,7 @@
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js
-	       (when bodyp (display (hop->json body) p)))
+	       (when bodyp (display (hop->json value) p)))
 	    (flush-output-port p)))))
       
 ;*---------------------------------------------------------------------*/
@@ -234,9 +234,10 @@
    (with-trace 3 'http-response::http-response-file
       (with-access::http-response-file r (start-line header content-type server file bodyp request timeout)
 	 (if (authorized-path? request file)
-	     ;; the file is never read so it can be open it with a tiny buffer
+	     ;; the file is never read with RGC so it can
+	     ;; be open with a tiny buffer
 	     (let ((p (socket-output socket))
-		   (pf (open-input-file file)))
+		   (pf (open-input-file file 1)))
 		(cond
 		   ((not (input-port? pf))
 		    (let ((rep (if (file-exists? pf)
@@ -560,7 +561,7 @@
 	  (xml obj)))
       (else
        (instantiate::http-response-js
-	  (body obj)))))
+	  (value obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::%http-response ...                            */

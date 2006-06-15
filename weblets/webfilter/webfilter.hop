@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed May 24 15:12:44 2006 (serrano)                */
+;*    Last change :  Thu Jun 15 10:18:17 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -253,10 +253,10 @@
 	 (<TH>
 	    (<P> [This filter prevents Google bouncing.])
 	    (<P> :class "readme"
-		 [Google boucing is a technique that enables Google to log
+		 [Google bouncing is a technique that enables Google to log
 users requests selections. That is, when Google serves a request, instead
 of returning a list of found URLs, it returns a list of URLs pointing to
-Google, each containing a forward pointer to the found wanted URL.])))
+Google, each containing a forward pointer to the actual URL.])))
       (let ((txt (<SPAN>
 		    :class (if (webfilter-google-unbounce) "enable" "disable")
 		    "Google unbounce")))

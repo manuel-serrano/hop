@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jun  8 11:35:10 2006 (serrano)                */
+;*    Last change :  Thu Jun 15 14:06:31 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -55,7 +55,10 @@
       (let* ((req (read/rp request-line-grammar port id))
 	     (localc (string=? (socket-local-address sock)
 			       (socket-host-address sock)))
-	     (localh (is-local? (http-request-host req))))
+	     (localh (or (not (hop-enable-proxing))
+			 (string=? (host (http-request-host req))
+				   (socket-host-address sock))
+			 (is-local? (http-request-host req)))))
 	 (when (> (hop-request-header-timeout) 0)
 	    (input-port-timeout-set! port 0))
 	 (with-access::http-request req (socket localclientp localhostp user userinfo)

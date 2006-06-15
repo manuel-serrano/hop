@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jun  7 17:37:04 2006 (serrano)                */
+;*    Last change :  Thu Jun 15 09:41:22 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -106,7 +106,7 @@
 	      (body::obj read-only))
 	   
 	   (class http-response-js::%http-response-local
-	      (body::obj read-only))
+	      (value::obj read-only))
 	   
 	   (class http-response-cgi::%http-response-local
 	      (cgibin::bstring read-only))

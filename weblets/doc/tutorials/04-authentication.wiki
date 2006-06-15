@@ -90,9 +90,9 @@ sake of the example, let us study the implementation of the authentication of
      (let ((req (the-current-request)))
         (if (users-added?)
             (let ((user (hz-get-access req)))
-	       (if (and (user? user) (authorized-service? req 'hz))
-		   (hz-main req user)
-		   (hz-authenticate req)))
+               (if (and (user? user) (authorized-service? req 'hz))
+                   (hz-main req user)
+                   (hz-authenticate req)))
             (hz-main req #f 'local))))
 </code>
 
@@ -105,8 +105,8 @@ user authentication. Its implementation is:
   (define (hz-get-access req)
      (let ((cookie (http-cookie-get req "hop_hz")))
         (if (string? cookie)
-	    (let ((exp (with-input-from-string (base64-decode cookie) read)))
-	       (and (pair? exp) (find-user-cookie exp))))))
+            (let ((exp (with-input-from-string (base64-decode cookie) read)))
+               (and (pair? exp) (find-user-cookie exp))))))
 </code>
 
 That function searches the request ++req++ in order to find the value
@@ -117,12 +117,12 @@ that is inspected with the function ++find-user-cookie++. Its definition is:
 <code>
   (define (find-user-cookie exp)
      (let* ((user (memq :user exp))
-	    (passwd (memq :passwd exp)))
+            (passwd (memq :passwd exp)))
         (and (pair? user) (pair? (cdr user)) (symbol? (cadr user))
-	     (pair? passwd) (pair? (cdr passwd)) (symbol? (cadr passwd))
-	     (find-user/encrypt (symbol->string (cadr user))
-		  	        (symbol->string (cadr passwd))
-			        hz-encrypt-password))))
+             (pair? passwd) (pair? (cdr passwd)) (symbol? (cadr passwd))
+             (find-user/encrypt (symbol->string (cadr user))
+                                (symbol->string (cadr passwd))
+                                hz-encrypt-password))))
 </code>
 
 An encrypted password is contained in that list. It is associated with
@@ -149,18 +149,18 @@ implementation is:
 <code>
   (define (login req name pass local)
      ~(let ((svc ($hz/setcookie $(begin name).value
-	  		        $(begin pass).value
-			        (if $(begin local).checked "local" "share")))
-	    (cback (lambda (http)
-		      (let ((date (new Date)))
-		         (date.setMinutes
-			   (+ (date.getMinutes) $(hz-auto-logout-minute)))
-		         (cookie-set! "hop_hz"
+                                $(begin pass).value
+                                (if $(begin local).checked "local" "share")))
+            (cback (lambda (http)
+                      (let ((date (new Date)))
+                         (date.setMinutes
+                           (+ (date.getMinutes) $(hz-auto-logout-minute)))
+                         (cookie-set! "hop_hz"
                                       http
                                       $(http-request-path req)
                                       #f
                                       date)
-		         (set! location $(http-request-path req))))))
+                         (set! location $(http-request-path req))))))
          (with-hop svc cback)))
 </code>
 
@@ -172,13 +172,13 @@ is:
 <code>
   (define-service (hz/setcookie name passwd mode)
      (let* ((pd (hz-encrypt-password
-	         (md5sum (string-append name " " passwd))))
-	    (cookie `(user: ,name passwd: ,pd mode: ,mode))
-	    (p (open-output-string)))
+                 (md5sum (string-append name " " passwd))))
+            (cookie `(user: ,name passwd: ,pd mode: ,mode))
+            (p (open-output-string)))
         (display cookie p)
         (let ((s (close-output-port p)))
-	   (instantiate::http-response-string
-	      (body (base64-encode s))))))
+           (instantiate::http-response-string
+              (body (base64-encode s))))))
 </code>
 
 In order to log out, users use:
@@ -187,8 +187,8 @@ In order to log out, users use:
   (define (logout req)
      (let ((path (http-request-path req)))
         ~(let ((path $path))
-	    (cookie-remove! "hop_hz" path)
-	    (set! location path))))
+            (cookie-remove! "hop_hz" path)
+            (set! location path))))
 </code>
 
 == Granting access globally ==

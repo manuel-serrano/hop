@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Thu May 11 08:21:05 2006 (serrano)                */
+;*    Last change :  Thu Jun 15 14:08:52 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -268,8 +268,7 @@
 ;*---------------------------------------------------------------------*/
 (define (is-local? dest)
    (or (string=? dest (hop-server-hostname))
-       (member dest (hop-server-aliases))
-       (string=? (host dest) (hop-server-ip))))
+       (member dest (hop-server-aliases))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-escape ...                                                */

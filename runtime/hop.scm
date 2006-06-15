@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Jun  9 08:44:27 2006 (serrano)                */
+;*    Last change :  Thu Jun 15 13:57:05 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -24,7 +24,8 @@
 	    __hop_service
 	    __hop_http-response
 	    __hop_js-lib
-	    __hop_xml)
+	    __hop_xml
+	    __hop_http-error)
    
    (with    __hop_hop-notepad
 	    __hop_hop-inline
@@ -59,32 +60,32 @@
    (let loop ((m req)
 	      (filters (hop-filters)))
       (if (null? filters)
-	  (with-access::http-request m (content-length method)
-	     (let* ((rp (instantiate::http-response-remote
-			   (method (http-request-method m))
-			   (host (http-request-host m))
-			   (port (http-request-port m))
-			   (path (http-request-path m))
-			   (userinfo (http-request-userinfo m))
-			   (encoded-path (http-request-encoded-path m))
-			   (http (http-request-http m))
-			   (header (http-request-header m))
-			   (scheme (http-request-scheme m))
-			   (bodyp (not (eq? method 'HEAD)))
-			   (content-length content-length)
-			   (request req)
-			   (remote-timeout (hop-connection-timeout))))
-		    (rp2 (hop-run-hook
-			  (hop-http-response-remote-hooks) m rp)))
-		(hop-request-hook m rp2)))
+	  (with-access::http-request m (content-length method path)
+	     (let* ((n (if (hop-enable-proxing)
+			   (instantiate::http-response-remote
+			      (method (http-request-method m))
+			      (host (http-request-host m))
+			      (port (http-request-port m))
+			      (path (http-request-path m))
+			      (userinfo (http-request-userinfo m))
+			      (encoded-path (http-request-encoded-path m))
+			      (http (http-request-http m))
+			      (header (http-request-header m))
+			      (scheme (http-request-scheme m))
+			      (bodyp (not (eq? method 'HEAD)))
+			      (content-length content-length)
+			      (request req)
+			      (remote-timeout (hop-connection-timeout)))
+			   (http-file-not-found path)))
+		    (r (hop-run-hook (hop-http-response-remote-hooks) m n)))
+		(hop-request-hook m r)))
 	  (let ((n ((cdar filters) m)))
 	     (cond
 		((eq? n 'hop-resume)
 		 (loop m (hop-filters)))
 		((%http-response? n)
-		 (let ((rp2 (hop-run-hook
-			     (hop-http-response-local-hooks) m n)))
-		    (hop-request-hook m rp2)))
+		 (let ((r (hop-run-hook (hop-http-response-local-hooks) m n)))
+		    (hop-request-hook m r)))
 		((http-request? n)
 		 (mutex-lock! (hop-filter-mutex))
 		 (let ((tail (cdr filters)))
@@ -119,9 +120,7 @@
        (error 'hop-request-hook "Illegal response" rep))
       (else
        (let* ((rep2 ((http-request-hook req) rep))
-	      (res (if (%http-response? rep2)
-		       rep2
-		       rep)))
+	      (res (if (%http-response? rep2) rep2 rep)))
 	  (%http-response-request-set! res req)
 	  res))))
 
@@ -277,7 +276,7 @@
 ;*    with-hop-response ::http-response-js ...                         */
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-response obj::http-response-js success fail)
-   (success (http-response-js-body obj)))
+   (success (http-response-js-value obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-response ::http-response-hop ...                        */

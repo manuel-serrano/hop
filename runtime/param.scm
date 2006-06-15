@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Jun  8 09:29:00 2006 (serrano)                */
+;*    Last change :  Thu Jun 15 14:09:04 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -86,7 +86,6 @@
 	    (hop-path-set! ::pair-nil)
 	    
 	    (hop-server-hostname::bstring)
-	    (hop-server-ip::bstring)
 
 	    (hop-service-base::bstring)
 	    
@@ -95,10 +94,13 @@
 	    (hop-initial-weblet::bstring)
 	    (hop-initial-weblet-set! ::bstring)
 
+	    (hop-enable-proxing::bool)
+	    (hop-enable-proxing-set! ::bool)
+	    
 	    (hop-server-aliases::pair-nil)
 	    (hop-server-aliases-set! ::pair-nil)
 	    (hop-server-aliases-add! ::bstring)
-	    
+
 	    (hop-mime-types::pair-nil)
 	    (hop-mime-types-set! ::pair-nil)
 	    
@@ -450,12 +452,6 @@
    (hostname))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-server-ip ...                                                */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-server-ip
-   (host (hostname)))
-
-;*---------------------------------------------------------------------*/
 ;*    hop-service-base ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    The prefix of all HOP weblets.                                   */
@@ -481,10 +477,19 @@
    (format "svc-~a" (hop-session)))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-enable-proxing ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Enable (or disable) the proxy facility. If set to #f HOP no      */
+;*    longer acts as proxy.                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-proxing
+   #t)
+
+;*---------------------------------------------------------------------*/
 ;*    hop-server-aliases ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-server-aliases
-   '("hop" "localhost"))
+   '("hop" "localhost" "127.0.0.1"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-aliases-add! ...                                      */
