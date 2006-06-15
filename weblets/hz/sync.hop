@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Mon Jun 12 14:08:32 2006 (eg)                     */
+;*    Last change :  Thu Jun 15 14:43:47 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -237,7 +237,7 @@
 	 (when (directory? dir)
 	   (or (try-sync-info name (make-file-path dir
 						   "etc"
-						   "weblet-info"))
+						   "weblet.info"))
 	       (try-sync-info name (make-file-path dir
 						   "etc"
 						   (string-append name ".info")))))))
@@ -246,7 +246,7 @@
 	(let* ((d (make-file-path (hop-weblets-directory)
 				  name
 				  "etc"))
-	       (i (make-file-path d "weblet-info"))
+	       (i (make-file-path d "weblet.info"))
 	       (j (make-file-path d (string-append name ".info"))))
 	  (unless (or (file-exists? i)  (file-exists? j))
 	    (hz-db-remove-weblet db o)))))

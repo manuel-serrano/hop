@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jun 15 14:06:31 2006 (serrano)                */
+;*    Last change :  Thu Jun 15 14:37:14 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -57,7 +57,7 @@
 			       (socket-host-address sock)))
 	     (localh (or (not (hop-enable-proxing))
 			 (string=? (host (http-request-host req))
-				   (socket-host-address sock))
+				   (socket-local-address sock))
 			 (is-local? (http-request-host req)))))
 	 (when (> (hop-request-header-timeout) 0)
 	    (input-port-timeout-set! port 0))
