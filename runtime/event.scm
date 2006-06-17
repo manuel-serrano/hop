@@ -72,9 +72,11 @@
 			  (mutex-unlock! %mutex)
 			  (if (eq? v *void*)
 			      (begin
-				 (if (pair? %requests)
-				     (append! %requests (list r))
-				     (set! %requests (list r)))
+				 (with-lock %mutex
+				    (lambda ()
+				       (if (pair? %requests)
+					   (append! %requests (list r))
+					   (set! %requests (list r)))))
 				 (instantiate::http-response-persistent))
 			      v)))))))))
 
