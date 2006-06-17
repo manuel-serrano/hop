@@ -29,7 +29,7 @@
    (export  (class hop-event
 	       (%hop-event-init!)
 	       (name::bstring read-only)
-	       (queue-size::int read-only (default 1))
+	       (queue-size::int read-only (default 20))
 	       (%service (default #unspecified))
 	       (%requests (default '()))
 	       (%closep::bool (default #f))
@@ -85,8 +85,9 @@
    (with-access::hop-event evt (queue-size %fifo %fifol)
       (if (>fx queue-size 0)
 	  (let ((v (car %fifo)))
-	     (set-car! %fifo *void*)
-	     (set! %fifo (cdr %fifo))
+	     (unless (eq? v *void*)
+		(set-car! %fifo *void*)
+		(set! %fifo (cdr %fifo)))
 	     v)
 	  *void*)))
 	 
