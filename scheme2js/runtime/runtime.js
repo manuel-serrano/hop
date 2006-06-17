@@ -1818,7 +1818,7 @@ function sc_isCharReady(port) { /// export
     return port.isCharReady();
 }
 function sc_closeInputPort(p) { /// export
-    p.close();
+    return p.close();
 }
 
 function sc_isInputPort(o) { /// export
@@ -1875,16 +1875,36 @@ function sc_withInputFromString_immutable(s, thunk) { /// export
 
 
 function sc_withOutputToString_mutable(thunk) { /// export
-    return new sc_String(sc_withOutputToString_immutable(thunk));
-}
-
-function sc_withOutputToString_immutable(thunk) { /// export
     var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
-    var outp = new sc_StringOutputPort();
+    var outp = new sc_StringOutputPort_mutable();
     SC_DEFAULT_OUT = outp;
     var tmp2 = thunk();
     SC_DEFAULT_OUT = tmp;
     return outp.close();
+}
+
+function sc_withOutputToString_immutable(thunk) { /// export
+    var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
+    var outp = new sc_StringOutputPort_immutable();
+    SC_DEFAULT_OUT = outp;
+    var tmp2 = thunk();
+    SC_DEFAULT_OUT = tmp;
+    return outp.close();
+}
+
+function sc_openOutputString_mutable() { /// export
+    return new sc_StringOutputPort_mutable();
+}
+function sc_openOutputString_immutable() { /// export
+    return new sc_StringOutputPort_immutable();
+}
+
+function sc_openInputString_mutable(str) { /// export
+    return new sc_StringInputPort(str.val);
+}
+
+function sc_openInputString_immutable(str) { /// export
+    return new sc_StringInputPort(str);
 }
 
 /* ----------------------------------------------------------------------------*/
@@ -1899,14 +1919,25 @@ sc_OutputPort.prototype.close = function() {
     /* do nothing */
 }
 
-function sc_StringOutputPort() {
+function sc_StringOutputPort_mutable() {
     this.res = "";
 }
-sc_StringOutputPort.prototype = new sc_OutputPort();
-sc_StringOutputPort.prototype.appendJSString = function(s) {
+sc_StringOutputPort_mutable.prototype = new sc_OutputPort();
+sc_StringOutputPort_mutable.prototype.appendJSString = function(s) {
     this.res += s;
 }
-sc_StringOutputPort.prototype.close = function() {
+sc_StringOutputPort_mutable.prototype.close = function() {
+    return new sc_String(this.res);
+}
+
+function sc_StringOutputPort_immutable() {
+    this.res = "";
+}
+sc_StringOutputPort_immutable.prototype = new sc_OutputPort();
+sc_StringOutputPort_immutable.prototype.appendJSString = function(s) {
+    this.res += s;
+}
+sc_StringOutputPort_immutable.prototype.close = function() {
     return this.res;
 }
 
@@ -1932,7 +1963,7 @@ function sc_isOutputPort(o) { /// export
 }
 
 function sc_closeOutputPort(p) { /// export
-    p.close();
+    return p.close();
 }
 
 function hop_bigloo_serialize_pair( l ) {
@@ -1962,7 +1993,7 @@ sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {
 	p.appendJSString("(");
     writeOrDisplay(p, this.car);
     if (sc_isPair(this.cdr)) {
-	writeOrDisplay(p, " ");
+	p.appendJSString(" ");
 	this.cdr.writeOrDisplay(p, writeOrDisplay, true);
     } else if (this.cdr !== null) {
 	p.appendJSString(" . ");
