@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jun 15 09:41:22 2006 (serrano)                */
+;*    Last change :  Sat Jun 17 10:54:10 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -40,6 +40,7 @@
 	      (id::int read-only (default -1))
 	      (localhostp::bool (default #f))
 	      (localclientp::bool (default #f))
+	      (proxyp::bool read-only (default #f))
 	      (hook::procedure (default (lambda (rep) rep)))
 	      (transfer-encoding (default #f))
 	      (authorization (default #f))

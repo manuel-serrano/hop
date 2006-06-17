@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Jun 17 06:26:18 2006 (serrano)                */
+;*    Last change :  Sat Jun 17 15:47:48 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -137,8 +137,11 @@
 		    #f)
 		 (http-parse-request sock id))))
       (when (http-request? req)
-	 (with-access::http-request req (method scheme host port path)
-	    (hop-verb 2 (hop-color req req " PROCESS")
+	 (with-access::http-request req (method scheme host port path proxyp)
+	    (hop-verb 2
+		      (if proxyp
+			  (hop-color req req " EXEC (P)")
+			  (hop-color req req " EXEC (S)"))
 		      " ("
 		      (pool-thread-available accept-pool)
 		      "/" (hop-max-accept-thread)

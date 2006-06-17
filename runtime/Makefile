@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Jun  5 12:10:08 2006 (serrano)                */
+#*    Last change :  Sat Jun 17 15:12:03 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -42,7 +42,7 @@ _OBJECTS	= param misc types thread \
 OBJECTS		= $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS	= o/make-lib.o
 
-BGL_CLASSES	= $(_OBJECTS:%=$(CLASS_DIR)/%.class)
+BGL_CLASSES	= $(_OBJECTS:%=$(CLASS_DIR)/%.class) $(CLASS_DIR)/configure.class
 BGL_ECLASSES	= $(CLASS_EDIR)/make-lib.class
 
 BGL_DOTNET_OBJ	= $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
@@ -84,7 +84,6 @@ ude:
 
 .jfile: $(SOURCES) configure.scm
 	@ $(JFILE) -o .jfile \
-                   -I $(MISC_SRC_DIR) \
                    -pbase $(PBASE) $(SOURCES) configure.scm make-lib.scm
 
 .etags: $(SOURCES)

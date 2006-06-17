@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Jun 15 11:24:44 2006 (serrano)                */
+;*    Last change :  Sat Jun 17 10:01:07 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -443,6 +443,8 @@
 						    request))
 		(rp (socket-output remote))
 		(sp (socket-input socket)))
+	    (trace-item "RP=" rp)
+	    (trace-item "SP=" sp)
 	    (hop-verb 4
 		      (hop-color request request " REMOTE")
 		      " " host ":" port "\n")
@@ -462,9 +464,12 @@
 		  (with-trace 4 'http-response-body
 		     (let* ((ip (socket-input remote))
 			    (op (socket-output socket)))
+			(trace-item "IP=" ip)
+			(trace-item "OP=" op)
 			(when (>fx timeout 0)
 			   (input-port-timeout-set! ip timeout)
 			   (output-port-timeout-set! op timeout))
+			(trace-item "timeout=" timeout)
 			(multiple-value-bind (http-version status-code phrase)
 			   (http-parse-status-line ip)
 			   ;; WARNING: phrase contains its terminal \r\n hence

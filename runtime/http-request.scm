@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Jun 17 06:00:25 2006 (serrano)                */
+;*    Last change :  Sat Jun 17 11:06:26 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -56,6 +56,7 @@
 	     (localc (string=? (socket-local-address sock)
 			       (socket-host-address sock)))
 	     (localh (or (not (hop-enable-proxing))
+			 (not (http-request-proxyp req))
 			 (is-local? (http-request-host req))
 			 (string=? (host (http-request-host req))
 				   (socket-local-address sock)))))
@@ -129,6 +130,7 @@
 		  (method method)
 		  (http http-version)
 		  (scheme scheme)
+		  (proxyp (string? hostname))
 		  (path (xml-string-decode cabspath))
 		  (userinfo userinfo)
 		  (encoded-path cabspath)

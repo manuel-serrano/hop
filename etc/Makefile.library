@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon May 22 12:05:36 2006 (serrano)                */
+#*    Last change :  Sat Jun 17 15:29:34 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -32,23 +32,19 @@ DOTNET_OBJ_EDIR	= o/dotnet_e
 #*    The implicit rules                                               */
 #*---------------------------------------------------------------------*/
 o/%.o: %.scm
-	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$*.scm -o $@ -c)
+	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$< -o $@ -c)
 
 $(CLASS_DIR)/%.class: %.scm
-	$(BIGLOO) -jvm $(BJVMFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -jvm-purify $< -o $@
+	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
 
 $(CLASS_EDIR)/%.class: %.scm
-	$(BIGLOO) -jvm $(BJVMFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -jvm-purify $< -o $@
+	@ $(call compile2,BIGLOO,BJVMFLAGS,BLJVMFLAGS,$< -o $@ -c)
 
 $(DOTNET_OBJ_DIR)/%.obj: %.scm
-	$(BIGLOO) -dotnet \
-            -dotnet-mono-workaround -dotnet-pnet-workaround \
-             $(BDOTNETFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -dotnet-managed $< -o $@
+	@ $(call compile,BIGLOO,BDOTNETFLAGS,$< -o $@ -c)
 
 $(DOTNET_OBJ_EDIR)/%.obj: %.scm
-	$(BIGLOO) -dotnet \
-            -dotnet-mono-workaround -dotnet-pnet-workaround \
-             $(BDOTNETFLAGS) $(EFLAGS) $(BHOPFLAGS) -c -dotnet-managed $< -o $@
+	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLDOTNETFLAGS,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/
 #*    The heap construction                                            */
@@ -65,7 +61,7 @@ $(HEAP_FILE): make-lib.scm .afile
 
 $(HEAPJVM_FILE): .jfile .afile make-lib.scm
 	@ $(RM) -f $(HEAPJVM_FILE)
-	@ $(BIGLOO) -jvm  $(EFLAGS) $(BHEAPFLAGS) make-lib.scm -addheap $(HEAPJVM_FILE)
+	@ $(BIGLOO) -jvm $(EFLAGS) $(BHFLAGS) make-lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 #*---------------------------------------------------------------------*/
@@ -140,17 +136,17 @@ $(CLASS_DIR):
 $(CLASS_EDIR): 
 	mkdir -p $(CLASS_EDIR)
 
-lib.zip: $(BUILDLIBDIR)/bigloo$(TARGETNAME)_s-$(HOPRELEASE).zip \
-         $(BUILDLIBDIR)/bigloo$(TARGETNAME)_e-$(HOPRELEASE).zip
+lib.zip: $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip \
+         $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip
 
-$(BUILDLIBDIR)/bigloo$(TARGETNAME)_s-$(HOPRELEASE).zip: .afile .jfile $(BGL_CLASSES)
+$(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip: .afile .jfile $(BGL_CLASSES)
 	@ $(RM) -f $@
 	@ (cd o/class_s && \
 	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_DIR:o/class_s/%=%)/*.class)
 	@ echo "$@ done..."
 	@ echo "-------------------------------"
 
-$(BUILDLIBDIR)/bigloo$(TARGETNAME)_e-$(HOPRELEASE).zip: .afile .jfile $(BGL_ECLASSES)
+$(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip: .afile .jfile $(BGL_ECLASSES)
 	@ $(RM) -f $@
 	@ (cd o/class_e && \
 	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_EDIR:o/class_e/%=%)/*.class)
@@ -210,9 +206,9 @@ stdclean:
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX)
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/bigloo$(TARGETNAME)_s-$(HOPRELEASE).zip
-	$(RM) -f $(BUILDLIBDIR)/bigloo$(TARGETNAME)_u-$(HOPRELEASE).zip
-	$(RM) -f $(BUILDLIBDIR)/bigloo$(TARGETNAME)_e-$(HOPRELEASE).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll
@@ -271,23 +267,23 @@ install-native:
 install-jvm:
 	cp $(BUILDLIBDIR)/$(TARGETNAME).jheap $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        cp $(BUILDLIBDIR)/bigloo$(TARGETNAME)_s-$(HOPRELEASE).zip $(DESTDIR)$(HOPFILDIR) && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_s-$(HOPRELEASE).zip && \
-        cp $(BUILDLIBDIR)/bigloo$(TARGETNAME)_e-$(HOPRELEASE).zip $(DESTDIR)$(HOPFILDIR) && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_e-$(HOPRELEASE).zip; \
+        cp $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip $(DESTDIR)$(HOPFILDIR) && \
+        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip && \
+        cp $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip $(DESTDIR)$(HOPFILDIR) && \
+        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip; \
         (cd $(DESTDIR)$(HOPFILDIR) && \
-           $(RM) -f bigloo$(TARGETNAME)_u-$(HOPRELEASE).zip && \
-           ln bigloo$(TARGETNAME)_s-$(HOPRELEASE).zip bigloo$(TARGETNAME)_u-$(HOPRELEASE).zip)
+           $(RM) -f $(TARGETNAME)_u-$(HOPRELEASE).zip && \
+           ln $(TARGETNAME)_s-$(HOPRELEASE).zip $(TARGETNAME)_u-$(HOPRELEASE).zip)
 
 install-dotnet:
 	cp $(BUILDLIBDIR)/$(TARGETNAME).jheap $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        cp $(BUILDLIBDIR)/bigloo$(TARGETNAME)_s-$(HOPRELEASE).dll $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_s-$(HOPRELEASE).dll && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_s-$(HOPRELEASE).dll && \
-        cp $(BUILDLIBDIR)/bigloo$(TARGETNAME)_e-$(HOPRELEASE).dll $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_e-$(HOPRELEASE).dll && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_e-$(HOPRELEASE).dll && \
-        cp $(BUILDLIBDIR)/bigloo$(TARGETNAME)_u-$(HOPRELEASE).dll $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_u-$(HOPRELEASE).dll && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_u-$(HOPRELEASE).dll 
+        cp $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
+        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
+        cp $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
+        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
+        cp $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll && \
+        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll 
 
 uninstall:
 	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).heap
@@ -295,12 +291,12 @@ uninstall:
 	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(HOPRELEASE)
 	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_e-$(HOPRELEASE)
 	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_s-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_u-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_e-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_s-$(HOPRELEASE).dll
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_u-$(HOPRELEASE).dll
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/bigloo$(TARGETNAME)_e-$(HOPRELEASE).dll
+	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
+	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
+	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip
+	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
+	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
+	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */

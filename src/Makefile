@@ -3,10 +3,12 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Jun  5 12:16:47 2006 (serrano)                */
+#*    Last change :  Sat Jun 17 15:26:52 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
+
+do: build
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
@@ -26,7 +28,11 @@ MODULES		= hop-param parseargs main init
 
 INCLUDES	= eval-macro.sch compiler-macro.sch
 
+CLASS_DIR	= o/class_s/bigloo/hop
+
 OBJECTS 	= $(MODULES:%=o/%.o)
+BGL_CLASSES	= $(MODULES:%=$(CLASS_DIR)/%.class)
+
 SOURCES 	= $(MODULES:%=%.scm)
 
 COLOR		= 32
@@ -41,16 +47,24 @@ POPULATION 	= $(INCLUDES) Makefile
 #*---------------------------------------------------------------------*/
 .PHONY: build dobuild
 
-build:  o dobuild
+build:  o $(BACKEND)
+
+
+native: $(BUILDBINDIR)/$(EXEC)
+jvm: $(CLASS_DIR) $(BUILDBINDIR)/$(EXEC).jvm
 
 o: 
 	mkdir -p $@
 
-dobuild: $(BUILDBINDIR)/$(EXEC)
-
+$(CLASS_DIR):
+	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $^)
+	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
+	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+
+$(BUILDBINDIR)/$(EXEC).jvm: .afile .etags .jfile $(BGL_CLASSES)
+	@ $(call compile,BIGLOO,BJVMFLAGS,-o $@ -I o/class_s $(BGL_CLASSES:o/class_s/%=%))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
 #*---------------------------------------------------------------------*/
@@ -63,7 +77,10 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 #*    The implicit `.scm.o' rule                                       */
 #*---------------------------------------------------------------------*/
 o/%.o: %.scm
-	@ $(call compile,BIGLOO,BCFLAGS,$*.scm -o $@ -c)
+	@ $(call compile,BIGLOO,BCFLAGS,$< -o $@ -c)
+
+$(CLASS_DIR)/%.class: %.scm
+	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
@@ -74,6 +91,9 @@ ude:
 
 .afile: $(SOURCES)
 	@ $(AFILE) -o .afile $(SOURCES) 
+
+.jfile: $(SOURCES)
+	@ $(JFILE) -o .jfile -pbase bigloo.hop $(SOURCES)
 
 .etags: .afile
 	@ $(BTAGS) -o .etags $(SOURCES)
@@ -111,6 +131,7 @@ clean:
 	/bin/rm -f .afile
 	/bin/rm -f $(OBJECTS)
 	/bin/rm -f $(MODULES:%=%.c)
+	/bin/rm -f $(BGL_CLASSES)
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
 
 devclean: clean

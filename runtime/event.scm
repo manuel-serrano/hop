@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon May  8 06:05:38 2006 (serrano)                */
+;*    Last change :  Sat Jun 17 16:55:41 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -34,7 +34,8 @@
 	       (%requests (default '()))
 	       (%closep::bool (default #f))
 	       (%fifo::pair-nil (default '()))
-	       (%fifol::pair-nil (default '())))
+	       (%fifol::pair-nil (default '()))
+	       (%mutex::mutex read-only (default (make-mutex "hop-event"))))
 
 	    (%hop-event-init! ::hop-event)
 	    (signal-hop-event! ::hop-event ::obj)
@@ -45,12 +46,17 @@
 	    (<TIMEOUT-EVENT> . args)))
 
 ;*---------------------------------------------------------------------*/
+;*    *void* ...                                                       */
+;*---------------------------------------------------------------------*/
+(define *void* (cons 0 0))
+
+;*---------------------------------------------------------------------*/
 ;*    %hop-event-init! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (%hop-event-init! evt::hop-event)
-   (with-access::hop-event evt (%service %requests %closep queue-size %fifo %fifol)
+   (with-access::hop-event evt (%service %requests %closep queue-size %fifo %fifol %mutex)
       (when (>fx queue-size 0)
-	 (set! %fifo (make-list queue-size #unspecified))
+	 (set! %fifo (make-list queue-size *void*))
 	 (set-cdr! (last-pair %fifo) %fifo)
 	 (set! %fifol %fifo))
       (set! %service
@@ -60,76 +66,93 @@
 		    (instantiate::http-response-string
 		       (start-line "HTTP/1.0 400 Bad Request")
 		       (body (format "Closed server event `~a'" name)))
-		    (begin
-		       (set! %requests (cons (the-current-request) %requests))
-		       (check-queued-events evt)
-		       (instantiate::http-response-persistent))))))))
-   
+		    (let ((r (the-current-request)))
+		       (mutex-lock! %mutex)
+		       (let ((v (pop-queued-events! evt)))
+			  (mutex-unlock! %mutex)
+			  (if (eq? v *void*)
+			      (begin
+				 (if (pair? %requests)
+				     (append! %requests (list r))
+				     (set! %requests (list r)))
+				 (instantiate::http-response-persistent))
+			      v)))))))))
+
 ;*---------------------------------------------------------------------*/
-;*    check-queued-events ...                                          */
+;*    pop-queued-events! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (check-queued-events evt::hop-event)
-   (with-access::hop-event evt (%requests %fifo %fifol)
-      (define (pop!)
-	 (let ((r (car %fifo)))
-	    (set-car! %fifo #unspecified)
-	    (set! %fifo (cdr %fifo))
-	    r))
-      (define (send! req val socket)
-	 (http-response (scheme->response val req) socket)
-	 (socket-close socket))
-      (if (and (not (null? %fifo))
-	       (not (eq? (car %fifo) #unspecified))
-	       (pair? %requests))
-	  (let* ((req (car %requests))
-		 (socket (http-request-socket req))
-		 (port (socket-output socket)))
-	     (set! %requests (cdr %requests))
-	     (if (output-port? port)
-		 (begin
-		    (send! req (pop!) socket)
-		    'pop))))))
-   
+(define (pop-queued-events! evt::hop-event)
+   (with-access::hop-event evt (queue-size %fifo %fifol)
+      (if (>fx queue-size 0)
+	  (let ((v (car %fifo)))
+	     (set-car! %fifo *void*)
+	     (set! %fifo (cdr %fifo))
+	     v)
+	  *void*)))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    signal-hop-event! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (signal-hop-event! evt val)
-   (with-access::hop-event evt (%fifo %fifol)
-      (define (push! val)
-	 (if (pair? %fifol)
+   (with-access::hop-event evt (%fifo %fifol queue-size %mutex %requests)
+      (mutex-lock! %mutex)
+      (let loop ()
+	 (if (pair? %requests)
+	     (let* ((req (car %requests))
+		    (socket (http-request-socket req))
+		    (port (socket-output socket)))
+		(set! %requests (cdr %requests))
+		(if (output-port? port)
+		    (begin
+		       (mutex-unlock! %mutex)
+		       (http-response (scheme->response val req) socket)
+		       (socket-close socket))
+		    (loop)))
 	     (begin
-		(set-car! %fifol val)
-		(set! %fifol (cdr %fifol))
-		'push)
-	     'ignore))
-      (push! val)
-      (check-queued-events evt)))
-
+		(when (>fx queue-size 0)
+		   (set-car! %fifol val)
+		   (set! %fifol (cdr %fifol)))
+		(mutex-unlock! %mutex))))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    broadcast-hop-event! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (broadcast-hop-event! evt val)
-   (with-access::hop-event evt (%requests)
-      (let loop ()
-	 (when (pair? %requests)
-	    (with-handler
-	       (lambda (e)
-		  (exception-notify e))
-	       (signal-hop-event! evt val))
-	    (loop)))))
+   (with-access::hop-event evt (%fifo %fifol queue-size %mutex %requests)
+      (mutex-lock! %mutex)
+      (let loop ((f #f))
+	 (if (pair? %requests)
+	     (let* ((req (car %requests))
+		    (socket (http-request-socket req))
+		    (port (socket-output socket)))
+		(set! %requests (cdr %requests))
+		(if (output-port? port)
+		    (begin
+		       (http-response (scheme->response val req) socket)
+		       (socket-close socket)
+		       (loop #t))
+		    (loop f)))
+	     (begin
+		(when (and f (>fx queue-size 0))
+		   (set-car! %fifol val)
+		   (set! %fifol (cdr %fifol)))
+		(mutex-unlock! %mutex))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-close ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-close evt)
-   (with-access::hop-event evt (%requests %closep)
-      (when (pair? %requests)
-	 (for-each (lambda (r)
-		      (let ((socket (http-request-socket r)))
-			 (socket-close socket)))
-		   %requests)
-	 (set! %requests '()))
-      (set! %closep #f)))
+   (with-access::hop-event evt (%requests %closep %mutex)
+      (mutex-lock! %mutex)
+      (unless %closep
+	 (when (pair? %requests)
+	    (for-each (lambda (r)
+			 (let ((socket (http-request-socket r)))
+			    (socket-close socket)))
+		      %requests)
+	    (set! %requests '())))
+      (set! %closep #t)
+      (mutex-unlock! %mutex)))
 
 ;*---------------------------------------------------------------------*/
 ;*    HOP-EVENT ...                                                    */
