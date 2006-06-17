@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Jun 15 14:21:20 2006 (serrano)                */
+;*    Last change :  Sat Jun 17 06:26:18 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -121,18 +121,15 @@
    (let ((req (with-handler
 		 (lambda (e)
 		    (when (&error? e) (error-notify e))
-;*---------------------------------------------------------------------*/
-;*    Why should be bother answering on error!?                        */
-;*---------------------------------------------------------------------*/
-;* 		    (unless (or (socket-down? sock)                    */
-;* 				(hop-close-request-syntax-error))      */
-;* 		       (with-handler                                   */
-;* 			  (lambda (e) #unspecified)                    */
-;* 			  (unless (&io-sigpipe-error? e)               */
-;* 			     (let ((resp ((or (hop-http-request-error) */
-;* 					      http-request-error)      */
-;* 					  e)))                         */
-;* 				(http-response resp sock)))))          */
+		    (when (and (&io-unknown-host-error? e)
+			       (not (socket-down? sock)))
+		       (with-handler
+			  (lambda (e) #unspecified)
+			  (unless (&io-sigpipe-error? e)
+			     (let ((resp ((or (hop-http-request-error)
+					      http-request-error)
+					  e)))
+				(http-response resp sock)))))
 		    (socket-close sock)
 		    (hop-verb 1 (hop-color id id " CLOSING")
 			      " " (trace-color 1 (find-runtime-type e))
