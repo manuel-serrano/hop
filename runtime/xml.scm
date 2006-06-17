@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Jun  6 12:31:17 2006 (eg)                     */
+;*    Last change :  Fri Jun 16 10:52:35 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -302,7 +302,8 @@
 ;*    xml-write ::xml-delay ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-delay p encoding)
-   (error 'xml-write "Illegal <DELAY> object" obj))
+   (with-access::xml-delay obj (thunk)
+      (xml-write (thunk) p encoding)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */

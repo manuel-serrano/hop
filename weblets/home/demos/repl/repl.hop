@@ -32,7 +32,7 @@
 				(define (safe-eval expr)
 				   (with-handler
 				    (lambda (exception)
-				       "exception")
+				       (+ "*** " exception))
 				    (eval expr)))
 				(if (>= i 0)
 				    (let ((s (e.substr (+ i 4) e.length)))
@@ -45,9 +45,8 @@
 							     e
 							     "\n:=> "))))))))))
 	       ";; Try to cut an paste the following lines, without the semi-colons
-;;   (define els (document.getElementsByTagName \"h1\"))
-;;   (define el (array-ref els 0))
-;;   (el.style.setProperty \"color\" \"red\" \"\")
+;;   (let ((el (car (dom-get-elements-by-tag-name document \"h1\"))))
+;;      (el.style.setProperty \"color\" \"red\" \"\"))
 ;; you can also try:
 ;;   (dom-append-child! document.body (<TABLE> :border 1 (<TR> (<TD> \"foo\"))))
 ;;   (iwindow-open 'home \"/hop/home\" \"home\")
@@ -63,6 +62,5 @@
 			 (lambda (e)
 			    (with-error-to-string
 			       (lambda () (error-notify e))))
-			 (with-output-to-string
-			    (lambda () (compile-hop-client e))))))
+			 (compile-hop-client e))))
 	       (cons j s))))))

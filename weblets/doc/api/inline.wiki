@@ -40,7 +40,9 @@ to clients in a respond.
  parsed only the markup is to be transmitted to a client.
   * If an attribute :id is provided, the parsing of HTML document stops 
  as soon as the element is found. For that reason, it is more efficient to use:
+
     (<INLINE> :src <a-url> :id <an-identifier>)
+
 
  than
 

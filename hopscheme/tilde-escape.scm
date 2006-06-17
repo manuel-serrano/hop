@@ -40,7 +40,10 @@
 
 (define (compile-hop-client e)
    (let ((s-port (open-output-string)))
-      (unwind-protect
+      (with-handler
+	 (lambda (e)
+	    (close-output-port s-port)
+	    (raise e))
 	 (scheme2js (list e) (hopscheme-aliases) (hopscheme-config) s-port)
 	 (close-output-port s-port))))
 

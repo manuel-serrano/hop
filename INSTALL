@@ -3,7 +3,7 @@ Here is the procedure for compiling and installing HOP on a Unix system.
 == 1. Requirements ==
 
   * HOP //requires// GNU-make.
-  * HOP //requires// [[http://www.inria.fr/mimosa/fs/Bigloo|Bigloo]] version 2.8 or higher.
+  * HOP //requires// [[http://www.inria.fr/mimosa/fp/Bigloo|Bigloo]] version 2.8 or higher.
 
 == 2. Summary of a full HOP compilation and installation ==
 
@@ -87,7 +87,7 @@ use it as a proxy, you will be to access HOP weblet using URLs such as:
 
 With the super user privilege, execute the command:
 
-    make install
+    make uninstall
 
 
 == 10. Unconfiguring and Cleaning HOP ==

@@ -24,9 +24,6 @@
 								$n.value)
 				      $url.value))))))
 
-;*---------------------------------------------------------------------*/
-;*    home/demos/rewrite/doit ...                                      */
-;*---------------------------------------------------------------------*/
 (define-service (home/demos/rewrite/doit url old new)
    (with-url url
       (lambda (h)

@@ -2,13 +2,13 @@
 
 == Description ==
 
-The ++<DELAY>++ markup delays the execution of a function. It **must**
-be embedded inside a container. It is an error to use a ++<DELAY>++
-markup outside a container that explicitly supports delayed trees. The
-++<DELAY>++ markup is supposed to be used in conjunction of container
-markups such as ++<NOTEPAD>++s, ++<TREE>++s, ++<FL>++ss, or
-++<TABSLIDER>++s.
-
+The ++<DELAY>++ markup delays the execution of a function. In general
+it is used in conjunction of container markups such as ++<NOTEPAD>++s,
+++<TREE>++s, ++<FL>++ss, or ++<TABSLIDER>++s. The ++<DELAY>++ markup
+delay its execution until the time it has to be served to a client.
+That is, when the broker constructs a HTML tree, it does not evaluated
+the ++<DELAY>++ nodes. It differs this evaluation until the node is
+actually needed for responding to the client.
 
 == Synopsis ==
 
