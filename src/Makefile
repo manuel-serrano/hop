@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Jun 19 11:54:33 2006 (serrano)                */
+#*    Last change :  Mon Jun 19 17:15:43 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -63,11 +63,11 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-unzip
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-jvm-unzip:
+jvm-stdlibs:
 	for p in $(JVMZIPLIBS); do \
           if [ -f $$p ]; then \
              $(UNZIP) -d o/class_s -u $$p; \
@@ -75,6 +75,10 @@ jvm-unzip:
              echo "Warning: Can't find zip file $$p..."; \
           fi; \
         done
+
+jvm-share:
+	cp -r ../share o/class_s
+	cp -r ../weblets o/class_s/share
 
 META-INF/MANIFEST.MF: META-INF
 	echo "Manifest-Version: 1.0" > $@
