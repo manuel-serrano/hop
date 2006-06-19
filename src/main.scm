@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Jun 17 15:47:48 2006 (serrano)                */
+;*    Last change :  Mon Jun 19 09:16:34 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -52,7 +52,8 @@
    (for-each (lambda (l) (eval `(library-load ',l))) (hop-preload-libraries))
    ;; parse the command line
    (parse-args args)
-   (hop-verb 2 "Starting hop on port " (hop-port) ":\n")
+   (hop-verb 1 "Starting hop (v" (hop-version) ", " (hop-backend)
+	     ") on port " (hop-port) ":\n")
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! load-once)

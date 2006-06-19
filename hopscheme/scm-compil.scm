@@ -1,9 +1,11 @@
-(module hop-scheme-head
+(module scm-compil
    (library hop
 	    scheme2js)
    (import hopscheme-config)
    (export (<HOP-SCHEME-HEAD> . obj))
    (eval (export-all)))
+
+(define *sscript-mutex* (make-mutex 'sscript))
 
 (define sscript-cache
    (instantiate::cache
@@ -34,17 +36,21 @@
 (define (hop-sscript file dir)
    (if (= (string-length file) 0)
        (error '<HOP-SCHEME-HEAD> "Illegal sscript" file)
-       (let* ((path (if (char=? (string-ref file 0) (file-separator))
-			file
-			(hop-file dir file)))
-	      (cached (cache-get sscript-cache path)))
-	  (if cached
-	      cached
-	      (let* ((compiled (compile-scheme-file path))
-		     (cached (cache-put! sscript-cache path compiled)))
-		 cached)))))
+       (with-lock *sscript-mutex*
+	  (lambda ()
+	     (let* ((path (if (char=? (string-ref file 0) (file-separator))
+			      file
+			      (hop-file dir file)))
+		    (cached-name (string-append path ".compiled"))
+		    (cached (cache-get sscript-cache cached-name)))
+		(if cached
+		    cached
+		    (let* ((compiled (compile-scheme-file path))
+			   (cached (cache-put! sscript-cache cached-name compiled)))
+		       cached)))))))
 
 ;*---------------------------------------------------------------------*/
+;; deprecated now.
 (define (<HOP-SCHEME-HEAD> . obj)
    (let* ((req (the-current-request))
 	  (dir (if (http-request? req)
@@ -90,3 +96,32 @@
 		       (cons (car a) filtered)))))
 	    (else
 	     (error '<HOP-SCHEME-HEAD> (format "Illegal ~a argument" (car a)) a))))))
+
+(define (sscript-response req)
+   (with-access::http-request req (path method header)
+      (with-lock *sscript-mutex*
+	 (lambda ()
+	    (let ((cache (cache-get sscript-cache path))
+		  (mime (mime-type path "text/javascript")))
+	       (if (string? cache)
+		   (instantiate::http-response-file
+		      (content-type mime)
+		      (bodyp (eq? method 'GET))
+		      (file cache))
+		   (let* ((jscript (compile-scheme-file path))
+			  (cache (cache-put! sscript-cache path jscript)))
+		      (instantiate::http-response-file
+			 (content-type mime)
+			 (bodyp (eq? method 'GET))
+			 (file cache)))))))))
+
+(hop-filter-add-always-last!
+ (lambda (req)
+    (when (http-request-localhostp req)
+       (with-access::http-request req (path method header)
+	  (case method
+	     ((GET HEAD)
+	      (if (and (file-exists? path)
+		       (is-suffix? (http-request-path req) "scm"))
+		  (sscript-response req)
+		  req)))))))

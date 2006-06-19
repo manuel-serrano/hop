@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sat Jun 17 15:26:52 2006 (serrano)                */
+#*    Last change :  Mon Jun 19 11:54:33 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -51,7 +51,7 @@ build:  o $(BACKEND)
 
 
 native: $(BUILDBINDIR)/$(EXEC)
-jvm: $(CLASS_DIR) $(BUILDBINDIR)/$(EXEC).jvm
+jvm: $(CLASS_DIR) $(BUILDBINDIR)/$(EXEC).jar
 
 o: 
 	mkdir -p $@
@@ -63,9 +63,26 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-$(BUILDBINDIR)/$(EXEC).jvm: .afile .etags .jfile $(BGL_CLASSES)
-	@ $(call compile,BIGLOO,BJVMFLAGS,-o $@ -I o/class_s $(BGL_CLASSES:o/class_s/%=%))
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-unzip
+	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+
+jvm-unzip:
+	for p in $(JVMZIPLIBS); do \
+          if [ -f $$p ]; then \
+             $(UNZIP) -d o/class_s -u $$p; \
+          else \
+             echo "Warning: Can't find zip file $$p..."; \
+          fi; \
+        done
+
+META-INF/MANIFEST.MF: META-INF
+	echo "Manifest-Version: 1.0" > $@
+	echo "Main-Class: bigloo/hop/main" >> $@
+	echo "Created-By: Hop $(VERSION)" >> $@
+
+META-INF:
+	mkdir -p $@
 
 #*---------------------------------------------------------------------*/
 #*    SUFFIXES                                                         */
@@ -114,9 +131,15 @@ dep:
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
-install:
+install: install-$(BACKEND)
+
+install-native:
 	mkdir -p $(HOPBINDIR)
 	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC) $(HOPBINDIR)
+
+install-jvm:
+	mkdir -p $(HOPBINDIR)
+	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC).jar $(HOPBINDIR)
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -131,8 +154,10 @@ clean:
 	/bin/rm -f .afile
 	/bin/rm -f $(OBJECTS)
 	/bin/rm -f $(MODULES:%=%.c)
-	/bin/rm -f $(BGL_CLASSES)
+	/bin/rm -rf o
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
+	/bin/rm -f $(BUILDBINDIR)/$(EXEC).jar
+	/bin/rm -rf META-INF
 
 devclean: clean
 

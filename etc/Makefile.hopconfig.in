@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sat Jun 17 14:30:52 2006 (serrano)                */
+#*    Last change :  Mon Jun 19 11:20:59 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -28,6 +28,8 @@ JFILE		= @JFILE@
 BTAGS		= @BTAGS@
 DEPEND		= @BDEPEND@
 CC		= @CC@
+UNZIP		= @UNZIP@
+JAR		= @JAR@
 
 BMASK		= 755
 
@@ -37,7 +39,8 @@ BMASK		= 755
 BCFLAGS		= @BCFLAGS@ -copt "$(CCFLAGS)" $(EFLAGS)
 BLFLAGS         = @BLFLAGS@
 BJVMFLAGS	= @BCFLAGS@ -jvm $(EFLAGS)
-BLJVMFLAGS      = @BLFLAGS@ -jvm-purify
+BLJVMFLAGS      = @BLFLAGS@ -jvm-purify -unsafe
+BEJVMFLAGS	= -jvm-jar
 BDOTNETFLAGS	= @BCFLAGS@ -dotnet -dotnet-mono-workaround -dotnet-pnet-workaround -dotnet-managed $(EFLAGS)
 BLDOTNETFLAGS   = @BLFLAGS@ 
 BHFLAGS		= -q -mkaddheap -mkaddlib $(EFLAGS)
@@ -64,6 +67,11 @@ HOPCONTRIBSDIR	= @CONTRIBSDIR@
 
 HOPFILDIR	= $(HOPLIBDIR)/hop/$(HOPRELEASE)
 HOPDEMOSDIR	= $(HOPSHAREDIR)/demos
+
+#*---------------------------------------------------------------------*/
+#*    JVM zips                                                         */
+#*---------------------------------------------------------------------*/
+JVMZIPLIBS	= @JVMZIPLIBS@
 
 #*---------------------------------------------------------------------*/
 #*    REPOSITORY                                                       */

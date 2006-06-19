@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jun 12 21:16:12 2006 (eg)                     */
+;*    Last change :  Sun Jun 18 13:21:15 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -102,6 +102,8 @@
 	  (set! log-file file))
 	 ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
 	  (hop-path-set! (cons path (hop-path))))
+	 ((("-L" "--library-path") ?path (help "Add <PATH> to hop library path"))
+	  (bigloo-library-path-set! (cons path (bigloo-library-path))))
 	 ((("-l" "--library") ?library (help "Preload additional <LIBRARY>"))
 	  (set! libraries (cons library libraries )))
 	 (("-?dummy")
@@ -112,10 +114,10 @@
 	  (args-parse-usage #f)
 	  (exit 1)))
       (when log-file
-	(let ((p (append-output-file log-file)))
-	  (unless p
-	    (error 'hop "Cannot open log file" log-file))
-	  (hop-log-file-set! p)))      
+	 (let ((p (append-output-file log-file)))
+	    (unless p
+	       (error 'hop "Cannot open log file" log-file))
+	    (hop-log-file-set! p)))      
       (when mimep
 	 (load-mime-types (hop-mime-types-file))
 	 (load-mime-types (if (string? mime-file)
@@ -144,7 +146,7 @@
 			       (eval sexp))))))
 		exprs)
       (when autoloadp (autoload-weblets (reverse (hop-autoload-directories))))
-      (hop-preload-libraries-set! (append libraries (hop-preload-libraries)))))
+      (for-each (lambda (l) (eval `(library-load ',l))) libraries)))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-hop ...                                                     */

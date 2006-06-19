@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Jun 17 14:21:58 2006 (serrano)                */
+#*    Last change :  Mon Jun 19 11:58:32 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -22,6 +22,8 @@ btags=bgltags
 bdepend=bgldepend
 cc=
 backend=native
+unzip=unzip
+jar="jar cfm"
 
 bcflags="-O3 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
@@ -192,11 +194,13 @@ if [ ! -f $bigloo ]; then
    fi
 fi
 
+bglversion=`$bigloo -q -eval "(exit (display *bigloo-version*))"`
+
 $bigloo -q -eval "(exit (if (string>=? *bigloo-version* \"$bigloorequired\") 0 1))"
 
 if [ $? != "0" ]; then
   echo "*** ERROR:configure:bigloo. Aborting"
-  echo "Your version of Bigloo is too old. Release"
+  echo "Your version of Bigloo ($bglversion) is too old. Release"
   echo "   $bigloorequired"
   echo "or more recent is required. It may be downloaded at:"
   echo "   $bigloourl"
@@ -257,7 +261,31 @@ if [ "$ccflags " = " " ]; then
 fi
 
 
-# Makefile.hopconfig
+#*---------------------------------------------------------------------*/
+#*    Jvm zip libs                                                     */
+#*---------------------------------------------------------------------*/
+jvmziplibs=
+
+# Hop librairies
+for p in scheme2js hopscheme hopwiki hop; do
+  elib="$buildlibdir/$p"_e-$version.zip;
+  slib="$buildlibdir/$p"_s-$version.zip;
+  jvmziplibs="$elib $slib $jvmziplibs";
+done
+
+# Bigloo libraries
+for p in pth web multimedia sqlite ssl calendar; do
+  elib="$bigloolibdir/bigloo$p"_e-$bglversion.zip;
+  slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
+  jvmziplibs="$elib $slib $jvmziplibs";
+done
+
+slib="$bigloolibdir/bigloo_s.zip";
+jvmziplibs="$slib $jvmziplibs";
+
+#*---------------------------------------------------------------------*/
+#*    Makefile.hopconfig                                               */
+#*---------------------------------------------------------------------*/
 mkmf=etc/Makefile.hopconfig
 
 rm -f $mkmf 2> /dev/null
@@ -275,8 +303,11 @@ cat $mkmf.in \
           -e "s|@BTAGS@|$btags|" \
           -e "s|@BDEPEND@|$bdepend|" \
           -e "s|@CC@|$cc|" \
+          -e "s|@UNZIP@|$unzip|" \
+          -e "s|@JAR@|$jar|" \
           -e "s|@BCFLAGS@|$bcflags|" \
           -e "s|@BLFLAGS@|$blflags|" \
+          -e "s|@JVMZIPLIBS@|$jvmziplibs|" \
           -e "s|@CCFLAGS@|$ccflags|" \
           -e "s|@BUILDLIBDIR@|$PWD/lib|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \
@@ -301,6 +332,7 @@ echo ";* Automatically generated file (don't edit) */" > $configure
 
 cat etc/configure.scm.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BACKEND@|$backend|" \
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
@@ -386,7 +418,7 @@ echo "** Configuration summary **"
 echo 
 echo "Release features:"
 echo "  Hop release number.................... $version"
-echo "  Bigloo................................ $bigloo"
+echo "  Bigloo................................ $bigloo ($bglversion)"
 echo "  Backend............................... $backend"
 echo "  Bigloo compilation flags.............. $bcflags"
 echo

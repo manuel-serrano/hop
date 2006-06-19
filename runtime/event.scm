@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Jun 17 16:55:41 2006 (serrano)                */
+;*    Last change :  Sun Jun 18 07:18:37 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -29,7 +29,7 @@
    (export  (class hop-event
 	       (%hop-event-init!)
 	       (name::bstring read-only)
-	       (queue-size::int read-only (default 1))
+	       (queue-size::int read-only (default 20))
 	       (%service (default #unspecified))
 	       (%requests (default '()))
 	       (%closep::bool (default #f))
@@ -69,14 +69,16 @@
 		    (let ((r (the-current-request)))
 		       (mutex-lock! %mutex)
 		       (let ((v (pop-queued-events! evt)))
-			  (mutex-unlock! %mutex)
 			  (if (eq? v *void*)
 			      (begin
 				 (if (pair? %requests)
 				     (append! %requests (list r))
 				     (set! %requests (list r)))
+				 (mutex-unlock! %mutex)
 				 (instantiate::http-response-persistent))
-			      v)))))))))
+			      (begin
+				 (mutex-unlock! %mutex)
+				 v))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    pop-queued-events! ...                                           */
@@ -85,8 +87,9 @@
    (with-access::hop-event evt (queue-size %fifo %fifol)
       (if (>fx queue-size 0)
 	  (let ((v (car %fifo)))
-	     (set-car! %fifo *void*)
-	     (set! %fifo (cdr %fifo))
+	     (unless (eq? v *void*)
+		(set-car! %fifo *void*)
+		(set! %fifo (cdr %fifo)))
 	     v)
 	  *void*)))
 	 
