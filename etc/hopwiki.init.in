@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 09:57:45 2006                          */
-;*    Last change :  Mon Apr  3 09:27:56 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 09:38:47 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP lib init file.                                           */
@@ -12,7 +12,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    The basename of the HOP library name                             */
 ;*---------------------------------------------------------------------*/
-(library-translation-table-add! 'hopwiki "hopwiki" "@VERSION@")
+(cond-expand
+   (bigloo-c
+    ;; the C basename of the HOP library
+    (library-translation-table-add! 'hopwiki "hopwiki" "@VERSION@"))
+   (bigloo-jvm
+    ;; the C basename of the HOP library
+    (library-translation-table-add! 'hopscheme "bigloo/hopwiki/make-lib" #f))
+   (else
+    #unspecified))
 
 ;*---------------------------------------------------------------------*/
 ;*    Link option                                                      */

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Jun 19 17:15:43 2006 (serrano)                */
+#*    Last change :  Tue Jun 20 08:00:50 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -63,14 +63,14 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
 jvm-stdlibs:
 	for p in $(JVMZIPLIBS); do \
           if [ -f $$p ]; then \
-             $(UNZIP) -d o/class_s -u $$p; \
+             $(UNZIP) -d o/class_s -o -u $$p; \
           else \
              echo "Warning: Can't find zip file $$p..."; \
           fi; \
@@ -80,12 +80,18 @@ jvm-share:
 	cp -r ../share o/class_s
 	cp -r ../weblets o/class_s/share
 
+jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
+	cp $(BUILDLIBDIR)/*.init $<
+
 META-INF/MANIFEST.MF: META-INF
 	echo "Manifest-Version: 1.0" > $@
 	echo "Main-Class: bigloo/hop/main" >> $@
 	echo "Created-By: Hop $(VERSION)" >> $@
 
 META-INF:
+	mkdir -p $@
+
+o/class_s/lib/hop/$(HOPRELEASE):
 	mkdir -p $@
 
 #*---------------------------------------------------------------------*/
@@ -97,10 +103,10 @@ META-INF:
 #*---------------------------------------------------------------------*/
 #*    The implicit `.scm.o' rule                                       */
 #*---------------------------------------------------------------------*/
-o/%.o: %.scm
+o/%.o: %.scm .afile
 	@ $(call compile,BIGLOO,BCFLAGS,$< -o $@ -c)
 
-$(CLASS_DIR)/%.class: %.scm
+$(CLASS_DIR)/%.class: %.scm .afile
 	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/

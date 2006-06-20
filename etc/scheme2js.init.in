@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 09:57:45 2006                          */
-;*    Last change :  Thu Jan 19 10:29:55 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 09:37:23 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme2JS lib init file.                                     */
@@ -12,4 +12,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    The basename of the HOP library name                             */
 ;*---------------------------------------------------------------------*/
-(library-translation-table-add! 'scheme2js "scheme2js" "@VERSION@")
+(cond-expand
+   (bigloo-c
+    ;; the C basename of the HOP library
+    (library-translation-table-add! 'scheme2js "scheme2js" "@VERSION@"))
+   (bigloo-jvm
+    ;; the C basename of the HOP library
+    (library-translation-table-add! 'scheme2js "bigloo/scheme2js/make-lib" #f))
+   (else
+    #unspecified))

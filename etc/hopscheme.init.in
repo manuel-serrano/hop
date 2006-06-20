@@ -5,7 +5,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    The basename of the hopscheme library name                       */
 ;*---------------------------------------------------------------------*/
-(library-translation-table-add! 'hopscheme "hopscheme" "@VERSION@")
+(cond-expand
+   (bigloo-c
+    ;; the C basename of the HOP library
+    (library-translation-table-add! 'hopscheme "hopscheme" "@VERSION@"))
+   (bigloo-jvm
+    ;; the C basename of the HOP library
+    (library-translation-table-add! 'hopscheme "bigloo/hopscheme/make-lib" #f))
+   (else
+    #unspecified))
 
 ;*---------------------------------------------------------------------*/
 ;*    Link option                                                      */
