@@ -8,7 +8,7 @@
          (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*)))
    (<TR> :colspan 2 (<TD> "&nbsp;"))
    (<TR> (<TH> [Pre-compiled ,(<SPAN> :class "stable" "stable") JVM bytecodes:])
-         (<TD> (<A> :href *stable-zip-url* *stable-zip*)))
+         (<TD> (<A> :href *stable-jar-url* *stable-jar*)))
    (<TR> (<TH> [Older versions may be download by ,(<SPAN> :class "old" "ftp") at:])
          (<TD> (<A> :href (home-ftp-hop-url) (home-ftp-hop-url)))))
 
