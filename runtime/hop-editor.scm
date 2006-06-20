@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-edit.scm                    */
+;*    serrano/prgm/project/hop/runtime/hop-editor.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Tue May 16 13:52:32 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 13:42:03 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -18,12 +18,13 @@
 
    (import  __hop_param
 	    __hop_configure
-	    __hop_xml)
+	    __hop_xml
+	    __hop_misc)
 
    (export  (<EDITOR> . ::obj)))
 
 
-(define *icons-dir*  (make-file-path (hop-share-directory) "editor"))
+(define *icons-dir*  (make-file-name (hop-share-directory) "editor"))
 (define *popups-dir* *icons-dir*)
 
 (define *styles* '(("Title 1" "h1") ("Title 2" "h2") ("Title 3" "h3")
@@ -62,15 +63,18 @@
 
   (define (<SEPARATOR>)
     (<TD> :width "12px"  :align "center"
-      (<IMG> :src (make-file-path *icons-dir* "ed-separator.png") :border 0)))
+      (<IMG> :src (file->url! (make-file-name *icons-dir* "ed-separator.png"))
+	     :border 0)))
 
   (define (<FILER>)
     (<TD> "&nbsp;"))
   
   (define (<ICON> name tooltip image)
-    (let ((icon (make-file-path *icons-dir* (string-append image ".png"))))
+    (let ((icon (make-file-name *icons-dir* (string-append image ".png"))))
       (<TD> :style "width: 22px"
-	(<IMG> :src icon :class "hop-edit-button" :id (format "~a-but-~a" id name)
+	(<IMG> :src (file->url! icon)
+	       :class "hop-edit-button"
+	       :id (format "~a-but-~a" id name)
 	       :border 0  :title tooltip
 	       :onclick (format "hop_edit_action(~s, ~s)" id name)
 	       :onmouseover "if (!hop_edit_src) className='hop-edit-button-over'"
@@ -106,7 +110,7 @@
 	     :onclick "this.style.display = 'none'"
 	     (<DIV> (make-palette id)))))
   
-  (let ((bg (make-file-path *icons-dir* "ed-silver-bg.png")))
+  (let ((bg (file->url! (make-file-name *icons-dir* "ed-silver-bg.png"))))
     (<DIV>
      ;; The (not yet visible) color palette
      (<PALETTE>)

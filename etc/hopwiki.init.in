@@ -18,7 +18,7 @@
     (library-translation-table-add! 'hopwiki "hopwiki" "@VERSION@"))
    (bigloo-jvm
     ;; the C basename of the HOP library
-    (library-translation-table-add! 'hopscheme "bigloo/hopwiki/make-lib" #f))
+    (library-translation-table-add! 'hopwiki "bigloo/hopwiki/make-lib" #f))
    (else
     #unspecified))
 

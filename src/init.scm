@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Jun 15 14:23:45 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 18:08:21 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -222,7 +222,7 @@
 			     ,(format "Basic realm=\"Hop proxy (~a) authentication\""
 				      host))))
 		  (body "Protected Area! Authentication required."))))))))
- 
+
 ;*---------------------------------------------------------------------*/
 ;*    server logging ...                                               */
 ;*---------------------------------------------------------------------*/

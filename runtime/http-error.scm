@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Jun  6 18:49:08 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 10:51:30 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -361,7 +361,7 @@ Reloading the page is the only workaround.")))))))))))))
 					     (<SPAN> :class "filenotfound"
 						     (<TT> "(service ...)"))))
 				(<TR> (<ETD> :class "dump"
-					     (<SPAN> "You are trying to executed an invalidated service!
+					     (<SPAN> "You are trying to executed an unexisting or invalidated service!
 <br><br>
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence

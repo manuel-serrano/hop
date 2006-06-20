@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jun 20 10:35:38 2006 (serrano)                */
+#*    Last change :  Tue Jun 20 18:08:34 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -230,11 +230,11 @@ case $backend in
   "native")
      break;;
   "jvm")
-     etcdir=resource:etc
-     libdir=resource:lib
-     webletsdir=resource:share/weblets
-     contribsdir=resource:share/contribs
-     sharedir=resource:share
+     etcdir=/resource/etc
+     libdir=/resource/lib
+     webletsdir=/resource/share/weblets
+     contribsdir=/resource/share/contribs
+     sharedir=/resource/share
      break;;
   "dotnet")
      break;;
@@ -270,6 +270,7 @@ fi
 #*    Jvm zip libs                                                     */
 #*---------------------------------------------------------------------*/
 jvmziplibs=
+jvminits=
 
 # Hop librairies
 for p in scheme2js hopscheme hopwiki hop; do
@@ -283,10 +284,12 @@ for p in pth web multimedia sqlite ssl calendar; do
   elib="$bigloolibdir/bigloo$p"_e-$bglversion.zip;
   slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
   jvmziplibs="$elib $slib $jvmziplibs";
+  jvminits="$bigloolibdir/$p"".init $jvminits";
 done
 
 slib="$bigloolibdir/bigloo_s.zip";
 jvmziplibs="$slib $jvmziplibs";
+jvminits="$bigloolibdir/pthread.init $jvminits";
 
 #*---------------------------------------------------------------------*/
 #*    Makefile.hopconfig                                               */
@@ -313,6 +316,7 @@ cat $mkmf.in \
           -e "s|@BCFLAGS@|$bcflags|" \
           -e "s|@BLFLAGS@|$blflags|" \
           -e "s|@JVMZIPLIBS@|$jvmziplibs|" \
+          -e "s|@JVMINITS@|$jvminits|" \
           -e "s|@CCFLAGS@|$ccflags|" \
           -e "s|@BUILDLIBDIR@|$PWD/lib|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \

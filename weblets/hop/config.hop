@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Mon May 22 14:32:55 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 17:55:08 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop configuration                                                */
@@ -16,7 +16,8 @@
    (export (hop-date)
 	   (hop-author)
 	   (hop-builtin-weblets)
-	   (hop-dir)))
+	   (hop-dir)
+	   (hop-url)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon May 29 10:58:28 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 18:05:58 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -16,6 +16,8 @@
 
    (include "compiler-macro.sch"
 	    "xml.sch")
+
+   (library web)
 
    (import  __hop_param
 	    __hop_configure
@@ -38,15 +40,23 @@
 ;*    hop-file ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-file path file)
-   (let ((p (find-file/path file path)))
-      (if (string? p)
-	  p
-	  (make-file-name (hop-share-directory) file))))
+   (cond-expand
+      (bigloo-jvm
+       (let ((p (find-file/path file path)))
+	  (if (string? p)
+	      (file->url p)
+	      (file->url! (make-file-name (hop-share-directory) file)))))
+      (else
+       (let ((p (find-file/path file path)))
+	  (if (string? p)
+	      p
+	      (make-file-name (hop-share-directory) file))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-css ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (hop-css file dir)
+   (tprint "hop-css: " file " " dir)
    (<LINK>
       :rel "stylesheet"
       :type "text/css"
@@ -81,9 +91,10 @@
 ;*---------------------------------------------------------------------*/
 (define (head-parse args)
    (let* ((req (the-current-request))
-	  (dir (if (http-request? req)
-		   (list (dirname (http-request-path req)))
-		   '()))
+;* 	  (dir (if (http-request? req)                                 */
+;* 		   (list (dirname (http-request-path req)))            */
+;* 		   '()))                                               */
+	  (dir '())
 	  (css '())
 	  (jscript '())
 	  (favicon #f)
@@ -210,7 +221,9 @@
 		     ((string? path)
 		      path)
 		     ((string? src)
-		      (format "~a/buttons/~a" (hop-share-directory) src))
+		      (format "~a/buttons/~a"
+			      (url-encode (hop-share-directory))
+			      src))
 		     (else
 		      (error '<FOOT-BUTTON> "Illegal source" src))))))
 				     

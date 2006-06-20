@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Sat May 13 08:09:01 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 13:41:48 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -19,7 +19,8 @@
    (import  __hop_param
 	    __hop_xml
 	    __hop_service
-	    __hop_types)
+	    __hop_types
+	    __hop_misc)
 
    (static  (class html-foldlist::xml-element
 	       (spacing (default 0))
@@ -86,11 +87,13 @@
    (with-access::html-flitem obj (body id parent open)
       (let ((tmp   body)
 	    (icono (or (html-foldlist-icono parent)
-		       (make-file-name (hop-icons-directory)
-				       "triangle-down.png")))
+		       (file->url!
+			(make-file-name (hop-icons-directory)
+					"triangle-down.png"))))
 	    (iconc (or (html-foldlist-iconc parent)
-		       (make-file-name (hop-icons-directory)
-				       "triangle-right.png"))))
+		       (file->url!
+			(make-file-name (hop-icons-directory)
+					"triangle-right.png")))))
 	 (cond
 	    ((not (pair? body))
 	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s)'>"

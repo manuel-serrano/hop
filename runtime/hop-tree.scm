@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Jun  5 17:57:48 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 13:37:40 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -126,16 +126,20 @@
 		   (foldero
 		    foldero)
 		   ((>fx level 0)
-		    (make-file-name (hop-icons-directory) "folder-open.png"))
+		    (file->url!
+		     (make-file-name (hop-icons-directory) "folder-open.png")))
 		   (else
-		    (make-file-name (hop-icons-directory) "base.png"))))
+		    (file->url!
+		     (make-file-name (hop-icons-directory) "base.png")))))
 	    (fc (cond
 		   (folderc
 		    folderc)
 		   ((>fx level 0)
-		    (make-file-name (hop-icons-directory) "folder-close.png"))
+		    (file->url!
+		     (make-file-name (hop-icons-directory) "folder-close.png")))
 		   (else
-		    (make-file-name (hop-icons-directory) "base.png"))))
+		    (file->url!
+		     (make-file-name (hop-icons-directory) "base.png")))))
 	    (svc (if (null? body)
 		     "false"
 		     (hop->json
@@ -210,7 +214,9 @@
       (let ((sbody (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body obj) ps)
 		      (close-output-port ps)))
-	    (icon (or file (make-file-name (hop-icons-directory) "file.png"))))
+	    (icon (or file
+		      (file->url!
+		       (make-file-name (hop-icons-directory) "file.png")))))
 	 (fprint p
 		 "hop_make_tree_leaf( "
 		 ;; parent

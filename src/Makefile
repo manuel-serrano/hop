@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Jun 20 08:00:50 2006 (serrano)                */
+#*    Last change :  Tue Jun 20 16:43:36 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -67,7 +67,7 @@ $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFES
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-jvm-stdlibs:
+jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
 	for p in $(JVMZIPLIBS); do \
           if [ -f $$p ]; then \
              $(UNZIP) -d o/class_s -o -u $$p; \
@@ -75,10 +75,26 @@ jvm-stdlibs:
              echo "Warning: Can't find zip file $$p..."; \
           fi; \
         done
+	for p in $(JVMINITS); do \
+          if [ -f $$p ]; then \
+             cp $$p o/class_s/lib/hop/$(HOPRELEASE); \
+          else \
+             echo "Warning: Can't find init file $$p..."; \
+          fi; \
+        done
 
 jvm-share:
 	cp -r ../share o/class_s
 	cp -r ../weblets o/class_s/share
+	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/share
+
+jvm-list:
+	/usr/bin/ls $(SRC)/$(DIR) > $(DEST)/$(DIR)/.list
+	for p in `ls $(SRC)/$(DIR)`; do \
+	  if [ -d $(SRC)/$(DIR)/$$p ]; then \
+            $(MAKE) jvm-list SRC=$(SRC)/$(DIR) DIR=$$p DEST=$(DEST)/$(DIR) || (echo "*** ERROR: $$p"; exit 1); \
+          fi \
+        done
 
 jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
 	cp $(BUILDLIBDIR)/*.init $<
