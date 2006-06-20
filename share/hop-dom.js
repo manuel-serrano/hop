@@ -431,7 +431,7 @@ function dom_clone_node( node ) {
 function dom_insert_before( node, n, r ) {
    return node.insertBefore( n, r );
 }
-function dom_replaceChild( node, n, r ) {
+function dom_replace_child( node, n, r ) {
    return node.replaceChild( n, r );
 }
 function dom_get_element_by_id( document, id ) {
