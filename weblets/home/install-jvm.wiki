@@ -9,8 +9,9 @@ Development Kit. It *does not* work on Microsoft Windows yet because
 of the permanent confusion on this operating between / and \ for
 denoting files and URLs.
 
-~~ As much as possible the native version should be preferee to the JVM
-pre-compiled distribution.
+~~ As much as possible the native version should be prefered to the JVM
+pre-compiled distribution. The JVM pre-compiled distribution is still
+experimental.
 
 ~~ The pre-compiled HOP version is slower that the native version (about 
 a factor of 4) and the database library (++sqlite++) is still missing. 
