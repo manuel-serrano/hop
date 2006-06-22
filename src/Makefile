@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Jun 20 16:43:36 2006 (serrano)                */
+#*    Last change :  Thu Jun 22 08:26:09 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -85,6 +85,7 @@ jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
 
 jvm-share:
 	cp -r ../share o/class_s
+	cp -r ../scheme2js/runtime/*.js o/class_s/share
 	cp -r ../weblets o/class_s/share
 	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/share
 

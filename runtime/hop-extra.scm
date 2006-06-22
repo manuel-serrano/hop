@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Jun 20 18:05:58 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 20:57:26 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -56,7 +56,6 @@
 ;*    hop-css ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (hop-css file dir)
-   (tprint "hop-css: " file " " dir)
    (<LINK>
       :rel "stylesheet"
       :type "text/css"
