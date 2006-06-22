@@ -2,9 +2,12 @@ This describes how to run HOP inside a Java Virtual Machine.
 
 == 1. Introduction ==
 
-HOP can either be executed in native mode or in JVM mode. The native mode
-is only operational on Linux systems. The pre-compiled JVM mode is available
-on all systems that support complete Java Development Kit.
+HOP can either be executed in native mode or in JVM mode. The native
+mode is only operational on Linux systems. The pre-compiled JVM mode
+is available on all Unix systems that support complete Java
+Development Kit. It *does not* work on Microsoft Windows yet because
+of the permanent confusion on this operating between / and \ for
+denoting files and URLs.
 
 ~~ As much as possible the native version should be preferee to the JVM
 pre-compiled distribution.

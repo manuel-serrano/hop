@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Jun 20 20:57:26 2006 (serrano)                */
+;*    Last change :  Thu Jun 22 09:03:52 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -62,7 +62,7 @@
       :href (cond
 	       ((= (string-length file) 0)
 		(error '<HEAD> "Illegal css" file))
-	       ((char=? (string-ref file 0) (file-separator))
+	       ((char=? (string-ref file 0) #\/)
 		file)
 	       ((substring-at? file "http://" 0)
 		file)
@@ -78,7 +78,7 @@
       :src (cond
 	      ((= (string-length file) 0)
 	       (error '<HEAD> "Illegal jscript" file))
-	      ((char=? (string-ref file 0) (file-separator))
+	      ((char=? (string-ref file 0) #\/)
 	       file)
 	      ((substring-at? file "http://" 0)
 	       file)
