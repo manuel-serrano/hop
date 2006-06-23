@@ -1,6 +1,6 @@
 ;; automatically generated, don't edit
-;; /users/serrano/prgm/project/hop/weblets/doc
-;; Tue Jun 13 16:15:24 2006
+;; /mnt/users/eg/Projects/hop/weblets/doc
+;; Mon Jun 19 11:59:12 2006
 
 (
   (hopdoc_api "./api.hop")

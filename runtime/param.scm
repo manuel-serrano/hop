@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Jun 15 14:09:04 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 22:43:33 2006 (eg)                     */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -505,6 +505,7 @@
      ("text/html" "html" "htm" "shtml")
      ("text/css" "css" "hss")
      ("application/x-javascript" "js")
+     ("application/xml" "xml" "rss")
      ;; audio
      ("audio/audible" "aa")
      ("audio/aac" "aac")

@@ -1,7 +1,7 @@
 (<HTML>
  (<HEAD>
   (<TITLE> "Insert / Modify link")
-  (<HOP-HEAD> :jscript "hop-editor.js" :css "hop-editor.css"))
+  (<HEAD> :jscript "hop-editor.js" :css "hop-editor.css"))
 
  (<BODY> :class "hop-edit-popup"
   (<DIV> :class "hop-edit-popup-title" "Insert/Modify Link")
