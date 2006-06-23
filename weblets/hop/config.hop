@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Thu Jun 22 08:55:51 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 11:19:00 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop configuration                                                */
@@ -16,8 +16,7 @@
    (export (hop-date)
 	   (hop-author)
 	   (hop-builtin-weblets)
-	   (hop-dir)
-	   (hop-url)))
+	   (hop-dir)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
@@ -36,9 +35,3 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-dir
    (dirname (the-loading-file)))
-
-;*---------------------------------------------------------------------*/
-;*    hop-url ...                                                      */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-url
-   (file->url (hop-dir)))

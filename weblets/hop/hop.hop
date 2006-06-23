@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu Jun 22 08:50:48 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 11:18:23 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -96,7 +96,7 @@
 		  (<IMG> :class "logo"
 			 :src (if (file-exists? logo)
 				  logo
-				  (string-append (hop-url)
+				  (string-append (hop-dir)
 						 "/etc/default.png")))))
 	    (<TR>
 	       (<TD>
@@ -125,7 +125,7 @@
 		  (<IMG> :class "logo"
 			 :src (if (file-exists? logo)
 				  logo
-				  (string-append (hop-url)
+				  (string-append (hop-dir)
 						 "/etc/default.png")))))
 	    (<TR>
 	       (<TD>
@@ -139,7 +139,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<HOP> . obj)
    (<HTML>
-      (<HEAD> :css (format "~a/hop.hss" (hop-url)))
+      (<HEAD> :css (format "~a/hop.hss" (hop-dir)))
       (<BODY>
 	 (<DIV>
 	    :align "center"
@@ -149,7 +149,7 @@
 		  (<TD>
 		     :valign "top"
 		     (<IMG> :class "logo"
-			    :src (format "~a/etc/logo.png" (hop-url))))
+			    :src (format "~a/etc/logo.png" (hop-dir))))
 		  (<TD>
 		     :valign "top"
 		     (<TABLE>

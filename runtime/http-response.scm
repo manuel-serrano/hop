@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Jun 20 17:38:32 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 13:36:25 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -284,7 +284,7 @@
 		     (<H1> dir)
 		     (<PRE> (map (lambda (f)
 				    (let ((path (make-file-name dir f)))
-				       (<A> :href (file->url! path)
+				       (<A> :href path
 					 (if (directory? path)
 					     (string-append f "/\n")
 					     (string-append f "\n")))))

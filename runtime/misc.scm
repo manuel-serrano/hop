@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Tue Jun 20 13:41:11 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 11:16:34 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -37,9 +37,7 @@
 	   (escape-string::bstring ::bstring)
 	   (delete-path ::bstring)
 	   (autoload-prefix::procedure ::bstring)
-	   (make-url-name::bstring ::bstring ::bstring)
-	   (file->url::bstring ::bstring)
-	   (file->url!::bstring ::bstring)))
+	   (make-url-name::bstring ::bstring ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -356,32 +354,3 @@
 	     (blit-string-ur! directory 0 str 0 ldir)
 	     (blit-string-ur! file 0 str (+fx 1 ldir) lfile)
 	     str))))
-
-;*---------------------------------------------------------------------*/
-;*    file->url ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (file->url file)
-   (if (>=fx (string-index file #\\) 0)
-       (let* ((len (string-length file))
-	      (new (make-string len)))
-	  (let loop ((i (-fx (string-length file) 1)))
-	     (when (>=fx i 0)
-		(let ((c (string-ref file i)))
-		   (if (char=? c #\\)
-		       (string-set! new i #\/)
-		       (string-set! new i c)))
-		(loop (-fx i 1))))
-	  new)
-       file))
-
-;*---------------------------------------------------------------------*/
-;*    file->url! ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (file->url! file)
-   (let loop ((i (-fx (string-length file) 1)))
-      (when (>=fx i 0)
-	 (when (char=? (string-ref file i) #\\)
-	    (string-set! file i #\/))
-	 (loop (-fx i 1))))
-   file)
-

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Tue Jun 20 13:42:03 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 11:17:05 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -63,7 +63,7 @@
 
   (define (<SEPARATOR>)
     (<TD> :width "12px"  :align "center"
-      (<IMG> :src (file->url! (make-file-name *icons-dir* "ed-separator.png"))
+      (<IMG> :src (make-file-name *icons-dir* "ed-separator.png")
 	     :border 0)))
 
   (define (<FILER>)
@@ -72,7 +72,7 @@
   (define (<ICON> name tooltip image)
     (let ((icon (make-file-name *icons-dir* (string-append image ".png"))))
       (<TD> :style "width: 22px"
-	(<IMG> :src (file->url! icon)
+	(<IMG> :src icon
 	       :class "hop-edit-button"
 	       :id (format "~a-but-~a" id name)
 	       :border 0  :title tooltip
@@ -110,7 +110,7 @@
 	     :onclick "this.style.display = 'none'"
 	     (<DIV> (make-palette id)))))
   
-  (let ((bg (file->url! (make-file-name *icons-dir* "ed-silver-bg.png"))))
+  (let ((bg (make-file-name *icons-dir* "ed-silver-bg.png")))
     (<DIV>
      ;; The (not yet visible) color palette
      (<PALETTE>)
