@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon May 29 14:39:25 2006 (serrano)                */
+/*    Last change :  Sat Jun 24 08:04:53 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -120,3 +120,32 @@ hop_style_set = function( obj, property, value ) {
 
    return hop_style_set( obj, property, value );
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_page ...                                                     */
+/*---------------------------------------------------------------------*/
+/* var hop_page_x = undefined;                                         */
+/* var hop_page_y = undefined;                                         */
+/*                                                                     */
+/* if( false ) {                                                       */
+/*    if( document.body.scrollLeft ) {                                 */
+/*       hop_page_x = function hop_page_x( event ) {                   */
+/* 	 return event.clientX + document.body.scrollLeft;              */
+/*       }                                                             */
+/*       hop_page_x = function hop_page_x( event ) {                   */
+/* 	 return event.clientY + document.body.scrollTop;               */
+/*       } else {                                                      */
+/*       hop_page_x = function hop_page_x( event ) {                   */
+/* 	 return event.clientX + document.documentElement.scrollLeft;   */
+/*       }                                                             */
+/*       hop_page_x = function hop_page_x( event ) {                   */
+/* 	 return event.clientY + document.documentElement.scrollTop;    */
+/*       }                                                             */
+/* } else {                                                            */
+/*    hop_page_x = function hop_page_x( event ) {                      */
+/*       return event.pageX;                                           */
+/*    }                                                                */
+/*    hop_page_y = function hop_page_y( event ) {                      */
+/*       return event.pageY;                                           */
+/*    }                                                                */
+/* }                                                                   */
