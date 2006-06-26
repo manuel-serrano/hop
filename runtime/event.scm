@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Jun 19 15:41:06 2006 (serrano)                */
+;*    Last change :  Mon Jun 26 10:05:42 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -135,11 +135,10 @@
 		       (socket-close socket)
 		       (loop #f))
 		    (loop f)))
-	     (begin
-		(when (and f (>fx queue-size 0))
-		   (set-car! %fifol val)
-		   (set! %fifol (cdr %fifol)))
-		(mutex-unlock! %mutex))))))
+	     (when (and f (>fx queue-size 0))
+		(set-car! %fifol val)
+		(set! %fifol (cdr %fifol)))))
+      (mutex-unlock! %mutex)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-close ...                                              */

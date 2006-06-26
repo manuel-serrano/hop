@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Fri Jun 23 11:18:23 2006 (serrano)                */
+;*    Last change :  Mon Jun 26 09:23:28 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -80,7 +80,7 @@
 ;*    <HOME> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<HOME> base)
-   (let ((url (hop-dir))
+   (let ((url (hop-url))
 	 (logo (format "~a/home/etc/logo.png" base)))
       (<TD>
 	 :valign "top"

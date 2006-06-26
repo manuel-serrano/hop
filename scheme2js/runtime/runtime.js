@@ -1979,7 +1979,7 @@ function hop_bigloo_serialize_pair( l ) {
    if( l == null ) {
       return hop_serialize_word( len + 1 ) + res + ".";
    } else {
-      return hop_serialize_word( len ) + res;
+      return hop_serialize_word( len + 1 ) + res + hop_serialize( l );
    }
 }
 
