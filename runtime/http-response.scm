@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Jun 17 10:01:07 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 13:36:25 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -234,10 +234,12 @@
    (with-trace 3 'http-response::http-response-file
       (with-access::http-response-file r (start-line header content-type server file bodyp request timeout)
 	 (if (authorized-path? request file)
-	     ;; the file is never read with RGC so it can
+	     ;; In C the file is never read with RGC so it can
 	     ;; be open with a tiny buffer
 	     (let ((p (socket-output socket))
-		   (pf (open-input-file file 1)))
+		   (pf (cond-expand
+			  (bigloo-c (open-input-file file 1))
+			  (else (open-input-file file)))))
 		(cond
 		   ((not (input-port? pf))
 		    (let ((rep (if (file-exists? pf)

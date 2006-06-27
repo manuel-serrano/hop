@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon Jun 19 12:00:05 2006 (serrano)                */
+#*    Last change :  Tue Jun 20 10:17:52 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -265,15 +265,6 @@ install-native:
                 LN=lib$(TARGETNAME)_u-$(HOPRELEASE)
 
 install-jvm:
-	cp $(BUILDLIBDIR)/$(TARGETNAME).jheap $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        cp $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip $(DESTDIR)$(HOPFILDIR) && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip && \
-        cp $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip $(DESTDIR)$(HOPFILDIR) && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip; \
-        (cd $(DESTDIR)$(HOPFILDIR) && \
-           $(RM) -f $(TARGETNAME)_u-$(HOPRELEASE).zip && \
-           ln $(TARGETNAME)_s-$(HOPRELEASE).zip $(TARGETNAME)_u-$(HOPRELEASE).zip)
 
 install-dotnet:
 	cp $(BUILDLIBDIR)/$(TARGETNAME).jheap $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap && \

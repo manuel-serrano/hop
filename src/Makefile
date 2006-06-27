@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Jun 19 11:54:33 2006 (serrano)                */
+#*    Last change :  Thu Jun 22 08:26:09 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -63,18 +63,42 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-unzip
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-jvm-unzip:
+jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
 	for p in $(JVMZIPLIBS); do \
           if [ -f $$p ]; then \
-             $(UNZIP) -d o/class_s -u $$p; \
+             $(UNZIP) -d o/class_s -o -u $$p; \
           else \
              echo "Warning: Can't find zip file $$p..."; \
           fi; \
         done
+	for p in $(JVMINITS); do \
+          if [ -f $$p ]; then \
+             cp $$p o/class_s/lib/hop/$(HOPRELEASE); \
+          else \
+             echo "Warning: Can't find init file $$p..."; \
+          fi; \
+        done
+
+jvm-share:
+	cp -r ../share o/class_s
+	cp -r ../scheme2js/runtime/*.js o/class_s/share
+	cp -r ../weblets o/class_s/share
+	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/share
+
+jvm-list:
+	/usr/bin/ls $(SRC)/$(DIR) > $(DEST)/$(DIR)/.list
+	for p in `ls $(SRC)/$(DIR)`; do \
+	  if [ -d $(SRC)/$(DIR)/$$p ]; then \
+            $(MAKE) jvm-list SRC=$(SRC)/$(DIR) DIR=$$p DEST=$(DEST)/$(DIR) || (echo "*** ERROR: $$p"; exit 1); \
+          fi \
+        done
+
+jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
+	cp $(BUILDLIBDIR)/*.init $<
 
 META-INF/MANIFEST.MF: META-INF
 	echo "Manifest-Version: 1.0" > $@
@@ -82,6 +106,9 @@ META-INF/MANIFEST.MF: META-INF
 	echo "Created-By: Hop $(VERSION)" >> $@
 
 META-INF:
+	mkdir -p $@
+
+o/class_s/lib/hop/$(HOPRELEASE):
 	mkdir -p $@
 
 #*---------------------------------------------------------------------*/
@@ -93,10 +120,10 @@ META-INF:
 #*---------------------------------------------------------------------*/
 #*    The implicit `.scm.o' rule                                       */
 #*---------------------------------------------------------------------*/
-o/%.o: %.scm
+o/%.o: %.scm .afile
 	@ $(call compile,BIGLOO,BCFLAGS,$< -o $@ -c)
 
-$(CLASS_DIR)/%.class: %.scm
+$(CLASS_DIR)/%.class: %.scm .afile
 	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/

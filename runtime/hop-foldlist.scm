@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Sat May 13 08:09:01 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 11:17:36 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -19,7 +19,8 @@
    (import  __hop_param
 	    __hop_xml
 	    __hop_service
-	    __hop_types)
+	    __hop_types
+	    __hop_misc)
 
    (static  (class html-foldlist::xml-element
 	       (spacing (default 0))

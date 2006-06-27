@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Wed Apr 12 15:54:22 2006 (serrano)                */
+#*    Last change :  Mon Jun 19 14:19:29 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the wiki library.                          */
@@ -76,7 +76,6 @@ ude:
 
 .jfile: $(SOURCES) 
 	@ $(JFILE) -o .jfile \
-                   -I $(MISC_SRC_DIR) \
                    -pbase $(PBASE) $(SOURCES)  make-lib.scm
 
 .etags: $(SOURCES)

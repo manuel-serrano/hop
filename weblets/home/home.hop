@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sat Jun  3 09:27:56 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 13:55:54 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -176,6 +176,15 @@ implemented you can send comments and remarks to "
 	      (wiki->hop "install.wiki"))))
 
 ;*---------------------------------------------------------------------*/
+;*    home/install-jvm ...                                             */
+;*---------------------------------------------------------------------*/
+(define-service (home/install-jvm)
+   (<HTML>
+      (<HEAD> :css (make-file-name (home-dir) "home.hss"))
+      (<BODY> :style "background: white; font-size: small"
+	      (wiki->hop "install-jvm.wiki"))))
+
+;*---------------------------------------------------------------------*/
 ;*    home/submit-hz ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-service (home/submit-hz file)
@@ -186,13 +195,13 @@ implemented you can send comments and remarks to "
 ;*    downloads ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define *devel-tar-gz* #unspecified)
-(define *devel-zip* #unspecified)
+(define *devel-jar* #unspecified)
 (define *devel-tar-url* #unspecified)
-(define *devel-zip-url* #unspecified)
+(define *devel-jar-url* #unspecified)
 (define *stable-tar-gz* #unspecified)
-(define *stable-zip* #unspecified)
+(define *stable-jar* #unspecified)
 (define *stable-tar-url* #unspecified)
-(define *stable-zip-url* #unspecified)
+(define *stable-jar-url* #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    download-versions-set! ...                                       */
@@ -205,9 +214,9 @@ implemented you can send comments and remarks to "
 		(string-append "hop-" devel-version ".tar.gz")
 		"not available"))
       
-      (set! *devel-zip*
+      (set! *devel-jar*
 	    (if (string? devel-version)
-		(string-append "hop-" devel-version ".zip")
+		(string-append "hop-" devel-version ".jar")
 		"not available"))
       
       (set! *devel-tar-url*
@@ -215,9 +224,9 @@ implemented you can send comments and remarks to "
 		(make-file-name (home-ftp-hop-url) *devel-tar-gz*)
 		"not available"))
       
-      (set! *devel-zip-url*
-	    (if (string? *devel-tar-gz*)
-		(make-file-name (home-ftp-hop-url) *devel-tar-gz*)
+      (set! *devel-jar-url*
+	    (if (string? *devel-jar*)
+		(make-file-name (home-ftp-hop-url) *devel-jar*)
 		"not available"))
       
       (set! *stable-tar-gz*
@@ -225,15 +234,17 @@ implemented you can send comments and remarks to "
 		(string-append "hop-" (home-hop-stable-version) ".tar.gz")
 		"not available"))
       
-      (set! *stable-zip*
-	    "not available")
+      (set! *stable-jar*
+	    (if (string? (home-hop-stable-version))
+		(string-append "hop-" (home-hop-stable-version) ".jar")
+		"not available"))
       
       (set! *stable-tar-url*
 	    (if (string? *stable-tar-gz*)
 		(make-file-name(home-ftp-hop-url) *stable-tar-gz*)
 		"not available"))
       
-      (set! *stable-zip-url*
-	    "/dev/null")))
-      
-
+      (set! *stable-jar-url*
+	    (if (string? *stable-jar*)
+		(make-file-name(home-ftp-hop-url) *stable-jar*)
+		"not available"))))

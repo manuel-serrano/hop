@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Jun  5 17:57:48 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 11:17:50 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -210,7 +210,8 @@
       (let ((sbody (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body obj) ps)
 		      (close-output-port ps)))
-	    (icon (or file (make-file-name (hop-icons-directory) "file.png"))))
+	    (icon (or file
+		      (make-file-name (hop-icons-directory) "file.png"))))
 	 (fprint p
 		 "hop_make_tree_leaf( "
 		 ;; parent

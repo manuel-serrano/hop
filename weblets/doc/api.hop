@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Mon May 29 14:40:02 2006 (serrano)                */
+;*    Last change :  Thu Jun 22 08:40:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -368,7 +368,7 @@
       (with-lock *server-mutex*
 	 (lambda ()
 	    (when (or (not (=elong *server-time* (file-modification-time dir)))
-		      (not (hashtable* *see-also-table*)))
+		      (not (hashtable? *see-also-table*)))
 	       (set! *see-also-table* (make-hashtable)))
 	    (let ((old (hashtable-get *see-also-table* keyword)))
 	       (or old

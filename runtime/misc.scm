@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Thu Jun 15 14:08:52 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 11:16:34 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -36,7 +36,8 @@
 	   (string-escape::bstring ::bstring ::char)
 	   (escape-string::bstring ::bstring)
 	   (delete-path ::bstring)
-	   (autoload-prefix::procedure ::bstring)))
+	   (autoload-prefix::procedure ::bstring)
+	   (make-url-name::bstring ::bstring ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -339,3 +340,17 @@
 			(or (=fx l lp) (eq? (string-ref path lp) #\/)))
 		   (and (>=fx i lp)
 			(substring-at? path p 0 i))))))))
+
+;*---------------------------------------------------------------------*/
+;*    make-url-name ...                                                */
+;*---------------------------------------------------------------------*/
+(define (make-url-name directory file)
+   (let* ((ldir (string-length directory)))
+      (if (and (=fx ldir 1) (char=? (string-ref directory 0) #\.))
+	  file
+	  (let* ((lfile (string-length file))
+		 (len (+fx ldir (+fx lfile 1)))
+		 (str (make-string len #\/)))
+	     (blit-string-ur! directory 0 str 0 ldir)
+	     (blit-string-ur! file 0 str (+fx 1 ldir) lfile)
+	     str))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed May 24 15:09:02 2006 (serrano)                */
+;*    Last change :  Mon Jun 26 09:23:28 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -139,8 +139,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<HOP> . obj)
    (<HTML>
-      (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css" 
-	      :css (format "~a/hop.hss" (hop-dir)))
+      (<HEAD> :css (format "~a/hop.hss" (hop-dir)))
       (<BODY>
 	 (<DIV>
 	    :align "center"

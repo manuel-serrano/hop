@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Jun 19 11:20:59 2006 (serrano)                */
+#*    Last change :  Tue Jun 20 12:02:36 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -72,6 +72,7 @@ HOPDEMOSDIR	= $(HOPSHAREDIR)/demos
 #*    JVM zips                                                         */
 #*---------------------------------------------------------------------*/
 JVMZIPLIBS	= @JVMZIPLIBS@
+JVMINITS	= @JVMINITS@
 
 #*---------------------------------------------------------------------*/
 #*    REPOSITORY                                                       */

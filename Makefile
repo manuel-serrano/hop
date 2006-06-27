@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed May 31 14:26:13 2006 (serrano)                */
+#*    Last change :  Tue Jun 20 10:40:50 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -21,7 +21,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile LICENSE INSTALL configure .hoprelease
+POPULATION	= Makefile LICENSE INSTALL INSTALL.jvm configure .hoprelease
 POPDIRS		= runtime hopscheme scheme2js hopwiki src \
                   etc share \
                   weblets # contribs
@@ -185,6 +185,7 @@ distrib:
           echo "state=$$devel" >> .hoprelease; \
           echo "minor=$$min" >> .hoprelease; \
           (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
+	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
           $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
           mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
           tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
@@ -194,6 +195,15 @@ distrib:
               /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
               mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
             fi \
-          fi \
+          fi; \
+	  echo "Building hop-$(HOPRELEASE).jar..."; \
+          $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
+          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
+          (cd $(HOPTMPDIR)/hop-$$distrib && \
+           ./configure --backend=jvm && \
+           $(MAKE) && \
+           /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.jar && \
+           mv bin/hop.jar $(HOPDISTRIBDIR)/hop-$(HOPRELEASE).jar) && \
+          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
         fi
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Fri Jun  9 17:08:08 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 13:40:43 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -56,7 +56,7 @@
 						   args)))
 				`(,proc (error '$service/filter "not implement" "yet"))))))
 	      (,url ,svcurl)
-	      (,path (make-file-name (hop-service-base) ,url))
+	      (,path (make-url-name (hop-service-base) ,url))
 	      (svc (instantiate::hop-service
 		      (id (string->symbol ,url))
 		      (path ,path)

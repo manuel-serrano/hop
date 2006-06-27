@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Thu Jun 15 14:43:26 2006 (serrano)                */
+;*    Last change :  Tue Jun 20 16:32:09 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -44,7 +44,7 @@
 			     (char=? (string-ref path (-fx lp 1))
 				     #\/))))))))
    (define (maybe-autoload x)
-      (let ((url (make-file-name (hop-service-base) (cadr (assoc 'name x))))
+      (let ((url (make-url-name (hop-service-base) (cadr (assoc 'name x))))
 	    (path (cadr (assq 'weblet x)))
 	    (autopred (assq 'autoload x)))
 	 (if (pair? autopred)
@@ -72,7 +72,7 @@
 					 (string-append name ".hop")))))
 	 (when (file-exists? weblet)
 	    `((name ,name) (weblet ,weblet) ,@infos))))
-   
+
    (let Loop ((files (directory->list dir))
 	      (res '()))
       (if (null? files)

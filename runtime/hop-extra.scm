@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon May 29 10:58:28 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 11:17:25 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -16,6 +16,8 @@
 
    (include "compiler-macro.sch"
 	    "xml.sch")
+
+   (library web)
 
    (import  __hop_param
 	    __hop_configure
@@ -53,7 +55,7 @@
       :href (cond
 	       ((= (string-length file) 0)
 		(error '<HEAD> "Illegal css" file))
-	       ((char=? (string-ref file 0) (file-separator))
+	       ((char=? (string-ref file 0) #\/)
 		file)
 	       ((substring-at? file "http://" 0)
 		file)
@@ -69,7 +71,7 @@
       :src (cond
 	      ((= (string-length file) 0)
 	       (error '<HEAD> "Illegal jscript" file))
-	      ((char=? (string-ref file 0) (file-separator))
+	      ((char=? (string-ref file 0) #\/)
 	       file)
 	      ((substring-at? file "http://" 0)
 	       file)
@@ -81,9 +83,10 @@
 ;*---------------------------------------------------------------------*/
 (define (head-parse args)
    (let* ((req (the-current-request))
-	  (dir (if (http-request? req)
-		   (list (dirname (http-request-path req)))
-		   '()))
+;* 	  (dir (if (http-request? req)                                 */
+;* 		   (list (dirname (http-request-path req)))            */
+;* 		   '()))                                               */
+	  (dir '())
 	  (css '())
 	  (jscript '())
 	  (favicon #f)
@@ -210,7 +213,9 @@
 		     ((string? path)
 		      path)
 		     ((string? src)
-		      (format "~a/buttons/~a" (hop-share-directory) src))
+		      (format "~a/buttons/~a"
+			      (url-encode (hop-share-directory))
+			      src))
 		     (else
 		      (error '<FOOT-BUTTON> "Illegal source" src))))))
 				     

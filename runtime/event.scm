@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Jun 18 07:18:37 2006 (serrano)                */
+;*    Last change :  Mon Jun 26 10:05:42 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -123,7 +123,7 @@
 (define (broadcast-hop-event! evt val)
    (with-access::hop-event evt (%fifo %fifol queue-size %mutex %requests)
       (mutex-lock! %mutex)
-      (let loop ((f #f))
+      (let loop ((f #t))
 	 (if (pair? %requests)
 	     (let* ((req (car %requests))
 		    (socket (http-request-socket req))
@@ -133,13 +133,12 @@
 		    (begin
 		       (http-response (scheme->response val req) socket)
 		       (socket-close socket)
-		       (loop #t))
+		       (loop #f))
 		    (loop f)))
-	     (begin
-		(when (and f (>fx queue-size 0))
-		   (set-car! %fifol val)
-		   (set! %fifol (cdr %fifol)))
-		(mutex-unlock! %mutex))))))
+	     (when (and f (>fx queue-size 0))
+		(set-car! %fifol val)
+		(set! %fifol (cdr %fifol)))))
+      (mutex-unlock! %mutex)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-close ...                                              */

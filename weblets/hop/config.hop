@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Mon May 22 14:32:55 2006 (serrano)                */
+;*    Last change :  Fri Jun 23 11:19:00 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop configuration                                                */
@@ -33,4 +33,5 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-dir                                                          */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-dir (dirname (the-loading-file)))
+(define-parameter hop-dir
+   (dirname (the-loading-file)))

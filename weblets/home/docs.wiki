@@ -1,6 +1,7 @@
 == Installation Guides ==
 
   * [[/hop/home/install|HOP Installation page]]
+  * [[/hop/home/install-jvm|Running HOP with a Java Virtual Machine]]
 
 == Development Guides ==
 
