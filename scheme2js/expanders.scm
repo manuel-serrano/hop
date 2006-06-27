@@ -208,3 +208,7 @@
 		  fields
 		  field-getters
 		  field-setters)))))
+
+(install-expander! 'delay
+		   (lambda (x e)
+		      (e `(make-promise (lambda () ,@(cdr x))) e)))

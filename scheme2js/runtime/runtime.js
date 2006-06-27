@@ -300,10 +300,7 @@ var sc_ceiling = Math.ceil; /// export
 var sc_truncate = parseInt; /// export
 var sc_round = Math.round; /// export
 
-// TODO: sc_rationalize
-function sc_rationalize(x, eps) { /// export
-    return x;
-}
+// LIMITATION: sc_rationalize doesn't make sense in a floating point world.
 
 var sc_exp = Math.exp; /// export
 var sc_log = Math.log; /// export
@@ -312,13 +309,15 @@ var sc_cos = Math.cos; /// export
 var sc_tan = Math.tan; /// export
 var sc_asin = Math.asin; /// export
 var sc_acos = Math.acos; /// export
-// TODO: 2 argument atan
 var sc_atan = Math.atan; /// export
 
 var sc_sqrt = Math.sqrt; /// export
 var sc_expt = Math.pow; /// export
 
-// TODO: make-rectangular, make-polar, real-part, imag-part, magnitude, angle
+// LIMITATION: we don't have complex numbers.
+// LIMITATION: the following functions are hence not implemented.
+// LIMITATION: make-rectangular, make-polar, real-part, imag-part, magnitude, angle
+// LIMITATION: 2 argument atan
 
 function sc_exact2inexact(x) { /// export
     return x;
@@ -1207,8 +1206,25 @@ function sc_forEach(proc, l1) { /// export
     }
 }
 
-// TODO: sc_force
-// TODO: call-with-current-continuation
+function sc_force(o) { /// export
+    return o();
+}
+function sc_makePromise(proc) { /// export
+    var isResultReady = false;
+    var result = undefined;
+    return function() {
+	if (!isResultReady) {
+	    var tmp = proc();
+	    if (!isResultReady) {
+		isResultReady = true;
+		result = tmp;
+	    }
+	}
+	return result;
+    };
+}
+
+// TODO: call-with-current-continuation (and adapt dynamic-wind)
 
 function sc_values() { /// export
     return arguments;
@@ -1218,12 +1234,17 @@ function sc_callWithValues(producer, consumer) { /// export
     consumer.apply(null, producer());
 }
 
-// TODO: dynamic-wind
+function sc_dynamicWind(before thunk after) { /// export
+    before();
+    var res = thunk();
+    after();
+    return res;
+}
     
 // TODO: eval/scheme-report-environment/null-environment/interaction-environment
 
-// TODO: load
-// TODO: transcript-on/transcript-off
+// LIMITATION: 'load' doesn't exist without files.
+// LIMITATION: transcript-on/transcript-off doesn't exist without files.
 
 
 function sc_Struct(name) {
