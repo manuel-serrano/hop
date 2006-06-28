@@ -25,7 +25,8 @@
 ;*    *hop-aliases* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *hop-aliases*
-   '((timeout-start hop_timeout)
+   '((with-hop with_hop)
+     (timeout-start hop_timeout)
      (timeout-clear! hop_clear_timeout)
      (timeout-reset! hop_timeout_reset)
      (tooltip-hide hop_tooltip_hide)

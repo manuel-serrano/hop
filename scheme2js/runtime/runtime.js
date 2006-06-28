@@ -2,8 +2,6 @@ var sc_JS_GLOBALS = this; /// export *js*
 
 var sc_SYMBOL_PREFIX = "\u1E9C"; // "\u1E9D\u1E9E\u1E9F";
 
-var with_hop; /// export with-hop
-
 function sc_alert() { /// export
    var len = arguments.length;
    var s = "";
@@ -891,10 +889,6 @@ sc_String.prototype.toString = function() {
     return this.val;
 }
 
-sc_String.prototype.hop_bigloo_serialize = function() {
-   return hop_bigloo_serialize( this.val );
-}
-
 function sc_isString_mutable(s) { /// export
     return (s instanceof sc_String);
 }
@@ -1234,7 +1228,7 @@ function sc_callWithValues(producer, consumer) { /// export
     consumer.apply(null, producer());
 }
 
-function sc_dynamicWind(before thunk after) { /// export
+function sc_dynamicWind(before, thunk, after) { /// export
     before();
     var res = thunk();
     after();
@@ -1985,27 +1979,6 @@ function sc_isOutputPort(o) { /// export
 
 function sc_closeOutputPort(p) { /// export
     return p.close();
-}
-
-function hop_bigloo_serialize_pair( l ) {
-   var res = "";
-   var len = 0;
-   
-   while (sc_isPair( l ) ) {
-      res += hop_serialize( l.car );
-      l = l.cdr;
-      len++;
-   }
-
-   if( l == null ) {
-      return hop_serialize_word( len + 1 ) + res + ".";
-   } else {
-      return hop_serialize_word( len + 1 ) + res + hop_serialize( l );
-   }
-}
-
-sc_Pair.prototype.hop_bigloo_serialize = function() {
-   return '(' + hop_bigloo_serialize_pair( this );
 }
 
 sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {

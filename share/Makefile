@@ -28,6 +28,7 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-foldlist.js hop-foldlist.css \
                   hop-iwindow.js hop-iwindow.css \
                   hop-editor.js hop-editor.css \
+                  hopscheme.js \
                   hop.scm icons buttons editor Makefile
 
 #*---------------------------------------------------------------------*/
@@ -61,6 +62,7 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-editor.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-editor.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hopscheme.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/base64.js $(HOPSHAREDIR) && \
 	mkdir -p $(HOPSHAREDIR)/icons && \
 	chmod a+rx $(HOPSHAREDIR)/icons && \
@@ -102,10 +104,8 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop-editor.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-editor.css && \
 	/bin/rm -f $(HOPSHAREDIR)/base64.js && \
+	/bin/rm -f $(HOPSHAREDIR)/hopscheme.js && \
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \
 	/bin/rm -rf $(HOPSHAREDIR)/icons && \
 	/bin/rm -rf $(HOPSHAREDIR)/buttons && \
 	/bin/rm -rf $(HOPSHAREDIR)/editor 
-
-
-
