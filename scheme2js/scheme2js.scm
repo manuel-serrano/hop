@@ -141,6 +141,9 @@
       (("--no-tailrec"
 	(help "don't optimize tail-recs."))
        (hashtable-put! config-ht 'optimize-tail-rec #f))
+      (("--no-constant-propagation"
+	(help "don't propagate constants."))
+       (hashtable-put! config-ht 'constant-propagation #f))
       (("--no-optimize-calls"
 	(help "don't inline simple runtime-functions."))
        (hashtable-put! config-ht 'optimize-calls #f))

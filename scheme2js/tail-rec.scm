@@ -122,6 +122,9 @@
 	 (var-ref-tree vars)
 	 (for-each (lambda (var)
 		      (break-cycle var))
+		   vars)
+	 (for-each (lambda (var)
+		      (delete! var.visited?))
 		   vars))
 
       ;; creates break-var, and breaks cycle (decreasing rev-dep.
@@ -159,7 +162,8 @@
 	    (delete! var.referenced-vars)
 	    (delete! var.rev-referenced-vars)
 	    (delete! var.cyclic-var?)
-	    (delete! var.break-var))
+	    (delete! var.break-var)
+	    (delete! var.pending?))
 
 	 ;; mark cycle-vars
 	 (break-cycles vars)
@@ -183,6 +187,9 @@
                                       0))
                                 vars)))
 
+	    ;(verbose "cyclic-vars: " (map (lambda (var) var.id) cyclic-vars))
+	    ;(verbose "indeps: " (map (lambda (var) var.id) indeps))
+	    
 	    ;; the indeps will be our pending set.
 
 	    ;; mark all indeps vars as pending?

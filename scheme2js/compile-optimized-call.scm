@@ -98,7 +98,7 @@
    (and (pair? operand)
 	(null? (cdr operand))
 	(begin
-	   (operand.compile p)
+	   ((car operand).compile p)
 	   #t)))
 
 (define (jsNew-op p operands)
@@ -216,7 +216,8 @@
     (sci_exact2inexact ,id)
     (sci_inexact2exact ,id)
     
-    (sci_not ,(prefix-op "!"))
+    ;; TODO: merge somehow with compile-optimize-bool
+    (sci_not ,(postfix-op "=== false"))
     
     (sci_cons ,(hole-op 2 "new sc_Pair(" 'car ", " 'cdr ")"))
     (sci_isPair ,(postfix-op " instanceof sc_Pair"))

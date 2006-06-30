@@ -109,17 +109,34 @@
 			 (install-expander! id (eval expander))
 			 #unspecified)))
 
-(install-expander! 'define-macro
-		   (lambda (x e)
-		      (match-case x
-			 ((?- (?name . ?args) . ?body)
-			  (install-expander! name
-					     (eval `(lambda (x e)
-						       (e (let ,(destructure args '(cdr x) '())
-							     ,@body)
-							  e)))))
+(install-expander!
+ 'define-macro
+ (lambda (x e)
+    (match-case x
+       ((?- (?name . ?args) . ?body)
+	(install-expander!
+	 name
+	 (eval `(lambda (x e)
+		   (define (deep-copy o)
+		      (cond
+			 ((pair? o)
+			  (cons (deep-copy (car o)) (deep-copy (cdr o))))
+			 ((vector? o)
+			  (copy-vector o (vector-length o)))
+			 ((string? o)
+			  (string-copy o))
 			 (else
-			  (error "define-macro" "Illegal 'define-macro' syntax" x)))))
+			  o)))
+
+		   ;; macros might reference lists twice.
+		   ;; by deep-copying the result, we are sure, that
+		   ;; we don't share anything.
+		   (e (deep-copy
+		       (let ,(destructure args '(cdr x) '())
+			  ,@body))
+		      e)))))
+       (else
+	(error "define-macro" "Illegal 'define-macro' syntax" x)))))
 
 (define (destructure pat arg bindings)
    (cond

@@ -101,10 +101,21 @@ function sc_isEq(o1, o2) { /// export
     return (o1 === o2);
 }
 
-function sc_isEqual(o1, o2) { /// export
+function sc_isEqual_immutable(o1, o2) { /// export
     return ((o1 === o2) ||
-	    (sc_isPair(o1) && sc_isPair(o2) && sc_isPairEqual(o1, o2)) ||
-	    (sc_isVector(o1) && sc_isVector(o2) && sc_isVectorEqual(o1, o2)));
+	    (sc_isPair(o1) && sc_isPair(o2)
+	     && sc_isPairEqual(o1, o2, sc_isEqual_immutable)) ||
+	    (sc_isVector(o1) && sc_isVector(o2)
+	     && sc_isVectorEqual(o1, o2, sc_isEqual_immutable)));
+}
+function sc_isEqual_mutable(o1, o2) { /// export
+    return ((o1 === o2) ||
+	    (sc_isPair(o1) && sc_isPair(o2)
+	     && sc_isPairEqual(o1, o2, sc_isEqual_mutable)) ||
+	    (sc_isVector(o1) && sc_isVector(o2)
+	     && sc_isVectorEqual(o1, o2, sc_isEqual_mutable)) ||
+	    (sc_isString_mutable(o1) && sc_isString_mutable(o2)
+	     && sc_isStringEqual_mutable(o1, o2)));
 }
 
 function sc_isNumber(n) { /// export
@@ -216,18 +227,26 @@ function sc_multi() { /// export * *fx *fl
     return product;
 }
 
-function sc_minus(x, y) { /// export - -fx -fl
-    if (y === undefined)
+function sc_minus(x) { /// export - -fx -fl
+    if (arguments.length === 1)
 	return -x;
-    else
-	return x - y;
+    else {
+	var res = x;
+	for (var i = 1; i < arguments.length; i++)
+	    res -= arguments[i];
+	return res;
+    }
 }
 
-function sc_div(x, y) { /// export / /fl
-    if (y === undefined)
-	return 1 / x;
-    else
-	return x / y;
+function sc_div(x) { /// export / /fl
+    if (arguments.length === 1)
+	return 1/x;
+    else {
+	var res = x;
+	for (var i = 1; i < arguments.length; i++)
+	    res /= arguments[i];
+	return res;
+    }
 }
 
 var sc_abs = Math.abs; /// export
@@ -281,17 +300,18 @@ function sc_lcm() { /// export
     return lcm;
 }
 
-var SC_MAX_DECIMALS = 1000000
+// LIMITATION: numerator and denominator don't make sense in floating point world.
+//var SC_MAX_DECIMALS = 1000000
+//
+// function sc_numerator(x) {
+//     var rounded = Math.round(x * SC_MAX_DECIMALS);
+//     return Math.round(rounded / sc_euclid_gcd(rounded, SC_MAX_DECIMALS));
+// }
 
-function sc_numerator(x) { /// export
-    var rounded = Math.round(x * SC_MAX_DECIMALS);
-    return Math.round(rounded / sc_euclid_gcd(rounded, SC_MAX_DECIMALS));
-}
-
-function sc_denominator(x) { /// export
-    var rounded = Math.round(x * SC_MAX_DECIMALS);
-    return Math.round(SC_MAX_DECIMALS / sc_euclid_gcd(rounded, SC_MAX_DECIMALS));
-}
+// function sc_denominator(x) {
+//     var rounded = Math.round(x * SC_MAX_DECIMALS);
+//     return Math.round(SC_MAX_DECIMALS / sc_euclid_gcd(rounded, SC_MAX_DECIMALS));
+// }
 
 var sc_floor = Math.floor; /// export
 var sc_ceiling = Math.ceil; /// export
@@ -356,7 +376,7 @@ function sc_symbol2number_mutable(s, radix) { /// export
 }
 
 function sc_string2number_mutable(s, radix) { /// export
-    sc_symbol2number_mutable(s.val, radix);
+    return sc_symbol2number_mutable(s.val, radix);
 }
 
 function sc_symbol2number_immutable(s, radix) { /// export
@@ -395,12 +415,19 @@ function sc_isPair(p) { /// export
     return (p instanceof sc_Pair);
 }
 
-function sc_isPairEqual(p1, p2) {
-    return (sc_isEqual(p1.car, p2.car) && sc_isEqual(p1.cdr, p2.cdr));
+function sc_isPairEqual(p1, p2, comp) {
+    return (comp(p1.car, p2.car) && comp(p1.cdr, p2.cdr));
 }
 
 function sc_cons(car, cdr) { /// export
     return new sc_Pair(car, cdr);
+}
+
+function sc_consStar() { /// export cons*
+    var res = arguments[arguments.length - 1];
+    for (var i = arguments.length-2; i >= 0; i--)
+	res = new sc_Pair(arguments[i], res);
+    return res;
 }
 
 function sc_car(p) { /// export
@@ -420,32 +447,32 @@ function sc_setCdr(p, o) { /// export set-cdr!
 }
 
 function sc_caar(p) { return p.car.car; } /// export
-function sc_cdar(p) { return p.cdr.car; } /// export
-function sc_cadr(p) { return p.car.cdr; } /// export
+function sc_cadr(p) { return p.cdr.car; } /// export
+function sc_cdar(p) { return p.car.cdr; } /// export
 function sc_cddr(p) { return p.cdr.cdr; } /// export
 function sc_caaar(p) { return p.car.car.car; } /// export
 function sc_cadar(p) { return p.car.cdr.car; } /// export
-function sc_caadr(p) { return p.car.car.cdr; } /// export
-function sc_caddr(p) { return p.car.cdr.cdr; } /// export
-function sc_cdaar(p) { return p.cdr.car.car; } /// export
-function sc_cddar(p) { return p.cdr.cdr.car; } /// export
+function sc_caadr(p) { return p.cdr.car.car; } /// export
+function sc_caddr(p) { return p.cdr.cdr.car; } /// export
+function sc_cdaar(p) { return p.car.car.cdr; } /// export
 function sc_cdadr(p) { return p.cdr.car.cdr; } /// export
+function sc_cddar(p) { return p.car.cdr.cdr; } /// export
 function sc_cdddr(p) { return p.cdr.cdr.cdr; } /// export
 function sc_caaaar(p) { return p.car.car.car.car; } /// export
-function sc_caadar(p) { return p.car.car.cdr.car; } /// export
-function sc_caaadr(p) { return p.car.car.car.cdr; } /// export
-function sc_caaddr(p) { return p.car.car.cdr.cdr; } /// export
-function sc_cadaar(p) { return p.car.cdr.car.car; } /// export
-function sc_caddar(p) { return p.car.cdr.cdr.car; } /// export
-function sc_cadadr(p) { return p.car.cdr.car.cdr; } /// export
-function sc_cadddr(p) { return p.car.cdr.cdr.cdr; } /// export
-function sc_cdaaar(p) { return p.cdr.car.car.car; } /// export
-function sc_cdadar(p) { return p.cdr.car.cdr.car; } /// export
+function sc_caadar(p) { return p.car.cdr.car.car; } /// export
+function sc_caaadr(p) { return p.cdr.car.car.car; } /// export
+function sc_caaddr(p) { return p.cdr.cdr.car.car; } /// export
+function sc_cdaaar(p) { return p.car.car.car.cdr; } /// export
+function sc_cdadar(p) { return p.car.cdr.car.cdr; } /// export
 function sc_cdaadr(p) { return p.cdr.car.car.cdr; } /// export
-function sc_cdaddr(p) { return p.cdr.car.cdr.cdr; } /// export
-function sc_cddaar(p) { return p.cdr.cdr.car.car; } /// export
-function sc_cdddar(p) { return p.cdr.cdr.cdr.car; } /// export
-function sc_cddadr(p) { return p.cdr.cdr.car.cdr; } /// export
+function sc_cdaddr(p) { return p.cdr.cdr.car.cdr; } /// export
+function sc_cadaar(p) { return p.car.car.cdr.car; } /// export
+function sc_caddar(p) { return p.car.cdr.cdr.car; } /// export
+function sc_cadadr(p) { return p.cdr.car.cdr.car; } /// export
+function sc_cadddr(p) { return p.cdr.cdr.cdr.car; } /// export
+function sc_cddaar(p) { return p.car.car.cdr.cdr; } /// export
+function sc_cdddar(p) { return p.car.cdr.cdr.cdr; } /// export
+function sc_cddadr(p) { return p.cdr.car.cdr.cdr; } /// export
 function sc_cddddr(p) { return p.cdr.cdr.cdr.cdr; } /// export
 
 function sc_lastPair(l) { /// export
@@ -469,30 +496,32 @@ function sc_isList(o) { /// export
 
     var rabbit = o;
     var turtle = o;
-    while (rabbit != null) {
-	if (sc_isPair(rabbit) &&
-	    sc_isPair(rabbit.cdr)) {
+    while (true) {
+	if (rabbit === null ||
+	    (rabbit instanceof sc_Pair && rabbit.cdr === null))
+	    return true;  // end of list
+	else if ((rabbit instanceof sc_Pair) &&
+		 (rabbit.cdr instanceof sc_Pair)) {
 	    rabbit = rabbit.cdr.cdr;
 	    turtle = turtle.cdr;
 	    if (rabbit === turtle) return false; // cycle
 	} else
 	    return false; // not pair
     }
-    return true;
 }
 
 function sc_list() { /// export
     var res = null;
     var a = arguments;
     for (var i = a.length-1; i >= 0; i--)
-	res = sc_cons(a[i], res);
+	res = new sc_Pair(a[i], res);
     return res;
 }
 
 function sc_makeList(nbEls, fill) { /// export
     var res = null;
     for (var i = 0; i < nbEls; i++)
-	res = sc_cons(fill, res);
+	res = new sc_Pair(fill, res);
     return res;
 }
 
@@ -604,9 +633,17 @@ function sc_memv(o, l) { /// export
     }
     return false;
 }
-function sc_member(o, l) { /// export
+function sc_member_mutable(o, l) { /// export
     while (l != null) {
-	if (sc_isEqual(l.car,o))
+	if (sc_isEqual_mutable(l.car,o))
+	    return l;
+	l = l.cdr;
+    }
+    return false;
+}
+function sc_member_immutable(o, l) { /// export
+    while (l != null) {
+	if (sc_isEqual_immutable(l.car,o))
 	    return l;
 	l = l.cdr;
     }
@@ -644,9 +681,17 @@ function sc_assv(o, al) { /// export
     }
     return false;
 }
-function sc_assoc(o, al) { /// export
+function sc_assoc_mutable(o, al) { /// export
     while (al != null) {
-	if (is_Equal(al.car.car, o))
+	if (sc_isEqual_mutable(al.car.car, o))
+	    return al.car;
+	al = al.cdr;
+    }
+    return false;
+}
+function sc_assoc_immutable(o, al) { /// export
+    while (al != null) {
+	if (sc_isEqual_immutable(al.car.car, o))
 	    return al.car;
 	al = al.cdr;
     }
@@ -1063,10 +1108,10 @@ function sc_isVector(v) { /// export vector? array?
 }
 
 // only applies to vectors
-function sc_isVectorEqual(v1, v2) {
+function sc_isVectorEqual(v1, v2, comp) {
     if (v1.length != v2.length) return false;
     for (var i = 0; i < v1.length; i++)
-	if (!sc_isEqual(v1[i], v2[i])) return false;
+	if (!comp(v1[i], v2[i])) return false;
     return true;
 }
 
@@ -1220,12 +1265,20 @@ function sc_makePromise(proc) { /// export
 
 // TODO: call-with-current-continuation (and adapt dynamic-wind)
 
+function sc_Values(values) {
+    this.values = values;
+}
+
 function sc_values() { /// export
-    return arguments;
+    return new sc_Values(arguments);
 }
 
 function sc_callWithValues(producer, consumer) { /// export
-    consumer.apply(null, producer());
+    var produced = producer();
+    if (produced instanceof sc_Values)
+	return consumer.apply(null, produced.values);
+    else
+	return consumer(produced);
 }
 
 function sc_dynamicWind(before, thunk, after) { /// export
@@ -1997,8 +2050,10 @@ sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {
 	p.appendJSString(")");
 };
 sc_Vector.prototype.writeOrDisplay = function(p, writeOrDisplay) {
-    if (this.length === 0)
+    if (this.length === 0) {
 	p.appendJSString("#()");
+	return;
+    }
 
     p.appendJSString("#(");
     writeOrDisplay(p, this[0]);
