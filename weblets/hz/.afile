@@ -1,6 +1,5 @@
-;; automatically generated, don't edit
 ;; /users/serrano/prgm/project/hop/weblets/hz
-;; Thu Jun 15 14:23:05 2006
+;; Mon Mar 27 18:26:38 2006
 
 (
   (hz_authenticate "./authenticate.hop")

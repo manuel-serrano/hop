@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Apr 28 08:02:05 2006 (serrano)                */
+;*    Last change :  Wed Jul 12 06:10:36 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -92,8 +92,12 @@
 		     "hop_make_vpaned( "
 		     "hop_make_hpaned( ")
 		 "document.getElementById( '" gid "' ),"
-		 "'" id "', "
-		 fraction ", "
+		 "'" id "', ")
+	 (if (string? fraction)
+	     (fprint p "\"" fraction "\"")
+	     (display fraction p))
+	 (fprint p 
+		 ", "
 		 "document.getElementById( '" (html-pan-id (car body)) "' ),"
 		 "document.getElementById( '" (html-pan-id (cadr body)) "' ) )"
 		 ", function() { " onresize " } )"))

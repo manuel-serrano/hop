@@ -92,12 +92,17 @@ This function returns the current fraction of the //paned//.
 <procedure> paned-fraction-set!
 
 <arguments>
-^  arguments  ^   type            ^  short description          ^
-| paned       |  string or paned  | the paned.                  |
-| fraction    |  integer          | the new fraction.           |
+^  arguments  ^   type              ^  short description          ^
+| paned       |  string or paned    | the paned.                  |
+| fraction    |  integer or string  | the new fraction.           |
 </arguments>
 
-This function sets a new fraction to the //paned//.
+This function sets a new fraction to the //paned//. If the argument
+++fraction++ is an integer, it denotes the width of the left (respectively
+top) pan as a percentage of the overall //paned// width. If the argument
+++fraction++ is a string, it denotes an absolute width for the left
+(respec. top) pan.
+
 </procedure>
 
 === ++(paned-onresize paned)++ ===
