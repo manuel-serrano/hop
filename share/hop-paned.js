@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Wed Jul 12 06:07:12 2006 (serrano)                */
+/*    Last change :  Wed Jul 12 06:33:53 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -110,13 +110,13 @@ function hop_paned_onresize_set( paned, onresize ) {
 /*---------------------------------------------------------------------*/
 /*    hop_make_vpaned ...                                              */
 /*---------------------------------------------------------------------*/
-function hop_make_vpaned( parent, id, fraction, pan1, pan2 ) {
+function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
    var document = parent.ownerDocument || parent.document;
    var paned, tbody, tr, td1, td2, cursor, div;
 
    // the paned
    paned = document.createElement( "table" );
-   paned.className = "hop-vpaned"
+   paned.className = klass;
    paned.id = id;
    paned.onresize = undefined;
    paned.parent = parent;
@@ -206,14 +206,14 @@ function hop_make_vpaned( parent, id, fraction, pan1, pan2 ) {
 /*---------------------------------------------------------------------*/
 /*    hop_make_hpaned ...                                              */
 /*---------------------------------------------------------------------*/
-function hop_make_hpaned( parent, id, fraction, pan1, pan2 ) {
+function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
    var document = parent.ownerDocument || parent.document;
    var td1, td2, pcursor, cursor;
    var tr1, tr2, tr3;
    
    // the paned
    var paned = document.createElement( "div" );
-   paned.className = "hop-hpaned";
+   paned.className = klass,
    paned.style.height = "inherit";
 
    // the cursor
