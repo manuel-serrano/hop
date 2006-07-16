@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jun 13 10:53:11 2006 (serrano)                */
+/*    Last change :  Sat Jul 15 15:33:35 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -212,8 +212,8 @@ function hop_default_failure( http ) {
    t = t.replace( /<\/html>/g, "</div>" );
    t = t.replace( /<body[^>]*>/g, "<div style='background: transparent; font-family: sans serif; -moz-opacity: 0.87'>" );
    t = t.replace( /<\/body>/g, "</div>" );
-   t = t.replace( /&lt;/g, "<" );
-   t = t.replace( /&gt;/g, ">" );
+/*    t = t.replace( /&lt;/g, "<" );                                   */
+/*    t = t.replace( /&gt;/g, ">" );                                   */
    t = t.replace( /&quot;/g, "\"" );
    
    if( !div ) {
