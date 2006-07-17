@@ -59,6 +59,7 @@
 							    (symbol->string v.id)))
 					  (hashtable-key-list ht)))))
 
+;; every tail-rec receives a list of variables, that are captured within the loop.
 (define (tail-rec-escapes tree)
    (verbose " latest allocation")
    (overload traverse tail-rec-escapes (Node
@@ -114,6 +115,22 @@
    (this.traverse1 tail-rec-escapes))
 
 (define-pmethod (Lambda-latest tail-rec-escapes)
+   ;; any free variable that is in the tail-rec-escapes must be allocated
+   ;; before the creation of the function. We can't just take the
+   ;; "captured-vars", as two different functions might not share the same
+   ;; variable anymore. Ex:
+   ;; (let loop ((x 0))
+   ;;   (let ((f (lambda () (print x)))) ;; not captured
+   ;;     (set! global-funs (cons (lambda () x) global-funs))
+   ;;     (set! x (+ x 3))
+   ;;     (f) 
+   ;;	  (loop (+ x 1))))
+   ;;
+   ;; If we looked only at captured variables, we would allocate the "loop"-x
+   ;; only just before the assignment to "global-funs". We would then change
+   ;; the value of "x". the procedure "f" would hence use a different x, than
+   ;; the global-funs procedure. But more importantly we would not modify the
+   ;; same 'x', and the call to "f" would not print the augmented x.
    (define (latest-for-surrounding)
       (let ((free-vars-list (hashtable-key-list this.free-vars)))
 	 (let loop ((escapes tail-rec-escapes)
@@ -129,8 +146,9 @@
       
    (this.traverse1 '())
    (let ((latest-for-surrounding-L (latest-for-surrounding)))
-      (if (not (null? latest-for-surrounding-L))
-	  (set! this.latest latest-for-surrounding-L))
+      (when (not (null? latest-for-surrounding-L))
+	 (set! this.latest latest-for-surrounding-L)
+	 (set! this.references-tail-rec-variables? #t))
       latest-for-surrounding-L))
 
 (define-pmethod (Tail-rec-latest tail-rec-escapes)
