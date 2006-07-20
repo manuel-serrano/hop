@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jun 19 09:16:34 2006 (serrano)                */
+;*    Last change :  Thu Jul 20 19:55:11 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -75,7 +75,7 @@
 	       (lambda (e)
 		  (exception-notify e))
 	       (let liip ()
-		  (handle-connection ap rp s n)
+		  (accept-connection s ap rp n)
 		  (set! n (+fx n 1))
 		  (liip)))
 	    (loop n)))))
@@ -91,34 +91,45 @@
 	      (exit 2))))
 
 ;*---------------------------------------------------------------------*/
+;*    accept-connection ...                                            */
+;*---------------------------------------------------------------------*/
+(define (accept-connection s::socket accept-pool::pool reply-pool::pool n::int)
+   (let ((sock (socket-accept s)))
+      (when (socket? sock)
+	 (handle-connection sock accept-pool reply-pool (*fx 1000000 (hop-read-timeout)) n " CONNECT"))))
+
+;*---------------------------------------------------------------------*/
 ;*    handle-connection ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (handle-connection accept-pool::pool reply-pool::pool s::socket n::int)
-   (let ((sock (socket-accept s)))
-      (hop-verb 1 (hop-color n n " CONNECT"))
-      (hop-verb 2
-		" (" (pool-thread-available accept-pool)
-		"/" (hop-max-accept-thread)
-		"-" 
-		(pool-thread-available reply-pool)
-		"/" (hop-max-reply-thread)
-		")")
-      (hop-verb 1
-		": "
-		(socket-hostname sock) " [" (current-date) "]\n")
-      (when (socket? sock)
-	 (pool-thread-execute accept-pool
-			      (lambda ()
-				 (http-connect sock accept-pool reply-pool n))
-			      (lambda (m)
-				 (http-response
-				  (http-service-unavailable m) sock))
-			      n))))
+(define (handle-connection sock
+			   accept-pool::pool
+			   reply-pool::pool
+			   timeout::int
+			   id::int
+			   msg)
+   (hop-verb 1 (hop-color id id msg))
+   (hop-verb 2
+	     " (" (pool-thread-available accept-pool)
+	     "/" (hop-max-accept-thread)
+	     "-" 
+	     (pool-thread-available reply-pool)
+	     "/" (hop-max-reply-thread)
+	     ")")
+   (hop-verb 1
+	     ": "
+	     (socket-hostname sock) " [" (current-date) "]\n")
+   (pool-thread-execute accept-pool
+			(lambda ()
+			   (http-connect sock accept-pool reply-pool timeout id))
+			(lambda (m)
+			   (http-response
+			    (http-service-unavailable m) sock))
+			id))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-connect ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (http-connect sock accept-pool reply-pool id)
+(define (http-connect sock accept-pool reply-pool timeout id)
    (let ((req (with-handler
 		 (lambda (e)
 		    (when (&error? e) (error-notify e))
@@ -132,11 +143,11 @@
 					  e)))
 				(http-response resp sock)))))
 		    (socket-close sock)
-		    (hop-verb 1 (hop-color id id " CLOSING")
+		    (hop-verb 1 (hop-color id id " ABORTING")
 			      " " (trace-color 1 (find-runtime-type e))
 			      "\n")
 		    #f)
-		 (http-parse-request sock id))))
+		 (http-parse-request sock id timeout))))
       (when (http-request? req)
 	 (with-access::http-request req (method scheme host port path proxyp)
 	    (hop-verb 2
@@ -154,20 +165,11 @@
 		      "\n"))
 	 (pool-thread-execute reply-pool
 			      (lambda ()
-				 (http-process req sock accept-pool reply-pool))
+				 (http-process req sock accept-pool reply-pool id))
 			      (lambda (m)
 				 (http-response
 				  (http-service-unavailable m) sock))
 			      req))))
-;*---------------------------------------------------------------------*/
-;*    MS: 17may 06                                                     */
-;*    -------------------------------------------------------------    */
-;*    This is not the good time to execute this test. The              */
-;*    HTTP-RESPONSE-REMOTE should be in charge.                        */
-;*---------------------------------------------------------------------*/
-;* 				 (let ((host (http-request-host req))) */
-;* 				    (lambda (p)                        */
-;* 				       (can-connect? reply-pool host)))))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    http-debug ...                                                   */
@@ -179,7 +181,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-process ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (http-process req sock accept-pool reply-pool)
+(define (http-process req sock accept-pool reply-pool id)
    (with-handler
       (lambda (e)
 	 (with-handler
@@ -203,7 +205,7 @@
 		       (warning-notify e)))
 		   (unless (&io-sigpipe-error? e)
 		      (let ((resp ((or (hop-http-response-error)
-				       http-response-error)
+ 				       http-response-error)
 				   e req)))
 			 (http-response resp sock))))))
 	 (socket-close sock)
@@ -229,13 +231,20 @@
 		      "-" 
 		      (pool-thread-available reply-pool)
 		      "/" (hop-max-reply-thread) "): "
-		      rep
+		      (find-runtime-type hp) "=" rep
 		      " [" (current-date) "]"
 		      (if (http-response-persistent? rep)
 			  " persistent\n"
 			  "\n"))
-	    (unless (http-response-persistent? rep)
-	       (socket-close sock))))))
+	    (cond
+	       ((http-response-persistent? rep)
+		#unspecified)
+	       ((eq? (http-request-connection req) 'keep-alive)
+		(handle-connection
+		 sock accept-pool reply-pool
+		 (*fx (hop-keep-alive-timeout) 1000) id " KEEP-ALIVE"))
+	       (else
+		(socket-close sock)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    can-connect? ...                                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Thu Mar  9 06:02:59 2006 (serrano)                */
+;*    Last change :  Mon Jul 17 13:57:15 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -77,7 +77,7 @@
 					   status-code
 					   phrase))))
 			   (display fs op)
-			   (multiple-value-bind (header _1 _2 cl te _3 _4)
+			   (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
 			      (http-read-header ip)
 			      (when (eq? te 'chunked)
 				 (let ((c (assq transfer-encoding: header)))

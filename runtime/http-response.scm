@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Jun 23 13:36:25 2006 (serrano)                */
+;*    Last change :  Thu Jul 20 19:02:42 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -87,17 +87,20 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-authentication socket)
    (with-trace 3 'http-response::http-response-authentication
-      (with-access::http-response-authentication r (header content-type body server timeout)
+      (with-access::http-response-authentication r (header content-type body server timeout request)
 	 (let ((p (socket-output socket)))
 	    (when (>fx timeout 0)
 	       (output-port-timeout-set! p timeout))
 	    (http-write-line p "HTTP/1.0 401 Unauthorized")
 	    (http-write-header p header)
-	    (http-write-line p "Connection: close")
+	    (http-write-line p "Connection: "
+			     (http-request-connection request))
 	    (when content-type
 	       (http-write-line p "Content-Type: " content-type))
 	    (when server
 	       (http-write-line p "Server: " server))
+	    (when (string? body)
+	       (http-write-line p "Content-Length: " (string-length body)))
 	    (http-write-line p)
 	    (when (string? body) (display body p))
 	    (flush-output-port p)))))
@@ -107,25 +110,24 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-string socket)
    (with-trace 3 'http-response::http-response-string
-      (with-access::http-response-string r (start-line header content-type server content-length bodyp body char-encoding timeout)
-	 (let ((p (socket-output socket)))
+      (with-access::http-response-string r (start-line header content-type server content-length bodyp body char-encoding timeout request)
+	 (let* ((p (socket-output socket))
+		(ce (or char-encoding (hop-char-encoding)))
+		(s (if (eq? ce 'UTF-8)
+		       (iso-latin->utf8! body)
+		       body)))
 	    (when (>fx timeout 0)
 	       (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
-	    (http-write-line p "Connection: close")
+	    (http-write-line p "Content-Length: " (string-length s))
+	    (http-write-line p "Connection: " (http-request-connection request))
 	    (when content-type
 	       (http-write-line p "Content-Type: " content-type))
 	    (when server
 	       (http-write-line p "Server: " server))
-	    (when (>elong content-length #e0)
-	       (http-write-line p "Content-Length: " content-length))
 	    (http-write-line p)
-	    (when bodyp
-	       (let ((ce (or char-encoding (hop-char-encoding))))
-		  (if (eq? ce 'UTF-8)
-		      (display (iso-latin->utf8! body) p)
-		      (display body p))))
+	    (when bodyp (display s p))
 	    (flush-output-port p)))))
 
 ;*---------------------------------------------------------------------*/
@@ -136,19 +138,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-obj socket)
    (with-trace 3 'http-response::http-response-obj
-      (with-access::http-response-obj r (start-line header content-type server content-length body bodyp timeout)
+      (with-access::http-response-obj r (start-line header content-type server content-length body bodyp timeout request)
 	 (let ((p (socket-output socket)))
 	    (when (>fx timeout 0)
 	       (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
-	    (http-write-line p "Connection: close")
+	    (with-access::http-request request (connection)
+	       (if (>elong content-length #e0)
+		   (http-write-line p "Content-Length: " content-length)
+		   (set! connection 'close))
+	       (http-write-line p "Connection: " connection))
 	    (when content-type
 	       (http-write-line p "Content-Type: " content-type))
 	    (when server
 	       (http-write-line p "Server: " server))
-	    (when (>elong content-length #e0)
-	       (http-write-line p "Content-Length: " content-length))
 	    (http-write-line p)
 	    (when bodyp (write body p))
 	    (flush-output-port p)))))
@@ -158,19 +162,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-js socket)
    (with-trace 3 'http-response::http-response-js
-      (with-access::http-response-js r (start-line header content-type server content-length value bodyp timeout)
+      (with-access::http-response-js r (start-line header content-type server content-length value bodyp timeout request)
 	 (let ((p (socket-output socket)))
 	    (when (>fx timeout 0)
 	       (output-port-timeout-set! p timeout))
 	    (http-write-line p "HTTP/1.1 200 Ok")
 	    (http-write-header p header)
-	    (http-write-line p "Connection: close")
+	    (with-access::http-request request (connection)
+	       (if (>elong content-length #e0)
+		   (http-write-line p "Content-Length: " content-length)
+		   (set! connection 'close))
+	       (http-write-line p "Connection: " connection))
 	    (when content-type
 	       (http-write-line p "Content-Type: " content-type))
 	    (when server
 	       (http-write-line p "Server: " server))
-	    (when (>elong content-length #e0)
-	       (http-write-line p "Content-Length: " content-length))
 	    (http-write-line p "hop-json: true")
 	    (http-write-line p)
 	    ;; the body
@@ -183,19 +189,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop socket)
    (with-trace 3 'http-response::http-response-hop
-      (with-access::http-response-hop r (start-line header content-type server content-length xml char-encoding bodyp timeout)
+      (with-access::http-response-hop r (start-line header content-type server content-length xml char-encoding bodyp timeout request)
 	 (let ((p (socket-output socket)))
 	    (when (>fx timeout 0)
 	       (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
-	    (http-write-line p "Connection: close")
+	    (with-access::http-request request (connection)
+	       (if (>elong content-length #e0)
+		   (http-write-line p "Content-Length: " content-length)
+		   (set! connection 'close))
+	       (http-write-line p "Connection: " connection))
 	    (when content-type
 	       (http-write-line p "Content-Type: " content-type))
 	    (when server
 	       (http-write-line p "Server: " server))
-	    (when (>elong content-length #e0)
-	       (http-write-line p "Content-Length: " content-length))
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-hop
@@ -208,19 +216,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-procedure socket)
    (with-trace 3 'http-response::http-response-procedure
-      (with-access::http-response-procedure r (start-line header content-type server content-length proc bodyp timeout)
+      (with-access::http-response-procedure r (start-line header content-type server content-length proc bodyp timeout request)
 	 (let ((p (socket-output socket)))
 	    (when (>fx timeout 0)
 	       (output-port-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
-	    (http-write-line p "Connection: close")
+	    (with-access::http-request request (connection)
+	       (if (>elong content-length #e0)
+		   (http-write-line p "Content-Length: " content-length)
+		   (set! connection 'close))
+	       (http-write-line p "Connection: " connection))
 	    (when content-type
 	       (http-write-line p "Content-Type: " content-type))
 	    (when server
 	       (http-write-line p "Server: " server))
-	    (when (>elong content-length #e0)
-	       (http-write-line p "Content-Length: " content-length))
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-procedure
@@ -254,7 +264,8 @@
 		       (output-port-timeout-set! p timeout))
 		    (http-write-line p start-line)
 		    (http-write-header p header)
-		    (http-write-line p "Connection: close")
+		    (http-write-line p "Connection: "
+				     (http-request-connection request))
 		    (when content-type
 		       (http-write-line p "Content-Type: " content-type))
 		    (when server
@@ -351,7 +362,9 @@
 		   (output-port-timeout-set! p timeout))
 		(http-write-line p start-line)
 		(http-write-header p header)
-		(http-write-line p "Connection: close")
+		(with-access::http-request request (connection)
+		   (set! connection 'close)
+		   (http-write-line p "Connection: " connection))
 		(when content-type
 		   (http-write-line p "Content-Type: " content-type))
 		(when server
@@ -380,7 +393,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-put socket)
    (with-trace 3 'http-response::http-response-put
-      (with-access::http-response-put r (start-line header content-type server uri bodyp timeout)
+      (with-access::http-response-put r (start-line header content-type server uri bodyp timeout request)
 	 (let ((l (string-length uri)))
 	    (let loop ((i 0))
 	       (cond
@@ -399,7 +412,9 @@
 			 (output-port-timeout-set! p timeout))
 		      (http-write-line p start-line)
 		      (http-write-header p header)
-		      (http-write-line p "Connection: close")
+		      (with-access::http-request request (connection)
+			 (set! connection 'close)
+			 (http-write-line p "Connection: " connection))
 		      (when content-type
 			 (http-write-line p "Content-Type: " content-type))
 		      (when server
@@ -484,7 +499,7 @@
 			   (display status-code op)
 			   (display " " op)
 			   (display phrase op)
-			   (multiple-value-bind (header _1 _2 cl te _3 _4)
+			   (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
 			      (http-read-header ip)
 			      (http-write-header op header)
 			      (http-write-line op)
@@ -597,7 +612,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure)
    (with-trace 3 'http-send-request
-      (with-access::http-request req (method path http host port header socket timeout userinfo authorization)
+      (with-access::http-request req (method path http host port header socket userinfo authorization timeout)
 	 (let* ((remote (make-client-socket/timeout host port timeout req))
 		(rp (socket-output remote))
 		(ip (socket-input remote)))
@@ -627,7 +642,7 @@
 		  (flush-output-port rp)
 		  (multiple-value-bind (_1 status-code _2)
 		     (http-parse-status-line ip)
-		     (multiple-value-bind (header _1 _2 cl te _3 _4)
+		     (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
 			(http-read-header ip)
 			(case status-code
 			   ((204 304)

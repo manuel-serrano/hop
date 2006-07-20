@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Jun 17 10:54:10 2006 (serrano)                */
+;*    Last change :  Thu Jul 20 15:06:38 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -33,7 +33,8 @@
 	      (socket (default #f))
 	      (header::pair-nil (default '()))
 	      (content-length::elong read-only (default #e-1))
-	      (char-encoding (default #f)))
+	      (char-encoding (default #f))
+	      (timeout::int read-only (default -1)))
 	   
 	   (class http-request::%http-message
 	      (user (default #f))
@@ -53,13 +54,12 @@
 	      (port::bint (default 80))
 	      (method::symbol read-only (default 'GET))
 	      (encoded-path::bstring (default ""))
-	      (timeout::int read-only (default -1)))
+	      (connection::symbol (default 'keep-alive)))
 	   
 	   (abstract-class %http-response::%http-message
 	      (content-type::bstring (default "text/html"))
 	      (request::obj (default #unspecified))
-	      (bodyp::bool read-only (default #t))
-	      (timeout::int (default -1)))
+	      (bodyp::bool read-only (default #t)))
 
 	   (class http-response-abort::%http-response)
 	   
@@ -86,7 +86,7 @@
 
 	   (abstract-class %http-response-local::%http-response
 	      (server::bstring (default (hop-server-name)))
-	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
+ 	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
 
 	   (class http-response-hop::%http-response-local
 	      (xml read-only))
