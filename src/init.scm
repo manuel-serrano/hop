@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue Jun 20 18:08:21 2006 (serrano)                */
+;*    Last change :  Fri Jul 21 18:57:22 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -55,6 +55,7 @@
 		  (mime (mime-type path "text/css")))
 	       (if (string? cache)
 		   (instantiate::http-response-file
+		      (request req)
 		      (content-type mime)
 		      (bodyp (eq? method 'GET))
 		      (file cache))
@@ -62,10 +63,12 @@
 			  (cache (cache-put! hss-cache path hss)))
 		      (if (string? cache)
 			  (instantiate::http-response-file
+			     (request req)
 			     (content-type mime)
 			     (bodyp (eq? method 'GET))
 			     (file cache))
 			  (instantiate::http-response-hop
+			     (request req)
 			     (content-type mime)
 			     (bodyp (eq? method 'GET))
 			     (xml hss))))))))))
@@ -90,6 +93,7 @@
 			    (cond
 			       ((file-exists? p)
 				(instantiate::http-response-file
+				   (request req)
 				   (content-type (mime-type p "text/plain"))
 				   (bodyp (eq? method 'GET))
 				   (file p)))
@@ -108,6 +112,7 @@
 			 rep)
 			((xml? rep)
 			 (instantiate::http-response-hop
+			    (request req)
 			    (content-type (mime-type path "text/html"))
 			    (bodyp (eq? method 'GET))
 			    (xml rep)))
@@ -119,11 +124,13 @@
 		  (hss-response req))
 		 ((pair? (assq 'icy-metadata: header))
 		  (instantiate::http-response-shoutcast
+		     (request req)
 		     (start-line "ICY 200 OK")
 		     (bodyp (eq? method 'GET))
 		     (file path)))
 		 (else
 		  (instantiate::http-response-file
+		     (request req)
 		     (content-type (mime-type path "text/plain"))
 		     (bodyp (eq? method 'GET))
 		     (file path)))))
@@ -203,7 +210,8 @@
     (cond
        ((and (not (hop-proxy-allow-remote-client))
 	     (not (http-request-localclientp req)))
-	(instantiate::http-response-abort))
+	(instantiate::http-response-abort
+	   (request req)))
        ((and (http-request-localclientp req)
 	     (not (hop-proxy-authentication)))
 	resp)
@@ -216,6 +224,7 @@
 	   (if (or (not (users-added?)) (user? user))
 	       resp
 	       (instantiate::http-response-string
+		  (request req)
 		  (start-line "HTTP/1.0 407 Proxy Authentication Required")
 		  (header `((Proxy-Authenticate:
 			     .

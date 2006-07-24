@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Jul 20 22:35:36 2006 (serrano)                */
+;*    Last change :  Fri Jul 21 18:45:47 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -43,7 +43,7 @@
 	    (make-service-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
 	    (procedure->service::hop-service ::procedure)
-            (%eval::%http-response ::bstring ::procedure)
+            (%eval::%http-response ::bstring ::http-request ::procedure)
 	    (autoload ::bstring ::procedure . hooks)
 	    (autoload-filter ::http-request)
 	    (service-filter ::http-request)
@@ -154,10 +154,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    %eval ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%eval exp cont)
+(define (%eval exp req cont)
    (let ((s (hop->json
 	     (procedure->service (lambda (res) (cont res))))))
       (instantiate::http-response-hop
+	 (request req)
 	 (xml (<HTML>
 		 (<HEAD>)
 		 (<BODY>

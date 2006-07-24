@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jul 20 15:37:33 2006 (serrano)                */
+#*    Last change :  Mon Jul 24 08:28:17 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -27,7 +27,7 @@ jar="jar cfm"
 
 bcflags="-fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
-bcflagsdbg="-g -O2"
+bcflagsdbg="-g -O2 -cg"
 bcflagsbmem="-g2 -O2"
 bcflagsopt="-unsafe -O3"
 

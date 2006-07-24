@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Thu Jul 20 18:16:33 2006 (serrano)                */
+;*    Last change :  Mon Jul 24 11:52:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -413,15 +413,15 @@
 	      (with-trace 5 'http-parse-status-line
 		 (trace-item "status-line: " (string-for-read line))
 		 (let* ((ip (open-input-string line)))
-		    (let ((r (read/rp status-line-grammar ip)))
-		       (close-input-port ip)
-		       r)))
+		    (unwind-protect
+		       (read/rp status-line-grammar ip)
+		       (close-input-port ip))))
 	      (with-trace 5 'http-parse-status-line
 		 (trace-item "error in status-line: " line)
 		 (let* ((ip (open-input-string "")))
-		    (let ((r (read/rp status-line-grammar ip)))
-		       (close-input-port ip)
-		       r)))))
+		    (unwind-protect
+		       (read/rp status-line-grammar ip)
+		       (close-input-port ip))))))
        (read/rp status-line-grammar ip)))
 
 ;*---------------------------------------------------------------------*/

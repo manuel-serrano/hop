@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Jul 20 22:41:39 2006 (serrano)                */
+;*    Last change :  Mon Jul 24 07:59:32 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -140,8 +140,14 @@
 	    (hop-read-timeout::int) 
 	    (hop-read-timeout-set! ::int)
 
+	    (hop-enable-keep-alive::bool) 
+	    (hop-enable-keep-alive-set! ::bool)
+
 	    (hop-keep-alive-timeout::int) 
 	    (hop-keep-alive-timeout-set! ::int)
+
+	    (hop-max-remote-keep-alive-connection::int)
+	    (hop-max-remote-keep-alive-connection-set! ::int)
 
 	    (hop-weblets::pair-nil)
 	    (hop-weblets-set! ::pair-nil)
@@ -594,6 +600,7 @@
 ;*    Connection delays and timeouts                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-connection-ttl
+   ;; the number of retry when a connection cannot be established
    10)
 
 (define-parameter hop-connection-timeout
@@ -604,9 +611,17 @@
    ;; the number of seconds to wait for parsing http headers
    10)
 
+(define-parameter hop-enable-keep-alive
+   ;; does hop support keep-alive connection
+   #t)
+   
 (define-parameter hop-keep-alive-timeout
    ;; the number of milli-seconds to wait for keep-alive connections
-   250)
+   300)
+
+(define-parameter hop-max-remote-keep-alive-connection
+   ;; the max number of keep-alive remote (proxing) connections
+   50)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-weblets ...                                                  */

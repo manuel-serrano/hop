@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jul 20 15:06:38 2006 (serrano)                */
+;*    Last change :  Fri Jul 21 19:16:44 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -47,8 +47,8 @@
 	      (authorization (default #f))
 	      (proxy-authorization (default #f))
 	      (http::bstring (default "HTTP/1.1"))
-	      host::bstring
-	      path::bstring
+	      (host::bstring (default "localhost"))
+	      (path::bstring (default "/dummy"))
 	      (userinfo read-only (default #f))
 	      (scheme::bstring (default "http"))
 	      (port::bint (default 80))
@@ -58,7 +58,7 @@
 	   
 	   (abstract-class %http-response::%http-message
 	      (content-type::bstring (default "text/html"))
-	      (request::obj (default #unspecified))
+	      (request::http-request (default (instantiate::http-request)))
 	      (bodyp::bool read-only (default #t)))
 
 	   (class http-response-abort::%http-response)

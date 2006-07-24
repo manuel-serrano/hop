@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Fri Jun 23 11:16:34 2006 (serrano)                */
+;*    Last change :  Mon Jul 24 07:36:30 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -37,7 +37,8 @@
 	   (escape-string::bstring ::bstring)
 	   (delete-path ::bstring)
 	   (autoload-prefix::procedure ::bstring)
-	   (make-url-name::bstring ::bstring ::bstring)))
+	   (make-url-name::bstring ::bstring ::bstring)
+	   (make-client-socket/timeout ::bstring ::int ::int ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -354,3 +355,42 @@
 	     (blit-string-ur! directory 0 str 0 ldir)
 	     (blit-string-ur! file 0 str (+fx 1 ldir) lfile)
 	     str))))
+
+;*---------------------------------------------------------------------*/
+;*    output-port-timeout-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo2.8a (define (output-port-timeout-set! p t) #f))
+   (else #unspecified))
+
+(cond-expand
+   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
+   (else #unspecified))
+
+;*---------------------------------------------------------------------*/
+;*    make-client-socket/timeout ...                                   */
+;*---------------------------------------------------------------------*/
+(define (make-client-socket/timeout host port timeout::int msg::obj)
+   (let ((tmt (if (>fx  timeout 0)
+		  (*fx 1000000 timeout)
+		  (*fx 1000000 (hop-connection-timeout)))))
+      (let loop ((ttl (hop-connection-ttl)))
+	 (let ((res (with-handler
+		       (lambda (e)
+			  (if (>fx ttl 0)
+			      (begin
+				 (hop-verb 1
+					   (hop-color msg msg " REMOTE")
+					   ": " host ":" port
+					   (if (http-request? msg)
+					       (format " (~a)"
+						       (http-request-path msg))
+					       "")
+					   (trace-color 1 " CONNECTION FAILED")
+					   " ttl=" ttl "\n")
+				 (-fx ttl 1))
+			      (raise e)))
+		       (make-client-socket host port :timeout tmt))))
+	    (if (number? res)
+		(loop res)
+		res)))))

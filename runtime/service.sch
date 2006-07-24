@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Tue Jun 20 13:40:43 2006 (serrano)                */
+;*    Last change :  Fri Jul 21 18:45:33 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -141,6 +141,7 @@
 		     (nbindings '()))
 	     (if (null? bindings)
 		 `(%eval ,(apply string-append "new Array(" (reverse! str))
+			 (the-current-request)
 			 (lambda (,vec) (let ,nbindings ,@body)))
 		 (let ((binding (car bindings)))
 		    (loop (cdr bindings)

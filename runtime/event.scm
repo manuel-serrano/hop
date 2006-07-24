@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Jun 26 10:05:42 2006 (serrano)                */
+;*    Last change :  Sat Jul 22 09:20:04 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -62,23 +62,26 @@
       (set! %service
 	    (procedure->service
 	     (lambda (name)
-		(if %closep
-		    (instantiate::http-response-string
-		       (start-line "HTTP/1.0 400 Bad Request")
-		       (body (format "Closed server event `~a'" name)))
-		    (let ((r (the-current-request)))
-		       (mutex-lock! %mutex)
-		       (let ((v (pop-queued-events! evt)))
-			  (if (eq? v *void*)
-			      (begin
-				 (if (pair? %requests)
-				     (append! %requests (list r))
-				     (set! %requests (list r)))
-				 (mutex-unlock! %mutex)
-				 (instantiate::http-response-persistent))
-			      (begin
-				 (mutex-unlock! %mutex)
-				 v))))))))))
+		(let ((req (the-current-request)))
+		   (if %closep
+		       (instantiate::http-response-string
+			  (start-line "HTTP/1.0 400 Bad Request")
+			  (request req)
+			  (body (format "Closed server event `~a'" name)))
+		       (begin
+			  (mutex-lock! %mutex)
+			  (let ((v (pop-queued-events! evt)))
+			     (if (eq? v *void*)
+				 (begin
+				    (if (pair? %requests)
+					(append! %requests (list req))
+					(set! %requests (list req)))
+				    (mutex-unlock! %mutex)
+				    (instantiate::http-response-persistent
+				       (request req)))
+				 (begin
+				    (mutex-unlock! %mutex)
+				    v)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    pop-queued-events! ...                                           */
@@ -171,11 +174,14 @@
        (error '<HOP-EVENT> "Event handler missing" event))
       (else
        (cons (<SCRIPT>
+		:type "text/javascript"
 		:id (xml-make-id id 'HOP-EVENT)
 		(format "hop_event_handler_set( ~a, \"~a\", function( event ) { ~a; return true; }, function( event ) { ~a; return true; } )"
 			(hop->json (hop-event-%service event))
 			(string-for-read (hop-event-name event))
-			handler
+			(if (xml-tilde? handler)
+			    (xml-tilde-body handler)
+			    handler)
 			(or failure "false")))
 	     body))))
 

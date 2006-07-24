@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jun 23 11:17:50 2006 (serrano)                */
+;*    Last change :  Fri Jul 21 18:53:19 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -185,6 +185,7 @@
 ;*---------------------------------------------------------------------*/
 (define (html-write-tree-body level obj parent p)
    (instantiate::http-response-procedure
+      (request (instantiate::http-request))
       (proc (lambda (p)
 	       (with-access::xml-element obj (body)
 		  (for-each (lambda (b)

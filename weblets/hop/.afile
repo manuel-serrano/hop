@@ -1,9 +1,9 @@
 ;; automatically generated, don't edit
 ;; /users/serrano/prgm/project/hop/weblets/hop
-;; Sun Jul  9 13:58:34 2006
+;; Mon Jun 26 09:23:36 2006
 
 (
-  (hophop_config "./config.hop")
-  (hophop "./hop.hop")
+  (hophop_config "config.hop")
+  (hophop "hop.hop")
 )
 
