@@ -22,11 +22,14 @@
    (define *id->js-var* #unspecified)
 
    ;; current (I hope I don't forget to update the comment...) strategy:
-   ;; - non-captured variables are assigned to tmp-variables, and then assigned
+   ;; - non-captured variables: just before the continue-call the
+   ;; loop-variables are assigned to tmp-variables, and then assigned
    ;; back to their loop-variables.
-   ;; - captured variables are assigned to the tmp-variable (that is also used
-   ;; as formal for the surrounding procedure. The "back-assigning" is done at
-   ;; the beginning of the body. This is necessary to capture the variables
+   ;; - captured variables: The formal/vaarg is replaced by a tmp-variable. At
+   ;; the beginning of the loop, we assign the "normal" variable (eg. x=tmp-x),
+   ;; and just before the callback we put the updated value into the
+   ;; tmp-variable.
+   ;; This is necessary to capture the variables
    ;; correctly with the 'with' statement. The beginning-part is done in the
    ;; "Lambda-tail-rec" function.
    ;; ex:
@@ -58,7 +61,7 @@
    ;;
    ;; An optimization reduces the 'tmp-variable'-affections,  by directly
    ;; assigning to the loop-variable.
-   ;;
+
    (define (optimize-tail-rec call-node target)
       ;; we are creating quite some tmp-vars in this function, but we have a
       ;; pass that eliminates them...
@@ -68,7 +71,7 @@
       ;; Exception is v1 itself ('v1 = v1 + 1' wouldn't need a tmp-var).
       ;; the tree is stored in hashtables directly in the vars:
       ;;   - var.referenced-vars
-      ;;   - and var.rev-referenced-vars (the back-pointers
+      ;;   - and var.rev-referenced-vars (the back-pointers)
       ;;
       ;; this procedure stops at function boundaries.
       (define (var-ref-tree vars)
@@ -243,16 +246,16 @@
 			 (loop new-pending
 			       (cons (var.assig new-val)
 				     rev-res))))))))
-      
+
       (define (replace-captured-formals/vaarg! vars)
 	 (map! (lambda (var)
 		  (cond
-		     (var.tmp-var => (lambda (tmp-var)
-					tmp-var))
+		     (var.tmp-var-decl => (lambda (tmp-var-decl)
+					     tmp-var-decl))
 		     (var.captured?
-		      (let ((tmp-var (Decl-of-new-Var var.id)))
-			 (set! var.tmp-var tmp-var)
-			 tmp-var.var))
+		      (let ((tmp-var-decl (Decl-of-new-Var var.id)))
+			 (set! var.tmp-var-decl tmp-var-decl)
+			 tmp-var-decl.var))
 		     (else
 		      var)))
 	      vars))
@@ -273,18 +276,22 @@
 						     *id->js-var*))
 	     (assig-vars (map (lambda (p)
 				 (car p).var)
-			      assig-mapping)))
+			      assig-mapping))
+	     (capture-free-vars (replace-captured-formals/vaarg! assig-vars)))
+
 	 ;; temporarely store the rvalue in the vars.
-	 (for-each (lambda (p)
-		      (set! (car p).var.new-val (cdr p)))
+	 ;; capture-free-vars might have some vars replaced (so we can't use
+	 ;; the assig-mapping cars).
+	 (for-each (lambda (var p)
+		      (set! var.new-val (cdr p)))
+		   capture-free-vars
 		   assig-mapping)
-	 (let* ((replaced-vars (replace-captured-formals/vaarg! assig-vars))
-		(assigs (non-cyclic-assigs replaced-vars)))
+	 (let ((assigs (non-cyclic-assigs capture-free-vars)))
 	 
-	 ;; replace call by reassig of vars, followed by 'continue'
-	 (new-node Begin (append assigs
-				 (list (new-node Tail-rec-call
-						 tail-rec-label)))))))
+	    ;; replace call by reassig of vars, followed by 'continue'
+	    (new-node Begin (append assigs
+				    (list (new-node Tail-rec-call
+						    tail-rec-label)))))))
    
    (define-pmethod (Node-tail-rec! current-fun)
       (this.traverse1! current-fun))
@@ -299,19 +306,19 @@
 		    (rev-exchanged '()))
 	    (if (null? formals-ptr)
 		(if (and this.vaarg
-			 this.vaarg.var.tmp-var)
+			 this.vaarg.var.tmp-var-decl)
 		    (let* ((old-vaarg this.vaarg)
-			   (tmp-vaarg old-vaarg.var.tmp-var))
+			   (tmp-vaarg old-vaarg.var.tmp-var-decl))
 		       (set! this.vaarg tmp-vaarg)
-		       (delete! tmp-vaarg.var.tmp-var)
+		       (delete! tmp-vaarg.var.tmp-var-decl)
 		       (cons (cons old-vaarg tmp-vaarg)
 			     rev-exchanged))
 		    rev-exchanged)
-		(if (car formals-ptr).var.tmp-var
+		(if (car formals-ptr).var.tmp-var-decl
 		    (let* ((formal (car formals-ptr))
-			   (tmp-formal formal.var.tmp-var))
+			   (tmp-formal formal.var.tmp-var-decl))
 		       (set-car! formals-ptr tmp-formal)
-		       (delete! tmp-formal.var.tmp-var)
+		       (delete! tmp-formal.var.tmp-var-decl)
 		       (loop (cdr formals-ptr)
 			     (cons (cons formal tmp-formal)
 				   rev-exchanged)))

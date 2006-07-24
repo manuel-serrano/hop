@@ -2,7 +2,11 @@
    (include "runtime/runtime_mapping.sch")
    (import verbose
 	   config)
-   (export (extract-js-interface::pair top-level::pair-nil js-interface::pair-nil)))
+   (export (extract-js-interface::pair top-level::pair-nil
+				       js-interface::pair-nil)
+	   *runtime-var-mapping*))
+
+(define *runtime-var-mapping* #f)
 
 (define (paired-interface interface)
    (match-case interface
@@ -40,6 +44,9 @@
 			  (cdr last-top-level)
 			  last-extension))))))
 
+   (set! *runtime-var-mapping* (if (config 'mutable-strings)
+				   *mutable-runtime-var-mapping*
+				   *immutable-runtime-var-mapping*))
    ;; add our runtime in front of js-interface in front of the extension
    ;; add 'js in front of our built-in interfaces, so they ressemble the
    ;; extracted js-clauses.
@@ -47,9 +54,7 @@
 			  (lambda (js-interface-sexp)
 			     (map paired-interface
 				   (cdr js-interface-sexp)))
-			  (cons (cons 'js (if (config 'mutable-strings)
-					      *mutable-runtime-var-mapping*
-					      *immutable-runtime-var-mapping*))
+			  (cons (cons 'js *runtime-var-mapping*)
 				(cons (cons 'js js-interface)
 				      ;; remove the 'dummy
 				      (cdr extension-head))))))
