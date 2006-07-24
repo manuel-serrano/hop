@@ -6,7 +6,8 @@
    (include "compile-optimized-boolify.scm")
    (include "compile-optimized-set.scm")
    (option (loadq "protobject-eval.sch"))
-   (export (compile tree::pobject p))
+   (export (compile tree::pobject p)
+	   (default-max-tail-call-depth))
    (import protobject
 	   gen-js
 	   config
@@ -18,6 +19,15 @@
 	   constants
 	   verbose
 	   allocate-names))
+
+(define *max-tail-call-depth* 20)
+
+(define (default-max-tail-call-depth)
+   *max-tail-call-depth*)
+
+(define (max-tail-call-depth)
+   (or (config 'max-tail-depth)
+       *max-tail-call-depth*))
 
 (define (compile tree::pobject p)
    (verbose "Compiling")
@@ -44,11 +54,33 @@
 (define *tmp-var* "tmp") ;; can't conflict, as all vars are starting with 'sc_
 (define *symbol-prefix* "\\u1E9C") ;; "\\u1E9D\\u1E9E\\u1E9F")
 
+;; TODO: *last-line* is not thread-safe!
+(define *last-line* 0)
+(define *last-file* "")
+
 (define-macro (check-stmt-form node p . Lbody)
-   `(begin
-       ,@Lbody
-       (if (statement-form? ,node)
-	   (display ";\n" ,p))))
+   `(if (statement-form? ,node)
+	(let* ((loc/line (pfield ,node 'loc/line))
+	       (file (and loc/line (cadr (car loc/line))))
+	       (line (and loc/line (cdr loc/line)))
+	       (file-changed? (and file (not (string=? *last-file* file))))
+	       (line-changed? (and line (not (= *last-line* line)))))
+	   (when (or file-changed? line-changed?)
+	      (p-display ,p "{"))
+	   (when file-changed?
+	      (p-display ,p "__sc_FILE=\"" (string-for-read file) "\";")
+	      (if file (set! *last-file* file)))
+	   (when line-changed?
+	      (p-display ,p "__sc_LINE=" line ";")
+	      (set! *last-line* line))
+	   ,@Lbody
+	   (p-display ,p ";")
+	   (when (or file-changed? line-changed?)
+	      (p-display ,p "}"))
+	   (p-display ,p "\n"))
+	(begin
+	   ,@Lbody)))
+	
 
 (define (compile-separated-list p els sep . Ldefault)
    (define (iter els sep default)
@@ -141,11 +173,9 @@
     this p
     (p-display p this.var.compiled)))
 
-(define *max-tail-call-depth* 20)
-
 (define-pmethod (Program-compile p)
    (when (config 'trampoline)
-      (p-display p "sc_TAIL_CALLS = " *max-tail-call-depth* ";\n")
+      (p-display p "sc_TAIL_CALLS = " (max-tail-call-depth) ";\n")
       (p-display p "var sc_f;\n")
       (p-display p "var sc_funTailCalls = sc_TAIL_CALLS + 1;\n"))
    (this.body.compile p))
@@ -227,14 +257,14 @@
        "var sc_funTailCalls;\n"
        "var sc_f;\n"
        "if (!(sc_funTailCalls=sc_TAIL_CALLS)) throw new sc_TailCall(this, arguments);\n"
-       "sc_TAIL_CALLS=" *max-tail-call-depth* ";\n"
+       "sc_TAIL_CALLS=" (max-tail-call-depth) ";\n"
        "try {\n"))
 
    (define (trampoline-end-code p)
       (p-display
        p
        "\n} catch (e) {\n"
-       "    if (sc_funTailCalls === " *max-tail-call-depth* ") {\n"
+       "    if (sc_funTailCalls === " (max-tail-call-depth) ") {\n"
        "       var tmpExc = e;\n"
        "       while (tmpExc instanceof sc_TailCall) {\n"
        "           try {\n"

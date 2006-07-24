@@ -1,0 +1,34 @@
+;; A //Paned// with a fixed initial fraction
+(<HTML>
+   (<HEAD> :css "hop-paned.css" :jscript "hop-paned.js")
+   (<BODY>
+      (<PANED>
+	 :fraction "250px"
+	 (<PAN>
+	    (let ((enum (iota 9 1)))
+	       (<DIV>
+		  :style { overflow: auto }
+		  (<TABLE>
+		     :border 1
+		     (<TR> (<TD>) (map <TH> enum))
+		     (map (lambda (v1)
+			     (<TR>
+				(cons (<TH> v1)
+				      (map (lambda (v2)
+					      (<TD> (* v1 v2)))
+					   enum))))
+			  enum)))))
+	 (<PAN>
+	    (let ((enum (iota 9 1)))
+	       (<DIV>
+		  :style { overflow: auto }
+		  (<TABLE>
+		     :border 1
+		     (<TR> (<TD>) (map <TH> enum))
+		     (map (lambda (v1)
+			     (<TR>
+				(cons (<TH> v1)
+				      (map (lambda (v2)
+					      (<TD> (+ v1 v2)))
+					   enum))))
+			  enum))))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jun 16 10:52:35 2006 (serrano)                */
+;*    Last change :  Sun Jul  9 14:06:46 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -38,6 +38,9 @@
 	       (thunk::procedure read-only)
 	       (value::obj (default #f)))
 
+	    (class xml-tilde::xml
+	       (body read-only))
+
 	    (class xml-markup::xml
 	       (markup::symbol read-only)
 	       (attributes::pair-nil (default '()))
@@ -61,7 +64,7 @@
 	    (xml-make-id::bstring #!optional id (markup 'HOP))
 	    
  	    (generic xml-write ::obj ::output-port ::symbol)
-	    (generic xml-write-attribute attr::obj id p)
+	    (generic xml-write-attribute ::obj id p)
 	    (xml-write-attributes ::pair-nil ::output-port)
 
 	    (string->html ::bstring)
@@ -159,7 +162,8 @@
 	    (<U> . ::obj)
 	    (<UL> . ::obj)
 	    (<VAR> . ::obj)
-	    
+
+	    (<TILDE> ::obj)
 	    (<DELAY> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -299,6 +303,15 @@
 	  (xml-write otherwise p encoding))))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-tilde ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-tilde p encoding)
+   (with-access::xml-tilde obj (body)
+      (display "<script type='text/javascript'>" p)
+      (xml-write body p encoding)
+      (display "</script>\n" p)))
+      
+;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-delay ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-delay p encoding)
@@ -409,6 +422,13 @@
 	     (display (xml-attribute-encode attr) p))
 	 (display "'" p))))
 
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::xml-tilde ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute attr::xml-tilde id p)
+   (with-access::xml-tilde attr (body)
+      (xml-write-attribute body id p)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::hop-service ...                            */
 ;*---------------------------------------------------------------------*/
@@ -556,6 +576,13 @@
 (define-xml-element <U>)
 (define-xml-element <UL>)
 (define-xml-element <VAR>)
+
+;*---------------------------------------------------------------------*/
+;*    <TILDE> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<TILDE> body)
+   (instantiate::xml-tilde
+      (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DELAY> ...                                                      */

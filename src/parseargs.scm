@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jun 18 13:21:15 2006 (serrano)                */
+;*    Last change :  Fri Jul 21 18:29:25 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -106,6 +106,8 @@
 	  (bigloo-library-path-set! (cons path (bigloo-library-path))))
 	 ((("-l" "--library") ?library (help "Preload additional <LIBRARY>"))
 	  (set! libraries (cons library libraries )))
+	 ((("-t" "--thread-scheduling") ?scheduling (help (format "Select scheduling (default: ~s)" (hop-scheduling))))
+	  (hop-scheduling-set! (string->symbol scheduling)))
 	 (("-?dummy")
 	  (args-parse-usage #f)
 	  (exit 1))

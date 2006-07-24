@@ -23,6 +23,7 @@
 	   protobject
 	   liveness
 	   rm-unused-vars
+	   locations
 	   verbose)
    (main my-main)
    (export (scheme2js top-level::pair-nil js-interface::pair-nil config p)
@@ -151,6 +152,17 @@
       (("--trampoline"
 	(help "add trampolines around tail-recursive calls"))
        (hashtable-put! config-ht 'trampoline #t))
+      (("--max-tail-depth"
+	?depth
+	(help (string-append "maximum tail-call depth before "
+			     "the trampoline is used. Default: "
+			     (number->string (default-max-tail-call-depth)))))
+       (let ((new-depth (string->number depth)))
+	  (if (not new-depth)
+	      (error #f
+		     "--max-tail-depth requires a number as argument"
+		     depth))
+	  (hashtable-put! config-ht 'max-tail-depth new-depth)))
       (("--no-constant-propagation"
 	(help "don't propagate constants."))
        (hashtable-put! config-ht 'constant-propagation #f))
@@ -166,10 +178,10 @@
       (("--no-optimize-boolify"
 	(help "always test against false. Even if the test is a bool."))
        (hashtable-put! config-ht 'optimize-boolify #f))
-      (("-d" ?stage (help "debug stage"))
-       (hashtable-put! config-ht 'debug-stage (string->symbol stage)))
-      ((("-l" "--print-locs") (help "print locations"))
+      ((("-l" "--print-locations") (help "print locations"))
        (hashtable-put! config-ht 'print-locations #t))
+      (("-d" ?stage (help "debug compiler-stage"))
+       (hashtable-put! config-ht 'debug-stage (string->symbol stage)))
       (else
        (set! *in-files* (cons else *in-files*)))))
 
@@ -209,6 +221,8 @@
       (if (eq? (config 'debug-stage) 'statements) (dot-out p tree))
       (node-elimination! tree)
       (if (eq? (config 'debug-stage) 'node-elim3) (dot-out p tree))
+      (locations tree)
+      (if (eq? (config 'debug-stage) 'locations) (dot-out p tree))
       (let* ((out-p (if (config 'debug-stage)
 			(open-output-string)
 			p))

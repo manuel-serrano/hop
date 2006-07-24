@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Jun 17 06:26:10 2006 (serrano)                */
+;*    Last change :  Fri Jul 21 18:26:17 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -42,7 +42,10 @@
 	    (hop-proxy-remote-authentication-set! ::bool)
 
 	    (hop-log-file::obj)
-	    (hop-log-file-set! ::obj))
+	    (hop-log-file-set! ::obj)
+
+	    (hop-scheduling::symbol)
+	    (hop-scheduling-set! ::symbol))
 
    (eval    (export-exports)))
 
@@ -98,3 +101,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-log-file
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-scheduling ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-scheduling
+   'cohort)

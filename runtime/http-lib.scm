@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Tue Jun  6 11:32:17 2006 (serrano)                */
+;*    Last change :  Mon Jul 24 11:52:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -127,7 +127,7 @@
 	 ((+ (in " \t")) (ignore))))
    (define symbol-grammar
       (regular-grammar ()
-	 ((+ alpha) (the-downcase-symbol))
+	 ((+ (or alpha #\-)) (the-downcase-symbol))
 	 ((+ (in " \t")) (ignore))))
    (define auth-grammar
       (regular-grammar ()
@@ -146,7 +146,7 @@
    (define header-grammar
       (regular-grammar (header
 			hostname port content-length transfer-encoding
-			authorization proxy-authorization)
+			authorization proxy-authorization connection)
 	 ((: (+ (or (out " :\r\n\t") (: #\space (out #\:)))) #\:)
 	  (let* ((k (the-downcase-keyword)))
 	     (case k
@@ -177,15 +177,21 @@
 		 (read/rp crlf-grammar (the-port))
 		 (set! header (cons (cons k authorization) header))
 		 (ignore))
+		((connection:)
+		 (set! connection (read/rp symbol-grammar (the-port)))
+		 (trace-item "##5 " k " [" connection "]")
+		 (http-read-line (the-port))
+		 (set! header (cons (cons k connection) header))
+		 (ignore))
 		((proxy-authorization:)
 		 (set! proxy-authorization (read/rp auth-grammar (the-port)))
-		 (trace-item "##5 " k " [" proxy-authorization "]")
+		 (trace-item "##6 " k " [" proxy-authorization "]")
 		 (read/rp crlf-grammar (the-port))
 		 ;; don't store the proxy-authorization in the header
 		 (ignore))
 		(else
 		 (let ((v (read/rp value-grammar (the-port))))
-		    (trace-item "##6 " k " [" v "]")
+		    (trace-item "##7 " k " [" v "]")
 		    (set! header (cons (cons k v) header))
 		    (ignore))))))
 	 ((: (* (in #\space #\tab)) (? #\Return) #\Newline)
@@ -195,7 +201,8 @@
 		  content-length
 		  transfer-encoding
 		  authorization
-		  proxy-authorization))
+		  proxy-authorization
+		  connection))
 	 (else
 	  (let ((c (the-failure)))
 	     (if (eof-object? c)
@@ -207,12 +214,13 @@
 			 content-length
 			 transfer-encoding
 			 authorization
-			 proxy-authorization)
+			 proxy-authorization
+			 connection)
 		 (parse-error 'http-read-header
-				 "Illegal characters"
-				 (http-parse-error-message
-				  (the-failure)
-				  (the-port))))))))
+			      "Illegal characters"
+			      (http-parse-error-message
+			       (the-failure)
+			       (the-port))))))))
    (with-trace 5 'http-read-header
       (read/rp header-grammar p
 	       '()   ;; header
@@ -221,7 +229,8 @@
 	       #e-1  ;; content-length
 	       #f    ;; transfer-encoding
 	       #f    ;; authorization
-	       #f))) ;; proxy-authorization
+	       #f    ;; proxy-authorization
+	       #f))) ;; connection
 	       
 ;*---------------------------------------------------------------------*/
 ;*    http-header-field ...                                            */
@@ -404,15 +413,15 @@
 	      (with-trace 5 'http-parse-status-line
 		 (trace-item "status-line: " (string-for-read line))
 		 (let* ((ip (open-input-string line)))
-		    (let ((r (read/rp status-line-grammar ip)))
-		       (close-input-port ip)
-		       r)))
+		    (unwind-protect
+		       (read/rp status-line-grammar ip)
+		       (close-input-port ip))))
 	      (with-trace 5 'http-parse-status-line
 		 (trace-item "error in status-line: " line)
 		 (let* ((ip (open-input-string "")))
-		    (let ((r (read/rp status-line-grammar ip)))
-		       (close-input-port ip)
-		       r)))))
+		    (unwind-protect
+		       (read/rp status-line-grammar ip)
+		       (close-input-port ip))))))
        (read/rp status-line-grammar ip)))
 
 ;*---------------------------------------------------------------------*/
@@ -496,6 +505,8 @@
 	    ((not (pair? (car lst)))
 	     (loop (cdr lst) fil))
 	    ((eq? (caar lst) proxy-connection:)
+	     (loop (cdr lst) (cons (caar lst) fil)))
+	    ((eq? (caar lst) connection:)
 	     (loop (cdr lst) (cons (caar lst) fil)))
 	    ((not (eq? (caar lst) content:))
 	     (loop (cdr lst) fil))

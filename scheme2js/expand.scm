@@ -119,6 +119,10 @@
 	 (eval `(lambda (x e)
 		   (define (deep-copy o)
 		      (cond
+			 ((epair? o)
+			  (econs (deep-copy (car o))
+				 (deep-copy (cdr o))
+				 (deep-copy (cer o))))
 			 ((pair? o)
 			  (cons (deep-copy (car o)) (deep-copy (cdr o))))
 			 ((vector? o)

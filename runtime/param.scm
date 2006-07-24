@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Jun 15 14:09:04 2006 (serrano)                */
+;*    Last change :  Mon Jul 24 07:59:32 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -137,6 +137,18 @@
 	    (hop-connection-timeout::int) 
 	    (hop-connection-timeout-set! ::int)
 
+	    (hop-read-timeout::int) 
+	    (hop-read-timeout-set! ::int)
+
+	    (hop-enable-keep-alive::bool) 
+	    (hop-enable-keep-alive-set! ::bool)
+
+	    (hop-keep-alive-timeout::int) 
+	    (hop-keep-alive-timeout-set! ::int)
+
+	    (hop-max-remote-keep-alive-connection::int)
+	    (hop-max-remote-keep-alive-connection-set! ::int)
+
 	    (hop-weblets::pair-nil)
 	    (hop-weblets-set! ::pair-nil)
 
@@ -160,15 +172,6 @@
 	    
 	    (hop-service-flush-pace::long)
 	    (hop-service-flush-pace-set! ::long)
-
-	    (hop-request-header-timeout::long)
-	    (hop-request-header-timeout-set! ::long)
-
-	    (hop-request-body-timeout::long)
-	    (hop-request-body-timeout-set! ::long)
-
-	    (hop-response-timeout::long)
-	    (hop-response-timeout-set! ::long)
 
 	    (hop-rc-loaded!)))
 
@@ -597,11 +600,28 @@
 ;*    Connection delays and timeouts                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-connection-ttl
+   ;; the number of retry when a connection cannot be established
    10)
 
 (define-parameter hop-connection-timeout
    ;; a number of seconds before the connection fails
    1)
+
+(define-parameter hop-read-timeout
+   ;; the number of seconds to wait for parsing http headers
+   10)
+
+(define-parameter hop-enable-keep-alive
+   ;; does hop support keep-alive connection
+   #t)
+   
+(define-parameter hop-keep-alive-timeout
+   ;; the number of milli-seconds to wait for keep-alive connections
+   300)
+
+(define-parameter hop-max-remote-keep-alive-connection
+   ;; the max number of keep-alive remote (proxing) connections
+   50)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-weblets ...                                                  */
@@ -723,14 +743,3 @@
 (define (hop-rc-loaded!)
    (set! *hop-rc-loaded* #t))
 
-;*---------------------------------------------------------------------*/
-;*    IO timeouts (in seconds) ...                                     */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-request-header-timeout
-   10)
-
-(define-parameter hop-request-body-timeout
-   60)
-
-(define-parameter hop-response-timeout
-   60)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jun 13 10:53:11 2006 (serrano)                */
+/*    Last change :  Sat Jul 22 09:22:36 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -212,8 +212,8 @@ function hop_default_failure( http ) {
    t = t.replace( /<\/html>/g, "</div>" );
    t = t.replace( /<body[^>]*>/g, "<div style='background: transparent; font-family: sans serif; -moz-opacity: 0.87'>" );
    t = t.replace( /<\/body>/g, "</div>" );
-   t = t.replace( /&lt;/g, "<" );
-   t = t.replace( /&gt;/g, ">" );
+/*    t = t.replace( /&lt;/g, "<" );                                   */
+/*    t = t.replace( /&gt;/g, ">" );                                   */
    t = t.replace( /&quot;/g, "\"" );
    
    if( !div ) {
@@ -251,41 +251,42 @@ function hop_failure_alert( http ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop ...                                                          */
+/*    hop_anim ...                                                     */
 /*---------------------------------------------------------------------*/
-function hop_inner( method, service, success, failure, sync, mute ) {
-   var http = hop_make_xml_http_request();
-   var vis = false;
-
-   if( mute != true ) {
-      vis = document.createElement( "div" );
+function hop_anim( title ) {
+   var vis = document.createElement( "div" );
       
-      hop_style_set( vis, "position", "absolute" );
-      hop_style_set( vis, "top", "5" );
-      hop_style_set( vis, "right", "5" );
-      hop_style_set( vis, "z-index", "100" );
-      hop_style_set( vis, "background", "#eeeeee" );
-      hop_style_set( vis, "-moz-opacity", "0.7" );
-      hop_style_set( vis, "border-color", "black" );
-      hop_style_set( vis, "border-style", "outset" );
-      hop_style_set( vis, "border-width", "1px" );
-      hop_style_set( vis, "padding", "2px" );
+   hop_style_set( vis, "position", "absolute" );
+   hop_style_set( vis, "top", "5" );
+   hop_style_set( vis, "right", "5" );
+   hop_style_set( vis, "z-index", "100" );
+   hop_style_set( vis, "background", "#eeeeee" );
+   hop_style_set( vis, "-moz-opacity", "0.7" );
+   hop_style_set( vis, "border-color", "black" );
+   hop_style_set( vis, "border-style", "outset" );
+   hop_style_set( vis, "border-width", "1px" );
+   hop_style_set( vis, "padding", "2px" );
       
-      vis.title = service;
+   vis.title = title;
 
-      var img = document.createElement( "img" );
-      img.classname = "hop-busy-anim";
-      img.src = hop_busy_anim;
+   var img = document.createElement( "img" );
+   img.classname = "hop-busy-anim";
+   img.src = hop_busy_anim;
 
-      vis.appendChild( img );
-      document.body.appendChild( vis );
-   }
+   vis.appendChild( img );
+ 
+   return vis;
+}
 
+/*---------------------------------------------------------------------*/
+/*    hop_inner ...                                                    */
+/*---------------------------------------------------------------------*/
+function hop_inner( http, success, failure, vis ) {
    http.onreadystatechange = function() {
       if( http.readyState == 4 ) {
 	 var status;
 
-	 if( mute != true ) {
+	 if( vis != false ) {
 	    document.body.removeChild( vis );
 	 }
 
@@ -301,55 +302,54 @@ function hop_inner( method, service, success, failure, sync, mute ) {
 
 	 switch( status ) {
 	    case 200:
- 	      if( success ) {
-	         success( http );
-  	      } else {
-	         hop_js_eval( http );
-	      }
-	      break;
+	    if( success ) {
+	       success( http );
+	    } else {
+	       hop_js_eval( http );
+	    }
+	    break;
 
 	    case 204:
-	       break;
+	    break;
 
 	    case 257:
-	       hop_js_eval( http );
-	       break;
+	    hop_js_eval( http );
+	    break;
 
 	    case 258:
-	       if( http.responseText != null ) eval( http.responseText );
-	       break;
+	    if( http.responseText != null ) eval( http.responseText );
+	    break;
 
 	    case 259:
-	       hop_set_cookie( http );
-	       break;
+	    hop_set_cookie( http );
+	    break;
 
 	    case 407:
-	       alert( "*** Hop Authentication Error " + http.status + ": `"
-			 + http.responseText + "'" );
-	       break;
+	    alert( "*** Hop Authentication Error " + http.status + ": `"
+		   + http.responseText + "'" );
+	    break;
 
 	    default:
-	       if( (status > 200) && (status < 300) ) {
- 	          if( success ) {
-	            success( http );
-  	          }
-	       } else {
-		  if( failure ) {
-		     failure( http );
-		  } else {
-		     hop_default_failure( http );
-		  }
+	    if( (status > 200) && (status < 300) ) {
+	       if( success ) {
+		  success( http );
 	       }
+	    } else {
+	       if( failure ) {
+		  failure( http );
+	       } else {
+		  hop_default_failure( http );
+	       }
+	    }
 	 }
       }
    }
 
-   http.open( method, service, (sync != true) );
-
-   http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
-/*    http.setTimeouts = 1000;                                         */
-
-   http.send( null );
+   try {
+      http.send( null );
+   } catch( e ) {
+      alert( "*** HOP send error: " + e );
+   }
 
    return http;
 }
@@ -365,14 +365,24 @@ var resume_failure = false;
 /*---------------------------------------------------------------------*/
 function hop( service, success, failure, sync ) {
    if( success == true ) {
-      success = resume_success;
-      failure = resume_failure;
+      location.href = service;
+      return true;
    } else {
       resume_success = success;
       resume_failure = failure;
    }
+
+   var http = hop_make_xml_http_request();
+   var vis = hop_anim( service );
+
+   document.body.appendChild( vis );
    
-   return hop_inner( "GET", service, success, failure, sync );
+   http.open( "GET", service, (sync != true) );
+
+   http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+   http.setRequestHeader( 'Connection', 'close' );
+   
+   return hop_inner( http, success, failure, vis );
 }
 
 /*---------------------------------------------------------------------*/
@@ -408,25 +418,25 @@ function with_hop( service, success, failure ) {
 /*    hop_event_hander_set ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_event_handler_set( svc, evt, success, failure ) {
-   return hop_inner( "GET",
-		     svc( evt ),
-		     function( http ) {
-                        http.eventName = evt;
-                        var res = success( http );
-			if( res ) 
-			   hop_event_handler_set( svc, evt, success, failure );
-                        return res;
-		     },
-		     failure,
-		     false,
-		     true );
-}
+   var req = hop_make_xml_http_request();
+   
+   var handler = function ( http ) {
+      http.eventName = evt;
+      var res = success( http );
+      
+      if( res ) {
+	    hop_event_handler_set( svc, evt, success, failure );
+      }
+			
+      return res;
+   }
 
-/*---------------------------------------------------------------------*/
-/*    hop_mozillap ...                                                 */
-/*---------------------------------------------------------------------*/
-function hop_mozillap() {
-   return navigator.userAgent.indexOf( "Mozilla" ) >= 0;
+   req.open( "GET", svc( evt ) );
+
+   req.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+   req.setRequestHeader( 'Connection', 'close' );
+
+   return hop_inner( req, handler, failure, false );
 }
 
 /*---------------------------------------------------------------------*/

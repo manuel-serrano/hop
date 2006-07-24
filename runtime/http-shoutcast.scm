@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Jun  8 10:03:35 2006 (serrano)                */
+;*    Last change :  Sun Jul 23 15:47:04 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -90,7 +90,9 @@
 			       (loop (+elong offset psize)))))
 		      (begin
 			 (close-input-port pf)
-			 (flush-output-port p)))))))))
+			 (flush-output-port p))))
+		;; close the connection
+		'close)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    icy-name ...                                                     */

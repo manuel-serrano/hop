@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Jun 20 10:51:30 2006 (serrano)                */
+;*    Last change :  Fri Jul 21 18:51:49 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -150,6 +150,7 @@
 (define (http-unknown-host host)
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 404 Not Found")
+      (request (instantiate::http-request))
       (xml (<HTML>
 	      (<HEAD> :css
 		      (format "http://~a:~a/~a/hop-error.hss"
@@ -177,6 +178,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-file-not-found file)
    (instantiate::http-response-hop
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
 	      (<HEAD> :css "hop-error.hss")
@@ -200,6 +202,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-service-not-found file)
    (instantiate::http-response-hop
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
 	      (<HEAD> :css "hop-error.hss")
@@ -232,6 +235,7 @@ Reloading the page is the only workaround.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-permission-denied file)
    (instantiate::http-response-string
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 403 Forbidden")
       (body (format "Permission denied: ~s" file))))
 
@@ -239,16 +243,18 @@ Reloading the page is the only workaround.")))))))))))))
 ;*    http-method-error ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-method-error obj)
-    (instantiate::http-response-string
-       (start-line "HTTP/1.0 501 Not Implemented")
-       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Method not implemented ~a</body></html>"
-		     obj))))
+   (instantiate::http-response-string
+      (request (instantiate::http-request))
+      (start-line "HTTP/1.0 501 Not Implemented")
+      (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Method not implemented ~a</body></html>"
+		    obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-error ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-error obj)
    (instantiate::http-response-string
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 400 Bad Request")
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Parse error in HTTP request on token <tt>~a</tt>/body></html>"
 		    obj))))
@@ -258,6 +264,7 @@ Reloading the page is the only workaround.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-bad-request obj)
    (instantiate::http-response-string
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 400 Bad Request")
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request <tt><pre>~a</pre></tt></body></html>" obj))))
 
@@ -267,6 +274,7 @@ Reloading the page is the only workaround.")))))))))))))
 (define (http-internal-error e msg)
    (let ((s (with-error-to-string (lambda () (error-notify e)))))
       (instantiate::http-response-hop
+	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 501 Internal Server Error")
 	 (xml (<HTML>
 		 (<HEAD> :css "hop-error.hss")
@@ -313,6 +321,7 @@ Reloading the page is the only workaround.")))))))))))))
 			      (<TH> :align 'right "filter:")
 			      (<ETD> (<TT> (hop-request-service-name req))))))))))
       (instantiate::http-response-hop
+	 (request req)
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (xml (<HTML>
 		 (<HEAD> :css "hop-error.hss")
@@ -341,6 +350,7 @@ Reloading the page is the only workaround.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-invalidated-service-error req)
    (instantiate::http-response-hop
+      (request req)
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
 	      (<HEAD> :css "hop-error.hss")
@@ -373,6 +383,7 @@ Reloading the page is the only workaround.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-corrupted-service-error req)
    (instantiate::http-response-hop
+      (request req)
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
 	      (<HEAD> :css "hop-error.hss")
@@ -401,6 +412,7 @@ Reloading the page is the only workaround.")))))))))))))
 (define (http-internal-warning e)
    (let ((s (with-error-to-string (lambda () (warning-notify e)))))
       (instantiate::http-response-string
+	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>" s)))))
    
@@ -409,6 +421,7 @@ Reloading the page is the only workaround.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-warning msg #!optional dump)
    (instantiate::http-response-hop
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 200 ok")
       (xml (<HTML>
 	      (<HEAD> :css "hop-error.hss")
@@ -430,6 +443,7 @@ Reloading the page is the only workaround.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-service-unavailable e)
    (instantiate::http-response-string
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 503 Service Unavailable")
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Service unavailable ~a</body></html>" e))))
 
@@ -439,6 +453,7 @@ Reloading the page is the only workaround.")))))))))))))
 (define (http-io-error e)
    (let ((s (with-error-to-string (lambda () (error-notify e)))))
       (instantiate::http-response-hop
+	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
 		 (<HEAD> :css

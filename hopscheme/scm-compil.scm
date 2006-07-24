@@ -105,12 +105,14 @@
 		  (mime (mime-type path "text/javascript")))
 	       (if (string? cache)
 		   (instantiate::http-response-file
+		      (request req)
 		      (content-type mime)
 		      (bodyp (eq? method 'GET))
 		      (file cache))
 		   (let* ((jscript (compile-scheme-file path))
 			  (cache (cache-put! sscript-cache path jscript)))
 		      (instantiate::http-response-file
+			 (request req)
 			 (content-type mime)
 			 (bodyp (eq? method 'GET))
 			 (file cache)))))))))

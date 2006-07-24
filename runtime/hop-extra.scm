@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jun 23 11:17:25 2006 (serrano)                */
+;*    Last change :  Fri Jul 14 15:32:34 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -147,6 +147,8 @@
 		 (set! jscript (cons (car a) jscript)))
 		(else
 		 (set! rest (cons (car a) rest))))
+	     (loop (cdr a)))
+	    ((not (car a))
 	     (loop (cdr a)))
 	    (else
 	     (set! rest (cons (car a) rest))

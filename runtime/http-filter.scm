@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Thu Mar  9 06:02:59 2006 (serrano)                */
+;*    Last change :  Sun Jul 23 15:49:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -23,14 +23,15 @@
 	    __hop_xml
 	    __hop_http-lib
 	    __hop_http-error
-	    __hop_http-response)
+	    __hop_http-response
+	    __hop_http-remote)
 	    
-   (export  (generic http-filter ::%http-response ::http-response-filter ::socket)))
+   (export  (generic http-filter::symbol ::%http-response ::http-response-filter ::socket)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-filter ::%http-response ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (http-filter r::%http-response f socket)
+(define-generic (http-filter::symbol r::%http-response f socket)
    (http-response r socket))
 
 ;*---------------------------------------------------------------------*/
@@ -77,7 +78,7 @@
 					   status-code
 					   phrase))))
 			   (display fs op)
-			   (multiple-value-bind (header _1 _2 cl te _3 _4)
+			   (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
 			      (http-read-header ip)
 			      (when (eq? te 'chunked)
 				 (let ((c (assq transfer-encoding: header)))
@@ -98,7 +99,8 @@
 					       (bodyf ip2 op sl header cl)
 					       (close-input-port ip2)))
 					 (bodyf ip op sl header cl)))))))))))
-	    (socket-close rsock)))))
+	    (socket-close rsock))))
+   'close)
 
 ;*---------------------------------------------------------------------*/
 ;*    http-filter ::http-response-filter ...                           */
@@ -109,12 +111,14 @@
    (with-access::http-response-filter r ((sr statusf)
 					 (hr headerf)
 					 (br bodyf)
-					 (rr response))
+					 (rr response)
+					 (rq request))
       (with-access::http-response-filter f ((sf statusf)
 					    (hf headerf)
 					    (bf bodyf))
 	 (let ((f (instantiate::http-response-filter
 		     (response rr)
+		     (request rq)
 		     (statusf (lambda (s)
 				 (sf (sr s))))
 		     (headerf (lambda (h)

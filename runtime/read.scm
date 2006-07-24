@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Jun 20 09:44:40 2006 (serrano)                */
+;*    Last change :  Sun Jul  9 14:03:49 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -459,9 +459,11 @@
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
        ;; and then, we compute the result list...
-       ((hop-make-escape)
-	(the-port)
-	(make-list! (collect-up-to ignore "list" (the-port)) (the-port))))
+       (list '<TILDE>
+	     ((hop-make-escape)
+	      (the-port)
+	      (make-list!
+	       (collect-up-to ignore "list" (the-port)) (the-port)))))
       
       ;; structures
       ("#{"

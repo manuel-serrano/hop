@@ -4,6 +4,9 @@ var sc_SYMBOL_PREFIX = "\u1E9C"; // "\u1E9D\u1E9E\u1E9F";
 
 var sc_TAIL_CALLS;
 
+var __sc_LINE=-1;
+var __sc_FILE="";
+
 function sc_alert() { /// export
    var len = arguments.length;
    var s = "";
