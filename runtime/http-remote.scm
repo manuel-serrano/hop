@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Mon Jul 24 14:08:40 2006 (serrano)                */
+;*    Last change :  Tue Jul 25 15:30:54 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -54,79 +54,105 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-remote socket)
    (with-trace 3 'http-response::http-response-remote
-      (with-access::http-response-remote r (host port header content-length timeout request timeout remote-timeout)
-	 (trace-item "remotehost=" host
-		     " remoteport=" port
-		     " remote-timeout=" remote-timeout)
-	 (let* ((host (or (hop-proxy-host) host))
-		(port (or (hop-proxy-port) port))
-		(remote (remote-get-socket host port remote-timeout request))
-		(rp (connection-output remote))
-		(sp (socket-input socket)))
-	    (hop-verb 2
-		      (hop-color request request " REMOTE")
-		      " " host ":" port "\n")
-	    (with-handler
-	       (lambda (e)
-		  (remote-close! remote)
-		  (raise e))
-	       (begin
-		  ;; the header
+      (let loop ()
+	 (with-access::http-response-remote r (host port header content-length timeout request remote-timeout)
+	    (trace-item "remotehost=" host
+			" remoteport=" port
+			" remote-timeout=" remote-timeout)
+	    (let* ((host (or (hop-proxy-host) host))
+		   (port (or (hop-proxy-port) port))
+		   (remote (remote-get-socket host port remote-timeout request))
+		   (rp (connection-output remote))
+		   (sp (socket-input socket))
+		   (ip (connection-input remote)))
+	       (hop-verb 2
+			 (hop-color request request " REMOTE")
+			 " " host ":" port "\n")
+	       (with-handler
+		  (lambda (e)
+		     (remote-close! remote)
+		     (raise e))
+		  ;; the header and the request
 		  (with-trace 4 'http-response-header
 		     (http-write-line rp (response-remote-start-line r))
-		     (http-write-header rp (http-filter-proxy-header header))
-		     (http-write-line rp)
-		     ;; the content of the request
-		     (when (>elong content-length #e0)
-			(trace-item "content-length=" content-length)
-			(send-chars sp rp content-length))
-		     (flush-output-port rp))
-		  ;; the body
-		  (with-trace 4 'http-response-body
-		     (let* ((ip (connection-input remote))
-			    (op (socket-output socket)))
-			(when (>fx timeout 0)
-			   (input-port-timeout-set! ip timeout)
-			   (output-port-timeout-set! op timeout))
-			(multiple-value-bind (http-version status-code phrase)
-			   (http-parse-status-line ip)
-			   ;; WARNING: phrase contains its terminal \r\n hence
-			   ;; it must be displayed with regular scheme writer,
-			   ;; not HTTP-WRITE-LINE!
-			   (trace-item "# " http-version " " status-code " "
-				       (string-for-read phrase))
-			   (display http-version op)
-			   (display " " op)
-			   (display status-code op)
-			   (display " " op)
-			   (display phrase op)
-			   (multiple-value-bind (header _1 _2 cl te _3 _4 connection)
-			      (http-read-header ip)
-			      (http-write-header op header)
-			      (http-write-line op)
-			      (case status-code
-				 ((204 304)
-				  ;; no message body
-				  #unspecified)
-				 (else
-				  (if (not (eq? te 'chunked))
-				      (unless (=elong cl #e0)
-					 (send-chars ip op cl))
-				      (response-chunks ip op))))
-			      ;; what to do with the remote connection
-			      (if (or (eq? connection 'close)
-				      (not (hop-enable-keep-alive)))
-				  (remote-close! remote)
-				  (remote-keep-alive! remote))
-			      ;; return to the main hop loop
-			      (let ((s (http-header-field
-					(http-request-header request)
-					proxy-connection:)))
-				 (cond
-				    ((string? s)
-				     (string->symbol s))
-				    (else
-				     'close)))))))))))))
+		     ;; if a char is ready and is eof, it means that the
+		     ;; connection is closed
+		     (if (char-ready? ip)
+			 (let ((c (read-char ip)))
+			    (if (eof-object? c)
+				;; close the connection and restart
+				(begin
+				   (remote-close! remote)
+				   (loop))
+				(raise
+				 (instantiate::&io-parse-error
+				    (obj ip)
+				    (proc 'http-response)
+				    (msg "Illegal character")))))
+			 (begin
+			    (http-write-header rp (http-filter-proxy-header header))
+			    (http-write-line rp)
+			    (when (and (hop-enable-keep-alive)
+				       (hop-proxy-host))
+			       (http-write-line
+				"proxy-connection: keep-alive"))
+			    ;; the content of the request
+			    (when (>elong content-length #e0)
+			       (trace-item "content-length=" content-length)
+			       (send-chars sp rp content-length))
+			    (flush-output-port rp)
+			    (remote-body r socket remote ip))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    remote ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (remote-body r::http-response-remote socket remote::connection ip)
+   (with-access::http-response-remote r (host port timeout request)
+      ;; the body
+      (with-trace 4 'http-response-body
+	 (let ((op (socket-output socket)))
+	    (when (>fx timeout 0)
+	       (input-port-timeout-set! ip timeout)
+	       (output-port-timeout-set! op timeout))
+	    (multiple-value-bind (http-version status-code phrase)
+	       (http-parse-status-line ip)
+	       ;; WARNING: phrase contains its terminal \r\n hence
+	       ;; it must be displayed with regular scheme writer,
+	       ;; not HTTP-WRITE-LINE!
+	       (trace-item "# " http-version " " status-code " "
+			   (string-for-read phrase))
+	       (display http-version op)
+	       (display " " op)
+	       (display status-code op)
+	       (display " " op)
+	       (display phrase op)
+	       (multiple-value-bind (header _1 _2 cl te _3 _4 connection)
+		  (http-read-header ip)
+		  (http-write-header op header)
+		  (http-write-line op)
+		  (case status-code
+		     ((204 304)
+		      ;; no message body
+		      #unspecified)
+		     (else
+		      (if (not (eq? te 'chunked))
+			  (unless (=elong cl #e0)
+			     (send-chars ip op cl))
+			  (response-chunks ip op))))
+		  ;; what to do with the remote connection
+		  (if (or (eq? connection 'close)
+			  (not (hop-enable-keep-alive)))
+		      (remote-close! remote)
+		      (remote-keep-alive! remote))
+		  ;; return to the main hop loop
+		  (let ((s (http-header-field
+			    (http-request-header request)
+			    proxy-connection:)))
+		     (cond
+			((string? s)
+			 (string->symbol s))
+			(else
+			 'close)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *remote-lock* ...                                                */
@@ -172,13 +198,14 @@
 			    (socket socket)
 			    (port port)
 			    (id *remote-id*))))
-;* 	 (hashtable-put! *connection-table* host connection)           */
+	 (hashtable-put! *connection-table* host connection)
 	 connection))
    (define (get-connection)
       (let ((old (hashtable-get *connection-table* host)))
-	 (if (and (connection? old)
-		  (input-port? (socket-input (connection-socket old))))
-	     (trace-item "old=" old " port=" (connection-port old))
+	 (if (connection? old)
+	     (trace-item "old=" old
+			 " port=" (connection-port old)
+			 " input-port=" (connection-input old))
 	     (trace-item "old=" old))
 	 (if old
 	     (cond
@@ -191,7 +218,7 @@
 		(else
 		 old))
 	     (register-new-connection!))))
-   (with-trace 4 'remote-get-socket
+   (with-trace 3 'remote-get-socket
       (mutex-lock! *remote-lock*)
       (let ((conn (get-connection)))
 	 (connection-locked-set! conn #t)
@@ -203,8 +230,7 @@
 ;*---------------------------------------------------------------------*/
 (define (remote-keep-alive! connection)
    (mutex-lock! *remote-lock*)
-;*    (connection-locked-set! connection #f)                           */
-   (socket-close (connection-socket connection))
+   (connection-locked-set! connection #f)
    (mutex-unlock! *remote-lock*))
 
 ;*---------------------------------------------------------------------*/
@@ -213,14 +239,8 @@
 (define (remote-close! connection)
    (mutex-lock! *remote-lock*)
    (socket-close (connection-socket connection))
-;*    (hashtable-remove! *connection-table* connection)                */
+   (hashtable-remove! *connection-table* connection)
    (mutex-unlock! *remote-lock*))
-
-;*---------------------------------------------------------------------*/
-;*    remote-down? ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (remote-down? connection)
-   (socket-down? (connection-socket connection)))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-output ...                                            */

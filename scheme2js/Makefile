@@ -34,7 +34,7 @@ _BGL_OBJECTS	= capture compile constants expanders \
 	tail-rec tail transform-util traverse var expand verbose \
 	dot-expand allocate-names config locals use-count nested-funs \
 	constant-propagation fun-size rm-unused-vars captured-vars \
-	free-vars var-propagation mark-statements while trampoline
+	free-vars var-propagation mark-statements while
 
 _OBJECTS	= $(_BGL_OBJECTS)
 

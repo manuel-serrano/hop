@@ -141,13 +141,7 @@
     this p
     (p-display p this.var.compiled)))
 
-(define *max-tail-call-depth* 20)
-
 (define-pmethod (Program-compile p)
-   (when (config 'trampoline)
-      (p-display p "sc_TAIL_CALLS = " *max-tail-call-depth* ";\n")
-      (p-display p "var sc_f;\n")
-      (p-display p "var sc_funTailCalls = sc_TAIL_CALLS + 1;\n"))
    (this.body.compile p))
 
 (define-pmethod (Part-compile p)
@@ -182,13 +176,13 @@
 				    (statement-form? this)))
 
 	  (new-body (if (and part-vars
-			     (> (hashtable-size part-vars) 0))
-			(let* ((fun (new-node Lambda '() #f this.body))
-			       (call (new-node Call fun '())))
-			   (mark-statement-form! call #t)
-			   (set! fun.local-vars part-vars)
-			   call)
-			this.body)))
+				  (> (hashtable-size part-vars) 0))
+			     (let* ((fun (new-node Lambda '() #f this.body))
+				    (call (new-node Call fun '())))
+				(mark-statement-form! call #t)
+				(set! fun.local-vars part-vars)
+				call)
+			     this.body)))
       (if outer-vars?
 	  (begin
 	     (p-display part-filter-port "\n{\n")
@@ -205,14 +199,9 @@
       (if (not whole-is-stmt-form?)
 	  (p-display p ";"))))
 
+      
 
-;; Llvalue/stmt?, if given, indicate, that this lambda should be assigned to
-;; the given lvalue. stmt? is true, if we should treat this node, as if it was
-;; a statement-node.
-;; If there's a lvalue and it's not a stmt?, the return value of the compiled
-;; code is unspecified. (ie, it doesn't anymore necessarily return the
-;; lambda).
-(define-pmethod (Lambda-compile p . Llvalue/stmt?)
+(define-pmethod (Lambda-compile p)
    (define (vaarg-code vaarg nb-args)
       (let ((L vaarg.compiled))
 	 (p-display p "var " L " = null;\n"
@@ -221,144 +210,26 @@
 		    *tmp-var* "--) {\n")
 	 (p-display p L " = sc_cons(arguments[" *tmp-var* "], " L ");\n}\n")))
 
-   (define (trampoline-start-code p)
-      (p-display
-       p
-       "var sc_funTailCalls;\n"
-       "var sc_f;\n"
-       "if (!(sc_funTailCalls=sc_TAIL_CALLS)) throw new sc_TailCall(this, arguments);\n"
-       "sc_TAIL_CALLS=" *max-tail-call-depth* ";\n"
-       "try {\n"))
-
-   (define (trampoline-end-code p)
-      (p-display
-       p
-       "\n} catch (e) {\n"
-       "    if (sc_funTailCalls === " *max-tail-call-depth* ") {\n"
-       "       var tmpExc = e;\n"
-       "       while (tmpExc instanceof sc_TailCall) {\n"
-       "           try {\n"
-       "              sc_TAIL_CALLS=sc_funTailCalls-1;\n"
-       "              return tmpExc.arguments.callee.apply(tmpExc.funThis,"
-       " tmpExc.arguments);\n"
-       "           } catch (e2) {\n"
-       "              tmpExc = e2;\n"
-       "           }\n"
-       "       }\n"
-       "       throw tmpExc;\n"
-       "    } else\n"
-       "       throw e;\n"
-       "} finally { sc_TAIL_CALLS = sc_funTailCalls; }"))
-
-   (let* ((locals this.local-vars)
-	  (ht (make-hashtable))
-	  (needs-trampoline? (and (config 'trampoline)
-				  this.contains-tail-calls?))
-	  (lvalue (and (not (null? Llvalue/stmt?))
-		       (car Llvalue/stmt?)))
-	  (stmt? (or (statement-form? this)
-		     (and (not (null? Llvalue/stmt?))
-			  (cadr Llvalue/stmt?))))
-	  (declaration? (and lvalue
-			     stmt?
-			     
-			     ;; if we optimize the var-number we might reuse
-			     ;; variables. Don't play with that...
-			     (not (config 'optimize-var-number))
-
-			     lvalue.var.single-value ;; not muted or anything
-
-			     ;; a declaration puts the assignment at the
-			     ;; beginning of the scope. This is not good, if we
-			     ;; want to access 'with' variables, that represent
-			     ;; closures...
-			     (not this.references-tail-rec-variables?)))
-
-	  ;; a function can't be alone as statement. ie.
-	  ;; function () {}; is not a valid statement.
-	  ;; but
-	  ;; (function () {}); is. So we wrap the function expression if we are
-	  ;; in a statement. This only happens, if we don't assign to same
-	  ;; lvalue.
-	  ;;
-	  ;; if we are an expression, and we need to do some assignments, we
-	  ;; prefer parenthesis too. This happens, when we have a lvalue, or we
-	  ;; are needing trampolines.
-	  (needs-parenthesis? (or (and stmt?
-				       (not needs-trampoline?)
-				       (not lvalue))
-				  (and (not stmt?)
-				       (or lvalue
-					   needs-trampoline?)))))
-      
-      ;; ht will contain the var-names. by putting them into a hashtable we
-      ;; remove the duplicates. Not very elegant, but it should work ;)
+   (let ((locals this.local-vars)
+	 (ht (make-hashtable)))
+      ;; ht will contain the var-names. (unify local-names)
       (hashtable-for-each locals
 			  (lambda (var ignored)
 			     (hashtable-put! ht var.compiled #t)))
-      
-      (if needs-parenthesis?
-	  (p-display p "("))
-      
-      (cond
-	 ;; if we don't have a lvalue, we use "sc_f" as temporary variable...
-	 ((and needs-trampoline?
-	       (not lvalue))
-	  (p-display p "sc_f = function ("))
-	 ;; if it's a declaration we write the beginning of it: 'function name('
-	 (declaration?
-	  (p-display p "function ")
-	  (lvalue.compile p)
-	  (p-display p "("))
-	 ;; if it's an assignment: 'lval = function('
-	 (lvalue
-	  (lvalue.compile p)
-	  (p-display p " = function("))
-	 (else
-	  (p-display p "function(")))
-	  
-      (compile-separated-list p this.formals ", ")
-      (p-display p ") {\n")
-      (if needs-trampoline?
-	  (trampoline-start-code p))
-      (if this.vaarg
-	  (vaarg-code this.vaarg.var (length this.formals)))
-      (hashtable-for-each ht
-			  (lambda (var ignored)
-			     (p-display p "var " var ";\n")))
-      (this.body.compile p)
-      (if needs-trampoline?
-	  (trampoline-end-code p))
-      ;; with the following p-display we close the function-body.
-      (p-display p "\n}\n")
-      
-      (when needs-trampoline?
-	 (if stmt?
-	     ;; we don't need a semicolon if it was a declaration, but
-	     ;; it doesn't hurt.
-	     (p-display p "; ")
-	     (p-display p ", "))
-	 (if lvalue
-	     (lvalue.compile p)
-	     (p-display p "sc_f"))
-	 (p-display p ".hasTailCalls = true")
-	 (if (and (not stmt?)
-		  (not lvalue)) ;; we need to return the function...
-	     ;; if there's a lvalue, we have an assignment. and assignments
-	     ;; return unspecified values...
-	     (p-display p ", sc_f"))
-	 ;; if there's a closing semicolon needed it will be written later on.
-	 )
-
-      ;; close the previously opened parenthesis
-      (if needs-parenthesis?
-	  (p-display p ")"))
-
-      ;; add the stmt-semicolon. In theory we don't need any, when it's a
-      ;; function declaration, but this simplifies the code, and some editors
-      ;; prefer the semicolon.
-      (if stmt?
-	  (p-display p ";\n"))))
+      (check-stmt-form
+       this p
+       (if (statement-form? this) (p-display p "("))
+       (p-display p "function(")
+       (compile-separated-list p this.formals ", ")
+       (p-display p ")\n{\n")
+       (if this.vaarg
+	   (vaarg-code this.vaarg.var (length this.formals)))
+       (hashtable-for-each ht
+			   (lambda (var ignored)
+			      (p-display p "var " var ";\n")))
+       (this.body.compile p)
+       (p-display p "\n}\n")
+       (if (statement-form? this) (p-display p ")")))))
 
 (define (compile-unoptimized-boolify p node)
    (p-display p "(")
@@ -421,13 +292,11 @@
    (p-display p ")"))
 
 (define-pmethod (Set!-compile p)
-   (if (instance-of? this.val (node 'Lambda))
-       (this.val.compile p this.lvalue (statement-form? this))
-       (check-stmt-form
-	this p
-	(if (config 'optimize-set!)
-	    (compile-optimized-set! p this)
-	    (compile-unoptimized-set! p this)))))
+   (check-stmt-form
+    this p
+    (if (config 'optimize-set!)
+	(compile-optimized-set! p this)
+	(compile-unoptimized-set! p this))))
 
 (define-pmethod (Begin-compile p)
    (if (statement-form? this)
@@ -486,29 +355,7 @@
        (unless (and (config 'optimize-calls)
 		    (compile-optimized-call p operator this.operands))
 	  (p-display p "(")
-	  (cond
-	     ((and (config 'trampoline)
-		   this.certain-tail-call?)
-	      (p-display p "sc_TAIL_CALLS=sc_funTailCalls-1,")
-	      (this.operator.compile p))
-	     ((and (config 'trampoline)
-		   this.tail-call?
-		   (instance-of? this.operator (node 'Var-ref)))
-	      (p-display p "(")
-	      (this.operator.compile p)
-	      (p-display p
-			 ".hasTailCalls?sc_TAIL_CALLS=sc_funTailCalls-1:true),")
-	      (this.operator.compile p))
-	     ((and (config 'trampoline)
-		   this.tail-call?)
-	      (p-display p "sc_f =")
-	      (this.operator.compile p)
-	      (p-display p
-			 ", (sc_f.hasTailCalls?"
-			 "sc_TAIL_CALLS=sc_funTailCalls-1"
-			 ":true), sc_f"))
-	     (else
-	      (this.operator.compile p)))
+	  (this.operator.compile p)
 	  (p-display p "(")
 	  (compile-separated-list p this.operands ", ")
 	  (p-display p "))")))))

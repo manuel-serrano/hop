@@ -3,7 +3,6 @@
    (include "protobject.sch")
    (include "nodes.sch")
    (import nodes
-	   config
 	   protobject
 	   verbose)
    (export (pobject-conv::pobject prog)))
@@ -160,16 +159,9 @@
 		#f ;; don't prefer statement-form
 		fun))
 	  ((?operator . ?operands)
-	   (if (and (config 'return)
-		    (eq? operator 'return!))
-	       (if (or (null? operands)
-		       (not (null? (cdr operands))))
-		   (error #f "bad return! form: " exp)
-		   (new-node Return (scheme->pobject (car operands)
-						     (location operands))))
-	       (new-node Call
-			 (scheme->pobject operator (location exp))
-			 (scheme->pobject-map operands))))))
+	   (new-node Call
+		(scheme->pobject operator (location exp))
+		(scheme->pobject-map operands)))))
       ((eq? exp #unspecified)
 	(new-node Const #unspecified))
        ;; unquoted symbols must be var-refs

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jul 24 08:00:18 2006 (serrano)                */
+;*    Last change :  Tue Jul 25 09:31:38 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -115,7 +115,8 @@
 	 (hop-verb 1
 		   ": "
 		   (socket-hostname sock) " [" (current-date) "]\n")
-	 (handle-connection sock accept-pool reply-pool (*fx 1000000 (hop-read-timeout)) n 'connect))))
+	 (handle-connection
+	  sock accept-pool reply-pool (*fx 1000000 (hop-read-timeout)) n 'connect))))
 
 ;*---------------------------------------------------------------------*/
 ;*    handle-connection ...                                            */
@@ -141,7 +142,9 @@
    (let ((req (with-handler
 		 (lambda (e)
 		    (unless (and (eq? mode 'keep-alive)
-				 (&io-timeout-error? e))
+				 (or (&io-timeout-error? e)
+				     (and (&io-parse-error? e)
+					  (eof-object? (&io-parse-error-obj e)))))
 		       (when (&error? e) (error-notify e))
 		       (when (and (&io-unknown-host-error? e)
 				  (not (socket-down? sock)))
@@ -158,19 +161,19 @@
 		    (socket-close sock)
 		    #f)
 		 (http-parse-request sock id timeout))))
-      (when (eq? mode 'keep-alive)
-	 (hop-verb 1 (hop-color id id " KEEP-ALIVE"))
-	 (hop-verb 2
-		   " (" (pool-thread-available accept-pool)
-		   "/" (hop-max-accept-thread)
-		   "-" 
-		   (pool-thread-available reply-pool)
-		   "/" (hop-max-reply-thread)
-		   ")")
-	 (hop-verb 1
-		   ": "
-		   (socket-hostname sock) " [" (current-date) "]\n"))
       (when (http-request? req)
+	 (when (eq? mode 'keep-alive)
+	    (hop-verb 1 (hop-color id id " KEEP-ALIVE"))
+	    (hop-verb 2
+		      " (" (pool-thread-available accept-pool)
+		      "/" (hop-max-accept-thread)
+		      "-" 
+		      (pool-thread-available reply-pool)
+		      "/" (hop-max-reply-thread)
+		      ")")
+	    (hop-verb 1
+		      ": "
+		      (socket-hostname sock) " [" (current-date) "]\n"))
 	 (with-access::http-request req (method scheme host port path proxyp)
 	    (hop-verb 2
 		      (if proxyp

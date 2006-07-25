@@ -162,11 +162,9 @@
 
    ;; a Part represents a functional part of a program. Besides of free variables
    ;; the generated code should be fully functionally.
-   ;; the given function is called before code-generation with the current port
-   ;; as parameter and must return a
-   ;; pair containing a port as 'car' and a function to close the port as cdr.
-   ;; the closing function should have the following signature:
-   ;;  (define (close-port p::port is-statement-form?::bool) ...)
+   ;; the given function is called after code-generation with
+   ;; the generated code and a flag telling, if the code is in statement-form
+   ;; as parameter. The returned string is then used as result of the Part.
    ;; A part is *not* a scope. Two parts at the same level can therefore share
    ;; variables.
    (define-node (Part body prefer-statement-form? fun)
