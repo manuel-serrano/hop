@@ -16,8 +16,7 @@
    (overload traverse fun-size (Node
 				   (Program Fun-fun-size)
 				   (Lambda Fun-fun-size)
-;				   (Tail-rec Fun-fun-size)
-				   )
+				   (Tail-rec Fun-fun-size))
 	     (tree.traverse #f)))
 
 (define-pmethod (Node-fun-size surrounding-scope)

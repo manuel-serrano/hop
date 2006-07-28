@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jul 20 19:11:08 2006 (serrano)                */
+;*    Last change :  Wed Jul 26 15:48:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -39,19 +39,11 @@
 	     (msg msg))))
 
 ;*---------------------------------------------------------------------*/
-;*    input-port-timeout-set! ...                                      */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
-   (else #unspecified))
-
-;*---------------------------------------------------------------------*/
 ;*    http-parse-request ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-request sock id timeout)
    (let ((port (socket-input sock)))
-      (when (>fx timeout 0)
-         (input-port-timeout-set! port timeout))
+      (input-timeout-set! port timeout)
       (let* ((req (read/rp request-line-grammar port id))
 	     (localc (string=? (socket-local-address sock)
 			       (socket-host-address sock)))
@@ -60,8 +52,7 @@
 			 (is-local? (http-request-host req))
 			 (string=? (host (http-request-host req))
 				   (socket-local-address sock)))))
-	 (when (>fx timeout 0)
-	    (input-port-timeout-set! port 0))
+	 (input-timeout-set! port 0)
 	 (with-access::http-request req (socket localclientp localhostp user userinfo)
 	    (set! socket sock)
 	    (set! localclientp localc)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Jul 22 09:22:36 2006 (serrano)                */
+/*    Last change :  Thu Jul 27 10:27:46 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -256,7 +256,7 @@ function hop_failure_alert( http ) {
 function hop_anim( title ) {
    var vis = document.createElement( "div" );
       
-   hop_style_set( vis, "position", "absolute" );
+   hop_style_set( vis, "position", "fixed" );
    hop_style_set( vis, "top", "5" );
    hop_style_set( vis, "right", "5" );
    hop_style_set( vis, "z-index", "100" );

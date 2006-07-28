@@ -1,0 +1,10 @@
+((name "webfilter")
+ (version "1.0.0")
+ (author "M. Serrano")
+ (sdescr "HOP Web filtering.")
+ (about-service "about")
+ (autoload (let ((pred (autoload-prefix
+			(make-file-name (hop-service-base) "webfilter"))))
+	      (lambda (req)
+		 (or (not (http-request-localhostp req))
+		     (pred req))))))

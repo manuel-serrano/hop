@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jul 21 18:51:49 2006 (serrano)                */
+;*    Last change :  Fri Jul 28 10:03:01 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -42,7 +42,8 @@
 	    (http-corrupted-service-error ::http-request)
 	    (http-warning msg #!optional dump)
 	    (http-internal-warning e)
-	    (http-service-unavailable obj)))
+	    (http-service-unavailable obj)
+	    (http-gateway-timeout e)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-error ...                                           */
@@ -480,3 +481,14 @@ Reloading the page is the only workaround.")))))))))))))
 						      (&error-msg e))))
 				   (<TR> (<ETD> :id "dump"
 						(<PRE> (html-string-encode s)))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-gateway-timeout ...                                         */
+;*---------------------------------------------------------------------*/
+(define (http-gateway-timeout e)
+   (instantiate::http-response-string
+      (request (instantiate::http-request))
+      (start-line "HTTP/1.0 502 Bad Gateway")
+      (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Gateway Timeout ~a</body></html>" e))))
+
+

@@ -18,7 +18,6 @@
 	   constant-propagation
 	   var-propagation
 	   while
-	   trampoline
 	   capture
 	   protobject
 	   liveness
@@ -46,15 +45,12 @@
 		  (constant-propagation #t)
 		  (var-propagation #t)
 		  (while #f)
-		  (correct-modulo #f)
 		  (optimize-calls #t)
 		  (optimize-var-number #f)
 		  (optimize-boolify #t)
 		  (optimize-set! #t)
 		  (encapsulate-parts #f)
-		  (trampoline #f)
-		  (print-locations #f)
-		  (return #f)))
+		  (print-locations #f)))
       ht))
 
 (define (read-rev-port in-port)
@@ -143,15 +139,9 @@
       (("--js-this"
 	(help "procedures may use Javascript's 'this' variable."))
        (hashtable-put! config-ht 'procedures-provide-js-this #t))
-      (("--js-return"
-	(help "adds the special-form 'return!'."))
-       (hashtable-put! config-ht 'return #t))
       (("--no-tailrec"
 	(help "don't optimize tail-recs."))
        (hashtable-put! config-ht 'optimize-tail-rec #f))
-      (("--trampoline"
-	(help "add trampolines around tail-recursive calls"))
-       (hashtable-put! config-ht 'trampoline #t))
       (("--max-tail-depth"
 	?depth
 	(help (string-append "maximum tail-call depth before "
@@ -166,9 +156,6 @@
       (("--no-constant-propagation"
 	(help "don't propagate constants."))
        (hashtable-put! config-ht 'constant-propagation #f))
-      (("--correct-modulo"
-	(help "(module -13 4) will return R5RS's 3 instead of faster -1."))
-       (hashtable-put! config-ht 'correct-modulo #t))
       (("--no-optimize-calls"
 	(help "don't inline simple runtime-functions."))
        (hashtable-put! config-ht 'optimize-calls #f))
@@ -215,8 +202,6 @@
       (if (eq? (config 'debug-stage) 'node-elim2) (dot-out p tree))
       (while! tree)
       (if (eq? (config 'debug-stage) 'while) (dot-out p tree))
-      (trampoline tree)
-      (if (eq? (config 'debug-stage) 'trampoline) (dot-out p tree))
       (statements! tree)
       (if (eq? (config 'debug-stage) 'statements) (dot-out p tree))
       (node-elimination! tree)
