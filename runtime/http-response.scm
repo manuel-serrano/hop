@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Jul 24 07:36:34 2006 (serrano)                */
+;*    Last change :  Wed Jul 26 15:51:08 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -50,7 +50,7 @@
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
-	       (output-port-timeout-set! p timeout))
+	       (output-timeout-set! p timeout))
 	    (http-write-line p "HTTP/1.0 401 Unauthorized")
 	    (http-write-header p header)
 	    (http-write-line p "Connection: " connection)
@@ -78,7 +78,7 @@
 		       body))
 		(connection (http-request-connection request)))
 	    (when (>fx timeout 0)
-	       (output-port-timeout-set! p timeout))
+	       (output-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Content-Length: " (string-length s))
@@ -104,7 +104,7 @@
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
-	       (output-port-timeout-set! p timeout))
+	       (output-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (if (>elong content-length #e0)
@@ -129,7 +129,7 @@
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
-	       (output-port-timeout-set! p timeout))
+	       (output-timeout-set! p timeout))
 	    (http-write-line p "HTTP/1.1 200 Ok")
 	    (http-write-header p header)
 	    (if (>elong content-length #e0)
@@ -157,7 +157,7 @@
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
-	       (output-port-timeout-set! p timeout))
+	       (output-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (if (>elong content-length #e0)
@@ -185,7 +185,7 @@
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
-	       (output-port-timeout-set! p timeout))
+	       (output-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (if (>elong content-length #e0)
@@ -227,7 +227,7 @@
 		       (http-response rep socket)))
 		   (else
 		    (when (>fx timeout 0)
-		       (output-port-timeout-set! p timeout))
+		       (output-timeout-set! p timeout))
 		    (http-write-line p start-line)
 		    (http-write-header p header)
 		    (http-write-line p "Connection: " connection)
@@ -325,7 +325,7 @@
 	 (if (authorized-path? request cgibin)
 	     (let ((p (socket-output socket)))
 		(when (>fx timeout 0)
-		   (output-port-timeout-set! p timeout))
+		   (output-timeout-set! p timeout))
 		(http-write-line p start-line)
 		(http-write-header p header)
 		(http-write-line p "Connection: close")
@@ -375,7 +375,7 @@
 			 (args (substring uri (+fx i 1) l))
 			 (p (socket-output socket)))
 		      (when (>fx timeout 0)
-			 (output-port-timeout-set! p timeout))
+			 (output-timeout-set! p timeout))
 		      (http-write-line p start-line)
 		      (http-write-header p header)
 		      (http-write-line p "Connection: close")

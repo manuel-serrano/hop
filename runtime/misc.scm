@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Mon Jul 24 07:36:30 2006 (serrano)                */
+;*    Last change :  Wed Jul 26 15:51:30 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -38,7 +38,10 @@
 	   (delete-path ::bstring)
 	   (autoload-prefix::procedure ::bstring)
 	   (make-url-name::bstring ::bstring ::bstring)
-	   (make-client-socket/timeout ::bstring ::int ::int ::obj)))
+	   (make-client-socket/timeout ::bstring ::int ::int ::obj)
+	   (inline micro-seconds::int ::int)
+	   (inline input-timeout-set! ::input-port ::int)
+	   (inline output-timeout-set! ::output-port ::int)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -371,9 +374,9 @@
 ;*    make-client-socket/timeout ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (make-client-socket/timeout host port timeout::int msg::obj)
-   (let ((tmt (if (>fx  timeout 0)
-		  (*fx 1000000 timeout)
-		  (*fx 1000000 (hop-connection-timeout)))))
+   (let ((tmt (if (>fx timeout 0)
+		  (micro-seconds timeout)
+		  (micro-seconds (hop-connection-timeout)))))
       (let loop ((ttl (hop-connection-ttl)))
 	 (let ((res (with-handler
 		       (lambda (e)
@@ -394,3 +397,31 @@
 	    (if (number? res)
 		(loop res)
 		res)))))
+
+;*---------------------------------------------------------------------*/
+;*    micro-seconds ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (micro-seconds ms)
+   (*fx 1000 ms))
+
+;*---------------------------------------------------------------------*/
+;*    input-port-timeout-set! ...                                      */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
+   (else #unspecified))
+
+;*---------------------------------------------------------------------*/
+;*    input-timeout-set! ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (input-timeout-set! port t)
+   (let ((ms (micro-seconds t)))
+      (input-port-timeout-set! port ms)))
+
+;*---------------------------------------------------------------------*/
+;*    output-timeout-set! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (output-timeout-set! port t)
+   (let ((ms (micro-seconds t)))
+      (output-port-timeout-set! port ms)))
+

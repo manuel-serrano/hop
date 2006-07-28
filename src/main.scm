@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jul 25 09:31:38 2006 (serrano)                */
+;*    Last change :  Fri Jul 28 11:19:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -116,7 +116,7 @@
 		   ": "
 		   (socket-hostname sock) " [" (current-date) "]\n")
 	 (handle-connection
-	  sock accept-pool reply-pool (*fx 1000000 (hop-read-timeout)) n 'connect))))
+	  sock accept-pool reply-pool (hop-read-timeout) n 'connect))))
 
 ;*---------------------------------------------------------------------*/
 ;*    handle-connection ...                                            */
@@ -177,8 +177,8 @@
 	 (with-access::http-request req (method scheme host port path proxyp)
 	    (hop-verb 2
 		      (if proxyp
-			  (hop-color req req " EXEC (P)")
-			  (hop-color req req " EXEC (S)"))
+			  (hop-color req req " EXEC.prox")
+			  (hop-color req req " EXEC.serv"))
 		      " ("
 		      (pool-thread-available accept-pool)
 		      "/" (hop-max-accept-thread)
@@ -252,12 +252,12 @@
 		       (user-name (http-request-user req))
 		       "anonymous") "\n")
 	 (let ((connection (http-response hp sock)))
-	    (hop-verb 2 (hop-color req req " RESPONSE")
+	    (hop-verb 2 (hop-color req req " END")
 		      " ("
 		      (pool-thread-available accept-pool)
 		      "/" (hop-max-accept-thread)
 		      "-" 
-		      (pool-thread-available reply-pool)
+		      (+fx 1 (pool-thread-available reply-pool))
 		      "/" (hop-max-reply-thread) "): "
 		      (find-runtime-type hp) " " connection
 		      " [" (current-date) "]"
@@ -271,7 +271,7 @@
 		(if (hop-enable-keep-alive)
 		    (handle-connection
 		     sock accept-pool reply-pool
-		     (*fx (hop-keep-alive-timeout) 1000) id connection)
+		     (hop-keep-alive-timeout) id connection)
 		    (socket-close sock)))
 	       (else
 		(socket-close sock)))))))
