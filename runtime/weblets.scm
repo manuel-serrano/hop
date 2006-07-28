@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue Jun 20 16:32:09 2006 (serrano)                */
+;*    Last change :  Fri Jul 28 15:38:06 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -86,10 +86,10 @@
 ;*    get-weblet-infos ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (get-weblet-infos dir name)
-  (let ((file (make-file-path dir name "weblet.info")))
+  (let ((file (make-file-path dir name "etc" "weblet.info")))
     (if (file-exists? file)
 	(with-input-from-file file read)
-	(let ((file  (make-file-path dir name (string-append name ".info"))))
-	  (if (file-exists? file)
-	      (with-input-from-file file read)
+	(let ((f (make-file-path dir name "etc" (string-append name ".info"))))
+	  (if (file-exists? f)
+	      (with-input-from-file f read)
 	      '())))))

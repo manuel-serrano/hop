@@ -25,10 +25,10 @@
    
 (define (good-for-inlining? var nested-counter)
    (and (can-be-inlined? var)
- 	(< nested-counter 3)
+ 	(< nested-counter 1)
  	(or (= var.uses 1)
  	    (and (not var.single-value.nested-funs?)
- 		 (< var.single-value.size (/ 30 (+ nested-counter 1)))))))
+ 		 (< var.single-value.size 50)))))
 
 (define (inline! tree)
    (if (config 'do-inlining)

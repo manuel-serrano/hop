@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jul 21 19:16:44 2006 (serrano)                */
+;*    Last change :  Fri Jul 28 14:59:02 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -34,7 +34,7 @@
 	      (header::pair-nil (default '()))
 	      (content-length::elong read-only (default #e-1))
 	      (char-encoding (default #f))
-	      (timeout::int read-only (default -1)))
+	      (timeout::int (default -1)))
 	   
 	   (class http-request::%http-message
 	      (user (default #f))
@@ -72,7 +72,8 @@
 	      (path::bstring read-only)
 	      (userinfo read-only)
 	      (encoded-path::bstring read-only)
-	      (remote-timeout read-only (default #f)))
+	      (remote-timeout read-only)
+	      (connection-timeout read-only))
 
 	   (class http-response-filter::%http-response
 	      (response::%http-response read-only)
