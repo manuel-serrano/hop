@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri Jul 28 15:05:11 2006 (serrano)                */
+;*    Last change :  Fri Jul 28 17:49:27 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -28,7 +28,7 @@
 	       (socket::socket read-only)
 	       (host::bstring read-only)
 	       (port::int read-only)
-	       (id::elong read-only)
+	       (id::elong (default -1))
 	       request-id::obj
 	       (keep-alive?::bool (default #f))
 	       (locked::bool (default #f))))
@@ -193,7 +193,7 @@
 ;*    it first checks if it happens to still have an old connection    */
 ;*    with that host.                                                  */
 ;*---------------------------------------------------------------------*/
-(define (remote-get-socket host port conn-timeout request)
+(define (remote-get-socket host port timeout request)
    (define (purge-table!)
       (cond
 	 ((=elong *remote-id* #e0)
@@ -208,40 +208,36 @@
 	      (<= (-elong *remote-id* (connection-id c))
 		  (hop-max-remote-keep-alive-connection)))))))
    (define (register-new-connection!)
-      (set! *remote-id* (+elong *remote-id* #e1))
-      (let* ((socket (make-client-socket/timeout host port conn-timeout request))
+      (let* ((socket (make-client-socket/timeout host port timeout request))
 	     (connection (instantiate::connection
 			    (socket socket)
 			    (host host)
 			    (port port)
 			    (request-id (http-request-id request))
-			    (id *remote-id*))))
+			    (locked #t))))
+	 (mutex-lock! *remote-lock*)
+	 (set! *remote-id* (+elong *remote-id* #e1))
+	 (connection-id-set! connection *remote-id*)
 	 (hashtable-put! *connection-table* host connection)
+	 (mutex-unlock! *remote-lock*)
 	 connection))
    (define (get-connection)
-      (let ((old (hashtable-get *connection-table* host)))
-	 (if (connection? old)
-	     (begin
-		(trace-item "old connection=" old)
-		(trace-item "host=" (connection-host old))
-		(trace-item "port=" (connection-port old))
-		(trace-item "input-port=" (connection-input old))
-		(cond
-		   ((connection-locked old)
-		    (register-new-connection!))
-		   ((not (=fx (connection-port old) port))
-		    (hashtable-remove! *connection-table* old)
-		    (register-new-connection!))
-		   (else
-		    (connection-keep-alive?-set! old #t)
-		    old)))
-	     (register-new-connection!))))
-   (with-trace 3 'remote-get-socket
       (mutex-lock! *remote-lock*)
-      (let ((conn (get-connection)))
-	 (connection-locked-set! conn #t)
-	 (mutex-unlock! *remote-lock*)
-	 conn)))
+      (let ((old (hashtable-get *connection-table* host)))
+	 (if (and (connection? old)
+		  (not (connection-locked old))
+		  (=fx (connection-port old) port))
+	     (begin
+		(connection-keep-alive?-set! old #t)
+		(connection-locked-set! old #t)
+		(mutex-unlock! *remote-lock*)
+		old)
+	     (begin
+		(mutex-unlock! *remote-lock*)
+		#f))))
+   (with-trace 3 'remote-get-socket
+      (or (get-connection)
+	  (register-new-connection!))))
    
 ;*---------------------------------------------------------------------*/
 ;*    connection-keep-alive! ...                                       */

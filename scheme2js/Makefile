@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sat Jun 17 14:13:05 2006 (serrano)                */
+#*    Last change :  Fri Jul 28 16:33:44 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -35,7 +35,7 @@ _BGL_OBJECTS	= capture compile constants expanders \
 	dot-expand allocate-names config locals use-count nested-funs \
 	constant-propagation fun-size rm-unused-vars captured-vars \
 	free-vars var-propagation mark-statements while trampoline \
-	locations
+	# locations
 
 _OBJECTS	= $(_BGL_OBJECTS)
 

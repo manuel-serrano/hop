@@ -22,7 +22,7 @@
 	   protobject
 	   liveness
 	   rm-unused-vars
-	   locations
+;* 	   locations                                                   */
 	   verbose)
    (main my-main)
    (export (scheme2js top-level::pair-nil js-interface::pair-nil config p)
@@ -142,17 +142,17 @@
       (("--no-tailrec"
 	(help "don't optimize tail-recs."))
        (hashtable-put! config-ht 'optimize-tail-rec #f))
-      (("--max-tail-depth"
-	?depth
-	(help (string-append "maximum tail-call depth before "
-			     "the trampoline is used. Default: "
-			     (number->string (default-max-tail-call-depth)))))
-       (let ((new-depth (string->number depth)))
-	  (if (not new-depth)
-	      (error #f
-		     "--max-tail-depth requires a number as argument"
-		     depth))
-	  (hashtable-put! config-ht 'max-tail-depth new-depth)))
+;*       (("--max-tail-depth"                                          */
+;* 	?depth                                                         */
+;* 	(help (string-append "maximum tail-call depth before "         */
+;* 			     "the trampoline is used. Default: "       */
+;* 			     (number->string (default-max-tail-call-depth))))) */
+;*        (let ((new-depth (string->number depth)))                    */
+;* 	  (if (not new-depth)                                          */
+;* 	      (error #f                                                */
+;* 		     "--max-tail-depth requires a number as argument"  */
+;* 		     depth))                                           */
+;* 	  (hashtable-put! config-ht 'max-tail-depth new-depth)))       */
       (("--no-constant-propagation"
 	(help "don't propagate constants."))
        (hashtable-put! config-ht 'constant-propagation #f))
@@ -206,8 +206,8 @@
       (if (eq? (config 'debug-stage) 'statements) (dot-out p tree))
       (node-elimination! tree)
       (if (eq? (config 'debug-stage) 'node-elim3) (dot-out p tree))
-      (locations tree)
-      (if (eq? (config 'debug-stage) 'locations) (dot-out p tree))
+;*       (locations tree)                                              */
+;*       (if (eq? (config 'debug-stage) 'locations) (dot-out p tree))  */
       (let* ((out-p (if (config 'debug-stage)
 			(open-output-string)
 			p))

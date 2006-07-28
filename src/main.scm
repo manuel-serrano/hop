@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jul 28 11:19:12 2006 (serrano)                */
+;*    Last change :  Fri Jul 28 17:50:57 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -257,7 +257,7 @@
 		      (pool-thread-available accept-pool)
 		      "/" (hop-max-accept-thread)
 		      "-" 
-		      (+fx 1 (pool-thread-available reply-pool))
+		      (pool-thread-available reply-pool)
 		      "/" (hop-max-reply-thread) "): "
 		      (find-runtime-type hp) " " connection
 		      " [" (current-date) "]"
