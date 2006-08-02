@@ -14,7 +14,7 @@ div.hop-tabslider {
     background: #eee;
 }
 
-div.hop-tabslider > span {
+div.hop-tabslider span.hop-tabslider-head {
     display: block;
     background: #ccc;
     cursor:pointer;

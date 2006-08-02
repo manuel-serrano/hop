@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 10 14:25:42 2004                          */
-/*    Last change :  Mon Jan  9 14:07:39 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 14:51:22 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Sortable tables                                                  */
@@ -84,12 +84,12 @@ function hop_sorttable_sort( lnk ) {
    SORT_COLUMN_INDEX = column;
    var newRows = new Array();
    var itm = hop_sorttable_getInnerText( table.rows[1].cells[ column ] );
-    
+   
    for( j = 1; j < table.rows.length; j++ ) {
       var o = new Object();
       var l = table.rows[ j ].cells[ column ].getAttribute( "lang" );
 
-      if( typeof l == "string" ) {
+      if( (typeof l == "string") && (l != '') ) {
 	 o.key = l;
 	 itm = false;
       } else {
@@ -98,7 +98,7 @@ function hop_sorttable_sort( lnk ) {
       o.val = table.rows[ j ];
       newRows[ j - 1 ] = o;
    }
-    
+
    if( !itm ) {
       newRows.sort( hop_sorttable_sort_default );
    } else {
@@ -108,7 +108,7 @@ function hop_sorttable_sort( lnk ) {
 	 newRows.sort( hop_sorttable_sort_default );
       }
    }
-    
+
    if( lnk.getAttribute( "sortdir" ) != 'down' ) {
       newRows.reverse();
       arrow.innerHTML = "&#8593;";

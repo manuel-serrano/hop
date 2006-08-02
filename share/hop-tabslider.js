@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Wed May 31 13:42:02 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 15:01:13 2006 (serrano)                */
 /*    Copyright   :  2006 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
@@ -26,7 +26,7 @@ function hop_tabslider_select( item ) {
       titlesHeight += title.offsetHeight;
       if( title == item ) {
 	 selected = content;
-	 title.className = "hop-tabslider-head-active";
+	 title.className = "hop-tabslider-head hop-tabslider-head-active";
 	 if( content.lang == "delay" ) {
 	    hop( selected.onkeyup()(),
 		 function( http ) {
@@ -38,7 +38,7 @@ function hop_tabslider_select( item ) {
 	 }
       } else {
 	 content.style.display = "none";
-	 title.className = "hop-tabslider-head-inactive";
+	 title.className = "hop-tabslider-head hop-tabslider-head-inactive";
       }
    }
     
@@ -52,9 +52,7 @@ function hop_tabslider_select( item ) {
 function hop_tabslider_init( id, ind ) {
    var ts = document.getElementById( id );
 
-   window.addEventListener( 'load', 
-			    function( e ) {
-                               hop_tabslider_select( ts.childNodes[ 2*ind ] );
-                            },
-			    false );
+   window.onload = function( e ) {
+      hop_tabslider_select( ts.childNodes[ 2*ind ] );
+   };
 }

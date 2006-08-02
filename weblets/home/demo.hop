@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Mon May 29 11:05:32 2006 (serrano)                */
+;*    Last change :  Wed Aug  2 14:13:39 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -28,64 +28,69 @@
 ;*    <DEMO> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<DEMO> req)
-   (<DIV>
-      :class "demo"
-      :id "demo-playground"
-      :align "left"
+   ;; MSIE does not support yet, inline images!
+   (let ((inl (not
+	       (string-contains
+		(http-header-field (http-request-header req) :user-agent)
+		"MSIE"))))
       (<DIV>
-	 :class "toolbar"
-	 :align "center"
-	 :id "toolbar-demo"
-	 (<TIPS> 550 500)
-	 (<TABLE>
+	 :class "demo"
+	 :id "demo-playground"
+	 :align "left"
+	 (<DIV>
 	    :class "toolbar"
-	    (<TR>
-	       (<TD>
-		  :align "left"
-		  (<ZIMG> (make-service-url home/demos/sudoku)
-			  "games1-32x32.png" "games1-48x48.png"
-			  500 420)))
-	    (<TR>
-	       (<TD>
-		  :align "left"
-		  (<ZIMG> (make-service-url home/demos/minesweeper)
-			  "mines-32x32.png" "mines-48x48.png"
-			  320 320)))
+	    :align "center"
+	    :id "toolbar-demo"
+	    (<TIPS> 550 500)
+	    (<TABLE>
+	       :class "toolbar"
+	       (<TR>
+		  (<TD>
+		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/sudoku)
+			     "games1-32x32.png" "games1-48x48.png" inl
+			     500 420)))
+	       (<TR>
+		  (<TD>
+		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/minesweeper)
+			     "mines-32x32.png" "mines-48x48.png" inl
+			     320 320)))
 ;* 	    (<TR>                                                      */
 ;* 	       (<TD>                                                   */
 ;* 		  :align "left"                                        */
 ;* 		  (<ZIMG> "hop/home/demos/tetris"                      */
 ;* 			  "games2-32x32.png" "games2-48x48.png")))     */
-	    (<TR>
-	       (<TD>
-		  :align "left"
-		  (<ZIMG> (make-service-url home/demos/rss)
-			  "news-32x32.png" "news-48x48.png"
-			  570 370)))
-	    (<TR>
-	       (<TD>
-		  :align "left"
-		  (<ZIMG> (make-service-url home/demos/repl)
-			  "term-32x32.png" "term-48x48.png"
-			  540 370)))
-	    (<TR>
-	       (<TD>
-		  :align "left"
-		  (<ZIMG> (make-service-url home/demos/wiki)
-			  "wiki-32x32.png" "wiki-48x48.png"
-			  390 450)))
-	    (<TR>
-	       (<TD>
-		  :align "left"
-		  (<ZIMG> (make-service-url home/demos/rewrite)
-			  "utilities-32x32.png" "utilities-48x48.png"
-			  500 220)))
-	    (<TR>
-	       (<TD>
-		  :align "left"
-		  (<ZIMG> (make-service-url home/demos/source)
-			  "computer-32x32.png" "computer-48x48.png"
-			  700 500)))))))
+	       (<TR>
+		  (<TD>
+		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/rss)
+			     "news-32x32.png" "news-48x48.png" inl
+			     570 370)))
+	       (<TR>
+		  (<TD>
+		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/repl)
+			     "term-32x32.png" "term-48x48.png" inl
+			     540 370)))
+	       (<TR>
+		  (<TD>
+		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/wiki)
+			     "wiki-32x32.png" "wiki-48x48.png" inl
+			     390 450)))
+	       (<TR>
+		  (<TD>
+		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/rewrite)
+			     "utilities-32x32.png" "utilities-48x48.png" inl
+			     500 220)))
+	       (<TR>
+		  (<TD>
+		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/source)
+			     "computer-32x32.png" "computer-48x48.png" inl
+			     700 500))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/demos/tips ...                                              */
@@ -176,7 +181,7 @@ be used to access the whole source code of this playground.])))
 ;*---------------------------------------------------------------------*/
 ;*    <ZIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (<ZIMG> svc s1 s2 . r)
+(define (<ZIMG> svc s1 s2 inl . r)
    (let ((id (xml-make-id))
 	 (p1 (format "~a/etc/icons/~a" (home-dir) s1))
 	 (p2 (format "~a/etc/icons/~a" (home-dir) s2))
@@ -185,7 +190,7 @@ be used to access the whole source code of this playground.])))
 	 (t (string-capitalize (basename svc))))
       (<IMG> :id id
 	     :src p1
-	     :inline #t
+	     :inline inl
 	     :title t
 	     :alt t
 	     :onmouseover ~(set! (document.getElementById $id).src $p2)
