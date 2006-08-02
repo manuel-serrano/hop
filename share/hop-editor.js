@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Apr 10 11:43:00 2006                          */
-/*    Last change :  Fri Jun  9 18:47:57 2006 (eg)                     */
+/*    Last change :  Wed Aug  2 15:59:15 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    <EDITOR> JavaScript support                                      */
 /*=====================================================================*/
@@ -39,18 +39,16 @@ function hop_edit_init(id, popups_dir, submit, cancel)
     hop_edit_popups_dir = popups_dir;
 
     // Install a listener fo KeyPress events
-    iframe.contentDocument.addEventListener("keypress", 
-					    function(e) {
-						hop_edit_keypress_hdlr(e, id);
-					    },
-					    true);
+    hop_add_event_listener( iframe.contentDocument,
+			    "keypress", 
+			    function(e) { hop_edit_keypress_hdlr(e, id); },
+			    true );
     // Install an event hdler to copy back iframe content to textarea if submitting
     for (var i=0; i < document.forms.length; i++) {
-    	document.forms[i].addEventListener("submit",
-					   function (e) { 
-					       hop_edit_update_textarea(id); 
-					   },
-					   true);
+       hop_add_event_listener( document.forms[i],
+			       "submit",
+			       function (e) { hop_edit_update_textarea(id); },
+			       true );
     }
     // Initialize Selection boxes
     hop_edit_style_set(id, "p");

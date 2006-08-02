@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Aug  2 15:25:02 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 15:33:15 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */

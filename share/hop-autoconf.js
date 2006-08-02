@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Sat Jul 22 08:05:53 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 15:52:09 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -122,10 +122,39 @@ hop_style_set = function( obj, property, value ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    Event handlers                                                   */
+/*---------------------------------------------------------------------*/
+var hop_add_event_listener = undefined;
+var hop_remove_event_listener = undefined;
+
+if( document.implementation.hasFeature( "Events" , "2.0") ) {
+   hop_add_event_listener = function( obj, event, proc, capture ) {
+      return obj.addEventListener( event, proc, capture );
+   }
+   hop_remove_event_listener = function( obj, event, proc, capture ) {
+      return obj.removeEventListener( event, proc, capture );
+   }
+} else {
+   hop_add_event_listener = function( obj, event, proc, capture ) {
+      return obj.attachEvent( "on" + event, proc );
+   }
+   hop_remove_event_listener = function( obj, event, proc, capture ) {
+      return obj.detachEvent( "on" + event, proc );
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_mozillap ...                                                 */
 /*---------------------------------------------------------------------*/
 function hop_mozillap() {
    return navigator.userAgent.indexOf( "Mozilla" ) >= 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_iep ...                                                      */
+/*---------------------------------------------------------------------*/
+function hop_iep() {
+   return navigator.userAgent.indexOf( "MSIE" ) >= 0;
 }
 
 /*---------------------------------------------------------------------*/
