@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri Jul 28 17:49:27 2006 (serrano)                */
+;*    Last change :  Wed Aug  2 07:46:10 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -110,10 +110,10 @@
 			    (remote-body r socket remote))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    remote ...                                                       */
+;*    remote-body ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (remote-body r::http-response-remote socket remote::connection)
-   (with-access::http-response-remote r (host remote-timeout timeout request)
+   (with-access::http-response-remote r (host port remote-timeout timeout request)
       ;; the body
       (with-trace 4 'http-response-body
 	 (let ((op (socket-output socket))
@@ -125,11 +125,27 @@
 	       (output-timeout-set! op timeout))
 	    (with-handler
 	       (lambda (e)
-		  ;; If we have alread send characters to the client
-		  ;; it is no longer possible to answer resource unavailable
-		  (if wstart
-		      (raise e)
-		      (http-response (http-gateway-timeout host) socket)))
+		  (cond
+		     (wstart
+		      ;; If we have alread send characters to the client
+		      ;; it is no longer possible to answer resource
+		      ;; unavailable so we raise the error
+		      (raise e))
+		     ((connection-keep-alive? remote)
+		      ;; This is a keep-alive connectionn that is likely
+		      ;; to have been closed by the remote server, we retry
+		      ;; with a fresh connection
+		      (connection-close! remote)
+		      (hop-verb 2
+				(hop-color request request " RESET.ka")
+				" (alive since "
+				(connection-request-id remote)
+				") " host ":" port "\n")
+		      (http-response r socket))
+		     (else
+		      ;; We signal the error to the client that will retry
+		      ;; its request if he wishes to
+		      (http-response (http-service-unavailable host) socket))))
 	       (multiple-value-bind (http-version status-code phrase)
 		  (http-parse-status-line ip)
 		  (multiple-value-bind (header _1 _2 cl te _3 _4 connection)
