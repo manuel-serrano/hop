@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Jul 27 10:27:46 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 15:14:13 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -219,13 +219,13 @@ function hop_default_failure( http ) {
    if( !div ) {
       div = document.createElement( "div" );
       div.id = "hop_default_failure";
-      div.style.setProperty( "position", "absolute", "" );
-      div.style.setProperty( "top", "100", "" );
-      div.style.setProperty( "z-index", "10000", "" );
-      div.style.setProperty( "width", "100%", "" );
-      div.style.setProperty( "padding", "0", "" );
+      hop_style_set( div, "position", "absolute" );
+      hop_style_set( div, "top", "100" );
+      hop_style_set( div, "z-index", "10000" );
+      hop_style_set( div, "width", "100%" );
+      hop_style_set( div, "padding", "0" );
       div.align = "center";
-      div.style.setProperty( "background", "transparent", "" );
+      hop_style_set( div, "background", "transparent" );
 
       div.innerHTML = t;
 

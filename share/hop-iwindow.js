@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed Aug  2 13:42:28 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 15:13:16 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -94,11 +94,11 @@ function hop_iwindow_iconify( id ) {
 	 // MS 3may2006: I think that for IE, we have to use
 	 // document.documentElement.scrollTop or document.body.scrollTop
 	 win.style.top = old + window.pageYOffset;
-	 win.style.setProperty( "position", "absolute", "" );
+	 hop_style_set( win, "position", "absolute" );
       } else {
 	 var old = win.offsetTop;
 	 win.style.top = old - window.pageYOffset;
-	 win.style.setProperty( "position", "fixed", "" );
+	 hop_style_set( win, "position", "fixed" );
       }
    }
 
