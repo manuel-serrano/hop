@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed Aug  2 17:11:10 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 17:21:22 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -314,7 +314,7 @@ function make_hop_iwindow( id, klass, parent ) {
    else
       document.body.appendChild( win );
 
-   win.user_parent = parent;
+   win.user_parent = (parent && parent != undefined) ? parent : false;
    
    win.el_title = document.getElementById( id + "-title" );
    win.el_handle = document.getElementById( id + "-title" );
