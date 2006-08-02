@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed Aug  2 15:13:16 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 17:11:10 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -146,6 +146,7 @@ function hop_iwindow_drag( event, win ) {
    win.el_handle.style.cursor = "move";
 
    document.onmousemove = function( event ) {
+      if( event == undefined ) event = window.event;
       var nx = (event.clientX - dx);
       var ny = (event.clientY - dy);
 
@@ -167,6 +168,7 @@ function hop_iwindow_drag( event, win ) {
    }
 
    document.onmouseup = function( event ) {
+      if( event == undefined ) event = window.event;
       document.onmousemove = false;
       win.el_handle.style.cursor = ocursor;
       win.el_body.style.visibility = "visible";
@@ -192,23 +194,27 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
    
    if( widthp && heightp ) {
       document.onmousemove = function( event ) {
+	 if( event == undefined ) event = window.event;
 	 win.el_main.style.width = w0 + (event.clientX - x0);
 	 win.el_main.style.height = h0 + (event.clientY - y0);
       }
    } else {
       if( widthp ) {
 	 document.onmousemove = function( event ) {
+	    if( event == undefined ) event = window.event;
 	    win.el_main.style.width = w0 + (event.clientX - x0);
 	 }
       } else {
 	 if( heightp ) {
 	    document.onmousemove = function( event ) {
+	       if( event == undefined ) event = window.event;
 	       win.el_main.style.height = h0 + (event.clientY - y0);
 	    }
 	 } else {
 	    var l0 = win.offsetLeft;
 
 	    document.onmousemove = function( event ) {
+	       if( event == undefined ) event = window.event;
 	       var w = w0 + (x0 - event.clientX);
 	       win.style.left = (l0 + w0) - w;
 	       win.el_main.style.width = w;
@@ -219,6 +225,7 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
    }
 
    document.onmouseup = function( event ) {
+      if( event == undefined ) event = window.event;
       win.el_body.style.display = "block";
       document.onmousemove = false;
 
@@ -321,18 +328,22 @@ function make_hop_iwindow( id, klass, parent ) {
    win.el_shadow_box = document.getElementById( id + "-shadow-box" );
 
    win.el_handle.onmousedown = function( event ) {
+      if( event == undefined ) event = window.event;
       hop_iwindow_drag( event, win )
    };
 
    win.el_resize_middle.onmousedown = function( event ) {
+      if( event == undefined ) event = window.event;
       hop_iwindow_resize( event, win, false, true );
    };
    
    win.el_resize_right.onmousedown = function( event ) {
+      if( event == undefined ) event = window.event;
       hop_iwindow_resize( event, win, true, true );
    };
    
    win.el_resize_left.onmousedown = function( event ) {
+      if( event == undefined ) event = window.event;
       hop_iwindow_resize( event, win, false, false );
    };
    
