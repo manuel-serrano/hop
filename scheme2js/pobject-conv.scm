@@ -131,6 +131,16 @@
 		(scheme->pobject then (location (cddr exp)))
 		(scheme->pobject else (location (cdddr exp)))))
 	  ((if . L) (error #f "bad if-form: " exp))
+	  ((when ?test . ?then)
+	   (new-node If
+		(scheme->pobject test (location (cdr exp)))
+		(scheme->pobject (cons 'begin then) (location (cddr exp)))
+		(scheme->pobject #f (location (cdddr exp)))))
+	  ((unless ?test . ?then)
+	   (new-node If
+		(scheme->pobject `(not ,test) (location (cdr exp)))
+		(scheme->pobject (cons 'begin then) (location (cddr exp)))
+		(scheme->pobject #f (location (cdddr exp)))))
 	  ((case ?key . ?clauses)
 	   (case->pobject key clauses))
 	  ((set! ?var ?expr)
