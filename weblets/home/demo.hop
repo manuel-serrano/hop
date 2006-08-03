@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Wed Aug  2 14:13:39 2006 (serrano)                */
+;*    Last change :  Thu Aug  3 08:42:58 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -148,35 +148,33 @@ be used to access the whole source code of this playground.])))
 	 (w (if (pair? r) (car r) "200"))
 	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
 	 (t (string-capitalize "Tips")))
-      (<SCRIPT>
-	 :type "text/javascript"
-	 ~(let ((frame (document.createElement "iframe"))
-		(t (document.getElementById $id))
-		(p (document.getElementById "demo-playground")))
-	     (set! frame.className "demos")
-	     (set! frame.src $(make-service-url home/demos/tips))
-	     (set! frame.style.border "0")
-	     (set! frame.style.width "100%")
-	     (set! frame.style.height "100%")
-	     (let* ((w (iwindow-open $t
-				     frame
-				     false false
-				     $w $h
-				     (/ (- window.innerWidth $w) 2) 200
-				     p))
-		    (i (<SPAN> :class "icon" $t)))
-		(set! i.onmousedown
-		      (lambda (e)
-			 (set! i.style.visibility "hidden")
-			 (set! w.style.display "block")))
-		(set! w.iconify
-		      (lambda ()
-			 (set! i.style.top w.style.top)
-			 (set! i.style.left w.style.left)
-			 (set! i.style.visibility "visible")
-			 (set! w.style.display "none")))
-		(dom-append-child! p i)
-		w)))))
+      ~(let ((frame (document.createElement "iframe"))
+	     (t (document.getElementById $id))
+	     (p (document.getElementById "demo-playground")))
+	  (set! frame.className "demos")
+	  (set! frame.src $(make-service-url home/demos/tips))
+	  (set! frame.style.border "0")
+	  (set! frame.style.width "100%")
+	  (set! frame.style.height "100%")
+	  (let* ((w (iwindow-open $t
+				  frame
+				  false false
+				  $w $h
+				  (/ (- window.innerWidth $w) 2) 200
+				  p))
+		 (i (<SPAN> :class "icon" $t)))
+	     (set! i.onmousedown
+		   (lambda (e)
+		      (set! i.style.visibility "hidden")
+		      (set! w.style.display "block")))
+	     (set! w.iconify
+		   (lambda ()
+		      (set! i.style.top w.style.top)
+		      (set! i.style.left w.style.left)
+		      (set! i.style.visibility "visible")
+		      (set! w.style.display "none")))
+	     (dom-append-child! p i)
+	     w))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ZIMG> ...                                                       */
