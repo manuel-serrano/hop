@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Wed Aug  2 15:52:09 2006 (serrano)                */
+/*    Last change :  Thu Aug  3 12:27:14 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -151,9 +151,9 @@ function hop_mozillap() {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_iep ...                                                      */
+/*    hop_msiep ...                                                    */
 /*---------------------------------------------------------------------*/
-function hop_iep() {
+function hop_msiep() {
    return navigator.userAgent.indexOf( "MSIE" ) >= 0;
 }
 

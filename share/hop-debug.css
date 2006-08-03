@@ -1,0 +1,33 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-debug.css                     */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Aug  3 14:19:22 2006                          */
+/*    Last change :  Thu Aug  3 15:07:39 2006 (serrano)                */
+/*    Copyright   :  2006 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    HOP debug CSS                                                    */
+/*=====================================================================*/
+
+div.hop_debug_reset {
+  text-align: center;
+  font-size: x-small;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 2px;
+  padding-bottom: 2px;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+  
+div.hop_debug {
+  width: 320px;
+  max-width: 320px;
+  height: 200px;
+  max-height: 200px;
+  overflow: auto;
+  background: white;
+  font-size: x-small;
+}
+
+pre.hop_debug {
+}
