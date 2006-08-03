@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Aug  2 14:11:41 2006 (serrano)                */
+;*    Last change :  Thu Aug  3 10:24:31 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -77,7 +77,11 @@
 		      (else
 		       body))))))
    (let ((bodies (map (lambda (t i) (make-tab-div t i))
-		      tabs (iota (length tabs)))))
+		      tabs (iota (length tabs))))
+	 (attrs (append-map (lambda (a)
+			       (list (symbol->keyword (car a)) (cdr a)))
+			    attrs)))
+      (tprint "attrs=" attrs)
       (apply <DIV>
 	     :id id
 	     :class "hop-notepad"

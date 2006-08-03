@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed Aug  2 17:21:22 2006 (serrano)                */
+/*    Last change :  Thu Aug  3 10:06:27 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -23,6 +23,14 @@ function hop_iwindow_close( id ) {
 
    /* user event */
    if( win.onclose ) win.onclose();
+}
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_window_close ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_window_close( win ) {
+   return win.close( win );
 }
 
 /*---------------------------------------------------------------------*/
@@ -422,3 +430,17 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
 
    return win;
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_window_open ...                                              */
+/*---------------------------------------------------------------------*/
+function hop_window_open( url, title, klass, width, height, x, y ) {
+   var p = klass ? klass : "toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, copyhistory=no, titlebar=no";
+   if( width ) p += ",width=" + width; else p += ",width=640";
+   if( height ) p += ",height=" + height; else p+= ",height=480";
+   if( x ) p += ",screenX=" + x + ",left=" + x;
+   if( y ) p += ",screenY=" + y + ",top=" + y;
+   return window.open( url, title, p );
+}
+   
+
