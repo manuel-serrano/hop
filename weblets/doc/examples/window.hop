@@ -1,0 +1,13 @@
+;; Outer windows
+(define-service (window/iota)
+   (<HTML>
+      (<TABLE>
+	 (map (lambda (i) (<TR> (map <TD> (iota 10 i))))
+	      (iota 10)))))
+
+(<HTML>
+   (<HEAD> :jscript "hop-iwindow.js")
+   (<BODY>
+      (<BUTTON>
+	 :onclick ~(window-open ($window/iota) "iota")
+	 "clickme")))
