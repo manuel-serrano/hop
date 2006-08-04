@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Aug  2 14:02:52 2006 (serrano)                */
+;*    Last change :  Fri Aug  4 10:29:37 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -202,34 +202,43 @@
 ;*    http-service-not-found ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (http-service-not-found file)
-   (instantiate::http-response-hop
-      (request (instantiate::http-request))
-      (start-line "HTTP/1.0 404 Not Found")
-      (xml (<HTML>
-	      (<HEAD> :css "hop-error.hss")
-	      (<BODY>
-		 (<CENTER>
-		    (<ETABLE>
-		       (<TR>
-			  (<ETD>
-			     (<EIMG> :src (format "~a/icons/notfound.png"
-						  (hop-share-directory))))
-			  (<ETD>
-			     (<TABLE>
-				:style "35em"
-				(<TR> (<ETD> :class "title"
-					     "Invalidated service!"
-					     ))
-				(<TR> (<ETD> :class "msg"
-					     (<SPAN> :class "filenotfound"
-						     file)))
-				(<TR> (<ETD> :class "dump"
-					     (<SPAN> "You are trying to executed an invalidated service!
+   (define (illegal-service msg)
+      (instantiate::http-response-hop
+	 (request (instantiate::http-request))
+	 (start-line "HTTP/1.0 404 Not Found")
+	 (xml (<HTML>
+		 (<HEAD> :css "hop-error.hss")
+		 (<BODY>
+		    (<CENTER>
+		       (<ETABLE>
+			  (<TR>
+			     (<ETD>
+				(<EIMG> :src (format "~a/icons/notfound.png"
+						     (hop-share-directory))))
+			     (<ETD>
+				(<TABLE>
+				   :style "35em"
+				   (<TR> (<ETD> :class "title"
+						(format "~a service!"
+							(string-capitalize msg))))
+				   (<TR> (<ETD> :class "msg"
+						(<SPAN> :class "filenotfound"
+							file)))
+				   (<TR> (<ETD> :class "dump"
+						(<SPAN> (format "You are trying to executed an ~a service!
 <br><br>
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
 can no longer be executed.<br><br>
-Reloading the page is the only workaround.")))))))))))))
+Reloading the page is the only workaround." msg))))))))))))))
+   (define (http-invalidated-service file)
+      (illegal-service "invalidated"))
+   (define (http-unknown-service file)
+      (illegal-service "unknown"))
+   (let ((svc (make-file-name (hop-service-base) (hop-service-weblet-name))))
+      (if (substring-at? file svc 0)
+	  (http-invalidated-service file)
+	  (http-unknown-service file))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-permission-denied ...                                       */

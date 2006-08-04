@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Aug  3 12:27:14 2006 (serrano)                */
+/*    Last change :  Fri Aug  4 11:10:05 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -126,6 +126,7 @@ hop_style_set = function( obj, property, value ) {
 /*---------------------------------------------------------------------*/
 var hop_add_event_listener = undefined;
 var hop_remove_event_listener = undefined;
+var hop_stop_propagation = undefined;
 
 if( document.implementation.hasFeature( "Events" , "2.0") ) {
    hop_add_event_listener = function( obj, event, proc, capture ) {
@@ -134,14 +135,23 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
    hop_remove_event_listener = function( obj, event, proc, capture ) {
       return obj.removeEventListener( event, proc, capture );
    }
+   hop_stop_propagation = function( event ) {
+      event.preventDefault();
+      event.stopPropagation();
+   }
 } else {
    hop_add_event_listener = function( obj, event, proc, capture ) {
-      return obj.attachEvent( "on" + event, proc );
+      return obj.attachEvent( "on" + event, function(_) {return proc(window.event)});
    }
    hop_remove_event_listener = function( obj, event, proc, capture ) {
       return obj.detachEvent( "on" + event, proc );
    }
+   hop_stop_propagation = function( event ) {
+      event.cancelBubble = true;
+      event.returnValue = false;
+   }
 }
+
 
 /*---------------------------------------------------------------------*/
 /*    hop_mozillap ...                                                 */

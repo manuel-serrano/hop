@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Tue May 30 08:07:51 2006 (serrano)                */
+;*    Last change :  Fri Aug  4 11:30:13 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
@@ -99,8 +99,9 @@
 			 :title "Save current preferences"
 			 (<BUTTON>
 			    :onclick
-			    (string-append
-			     "var els = document.getElementsByClass( 'pref_applied' ); var i; for( i = 0; i < els.length; i++ ) { els[ i ].className = 'pref_saved'; }"
+			    (tilde-compose
+			     (string->tilde
+			      "var els = document.getElementsByClass( 'pref_applied' ); var i; for( i = 0; i < els.length; i++ ) { els[ i ].className = 'pref_saved'; }")
 			     onclick)
 			    "save preferences"))))
 	     ,@(map make-edit-clause clauses))))

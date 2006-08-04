@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Aug  3 09:16:39 2006 (serrano)                */
+;*    Last change :  Fri Aug  4 11:28:06 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -70,6 +70,9 @@
 
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
+
+	    (string->tilde::xml-tilde ::bstring)
+	    (tilde-compose::xml-tilde ::xml-tilde ::xml-tilde)
 	    
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -630,4 +633,17 @@
 	     (attributes (cons `(src . ,src) attributes))
 	     (body '())))))
 	  
+;*---------------------------------------------------------------------*/
+;*    string->tilde ...                                                */
+;*---------------------------------------------------------------------*/
+(define (string->tilde string)
+   (instantiate::xml-tilde
+      (body string)))
+
+;*---------------------------------------------------------------------*/
+;*    tilde-compose ...                                                */
+;*---------------------------------------------------------------------*/
+(define (tilde-compose t1 t2)
+   (instantiate::xml-tilde
+      (body (string-append (xml-tilde-body t1) "\n" (xml-tilde-body t2)))))
 

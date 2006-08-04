@@ -11,9 +11,7 @@
 	         if( b ) blue = b;
 
 		 if( el != null )
-		   el.style.setProperty("background",
-				        "rgb("+red+","+green+","+blue+")",
-				        "");
+		   hop_style_set( el, "background", "rgb("+red+","+green+","+blue+")" );		  
               }
 	    }))
  (let* ((colbox (<DIV> :style { border: 1px solid black; width: 60px; height: 60px}))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Fri Aug  4 08:36:46 2006 (serrano)                */
+/*    Last change :  Fri Aug  4 12:41:08 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -141,8 +141,8 @@ function hop_iwindow_raise( win ) {
 /*    hop_iwindow_drag ...                                             */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_drag( event, win ) {
-   var dx = event.clientX - hop_element_x( win );
-   var dy = event.clientY - hop_element_y( win );
+   var dx = event.clientX - win.offsetLeft;
+   var dy = event.clientY - win.offsetTop;
    var ocursor = win.el_handle.style.cursor;
 
    hop_iwindow_raise( win );
@@ -153,9 +153,7 @@ function hop_iwindow_drag( event, win ) {
    win.el_body.style.visibility = "hidden";
    win.el_handle.style.cursor = "move";
 
-   debug( "win-drag, clientY=" + event.clientY + " y=" + hop_element_y( win ) + " dy=" + dy + "\n" );
-   document.onmousemove = function( event ) {
-      if( event == undefined ) event = window.event;
+   var mousemove = function( event ) {
       var nx = (event.clientX - dx);
       var ny = (event.clientY - dy);
 
@@ -164,31 +162,29 @@ function hop_iwindow_drag( event, win ) {
 	 var px = hop_element_x( p );
 	 var py = hop_element_y( p );
       
-	 if( (nx > px) && ((nx + win.offsetWidth) < px + p.offsetWidth) ) {
+	 if( (nx > px) && ((nx + win.offsetWidth) < (px + p.offsetWidth)) ) {
 	    win.style.left = nx;
 	 }
-	 if( (ny > py) && ((ny + win.offsetHeight) < py + p.offsetHeight) ) {
+	 if( (ny > py) && ((ny + win.offsetHeight) < (py + p.offsetHeight)) ) {
 	    win.style.top = ny;
 	 }
       } else {
 	 if( nx > 0 ) win.style.left = nx;
 	 if( ny > 0 ) win.style.top = ny;
-	 debug( "ny=" + ny + "\n" );
       }
    }
+   hop_add_event_listener( document, "mousemove", mousemove );
 
    document.onmouseup = function( event ) {
-      if( event == undefined ) event = window.event;
-      document.onmousemove = false;
+      hop_remove_event_listener( document, "mousemove", mousemove );
       win.el_handle.style.cursor = ocursor;
       win.el_body.style.visibility = "visible";
 
       /* user event */
       if( win.ondrag ) win.ondrag();
    }
-   
-   event.preventDefault();
-   event.stopPropagation();
+
+   hop_stop_propagation( event );
 }
 
 /*---------------------------------------------------------------------*/
@@ -199,52 +195,50 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
    var y0 = event.clientY;
    var w0 = win.el_main.offsetWidth;
    var h0 = win.el_main.offsetHeight;
+   var mousemove;
 
    win.el_body.style.display = "none";
    
    if( widthp && heightp ) {
-      document.onmousemove = function( event ) {
-	 if( event == undefined ) event = window.event;
+      mousemove = function( event ) {
 	 win.el_main.style.width = w0 + (event.clientX - x0);
 	 win.el_main.style.height = h0 + (event.clientY - y0);
-      }
+      };
+      hop_add_event_listener( document, "mousemove", mousemove );
    } else {
       if( widthp ) {
-	 document.onmousemove = function( event ) {
-	    if( event == undefined ) event = window.event;
+	 mousemove = function( event ) {
 	    win.el_main.style.width = w0 + (event.clientX - x0);
-	 }
+	 };
+	 hop_add_event_listener( document, "mousemove", mousemove );
       } else {
 	 if( heightp ) {
-	    document.onmousemove = function( event ) {
-	       if( event == undefined ) event = window.event;
+	    mousemove = function( event ) {
 	       win.el_main.style.height = h0 + (event.clientY - y0);
-	    }
+	    };
+	    hop_add_event_listener( document, "mousemove", mousemove );
 	 } else {
 	    var l0 = win.offsetLeft;
-
-	    document.onmousemove = function( event ) {
-	       if( event == undefined ) event = window.event;
+	    mousemove = function( event ) {
 	       var w = w0 + (x0 - event.clientX);
 	       win.style.left = (l0 + w0) - w;
 	       win.el_main.style.width = w;
 	       win.el_main.style.height = h0 + (event.clientY - y0);
 	    }
+	    hop_add_event_listener( document, "mousemove", mousemove );
 	 }
       }
    }
 
    document.onmouseup = function( event ) {
-      if( event == undefined ) event = window.event;
       win.el_body.style.display = "block";
-      document.onmousemove = false;
+      hop_remove_event_listener( document, "mousemove", mousemove );
 
       /* user event */
       if( win.onresize ) win.onresize();
    }
    
-   event.preventDefault();
-   event.stopPropagation();
+   hop_stop_propagation( event );
 }
 
 /*---------------------------------------------------------------------*/
@@ -337,25 +331,25 @@ function make_hop_iwindow( id, klass, parent ) {
    win.el_shadow = win.childNodes[ 0 ];
    win.el_shadow_box = document.getElementById( id + "-shadow-box" );
 
-   win.el_handle.onmousedown = function( event ) {
-      if( event == undefined ) event = window.event;
-      hop_iwindow_drag( event, win )
-   };
+   hop_add_event_listener(
+      win.el_handle,
+      "mousedown",
+      function( event ) { hop_iwindow_drag( event, win ) } );
 
-   win.el_resize_middle.onmousedown = function( event ) {
-      if( event == undefined ) event = window.event;
-      hop_iwindow_resize( event, win, false, true );
-   };
+   hop_add_event_listener(
+      win.el_resize_middle,
+      "mousedown",
+      function( event ) { hop_iwindow_resize( event, win, false, true ) } );
+
+   hop_add_event_listener(
+      win.el_resize_right,
+      "mousedown",
+      function( event ) { hop_iwindow_resize( event, win, true, true ) } );
    
-   win.el_resize_right.onmousedown = function( event ) {
-      if( event == undefined ) event = window.event;
-      hop_iwindow_resize( event, win, true, true );
-   };
-   
-   win.el_resize_left.onmousedown = function( event ) {
-      if( event == undefined ) event = window.event;
-      hop_iwindow_resize( event, win, false, false );
-   };
+   hop_add_event_listener(
+      win.el_resize_left,
+      "mousedown",
+      function( event ) { hop_iwindow_resize( event, win, false, false ) } );
    
    return win;
 }
@@ -368,7 +362,6 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
    var isnew = false;
 
    klass = klass ? ("hop-iwindow " + klass) : "hop-iwindow";
-
    if( win == null ) {
       win = make_hop_iwindow( id, klass, parent );
       isnew = true;
@@ -442,6 +435,7 @@ function hop_window_open( url, title, klass, width, height, x, y ) {
    if( height ) p += ",height=" + height; else p+= ",height=480";
    if( x ) p += ",screenX=" + x + ",left=" + x;
    if( y ) p += ",screenY=" + y + ",top=" + y;
+
    return window.open( url, title, p );
 }
    

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Wed Aug  2 16:11:40 2006 (serrano)                */
+/*    Last change :  Fri Aug  4 09:09:17 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -156,6 +156,7 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
    
    // cursor event handling
    var mousemove = function( e ) {
+      if( e == undefined ) e = window.event;
       hop_vpaned_mousemove( e, paned );
    };
 
@@ -175,8 +176,8 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
       hop_add_event_listener( document, "mousemove", mousemove, true );
       hop_add_event_listener( document, "mouseup", delmousemove, true );
       hop_add_event_listener( document, "onblur", delmousemove, true );
-      e.preventDefault();
-      e.stopPropagation();
+      
+      hop_stop_propagation( e );
    }
    
    // re-parent the two pans
@@ -246,6 +247,7 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
 
    // cursor event handling
    var mousemove = function( e ) {
+      if( e == undefined ) e = window.event;
       hop_hpaned_mousemove( e, paned );
    };
 

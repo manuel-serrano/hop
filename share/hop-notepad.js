@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Wed Aug  2 14:12:13 2006 (serrano)                */
+/*    Last change :  Fri Aug  4 11:59:06 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -14,11 +14,11 @@
 /*---------------------------------------------------------------------*/
 function hop_notepad_inner_toggle( np, to, tabs, bodies ) {
    /* disactive last selected tab */
-   tabs.childNodes[ np.active_tab ].className = "hop-nptab-inactive hop-nptab";
+   tabs.childNodes[ np.active_tab ].className = " hop-nptab hop-nptab-inactive";
    bodies.childNodes[ np.active_tab ].style.display = "none";
 
    /* active the new selected tab */
-   tabs.childNodes[ to ].className = "hop-nptab-active hop-nptab";
+   tabs.childNodes[ to ].className = "hop-nptab hop-nptab-active";
    bodies.childNodes[ to ].style.display = "block";
 
    /* store for next time */

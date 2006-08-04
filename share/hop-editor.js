@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Apr 10 11:43:00 2006                          */
-/*    Last change :  Wed Aug  2 15:59:15 2006 (serrano)                */
+/*    Last change :  Fri Aug  4 09:08:28 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    <EDITOR> JavaScript support                                      */
 /*=====================================================================*/
@@ -65,6 +65,7 @@ function hop_edit_init(id, popups_dir, submit, cancel)
 /*---------------------------------------------------------------------*/
 function hop_edit_keypress_hdlr(e, id)
 {
+    if (e==undefined) e=window.event;
     if (e.ctrlKey) {
 	var propagate=false,
 	    char=e.charCode;
@@ -76,8 +77,7 @@ function hop_edit_keypress_hdlr(e, id)
 	  default: propagate = true;
 	}
 	if (!propagate) {
-	    e.preventDefault();
-	    e.stopPropagation();
+	   hop_stop_propagation(e);
 	}
     }
 }
