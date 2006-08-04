@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Mon May 15 21:26:44 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 15:52:27 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -84,8 +84,8 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    slider.cellpadding = 0;
    slider.cellspacing = 0;
    slider.border = 0;
-   slider.style.setProperty( "border-collapse", "collapse", 0 );
-   slider.style.setProperty( "border-spacing", "0", 0 );
+   hop_style_set( slider, "border-collapse", "collapse" );
+   hop_style_set( slider, "border-spacing", "0" )
    parent.appendChild( slider );
 
    tbody = doc.createElement( "tbody" );
@@ -177,7 +177,7 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    };
 
    var delmousemove = function( e ) {
-      doc.removeEventListener( "mousemove", mousemove, true );
+      hop_remove_event_listener( doc, "mousemove", mousemove, true );
    };
    
    cursor.onmouseover = function( e ) {
@@ -189,9 +189,9 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    };
 
    cursor.onmousedown = function( e ) {
-      doc.addEventListener( "mousemove", mousemove, true );
-      doc.addEventListener( "mouseup", delmousemove, true );
-      doc.addEventListener( "onblur", delmousemove, true );
+      hop_add_event_listener( doc, "mousemove", mousemove, true );
+      hop_add_event_listener( doc, "mouseup", delmousemove, true );
+      hop_add_event_listener( doc, "onblur", delmousemove, true );
    }
    
    // line event handling

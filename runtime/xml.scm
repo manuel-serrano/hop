@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Jul  9 14:06:46 2006 (serrano)                */
+;*    Last change :  Thu Aug  3 09:16:39 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -16,7 +16,7 @@
 
    (library web)
    
-   (include "eval-macro.sch"
+   (include "compiler-macro.sch"
 	    "xml.sch")
 
    (import  __hop_types
@@ -39,7 +39,8 @@
 	       (value::obj (default #f)))
 
 	    (class xml-tilde::xml
-	       (body read-only))
+	       (body read-only)
+	       (parent (default #unspecified)))
 
 	    (class xml-markup::xml
 	       (markup::symbol read-only)
@@ -208,6 +209,8 @@
 		(cond
 		   ((xml-element? e)
 		    (xml-element-parent-set! e o))
+		   ((xml-tilde? e)
+		    (xml-tilde-parent-set! e o))
 		   ((pair? e)
 		    (loop e))))
 	     (loop (cdr es)))
@@ -306,10 +309,13 @@
 ;*    xml-write ::xml-tilde ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-tilde p encoding)
-   (with-access::xml-tilde obj (body)
-      (display "<script type='text/javascript'>" p)
-      (xml-write body p encoding)
-      (display "</script>\n" p)))
+   (with-access::xml-tilde obj (body parent)
+      (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
+	  (xml-write body p encoding)
+	  (begin
+	     (display "<script type='text/javascript'>" p)
+	     (xml-write body p encoding)
+	     (display "</script>\n" p)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-delay ...                                        */

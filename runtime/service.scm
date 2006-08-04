@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Jul 21 18:45:47 2006 (serrano)                */
+;*    Last change :  Thu Aug  3 09:14:53 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_service
    
-   (include "eval-macro.sch"
+   (include "compiler-macro.sch"
 	    "service.sch")
    
    (library web)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Jun 13 12:13:14 2006 (serrano)                */
+;*    Last change :  Wed Aug  2 16:30:18 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -96,8 +96,10 @@
    (define popup-letter-menu
       ~(let ((el this)
 	     (menu $popup))
-	  (event.preventDefault)
-	  (event.stopPropagation)
+	  (unless (eq? event.preventDefault #unspecified)
+	     (event.preventDefault))
+	  (unless (eq? event.stopPropagation #unspecified)
+	     (event.stopPropagation))
 	  (with-hop ($click this.innerHTML)
 	     (lambda (h)
 		(if (> h.length 0)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jul 28 10:03:01 2006 (serrano)                */
+;*    Last change :  Wed Aug  2 14:02:52 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -97,7 +97,7 @@
 ;*    <EIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<EIMG> . args)
-   (apply <IMG> :style "padding: 20px;" :inline #t args))
+   (apply <IMG> :style "padding: 20px;" args))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ETD> ...                                                        */

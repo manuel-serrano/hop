@@ -1,0 +1,5 @@
+((name "info")
+ (author "M. Serrano")
+ (version "1.0.0")
+ (sdescr "General informations on the running Hop.")
+ (about-service "about"))

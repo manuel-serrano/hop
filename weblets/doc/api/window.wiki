@@ -1,0 +1,68 @@
+<doc> Outer Windows
+
+== Description ==
+
+HOP windows are window managed by the client window manager. They can only
+entire documents.
+
+== Synopsis ==
+
+=== Client ===
+
+  (window-open arg ...)
+  (window-close win)
+
+=== Requirements ===
+
+Documents using //windows// need to load the script
+++hop-iwindow.js++.  They also might want to load the
+++hop-iwindow.css++ style sheet. Hence, documents using //windows//
+must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-window.js")
+
+
+== Examples ==
+
+<example>window</example>
+
+== Client Definitions ==
+<client>
+
+=== ++(window-open id o [t] [attr] [w h] [x y])++ ===
+<procedure> window-open
+
+<arguments>
+^  arguments  ^   type    ^   description                                   ^
+| id          |  string   | the window identifier.                          |
+| o           |   obj     | the content material.                           |
+| t           |  string   | an optional title, defaults to ++id++.          |
+| attr        |  string   | an optional attribute.                          |
+| w           |  integer  | the optional width.                             |
+| h           |  integer  | the optional height.                            |
+| x           |  integer  | the optional X coordinate.                      |
+| y           |  integer  | the optional Y coordinate.                      |
+</arguments>
+
+
+</procedure>
+
+=== ++(window-close obj)++ ===
+<procedure> window-close
+
+<arguments>
+^  arguments  ^   type    ^   description                                   ^
+| obj         |   obj     | A window identifier or a window itself.         |
+</arguments>
+
+~~
+This client-side procedure closes an //window//.
+
+</procedure>
+<client>
+
+== See also ==
+<see-also>TOOLTIP, iwindow</see-also>
+
+</doc>

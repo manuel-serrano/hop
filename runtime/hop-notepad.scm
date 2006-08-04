@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 29 11:57:46 2006 (serrano)                */
+;*    Last change :  Thu Aug  3 10:24:31 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -59,8 +59,8 @@
 	    (set! attributes
 		  (cons* (cons "onclick" click)
 			 (cons "class" (if (=fx i 0)
-					   "hop-nptab-active"
-					   "hop-nptab-inactive"))
+					   "hop-nptab-active hop-nptab"
+					   "hop-nptab-inactive hop-nptab"))
 			 attributes)))
 	 (with-access::xml-nptab-element tab (attributes body)
 	    (when (and (xml-delay? (car (xml-element-body tab)))
@@ -77,7 +77,11 @@
 		      (else
 		       body))))))
    (let ((bodies (map (lambda (t i) (make-tab-div t i))
-		      tabs (iota (length tabs)))))
+		      tabs (iota (length tabs))))
+	 (attrs (append-map (lambda (a)
+			       (list (symbol->keyword (car a)) (cdr a)))
+			    attrs)))
+      (tprint "attrs=" attrs)
       (apply <DIV>
 	     :id id
 	     :class "hop-notepad"

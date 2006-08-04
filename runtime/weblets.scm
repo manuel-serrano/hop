@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Jul 28 15:38:06 2006 (serrano)                */
+;*    Last change :  Thu Aug  3 09:35:08 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -27,6 +27,16 @@
 	    (autoload-weblets ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
+;*    *weblet-table* ...                                               */
+;*---------------------------------------------------------------------*/
+(define *weblet-table* (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    *weblet-lock* ...                                                */
+;*---------------------------------------------------------------------*/
+(define *weblet-lock* (make-mutex "weblets"))
+
+;*---------------------------------------------------------------------*/
 ;*    autoload-weblets ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (autoload-weblets dirs)
@@ -43,19 +53,41 @@
 			(and (=fx lp (+fx lb 1))
 			     (char=? (string-ref path (-fx lp 1))
 				     #\/))))))))
+   (define (warn name opath npath)
+      (when (> (bigloo-warning) 1)
+	 (warning name
+		  (format
+		   "autoload already installed on:\n  ~a\nignoring:\n  ~a"
+		   opath
+		   npath))))
    (define (maybe-autoload x)
-      (let ((url (make-url-name (hop-service-base) (cadr (assoc 'name x))))
-	    (path (cadr (assq 'weblet x)))
-	    (autopred (assq 'autoload x)))
-	 (if (pair? autopred)
-	     (begin
-		(hop-verb 2 "Setting autoload " path " on "
-			  (cadr autopred) "\n")
-		(autoload path (eval (cadr autopred))))
-	     (install-autoload-prefix path url))))
-   (for-each (lambda (dir)
-		(for-each maybe-autoload (find-weblets-in-directory dir)))
-	     dirs))
+      (let ((cname (assq 'name x)))
+	 (if (pair? cname)
+	     (let* ((name (cadr cname))
+		    (url (make-url-name (hop-service-base) name))
+		    (path (cadr (assq 'weblet x)))
+		    (autopred (assq 'autoload x))
+		    (opath (hashtable-get *weblet-table* name)))
+		(cond
+		   ((string? opath)
+		    (warn name opath path))
+		   ((pair? autopred)
+		    (hashtable-put! *weblet-table* name path)
+		    (hop-verb 2 "Setting autoload " path " on "
+			      (cadr autopred) "\n")
+		    (autoload path (eval (cadr autopred))))
+		   (else
+		    (hashtable-put! *weblet-table* name path)
+		    (install-autoload-prefix path url))))
+	     (warning 'autoload-weblets
+		      "Illegal weblet etc/weblet.info file"
+		      x))))
+   (with-lock *weblet-lock*
+      (lambda ()
+	 (for-each (lambda (dir)
+		      (for-each maybe-autoload
+				(find-weblets-in-directory dir)))
+		   dirs))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-weblets-in-directory ...                                    */

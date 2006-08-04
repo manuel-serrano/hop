@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Jun 12 13:27:31 2006 (eg)                     */
+#*    Last change :  Thu Aug  3 09:21:20 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -18,7 +18,7 @@ include ../../etc/Makefile.version
 POPULATION	= Makefile \
                   etc/icons config.hop hz.hop repository.hop weblets.hop \
 		  authenticate.hop db.hop hz.hss install.hop sync.hop \
-                  widgets.hop .afile etc/weblet-info etc/logo.png
+                  widgets.hop .afile etc/weblet.info etc/logo.png
 
 build: .afile
 

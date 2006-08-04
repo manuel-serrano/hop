@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Fri Apr 28 12:03:36 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 15:33:15 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -23,7 +23,7 @@ function hop_tree_close( tree ) {
       }
    
       tree.img_folder.src = tree.src_folderc;
-      tree.body.style.setProperty( "display", "none", "" );
+      hop_style_set( tree.body, "display", "none" );
 
       /* recursively close the subtree */
       var children = tree.body.childNodes;
@@ -54,7 +54,7 @@ function hop_tree_open( tree ) {
    }
    
    tree.img_folder.src = tree.src_foldero;
-   tree.body.style.setProperty( "display", "block", "" );
+   hop_style_set( tree.body, "display", "block" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -262,7 +262,7 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
    
    /* the (empty) body */
    var body = document.createElement( "div" );
-   body.style.setProperty( "display", "none", "" );
+   hop_style_set( body, "display", "none" );
    body.className = "hop-tree-body";
    tree.appendChild( body );
 
@@ -319,7 +319,6 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
 
    leaf.setAttribute( "cellpadding", 0 );
    leaf.setAttribute( "cellspacing", 0 );
-   leaf.setAttribute( "border", 0 );
 
    var tb = document.createElement( "tbody" );
    var row = document.createElement( "tr" ); 

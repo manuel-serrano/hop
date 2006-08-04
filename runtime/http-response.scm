@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Jul 26 15:51:08 2006 (serrano)                */
+;*    Last change :  Wed Aug  2 15:05:35 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -200,7 +200,8 @@
 	    ;; the body
 	    (with-trace 4 'http-response-procedure
 	       (when bodyp (proc p)))
-	    (flush-output-port p)))))
+	    (flush-output-port p)
+	    connection))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-file ...                           */

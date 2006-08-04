@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Sat Jun  3 15:07:50 2006 (serrano)                */
+/*    Last change :  Fri Aug  4 08:36:46 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -23,6 +23,14 @@ function hop_iwindow_close( id ) {
 
    /* user event */
    if( win.onclose ) win.onclose();
+}
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_window_close ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_window_close( win ) {
+   return win.close( win );
 }
 
 /*---------------------------------------------------------------------*/
@@ -94,11 +102,11 @@ function hop_iwindow_iconify( id ) {
 	 // MS 3may2006: I think that for IE, we have to use
 	 // document.documentElement.scrollTop or document.body.scrollTop
 	 win.style.top = old + window.pageYOffset;
-	 win.style.setProperty( "position", "absolute", "" );
+	 hop_style_set( win, "position", "absolute" );
       } else {
 	 var old = win.offsetTop;
 	 win.style.top = old - window.pageYOffset;
-	 win.style.setProperty( "position", "fixed", "" );
+	 hop_style_set( win, "position", "fixed" );
       }
    }
 
@@ -145,7 +153,9 @@ function hop_iwindow_drag( event, win ) {
    win.el_body.style.visibility = "hidden";
    win.el_handle.style.cursor = "move";
 
+   debug( "win-drag, clientY=" + event.clientY + " y=" + hop_element_y( win ) + " dy=" + dy + "\n" );
    document.onmousemove = function( event ) {
+      if( event == undefined ) event = window.event;
       var nx = (event.clientX - dx);
       var ny = (event.clientY - dy);
 
@@ -163,10 +173,12 @@ function hop_iwindow_drag( event, win ) {
       } else {
 	 if( nx > 0 ) win.style.left = nx;
 	 if( ny > 0 ) win.style.top = ny;
+	 debug( "ny=" + ny + "\n" );
       }
    }
 
    document.onmouseup = function( event ) {
+      if( event == undefined ) event = window.event;
       document.onmousemove = false;
       win.el_handle.style.cursor = ocursor;
       win.el_body.style.visibility = "visible";
@@ -192,23 +204,27 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
    
    if( widthp && heightp ) {
       document.onmousemove = function( event ) {
+	 if( event == undefined ) event = window.event;
 	 win.el_main.style.width = w0 + (event.clientX - x0);
 	 win.el_main.style.height = h0 + (event.clientY - y0);
       }
    } else {
       if( widthp ) {
 	 document.onmousemove = function( event ) {
+	    if( event == undefined ) event = window.event;
 	    win.el_main.style.width = w0 + (event.clientX - x0);
 	 }
       } else {
 	 if( heightp ) {
 	    document.onmousemove = function( event ) {
+	       if( event == undefined ) event = window.event;
 	       win.el_main.style.height = h0 + (event.clientY - y0);
 	    }
 	 } else {
 	    var l0 = win.offsetLeft;
 
 	    document.onmousemove = function( event ) {
+	       if( event == undefined ) event = window.event;
 	       var w = w0 + (x0 - event.clientX);
 	       win.style.left = (l0 + w0) - w;
 	       win.el_main.style.width = w;
@@ -219,6 +235,7 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
    }
 
    document.onmouseup = function( event ) {
+      if( event == undefined ) event = window.event;
       win.el_body.style.display = "block";
       document.onmousemove = false;
 
@@ -307,7 +324,7 @@ function make_hop_iwindow( id, klass, parent ) {
    else
       document.body.appendChild( win );
 
-   win.user_parent = parent;
+   win.user_parent = (parent && parent != undefined) ? parent : false;
    
    win.el_title = document.getElementById( id + "-title" );
    win.el_handle = document.getElementById( id + "-title" );
@@ -321,18 +338,22 @@ function make_hop_iwindow( id, klass, parent ) {
    win.el_shadow_box = document.getElementById( id + "-shadow-box" );
 
    win.el_handle.onmousedown = function( event ) {
+      if( event == undefined ) event = window.event;
       hop_iwindow_drag( event, win )
    };
 
    win.el_resize_middle.onmousedown = function( event ) {
+      if( event == undefined ) event = window.event;
       hop_iwindow_resize( event, win, false, true );
    };
    
    win.el_resize_right.onmousedown = function( event ) {
+      if( event == undefined ) event = window.event;
       hop_iwindow_resize( event, win, true, true );
    };
    
    win.el_resize_left.onmousedown = function( event ) {
+      if( event == undefined ) event = window.event;
       hop_iwindow_resize( event, win, false, false );
    };
    
@@ -346,7 +367,7 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
    var win = document.getElementById( id );
    var isnew = false;
 
-   klass = klass ? klass : "hop-iwindow";
+   klass = klass ? ("hop-iwindow " + klass) : "hop-iwindow";
 
    if( win == null ) {
       win = make_hop_iwindow( id, klass, parent );
@@ -411,3 +432,17 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
 
    return win;
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_window_open ...                                              */
+/*---------------------------------------------------------------------*/
+function hop_window_open( url, title, klass, width, height, x, y ) {
+   var p = klass ? klass : "toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, copyhistory=no, titlebar=no";
+   if( width ) p += ",width=" + width; else p += ",width=640";
+   if( height ) p += ",height=" + height; else p+= ",height=480";
+   if( x ) p += ",screenX=" + x + ",left=" + x;
+   if( y ) p += ",screenY=" + y + ",top=" + y;
+   return window.open( url, title, p );
+}
+   
+
