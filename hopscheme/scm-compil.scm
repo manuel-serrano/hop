@@ -1,7 +1,8 @@
 (module scm-compil
    (library hop
 	    scheme2js)
-   (import hopscheme-config)
+   (import hopscheme-config
+	   hopscheme_aliases)
    (export (<HOP-SCHEME-HEAD> . obj))
    (eval (export-all)))
 
@@ -28,7 +29,7 @@
       (lambda ()
 	 (scheme2js-compile-files! (list file)          ;; input-files
 				"-"                  ;; output-file
-				'()                  ;; js-interface
+				(hopscheme-aliases)   ;; js-interface
 				(hopscheme-config)))))  ;; config
 
 
