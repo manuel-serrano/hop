@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Thu Aug  3 09:53:12 2006 (serrano)                */
+;*    Last change :  Fri Aug  4 08:36:02 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -181,6 +181,8 @@
      (<SORTTABLE> dom_create_sorttable)
      (cookie-remove! hop_cookie_remove)
      (cookie-get hop_cookie_get_value)
-     (cookie-set! hop_cookie_set_value)))
+     (cookie-set! hop_cookie_set_value)
+     (debug hop_debug)
+     (debug-reset! hop_debug_reset)))
 
 

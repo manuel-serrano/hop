@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug  3 14:17:43 2006                          */
-/*    Last change :  Thu Aug  3 15:06:33 2006 (serrano)                */
+/*    Last change :  Fri Aug  4 08:35:35 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Simple HOP debug console                                         */
@@ -46,9 +46,9 @@ function hop_debug_get_container() {
 }
 
 /*---------------------------------------------------------------------*/
-/*    debug ...                                                        */
+/*    hop_debug ...                                                    */
 /*---------------------------------------------------------------------*/
-function debug() {
+function hop_debug() {
    var pre = hop_debug_get_container();
    var i;
    
