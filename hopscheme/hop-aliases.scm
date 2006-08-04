@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Fri Aug  4 08:36:02 2006 (serrano)                */
+;*    Last change :  Fri Aug  4 15:31:27 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -183,6 +183,9 @@
      (cookie-get hop_cookie_get_value)
      (cookie-set! hop_cookie_set_value)
      (debug hop_debug)
-     (debug-reset! hop_debug_reset)))
+     (debug-reset! hop_debug_reset)
+     (add-event-listener! hop_add_event_listener)
+     (remove-event-listener! hop_remove_event_listener)
+     (stop-event-propagation hop_stop_propagation)))
 
 

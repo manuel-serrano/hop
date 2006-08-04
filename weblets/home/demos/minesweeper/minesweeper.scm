@@ -136,14 +136,13 @@
 	  (set! cell.src *bomb-flagged-img*)))
       (remaining-bombs-update!)))
 
-(define (cell-mouse-down event)
-   (event.preventDefault)
-   (event.stopPropagation)
+(define (cell-mouse-down event mine)
+   (hop_stop_propagation event)
    (if (and (not *game-over*)
-	    (= event.which 1)) ; left button
+	    (or (eq? event.which 1) (eq? event.button 0))) ; left button
        (if event.shiftKey
-	   (mark-bomb! this)
-	   (cell-click! this))))
+	   (mark-bomb! mine)
+	   (cell-click! mine))))
 
 (define (cell-create! x y)
    (define (Mine)
@@ -155,8 +154,11 @@
    
    (let ((cell (document.createElement "img")))
       (set! cell.src *blank-img*)
-      (set! cell.onclick cell-mouse-down)
       (set! cell.mine (js-new Mine))
+      (hop_add_event_listener cell
+			      "click"
+			      (lambda (event)
+				 (cell-mouse-down event cell)))
       cell))
 
 (define *cells* (let ((v (make-vector (* *width* *height*)))
