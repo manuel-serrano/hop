@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Jul 26 15:51:30 2006 (serrano)                */
+;*    Last change :  Sun Aug 13 10:13:20 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -84,6 +84,7 @@
 ;*    *load-once-mutex* ...                                            */
 ;*---------------------------------------------------------------------*/
 (define *load-once-mutex* (make-mutex "load-once"))
+(define *load-once-condvar* (make-condition-variable "load-once"))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-once ...                                                    */
@@ -91,21 +92,35 @@
 (define (load-once file)
    (mutex-lock! *load-once-mutex*)
    (unless (hashtable? *table*) (set! *table* (make-hashtable)))
-   (let* ((f (file-name-unix-canonicalize file))
-	  (g (hashtable-get *table* f)))
-      (if g
-	  (mutex-unlock! *load-once-mutex*)
-	  (begin
-	     (hashtable-put! *table* f #t)
+   (let loop ()
+      (let ((f (file-name-unix-canonicalize file)))
+	 (case (hashtable-get *table* f)
+	    ((error)
+	     ;; the file failed to be loaded
+	     #f)
+	    ((loaded)
+	     ;; the file is already loaded
+	     (mutex-unlock! *load-once-mutex*))
+	    ((loading)
+	     ;; the file is currently being loaded
+	     (condition-variable-wait! *load-once-condvar* *load-once-mutex*)
+	     (loop))
+	    (else
+	     ;; the file has to be loaded
+	     (hashtable-put! *table* f 'loading)
 	     (mutex-unlock! *load-once-mutex*)
 	     (with-handler
 		(lambda (e)
-		   ;; unload the file on error
 		   (mutex-lock! *load-once-mutex*)
-		   (hashtable-remove! *table* f)
+		   (hashtable-put! *table* f 'error)
+		   (condition-variable-signal! *load-once-condvar*)
 		   (mutex-unlock! *load-once-mutex*)
 		   (raise e))
-		(hop-load f))))))
+		(hop-load f))
+	     (mutex-lock! *load-once-mutex*)
+	     (hashtable-put! *table* f 'loaded)
+	     (condition-variable-signal! *load-once-condvar*)
+	     (mutex-unlock! *load-once-mutex*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-once-unmark! ...                                            */

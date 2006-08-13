@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Jun 19 12:00:41 2006 (serrano)                */
+;*    Last change :  Sat Aug 12 09:29:34 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -443,7 +443,7 @@
        (table-cell (string-ref (the-html-substring 2 3) 0)
 		   #t #f (-fx (the-length) 2)))
       
-      ;; standard markups
+      ;; font style
       ("**"
        (let ((s (in-state '**)))
 	  (if s

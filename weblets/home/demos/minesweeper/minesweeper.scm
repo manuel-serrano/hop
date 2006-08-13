@@ -137,7 +137,7 @@
       (remaining-bombs-update!)))
 
 (define (cell-mouse-down event mine)
-   (hop_stop_propagation event)
+   (stop-event-propagation event)
    (if (and (not *game-over*)
 	    (or (eq? event.which 1) (eq? event.button 0))) ; left button
        (if event.shiftKey
@@ -155,10 +155,10 @@
    (let ((cell (document.createElement "img")))
       (set! cell.src *blank-img*)
       (set! cell.mine (js-new Mine))
-      (hop_add_event_listener cell
-			      "click"
-			      (lambda (event)
-				 (cell-mouse-down event cell)))
+      (add-event-listener! cell
+			   "click"
+			   (lambda (event)
+			      (cell-mouse-down event cell)))
       cell))
 
 (define *cells* (let ((v (make-vector (* *width* *height*)))

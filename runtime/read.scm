@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Jul  9 14:03:49 2006 (serrano)                */
+;*    Last change :  Sun Aug 13 09:56:03 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -687,7 +687,7 @@
 		       (f *the-loading-file*))
 		    (unwind-protect
 		       (begin
-			  (hop-load-afile (dirname file-name))
+			  (hop-load-afile (dirname path))
 			  (if (thread? t)
 			      (thread-specific-set! t file-name)
 			      (set! *the-loading-file* file-name))
