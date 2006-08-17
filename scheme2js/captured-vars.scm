@@ -10,6 +10,13 @@
 
 ;; free-vars and locals must be executed before using captured-vars
 
+;; assigns a "captured-vars" hashtable to each function.
+;; if a function captures a variable, it is marked as ".closure?" too.
+;; we handle the special case, where the function is only used within the scope
+;; of its variables. That is, if a function has free variables, but the
+;; lifetime of the function itself is shorter than those of its free variables,
+;; the function is not considered to be a closure (and the '.captured-vars'
+;; would be empty.
 (define (captured-vars tree::pobject)
    (verbose " collect captured")
    (overload traverse cc (Node
