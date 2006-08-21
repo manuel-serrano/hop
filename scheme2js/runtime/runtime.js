@@ -2,6 +2,8 @@ var sc_JS_GLOBALS = this; /// export *js*
 
 var sc_SYMBOL_PREFIX = "\u1E9C"; // "\u1E9D\u1E9E\u1E9F";
 
+var sc_TAIL_CALLS;
+
 var __sc_LINE=-1;
 var __sc_FILE="";
 
@@ -22,19 +24,25 @@ function sc_typeof( x ) { /// export
 }
 
 function sc_error_mutable() {  /// export
-    sc_print_mutable("**ERROR**");
-    for (var i = 0; i < arguments.length; i++) {
-	sc_print_mutable(arguments[i]);
-    }
-    throw "ERROR";
+    var t = sc_withOutputToString_mutable(
+	function () {
+	    sc_print_mutable("**ERROR**");
+	    for (var i = 0; i < arguments.length; i++) {
+		sc_print_mutable(arguments[i]);
+	    }
+	});
+    throw t;
 }
 
 function sc_error_immutable() {  /// export
-    sc_print_immutable("**ERROR**");
-    for (var i = 0; i < arguments.length; i++) {
-	sc_print_immutable(arguments[i]);
-    }
-    throw "ERROR";
+    var t = sc_withOutputToString_mutable(
+	function () {
+	    sc_print_immutable("**ERROR**");
+	    for (var i = 0; i < arguments.length; i++) {
+		sc_print_mutable(arguments[i]);
+	    }
+	});
+    throw t;
 }
 
 var sc_properties = new Object();
@@ -1199,10 +1207,10 @@ function sc_map2(proc, l1, l2) {
     }
     return sc_destReverseAppend(revres, null);
 }
-function sc_map(proc, l1, l2) { /// export
-    if (arguments.length == 2)
+function sc_map(proc, l1, l2, l3) { /// export
+    if (l2 === undefined)
 	return sc_map1(proc, l1);
-    else if (arguments.length == 3)
+    else if (l3 === undefined)
 	return sc_map2(proc, l1, l2);
     // else
     var nbApplyArgs = arguments.length - 1;
@@ -1231,10 +1239,10 @@ function sc_forEach2(proc, l1, l2) {
 	l2 = l2.cdr;
     }
 }
-function sc_forEach(proc, l1) { /// export
-    if (arguments.length == 2)
+function sc_forEach(proc, l1, l2, l3) { /// export
+    if (l2 === undefined)
 	return sc_forEach1(proc, l1);
-    else if (arguments.length == 3)
+    else if (l3 === undefined)
 	return sc_forEach2(proc, l1, l2);
     // else
     var nbApplyArgs = arguments.length - 1;
@@ -1286,9 +1294,12 @@ function sc_callWithValues(producer, consumer) { /// export
 
 function sc_dynamicWind(before, thunk, after) { /// export
     before();
-    var res = thunk();
-    after();
-    return res;
+    try {
+	var res = thunk();
+	return res;
+    } finally {
+	after();
+    }
 }
     
 // TODO: eval/scheme-report-environment/null-environment/interaction-environment
@@ -1876,12 +1887,14 @@ function sc_read_immutable(port) { /// export
 function sc_readChar(port) { /// export
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
-    return port.readChar();
+    var t = port.readChar();
+    return t === SC_EOF_OBJECT? t: new sc_Char(t);
 }
 function sc_peekChar(port) { /// export
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
-    return port.peekChar();
+    var t = port.peekChar();
+    return t === SC_EOF_OBJECT? t: new sc_Char(t);
 }    
 function sc_isCharReady(port) { /// export
     if (port === undefined) // we assume the port hasn't been given.
@@ -2011,6 +2024,15 @@ sc_StringOutputPort_immutable.prototype.appendJSString = function(s) {
 sc_StringOutputPort_immutable.prototype.close = function() {
     return this.res;
 }
+
+function sc_getOutputString_mutable(sp) { /// export
+    return new sc_String(sp.res);
+}
+function sc_getOutputString_immutable(sp) { /// export
+    return sp.res;
+}
+    
+    
 
 function sc_ErrorOutputPort() {
 }
@@ -2540,3 +2562,9 @@ sc_String.prototype.getHash = function() {
 }
 sc_Char.prototype.getHash = sc_counterHash;
 sc_Hashtable.prototype.getHash = sc_counterHash;
+
+
+function sc_TailCall(funThis, args) {
+    this.funThis = funThis;
+    this.arguments = args;
+}

@@ -185,7 +185,12 @@
 		    (cdr operands))
 	  (p-display p "))")))))
 
-   
+
+(define (modulo-op p operands)
+   (if (config 'correct-modulo)
+       #f
+       ((infix-op 2 2 "%") p operands)))
+
 (define *optimizable-operators*
    `(
     (sci_isEq ,(infix-op 2 2 "==="))
@@ -202,8 +207,8 @@
     (sci_multi ,(infix-op 0 #f "*" "1"))
     (sci_minus ,minus-op)
     (sci_div ,div-op)
-    ;; TODO: this is actually not true!
-    (sci_modulo ,(infix-op 2 2 "%"))
+
+    (sci_modulo ,modulo-op)
     
     (sci_quotient ,(hole-op 2 "parseInt(" 'x "/" 'y ")"))
     (sci_bitAnd ,(infix-op 2 2 "&"))

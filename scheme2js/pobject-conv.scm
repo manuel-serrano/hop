@@ -3,6 +3,7 @@
    (include "protobject.sch")
    (include "nodes.sch")
    (import nodes
+	   config
 	   protobject
 	   verbose)
    (export (pobject-conv::pobject prog)))
@@ -131,16 +132,6 @@
 		(scheme->pobject then (location (cddr exp)))
 		(scheme->pobject else (location (cdddr exp)))))
 	  ((if . L) (error #f "bad if-form: " exp))
-	  ((when ?test . ?then)
-	   (new-node If
-		(scheme->pobject test (location (cdr exp)))
-		(scheme->pobject (cons 'begin then) (location (cddr exp)))
-		(scheme->pobject #f (location (cdddr exp)))))
-	  ((unless ?test . ?then)
-	   (new-node If
-		(scheme->pobject `(not ,test) (location (cdr exp)))
-		(scheme->pobject (cons 'begin then) (location (cddr exp)))
-		(scheme->pobject #f (location (cdddr exp)))))
 	  ((case ?key . ?clauses)
 	   (case->pobject key clauses))
 	  ((set! ?var ?expr)
@@ -169,9 +160,16 @@
 		#f ;; don't prefer statement-form
 		fun))
 	  ((?operator . ?operands)
-	   (new-node Call
-		(scheme->pobject operator (location exp))
-		(scheme->pobject-map operands)))))
+	   (if (and (config 'return)
+		    (eq? operator 'return!))
+	       (if (or (null? operands)
+		       (not (null? (cdr operands))))
+		   (error #f "bad return! form: " exp)
+		   (new-node Return (scheme->pobject (car operands)
+						     (location operands))))
+	       (new-node Call
+			 (scheme->pobject operator (location exp))
+			 (scheme->pobject-map operands))))))
       ((eq? exp #unspecified)
 	(new-node Const #unspecified))
        ;; unquoted symbols must be var-refs
