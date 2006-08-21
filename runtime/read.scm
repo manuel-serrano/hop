@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Aug 13 09:56:03 2006 (serrano)                */
+;*    Last change :  Tue Aug 15 15:31:24 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -22,9 +22,15 @@
 	    __hop_css)
    
    (export  (the-loading-file)
-	    (hop-read #!optional (iport::input-port (current-input-port)))
-	    (hop-load ::bstring #!optional (env (interaction-environment)))
+	    
 	    (hop-load-afile ::bstring)
+	    
+	    (hop-read #!optional (iport::input-port (current-input-port)))
+	    (hop-load ::bstring #!key (env (interaction-environment)) (mode 'load))
+
+	    (load-once ::bstring #!key (mode 'load))
+	    (load-once-unmark! ::bstring)
+	    
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
    
@@ -673,7 +679,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-load file-name #!optional (env (interaction-environment)))
+(define (hop-load file-name #!key (env (interaction-environment)) (mode 'load))
    (let ((path (find-file/path file-name (hop-path))))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
@@ -691,11 +697,21 @@
 			  (if (thread? t)
 			      (thread-specific-set! t file-name)
 			      (set! *the-loading-file* file-name))
-			  (let loop ((last #unspecified))
-			     (let ((sexp (hop-read port)))
-				(if (eof-object? sexp)
-				    last
-				    (loop (eval sexp env))))))
+			  (case mode
+			     ((load)
+			      (let loop ((last #unspecified))
+				 (let ((sexp (hop-read port)))
+				    (if (eof-object? sexp)
+					last
+					(loop (eval sexp env))))))
+			     ((include)
+			      (let loop ((res '()))
+				 (let ((sexp (hop-read port)))
+				    (if (eof-object? sexp)
+					(reverse! res)
+					(loop (cons (eval sexp env) res))))))
+			     (else
+			      (error 'hop-load "Illegal mode" mode))))
 		       (begin
 			  (close-input-port port)
 			  (eval-module-set! m)
@@ -704,3 +720,63 @@
 			   (proc 'hop-load)
 			   (msg "Can't open file")
 			   (obj file-name))))))))
+
+;*---------------------------------------------------------------------*/
+;*    *load-once-table* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *load-once-table* #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    *load-once-mutex* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *load-once-mutex* (make-mutex "load-once"))
+(define *load-once-condvar* (make-condition-variable "load-once"))
+
+;*---------------------------------------------------------------------*/
+;*    load-once ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (load-once file #!key (mode 'load))
+   (mutex-lock! *load-once-mutex*)
+   (unless (hashtable? *load-once-table*)
+      (set! *load-once-table* (make-hashtable)))
+   (let loop ()
+      (let ((f (file-name-unix-canonicalize file)))
+	 (case (hashtable-get *load-once-table* f)
+	    ((error)
+	     ;; the file failed to be loaded
+	     #f)
+	    ((loaded)
+	     ;; the file is already loaded
+	     (mutex-unlock! *load-once-mutex*))
+	    ((loading)
+	     ;; the file is currently being loaded
+	     (condition-variable-wait! *load-once-condvar* *load-once-mutex*)
+	     (loop))
+	    (else
+	     ;; the file has to be loaded
+	     (hashtable-put! *load-once-table* f 'loading)
+	     (mutex-unlock! *load-once-mutex*)
+	     (with-handler
+		(lambda (e)
+		   (mutex-lock! *load-once-mutex*)
+		   (hashtable-put! *load-once-table* f 'error)
+		   (condition-variable-signal! *load-once-condvar*)
+		   (mutex-unlock! *load-once-mutex*)
+		   (raise e))
+		(hop-load f :mode mode))
+	     (mutex-lock! *load-once-mutex*)
+	     (hashtable-put! *load-once-table* f 'loaded)
+	     (condition-variable-signal! *load-once-condvar*)
+	     (mutex-unlock! *load-once-mutex*))))))
+
+;*---------------------------------------------------------------------*/
+;*    load-once-unmark! ...                                            */
+;*    -------------------------------------------------------------    */
+;*    Remove a file name from the load-once table                      */
+;*---------------------------------------------------------------------*/
+(define (load-once-unmark! file)
+   (mutex-lock! *load-once-mutex*)
+   (when (hashtable? *load-once-table*)
+      (hashtable-remove! *load-once-table* (file-name-unix-canonicalize file)))
+   (mutex-unlock! *load-once-mutex*))
+   

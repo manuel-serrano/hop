@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Aug  3 09:26:20 2006 (serrano)                */
+;*    Last change :  Tue Aug 15 15:25:39 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -131,7 +131,10 @@
       (when loadp
 	 (if (string? rc-file)
 	     (%hop-load-rc rc-file)
-	     (hop-load-rc (hop-rc-file))))
+	     (let ((path (make-file-name (hop-rc-directory) (hop-rc-file))))
+		(if (file-exists? path)
+		    (%hop-load-rc path)
+		    (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file)))))))
       (when replp (hop-repl))
       (hop-port-set! p)
       (for-each (lambda (expr)
@@ -177,9 +180,8 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-load-rc file)
    (let ((path (make-file-name (hop-rc-directory) file)))
-      (if (file-exists? path)
-	  (%hop-load-rc path)
-	  (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file))))))
+      (when (file-exists? path)
+	 (%hop-load-rc path))))
       
 ;*---------------------------------------------------------------------*/
 ;*    hop-repl ...                                                     */

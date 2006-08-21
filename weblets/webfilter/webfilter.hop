@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jul 28 15:38:31 2006 (serrano)                */
+;*    Last change :  Tue Aug 15 15:29:50 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -500,3 +500,4 @@ Google, each containing a forward pointer to the actual URL.])))
    (webfilter-preferences-edit
     :onclick ~(with-hop ($(service ()
 			     (webfilter-preferences-save webfilter-prefs))))))
+

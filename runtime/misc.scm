@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sun Aug 13 10:13:20 2006 (serrano)                */
+;*    Last change :  Sun Aug 13 12:27:27 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -20,8 +20,6 @@
    
    (export (hop-verb ::int . args)
 	   (hop-color ::obj ::obj ::obj)
-	   (load-once ::bstring)
-	   (load-once-unmark! ::bstring)
 	   (shortest-prefix ::bstring)
 	   (longest-suffix ::bstring)
 	   (is-suffix?::bool ::bstring ::bstring)
@@ -75,64 +73,6 @@
 		       req)
 		   msg)))
 
-;*---------------------------------------------------------------------*/
-;*    *table* ...                                                      */
-;*---------------------------------------------------------------------*/
-(define *table* #f)
-
-;*---------------------------------------------------------------------*/
-;*    *load-once-mutex* ...                                            */
-;*---------------------------------------------------------------------*/
-(define *load-once-mutex* (make-mutex "load-once"))
-(define *load-once-condvar* (make-condition-variable "load-once"))
-
-;*---------------------------------------------------------------------*/
-;*    load-once ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (load-once file)
-   (mutex-lock! *load-once-mutex*)
-   (unless (hashtable? *table*) (set! *table* (make-hashtable)))
-   (let loop ()
-      (let ((f (file-name-unix-canonicalize file)))
-	 (case (hashtable-get *table* f)
-	    ((error)
-	     ;; the file failed to be loaded
-	     #f)
-	    ((loaded)
-	     ;; the file is already loaded
-	     (mutex-unlock! *load-once-mutex*))
-	    ((loading)
-	     ;; the file is currently being loaded
-	     (condition-variable-wait! *load-once-condvar* *load-once-mutex*)
-	     (loop))
-	    (else
-	     ;; the file has to be loaded
-	     (hashtable-put! *table* f 'loading)
-	     (mutex-unlock! *load-once-mutex*)
-	     (with-handler
-		(lambda (e)
-		   (mutex-lock! *load-once-mutex*)
-		   (hashtable-put! *table* f 'error)
-		   (condition-variable-signal! *load-once-condvar*)
-		   (mutex-unlock! *load-once-mutex*)
-		   (raise e))
-		(hop-load f))
-	     (mutex-lock! *load-once-mutex*)
-	     (hashtable-put! *table* f 'loaded)
-	     (condition-variable-signal! *load-once-condvar*)
-	     (mutex-unlock! *load-once-mutex*))))))
-
-;*---------------------------------------------------------------------*/
-;*    load-once-unmark! ...                                            */
-;*    -------------------------------------------------------------    */
-;*    Remove a file name from the load-once table                      */
-;*---------------------------------------------------------------------*/
-(define (load-once-unmark! file)
-   (mutex-lock! *load-once-mutex*)
-   (when (hashtable? *table*)
-      (hashtable-remove! *table* (file-name-unix-canonicalize file)))
-   (mutex-unlock! *load-once-mutex*))
-   
 ;*---------------------------------------------------------------------*/
 ;*    shortest-prefix ...                                              */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Fri Aug  4 11:30:13 2006 (serrano)                */
+;*    Last change :  Tue Aug 15 15:29:36 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
@@ -20,7 +20,7 @@
       (let ((mod (eval-module)))
 	 `(define (,id file)
 	     ,(if (evmodule? mod)
-		  `(hop-load file (eval-find-module ',(evmodule-name mod)))
+		  `(hop-load file :env (eval-find-module ',(evmodule-name mod)))
 		  `(hop-load file)))))
 
    (define (make-save-clause c)
