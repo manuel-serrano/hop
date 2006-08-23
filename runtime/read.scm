@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Aug 15 15:31:24 2006 (serrano)                */
+;*    Last change :  Mon Aug 21 17:44:44 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -217,9 +217,7 @@
 		     (id       (: (* digit)
 				  (or letter special)
 				  (* (or letter special digit (in "'`")))))
-		     (kid      (: (* digit)
-				  (or letter kspecial)
-				  (* (or letter kspecial digit (in ",'`")))))
+		     (kid      (or digit letter kspecial))
 		     (blank    (in #\Space #\Tab #a012 #a013))
 		     
 		     cycles par-open bra-open par-poses bra-poses)
@@ -384,7 +382,7 @@
 	   (make-cnst (string->integer (the-substring 2 6) 16))))
       
       ;; keywords
-      ((or (: ":" kid) (: kid ":"))
+      ((or (: ":" kid (? id)) (: (? id) kid ":"))
        ;; since the keyword expression is also matched by the id
        ;; rule, keyword rule has to be placed before the id rule.
        (the-keyword))
