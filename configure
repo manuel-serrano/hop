@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Aug 23 15:04:23 2006 (serrano)                */
+#*    Last change :  Wed Aug 23 15:05:41 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -216,16 +216,25 @@ if [ ! -f $bgllibdir/$bglversion/pthread.heap ]; then
   echo "*** ERROR:configure:bigloo pthread. Aborting"
   echo ""
   echo "This error is due to a bad Bigloo installation. It might be that"
-  echo "you have installed Bigloo without the pthread support. Please"
+  echo "you have installed Bigloo without the PTHREAD support. Please"
+  echo "check your Bigloo installation."
+  exit 1;
+fi
+
+if [ ! -f $bgllibdir/$bglversion/web.heap ]; then
+  echo "*** ERROR:configure:bigloo web. Aborting"
+  echo ""
+  echo "This error is due to a bad Bigloo installation. It might be that"
+  echo "you have installed Bigloo without the WEB support. Please"
   echo "check your Bigloo installation."
   exit 1;
 fi
 
 if [ ! -f $bgllibdir/$bglversion/multimedia.heap ]; then
-  echo "*** ERROR:configure:bigloo pthread. Aborting"
+  echo "*** ERROR:configure:bigloo multimedia. Aborting"
   echo ""
   echo "This error is due to a bad Bigloo installation. It might be that"
-  echo "you have installed Bigloo without the multimedia support. Please"
+  echo "you have installed Bigloo without the MULTIMEDIA support. Please"
   echo "check your Bigloo installation."
   exit 1;
 fi
