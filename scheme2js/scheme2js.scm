@@ -24,6 +24,7 @@
 	   liveness
 	   rm-unused-vars
 	   locations
+	   callcc
 	   verbose)
    (main my-main)
    (export (scheme2js top-level::pair-nil js-interface::pair-nil config p)
@@ -54,7 +55,8 @@
 		  (encapsulate-parts #f)
 		  (trampoline #f)
 		  (print-locations #f)
-		  (return #f)))
+		  (return #f)
+		  (call/cc #f)))
       ht))
 
 (define (read-rev-port in-port)
@@ -92,11 +94,17 @@
 (define (dot-out p tree)
    (with-output-to-port p
       (lambda ()
-	 (let ((imported tree.imported))
-	    (delete! tree.imported)
-	    (pobject-dot-out tree)
-	    (if imported
-		(set! tree.imported imported))))))
+	 (pobject-dot-out tree (lambda (id)
+				  (not (memq id
+					     '(imported traverse traverse0
+							traverse1 traverse2
+							traverse0! traverse1!
+							traverse2! clone
+							deep-clone
+							already-defined?
+							single-value
+							var
+   ))))))))
 
 (define *out-file* #f)
 (define *in-files* '())
@@ -163,6 +171,8 @@
 		     "--max-tail-depth requires a number as argument"
 		     depth))
 	  (hashtable-put! config-ht 'max-tail-depth new-depth)))
+      (("--call/cc" (help "allow call/cc"))
+       (hashtable-put! config-ht 'call/cc #t))
       (("--no-constant-propagation"
 	(help "don't propagate constants."))
        (hashtable-put! config-ht 'constant-propagation #f))
@@ -217,10 +227,14 @@
       (if (eq? (config 'debug-stage) 'while) (dot-out p tree))
       (trampoline tree)
       (if (eq? (config 'debug-stage) 'trampoline) (dot-out p tree))
+      (callcc-check-points tree)
+      (if (eq? (config 'debug-stage) 'call/cc-cp) (dot-out p tree))
       (statements! tree)
       (if (eq? (config 'debug-stage) 'statements) (dot-out p tree))
       (node-elimination! tree)
       (if (eq? (config 'debug-stage) 'node-elim3) (dot-out p tree))
+      (callcc-late tree)
+      (if (eq? (config 'debug-stage) 'call/cc-late) (dot-out p tree))
       (locations tree)
       (if (eq? (config 'debug-stage) 'locations) (dot-out p tree))
       (let* ((out-p (if (config 'debug-stage)

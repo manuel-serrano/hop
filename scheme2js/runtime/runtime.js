@@ -1,3 +1,6 @@
+function sc_print_debug() {
+    sc_print_immutable.apply(null, arguments);
+}
 var sc_JS_GLOBALS = this; /// export *js*
 
 var sc_SYMBOL_PREFIX = "\u1E9C"; // "\u1E9D\u1E9E\u1E9F";
@@ -1190,6 +1193,31 @@ function sc_apply(proc) { /// export
     return proc.apply(null, args);
 }
 
+function sc_apply_callcc(proc) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	proc = sc_storage.getNextFrame();
+	// we only need to call the correct procedure again.
+	// the proc itself needs to store everything it needs (in particular the params).
+    } else {
+	sc_storage.push(proc);
+    }
+    try {
+	var args = new Array();
+	// first part of arguments are not in list-form.
+	for (var i = 1; i < arguments.length - 1; i++)
+	    args.push(arguments[i]);
+	var l = arguments[arguments.length - 1];
+	while (l != null) {
+	    args.push(l.car);
+	    l = l.cdr;
+	}
+	return proc.apply(null, args);
+    } finally {
+	sc_storage.pop();
+    }
+}
+
 function sc_map1(proc, l1) {
     var revres = null;
     while (l1 !== null) {
@@ -1226,6 +1254,39 @@ function sc_map(proc, l1, l2, l3) { /// export
     return sc_destReverseAppend(revres, null);
 }
 
+function sc_map_callcc(proc) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+    } else {
+	var sc_frame = new Object();
+	sc_frame.proc = proc;
+	sc_frame.arguments = arguments;
+	sc_frame.nbApplyArgs = arguments.length - 1;
+	sc_frame.applyArgs = new Array(sc_frame.nbApplyArgs);
+	sc_frame.revres = null;
+	sc_storage.push(sc_frame);
+    }
+    with(sc_frame) {
+	try {
+	    if(sc_storage.doRestore) {
+		revres = sc_cons(proc(), revres);
+	    }
+	    while (arguments[1] !== null) {
+		for (var i = 0; i < nbApplyArgs; i++) {
+		    applyArgs[i] = arguments[i + 1].car;
+		    arguments[i + 1] = arguments[i + 1].cdr;
+		}
+		revres = sc_cons(proc.apply(null, applyArgs), revres);
+	    }
+	    
+	    return sc_destReverseAppend(revres, null);
+	} finally {
+	    sc_storage.pop();
+	}
+    }
+}
+
 function sc_forEach1(proc, l1) {
     while (l1 !== null) {
 	proc(l1.car);
@@ -1256,6 +1317,10 @@ function sc_forEach(proc, l1, l2, l3) { /// export
     }
 }
 
+function sc_forEach_callcc(proc, l1) { /// export
+    sc_map_callcc.apply(this, arguments);
+}
+
 function sc_force(o) { /// export
     return o();
 }
@@ -1274,8 +1339,6 @@ function sc_makePromise(proc) { /// export
     };
 }
 
-// TODO: call-with-current-continuation (and adapt dynamic-wind)
-
 function sc_Values(values) {
     this.values = values;
 }
@@ -1292,6 +1355,29 @@ function sc_callWithValues(producer, consumer) { /// export
 	return consumer(produced);
 }
 
+function sc_callWithValues_callcc(producer, consumer) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+    } else {
+	var sc_frame = new Object();
+	sc_frame.producer = producer;
+	sc_frame.consumer = consumer;
+	sc_storage.push(sc_frame);
+    }
+    try {
+	if (!('produced' in sc_frame)) {
+	    sc_frame.produced = sc_frame.producer();
+	}
+	if (sc_frame.produced instanceof sc_Values)
+	    return sc_frame.consumer.apply(null, sc_frame.produced.values);
+	else
+	    return sc_frame.consumer(sc_frame.produced);
+    } finally {
+	sc_storage.pop();
+    }
+}
+
 function sc_dynamicWind(before, thunk, after) { /// export
     before();
     try {
@@ -1301,7 +1387,33 @@ function sc_dynamicWind(before, thunk, after) { /// export
 	after();
     }
 }
-    
+
+function sc_dynamicWind_callcc(before, thunk, after) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+    } else {
+	var sc_frame = new Object();
+	sc_frame.before = before;
+	sc_frame.thunk = thunk;
+	sc_frame.after = after;
+	sc_frame.state = 'before';
+	sc_storage.push(sc_frame);
+    }
+    try {
+	if (sc_frame.state == 'before') {
+	    sc_frame.before();
+	    sc_frame.state = 'thunk';
+	}
+	var res = sc_frame.thunk();
+	return res;
+    } finally {
+	if (sc_frame.state != 'before')
+	    sc_frame.after();
+	sc_storage.pop();
+    }
+}
+
 // TODO: eval/scheme-report-environment/null-environment/interaction-environment
 
 // LIMITATION: 'load' doesn't exist without files.
@@ -1375,11 +1487,57 @@ function sc_jsCall(o, fun) { /// export
     return fun.apply(o, args);
 }
 
+function sc_jsCall_callcc(o, fun) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+	o = sc_frame.o;
+	fun = sc_frame.fun;
+    } else {
+	// we don't need to store the arguments, as they called function needs
+	// to store it's parameters anyways.
+	var sc_frame = new Object();
+	sc_frame.o = o;
+	sc_frame.fun = fun;
+    }
+    try {
+	var args = new Array();
+	for (var i = 2; i < arguments.length; i++)
+	    args[i-2] = arguments[i];
+	return fun.apply(o, args);
+    } finally {
+	sc_storage.pop();
+    }
+}
+
 function sc_jsMethodCall(o, field) { /// export
     var args = new Array();
     for (var i = 2; i < arguments.length; i++)
 	args[i-2] = arguments[i];
     return o[field].apply(o, args);
+}
+
+function sc_jsMethodCall_callcc(o, field) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+	o = sc_frame.o;
+	field = sc_frame.field;
+    } else {
+	// we don't need to store the arguments, as they called function needs
+	// to store it's parameters anyways.
+	var sc_frame = new Object();
+	sc_frame.o = o;
+	sc_frame.field = field;
+    }
+    try {
+	var args = new Array();
+	for (var i = 2; i < arguments.length; i++)
+	    args[i-2] = arguments[i];
+	return o[field].apply(o, args);
+    } finally {
+	sc_storage.pop();
+    }
 }
 
 function sc_jsNew(c) { /// export new js-new
@@ -1944,36 +2102,136 @@ function sc_openOutputFile(s) { /// export
 
 /* ----------------------------------------------------------------------------*/
 
+function sc_withInputFromPort(p, thunk) { /// export
+    try {
+	var tmp = SC_DEFAULT_IN; // THREAD: shared var.
+	SC_DEFAULT_IN = p;
+	return thunk();
+    } finally {
+	SC_DEFAULT_IN = tmp;
+    }
+}
+
+function sc_withInputFromPort_callcc(p, thunk) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+	p = sc_frame.p;
+	thunk = sc_frame.thunk;
+    } else {
+	var sc_frame = new Object();
+	sc_frame.p = p;
+	sc_frame.thunk = thunk;
+	sc_storage.push(sc_frame);
+    }
+    try {
+	var tmp = SC_DEFAULT_IN; // THREAD: shared var.
+	SC_DEFAULT_IN = p;
+	return thunk();
+    } finally {
+	SC_DEFAULT_IN = tmp;
+	sc_storage.pop();
+    }
+}
+
 function sc_withInputFromString_mutable(s, thunk) { /// export
     return sc_withInputFromString_immutable(s.val, thunk);
 }
 
-function sc_withInputFromString_immutable(s, thunk) { /// export
-    var tmp = SC_DEFAULT_IN; // THREAD: shared var.
-    SC_DEFAULT_IN = new sc_StringInputPort(s);
-    var tmp2 = thunk();
-    SC_DEFAULT_IN.close(); // just to make sure...
-    SC_DEFAULT_IN = tmp;
-    return tmp2;
+function sc_withInputFromString_mutable_callcc(s, thunk) { /// export
+    if (sc_CALLCC_STORAGE.doRestore)
+	return sc_withInputFromPort_callcc();
+    else
+	return sc_withInputFromString_immutable_callcc(s.val, thunk);
 }
 
+function sc_withInputFromString_immutable(s, thunk) { /// export
+    return sc_withInputFromPort(new sc_StringInputPort(s), thunk);
+}
+
+function sc_withInputFromString_immutable_callcc(s, thunk) { /// export
+    if (sc_CALLCC_STORAGE.doRestore)
+	return sc_withInputFromPort_callcc();
+    else
+	return sc_withInputFromPort_callcc(new sc_StringInputPort(s), thunk);
+}
+
+function sc_withOutputToPort(p, thunk) { /// export
+    try {
+	var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
+	SC_DEFAULT_OUT = p;
+	return thunk();
+    } finally {
+	SC_DEFAULT_OUT = tmp;
+    }
+}
+
+function sc_withOutputToPort_callcc(p, thunk) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+	p = sc_frame.p;
+	thunk = sc_frame.thunk;
+    } else {
+	var sc_frame = new Object();
+	sc_frame.p = p;
+	sc_frame.thunk = thunk;
+	sc_storage.push(sc_frame);
+    }
+    try {
+	var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
+	SC_DEFAULT_OUT = p;
+	return thunk();
+    } finally {
+	SC_DEFAULT_OUT = tmp;
+	sc_storage.pop();
+    }
+}
 
 function sc_withOutputToString_mutable(thunk) { /// export
-    var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
-    var outp = new sc_StringOutputPort_mutable();
-    SC_DEFAULT_OUT = outp;
-    var tmp2 = thunk();
-    SC_DEFAULT_OUT = tmp;
-    return outp.close();
+    var p = new sc_StringOutputPort_mutable();
+    sc_withOutputToPort(p, thunk);
+    return p.close();
+}
+
+function sc_withOutputToString_mutable_callcc(thunk) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    var p;
+    if (sc_storage.doRestore) {
+	p = sc_storage.getNextFrame();
+    } else {
+	p = new sc_StringOutputPort_mutable();
+	sc_storage.push(p);
+    }
+    try {
+	sc_withOutputToPort(p, thunk);
+	return p.close();
+    } finally {
+	sc_storage.pop();
+    }
 }
 
 function sc_withOutputToString_immutable(thunk) { /// export
-    var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
-    var outp = new sc_StringOutputPort_immutable();
-    SC_DEFAULT_OUT = outp;
-    var tmp2 = thunk();
-    SC_DEFAULT_OUT = tmp;
-    return outp.close();
+    var p = new sc_StringOutputPort_immutable();
+    sc_withOutputToPort(p, thunk);
+    return p.close();
+}
+
+function sc_withOutputToString_immutable_callcc(thunk) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    var p;
+    if (sc_storage.doRestore) {
+	p = sc_storage.getNextFrame();
+    } else {
+	p = new sc_StringOutputPort_immutable();
+	sc_storage.push(p);
+    }
+    try {
+	sc_withOutputToPort(p, thunk);
+	return p.close();
+    } finally {
+	sc_storage.pop();
+    }
 }
 
 function sc_openOutputString_mutable() { /// export
@@ -2565,6 +2823,141 @@ sc_Hashtable.prototype.getHash = sc_counterHash;
 
 
 function sc_TailCall(funThis, args) {
+    this._internalException = true;
     this.funThis = funThis;
     this.arguments = args;
+}
+
+// default tail-call depth.
+// normally the program should set it again. but just in case...
+var sc_TAIL_CALLS = 20;
+
+function sc_CallCcStorage() {
+    this.frames = new Array();
+}
+sc_CallCcStorage.prototype.push = function(frame) {
+    this.frames.push(frame);
+};
+sc_CallCcStorage.prototype.pop = function() {
+    this.frames.pop();
+};
+sc_CallCcStorage.prototype.popAll = function() {
+    this.frames.length = 0;
+};
+sc_CallCcStorage.prototype.isEmpty = function() {
+    return this.frames.length == 0;
+};
+sc_CallCcStorage.prototype.length = function() {
+    return this.frames.length;
+};
+sc_CallCcStorage.prototype.duplicate = function() {
+    var dupl = new sc_CallCcStorage();
+    dupl.frames = this.frames.concat();
+    return dupl;
+};
+
+sc_CallCcStorage.prototype.resetFrameIterator = function() {
+    this.frameIndex = 0;
+};
+sc_CallCcStorage.prototype.getNextFrame = function() {
+    return this.frames[this.frameIndex++];
+};
+
+var sc_CALLCC_STORAGE = new sc_CallCcStorage();
+
+function sc_CallCcException() {
+    this._internalException = true;
+}
+
+function sc_callcc(proc) { /// export call/cc call-with-current-continuation
+    function backup(storage) {
+	var backup = storage.duplicate();
+	for (var i = 0; i < backup.frames.length; i++) {
+	    if (!backup.frames[i].closureAllocation) {
+		backup.frames[i].savedRestoreIndex = backup.frames[i].sc_callCcIndex;
+		backup.frames[i].savedCallCcFun = backup.frames[i].sc_callCcFun;
+	    }
+	}
+	return backup;
+    };
+    
+    function restore(backup, returnValue) {
+	var dupl = backup.duplicate();
+	dupl.doRestore = true;
+	dupl.returnValue = returnValue;
+	for (var i = 0; i < dupl.frames.length; i++) {
+	    if (!dupl.frames[i].closureAllocation) {
+		dupl.frames[i].sc_callCcRestoreIndex = dupl.frames[i].savedRestoreIndex;
+		dupl.frames[i].sc_callCcFun = dupl.frames[i].savedCallCcFun;
+	    }
+	}
+	var e = new sc_CallCcException();
+	e.token = backup.token;
+	e.storage = dupl;
+	e.text = "call/cc-exception";
+	e.root = function() {
+	    sc_CALLCC_STORAGE = dupl;
+	    sc_CALLCC_STORAGE.resetFrameIterator();
+	};
+	throw e;
+    };
+	
+    var storage = sc_CALLCC_STORAGE;
+    if (storage.doRestore) {
+	delete storage.doRestore;
+	for (var i = 0; i < storage.frames.length; i++) {
+	    // reset the callCcRestoreIndex.
+	    if (!storage.frames[i].closureAllocation)
+		storage.frames[i].sc_callCcRestoreIndex = 0;
+	}
+	var tmp = storage.returnValue;
+	delete storage.returnValue;
+	return tmp;
+    } else {
+	var b = backup(sc_CALLCC_STORAGE);
+	var token = new Object();
+	b.token = token;
+	var k = function(returnValue) {
+	    restore(b, returnValue);
+	};
+	try {
+	    return proc(k);
+	} catch (e) {
+	    if (e instanceof sc_CallCcException &&
+		e.token === token) {
+		// shortcut
+		return e.storage.returnValue;
+	    } else throw e;
+	}
+    }
+}
+
+function sc_callCcRestart(exc, startFun) {
+    while (true) {
+	try {
+	    exc.root();
+	    return startFun();
+	} catch (e) {
+	    if (e instanceof sc_CallCcException)
+		exc = e;
+	    else
+		throw e;
+	}
+    }
+}
+
+var sc_INDEX_OBJECT_HASH = new Array;
+
+function sc_getCallCcIndexObject(index) {
+    if (sc_INDEX_OBJECT_HASH[index])
+	return sc_INDEX_OBJECT_HASH[index];
+    else {
+	var tmp = { index: index };
+	sc_INDEX_OBJECT_HASH[index] = tmp;
+	return tmp;
+    }
+}
+
+function sc_BindExitException() {
+    this._internalException = true;
 }

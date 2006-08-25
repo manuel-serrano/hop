@@ -15,5 +15,9 @@
       (hashtable-put! config 'return #t)
 
       ;; if one wants to test trampolines:
-      ;(hashtable-put! config 'trampoline)
+      ;(hashtable-put! config 'trampoline #t)
+
+      ;; to enable call/cc uncomment the following line:
+      ;(hashtable-put! config 'call/cc #t)
+      
       config))

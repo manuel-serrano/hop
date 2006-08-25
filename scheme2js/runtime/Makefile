@@ -1,7 +1,7 @@
 all: runtime_mapping.sch runtime-interface.js
 
 exporter: exporter.scm
-	bigloo -o $@ $^
+	bigloo -g -o $@ $^
 
 runtime_mapping.sch: runtime.js exporter
 	./exporter $< mapping > $@

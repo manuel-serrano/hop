@@ -44,9 +44,17 @@
 			  (cdr last-top-level)
 			  last-extension))))))
 
-   (set! *runtime-var-mapping* (if (config 'mutable-strings)
-				   *mutable-runtime-var-mapping*
-				   *immutable-runtime-var-mapping*))
+   (set! *runtime-var-mapping*
+	 (cond
+	    ((and (config 'mutable-strings)
+		  (config 'call/cc))
+	     *mutable-call/cc-runtime-var-mapping*)
+	    ((config 'mutable-strings)
+	     *mutable-runtime-var-mapping*)
+	    ((config 'call/cc)
+	     *immutable-call/cc-runtime-var-mapping*)
+	    (else
+	     *immutable-runtime-var-mapping*)))
    ;; add our runtime in front of js-interface in front of the extension
    ;; add 'js in front of our built-in interfaces, so they ressemble the
    ;; extracted js-clauses.

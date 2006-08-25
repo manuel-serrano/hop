@@ -22,8 +22,8 @@
 		  #f) ;; intermediate nodes are not considered to be tail.
       (side-effect tree)
       (overload traverse trampoline (Node
-				    Lambda
-				    Call)
+				     Lambda
+				     Call)
 		(tree.traverse #f))))
 
 (define-pmethod (Node-trampoline current-fun)

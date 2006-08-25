@@ -192,7 +192,7 @@
 	    (loop (cdr opnds))))
 
       ;; remove potential mark (we might re-add the statement-form?
-      ;; mark again
+      ;; mark again)
       (mark-node! this #f)
 
       (let ((new-this (if state-var

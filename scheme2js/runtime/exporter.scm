@@ -1,8 +1,9 @@
 (module export-runtime
    (main myMain))
 
-(define *export-line* (pregexp "/// export[ ]*(.*)"))
-(define *exported-fun* (pregexp "(?:var|function) ((?:sc_)?([^ (;]*))"))
+(define *export-line-pattern* (pregexp "/// export[ ]*(.*)"))
+(define *exported-fun-pattern* (pregexp "(?:var|function) ((?:sc_)?([^ (;]*))"))
+(define *attributes-pattern* (pregexp "((?:sc_)?(?:_[A-Z]|[^_])*)(?:_(.*))?"))
 
 (define (starts-with? s sub-s)
    (substring-at? s sub-s 0))
@@ -14,16 +15,8 @@
 	   (substring-at? s sub-s (- s-length sub-s-length)))))
 
 (define (unmarshall s)
-   (let ((s-without-string-mode
-	  (cond
-	     ((ends-with? s "_mutable")
-	      (substring s 0 (- (string-length s) (string-length "_mutable"))))
-	     ((ends-with? s "_immutable")
-	      (substring s 0 (- (string-length s)
-				(string-length "_immutable"))))
-	     (else
-	      s))))
-      (let loop ((chars (string->list s-without-string-mode))
+   (let ((s-without-attributes (cadr (pregexp-match *attributes-pattern* s))))
+      (let loop ((chars (string->list s-without-attributes))
 		 (rev-res '()))
 	 (if (null? chars)
 	     (let ((res (list->string (reverse! rev-res))))
@@ -41,52 +34,75 @@
 		 (loop (cdr chars)
 		       (cons (car chars) rev-res))))))))
 
-(define (string-mode s)
-   (cond
-      ((ends-with? s "_mutable")
-       'mutable)
-      ((ends-with? s "_immutable")
-       'immutable)
-      (else #f)))
+(define (extract-attributes s)
+   (let* ((match (pregexp-match *attributes-pattern* s))
+	  (attributes_ext (caddr match)))
+      (and attributes_ext
+	   (map string->symbol
+		(string-split attributes_ext "_")))))
 
 (define (parse-line line)
-   (let ((match (pregexp-match *export-line* line)))
+   (let ((match (pregexp-match *export-line-pattern* line)))
       (and match
-	   (let* ((fun-match (pregexp-match *exported-fun* line))
+	   (let* ((fun-match (pregexp-match *exported-fun-pattern* line))
 		  (exported-fun (cadr fun-match))
 		  (interface-fun (string-append "sci_"
 						(caddr fun-match)))
-		  (mutable/immutable? (string-mode exported-fun))
+		  (attributes (extract-attributes exported-fun))
 		  (override-names (cadr match))
 		  (scheme-funs (if (string=? override-names "")
 				   (list (unmarshall (caddr fun-match)))
 				   (string-split override-names
 						 " "))))
 	      (if (eq? *mode* 'map)
-		  (list mutable/immutable? scheme-funs interface-fun)
+		  (list attributes scheme-funs interface-fun)
 		  (cons interface-fun exported-fun))))))
 
 (define *mode* #f)
+
+(define (print-runtime-var-mapping ht)
+   (let ((combinations '(("mutable" mutable default)
+			 ("immutable" immutable default)
+			 ("mutable-call/cc" mutable-call/cc call/cc mutable
+					    default)
+			 ("immutable-call/cc" immutable-call/cc call/cc
+					      immutable default))))
+      (for-each
+       (lambda (combination)
+	  (let ((name (string->symbol
+		       (string-append "*" (car combination) "-runtime-var-mapping*")))
+		(done-symbols (make-hashtable)))
+	     ;(with-output-to-port (current-error-port) (lambda () (print name)))
+	     (let loop ((res-mapping '())
+			(remaining (cdr combination)))
+		(if (null? remaining)
+		    (pp `(define ,name ',res-mapping))
+		    (let* ((part-mapping (hashtable-get ht (car remaining)))
+			   (dummy
+			    (with-output-to-port (current-error-port)
+			       (lambda () (print (car remaining)))))
+			   (part-mapping-filtered
+			    (filter (lambda (p)
+				       (not (hashtable-get done-symbols
+							   (car p))))
+				    part-mapping)))
+		       (for-each (lambda (p)
+				    (hashtable-put! done-symbols (car p) #t))
+				 part-mapping-filtered)
+		       (loop (append! part-mapping-filtered res-mapping)
+			     (cdr remaining)))))))
+       combinations)))
 
 (define (extract-mapping! file)
    (with-input-from-file file
       (lambda ()
 	 (let loop ((line (read-line))
-		    (shared '())
-		    (mutable '())
-		    (immutable '()))
+		    (ht (make-hashtable)))
 	    (if (eof-object? line)
-		(begin
-		   (pp `(define *shared-runtime-var-mapping* ',shared))
-		   (pp `(define *mutable-runtime-var-mapping*
-			   (append ',mutable
-				   *shared-runtime-var-mapping*)))
-		   (pp `(define *immutable-runtime-var-mapping*
-			   (append ',immutable
-				   *shared-runtime-var-mapping*))))
+		(print-runtime-var-mapping ht)
 		(let ((parsed-line (parse-line line)))
 		   (if parsed-line
-		       (let* ((mutable/immutable? (car parsed-line))
+		       (let* ((attributes (car parsed-line))
 			      (scheme-funs (cadr parsed-line))
 			      (interface-fun (caddr parsed-line))
 			      (sym-interface-fun (string->symbol interface-fun))
@@ -95,17 +111,29 @@
 					(list (string->symbol scheme-fun)
 					      sym-interface-fun))
 				     scheme-funs)))
-			  (loop (read-line)
-				(if mutable/immutable?
-				    shared
-				    (append! new-mappings shared))
-				(if (eq? mutable/immutable? 'mutable)
-				    (append! new-mappings mutable)
-				    mutable)
-				(if (eq? mutable/immutable? 'immutable)
-				    (append! new-mappings immutable)
-				    immutable)))
-		       (loop (read-line) shared mutable immutable))))))))
+			      (hashtable-update!
+			       ht
+			       (cond
+				  ((not attributes)
+				   'default)
+				  ((and (memq 'mutable attributes)
+					(memq 'callcc attributes))
+				   'mutable-call/cc)
+				  ((and (memq 'immutable attributes)
+					(memq 'callcc attributes))
+				   'immutable-call/cc)
+				  ((memq 'mutable attributes)
+				   'mutable)
+				  ((memq 'immutable attributes)
+				   'immutable)
+				  ((memq 'callcc attributes)
+				   'call/cc)
+				  (else
+				   (error #f "should not happen " attributes)))
+			       (lambda (old-mappings)
+				  (append! new-mappings old-mappings))
+			       new-mappings)))
+		   (loop (read-line) ht)))))))
 
 (define (extract-interface! file)
    (with-input-from-file file
