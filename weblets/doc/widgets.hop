@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Wed Aug  2 16:30:18 2006 (serrano)                */
+;*    Last change :  Fri Aug 25 08:33:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -38,7 +38,7 @@
 	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
 	      :jscript "hop-fx.js"
 	      :css (format "~a/doc.hss" (doc-dir))
-	      (<TITLE> "Hop documentation center (APIs & libraries)")
+	      (<TITLE> "Hop documentation center (APIs &amp; libraries)")
 	      script)
       (<BODY>
 	 (<DIV>

@@ -29,7 +29,7 @@
 	       (wiki-string->hop src))))
       (with-output-to-string
 	 (lambda ()
-	    (xml-write o (current-output-port) (hop-char-encoding))))))
+	    (xml-write o (current-output-port) (hop-char-encoding) (hop-xml-backend))))))
 
 (define-service (home/demos/wiki)
    (<HTML>

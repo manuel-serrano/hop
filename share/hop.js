@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Aug  4 10:10:55 2006 (serrano)                */
+/*    Last change :  Fri Aug 25 13:28:29 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */

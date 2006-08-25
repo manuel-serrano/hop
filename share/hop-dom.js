@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Jun 20 13:23:35 2006 (serrano)                */
+/*    Last change :  Fri Aug 25 13:36:56 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -440,3 +440,17 @@ function dom_get_element_by_id( document, id ) {
 function dom_get_elements_by_tag_name( document, name ) {
    return sci_vector2list( document.getElementsByTagName( name ) );
 }
+function dom_get_elements_by_class( document, name ) {
+   var all = document.getElementsByTagName( "*" );
+   var res = new Array();
+   var n = 0;
+    
+   for( var i = 0; i < all.length; i++ ) {
+      if( all[ i ].className == name ) {
+	 res[ n++ ] = all[ i ];
+      }
+   }
+   
+   return sci_vector2list( res );
+}
+

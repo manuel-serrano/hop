@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jul 28 14:59:02 2006 (serrano)                */
+;*    Last change :  Fri Aug 25 09:40:28 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -17,6 +17,8 @@
    (option  (set! *dlopen-init* #t))
 
    (import __hop_param)
+
+   (use    __hop_xml)
    
    (export (class user
 	       (name::bstring read-only)
@@ -57,7 +59,7 @@
 	      (connection::symbol (default 'keep-alive)))
 	   
 	   (abstract-class %http-response::%http-message
-	      (content-type::bstring (default "text/html"))
+	      (content-type::bstring (default (hop-default-mime-type)))
 	      (request::http-request (default (instantiate::http-request)))
 	      (bodyp::bool read-only (default #t)))
 
@@ -90,7 +92,12 @@
  	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
 
 	   (class http-response-hop::%http-response-local
+	      (backend read-only (default (hop-xml-backend)))
 	      (xml read-only))
+	   
+	   (class http-response-js::%http-response-local
+	      (backend read-only (default (hop-xml-backend)))
+	      (value::obj read-only))
 	   
 	   (class http-response-procedure::%http-response-local
 	      (proc::procedure read-only))
@@ -103,13 +110,6 @@
 	   (class http-response-string::%http-response-local
 	      (body::bstring read-only (default "")))
 
-	   ;; this class is obsolete. it should no longer be used
-	   (class http-response-obj::%http-response-local
-	      (body::obj read-only))
-	   
-	   (class http-response-js::%http-response-local
-	      (value::obj read-only))
-	   
 	   (class http-response-cgi::%http-response-local
 	      (cgibin::bstring read-only))
 

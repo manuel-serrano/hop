@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Aug 21 17:44:44 2006 (serrano)                */
+;*    Last change :  Thu Aug 24 12:51:53 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -210,8 +210,8 @@
    (regular-grammar ((float    (or (: (* digit) "." (+ digit))
 				   (: (+ digit) "." (* digit))))
 		     (letter   (in ("azAZ") (#a128 #a255)))
-		     (special  (in "!@~$%^&*></-_+\\=?.:"))
 		     (kspecial (in "!@~$%^&*></-_+\\=?."))
+		     (special  (or kspecial #\:))
 		     (quote    (in "\",'`"))
 		     (paren    (in "()[]{}"))
 		     (id       (: (* digit)
@@ -382,7 +382,8 @@
 	   (make-cnst (string->integer (the-substring 2 6) 16))))
       
       ;; keywords
-      ((or (: ":" kid (? id)) (: (? id) kid ":"))
+      ((or (: ":" (+ kid) (* (or kid special)))
+	   (: (? (: kid (* (or kid special)))) (+ kid) ":"))
        ;; since the keyword expression is also matched by the id
        ;; rule, keyword rule has to be placed before the id rule.
        (the-keyword))

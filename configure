@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Aug 23 15:05:41 2006 (serrano)                */
+#*    Last change :  Fri Aug 25 18:16:05 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -212,7 +212,7 @@ fi
 #*---------------------------------------------------------------------*/
 bgllibdir=`$bigloo -q -eval "(begin (print *ld-library-dir*) (exit 0))"`
 
-if [ ! -f $bgllibdir/$bglversion/pthread.heap ]; then
+if [ ! -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
   echo "*** ERROR:configure:bigloo pthread. Aborting"
   echo ""
   echo "This error is due to a bad Bigloo installation. It might be that"
@@ -221,7 +221,7 @@ if [ ! -f $bgllibdir/$bglversion/pthread.heap ]; then
   exit 1;
 fi
 
-if [ ! -f $bgllibdir/$bglversion/web.heap ]; then
+if [ ! -f $bgllibdir/bigloo/$bglversion/web.heap ]; then
   echo "*** ERROR:configure:bigloo web. Aborting"
   echo ""
   echo "This error is due to a bad Bigloo installation. It might be that"
@@ -230,7 +230,7 @@ if [ ! -f $bgllibdir/$bglversion/web.heap ]; then
   exit 1;
 fi
 
-if [ ! -f $bgllibdir/$bglversion/multimedia.heap ]; then
+if [ ! -f $bgllibdir/bigloo/$bglversion/multimedia.heap ]; then
   echo "*** ERROR:configure:bigloo multimedia. Aborting"
   echo ""
   echo "This error is due to a bad Bigloo installation. It might be that"
