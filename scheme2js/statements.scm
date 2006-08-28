@@ -67,16 +67,9 @@
        (error "Part-transform-statements!"
 	      "Parts must not have state-vars: "
 	      #f))
-   (if (and statement-form?                 ;; surrounding wants us to be stmt
-	    (not (marked-node? this))       ;; we aren't yet stmt
-	    (not this.prefer-statement-form?))  ;; and user prefers no stmt
-       (begin
-	  ;; stay non-stmt, but mark node, so we add a ";" when compiling.
-	  (set! this.statement-expression? #t)
-	  (set! this.body (this.body.traverse! #f #f)))
        (begin
 	  (set! this.body (this.body.traverse! #f statement-form?))
-	  (mark-node! this statement-form?)))
+	  (mark-node! this statement-form?))
    this)
 
 (define-pmethod (Value-transform-statements! state-var statement-form?)

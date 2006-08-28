@@ -42,8 +42,7 @@
    (new-node Program
 	(new-node Part
 		  (scheme->pobject prog (location prog))
-		  #t ;; we want the main-part in statement-form
-		  (lambda (p) (cons p (lambda (p stmt-form?) 'do-nothing))))))
+		  (lambda (p) (cons p (lambda (p) 'do-nothing))))))
    
 (define (expr-list->Body expr-list)
    (new-node Body (expr-list->Begin expr-list)))
@@ -157,7 +156,6 @@
 	  ((part ?expr (and ?fun (? procedure?)))
 	   (new-node Part
 		(scheme->pobject expr (location (cdr exp)))
-		#f ;; don't prefer statement-form
 		fun))
 	  ((?operator . ?operands)
 	   (if (and (config 'return)

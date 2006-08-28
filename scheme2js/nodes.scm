@@ -169,9 +169,8 @@
    ;;  (define (close-port p::port is-statement-form?::bool) ...)
    ;; A part is *not* a scope. Two parts at the same level can therefore share
    ;; variables.
-   (define-node (Part body prefer-statement-form? fun)
+   (define-node (Part body fun)
       (set! this.body body)
-      (set! this.prefer-statement-form? prefer-statement-form?)
       (set! this.fun fun))
    (set! Part.proto (empty-pobject Node))
    (proto-traverses Part body)

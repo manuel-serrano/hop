@@ -210,9 +210,6 @@
 	  (part-filter-port (car part-filter-port/close))
 	  (part-filter-close (cdr part-filter-port/close))
 	  
-	  (whole-is-stmt-form? (and outer-vars?
-				    (statement-form? this)))
-
 	  (encapsulated (if (or (config 'call/cc)
 				(and (and part-vars
 					  (> (hashtable-size part-vars) 0))))
@@ -235,10 +232,7 @@
 			").call(this)"))
 	  (this.body.compile part-filter-port))
 
-      (part-filter-close part-filter-port whole-is-stmt-form?)
-
-      (if (not whole-is-stmt-form?)
-	  (p-display p ";"))))
+      (part-filter-close part-filter-port)))
 
 
 ;; Llvalue/stmt?, if given, indicate, that this lambda should be assigned to
