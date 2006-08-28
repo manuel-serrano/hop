@@ -338,6 +338,7 @@ function hop_edit_view_only_source(id)
     tools.style.display = "none";
     // Retain that we see the text mode
     hop_edit_src = true;
+    hop_edit_in_iframe = false;
 }
 
 /*---------------------------------------------------------------------*/
