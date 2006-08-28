@@ -229,9 +229,10 @@
 					    "var " var.compiled ";\n"))))
       (if encapsulated
 	  (begin
+	     (p-display part-filter-port "(")
 	     (encapsulated.compile part-filter-port)
 	     (p-display part-filter-port
-			".call(this)"))
+			").call(this)"))
 	  (this.body.compile part-filter-port))
 
       (part-filter-close part-filter-port whole-is-stmt-form?)
