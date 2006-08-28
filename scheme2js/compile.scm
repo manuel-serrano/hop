@@ -213,25 +213,26 @@
 	  (whole-is-stmt-form? (and outer-vars?
 				    (statement-form? this)))
 
-	  (new-body (if (or (config 'call/cc)
-			    (and (and part-vars
-				      (> (hashtable-size part-vars) 0))))
-			(let* ((fun (new-node Lambda '() #f this.body))
-			       (call (new-node Call fun '())))
-			   (mark-statement-form! call #t)
-			   (set! fun.local-vars part-vars)
-			   call)
-			this.body)))
+	  (encapsulated (if (or (config 'call/cc)
+				(and (and part-vars
+					  (> (hashtable-size part-vars) 0))))
+			    (let ((fun (new-node Lambda '() #f this.body)))
+			       (set! fun.local-vars part-vars)
+			       fun)
+			    #f)))
       (trampoline-start-code p)
-      (set! new-body.source-element? #t)
+      (set! this.body.source-element? #t)
       (if outer-vars?
+	  (hashtable-for-each outer-vars
+			      (lambda (var ignored)
+				 (p-display part-filter-port
+					    "var " var.compiled ";\n"))))
+      (if encapsulated
 	  (begin
-	     (hashtable-for-each outer-vars
-				 (lambda (var ignored)
-				    (p-display part-filter-port
-					       "var " var.compiled ";\n")))
-	     (new-body.compile part-filter-port))
-	  (new-body.compile part-filter-port))
+	     (encapsulated.compile part-filter-port)
+	     (p-display part-filter-port
+			".call(this)"))
+	  (this.body.compile part-filter-port))
 
       (part-filter-close part-filter-port whole-is-stmt-form?)
 

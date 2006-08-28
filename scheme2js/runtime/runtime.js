@@ -1519,22 +1519,24 @@ function sc_jsMethodCall(o, field) { /// export
 
 function sc_jsMethodCall_callcc(o, field) { /// export
     var sc_storage = sc_CALLCC_STORAGE;
+    var fun;
+    var args;
     if (sc_storage.doRestore) {
 	var sc_frame = sc_storage.getNextFrame();
 	o = sc_frame.o;
-	field = sc_frame.field;
+	fun = sc_frame.fun;
     } else {
 	// we don't need to store the arguments, as they called function needs
 	// to store it's parameters anyways.
 	var sc_frame = new Object();
 	sc_frame.o = o;
-	sc_frame.field = field;
-    }
-    try {
-	var args = new Array();
+	sc_frame.fun = fun = o[field];
+	args = new Array();
 	for (var i = 2; i < arguments.length; i++)
 	    args[i-2] = arguments[i];
-	return o[field].apply(o, args);
+    }
+    try {
+	return fun.apply(o, args);
     } finally {
 	sc_storage.pop();
     }
