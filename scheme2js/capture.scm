@@ -52,13 +52,6 @@
    (latest-allocation tree)
    (allocate-captured! tree))
 
-(define (debug-var-ht-property probj name ht)
-   (pfield-set! probj name
-		(apply string-append (map (lambda (v)
-					     (string-append " "
-							    (symbol->string v.id)))
-					  (hashtable-key-list ht)))))
-
 ;; every tail-rec receives a list of variables, that are captured within the loop.
 (define (tail-rec-escapes tree)
    (verbose " latest allocation")

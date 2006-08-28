@@ -78,9 +78,9 @@
 		(if (null? remaining)
 		    (pp `(define ,name ',res-mapping))
 		    (let* ((part-mapping (hashtable-get ht (car remaining)))
-			   (dummy
-			    (with-output-to-port (current-error-port)
-			       (lambda () (print (car remaining)))))
+;			   (dummy
+;			    (with-output-to-port (current-error-port)
+;			       (lambda () (print (car remaining)))))
 			   (part-mapping-filtered
 			    (filter (lambda (p)
 				       (not (hashtable-get done-symbols

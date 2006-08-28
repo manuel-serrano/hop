@@ -2236,6 +2236,27 @@ function sc_withOutputToString_immutable_callcc(thunk) { /// export
     }
 }
 
+function sc_withOutputToProcedure_mutable(proc, thunk) { /// export
+    var t = function(s) { proc(new sc_String(s)); };
+    return sc_withOutputToPort(new sc_GenericOutputPort(t), thunk);
+}
+function sc_withOutputToProcedure_mutable_callcc(proc, thunk) { /// export
+    var t = function(s) { proc(new sc_String(s)); };
+    return sc_withOutputToPort_callcc(new sc_GenericOutputPort(t), thunk);
+}
+function sc_withOutputToProcedure_immutable(proc, thunk) { /// export
+    return sc_withOutputToPort(new sc_GenericOutputPort(proc), thunk);
+}
+function sc_withOutputToProcedure_immutable_callcc(proc, thunk) { /// export
+    return sc_withOutputToPort_callcc(new sc_GenericOutputPort(proc), thunk);
+}
+
+function sc_GenericOutputPort(appendJSString, close) {
+    this.appendJSString = appendJSString;
+    if (close)
+	this.close = close;
+}
+
 function sc_openOutputString_mutable() { /// export
     return new sc_StringOutputPort_mutable();
 }

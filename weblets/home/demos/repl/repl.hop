@@ -25,25 +25,29 @@
 	    (<TEXTAREA>
 	       :class "repl"
 	       :rows 22 :cols 80
-	       :onkeyup ~(if (= event.keyCode 13)
-			     (let* ((t this)
-				    (e t.value)
-				    (i (e.lastIndexOf ":=> ")))
-				(define (safe-eval expr)
-				   (with-handler
-				    (lambda (exception)
-				       (+ "*** " exception))
-				    (eval expr)))
-				(if (>= i 0)
-				    (let ((s (e.substr (+ i 4) e.length)))
-				       (with-hop ($home/demos/repl/compile s)
-					  (lambda (h)
-					     (if (pair? h)
-						 (let ((e (safe-eval (car h))))
-						    (set! t.value
-							  (+ t.value
-							     e
-							     "\n:=> "))))))))))
+	       :onkeyup
+	       ~(if (= event.keyCode 13)
+		    (let* ((t this)
+			   (e t.value)
+			   (i (e.lastIndexOf ":=> ")))
+		       (define (safe-eval expr)
+			  (with-handler
+			   (lambda (exception)
+			      (+ "*** " exception))
+			   (eval expr)))
+		       (if (>= i 0)
+			   (let ((s (e.substr (+ i 4) e.length)))
+			      (with-hop ($home/demos/repl/compile s)
+					(lambda (h)
+					   (if (pair? h)
+					       (with-output-to-procedure
+						(lambda (s)
+						   (set! t.value (+ t.value
+								    s)))
+						(lambda ()
+						   (let ((e (safe-eval (car h))))
+						      (print e)
+						      (display ":=> ")))))))))))
 	       ";; Try to cut an paste the following lines, without the semi-colons
 ;;   (let ((el (car (dom-get-elements-by-tag-name document \"h1\"))))
 ;;      (el.style.setProperty \"color\" \"red\" \"\"))
