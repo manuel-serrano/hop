@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Thu Aug 24 18:40:23 2006 (serrano)                */
+/*    Last change :  Wed Aug 30 19:05:24 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -371,6 +371,7 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
 
    /* start hidden otherwise we loose the border on drag! */
    win.el_body.style.display = "none";
+
    if( hop_is_html_element( obj ) ) {
       var c = win.el_body.childNodes;
       var i = c.length;

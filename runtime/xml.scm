@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Aug 25 18:41:05 2006 (serrano)                */
+;*    Last change :  Wed Aug 30 15:42:49 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -32,6 +32,8 @@
 	      (header-format::bstring read-only)
 	      (html-attributes::pair-nil read-only (default '()))
 	      (no-end-tags-elements::pair-nil read-only (default '()))
+	      (script-start (default #f))
+	      (script-stop (default #f))
 	      (meta-format::bstring read-only))
 
 	    (class xml
@@ -77,8 +79,12 @@
 	    (xml-make-id::bstring #!optional id (markup 'HOP))
 	    
 	    (hop-get-xml-backend::xml-backend ::symbol)
+	    
 	    (hop-xml-backend::xml-backend)
 	    (hop-xml-backend-set! ::obj)
+
+	    (hop-xhtml-xmlns::pair-nil)
+	    (hop-xhtml-xmlns-set! ::pair-nil)
 
  	    (generic xml-write ::obj ::output-port ::symbol ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port)
@@ -89,6 +95,7 @@
 
 	    (string->tilde::xml-tilde ::bstring)
 	    (tilde-compose::xml-tilde ::xml-tilde ::xml-tilde)
+	    (tilde-make-thunk::xml-tilde ::xml-tilde)
 	    
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -187,6 +194,18 @@
 	    (<DELAY> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-xhtml-xmlns ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-xhtml-xmlns
+   '((xmlns . "http://www.w3.org/1999/xhtml"))
+   (lambda (v)
+      (if (every? (lambda (x)
+		     (and (pair? x) (symbol? (car x)) (string? (cdr x))))
+		  v)
+	  v
+	  (error 'hop-xhtml-xmlns "Illegal namespaces" v))))
+				   
+;*---------------------------------------------------------------------*/
 ;*    *html-backend* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *html-4.01-backend*
@@ -208,11 +227,24 @@
       (id 'xhtml-1.0)
       (mime-type "application/xhtml+xml")
       (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">")
-      (html-attributes '((xmlns . "http://www.w3.org/1999/xhtml")))
+      (html-attributes (hop-xhtml-xmlns))
       (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>")
       (no-end-tags-elements '())
+      ;; XHTML scripts have to be protected
+      (script-start "<![CDATA[")
+      (script-stop "]]>")
       ;; the meta-format contains the closing />
       (meta-format "/>")))
+
+;*---------------------------------------------------------------------*/
+;*    hop-xml-backend ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-xml-backend
+   *html-4.01-backend*
+   (lambda (v)
+      (if (xml-backend? v)
+	  v
+	  (hop-get-xml-backend v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-get-xml-backend ...                                          */
@@ -226,16 +258,6 @@
       (else
        (error 'hop-get-xml-backend "Illegal backend" id))))
    
-;*---------------------------------------------------------------------*/
-;*    hop-xml-backend ...                                              */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-xml-backend
-   *html-4.01-backend*
-   (lambda (v)
-      (if (xml-backend? v)
-	  v
-	  (hop-get-xml-backend v))))
-
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -382,9 +404,11 @@
    (with-access::xml-tilde obj (body parent)
       (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
 	  (xml-write body p encoding backend)
-	  (begin
+	  (with-access::xml-backend backend (script-start script-stop)
 	     (display "<script type='text/javascript'>" p)
+	     (when script-start (display script-start p))
 	     (xml-write body p encoding backend)
+	     (when script-stop (display script-stop p))
 	     (display "</script>\n" p)))))
       
 ;*---------------------------------------------------------------------*/
@@ -741,3 +765,10 @@
    (instantiate::xml-tilde
       (body (string-append (xml-tilde-body t1) "\n" (xml-tilde-body t2)))))
 
+;*---------------------------------------------------------------------*/
+;*    tilde-make-thunk ...                                             */
+;*---------------------------------------------------------------------*/
+(define (tilde-make-thunk t)
+   (instantiate::xml-tilde
+      (body (string-append "function() {" (xml-tilde-body t) "}"))))
+      

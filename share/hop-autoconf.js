@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Aug  4 11:10:05 2006 (serrano)                */
+/*    Last change :  Wed Aug 30 19:10:39 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -16,20 +16,30 @@
 /*---------------------------------------------------------------------*/
 var undefined;
 
-/*    var res = "";                                                    */
-/*    for( var p in Object ) {                                         */
-/*       res += p + "\n";                                              */
-/*    }                                                                */
-/*    res += "--------------------------------------------\n\n";       */
-/*    document.write( res );                                           */
-/* res = "";                                                           */
-
 if( window.HTMLFormElement == undefined ) {
    window.HTMLFormElement = window.HTMLForm;
 }
 
 if( window.HTMLCollection == undefined ) {
    window.HTMLCollection = false;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_properties_to_string ...                                     */
+/*---------------------------------------------------------------------*/
+function hop_properties_to_string( obj ) {
+   var res = "";
+   var i = 0;
+   for( var p in window ) {
+      if( i == 10 ) {
+	 res += p + "\n";
+	 i = 0;
+      } else {
+	 i++;
+	 res += p + " ";
+      }
+   }
+   return res;
 }
 
 /*---------------------------------------------------------------------*/
@@ -43,8 +53,18 @@ if( window.HTMLElement == undefined ) {
 	      && (typeof obj.innerHTML == "string"));
    } 
 } else {
-   hop_is_html_element = function hop_is_html_element( obj ) {
-      return (obj instanceof HTMLElement);
+   var ifr = document.createElement( "iframe" );
+
+   if( ifr instanceof HTMLElement ) {
+      hop_is_html_element = function hop_is_html_element( obj ) {
+	 return (obj instanceof HTMLElement);
+      }
+   } else {
+      /* this is konqueror */
+      var ifproto = ifr.__proto__;
+      hop_is_html_element = function hop_is_html_element( obj ) {
+	 return (obj instanceof HTMLElement) || (obj.__proto__ == ifproto);
+      }
    }
 }
 
