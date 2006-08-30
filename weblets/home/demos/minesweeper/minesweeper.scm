@@ -136,13 +136,13 @@
 	  (set! cell.src *bomb-flagged-img*)))
       (remaining-bombs-update!)))
 
-(define (cell-mouse-down event mine)
+(define (cell-mouse-down event cell)
    (stop-event-propagation event)
    (if (and (not *game-over*)
 	    (or (eq? event.which 1) (eq? event.button 0))) ; left button
        (if event.shiftKey
-	   (mark-bomb! mine)
-	   (cell-click! mine))))
+	   (mark-bomb! cell)
+	   (cell-click! cell))))
 
 (define (cell-create! x y)
    (define (Mine)
