@@ -42,7 +42,7 @@
 	     (let* ((path (if (char=? (string-ref file 0) (file-separator))
 			      file
 			      (hop-file dir file)))
-		    (cached-name (string-append path ".compiled"))
+		    (cached-name (string-append path ".compiled.js"))
 		    (cached (cache-get sscript-cache cached-name)))
 		(if cached
 		    cached
