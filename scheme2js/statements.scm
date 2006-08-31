@@ -170,7 +170,7 @@
    (let ((prolog '()))
       (define (transform-optr/opnd expr)
 	 (if (marked-node? expr)
-	     (let* ((id (gensym 'optr/opnd))
+	     (let* ((id (gensym 'optrOpnd))
 		    (optr/opnd-var-decl (Decl-of-new-Var id))
 		    (expr-state-var optr/opnd-var-decl.var)
 		    (new-expr (expr.traverse! expr-state-var #t)))

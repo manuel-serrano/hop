@@ -4,7 +4,8 @@
 	   config)
    (export (extract-js-interface::pair top-level::pair-nil
 				       js-interface::pair-nil)
-	   *runtime-var-mapping*))
+	   *runtime-var-mapping*
+	   *higher-order-runtime*)) ;; comes directly from runtime_mapping.sch
 
 (define *runtime-var-mapping* #f)
 

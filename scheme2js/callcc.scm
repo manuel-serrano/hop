@@ -90,11 +90,29 @@
 (define-pmethod (Lambda-propagate current-fun)
    (this.traverse1 this))
 
-;; TODO: this is a temporary hack (to make things compile).
-(define *higher-order-runtime* '(map for-each))
-(define *call/cc-names* '(call/cc call-with-current-continuation))
+(define *optimizable-higher*
+   `((apply ,car)
+     (map ,car)
+     (for-each ,car)
+     (call-with-values ,car ,cadr)
+     (dynamic-wind ,car ,cadr) ;; we ignore the 'after'-part
+     (js-call ,cadr)
+     (with-input-from-port ,cadr)
+     (with-input-from-string ,cadr)
+     (with-output-to-port ,cadr)
+     (with-output-to-string ,car)
+     (with-output-to-procedure ,cadr) ;; car must not call call/cc
+     (hashtable-for-each ,cadr)))
 
 (define-pmethod (Call-propagate current-fun)
+   (define *call/cc-names*
+      (let ((interface-p (assoc 'call/cc *runtime-var-mapping*)))
+	 (if (not interface-p)
+	     '()
+	     (map! car (filter (lambda (p) (eq? (cadr interface-p)
+						(cadr p)))
+			       *runtime-var-mapping*)))))
+
    (define (mark-call/cc-fun fun)
       (unless fun.potential-call/cc?
 	 (set! fun.potential-call/cc? #t)
@@ -104,33 +122,51 @@
    (let* ((target this.target)
 	  (runtime-id (and target (runtime-var-ref-id target))))
       (cond
-	 ;; they are way too common to treat them "normally".
-	 ((and runtime-id (memq runtime-id '(map for-each)))
-	  (let* ((higher-target (call-target (car this.operands)))
-		 (higher-target-runtime (runtime-var-ref-id higher-target)))
-	     (if higher-target
-		 (set! this.higher-target higher-target))
-	     (cond
-		((and (inherits-from? higher-target (node 'Lambda))
-		      (not higher-target.potential-call/cc?))
-		 (verbose "put into caller's list1")
-		 ;; put us into the callers list of the higher-target, in case
-		 ;; it hasn't been traversed yet.
-		 (when (or (not higher-target.callers)
-			   (not (memq current-fun higher-target.callers)))
-		    (verbose "put into caller's list")
-		    (set! higher-target.callers
-			  (cons current-fun
-				(or higher-target.callers
-				    '())))))
-		((and higher-target-runtime
-		      (not (memq higher-target-runtime
-				 (append *call/cc-names*
-					 *higher-order-runtime*))))
-		 'do-nothing)
-		(else
-		 (mark-call/cc-fun current-fun)
-		 (set! this.call/cc-call? #t)))))
+	 ;; optim.
+	 ((and runtime-id (assq runtime-id *optimizable-higher*))
+	  =>
+	  (lambda (match)
+	     (if (any?
+		  (lambda (which)
+		     (let* ((higher-target (call-target (which this.operands)))
+			    (higher-target-runtime
+			     (runtime-var-ref-id higher-target)))
+			(cond
+			   ((and (inherits-from? higher-target (node 'Lambda))
+				 (not higher-target.potential-call/cc?))
+			    ;; put us into the callers list of the
+			    ;; higher-target, in case it hasn't been traversed
+			    ;; yet.
+			    (when (or (not higher-target.callers)
+				      (not (memq current-fun
+						 higher-target.callers)))
+			       (set! higher-target.callers
+				     (cons current-fun
+					   (or higher-target.callers
+					       '()))))
+			    ;; put us into a 'higher-targets' list so we can
+			    ;; verify later on, if any of these yet unevaluated
+			    ;; functions turned out to contain call/ccs.
+			    (set! this.higher-targets
+				  (cons higher-target
+					(or this.higher-targets
+					    '())))
+			    ;; for now don't mark us as call/cc
+			    #f)
+			   ((and higher-target-runtime
+				 (not (memq higher-target-runtime
+					    (append *call/cc-names*
+						    *higher-order-runtime*))))
+			    ;; do-nothing
+			    #f)
+			   (else
+			    ;; mark call/cc-fun and abort traversal of list.
+			    #t))))
+		  (cdr match))
+		 (begin
+		    (mark-call/cc-fun current-fun)
+		    (set! this.call/cc-call? #t)))))
+		 
 	 ((or (not target) ;; assume call/cc
 	      target.potential-call/cc?
 	      (and runtime-id (memq runtime-id (append *higher-order-runtime*
@@ -168,21 +204,26 @@
 			       (inherits-from? operand (node 'Const)))
 		      (set! operand.call/cc-stmt? #t)))
 		call.operands)
-      (if (inherits-from? this.operator (node 'Var-ref))
-	  (verbose "call/cc call: " this.operator.id " " (car index)))
       (set-car! index (+ (car index) 1)))
 
    (this.traverse1 index)
    (let ((target this.target)
-	 (higher-target this.higher-target)
+	 ;; higher-targets have been set during propagate pass.
+	 ;; at this time these targets haven't been evaluated yet.
+	 ;; if one of them turned out to contain call/cc we must mark this call
+	 ;; as call/cc.
+	 (higher-targets this.higher-targets)
 	 (call/cc-call? this.call/cc-call?))
       (delete! this.target)
+      (delete! this.higher-targets)
       (delete! this.call/cc-call?)
       (cond
 	 (call/cc-call?
 	  (mark-call/cc-call this index))
 	 ((or (and target target.potential-call/cc?)
-	      (and higher-target higher-target.potential-call/cc?))
+	      (and higher-targets (any? (lambda (n)
+					   n.potential-call/cc?)
+					higher-targets)))
 	  (mark-call/cc-call this index))
 	 ((and target (not target.potential-call/cc?))
 	  'do-nothing)

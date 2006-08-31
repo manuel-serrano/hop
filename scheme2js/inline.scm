@@ -131,7 +131,7 @@
    
    (define-pmethod (Labelled-deep-clone cloned-ht)
       (let ((res (pcall this pobject-deep-clone cloned-ht)))
-	 (set! res.id (label-map res.id))
+	 (set! res.label (label-map res.label))
 	 res))
 
    (to-clone-add! fun.local-vars)

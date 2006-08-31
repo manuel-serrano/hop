@@ -297,6 +297,9 @@
        "if (sc_storage.doRestore) {\n"
        "  var sc_frame = sc_storage.getNextFrame();\n"
        "} else {\n"
+       "  if (sc_storage.length() == 0 && !sc_storage.firstCall) {\n"
+       "        sc_storage.firstCall = arguments.callee;\n"
+       "  }\n"
        "  var sc_frame = new Object();\n"
        "  sc_frame.sc_callCcRestoreIndex = 0;\n"
        "  sc_frame.sc_callCcIndex = 0;\n"
@@ -326,9 +329,9 @@
       (p-display
        p
        "} catch (e) {\n"
-       "  if (e instanceof sc_CallCcException && sc_storage.length() == 1)\n"
-       "    return sc_callCcRestart(e, arguments.callee);\n"
-       "  else \n"
+       "  if (e instanceof sc_CallCcException && sc_storage.length() == 1) {\n"
+       "    return sc_callCcRestart(e);\n"
+       "  } else \n"
        "    throw e;\n"
        "} finally {\n"
        "  sc_storage.pop();\n"

@@ -1,7 +1,7 @@
 (module export-runtime
    (main myMain))
 
-(define *export-line-pattern* (pregexp "/// export[ ]*(.*)"))
+(define *export-line-pattern* (pregexp "/// export(-higher)?[ ]*(.*)"))
 (define *exported-fun-pattern* (pregexp "(?:var|function) ((?:sc_)?([^ (;]*))"))
 (define *attributes-pattern* (pregexp "((?:sc_)?(?:_[A-Z]|[^_])*)(?:_(.*))?"))
 
@@ -49,13 +49,14 @@
 		  (interface-fun (string-append "sci_"
 						(caddr fun-match)))
 		  (attributes (extract-attributes exported-fun))
-		  (override-names (cadr match))
+		  (higher-order? (and (cadr match) #t))
+		  (override-names (caddr match))
 		  (scheme-funs (if (string=? override-names "")
 				   (list (unmarshall (caddr fun-match)))
 				   (string-split override-names
 						 " "))))
 	      (if (eq? *mode* 'map)
-		  (list attributes scheme-funs interface-fun)
+		  (list attributes scheme-funs interface-fun higher-order?)
 		  (cons interface-fun exported-fun))))))
 
 (define *mode* #f)
@@ -93,47 +94,60 @@
 			     (cdr remaining)))))))
        combinations)))
 
+(define (print-higher-order-list ht)
+   (pp `(define *higher-order-runtime* ',(hashtable-key-list ht))))
+
 (define (extract-mapping! file)
    (with-input-from-file file
       (lambda ()
-	 (let loop ((line (read-line))
-		    (ht (make-hashtable)))
-	    (if (eof-object? line)
-		(print-runtime-var-mapping ht)
-		(let ((parsed-line (parse-line line)))
-		   (if parsed-line
-		       (let* ((attributes (car parsed-line))
-			      (scheme-funs (cadr parsed-line))
-			      (interface-fun (caddr parsed-line))
-			      (sym-interface-fun (string->symbol interface-fun))
-			      (new-mappings
-			       (map! (lambda (scheme-fun)
-					(list (string->symbol scheme-fun)
-					      sym-interface-fun))
-				     scheme-funs)))
-			      (hashtable-update!
-			       ht
-			       (cond
-				  ((not attributes)
-				   'default)
-				  ((and (memq 'mutable attributes)
-					(memq 'callcc attributes))
-				   'mutable-call/cc)
-				  ((and (memq 'immutable attributes)
-					(memq 'callcc attributes))
-				   'immutable-call/cc)
-				  ((memq 'mutable attributes)
-				   'mutable)
-				  ((memq 'immutable attributes)
-				   'immutable)
-				  ((memq 'callcc attributes)
-				   'call/cc)
-				  (else
-				   (error #f "should not happen " attributes)))
-			       (lambda (old-mappings)
-				  (append! new-mappings old-mappings))
-			       new-mappings)))
-		   (loop (read-line) ht)))))))
+	 (let ((ht (make-hashtable))
+	       (higher-order-ht (make-hashtable)))
+	    (let loop ((line (read-line)))
+	       (if (eof-object? line)
+		   (begin
+		      (print-runtime-var-mapping ht)
+		      (print-higher-order-list higher-order-ht))
+		   (let ((parsed-line (parse-line line)))
+		      (if parsed-line
+			  (let* ((attributes (car parsed-line))
+				 (scheme-funs (cadr parsed-line))
+				 (interface-fun (caddr parsed-line))
+				 (higher-order? (cadddr parsed-line))
+				 (sym-interface-fun (string->symbol interface-fun))
+				 (new-mappings
+				  (map (lambda (scheme-fun)
+					  (list (string->symbol scheme-fun)
+						sym-interface-fun))
+				       scheme-funs)))
+			     (when higher-order?
+				(for-each (lambda (id)
+					     (hashtable-put! higher-order-ht
+							     (string->symbol id)
+							     #t))
+					  scheme-funs))
+			     (hashtable-update!
+			      ht
+			      (cond
+				 ((not attributes)
+				  'default)
+				 ((and (memq 'mutable attributes)
+				       (memq 'callcc attributes))
+				  'mutable-call/cc)
+				 ((and (memq 'immutable attributes)
+				       (memq 'callcc attributes))
+				  'immutable-call/cc)
+				 ((memq 'mutable attributes)
+				  'mutable)
+				 ((memq 'immutable attributes)
+				  'immutable)
+				 ((memq 'callcc attributes)
+				  'call/cc)
+				 (else
+				  (error #f "should not happen " attributes)))
+			      (lambda (old-mappings)
+				 (append! new-mappings old-mappings))
+			      new-mappings)))
+		      (loop (read-line)))))))))
 
 (define (extract-interface! file)
    (with-input-from-file file

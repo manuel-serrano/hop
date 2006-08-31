@@ -65,10 +65,9 @@
       res))
 
 (define-pmethod (Part-mark-statements)
-   (let* ((body-res (this.body.traverse))
-	  (res (or body-res this.prefer-statement-form?)))
-      (mark-node! this res)
-      res))
+   (this.body.traverse)
+   (mark-node! this #t)
+   #t)
 
 (define-pmethod (Lambda-mark-statements)
    (this.body.traverse)

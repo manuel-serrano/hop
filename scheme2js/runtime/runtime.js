@@ -1180,7 +1180,7 @@ function sc_isProcedure(o) { /// export
     return (typeof o === "function");
 }
 
-function sc_apply(proc) { /// export
+function sc_apply(proc) { /// export-higher
     var args = new Array();
     // first part of arguments are not in list-form.
     for (var i = 1; i < arguments.length - 1; i++)
@@ -1235,7 +1235,7 @@ function sc_map2(proc, l1, l2) {
     }
     return sc_destReverseAppend(revres, null);
 }
-function sc_map(proc, l1, l2, l3) { /// export
+function sc_map(proc, l1, l2, l3) { /// export-higher
     if (l2 === undefined)
 	return sc_map1(proc, l1);
     else if (l3 === undefined)
@@ -1254,7 +1254,7 @@ function sc_map(proc, l1, l2, l3) { /// export
     return sc_destReverseAppend(revres, null);
 }
 
-function sc_map_callcc(proc) { /// export
+function sc_map_callcc(proc) { /// export-higher
     var sc_storage = sc_CALLCC_STORAGE;
     if (sc_storage.doRestore) {
 	var sc_frame = sc_storage.getNextFrame();
@@ -1300,7 +1300,7 @@ function sc_forEach2(proc, l1, l2) {
 	l2 = l2.cdr;
     }
 }
-function sc_forEach(proc, l1, l2, l3) { /// export
+function sc_forEach(proc, l1, l2, l3) { /// export-higher
     if (l2 === undefined)
 	return sc_forEach1(proc, l1);
     else if (l3 === undefined)
@@ -1317,11 +1317,20 @@ function sc_forEach(proc, l1, l2, l3) { /// export
     }
 }
 
-function sc_forEach_callcc(proc, l1) { /// export
+function sc_forEach_callcc(proc, l1) { /// export-higher
     sc_map_callcc.apply(this, arguments);
 }
 
-function sc_force(o) { /// export
+function sc_force(o) { /// export-higher
+    return o();
+}
+function sc_force_callcc(o) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	o = sc_storage.getNextFrame();
+    } else {
+	sc_storage.push(o);
+    }
     return o();
 }
 function sc_makePromise(proc) { /// export
@@ -1344,10 +1353,13 @@ function sc_Values(values) {
 }
 
 function sc_values() { /// export
-    return new sc_Values(arguments);
+    if (arguments.length === 1)
+	return arguments[0];
+    else
+	return new sc_Values(arguments);
 }
 
-function sc_callWithValues(producer, consumer) { /// export
+function sc_callWithValues(producer, consumer) { /// export-higher
     var produced = producer();
     if (produced instanceof sc_Values)
 	return consumer.apply(null, produced.values);
@@ -1355,7 +1367,7 @@ function sc_callWithValues(producer, consumer) { /// export
 	return consumer(produced);
 }
 
-function sc_callWithValues_callcc(producer, consumer) { /// export
+function sc_callWithValues_callcc(producer, consumer) { /// export-higher
     var sc_storage = sc_CALLCC_STORAGE;
     if (sc_storage.doRestore) {
 	var sc_frame = sc_storage.getNextFrame();
@@ -1378,7 +1390,7 @@ function sc_callWithValues_callcc(producer, consumer) { /// export
     }
 }
 
-function sc_dynamicWind(before, thunk, after) { /// export
+function sc_dynamicWind(before, thunk, after) { /// export-higher
     before();
     try {
 	var res = thunk();
@@ -1388,7 +1400,7 @@ function sc_dynamicWind(before, thunk, after) { /// export
     }
 }
 
-function sc_dynamicWind_callcc(before, thunk, after) { /// export
+function sc_dynamicWind_callcc(before, thunk, after) { /// export-higher
     var sc_storage = sc_CALLCC_STORAGE;
     if (sc_storage.doRestore) {
 	var sc_frame = sc_storage.getNextFrame();
@@ -1480,14 +1492,14 @@ function sc_deleteJsField(o, field) { /// export js-field-delete!
     delete o[field];
 }
 
-function sc_jsCall(o, fun) { /// export
+function sc_jsCall(o, fun) { /// export-higher
     var args = new Array();
     for (var i = 2; i < arguments.length; i++)
 	args[i-2] = arguments[i];
     return fun.apply(o, args);
 }
 
-function sc_jsCall_callcc(o, fun) { /// export
+function sc_jsCall_callcc(o, fun) { /// export-higher
     var sc_storage = sc_CALLCC_STORAGE;
     if (sc_storage.doRestore) {
 	var sc_frame = sc_storage.getNextFrame();
@@ -1510,14 +1522,14 @@ function sc_jsCall_callcc(o, fun) { /// export
     }
 }
 
-function sc_jsMethodCall(o, field) { /// export
+function sc_jsMethodCall(o, field) { /// export-higher
     var args = new Array();
     for (var i = 2; i < arguments.length; i++)
 	args[i-2] = arguments[i];
     return o[field].apply(o, args);
 }
 
-function sc_jsMethodCall_callcc(o, field) { /// export
+function sc_jsMethodCall_callcc(o, field) { /// export-higher
     var sc_storage = sc_CALLCC_STORAGE;
     var fun;
     var args;
@@ -1542,6 +1554,7 @@ function sc_jsMethodCall_callcc(o, field) { /// export
     }
 }
 
+// HACK: we don't export jsNew as higher, as we can't handle it in our call/cc anyways.
 function sc_jsNew(c) { /// export new js-new
     var evalStr = "new c(";
     evalStr +=arguments.length > 1? "arguments[1]": "";
@@ -2104,7 +2117,7 @@ function sc_openOutputFile(s) { /// export
 
 /* ----------------------------------------------------------------------------*/
 
-function sc_withInputFromPort(p, thunk) { /// export
+function sc_withInputFromPort(p, thunk) { /// export-higher
     try {
 	var tmp = SC_DEFAULT_IN; // THREAD: shared var.
 	SC_DEFAULT_IN = p;
@@ -2114,7 +2127,7 @@ function sc_withInputFromPort(p, thunk) { /// export
     }
 }
 
-function sc_withInputFromPort_callcc(p, thunk) { /// export
+function sc_withInputFromPort_callcc(p, thunk) { /// export-higher
     var sc_storage = sc_CALLCC_STORAGE;
     if (sc_storage.doRestore) {
 	var sc_frame = sc_storage.getNextFrame();
@@ -2136,29 +2149,29 @@ function sc_withInputFromPort_callcc(p, thunk) { /// export
     }
 }
 
-function sc_withInputFromString_mutable(s, thunk) { /// export
+function sc_withInputFromString_mutable(s, thunk) { /// export-higher
     return sc_withInputFromString_immutable(s.val, thunk);
 }
 
-function sc_withInputFromString_mutable_callcc(s, thunk) { /// export
+function sc_withInputFromString_mutable_callcc(s, thunk) { /// export-higher
     if (sc_CALLCC_STORAGE.doRestore)
 	return sc_withInputFromPort_callcc();
     else
 	return sc_withInputFromString_immutable_callcc(s.val, thunk);
 }
 
-function sc_withInputFromString_immutable(s, thunk) { /// export
+function sc_withInputFromString_immutable(s, thunk) { /// export-higher
     return sc_withInputFromPort(new sc_StringInputPort(s), thunk);
 }
 
-function sc_withInputFromString_immutable_callcc(s, thunk) { /// export
+function sc_withInputFromString_immutable_callcc(s, thunk) { /// export-higher
     if (sc_CALLCC_STORAGE.doRestore)
 	return sc_withInputFromPort_callcc();
     else
 	return sc_withInputFromPort_callcc(new sc_StringInputPort(s), thunk);
 }
 
-function sc_withOutputToPort(p, thunk) { /// export
+function sc_withOutputToPort(p, thunk) { /// export-higher
     try {
 	var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
 	SC_DEFAULT_OUT = p;
@@ -2168,7 +2181,7 @@ function sc_withOutputToPort(p, thunk) { /// export
     }
 }
 
-function sc_withOutputToPort_callcc(p, thunk) { /// export
+function sc_withOutputToPort_callcc(p, thunk) { /// export-higher
     var sc_storage = sc_CALLCC_STORAGE;
     if (sc_storage.doRestore) {
 	var sc_frame = sc_storage.getNextFrame();
@@ -2190,13 +2203,13 @@ function sc_withOutputToPort_callcc(p, thunk) { /// export
     }
 }
 
-function sc_withOutputToString_mutable(thunk) { /// export
+function sc_withOutputToString_mutable(thunk) { /// export-higher
     var p = new sc_StringOutputPort_mutable();
     sc_withOutputToPort(p, thunk);
     return p.close();
 }
 
-function sc_withOutputToString_mutable_callcc(thunk) { /// export
+function sc_withOutputToString_mutable_callcc(thunk) { /// export-higher
     var sc_storage = sc_CALLCC_STORAGE;
     var p;
     if (sc_storage.doRestore) {
@@ -2213,13 +2226,13 @@ function sc_withOutputToString_mutable_callcc(thunk) { /// export
     }
 }
 
-function sc_withOutputToString_immutable(thunk) { /// export
+function sc_withOutputToString_immutable(thunk) { /// export-higher
     var p = new sc_StringOutputPort_immutable();
     sc_withOutputToPort(p, thunk);
     return p.close();
 }
 
-function sc_withOutputToString_immutable_callcc(thunk) { /// export
+function sc_withOutputToString_immutable_callcc(thunk) { /// export-higher
     var sc_storage = sc_CALLCC_STORAGE;
     var p;
     if (sc_storage.doRestore) {
@@ -2236,18 +2249,19 @@ function sc_withOutputToString_immutable_callcc(thunk) { /// export
     }
 }
 
-function sc_withOutputToProcedure_mutable(proc, thunk) { /// export
+/* with-output-to-procedure proc must not call call/cc! */
+function sc_withOutputToProcedure_mutable(proc, thunk) { /// export-higher
     var t = function(s) { proc(new sc_String(s)); };
     return sc_withOutputToPort(new sc_GenericOutputPort(t), thunk);
 }
-function sc_withOutputToProcedure_mutable_callcc(proc, thunk) { /// export
+function sc_withOutputToProcedure_mutable_callcc(proc, thunk) { /// export-higher
     var t = function(s) { proc(new sc_String(s)); };
     return sc_withOutputToPort_callcc(new sc_GenericOutputPort(t), thunk);
 }
-function sc_withOutputToProcedure_immutable(proc, thunk) { /// export
+function sc_withOutputToProcedure_immutable(proc, thunk) { /// export-higher
     return sc_withOutputToPort(new sc_GenericOutputPort(proc), thunk);
 }
-function sc_withOutputToProcedure_immutable_callcc(proc, thunk) { /// export
+function sc_withOutputToProcedure_immutable_callcc(proc, thunk) { /// export-higher
     return sc_withOutputToPort_callcc(new sc_GenericOutputPort(proc), thunk);
 }
 
@@ -2793,11 +2807,24 @@ function sc_hashtableGet(ht, key) { /// export
 	return false;
 }
 
-function sc_hashtableForEach(ht, f) { /// export
+function sc_hashtableForEach(ht, f) { /// export-higher
     for (var v in ht) {
 	if (ht[v] instanceof sc_HashtableElement)
 	    f(ht[v].key, ht[v].val);
     }
+}
+function sc_hashtableForEach_callcc(ht, f) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	return sc_forEach_callcc();
+    }
+    var l = null;
+    for (var v in ht) {
+	if (ht[v] instanceof sc_HashtableElement)
+	    l = new sc_Pair(ht[v], l);
+    }
+    sc_forEach_callcc(function(e) { f(e.key, e.val); },
+		      l);
 }
 
 function sc_hashtableContains(ht, key) { /// export hashtable-contains?
@@ -2862,7 +2889,7 @@ sc_CallCcStorage.prototype.push = function(frame) {
     this.frames.push(frame);
 };
 sc_CallCcStorage.prototype.pop = function() {
-    this.frames.pop();
+    if (this.frames.length > 0) this.frames.pop();
 };
 sc_CallCcStorage.prototype.popAll = function() {
     this.frames.length = 0;
@@ -2876,6 +2903,7 @@ sc_CallCcStorage.prototype.length = function() {
 sc_CallCcStorage.prototype.duplicate = function() {
     var dupl = new sc_CallCcStorage();
     dupl.frames = this.frames.concat();
+    if (this.firstCall) dupl.firstCall = this.firstCall;
     return dupl;
 };
 
@@ -2887,12 +2915,14 @@ sc_CallCcStorage.prototype.getNextFrame = function() {
 };
 
 var sc_CALLCC_STORAGE = new sc_CallCcStorage();
+var sc_EMPTY_CALLCC;
+sc_callcc(function(k) { sc_EMPTY_CALLCC = k; });
 
 function sc_CallCcException() {
     this._internalException = true;
 }
 
-function sc_callcc(proc) { /// export call/cc call-with-current-continuation
+function sc_callcc(proc) { /// export-higher call/cc call-with-current-continuation
     function backup(storage) {
 	var backup = storage.duplicate();
 	for (var i = 0; i < backup.frames.length; i++) {
@@ -2922,9 +2952,16 @@ function sc_callcc(proc) { /// export call/cc call-with-current-continuation
 	    sc_CALLCC_STORAGE = dupl;
 	    sc_CALLCC_STORAGE.resetFrameIterator();
 	};
-	throw e;
+	if (sc_CALLCC_STORAGE.length() > 0) {
+	    throw e;
+	} else {
+	    // we are not called out of a Scheme-function.
+	    // Just invoke the continuation ourselves...
+	    e.root();
+	    sc_callCcRestart(e);
+	}
     };
-	
+
     var storage = sc_CALLCC_STORAGE;
     if (storage.doRestore) {
 	delete storage.doRestore;
@@ -2955,11 +2992,14 @@ function sc_callcc(proc) { /// export call/cc call-with-current-continuation
     }
 }
 
-function sc_callCcRestart(exc, startFun) {
+function sc_callCcRestart(exc) {
     while (true) {
 	try {
 	    exc.root();
-	    return startFun();
+	    if (sc_CALLCC_STORAGE.firstCall) {
+		return sc_CALLCC_STORAGE.firstCall();
+	    }
+	    return;
 	} catch (e) {
 	    if (e instanceof sc_CallCcException)
 		exc = e;

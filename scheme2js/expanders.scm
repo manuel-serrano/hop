@@ -1,6 +1,26 @@
 (module expanders
    (import expand))
 
+(install-expander! 'when
+		   (lambda (x e)
+		      (match-case x
+			 ((?- ?test . ?body)
+			  (e
+			   `(if ,test (begin ,@body))
+			   e))
+			 (else
+			  (error "when-expand" "Invalid when form: " x)))))
+
+(install-expander! 'unless
+		   (lambda (x e)
+		      (match-case x
+			 ((?- ?test . ?body)
+			  (e
+			   `(if (not ,test) (begin ,@body))
+			   e))
+			 (else
+			  (error "unless-expand" "Invalid unless form: " x)))))
+
 (install-expander! 'define
 		   (lambda (x e)
 		      (match-case x
@@ -293,3 +313,89 @@
 (install-expander! 'delay
 		   (lambda (x e)
 		      (e `(make-promise (lambda () ,@(cdr x))) e)))
+
+(install-expander!
+ 'for-each
+ (lambda (x e)
+    (match-case x
+       ((?- ?proc . ?Ls)
+	(e
+	 (let ((L-ids (map (lambda (ignored)
+			      (gensym 'L))
+			   Ls))
+	       (tmp-f (gensym 'tmpF)))
+	    `(let ((,tmp-f ,proc))
+		(do ,(map (lambda (id l)
+			     `(,id ,l (cdr ,id)))
+			  L-ids Ls)
+		    ((null? ,(car L-ids)) #unspecified)
+		    (,tmp-f ,@(map (lambda (id)
+				      `(car ,id))
+				   L-ids)))))
+	 e))
+       (else
+	(error "for-each-expander" "Invalid for-each-form: " x)))))
+
+(install-expander!
+ 'map
+ (lambda (x e)
+    (match-case x
+       ((?- ?proc . ?Ls)
+	(e
+	 (let ((L-ids (map (lambda (ignored)
+			      (gensym 'L))
+			   Ls))
+	       (rev-res (gensym 'revRes))
+	       (loop (gensym 'loop))
+	       (false-head (gensym 'falseHead))
+	       (tail (gensym 'tail))
+	       (tmp-f (gensym 'tmpF)))
+	    `(let ((,tmp-f ,proc)
+		   (,false-head (cons '() '())))
+		(let ,loop ((,tail ,false-head)
+			    ,@(map list L-ids Ls))
+		     (if (null? ,(car L-ids))
+			 (cdr ,false-head)
+			 (begin
+			    (set-cdr! ,tail
+				      (cons (,tmp-f ,@(map (lambda (id)
+							      `(car ,id))
+							   L-ids))
+					    '()))
+			    (,loop (cdr ,tail)
+				   ,@(map (lambda (id)
+					     `(cdr ,id))
+					  L-ids)))))))
+	 e))
+       (else
+	(error "map-expander" "Invalid map-form: " x)))))
+
+(install-expander!
+ 'map!
+ (lambda (x e)
+    (match-case x
+       ((?- ?proc ?L1 . ?Lrest)
+	(e
+	 (let ((L-ids (map (lambda (ignored)
+			      (gensym 'L))
+			   (cons L1 Lrest)))
+	       (loop (gensym 'loop))
+	       (tmp-f (gensym 'tmpF))
+	       (first-L (gensym 'firstL)))
+	    `(let ((,tmp-f ,proc)
+		   (,first-L ,L1))
+		(let ,loop ((,(car L-ids) ,first-L)
+			    ,@(map list (cdr L-ids) Lrest))
+		     (if (null? ,(car L-ids))
+			 ,first-L
+			 (begin
+			    (set-car! ,(car L-ids)
+				      (,tmp-f ,@(map (lambda (id)
+							`(car ,id))
+						     L-ids)))
+			    (,loop ,@(map (lambda (id)
+					     `(cdr ,id))
+					  L-ids)))))))
+	 e))
+       (else
+	(error "map!-expander" "Invalid map!-form: " x)))))

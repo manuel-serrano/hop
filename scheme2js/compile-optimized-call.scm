@@ -174,7 +174,7 @@
 
    (let ((nb-operands (length operands)))
       (cond
-	 ((= nb-operands 0) "(new sc_String(''))")
+	 ((= nb-operands 0) (p-display p "(new sc_String(''))"))
 	 ((= nb-operands 1) ((car operands).compile p))
 	 (else
 	  (p-display p "(new sc_String(")
@@ -190,6 +190,20 @@
    (if (config 'correct-modulo)
        #f
        ((infix-op 2 2 "%") p operands)))
+
+(define (values-op p operands)
+   (let ((nb-operands (length operands)))
+      (cond
+	 ((= nb-operands 0) (p-display p "(new sc_Values([]))"))
+	 ((= nb-operands 1) ((car operands).compile p))
+	 (else
+	  (p-display p "(new sc_Values([")
+	  ((car operands).compile p)
+	  (for-each (lambda (n)
+		       (p-display p ",")
+		       (n.compile p))
+		    (cdr operands))
+	  (p-display p "]))")))))
 
 (define *optimizable-operators*
    `(
@@ -317,6 +331,8 @@
 				 " (" 1 ".name === " 0 ")"))
     (sci_getStructField ,(hole-op 3 0 "[" 2 "]"))
     (sci_setStructField ,(hole-op 4 0 "[" 2 "] = " 3))
+
+    (sci_values ,values-op)
 
     ;; scheme2js extension
     (sci_jsField ,(hole-op 2 'o "[" 'field "]"))

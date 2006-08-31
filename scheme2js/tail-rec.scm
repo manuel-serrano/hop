@@ -262,7 +262,7 @@
 
       (if (not target.tail-recced?)
 	  (begin
-	     (set! target.tail-rec-label (gensym 'rec-call))
+	     (set! target.tail-rec-label (gensym 'recCall))
 	     (set! target.tail-recced? #t)))
       
       (let* ((tail-rec-label target.tail-rec-label)
