@@ -1511,6 +1511,7 @@ function sc_jsCall_callcc(o, fun) { /// export-higher
 	var sc_frame = new Object();
 	sc_frame.o = o;
 	sc_frame.fun = fun;
+	sc_storage.push(sc_frame);
     }
     try {
 	var args = new Array();
@@ -1546,6 +1547,7 @@ function sc_jsMethodCall_callcc(o, field) { /// export-higher
 	args = new Array();
 	for (var i = 2; i < arguments.length; i++)
 	    args[i-2] = arguments[i];
+	sc_storage.push(sc_frame)
     }
     try {
 	return fun.apply(o, args);
