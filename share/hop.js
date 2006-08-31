@@ -415,6 +415,51 @@ function with_hop( service, success, failure ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    with_hop_callcc ...                                              */
+/*---------------------------------------------------------------------*/
+function with_hop_callcc( service ) {
+   var sc_storage = sc_CALLCC_STORAGE;
+   if (sc_storage.doRestore) {
+      var res = sc_callcc();
+      if (res.failure)
+	 throw res.value; // TODO
+      else
+	 return res.value;
+   } else {
+      sc_callcc(function(k) {
+	 function success(val) {
+	    k({value: val});
+	 };
+	 function failure(val) {
+	    k({failure: true, value: val});
+	 };
+	 hop( service,
+	      function( http ) {
+		 var json;
+
+		 switch( http.status ) {
+		 case 200:
+		    if( hop_is_http_json( http ) ) {
+		       success( eval( http.responseText ) );
+		    } else {
+		       success( http.responseText );
+		    }
+		    return;
+		 case 202:
+		    success( hop_unserialize( http.responseText ) );
+		    return;
+		 default:
+		    success( http );
+		    return;
+		 }
+	      }, 
+	      failure );
+	 sc_EMPTY_CALLCC(); // abort execution here.
+      });
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_event_hander_set ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_event_handler_set( svc, evt, success, failure ) {

@@ -26,6 +26,7 @@
 ;*---------------------------------------------------------------------*/
 (define *hop-aliases*
    '((with-hop with_hop)
+     (with-hop-call/cc with_hop_callcc)
      (timeout-start hop_timeout)
      (timeout-clear! hop_clear_timeout)
      (timeout-reset! hop_timeout_reset)
@@ -187,5 +188,3 @@
      (add-event-listener! hop_add_event_listener)
      (remove-event-listener! hop_remove_event_listener)
      (stop-event-propagation hop_stop_propagation)))
-
-
