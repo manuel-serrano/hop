@@ -211,19 +211,27 @@
 	  (part-filter-close (cdr part-filter-port/close))
 	  
 	  (encapsulated (if (or (config 'call/cc)
+				(and (config 'encapsulate-parts)
+				     '(HACK HACK HACK we need a body at the
+					    moment cause we introduced a
+					    'return in the
+					    hack-encapsulation-pass))
 				(and (and part-vars
 					  (> (hashtable-size part-vars) 0))))
 			    (let ((fun (new-node Lambda '() #f this.body)))
-			       (set! fun.local-vars part-vars)
+			       (set! fun.local-vars (or part-vars (make-eq-hashtable)))
 			       fun)
 			    #f)))
+      (verbose (config 'call/cc))
+      (verbose (not encapsulated))
       (trampoline-start-code p)
       (set! this.body.source-element? #t)
       (if outer-vars?
 	  (hashtable-for-each outer-vars
 			      (lambda (var ignored)
 				 (p-display part-filter-port
-					    "var " var.compiled ";\n"))))
+					    "var " var.compiled ";\n")
+				 (set! var.encapsulated? #t))))
       (if encapsulated
 	  (begin
 	     (p-display part-filter-port "(")
@@ -356,6 +364,13 @@
 			     ;; if we optimize the var-number we might reuse
 			     ;; variables. Don't play with that...
 			     (not (config 'optimize-var-number))
+
+			     ;; call/cc has bad property of putting
+			     ;; declarations into an anonymous function.
+			     ;; the variable itself is however still accessible
+			     ;; outside this function. -> we can't do
+			     ;; declarations then.
+			     (not lvalue.var.encapsulated?)
 
 			     lvalue.var.single-value ;; not muted or anything
 

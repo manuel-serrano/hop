@@ -63,13 +63,9 @@
    (set! this.body (this.body.traverse! state-var statement-form?)))
 
 (define-pmethod (Part-transform-statements! state-var statement-form?)
-   (if state-var
-       (error "Part-transform-statements!"
-	      "Parts must not have state-vars: "
-	      #f))
-       (begin
-	  (set! this.body (this.body.traverse! #f statement-form?))
-	  (mark-node! this statement-form?))
+   ;; we ignore the state-var entering Parts. (bad luck...)
+   (set! this.body (this.body.traverse! #f statement-form?))
+   (mark-node! this statement-form?)
    this)
 
 (define-pmethod (Value-transform-statements! state-var statement-form?)

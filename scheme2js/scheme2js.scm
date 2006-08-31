@@ -11,6 +11,7 @@
 	   symbol
 	   side
 	   tail-rec
+	   hack-encapsulation
 	   statements
 	   node-elimination
 	   traverse
@@ -227,6 +228,9 @@
       (if (eq? (config 'debug-stage) 'while) (dot-out p tree))
       (trampoline tree)
       (if (eq? (config 'debug-stage) 'trampoline) (dot-out p tree))
+
+      (hack-encapsulation! tree)
+
       (callcc-check-points tree)
       (if (eq? (config 'debug-stage) 'call/cc-cp) (dot-out p tree))
       (statements! tree)

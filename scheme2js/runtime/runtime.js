@@ -2889,7 +2889,7 @@ sc_CallCcStorage.prototype.push = function(frame) {
     this.frames.push(frame);
 };
 sc_CallCcStorage.prototype.pop = function() {
-    if (this.frames.length > 0) this.frames.pop();
+    this.frames.pop();
 };
 sc_CallCcStorage.prototype.popAll = function() {
     this.frames.length = 0;
