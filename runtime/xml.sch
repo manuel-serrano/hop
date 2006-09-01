@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 15:24:40 2005                          */
-;*    Last change :  Fri Aug 25 18:52:56 2006 (serrano)                */
+;*    Last change :  Thu Aug 31 14:45:11 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML macros                                                       */
@@ -74,7 +74,7 @@
 						"string"
 						(cadr args)))
 			 (loop (cddr args)
-			       (cons (cons (keyword->string (car args))
+			       (cons (cons (keyword->symbol (car args))
 					   (cadr args))
 				     attr)
 			       body

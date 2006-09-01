@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Wed Aug 30 19:10:39 2006 (serrano)                */
+/*    Last change :  Fri Sep  1 09:49:24 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -155,8 +155,8 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
    hop_remove_event_listener = function( obj, event, proc, capture ) {
       return obj.removeEventListener( event, proc, capture );
    }
-   hop_stop_propagation = function( event ) {
-      event.preventDefault();
+   hop_stop_propagation = function( event, def ) {
+      if( !def ) event.preventDefault();
       event.stopPropagation();
    }
 } else {
@@ -166,8 +166,8 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
    hop_remove_event_listener = function( obj, event, proc, capture ) {
       return obj.detachEvent( "on" + event, proc );
    }
-   hop_stop_propagation = function( event ) {
-      event.cancelBubble = true;
+   hop_stop_propagation = function( event, def ) {
+      if( !def ) event.cancelBubble = true;
       event.returnValue = false;
    }
 }

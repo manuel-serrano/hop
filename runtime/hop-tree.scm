@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Aug 25 09:47:39 2006 (serrano)                */
+;*    Last change :  Thu Aug 31 14:45:41 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -122,7 +122,7 @@
       (let ((title (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body head) ps be)
 		      (close-output-port ps)))
-	    (value (let ((c (assoc "value" (xml-element-attributes head))))
+	    (value (let ((c (assq 'value (xml-element-attributes head))))
 		      (if (pair? c)
 			  (cdr c)
 			  "")))
