@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Aug 30 15:42:49 2006 (serrano)                */
+;*    Last change :  Mon Sep  4 12:10:48 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -51,10 +51,6 @@
 	       (thunk::procedure read-only)
 	       (value::obj (default #f)))
 
-	    (class xml-tilde::xml
-	       (body read-only)
-	       (parent (default #unspecified)))
-
 	    (class xml-markup::xml
 	       (markup::symbol read-only)
 	       (attributes::pair-nil (default '()))
@@ -67,6 +63,12 @@
 	       (parent (default #unspecified)))
 
 	    (class xml-empty-element::xml-element)
+
+	    (class xml-script::xml-element)
+	    
+	    (class xml-tilde::xml
+	       (body read-only)
+	       (parent (default #unspecified)))
 
 	    (class xml-meta::xml-markup)
 
@@ -398,6 +400,24 @@
 	  (xml-write otherwise p encoding backend))))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-script ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-script p encoding backend)
+   (with-access::xml-script obj (body attributes)
+      (with-access::xml-backend backend (script-start script-stop)
+	 (if (pair? attributes)
+	     (begin
+		(display "<script " p)
+		(xml-write-attributes attributes p)
+		(display ">" p))
+	     (display "<script type='text/javascript'>" p))
+	 (when (pair? body)
+	    (when script-start (display script-start p))
+	    (xml-write body p encoding backend)
+	    (when script-stop (display script-stop p)))
+	 (display "</script>\n" p))))
+   
+;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-tilde ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-tilde p encoding backend)
@@ -514,7 +534,10 @@
       (with-access::xml-html obj (markup attributes body)
 	 (display "<" p)
 	 (display markup p)
-	 (xml-write-attributes html-attributes p)
+	 (xml-write-attributes (filter (lambda (h)
+					  (not (assq (car h) attributes)))
+				       html-attributes)
+			       p)
 	 (xml-write-attributes attributes p)
 	 (display ">\n" p)
 	 (for-each (lambda (b) (xml-write b p encoding backend)) body)
@@ -681,7 +704,7 @@
 (define-xml-element <Q>)
 (define-xml-element <S>)
 (define-xml-element <SAMP>)
-(define-xml-markup <SCRIPT>)
+(define-xml xml-script #f <SCRIPT>)
 (define-xml-element <SELECT>)
 (define-xml-element <SMALL>)
 (define-xml-element <SPAN>)

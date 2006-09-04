@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Sep  1 09:49:24 2006 (serrano)                */
+/*    Last change :  Mon Sep  4 11:33:03 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -74,8 +74,18 @@ if( window.HTMLElement == undefined ) {
 var hop_make_xml_http_request;
 
 if( window.XMLHttpRequest != undefined ) {
-   hop_make_xml_http_request = function hop_make_xml_http_request() {
-      return new XMLHttpRequest();
+   var req = new XMLHttpRequest();
+   if( req.overrideMimeType != undefined ) {
+      hop_make_xml_http_request = function hop_make_xml_http_request() {
+	 var req = new XMLHttpRequest();
+	 /* this is required by some versions of Mozilla */
+/* 	 req.overrideMimeType( "text/xml" );                           */
+	 return req;
+      }
+   } else {
+      hop_make_xml_http_request = function hop_make_xml_http_request() {
+	 return new XMLHttpRequest();
+      }
    }
 } else {
    if( window.ActiveXObject != undefined ) {
