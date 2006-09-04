@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Aug  2 15:04:25 2006 (serrano)                */
+;*    Last change :  Thu Aug 31 14:45:41 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -101,24 +101,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tree ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-tree p encoding)
+(define-method (xml-write obj::html-tree p encoding backend)
    (let ((parent (symbol->string (gensym 'TREE-PARENT))))
       (fprintf p "<span id='~a' class='hop-tree-parent'>" parent)
       (display " <script type='text/javascript'>" p)
-      (html-write-tree 0 obj parent p)
+      (html-write-tree 0 obj parent p backend)
       (display " </script>" p)
       (display "</span>" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-write-tree ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (html-write-tree level obj::html-tree parent::bstring p::output-port)
+(define (html-write-tree level
+			 obj::html-tree
+			 parent::bstring
+			 p::output-port
+			 be::xml-backend)
    (with-access::html-tree obj (id foldero folderc open head body
 				   multiselect onselect onunselect cached)
       (let ((title (let ((ps (open-output-string)))
-		      (xml-write-body (xml-element-body head) ps)
+		      (xml-write-body (xml-element-body head) ps be)
 		      (close-output-port ps)))
-	    (value (let ((c (assoc "value" (xml-element-attributes head))))
+	    (value (let ((c (assq 'value (xml-element-attributes head))))
 		      (if (pair? c)
 			  (cdr c)
 			  "")))
@@ -141,7 +145,7 @@
 		     (hop->json
 		      (procedure->service
 		       (lambda (level)
-			  (html-write-tree-body level (car body) id p)))))))
+			  (html-write-tree-body level (car body) id p be)))))))
 	 ;; set the parent relationship with the body
 	 (when (and (pair? body) (html-trbody? (car body)))
 	    (html-trbody-parent-set! (car body) obj))
@@ -177,13 +181,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-body ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (xml-write-body body p)
-   (for-each (lambda (b) (xml-write b p 'ISO-8859-1)) body))
+(define (xml-write-body body p be)
+   (for-each (lambda (b) (xml-write b p 'ISO-8859-1 be)) body))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-write-tree-body ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (html-write-tree-body level obj parent p)
+(define (html-write-tree-body level obj parent p be)
    (instantiate::http-response-procedure
       (request (instantiate::http-request))
       (proc (lambda (p)
@@ -196,9 +200,9 @@
 				     ((xml-delay? b)
 				      (loop ((xml-delay-thunk b))))
 				     ((html-tree? b)
-				      (html-write-tree level b parent p))
+				      (html-write-tree level b parent p be))
 				     ((html-tree-leaf? b)
-				      (html-write-tree-leaf b parent p))
+				      (html-write-tree-leaf b parent p be))
 				     (else
 				      (error '<TREE> "Illegal tree body" b)))))
 			    body))))))
@@ -206,10 +210,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    html-write-tree-leaf ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (html-write-tree-leaf obj::html-tree-leaf parent p)
+(define (html-write-tree-leaf obj::html-tree-leaf parent p be)
    (with-access::html-tree-leaf obj (file body value)
       (let ((sbody (let ((ps (open-output-string)))
-		      (xml-write-body (xml-element-body obj) ps)
+		      (xml-write-body (xml-element-body obj) ps be)
 		      (close-output-port ps)))
 	    (icon (or file
 		      (make-file-name (hop-icons-directory) "file.png"))))

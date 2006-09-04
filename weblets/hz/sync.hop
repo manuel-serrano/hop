@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Thu Jun 15 14:43:47 2006 (serrano)                */
+;*    Last change :  Fri Aug 25 10:14:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -30,8 +30,9 @@
    (let* ((path (hz-db-path 'repository))
 	  (db (hz-get-db path)))
       (unwind-protect
-	 (instantiate::http-response-obj
-	    (body (hz-db->list db)))
+	 (let ((l (hz-db->list db)))
+	    (instantiate::http-response-string
+	       (body (with-output-to-string (lambda () (write l))))))
 	 (hz-db-close db))))
 
 ;*---------------------------------------------------------------------*/

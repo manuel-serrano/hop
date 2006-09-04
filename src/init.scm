@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Jul 21 18:57:22 2006 (serrano)                */
+;*    Last change :  Thu Aug 24 15:18:27 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -34,6 +34,15 @@
 (define *hss-mutex* (make-mutex 'hss))
 
 ;*---------------------------------------------------------------------*/
+;*    hss-write ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hss-write hss p)
+   (let loop ((hss hss))
+      (if (string? hss)
+	  (display hss p)
+	  (for-each loop hss))))
+
+;*---------------------------------------------------------------------*/
 ;*    hss-cache ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define hss-cache
@@ -42,7 +51,7 @@
 			    "cache"
 			    (string-append "hss-"
 					   (integer->string (hop-port)))))
-      (out (lambda (o p) (xml-write o p (hop-char-encoding))))))
+      (out (lambda (o p) (hss-write o p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-response ...                                                 */
@@ -67,11 +76,11 @@
 			     (content-type mime)
 			     (bodyp (eq? method 'GET))
 			     (file cache))
-			  (instantiate::http-response-hop
+			  (instantiate::http-response-procedure
 			     (request req)
 			     (content-type mime)
 			     (bodyp (eq? method 'GET))
-			     (xml hss))))))))))
+			     (proc (lambda (p) (hss-write hss p))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-filter ...                                                   */

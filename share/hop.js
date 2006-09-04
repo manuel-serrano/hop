@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Aug  4 10:10:55 2006 (serrano)                */
+/*    Last change :  Mon Sep  4 11:37:11 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -468,9 +468,9 @@ function hop_event_handler_set( svc, evt, success, failure ) {
    var handler = function ( http ) {
       http.eventName = evt;
       var res = success( http );
-      
+
       if( res ) {
-	    hop_event_handler_set( svc, evt, success, failure );
+	 hop_event_handler_set( svc, evt, success, failure );
       }
 			
       return res;
@@ -651,7 +651,7 @@ function hop_element_y( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_timeout ...                                                  */
 /*---------------------------------------------------------------------*/
-function hop_timeout( id, timeout, proc ,eager ) {
+function hop_timeout( id, timeout, proc, eager ) {
    window[ id ] = setInterval( proc, timeout );
    window[ id ].proc = proc;
    window[ id ].timeout = timeout;

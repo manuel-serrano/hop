@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Fri Aug  4 12:41:08 2006 (serrano)                */
+/*    Last change :  Wed Aug 30 19:05:24 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -251,66 +251,66 @@ function make_hop_iwindow( id, klass, parent ) {
    win.className = klass;
    win.name = "hop-iwindow";
 
-   var t = "\
-<TABLE id='" + id + "-main' class='hop-iwindow' \
-       cellpadding='0' cellspacing='0' border='0'>\
-  <TR>\
-    <TD class='hop-iwindow-top' valign='top'>\
-      <TABLE id='" + id + "-handle' class='hop-iwindow-handle' width='100%'\
-             cellpadding='0' cellspacing='0' border='0'>\
-        <TR class='hop-iwindow-handle'>\
-          <TD class='hop-iwindow-iconify' align='left' onclick='hop_iwindow_iconify( \"" + id + "\" )'>&nbsp;</TD>\
-          <TD class='hop-iwindow-maximize' align='left' onclick='hop_iwindow_maximize( \"" + id + "\" )'>&nbsp;</TD>\
-          <TD class='hop-iwindow-up-title'>\
-            <TABLE class='hop-iwindow-title' width='100%' border='0' cellspacing='0' cellpadding='0'>\
-              <TR>\
-                <TD class='hop-iwindow-title-left'>&nbsp;</TD>\
-                <TD id='" + id + "-title' class='hop-iwindow-title-middle'>title</TD>\
-                <TD class='hop-iwindow-title-right'>&nbsp;</TD>\
-              </TR>\
-            </TABLE>\
-          </TD> \
-          <TD class='hop-iwindow-close' align='right' onclick='hop_iwindow_close( \"" + id + "\" )'>&nbsp;</TD>\
-        </TR>\
-      </TABLE>\
-    </TD>\
-  </TR>\
-  <TR class='hop-iwindow-body'>\
-    <TD id='" + id + "-content'  class='hop-iwindow-content' valign='top'>\
-      <TABLE class='hop-iwindow-body' width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'>\
-        <TR>\
-          <TD id='" + id + "-body' class='hop-iwindow-body' height='100%'></TD>\
-        </TR>\
-      </TABLE>\
-    </TD>\
-  </TR>\
-  <TR class='hop-iwindow-bottom'>\
-    <TD>\
-      <TABLE width='100%' border='0' cellspacing='0' cellpadding='0'>\
-        <TR>\
-          <TD id='" + id + "-resize-left' class='hop-iwindow-bottom-left'>&nbsp;</TD>\
-          <TD id='" + id + "-resize-middle' class='hop-iwindow-bottom-middle'>&nbsp;</TD>\
-          <TD id='" + id + "-resize-right' class='hop-iwindow-bottom-right'>&nbsp;</TD>\
-        </TR>\
-      </TABLE> \
-    </TD>\
-  </TR>\
+   var t = "\n\
+<TABLE id='" + id + "-main' class='hop-iwindow' \n\
+       cellpadding='0' cellspacing='0' border='0'>\n\
+  <TR>\n\
+    <TD class='hop-iwindow-top' valign='top'>\n\
+      <TABLE id='" + id + "-handle' class='hop-iwindow-handle' width='100%'\n\
+             cellpadding='0' cellspacing='0' border='0'>\n\
+        <TR class='hop-iwindow-handle'>\n\
+          <TD class='hop-iwindow-iconify' align='left' onclick='hop_iwindow_iconify( \"" + id + "\" )'>&nbsp;</TD>\n\
+          <TD class='hop-iwindow-maximize' align='left' onclick='hop_iwindow_maximize( \"" + id + "\" )'>&nbsp;</TD>\n\
+          <TD class='hop-iwindow-up-title'>\n\
+            <TABLE class='hop-iwindow-title' width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
+              <TR>\n\
+                <TD class='hop-iwindow-title-left'>&nbsp;</TD>\n\
+                <TD id='" + id + "-title' class='hop-iwindow-title-middle'>title</TD>\n\
+                <TD class='hop-iwindow-title-right'>&nbsp;</TD>\n\
+              </TR>\n\
+            </TABLE>\n\
+          </TD> \n\
+          <TD class='hop-iwindow-close' align='right' onclick='hop_iwindow_close( \"" + id + "\" )'>&nbsp;</TD>\n\
+        </TR>\n\
+      </TABLE>\n\
+    </TD>\n\
+  </TR>\n\
+  <TR class='hop-iwindow-body'>\n\
+    <TD id='" + id + "-content'  class='hop-iwindow-content' valign='top'>\n\
+      <TABLE class='hop-iwindow-body' width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'>\n\
+        <TR>\n\
+          <TD id='" + id + "-body' class='hop-iwindow-body' height='100%'></TD>\n\
+        </TR>\n\
+      </TABLE>\n\
+    </TD>\n\
+  </TR>\n\
+  <TR class='hop-iwindow-bottom'>\n\
+    <TD>\n\
+      <TABLE width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
+        <TR>\n\
+          <TD id='" + id + "-resize-left' class='hop-iwindow-bottom-left'>&nbsp;</TD>\n\
+          <TD id='" + id + "-resize-middle' class='hop-iwindow-bottom-middle'>&nbsp;</TD>\n\
+          <TD id='" + id + "-resize-right' class='hop-iwindow-bottom-right'>&nbsp;</TD>\n\
+        </TR>\n\
+      </TABLE> \n\
+    </TD>\n\
+  </TR>\n\
 </TABLE>";
 
-   win.innerHTML = "\
-<TABLE class='hop-iwindow-shadow' cellspacing='0' cellpadding='0' border='0'>\
-  <TR>\
-    <TD class='hop-iwindow-shadow-nw' rowspan='2' colspan='2'>" + t + "</TD>\
-    <TD id='" + id + "-shadow-box' class='hop-iwindow-shadow-ne'>&nbsp;</TD>\
-  </TR>\
-  <TR>\
-    <TD class='hop-iwindow-shadow-e'>&nbsp;</TD>\
-  </TR>\
-  <TR>\
-    <TD class='hop-iwindow-shadow-sw'>&nbsp;</TD>\
-    <TD class='hop-iwindow-shadow-s'>&nbsp;</TD>\
-    <TD class='hop-iwindow-shadow-se'>&nbsp;</TD>\
-  </TR>\
+   win.innerHTML = "\n\
+<TABLE class='hop-iwindow-shadow' cellspacing='0' cellpadding='0' border='0'>\n\
+  <TR>\n\
+    <TD class='hop-iwindow-shadow-nw' rowspan='2' colspan='2'>\n" + t + "</TD>\n\
+    <TD id='" + id + "-shadow-box' class='hop-iwindow-shadow-ne'>&nbsp;</TD>\n\
+  </TR>\n\
+  <TR>\n\
+    <TD class='hop-iwindow-shadow-e'>&nbsp;</TD>\n\
+  </TR>\n\
+  <TR>\n\
+    <TD class='hop-iwindow-shadow-sw'>&nbsp;</TD>\n\
+    <TD class='hop-iwindow-shadow-s'>&nbsp;</TD>\n\
+    <TD class='hop-iwindow-shadow-se'>&nbsp;</TD>\n\
+  </TR>\n\
 </TABLE>";
 
    if( parent )
@@ -371,6 +371,7 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
 
    /* start hidden otherwise we loose the border on drag! */
    win.el_body.style.display = "none";
+
    if( hop_is_html_element( obj ) ) {
       var c = win.el_body.childNodes;
       var i = c.length;

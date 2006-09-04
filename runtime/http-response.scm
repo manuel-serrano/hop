@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Aug  2 15:05:35 2006 (serrano)                */
+;*    Last change :  Fri Aug 25 09:33:50 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -93,34 +93,6 @@
 	    connection))))
 
 ;*---------------------------------------------------------------------*/
-;*    http-response ::http-response-obj ...                            */
-;*    -------------------------------------------------------------    */
-;*    The class HTTP-RESPONS-OBJ being obsolete, this method will      */
-;*    be removed soon.                                                 */
-;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-obj socket)
-   (with-trace 3 'http-response::http-response-obj
-      (with-access::http-response-obj r (start-line header content-type server content-length body bodyp timeout request)
-	 (let ((p (socket-output socket))
-	       (connection (http-request-connection request)))
-	    (when (>fx timeout 0)
-	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
-	    (http-write-header p header)
-	    (if (>elong content-length #e0)
-		(http-write-line p "Content-Length: " content-length)
-		(set! connection 'close))
-	    (http-write-line p "Connection: " connection)
-	    (when content-type
-	       (http-write-line p "Content-Type: " content-type))
-	    (when server
-	       (http-write-line p "Server: " server))
-	    (http-write-line p)
-	    (when bodyp (write body p))
-	    (flush-output-port p)
-	    connection))))
-      
-;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-js ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-js socket)
@@ -153,7 +125,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop socket)
    (with-trace 3 'http-response::http-response-hop
-      (with-access::http-response-hop r (start-line header content-type server content-length xml char-encoding bodyp timeout request)
+      (with-access::http-response-hop r (start-line header content-type server content-length xml char-encoding bodyp timeout request backend)
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
@@ -172,7 +144,10 @@
 	    ;; the body
 	    (with-trace 4 'http-response-hop
 	       (when bodyp
-		  (xml-write xml p (or char-encoding (hop-char-encoding)))))
+		  (xml-write xml
+			     p
+			     (or char-encoding (hop-char-encoding))
+			     backend)))
 	    (flush-output-port p)
 	    connection))))
 
@@ -253,6 +228,7 @@
 ;*---------------------------------------------------------------------*/
 (define (response-directory rep dir)
    (instantiate::http-response-hop
+      (backend (hop-xml-backend))
       (char-encoding (request-encoding (%http-response-request rep)))
       (request (%http-response-request rep))
       (xml (if (%http-response-bodyp rep)
@@ -458,12 +434,14 @@
 	  (body obj)))
       ((response-is-xml? obj)
        (instantiate::http-response-hop
+	  (backend (hop-xml-backend))
 	  (char-encoding (request-encoding req))
 	  (request req)
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
 	  (xml obj)))
       (else
        (instantiate::http-response-js
+	  (backend (hop-xml-backend))
 	  (request req)
 	  (value obj)))))
 
@@ -478,6 +456,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::xml req)
    (instantiate::http-response-hop
+      (backend (hop-xml-backend))
       (request req)
       (char-encoding (request-encoding req))
       (bodyp (not (eq? (http-request-method req) 'HEAD)))

@@ -63,6 +63,7 @@ vectors.
   (dom-replace-child! node new old)
   (dom-get-element-by-id node string)
   (dom-get-elements-by-tag-name node string)
+  (dom-get-elements-by-class node string)
 
 === server only ===
 
@@ -383,6 +384,25 @@ two or more elements with the same identifier.
 Search all the elements in ++document++ whose tag name is ++id++. The
 tag name is the name of the markup that has been used to build the
 elements. The function ++string=?++ that compare characters by
+characters is used to compare identifiers.  
+
+~~ Note: On client code, ++node++ must a document, i.e., an element built
+by the ++<HTML>++ markup. This restriction does not apply to server code.
+</procedure>
+</function>
+
+=== ++(dom-get-elements-by-class document name)++ ===
+<function> dom-get-elements-by-class
+<procedure> getElementsByClass
+
+<arguments>
+^  arguments       ^   type       ^  short description                      ^
+| document         |  element     | an element.                             |
+| name             |  string      | the seeked elements class.              |
+</arguments>
+
+Search all the elements in ++document++ whose class ++name++. The
+function ++string=?++ that compare characters by
 characters is used to compare identifiers.  
 
 ~~ Note: On client code, ++node++ must a document, i.e., an element built

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Aug  2 14:25:04 2006 (serrano)                */
+;*    Last change :  Fri Aug 25 09:48:17 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -83,14 +83,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-paned ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-paned p encoding)
+(define-method (xml-write obj::html-paned p encoding backend)
    (let ((gid (symbol->string (gensym))))
       (with-access::html-paned obj (id klass fraction onresize body orientation style)
 	 (fprintf p "<div class='hop-paned' id='~a'" gid)
 	 (when style (fprintf p " style='~a'" style))
 	 (display ">" p)
-	 (xml-write (car body) p encoding)
-	 (xml-write (cadr body) p encoding)
+	 (xml-write (car body) p encoding backend)
+	 (xml-write (cadr body) p encoding backend)
 	 (display " <script type='text/javascript'>" p)
 	 (fprint p
 		 "hop_paned_onresize_set( "
@@ -121,7 +121,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-pan ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-pan p encoding)
+(define-method (xml-write obj::html-pan p encoding backend)
    (with-access::html-pan obj (id klass body)
       (display "<div id='" p)
       (display id p)
@@ -130,5 +130,5 @@
 	 (display " " p)
 	 (display klass p))
       (display "' style='visibility: hidden'>" p)
-      (xml-write body p encoding)
+      (xml-write body p encoding backend)
       (display "</div>" p)))

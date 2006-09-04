@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun Jul 23 15:47:57 2006 (serrano)                */
+;*    Last change :  Fri Aug 25 08:59:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -72,7 +72,6 @@
 	   (class http-response-file)
 	   (class http-response-shoutcast)
 	   (class http-response-string)
-	   (class http-response-obj)
 	   (class http-response-js)
 	   (class http-response-authentication)
 	   (class http-response-cgi)

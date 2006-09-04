@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Aug  3 09:07:38 2006 (serrano)                */
+;*    Last change :  Fri Aug 25 09:31:02 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -115,6 +115,9 @@
 	    
 	    (hop-char-encoding::symbol)
 	    (hop-char-encoding-set! ::symbol)
+
+	    (hop-default-mime-type::bstring)
+	    (hop-default-mime-type-set! ::bstring)
 
 	    (hop-upload-directory::bstring)
 	    (hop-upload-directory-set! ::bstring)
@@ -559,6 +562,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-hopaccess
    ".hopaccess")
+
+;*---------------------------------------------------------------------*/
+;*    hop-default-mime-type ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-default-mime-type
+   "text/html")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-char-encoding ...                                            */

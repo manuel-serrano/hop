@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Aug 21 17:44:44 2006 (serrano)                */
+;*    Last change :  Sun Sep  3 08:29:51 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -22,14 +22,15 @@
 	    __hop_css)
    
    (export  (the-loading-file)
+	    (the-loading-dir)
 	    
 	    (hop-load-afile ::bstring)
 	    
 	    (hop-read #!optional (iport::input-port (current-input-port)))
 	    (hop-load ::bstring #!key (env (interaction-environment)) (mode 'load))
 
-	    (load-once ::bstring #!key (mode 'load))
-	    (load-once-unmark! ::bstring)
+	    (hop-load-once ::bstring #!key (env (interaction-environment)))
+	    (hop-load-once-unmark! ::bstring)
 	    
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
@@ -210,8 +211,8 @@
    (regular-grammar ((float    (or (: (* digit) "." (+ digit))
 				   (: (+ digit) "." (* digit))))
 		     (letter   (in ("azAZ") (#a128 #a255)))
-		     (special  (in "!@~$%^&*></-_+\\=?.:"))
 		     (kspecial (in "!@~$%^&*></-_+\\=?."))
+		     (special  (or kspecial #\:))
 		     (quote    (in "\",'`"))
 		     (paren    (in "()[]{}"))
 		     (id       (: (* digit)
@@ -382,7 +383,8 @@
 	   (make-cnst (string->integer (the-substring 2 6) 16))))
       
       ;; keywords
-      ((or (: ":" kid (? id)) (: (? id) kid ":"))
+      ((or (: ":" (+ kid) (* (or kid special)))
+	   (: (? (: kid (* (or kid special)))) (+ kid) ":"))
        ;; since the keyword expression is also matched by the id
        ;; rule, keyword rule has to be placed before the id rule.
        (the-keyword))
@@ -629,6 +631,7 @@
 ;*    *the-loading-file* ...                                           */
 ;*---------------------------------------------------------------------*/
 (define *the-loading-file* #f)
+(define *the-loading-dir* #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    the-loading-file ...                                             */
@@ -638,6 +641,13 @@
       (if (thread? t)
 	  (thread-specific t)
 	  *the-loading-file*)))
+
+;*---------------------------------------------------------------------*/
+;*    the-loading-dir ...                                              */
+;*---------------------------------------------------------------------*/
+(define (the-loading-dir)
+   (let ((path (the-loading-file)))
+      (and (string? path) (dirname path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *afile-dirs* ...                                                 */
@@ -731,9 +741,9 @@
 (define *load-once-condvar* (make-condition-variable "load-once"))
 
 ;*---------------------------------------------------------------------*/
-;*    load-once ...                                                    */
+;*    hop-load-once ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (load-once file #!key (mode 'load))
+(define (hop-load-once file #!key (env (interaction-environment)))
    (mutex-lock! *load-once-mutex*)
    (unless (hashtable? *load-once-table*)
       (set! *load-once-table* (make-hashtable)))
@@ -745,7 +755,8 @@
 	     #f)
 	    ((loaded)
 	     ;; the file is already loaded
-	     (mutex-unlock! *load-once-mutex*))
+	     (mutex-unlock! *load-once-mutex*)
+	     #unspecified)
 	    ((loading)
 	     ;; the file is currently being loaded
 	     (condition-variable-wait! *load-once-condvar* *load-once-mutex*)
@@ -761,18 +772,18 @@
 		   (condition-variable-signal! *load-once-condvar*)
 		   (mutex-unlock! *load-once-mutex*)
 		   (raise e))
-		(hop-load f :mode mode))
+		(hop-load f :mode 'load :env env))
 	     (mutex-lock! *load-once-mutex*)
 	     (hashtable-put! *load-once-table* f 'loaded)
 	     (condition-variable-signal! *load-once-condvar*)
 	     (mutex-unlock! *load-once-mutex*))))))
 
 ;*---------------------------------------------------------------------*/
-;*    load-once-unmark! ...                                            */
+;*    hop-load-once-unmark! ...                                        */
 ;*    -------------------------------------------------------------    */
 ;*    Remove a file name from the load-once table                      */
 ;*---------------------------------------------------------------------*/
-(define (load-once-unmark! file)
+(define (hop-load-once-unmark! file)
    (mutex-lock! *load-once-mutex*)
    (when (hashtable? *load-once-table*)
       (hashtable-remove! *load-once-table* (file-name-unix-canonicalize file)))

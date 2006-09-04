@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 15:24:40 2005                          */
-;*    Last change :  Mon May 29 10:49:28 2006 (serrano)                */
+;*    Last change :  Mon Sep  4 12:06:07 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML macros                                                       */
@@ -33,7 +33,7 @@
 		 (if (null? (cdr args))
 		     (error ',name "attribute value missing" (car args))
 		     (loop (cddr args)
-			   (cons (cons (keyword->string (car args))
+			   (cons (cons (keyword->symbol (car args))
 				       (cadr args))
 				 attr)
 			   body
@@ -74,7 +74,7 @@
 						"string"
 						(cadr args)))
 			 (loop (cddr args)
-			       (cons (cons (keyword->string (car args))
+			       (cons (cons (keyword->symbol (car args))
 					   (cadr args))
 				     attr)
 			       body
@@ -91,7 +91,12 @@
 	       (char=? (string-ref s 0) #\<)
 	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
 	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1))))
-		(css (memq :hss-type exp)))
+		(css (memq :hss-type exp))
+		(markup (memq :markup exp)))
+	     (when (and (pair? markup) (pair? (cdr markup)))
+		(set! el (cadr markup))
+		(set-cdr! markup (cddr markup))
+		(set! exp (remq! (car markup) exp)))
 	     (if (and (pair? css) (pair? (cdr css)))
 		 (let ((new (cadr css)))
 		    (set-cdr! css (cddr css))

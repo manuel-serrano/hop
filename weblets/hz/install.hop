@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Sat Jun  3 06:10:49 2006 (serrano)                */
+;*    Last change :  Sun Sep  3 08:16:31 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -58,7 +58,7 @@
 				    (url (make-file-name
 					  (hop-service-base)
 					  name)))
-				 (for-each load-once-unmark! lst)
+				 (for-each hop-load-once-unmark! lst)
 				 (autoload path (autoload-prefix url))
 				 (set! install version))
 			      (error 'hz-install

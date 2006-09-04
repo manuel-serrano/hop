@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sat Aug 12 09:29:34 2006 (serrano)                */
+;*    Last change :  Mon Sep  4 06:53:05 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -42,7 +42,7 @@
 	       (ol::procedure (default <OL>))
 	       (ul::procedure (default <UL>))
 	       (li::procedure (default <LI>))
-	       (b::procedure (default <B>))
+	       (b::procedure (default <STRONG>))
 	       (em::procedure (default <EM>))
 	       (u::procedure (default <U>))
 	       (del::procedure (default <DEL>))

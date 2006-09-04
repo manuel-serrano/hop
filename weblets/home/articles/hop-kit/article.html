@@ -1,0 +1,1885 @@
+<!-- 95% W3C COMPLIANT, 95% CSS FREE, RAW HTML -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1">
+<title>The HOP Development Kit</title>
+ <style type="text/css">
+  <!--
+  pre { font-family: monospace }
+  tt { font-family: monospace }
+  code { font-family: monospace }
+  p.flushright { text-align: right }
+  p.flushleft { text-align: left }
+  span.sc { font-variant: small-caps }
+  span.sf { font-family: sans-serif }
+  span.skribetitle { font-family: sans-serif; font-weight: bolder; font-size: x-large; }
+  span.refscreen { }
+  span.refprint { display: none; }
+/*=====================================================================*/
+/*    serrano/diffusion/article/hop-lang/css/article.css               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Fri Jun 10 09:15:18 2005                          */
+/*    Last change :  Thu Dec  1 14:31:27 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Mail Article CSS                                                 */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Default settings                                                 */
+/*---------------------------------------------------------------------*/
+body {
+  display: block;
+  width: 45em;
+  margin: auto;
+  font-family: PostAntiqua;
+}
+
+p {
+  text-align: justify;
+}
+
+ul {
+  text-align: justify;
+}
+
+ol {
+  text-align: justify;
+}
+
+div.section {
+  margin-bottom: 1em;
+}
+
+div.abstract {
+  margin: 1em;
+  padding: 1px 10px 1px 10px;
+  background: #eef;
+  font-size: medium;
+  font-family: Trebuchet ms;
+  font-style: italic;
+  border: 1px dotted black;
+}
+
+div.footnote {
+  font-size: small;
+}
+
+div.skribesectiontitle {
+  padding-top: 0;
+  padding-bottom: 0em;
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+div.section-atitle h3 {
+  border-top: thin solid black;
+  border-bottom: thin solid black;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+div.document-title {
+  font-family: PostAntiqua;
+}
+
+div.document-title-title {
+  text-align: right;
+  font-weight: bold;
+  font-size: 30pt;
+  border-top: thin solid black;
+  border-bottom: medium solid black;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-top: 10px;
+  padding-top: 10px;
+
+}
+
+div.document-title-authors {
+  margin-bottom: 2em;
+}
+
+span.document-author {
+  display: block;
+  text-align: right;
+  margin-bottom: 1em;
+}
+
+span.document-author span {
+  font-style: italic;
+}
+
+span.document-author span.document-author-name {
+  font-weight: bold;
+  font-size: large;
+  font-style: normal;
+  display: block;
+}
+
+span.document-author span.document-author-url {
+  font-style: normal;
+  display: block;
+}
+
+span.document-author span.document-author-email {
+  font-style: normal;
+  display: block;
+}
+
+div.prog-border {
+  border: 1px solid #aaa;
+}
+
+pre.scheme {
+  background-color: #ffffee;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.uscheme {
+  background-color: #eeffee;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.repl {
+  background-color: #eff;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.c {
+  background-color: #eeffff;
+  border: thin solid black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.display {
+  background-color: #ffeeee;
+  border: thin solid black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+center.show {
+  background-color: #ffeeff;
+  border: thin solid black;
+  padding: 2pt;
+  margin: 0;
+  font-style: normal;
+  text-align: left;
+}
+
+center.show ul {
+  padding: 2pt;
+  padding-left: 14pt;
+  margin: 0;
+}
+
+div.references table {
+  font-size: small;
+}
+
+div.references table td {
+  font-size: small;
+}
+
+div.references table th {
+  font-size: small;
+}
+
+table.api-table {
+  border: none;
+  background-color: #ffe;
+}
+
+tr.api-table-prototype {
+   background-color: #ffc;
+}
+
+tr.api-table-header {
+   background-color: #fcf;
+}
+
+div.section#appendix p {
+   margin-left: 5%;
+}
+
+div.plan {
+  border: 1px dotted red;
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 5px;
+  color: #d00;
+  font-family: sans-serif;
+  font-style: italic;
+  font-size: small;
+  background: #eee;
+}
+
+/*---------------------------------------------------------------------*/
+/*    prgm ...                                                         */
+/*---------------------------------------------------------------------*/
+pre {
+  padding-left: 2px;
+  margin: 0;
+}
+
+pre.bigloo {
+  background-color: #dff;
+}
+
+pre.lhtml {
+  background-color: #fdf;
+}
+
+pre.hop {
+  background-color: #ffc;
+}
+
+pre.html {
+  background-color: #ccf;
+}
+
+pre.server {
+  background-color: #eee;
+  color: #007;
+}
+
+pre.client {
+  background-color: #eee;
+  color: #033;
+}
+
+pre.syntax {
+  background-color: #dfd;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Printing configuration                                           */
+/*---------------------------------------------------------------------*/
+@media print {
+/*--- Markup configuration --------------------------------------------*/
+pre {
+  font-size: 8pt;
+  font-family: courier;
+  line-height: 95%;
+}
+
+div.prog-border {
+  border: 0;
+}
+
+pre.prog {
+  font-size: 6pt;
+  line-height: 100%;
+}
+
+center.break-page-before {
+  page-break-before: always;
+}
+
+table.api-table {
+  border: 1px solid black;
+  padding: 10px;
+}
+
+table.api-table tr.api td {
+  padding-top: 5px;
+}
+
+table.api-table th {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+table.api-table td {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.api-table-prototype {
+  display: none;
+}
+
+.api-table-header {
+  display: none;
+}
+
+span.refscreen {
+  display: none;
+}
+
+span.refprint {
+  display: inline;
+}
+
+div.abstract {
+  border: none;
+  line-height: 100%;
+}
+
+div.section#Table-of-contents {
+  display: none;
+}
+
+div.section#Postscript-download {
+  display: none;
+}
+
+span.document-author span.document-author-name {
+  font-size: 13pt;
+  font-family: sans-serif;
+  font-weight: normal;
+}
+
+a {
+  text-decoration: none;
+}
+
+pre.scheme {
+  background-color: #ffffee;
+  border: none;
+}
+
+pre.uscheme {
+  background-color: #eeffee;
+  border: none;
+}
+
+pre.repl {
+  background-color: #eff;
+  border: none;
+}
+
+div.skribe-ending {
+  display: none;
+}
+
+div.print-plan {
+  display: none;
+}
+
+div.section-atitle h3 {
+  border-top: 0;
+  border-bottom: 0;
+}
+}
+/*=====================================================================*/
+/*    serrano/diffusion/article/hop-lang/css/sigplan.css               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Dec  1 11:00:10 2005                          */
+/*    Last change :  Wed Dec 14 13:46:49 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    The SIGPLAN CSS                                                  */
+/*=====================================================================*/
+
+@media print {
+  div.document-title {
+    font-family: Palatino;
+/*     -moz-column-count: 1;                                           */
+    width: 100%;
+    text-align: center;
+  }
+
+  div.document-title-title {
+/*     width: 42pc;                                                    */
+    font-weight: bold;
+    font-size: 20pt;
+    text-align: center;
+    line-height: 120%;
+    border: 0;
+  }
+
+  div.document-title-authors {
+    display: table;
+/*     width: 42pc;                                                    */
+    text-align: center;
+    margin-bottom: 1.8cm;
+  }
+
+  div.document-authors {
+    width: 100%;
+    display: table-row;
+    text-align: center;
+  }
+
+  span.document-author {
+    text-align: center;
+    display: table-cell;
+    width: 50%;
+  }
+
+  span.document-author span.document-author-name {
+    font-size: large;
+    font-family: Palatino;
+    padding-bottom: 0.5em;
+  }
+
+  span.document-author span.document-author-affiliation {
+    font-style: normal;
+  }
+
+  span.document-author tt {
+    font-family: mono, sans-serif;
+    font-size: 8pt;
+  }
+
+  div.skribe-body {
+/*     -moz-column-count: 2;                                           */
+/*     -moz-column-rule: none;                                         */
+/*     -moz-column-gap: 2pc;                                           */
+/*     width: 42pc;                                                    */
+  }
+ 
+  body, div.abstract {
+    font-size: 9pt;
+    line-height: 110%;
+    font-family: Palatino;
+    font-style: normal;
+    padding: 0;
+    margin-top: 1in;
+    margin-left: .70in;
+    margin-right: .70in;
+    margin-bottom: 1in;
+  }
+
+  div.abstract {
+    font-size: 9pt;
+    line-height: 110%;
+    font-family: Palatino;
+    font-style: normal;
+    padding: 0;
+    margin-top: 1in;
+/*     margin-left: .70in;                                             */
+/*     margin-right: .70in;                                            */
+  }
+
+  div.abstract {
+    margin: 0;
+  }
+
+  div.section#References {
+/*     font-size: x-small;                                             */
+  }
+  
+  div.section#References table {
+    font-size: inherit;
+  }
+
+  @page { 
+    size: 8.5in 11in; 
+    margin-bottom: 5cm;
+  }
+}
+  -->
+ </style>
+</head>
+
+<body class="document">
+<div id="The-HOP-Development-Kit-title" class="document-title">
+<div id="The-HOP-Development-Kit-title" class="document-title-title">
+The HOP Development Kit</div>
+<div id="The-HOP-Development-Kit-title" class="document-title-authors">
+<div class="document-authors">
+<span id="author1651" class="document-author">
+<span class="document-author-name" id="author1651">Manuel Serrano</span>
+<span class="document-author-affiliation" id="author1651">Inria Sophia Antipolis</span>
+<span class="document-author-email" id="author1651"><a href="http://www.inria.fr/mimosa/Manuel.Serrano" class="http"><tt id='tt1650'
+>http://www.inria.fr/mimosa/Manuel.Serrano</tt></a></span>
+</span
+</div></div>
+</div>
+<div class="skribe-body">
+<div class="section" id="Abstract"><!-- Abstract -->
+<a name="Abstract"></a>
+<div class="abstract-atitle"><h3><font color="black">Abstract</font>
+</h3></div><div class="abstract">
+<p id='paragraph1655'
+>Hop, is a language dedicated to programming reactive and
+dynamic applications on the web. It is meant for programming
+applications such as web agendas, web galleries, web mail clients, 
+etc. While a previous paper (<em id='emph1652'
+>Hop, a Language for
+Programming the Web 2.0</em>, available at 
+<tt id='tt1653'
+>http://hop.inria.fr</tt>) focused on the
+linguistic novelties brought by Hop, the present one focuses on its
+execution environment. That is, it presents Hop's user libraries, its
+extensions to the HTML-based standards, and its execution platform,
+the Hop web <em id='emph1654'
+>broker</em>.</p></div><br>
+</div>
+<div class="section" id="Table-of-contents"><!-- Table of contents -->
+<a name="Table-of-contents"></a>
+<div class="section-atitle"><h3><font color="black">Table of contents</font>
+</h3></div><div class="section">
+<table cellspacing="1" cellpadding="1" width="100%" class="toc">
+<tbody>
+ <tr><td valign="top" align="left"></td><td colspan="4" width="100%"><a href="article.html#DOWNLOAD">DOWNLOAD</a></td></tr>
+ <tr><td valign="top" align="left">1</td><td colspan="4" width="100%"><a href="article.html#Introduction">Introduction</a></td></tr>
+ <tr><td></td><td valign="top" align="left">1.1</td><td colspan="3" width="100%"><a href="article.html#The-web-2.0">The web 2.0</a></td></tr>
+ <tr><td></td><td valign="top" align="left">1.2</td><td colspan="3" width="100%"><a href="article.html#The-HOP-architecture">The HOP architecture</a></td></tr>
+ <tr><td valign="top" align="left">2</td><td colspan="4" width="100%"><a href="article.html#Graphical-User-Interfaces">Graphical User Interfaces</a></td></tr>
+ <tr><td></td><td valign="top" align="left">2.1</td><td colspan="3" width="100%"><a href="article.html#HOP-Widgets">HOP Widgets</a></td></tr>
+ <tr><td></td><td valign="top" align="left">2.2</td><td colspan="3" width="100%"><a href="article.html#HOP-Cascade-Style-Sheets">HOP Cascade Style Sheets</a></td></tr>
+ <tr><td valign="top" align="left">3</td><td colspan="4" width="100%"><a href="article.html#Programming-the-HOP-web-broker">Programming the HOP web broker</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.1</td><td colspan="3" width="100%"><a href="article.html#Requests-to-Responses">Requests to Responses</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.2</td><td colspan="3" width="100%"><a href="article.html#Producing-responses">Producing responses</a></td></tr>
+ <tr><td></td><td valign="top" align="left">3.3</td><td colspan="3" width="100%"><a href="article.html#Broker-hooks">Broker hooks</a></td></tr>
+ <tr><td valign="top" align="left">4</td><td colspan="4" width="100%"><a href="article.html#The-HOP-library">The HOP library</a></td></tr>
+ <tr><td></td><td valign="top" align="left">4.1</td><td colspan="3" width="100%"><a href="article.html#The-<INLINE>-markup">The <font color="blue"><tt id='tt2061'
+>&lt;INLINE&gt;</tt></font> markup</a></td></tr>
+ <tr><td></td><td valign="top" align="left">4.2</td><td colspan="3" width="100%"><a href="article.html#The-with-url-form">The <font color="blue"><tt id='tt2106'
+>with-url</tt></font> form</a></td></tr>
+ <tr><td valign="top" align="left">5</td><td colspan="4" width="100%"><a href="article.html#Conclusion">Conclusion</a></td></tr>
+ <tr><td valign="top" align="left">6</td><td colspan="4" width="100%"><a href="article.html#References">References</a></td></tr>
+ <tr><td valign="top" align="left"></td><td colspan="4" width="100%"><a href="article.html#Acknowledgments">Acknowledgments</a></td></tr>
+</tbody>
+</table>
+</div><br>
+</div>
+<div class="section" id="DOWNLOAD"><!-- DOWNLOAD -->
+<a name="DOWNLOAD"></a>
+<div class="section-atitle"><h3><font color="black">DOWNLOAD</font>
+</h3></div><div class="section">
+Hop is available at: 
+<a href="http://hop.inria.fr" class="http"><tt id='tt1657'
+>http://hop.inria.fr</tt></a>. <p id='paragraph1658'
+></p><pre id='pre1659'
+></pre>
+<p id='paragraph1660'
+>The web site contains the distribution of the source code, the
+online documentation, and various demonstrations.</p></div><br>
+</div>
+<div class="section" id="Introduction"><!-- Introduction -->
+<a name="Introduction"></a>
+<div class="section-atitle"><h3><font color="black">1 Introduction</font>
+</h3></div><div class="section">
+<p id='paragraph1661'
+>Along with games, multimedia applications, and email, the web
+has popularized computers in everybody's life. The revolution is
+engaged and we may be at the dawn of a new era of computing where the
+web is a central element.</p><p id='paragraph1662'
+>Many of the computer programs we write, for
+professional purposes or for our own needs, are likely to
+extensively use the web. The web is a database. The web is an API. The web
+is a novel architecture. Therefore, it needs novel programming
+languages and novel programming environments. Hop is a step in this
+direction.</p><p id='paragraph1663'
+>A previous paper [<a href="article.html#sgl:dls06" class="inbound">1</a>] presented the
+Hop programming language. This present paper presents the Hop
+execution environment. The rest of this section presents the kind of
+end-user applications Hop focuses on (Section <a href="article.html#The-web-2.0" class="inbound"><span class="refscreen">The web 2.0</span><span class="refprint">1.1</span></a>) and the technical solutions it promotes
+(Section <a href="article.html#The-HOP-architecture" class="inbound"><span class="refscreen">The HOP architecture</span><span class="refprint">1.2</span></a>). The rest of this paper
+assumes a familiarity with strict functional languages and with infix
+parenthetical syntaxes such as the ones found in Lisp and Scheme.</p><p id='paragraph1664'
+>Because it is normal for a web application to access databases,
+manipulate multimedia documents (images, movies, and music), and
+parse files according to public formats, programming the web demands a
+lot of libraries. Even though it is still young, Hop
+provides many of them. In an attempt to avoid a desperately boring
+presentation this paper does not present them all! Only the library
+for building HTML graphical user interfaces is presented here.  It is
+presented in Section <a href="article.html#Graphical-User-Interfaces" class="inbound"><span class="refscreen">Graphical User Interfaces</span><span class="refprint">2</span></a>, along with a presentation
+of the Hop solution for bringing abstraction to Cascade Style
+Sheets.</p><p id='paragraph1665'
+>The section <a href="article.html#Programming-the-HOP-web-broker" class="inbound"><span class="refscreen">Programming the HOP web broker</span><span class="refprint">3</span></a> focuses on programming the
+Hop web broker. Its presents basic handling of client
+requests and it presents the facilities for connecting two brokers and
+for gathering information scattered on the internet. The 
+Section <a href="article.html#The-HOP-library" class="inbound"><span class="refscreen">The HOP library</span><span class="refprint">4</span></a> presents the main functions of
+the broker programming library.</p><!-- The web 2.0 -->
+<a name="The-web-2.0"></a>
+<div class="subsection-atitle"><h3>1.1 The web 2.0</h3></div><div class="subsection">
+<p id='paragraph1668'
+>In the newsgroup <tt id='tt1666'
+>comp.lang.functional</tt>, a Usenet news
+group for computer scientists (if not <em id='emph1667'
+>researchers</em> in
+computer science) someone reacted rather badly to the official
+announce of the availability of the first version Hop:</p><em id='emph1669'
+>"I really don't understand why people are [so]
+hyped-up over Web 2.0. It's just Java reborn with a slower engine that 
+doesn't even have sandboxing capabilities built into it. I guess this hype will
+taper off just like the Java hype, leaving us with yet another large
+technology and a few niches where it's useful."</em><p id='paragraph1670'
+></p><p id='paragraph1671'
+></p><p id='paragraph1674'
+>This message implicitly compares two programming languages,
+namely Java and JavaScript and reduces Hop to <em id='emph1672'
+>yet another
+general-purpose programming language</em>. This is a
+misunderstanding. The point of Hop is to help writing new
+applications that are nearly impossible (or at least, discouragingly
+tedious) to write using traditional programming languages such as Java
+and the like. As such, its goal is definitively <em id='emph1673'
+>not</em> to
+compete with these languages.</p><p id='paragraph1676'
+>As a challenge, imagine implementing a program that represents
+the user with a map of the United States of America that : lets the
+user zoom in and out on the map, and also helps with trip planning. In
+particular the user may click on two cities, and the application
+responds with the shortest route between the cities, the estimated
+trip time, the price of the gas for the trip (using local pump prices)
+the weather forecasts along the route (for the appropriate tires), and
+where to find the best pizza and gelatos in each town along the
+way. Although it is possible to write such a program using Java or C
+and existing resources available online, the web 2.0 is the
+infrastructure that makes it <em id='emph1675'
+>feasible</em> to write such
+programs. Because the web 2.0 provides the potential to easily combine
+fancy graphics and information from disparate sources online into new,
+information-aware applications. Unfortunately, the programming model
+for the web 2.0 is missing. Hop is one attempt to provide the right
+model, and the rest of this paper explains how.</p></div>
+<!-- The HOP architecture -->
+<a name="The-HOP-architecture"></a>
+<div class="subsection-atitle"><h3>1.2 The HOP architecture</h3></div><div class="subsection">
+<p id='paragraph1677'
+>Hop enforces a programming model where the graphical user
+interface and the logic of an application are executed on two
+different engines. In theory, the execution happens as if the two
+engines are located on different computers even if they are actually
+frequently hosted by a single computer. In practice, executing a
+Hop application requires:</p><ul class="itemize" id='itemize1683'
+><li>A web browser that plays the role of the engine in charge
+of the graphical user interface. It is the <em id='emph1678'
+>terminal</em> of the
+application. It establishes communications with the Hop <em id='emph1679'
+>broker</em>.</li>
+<li>A Hop <em id='emph1681'
+>broker</em> which is the execution
+engine of the application. All computations that involve resources of
+the local computer (CPU resource, storage devices, various multi-media
+devices, ...)  are executed on the broker. The broker it also in
+charge of communicating with other Hop brokers or regular web
+servers in order to gather the information needed by the
+application.</li>
+</ul><p id='paragraph1686'
+>The Hop programming language provides primitives for
+managing the distributed computing involved in a whole application. In
+particular, at the heart of this language, we find the 
+<font color="blue"><tt id='tt1684'
+>with-hop</tt></font> form. Its syntax is:</p><pre id='pre1687'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1692'
+>(with-hop (<em id='it1688'
+>service</em> a<sub id='sub1690'
+><font size="-3">0</font></sub> ..) <em id='it1691'
+>callback</em>)
+</pre>
+</DIV><pre id='pre1693'
+></pre>
+<p id='paragraph1702'
+>Informally, its evaluation consists in invoking a remote
+<font color="blue"><tt id='tt1695'
+><em id='it1694'
+>service</em></tt></font>, i.e., a function hosted by a remote Hop broker,
+and, on completion, locally invoking the <font color="blue"><tt id='tt1698'
+><em id='it1697'
+>callback</em></tt></font>.
+The form <font color="blue"><tt id='tt1700'
+>with-hop</tt></font> can be used by engines executing
+graphical user interfaces in order to spawn computations on the
+engine in charge of the logic of the application. It can also be used from 
+that engine in order to spawn computations on other remote computation
+engines.</p></div>
+</div><br>
+</div>
+<div class="section" id="Graphical-User-Interfaces"><!-- Graphical User Interfaces -->
+<a name="Graphical-User-Interfaces"></a>
+<div class="section-atitle"><h3><font color="black">2 Graphical User Interfaces</font>
+</h3></div><div class="section">
+<p id='paragraph1703'
+>This section presents the support of Hop for graphical user
+interfaces. It presents the library of widgets supported by Hop
+and its proposal for bringing more abstraction to Cascade Style Sheets (CSS).</p><!-- HOP Widgets -->
+<a name="HOP-Widgets"></a>
+<div class="subsection-atitle"><h3>2.1 HOP Widgets</h3></div><div class="subsection">
+<p id='paragraph1705'
+>Graphical user interfaces are made of elementary graphical
+objects (generally named <em id='emph1704'
+>widgets</em>). Each of these objects has
+its own graphical aspect and graphical behavior and it reacts to
+user interactions by intercepting mouse events and keyboard events.
+Hence, toolkits for implementing graphical user interfaces are
+characterized by:</p><ol class="enumerate" id='enumerate1709'
+><li>the mechanisms for catching user interactions, and</li>
+<li>the composition of graphical elements, and</li>
+<li>the richness of them widgets.</li>
+</ol><p id='paragraph1716'
+>HTML (either <a href="www.w3.org">W3C</a>'s <span class="sc">HTML-4</span> or <span class="sc">XHTML-1</span>) do a good job at handling events. Each
+HTML elements is <em id='emph1712'
+>reactive</em> and JavaScript, the language used
+for programming events handlers, is adequate. CSS2, the HTML
+composition model based on boxes, is close to be sufficient. The few
+lacking facilities are up to be added to the third revision. On the
+other hand, the set of HTML widgets is poor. It mainly consists of
+boxes, texts, and buttons.  This is insufficient if the web is
+considered for implementing modern graphical user interfaces. Indeed,
+these frequently use <em id='emph1713'
+>sliders</em> for selecting integer values,
+<em id='emph1714'
+>trees</em> for representing recursive data structures, <em id='emph1715'
+>notepads</em> for compact representations of unrelated documents, and
+many others. HTML does not support these widgets and, even worse,
+since it is not a programming language, it does not allow
+user to implement their own complementary sets
+of widgets. Hop bridges this gap.</p><p id='paragraph1724'
+>Hop proposes a set of widgets for easing the programming
+of graphical user interfaces. In particular, it proposes a <em id='it1717'
+>slider</em>
+widget for representing numerical values or enumerated sets. It proposes
+a WYSIWYG editor. It extends HTML tables for allowing automatic
+sorting of columns. It supports various <em id='it1718'
+>container</em> widgets such
+as a <em id='it1719'
+>pan</em> for splitting the screen in two horizontal or
+vertical re-sizable areas, a <em id='it1720'
+>notepad</em> widget for implementing
+<em id='it1721'
+>tab</em> elements, a <em id='it1722'
+>hop-iwindow</em> that implements a window
+system in the browser, etc. In this paper, we focus on one widget
+that is representative of the container family, the <em id='it1723'
+>tree</em> widget.</p><!-- The tree widget -->
+<a name="The-tree-widget"></a>
+<div class="subsubsection-atitle"><h4>2.1.1 The tree widget</h4></div><div class="subsubsection">
+<p id='paragraph1727'
+>A tree is a traditional widget that is frequently used for
+representing its eponymous data structure. For instance, it is extensively
+used for implementing file selectors. The syntax of Hop trees
+is given below. The meta elements required by the syntax are expressed
+using lower case letters and prefixed with the character <tt id='tt1725'
+>%</tt>.
+The concrete markups only use upper case letters. The meta
+element <tt id='tt1726'
+>%markup</tt> refers to the whole set of Hop markups.</p><pre id='pre1728'
+></pre>
+<DIV class='prog-border'><pre class="syntax" id='prog1729'
+><em id='it2159'
+>%markup</em> &#8594; ... <font color="red"><strong id='bold2160'
+>|</strong></font> <em id='it2162'
+>%tree</em>
+
+<em id='it2163'
+>%tree</em> &#8594; <em id='it2165'
+><font color="#1919af">(</font></em><em id='it2167'
+><font color="#1919af">&lt;TREE&gt;</font></em> <em id='it2168'
+>%tree-head</em> <em id='it2169'
+>%tree-body</em><em id='it2171'
+><font color="#1919af">)</font></em>
+<em id='it2172'
+>%tree-head</em> &#8594; <em id='it2174'
+><font color="#1919af">(</font></em><em id='it2176'
+><font color="#1919af">&lt;TRHEAD&gt;</font></em> <em id='it2177'
+>%markup</em><em id='it2179'
+><font color="#1919af">)</font></em>
+<em id='it2180'
+>%tree-body</em> &#8594; <em id='it2182'
+><font color="#1919af">(</font></em><em id='it2184'
+><font color="#1919af">&lt;TRBODY&gt;</font></em> <em id='it2185'
+>%leaf-or-tree</em><font color="red"><strong id='bold2186'
+>*</strong></font><em id='it2189'
+><font color="#1919af">)</font></em>
+<em id='it2190'
+>%leaf-or-tree</em> &#8594; <em id='it2191'
+>%leaf</em> <font color="red"><strong id='bold2192'
+>|</strong></font> <em id='it2194'
+>%tree</em>
+<em id='it2195'
+>%leaf</em> &#8594; <em id='it2197'
+><font color="#1919af">(</font></em><em id='it2199'
+><font color="#1919af">&lt;TRLEAF&gt;</font></em> <em id='it2200'
+>%markup</em><em id='it2202'
+><font color="#1919af">)</font></em>
+</pre>
+</DIV><pre id='pre1730'
+></pre>
+<p id='paragraph1731'
+>As an example, here is a simple tree.</p><pre id='pre1732'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1738'
+>(<font color="#6959cf"><strong id='bold2203'
+>define</strong></font> (dir-&gt;tree dir<font color="#6959cf"><strong id='bold2205'
+>)</strong></font>
+  (<font color="#1919af"><strong id='bold2207'
+>&lt;TREE&gt;</strong></font>
+    (<font color="#1919af"><strong id='bold2209'
+>&lt;TRHEAD&gt;</strong></font> dir)
+    (<font color="#1919af"><strong id='bold2211'
+>&lt;TRBODY&gt;</strong></font>
+      (map (<strong id='bold2213'
+>lambda</strong> (f)
+             (<strong id='bold2214'
+>let</strong> ((p (make-file-name dir f)))
+               (<strong id='bold2215'
+>if</strong> (directory? p)
+                   (dir-&gt;tree p)
+                   (<font color="#1919af"><strong id='bold2216'
+>&lt;TRLEAF&gt;</strong></font> <strong id='bold2218'
+>:value</strong> qf f))))
+           (directory-&gt;list dir)))))
+</pre>
+</DIV><pre id='pre1739'
+></pre>
+<p id='paragraph1742'
+>When an expression such as <font color="blue"><tt id='tt1740'
+>(dir-&gt;tree &quot;/&quot;)</tt></font>
+is evaluated on the broker, a tree widget representing the hierarchy of the
+broker files is built. It has to be sent to a client for rendering.</p><p id='paragraph1747'
+>Hop containers (i.e., widgets that contain other
+widgets) are <em id='emph1743'
+>static</em>, as in the example above, or <em id='emph1744'
+>dynamic</em>.  A static container builds its content only once. A
+dynamic container rebuilds its content each time it has to be
+displayed. A static tree has a fixed set of subtrees and leaves. A
+dynamic tree recomputes them each time unfolded. A dynamic tree is
+characterized by the use of the <font color="blue"><tt id='tt1745'
+>&lt;DELAY&gt;</tt></font> markup in its
+body. The syntax of this new markup is:</p><pre id='pre1748'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1749'
+>(<font color="#1919af"><strong id='bold2220'
+>&lt;DELAY&gt;</strong></font> thunk)
+</pre>
+</DIV><pre id='pre1750'
+></pre>
+<p id='paragraph1759'
+>The argument <font color="blue"><tt id='tt1751'
+>thunk</tt></font> is a procedure of no argument. Evaluating
+a <font color="blue"><tt id='tt1753'
+>&lt;DELAY&gt;</tt></font> form on the Hop broker installs an anonymous
+service whose body is the application of this <font color="blue"><tt id='tt1755'
+>thunk</tt></font>. When the client,
+i.e., a web browser, unfolds a dynamic tree, its invokes the service associated
+with the <font color="blue"><tt id='tt1757'
+>thunk</tt></font> on the broker. This produces a new tree that
+is sent back to the client and inserted in the initial tree.</p><pre id='pre1760'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1767'
+>(<font color="#6959cf"><strong id='bold2222'
+>define</strong></font> (dir-&gt;dyntree dir<font color="#6959cf"><strong id='bold2224'
+>)</strong></font>
+  (<font color="#1919af"><strong id='bold2226'
+>&lt;TREE&gt;</strong></font>
+    (<font color="#1919af"><strong id='bold2228'
+>&lt;TRHEAD&gt;</strong></font> dir)
+    (<font color="#1919af"><strong id='bold2230'
+>&lt;TRBODY&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold2232'
+>&lt;DELAY&gt;</strong></font>
+        (<strong id='bold2234'
+>lambda</strong> ()
+           (map (<strong id='bold2235'
+>lambda</strong> (f)
+                  (<strong id='bold2236'
+>let</strong> ((p (make-file-name dir f)))
+                    (<strong id='bold2237'
+>if</strong> (directory? p)
+                        (dir-&gt;dyntree p)
+                        (<font color="#1919af"><strong id='bold2238'
+>&lt;TRLEAF&gt;</strong></font> <strong id='bold2240'
+>:value</strong> qf f))))
+                (directory-&gt;list dir)))))))
+</pre>
+</DIV><pre id='pre1768'
+></pre>
+<p id='paragraph1783'
+>Even if the function <font color="blue"><tt id='tt1769'
+>dir-&gt;dyntree</tt></font> only
+differs from <font color="blue"><tt id='tt1771'
+>dir-&gt;tree</tt></font> by the use of the <font color="blue"><tt id='tt1773'
+>&lt;DELAY&gt;</tt></font>
+markup, its execution is dramatically different. When the expression
+<font color="blue"><tt id='tt1775'
+>(dir-&gt;dyntree &quot;/&quot;)</tt></font> is evaluated, the broker
+no longer traverses its entire hierarchy of files. It only inspects the files
+located in the directory <font color="blue"><tt id='tt1777'
+>&quot;/&quot;</tt></font>. When the client, i.e., a web
+browser, unfolds a node representing a directory, the broker 
+traverses only that directory for scanning the files. Contrary to
+<font color="blue"><tt id='tt1779'
+>dir-&gt;tree</tt></font>, the directories associated with nodes that are 
+never unfolded are never scanned by <font color="blue"><tt id='tt1781'
+>dir-&gt;dyntree</tt></font>.</p></div>
+<!-- Extending existing HTML markups -->
+<a name="Extending-existing-HTML-markups"></a>
+<div class="subsubsection-atitle"><h4>2.1.2 Extending existing HTML markups</h4></div><div class="subsubsection">
+<p id='paragraph1794'
+>Because Hop is not HTML it is very tempting to add some
+HTML facilities to Hop, for instance by adding new attributes to
+markups. In order to keep the learning curve as low as possible, we
+resist this temptation. Hop offers the HTML markups as is, with
+on exception: the <font color="blue"><tt id='tt1784'
+>&lt;IMG&gt;</tt></font> markup. In HTML, this markup has a
+<font color="blue"><tt id='tt1786'
+>src</tt></font> attribute that specifies the actual implementation of
+the image. It can be an URL or an in-line encoding of the image. In
+that case, the image is represented by a string whose first part is
+the declaration of a mime type and the second part a row sequence of
+characters representing the encoding (e.g., a <em id='emph1788'
+>base64</em>
+encoding of the bytes of the image). While this representation is
+close to impractical for a hand-written HTML documents, it is easy to
+produce for automatically generated documents, such as the ones
+produced by Hop.  Hop adds a new attribute <font color="blue"><tt id='tt1789'
+>inline</tt></font> to
+HTML images.  When this attribute is set to <font color="blue"><tt id='tt1791'
+>#t</tt></font> (the
+representation of the value <em id='emph1793'
+>true</em> in the concrete Hop
+syntax), the image is encoded on the fly.</p><p id='paragraph1801'
+>This tiny modification to HTML illustrates why a programming
+language can dramatically help releasing documents to the web. Thanks
+to this <font color="blue"><tt id='tt1795'
+>inline</tt></font> attribute, it is now easy to produce stand alone
+HTML files. This eliminates the burden of packaging HTML documents with
+external tools such as <font color="blue"><tt id='tt1797'
+>tar</tt></font> or <font color="blue"><tt id='tt1799'
+>zip</tt></font>.</p></div>
+</div>
+<!-- HOP Cascade Style Sheets -->
+<a name="HOP-Cascade-Style-Sheets"></a>
+<div class="subsection-atitle"><h3>2.2 HOP Cascade Style Sheets</h3></div><div class="subsection">
+<p id='paragraph1802'
+>Cascading Style Sheets (CSS) enable graphical customizations of
+HTML documents. A CSS specifies rendering information for visualizing
+HTML documents on computer screens, printing them on paper, or even
+pronouncing them on aural devices. A CSS uses selectors to designate
+the elements onto which a customization applies.  Attributes, which
+are associated with selectors, specify the rendering information. The
+set of possible rendering attributes is rich. CSS exposes layout
+principles based on horizontal and vertical boxes in the spirit of
+traditional text processing applications.  CSS version 2 suffers
+limitations (for instance, it only supports one column layout) that
+are to be overcome by CSS version 3. CSS is so expressive that we
+think that when CSS v3 is fully supported by web browsers, HTML will
+compete with text processors like Latex for printing
+high quality documents.</p><p id='paragraph1807'
+>CSS selectors are expressed in a little language.
+The elements to which a rendering attribute applies are designed
+either by their identities, their classes, their local or global
+positions in the HTML tree, and their attributes. The language of
+selectors is expressive but complex, even if not Turing-complete. On
+the one hand, the identity and class designations are suggestive
+of object-oriented programming. On the other hand, they do not
+support inheritance. Implementing re-usable, compact, and
+easy-to-understand CSS is a challenging task. Frequently the HTML
+documents have to be modified in order to best fit the CSS model. For
+instance, dummy <font color="blue"><tt id='tt1803'
+>&lt;DIV&gt;</tt></font> or <font color="blue"><tt id='tt1805'
+>&lt;SPAN&gt;</tt></font> HTML elements have
+to be introduced in order to ease the CSS selection specification. We
+think that this complexity is a drawback of CSS, and Hop
+offers an improvement.</p><p id='paragraph1810'
+>Like the Hop programming language, Hop-CSS (HSS in short)
+uses a stratified language approach. HSS extends CSS in one
+direction: it enables embedding, inside standard CSS specifications,
+Hop expressions.  The CSS syntax is extended with a new
+construction. Inside a HSS specification, the <font color="blue"><tt id='tt1808'
+>$</tt></font> character
+escapes from CSS and switches to Hop. This simple stratification
+enables arbitrary Hop expressions to be embedded in CSS
+specifications. We have found this extension to be useful to avoiding
+repeating constants. For instance, instead of duplicating a color
+specification in many attributes, it is convenient to declare a variable
+holding the color value and use that variable in the CSS. That is,
+the traditional CSS:</p><pre id='pre1811'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1812'
+>button <font color="red"><strong id='bold2242'
+>{</strong></font>
+  border: 2px inset #555;
+<font color="red"><strong id='bold2244'
+>}</strong></font>
+span.button <font color="red"><strong id='bold2246'
+>{</strong></font>
+  border: 2px inset #555;
+<font color="red"><strong id='bold2248'
+>}</strong></font>
+</pre>
+</DIV><pre id='pre1813'
+></pre>
+<p id='paragraph1814'
+>in Hop can be re-written as:</p><pre id='pre1815'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1819'
+><font color="#00cf00"><strong id='bold2250'
+>$</strong></font>(<font color="#6959cf"><strong id='bold2252'
+>define</strong></font> border-button-spec <font color="red">&quot;2px inset #555&quot;</font><font color="#6959cf"><strong id='bold2255'
+>)</strong></font>
+
+button <font color="red"><strong id='bold2257'
+>{</strong></font>
+  border: <font color="#00cf00"><strong id='bold2259'
+>$border-button-spec;</strong></font>
+<font color="red"><strong id='bold2261'
+>}</strong></font>
+span.button <font color="red"><strong id='bold2263'
+>{</strong></font>
+  border: <font color="#00cf00"><strong id='bold2265'
+>$border-button-spec;</strong></font>
+<font color="red"><strong id='bold2267'
+>}</strong></font>
+</pre>
+</DIV><pre id='pre1820'
+></pre>
+<p id='paragraph1825'
+>In other situations, the computation power of Hop significantly
+helps the CSS specifications. As an example, imagine
+a graphical specification for 3-dimensional borders. Given a base
+color, a 3-dimensional inset border is implemented by lightening the top
+and left borders and darkening the bottom and right borders. Using the two
+Hop library functions <font color="blue"><tt id='tt1821'
+>color-ligher</tt></font> and <font color="blue"><tt id='tt1823'
+>color-darker</tt></font>
+this can be implemented as:</p><pre id='pre1826'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1829'
+><font color="#00cf00"><strong id='bold2269'
+>$</strong></font>(<font color="#6959cf"><strong id='bold2271'
+>define</strong></font> base-color <font color="red">&quot;#555&quot;</font><font color="#6959cf"><strong id='bold2274'
+>)</strong></font>
+
+button <font color="red"><strong id='bold2276'
+>{</strong></font>
+  border-top: 1px solid <font color="#00cf00"><strong id='bold2278'
+>$</strong></font>(color-lighter base-color);
+  border-left: 1px solid <font color="#00cf00"><strong id='bold2280'
+>$</strong></font>(color-lighter base-color);
+  border-bottom: 1px solid <font color="#00cf00"><strong id='bold2282'
+>$</strong></font>(color-darker base-color);
+  border-right: 1px solid <font color="#00cf00"><strong id='bold2284'
+>$</strong></font>(color-darker base-color);
+<font color="red"><strong id='bold2286'
+>}</strong></font>
+</pre>
+</DIV><pre id='pre1830'
+></pre>
+<p id='paragraph1833'
+>The specification of the buttons border is actually a compound
+property made of four attributes. It might be convenient to bind these
+four attributes to a unique Hop variable. Since the HSS <font color="blue"><tt id='tt1831'
+>$</tt></font>
+escape character enables to inject compound expressions, this can be
+wriiten as:</p><pre id='pre1834'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1840'
+><font color="#00cf00"><strong id='bold2288'
+>$</strong></font>(<font color="#6959cf"><strong id='bold2290'
+>define</strong></font> base-color <font color="red">&quot;#555&quot;</font><font color="#6959cf"><strong id='bold2293'
+>)</strong></font>
+<font color="#00cf00"><strong id='bold2295'
+>$</strong></font>(<font color="#6959cf"><strong id='bold2297'
+>define</strong></font> button-border
+   (<strong id='bold2299'
+>let</strong> <font color="#6959cf"><strong id='bold2300'
+>(</strong></font>(c1 (color-lighter base-color<font color="#6959cf"><strong id='bold2302'
+>)</strong></font>)
+         (c2 (color-darker base-color)))
+      <font color="red"><strong id='bold2304'
+>{</strong></font> border-top: 1px solid <font color="#00cf00"><strong id='bold2306'
+>$c1;</strong></font>
+        border-left: 1px solid <font color="#00cf00"><strong id='bold2308'
+>$c2;</strong></font>
+        border-bottom: 1px solid <font color="#00cf00"><strong id='bold2310'
+>$c2;</strong></font>
+        border-right: 1px solid <font color="#00cf00"><strong id='bold2312'
+>$c1</strong></font> <font color="red"><strong id='bold2314'
+>}</strong></font>))
+
+button <font color="red"><strong id='bold2316'
+>{</strong></font>
+   <font color="#00cf00"><strong id='bold2318'
+>$button-border;</strong></font>
+<font color="red"><strong id='bold2320'
+>}</strong></font>
+</pre>
+</DIV><pre id='pre1841'
+></pre>
+</div>
+</div><br>
+</div>
+<div class="section" id="Programming-the-HOP-web-broker"><!-- Programming the HOP web broker -->
+<a name="Programming-the-HOP-web-broker"></a>
+<div class="section-atitle"><h3><font color="black">3 Programming the HOP web broker</font>
+</h3></div><div class="section">
+<p id='paragraph1842'
+>The Hop web broker implements the execution engine of an
+application. While the client executes in a sandbox, the broker has
+privileged accesses to the resources of the computer it execution on.
+As a consequence, the client has to delegate to the broker the
+operations it is not allowed to execute by itself. These operations
+might be reading a file, executing a CPU-intensive operation,
+or collecting information from another remote Hop broker or from a
+remote web server.  In that respect, a Hop broker is more than a
+web server because it may act has a client itself for handling external
+requests. Still, a Hop broker resembles a web server. In
+particular, it conforms to the HTTP protocol for handling clients
+connections and requests. When a client request is parsed, the broker
+elaborates a response. This process is described in the next
+sections.</p><!-- Requests to Responses -->
+<a name="Requests-to-Responses"></a>
+<div class="subsection-atitle"><h3>3.1 Requests to Responses</h3></div><div class="subsection">
+<p id='paragraph1843'
+>Clients send HTTP messages to Hop brokers that parse the
+messages and build objects representing these requests. For each
+such objects, a broker elaborates a response. Programming a
+broker means adding new rules for constructing responses. These rules
+are implemented as functions accepting requests.
+On return, they either produce a new request or a response. The
+algorithm for constructing the responses associated with requests is
+defined as follows.</p><pre id='pre1844'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1849'
+>(<font color="#6959cf"><strong id='bold2322'
+>define</strong></font> (request-&gt;response req rules<font color="#6959cf"><strong id='bold2324'
+>)</strong></font>
+   (<strong id='bold2326'
+>if</strong> (null? rules)
+       (default-response-rule req)
+       (<strong id='bold2327'
+>let</strong> ((n ((car rules) req)))
+          (<strong id='bold2328'
+>cond</strong>
+             ((is-response? n) 
+              n)
+             ((is-request? n)
+              (request-&gt;response n (cdr rules)))
+             (else 
+              (request-&gt;response req (cdr rules)))))))
+</pre>
+</DIV><pre id='pre1850'
+></pre>
+<p id='paragraph1855'
+>The <em id='emph1851'
+>else</em> branch of the conditional is used when no
+rule applies. It allows rules to be built using <tt id='tt1852'
+>when</tt> and
+<tt id='tt1853'
+>unless</tt>, without having to be a series of nested <tt id='tt1854'
+>if</tt>s.</p><p id='paragraph1856'
+>A rule may produce a response. In that case, the algorithm
+returns that value. A rule may also annotate a request or build a new
+request from the original one. In that case, the algorithm applies the
+remaining rules to that new request.</p><p id='paragraph1857'
+>The default response rule, which is used when no other rule
+matches, is specified in the configuration files of the broker.</p></div>
+<!-- Producing responses -->
+<a name="Producing-responses"></a>
+<div class="subsection-atitle"><h3>3.2 Producing responses</h3></div><div class="subsection">
+<p id='paragraph1858'
+>The broker has to serve various kind of responses. Some
+responses involve local operations (such as serving a file located on
+the disk of the computer where the broker executes). Some other
+responses involve fetching information from the internet. Hop
+proposes several type of responses that correspond to
+the various ways it may fulfill client requests.</p><p id='paragraph1861'
+>From a programmer's point of view, responses are represented by
+subclasses of the abstract class <font color="blue"><tt id='tt1859'
+>%http-response</tt></font>. Hop
+proposes an extensive set of pre-declared response classes. The most
+important ones are presented in the rest of this section. Of course, user
+programs may also provide new response classes.</p><!-- No response! -->
+<a name="No-response!"></a>
+<div class="subsubsection-atitle"><h4>3.2.1 No response!</h4></div><div class="subsubsection">
+<p id='paragraph1867'
+>Responses instance of the class <font color="blue"><tt id='tt1862'
+>http-response-abort</tt></font> are actually <em id='emph1864'
+>no response</em>.  These
+objects are used to prevent the broker for answering unauthorized
+accesses. For instance, on may wish to prevent the broker for serving
+requests originated from a remote host. For that, he should had a rule that
+returns an instance of <font color="blue"><tt id='tt1865'
+>http-response-abort</tt></font> for such
+requests.</p><p id='paragraph1868'
+>Hop provides predicates that return true if and only if a
+request comes from the local host. Hence, implementing remote host access
+restriction can be programmed as follows.</p><pre id='pre1869'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1874'
+>(hop-add-rule!
+ (<strong id='bold2329'
+>lambda</strong> (req)
+    (<strong id='bold2330'
+>if</strong> (is-request-local? req)
+        req
+        (<strong id='bold2331'
+>instantiate</strong><font color="#00cf00"><strong id='bold2332'
+>::http-response-abort</strong></font>))))
+</pre>
+</DIV><pre id='pre1875'
+></pre>
+</div>
+<!-- Serving files -->
+<a name="Serving-files"></a>
+<div class="subsubsection-atitle"><h4>3.2.2 Serving files</h4></div><div class="subsubsection">
+<p id='paragraph1879'
+>The class <font color="blue"><tt id='tt1876'
+>http-response-file</tt></font> is used for
+responding files. It is used for serving requests that involve static
+documents (static HTML documents, cascade style sheets, etc.). It
+declares the field <tt id='tt1878'
+>path</tt> which is used to denote the file to be
+served. In general these responses are produced by rules equivalent
+to the following one.</p><pre id='pre1880'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1885'
+>(hop-add-rule!
+ (<strong id='bold2334'
+>lambda</strong> (req)
+    (<strong id='bold2335'
+>if</strong> (and (is-request-local? req) 
+             (file-exists? (request-path req)))
+        (<strong id='bold2336'
+>instantiate</strong><font color="#00cf00"><strong id='bold2337'
+>::http-response-file</strong></font>
+           (path (request-path req))))))
+</pre>
+</DIV><pre id='pre1886'
+></pre>
+<p id='paragraph1891'
+>In order to serve <font color="blue"><tt id='tt1887'
+>http-response-file</tt></font> responses,
+the broker reads the characters from the disk and transmit them to the
+client via a socket. Some operating systems (such as Linux 2.4 and
+higher) propose system calls for implementing this operation
+efficiently. This liberates the application from explicitly reading
+and writing the characters of the file. With exactly one system call,
+the whole file is read and written to a socket. For this, Hop
+uses subclasses of <font color="blue"><tt id='tt1889'
+>http-response-file</tt></font>.</p><p id='paragraph1898'
+>The class <font color="blue"><tt id='tt1892'
+>http-response-shoutcast</tt></font> is one of them. It is used for serving music files
+according to the shoutcast protocol<a href="#footnote-footnote1895"><sup><small>1</small></sup></a>.  This protocol adds meta-information
+such as the name of the music, the author, etc., to the music
+broadcasting. When a client is ready for receiving shoutcast
+information, it must add an <font color="blue"><tt id='tt1896'
+>icy-metadata</tt></font> attribute to the
+header of its requests. Hence, in order to activate shoutcasting on
+the broker one may use a rule similar to the following one.</p><pre id='pre1899'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1907'
+>(hop-add-rule!
+ (<strong id='bold2339'
+>lambda</strong> (req)
+    (<strong id='bold2340'
+>if</strong> (and (is-request-local? req) 
+              (file-exists? (request-path req)))
+        (<strong id='bold2341'
+>if</strong> (is-request-header? req 'icy-metadata)
+            (<strong id='bold2342'
+>instantiate</strong><font color="#00cf00"><strong id='bold2343'
+>::http-response-shoutcast</strong></font>
+               (path (request-path req)))
+            (<strong id='bold2345'
+>instantiate</strong><font color="#00cf00"><strong id='bold2346'
+>::http-response-file</strong></font>
+               (path (request-path req)))))))
+</pre>
+</DIV><pre id='pre1908'
+></pre>
+<p id='paragraph1909'
+>Note that since the rules scanned in the inverse order of the their
+declaration, the shoutcast rule must be added after the rule for regular
+files.</p></div>
+<!-- Serving dynamic content -->
+<a name="Serving-dynamic-content"></a>
+<div class="subsubsection-atitle"><h4>3.2.3 Serving dynamic content</h4></div><div class="subsubsection">
+<p id='paragraph1915'
+>Hop provides several classes for serving dynamic content.
+The first one, <font color="blue"><tt id='tt1910'
+>http-response-procedure</tt></font>, is used for sending
+content that varies for each request. The instances of that class carry
+a procedure that is invoked each time the response is served. In the
+example above, we add a rule that create a <em id='emph1912'
+>virtual</em> URL 
+<font color="blue"><tt id='tt1913'
+>/count</tt></font> that returns the value of an incremented counter each
+time visited.</p><pre id='pre1916'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1925'
+>(<strong id='bold2348'
+>let</strong> ((count 0)
+      (resp (<strong id='bold2349'
+>instantiate</strong><font color="#00cf00"><strong id='bold2350'
+>::http-response-procedure</strong></font>
+               (proc (<strong id='bold2352'
+>lambda</strong> (op)
+                        (<strong id='bold2353'
+>set!</strong> count (+ 1 count))
+                        (printf op 
+                                <font color="red">&quot;&lt;HTML&gt;~a&lt;/HTML&gt;&quot;</font> 
+                                count))))))
+   (hop-add-rule!
+    (<strong id='bold2355'
+>lambda</strong> (req)
+       (when (and (is-request-local? req) 
+                  (string=? (request-path req) <font color="red">&quot;/count&quot;</font>))
+          resp))))
+</pre>
+</DIV><pre id='pre1926'
+></pre>
+</div>
+<!-- Serving data -->
+<a name="Serving-data"></a>
+<div class="subsubsection-atitle"><h4>3.2.4 Serving data</h4></div><div class="subsubsection">
+<p id='paragraph1931'
+>Hop programs construct HTML documents on the server. On
+demand they are served to clients. These responses are implemented by
+the <font color="blue"><tt id='tt1927'
+>http-response-hop</tt></font> class. When served, the XML tree inside
+a response of this type is traversed and sent to the client. As an
+example, consider a rule that adds the 
+URL <font color="blue"><tt id='tt1929'
+>/fact</tt></font> to the broker. That rule computes a HTML table filled
+with factorial numbers.</p><pre id='pre1932'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1938'
+>(hop-add-rule!
+ (<strong id='bold2357'
+>lambda</strong> (req)
+    (when (and (is-request-local? req) 
+               (string=? (request-path req) <font color="red">&quot;/fact&quot;</font>))
+       (<strong id='bold2359'
+>instantiate</strong><font color="#00cf00"><strong id='bold2360'
+>::http-response-hop</strong></font>
+          (xml (<font color="#1919af"><strong id='bold2362'
+>&lt;TABLE&gt;</strong></font>
+                  (map (<strong id='bold2364'
+>lambda</strong> (n)
+                          (<font color="#1919af"><strong id='bold2365'
+>&lt;TR&gt;</strong></font> 
+                             (<font color="#1919af"><strong id='bold2367'
+>&lt;TH&gt;</strong></font> n) 
+                             (<font color="#1919af"><strong id='bold2369'
+>&lt;TD&gt;</strong></font> (fact n))))
+                       (iota 10 1))))))))
+</pre>
+</DIV><pre id='pre1939'
+></pre>
+<p id='paragraph1940'
+>Instead of always computing factorial value from 1 to 10, it is 
+easy to modify the rule for adding a range.</p><pre id='pre1941'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1948'
+>(hop-add-rule!
+ (<strong id='bold2371'
+>lambda</strong> (req)
+    (when (and (is-request-local? req) 
+               (substring? (request-path req) <font color="red">&quot;/fact/&quot;</font>))
+       (<strong id='bold2373'
+>let</strong> ((m (string-&gt;integer 
+                 (basename (request-path req)))))
+          (<strong id='bold2374'
+>instantiate</strong><font color="#00cf00"><strong id='bold2375'
+>::http-response-hop</strong></font>
+             (xml (<font color="#1919af"><strong id='bold2377'
+>&lt;TABLE&gt;</strong></font>
+                     (map (<strong id='bold2379'
+>lambda</strong> (n)
+                             (<font color="#1919af"><strong id='bold2380'
+>&lt;TR&gt;</strong></font> 
+                                (<font color="#1919af"><strong id='bold2382'
+>&lt;TH&gt;</strong></font> n) 
+                                (<font color="#1919af"><strong id='bold2384'
+>&lt;TD&gt;</strong></font> (fact n))))
+                          (iota m 1)))))))))
+</pre>
+</DIV><pre id='pre1949'
+></pre>
+<p id='paragraph1958'
+>Next, we now show how to modify the rule above so that the
+computation of the HTML representation of the factorial table is moved
+from the broker to the client. As presented in Section <a href="article.html#The-HOP-architecture" class="inbound"><span class="refscreen">The HOP architecture</span><span class="refprint">1.2</span></a>, the Hop programming language supports
+the form <font color="blue"><tt id='tt1950'
+>with-hop</tt></font>. This invokes a service on the broker and
+applies, on the client, a callback with the value produced by the
+service. This value might be an HTML fragment or another Hop
+value. On the server, HTML fragments are represented by responses of
+the class <font color="blue"><tt id='tt1952'
+>http-response-hop</tt></font>.  The other values are
+represented by the class <font color="blue"><tt id='tt1954'
+>http-response-js</tt></font>.  When such a
+response is served to the client, the value is serialized on the
+broker according to the JSON format<a href="#footnote-footnote1957"><sup><small>2</small></sup></a>  and unserialized on the client.  We can
+re-write the previous factorial example in order to move the
+computation of the HTML table from the broker to the client. For that,
+we create a rule that returns the factorial values in a list.</p><pre id='pre1959'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1966'
+>(hop-add-rule!
+ (<strong id='bold2386'
+>lambda</strong> (req)
+    (when (and (is-request-local? req) 
+               (substring? (request-path req) <font color="red">&quot;/fact/&quot;</font>))
+       (<strong id='bold2388'
+>let</strong> ((m (string-&gt;integer
+                 (basename (request-path req)))))
+          (<strong id='bold2389'
+>instantiate</strong><font color="#00cf00"><strong id='bold2390'
+>::http-response-js</strong></font>
+             (value (map (<strong id='bold2392'
+>lambda</strong> (n) 
+                            (cons n (fact n))) 
+                         (iota m 1))))))))
+</pre>
+</DIV><pre id='pre1967'
+></pre>
+<p id='paragraph1970'
+>The <font color="blue"><tt id='tt1968'
+>/fact</tt></font> URL can be used in client code as follows.</p><pre id='pre1971'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1975'
+>(with-hop <font color="red">&quot;/hop/fact/10&quot;</font>
+   (<strong id='bold2394'
+>lambda</strong> (l)
+      (<font color="#1919af"><strong id='bold2395'
+>&lt;TABLE&gt;</strong></font>
+         (map (<strong id='bold2397'
+>lambda</strong> (p) 
+                 (<font color="#1919af"><strong id='bold2398'
+>&lt;TR&gt;</strong></font>
+                    (<font color="#1919af"><strong id='bold2400'
+>&lt;TH&gt;</strong></font> (car p))
+                    (<font color="#1919af"><strong id='bold2402'
+>&lt;TD&gt;</strong></font> (cdr p))))
+              l))))
+</pre>
+</DIV><pre id='pre1976'
+></pre>
+<p id='paragraph1977'
+>The point of this last example is not to argue in favor of
+moving this particular computation from the broker to the client. It
+is just to show how these moves can be programmed with Hop.</p></div>
+<!-- Serving remote documents -->
+<a name="Serving-remote-documents"></a>
+<div class="subsubsection-atitle"><h4>3.2.5 Serving remote documents</h4></div><div class="subsubsection">
+<p id='paragraph1980'
+>Hop can also act as a web proxy. In that case, it
+intercepts requests for remote hosts with which it establishes
+connections. It reads the data from those hosts and sends them
+back to its clients. The class <font color="blue"><tt id='tt1978'
+>http-response-remote</tt></font>
+represents such a request.</p><p id='paragraph1981'
+>In order to let Hop act as a proxy, one simply adds
+a rule similar to the one below.</p><pre id='pre1982'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog1986'
+>(hop-add-rule!
+ (<strong id='bold2404'
+>lambda</strong> (req)
+    (unless (is-request-local? req)
+       (<strong id='bold2405'
+>instantiate</strong><font color="#00cf00"><strong id='bold2406'
+>::http-response-remote</strong></font>
+          (host (request-host req))
+          (port (request-port req))
+          (path (request-path req))))))
+</pre>
+</DIV><pre id='pre1987'
+></pre>
+<p id='paragraph1992'
+>This rule is a good candidate for acting as the <em id='emph1988'
+>default</em> 
+rule presented in Section <a href="article.html#Requests-to-Responses" class="inbound"><span class="refscreen">Requests to Responses</span><span class="refprint">3.1</span></a>.
+The actual Hop distribution uses a default rule almost similar to
+this one. It only differs from this code by returning an instance of the
+<font color="blue"><tt id='tt1989'
+>http-response-string</tt></font> class for denoting a <em id='emph1991'
+>404 error</em> when
+the requests refer to local files.</p></div>
+<!-- Serving strings of characters -->
+<a name="Serving-strings-of-characters"></a>
+<div class="subsubsection-atitle"><h4>3.2.6 Serving strings of characters</h4></div><div class="subsubsection">
+<p id='paragraph1995'
+>Some requests call for simple responses. For instance when a
+request refers to an non existing resource, a simple error code must be
+served to the client. The class <font color="blue"><tt id='tt1993'
+>http-response-string</tt></font> plays
+this role. It is used to send a return code and, optionally,
+a message,  back to the client.</p><p id='paragraph1999'
+>The example below uses a <font color="blue"><tt id='tt1996'
+>http-response-string</tt></font> to
+re-direct a client. From time to time, Google uses <em id='it1998'
+>bouncing</em> which is a
+technique that allows them to log requests. That is,
+when Google serves a request, instead of returning a list of found
+URLs, it returns a list of URLs pointing to Google, each of these URL
+containing a forward pointer to the actual URL. Hence Google links
+look like:</p><pre id='pre2000'
+></pre>
+<DIV class='prog-border'><pre class="html" id='prog2001'
+>http://www.google.com/url?q=www.inria.fr
+</pre>
+</DIV><pre id='pre2002'
+></pre>
+<p id='paragraph2003'
+>When Hop is configured for acting as a 
+proxy it can be used to avoid this bouncing. A simple rule may redirect
+the client to the actual URL.</p><pre id='pre2004'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog2013'
+>(hop-add-rule!
+ (<strong id='bold2408'
+>lambda</strong> (req)
+    (when (and (string=? (request-host req) 
+                         <font color="red">&quot;www.google.com&quot;</font>)
+               (substring? (request-path req) <font color="red">&quot;/url&quot;</font> 0))
+      (<strong id='bold2411'
+>let</strong> ((q (cgi-fetch-arg <font color="red">&quot;q&quot;</font> path)))
+         (<strong id='bold2413'
+>instantiate</strong><font color="#00cf00"><strong id='bold2414'
+>::http-response-string</strong></font>
+            (start-line <font color="red">&quot;HTTP/1.0 301 Moved Permanently&quot;</font>)
+            (header (list (cons 'location: q))))))))
+</pre>
+</DIV><pre id='pre2014'
+></pre>
+<p id='paragraph2015'
+>A similar technique can be used for implementing
+blacklisting.  When configured as web proxy, Hop can be used to ban
+ads contained in HTML pages. For this, let us assume a black list of
+domain names held in a hash table loaded on the broker. The rule above
+prevents pages from these domains to be served. It lets the client
+believe that ads pages do not exist.</p><pre id='pre2016'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog2021'
+>(hop-add-rule!
+ (<strong id='bold2417'
+>lambda</strong> (req)
+    (when (hashtable-get *blacklist* (request-host req))
+       (<strong id='bold2418'
+>instantiate</strong><font color="#00cf00"><strong id='bold2419'
+>::http-response-string</strong></font>
+          (start-line <font color="red">&quot;HTTP/1.0 404 Not Found&quot;</font>)))))
+</pre>
+</DIV><pre id='pre2022'
+></pre>
+</div>
+</div>
+<!-- Broker hooks -->
+<a name="Broker-hooks"></a>
+<div class="subsection-atitle"><h3>3.3 Broker hooks</h3></div><div class="subsection">
+<p id='paragraph2024'
+>When a response is generated by the algorithm presented in Section
+<a href="article.html#Requests-to-Responses" class="inbound"><span class="refscreen">Requests to Responses</span><span class="refprint">3.1</span></a> and using the rules of
+Section <a href="article.html#Producing-responses" class="inbound"><span class="refscreen">Producing responses</span><span class="refprint">3.2</span></a> the broker is ready to
+fulfill a client request. Prior to sending the characters
+composing the answer, the broker still offers an opportunity to apply
+programmable actions to the generated request. That is, before
+sending the response, the broker applies <em id='emph2023'
+>hooks</em>. A hook is a
+function that might be used for applying security checks, for
+authenticating requests or for logging transactions.</p><p id='paragraph2027'
+>A hook is a procedure of two arguments: a request and a response.
+It may modify the response (for instance, for adding extra header fields)
+or it may return a new response. In the following example, a hook
+is used to restrict the access of the files of the directory 
+<font color="blue"><tt id='tt2025'
+>/tmp</tt></font>.</p><pre id='pre2028'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog2039'
+> (hop-hook-add!
+  (<strong id='bold2422'
+>lambda</strong> (req resp)
+   (<strong id='bold2423'
+>if</strong> (substring? (request-path req) <font color="red">&quot;/tmp/&quot;</font>)
+    (<strong id='bold2425'
+>let</strong> ((auth (get-request-header req 'authorization)))
+     (<strong id='bold2426'
+>if</strong> (file-access-denied? auth <font color="red">&quot;/tmp&quot;</font>)
+      (<strong id='bold2428'
+>instantiate</strong><font color="#00cf00"><strong id='bold2429'
+>::http-response-authentication</strong></font>
+        (header '(<font color="red">&quot;WWW-Authenticate: Basic realm=Hop&quot;</font>))
+        (body (format <font color="red">&quot;Authentication required.&quot;</font>)))
+      resp))
+    resp)))
+</pre>
+</DIV><pre id='pre2040'
+></pre>
+<p id='paragraph2045'
+>When a request refers to a file located in the directory <font color="blue"><tt id='tt2041'
+>/tmp</tt></font>, the hook presented above forces Hop to check if that
+request is authenticated (a request is authenticated when it contains
+a header field <font color="blue"><tt id='tt2043'
+>authorization</tt></font> with correct values). When the
+authentication succeeds, the file is served. Otherwise, a request for
+authentication is sent back to the client.</p></div>
+</div><br>
+</div>
+<div class="section" id="The-HOP-library"><!-- The HOP library -->
+<a name="The-HOP-library"></a>
+<div class="section-atitle"><h3><font color="black">4 The HOP library</font>
+</h3></div><div class="section">
+<p id='paragraph2055'
+>The Hop standard library provides APIs for graphical user
+interfaces, for enabling communication between the clients and the
+broker, for decoding standards documents formats (e.g., <span class="sc">Exif</span>
+for <tt id='tt2047'
+>jpeg</tt> pictures, <span class="sc">Id3</span> for <tt id='tt2049'
+>mp3</tt> music, <span class="sc">Xml</span>, <span class="sc">Html</span>, <span class="sc">Rss</span>, ...). It also offers APIs for
+enabling communications between two brokers and between brokers and
+regular web servers.  Since the communication between two brokers is similar
+to the communication between clients and brokers (see the form <font color="blue"><tt id='tt2053'
+>with-hop</tt></font> presented Section <a href="article.html#The-HOP-architecture" class="inbound"><span class="refscreen">The HOP architecture</span><span class="refprint">1.2</span></a>), it
+is not presented here. In this section we focus on the communications
+between brokers and regular web servers.</p><p id='paragraph2060'
+>The Hop library provides facilities for dealing with low-level
+network communications by the means of sockets. While this is powerful
+and enables all kind of communications it is generally tedious to use.
+In order to remove this burden from programmers, Hop provides two
+high-level constructions: the <font color="blue"><tt id='tt2056'
+>&lt;INLINE&gt;</tt></font> markup and the
+<font color="blue"><tt id='tt2058'
+>with-url</tt></font> form.</p><!-- The &lt;INLINE&gt; markup -->
+<a name="The-<INLINE>-markup"></a>
+<div class="subsection-atitle"><h3>4.1 The <font color="blue"><tt id='tt2061'
+>&lt;INLINE&gt;</tt></font> markup</h3></div><div class="subsection">
+<p id='paragraph2070'
+>The <font color="blue"><tt id='tt2063'
+>&lt;INLINE&gt;</tt></font> markup lets a document embed
+subparts of another remote document. When the broker sends a HTML tree
+to a client, it <em id='emph2065'
+>resolves</em> its <font color="blue"><tt id='tt2066'
+>&lt;INLINE&gt;</tt></font> nodes. That
+is, it opens communication with the remote hosts denoted to by the
+<font color="blue"><tt id='tt2068'
+>&lt;INLINE&gt;</tt></font> nodes, it parses the received documents and it
+includes these subtrees to the response sent to its client.</p><p id='paragraph2077'
+>The <font color="blue"><tt id='tt2071'
+>&lt;INLINE&gt;</tt></font> node accepts two options. The first one,
+<font color="blue"><tt id='tt2073'
+>:src</tt></font>, is mandatory. It specifies the URL of the remote
+host. The example below builds a HTML tree reporting information about
+the current version of the Linux kernel. This information is fetched directly
+from the kernel home page. It is contained in an element whose
+identifier is <font color="blue"><tt id='tt2075'
+>versions</tt></font>.</p><pre id='pre2078'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog2084'
+>(<font color="#1919af"><strong id='bold2433'
+>&lt;HTML&gt;</strong></font>
+  (<font color="#1919af"><strong id='bold2435'
+>&lt;BODY&gt;</strong></font>
+    <font color="red">&quot;The current Linux kernel versions are:&quot;</font>
+    (<strong id='bold2438'
+>let</strong> ((d (<font color="#1919af"><strong id='bold2439'
+>&lt;INLINE&gt;</strong></font> <strong id='bold2441'
+>:src</strong> <font color="red">&quot;http://www.kernel.org&quot;</font>)))
+       (dom-get-element-by-id d <font color="red">&quot;versions&quot;</font>))))
+</pre>
+</DIV><pre id='pre2085'
+></pre>
+<p id='paragraph2094'
+>This program fetches the entire kernel home page. From that
+document it extracts the node named <font color="blue"><tt id='tt2086'
+>versions</tt></font>. The second option of
+the <font color="blue"><tt id='tt2088'
+>&lt;INLINE&gt;</tt></font> node allows a simplification of the code by
+automatically isolating one node of the remote document. The <font color="blue"><tt id='tt2090'
+>:id</tt></font> option restricts the inclusion, inside the client response, to
+one element whose identifier is <font color="blue"><tt id='tt2092'
+>:id</tt></font>.  Using this second
+option, our program can be simplified as shown below.</p><pre id='pre2095'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog2101'
+>(<font color="#1919af"><strong id='bold2445'
+>&lt;HTML&gt;</strong></font>
+  (<font color="#1919af"><strong id='bold2447'
+>&lt;BODY&gt;</strong></font>
+     <font color="red">&quot;The current Linux kernel versions are:&quot;</font>
+     (<font color="#1919af"><strong id='bold2450'
+>&lt;INLINE&gt;</strong></font> <strong id='bold2452'
+>:src</strong> <font color="red">&quot;http://www.kernel.org&quot;</font> 
+                <strong id='bold2455'
+>:id</strong> <font color="red">&quot;versions&quot;</font>)))
+</pre>
+</DIV><pre id='pre2102'
+></pre>
+<p id='paragraph2105'
+>In addition to be more compact, this version is also more
+efficient because it does not require the entire remote document to be
+loaded on the broker. As it receives characters from the network
+connection, the broker parses the document. As soon as it has parsed
+a node whose identifier is <font color="blue"><tt id='tt2103'
+>versions</tt></font> it closes the connection.</p></div>
+<!-- The with-url form -->
+<a name="The-with-url-form"></a>
+<div class="subsection-atitle"><h3>4.2 The <font color="blue"><tt id='tt2106'
+>with-url</tt></font> form</h3></div><div class="subsection">
+<p id='paragraph2110'
+>The syntax of the form <font color="blue"><tt id='tt2108'
+>with-url</tt></font> is as follows:</p><pre id='pre2111'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog2113'
+>(with-url url <em id='it2112'
+>callback</em>)
+</pre>
+</DIV><pre id='pre2114'
+></pre>
+<p id='paragraph2122'
+>Informally, its evaluation consists in fetching a remote
+document from the web and on completion, invoking the 
+<font color="blue"><tt id='tt2116'
+><em id='it2115'
+>callback</em></tt></font> with the read characters as argument. Unlike
+to the <font color="blue"><tt id='tt2118'
+>&lt;INLINE&gt;</tt></font> node, the characters do not need to conform
+any particular syntax. More precisely, the fetched document does not
+necessarily need to be a valid XML document. In the example below, we
+show how the <font color="blue"><tt id='tt2120'
+>with-url</tt></font> form can be used to implement a simple
+RSS reader.</p><p id='paragraph2125'
+>The function <font color="blue"><tt id='tt2123'
+>rss-parse</tt></font> provided by the standard
+Hop library parses a string of characters according to the RSS
+grammar. It accepts four arguments, the string to be parsed and three
+constructors. The first and seconds  build a data structure
+representing RSS sections. The last one builds data structures for
+representing RSS entries.</p><pre id='pre2126'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog2129'
+>(<font color="#6959cf"><strong id='bold2458'
+>define</strong></font> (make-rss channel items<font color="#6959cf"><strong id='bold2460'
+>)</strong></font>
+   (<font color="#1919af"><strong id='bold2462'
+>&lt;TREE&gt;</strong></font>
+      channel
+      (<font color="#1919af"><strong id='bold2464'
+>&lt;TRBODY&gt;</strong></font> items)))
+
+(<font color="#6959cf"><strong id='bold2466'
+>define</strong></font> (make-channel channel<font color="#6959cf"><strong id='bold2468'
+>)</strong></font>
+   (<font color="#1919af"><strong id='bold2470'
+>&lt;TRHEAD&gt;</strong></font> channel))
+</pre>
+</DIV><pre id='pre2130'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog2139'
+>(<font color="#6959cf"><strong id='bold2472'
+>define</strong></font> (make-item link title date subject descr<font color="#6959cf"><strong id='bold2474'
+>)</strong></font>
+   (<font color="#1919af"><strong id='bold2476'
+>&lt;TRLEAF&gt;</strong></font>
+      (<font color="#1919af"><strong id='bold2478'
+>&lt;DIV&gt;</strong></font>
+         <strong id='bold2480'
+>:class</strong> <font color="red">&quot;entry&quot;</font>
+         (<font color="#1919af"><strong id='bold2483'
+>&lt;A&gt;</strong></font> <strong id='bold2485'
+>:href</strong> link title)
+         (<strong id='bold2487'
+>if</strong> date (list <font color="red">&quot;(&quot;</font> date <font color="red">&quot;)&quot;</font>))
+         (<strong id='bold2490'
+>if</strong> subject (<font color="#1919af"><strong id='bold2491'
+>&lt;I&gt;</strong></font> subject))
+         descr)))
+</pre>
+</DIV><pre id='pre2140'
+></pre>
+<p id='paragraph2141'
+>Once provided with the tree constructors, parsing RSS documents
+is straightforward.</p><pre id='pre2142'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog2145'
+>(<font color="#6959cf"><strong id='bold2493'
+>define</strong></font> (rss-&gt;html url<font color="#6959cf"><strong id='bold2495'
+>)</strong></font>
+   (with-url url
+      (<strong id='bold2497'
+>lambda</strong> (h)
+         (rss-parse h make-rss make-channel make-item))))
+</pre>
+</DIV><pre id='pre2146'
+></pre>
+<p id='paragraph2147'
+>Producing a RSS report is then as simple as:</p><pre id='pre2148'
+></pre>
+<DIV class='prog-border'><pre class="hop" id='prog2150'
+>(rss-&gt;html <font color="red">&quot;kernel.org/kdist/rss.xml&quot;</font>)
+</pre>
+</DIV><pre id='pre2151'
+></pre>
+</div>
+</div><br>
+</div>
+<div class="section" id="Conclusion"><!-- Conclusion -->
+<a name="Conclusion"></a>
+<div class="section-atitle"><h3><font color="black">5 Conclusion</font>
+</h3></div><div class="section">
+<p id='paragraph2152'
+>Hop is a programming language dedicated to programming
+interactive web applications. It differs from general purpose
+programming languages by providing support for dealing with programs
+whose execution is split across two computers. One computer is in charge
+of executing the logic of the application. The other one is in charge
+of dealing with the interaction with users.</p><p id='paragraph2153'
+>This article focuses on the Hop development kit. It presents
+some extensions to HTML that enable fancy graphical user interfaces
+programming and it presents the Hop web broker programming. In
+the presentation various examples are presented. In particular, the
+paper shows how to implement simple a RSS reader with Hop in no more than
+20 lines of code!</p><p id='paragraph2156'
+>The Hop library is still missing important features for web
+programming. In particular, it does not provide <span class="sc">Soap</span>
+interface, it cannot handle secure <span class="sc">Https</span> connections, and it
+does not implement graphical visual effects. We continue to work on
+Hop, however, and would love your feedback.</p></div><br>
+</div>
+<div class="section" id="References"><!-- References -->
+<a name="References"></a>
+<div class="section-atitle"><h3><font color="black">6 References</font>
+</h3></div><div class="section">
+
+
+<font size="-1"><table><tbody>
+<tr><td id="sgl:dls06" align="right" valign="top"><a name="sgl:dls06">[1]</a></td><td id="sgl:dls06" align="left" valign="top">Serrano, M. and Gallesio, E. and Loitsch, F. -- <strong id='bold2499'
+>HOP, a language for programming the Web 2.0</strong> -- Proceedings of the First Dynamic Languages Symposium, Portland, Oregon, USA, Oct, 2006.</td></tr>
+</tbody></table>
+</font></div><br>
+</div>
+<div class="section" id="Acknowledgments"><!-- Acknowledgments -->
+<a name="Acknowledgments"></a>
+<div class="section-atitle"><h3><font color="black">Acknowledgments</font>
+</h3></div><div class="section">
+<p id='paragraph2158'
+>I would like to thanks Robby Findler for his invitation to
+the Scheme workshop and for his extremely helpful comments on the paper.</p></div><br>
+</div>
+<div class="footnotes" id="The-HOP-Development-Kit-footnote"><div class="footnote"><br><br>
+<hr width='20%' size='2' align='left'>
+<a name="footnote-footnote1895"><sup><small>1</small></sup></a>: <tt id='tt1894'
+>http://www.shoutcast.com/</tt>.
+<br>
+<a name="footnote-footnote1957"><sup><small>2</small></sup></a>: <tt id='tt1956'
+>http://www.json.org/</tt>.
+<br>
+<div></div>
+</div>
+<div class="skribe-ending">
+<hr> 
+<p class="ending" id='paragraph2505'
+><font size="-1">
+This <span class="sc">Html</span> page has been produced by 
+<a href="http://www.inria.fr/mimosa/fp/Skribe" class="http">Skribe</a>.
+<br/>
+Last update <em id='it2503'
+>Wed Aug 30 09:26:26 2006</em>.</font></p></div>
+</body>
+</html>

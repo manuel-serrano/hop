@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Aug 13 12:34:04 2006 (serrano)                */
+;*    Last change :  Sun Sep  3 08:16:04 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -159,6 +159,7 @@
    (let ((s (hop->json
 	     (procedure->service (lambda (res) (cont res))))))
       (instantiate::http-response-hop
+	 (backend (hop-xml-backend))
 	 (request req)
 	 (xml (<HTML>
 		 (<HEAD>)
@@ -211,7 +212,7 @@
 			  (hop-verb 1 (hop-color req req " AUTOLOADING")
 				    ": " path "\n")
 			  ;; load the autoloaded file
-			  (load-once path)
+			  (hop-load-once path)
 			  ;; execute the hooks
 			  (for-each (lambda (h) (h req)) hooks)
 			  ;; remove the autoaload (once loaded)

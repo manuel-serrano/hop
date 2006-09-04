@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jul 14 15:32:34 2006 (serrano)                */
+;*    Last change :  Fri Aug 25 10:04:30 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -160,24 +160,25 @@
 (define (<HEAD> . args)
    (multiple-value-bind (dir body)
       (head-parse args)
-      (let ((meta (<META> :http-equiv "Content-Type"
-			  :content (if (eq? (hop-char-encoding) 'UTF-8)
-				       "text/html; charset=UTF-8"
-				       "text/html; charset=ISO-8859-1")))
-	    (css (<LINK> :rel "stylesheet"
-			 :type "text/css"
-			 :href (hop-file dir "hop.css")))
-	    (jscripts (list
-		       (<SCRIPT>
-			  :type "text/javascript"
-			  :src (hop-file dir "hop-autoconf.js"))
-		       (<SCRIPT>
-			  :type "text/javascript"
-			  :src (hop-file dir "hop.js")))))
+      (let* ((meta (<META> :http-equiv "Content-Type"))
+	     (css (<LINK> :rel "stylesheet"
+		     :type "text/css"
+		     :href (hop-file dir "hop.css")))
+	     (jscripts (list
+			(<SCRIPT>
+			   :type "text/javascript"
+			   :src (hop-file dir "hop-autoconf.js"))
+			(<SCRIPT>
+			   :type "text/javascript"
+			   :src (hop-file dir "hop.js"))))
+	     (body (cons css  (append jscripts body)))
+	     (body (if (memq (hop-xml-backend) '(html html-4.01))
+		       (cons meta body)
+		       body)))
 	 (instantiate::xml-markup
 	    (markup 'head)
 	    (attributes '())
-	    (body (cons* meta css (append jscripts body)))))))
+	    (body body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FOOT> ...                                                       */
