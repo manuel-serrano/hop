@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Fri Sep  1 13:46:28 2006 (serrano)                */
+;*    Last change :  Thu Sep  7 06:59:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */

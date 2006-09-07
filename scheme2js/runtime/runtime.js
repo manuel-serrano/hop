@@ -3026,3 +3026,7 @@ function sc_getCallCcIndexObject(index) {
 function sc_BindExitException() {
     this._internalException = true;
 }
+
+function sc_CurrentDate() { /// export current-date
+   return new Date();
+}
