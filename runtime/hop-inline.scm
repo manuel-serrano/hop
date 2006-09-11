@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Fri Aug 25 09:48:57 2006 (serrano)                */
+;*    Last change :  Mon Sep 11 17:07:09 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -78,6 +78,8 @@
 ;*    xml-inline ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (xml-inline host port path userinfo authorization eid)
+   (define (filter-attr attr)
+      (not (eq? (car attr) 'id)))
    (http-send-request
     (instantiate::http-request
        (host host)
@@ -108,7 +110,7 @@
 				     (el (instantiate::xml-element
 					    (markup markup)
 					    (id i)
-					    (attributes attr)
+					    (attributes (filter! filter-attr attr))
 					    (body body))))
 				 (for-each (lambda (b)
 					      (when (xml-element? b)
