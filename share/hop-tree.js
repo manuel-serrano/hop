@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Aug  2 15:33:15 2006 (serrano)                */
+/*    Last change :  Mon Sep 11 16:17:12 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -218,6 +218,7 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
    table.setAttribute( "cellpadding", 0 );
    table.setAttribute( "cellspacing", 0 );
    table.setAttribute( "border", 0 );
+   table.setAttribute( "rules", "none" );
    table.className = "hop-tree";
    
    var tb = document.createElement( "tbody" );
@@ -319,6 +320,8 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
 
    leaf.setAttribute( "cellpadding", 0 );
    leaf.setAttribute( "cellspacing", 0 );
+   leaf.setAttribute( "border", 0 );
+   leaf.setAttribute( "rules", "none" );
 
    var tb = document.createElement( "tbody" );
    var row = document.createElement( "tr" ); 
@@ -329,6 +332,7 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
 
    /* space */
    var td1 = document.createElement( "td" );
+   td1.setAttribute( "valign", "top" );
    td1.setAttribute( "nowrap", "nowrap" );
    var join = document.createElement( "img" );
    join.src = tree.icondir + "/join.png";
@@ -338,6 +342,7 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
 
    /* add the folder icon */
    var td2 = document.createElement( "td" );
+   td2.setAttribute( "valign", "top" );
    var fimg = document.createElement( "img" );
    fimg.src = icon;
    fimg.setAttribute( "align", "absbottom" );

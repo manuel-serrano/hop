@@ -30,12 +30,11 @@ must include in their header, the following statement:
 == Client Definitions ==
 <client>
 
-=== ++(window-open id o [t] [attr] [w h] [x y])++ ===
+=== ++(window-open o [t] [attr] [w h] [x y])++ ===
 <procedure> window-open
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
-| id          |  string   | the window identifier.                          |
 | o           |   obj     | the content material.                           |
 | t           |  string   | an optional title, defaults to ++id++.          |
 | attr        |  string   | an optional attribute.                          |
