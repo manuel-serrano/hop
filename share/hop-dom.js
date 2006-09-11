@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Aug 25 13:36:56 2006 (serrano)                */
+/*    Last change :  Mon Sep 11 11:34:04 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -16,12 +16,12 @@ function dom_add_child( node, e ) {
    if( hop_is_html_element( e ) ) {
       node.appendChild( e );
    } else {
-      if( (e instanceof String) || (typeof e == "string") ) {
+      if( (e instanceof String) || (typeof e == "string") || (typeof e == "number") ) {
 	 node.innerHTML = e;
       } else {
 	 if( sc_isPair( e ) ) {
-	    dom_add_child( node, e.cdr );
 	    dom_add_child( node, e.car );
+	    dom_add_child( node, e.cdr );
 	 }
       }
    }
@@ -32,21 +32,32 @@ function dom_add_child( node, e ) {
 /*---------------------------------------------------------------------*/
 function dom_create( tag, args ) {
    var el = document.createElement( tag );
-   var i = args.length - 1;
+   var l = args.length;
+   var i = 0;
 
-   while( i > 0 ) {
-      var k = args[ i - 1 ];
+   while( i < l ) {
+      var k = args[ i ];
       
       if( sci_isKeyword( k ) ) {
-	 el.setAttribute( k.toJSString(), args[ i ] );
-	 i -= 2;
+	 if( i < (l - 1) ) {
+	    var at = args[ i + 1 ];
+	    if( (at instanceof String) || (typeof at == "string") ) {
+	       if( sc_isSymbol_immutable( at ) ) {
+		  el.setAttribute( k.toJSString(),
+				   sc_symbol2string_immutable( at ) );
+	       } else {
+		  el.setAttribute( k.toJSString(), at );
+	       }
+	    } else {
+	       el.setAttribute( k.toJSString(), at + "" );
+	    }
+	    i += 2;
+	 }
       } else {
 	 dom_add_child( el, args[ i ] );
-	 i--;
+	 i++;
       }
    }
-
-   if( i == 0 ) dom_add_child( el, args[ i ] );
 
    return el;
 }

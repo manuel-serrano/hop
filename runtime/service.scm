@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Sep  3 08:16:04 2006 (serrano)                */
+;*    Last change :  Mon Sep 11 14:43:08 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -44,7 +44,7 @@
 	    (make-service-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
 	    (procedure->service::hop-service ::procedure)
-            (%eval::%http-response ::bstring ::http-request ::procedure)
+            (%eval::%http-response ::obj ::http-request ::procedure)
 	    (autoload ::bstring ::procedure . hooks)
 	    (autoload-filter ::http-request)
 	    (service-filter ::http-request)
@@ -153,11 +153,47 @@
 	  (service a (apply proc a))))))
 
 ;*---------------------------------------------------------------------*/
+;*    exp->eval-string ...                                             */
+;*    -------------------------------------------------------------    */
+;*    JS eval does not accept \n inside quotes!                        */
+;*---------------------------------------------------------------------*/
+(define (exp->eval-string exp)
+   (cond
+      ((string? exp)
+       exp)
+      ((xml-tilde? exp)
+       (with-access::xml-tilde exp (body)
+	  (if (string? body)
+	      (let ((l (string-length body)))
+		 (if (substring-at? body ";\n" (-fx l 2))
+		     (substring body 0 (-fx l 2))))
+	      body)))
+      ((list? exp)
+       (apply string-append (map exp->eval-string exp)))
+      (else
+       exp)))
+
+;*---------------------------------------------------------------------*/
+;*    exp-list->eval-string ...                                        */
+;*---------------------------------------------------------------------*/
+(define (exp-list->eval-string exp)
+   (if (null? exp)
+       "[]"
+       (let loop ((exp exp)
+		  (res '()))
+	  (cond
+	     ((null? (cdr exp))
+	      (apply string-append "new Array( "
+		     (reverse! (cons* ")" (exp->eval-string (car exp)) res))))
+	     (else
+	      (loop (cdr exp)
+		    (cons* "," (exp->eval-string (car exp)) res)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    %eval ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%eval exp req cont)
-   (let ((s (hop->json
-	     (procedure->service (lambda (res) (cont res))))))
+   (let ((s (hop->json (procedure->service (lambda (res) (cont res))))))
       (instantiate::http-response-hop
 	 (backend (hop-xml-backend))
 	 (request req)
@@ -165,7 +201,9 @@
 		 (<HEAD>)
 		 (<BODY>
 		    (<SCRIPT>
-		       (format "hop( ~a( eval( '~a' ) ), true )" s exp))))))))
+		       (format "hop( ~a( eval( '~a' ) ), true )"
+			       s
+			       (exp-list->eval-string exp)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *autoload-mutex* ...                                             */

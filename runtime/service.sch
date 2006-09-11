@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Fri Jul 21 18:45:33 2006 (serrano)                */
+;*    Last change :  Mon Sep 11 14:37:06 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -131,24 +131,21 @@
       ((null? bindings)
        `(begin ,body))
       ((null? (cdr bindings))
-       `(%eval ,(cadr (car bindings))
+       `(%eval (list ,(cadr (car bindings)))
+	       (the-current-request)
 	       (lambda (,(caar bindings)) ,@body)))
       (else
        (let ((vec (gensym)))
-	  (let loop ((bindings bindings)
+	  (let loop ((obindings bindings)
 		     (i 0)
-		     (str '())
 		     (nbindings '()))
-	     (if (null? bindings)
-		 `(%eval ,(apply string-append "new Array(" (reverse! str))
+	     (if (null? obindings)
+		 `(%eval (list ,@(map cadr bindings))
 			 (the-current-request)
 			 (lambda (,vec) (let ,nbindings ,@body)))
-		 (let ((binding (car bindings)))
-		    (loop (cdr bindings)
+		 (let ((binding (car obindings)))
+		    (loop (cdr obindings)
 			  (+fx i 1)
-			  (cons* (if (pair? (cdr bindings)) "," ")")
-				 (cadr binding)
-				 str)
 			  (cons `(,(car binding) (vector-ref ,vec ,i))
 				nbindings)))))))))
 

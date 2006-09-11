@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Sep  4 12:10:48 2006 (serrano)                */
+;*    Last change :  Mon Sep 11 13:01:58 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -794,4 +794,3 @@
 (define (tilde-make-thunk t)
    (instantiate::xml-tilde
       (body (string-append "function() {" (xml-tilde-body t) "}"))))
-      

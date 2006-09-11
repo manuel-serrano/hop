@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Fri Aug 25 08:33:20 2006 (serrano)                */
+;*    Last change :  Mon Sep 11 08:14:51 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -287,14 +287,19 @@
 	 :onclick ~(let ((e1 (document.getElementById $id1))
 			 (e2 (document.getElementById $id2))
 			 (b (document.getElementById $id)))
+		      (stop-event-propagation event #t)
 		      (if b.edit
 			  (begin
 			     (set! b.edit #f)
 			     (set! b.innerHTML "cancel")
-			     (set! e2.style.width e1.offsetWidth)
-			     (set! e2.style.height e1.offsetHeight)
-			     (set! e2.style.top e1.offsetTop)
-			     (set! e2.style.left e1.offsetLeft)
+			     (set! e2.style.width
+				   (string-append e1.offsetWidth "px"))
+			     (set! e2.style.height
+				   (string-append e1.offsetHeight "px"))
+			     (set! e2.style.top
+				   (string-append e1.offsetTop "px"))
+			     (set! e2.style.left
+				   (string-append e1.offsetLeft "px"))
 			     (set! e2.style.display "block")
 			     (set! e1.style.display "none"))
 			  (begin
