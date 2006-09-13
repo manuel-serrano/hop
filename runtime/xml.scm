@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Sep 11 13:01:58 2006 (serrano)                */
+;*    Last change :  Tue Sep 12 14:24:54 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -568,7 +568,7 @@
 	  (display id p))
 	 ((procedure? attr)
 	  (error 'xml "Illegal procedure argument in XML attribute" id))
-	 (display
+	 (else
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))
 
