@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon Sep 11 16:17:12 2006 (serrano)                */
+/*    Last change :  Fri Sep 15 19:25:16 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -165,6 +165,7 @@ function hop_tree_row_select( root, row ) {
    row.className = "hop-tree-row-selected";
    root.selection = row;
    root.selections.push( row );
+   root.onselect();
 }
    
 /*---------------------------------------------------------------------*/
@@ -174,6 +175,7 @@ function hop_tree_row_unselect( root, row ) {
    row.className = "hop-tree-row-unselected";
    root.selection = false;
    var i;
+   root.onunselect();
 
    for( i = 0; i < root.selections.length; i++ ) {
       if( root.selections[ i ] == row ) {
@@ -332,7 +334,6 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
 
    /* space */
    var td1 = document.createElement( "td" );
-   td1.setAttribute( "valign", "top" );
    td1.setAttribute( "nowrap", "nowrap" );
    var join = document.createElement( "img" );
    join.src = tree.icondir + "/join.png";
@@ -342,7 +343,6 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
 
    /* add the folder icon */
    var td2 = document.createElement( "td" );
-   td2.setAttribute( "valign", "top" );
    var fimg = document.createElement( "img" );
    fimg.src = icon;
    fimg.setAttribute( "align", "absbottom" );

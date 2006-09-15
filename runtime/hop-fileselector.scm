@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Thu Sep 14 15:22:03 2006 (serrano)                */
+;*    Last change :  Fri Sep 15 19:56:21 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -93,6 +93,9 @@
 				   (size 10)
 				   (value "" string)
 				   (text "Browse" string)
+				   (width 500 integer)
+				   (height 400 integer)
+				   (onselect #unspecified)
 				   (attributes)
 				   body)
    (let ((svc (get-filebrowser-service)))
@@ -101,10 +104,18 @@
 	 :class (if (string? class)
 		    (string-append "hop-filebrowse " class)
 		    "hop-fileselect")
-	 :type "text" :size size :value value
-;* 	 :onclick (format "hop_filebrowse( ~a, this, event )"          */
-;* 			  (hop-service-javascript svc))                */
-	 :onclick "alert( 'TO BE IMPLEMENTED' )"
+	 :value value
+	 :onclick (format "hop_stop_propagation( event, false ); hop_filebrowse( ~a, this, ~a, ~a, event, ~a )"
+			  (hop-service-javascript svc) 
+			  width height
+			  (cond
+			     ((xml-tilde? onselect)
+			      (format "function() { ~a }"
+				      (xml-tilde-body onselect)))
+			     ((string? onselect)
+			      (format "function() { ~a }" onselect))
+			     (else
+			      "false")))
 	 text)))
 
 ;*---------------------------------------------------------------------*/
@@ -115,16 +126,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    browse ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (browse req dir)
-   (<TREE>
-      (<TRHEAD> dir)
-      (<TRBODY>
-	 (map (lambda (f)
-		 (let ((p (make-file-name dir f)))
-		    (if (directory? p)
-			(browse req p)
-			(<TRLEAF> :value p f))))
-	      (directory->list dir)))))
+(define (browse req ident base)
+   (<DIV> :class "hop-filebrowse"
+      (let loop ((dir base)
+		 (open #t))
+	 (<TREE>
+	    :open open
+	    :onselect (format "var o=document.getElementById( '~a' ); o.value = this.selection.value; o.onselect();" ident)
+	    (<TRHEAD> (if open dir (basename dir)))
+	    (<TRBODY>
+	       (<DELAY>
+		  (lambda ()
+		     (map (lambda (f)
+			     (let ((p (make-file-name dir f)))
+				(if (directory? p)
+				    (loop p #f)
+				    (<TRLEAF> :value p f))))
+			  (sort (directory->list dir) string<?)))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    get-filebrowser-service ...                                      */
@@ -132,6 +150,7 @@
 (define (get-filebrowser-service)
    (unless *filebrowser-service*
       (set! *filebrowser-service*
-	    (service (d o) (browse (the-current-request) d))))
+	    (service (ident value)
+	       (browse (the-current-request) ident value))))
    *filebrowser-service*)
 				      

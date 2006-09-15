@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 14 09:43:45 2006                          */
-/*    Last change :  Thu Sep 14 15:22:33 2006 (serrano)                */
+/*    Last change :  Fri Sep 15 19:24:58 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    <FILESELECT> runtime library.                                    */
@@ -56,3 +56,20 @@ function hop_fileselect_complete( obj, l ) {
       hop_fileselect_count = -1;
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_filebrowse ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_filebrowse( service, obj, width, height, event, onselect ) {
+   var x = window.innerWidth/2 - width/2;
+   var y = event.clientY + 20;
+
+   if( (y + height) > window.innerHeight ) y = window.innerHeight - height;
+
+   obj.onselect = onselect;
+
+   hop_iwindow_open( "file browser", service( obj.id, obj.value ),
+		     obj.value,
+		     "hop-file-browse",
+		     width, height, x, y );
+}   

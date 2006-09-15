@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Sep  4 11:37:11 2006 (serrano)                */
+/*    Last change :  Fri Sep 15 19:06:37 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -257,8 +257,8 @@ function hop_anim( title ) {
    var vis = document.createElement( "div" );
       
    hop_style_set( vis, "position", "fixed" );
-   hop_style_set( vis, "top", "5" );
-   hop_style_set( vis, "right", "5" );
+   hop_style_set( vis, "top", "5px" );
+   hop_style_set( vis, "right", "5px" );
    hop_style_set( vis, "z-index", "100" );
    hop_style_set( vis, "background", "#eeeeee" );
    hop_style_set( vis, "border-color", "black" );
@@ -376,7 +376,7 @@ function hop( service, success, failure, sync ) {
    var vis = hop_anim( service );
 
    document.body.appendChild( vis );
-   
+
    http.open( "GET", service, (sync != true) );
 
    http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
