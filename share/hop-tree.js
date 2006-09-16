@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Fri Sep 15 19:25:16 2006 (serrano)                */
+/*    Last change :  Sat Sep 16 16:04:45 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -163,9 +163,9 @@ function hop_tree_row_select( root, row ) {
    }
    
    row.className = "hop-tree-row-selected";
+   root.value = row.value;
    root.selection = row;
    root.selections.push( row );
-   root.onselect();
 }
    
 /*---------------------------------------------------------------------*/
@@ -198,10 +198,14 @@ function hop_tree_row_toggle_selected( tree, row ) {
       aux = root.parent;
    }
 
-   if( row.className == "hop-tree-row-selected" )
+   if( row.className == "hop-tree-row-selected" ) {
+      if( root.onselect ) {
+	 root.onselect();
+      }
       hop_tree_row_unselect( root, row );
-   else
+   } else {
       hop_tree_row_select( root, row );
+   }
 }
 
 /*---------------------------------------------------------------------*/
