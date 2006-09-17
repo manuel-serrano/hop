@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Sat Sep 16 18:20:01 2006 (serrano)                */
+;*    Last change :  Sun Sep 17 13:22:05 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -71,6 +71,7 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <FILESELECT> ((id #unspecified string)
 				   (class #unspecified string)
+				   (onchange #f)
 				   (size 10)
 				   (value "" string)
 				   (attributes)
@@ -83,8 +84,16 @@
 			(string-append "hop-fileselect " class)
 			"hop-fileselect")
 	     :type "text" :size size :value value
-	     :onkeydown (format "hop_fileselect_keypress( ~a, this, event )"
-				(hop-service-javascript svc))
+	     :onkeydown (format "hop_fileselect_keypress( ~a, this, event, ~a )"
+				(hop-service-javascript svc)
+				(cond
+				   ((string? onchange)
+				    (format "function() { ~a }" onchange))
+				   ((xml-tilde? onchange)
+				    (format "function() { ~a }"
+					    (xml-tilde-body onchange)))
+				   (else
+				    "function() { return false; }")))
 	     (map (lambda (e) (list (symbol->keyword (car e)) (cdr e)))
 		  attributes))))
 
@@ -205,7 +214,7 @@
 			     ((string? onselect)
 			      (format "function() { ~a }" onselect))
 			     (else
-			      "function() { return false }"))
+			      "function() { return false; }"))
 			  ;; service
 			  (hop-service-javascript svc)
 			  ;; title

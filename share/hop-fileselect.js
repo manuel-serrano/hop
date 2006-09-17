@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 14 09:43:45 2006                          */
-/*    Last change :  Sat Sep 16 18:24:33 2006 (serrano)                */
+/*    Last change :  Sun Sep 17 13:20:56 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    <FILESELECT> runtime library.                                    */
@@ -19,7 +19,7 @@ var hop_fileselect_init = false;
 /*---------------------------------------------------------------------*/
 /*    hop_fileselect_keypress ...                                      */
 /*---------------------------------------------------------------------*/
-function hop_fileselect_keypress( service, obj, event ) {
+function hop_fileselect_keypress( service, obj, event, onreturn ) {
    if( event.which == 9 ) {
       hop_stop_propagation( event, false );
 
@@ -39,9 +39,10 @@ function hop_fileselect_keypress( service, obj, event ) {
       hop_fileselect_completions = false;
       
       if( event.which == 13 ) {
-	 if( obj.onchange ) {
-	    obj.onchange();
-	 }
+	 hop_stop_propagation( event, false );
+
+	 obj.onreturn = onreturn;
+	 obj.onreturn();
       }
    }
 }
