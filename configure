@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Aug 25 18:16:05 2006 (serrano)                */
+#*    Last change :  Tue Sep 19 16:40:40 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -239,7 +239,6 @@ if [ ! -f $bgllibdir/bigloo/$bglversion/multimedia.heap ]; then
   exit 1;
 fi
 
-
 #*---------------------------------------------------------------------*/
 #*    Then check if bglafile exists this is a good indicator of a      */
 #*    correct Bigloo installation.                                     */
@@ -297,7 +296,6 @@ if [ "$ccflags " = " " ]; then
   ccflags=`grep '^CFLAGS=' $bigloolibdir/Makefile.config | sed 's/^[A-Z]*=//'`
   ccflags="$ccflags -I $bigloolibdir"
 fi
-
 
 #*---------------------------------------------------------------------*/
 #*    Jvm zip libs                                                     */

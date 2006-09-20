@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Sep 12 14:24:54 2006 (serrano)                */
+;*    Last change :  Tue Sep 19 04:59:18 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -357,12 +357,20 @@
    (and (xml-markup? o) (eq? (xml-markup-markup o) markup)))
 
 ;*---------------------------------------------------------------------*/
+;*    if-debug ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-macro (if-debug exp1 exp2)
+   (if (>fx (bigloo-debug) 0)
+       exp1
+       exp2))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-make-id ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (xml-make-id #!optional id (markup 'HOP))
    (if (string? id)
        id
-       (symbol->string (gensym markup))))
+       (if-debug (symbol->string (gensym markup)) (symbol->string (gensym)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */

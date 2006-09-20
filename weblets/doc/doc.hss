@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu Aug 24 17:08:24 2006 (serrano)                */
+/*    Last change :  Wed Sep 20 15:08:13 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -773,6 +773,11 @@ weblets div.weblets-title {
   font-weight: bold;
   font-size: large;
   border-bottom: 1px solid $border-color;
+}
+
+weblets div.weblets-title span:hover {
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 weblets table.api-index {
