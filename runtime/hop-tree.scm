@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Sep 16 16:10:06 2006 (serrano)                */
+;*    Last change :  Thu Sep 21 18:50:44 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -216,6 +216,8 @@
 				      (html-write-tree level b parent p be))
 				     ((html-tree-leaf? b)
 				      (html-write-tree-leaf b parent p be))
+				     ((null? b)
+				      #unspecified)
 				     (else
 				      (error '<TREE> "Illegal tree body" b)))))
 			    body))))))

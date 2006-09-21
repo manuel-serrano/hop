@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Sep 21 18:39:12 2006 (serrano)                */
+;*    Last change :  Thu Sep 21 18:45:56 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -62,8 +62,10 @@
       (if req
 	  (with-access::http-request req (%env)
 	     (unless %env (set! %env (request-parse-share req)))
-	     (tprint "%env=" %env)
-	     #unspecified)
+	     (let ((c (assq key %env)))
+		(if (not (pair? c))
+		    #unspecified
+		    (cdr c))))
 	  #unspecified)))
 
 ;*---------------------------------------------------------------------*/
@@ -72,8 +74,6 @@
 (define (request-parse-share req)
    (with-access::http-request req (header)
       (let ((env (http-header-field header hop-share:)))
-	 (tprint "env=" (string-for-read env))
-	 (tprint "env2=" (string-for-read (xml-string-decode env)))
 	 (if (string? env)
 	     (string->obj (xml-string-decode env))
 	     '()))))
