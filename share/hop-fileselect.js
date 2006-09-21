@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 14 09:43:45 2006                          */
-/*    Last change :  Sun Sep 17 13:20:56 2006 (serrano)                */
+/*    Last change :  Wed Sep 20 18:16:19 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    <FILESELECT> runtime library.                                    */
@@ -12,7 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_fileselect_count ...                                         */
 /*---------------------------------------------------------------------*/
-var hop_fileselect_count = 1;
+var hop_fileselect_count = -1;
 var hop_fileselect_completions = false;
 var hop_fileselect_init = false;
 

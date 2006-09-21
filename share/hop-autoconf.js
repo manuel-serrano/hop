@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Sep  4 11:33:03 2006 (serrano)                */
+/*    Last change :  Thu Sep 21 15:25:00 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -30,7 +30,7 @@ if( window.HTMLCollection == undefined ) {
 function hop_properties_to_string( obj ) {
    var res = "";
    var i = 0;
-   for( var p in window ) {
+   for( var p in obj ) {
       if( i == 10 ) {
 	 res += p + "\n";
 	 i = 0;

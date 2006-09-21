@@ -3,7 +3,7 @@ function hop_bigloo_serialize_pair( l ) {
    var len = 0;
    
    while (sc_isPair( l ) ) {
-      res += hop_serialize( l.car );
+      res += hop_bigloo_serialize( l.car );
       l = l.cdr;
       len++;
    }
@@ -11,7 +11,7 @@ function hop_bigloo_serialize_pair( l ) {
    if( l == null ) {
       return hop_serialize_word( len + 1 ) + res + ".";
    } else {
-      return hop_serialize_word( len + 1 ) + res + hop_serialize( l );
+      return hop_serialize_word( len + 1 ) + res + hop_bigloo_serialize( l );
    }
 }
 
