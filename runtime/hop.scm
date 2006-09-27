@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Sep 21 18:45:56 2006 (serrano)                */
+;*    Last change :  Fri Sep 22 07:46:29 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -39,7 +39,7 @@
 	    __hop_event)
    
    (export  (the-current-request::obj)
-	    (share-get::obj ::symbol)
+	    (request-get::obj ::symbol)
 	    (hop::%http-response ::http-request)
 	    (with-url ::bstring ::procedure #!key (fail raise) (header '()))
 	    (with-remote-host ::bstring ::hop-service ::pair-nil ::procedure ::procedure)
@@ -55,13 +55,13 @@
 	  #f)))
 
 ;*---------------------------------------------------------------------*/
-;*    share-get ...                                                    */
+;*    request-get ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (share-get key)
+(define (request-get key)
    (let ((req (the-current-request)))
       (if req
 	  (with-access::http-request req (%env)
-	     (unless %env (set! %env (request-parse-share req)))
+	     (unless %env (set! %env (request-env-parse req)))
 	     (let ((c (assq key %env)))
 		(if (not (pair? c))
 		    #unspecified
@@ -69,9 +69,9 @@
 	  #unspecified)))
 
 ;*---------------------------------------------------------------------*/
-;*    request-parse-share ...                                          */
+;*    request-env-parse ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (request-parse-share req)
+(define (request-env-parse req)
    (with-access::http-request req (header)
       (let ((env (http-header-field header hop-share:)))
 	 (if (string? env)

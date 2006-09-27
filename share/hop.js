@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Sep 21 18:44:33 2006 (serrano)                */
+/*    Last change :  Fri Sep 22 07:44:44 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -381,7 +381,7 @@ function hop( service, success, failure, sync ) {
 
    http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    http.setRequestHeader( 'Connection', 'close' );
-   http.setRequestHeader( 'Hop-Share', hop_serialize_share_env() );
+   http.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
 
    return hop_inner( http, success, failure, vis );
 }
@@ -614,57 +614,57 @@ function hop_cookie_set_value( name, val, path, domain, expires ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_share_env ...                                                */
+/*    hop_request_env ...                                              */
 /*---------------------------------------------------------------------*/
-var hop_share_env = [];
-var hop_share_env_string = "";
+var hop_request_env = [];
+var hop_request_env_string = "";
 
 /*---------------------------------------------------------------------*/
-/*    hop_serialize_share_env ...                                      */
+/*    hop_serialize_request_env ...                                    */
 /*---------------------------------------------------------------------*/
-function hop_serialize_share_env() {
-   if( hop_share_env_string == null ) {
+function hop_serialize_request_env() {
+   if( hop_request_env_string == null ) {
       var tmp = null;
 
-      for( var p in hop_share_env ) {
-	 if( typeof hop_share_env[ p ] != "function" ) {
-	    tmp = sc_cons( sc_cons( p, hop_share_env[ p ] ) );
+      for( var p in hop_request_env ) {
+	 if( typeof hop_request_env[ p ] != "function" ) {
+	    tmp = sc_cons( sc_cons( p, hop_request_env[ p ] ) );
 	 }
       }
       
-      hop_share_env_string = hop_serialize( tmp );
+      hop_request_env_string = hop_serialize( tmp );
    }
-   return hop_share_env_string;
+   return hop_request_env_string;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_share_reset ...                                              */
+/*    hop_request_reset ...                                            */
 /*    -------------------------------------------------------------    */
 /*    Is this really needed?                                           */
 /*    I think that if it is, a function that returns the whole list    */
 /*    of currently binding cells will also be required. For now,       */
 /*       this function is not bound in the Hop syntax (hop-alias.scm). */
 /*---------------------------------------------------------------------*/
-function hop_share_reset() {
-   hop_share_env = [];
-   hop_share_env_string = "";
+function hop_request_reset() {
+   hop_request_env = [];
+   hop_request_env_string = "";
    return null;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_share_set ...                                                */
+/*    hop_request_set ...                                              */
 /*---------------------------------------------------------------------*/
-function hop_share_set( key, val ) {
-   hop_share_env_string = null;
-   hop_share_env[ key ] = val;
+function hop_request_set( key, val ) {
+   hop_request_env_string = null;
+   hop_request_env[ key ] = val;
    return val;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_share_get ...                                                */
+/*    hop_request_get ...                                              */
 /*---------------------------------------------------------------------*/
-function hop_share_get( key ) {
-   return hop_share[ key ];
+function hop_request_get( key ) {
+   return hop_request[ key ];
 }
 
 /*---------------------------------------------------------------------*/
