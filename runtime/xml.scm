@@ -96,6 +96,7 @@
 	    (string->xml ::bstring)
 
 	    (string->tilde::xml-tilde ::bstring)
+	    (tilde->string::bstring ::xml-tilde)
 	    (tilde-compose::xml-tilde ::xml-tilde ::xml-tilde)
 	    (tilde-make-thunk::xml-tilde ::xml-tilde)
 	    
@@ -780,6 +781,13 @@
 (define (string->tilde string)
    (instantiate::xml-tilde
       (body string)))
+
+;*---------------------------------------------------------------------*/
+;*    tilde->string ...                                                */
+;*---------------------------------------------------------------------*/
+(define (tilde->string t)
+   (with-access::xml-tilde t (body)
+      body))
 
 ;*---------------------------------------------------------------------*/
 ;*    tilde-compose ...                                                */
