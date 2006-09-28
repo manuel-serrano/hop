@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Sep  4 11:37:11 2006 (serrano)                */
+/*    Last change :  Fri Sep 22 07:44:44 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -257,8 +257,8 @@ function hop_anim( title ) {
    var vis = document.createElement( "div" );
       
    hop_style_set( vis, "position", "fixed" );
-   hop_style_set( vis, "top", "5" );
-   hop_style_set( vis, "right", "5" );
+   hop_style_set( vis, "top", "5px" );
+   hop_style_set( vis, "right", "5px" );
    hop_style_set( vis, "z-index", "100" );
    hop_style_set( vis, "background", "#eeeeee" );
    hop_style_set( vis, "border-color", "black" );
@@ -376,12 +376,13 @@ function hop( service, success, failure, sync ) {
    var vis = hop_anim( service );
 
    document.body.appendChild( vis );
-   
+
    http.open( "GET", service, (sync != true) );
 
    http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    http.setRequestHeader( 'Connection', 'close' );
-   
+   http.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
+
    return hop_inner( http, success, failure, vis );
 }
 
@@ -613,6 +614,60 @@ function hop_cookie_set_value( name, val, path, domain, expires ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_request_env ...                                              */
+/*---------------------------------------------------------------------*/
+var hop_request_env = [];
+var hop_request_env_string = "";
+
+/*---------------------------------------------------------------------*/
+/*    hop_serialize_request_env ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_serialize_request_env() {
+   if( hop_request_env_string == null ) {
+      var tmp = null;
+
+      for( var p in hop_request_env ) {
+	 if( typeof hop_request_env[ p ] != "function" ) {
+	    tmp = sc_cons( sc_cons( p, hop_request_env[ p ] ) );
+	 }
+      }
+      
+      hop_request_env_string = hop_serialize( tmp );
+   }
+   return hop_request_env_string;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_request_reset ...                                            */
+/*    -------------------------------------------------------------    */
+/*    Is this really needed?                                           */
+/*    I think that if it is, a function that returns the whole list    */
+/*    of currently binding cells will also be required. For now,       */
+/*       this function is not bound in the Hop syntax (hop-alias.scm). */
+/*---------------------------------------------------------------------*/
+function hop_request_reset() {
+   hop_request_env = [];
+   hop_request_env_string = "";
+   return null;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_request_set ...                                              */
+/*---------------------------------------------------------------------*/
+function hop_request_set( key, val ) {
+   hop_request_env_string = null;
+   hop_request_env[ key ] = val;
+   return val;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_request_get ...                                              */
+/*---------------------------------------------------------------------*/
+function hop_request_get( key ) {
+   return hop_request[ key ];
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_element_x ...                                                */
 /*---------------------------------------------------------------------*/
 function hop_element_x( obj ) {
@@ -691,8 +746,14 @@ function hop_serialize( item ) {
 function hop_bigloo_serialize( item ) {
    var tname = typeof item;
    
-   if( (item instanceof String) || (tname == "string") )
-      return hop_serialize_string( '"', item );
+   if( (item instanceof String) || (tname == "string") ) {
+      if( sc_isSymbol_immutable( item ) ) {
+	 return "'"
+	    + hop_serialize_string( '"', sc_symbol2string_immutable( item ) );
+      } else {
+	 return hop_serialize_string( '"', item );
+      }
+   }
 
    if( (typeof item) == "number" )
       return hop_serialize_number( item );
@@ -720,18 +781,18 @@ function hop_bigloo_serialize( item ) {
       return hop_serialize_array( item );
       
    if( (HTMLInputElement != undefined) && (item instanceof HTMLInputElement) )
-      return hop_serialize( item.value );
+      return hop_bigloo_serialize( item.value );
 
    if( (HTMLTextAreaElement != undefined) && (item instanceof HTMLTextAreaElement) )
-      return hop_serialize( item.value );
+      return hop_bigloo_serialize( item.value );
 
    if( (HTMLSelectElement != undefined) && (item instanceof HTMLSelectElement) )
-      return hop_serialize( item.value );
+      return hop_bigloo_serialize( item.value );
 
    alert( "*** Hop Error, Can't serialize element: `" + item +
 	  "' (" + tname + "). Ignoring value." );
    
-   return hop_serialize( false );
+   return hop_bigloo_serialize( false );
 }
 
 /*---------------------------------------------------------------------*/
@@ -848,42 +909,42 @@ document.getElementsByClass = function( className ) {
    return res;
 }
 
-/*---------------------------------------------------------------------*/
-/*    hopBehaviour class ...                                           */
-/*---------------------------------------------------------------------*/
-var hopBehaviour = {
-    behaviours: {},
-    
-    register: function( className, func ) {
-	hopBehaviour.behaviours[ className ] = func;
-    },
-
-    plug: function() {
-	var all = hopBehaviour.behaviours;
-
-	for( var name in all ) {
-	    var list = document.getElementsByClass( name );
-	    
-	    for( var i in list ) {
-		all[ name ]( list[ i ] );
-	    }
-	}
-    },
-
-    start: function() {
-	var oldonload = window.onload;
-
-	if( typeof window.onload != 'function' ) {
-	    window.onload = hopBehaviour.plug;
-	} else {
-	    window.onload = function() {
-		oldonload();
-		hopBehaviour.plug();
-	    }
-	}
-    }
-};
-
-hopBehaviour.start();
-
+/* {*---------------------------------------------------------------------*} */
+/* {*    hopBehaviour class ...                                           *} */
+/* {*---------------------------------------------------------------------*} */
+/* var hopBehaviour = {                                                */
+/*     behaviours: {},                                                 */
+/*                                                                     */
+/*     register: function( className, func ) {                         */
+/* 	hopBehaviour.behaviours[ className ] = func;                   */
+/*     },                                                              */
+/*                                                                     */
+/*     plug: function() {                                              */
+/* 	var all = hopBehaviour.behaviours;                             */
+/*                                                                     */
+/* 	for( var name in all ) {                                       */
+/* 	    var list = document.getElementsByClass( name );            */
+/* 	                                                               */
+/* 	    for( var i in list ) {                                     */
+/* 		all[ name ]( list[ i ] );                              */
+/* 	    }                                                          */
+/* 	}                                                              */
+/*     },                                                              */
+/*                                                                     */
+/*     start: function() {                                             */
+/* 	var oldonload = window.onload;                                 */
+/*                                                                     */
+/* 	if( typeof window.onload != 'function' ) {                     */
+/* 	    window.onload = hopBehaviour.plug;                         */
+/* 	} else {                                                       */
+/* 	    window.onload = function() {                               */
+/* 		oldonload();                                           */
+/* 		hopBehaviour.plug();                                   */
+/* 	    }                                                          */
+/* 	}                                                              */
+/*     }                                                               */
+/* };                                                                  */
+/*                                                                     */
+/* hopBehaviour.start();                                               */
+/*                                                                     */
    

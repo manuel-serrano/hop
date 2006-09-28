@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Fri May  5 13:28:30 2006 (serrano)                */
+/*    Last change :  Sat Sep 16 15:01:40 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW CSS                                                  */
@@ -103,6 +103,10 @@ table.hop-iwindow td.hop-iwindow-close {
 }
 
 /*--- The title -------------------------------------------------------*/
+table.hop-iwindow td.hop-iwindow-up-title {
+  vertical-align: middle;
+}
+
 table.hop-iwindow td.hop-iwindow-up-title table {
   font-size: 11px;
   font-weight: bold;

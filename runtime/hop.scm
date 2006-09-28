@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Aug 25 09:31:29 2006 (serrano)                */
+;*    Last change :  Fri Sep 22 07:46:29 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -25,7 +25,8 @@
 	    __hop_http-response
 	    __hop_js-lib
 	    __hop_xml
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_http-lib)
    
    (with    __hop_hop-notepad
 	    __hop_hop-inline
@@ -38,6 +39,7 @@
 	    __hop_event)
    
    (export  (the-current-request::obj)
+	    (request-get::obj ::symbol)
 	    (hop::%http-response ::http-request)
 	    (with-url ::bstring ::procedure #!key (fail raise) (header '()))
 	    (with-remote-host ::bstring ::hop-service ::pair-nil ::procedure ::procedure)
@@ -51,6 +53,30 @@
       (if (http-request? d)
 	  d
 	  #f)))
+
+;*---------------------------------------------------------------------*/
+;*    request-get ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (request-get key)
+   (let ((req (the-current-request)))
+      (if req
+	  (with-access::http-request req (%env)
+	     (unless %env (set! %env (request-env-parse req)))
+	     (let ((c (assq key %env)))
+		(if (not (pair? c))
+		    #unspecified
+		    (cdr c))))
+	  #unspecified)))
+
+;*---------------------------------------------------------------------*/
+;*    request-env-parse ...                                            */
+;*---------------------------------------------------------------------*/
+(define (request-env-parse req)
+   (with-access::http-request req (header)
+      (let ((env (http-header-field header hop-share:)))
+	 (if (string? env)
+	     (string->obj (xml-string-decode env))
+	     '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop ...                                                          */

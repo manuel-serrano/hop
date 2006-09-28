@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Thu Jun 15 15:12:13 2006 (serrano)                */
+;*    Last change :  Wed Sep 20 14:30:07 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -20,7 +20,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    create ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/create db name author category hop version minhop maxhop sdescr descr home)
+(define-service (hz/create name author category hop version minhop maxhop sdescr descr home)
    (let ((db (hz-get-repository-db)))
       (hz-db-sync-date-update! db (current-date))
       (hz-db-add-entry db (hz-db-sync-stamp db)

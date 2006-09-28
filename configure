@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Aug 25 18:16:05 2006 (serrano)                */
+#*    Last change :  Wed Sep 27 17:05:03 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -239,7 +239,6 @@ if [ ! -f $bgllibdir/bigloo/$bglversion/multimedia.heap ]; then
   exit 1;
 fi
 
-
 #*---------------------------------------------------------------------*/
 #*    Then check if bglafile exists this is a good indicator of a      */
 #*    correct Bigloo installation.                                     */
@@ -298,7 +297,6 @@ if [ "$ccflags " = " " ]; then
   ccflags="$ccflags -I $bigloolibdir"
 fi
 
-
 #*---------------------------------------------------------------------*/
 #*    Jvm zip libs                                                     */
 #*---------------------------------------------------------------------*/
@@ -313,7 +311,7 @@ for p in scheme2js hopscheme hopwiki hop; do
 done
 
 # Bigloo libraries
-for p in pth web multimedia sqlite ssl calendar; do
+for p in pthread web multimedia sqlite ssl calendar; do
   elib="$bigloolibdir/bigloo$p"_e-$bglversion.zip;
   slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
   jvmziplibs="$elib $slib $jvmziplibs";

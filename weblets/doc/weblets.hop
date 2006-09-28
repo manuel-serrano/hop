@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May  8 06:21:47 2006                          */
-;*    Last change :  Sat Jun  3 07:26:01 2006 (serrano)                */
+;*    Last change :  Wed Sep 20 15:12:19 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP weblets doc.                                             */
@@ -28,14 +28,15 @@
 ;*    <WEBLETS> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS> req)
-   (<DIV>
-      :class "weblets"
+   (let ((d (<DIV> :id "pad-weblet" (<WEBLETS-TOC>))))
       (<DIV>
-	 :class "weblets-title"
-	 "Weblets")
-      (<DIV>
-	 :id "pad-weblet"
-	 (<WEBLETS-TOC>))))
+	 :class "weblets"
+	 (<DIV>
+	    :class "weblets-title"
+	    (<SPAN> :onclick ~(with-hop ($(service () (<WEBLETS-TOC>)))
+				 (lambda (h) (set! $d.innerHTML h)))
+	       "Weblets" ))
+	 d)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETS-TOC> ...                                                */

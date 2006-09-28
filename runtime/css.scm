@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Aug 25 09:36:28 2006 (serrano)                */
+;*    Last change :  Wed Sep 13 20:53:56 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -33,7 +33,10 @@
        (let ((p (open-input-file file)))
 	  (if (input-port? p)
 	      (unwind-protect
-		 (hop-read-hss p)
+		 (begin
+		    ;; each hss file is read inside a dummy empty module
+		    (eval `(module ,(gensym)))
+		    (hop-read-hss p))
 		 (close-input-port p))
 	      (raise (instantiate::&io-port-error
 			(proc 'hop-load)

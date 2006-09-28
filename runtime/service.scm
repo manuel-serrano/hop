@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Sep 11 14:43:08 2006 (serrano)                */
+;*    Last change :  Tue Sep 12 14:20:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -160,13 +160,15 @@
 (define (exp->eval-string exp)
    (cond
       ((string? exp)
-       exp)
+       (string-replace exp #\Newline #\space))
       ((xml-tilde? exp)
        (with-access::xml-tilde exp (body)
 	  (if (string? body)
 	      (let ((l (string-length body)))
 		 (if (substring-at? body ";\n" (-fx l 2))
-		     (substring body 0 (-fx l 2))))
+		     (string-replace (substring body 0 (-fx l 2))
+				     #\Newline #\space)
+		     (string-replace body #\Newline #\space)))
 	      body)))
       ((list? exp)
        (apply string-append (map exp->eval-string exp)))

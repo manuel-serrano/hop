@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Sep  3 08:29:51 2006 (serrano)                */
+;*    Last change :  Wed Sep 27 16:59:10 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -732,51 +732,56 @@
 ;*---------------------------------------------------------------------*/
 ;*    *load-once-table* ...                                            */
 ;*---------------------------------------------------------------------*/
-(define *load-once-table* #unspecified)
+(define *load-once-table* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
 ;*    *load-once-mutex* ...                                            */
 ;*---------------------------------------------------------------------*/
 (define *load-once-mutex* (make-mutex "load-once"))
-(define *load-once-condvar* (make-condition-variable "load-once"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-once file #!key (env (interaction-environment)))
-   (mutex-lock! *load-once-mutex*)
-   (unless (hashtable? *load-once-table*)
-      (set! *load-once-table* (make-hashtable)))
-   (let loop ()
+   (with-trace 1 'hop-load-once
+      (trace-item "file=" file)
       (let ((f (file-name-unix-canonicalize file)))
-	 (case (hashtable-get *load-once-table* f)
-	    ((error)
-	     ;; the file failed to be loaded
-	     #f)
-	    ((loaded)
-	     ;; the file is already loaded
-	     (mutex-unlock! *load-once-mutex*)
-	     #unspecified)
-	    ((loading)
-	     ;; the file is currently being loaded
-	     (condition-variable-wait! *load-once-condvar* *load-once-mutex*)
-	     (loop))
-	    (else
-	     ;; the file has to be loaded
-	     (hashtable-put! *load-once-table* f 'loading)
-	     (mutex-unlock! *load-once-mutex*)
-	     (with-handler
-		(lambda (e)
-		   (mutex-lock! *load-once-mutex*)
-		   (hashtable-put! *load-once-table* f 'error)
-		   (condition-variable-signal! *load-once-condvar*)
-		   (mutex-unlock! *load-once-mutex*)
-		   (raise e))
-		(hop-load f :mode 'load :env env))
-	     (mutex-lock! *load-once-mutex*)
-	     (hashtable-put! *load-once-table* f 'loaded)
-	     (condition-variable-signal! *load-once-condvar*)
-	     (mutex-unlock! *load-once-mutex*))))))
+	 (mutex-lock! *load-once-mutex*)
+	 (let ((info (hashtable-get *load-once-table* f)))
+	    (if (pair? info)
+		(case (car info)
+		   ((error)
+		    ;; the file failed to be loaded
+		    (trace-item "error")
+		    #f)
+		   ((loaded)
+		    ;; the file is already loaded
+		    (trace-item "already loaded")
+		    (mutex-unlock! *load-once-mutex*)
+		    #unspecified)
+		   ((loading)
+		    ;; the file is currently being loaded
+		    (trace-item "loading")
+		    (condition-variable-wait! (cdr info) *load-once-mutex*)
+		    #unspecified))
+		(begin
+		   ;; the file has to be loaded
+		   (trace-item "load")
+		   (let ((cv (make-condition-variable "load-once")))
+		      (hashtable-put! *load-once-table* f (cons 'loading cv))
+		      (mutex-unlock! *load-once-mutex*)
+		      (with-handler
+			 (lambda (e)
+			    (mutex-lock! *load-once-mutex*)
+			    (hashtable-put! *load-once-table* f '(error))
+			    (condition-variable-signal! cv)
+			    (mutex-unlock! *load-once-mutex*)
+			    (raise e))
+			 (hop-load f :mode 'load :env env))
+		      (mutex-lock! *load-once-mutex*)
+		      (hashtable-put! *load-once-table* f '(loaded))
+		      (condition-variable-signal! cv)
+		      (mutex-unlock! *load-once-mutex*))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once-unmark! ...                                        */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul 19 10:48:00 2005                          */
-/*    Last change :  Mon Sep 11 16:25:44 2006 (serrano)                */
+/*    Last change :  Sun Sep 17 15:16:04 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Tree CSS                                                     */
@@ -15,19 +15,25 @@
 table.hop-tree {
   font-family: Tahoma, Verdana;
   font-size: 12px;
-  border: 0;
-  padding: 0;
   margin: 0;
+  padding: 0;
+  border: 0;
   border-collapse: collapse;
   border-spacing: 0;
 }
 
 table.hop-tree td {
-  vertical-align: baseline;
+  vertical-align: middle;
+  border: 0;
+  padding: 0;
+  margin: 0;
 }
 
-table.hop-tree td span, table.hop-tree td img {
-  vertical-align: top;
+table.hop-tree td img, table.hop-tree td span {
+  vertical-align: middle;
+  border: 0;
+  padding: 0;
+  margin: 0;
 }
 
 table.hop-tree-leaf {
@@ -41,7 +47,7 @@ table.hop-tree-leaf {
 }
 
 table.hop-tree-leaf td {
-  vertical-align: baseline;
+  vertical-align: middle;
 }
 
 table.hop-tree-leaf td span {
@@ -49,9 +55,8 @@ table.hop-tree-leaf td span {
 }
 
 table.hop-tree-leaf td img {
-  vertical-align: top;
+  vertical-align: middle;
 }
-
 
 img.hop-tree-openclose {
   cursor: pointer;
@@ -68,4 +73,13 @@ tr.hop-tree-row-unselected {
 tr.hop-tree-row-selected {
   background: #6b5dff;
   border: 1px solid black;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Tree body                                                        */
+/*---------------------------------------------------------------------*/
+div.hop-tree-body {
+  border: 0;
+  margin: 0;
+  padding: 0;
 }

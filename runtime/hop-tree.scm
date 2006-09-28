@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Aug 31 14:45:41 2006 (serrano)                */
+;*    Last change :  Thu Sep 21 18:50:44 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -32,7 +32,8 @@
 	       (multiselect::bool read-only)
 	       (onselect read-only)
 	       (onunselect read-only)
-	       (cached::bool read-only))
+	       (cached::bool read-only)
+	       (value read-only))
 	    
 	    (class html-trbody::xml-element)
 	    
@@ -56,6 +57,7 @@
 			     (onselect #f)
 			     (onunselect #f)
 			     (cached #f)
+			     (value #unspecified)
 			     body)
    (let ((head ""))
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
@@ -76,6 +78,7 @@
 	 (onselect onselect)
 	 (onunselect onunselect)
 	 (cached cached)
+	 (value value)
 	 (body body))))
 
 ;*---------------------------------------------------------------------*/
@@ -88,7 +91,7 @@
 ;*    <TRLEAF> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <TRLEAF> ((id #unspecified string)
-			       (value "")
+			       (value #unspecified)
 			       (file #f)
 			       body)
    (instantiate::html-tree-leaf
@@ -110,6 +113,18 @@
       (display "</span>" p)))
 
 ;*---------------------------------------------------------------------*/
+;*    obj->js-thunk ...                                                */
+;*---------------------------------------------------------------------*/
+(define (obj->js-thunk obj)
+   (cond
+      ((xml-tilde? obj)
+       (tilde-make-thunk obj))
+      ((string? obj)
+       (format "function() { ~a }" obj))
+      (else
+       "function() { return false; }")))
+
+;*---------------------------------------------------------------------*/
 ;*    html-write-tree ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (html-write-tree level
@@ -118,14 +133,10 @@
 			 p::output-port
 			 be::xml-backend)
    (with-access::html-tree obj (id foldero folderc open head body
-				   multiselect onselect onunselect cached)
+				   multiselect onselect onunselect cached value)
       (let ((title (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body head) ps be)
 		      (close-output-port ps)))
-	    (value (let ((c (assq 'value (xml-element-attributes head))))
-		      (if (pair? c)
-			  (cdr c)
-			  "")))
 	    (fo (cond
 		   (foldero
 		    foldero)
@@ -172,10 +183,12 @@
 		 ;; multi-selection
 		 (if multiselect "true, " "false, ")
 		 ;; onselect/onunselect event handlers
-		 (if onselect onselect "false")  ", "
-		 (if onunselect onunselect "false")  ", "
+		 (obj->js-thunk onselect) ", "
+		 (obj->js-thunk onunselect) ", "
 		 ;; the value associated with the tree
-		 "'" (if (string? value) (string-escape value #\') "") "' "
+		 "'"
+		 (if (string? value) (string-escape value #\') "")
+		 "' "
  		 ")"))))
 
 ;*---------------------------------------------------------------------*/
@@ -203,6 +216,8 @@
 				      (html-write-tree level b parent p be))
 				     ((html-tree-leaf? b)
 				      (html-write-tree-leaf b parent p be))
+				     ((null? b)
+				      #unspecified)
 				     (else
 				      (error '<TREE> "Illegal tree body" b)))))
 			    body))))))
@@ -224,7 +239,8 @@
 		 ;; the body
 		 "\"" (string-for-read sbody) "\", "
 		 ;; the value
-		 "'" (or (and (string? value) (string-escape value #\')) "")
+		 "'"
+		 (if (string? value) (string-escape value #\') "")
 		 "', "
 		 ;; the icon
 		 "'" (string-escape icon #\') "' "

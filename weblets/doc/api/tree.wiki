@@ -57,6 +57,7 @@ using //Trees// must include in their header, the following statement:
 | :multiselect  |  boolean   |   ++#f++     | does the tree supports multi-selection?    |
 | :onselect     |  function  |     _        | a function to invoke on selection.         |
 | :onunselect   |  function  |     _        | a function to invoke on unselection.       |
+| :value        |  string    |    ++""++    | a string denoting the value of the tree.   |
 | body          |  element   |  empty       | the body.                    |
 </arguments>
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Aug 25 09:31:02 2006 (serrano)                */
+;*    Last change :  Thu Sep 14 09:51:19 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -188,7 +188,7 @@
 ;*    hop-rc-directory ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-rc-directory
-   (let ((home (getenv "HOME"))
+   (let ((home (or (getenv "HOME") "/"))
 	 (host (hostname)))
       (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
 	 (if (string? host)

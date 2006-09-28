@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Thu Jun 22 08:26:09 2006 (serrano)                */
+#*    Last change :  Wed Sep 27 17:10:26 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -90,7 +90,7 @@ jvm-share:
 	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/share
 
 jvm-list:
-	/usr/bin/ls $(SRC)/$(DIR) > $(DEST)/$(DIR)/.list
+	ls $(SRC)/$(DIR) > $(DEST)/$(DIR)/.list
 	for p in `ls $(SRC)/$(DIR)`; do \
 	  if [ -d $(SRC)/$(DIR)/$$p ]; then \
             $(MAKE) jvm-list SRC=$(SRC)/$(DIR) DIR=$$p DEST=$(DEST)/$(DIR) || (echo "*** ERROR: $$p"; exit 1); \
