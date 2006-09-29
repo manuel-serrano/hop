@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Jul  9 14:00:38 2006 (serrano)                */
+#*    Last change :  Fri Sep 29 11:27:42 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -83,12 +83,13 @@ install-quick: hop-dirs install-init etc-hoprc
 	(cd scheme2js && $(MAKE) install) && \
 	(cd hopscheme && $(MAKE) install) && \
 	(cd hopwiki && $(MAKE) install) && \
-	(cd src && $(MAKE) install)
+	(cd src && $(MAKE) install) && \
+	(cd etc && $(MAKE) install)
 
 install-init: hop-dirs
 	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPFILDIR)/hop.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hop.init;
-	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDItR)$(HOPFILDIR)/scheme2js.init && \
+	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPFILDIR)/scheme2js.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/scheme2js.init;
 	cp $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPFILDIR)/hopscheme.init && \
         chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hopscheme.init;
@@ -115,6 +116,7 @@ etc-hoprc:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
+	(cd etc; $(MAKE) uninstall)
 	(cd src; $(MAKE) uninstall)
 	(cd runtime; $(MAKE) uninstall)
 	(cd scheme2js; $(MAKE) uninstall)
