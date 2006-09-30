@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Sep  4 06:53:05 2006 (serrano)                */
+;*    Last change :  Sat Sep 30 15:57:00 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -238,7 +238,7 @@
 		       (wiki-syntax-td syn))))
 	    (unless (is-state? 'table)
 	       (set! trcount 0)
-	       (enter-block! 'table (wiki-syntax-table syn) #f #t))
+	       (enter-block! 'table (wiki-syntax-table syn) #f #f))
 	    (enter-expr! 'tr
 			 (lambda exp
 			    (let ((cl (if (even? trcount)
@@ -294,6 +294,11 @@
        (let ((st (in-bottom-up-state (lambda (n _) (expr? n)))))
 	  (when st (unwind-state! st)))
        (add-expr! (the-html-string))
+       (ignore))
+      ((bol (: (>= 2 (in " \t")) (? #\Return) #\Newline))
+       (let ((st (in-bottom-up-state (lambda (n _) (expr? n)))))
+	  (when st (unwind-state! st)))
+       (add-expr! (the-html-substring 2 (the-length)))
        (ignore))
 
       ;; two consecutive blank lines: end of block
