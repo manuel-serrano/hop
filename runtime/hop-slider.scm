@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Aug 25 09:47:57 2006 (serrano)                */
+;*    Last change :  Sat Sep 30 08:01:09 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -42,7 +42,7 @@
 			       (min 0 integer)
 			       (max 100 integer)
 			       (step 1 integer)
-			       (onchange "")
+			       (onchange #f)
 			       (caption "top"))
    (instantiate::html-slider
       (markup 'slider)
@@ -59,10 +59,17 @@
 ;*    xml-write ::html-slider ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-slider p encoding backend)
-   (let ((gid (gensym)))
-      (fprintf p "<span id='~a'>" gid)
-      (display " <script language='JavaScript'>" p)
-      (with-access::html-slider obj (id value min max step onchange caption)
+   (with-access::html-slider obj (id value min max step onchange caption)
+      (let ((gid (gensym))
+	    (oc (cond
+		   ((xml-tilde? onchange)
+		    (tilde->string onchange))
+		   ((string? onchange)
+		    onchange)
+		   (else
+		    ""))))
+	 (fprintf p "<span id='~a'>" gid)
+	 (display " <script language='JavaScript'>" p)
 	 (fprint p
 		 "hop_slider_onchange_set( "
 		 "hop_make_slider( "
@@ -70,7 +77,7 @@
 		 "'" id "', "
 		 min ", " max ", " step ", "
 		 value ", \"" caption "\" )"
-		 ", function() { " onchange " } )"))
+		 ", function() { " oc " } )"))
       (display " </script>" p)
       (display "</span>" p)))
 

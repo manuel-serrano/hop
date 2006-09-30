@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May  8 06:21:47 2006                          */
-;*    Last change :  Mon May  8 12:09:24 2006 (serrano)                */
+;*    Last change :  Sat Sep 30 06:02:35 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP libraries doc.                                           */
@@ -31,7 +31,7 @@
       (<DIV>
 	 :class "libraries-title"
 	 "HOP Server Libraries")
-      (<LIBRARIES-TOC>)))
+      (<DIV> :id "pad-libraries" (<LIBRARIES-TOC>))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <LIBRARIES-TOC> ...                                              */

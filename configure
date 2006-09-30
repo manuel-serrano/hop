@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Sep 28 10:41:51 2006 (serrano)                */
+#*    Last change :  Fri Sep 29 12:29:24 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -44,7 +44,7 @@ devel=pre
 url="http://hop.inria.fr/"
 
 etcdir=$prefix/etc
-bindir=$prefix/bin;
+bindir=$prefix/bin
 libdir=$prefix/lib
 sharedir=$prefix/share/hop
 webletsdir=

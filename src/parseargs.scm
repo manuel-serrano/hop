@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Sep 29 11:09:01 2006 (serrano)                */
+;*    Last change :  Fri Sep 29 16:47:14 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -57,8 +57,10 @@
 	  (set! autoloadp #t))
 	 (("--disable-autoload" (help "Enable autoload"))
 	  (set! autoloadp #f))
-	 (("--autoload-dir" ?dir (help "Add autoload directory"))
+	 (("--add-autoload-dir" ?dir (help "Add autoload directory"))
 	  (hop-autoload-directory-add! dir))
+	 (("--autoload-dir" ?dir (help "Set autoload directory"))
+	  (hop-autoload-directories-set! (list dir)))
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
 	 (("--rc-dir" ?dir (help "Set rc directory"))

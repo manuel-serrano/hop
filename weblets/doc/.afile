@@ -1,11 +1,12 @@
 ;; automatically generated, don't edit
 ;; /users/serrano/prgm/project/hop/weblets/doc
-;; Mon Sep 25 07:30:59 2006
+;; Sat Sep 30 07:59:47 2006
 
 (
   (hopdoc_api "api.hop")
   (hopdoc_config "config.hop")
   (hopdoc "doc.hop")
+  (hopdoc_index "index.hop")
   (hopdoc_libraries "libraries.hop")
   (hopdoc_search "search.hop")
   (hopdoc_services "services.hop")

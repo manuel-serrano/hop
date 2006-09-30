@@ -1,0 +1,132 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/doc/index.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Sat Sep 30 06:04:20 2006                          */
+;*    Last change :  Sat Sep 30 07:14:39 2006 (serrano)                */
+;*    Copyright   :  2006 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The HOP doc global index.                                        */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc_index
+   (import hopdoc_config
+	   hopdoc_wiki
+	   hopdoc_api
+	   hopdoc_widgets
+	   hopdoc_search)
+   
+   (export (<INDEX>)))
+
+;*---------------------------------------------------------------------*/
+;*    <INDEX> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<INDEX>)
+   (<DIV>
+      :class "index"
+      (<DIV>
+	 :class "index-title"
+	 "HOP global index")
+      (<DIV> :id "pad-index" (<INDEX-TOC>))))
+
+;*---------------------------------------------------------------------*/
+;*    <INDEX-TOC> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<INDEX-TOC>)
+   (setup-api-tables!)
+   (index doc/api "pad-api" (index-table) 4))
+
+;*---------------------------------------------------------------------*/
+;*    index ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (index service id table columns)
+
+   (define (<ENTRY> k offset p)
+      (<TD>
+	 :class "entry"
+	 :onclick ~(with-hop ($service $p)
+		      (lambda (r)
+			 (let ((el (document.getElementById $id)))
+			    (set! el.innerHTML r)
+			    (notepad-select "doc-notepad" "doc-api")
+			    (let ((eo (and $k (document.getElementById $k))))
+			       (if eo
+				   (let ((po eo.offsetTop))
+				      (if (> po 50)
+					  (window.scrollTo 0 (- po 50)))
+				      (let* ((p eo.parentNode)
+					     (ob p.style.border.background))
+					 (hop-fx-fade-background
+					  p
+					  500
+					  40
+					  (vector "#fffd6b"
+						  "#ffff6f"
+						  "#ffff8f"
+						  "#ffffaf"
+						  "#ffffdf"
+						  "#ffffdf"
+						  (if (eq? ob #unspecified)
+						      "transparent"
+						      ob))))))))))
+	 (<SPAN> :class "descr" (html-string-encode k))))
+   
+   (define (char0 str offset)
+      (let ((c (char-upcase (string-ref str offset))))
+	 (if (char-alphabetic? c)
+	     c
+	     #\?)))
+   
+   (define (<LABEL> c)
+      (<TD> (<SPAN> :class "search-label" (string c))))
+   
+   (define (list->entries lst)
+      (let* ((el (car lst))
+	     (c0 (char0 (car el) (cadr el)))
+	     (res (cons (<LABEL> c0) lst)))
+	 (let loop ((c c0)
+		    (prev res)
+		    (lst lst)
+		    (len 1))
+	    (if (null? lst)
+		(list-split! res
+			     (inexact->exact (ceiling (/ len columns)))
+			     (<TD> "&nbsp;"))
+		(let* ((el (car lst))
+		       (c1 (char0 (car el) (cadr el))))
+		   (if (char=? c c1)
+		       (begin
+			  (set-car! lst (apply <ENTRY> el))
+			  (loop c lst (cdr lst) (+fx len 1)))
+		       (begin
+			  (set-cdr! prev (cons (<LABEL> c1) lst))
+			  (loop c1 (cdr prev) lst (+fx len 1)))))))))
+   
+   (let ((l1 (hashtable-map table cons)))
+
+      (cond
+	 ((null? l1)
+	  (<TABLE>
+	     :class "search-result"
+	     (<COLGROUP> :span columns :width (format "~a%" (/ 100 columns)))
+	     (<TR> 
+		(<TH>
+		   :colspan columns
+		   "internal error, no entry found!"))))
+	 ((and (pair? l1) (null? (cdr l1)))
+	  (<TABLE>
+	     :class "search-result"
+	     (<COLGROUP> :span columns :width (format "~a%" (/ 100 columns)))
+	     (<TR> 
+		(<TH>
+		   :colspan columns
+		   "internal error, only one element found!"))))
+	 (else
+	  (let ((l2 (sort l1 (lambda (a b) (string<? (car a) (car b))))))
+	     (<TABLE>
+		:class "search-result"
+		(<COLGROUP> :span columns :width (format "~a%" (/ 100 columns)))
+		(apply map <TR> (list->entries l2))))))))
