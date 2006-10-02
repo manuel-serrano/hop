@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Sep 29 16:47:14 2006 (serrano)                */
+;*    Last change :  Mon Oct  2 14:13:55 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -64,7 +64,8 @@
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
 	 (("--rc-dir" ?dir (help "Set rc directory"))
-	  (hop-rc-directory-set! dir))
+	  (hop-rc-directory-set! dir)
+	  (hop-upload-directory-set! (make-file-name dir "upload")))
 	 (("--mime-type" ?file (help "Load aternate user mime-type file"))
 	  (set! mime-file file))
          (("-v?level" (help "Increase or set verbosity level (-v0 crystal silence)"))

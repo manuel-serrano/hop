@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Sep 12 14:20:24 2006 (serrano)                */
+;*    Last change :  Mon Oct  2 07:36:37 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -100,30 +100,34 @@
 ;*    make-hop-service-url ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (make-hop-service-url svc . vals)
-   (with-access::hop-service svc (path args)
-      (if (null? args)
-	  path
-	  (apply string-append
-		 path
-		 "?hop-encoding=hop"
-		 (map (lambda (f v)
-			 (format "&~a=~a" f (url-encode (obj->string v))))
-		      args vals)))))
+   (if (not (hop-service? svc))
+       (bigloo-type-error 'make-hop-service-url 'service svc)
+       (with-access::hop-service svc (path args)
+	  (if (null? args)
+	      path
+	      (apply string-append
+		     path
+		     "?hop-encoding=hop"
+		     (map (lambda (f v)
+			     (format "&~a=~a" f (url-encode (obj->string v))))
+			  args vals))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-service-url ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (make-service-url svc . vals)
-   (with-access::hop-service svc (path args)
-      (if (null? args)
-	  path
-	  (apply string-append
-		 path
-		 "?hop-encoding=none"
-		 (map (lambda (f v)
-			 (let ((a (if (string? v) (url-encode v) v)))
-			    (format "&~a=~a" f a)))
-		      args vals)))))
+   (if (not (hop-service? svc))
+       (bigloo-type-error 'make-hop-service-url 'service svc)
+       (with-access::hop-service svc (path args)
+	  (if (null? args)
+	      path
+	      (apply string-append
+		     path
+		     "?hop-encoding=none"
+		     (map (lambda (f v)
+			     (let ((a (if (string? v) (url-encode v) v)))
+				(format "&~a=~a" f a)))
+			  args vals))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */
