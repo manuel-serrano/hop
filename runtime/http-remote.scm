@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri Sep  1 19:12:22 2006 (serrano)                */
+;*    Last change :  Wed Oct  4 04:40:03 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -295,15 +295,17 @@
 (define (connection-down? connection)
    (let ((ip (connection-input connection)))
       (when (char-ready? ip)
-	 (let ((c (read-char ip)))
-	    (if (eof-object? c)
-		#t
-		(let ((msg (http-parse-error-message c ip)))
-		   (raise
-		    (instantiate::&io-parse-error
-		       (obj ip)
-		       (proc 'http-response)
-		       (msg (format "Illegal character: ~a" msg))))))))))
+	 (with-handler
+	    (lambda (e) #t)
+	    (let ((c (read-char ip)))
+	       (if (eof-object? c)
+		   #t
+		   (let ((msg (http-parse-error-message c ip)))
+		      (raise
+		       (instantiate::&io-parse-error
+			  (obj ip)
+			  (proc 'http-response)
+			  (msg (format "Illegal character: ~a" msg)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-output ...                                            */
