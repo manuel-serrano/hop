@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Wed Oct  4 04:40:03 2006 (serrano)                */
+;*    Last change :  Thu Oct  5 13:51:46 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -216,7 +216,7 @@
 	 (trace-item "before purge, table-length="
 		     (hashtable-size *connection-table*))
 	 (hashtable-filter! *connection-table*
-			    (lambda (c)
+			    (lambda (k c)
 			       (if (connection-locked c)
 				   #t
 				   (begin
