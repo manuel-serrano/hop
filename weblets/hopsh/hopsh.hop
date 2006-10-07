@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Oct  7 18:29:48 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 18:39:43 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hopsh weblet                                                 */
@@ -74,7 +74,7 @@
 			(<TABLE>
 			   (<TR>
 			      (<TD> :colspan 2
-				 (<DIV> :id "title" "Eval expressions")))
+				 (<DIV> :id "title" "Hop Shell")))
 			   (<TR>
 			      (<TD> "$ ")
 			      (<TD> i))
