@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Sep 22 07:46:29 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 18:36:04 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -41,8 +41,8 @@
    (export  (the-current-request::obj)
 	    (request-get::obj ::symbol)
 	    (hop::%http-response ::http-request)
-	    (with-url ::bstring ::procedure #!key (fail raise) (header '()))
-	    (with-remote-host ::bstring ::hop-service ::pair-nil ::procedure ::procedure)
+	    (with-url ::bstring ::procedure #!key fail (header '()))
+	    (with-remote-host ::bstring ::hop-service ::pair-nil ::procedure ::obj)
 	    (generic with-hop-response obj proc fail)))
 
 ;*---------------------------------------------------------------------*/
@@ -153,7 +153,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (make-http-callback req success fail)
+(define (make-http-callback proc::symbol req success fail)
    (lambda (status clength p)
       (when (>elong clength #e0)
 	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
@@ -165,13 +165,17 @@
 	 ((202)
 	  (success (string->obj (read p))))
 	 ((401 407)
-	  (fail (user-access-denied req)))
+	  (if (procedure? fail)
+	      (fail status p)
+	      (raise (user-access-denied req))))
 	 (else
-	  (fail
-	   (instantiate::&error
-	      (proc 'wih-hop)
-	      (msg (format "Illegal status `~a'" status))
-	      (obj (read p))))))))
+	  (if (procedure? fail)
+	      (fail status p)
+	      (raise
+	       (instantiate::&error
+		  (proc proc)
+		  (msg (format "Illegal status `~a'" status))
+		  (obj (read-string p)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-to-hop-id ...                                                */
@@ -181,24 +185,27 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-url ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (with-url url success #!key (fail raise) (header '()))
+(define (with-url url success #!key fail (header '()))
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
 	     ": " url "\n")
    (with-trace 2 'with-url
       (trace-item "url=" url)
       (trace-item "header=" header)
-      (multiple-value-bind (_ userinfo host port path)
-	 (url-parse url)
-	 (let ((r (instantiate::http-request
-		       (id hop-to-hop-id)
-		       (userinfo userinfo)
-		       (host host)
-		       (port port)
-		       (header header)
-		       (path path))))
-	    (trace-item "remote path=" path)
-	    (http-send-request r (make-http-callback r success fail))))))
+      (if (and (procedure? fail) (not (correct-arity? fail 2)))
+	  (error 'with-url "Illegal fail handler" fail)
+	  (multiple-value-bind (_ userinfo host port path)
+	     (url-parse url)
+	     (let ((r (instantiate::http-request
+			 (id hop-to-hop-id)
+			 (userinfo userinfo)
+			 (host host)
+			 (port port)
+			 (header header)
+			 (path path))))
+		(trace-item "remote path=" path)
+		(http-send-request
+		 r (make-http-callback 'with-url r success fail)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    with-remote-host ...                                             */
@@ -209,20 +216,23 @@
 	     ": " url ":" (hop-service-id service) "\n")
    (with-trace 2 'with-hop
       (trace-item "url=" url " service=" (hop-service-id service))
-      (multiple-value-bind (_ userinfo host port path)
-	 (url-parse url)
-	 (if (and (is-local? host) (=fx port (hop-port)))
-	     (with-hop-response (apply (hop-service-proc service) args)
-				success fail)
-	     (let* ((path (apply make-hop-service-url service args))
-		    (r (instantiate::http-request
-			  (id hop-to-hop-id)
-			  (userinfo userinfo)
-			  (host host)
-			  (port port)
-			  (path path))))
-		(trace-item "remote path=" path)
-		(http-send-request r (make-http-callback r success fail)))))))
+      (if (and (procedure? fail) (not (correct-arity? fail 2)))
+	  (error 'with-url "Illegal fail handler" fail)
+	  (multiple-value-bind (_ userinfo host port path)
+	     (url-parse url)
+	     (if (and (is-local? host) (=fx port (hop-port)))
+		 (with-hop-response (apply (hop-service-proc service) args)
+				    success fail)
+		 (let* ((path (apply make-hop-service-url service args))
+			(r (instantiate::http-request
+			      (id hop-to-hop-id)
+			      (userinfo userinfo)
+			      (host host)
+			      (port port)
+			      (path path))))
+		    (trace-item "remote path=" path)
+		    (http-send-request
+		     r (make-http-callback 'with-hop r success fail))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-response ...                                            */

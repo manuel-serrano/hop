@@ -1,0 +1,94 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/hopsh/hopsh.hop                 */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Sat Oct  7 18:29:48 2006 (serrano)                */
+;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP hopsh weblet                                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_hopsh)
+
+;*---------------------------------------------------------------------*/
+;*    hopsh ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-service (hopsh exp)
+   (let ((req (the-current-request)))
+      (if (authorized-service? req 'hopsh)
+	  (if (not exp)
+	      (<HOPSH>)
+	      (with-handler
+		 (lambda (e)
+		    (with-error-to-string
+		       (lambda ()
+			  (display "*** ERROR:" (current-error-port))
+			  (error-notify e))))
+		 (eval exp)))
+	  (user-access-denied req))))
+
+;*---------------------------------------------------------------------*/
+;*    hopsh ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-service (hopsh-string exp)
+   (let ((req (the-current-request)))
+      (if (authorized-service? req 'hopsh)
+	  (if (not exp)
+	      (<HOPSH>)
+	      (with-handler
+		 (lambda (e)
+		    (with-error-to-string
+		       (lambda ()
+			  (display "*** ERROR:" (current-error-port))
+			  (error-notify e))))
+		 (eval (with-input-from-string exp read))))
+	  (user-access-denied req))))
+
+;*---------------------------------------------------------------------*/
+;*    hopsh-dir ...                                                    */
+;*---------------------------------------------------------------------*/
+(define hopsh-dir (dirname (the-loading-file)))
+
+;*---------------------------------------------------------------------*/
+;*    <HOPSH> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<HOPSH>)
+   (let ((i (<INPUT> :type 'text :name "expression" :size 90))
+	 (r (<PRE> :id "result" "&nbsp;")))
+      (<HTML>
+	 (<HEAD> :dir hopsh-dir :css "hopsh.hss")
+	 (<BODY>
+	    (<DIV>
+	       :align "center"
+	       (<TABLE>
+		  :class "hopsh"
+		  (<TR>
+		     (<TD>
+			(<IMG> :src
+			   (format "~a/etc/logo.png" hopsh-dir)))
+		     (<TD>
+			(<TABLE>
+			   (<TR>
+			      (<TD> :colspan 2
+				 (<DIV> :id "title" "Eval expressions")))
+			   (<TR>
+			      (<TD> "$ ")
+			      (<TD> i))
+			   (<TR>
+			      (<TD>
+				 :colspan 2
+				 :align 'left
+				 (<BUTTON> :onclick
+				    ~(with-hop ($hopsh-string $i.value)
+					(lambda (h)
+					   (set! $r.innerHTML h)))
+				    "Evaluate")))
+			   (<TR>
+			      (<TD> :colspan 2
+				 :align 'left
+				 r)))))))
+	    (<FOOT>)))))

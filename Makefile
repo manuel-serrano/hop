@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Oct  6 07:17:41 2006 (serrano)                */
+#*    Last change :  Sat Oct  7 16:34:03 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -22,7 +22,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile LICENSE INSTALL INSTALL.jvm configure .hoprelease
-POPDIRS		= runtime hopscheme scheme2js src \
+POPDIRS		= runtime hopscheme scheme2js src hopsh \
                   etc share \
                   weblets # contribs
 
@@ -41,6 +41,7 @@ libdir:
 
 bin: lib
 	(cd src && $(MAKE) build)
+	(cd hopsh && $(MAKE) build)
 
 lib:
 	(cd runtime && $(MAKE) build)
@@ -58,6 +59,7 @@ dep:
 	(cd scheme2js; $(MAKE) dep)
 	(cd hopscheme; $(MAKE) dep)
 	(cd src; $(MAKE) dep)
+	(cd hopsh; $(MAKE) dep)
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
@@ -67,6 +69,7 @@ ude:
 	(cd scheme2js; $(MAKE) ude)
 	(cd hopscheme; $(MAKE) ude)
 	(cd src; $(MAKE) ude)
+	(cd hopsh; $(MAKE) ude)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -80,6 +83,7 @@ install-quick: hop-dirs install-init etc-hoprc
 	(cd scheme2js && $(MAKE) install) && \
 	(cd hopscheme && $(MAKE) install) && \
 	(cd src && $(MAKE) install) && \
+	(cd hopsh && $(MAKE) install) && \
 	(cd etc && $(MAKE) install)
 
 install-init: hop-dirs
@@ -112,6 +116,7 @@ etc-hoprc:
 uninstall:
 	(cd etc; $(MAKE) uninstall)
 	(cd src; $(MAKE) uninstall)
+	(cd hopsh; $(MAKE) uninstall)
 	(cd runtime; $(MAKE) uninstall)
 	(cd scheme2js; $(MAKE) uninstall)
 	(cd hopscheme; $(MAKE) uninstall)
@@ -123,16 +128,19 @@ uninstall:
 clean-quick:
 	(cd runtime; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
+	(cd hopsh; $(MAKE) clean)
 
 clean:
 	(cd runtime; $(MAKE) clean)
 	(cd scheme2js; $(MAKE) clean)
 	(cd hopscheme; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
+	(cd hopsh; $(MAKE) clean)
 
 devclean:
 	(cd runtime; $(MAKE) devclean)
 	(cd src; $(MAKE) devclean)
+	(cd hopsh; $(MAKE) devclean)
 
 distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig

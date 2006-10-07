@@ -1,0 +1,73 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/hopsh/hopsh.hss                 */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 24 13:57:44 2005                          */
+/*    Last change :  Sat Oct  7 18:29:00 2006 (serrano)                */
+/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    history simple CSS                                               */
+/*=====================================================================*/
+
+$(define border-color "#bbb")
+
+body {
+  background: #e0e0e0;
+  font-family: arial;
+}
+
+img {
+  padding: 20px;
+}
+
+table.hopsh {
+  margin-top: 50px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  -moz-border-radius: 0.5em;
+}
+
+table.hopsh td#user-name {
+  font-weight: bold;
+}
+
+table.hopsh td {
+  font-weight: bold;
+}
+
+div#title {
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+
+pre#result {
+  text-align: left;
+  font-weight: bold;
+  font-size: 100%;
+  color: red;
+  border-top: 1px solid $border-color;
+  margin-top: 10px;
+  padding-top: 10px;
+}  
+
+table td {
+  vertical-align: top;
+}
+
+input[type=text] {
+  border: 1px solid $border-color;
+}
+
+button {
+  margin-top: 2ex;
+  border: 1px solid $border-color;
+}
+
+button:hover {
+  background: #ddd;
+  border: 1px solid #999;
+}

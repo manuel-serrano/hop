@@ -1,11 +1,11 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/src/Makefile                            */
+#*    serrano/prgm/project/hop/hopsh/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sat Oct  7 16:32:15 2006 (serrano)                */
+#*    Last change :  Sat Oct  7 17:22:09 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
-#*    The Makefile that builds Hop                                     */
+#*    The Makefile that builds HopSh                                   */
 #*=====================================================================*/
 
 do: build
@@ -19,12 +19,12 @@ include ../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 #*    Target and Project                                               */
 #*---------------------------------------------------------------------*/
-EXEC		= hop
+EXEC		= hopsh
 
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hop-param parseargs main init
+MODULES		= hopsh-param parseargs main repl
 
 INCLUDES	= 
 

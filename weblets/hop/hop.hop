@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Jun 26 09:23:28 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 18:17:47 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -33,36 +33,44 @@
 ;*    hop-main ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-main req)
+   (tprint "hop-main...")
    (let ((t (make-hashtable 20)))
       (hashtable-put! t "hop" #t)
       (hashtable-put! t "home" #t)
       (for-each (lambda (w) (hashtable-put! t w #t)) (hop-builtin-weblets))
       (set! *weblets-table* t))
-   (<HOP>
-      (<TABLE>
-	 :class "directory"
-	 (<TR> (<TH> :class "title" "Builtin Weblets"))
-	 (<TR> (<TD> :align "left"
+   (let* ((len 6) (width (format "~a%" (/ 100. len))))
+      (<HOP>
+	 (<TABLE>
+	    :class "directory"
+	    (<TR> (<TH> :class "title" "Builtin Weblets"))
+	    (<TR> (<TD> :align "left"
 		     (<TABLE> :class "weblets"
-			      (<COLGROUP>
-				 (<COL> :span 6 :width "16%"))
-			      (<TR> (cons
-				     (<HOME> (hop-weblets-directory))
-				     (map (lambda (x)
-					     (<HTD> (hop-weblets-directory) x))
-					  (hop-builtin-weblets)))))))
-	 (<TR> (<TD> "&nbsp;"))
-	 (<TR> (<TH> :class "title" "Additional Weblets"))
-	 (<TR> (<TH> :align "left"
+			(<COLGROUP>
+			   (<COL> :span len :width width))
+			(hop-builtin-rows len))))
+	    (<TR> (<TD> "&nbsp;"))
+	    (<TR> (<TH> :class "title" "Additional Weblets"))
+	    (<TR> (<TH> :align "left"
 		     (<TABLE> :class "weblets"
-			      (<COLGROUP>
-				 (<COL> :span 6 :width "16%"))
-			      (hop-additional-weblets)))))))
+			(<COLGROUP>
+			   (<COL> :span len :width width))
+			(hop-additional-rows len))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-additional-weblets ...                                       */
+;*    hop-builtin-rows ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hop-additional-weblets)
+(define (hop-builtin-rows len)
+   (let ((w (cons (<HOME> (hop-weblets-directory))
+		  (map (lambda (x)
+			  (<HTD> (hop-weblets-directory) x))
+		       (hop-builtin-weblets)))))
+      (map <TR> (list-split! w len (<TD> "")))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-additional-rows ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hop-additional-rows len)
    (let* ((w (append-map find-weblets-in-directory (hop-autoload-directories)))
 	  (fw (filter-map (lambda (a)
 			     (let ((n (cadr (assq 'name a)))
@@ -74,7 +82,7 @@
 				     (let ((namea (cadr (assq 'name a)))
 					   (nameb (cadr (assq 'name b))))
 					(string<? namea nameb)))))))
-      (map <TR> (list-split! fw 6 (<TD> "")))))
+      (map <TR> (list-split! fw len (<TD> "")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HOME> ...                                                       */
