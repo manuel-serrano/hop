@@ -1,20 +1,21 @@
 <doc> Wiki facilities
-<library> Hopwiki
 
 == Description ==
 
 HOP provides facilities for easing //wiki// implementations. The main
-functions are wiki parser. They parse characters according to the
+functions are wiki parsers. They parse characters according to the
 HOP's 
 ,(<SPAN> :class "href" 
          :onclick ~(hop_notepad_select "doc-notepad" "doc-wiki") 
          "wiki syntax") 
-and they build a HOP
-tree. Some additional functions apply some treatments on these trees.
+and they build a HOP element tree. Some additional functions apply some 
+treatments on these elements.
 
 == Synopsis ==
 
 === Server ===
+
+  (<WIKI> arg ...)
 
   (wiki-string->hop string [syntax])
   (wiki-file->hop string [syntax])
@@ -23,23 +24,43 @@ tree. Some additional functions apply some treatments on these trees.
   (class wiki-syntax ...)
 
 
-=== Requirements ===
-The server functions and class described in this page are defined in the 
-++hopwiki++ library. That is, server codes using them must include a 
-statement such as:
-
-  (module a-module-name
-     ...
-     (library hopwiki)
-     ...)
-
-
 == Examples ==
 
 <example>wiki</example>
 
 == Server Definitions ==
 <server>
+
+=== ++<WIKI>++ ===
+<markup> <WIKI>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description           ^
+| :src         |  string   |  //random//  | a file to be processed.      |
+| :cache       |  boolean  |  _           | an optional cache.           |
+| body         |  element  |  empty       | the text to be processed.    |
+</arguments>
+
+This markup creates a Hop element from a wiki text. The text can
+either be located in a file and passed as argument. When the text is
+contained in a file (the :src attributes contains a file name), the
+result of the compilation of the wiki syntax is cached if the
+attributed :cache is a cache (i.e., an instance of the ::cache
+class). The :cache attribute has no effect when the wiki text is found
+in the body of the ++<WIKI>++ markup.
+
+A cache can be created such as:
+
+   (instantiate::cache
+      (path (make-file-path (hop-rc-directory)
+                            "cache"
+                            (string-append "demo-"
+                                           (integer->string (hop-port)))))
+      (out (lambda (o p)
+              (xml-write o p (hop-char-encoding) (hop-xml-backend))))))
+
+</markup>
+
 
 === ++(wiki-string->hop string [syntax]) ===
 <function> wiki-string->hop
@@ -180,5 +201,4 @@ expressions that are parsed before the closing markup.
 == See also ==
 <see-also>wiki</see-also>
 
-</library>
 </doc>

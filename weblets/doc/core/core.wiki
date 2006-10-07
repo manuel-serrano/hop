@@ -27,6 +27,7 @@ The sign ++|++ denotes the alternative.
 ~~ HOP expressions are either atoms, quotes, or lists. 
 
   <expression> := <atom> 
+     | <text>
      | <quote>
      | <list>
 
@@ -45,6 +46,11 @@ An atom is a syntactic elements described by the following grammar:
 
   <keyword> := :<ident>
 
+  <string> := " <char>+ "
+
+  <char> := "any character but " and \"
+     | \ [\"tnr]
+
   <character> := # \ "a character"
      | #\Newline
      | #\Space
@@ -53,6 +59,29 @@ An atom is a syntactic elements described by the following grammar:
 
   <boolean> := #t | #f
 
+
+Hop supports //texts//. A text is made of a list of strings. A text
+is actually a syntactic shorthand for building list of strings.
+
+  <text> := 
+     | <angle-text>
+     | <bracket-text>
+
+  <angle-text> := [ ... ]
+
+  <bracket-text> := { ... }
+
+
+Inside <angle-text> all characters are left as is with two exception. The
+character ,(begin "]") must escaped as ,(begin "\\]"). The sequence
+,(begin ",(") is an escape operator. It introduce an Hop expression inside
+a text.
+
+
+Inside <bracket-text> all characters are left as is with two exceptions. The
+characters ,(begin "{") and ,(begin "}") that are included in the text
+but must be balanced. The text is ended when the parse reads a closing bracket
+matching the one that has opened the text construction.
 
 Quotes are:
 
@@ -190,11 +219,11 @@ is:
 
 
 Here is an example of a module named ++foo++ that uses the library
-++hopwiki++, that imports the module named ++bar++, and that exports the 
+++ssl++, that imports the module named ++bar++, and that exports the 
 function ++fun-foo++, the variable ++var-foo++, and the class ++class-foo++.
 
   (module foo
-     (library hopwiki)
+     (library ssl)
      (import bar)
      (export (fun-foo x)
              var-foo

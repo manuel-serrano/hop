@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Fri Jul 21 19:17:26 2006 (serrano)                */
+;*    Last change :  Fri Oct  6 07:19:15 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -14,8 +14,6 @@
 ;*---------------------------------------------------------------------*/
 (module hopdoc_services
 
-   (library hopwiki)
-   
    (import  hopdoc_wiki
 	    hopdoc_widgets
 	    hopdoc_config)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Aug 25 10:46:42 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 09:28:17 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -43,6 +43,7 @@
 	    (http-warning msg #!optional dump)
 	    (http-internal-warning e)
 	    (http-service-unavailable obj)
+	    (http-remote-error ::obj ::&exception)
 	    (http-gateway-timeout e)))
 
 ;*---------------------------------------------------------------------*/
@@ -154,7 +155,7 @@
       (request (instantiate::http-request))
       (xml (<HTML>
 	      (<HEAD> :css
-		      (format "http://~a:~a/~a/hop-error.hss"
+		      (format "http://~a:~a~a/hop-error.hss"
 			      (hostname)
 			      (hop-port)
 			      (hop-share-directory)))
@@ -163,7 +164,7 @@
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD>
-			     (<EIMG> :src (format "http://~a:~a/~a/icons/notfound.png"
+			     (<EIMG> :src (format "http://~a:~a~a/icons/notfound.png"
 						  (hostname)
 						  (hop-port)
 						  (hop-share-directory))))
@@ -452,10 +453,62 @@ Reloading the page is the only workaround.")))))))))))))
 ;*    http-service-unavailable ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (http-service-unavailable e)
-   (instantiate::http-response-string
+   (instantiate::http-response-hop
       (request (instantiate::http-request))
       (start-line "HTTP/1.0 503 Service Unavailable")
-      (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Service unavailable ~a</body></html>" e))))
+      (xml (<HTML>
+	      (<HEAD> :css
+		 (format "http://~a:~a~a/hop-error.hss"
+			 (hostname)
+			 (hop-port)
+			 (hop-share-directory)))
+	      (<BODY>
+		 (<CENTER>
+		    (<ETABLE>
+		       (<TR>
+			  (<ETD>
+			     (<EIMG> :src (format
+					   "http://~a:~a~a/icons/error.png"
+					   (hostname)
+					   (hop-port)
+					   (hop-share-directory))))
+			  (<ETD>
+			     (<TABLE>
+				(<TR> (<ETD> :id "title" "Service Unavailable"))
+				(<TR> (<ETD> :id "msg" ""))
+				(<TR> (<ETD> :id "dump"
+					 (<PRE> e)))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-remote-error ...                                            */
+;*---------------------------------------------------------------------*/
+(define (http-remote-error host e)
+   (let ((s (with-error-to-string (lambda () (error-notify e)))))
+      (instantiate::http-response-hop
+	 (request (instantiate::http-request))
+	 (start-line "HTTP/1.0 503 Service Unavailable")
+	 (xml (<HTML>
+		 (<HEAD> :css
+		    (format "http://~a:~a~a/hop-error.hss"
+			    (hostname)
+			    (hop-port)
+			    (hop-share-directory)))
+		 (<BODY>
+		    (<CENTER>
+		       (<ETABLE>
+			  (<TR>
+			     (<ETD>
+				(<EIMG> :src (format
+					      "http://~a:~a~a/icons/error.png"
+					      (hostname)
+					      (hop-port)
+					      (hop-share-directory))))
+			     (<ETD>
+				(<TABLE>
+				   (<TR> (<ETD> :id "title" "An error occured while exchanging with a remote host"))
+				   (<TR> (<ETD> :id "msg" host))
+				   (<TR> (<ETD> :id "dump"
+					    (<PRE> s))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-io-error ...                                                */
@@ -467,7 +520,7 @@ Reloading the page is the only workaround.")))))))))))))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
 		 (<HEAD> :css
-			 (format "http://~a:~a/~a/hop-error.hss"
+			 (format "http://~a:~a~a/hop-error.hss"
 				 (hostname)
 				 (hop-port)
 				 (hop-share-directory)))
@@ -477,7 +530,7 @@ Reloading the page is the only workaround.")))))))))))))
 			  (<TR>
 			     (<ETD>
 				(<EIMG> :src (format
-					      "http://~a:~a/~a/icons/notfound.png"
+					      "http://~a:~a~a/icons/notfound.png"
 					      (hostname)
 					      (hop-port)
 					      (hop-share-directory))))

@@ -1,5 +1,4 @@
 (module hophome_demos-wiki
-   (library hopwiki)
    (export (home/demos/wiki)))
 
 (define wikiedit-event

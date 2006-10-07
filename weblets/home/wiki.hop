@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May 15 06:46:38 2006                          */
-;*    Last change :  Fri Aug 25 10:12:06 2006 (serrano)                */
+;*    Last change :  Fri Oct  6 07:19:37 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME wiki manager                                            */
@@ -13,9 +13,10 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hophome_wiki
+   
    (import  hophome_config
 	    hophome)
-   (library hopwiki)
+
    (export  (wiki->hop file)
 	    (wiki->hop-no-cache file)))
 

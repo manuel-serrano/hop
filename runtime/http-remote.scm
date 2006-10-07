@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Oct  5 13:51:46 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 09:25:36 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -144,9 +144,8 @@
 				") " host ":" port "\n")
 		      (http-response r socket))
 		     (else
-		      ;; We signal the error to the client that will retry
-		      ;; its request if he wishes to
-		      (http-response (http-service-unavailable host) socket))))
+		      ;; This is an unrecoverable error
+		      (http-response (http-remote-error host e) socket))))
 	       (multiple-value-bind (http-version status-code phrase)
 		  (http-parse-status-line ip)
 		  (multiple-value-bind (header _1 _2 cl te _3 _4 connection)

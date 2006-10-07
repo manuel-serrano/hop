@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Aug 25 10:04:30 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 09:18:35 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -40,10 +40,13 @@
 ;*    hop-file ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-file path file)
-   (let ((p (find-file/path file path)))
-      (if (string? p)
-	  p
-	  (make-file-name (hop-share-directory) file))))
+   (let* ((p (find-file/path file path))
+	  (f (if (string? p)
+		 p
+		 (make-file-name (hop-share-directory) file))))
+      (string-append "http://"
+		     (hostname) ":" (integer->string (hop-port))
+		     f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-css ...                                                      */
@@ -83,9 +86,6 @@
 ;*---------------------------------------------------------------------*/
 (define (head-parse args)
    (let* ((req (the-current-request))
-;* 	  (dir (if (http-request? req)                                 */
-;* 		   (list (dirname (http-request-path req)))            */
-;* 		   '()))                                               */
 	  (dir '())
 	  (css '())
 	  (jscript '())

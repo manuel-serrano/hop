@@ -165,15 +165,27 @@ the current server.
 <class> http-response-hop
 
 <fields>
-^  fields              ^   access  ^       type        ^  default value        ^  short description                   ^
-| ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local   |
-| xml                  |    r      |      obj          |      _                | the value of the answer.             |
+^  fields              ^   access  ^       type        ^  default value          ^  short description                   ^
+| ...                  |    ...    |        ...        |     ...                 | fields from ::%http-response-local   |
+| backend              |    r      |      xml-backend  |  ++(hop-xml-backend)++  | the response xml backend.            |
+| xml                  |    r      |      obj          |      _                  | the value of the answer.             |
 </fields>
 
 The class ::http-response-hop is used to return compound objects
 to clients. In particular, it is used to return HTML trees. The
 value ++xml++ might be any object built by any markup. It can also
 be a string or an number.
+
+The field ++backend++ controls the XML backend used to compile
+the response. This controls how the Hop element trees are compiled
+prior to be sent to clients. Currently Hop supports two different
+backends: one for HTML and one for XHTML. The function
+++hop-get-xml-backend++ takes a symbol denoting a backend
+name as argument and returns the associated backend.
+For instance ++(hop-get-xml-backend 'html)++ returns the
+HTML backend object and ++(hop-get-xml-backend 'xhtml)++ returns
+the XHTML backend object.
+  
 </class>
 
 === ++(class http-response-procedure::%http-response-local ...)++ ===
@@ -233,11 +245,23 @@ client according to the [[http://www.shoutcast.com/|shoutcast]] protocol.
 <fields>
 ^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
 | ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
+| backend              |    r      |      xml-backend  |  ++(hop-xml-backend)++  | the response xml backend.                |
 | body                 |    r      |       obj         |      _                | the object to be returned.                  |
 </fields>
 
 The class ::http-response-js is used to transmit values to
 client using the client ++with-hop++ service invocation.
+
+The field ++backend++ controls the XML backend used to compile
+the response. This controls how the Hop element trees are compiled
+prior to be sent to clients. Currently Hop supports two different
+backends: one for HTML and one for XHTML. The function
+++hop-get-xml-backend++ takes a symbol denoting a backend
+name as argument and returns the associated backend.
+For instance ++(hop-get-xml-backend 'html)++ returns the
+HTML backend object and ++(hop-get-xml-backend 'xhtml)++ returns
+the XHTML backend object.
+  
 </class>
 
 === ++(class http-response-cgi::%http-response-local ...)++ ===

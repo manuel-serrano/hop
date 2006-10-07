@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Thu Sep 21 15:11:42 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 09:44:49 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -89,9 +89,9 @@
       (regular-grammar ()
 	 ((+ (in " \t"))
 	  (ignore))
-	 ((: (out " \t\r\n") (* (out "\r\n")) "\r\n")
+	 ((: (out " \t\r\n") (* (or (out "\r") (: "\r" (out "\n")))) "\r\n")
 	  (the-substring 0 (-fx (the-length) 2)))
-	 ((: (out " \t\r\n") (* (out "\r\n")) "\n")
+	 ((: (out " \t\r\n") (* (or (out "\r") (: "\r" (out "\n")))) "\n")
 	  (the-substring 0 (-fx (the-length) 1)))
 	 ((: (? #\Return) #\Newline)
 	  "")
