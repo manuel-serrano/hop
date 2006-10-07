@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 30 06:04:20 2006                          */
-;*    Last change :  Sat Oct  7 08:47:41 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 16:11:08 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP doc global index.                                        */
@@ -77,7 +77,7 @@
    (define (char0 str offset)
       (let ((c (char-upcase (string-ref str offset))))
 	 (if (char-alphabetic? c)
-	     (char-upcase c)
+	     c
 	     #\?)))
    
    (define (<LABEL> c)
@@ -104,6 +104,25 @@
 		       (begin
 			  (set-cdr! prev (cons (<LABEL> c1) lst))
 			  (loop c1 (cdr prev) lst (+fx len 1)))))))))
+
+   (define (string-ci-at<=? s0 o0 s1 o1)
+      (if (and (=fx o0 0) (=fx o1 0))
+	  (string<? s0 s1)
+	  (let ((len0 (string-length s0))
+		(len1 (string-length s1)))
+	     (let loop ((i0 o0)
+			(i1 o1))
+		(cond
+		   ((=fx i0 len0)
+		    (<=fx i1 len1))
+		   ((=fx i1 len1)
+		    #f)
+		   ((char-ci=? (string-ref s0 i0) (string-ref s1 i1))
+		    (loop (+fx i0 1) (+fx i1 1)))
+		   ((char-ci<? (string-ref s0 i0) (string-ref s1 i1))
+		    #t)
+		   (else
+		    #f))))))
    
    (let ((l1 (hashtable-map table cons)))
 
@@ -125,7 +144,9 @@
 		   :colspan columns
 		   "internal error, only one element found!"))))
 	 (else
-	  (let ((l2 (sort l1 (lambda (a b) (string<? (car a) (car b))))))
+	  (let ((l2 (sort l1 (lambda (a b)
+				(string-ci-at<=? (car a) (cadr a)
+						 (car b) (cadr b))))))
 	     (<TABLE>
 		:class "search-result"
 		(<COLGROUP> :span columns :width (format "~a%" (/ 100 columns)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Sat Sep 30 05:57:27 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 16:06:39 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -299,7 +299,7 @@
 			  (set! el.innerHTML r))
 		       (iwindow-close "doc/search"))))))
 	 (else
-	  (let ((l2 (sort l1 (lambda (a b) (string<? (car a) (car b))))))
+	  (let ((l2 (sort l1 (lambda (a b) (string-ci<? (car a) (car b))))))
 	     (<TABLE>
 		:class "search-result"
 		(<COLGROUP> :span columns :width (format "~a%" (/ 100 columns)))
