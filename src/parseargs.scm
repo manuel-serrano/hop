@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Oct  9 07:49:05 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 13:27:34 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -86,8 +86,12 @@
 	      (hop-verbose-set! (string->integer level))))
          (("-g?level" (help "Increase/set debug level"))
           (if (string=? level "")
-	      (bigloo-debug-set! (+fx 1 (bigloo-debug)))
-	      (bigloo-debug-set! (string->integer level))))
+	      (begin
+		 (bigloo-debug-module-set! (+fx 1 (bigloo-debug-module)))
+		 (bigloo-debug-set! (+fx 1 (bigloo-debug))))
+	      (begin
+		 (bigloo-debug-module-set! (string->integer level))
+		 (bigloo-debug-set! (string->integer level)))))
 	 (("-w?level" (help "Increase/set warning level (-w0 no warning)"))
           (if (string=? level "")
 	      (bigloo-warning-set! (+fx 1 (bigloo-warning)))

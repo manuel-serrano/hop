@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Tue Oct 10 08:08:57 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 11:24:16 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -101,7 +101,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hopsh-exec url)
    (let loop ((header (login->header (hopsh-login)))
-	      (count 4))
+	      (count 3))
       (with-url url
 	 (lambda (s) s)
 	 :fail (lambda (status port)

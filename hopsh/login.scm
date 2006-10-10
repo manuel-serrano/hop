@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 10 07:50:17 2006                          */
-;*    Last change :  Tue Oct 10 08:11:45 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 11:25:52 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with HopSh login                                         */

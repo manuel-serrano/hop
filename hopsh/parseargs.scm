@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Oct 10 08:12:51 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 11:16:23 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -35,6 +35,9 @@
 	 (login #f))
       (args-parse (cdr args)
          ((("-h" "--help") (help "This message"))
+	  (print "HopSh v" (hop-version))
+	  (print "usage: hopsh [options]")
+	  (newline)
           (args-parse-usage #f)
           (exit 0))
          (("--options" (help "Display the Hop options and exit"))
