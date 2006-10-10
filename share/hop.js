@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Oct  9 08:35:05 2006 (serrano)                */
+/*    Last change :  Tue Oct 10 16:02:46 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -635,7 +635,8 @@ var hop_request_env_string = "";
 /*    hop_serialize_request_env ...                                    */
 /*---------------------------------------------------------------------*/
 function hop_serialize_request_env() {
-   if( hop_request_env_string == null ) {
+   if( (hop_request_env_string == null) ||
+       (hop_request_env_string.length == 0) ) {
       var tmp = null;
 
       for( var p in hop_request_env ) {
