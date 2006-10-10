@@ -103,7 +103,7 @@
       (with-lock *sscript-mutex*
 	 (lambda ()
 	    (let ((cache (cache-get sscript-cache path))
-		  (mime (mime-type path "text/javascript")))
+		  (mime (mime-type path (hop-javascript-mime-type))))
 	       (if (string? cache)
 		   (instantiate::http-response-file
 		      (request req)

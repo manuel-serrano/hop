@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Aug 25 09:48:37 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:48:06 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -71,7 +71,8 @@
      (xml-write body p encoding backend)
      (display "</div>" p)
      (fprintf p
-        "<script type='text/javascript'>hop_tabslider_init('~a', ~a)</script>"
+        "<script type='~a'>hop_tabslider_init('~a', ~a)</script>"
+	(hop-javascript-mime-type)
 	id index)))
 
 ;*---------------------------------------------------------------------*/

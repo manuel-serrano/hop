@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Sep 21 18:50:44 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:48:27 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -107,7 +107,9 @@
 (define-method (xml-write obj::html-tree p encoding backend)
    (let ((parent (symbol->string (gensym 'TREE-PARENT))))
       (fprintf p "<span id='~a' class='hop-tree-parent'>" parent)
-      (display " <script type='text/javascript'>" p)
+      (display " <script type='" p)
+      (display (hop-javascript-mime-type) p)
+      (display "'>" p)
       (html-write-tree 0 obj parent p backend)
       (display " </script>" p)
       (display "</span>" p)))

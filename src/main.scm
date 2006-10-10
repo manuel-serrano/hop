@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Oct  7 09:08:29 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 17:37:39 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -56,7 +56,7 @@
 	     ") on port " (hop-port) ":\n")
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
-   (bigloo-load-module-set! hop-load-once)
+   (bigloo-load-module-set! hop-load-modified)
    ;; install the builtin filters
    (hop-filter-add-always-last! autoload-filter)
    (hop-filter-add! service-filter)
@@ -268,7 +268,9 @@
 	       ((persistent)
 		#unspecified)
 	       ((keep-alive)
-		(if (hop-enable-keep-alive)
+		(if (and (hop-enable-keep-alive)
+			 (>fx (pool-thread-available accept-pool) 0)
+			 (>fx (pool-thread-available reply-pool) 0))
 		    (handle-connection
 		     sock accept-pool reply-pool
 		     (hop-keep-alive-timeout) id connection)

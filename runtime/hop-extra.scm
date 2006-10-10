@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Oct  7 09:18:35 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:47:07 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -70,7 +70,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-jscript file dir)
    (<SCRIPT>
-      :type "text/javascript"
+      :type (hop-javascript-mime-type)
       :src (cond
 	      ((= (string-length file) 0)
 	       (error '<HEAD> "Illegal jscript" file))
@@ -166,10 +166,10 @@
 		     :href (hop-file dir "hop.css")))
 	     (jscripts (list
 			(<SCRIPT>
-			   :type "text/javascript"
+			   :type (hop-javascript-mime-type)
 			   :src (hop-file dir "hop-autoconf.js"))
 			(<SCRIPT>
-			   :type "text/javascript"
+			   :type (hop-javascript-mime-type)
 			   :src (hop-file dir "hop.js"))))
 	     (body (cons css  (append jscripts body)))
 	     (body (if (memq (hop-xml-backend) '(html html-4.01))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Oct  2 09:30:25 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:01:07 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -30,6 +30,7 @@
 	    (hop-load ::bstring #!key (env (interaction-environment)) (mode 'load))
 
 	    (hop-load-once ::bstring #!key (env (interaction-environment)))
+	    (hop-load-modified ::bstring #!key (env (interaction-environment)))
 	    (hop-load-once-unmark! ::bstring)
 	    
 	    (read-error msg obj port)
@@ -740,14 +741,21 @@
 (define *load-once-mutex* (make-mutex "load-once"))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-load-once ...                                                */
+;*    %hop-load-once ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This function loads a file in ENV. If the parameter MODIFIEDP    */
+;*    is #t and if the file has changed since the last load, it is     */
+;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-once file #!key (env (interaction-environment)))
-   (with-trace 1 'hop-load-once
+(define (%hop-load-once file env modifiedp)
+   (with-trace 1 '%hop-load-once
       (trace-item "file=" file)
+      (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
+      (trace-item "modifiedp=" modifiedp)
       (let ((f (file-name-unix-canonicalize file)))
 	 (mutex-lock! *load-once-mutex*)
-	 (let ((info (hashtable-get *load-once-table* f)))
+	 (let loop ((info (hashtable-get *load-once-table* f))
+		    (t (file-modification-time f)))
 	    (if (pair? info)
 		(case (car info)
 		   ((error)
@@ -757,8 +765,14 @@
 		   ((loaded)
 		    ;; the file is already loaded
 		    (trace-item "already loaded")
-		    (mutex-unlock! *load-once-mutex*)
-		    #unspecified)
+		    ;; re-load if modified
+		    (if (and modifiedp (not (=elong t (cdr info))))
+			(begin
+			   (hashtable-remove! *load-once-table* f)
+			   (loop #f t))
+			(begin
+			   (mutex-unlock! *load-once-mutex*)
+			   #unspecified)))
 		   ((loading)
 		    ;; the file is currently being loaded
 		    (trace-item "loading")
@@ -779,9 +793,21 @@
 			    (raise e))
 			 (hop-load f :mode 'load :env env))
 		      (mutex-lock! *load-once-mutex*)
-		      (hashtable-put! *load-once-table* f '(loaded))
+		      (hashtable-put! *load-once-table* f (cons 'loaded t))
 		      (condition-variable-signal! cv)
 		      (mutex-unlock! *load-once-mutex*))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-load-once ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hop-load-once file #!key (env (interaction-environment)))
+   (%hop-load-once file env #f))
+
+;*---------------------------------------------------------------------*/
+;*    hop-load-modified ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hop-load-modified file #!key (env (interaction-environment)))
+   (%hop-load-once file env #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once-unmark! ...                                        */

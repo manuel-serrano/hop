@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Tue Jun 13 12:12:58 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 09:17:27 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -16,7 +16,8 @@
 
    (import hopdoc_services
 	   hopdoc_config
-	   hopdoc_search)
+	   hopdoc_search
+	   hopdoc_api)
    
    (export (doc-wiki-syntax)
 	   (make-wiki-request-syntax initial-syntax request)
@@ -42,6 +43,7 @@
       ((<arguments>) <WIKI-ARGUMENTS>)
       ((<fields>) <WIKI-FIELDS>)
       ((<example>) <WIKI-EXAMPLE>)
+      ((<code>) <WIKI-CODE>)
       ((<share>) <WIKI-SHARE>)))
 
 ;*---------------------------------------------------------------------*/
@@ -213,6 +215,15 @@
    (list
     (<DIV> :class "doc-fields" :align "center" expr)
     (<P>)))
+
+;*---------------------------------------------------------------------*/
+;*    <WIKI-CODE> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<WIKI-CODE> port title expr)
+   (<DIV>
+      :class "code"
+      :align "center"
+      (decorate-api-wiki-code expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI-EXAMPLE> ...                                               */

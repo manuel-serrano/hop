@@ -63,8 +63,7 @@ An atom is a syntactic elements described by the following grammar:
 Hop supports //texts//. A text is made of a list of strings. A text
 is actually a syntactic shorthand for building list of strings.
 
-  <text> := 
-     | <angle-text>
+  <text> := <angle-text>
      | <bracket-text>
 
   <angle-text> := [ ... ]
@@ -72,16 +71,20 @@ is actually a syntactic shorthand for building list of strings.
   <bracket-text> := { ... }
 
 
-Inside <angle-text> all characters are left as is with two exception. The
-character ,(begin "]") must escaped as ,(begin "\\]"). The sequence
-,(begin ",(") is an escape operator. It introduce an Hop expression inside
-a text.
+Inside <angle-text> all characters are left as is with two exceptions:
+  * the character ,(begin "]") must escaped as ,(begin "\\]"),
+  * the sequence ,(begin ",(") is an escape operator. It introduce an 
+ Hop expression inside a text.
 
 
-Inside <bracket-text> all characters are left as is with two exceptions. The
-characters ,(begin "{") and ,(begin "}") that are included in the text
-but must be balanced. The text is ended when the parse reads a closing bracket
-matching the one that has opened the text construction.
+Inside <bracket-text> all characters are left as is with two exceptions:
+  * the characters ,(begin "{") and ,(begin "}") that are included in the text
+ but must be balanced. The text is ended when the parse reads a closing 
+ bracket matching the one that has opened the text construction.
+  * the character ,(begin "$") is an escape operator. It introduces an 
+ Hop expression inside a text. The sequence ,(begin "$$") introduces a
+ single ,(begin "$") sign in the text construction.
+
 
 Quotes are:
 
@@ -222,6 +225,7 @@ Here is an example of a module named ++foo++ that uses the library
 ++ssl++, that imports the module named ++bar++, and that exports the 
 function ++fun-foo++, the variable ++var-foo++, and the class ++class-foo++.
 
+<code>
   (module foo
      (library ssl)
      (import bar)
@@ -231,7 +235,7 @@ function ++fun-foo++, the variable ++var-foo++, and the class ++class-foo++.
                 (name read-only)
                 (x (default 0))
                 (y (default 0)))))
-
+</code>
 
 === Classes and Objects === 
 
@@ -252,6 +256,7 @@ declare subclasses, generic functions, and methods.
 ~~ For the sake of the example, here is a simple source code that defines 
 two classes:
 
+<code>
   (module example
      (static (class point x y))
      (export (class point3d::point z))
@@ -267,6 +272,7 @@ two classes:
   (define-method (to-string obj::point3d)
      (with-access::point3d obj (z)
         (format "~a-~a" (call-next-method) z)))
+</code>
 
 
 The form ++define-generic++ defines a new generic function. The form
@@ -275,10 +281,12 @@ must be visible by the module declaring the method. The form ++with-access++
 opens an object up. Objects are creates with the ++instantiate++ form. Here
 is an expression creating an instance of the ++point3d++:
 
+<code>
   (instantiate::point3d
      (z 10)
      (x 0)
      (y 5))
+</code>
 
 
 Class fields that are provided with a default value are not required  by

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Aug 25 09:48:17 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:47:42 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -91,7 +91,9 @@
 	 (display ">" p)
 	 (xml-write (car body) p encoding backend)
 	 (xml-write (cadr body) p encoding backend)
-	 (display " <script type='text/javascript'>" p)
+	 (display " <script type='" p)
+	 (display (hop-javascript-mime-type) p)
+	 (display "'>" p)
 	 (fprint p
 		 "hop_paned_onresize_set( "
 		 (if (eq? orientation 'vertical)

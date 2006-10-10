@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Mon Sep 11 08:14:51 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 09:02:12 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -324,4 +324,3 @@
 	  (<TEXTAREA> :class "example" :id id2 code)
 	  (<DIV> :class "example"
 		 (<PRE> :class "example" :id id1 api-code "\n"))))))
-

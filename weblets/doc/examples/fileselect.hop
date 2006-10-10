@@ -1,0 +1,7 @@
+(<HTML>
+   (<HEAD> :jscript "hop-fileselect.js" :css "hop-fileselect.css")
+   (<BODY>
+      (<FILESELECT>
+	 :value "/tmp"
+	 :size 50
+	 :onchange ~(alert "value=" this.value))))
