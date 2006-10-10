@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Oct  6 07:36:58 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 09:29:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -502,14 +502,14 @@
 	  (when s (unwind-state! s))
 	  (ignore)))
       
-      ("$$"
-       (let ((s (in-state '$$)))
+      ("%%"
+       (let ((s (in-state '%%)))
 	  (if s
 	      (begin
 		 (unwind-state! s)
 		 (ignore))
 	      (begin
-		 (enter-expr! '$$ (wiki-syntax-math syn) #f)
+		 (enter-expr! '%% (wiki-syntax-math syn) #f)
 		 (ignore)))))
       ("++"
        (let ((s (in-state 'tt)))

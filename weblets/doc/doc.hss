@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Sep 30 07:12:49 2006 (serrano)                */
+/*    Last change :  Tue Oct 10 09:22:23 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -32,7 +32,7 @@ $(define keyword-color "#bb0088")
 $(define type-color "#00bb00")
 $(define example-background "#eeffdd")
 $(define edit-background "#ffffee")
-$(define source-background "#eeffff")
+$(define source-background "#ffeeff")
 $(define doc-opacity "0.97")
 $(define deep-blue "#00a")
 $(define deep-green "#0a0")
@@ -384,8 +384,14 @@ doc pre, doc textarea {
   font-size: x-small;
   font-family: $typewriter;
   overflow: auto;
+  background-color: $source-background;
+  display: table;
 }
 
+div.code pre {
+  background-color: $example-background;
+}
+  
 doc span.href {
   font-family: $typewriter;
   cursor: default;
