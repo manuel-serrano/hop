@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Thu May 11 09:28:43 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:53:54 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -24,7 +24,8 @@
 	   (hop-share-directory)
 	   (hop-contribs-directory)
            (hop-weblets-directory)
-           (hop-mime-types-file))
+           (hop-mime-types-file)
+	   (hop-configure-javascript-mime-type))
    
    (eval   (export hop-name)
 	   (export hop-version)
@@ -36,7 +37,8 @@
 	   (export hop-share-directory)
 	   (export hop-contribs-directory)
            (export hop-weblets-directory)
-           (export hop-mime-types-file)))
+           (export hop-mime-types-file)
+	   (export hop-configure-javascript-mime-type)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure ...                                                */
@@ -61,6 +63,8 @@
        (print (hop-weblets-directory)))
       ((--mimetypes)
        (print (hop-mime-types-file)))
+      ((--javascript-mime-type)
+       (print (hop-configure-javascript-mime-type)))
       ((--url)
        (print (hop-url)))
       (else
@@ -78,6 +82,7 @@
 	     (print "  [--contribsdir]")
              (print "  [--webletsdir]")
              (print "  [--mimetypes]")
+             (print "  [--javascript-mime-type]")
 	     (print "  [--url]"))))))
 	     
 ;*---------------------------------------------------------------------*/
@@ -102,5 +107,6 @@
 ;*    Misc ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-mime-types-file) "@MIMETYPES@")
+(define (hop-configure-javascript-mime-type) "@JSMIMETYPE@")
 
            

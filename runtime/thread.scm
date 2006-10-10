@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Nov 16 13:24:06 2004                          */
-;*    Last change :  Thu May 18 05:47:50 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 17:28:14 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hop_thread                                                       */
@@ -154,9 +154,9 @@
 				 (lambda (e)
 				    (fprint (current-error-port)
 					    "*** INTERNAL ERROR: "
-					    (current-thread)
-					    "uncaught exception: " e)
-				    (exit 23)
+					    (current-thread) " -- "
+					    "uncaught exception: "
+					    (find-runtime-type e))
 				    (exception-notify e)
 				    (raise e))
 				 (begin

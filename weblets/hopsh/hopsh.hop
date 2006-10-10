@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Oct  7 18:39:43 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 07:57:19 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hopsh weblet                                                 */
@@ -19,7 +19,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hopsh exp)
    (let ((req (the-current-request)))
-      (if (authorized-service? req 'hopsh)
+      (if (and (users-added?) (authorized-service? req 'hopsh))
 	  (if (not exp)
 	      (<HOPSH>)
 	      (with-handler
@@ -34,9 +34,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopsh ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-service (hopsh-string exp)
+(define-service (hopsh/string exp)
    (let ((req (the-current-request)))
-      (if (authorized-service? req 'hopsh)
+      (if (and (users-added?) (authorized-service? req 'hopsh))
 	  (if (not exp)
 	      (<HOPSH>)
 	      (with-handler
@@ -83,7 +83,7 @@
 				 :colspan 2
 				 :align 'left
 				 (<BUTTON> :onclick
-				    ~(with-hop ($hopsh-string $i.value)
+				    ~(with-hop ($hopsh/string $i.value)
 					(lambda (h)
 					   (set! $r.innerHTML h)))
 				    "Evaluate")))

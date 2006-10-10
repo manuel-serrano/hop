@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Jul 22 09:20:04 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:46:49 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -174,7 +174,7 @@
        (error '<HOP-EVENT> "Event handler missing" event))
       (else
        (cons (<SCRIPT>
-		:type "text/javascript"
+		:type (hop-javascript-mime-type)
 		:id (xml-make-id id 'HOP-EVENT)
 		(format "hop_event_handler_set( ~a, \"~a\", function( event ) { ~a; return true; }, function( event ) { ~a; return true; } )"
 			(hop->json (hop-event-%service event))

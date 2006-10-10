@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Sep 19 04:59:18 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:54:37 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -23,7 +23,8 @@
    (import  __hop_types
 	    __hop_mime
 	    __hop_misc
-	    __hop_param)
+	    __hop_param
+	    __hop_configure)
    
    (export  (class xml-backend
 	      (id::symbol read-only)
@@ -81,12 +82,15 @@
 	    (xml-make-id::bstring #!optional id (markup 'HOP))
 	    
 	    (hop-get-xml-backend::xml-backend ::symbol)
-	    
-	    (hop-xml-backend::xml-backend)
-	    (hop-xml-backend-set! ::obj)
 
+	    (hop-javascript-mime-type::bstring)
+	    (hop-javascript-mime-type-set! ::bstring)
+	    
 	    (hop-xhtml-xmlns::pair-nil)
 	    (hop-xhtml-xmlns-set! ::pair-nil)
+
+	    (hop-xml-backend::xml-backend)
+	    (hop-xml-backend-set! ::obj)
 
  	    (generic xml-write ::obj ::output-port ::symbol ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port)
@@ -196,6 +200,12 @@
 	    (<TILDE> ::obj)
 	    (<DELAY> . ::obj)))
 
+;*---------------------------------------------------------------------*/
+;*    hop-javascript-mime-type ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-javascript-mime-type
+   (hop-configure-javascript-mime-type))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-xhtml-xmlns ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -419,7 +429,10 @@
 		(display "<script " p)
 		(xml-write-attributes attributes p)
 		(display ">" p))
-	     (display "<script type='text/javascript'>" p))
+	     (begin
+		(display "<script type='" p)
+		(display (hop-javascript-mime-type) p)
+		(display "'>" p)))
 	 (when (pair? body)
 	    (when script-start (display script-start p))
 	    (xml-write body p encoding backend)
@@ -434,7 +447,9 @@
       (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
 	  (xml-write body p encoding backend)
 	  (with-access::xml-backend backend (script-start script-stop)
-	     (display "<script type='text/javascript'>" p)
+	     (display "<script type='" p)
+	     (display (hop-javascript-mime-type) p)
+	     (display "'>" p)
 	     (when script-start (display script-start p))
 	     (xml-write body p encoding backend)
 	     (when script-stop (display script-stop p))

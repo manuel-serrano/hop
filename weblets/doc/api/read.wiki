@@ -8,7 +8,8 @@ These functions parses file according to the HOP syntax.
 
   (hop-read [input-port])
   (hop-load path [:env] [:mode])
-  (hop-load-once path [:env] [:mode])
+  (hop-load-once path [:env])
+  (hop-load-modified path [:env])
   (hop-load-unmark! path)
   (the-loading-file)
   (the-loading-dir)
@@ -72,6 +73,19 @@ memory //if not already loaded//. That is, if the file ++path++ is loaded
 //if and only if// it has not already been loaded with ++hop-load-once++.
 
 This function is thread safe.
+</function>
+
+=== ++(hop-load-modified path [:env])++ ===
+<function> hop-load-modified
+
+<arguments>
+^  arguments  ^   type   ^  short description           ^
+| path        |  string  | the file name to be loaded.  |
+| env         |  module  | the eval environment.        |
+</arguments>
+
+As ++hop-load-once++ but in addition, the file is reloaded if the file
+has changed on the disc since it has been loaded.
 </function>
 
 === ++(hop-load-once-unmark! path)++ ===

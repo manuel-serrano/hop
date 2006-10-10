@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Sep 22 07:44:44 2006 (serrano)                */
+/*    Last change :  Mon Oct  9 08:35:05 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -387,10 +387,22 @@ function hop( service, success, failure, sync ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    WithHopError ...                                                 */
+/*---------------------------------------------------------------------*/
+function WithHopError( service ) {
+   var e = new Error( "with-hop error" );
+   e.service = service;
+
+   return e;
+}
+
+/*---------------------------------------------------------------------*/
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
 function with_hop( service, success, failure ) {
-   if( !success ) success = function( h ) { };
+   if( !success ) success = function( h ) { return h };
+   if( !failure ) failure = function( h ) { throw new WithHopError( service ); };
    
    return hop( service,
 	       function( http ) {

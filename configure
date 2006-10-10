@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Sep 29 12:29:24 2006 (serrano)                */
+#*    Last change :  Tue Oct 10 08:33:53 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -34,6 +34,7 @@ bcflagsopt="-unsafe -O3"
 blflags="-copt \$(CPICFLAGS)"
 
 mimetypes=/etc/mime.types
+jsmimetype="text/javascript"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
@@ -56,7 +57,7 @@ buildbindir=$PWD/bin
 
 repository=$HOME/prgm/project/hop/devel/repository
 
-bigloorequired=2.8c
+bigloorequired=2.8d
 bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
@@ -104,6 +105,9 @@ while : ; do
 
     --mimetypes=*)
       mimetypes="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --jsmimetype=*)
+      jsmimetype="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -162,6 +166,7 @@ while : ; do
       echo "   --webletsdir=dir...... alternative Hop weblets directory" >&2;
       echo "   --contribsdir=dir..... alternative Hop contribs directory" >&2;
       echo "   --mimetypes=file...... default mime.types file" >&2;
+      echo "   --jsmimetype=type..... default 'text/javascript'" >&2;
       echo "   --bigloo=comp......... The Bigloo compiler" >&2;
       echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
       echo "   --cigloo=comp......... The Cigloo compiler" >&2;
@@ -381,6 +386,7 @@ cat etc/configure.scm.in \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
+          -e "s|@JSMIMETYPE@|$jsmimetype|" \
     >> $configure
 
 # etc/hoprc.hop
@@ -456,7 +462,7 @@ echo "" >> $init
 #*---------------------------------------------------------------------*/
 echo "** Configuration summary **"
 echo 
-echo "Release features:"
+echo "Release:"
 echo "  Hop release number.................... $version"
 echo "  Bigloo................................ $bigloo ($bglversion)"
 echo "  Backend............................... $backend"
@@ -470,3 +476,7 @@ echo "  share directory....................... $sharedir"
 echo "  weblets directory..................... $webletsdir"
 echo "  contribs directory.................... $contribsdir"
 echo 
+echo "Internals:"
+echo "  Mime types............................ $mimetypes"
+echo "  Default JavaScript mime type.......... $jsmimetype"
+

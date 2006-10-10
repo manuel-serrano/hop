@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Oct  2 07:36:37 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:04:07 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -256,7 +256,7 @@
 			  (hop-verb 1 (hop-color req req " AUTOLOADING")
 				    ": " path "\n")
 			  ;; load the autoloaded file
-			  (hop-load-once path)
+			  (hop-load-modified path)
 			  ;; execute the hooks
 			  (for-each (lambda (h) (h req)) hooks)
 			  ;; remove the autoaload (once loaded)
