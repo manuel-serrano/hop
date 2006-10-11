@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sun Aug 13 12:27:27 2006 (serrano)                */
+;*    Last change :  Wed Oct 11 05:32:41 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -34,7 +34,6 @@
 	   (string-escape::bstring ::bstring ::char)
 	   (escape-string::bstring ::bstring)
 	   (delete-path ::bstring)
-	   (autoload-prefix::procedure ::bstring)
 	   (make-url-name::bstring ::bstring ::bstring)
 	   (make-client-socket/timeout ::bstring ::int ::int ::obj)
 	   (inline micro-seconds::int ::int)
@@ -279,26 +278,6 @@
 	  (delete-directory path)))
       (else
        (delete-file path))))
-
-;*---------------------------------------------------------------------*/
-;*    autoload-prefix ...                                              */
-;*    -------------------------------------------------------------    */
-;*    Builds a predicate that matches if the request path is a         */
-;*    prefix of STRING.                                                */
-;*---------------------------------------------------------------------*/
-(define (autoload-prefix string)
-   (let* ((p string)
-	  (p/ (string-append string "/"))
-	  (lp (string-length p)))
-      (lambda (req)
-	 (with-access::http-request req (path)
-	    (let ((i (string-index path #\?))
-		  (l (string-length path)))
-	       (if (=fx i -1)
-		   (and (substring-at? path p 0)
-			(or (=fx l lp) (eq? (string-ref path lp) #\/)))
-		   (and (>=fx i lp)
-			(substring-at? path p 0 i))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-url-name ...                                                */
