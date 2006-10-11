@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Oct 10 13:27:34 2006 (serrano)                */
+;*    Last change :  Wed Oct 11 05:26:38 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -181,7 +181,7 @@
 				      (raise e)))
 			       (eval sexp))))))
 		exprs)
-      (when autoloadp (autoload-weblets (hop-autoload-directories)))
+      (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
       (for-each (lambda (l) (eval `(library-load ',l))) libraries)))
 
 ;*---------------------------------------------------------------------*/

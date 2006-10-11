@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Oct  9 08:04:07 2006 (serrano)                */
+;*    Last change :  Wed Oct 11 09:38:00 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -31,13 +31,6 @@
 	    __hop_hop-extra
 	    __hop_js-lib)
    
-   (static  (class %autoload
-	       (path::bstring read-only)
-	       (pred::procedure read-only)
-	       (hooks::pair-nil read-only (default '()))
-	       (mutex::mutex (default (make-mutex)))
-	       (loaded::bool (default #f))))
-   
    (export  (get-service-url::bstring)
 	    (hop-service-path? ::bstring)
 	    (make-hop-service-url::bstring ::hop-service . o)
@@ -45,8 +38,6 @@
 	    (hop-request-service-name::bstring ::http-request)
 	    (procedure->service::hop-service ::procedure)
             (%eval::%http-response ::obj ::http-request ::procedure)
-	    (autoload ::bstring ::procedure . hooks)
-	    (autoload-filter ::http-request)
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)))
 
@@ -212,68 +203,6 @@
 			       (exp-list->eval-string exp)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    *autoload-mutex* ...                                             */
-;*---------------------------------------------------------------------*/
-(define *autoload-mutex* (make-mutex))
-
-;*---------------------------------------------------------------------*/
-;*    *autoloads* ...                                                  */
-;*---------------------------------------------------------------------*/
-(define *autoloads* '())
-
-;*---------------------------------------------------------------------*/
-;*    autoload ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (autoload file pred . hooks)
-   (let ((qfile (find-file/path file (hop-path))))
-      (if (not (and (string? qfile) (file-exists? qfile)))
-	  (error 'autoload-add! "Can't find autoload file" file)
-	  (let ((al (instantiate::%autoload
-		       (path qfile)
-		       (pred pred)
-		       (hooks hooks))))
-	     (mutex-lock! *autoload-mutex*)
-	     (set! *autoloads* (cons al *autoloads*))
-	     (mutex-unlock! *autoload-mutex*)))))
-
-;*---------------------------------------------------------------------*/
-;*    autoload-filter ...                                              */
-;*    -------------------------------------------------------------    */
-;*    Autoload has to be the last filter. When the autoload matches,   */
-;*    it simply returns the hop-resume value that is handled by the    */
-;*    hop loop.                                                        */
-;*---------------------------------------------------------------------*/
-(define (autoload-filter req)
-   (let loop ((al *autoloads*))
-      (if (null? al)
-	  req
-	  (with-access::%autoload (car al) (pred path hooks loaded mutex)
-	     (if (pred req)
-		 (begin
-		    (mutex-lock! mutex)
-		    (unwind-protect
-		       (unless loaded
-			  (hop-verb 1 (hop-color req req " AUTOLOADING")
-				    ": " path "\n")
-			  ;; load the autoloaded file
-			  (hop-load-modified path)
-			  ;; execute the hooks
-			  (for-each (lambda (h) (h req)) hooks)
-			  ;; remove the autoaload (once loaded)
-			  (mutex-lock! *autoload-mutex*)
-			  (set! *autoloads* (remq! (car al) *autoloads*))
-			  (mutex-unlock! *autoload-mutex*)
-			  (set! loaded #t))
-		       (mutex-unlock! mutex))
-		    ;; re-scan the filter list
-		    'hop-resume)
-		 (begin
-		    (mutex-lock! *autoload-mutex*)
-		    (let ((tail (cdr al)))
-		       (mutex-unlock! *autoload-mutex*)
-		       (loop tail))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    *service-mutex* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *service-mutex* (make-mutex))
@@ -320,6 +249,11 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This filter is executed after the AUTOLOAD-FILTER. Hence         */
+;*    when the default service is selected, the entire HOP loop        */
+;*    has to be re-executed in order to properly autoload the          */
+;*    initial weblet.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
    (when (http-request-localhostp req)
@@ -353,7 +287,9 @@
 			    (set! path (string-append (hop-service-base)
 						      "/"
 						      init))
-			    (loop)))))))))))
+			    ;; resume the hop loop in order to autoload
+			    ;; the initial weblet
+			    'hop-resume))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Oct  7 18:36:04 2006 (serrano)                */
+;*    Last change :  Wed Oct 11 09:29:51 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -80,6 +80,11 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hop ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    This function assumes that (HOP-FILTERS) returns a read-only     */
+;*    data structure. In other words, it assumes that no other thread  */
+;*    can change the list (HOP-FILTERS) in the background. Because of  */
+;*    this assumption, no lock is needed in this function.             */
 ;*---------------------------------------------------------------------*/
 (define (hop req::http-request)
    (let loop ((m req)
@@ -113,15 +118,9 @@
 		 (let ((r (hop-run-hook (hop-http-response-local-hooks) m n)))
 		    (hop-request-hook m r)))
 		((http-request? n)
-		 (mutex-lock! (hop-filter-mutex))
-		 (let ((tail (cdr filters)))
-		    (mutex-unlock! (hop-filter-mutex))
-		    (loop n tail)))
+		 (loop n (cdr filters)))
 		(else
-		 (mutex-lock! (hop-filter-mutex))
-		 (let ((tail (cdr filters)))
-		    (mutex-unlock! (hop-filter-mutex))
-		    (loop m tail))))))))
+		 (loop m (cdr filters))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-run-hooks ...                                                */

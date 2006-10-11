@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Sep 14 09:51:19 2006 (serrano)                */
+;*    Last change :  Wed Oct 11 08:07:06 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -61,7 +61,6 @@
 	    (hop-http-response-error::obj)
 	    (hop-http-response-error-set! ::obj)
 
-	    (hop-filter-mutex::mutex)
 	    (hop-filters::pair-nil)
 	    (hop-filters-set! ::pair-nil)
 	    (hop-filter-add! ::procedure)
@@ -318,10 +317,28 @@
    *filter-mutex*)
 
 ;*---------------------------------------------------------------------*/
+;*    *hop-filters-open* ...                                          */
+;*---------------------------------------------------------------------*/
+(define *hop-filters-open*
+   #t)
+
+;*---------------------------------------------------------------------*/
+;*    hop-filter-open! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-filter-close!)
+   (with-lock (hop-filter-mutex)
+      (lambda ()
+	 (set! *hop-filters-open* #f))))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-filter ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-filters
-   '())
+   '()
+   (lambda (v)
+      (if (not *hop-filters-open*)
+	  (error 'hop-filters-set! "Filters close" #f)
+	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %hop-filter-add! ...                                             */
@@ -331,7 +348,7 @@
       (if p
 	  (set-cdr! p n)
 	  (hop-filters-set! n)))
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (if (eq? kind 'last)
 	     (let loop ((fs (hop-filters))
@@ -357,7 +374,7 @@
 ;*    hop-filter-remove! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop-filter-remove! proc)
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (let loop ((fs (hop-filters))
 		    (p #f))
@@ -396,7 +413,7 @@
 ;*    hop-http-response-local-hook-add! ...                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-local-hook-add! proc)
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (hop-http-response-local-hooks-set!
 	  (cons proc (hop-http-response-local-hooks))))))
@@ -405,7 +422,7 @@
 ;*    hop-http-response-local-hook-remove! ...                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-local-hook-remove! proc)
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (hop-http-response-local-hooks-set!
 	  (remq! proc (hop-http-response-local-hooks))))))
@@ -420,7 +437,7 @@
 ;*    hop-http-response-remote-hook-add! ...                           */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-remote-hook-add! proc)
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (hop-http-response-remote-hooks-set!
 	  (cons proc (hop-http-response-remote-hooks))))))
@@ -429,7 +446,7 @@
 ;*    hop-http-response-remote-hook-remove! ...                        */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-remote-hook-remove! proc)
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (hop-http-response-remote-hooks-set!
 	  (remq! proc (hop-http-response-remote-hooks))))))

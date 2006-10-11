@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Oct  9 08:01:07 2006 (serrano)                */
+;*    Last change :  Wed Oct 11 08:32:26 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -779,6 +779,7 @@
 		    (condition-variable-wait! (cdr info) *load-once-mutex*)
 		    #unspecified))
 		(begin
+		   (tprint "%hop-load-once file=" file " modifiedp=" modifiedp)
 		   ;; the file has to be loaded
 		   (trace-item "load")
 		   (let ((cv (make-condition-variable "load-once")))
