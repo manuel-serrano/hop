@@ -231,13 +231,7 @@ div.hop-notepad-tabs span.hop-nptab-active {
 }
 
 div.hop-notepad-body {
-  border-color: $border-color;
-}
-
-div.hop-notepad-body {
-  border-left: 1px solid $border-color;
-  border-right: 1px solid $border-color;
-  border-bottom: 1px solid $border-color;
+  border: 1px solid $border-color;
   padding: 10px;
   font-size: small;
   background-color: $doc-color;
