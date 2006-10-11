@@ -21,14 +21,16 @@
 		 (multiple-value-bind (dir hbody)
 		    (head-parse '(:jscript "runtime.js"
 			          :jscript "hop-dom.js"
-				  :jscript "runtime-interface.js"))
+				  :jscript "runtime-interface.js"
+				  :jscript "hopscheme.js"))
 		    (with-access::xml-markup head (body)
 		       (set! body (append body hbody))))
 		 (let ((html (find-in-tree xml 'html))
 		       (jshead (<HEAD> :dir (hop-share-directory)
 				       :jscript "runtime.js"
 				       :jscript "hop-dom.js"
-				       :jscript "runtime-interface.js")))
+				       :jscript "runtime-interface.js"
+				       :jscript "hopscheme.js")))
 		    (when html
 		       (with-access::xml-markup html (body)
 			  (set! body (cons jshead body)))))))))

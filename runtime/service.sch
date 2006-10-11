@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Fri Jun  9 17:08:08 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 17:49:19 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -56,7 +56,7 @@
 						   args)))
 				`(,proc (error '$service/filter "not implement" "yet"))))))
 	      (,url ,svcurl)
-	      (,path (make-file-name (hop-service-base) ,url))
+	      (,path (make-url-name (hop-service-base) ,url))
 	      (svc (instantiate::hop-service
 		      (id (string->symbol ,url))
 		      (path ,path)
@@ -131,23 +131,21 @@
       ((null? bindings)
        `(begin ,body))
       ((null? (cdr bindings))
-       `(%eval ,(cadr (car bindings))
+       `(%eval (list ,(cadr (car bindings)))
+	       (the-current-request)
 	       (lambda (,(caar bindings)) ,@body)))
       (else
        (let ((vec (gensym)))
-	  (let loop ((bindings bindings)
+	  (let loop ((obindings bindings)
 		     (i 0)
-		     (str '())
 		     (nbindings '()))
-	     (if (null? bindings)
-		 `(%eval ,(apply string-append "new Array(" (reverse! str))
+	     (if (null? obindings)
+		 `(%eval (list ,@(map cadr bindings))
+			 (the-current-request)
 			 (lambda (,vec) (let ,nbindings ,@body)))
-		 (let ((binding (car bindings)))
-		    (loop (cdr bindings)
+		 (let ((binding (car obindings)))
+		    (loop (cdr obindings)
 			  (+fx i 1)
-			  (cons* (if (pair? (cdr bindings)) "," ")")
-				 (cadr binding)
-				 str)
 			  (cons `(,(car binding) (vector-ref ,vec ,i))
 				nbindings)))))))))
 
@@ -166,11 +164,11 @@
 	 ((null? args)
 	  `(with-hop-response ,(%invoke-service arg0)
 			      (lambda (_) #f)
-			      raise))
+			      #f))
 	 ((null? (cdr args))
 	  `(with-hop-response ,(%invoke-service arg0)
 			      ,(car args)
-			      raise))
+			      #f))
 	 (else
 	  `(with-hop-response ,(%invoke-service arg0)
 			      ,(car args)

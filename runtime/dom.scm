@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Mon May 29 10:51:01 2006 (serrano)                */
+;*    Last change :  Fri Aug 25 09:37:26 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -317,7 +317,6 @@
    (if (not deep)
        (duplicate::xml-html node)
        (duplicate::xml-html node
-	  (prelude (dom-clone-node (xml-html-prelude node) deep))
 	  (attributes (dom-clone-node (xml-html-attributes node) deep))
 	  (body (dom-clone-node (xml-html-body node) deep)))))
        

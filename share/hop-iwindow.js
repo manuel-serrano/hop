@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Sat Jun  3 15:07:50 2006 (serrano)                */
+/*    Last change :  Fri Sep 15 19:18:07 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -23,6 +23,14 @@ function hop_iwindow_close( id ) {
 
    /* user event */
    if( win.onclose ) win.onclose();
+}
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_window_close ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_window_close( win ) {
+   return win.close( win );
 }
 
 /*---------------------------------------------------------------------*/
@@ -94,11 +102,11 @@ function hop_iwindow_iconify( id ) {
 	 // MS 3may2006: I think that for IE, we have to use
 	 // document.documentElement.scrollTop or document.body.scrollTop
 	 win.style.top = old + window.pageYOffset;
-	 win.style.setProperty( "position", "absolute", "" );
+	 hop_style_set( win, "position", "absolute" );
       } else {
 	 var old = win.offsetTop;
 	 win.style.top = old - window.pageYOffset;
-	 win.style.setProperty( "position", "fixed", "" );
+	 hop_style_set( win, "position", "fixed" );
       }
    }
 
@@ -133,8 +141,8 @@ function hop_iwindow_raise( win ) {
 /*    hop_iwindow_drag ...                                             */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_drag( event, win ) {
-   var dx = event.clientX - hop_element_x( win );
-   var dy = event.clientY - hop_element_y( win );
+   var dx = event.clientX - win.offsetLeft;
+   var dy = event.clientY - win.offsetTop;
    var ocursor = win.el_handle.style.cursor;
 
    hop_iwindow_raise( win );
@@ -145,7 +153,7 @@ function hop_iwindow_drag( event, win ) {
    win.el_body.style.visibility = "hidden";
    win.el_handle.style.cursor = "move";
 
-   document.onmousemove = function( event ) {
+   var mousemove = function( event ) {
       var nx = (event.clientX - dx);
       var ny = (event.clientY - dy);
 
@@ -154,10 +162,10 @@ function hop_iwindow_drag( event, win ) {
 	 var px = hop_element_x( p );
 	 var py = hop_element_y( p );
       
-	 if( (nx > px) && ((nx + win.offsetWidth) < px + p.offsetWidth) ) {
+	 if( (nx > px) && ((nx + win.offsetWidth) < (px + p.offsetWidth)) ) {
 	    win.style.left = nx;
 	 }
-	 if( (ny > py) && ((ny + win.offsetHeight) < py + p.offsetHeight) ) {
+	 if( (ny > py) && ((ny + win.offsetHeight) < (py + p.offsetHeight)) ) {
 	    win.style.top = ny;
 	 }
       } else {
@@ -165,18 +173,18 @@ function hop_iwindow_drag( event, win ) {
 	 if( ny > 0 ) win.style.top = ny;
       }
    }
+   hop_add_event_listener( document, "mousemove", mousemove );
 
    document.onmouseup = function( event ) {
-      document.onmousemove = false;
+      hop_remove_event_listener( document, "mousemove", mousemove );
       win.el_handle.style.cursor = ocursor;
       win.el_body.style.visibility = "visible";
 
       /* user event */
       if( win.ondrag ) win.ondrag();
    }
-   
-   event.preventDefault();
-   event.stopPropagation();
+
+   hop_stop_propagation( event );
 }
 
 /*---------------------------------------------------------------------*/
@@ -187,47 +195,50 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
    var y0 = event.clientY;
    var w0 = win.el_main.offsetWidth;
    var h0 = win.el_main.offsetHeight;
+   var mousemove;
 
    win.el_body.style.display = "none";
    
    if( widthp && heightp ) {
-      document.onmousemove = function( event ) {
+      mousemove = function( event ) {
 	 win.el_main.style.width = w0 + (event.clientX - x0);
 	 win.el_main.style.height = h0 + (event.clientY - y0);
-      }
+      };
+      hop_add_event_listener( document, "mousemove", mousemove );
    } else {
       if( widthp ) {
-	 document.onmousemove = function( event ) {
+	 mousemove = function( event ) {
 	    win.el_main.style.width = w0 + (event.clientX - x0);
-	 }
+	 };
+	 hop_add_event_listener( document, "mousemove", mousemove );
       } else {
 	 if( heightp ) {
-	    document.onmousemove = function( event ) {
+	    mousemove = function( event ) {
 	       win.el_main.style.height = h0 + (event.clientY - y0);
-	    }
+	    };
+	    hop_add_event_listener( document, "mousemove", mousemove );
 	 } else {
 	    var l0 = win.offsetLeft;
-
-	    document.onmousemove = function( event ) {
+	    mousemove = function( event ) {
 	       var w = w0 + (x0 - event.clientX);
 	       win.style.left = (l0 + w0) - w;
 	       win.el_main.style.width = w;
 	       win.el_main.style.height = h0 + (event.clientY - y0);
 	    }
+	    hop_add_event_listener( document, "mousemove", mousemove );
 	 }
       }
    }
 
    document.onmouseup = function( event ) {
       win.el_body.style.display = "block";
-      document.onmousemove = false;
+      hop_remove_event_listener( document, "mousemove", mousemove );
 
       /* user event */
       if( win.onresize ) win.onresize();
    }
    
-   event.preventDefault();
-   event.stopPropagation();
+   hop_stop_propagation( event );
 }
 
 /*---------------------------------------------------------------------*/
@@ -240,66 +251,66 @@ function make_hop_iwindow( id, klass, parent ) {
    win.className = klass;
    win.name = "hop-iwindow";
 
-   var t = "\
-<TABLE id='" + id + "-main' class='hop-iwindow' \
-       cellpadding='0' cellspacing='0' border='0'>\
-  <TR>\
-    <TD class='hop-iwindow-top' valign='top'>\
-      <TABLE id='" + id + "-handle' class='hop-iwindow-handle' width='100%'\
-             cellpadding='0' cellspacing='0' border='0'>\
-        <TR class='hop-iwindow-handle'>\
-          <TD class='hop-iwindow-iconify' align='left' onclick='hop_iwindow_iconify( \"" + id + "\" )'>&nbsp;</TD>\
-          <TD class='hop-iwindow-maximize' align='left' onclick='hop_iwindow_maximize( \"" + id + "\" )'>&nbsp;</TD>\
-          <TD class='hop-iwindow-up-title'>\
-            <TABLE class='hop-iwindow-title' width='100%' border='0' cellspacing='0' cellpadding='0'>\
-              <TR>\
-                <TD class='hop-iwindow-title-left'>&nbsp;</TD>\
-                <TD id='" + id + "-title' class='hop-iwindow-title-middle'>title</TD>\
-                <TD class='hop-iwindow-title-right'>&nbsp;</TD>\
-              </TR>\
-            </TABLE>\
-          </TD> \
-          <TD class='hop-iwindow-close' align='right' onclick='hop_iwindow_close( \"" + id + "\" )'>&nbsp;</TD>\
-        </TR>\
-      </TABLE>\
-    </TD>\
-  </TR>\
-  <TR class='hop-iwindow-body'>\
-    <TD id='" + id + "-content'  class='hop-iwindow-content' valign='top'>\
-      <TABLE class='hop-iwindow-body' width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'>\
-        <TR>\
-          <TD id='" + id + "-body' class='hop-iwindow-body' height='100%'></TD>\
-        </TR>\
-      </TABLE>\
-    </TD>\
-  </TR>\
-  <TR class='hop-iwindow-bottom'>\
-    <TD>\
-      <TABLE width='100%' border='0' cellspacing='0' cellpadding='0'>\
-        <TR>\
-          <TD id='" + id + "-resize-left' class='hop-iwindow-bottom-left'>&nbsp;</TD>\
-          <TD id='" + id + "-resize-middle' class='hop-iwindow-bottom-middle'>&nbsp;</TD>\
-          <TD id='" + id + "-resize-right' class='hop-iwindow-bottom-right'>&nbsp;</TD>\
-        </TR>\
-      </TABLE> \
-    </TD>\
-  </TR>\
+   var t = "\n\
+<TABLE id='" + id + "-main' class='hop-iwindow' \n\
+       cellpadding='0' cellspacing='0' border='0'>\n\
+  <TR>\n\
+    <TD class='hop-iwindow-top' valign='top'>\n\
+      <TABLE id='" + id + "-handle' class='hop-iwindow-handle' width='100%'\n\
+             cellpadding='0' cellspacing='0' border='0'>\n\
+        <TR class='hop-iwindow-handle'>\n\
+          <TD class='hop-iwindow-iconify' align='left' onclick='hop_iwindow_iconify( \"" + id + "\" )'>&nbsp;</TD>\n\
+          <TD class='hop-iwindow-maximize' align='left' onclick='hop_iwindow_maximize( \"" + id + "\" )'>&nbsp;</TD>\n\
+          <TD class='hop-iwindow-up-title'>\n\
+            <TABLE class='hop-iwindow-title' width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
+              <TR>\n\
+                <TD class='hop-iwindow-title-left'>&nbsp;</TD>\n\
+                <TD id='" + id + "-title' class='hop-iwindow-title-middle'>title</TD>\n\
+                <TD class='hop-iwindow-title-right'>&nbsp;</TD>\n\
+              </TR>\n\
+            </TABLE>\n\
+          </TD> \n\
+          <TD class='hop-iwindow-close' align='right' onclick='hop_iwindow_close( \"" + id + "\" )'>&nbsp;</TD>\n\
+        </TR>\n\
+      </TABLE>\n\
+    </TD>\n\
+  </TR>\n\
+  <TR class='hop-iwindow-body'>\n\
+    <TD id='" + id + "-content'  class='hop-iwindow-content' valign='top'>\n\
+      <TABLE class='hop-iwindow-body' width='100%' height='100%' border='0' cellspacing='0' cellpadding='0'>\n\
+        <TR>\n\
+          <TD id='" + id + "-body' class='hop-iwindow-body' height='100%'></TD>\n\
+        </TR>\n\
+      </TABLE>\n\
+    </TD>\n\
+  </TR>\n\
+  <TR class='hop-iwindow-bottom'>\n\
+    <TD>\n\
+      <TABLE width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
+        <TR>\n\
+          <TD id='" + id + "-resize-left' class='hop-iwindow-bottom-left'>&nbsp;</TD>\n\
+          <TD id='" + id + "-resize-middle' class='hop-iwindow-bottom-middle'>&nbsp;</TD>\n\
+          <TD id='" + id + "-resize-right' class='hop-iwindow-bottom-right'>&nbsp;</TD>\n\
+        </TR>\n\
+      </TABLE> \n\
+    </TD>\n\
+  </TR>\n\
 </TABLE>";
 
-   win.innerHTML = "\
-<TABLE class='hop-iwindow-shadow' cellspacing='0' cellpadding='0' border='0'>\
-  <TR>\
-    <TD class='hop-iwindow-shadow-nw' rowspan='2' colspan='2'>" + t + "</TD>\
-    <TD id='" + id + "-shadow-box' class='hop-iwindow-shadow-ne'>&nbsp;</TD>\
-  </TR>\
-  <TR>\
-    <TD class='hop-iwindow-shadow-e'>&nbsp;</TD>\
-  </TR>\
-  <TR>\
-    <TD class='hop-iwindow-shadow-sw'>&nbsp;</TD>\
-    <TD class='hop-iwindow-shadow-s'>&nbsp;</TD>\
-    <TD class='hop-iwindow-shadow-se'>&nbsp;</TD>\
-  </TR>\
+   win.innerHTML = "\n\
+<TABLE class='hop-iwindow-shadow' cellspacing='0' cellpadding='0' border='0'>\n\
+  <TR>\n\
+    <TD class='hop-iwindow-shadow-nw' rowspan='2' colspan='2'>\n" + t + "</TD>\n\
+    <TD id='" + id + "-shadow-box' class='hop-iwindow-shadow-ne'>&nbsp;</TD>\n\
+  </TR>\n\
+  <TR>\n\
+    <TD class='hop-iwindow-shadow-e'>&nbsp;</TD>\n\
+  </TR>\n\
+  <TR>\n\
+    <TD class='hop-iwindow-shadow-sw'>&nbsp;</TD>\n\
+    <TD class='hop-iwindow-shadow-s'>&nbsp;</TD>\n\
+    <TD class='hop-iwindow-shadow-se'>&nbsp;</TD>\n\
+  </TR>\n\
 </TABLE>";
 
    if( parent )
@@ -307,7 +318,7 @@ function make_hop_iwindow( id, klass, parent ) {
    else
       document.body.appendChild( win );
 
-   win.user_parent = parent;
+   win.user_parent = (parent && parent != undefined) ? parent : false;
    
    win.el_title = document.getElementById( id + "-title" );
    win.el_handle = document.getElementById( id + "-title" );
@@ -320,21 +331,25 @@ function make_hop_iwindow( id, klass, parent ) {
    win.el_shadow = win.childNodes[ 0 ];
    win.el_shadow_box = document.getElementById( id + "-shadow-box" );
 
-   win.el_handle.onmousedown = function( event ) {
-      hop_iwindow_drag( event, win )
-   };
+   hop_add_event_listener(
+      win.el_handle,
+      "mousedown",
+      function( event ) { hop_iwindow_drag( event, win ) } );
 
-   win.el_resize_middle.onmousedown = function( event ) {
-      hop_iwindow_resize( event, win, false, true );
-   };
+   hop_add_event_listener(
+      win.el_resize_middle,
+      "mousedown",
+      function( event ) { hop_iwindow_resize( event, win, false, true ) } );
+
+   hop_add_event_listener(
+      win.el_resize_right,
+      "mousedown",
+      function( event ) { hop_iwindow_resize( event, win, true, true ) } );
    
-   win.el_resize_right.onmousedown = function( event ) {
-      hop_iwindow_resize( event, win, true, true );
-   };
-   
-   win.el_resize_left.onmousedown = function( event ) {
-      hop_iwindow_resize( event, win, false, false );
-   };
+   hop_add_event_listener(
+      win.el_resize_left,
+      "mousedown",
+      function( event ) { hop_iwindow_resize( event, win, false, false ) } );
    
    return win;
 }
@@ -346,8 +361,7 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
    var win = document.getElementById( id );
    var isnew = false;
 
-   klass = klass ? klass : "hop-iwindow";
-
+   klass = klass ? ("hop-iwindow " + klass) : "hop-iwindow";
    if( win == null ) {
       win = make_hop_iwindow( id, klass, parent );
       isnew = true;
@@ -357,6 +371,7 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
 
    /* start hidden otherwise we loose the border on drag! */
    win.el_body.style.display = "none";
+
    if( hop_is_html_element( obj ) ) {
       var c = win.el_body.childNodes;
       var i = c.length;
@@ -411,3 +426,18 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
 
    return win;
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_window_open ...                                              */
+/*---------------------------------------------------------------------*/
+function hop_window_open( url, title, klass, width, height, x, y ) {
+   var p = klass ? klass : "toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, copyhistory=no, titlebar=no";
+   if( width ) p += ",width=" + width; else p += ",width=640";
+   if( height ) p += ",height=" + height; else p+= ",height=480";
+   if( x ) p += ",screenX=" + x + ",left=" + x;
+   if( y ) p += ",screenY=" + y + ",top=" + y;
+
+   return window.open( url, title, p );
+}
+   
+

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed May 31 07:03:44 2006 (serrano)                */
+#*    Last change :  Thu Sep 14 14:53:07 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -28,6 +28,9 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-foldlist.js hop-foldlist.css \
                   hop-iwindow.js hop-iwindow.css \
                   hop-editor.js hop-editor.css \
+                  hop-fileselect.js hop-fileselect.css \
+                  hopscheme.js \
+                  hop-debug.js hop-debug.css \
                   hop.scm icons buttons editor Makefile
 
 #*---------------------------------------------------------------------*/
@@ -60,7 +63,12 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-iwindow.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-editor.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-editor.css $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-fileselect.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-fileselect.css $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-debug.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-debug.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hopscheme.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/base64.js $(HOPSHAREDIR) && \
 	mkdir -p $(HOPSHAREDIR)/icons && \
 	chmod a+rx $(HOPSHAREDIR)/icons && \
@@ -101,11 +109,13 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop-iwindow.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-editor.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-editor.css && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-fileselect.js && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-fileselect.css && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-debug.js && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-debug.css && \
 	/bin/rm -f $(HOPSHAREDIR)/base64.js && \
+	/bin/rm -f $(HOPSHAREDIR)/hopscheme.js && \
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \
 	/bin/rm -rf $(HOPSHAREDIR)/icons && \
 	/bin/rm -rf $(HOPSHAREDIR)/buttons && \
 	/bin/rm -rf $(HOPSHAREDIR)/editor 
-
-
-

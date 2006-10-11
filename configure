@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Jun 17 14:21:58 2006 (serrano)                */
+#*    Last change :  Tue Oct 10 11:21:19 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -22,27 +22,30 @@ btags=bgltags
 bdepend=bgldepend
 cc=
 backend=native
+unzip=unzip
+jar="jar cfm"
 
-bcflags="-O3 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
+bcflags="-fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
-bcflagsdbg="-g"
-bcflagsbmem="-g2"
-bcflagsopt="-unsafe"
+bcflagsdbg="-g -O2 -cg"
+bcflagsbmem="-g2 -O2"
+bcflagsopt="-unsafe -O3"
 
 blflags="-copt \$(CPICFLAGS)"
 
 mimetypes=/etc/mime.types
+jsmimetype="text/javascript"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="1.3.3"
-devel=rc
+version="1.5.0"
+devel=pre
 
 url="http://hop.inria.fr/"
 
 etcdir=$prefix/etc
-bindir=$prefix/bin;
+bindir=$prefix/bin
 libdir=$prefix/lib
 sharedir=$prefix/share/hop
 webletsdir=
@@ -54,7 +57,7 @@ buildbindir=$PWD/bin
 
 repository=$HOME/prgm/project/hop/devel/repository
 
-bigloorequired=2.8a
+bigloorequired=2.8d
 bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
@@ -102,6 +105,9 @@ while : ; do
 
     --mimetypes=*)
       mimetypes="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --jsmimetype=*)
+      jsmimetype="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -160,6 +166,7 @@ while : ; do
       echo "   --webletsdir=dir...... alternative Hop weblets directory" >&2;
       echo "   --contribsdir=dir..... alternative Hop contribs directory" >&2;
       echo "   --mimetypes=file...... default mime.types file" >&2;
+      echo "   --jsmimetype=type..... default 'text/javascript'" >&2;
       echo "   --bigloo=comp......... The Bigloo compiler" >&2;
       echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
       echo "   --cigloo=comp......... The Cigloo compiler" >&2;
@@ -192,14 +199,48 @@ if [ ! -f $bigloo ]; then
    fi
 fi
 
+bglversion=`$bigloo -q -eval "(exit (display *bigloo-version*))"`
+
 $bigloo -q -eval "(exit (if (string>=? *bigloo-version* \"$bigloorequired\") 0 1))"
 
 if [ $? != "0" ]; then
   echo "*** ERROR:configure:bigloo. Aborting"
-  echo "Your version of Bigloo is too old. Release"
+  echo "Your version of Bigloo ($bglversion) is too old. Release"
   echo "   $bigloorequired"
   echo "or more recent is required. It may be downloaded at:"
   echo "   $bigloourl"
+  exit 1;
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Check the Bigloo libraries                                       */
+#*---------------------------------------------------------------------*/
+bgllibdir=`$bigloo -q -eval "(begin (print *ld-library-dir*) (exit 0))"`
+
+if [ ! -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
+  echo "*** ERROR:configure:bigloo pthread. Aborting"
+  echo ""
+  echo "This error is due to a bad Bigloo installation. It might be that"
+  echo "you have installed Bigloo without the PTHREAD support. Please"
+  echo "check your Bigloo installation."
+  exit 1;
+fi
+
+if [ ! -f $bgllibdir/bigloo/$bglversion/web.heap ]; then
+  echo "*** ERROR:configure:bigloo web. Aborting"
+  echo ""
+  echo "This error is due to a bad Bigloo installation. It might be that"
+  echo "you have installed Bigloo without the WEB support. Please"
+  echo "check your Bigloo installation."
+  exit 1;
+fi
+
+if [ ! -f $bgllibdir/bigloo/$bglversion/multimedia.heap ]; then
+  echo "*** ERROR:configure:bigloo multimedia. Aborting"
+  echo ""
+  echo "This error is due to a bad Bigloo installation. It might be that"
+  echo "you have installed Bigloo without the MULTIMEDIA support. Please"
+  echo "check your Bigloo installation."
   exit 1;
 fi
 
@@ -226,6 +267,11 @@ case $backend in
   "native")
      break;;
   "jvm")
+     etcdir=/resource/etc
+     libdir=/resource/lib
+     webletsdir=/resource/share/weblets
+     contribsdir=/resource/share/contribs
+     sharedir=/resource/share
      break;;
   "dotnet")
      break;;
@@ -256,8 +302,34 @@ if [ "$ccflags " = " " ]; then
   ccflags="$ccflags -I $bigloolibdir"
 fi
 
+#*---------------------------------------------------------------------*/
+#*    Jvm zip libs                                                     */
+#*---------------------------------------------------------------------*/
+jvmziplibs=
+jvminits=
 
-# Makefile.hopconfig
+# Hop librairies
+for p in scheme2js hopscheme hopwiki hop; do
+  elib="$buildlibdir/$p"_e-$version.zip;
+  slib="$buildlibdir/$p"_s-$version.zip;
+  jvmziplibs="$elib $slib $jvmziplibs";
+done
+
+# Bigloo libraries
+for p in pthread web multimedia sqlite ssl calendar; do
+  elib="$bigloolibdir/bigloo$p"_e-$bglversion.zip;
+  slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
+  jvmziplibs="$elib $slib $jvmziplibs";
+  jvminits="$bigloolibdir/$p"".init $jvminits";
+done
+
+slib="$bigloolibdir/bigloo_s.zip";
+jvmziplibs="$slib $jvmziplibs";
+jvminits="$bigloolibdir/pthread.init $jvminits";
+
+#*---------------------------------------------------------------------*/
+#*    Makefile.hopconfig                                               */
+#*---------------------------------------------------------------------*/
 mkmf=etc/Makefile.hopconfig
 
 rm -f $mkmf 2> /dev/null
@@ -275,8 +347,12 @@ cat $mkmf.in \
           -e "s|@BTAGS@|$btags|" \
           -e "s|@BDEPEND@|$bdepend|" \
           -e "s|@CC@|$cc|" \
+          -e "s|@UNZIP@|$unzip|" \
+          -e "s|@JAR@|$jar|" \
           -e "s|@BCFLAGS@|$bcflags|" \
           -e "s|@BLFLAGS@|$blflags|" \
+          -e "s|@JVMZIPLIBS@|$jvmziplibs|" \
+          -e "s|@JVMINITS@|$jvminits|" \
           -e "s|@CCFLAGS@|$ccflags|" \
           -e "s|@BUILDLIBDIR@|$PWD/lib|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \
@@ -301,6 +377,7 @@ echo ";* Automatically generated file (don't edit) */" > $configure
 
 cat etc/configure.scm.in \
     | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BACKEND@|$backend|" \
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
@@ -309,6 +386,7 @@ cat etc/configure.scm.in \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
+          -e "s|@JSMIMETYPE@|$jsmimetype|" \
     >> $configure
 
 # etc/hoprc.hop
@@ -384,9 +462,9 @@ echo "" >> $init
 #*---------------------------------------------------------------------*/
 echo "** Configuration summary **"
 echo 
-echo "Release features:"
+echo "Release:"
 echo "  Hop release number.................... $version"
-echo "  Bigloo................................ $bigloo"
+echo "  Bigloo................................ $bigloo ($bglversion)"
 echo "  Backend............................... $backend"
 echo "  Bigloo compilation flags.............. $bcflags"
 echo
@@ -398,3 +476,7 @@ echo "  share directory....................... $sharedir"
 echo "  weblets directory..................... $webletsdir"
 echo "  contribs directory.................... $contribsdir"
 echo 
+echo "Internals:"
+echo "  Mime types............................ $mimetypes"
+echo "  Default JavaScript mime type.......... $jsmimetype"
+

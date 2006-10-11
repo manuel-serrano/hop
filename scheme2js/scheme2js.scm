@@ -11,6 +11,7 @@
 	   symbol
 	   side
 	   tail-rec
+	   hack-encapsulation
 	   statements
 	   node-elimination
 	   traverse
@@ -18,10 +19,13 @@
 	   constant-propagation
 	   var-propagation
 	   while
+	   trampoline
 	   capture
 	   protobject
 	   liveness
 	   rm-unused-vars
+	   locations
+	   callcc
 	   verbose)
    (main my-main)
    (export (scheme2js top-level::pair-nil js-interface::pair-nil config p)
@@ -44,12 +48,16 @@
 		  (constant-propagation #t)
 		  (var-propagation #t)
 		  (while #f)
+		  (correct-modulo #f)
 		  (optimize-calls #t)
 		  (optimize-var-number #f)
 		  (optimize-boolify #t)
 		  (optimize-set! #t)
 		  (encapsulate-parts #f)
-		  (print-locations #f)))
+		  (trampoline #f)
+		  (print-locations #f)
+		  (return #f)
+		  (call/cc #f)))
       ht))
 
 (define (read-rev-port in-port)
@@ -87,11 +95,17 @@
 (define (dot-out p tree)
    (with-output-to-port p
       (lambda ()
-	 (let ((imported tree.imported))
-	    (delete! tree.imported)
-	    (pobject-dot-out tree)
-	    (if imported
-		(set! tree.imported imported))))))
+	 (pobject-dot-out tree (lambda (id)
+				  (not (memq id
+					     '(imported traverse traverse0
+							traverse1 traverse2
+							traverse0! traverse1!
+							traverse2! clone
+							deep-clone
+							already-defined?
+							single-value
+							var
+   ))))))))
 
 (define *out-file* #f)
 (define *in-files* '())
@@ -138,9 +152,34 @@
       (("--js-this"
 	(help "procedures may use Javascript's 'this' variable."))
        (hashtable-put! config-ht 'procedures-provide-js-this #t))
+      (("--js-return"
+	(help "adds the special-form 'return!'."))
+       (hashtable-put! config-ht 'return #t))
       (("--no-tailrec"
 	(help "don't optimize tail-recs."))
        (hashtable-put! config-ht 'optimize-tail-rec #f))
+      (("--trampoline"
+	(help "add trampolines around tail-recursive calls"))
+       (hashtable-put! config-ht 'trampoline #t))
+      (("--max-tail-depth"
+	?depth
+	(help (string-append "maximum tail-call depth before "
+			     "the trampoline is used. Default: "
+			     (number->string (default-max-tail-call-depth)))))
+       (let ((new-depth (string->number depth)))
+	  (if (not new-depth)
+	      (error #f
+		     "--max-tail-depth requires a number as argument"
+		     depth))
+	  (hashtable-put! config-ht 'max-tail-depth new-depth)))
+      (("--call/cc" (help "allow call/cc"))
+       (hashtable-put! config-ht 'call/cc #t))
+      (("--no-constant-propagation"
+	(help "don't propagate constants."))
+       (hashtable-put! config-ht 'constant-propagation #f))
+      (("--correct-modulo"
+	(help "(module -13 4) will return R5RS's 3 instead of faster -1."))
+       (hashtable-put! config-ht 'correct-modulo #t))
       (("--no-optimize-calls"
 	(help "don't inline simple runtime-functions."))
        (hashtable-put! config-ht 'optimize-calls #f))
@@ -150,10 +189,10 @@
       (("--no-optimize-boolify"
 	(help "always test against false. Even if the test is a bool."))
        (hashtable-put! config-ht 'optimize-boolify #f))
-      (("-d" ?stage (help "debug stage"))
-       (hashtable-put! config-ht 'debug-stage (string->symbol stage)))
-      ((("-l" "--print-locs") (help "print locations"))
+      ((("-l" "--print-locations") (help "print locations"))
        (hashtable-put! config-ht 'print-locations #t))
+      (("-d" ?stage (help "debug compiler-stage"))
+       (hashtable-put! config-ht 'debug-stage (string->symbol stage)))
       (else
        (set! *in-files* (cons else *in-files*)))))
 
@@ -187,10 +226,21 @@
       (if (eq? (config 'debug-stage) 'node-elim2) (dot-out p tree))
       (while! tree)
       (if (eq? (config 'debug-stage) 'while) (dot-out p tree))
+      (trampoline tree)
+      (if (eq? (config 'debug-stage) 'trampoline) (dot-out p tree))
+
+      (hack-encapsulation! tree)
+
+      (callcc-check-points tree)
+      (if (eq? (config 'debug-stage) 'call/cc-cp) (dot-out p tree))
       (statements! tree)
       (if (eq? (config 'debug-stage) 'statements) (dot-out p tree))
       (node-elimination! tree)
       (if (eq? (config 'debug-stage) 'node-elim3) (dot-out p tree))
+      (callcc-late tree)
+      (if (eq? (config 'debug-stage) 'call/cc-late) (dot-out p tree))
+      (locations tree)
+      (if (eq? (config 'debug-stage) 'locations) (dot-out p tree))
       (let* ((out-p (if (config 'debug-stage)
 			(open-output-string)
 			p))

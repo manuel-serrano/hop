@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Apr 10 11:43:00 2006                          */
-/*    Last change :  Fri Jun 23 15:18:13 2006 (eg)                     */
+/*    Last change :  Fri Aug  4 09:08:28 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    <EDITOR> JavaScript support                                      */
 /*=====================================================================*/
@@ -39,19 +39,19 @@ function hop_edit_init(id, popups_dir, submit, cancel)
     hop_edit_popups_dir = popups_dir;
 
     // Install a listener fo KeyPress events
-    iframe.contentDocument.addEventListener("keypress", 
-					    function(e) {
-						hop_edit_keypress_hdlr(e, id);
-					    },
-					    true);
+    hop_add_event_listener( iframe.contentDocument,
+			    "keypress", 
+			    function(e) { hop_edit_keypress_hdlr(e, id); },
+			    true );
     // Install an event hdler to copy back iframe content to textarea if submitting
     for (var i=0; i < document.forms.length; i++) {
-    	document.forms[i].addEventListener("submit",
-					   function (e) {
-					       if (!hop_edit_src)
-						   hop_edit_update_textarea(id); 
-					   },
-					   true);
+       hop_add_event_listener( document.forms[i],
+			       "submit",
+			       function (e) { 
+			          if (!hop_edit_src)
+			             hop_edit_update_textarea(id); 
+			       },
+			       true );
     }
     // Initialize Selection boxes
     hop_edit_style_set(id, "p");
@@ -68,6 +68,7 @@ function hop_edit_init(id, popups_dir, submit, cancel)
 /*---------------------------------------------------------------------*/
 function hop_edit_keypress_hdlr(e, id)
 {
+    if (e==undefined) e=window.event;
     if (e.ctrlKey) {
 	var propagate=false,
 	    char=e.charCode;
@@ -78,8 +79,7 @@ function hop_edit_keypress_hdlr(e, id)
 	  default: propagate = true;
 	}
 	if (!propagate) {
-	    e.preventDefault();
-	    e.stopPropagation();
+	   hop_stop_propagation(e);
 	}
     }
 }

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon May 29 14:39:25 2006 (serrano)                */
+/*    Last change :  Thu Sep 21 15:25:00 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -16,20 +16,30 @@
 /*---------------------------------------------------------------------*/
 var undefined;
 
-/*    var res = "";                                                    */
-/*    for( var p in Object ) {                                         */
-/*       res += p + "\n";                                              */
-/*    }                                                                */
-/*    res += "--------------------------------------------\n\n";       */
-/*    document.write( res );                                           */
-/* res = "";                                                           */
-
 if( window.HTMLFormElement == undefined ) {
    window.HTMLFormElement = window.HTMLForm;
 }
 
 if( window.HTMLCollection == undefined ) {
    window.HTMLCollection = false;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_properties_to_string ...                                     */
+/*---------------------------------------------------------------------*/
+function hop_properties_to_string( obj ) {
+   var res = "";
+   var i = 0;
+   for( var p in obj ) {
+      if( i == 10 ) {
+	 res += p + "\n";
+	 i = 0;
+      } else {
+	 i++;
+	 res += p + " ";
+      }
+   }
+   return res;
 }
 
 /*---------------------------------------------------------------------*/
@@ -43,8 +53,18 @@ if( window.HTMLElement == undefined ) {
 	      && (typeof obj.innerHTML == "string"));
    } 
 } else {
-   hop_is_html_element = function hop_is_html_element( obj ) {
-      return (obj instanceof HTMLElement);
+   var ifr = document.createElement( "iframe" );
+
+   if( ifr instanceof HTMLElement ) {
+      hop_is_html_element = function hop_is_html_element( obj ) {
+	 return (obj instanceof HTMLElement);
+      }
+   } else {
+      /* this is konqueror */
+      var ifproto = ifr.__proto__;
+      hop_is_html_element = function hop_is_html_element( obj ) {
+	 return (obj instanceof HTMLElement) || (obj.__proto__ == ifproto);
+      }
    }
 }
 
@@ -54,8 +74,18 @@ if( window.HTMLElement == undefined ) {
 var hop_make_xml_http_request;
 
 if( window.XMLHttpRequest != undefined ) {
-   hop_make_xml_http_request = function hop_make_xml_http_request() {
-      return new XMLHttpRequest();
+   var req = new XMLHttpRequest();
+   if( req.overrideMimeType != undefined ) {
+      hop_make_xml_http_request = function hop_make_xml_http_request() {
+	 var req = new XMLHttpRequest();
+	 /* this is required by some versions of Mozilla */
+/* 	 req.overrideMimeType( "text/xml" );                           */
+	 return req;
+      }
+   } else {
+      hop_make_xml_http_request = function hop_make_xml_http_request() {
+	 return new XMLHttpRequest();
+      }
    }
 } else {
    if( window.ActiveXObject != undefined ) {
@@ -120,3 +150,78 @@ hop_style_set = function( obj, property, value ) {
 
    return hop_style_set( obj, property, value );
 }
+
+/*---------------------------------------------------------------------*/
+/*    Event handlers                                                   */
+/*---------------------------------------------------------------------*/
+var hop_add_event_listener = undefined;
+var hop_remove_event_listener = undefined;
+var hop_stop_propagation = undefined;
+
+if( document.implementation.hasFeature( "Events" , "2.0") ) {
+   hop_add_event_listener = function( obj, event, proc, capture ) {
+      return obj.addEventListener( event, proc, capture );
+   }
+   hop_remove_event_listener = function( obj, event, proc, capture ) {
+      return obj.removeEventListener( event, proc, capture );
+   }
+   hop_stop_propagation = function( event, def ) {
+      if( !def ) event.preventDefault();
+      event.stopPropagation();
+   }
+} else {
+   hop_add_event_listener = function( obj, event, proc, capture ) {
+      return obj.attachEvent( "on" + event, function(_) {return proc(window.event)});
+   }
+   hop_remove_event_listener = function( obj, event, proc, capture ) {
+      return obj.detachEvent( "on" + event, proc );
+   }
+   hop_stop_propagation = function( event, def ) {
+      if( !def ) event.cancelBubble = true;
+      event.returnValue = false;
+   }
+}
+
+
+/*---------------------------------------------------------------------*/
+/*    hop_mozillap ...                                                 */
+/*---------------------------------------------------------------------*/
+function hop_mozillap() {
+   return navigator.userAgent.indexOf( "Mozilla" ) >= 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_msiep ...                                                    */
+/*---------------------------------------------------------------------*/
+function hop_msiep() {
+   return navigator.userAgent.indexOf( "MSIE" ) >= 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_page ...                                                     */
+/*---------------------------------------------------------------------*/
+/* var hop_page_x = undefined;                                         */
+/* var hop_page_y = undefined;                                         */
+/*                                                                     */
+/* if( false ) {                                                       */
+/*    if( document.body.scrollLeft ) {                                 */
+/*       hop_page_x = function hop_page_x( event ) {                   */
+/* 	 return event.clientX + document.body.scrollLeft;              */
+/*       }                                                             */
+/*       hop_page_x = function hop_page_x( event ) {                   */
+/* 	 return event.clientY + document.body.scrollTop;               */
+/*       } else {                                                      */
+/*       hop_page_x = function hop_page_x( event ) {                   */
+/* 	 return event.clientX + document.documentElement.scrollLeft;   */
+/*       }                                                             */
+/*       hop_page_x = function hop_page_x( event ) {                   */
+/* 	 return event.clientY + document.documentElement.scrollTop;    */
+/*       }                                                             */
+/* } else {                                                            */
+/*    hop_page_x = function hop_page_x( event ) {                      */
+/*       return event.pageX;                                           */
+/*    }                                                                */
+/*    hop_page_y = function hop_page_y( event ) {                      */
+/*       return event.pageY;                                           */
+/*    }                                                                */
+/* }                                                                   */

@@ -7,6 +7,7 @@
 	   nodes
 	   var
 	   side
+	   use-count
 	   verbose)
    (export (constant-propagation! tree::pobject)))
 
@@ -15,6 +16,7 @@
        (begin
 	  (verbose "constant-propagation")
 	  (side-effect tree)
+	  (use-count tree)
 	  (overload traverse! propagate! (Node
 					  Var-ref
 					  Set!)
@@ -28,7 +30,11 @@
       (if (and single-value
 	       (inherits-from? single-value (node 'Const))
 	       (or (config 'inline-globals)
-		   (not this.var.is-global?)))
+		   (not this.var.is-global?))
+	       (or (= this.var.uses 1)
+		   (number? single-value.value)
+		   (symbol? single-value.value)
+		   (char? single-value.value)))
 	  (new-node Const single-value.value)
 	  this)))
 

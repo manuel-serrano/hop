@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Jun  3 09:30:51 2006 (serrano)                */
+/*    Last change :  Fri Aug  4 09:51:12 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -156,7 +156,7 @@ div.hop-notepad-tabs {
   margin-left: 10px;
 }
 
-div.hop-notepad-tabs > span {
+div.hop-notepad-tabs span.hop-nptab {
   font-size: small;
   border-color: $border-color;
   margin: 0 4px 0 0;

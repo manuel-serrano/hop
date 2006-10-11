@@ -107,9 +107,12 @@
 	  (set! this.lvalue var-ref))))
 
 (define-pmethod (Program-collect symbol-table is-global?)
-   (let ((local-scope (make-scope)))
+   (let* ((local-scope (make-scope))
+	  (new-symbol-table (add-scope symbol-table local-scope)))
       (set! this.scope local-scope)
-      (this.traverse2 (add-scope symbol-table local-scope) #t)))
+      (if (config 'procedures-provide-js-this)
+	  (symbol-var-set! symbol-table 'this (new-node JS-This-Var)))
+      (this.traverse2 new-symbol-table #t)))
 
 (define-pmethod (Scope-collect symbol-table is-global?)
    (let ((local-scope (make-scope)))
@@ -124,11 +127,12 @@
       (this.body.traverse symbol-table is-global?)))
 
 (define-pmethod (Lambda-collect symbol-table is-global?)
-   (let ((local-scope (make-scope)))
+   (let* ((local-scope (make-scope))
+	  (new-symbol-table (add-scope symbol-table local-scope)))
       (set! this.scope local-scope)
       (if (config 'procedures-provide-js-this)
-	  (symbol-var-set! symbol-table 'this (new-node JS-This-Var)))
-      (this.traverse2 (add-scope symbol-table local-scope) #f)))
+	  (symbol-var-set! new-symbol-table 'this (new-node JS-This-Var)))
+      (this.traverse2 new-symbol-table #f)))
       
 
 ;; ============================================================================

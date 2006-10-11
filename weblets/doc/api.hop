@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Mon May 29 14:40:02 2006 (serrano)                */
+;*    Last change :  Sat Sep 30 07:03:26 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -20,11 +20,12 @@
 	   hopdoc_search)
 
    (export (setup-api-tables!)
+	   (index-table)
 	   doc/api
 	   (<API>)
 	   (decorate-api-code code)
 	   (decorate-api-wiki-code code)
-	   (<APIREF> key api)
+	   (<APIREF> key api #!key (pad "api"))
 	   (<OBJ->STRING> expr)
 	   (markup-parser k)
 	   (server-parser k)
@@ -82,10 +83,19 @@
 
 (define *see-also-table* #unspecified)
 
+(define *index-table* #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    index-table ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (index-table)
+   *index-table*)
+
 ;*---------------------------------------------------------------------*/
 ;*    doc/api ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api page)
+   (setup-api-tables!)
    (let ((s (make-wiki-request-syntax *server-syntax* (the-current-request))))
       (doc-page page s)))
 
@@ -113,11 +123,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    select-api-pad ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (select-api-pad api k)
+(define (select-api-pad api k #!key (pad "api"))
    ~(with-hop ($doc/api $api)
        (lambda (r)
-	  (notepad-select "doc-notepad" "doc-api")
-	  (let ((el (document.getElementById "pad-api")))
+	  (notepad-select "doc-notepad" $(string-append "doc-" pad))
+	  (let ((el (document.getElementById $(string-append "pad-" pad))))
 	     (set! el.innerHTML r)
 	     (let ((eo (and $k (document.getElementById $k))))
 		(if (and eo (not (null? eo)))
@@ -336,7 +346,24 @@
 	    (multiple-value-bind (menu table)
 	       (make-doc-tables 0 "<procedure>")
 	       (set! *client-menu-table* menu)
-	       (set! *client-table* table))))))
+	       (set! *client-table* table))
+	    (set! *index-table* (make-hashtable))
+	    (hashtable-for-each *markup-table*
+				(lambda (k o)
+				   (hashtable-put! *index-table* k
+						   (list 1 o))))
+	    (hashtable-for-each *server-table*
+				(lambda (k o)
+				   (hashtable-put! *index-table* k
+						   (list 0 o))))
+	    (hashtable-for-each *class-table*
+				(lambda (k o)
+				   (hashtable-put! *index-table* k
+						   (list 0 o))))
+	    (hashtable-for-each *client-table*
+				(lambda (k o)
+				   (hashtable-put! *index-table* k
+						   (list 0 o))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-markups ...                                                  */
@@ -368,7 +395,7 @@
       (with-lock *server-mutex*
 	 (lambda ()
 	    (when (or (not (=elong *server-time* (file-modification-time dir)))
-		      (not (hashtable* *see-also-table*)))
+		      (not (hashtable? *see-also-table*)))
 	       (set! *see-also-table* (make-hashtable)))
 	    (let ((old (hashtable-get *see-also-table* keyword)))
 	       (or old
@@ -386,10 +413,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <APIREF> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (<APIREF> key api)
+(define (<APIREF> key api #!key (pad "api"))
    (<SPAN> 
       :class "href" 
-      :onclick (select-api-pad (make-file-name (doc-api-dir) api) key)
+      :onclick (select-api-pad (make-file-name (doc-api-dir) api) key :pad pad)
       key))
 
 ;*---------------------------------------------------------------------*/

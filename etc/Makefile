@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri May  5 09:11:31 2006 (serrano)                */
+#*    Last change :  Fri Sep 29 11:28:27 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -23,3 +23,11 @@ POPULATION	= Makefile Makefile.contrib \
 		  Makefile.hopconfig.in configure.scm.in hoprc.hop.in \
 		  hop.init.in scheme2js.init.in hopscheme.init.in \
                   hopwiki.init.in
+
+install:
+	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
+	chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
+
+uninstall:
+	$(RM) -f $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
+

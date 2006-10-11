@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Jun 13 12:13:14 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 09:02:12 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -38,7 +38,7 @@
 	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
 	      :jscript "hop-fx.js"
 	      :css (format "~a/doc.hss" (doc-dir))
-	      (<TITLE> "Hop documentation center (APIs & libraries)")
+	      (<TITLE> "Hop documentation center (APIs &amp; libraries)")
 	      script)
       (<BODY>
 	 (<DIV>
@@ -96,8 +96,10 @@
    (define popup-letter-menu
       ~(let ((el this)
 	     (menu $popup))
-	  (event.preventDefault)
-	  (event.stopPropagation)
+	  (unless (eq? event.preventDefault #unspecified)
+	     (event.preventDefault))
+	  (unless (eq? event.stopPropagation #unspecified)
+	     (event.stopPropagation))
 	  (with-hop ($click this.innerHTML)
 	     (lambda (h)
 		(if (> h.length 0)
@@ -285,14 +287,19 @@
 	 :onclick ~(let ((e1 (document.getElementById $id1))
 			 (e2 (document.getElementById $id2))
 			 (b (document.getElementById $id)))
+		      (stop-event-propagation event #t)
 		      (if b.edit
 			  (begin
 			     (set! b.edit #f)
 			     (set! b.innerHTML "cancel")
-			     (set! e2.style.width e1.offsetWidth)
-			     (set! e2.style.height e1.offsetHeight)
-			     (set! e2.style.top e1.offsetTop)
-			     (set! e2.style.left e1.offsetLeft)
+			     (set! e2.style.width
+				   (string-append e1.offsetWidth "px"))
+			     (set! e2.style.height
+				   (string-append e1.offsetHeight "px"))
+			     (set! e2.style.top
+				   (string-append e1.offsetTop "px"))
+			     (set! e2.style.left
+				   (string-append e1.offsetLeft "px"))
 			     (set! e2.style.display "block")
 			     (set! e1.style.display "none"))
 			  (begin
@@ -317,4 +324,3 @@
 	  (<TEXTAREA> :class "example" :id id2 code)
 	  (<DIV> :class "example"
 		 (<PRE> :class "example" :id id1 api-code "\n"))))))
-

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Tue Jun 13 10:52:40 2006 (serrano)                */
+;*    Last change :  Fri Sep 22 07:46:19 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -25,7 +25,9 @@
 ;*    *hop-aliases* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *hop-aliases*
-   '((timeout-start hop_timeout)
+   '((with-hop with_hop)
+     (with-hop-call/cc with_hop_callcc)
+     (timeout-start hop_timeout)
      (timeout-clear! hop_clear_timeout)
      (timeout-reset! hop_timeout_reset)
      (tooltip-hide hop_tooltip_hide)
@@ -39,6 +41,8 @@
      (notepad-select hop_notepad_select)
      (iwindow-open hop_iwindow_open)
      (iwindow-close hop_iwindow_close)
+     (window-open hop_window_open)
+     (window-close hop_window_close)
      (paned-fraction hop_paned_fraction_get)
      (paned-fraction-set! hop_paned_fraction_set)
      (paned-onresize hop_paned_onresize_get)
@@ -73,6 +77,7 @@
      (dom-replace-child! dom_replace_child)
      (dom-get-element-by-id dom_get_element_by_id)
      (dom-get-elements-by-tag-name dom_get_elements_by_tag_name)
+     (dom-get-elements-by-class dom_get_elements_by_class)
      (dom-node-eval hop_node_eval)
      (<A> dom_create_a)
      (<ABBR> dom_create_abbr)
@@ -178,6 +183,13 @@
      (<SORTTABLE> dom_create_sorttable)
      (cookie-remove! hop_cookie_remove)
      (cookie-get hop_cookie_get_value)
-     (cookie-set! hop_cookie_set_value)))
-
-
+     (cookie-set! hop_cookie_set_value)
+     (request-get hop_request_get)
+     (request-set! hop_request_set)
+     (debug hop_debug)
+     (debug-reset! hop_debug_reset)
+     (add-event-listener! hop_add_event_listener)
+     (remove-event-listener! hop_remove_event_listener)
+     (stop-event-propagation hop_stop_propagation)
+     (hop-style-set! hop_style_set)
+     (html-element? hop_is_html_element)))

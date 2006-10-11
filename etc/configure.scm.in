@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Thu May 11 09:28:43 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:53:54 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -16,6 +16,7 @@
    (export (hop-configure ::bstring)
 	   (hop-name)
            (hop-version)
+           (hop-backend)
 	   (hop-url)
 	   (hop-bin-directory)
 	   (hop-lib-directory)
@@ -23,10 +24,12 @@
 	   (hop-share-directory)
 	   (hop-contribs-directory)
            (hop-weblets-directory)
-           (hop-mime-types-file))
+           (hop-mime-types-file)
+	   (hop-configure-javascript-mime-type))
    
    (eval   (export hop-name)
 	   (export hop-version)
+	   (export hop-backend)
 	   (export hop-url)
 	   (export hop-etc-directory)
 	   (export hop-bin-directory)
@@ -34,7 +37,8 @@
 	   (export hop-share-directory)
 	   (export hop-contribs-directory)
            (export hop-weblets-directory)
-           (export hop-mime-types-file)))
+           (export hop-mime-types-file)
+	   (export hop-configure-javascript-mime-type)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure ...                                                */
@@ -43,6 +47,8 @@
    (case (string->symbol config)
       ((--version)
        (print (hop-version)))
+      ((--backend)
+       (print (hop-backend)))
       ((--etcdir)
        (print (hop-etc-directory)))
       ((--bindir)
@@ -57,6 +63,8 @@
        (print (hop-weblets-directory)))
       ((--mimetypes)
        (print (hop-mime-types-file)))
+      ((--javascript-mime-type)
+       (print (hop-configure-javascript-mime-type)))
       ((--url)
        (print (hop-url)))
       (else
@@ -66,6 +74,7 @@
 	     (newline)
 	     (print "Option:")
 	     (print "  [--version]")
+	     (print "  [--backend]")
 	     (print "  [--etcdir]")
 	     (print "  [--bindir]")
 	     (print "  [--libdir]")
@@ -73,6 +82,7 @@
 	     (print "  [--contribsdir]")
              (print "  [--webletsdir]")
              (print "  [--mimetypes]")
+             (print "  [--javascript-mime-type]")
 	     (print "  [--url]"))))))
 	     
 ;*---------------------------------------------------------------------*/
@@ -80,6 +90,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-name) "Hop")
 (define (hop-version) "@VERSION@")
+(define (hop-backend) "@BACKEND@")
 (define (hop-url) "@URL@")
 
 ;*---------------------------------------------------------------------*/
@@ -96,5 +107,6 @@
 ;*    Misc ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-mime-types-file) "@MIMETYPES@")
+(define (hop-configure-javascript-mime-type) "@JSMIMETYPE@")
 
            

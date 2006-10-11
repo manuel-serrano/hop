@@ -1,0 +1,147 @@
+<doc> File selectors
+
+== Description ==
+
+These markups implement //File selectors// in HOP documents. The first
+markup, ++<FILESELECT>++ is composed of a small selection text. By contrast
+with a regular ++<INPUT>++ element, it provides automatic file completion.
+Each time the charcter ++tab++ is typed-in, the server proposes to the
+client a list of possible file completions.
+
+The markup ++<FILEBROWSE>++ pops up a new window containing a file browser
+showing the file of the server.
+
+== Synopsis ==
+
+=== Server ===
+
+  (<FILESELECT> arg ...)
+  (<FILEBROWSE> arg ...)
+
+  (hop-filebrowse arg ...)
+
+=== Requirements ===
+
+Client codes using //File selectors// need to load the script
+++hop-fileselect.js++. They also need to load the
+++hop-fileselect.css++ style sheet. Hence, documents using //File
+selectors// must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-fileselect.js" :css "hop-fileselect.css")
+
+
+Client codes using //File browsers// need to load the script
+++hop-fileselect.js++, ++hop-tree.js++, and ++hop-iwindow.js++. They
+also need to load the ++hop-fileselect.css++, ++hop-tree.css++, and
+++hop-iwindow.css++ style sheets. Hence, documents using //File
+browsers// must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-fileselect.js" :css "hop-fileselect.css"
+          :jscript "hop-tree.js" :css "hop-tree.css"
+          :jscript "hop-iwindow.js" :css "hop-iwindow.css")
+
+
+== Examples ==
+
+<example><FILESELECT>, <FILEBROWSE></example>
+
+== Server Definitions ==
+<server>
+
+=== ++<FILESELECT>++ ===
+<markup> <FILESELECT>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| :value       |  string   |              | the default value.          |
+| :size        |  integer  |     10       | the size in character.      |
+</arguments>
+
+The argument :value specifies an initial value for the file selector.
+The argument :size give the length expressed in number of characters.
+
+When the value of the ++<FILESELECT>++ changes (i.e., when the
+character ++Return++ is typed in) the event handler :onchange is
+invoked.  
+
+The ++<FILESELECT>++ widget handles access controls. That is, it does not
+complete inside directories for which the access is not granted.
+</markup>
+
+=== ++<FILEBROWSE>++ ===
+<markup> <FILEBROWSE>
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description                ^
+| :id        |  string     |  //random//  | element identifier.               |
+| :title     |  string     |  //value//   | the title of the browser window.  |
+| :value     |  string     |              | the root directory.               |
+| :path      |  string     |              | the directory to be opened.       |
+| :text      |  string     |  ++Browse++  | the button text.                  |
+| :width     |  integer    |  ++500++     | the pixel width.                  |
+| :height    |  integer    |  ++400++     | the pixel height.                 |
+| :filter    |  procedure  |              | filter filtering.                 |
+| :multiselect  |  boolean  |   ++#f++  | enable/disable multiple selections. |
+</arguments>
+
+The argument :value specifies the root directory of the browser. Files located
+on parents of this directory won't be accessible by this browser.
+
+The argument :path specifies an optional directory to be //opened// on the
+browser at creation time.
+
+The argument :filter specifies a predicate that returns ++#t++ when a given
+file should be exposed by the browser. The default :filter value filters out
+file names starting the a dot character (++#\.++).
+
+When a value of the ++<FILEBROWSE>++ is selected (i.e., when the
+mouse is clicked over a row) the event handler :onselect is
+invoked. 
+
+The event :onclick is executed when the browse button is clicked.
+
+The ++<FILEBROWSE>++ widget is aware of access controls. That
+is, it does expose directories for which the access is not granted.
+
+</markup>
+
+=== ++(hop-filebrowse :handler :value :path ...)++ ===
+<procedure> hop-filebrowse
+<arguments>
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description                ^
+| :handler   |  client procedure  |       | the client action.                |
+| :value     |  string     |              | the root directory.               |
+| :path      |  string     |              | the directory to be opened.       |
+| :filter    |  procedure  |              | filter filtering.                 |
+| :title     |  string     |  //value//   | the title of the browser window.  |
+| :width     |  integer    |  ++500++     | the pixel width.                  |
+| :height    |  integer    |  ++400++     | the pixel height.                 |
+| :multiselect  |  boolean  |   ++#f++  | enable/disable multiple selections. |
+</arguments>
+</procedure>
+
+== Style ==
+<style>
+This section describes the various CSS elements used to configure
+file selectors.
+
+=== ++fileselect++ ===
+<css> fileselect
+
+This element specifies the graphical configuration of the input text
+of the file selector. The HSS selector ++fileselect++ is an alias
+for ++input.hop-fileselect++.
+</css>
+
+=== ++filebrowse++ ===
+<css> filebrowse
+
+This element specifies the graphical configuration of the main division
+of the file browser. The HSS selector ++filebrowse++ is an alias
+for ++div.hop-filebrowse++.
+</css>
+
+</doc>

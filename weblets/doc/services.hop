@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Mon May 29 13:17:20 2006 (serrano)                */
+;*    Last change :  Fri Oct  6 07:19:15 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -14,8 +14,6 @@
 ;*---------------------------------------------------------------------*/
 (module hopdoc_services
 
-   (library hopwiki)
-   
    (import  hopdoc_wiki
 	    hopdoc_widgets
 	    hopdoc_config)
@@ -54,6 +52,7 @@
 	  (lambda (e)
 	     (http-internal-error e "Error in source code"))
 	  (instantiate::http-response-hop
+	     (request (the-current-request))
 	     (content-type "text/html")
 	     (bodyp #t)
 	     (xml (with-input-from-string expr
@@ -74,6 +73,7 @@
 	  (lambda (e)
 	     (http-internal-error e "Error in source code"))
 	  (instantiate::http-response-hop
+	     (request (the-current-request))
 	     (content-type "text/html")
 	     (bodyp #t)
 	     (xml (with-input-from-file (make-file-path (doc-dir) "examples" file)

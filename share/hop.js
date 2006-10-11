@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jun 13 10:53:11 2006 (serrano)                */
+/*    Last change :  Tue Oct 10 16:02:46 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -212,20 +212,20 @@ function hop_default_failure( http ) {
    t = t.replace( /<\/html>/g, "</div>" );
    t = t.replace( /<body[^>]*>/g, "<div style='background: transparent; font-family: sans serif; -moz-opacity: 0.87'>" );
    t = t.replace( /<\/body>/g, "</div>" );
-   t = t.replace( /&lt;/g, "<" );
-   t = t.replace( /&gt;/g, ">" );
+/*    t = t.replace( /&lt;/g, "<" );                                   */
+/*    t = t.replace( /&gt;/g, ">" );                                   */
    t = t.replace( /&quot;/g, "\"" );
    
    if( !div ) {
       div = document.createElement( "div" );
       div.id = "hop_default_failure";
-      div.style.setProperty( "position", "absolute", "" );
-      div.style.setProperty( "top", "100", "" );
-      div.style.setProperty( "z-index", "10000", "" );
-      div.style.setProperty( "width", "100%", "" );
-      div.style.setProperty( "padding", "0", "" );
+      hop_style_set( div, "position", "absolute" );
+      hop_style_set( div, "top", "100" );
+      hop_style_set( div, "z-index", "10000" );
+      hop_style_set( div, "width", "100%" );
+      hop_style_set( div, "padding", "0" );
       div.align = "center";
-      div.style.setProperty( "background", "transparent", "" );
+      hop_style_set( div, "background", "transparent" );
 
       div.innerHTML = t;
 
@@ -251,41 +251,42 @@ function hop_failure_alert( http ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop ...                                                          */
+/*    hop_anim ...                                                     */
 /*---------------------------------------------------------------------*/
-function hop_inner( method, service, success, failure, sync, mute ) {
-   var http = hop_make_xml_http_request();
-   var vis = false;
-
-   if( mute != true ) {
-      vis = document.createElement( "div" );
+function hop_anim( title ) {
+   var vis = document.createElement( "div" );
       
-      hop_style_set( vis, "position", "absolute" );
-      hop_style_set( vis, "top", "5" );
-      hop_style_set( vis, "right", "5" );
-      hop_style_set( vis, "z-index", "100" );
-      hop_style_set( vis, "background", "#eeeeee" );
-      hop_style_set( vis, "-moz-opacity", "0.7" );
-      hop_style_set( vis, "border-color", "black" );
-      hop_style_set( vis, "border-style", "outset" );
-      hop_style_set( vis, "border-width", "1px" );
-      hop_style_set( vis, "padding", "2px" );
+   hop_style_set( vis, "position", "fixed" );
+   hop_style_set( vis, "top", "5px" );
+   hop_style_set( vis, "right", "5px" );
+   hop_style_set( vis, "z-index", "100" );
+   hop_style_set( vis, "background", "#eeeeee" );
+   hop_style_set( vis, "border-color", "black" );
+   hop_style_set( vis, "border-style", "outset" );
+   hop_style_set( vis, "border-width", "1px" );
+   hop_style_set( vis, "padding", "2px" );
+   hop_style_set( vis, "-moz-opacity", "0.7" );
       
-      vis.title = service;
+   vis.title = title;
 
-      var img = document.createElement( "img" );
-      img.classname = "hop-busy-anim";
-      img.src = hop_busy_anim;
+   var img = document.createElement( "img" );
+   img.classname = "hop-busy-anim";
+   img.src = hop_busy_anim;
 
-      vis.appendChild( img );
-      document.body.appendChild( vis );
-   }
+   vis.appendChild( img );
+ 
+   return vis;
+}
 
+/*---------------------------------------------------------------------*/
+/*    hop_inner ...                                                    */
+/*---------------------------------------------------------------------*/
+function hop_inner( http, success, failure, vis ) {
    http.onreadystatechange = function() {
       if( http.readyState == 4 ) {
 	 var status;
 
-	 if( mute != true ) {
+	 if( vis != false ) {
 	    document.body.removeChild( vis );
 	 }
 
@@ -301,55 +302,54 @@ function hop_inner( method, service, success, failure, sync, mute ) {
 
 	 switch( status ) {
 	    case 200:
- 	      if( success ) {
-	         success( http );
-  	      } else {
-	         hop_js_eval( http );
-	      }
-	      break;
+	    if( success ) {
+	       success( http );
+	    } else {
+	       hop_js_eval( http );
+	    }
+	    break;
 
 	    case 204:
-	       break;
+	    break;
 
 	    case 257:
-	       hop_js_eval( http );
-	       break;
+	    hop_js_eval( http );
+	    break;
 
 	    case 258:
-	       if( http.responseText != null ) eval( http.responseText );
-	       break;
+	    if( http.responseText != null ) eval( http.responseText );
+	    break;
 
 	    case 259:
-	       hop_set_cookie( http );
-	       break;
+	    hop_set_cookie( http );
+	    break;
 
 	    case 407:
-	       alert( "*** Hop Authentication Error " + http.status + ": `"
-			 + http.responseText + "'" );
-	       break;
+	    alert( "*** Hop Authentication Error " + http.status + ": `"
+		   + http.responseText + "'" );
+	    break;
 
 	    default:
-	       if( (status > 200) && (status < 300) ) {
- 	          if( success ) {
-	            success( http );
-  	          }
-	       } else {
-		  if( failure ) {
-		     failure( http );
-		  } else {
-		     hop_default_failure( http );
-		  }
+	    if( (status > 200) && (status < 300) ) {
+	       if( success ) {
+		  success( http );
 	       }
+	    } else {
+	       if( failure ) {
+		  failure( http );
+	       } else {
+		  hop_default_failure( http );
+	       }
+	    }
 	 }
       }
    }
 
-   http.open( method, service, (sync != true) );
-
-   http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
-/*    http.setTimeouts = 1000;                                         */
-
-   http.send( null );
+   try {
+      http.send( null );
+   } catch( e ) {
+      alert( "*** HOP send error: " + e );
+   }
 
    return http;
 }
@@ -365,21 +365,44 @@ var resume_failure = false;
 /*---------------------------------------------------------------------*/
 function hop( service, success, failure, sync ) {
    if( success == true ) {
-      success = resume_success;
-      failure = resume_failure;
+      location.href = service;
+      return true;
    } else {
       resume_success = success;
       resume_failure = failure;
    }
-   
-   return hop_inner( "GET", service, success, failure, sync );
+
+   var http = hop_make_xml_http_request();
+   var vis = hop_anim( service );
+
+   document.body.appendChild( vis );
+
+   http.open( "GET", service, (sync != true) );
+
+   http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+   http.setRequestHeader( 'Connection', 'close' );
+   http.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
+
+   return hop_inner( http, success, failure, vis );
+}
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    WithHopError ...                                                 */
+/*---------------------------------------------------------------------*/
+function WithHopError( service ) {
+   var e = new Error( "with-hop error" );
+   e.service = service;
+
+   return e;
 }
 
 /*---------------------------------------------------------------------*/
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
 function with_hop( service, success, failure ) {
-   if( !success ) success = function( h ) { };
+   if( !success ) success = function( h ) { return h };
+   if( !failure ) failure = function( h ) { throw new WithHopError( service ); };
    
    return hop( service,
 	       function( http ) {
@@ -405,28 +428,73 @@ function with_hop( service, success, failure ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_event_hander_set ...                                         */
+/*    with_hop_callcc ...                                              */
 /*---------------------------------------------------------------------*/
-function hop_event_handler_set( svc, evt, success, failure ) {
-   return hop_inner( "GET",
-		     svc( evt ),
-		     function( http ) {
-                        http.eventName = evt;
-                        var res = success( http );
-			if( res ) 
-			   hop_event_handler_set( svc, evt, success, failure );
-                        return res;
-		     },
-		     failure,
-		     false,
-		     true );
+function with_hop_callcc( service ) {
+   var sc_storage = sc_CALLCC_STORAGE;
+   if (sc_storage.doRestore) {
+      var res = sc_callcc();
+      if (res.failure)
+	 throw res.value; // TODO
+      else
+	 return res.value;
+   } else {
+      sc_callcc(function(k) {
+	 function success(val) {
+	    k({value: val});
+	 };
+	 function failure(val) {
+	    k({failure: true, value: val});
+	 };
+	 hop( service,
+	      function( http ) {
+		 var json;
+
+		 switch( http.status ) {
+		 case 200:
+		    if( hop_is_http_json( http ) ) {
+		       success( eval( http.responseText ) );
+		    } else {
+		       success( http.responseText );
+		    }
+		    return;
+		 case 202:
+		    success( hop_unserialize( http.responseText ) );
+		    return;
+		 default:
+		    success( http );
+		    return;
+		 }
+	      }, 
+	      failure );
+	 sc_EMPTY_CALLCC(); // abort execution here.
+      });
+   }
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_mozillap ...                                                 */
+/*    hop_event_hander_set ...                                         */
 /*---------------------------------------------------------------------*/
-function hop_mozillap() {
-   return navigator.userAgent.indexOf( "Mozilla" ) >= 0;
+function hop_event_handler_set( svc, evt, success, failure ) {
+   var req = hop_make_xml_http_request();
+   
+   var handler = function ( http ) {
+      http.eventName = evt;
+      var res = success( http );
+
+      if( res ) {
+	 hop_event_handler_set( svc, evt, success, failure );
+      }
+			
+      return res;
+   }
+
+   req.open( "GET", svc( evt ) );
+
+   req.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+   req.setRequestHeader( 'Connection', 'close' );
+
+   return hop_inner( req, handler, failure, false );
 }
 
 /*---------------------------------------------------------------------*/
@@ -558,6 +626,61 @@ function hop_cookie_set_value( name, val, path, domain, expires ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_request_env ...                                              */
+/*---------------------------------------------------------------------*/
+var hop_request_env = [];
+var hop_request_env_string = "";
+
+/*---------------------------------------------------------------------*/
+/*    hop_serialize_request_env ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_serialize_request_env() {
+   if( (hop_request_env_string == null) ||
+       (hop_request_env_string.length == 0) ) {
+      var tmp = null;
+
+      for( var p in hop_request_env ) {
+	 if( typeof hop_request_env[ p ] != "function" ) {
+	    tmp = sc_cons( sc_cons( p, hop_request_env[ p ] ) );
+	 }
+      }
+      
+      hop_request_env_string = hop_serialize( tmp );
+   }
+   return hop_request_env_string;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_request_reset ...                                            */
+/*    -------------------------------------------------------------    */
+/*    Is this really needed?                                           */
+/*    I think that if it is, a function that returns the whole list    */
+/*    of currently binding cells will also be required. For now,       */
+/*       this function is not bound in the Hop syntax (hop-alias.scm). */
+/*---------------------------------------------------------------------*/
+function hop_request_reset() {
+   hop_request_env = [];
+   hop_request_env_string = "";
+   return null;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_request_set ...                                              */
+/*---------------------------------------------------------------------*/
+function hop_request_set( key, val ) {
+   hop_request_env_string = null;
+   hop_request_env[ key ] = val;
+   return val;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_request_get ...                                              */
+/*---------------------------------------------------------------------*/
+function hop_request_get( key ) {
+   return hop_request[ key ];
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_element_x ...                                                */
 /*---------------------------------------------------------------------*/
 function hop_element_x( obj ) {
@@ -596,7 +719,7 @@ function hop_element_y( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_timeout ...                                                  */
 /*---------------------------------------------------------------------*/
-function hop_timeout( id, timeout, proc ,eager ) {
+function hop_timeout( id, timeout, proc, eager ) {
    window[ id ] = setInterval( proc, timeout );
    window[ id ].proc = proc;
    window[ id ].timeout = timeout;
@@ -636,8 +759,14 @@ function hop_serialize( item ) {
 function hop_bigloo_serialize( item ) {
    var tname = typeof item;
    
-   if( (item instanceof String) || (tname == "string") )
-      return hop_serialize_string( '"', item );
+   if( (item instanceof String) || (tname == "string") ) {
+      if( sc_isSymbol_immutable( item ) ) {
+	 return "'"
+	    + hop_serialize_string( '"', sc_symbol2string_immutable( item ) );
+      } else {
+	 return hop_serialize_string( '"', item );
+      }
+   }
 
    if( (typeof item) == "number" )
       return hop_serialize_number( item );
@@ -665,18 +794,18 @@ function hop_bigloo_serialize( item ) {
       return hop_serialize_array( item );
       
    if( (HTMLInputElement != undefined) && (item instanceof HTMLInputElement) )
-      return hop_serialize( item.value );
+      return hop_bigloo_serialize( item.value );
 
    if( (HTMLTextAreaElement != undefined) && (item instanceof HTMLTextAreaElement) )
-      return hop_serialize( item.value );
+      return hop_bigloo_serialize( item.value );
 
    if( (HTMLSelectElement != undefined) && (item instanceof HTMLSelectElement) )
-      return hop_serialize( item.value );
+      return hop_bigloo_serialize( item.value );
 
    alert( "*** Hop Error, Can't serialize element: `" + item +
 	  "' (" + tname + "). Ignoring value." );
    
-   return hop_serialize( false );
+   return hop_bigloo_serialize( false );
 }
 
 /*---------------------------------------------------------------------*/
@@ -793,42 +922,42 @@ document.getElementsByClass = function( className ) {
    return res;
 }
 
-/*---------------------------------------------------------------------*/
-/*    hopBehaviour class ...                                           */
-/*---------------------------------------------------------------------*/
-var hopBehaviour = {
-    behaviours: {},
-    
-    register: function( className, func ) {
-	hopBehaviour.behaviours[ className ] = func;
-    },
-
-    plug: function() {
-	var all = hopBehaviour.behaviours;
-
-	for( var name in all ) {
-	    var list = document.getElementsByClass( name );
-	    
-	    for( var i in list ) {
-		all[ name ]( list[ i ] );
-	    }
-	}
-    },
-
-    start: function() {
-	var oldonload = window.onload;
-
-	if( typeof window.onload != 'function' ) {
-	    window.onload = hopBehaviour.plug;
-	} else {
-	    window.onload = function() {
-		oldonload();
-		hopBehaviour.plug();
-	    }
-	}
-    }
-};
-
-hopBehaviour.start();
-
+/* {*---------------------------------------------------------------------*} */
+/* {*    hopBehaviour class ...                                           *} */
+/* {*---------------------------------------------------------------------*} */
+/* var hopBehaviour = {                                                */
+/*     behaviours: {},                                                 */
+/*                                                                     */
+/*     register: function( className, func ) {                         */
+/* 	hopBehaviour.behaviours[ className ] = func;                   */
+/*     },                                                              */
+/*                                                                     */
+/*     plug: function() {                                              */
+/* 	var all = hopBehaviour.behaviours;                             */
+/*                                                                     */
+/* 	for( var name in all ) {                                       */
+/* 	    var list = document.getElementsByClass( name );            */
+/* 	                                                               */
+/* 	    for( var i in list ) {                                     */
+/* 		all[ name ]( list[ i ] );                              */
+/* 	    }                                                          */
+/* 	}                                                              */
+/*     },                                                              */
+/*                                                                     */
+/*     start: function() {                                             */
+/* 	var oldonload = window.onload;                                 */
+/*                                                                     */
+/* 	if( typeof window.onload != 'function' ) {                     */
+/* 	    window.onload = hopBehaviour.plug;                         */
+/* 	} else {                                                       */
+/* 	    window.onload = function() {                               */
+/* 		oldonload();                                           */
+/* 		hopBehaviour.plug();                                   */
+/* 	    }                                                          */
+/* 	}                                                              */
+/*     }                                                               */
+/* };                                                                  */
+/*                                                                     */
+/* hopBehaviour.start();                                               */
+/*                                                                     */
    

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Jun 17 11:06:26 2006 (serrano)                */
+;*    Last change :  Wed Jul 26 15:48:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -27,7 +27,7 @@
 	    __hop_user
 	    __hop_misc)
    
-   (export  (http-parse-request::http-request ::socket ::int)))
+   (export  (http-parse-request::http-request ::socket ::int ::int)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
@@ -39,19 +39,11 @@
 	     (msg msg))))
 
 ;*---------------------------------------------------------------------*/
-;*    input-port-timeout-set! ...                                      */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
-   (else #unspecified))
-
-;*---------------------------------------------------------------------*/
 ;*    http-parse-request ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (http-parse-request sock id)
+(define (http-parse-request sock id timeout)
    (let ((port (socket-input sock)))
-      (when (> (hop-request-header-timeout) 0)
-	 (input-port-timeout-set! port (hop-request-header-timeout)))
+      (input-timeout-set! port timeout)
       (let* ((req (read/rp request-line-grammar port id))
 	     (localc (string=? (socket-local-address sock)
 			       (socket-host-address sock)))
@@ -60,8 +52,7 @@
 			 (is-local? (http-request-host req))
 			 (string=? (host (http-request-host req))
 				   (socket-local-address sock)))))
-	 (when (> (hop-request-header-timeout) 0)
-	    (input-port-timeout-set! port 0))
+	 (input-timeout-set! port 0)
 	 (with-access::http-request req (socket localclientp localhostp user userinfo)
 	    (set! socket sock)
 	    (set! localclientp localc)
@@ -122,9 +113,13 @@
 	       (http-read-crlf pi2)
 	       (if (input-string-port? pi2)
 		   (close-input-port pi2))))
-	 (multiple-value-bind (header actual-host actual-port cl te auth pauth)
+	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
 	    (http-read-header pi)
-	    (let ((cabspath (http-file-name-canonicalize! abspath)))
+	    (let ((cabspath (http-file-name-canonicalize! abspath))
+		  (connection (or co
+				  (if (string<? http-version "HTTP/1.1")
+				      'close
+				      'keep-alive))))
 	       (instantiate::http-request
 		  (id id)
 		  (method method)
@@ -141,6 +136,7 @@
 		  (transfer-encoding te)
 		  (authorization auth)
 		  (proxy-authorization pauth)
+		  (connection connection)
 		  (user (or (and (string? auth)
 				 (find-authenticated-user auth))
 			    (and (string? pauth)

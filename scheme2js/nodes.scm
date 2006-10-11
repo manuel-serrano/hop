@@ -162,14 +162,15 @@
 
    ;; a Part represents a functional part of a program. Besides of free variables
    ;; the generated code should be fully functionally.
-   ;; the given function is called after code-generation with
-   ;; the generated code and a flag telling, if the code is in statement-form
-   ;; as parameter. The returned string is then used as result of the Part.
+   ;; the given function is called before code-generation with the current port
+   ;; as parameter and must return a
+   ;; pair containing a port as 'car' and a function to close the port as cdr.
+   ;; the closing function should have the following signature:
+   ;;  (define (close-port p::port is-statement-form?::bool) ...)
    ;; A part is *not* a scope. Two parts at the same level can therefore share
    ;; variables.
-   (define-node (Part body prefer-statement-form? fun)
+   (define-node (Part body fun)
       (set! this.body body)
-      (set! this.prefer-statement-form? prefer-statement-form?)
       (set! this.fun fun))
    (set! Part.proto (empty-pobject Node))
    (proto-traverses Part body)
@@ -304,36 +305,6 @@
       (set! this.str str))
    (set! Pragma.proto (new Node))
    (proto-traverses Pragma)
-
-   ;; ++ and --
-   (define-node (Post-op lvalue op expr)
-      (set! this.lvalue lvalue)
-      (set! this.op op)
-      (set! this.expr expr))
-   (set! Post-op.proto (new Node))
-   (proto-traverses Post-op lvalue expr)
-
-   ;; something like x += ... or x -= ... or x ||= ...
-   (define-node (Op-set! lvalue operator operands)
-      (set! this.lvalue lvalue)
-      (set! this.operator operands)
-      (set! this.operands operands))
-   (set! Op-set!.proto (new Node))
-   (proto-traverses Post-op lvalue expr)
-
-   ;; x && y
-   (define-node (And left right)
-      (set! this.left left)
-      (set! this.right right))
-   (set! And.proto (new Node))
-   (proto-traverses And left right)
-
-   ;; x || y
-   (define-node (Or left right)
-      (set! this.left left)
-      (set! this.right right))
-   (set! Or.proto (new Node))
-   (proto-traverses Or left right)
 
    (define-node (While test body)
       (set! this.test test)

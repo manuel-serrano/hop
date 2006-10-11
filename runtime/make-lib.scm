@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Mon Jun  5 12:09:55 2006 (serrano)                */
+;*    Last change :  Fri Oct  6 07:37:10 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -36,6 +36,7 @@
 	   __hop_http-lib
 	   __hop_http-request
 	   __hop_http-response
+	   __hop_http-remote
 	   __hop_http-shoutcast
 	   __hop_http-error
 	   __hop_hop-extra
@@ -47,11 +48,15 @@
 	   __hop_hop-tree
 	   __hop_hop-foldlist
 	   __hop_hop-editor
+	   __hop_hop-fileselector
 	   __hop_event
 	   __hop_color
 	   __hop_prefs
 	   __hop_weblets
-	   __hop_cache)
+	   __hop_cache
+	   __hop_wiki
+	   __hop_wiki-syntax
+           __hop_wiki-toc)
 
    (eval   (export-all)
 	   
@@ -71,7 +76,6 @@
 	   (class http-response-file)
 	   (class http-response-shoutcast)
 	   (class http-response-string)
-	   (class http-response-obj)
 	   (class http-response-js)
 	   (class http-response-authentication)
 	   (class http-response-cgi)
@@ -86,6 +90,8 @@
 	   (class xml-html)
 
 	   (class cache-entry)
-	   (class cache)))
+	   (class cache)
+
+	   (class wiki-syntax)))
 	   
 	   

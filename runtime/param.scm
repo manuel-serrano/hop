@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Jun 20 22:43:33 2006 (eg)                     */
+;*    Last change :  Wed Oct 11 08:07:06 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -16,7 +16,7 @@
    
    (library pthread)
    
-   (include "eval-macro.sch"
+   (include "compiler-macro.sch"
 	    "param.sch")
 
    (import  __hop_configure
@@ -61,7 +61,6 @@
 	    (hop-http-response-error::obj)
 	    (hop-http-response-error-set! ::obj)
 
-	    (hop-filter-mutex::mutex)
 	    (hop-filters::pair-nil)
 	    (hop-filters-set! ::pair-nil)
 	    (hop-filter-add! ::procedure)
@@ -116,6 +115,9 @@
 	    (hop-char-encoding::symbol)
 	    (hop-char-encoding-set! ::symbol)
 
+	    (hop-default-mime-type::bstring)
+	    (hop-default-mime-type-set! ::bstring)
+
 	    (hop-upload-directory::bstring)
 	    (hop-upload-directory-set! ::bstring)
 	    
@@ -136,6 +138,18 @@
 	    
 	    (hop-connection-timeout::int) 
 	    (hop-connection-timeout-set! ::int)
+
+	    (hop-read-timeout::int) 
+	    (hop-read-timeout-set! ::int)
+
+	    (hop-enable-keep-alive::bool) 
+	    (hop-enable-keep-alive-set! ::bool)
+
+	    (hop-keep-alive-timeout::int) 
+	    (hop-keep-alive-timeout-set! ::int)
+
+	    (hop-max-remote-keep-alive-connection::int)
+	    (hop-max-remote-keep-alive-connection-set! ::int)
 
 	    (hop-weblets::pair-nil)
 	    (hop-weblets-set! ::pair-nil)
@@ -161,15 +175,6 @@
 	    (hop-service-flush-pace::long)
 	    (hop-service-flush-pace-set! ::long)
 
-	    (hop-request-header-timeout::long)
-	    (hop-request-header-timeout-set! ::long)
-
-	    (hop-request-body-timeout::long)
-	    (hop-request-body-timeout-set! ::long)
-
-	    (hop-response-timeout::long)
-	    (hop-response-timeout-set! ::long)
-
 	    (hop-rc-loaded!)))
 
 ;*---------------------------------------------------------------------*/
@@ -182,7 +187,7 @@
 ;*    hop-rc-directory ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-rc-directory
-   (let ((home (getenv "HOME"))
+   (let ((home (or (getenv "HOME") "/"))
 	 (host (hostname)))
       (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
 	 (if (string? host)
@@ -312,10 +317,28 @@
    *filter-mutex*)
 
 ;*---------------------------------------------------------------------*/
+;*    *hop-filters-open* ...                                          */
+;*---------------------------------------------------------------------*/
+(define *hop-filters-open*
+   #t)
+
+;*---------------------------------------------------------------------*/
+;*    hop-filter-open! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-filter-close!)
+   (with-lock (hop-filter-mutex)
+      (lambda ()
+	 (set! *hop-filters-open* #f))))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-filter ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-filters
-   '())
+   '()
+   (lambda (v)
+      (if (not *hop-filters-open*)
+	  (error 'hop-filters-set! "Filters close" #f)
+	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %hop-filter-add! ...                                             */
@@ -325,7 +348,7 @@
       (if p
 	  (set-cdr! p n)
 	  (hop-filters-set! n)))
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (if (eq? kind 'last)
 	     (let loop ((fs (hop-filters))
@@ -351,7 +374,7 @@
 ;*    hop-filter-remove! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop-filter-remove! proc)
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (let loop ((fs (hop-filters))
 		    (p #f))
@@ -390,7 +413,7 @@
 ;*    hop-http-response-local-hook-add! ...                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-local-hook-add! proc)
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (hop-http-response-local-hooks-set!
 	  (cons proc (hop-http-response-local-hooks))))))
@@ -399,7 +422,7 @@
 ;*    hop-http-response-local-hook-remove! ...                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-local-hook-remove! proc)
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (hop-http-response-local-hooks-set!
 	  (remq! proc (hop-http-response-local-hooks))))))
@@ -414,7 +437,7 @@
 ;*    hop-http-response-remote-hook-add! ...                           */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-remote-hook-add! proc)
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (hop-http-response-remote-hooks-set!
 	  (cons proc (hop-http-response-remote-hooks))))))
@@ -423,7 +446,7 @@
 ;*    hop-http-response-remote-hook-remove! ...                        */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-remote-hook-remove! proc)
-   (with-lock *filter-mutex*
+   (with-lock (hop-filter-mutex)
       (lambda ()
 	 (hop-http-response-remote-hooks-set!
 	  (remq! proc (hop-http-response-remote-hooks))))))
@@ -559,6 +582,12 @@
    ".hopaccess")
 
 ;*---------------------------------------------------------------------*/
+;*    hop-default-mime-type ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-default-mime-type
+   "text/html")
+
+;*---------------------------------------------------------------------*/
 ;*    hop-char-encoding ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-char-encoding
@@ -598,11 +627,28 @@
 ;*    Connection delays and timeouts                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-connection-ttl
+   ;; the number of retry when a connection cannot be established
    10)
 
 (define-parameter hop-connection-timeout
-   ;; a number of seconds before the connection fails
-   1)
+   ;; a number of milli-seconds before a connection fails
+   1000)
+
+(define-parameter hop-read-timeout
+   ;; the number of milli-seconds to wait for parsing http headers
+   10000)
+
+(define-parameter hop-enable-keep-alive
+   ;; does hop support keep-alive connection
+   #t)
+   
+(define-parameter hop-keep-alive-timeout
+   ;; the number of milli-seconds to wait for keep-alive connections
+   300)
+
+(define-parameter hop-max-remote-keep-alive-connection
+   ;; the max number of keep-alive remote (proxing) connections
+   50)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-weblets ...                                                  */
@@ -724,14 +770,3 @@
 (define (hop-rc-loaded!)
    (set! *hop-rc-loaded* #t))
 
-;*---------------------------------------------------------------------*/
-;*    IO timeouts (in seconds) ...                                     */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-request-header-timeout
-   10)
-
-(define-parameter hop-request-body-timeout
-   60)
-
-(define-parameter hop-response-timeout
-   60)

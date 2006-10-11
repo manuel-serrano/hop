@@ -1,7 +1,8 @@
 (module scm-compil
    (library hop
 	    scheme2js)
-   (import hopscheme-config)
+   (import hopscheme-config
+	   hopscheme_aliases)
    (export (<HOP-SCHEME-HEAD> . obj))
    (eval (export-all)))
 
@@ -28,7 +29,7 @@
       (lambda ()
 	 (scheme2js-compile-files! (list file)          ;; input-files
 				"-"                  ;; output-file
-				'()                  ;; js-interface
+				(hopscheme-aliases)   ;; js-interface
 				(hopscheme-config)))))  ;; config
 
 
@@ -41,7 +42,7 @@
 	     (let* ((path (if (char=? (string-ref file 0) (file-separator))
 			      file
 			      (hop-file dir file)))
-		    (cached-name (string-append path ".compiled"))
+		    (cached-name (string-append path ".compiled.js"))
 		    (cached (cache-get sscript-cache cached-name)))
 		(if cached
 		    cached
@@ -102,15 +103,17 @@
       (with-lock *sscript-mutex*
 	 (lambda ()
 	    (let ((cache (cache-get sscript-cache path))
-		  (mime (mime-type path "text/javascript")))
+		  (mime (mime-type path (hop-javascript-mime-type))))
 	       (if (string? cache)
 		   (instantiate::http-response-file
+		      (request req)
 		      (content-type mime)
 		      (bodyp (eq? method 'GET))
 		      (file cache))
 		   (let* ((jscript (compile-scheme-file path))
 			  (cache (cache-put! sscript-cache path jscript)))
 		      (instantiate::http-response-file
+			 (request req)
 			 (content-type mime)
 			 (bodyp (eq? method 'GET))
 			 (file cache)))))))))

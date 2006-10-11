@@ -102,6 +102,6 @@ It is defined as:
 </style>
 
 == See also ==
-<see-also>TOOLTIP, iwindow</see-also>
+<see-also>TOOLTIP, window</see-also>
 
 </doc>

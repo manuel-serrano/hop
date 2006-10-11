@@ -20,7 +20,7 @@
     (pfield-delete! po::pobject field)
     (create-pclass::pclass class-name::symbol constr::procedure)
     (instance-of? var type)
-    (pobject-dot-out po::pobject)
+    (pobject-dot-out po::pobject . Lfilter)
     (pclass-constructor var::pobject)
     (inherits-from? var type)
     (pobject-name po::pobject)
@@ -191,7 +191,7 @@
 			     p::procedure)
    (display po))
 
-(define (pobject-dot-out po::pobject)
+(define (pobject-dot-out po::pobject . Lfilter)
    (define new-id
       (let ((counter 0))
 	 (lambda ()
@@ -201,7 +201,10 @@
    (print "digraph g {")
    (print "node [shape = record];")
    (print "rankdir=LR;")
-   (let ((ht (make-hashtable #unspecified #unspecified eq?))
+   (let ((filter (if (null? Lfilter)
+		     (lambda (id) #t)
+		     (car Lfilter)))
+	 (ht (make-hashtable #unspecified #unspecified eq?))
 	 (links '()))
       (let loop ((objs (list po)))
 	 (unless (null? objs)
@@ -218,7 +221,9 @@
 		     (or id
 			 (let ((id (new-id)))
 			    (hashtable-put! ht o id)
-			    (set! remaining-objs (cons o remaining-objs))
+			    ;; clearly inefficient, but dot wouldn't work with
+			    ;; a huge list anyways...
+			    (set! remaining-objs (append! remaining-objs (list o)))
 			    id))))
 
 	       (define (add-link! obj-id field-id target-id . Llabel)
@@ -283,7 +288,8 @@
 			 (hashtable-for-each
 			  props
 			  (lambda (key val)
-			     (if (not (hashtable-get already-printed key))
+			     (if (and (not (hashtable-get already-printed key))
+				      (filter key))
 				 (let ((field-id (string-append
 						  "<f"
 						  (integer->string counter)

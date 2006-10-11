@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Jun  8 07:26:02 2006 (serrano)                */
+;*    Last change :  Wed Oct 11 09:38:00 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_service
    
-   (include "eval-macro.sch"
+   (include "compiler-macro.sch"
 	    "service.sch")
    
    (library web)
@@ -22,6 +22,7 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_misc
+	    __hop_read
 	    __hop_thread
 	    __hop_http-error
 	    __hop_http-response
@@ -30,22 +31,13 @@
 	    __hop_hop-extra
 	    __hop_js-lib)
    
-   (static  (class %autoload
-	       (path::bstring read-only)
-	       (pred::procedure read-only)
-	       (hooks::pair-nil read-only (default '()))
-	       (mutex::mutex (default (make-mutex)))
-	       (loaded::bool (default #f))))
-   
    (export  (get-service-url::bstring)
 	    (hop-service-path? ::bstring)
 	    (make-hop-service-url::bstring ::hop-service . o)
 	    (make-service-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
 	    (procedure->service::hop-service ::procedure)
-            (%eval::%http-response ::bstring ::procedure)
-	    (autoload ::bstring ::procedure . hooks)
-	    (autoload-filter ::http-request)
+            (%eval::%http-response ::obj ::http-request ::procedure)
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)))
 
@@ -99,30 +91,34 @@
 ;*    make-hop-service-url ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (make-hop-service-url svc . vals)
-   (with-access::hop-service svc (path args)
-      (if (null? args)
-	  path
-	  (apply string-append
-		 path
-		 "?hop-encoding=hop"
-		 (map (lambda (f v)
-			 (format "&~a=~a" f (url-encode (obj->string v))))
-		      args vals)))))
+   (if (not (hop-service? svc))
+       (bigloo-type-error 'make-hop-service-url 'service svc)
+       (with-access::hop-service svc (path args)
+	  (if (null? args)
+	      path
+	      (apply string-append
+		     path
+		     "?hop-encoding=hop"
+		     (map (lambda (f v)
+			     (format "&~a=~a" f (url-encode (obj->string v))))
+			  args vals))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-service-url ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (make-service-url svc . vals)
-   (with-access::hop-service svc (path args)
-      (if (null? args)
-	  path
-	  (apply string-append
-		 path
-		 "?hop-encoding=none"
-		 (map (lambda (f v)
-			 (let ((a (if (string? v) (url-encode v) v)))
-			    (format "&~a=~a" f a)))
-		      args vals)))))
+   (if (not (hop-service? svc))
+       (bigloo-type-error 'make-hop-service-url 'service svc)
+       (with-access::hop-service svc (path args)
+	  (if (null? args)
+	      path
+	      (apply string-append
+		     path
+		     "?hop-encoding=none"
+		     (map (lambda (f v)
+			     (let ((a (if (string? v) (url-encode v) v)))
+				(format "&~a=~a" f a)))
+			  args vals))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */
@@ -152,79 +148,59 @@
 	  (service a (apply proc a))))))
 
 ;*---------------------------------------------------------------------*/
+;*    exp->eval-string ...                                             */
+;*    -------------------------------------------------------------    */
+;*    JS eval does not accept \n inside quotes!                        */
+;*---------------------------------------------------------------------*/
+(define (exp->eval-string exp)
+   (cond
+      ((string? exp)
+       (string-replace exp #\Newline #\space))
+      ((xml-tilde? exp)
+       (with-access::xml-tilde exp (body)
+	  (if (string? body)
+	      (let ((l (string-length body)))
+		 (if (substring-at? body ";\n" (-fx l 2))
+		     (string-replace (substring body 0 (-fx l 2))
+				     #\Newline #\space)
+		     (string-replace body #\Newline #\space)))
+	      body)))
+      ((list? exp)
+       (apply string-append (map exp->eval-string exp)))
+      (else
+       exp)))
+
+;*---------------------------------------------------------------------*/
+;*    exp-list->eval-string ...                                        */
+;*---------------------------------------------------------------------*/
+(define (exp-list->eval-string exp)
+   (if (null? exp)
+       "[]"
+       (let loop ((exp exp)
+		  (res '()))
+	  (cond
+	     ((null? (cdr exp))
+	      (apply string-append "new Array( "
+		     (reverse! (cons* ")" (exp->eval-string (car exp)) res))))
+	     (else
+	      (loop (cdr exp)
+		    (cons* "," (exp->eval-string (car exp)) res)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    %eval ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%eval exp cont)
-   (let ((s (hop->json
-	     (procedure->service (lambda (res) (cont res))))))
+(define (%eval exp req cont)
+   (let ((s (hop->json (procedure->service (lambda (res) (cont res))))))
       (instantiate::http-response-hop
+	 (backend (hop-xml-backend))
+	 (request req)
 	 (xml (<HTML>
 		 (<HEAD>)
 		 (<BODY>
 		    (<SCRIPT>
-		       (format "hop( ~a( eval( '~a' ) ), true )" s exp))))))))
-
-;*---------------------------------------------------------------------*/
-;*    *autoload-mutex* ...                                             */
-;*---------------------------------------------------------------------*/
-(define *autoload-mutex* (make-mutex))
-
-;*---------------------------------------------------------------------*/
-;*    *autoloads* ...                                                  */
-;*---------------------------------------------------------------------*/
-(define *autoloads* '())
-
-;*---------------------------------------------------------------------*/
-;*    autoload ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (autoload file pred . hooks)
-   (let ((qfile (find-file/path file (hop-path))))
-      (if (not (and (string? qfile) (file-exists? qfile)))
-	  (error 'autoload-add! "Can't find autoload file" file)
-	  (let ((al (instantiate::%autoload
-		       (path qfile)
-		       (pred pred)
-		       (hooks hooks))))
-	     (mutex-lock! *autoload-mutex*)
-	     (set! *autoloads* (cons al *autoloads*))
-	     (mutex-unlock! *autoload-mutex*)))))
-
-;*---------------------------------------------------------------------*/
-;*    autoload-filter ...                                              */
-;*    -------------------------------------------------------------    */
-;*    Autoload has to be the last filter. When the autoload matches,   */
-;*    it simply returns the hop-resume value that is handled by the    */
-;*    hop loop.                                                        */
-;*---------------------------------------------------------------------*/
-(define (autoload-filter req)
-   (let loop ((al *autoloads*))
-      (if (null? al)
-	  req
-	  (with-access::%autoload (car al) (pred path hooks loaded mutex)
-	     (if (pred req)
-		 (begin
-		    (mutex-lock! mutex)
-		    (unwind-protect
-		       (unless loaded
-			  (hop-verb 1 (hop-color req req " AUTOLOADING")
-				    ": " path "\n")
-			  ;; load the autoloaded file
-			  (load-once path)
-			  ;; execute the hooks
-			  (for-each (lambda (h) (h req)) hooks)
-			  ;; remove the autoaload (once loaded)
-			  (mutex-lock! *autoload-mutex*)
-			  (set! *autoloads* (remq! (car al) *autoloads*))
-			  (mutex-unlock! *autoload-mutex*)
-			  (set! loaded #t))
-		       (mutex-unlock! mutex))
-		    ;; re-scan the filter list
-		    'hop-resume)
-		 (begin
-		    (mutex-lock! *autoload-mutex*)
-		    (let ((tail (cdr al)))
-		       (mutex-unlock! *autoload-mutex*)
-		       (loop tail))))))))
+		       (format "hop( ~a( eval( '~a' ) ), true )"
+			       s
+			       (exp-list->eval-string exp)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *service-mutex* ...                                              */
@@ -273,6 +249,11 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This filter is executed after the AUTOLOAD-FILTER. Hence         */
+;*    when the default service is selected, the entire HOP loop        */
+;*    has to be re-executed in order to properly autoload the          */
+;*    initial weblet.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
    (when (http-request-localhostp req)
@@ -306,7 +287,9 @@
 			    (set! path (string-append (hop-service-base)
 						      "/"
 						      init))
-			    (loop)))))))))))
+			    ;; resume the hop loop in order to autoload
+			    ;; the initial weblet
+			    'hop-resume))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */

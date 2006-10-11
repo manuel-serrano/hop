@@ -1,0 +1,15 @@
+;; A simple //Wiki// markup
+(<HTML>
+   (<BODY>
+      (<WIKI> {
+This example shows how to //inline// wiki syntax inside regular
+Hop programs. The wiki text may use ,(<SPAN> :style "color: red" "escape")
+constructions whose syntax is ,(<TT> ",(") ... ,(<TT> ")").
+
+~~ The main wiki syntactic elements are:
+
+  * sections
+  * lists
+  * tables
+  * verbatims
+}))) 

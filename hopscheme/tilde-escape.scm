@@ -20,14 +20,11 @@
 	   (list 'part expr
 		 (lambda (p)
 		    (cons (open-output-string)
-			  (lambda (string-port stmt-form?)
+			  (lambda (string-port)
 			     (let ((js-expr (close-output-port string-port)))
 				(set-cdr! proxy
-					  (js->hop (if stmt-form?
-						       js-expr
-						       (string-append js-expr
-								      ";"))))
-				(if stmt-form? (display ";" p)))))))))
+					  (js->hop js-expr))
+				(display ";" p))))))))
       (hashtable-update! *rev-scheme-exprs*
 			 p
 			 (lambda (old-l)

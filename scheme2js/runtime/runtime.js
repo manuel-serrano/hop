@@ -1,8 +1,14 @@
+function sc_print_debug() {
+    sc_print_immutable.apply(null, arguments);
+}
 var sc_JS_GLOBALS = this; /// export *js*
 
 var sc_SYMBOL_PREFIX = "\u1E9C"; // "\u1E9D\u1E9E\u1E9F";
 
-var with_hop; /// export with-hop
+var sc_TAIL_CALLS;
+
+var __sc_LINE=-1;
+var __sc_FILE="";
 
 function sc_alert() { /// export
    var len = arguments.length;
@@ -21,19 +27,25 @@ function sc_typeof( x ) { /// export
 }
 
 function sc_error_mutable() {  /// export
-    sc_print_mutable("**ERROR**");
-    for (var i = 0; i < arguments.length; i++) {
-	sc_print_mutable(arguments[i]);
-    }
-    throw "ERROR";
+    var t = sc_withOutputToString_mutable(
+	function () {
+	    sc_print_mutable("**ERROR**");
+	    for (var i = 0; i < arguments.length; i++) {
+		sc_print_mutable(arguments[i]);
+	    }
+	});
+    throw t;
 }
 
 function sc_error_immutable() {  /// export
-    sc_print_immutable("**ERROR**");
-    for (var i = 0; i < arguments.length; i++) {
-	sc_print_immutable(arguments[i]);
-    }
-    throw "ERROR";
+    var t = sc_withOutputToString_mutable(
+	function () {
+	    sc_print_immutable("**ERROR**");
+	    for (var i = 0; i < arguments.length; i++) {
+		sc_print_mutable(arguments[i]);
+	    }
+	});
+    throw t;
 }
 
 var sc_properties = new Object();
@@ -103,10 +115,21 @@ function sc_isEq(o1, o2) { /// export
     return (o1 === o2);
 }
 
-function sc_isEqual(o1, o2) { /// export
+function sc_isEqual_immutable(o1, o2) { /// export
     return ((o1 === o2) ||
-	    (sc_isPair(o1) && sc_isPair(o2) && sc_isPairEqual(o1, o2)) ||
-	    (sc_isVector(o1) && sc_isVector(o2) && sc_isVectorEqual(o1, o2)));
+	    (sc_isPair(o1) && sc_isPair(o2)
+	     && sc_isPairEqual(o1, o2, sc_isEqual_immutable)) ||
+	    (sc_isVector(o1) && sc_isVector(o2)
+	     && sc_isVectorEqual(o1, o2, sc_isEqual_immutable)));
+}
+function sc_isEqual_mutable(o1, o2) { /// export
+    return ((o1 === o2) ||
+	    (sc_isPair(o1) && sc_isPair(o2)
+	     && sc_isPairEqual(o1, o2, sc_isEqual_mutable)) ||
+	    (sc_isVector(o1) && sc_isVector(o2)
+	     && sc_isVectorEqual(o1, o2, sc_isEqual_mutable)) ||
+	    (sc_isString_mutable(o1) && sc_isString_mutable(o2)
+	     && sc_isStringEqual_mutable(o1, o2)));
 }
 
 function sc_isNumber(n) { /// export
@@ -218,18 +241,26 @@ function sc_multi() { /// export * *fx *fl
     return product;
 }
 
-function sc_minus(x, y) { /// export - -fx -fl
-    if (y === undefined)
+function sc_minus(x) { /// export - -fx -fl
+    if (arguments.length === 1)
 	return -x;
-    else
-	return x - y;
+    else {
+	var res = x;
+	for (var i = 1; i < arguments.length; i++)
+	    res -= arguments[i];
+	return res;
+    }
 }
 
-function sc_div(x, y) { /// export / /fl
-    if (y === undefined)
-	return 1 / x;
-    else
-	return x / y;
+function sc_div(x) { /// export / /fl
+    if (arguments.length === 1)
+	return 1/x;
+    else {
+	var res = x;
+	for (var i = 1; i < arguments.length; i++)
+	    res /= arguments[i];
+	return res;
+    }
 }
 
 var sc_abs = Math.abs; /// export
@@ -283,27 +314,25 @@ function sc_lcm() { /// export
     return lcm;
 }
 
-var SC_MAX_DECIMALS = 1000000
+// LIMITATION: numerator and denominator don't make sense in floating point world.
+//var SC_MAX_DECIMALS = 1000000
+//
+// function sc_numerator(x) {
+//     var rounded = Math.round(x * SC_MAX_DECIMALS);
+//     return Math.round(rounded / sc_euclid_gcd(rounded, SC_MAX_DECIMALS));
+// }
 
-function sc_numerator(x) { /// export
-    var rounded = Math.round(x * SC_MAX_DECIMALS);
-    return Math.round(rounded / sc_euclid_gcd(rounded, SC_MAX_DECIMALS));
-}
-
-function sc_denominator(x) { /// export
-    var rounded = Math.round(x * SC_MAX_DECIMALS);
-    return Math.round(SC_MAX_DECIMALS / sc_euclid_gcd(rounded, SC_MAX_DECIMALS));
-}
+// function sc_denominator(x) {
+//     var rounded = Math.round(x * SC_MAX_DECIMALS);
+//     return Math.round(SC_MAX_DECIMALS / sc_euclid_gcd(rounded, SC_MAX_DECIMALS));
+// }
 
 var sc_floor = Math.floor; /// export
 var sc_ceiling = Math.ceil; /// export
 var sc_truncate = parseInt; /// export
 var sc_round = Math.round; /// export
 
-// TODO: sc_rationalize
-function sc_rationalize(x, eps) { /// export
-    return x;
-}
+// LIMITATION: sc_rationalize doesn't make sense in a floating point world.
 
 var sc_exp = Math.exp; /// export
 var sc_log = Math.log; /// export
@@ -312,13 +341,15 @@ var sc_cos = Math.cos; /// export
 var sc_tan = Math.tan; /// export
 var sc_asin = Math.asin; /// export
 var sc_acos = Math.acos; /// export
-// TODO: 2 argument atan
 var sc_atan = Math.atan; /// export
 
 var sc_sqrt = Math.sqrt; /// export
 var sc_expt = Math.pow; /// export
 
-// TODO: make-rectangular, make-polar, real-part, imag-part, magnitude, angle
+// LIMITATION: we don't have complex numbers.
+// LIMITATION: the following functions are hence not implemented.
+// LIMITATION: make-rectangular, make-polar, real-part, imag-part, magnitude, angle
+// LIMITATION: 2 argument atan
 
 function sc_exact2inexact(x) { /// export
     return x;
@@ -359,7 +390,7 @@ function sc_symbol2number_mutable(s, radix) { /// export
 }
 
 function sc_string2number_mutable(s, radix) { /// export
-    sc_symbol2number_mutable(s.val, radix);
+    return sc_symbol2number_mutable(s.val, radix);
 }
 
 function sc_symbol2number_immutable(s, radix) { /// export
@@ -398,12 +429,19 @@ function sc_isPair(p) { /// export
     return (p instanceof sc_Pair);
 }
 
-function sc_isPairEqual(p1, p2) {
-    return (sc_isEqual(p1.car, p2.car) && sc_isEqual(p1.cdr, p2.cdr));
+function sc_isPairEqual(p1, p2, comp) {
+    return (comp(p1.car, p2.car) && comp(p1.cdr, p2.cdr));
 }
 
 function sc_cons(car, cdr) { /// export
     return new sc_Pair(car, cdr);
+}
+
+function sc_consStar() { /// export cons*
+    var res = arguments[arguments.length - 1];
+    for (var i = arguments.length-2; i >= 0; i--)
+	res = new sc_Pair(arguments[i], res);
+    return res;
 }
 
 function sc_car(p) { /// export
@@ -423,32 +461,32 @@ function sc_setCdr(p, o) { /// export set-cdr!
 }
 
 function sc_caar(p) { return p.car.car; } /// export
-function sc_cdar(p) { return p.cdr.car; } /// export
-function sc_cadr(p) { return p.car.cdr; } /// export
+function sc_cadr(p) { return p.cdr.car; } /// export
+function sc_cdar(p) { return p.car.cdr; } /// export
 function sc_cddr(p) { return p.cdr.cdr; } /// export
 function sc_caaar(p) { return p.car.car.car; } /// export
 function sc_cadar(p) { return p.car.cdr.car; } /// export
-function sc_caadr(p) { return p.car.car.cdr; } /// export
-function sc_caddr(p) { return p.car.cdr.cdr; } /// export
-function sc_cdaar(p) { return p.cdr.car.car; } /// export
-function sc_cddar(p) { return p.cdr.cdr.car; } /// export
+function sc_caadr(p) { return p.cdr.car.car; } /// export
+function sc_caddr(p) { return p.cdr.cdr.car; } /// export
+function sc_cdaar(p) { return p.car.car.cdr; } /// export
 function sc_cdadr(p) { return p.cdr.car.cdr; } /// export
+function sc_cddar(p) { return p.car.cdr.cdr; } /// export
 function sc_cdddr(p) { return p.cdr.cdr.cdr; } /// export
 function sc_caaaar(p) { return p.car.car.car.car; } /// export
-function sc_caadar(p) { return p.car.car.cdr.car; } /// export
-function sc_caaadr(p) { return p.car.car.car.cdr; } /// export
-function sc_caaddr(p) { return p.car.car.cdr.cdr; } /// export
-function sc_cadaar(p) { return p.car.cdr.car.car; } /// export
-function sc_caddar(p) { return p.car.cdr.cdr.car; } /// export
-function sc_cadadr(p) { return p.car.cdr.car.cdr; } /// export
-function sc_cadddr(p) { return p.car.cdr.cdr.cdr; } /// export
-function sc_cdaaar(p) { return p.cdr.car.car.car; } /// export
-function sc_cdadar(p) { return p.cdr.car.cdr.car; } /// export
+function sc_caadar(p) { return p.car.cdr.car.car; } /// export
+function sc_caaadr(p) { return p.cdr.car.car.car; } /// export
+function sc_caaddr(p) { return p.cdr.cdr.car.car; } /// export
+function sc_cdaaar(p) { return p.car.car.car.cdr; } /// export
+function sc_cdadar(p) { return p.car.cdr.car.cdr; } /// export
 function sc_cdaadr(p) { return p.cdr.car.car.cdr; } /// export
-function sc_cdaddr(p) { return p.cdr.car.cdr.cdr; } /// export
-function sc_cddaar(p) { return p.cdr.cdr.car.car; } /// export
-function sc_cdddar(p) { return p.cdr.cdr.cdr.car; } /// export
-function sc_cddadr(p) { return p.cdr.cdr.car.cdr; } /// export
+function sc_cdaddr(p) { return p.cdr.cdr.car.cdr; } /// export
+function sc_cadaar(p) { return p.car.car.cdr.car; } /// export
+function sc_caddar(p) { return p.car.cdr.cdr.car; } /// export
+function sc_cadadr(p) { return p.cdr.car.cdr.car; } /// export
+function sc_cadddr(p) { return p.cdr.cdr.cdr.car; } /// export
+function sc_cddaar(p) { return p.car.car.cdr.cdr; } /// export
+function sc_cdddar(p) { return p.car.cdr.cdr.cdr; } /// export
+function sc_cddadr(p) { return p.cdr.car.cdr.cdr; } /// export
 function sc_cddddr(p) { return p.cdr.cdr.cdr.cdr; } /// export
 
 function sc_lastPair(l) { /// export
@@ -472,30 +510,32 @@ function sc_isList(o) { /// export
 
     var rabbit = o;
     var turtle = o;
-    while (rabbit != null) {
-	if (sc_isPair(rabbit) &&
-	    sc_isPair(rabbit.cdr)) {
+    while (true) {
+	if (rabbit === null ||
+	    (rabbit instanceof sc_Pair && rabbit.cdr === null))
+	    return true;  // end of list
+	else if ((rabbit instanceof sc_Pair) &&
+		 (rabbit.cdr instanceof sc_Pair)) {
 	    rabbit = rabbit.cdr.cdr;
 	    turtle = turtle.cdr;
 	    if (rabbit === turtle) return false; // cycle
 	} else
 	    return false; // not pair
     }
-    return true;
 }
 
 function sc_list() { /// export
     var res = null;
     var a = arguments;
     for (var i = a.length-1; i >= 0; i--)
-	res = sc_cons(a[i], res);
+	res = new sc_Pair(a[i], res);
     return res;
 }
 
 function sc_makeList(nbEls, fill) { /// export
     var res = null;
     for (var i = 0; i < nbEls; i++)
-	res = sc_cons(fill, res);
+	res = new sc_Pair(fill, res);
     return res;
 }
 
@@ -607,9 +647,17 @@ function sc_memv(o, l) { /// export
     }
     return false;
 }
-function sc_member(o, l) { /// export
+function sc_member_mutable(o, l) { /// export
     while (l != null) {
-	if (sc_isEqual(l.car,o))
+	if (sc_isEqual_mutable(l.car,o))
+	    return l;
+	l = l.cdr;
+    }
+    return false;
+}
+function sc_member_immutable(o, l) { /// export
+    while (l != null) {
+	if (sc_isEqual_immutable(l.car,o))
 	    return l;
 	l = l.cdr;
     }
@@ -647,9 +695,17 @@ function sc_assv(o, al) { /// export
     }
     return false;
 }
-function sc_assoc(o, al) { /// export
+function sc_assoc_mutable(o, al) { /// export
     while (al != null) {
-	if (is_Equal(al.car.car, o))
+	if (sc_isEqual_mutable(al.car.car, o))
+	    return al.car;
+	al = al.cdr;
+    }
+    return false;
+}
+function sc_assoc_immutable(o, al) { /// export
+    while (al != null) {
+	if (sc_isEqual_immutable(al.car.car, o))
 	    return al.car;
 	al = al.cdr;
     }
@@ -892,10 +948,6 @@ sc_String.prototype.toString = function() {
     return this.val;
 }
 
-sc_String.prototype.hop_bigloo_serialize = function() {
-   return hop_bigloo_serialize( this.val );
-}
-
 function sc_isString_mutable(s) { /// export
     return (s instanceof sc_String);
 }
@@ -1070,10 +1122,10 @@ function sc_isVector(v) { /// export vector? array?
 }
 
 // only applies to vectors
-function sc_isVectorEqual(v1, v2) {
+function sc_isVectorEqual(v1, v2, comp) {
     if (v1.length != v2.length) return false;
     for (var i = 0; i < v1.length; i++)
-	if (!sc_isEqual(v1[i], v2[i])) return false;
+	if (!comp(v1[i], v2[i])) return false;
     return true;
 }
 
@@ -1128,7 +1180,7 @@ function sc_isProcedure(o) { /// export
     return (typeof o === "function");
 }
 
-function sc_apply(proc) { /// export
+function sc_apply(proc) { /// export-higher
     var args = new Array();
     // first part of arguments are not in list-form.
     for (var i = 1; i < arguments.length - 1; i++)
@@ -1139,6 +1191,31 @@ function sc_apply(proc) { /// export
 	l = l.cdr;
     }
     return proc.apply(null, args);
+}
+
+function sc_apply_callcc(proc) { /// export
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	proc = sc_storage.getNextFrame();
+	// we only need to call the correct procedure again.
+	// the proc itself needs to store everything it needs (in particular the params).
+    } else {
+	sc_storage.push(proc);
+    }
+    try {
+	var args = new Array();
+	// first part of arguments are not in list-form.
+	for (var i = 1; i < arguments.length - 1; i++)
+	    args.push(arguments[i]);
+	var l = arguments[arguments.length - 1];
+	while (l != null) {
+	    args.push(l.car);
+	    l = l.cdr;
+	}
+	return proc.apply(null, args);
+    } finally {
+	sc_storage.pop();
+    }
 }
 
 function sc_map1(proc, l1) {
@@ -1158,10 +1235,10 @@ function sc_map2(proc, l1, l2) {
     }
     return sc_destReverseAppend(revres, null);
 }
-function sc_map(proc, l1, l2) { /// export
-    if (arguments.length == 2)
+function sc_map(proc, l1, l2, l3) { /// export-higher
+    if (l2 === undefined)
 	return sc_map1(proc, l1);
-    else if (arguments.length == 3)
+    else if (l3 === undefined)
 	return sc_map2(proc, l1, l2);
     // else
     var nbApplyArgs = arguments.length - 1;
@@ -1177,6 +1254,39 @@ function sc_map(proc, l1, l2) { /// export
     return sc_destReverseAppend(revres, null);
 }
 
+function sc_map_callcc(proc) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+    } else {
+	var sc_frame = new Object();
+	sc_frame.proc = proc;
+	sc_frame.arguments = arguments;
+	sc_frame.nbApplyArgs = arguments.length - 1;
+	sc_frame.applyArgs = new Array(sc_frame.nbApplyArgs);
+	sc_frame.revres = null;
+	sc_storage.push(sc_frame);
+    }
+    with(sc_frame) {
+	try {
+	    if(sc_storage.doRestore) {
+		revres = sc_cons(proc(), revres);
+	    }
+	    while (arguments[1] !== null) {
+		for (var i = 0; i < nbApplyArgs; i++) {
+		    applyArgs[i] = arguments[i + 1].car;
+		    arguments[i + 1] = arguments[i + 1].cdr;
+		}
+		revres = sc_cons(proc.apply(null, applyArgs), revres);
+	    }
+	    
+	    return sc_destReverseAppend(revres, null);
+	} finally {
+	    sc_storage.pop();
+	}
+    }
+}
+
 function sc_forEach1(proc, l1) {
     while (l1 !== null) {
 	proc(l1.car);
@@ -1190,10 +1300,10 @@ function sc_forEach2(proc, l1, l2) {
 	l2 = l2.cdr;
     }
 }
-function sc_forEach(proc, l1) { /// export
-    if (arguments.length == 2)
+function sc_forEach(proc, l1, l2, l3) { /// export-higher
+    if (l2 === undefined)
 	return sc_forEach1(proc, l1);
-    else if (arguments.length == 3)
+    else if (l3 === undefined)
 	return sc_forEach2(proc, l1, l2);
     // else
     var nbApplyArgs = arguments.length - 1;
@@ -1207,23 +1317,119 @@ function sc_forEach(proc, l1) { /// export
     }
 }
 
-// TODO: sc_force
-// TODO: call-with-current-continuation
+function sc_forEach_callcc(proc, l1) { /// export-higher
+    sc_map_callcc.apply(this, arguments);
+}
+
+function sc_force(o) { /// export-higher
+    return o();
+}
+function sc_force_callcc(o) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	o = sc_storage.getNextFrame();
+    } else {
+	sc_storage.push(o);
+    }
+    return o();
+}
+function sc_makePromise(proc) { /// export
+    var isResultReady = false;
+    var result = undefined;
+    return function() {
+	if (!isResultReady) {
+	    var tmp = proc();
+	    if (!isResultReady) {
+		isResultReady = true;
+		result = tmp;
+	    }
+	}
+	return result;
+    };
+}
+
+function sc_Values(values) {
+    this.values = values;
+}
 
 function sc_values() { /// export
-    return arguments;
+    if (arguments.length === 1)
+	return arguments[0];
+    else
+	return new sc_Values(arguments);
 }
 
-function sc_callWithValues(producer, consumer) { /// export
-    consumer.apply(null, producer());
+function sc_callWithValues(producer, consumer) { /// export-higher
+    var produced = producer();
+    if (produced instanceof sc_Values)
+	return consumer.apply(null, produced.values);
+    else
+	return consumer(produced);
 }
 
-// TODO: dynamic-wind
-    
+function sc_callWithValues_callcc(producer, consumer) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+    } else {
+	var sc_frame = new Object();
+	sc_frame.producer = producer;
+	sc_frame.consumer = consumer;
+	sc_storage.push(sc_frame);
+    }
+    try {
+	if (!('produced' in sc_frame)) {
+	    sc_frame.produced = sc_frame.producer();
+	}
+	if (sc_frame.produced instanceof sc_Values)
+	    return sc_frame.consumer.apply(null, sc_frame.produced.values);
+	else
+	    return sc_frame.consumer(sc_frame.produced);
+    } finally {
+	sc_storage.pop();
+    }
+}
+
+function sc_dynamicWind(before, thunk, after) { /// export-higher
+    before();
+    try {
+	var res = thunk();
+	return res;
+    } finally {
+	after();
+    }
+}
+
+function sc_dynamicWind_callcc(before, thunk, after) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+    } else {
+	var sc_frame = new Object();
+	sc_frame.before = before;
+	sc_frame.thunk = thunk;
+	sc_frame.after = after;
+	sc_frame.state = 'before';
+	sc_storage.push(sc_frame);
+    }
+    try {
+	if (sc_frame.state == 'before') {
+	    sc_frame.before();
+	    sc_frame.state = 'thunk';
+	}
+	var res = sc_frame.thunk();
+	return res;
+    } finally {
+	if (sc_frame.state != 'before')
+	    sc_frame.after();
+	sc_storage.pop();
+    }
+}
+
 // TODO: eval/scheme-report-environment/null-environment/interaction-environment
 
-// TODO: load
-// TODO: transcript-on/transcript-off
+// LIMITATION: 'load' doesn't exist without files.
+// LIMITATION: transcript-on/transcript-off doesn't exist without files.
 
 
 function sc_Struct(name) {
@@ -1286,20 +1492,71 @@ function sc_deleteJsField(o, field) { /// export js-field-delete!
     delete o[field];
 }
 
-function sc_jsCall(o, fun) { /// export
+function sc_jsCall(o, fun) { /// export-higher
     var args = new Array();
     for (var i = 2; i < arguments.length; i++)
 	args[i-2] = arguments[i];
     return fun.apply(o, args);
 }
 
-function sc_jsMethodCall(o, field) { /// export
+function sc_jsCall_callcc(o, fun) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+	o = sc_frame.o;
+	fun = sc_frame.fun;
+    } else {
+	// we don't need to store the arguments, as they called function needs
+	// to store it's parameters anyways.
+	var sc_frame = new Object();
+	sc_frame.o = o;
+	sc_frame.fun = fun;
+	sc_storage.push(sc_frame);
+    }
+    try {
+	var args = new Array();
+	for (var i = 2; i < arguments.length; i++)
+	    args[i-2] = arguments[i];
+	return fun.apply(o, args);
+    } finally {
+	sc_storage.pop();
+    }
+}
+
+function sc_jsMethodCall(o, field) { /// export-higher
     var args = new Array();
     for (var i = 2; i < arguments.length; i++)
 	args[i-2] = arguments[i];
     return o[field].apply(o, args);
 }
 
+function sc_jsMethodCall_callcc(o, field) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    var fun;
+    var args;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+	o = sc_frame.o;
+	fun = sc_frame.fun;
+    } else {
+	// we don't need to store the arguments, as they called function needs
+	// to store it's parameters anyways.
+	var sc_frame = new Object();
+	sc_frame.o = o;
+	sc_frame.fun = fun = o[field];
+	args = new Array();
+	for (var i = 2; i < arguments.length; i++)
+	    args[i-2] = arguments[i];
+	sc_storage.push(sc_frame)
+    }
+    try {
+	return fun.apply(o, args);
+    } finally {
+	sc_storage.pop();
+    }
+}
+
+// HACK: we don't export jsNew as higher, as we can't handle it in our call/cc anyways.
 function sc_jsNew(c) { /// export new js-new
     var evalStr = "new c(";
     evalStr +=arguments.length > 1? "arguments[1]": "";
@@ -1805,12 +2062,14 @@ function sc_read_immutable(port) { /// export
 function sc_readChar(port) { /// export
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
-    return port.readChar();
+    var t = port.readChar();
+    return t === SC_EOF_OBJECT? t: new sc_Char(t);
 }
 function sc_peekChar(port) { /// export
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
-    return port.peekChar();
+    var t = port.peekChar();
+    return t === SC_EOF_OBJECT? t: new sc_Char(t);
 }    
 function sc_isCharReady(port) { /// export
     if (port === undefined) // we assume the port hasn't been given.
@@ -1860,36 +2119,158 @@ function sc_openOutputFile(s) { /// export
 
 /* ----------------------------------------------------------------------------*/
 
-function sc_withInputFromString_mutable(s, thunk) { /// export
+function sc_withInputFromPort(p, thunk) { /// export-higher
+    try {
+	var tmp = SC_DEFAULT_IN; // THREAD: shared var.
+	SC_DEFAULT_IN = p;
+	return thunk();
+    } finally {
+	SC_DEFAULT_IN = tmp;
+    }
+}
+
+function sc_withInputFromPort_callcc(p, thunk) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+	p = sc_frame.p;
+	thunk = sc_frame.thunk;
+    } else {
+	var sc_frame = new Object();
+	sc_frame.p = p;
+	sc_frame.thunk = thunk;
+	sc_storage.push(sc_frame);
+    }
+    try {
+	var tmp = SC_DEFAULT_IN; // THREAD: shared var.
+	SC_DEFAULT_IN = p;
+	return thunk();
+    } finally {
+	SC_DEFAULT_IN = tmp;
+	sc_storage.pop();
+    }
+}
+
+function sc_withInputFromString_mutable(s, thunk) { /// export-higher
     return sc_withInputFromString_immutable(s.val, thunk);
 }
 
-function sc_withInputFromString_immutable(s, thunk) { /// export
-    var tmp = SC_DEFAULT_IN; // THREAD: shared var.
-    SC_DEFAULT_IN = new sc_StringInputPort(s);
-    var tmp2 = thunk();
-    SC_DEFAULT_IN.close(); // just to make sure...
-    SC_DEFAULT_IN = tmp;
-    return tmp2;
+function sc_withInputFromString_mutable_callcc(s, thunk) { /// export-higher
+    if (sc_CALLCC_STORAGE.doRestore)
+	return sc_withInputFromPort_callcc();
+    else
+	return sc_withInputFromString_immutable_callcc(s.val, thunk);
 }
 
-
-function sc_withOutputToString_mutable(thunk) { /// export
-    var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
-    var outp = new sc_StringOutputPort_mutable();
-    SC_DEFAULT_OUT = outp;
-    var tmp2 = thunk();
-    SC_DEFAULT_OUT = tmp;
-    return outp.close();
+function sc_withInputFromString_immutable(s, thunk) { /// export-higher
+    return sc_withInputFromPort(new sc_StringInputPort(s), thunk);
 }
 
-function sc_withOutputToString_immutable(thunk) { /// export
-    var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
-    var outp = new sc_StringOutputPort_immutable();
-    SC_DEFAULT_OUT = outp;
-    var tmp2 = thunk();
-    SC_DEFAULT_OUT = tmp;
-    return outp.close();
+function sc_withInputFromString_immutable_callcc(s, thunk) { /// export-higher
+    if (sc_CALLCC_STORAGE.doRestore)
+	return sc_withInputFromPort_callcc();
+    else
+	return sc_withInputFromPort_callcc(new sc_StringInputPort(s), thunk);
+}
+
+function sc_withOutputToPort(p, thunk) { /// export-higher
+    try {
+	var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
+	SC_DEFAULT_OUT = p;
+	return thunk();
+    } finally {
+	SC_DEFAULT_OUT = tmp;
+    }
+}
+
+function sc_withOutputToPort_callcc(p, thunk) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	var sc_frame = sc_storage.getNextFrame();
+	p = sc_frame.p;
+	thunk = sc_frame.thunk;
+    } else {
+	var sc_frame = new Object();
+	sc_frame.p = p;
+	sc_frame.thunk = thunk;
+	sc_storage.push(sc_frame);
+    }
+    try {
+	var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
+	SC_DEFAULT_OUT = p;
+	return thunk();
+    } finally {
+	SC_DEFAULT_OUT = tmp;
+	sc_storage.pop();
+    }
+}
+
+function sc_withOutputToString_mutable(thunk) { /// export-higher
+    var p = new sc_StringOutputPort_mutable();
+    sc_withOutputToPort(p, thunk);
+    return p.close();
+}
+
+function sc_withOutputToString_mutable_callcc(thunk) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    var p;
+    if (sc_storage.doRestore) {
+	p = sc_storage.getNextFrame();
+    } else {
+	p = new sc_StringOutputPort_mutable();
+	sc_storage.push(p);
+    }
+    try {
+	sc_withOutputToPort(p, thunk);
+	return p.close();
+    } finally {
+	sc_storage.pop();
+    }
+}
+
+function sc_withOutputToString_immutable(thunk) { /// export-higher
+    var p = new sc_StringOutputPort_immutable();
+    sc_withOutputToPort(p, thunk);
+    return p.close();
+}
+
+function sc_withOutputToString_immutable_callcc(thunk) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    var p;
+    if (sc_storage.doRestore) {
+	p = sc_storage.getNextFrame();
+    } else {
+	p = new sc_StringOutputPort_immutable();
+	sc_storage.push(p);
+    }
+    try {
+	sc_withOutputToPort(p, thunk);
+	return p.close();
+    } finally {
+	sc_storage.pop();
+    }
+}
+
+/* with-output-to-procedure proc must not call call/cc! */
+function sc_withOutputToProcedure_mutable(proc, thunk) { /// export-higher
+    var t = function(s) { proc(new sc_String(s)); };
+    return sc_withOutputToPort(new sc_GenericOutputPort(t), thunk);
+}
+function sc_withOutputToProcedure_mutable_callcc(proc, thunk) { /// export-higher
+    var t = function(s) { proc(new sc_String(s)); };
+    return sc_withOutputToPort_callcc(new sc_GenericOutputPort(t), thunk);
+}
+function sc_withOutputToProcedure_immutable(proc, thunk) { /// export-higher
+    return sc_withOutputToPort(new sc_GenericOutputPort(proc), thunk);
+}
+function sc_withOutputToProcedure_immutable_callcc(proc, thunk) { /// export-higher
+    return sc_withOutputToPort_callcc(new sc_GenericOutputPort(proc), thunk);
+}
+
+function sc_GenericOutputPort(appendJSString, close) {
+    this.appendJSString = appendJSString;
+    if (close)
+	this.close = close;
 }
 
 function sc_openOutputString_mutable() { /// export
@@ -1941,6 +2322,15 @@ sc_StringOutputPort_immutable.prototype.close = function() {
     return this.res;
 }
 
+function sc_getOutputString_mutable(sp) { /// export
+    return new sc_String(sp.res);
+}
+function sc_getOutputString_immutable(sp) { /// export
+    return sp.res;
+}
+    
+    
+
 function sc_ErrorOutputPort() {
 }
 sc_ErrorOutputPort.prototype = new sc_OutputPort();
@@ -1966,27 +2356,6 @@ function sc_closeOutputPort(p) { /// export
     return p.close();
 }
 
-function hop_bigloo_serialize_pair( l ) {
-   var res = "";
-   var len = 0;
-   
-   while (sc_isPair( l ) ) {
-      res += hop_serialize( l.car );
-      l = l.cdr;
-      len++;
-   }
-
-   if( l == null ) {
-      return hop_serialize_word( len + 1 ) + res + ".";
-   } else {
-      return hop_serialize_word( len ) + res;
-   }
-}
-
-sc_Pair.prototype.hop_bigloo_serialize = function() {
-   return '(' + hop_bigloo_serialize_pair( this );
-}
-
 sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {
     var isP = sc_isPair(this.cdr);
     if (!inList)
@@ -2003,8 +2372,10 @@ sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {
 	p.appendJSString(")");
 };
 sc_Vector.prototype.writeOrDisplay = function(p, writeOrDisplay) {
-    if (this.length === 0)
+    if (this.length === 0) {
 	p.appendJSString("#()");
+	return;
+    }
 
     p.appendJSString("#(");
     writeOrDisplay(p, this[0]);
@@ -2438,11 +2809,24 @@ function sc_hashtableGet(ht, key) { /// export
 	return false;
 }
 
-function sc_hashtableForEach(ht, f) { /// export
+function sc_hashtableForEach(ht, f) { /// export-higher
     for (var v in ht) {
 	if (ht[v] instanceof sc_HashtableElement)
 	    f(ht[v].key, ht[v].val);
     }
+}
+function sc_hashtableForEach_callcc(ht, f) { /// export-higher
+    var sc_storage = sc_CALLCC_STORAGE;
+    if (sc_storage.doRestore) {
+	return sc_forEach_callcc();
+    }
+    var l = null;
+    for (var v in ht) {
+	if (ht[v] instanceof sc_HashtableElement)
+	    l = new sc_Pair(ht[v], l);
+    }
+    sc_forEach_callcc(function(e) { f(e.key, e.val); },
+		      l);
 }
 
 function sc_hashtableContains(ht, key) { /// export hashtable-contains?
@@ -2488,3 +2872,161 @@ sc_String.prototype.getHash = function() {
 }
 sc_Char.prototype.getHash = sc_counterHash;
 sc_Hashtable.prototype.getHash = sc_counterHash;
+
+
+function sc_TailCall(funThis, args) {
+    this._internalException = true;
+    this.funThis = funThis;
+    this.arguments = args;
+}
+
+// default tail-call depth.
+// normally the program should set it again. but just in case...
+var sc_TAIL_CALLS = 20;
+
+function sc_CallCcStorage() {
+    this.frames = new Array();
+}
+sc_CallCcStorage.prototype.push = function(frame) {
+    this.frames.push(frame);
+};
+sc_CallCcStorage.prototype.pop = function() {
+    this.frames.pop();
+};
+sc_CallCcStorage.prototype.popAll = function() {
+    this.frames.length = 0;
+};
+sc_CallCcStorage.prototype.isEmpty = function() {
+    return this.frames.length == 0;
+};
+sc_CallCcStorage.prototype.length = function() {
+    return this.frames.length;
+};
+sc_CallCcStorage.prototype.duplicate = function() {
+    var dupl = new sc_CallCcStorage();
+    dupl.frames = this.frames.concat();
+    if (this.firstCall) dupl.firstCall = this.firstCall;
+    return dupl;
+};
+
+sc_CallCcStorage.prototype.resetFrameIterator = function() {
+    this.frameIndex = 0;
+};
+sc_CallCcStorage.prototype.getNextFrame = function() {
+    return this.frames[this.frameIndex++];
+};
+
+var sc_CALLCC_STORAGE = new sc_CallCcStorage();
+var sc_EMPTY_CALLCC;
+sc_callcc(function(k) { sc_EMPTY_CALLCC = k; });
+
+function sc_CallCcException() {
+    this._internalException = true;
+}
+
+function sc_callcc(proc) { /// export-higher call/cc call-with-current-continuation
+    function backup(storage) {
+	var backup = storage.duplicate();
+	for (var i = 0; i < backup.frames.length; i++) {
+	    if (!backup.frames[i].closureAllocation) {
+		backup.frames[i].savedRestoreIndex = backup.frames[i].sc_callCcIndex;
+		backup.frames[i].savedCallCcFun = backup.frames[i].sc_callCcFun;
+	    }
+	}
+	return backup;
+    };
+    
+    function restore(backup, returnValue) {
+	var dupl = backup.duplicate();
+	dupl.doRestore = true;
+	dupl.returnValue = returnValue;
+	for (var i = 0; i < dupl.frames.length; i++) {
+	    if (!dupl.frames[i].closureAllocation) {
+		dupl.frames[i].sc_callCcRestoreIndex = dupl.frames[i].savedRestoreIndex;
+		dupl.frames[i].sc_callCcFun = dupl.frames[i].savedCallCcFun;
+	    }
+	}
+	var e = new sc_CallCcException();
+	e.token = backup.token;
+	e.storage = dupl;
+	e.text = "call/cc-exception";
+	e.root = function() {
+	    sc_CALLCC_STORAGE = dupl;
+	    sc_CALLCC_STORAGE.resetFrameIterator();
+	};
+	if (sc_CALLCC_STORAGE.length() > 0) {
+	    throw e;
+	} else {
+	    // we are not called out of a Scheme-function.
+	    // Just invoke the continuation ourselves...
+	    e.root();
+	    sc_callCcRestart(e);
+	}
+    };
+
+    var storage = sc_CALLCC_STORAGE;
+    if (storage.doRestore) {
+	delete storage.doRestore;
+	for (var i = 0; i < storage.frames.length; i++) {
+	    // reset the callCcRestoreIndex.
+	    if (!storage.frames[i].closureAllocation)
+		storage.frames[i].sc_callCcRestoreIndex = 0;
+	}
+	var tmp = storage.returnValue;
+	delete storage.returnValue;
+	return tmp;
+    } else {
+	var b = backup(sc_CALLCC_STORAGE);
+	var token = new Object();
+	b.token = token;
+	var k = function(returnValue) {
+	    restore(b, returnValue);
+	};
+	try {
+	    return proc(k);
+	} catch (e) {
+	    if (e instanceof sc_CallCcException &&
+		e.token === token) {
+		// shortcut
+		return e.storage.returnValue;
+	    } else throw e;
+	}
+    }
+}
+
+function sc_callCcRestart(exc) {
+    while (true) {
+	try {
+	    exc.root();
+	    if (sc_CALLCC_STORAGE.firstCall) {
+		return sc_CALLCC_STORAGE.firstCall();
+	    }
+	    return;
+	} catch (e) {
+	    if (e instanceof sc_CallCcException)
+		exc = e;
+	    else
+		throw e;
+	}
+    }
+}
+
+var sc_INDEX_OBJECT_HASH = new Array;
+
+function sc_getCallCcIndexObject(index) {
+    if (sc_INDEX_OBJECT_HASH[index])
+	return sc_INDEX_OBJECT_HASH[index];
+    else {
+	var tmp = { index: index };
+	sc_INDEX_OBJECT_HASH[index] = tmp;
+	return tmp;
+    }
+}
+
+function sc_BindExitException() {
+    this._internalException = true;
+}
+
+function sc_CurrentDate() { /// export current-date
+   return new Date();
+}

@@ -8,6 +8,11 @@
 			     (hashtable-put! cloned-ht key val)))
       cloned-ht))
 
+(define (hashtable-append! ht1 ht2)
+   (hashtable-for-each ht2
+		       (lambda (key val)
+			  (hashtable-put! ht1 key val))))
+
 ;; '("a" "b" "c") -> "a,b,c"
 (define (separated-list els sep . Ldefault)
    (cond
@@ -25,3 +30,8 @@
 		 `(display ,arg ,p))
 	      Largs)))
 
+(define-macro (begin0 . L)
+   (let ((fst (gensym 'fst)))
+      `(let ((,fst ,(car L)))
+	  ,@(cdr L)
+	  ,fst)))

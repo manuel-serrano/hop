@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon May 22 09:26:11 2006 (serrano)                */
+#*    Last change :  Sat Oct  7 17:54:24 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -23,7 +23,7 @@ POPULATION	= Makefile
 #*---------------------------------------------------------------------*/
 #*    weblets                                                          */
 #*---------------------------------------------------------------------*/
-POPDIRS	= hop password hz info webfilter doc home
+POPDIRS	= hop password hz info webfilter doc home hopsh
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */

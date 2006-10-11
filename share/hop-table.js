@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 10 14:25:42 2004                          */
-/*    Last change :  Mon Jan  9 07:59:00 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 15:56:50 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Sortable tables                                                  */
@@ -172,28 +172,7 @@ function hop_ts_sort_default( a, b ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    add_event                                                        */
-/*    -------------------------------------------------------------    */
-/*    cross-browser event handling for IE5+,  NS6 and Mozilla          */
-/*    By Scott Andrew.                                                 */
-/*---------------------------------------------------------------------*/
-function add_event( elm, evType, fn ) {
-   if( elm.addEventListener ) {
-      elm.addEventListener( evType, fn, false );
-      return true;
-   } else {
-      if( elm.attachEvent ){
-	 var r = elm.attachEvent( "on" + evType, fn );
-	 return r;
-      } else {
-	 alert( "Handler could not be removed" );
-	 return false;
-      }
-   }
-}
-
-/*---------------------------------------------------------------------*/
 /*    onload event                                                     */
 /*---------------------------------------------------------------------*/
-add_event( window, "load", hop_sorttables_init );
+hop_add_event_listener( window, "load", hop_sorttables_init );
 

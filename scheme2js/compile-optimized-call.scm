@@ -98,7 +98,7 @@
    (and (pair? operand)
 	(null? (cdr operand))
 	(begin
-	   (operand.compile p)
+	   ((car operand).compile p)
 	   #t)))
 
 (define (jsNew-op p operands)
@@ -174,7 +174,7 @@
 
    (let ((nb-operands (length operands)))
       (cond
-	 ((= nb-operands 0) "(new sc_String(''))")
+	 ((= nb-operands 0) (p-display p "(new sc_String(''))"))
 	 ((= nb-operands 1) ((car operands).compile p))
 	 (else
 	  (p-display p "(new sc_String(")
@@ -185,7 +185,26 @@
 		    (cdr operands))
 	  (p-display p "))")))))
 
-   
+
+(define (modulo-op p operands)
+   (if (config 'correct-modulo)
+       #f
+       ((infix-op 2 2 "%") p operands)))
+
+(define (values-op p operands)
+   (let ((nb-operands (length operands)))
+      (cond
+	 ((= nb-operands 0) (p-display p "(new sc_Values([]))"))
+	 ((= nb-operands 1) ((car operands).compile p))
+	 (else
+	  (p-display p "(new sc_Values([")
+	  ((car operands).compile p)
+	  (for-each (lambda (n)
+		       (p-display p ",")
+		       (n.compile p))
+		    (cdr operands))
+	  (p-display p "]))")))))
+
 (define *optimizable-operators*
    `(
     (sci_isEq ,(infix-op 2 2 "==="))
@@ -202,8 +221,8 @@
     (sci_multi ,(infix-op 0 #f "*" "1"))
     (sci_minus ,minus-op)
     (sci_div ,div-op)
-    ;; TODO: this is actually not true!
-    (sci_modulo ,(infix-op 2 2 "%"))
+
+    (sci_modulo ,modulo-op)
     
     (sci_quotient ,(hole-op 2 "parseInt(" 'x "/" 'y ")"))
     (sci_bitAnd ,(infix-op 2 2 "&"))
@@ -216,7 +235,8 @@
     (sci_exact2inexact ,id)
     (sci_inexact2exact ,id)
     
-    (sci_not ,(prefix-op "!"))
+    ;; TODO: merge somehow with compile-optimize-bool
+    (sci_not ,(postfix-op "=== false"))
     
     (sci_cons ,(hole-op 2 "new sc_Pair(" 'car ", " 'cdr ")"))
     (sci_isPair ,(postfix-op " instanceof sc_Pair"))
@@ -311,6 +331,8 @@
 				 " (" 1 ".name === " 0 ")"))
     (sci_getStructField ,(hole-op 3 0 "[" 2 "]"))
     (sci_setStructField ,(hole-op 4 0 "[" 2 "] = " 3))
+
+    (sci_values ,values-op)
 
     ;; scheme2js extension
     (sci_jsField ,(hole-op 2 'o "[" 'field "]"))

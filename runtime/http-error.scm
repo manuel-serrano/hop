@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Jun  6 18:49:08 2006 (serrano)                */
+;*    Last change :  Sat Oct  7 09:28:17 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -42,7 +42,9 @@
 	    (http-corrupted-service-error ::http-request)
 	    (http-warning msg #!optional dump)
 	    (http-internal-warning e)
-	    (http-service-unavailable obj)))
+	    (http-service-unavailable obj)
+	    (http-remote-error ::obj ::&exception)
+	    (http-gateway-timeout e)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-error ...                                           */
@@ -96,7 +98,7 @@
 ;*    <EIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<EIMG> . args)
-   (apply <IMG> :style "padding: 20px;" :inline #t args))
+   (apply <IMG> :style "padding: 20px;" args))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ETD> ...                                                        */
@@ -150,9 +152,10 @@
 (define (http-unknown-host host)
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 404 Not Found")
+      (request (instantiate::http-request))
       (xml (<HTML>
 	      (<HEAD> :css
-		      (format "http://~a:~a/~a/hop-error.hss"
+		      (format "http://~a:~a~a/hop-error.hss"
 			      (hostname)
 			      (hop-port)
 			      (hop-share-directory)))
@@ -161,7 +164,7 @@
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD>
-			     (<EIMG> :src (format "http://~a:~a/~a/icons/notfound.png"
+			     (<EIMG> :src (format "http://~a:~a~a/icons/notfound.png"
 						  (hostname)
 						  (hop-port)
 						  (hop-share-directory))))
@@ -177,6 +180,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-file-not-found file)
    (instantiate::http-response-hop
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
 	      (<HEAD> :css "hop-error.hss")
@@ -199,39 +203,50 @@
 ;*    http-service-not-found ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (http-service-not-found file)
-   (instantiate::http-response-hop
-      (start-line "HTTP/1.0 404 Not Found")
-      (xml (<HTML>
-	      (<HEAD> :css "hop-error.hss")
-	      (<BODY>
-		 (<CENTER>
-		    (<ETABLE>
-		       (<TR>
-			  (<ETD>
-			     (<EIMG> :src (format "~a/icons/notfound.png"
-						  (hop-share-directory))))
-			  (<ETD>
-			     (<TABLE>
-				:style "35em"
-				(<TR> (<ETD> :class "title"
-					     "Invalidated service!"
-					     ))
-				(<TR> (<ETD> :class "msg"
-					     (<SPAN> :class "filenotfound"
-						     file)))
-				(<TR> (<ETD> :class "dump"
-					     (<SPAN> "You are trying to executed an invalidated service!
+   (define (illegal-service msg)
+      (instantiate::http-response-hop
+	 (request (instantiate::http-request))
+	 (start-line "HTTP/1.0 404 Not Found")
+	 (xml (<HTML>
+		 (<HEAD> :css "hop-error.hss")
+		 (<BODY>
+		    (<CENTER>
+		       (<ETABLE>
+			  (<TR>
+			     (<ETD>
+				(<EIMG> :src (format "~a/icons/notfound.png"
+						     (hop-share-directory))))
+			     (<ETD>
+				(<TABLE>
+				   :style "35em"
+				   (<TR> (<ETD> :class "title"
+						(format "~a service!"
+							(string-capitalize msg))))
+				   (<TR> (<ETD> :class "msg"
+						(<SPAN> :class "filenotfound"
+							file)))
+				   (<TR> (<ETD> :class "dump"
+						(<SPAN> (format "You are trying to executed an ~a service!
 <br><br>
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
 can no longer be executed.<br><br>
-Reloading the page is the only workaround.")))))))))))))
+Reloading the page is the only workaround." msg))))))))))))))
+   (define (http-invalidated-service file)
+      (illegal-service "invalidated"))
+   (define (http-unknown-service file)
+      (illegal-service "unknown"))
+   (let ((svc (make-file-name (hop-service-base) (hop-service-weblet-name))))
+      (if (substring-at? file svc 0)
+	  (http-invalidated-service file)
+	  (http-unknown-service file))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-permission-denied ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (http-permission-denied file)
    (instantiate::http-response-string
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 403 Forbidden")
       (body (format "Permission denied: ~s" file))))
 
@@ -239,16 +254,18 @@ Reloading the page is the only workaround.")))))))))))))
 ;*    http-method-error ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-method-error obj)
-    (instantiate::http-response-string
-       (start-line "HTTP/1.0 501 Not Implemented")
-       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Method not implemented ~a</body></html>"
-		     obj))))
+   (instantiate::http-response-string
+      (request (instantiate::http-request))
+      (start-line "HTTP/1.0 501 Not Implemented")
+      (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Method not implemented ~a</body></html>"
+		    obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-error ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-error obj)
    (instantiate::http-response-string
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 400 Bad Request")
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Parse error in HTTP request on token <tt>~a</tt>/body></html>"
 		    obj))))
@@ -258,6 +275,7 @@ Reloading the page is the only workaround.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-bad-request obj)
    (instantiate::http-response-string
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 400 Bad Request")
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request <tt><pre>~a</pre></tt></body></html>" obj))))
 
@@ -267,6 +285,7 @@ Reloading the page is the only workaround.")))))))))))))
 (define (http-internal-error e msg)
    (let ((s (with-error-to-string (lambda () (error-notify e)))))
       (instantiate::http-response-hop
+	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 501 Internal Server Error")
 	 (xml (<HTML>
 		 (<HEAD> :css "hop-error.hss")
@@ -313,6 +332,7 @@ Reloading the page is the only workaround.")))))))))))))
 			      (<TH> :align 'right "filter:")
 			      (<ETD> (<TT> (hop-request-service-name req))))))))))
       (instantiate::http-response-hop
+	 (request req)
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (xml (<HTML>
 		 (<HEAD> :css "hop-error.hss")
@@ -341,6 +361,7 @@ Reloading the page is the only workaround.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-invalidated-service-error req)
    (instantiate::http-response-hop
+      (request req)
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
 	      (<HEAD> :css "hop-error.hss")
@@ -361,7 +382,7 @@ Reloading the page is the only workaround.")))))))))))))
 					     (<SPAN> :class "filenotfound"
 						     (<TT> "(service ...)"))))
 				(<TR> (<ETD> :class "dump"
-					     (<SPAN> "You are trying to executed an invalidated service!
+					     (<SPAN> "You are trying to executed an unexisting or invalidated service!
 <br><br>
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
@@ -373,6 +394,7 @@ Reloading the page is the only workaround.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-corrupted-service-error req)
    (instantiate::http-response-hop
+      (request req)
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
 	      (<HEAD> :css "hop-error.hss")
@@ -401,6 +423,7 @@ Reloading the page is the only workaround.")))))))))))))
 (define (http-internal-warning e)
    (let ((s (with-error-to-string (lambda () (warning-notify e)))))
       (instantiate::http-response-string
+	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>" s)))))
    
@@ -409,6 +432,7 @@ Reloading the page is the only workaround.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-warning msg #!optional dump)
    (instantiate::http-response-hop
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 200 ok")
       (xml (<HTML>
 	      (<HEAD> :css "hop-error.hss")
@@ -429,9 +453,62 @@ Reloading the page is the only workaround.")))))))))))))
 ;*    http-service-unavailable ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (http-service-unavailable e)
-   (instantiate::http-response-string
+   (instantiate::http-response-hop
+      (request (instantiate::http-request))
       (start-line "HTTP/1.0 503 Service Unavailable")
-      (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Service unavailable ~a</body></html>" e))))
+      (xml (<HTML>
+	      (<HEAD> :css
+		 (format "http://~a:~a~a/hop-error.hss"
+			 (hostname)
+			 (hop-port)
+			 (hop-share-directory)))
+	      (<BODY>
+		 (<CENTER>
+		    (<ETABLE>
+		       (<TR>
+			  (<ETD>
+			     (<EIMG> :src (format
+					   "http://~a:~a~a/icons/error.png"
+					   (hostname)
+					   (hop-port)
+					   (hop-share-directory))))
+			  (<ETD>
+			     (<TABLE>
+				(<TR> (<ETD> :id "title" "Service Unavailable"))
+				(<TR> (<ETD> :id "msg" ""))
+				(<TR> (<ETD> :id "dump"
+					 (<PRE> e)))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-remote-error ...                                            */
+;*---------------------------------------------------------------------*/
+(define (http-remote-error host e)
+   (let ((s (with-error-to-string (lambda () (error-notify e)))))
+      (instantiate::http-response-hop
+	 (request (instantiate::http-request))
+	 (start-line "HTTP/1.0 503 Service Unavailable")
+	 (xml (<HTML>
+		 (<HEAD> :css
+		    (format "http://~a:~a~a/hop-error.hss"
+			    (hostname)
+			    (hop-port)
+			    (hop-share-directory)))
+		 (<BODY>
+		    (<CENTER>
+		       (<ETABLE>
+			  (<TR>
+			     (<ETD>
+				(<EIMG> :src (format
+					      "http://~a:~a~a/icons/error.png"
+					      (hostname)
+					      (hop-port)
+					      (hop-share-directory))))
+			     (<ETD>
+				(<TABLE>
+				   (<TR> (<ETD> :id "title" "An error occured while exchanging with a remote host"))
+				   (<TR> (<ETD> :id "msg" host))
+				   (<TR> (<ETD> :id "dump"
+					    (<PRE> s))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-io-error ...                                                */
@@ -439,10 +516,11 @@ Reloading the page is the only workaround.")))))))))))))
 (define (http-io-error e)
    (let ((s (with-error-to-string (lambda () (error-notify e)))))
       (instantiate::http-response-hop
+	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
 		 (<HEAD> :css
-			 (format "http://~a:~a/~a/hop-error.hss"
+			 (format "http://~a:~a~a/hop-error.hss"
 				 (hostname)
 				 (hop-port)
 				 (hop-share-directory)))
@@ -452,7 +530,7 @@ Reloading the page is the only workaround.")))))))))))))
 			  (<TR>
 			     (<ETD>
 				(<EIMG> :src (format
-					      "http://~a:~a/~a/icons/notfound.png"
+					      "http://~a:~a~a/icons/notfound.png"
 					      (hostname)
 					      (hop-port)
 					      (hop-share-directory))))
@@ -465,3 +543,14 @@ Reloading the page is the only workaround.")))))))))))))
 						      (&error-msg e))))
 				   (<TR> (<ETD> :id "dump"
 						(<PRE> (html-string-encode s)))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-gateway-timeout ...                                         */
+;*---------------------------------------------------------------------*/
+(define (http-gateway-timeout e)
+   (instantiate::http-response-string
+      (request (instantiate::http-request))
+      (start-line "HTTP/1.0 502 Bad Gateway")
+      (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Gateway Timeout ~a</body></html>" e))))
+
+

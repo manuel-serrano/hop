@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Thu Jun  8 10:03:22 2006 (serrano)                */
+;*    Last change :  Mon Oct  2 14:04:13 2006 (serrano)                */
 ;*    Copyright   :  2003-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -72,8 +72,7 @@
 			      content-length
 			      boundary)))
 		    (let ((body (read-chars (elong->fixnum content-length) pi)))
-		       (cons path
-			     (cgi-args->list body))))))
+		       (cons path (cgi-args->list body))))))
 	    ((GET PUT)
 	     (http-request-url-cgi-args encoded-path))
 	    (else
@@ -94,7 +93,7 @@
 		    ;; Not yet added.
 		    (loop (cdr l)
 			  (cons (car l) res)))))))
-   
+
    (let ((args (cgi-args req)))
       (cons (car args) (normalize (cdr args)))))
 

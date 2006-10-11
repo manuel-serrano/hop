@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Fri Jun  9 08:48:56 2006 (serrano)                */
+/*    Last change :  Tue Oct 10 16:42:25 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -14,11 +14,11 @@
 /*---------------------------------------------------------------------*/
 function hop_notepad_inner_toggle( np, to, tabs, bodies ) {
    /* disactive last selected tab */
-   tabs.childNodes[ np.active_tab ].className = "hop-nptab-inactive";
+   tabs.childNodes[ np.active_tab ].className = " hop-nptab hop-nptab-inactive";
    bodies.childNodes[ np.active_tab ].style.display = "none";
 
    /* active the new selected tab */
-   tabs.childNodes[ to ].className = "hop-nptab-active";
+   tabs.childNodes[ to ].className = "hop-nptab hop-nptab-active";
    bodies.childNodes[ to ].style.display = "block";
 
    /* store for next time */
@@ -29,8 +29,20 @@ function hop_notepad_inner_toggle( np, to, tabs, bodies ) {
 /*    hop_notepad_inner_select ...                                     */
 /*---------------------------------------------------------------------*/
 function hop_notepad_inner_select( np, to ) {
-   var tabs = np.childNodes[ 1 ];
-   var bodies = np.childNodes[ 2 ];
+   var tabs = null;
+   var bodies = null;
+   var i;
+
+   for( i = 0; i < np.childNodes.length; i++ ) {
+      if( np.childNodes[ i ].className == "hop-notepad-body" ) {
+	 bodies = np.childNodes[ i ];
+	 if( tabs != null ) break;
+      }
+      if( np.childNodes[ i ].className == "hop-notepad-tabs" ) {
+	 tabs = np.childNodes[ i ];
+	 if( bodies !=null ) break;
+      }
+   }
 
    /* at creation time, tab 0 is active */
    if( np.active_tab == undefined ) np.active_tab = 0;

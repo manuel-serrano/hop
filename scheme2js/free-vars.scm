@@ -30,6 +30,9 @@
 
       ;; fun-free-vars might contain local vars.
       ;; remove them.
+      ;; This is possible, if we have nested lambdas.
+      ;; In this case the "Var-ref-capt-fun" checks for local vars, but once we
+      ;; got out of the nested Lambda, we still have the now local vars in it.
       (hashtable-for-each local-vars
 			  (lambda (key val)
 			     (hashtable-remove! fun-free-vars key)))

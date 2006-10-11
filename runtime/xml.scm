@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jun 16 10:52:35 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:54:37 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -16,14 +16,28 @@
 
    (library web)
    
-   (include "eval-macro.sch"
+   (include "compiler-macro.sch"
+	    "param.sch"
 	    "xml.sch")
 
    (import  __hop_types
 	    __hop_mime
-	    __hop_misc)
+	    __hop_misc
+	    __hop_param
+	    __hop_configure)
    
-   (export  (class xml
+   (export  (class xml-backend
+	      (id::symbol read-only)
+	      (mime-type::bstring read-only)
+	      (doctype::bstring read-only)
+	      (header-format::bstring read-only)
+	      (html-attributes::pair-nil read-only (default '()))
+	      (no-end-tags-elements::pair-nil read-only (default '()))
+	      (script-start (default #f))
+	      (script-stop (default #f))
+	      (meta-format::bstring read-only))
+
+	    (class xml
 	       (%xml-constructor))
 
 	    (class css::xml)
@@ -43,14 +57,21 @@
 	       (attributes::pair-nil (default '()))
 	       body::pair-nil)
 
-	    (class xml-html::xml-markup
-	       (prelude read-only (default "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n")))
+	    (class xml-html::xml-markup)
 
 	    (class xml-element::xml-markup
 	       (id read-only (default #unspecified))
 	       (parent (default #unspecified)))
 
 	    (class xml-empty-element::xml-element)
+
+	    (class xml-script::xml-element)
+	    
+	    (class xml-tilde::xml
+	       (body read-only)
+	       (parent (default #unspecified)))
+
+	    (class xml-meta::xml-markup)
 
 	    (generic %xml-constructor ::xml)
 	    (xml-constructor-add! ::symbol ::procedure)
@@ -60,12 +81,28 @@
 
 	    (xml-make-id::bstring #!optional id (markup 'HOP))
 	    
- 	    (generic xml-write ::obj ::output-port ::symbol)
-	    (generic xml-write-attribute attr::obj id p)
+	    (hop-get-xml-backend::xml-backend ::symbol)
+
+	    (hop-javascript-mime-type::bstring)
+	    (hop-javascript-mime-type-set! ::bstring)
+	    
+	    (hop-xhtml-xmlns::pair-nil)
+	    (hop-xhtml-xmlns-set! ::pair-nil)
+
+	    (hop-xml-backend::xml-backend)
+	    (hop-xml-backend-set! ::obj)
+
+ 	    (generic xml-write ::obj ::output-port ::symbol ::xml-backend)
+	    (generic xml-write-attribute ::obj ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port)
 
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
+
+	    (string->tilde::xml-tilde ::bstring)
+	    (tilde->string::bstring ::xml-tilde)
+	    (tilde-compose::xml-tilde ::xml-tilde ::xml-tilde)
+	    (tilde-make-thunk::xml-tilde ::xml-tilde)
 	    
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -159,9 +196,81 @@
 	    (<U> . ::obj)
 	    (<UL> . ::obj)
 	    (<VAR> . ::obj)
-	    
+
+	    (<TILDE> ::obj)
 	    (<DELAY> . ::obj)))
 
+;*---------------------------------------------------------------------*/
+;*    hop-javascript-mime-type ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-javascript-mime-type
+   (hop-configure-javascript-mime-type))
+   
+;*---------------------------------------------------------------------*/
+;*    hop-xhtml-xmlns ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-xhtml-xmlns
+   '((xmlns . "http://www.w3.org/1999/xhtml"))
+   (lambda (v)
+      (if (every? (lambda (x)
+		     (and (pair? x) (symbol? (car x)) (string? (cdr x))))
+		  v)
+	  v
+	  (error 'hop-xhtml-xmlns "Illegal namespaces" v))))
+				   
+;*---------------------------------------------------------------------*/
+;*    *html-backend* ...                                               */
+;*---------------------------------------------------------------------*/
+(define *html-4.01-backend*
+   (instantiate::xml-backend
+      (id 'html-4.01)
+      (mime-type "text/html")
+      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n")
+      (html-attributes '())
+      (header-format "")
+      (no-end-tags-elements '(meta link))
+      ;; the meta-format contains the closing >
+      (meta-format "http-equiv=\"Content-type\" content=\"~a; charset=~a\">")))
+
+;*---------------------------------------------------------------------*/
+;*    *xhtml-backend* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *xhtml-backend*
+   (instantiate::xml-backend
+      (id 'xhtml-1.0)
+      (mime-type "application/xhtml+xml")
+      (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">")
+      (html-attributes (hop-xhtml-xmlns))
+      (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>")
+      (no-end-tags-elements '())
+      ;; XHTML scripts have to be protected
+      (script-start "<![CDATA[")
+      (script-stop "]]>")
+      ;; the meta-format contains the closing />
+      (meta-format "/>")))
+
+;*---------------------------------------------------------------------*/
+;*    hop-xml-backend ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-xml-backend
+   *html-4.01-backend*
+   (lambda (v)
+      (if (xml-backend? v)
+	  v
+	  (hop-get-xml-backend v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-get-xml-backend ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hop-get-xml-backend id)
+   (case id
+      ((html html-4.01)
+       *html-4.01-backend*)
+      ((xhtml xhtml-1.0)
+       *xhtml-backend*)
+      (else
+       (error 'hop-get-xml-backend "Illegal backend" id))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    *xml-constructors* ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -182,16 +291,6 @@
    o)
 
 ;*---------------------------------------------------------------------*/
-;*    %xml-constructor ::xml-element ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (%xml-constructor o::xml-element)
-   (with-access::xml-element o (id)
-      (let ((hook (hashtable-get *xml-constructors* id)))
-	 (when (procedure? hook)
-	    (hook o)))
-      o))
-
-;*---------------------------------------------------------------------*/
 ;*    %xml-constructor ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (%xml-constructor o::xml-markup)
@@ -204,11 +303,24 @@
 		(cond
 		   ((xml-element? e)
 		    (xml-element-parent-set! e o))
+		   ((xml-tilde? e)
+		    (xml-tilde-parent-set! e o))
 		   ((pair? e)
 		    (loop e))))
 	     (loop (cdr es)))
 	    ((xml-element? es)
 	     (xml-element-parent-set! es o))))
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    %xml-constructor ::xml-element ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (%xml-constructor o::xml-element)
+   (call-next-method)
+   (with-access::xml-element o (id)
+      (let ((hook (hashtable-get *xml-constructors* id)))
+	 (when (procedure? hook)
+	    (hook o)))
       o))
 
 ;*---------------------------------------------------------------------*/
@@ -256,17 +368,25 @@
    (and (xml-markup? o) (eq? (xml-markup-markup o) markup)))
 
 ;*---------------------------------------------------------------------*/
+;*    if-debug ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-macro (if-debug exp1 exp2)
+   (if (>fx (bigloo-debug) 0)
+       exp1
+       exp2))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-make-id ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (xml-make-id #!optional id (markup 'HOP))
    (if (string? id)
        id
-       (symbol->string (gensym markup))))
+       (if-debug (symbol->string (gensym markup)) (symbol->string (gensym)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (xml-write obj p encoding)
+(define-generic (xml-write obj p encoding backend)
    (cond
       ((string? obj)
        (if (eq? encoding 'UTF-8)
@@ -275,7 +395,7 @@
       ((or (number? obj) (symbol? obj))
        (display obj p))
       ((pair? obj)
-       (for-each (lambda (o) (xml-write o p encoding)) obj))
+       (for-each (lambda (o) (xml-write o p encoding backend)) obj))
       ((date? obj)
        (display obj p))
       ((null? obj)
@@ -292,43 +412,92 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-if ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-if p encoding)
+(define-method (xml-write obj::xml-if p encoding backend)
    (with-access::xml-if obj (test then otherwise)
       (if (test)
-	  (xml-write then p encoding)
-	  (xml-write otherwise p encoding))))
+	  (xml-write then p encoding backend)
+	  (xml-write otherwise p encoding backend))))
 
+;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-script ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-script p encoding backend)
+   (with-access::xml-script obj (body attributes)
+      (with-access::xml-backend backend (script-start script-stop)
+	 (if (pair? attributes)
+	     (begin
+		(display "<script " p)
+		(xml-write-attributes attributes p)
+		(display ">" p))
+	     (begin
+		(display "<script type='" p)
+		(display (hop-javascript-mime-type) p)
+		(display "'>" p)))
+	 (when (pair? body)
+	    (when script-start (display script-start p))
+	    (xml-write body p encoding backend)
+	    (when script-stop (display script-stop p)))
+	 (display "</script>\n" p))))
+   
+;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-tilde ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-tilde p encoding backend)
+   (with-access::xml-tilde obj (body parent)
+      (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
+	  (xml-write body p encoding backend)
+	  (with-access::xml-backend backend (script-start script-stop)
+	     (display "<script type='" p)
+	     (display (hop-javascript-mime-type) p)
+	     (display "'>" p)
+	     (when script-start (display script-start p))
+	     (xml-write body p encoding backend)
+	     (when script-stop (display script-stop p))
+	     (display "</script>\n" p)))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-delay ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-delay p encoding)
+(define-method (xml-write obj::xml-delay p encoding backend)
    (with-access::xml-delay obj (thunk)
-      (xml-write (thunk) p encoding)))
+      (xml-write (thunk) p encoding backend)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-markup p encoding)
-   (with-access::xml-element obj (markup attributes body)
+(define-method (xml-write obj::xml-markup p encoding backend)
+   (with-access::xml-markup obj (markup attributes body)
       (display "<" p)
       (display markup p)
       (xml-write-attributes attributes p)
       (cond
 	 ((or (pair? body) (memq markup '(script)))
 	  (display ">" p)
-	  (for-each (lambda (b) (xml-write b p encoding)) body)
+	  (for-each (lambda (b) (xml-write b p encoding backend)) body)
 	  (display "</" p)
 	  (display markup p)
 	  (display ">\n" p))
-	 ((memq markup '(meta link))
+	 ((memq markup (xml-backend-no-end-tags-elements backend))
 	  (display ">\n" p))
 	 (else
 	  (display "/>\n" p)))))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-meta ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-meta p encoding backend)
+   (with-access::xml-meta obj (markup attributes body)
+      (display "<" p)
+      (display markup p)
+      (xml-write-attributes attributes p)
+      (with-access::xml-backend backend (meta-format mime-type)
+	 (fprint p meta-format mime-type encoding))
+      (newline p)))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-element ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-element p encoding)
+(define-method (xml-write obj::xml-element p encoding backend)
    (with-access::xml-element obj (markup id attributes body)
       (cond
 	 ((and (null? body) (null? attributes))
@@ -359,7 +528,7 @@
 	  (display "\"" p)
 	  (xml-write-attributes attributes p)
 	  (display ">" p)
-	  (for-each (lambda (b) (xml-write b p encoding)) body)
+	  (for-each (lambda (b) (xml-write b p encoding backend)) body)
 	  (display "</" p)
 	  (display markup p)
 	  (display ">" p)))))
@@ -367,7 +536,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-empty-element ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-empty-element p encoding)
+(define-method (xml-write obj::xml-empty-element p encoding backend)
    (with-access::xml-empty-element obj (markup id attributes)
       (display "<" p)
       (display markup p)
@@ -380,10 +549,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-html ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-html p encoding)
-   (with-access::xml-html obj (prelude)
-      (when prelude (display prelude p))
-      (call-next-method)))
+(define-method (xml-write obj::xml-html p encoding backend)
+   (with-access::xml-backend backend (header-format doctype html-attributes)
+      (fprintf p header-format encoding)
+      (newline p)
+      (display doctype p)
+      (newline p)
+      (with-access::xml-html obj (markup attributes body)
+	 (display "<" p)
+	 (display markup p)
+	 (xml-write-attributes (filter (lambda (h)
+					  (not (assq (car h) attributes)))
+				       html-attributes)
+			       p)
+	 (xml-write-attributes attributes p)
+	 (display ">\n" p)
+	 (for-each (lambda (b) (xml-write b p encoding backend)) body)
+	 (display "</" p)
+	 (display markup p)
+	 (display ">\n" p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attributes ...                                         */
@@ -402,13 +586,23 @@
    (unless (eq? attr #f)
       (display id p)
       ;; boolean true attribute has no value
-      (unless (eq? attr #t)
-	 (display "='" p)
-	 (if (procedure? attr)
-	     (error 'xml "Illegal procedure argument in XML attribute" id)
-	     (display (xml-attribute-encode attr) p))
-	 (display "'" p))))
+      (display "='" p)
+      (cond
+	 ((eq? attr #t)
+	  (display id p))
+	 ((procedure? attr)
+	  (error 'xml "Illegal procedure argument in XML attribute" id))
+	 (else
+	  (display (xml-attribute-encode attr) p)))
+      (display "'" p)))
 
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::xml-tilde ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute attr::xml-tilde id p)
+   (with-access::xml-tilde attr (body)
+      (xml-write-attribute body id p)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::hop-service ...                            */
 ;*---------------------------------------------------------------------*/
@@ -521,7 +715,7 @@
 (define-xml-element <MAP>)
 (define-xml-element <MARQUEE>)
 (define-xml-element <MENU>)
-(define-xml-markup <META>)
+(define-xml xml-meta #f <META>)
 (define-xml-element <NOFRAMES>)
 (define-xml-element <NOSCRIPT>)
 (define-xml-element <OBJECT>)
@@ -534,7 +728,7 @@
 (define-xml-element <Q>)
 (define-xml-element <S>)
 (define-xml-element <SAMP>)
-(define-xml-markup <SCRIPT>)
+(define-xml xml-script #f <SCRIPT>)
 (define-xml-element <SELECT>)
 (define-xml-element <SMALL>)
 (define-xml-element <SPAN>)
@@ -556,6 +750,13 @@
 (define-xml-element <U>)
 (define-xml-element <UL>)
 (define-xml-element <VAR>)
+
+;*---------------------------------------------------------------------*/
+;*    <TILDE> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<TILDE> body)
+   (instantiate::xml-tilde
+      (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DELAY> ...                                                      */
@@ -597,4 +798,30 @@
 	     (attributes (cons `(src . ,src) attributes))
 	     (body '())))))
 	  
+;*---------------------------------------------------------------------*/
+;*    string->tilde ...                                                */
+;*---------------------------------------------------------------------*/
+(define (string->tilde string)
+   (instantiate::xml-tilde
+      (body string)))
 
+;*---------------------------------------------------------------------*/
+;*    tilde->string ...                                                */
+;*---------------------------------------------------------------------*/
+(define (tilde->string t)
+   (with-access::xml-tilde t (body)
+      body))
+
+;*---------------------------------------------------------------------*/
+;*    tilde-compose ...                                                */
+;*---------------------------------------------------------------------*/
+(define (tilde-compose t1 t2)
+   (instantiate::xml-tilde
+      (body (string-append (xml-tilde-body t1) "\n" (xml-tilde-body t2)))))
+
+;*---------------------------------------------------------------------*/
+;*    tilde-make-thunk ...                                             */
+;*---------------------------------------------------------------------*/
+(define (tilde-make-thunk t)
+   (instantiate::xml-tilde
+      (body (string-append "function() {" (xml-tilde-body t) "}"))))

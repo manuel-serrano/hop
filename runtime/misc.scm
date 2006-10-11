@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Thu Jun 15 14:08:52 2006 (serrano)                */
+;*    Last change :  Wed Oct 11 05:32:41 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -20,8 +20,6 @@
    
    (export (hop-verb ::int . args)
 	   (hop-color ::obj ::obj ::obj)
-	   (load-once ::bstring)
-	   (load-once-unmark! ::bstring)
 	   (shortest-prefix ::bstring)
 	   (longest-suffix ::bstring)
 	   (is-suffix?::bool ::bstring ::bstring)
@@ -36,7 +34,11 @@
 	   (string-escape::bstring ::bstring ::char)
 	   (escape-string::bstring ::bstring)
 	   (delete-path ::bstring)
-	   (autoload-prefix::procedure ::bstring)))
+	   (make-url-name::bstring ::bstring ::bstring)
+	   (make-client-socket/timeout ::bstring ::int ::int ::obj)
+	   (inline micro-seconds::int ::int)
+	   (inline input-timeout-set! ::input-port ::int)
+	   (inline output-timeout-set! ::output-port ::int)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
@@ -70,49 +72,6 @@
 		       req)
 		   msg)))
 
-;*---------------------------------------------------------------------*/
-;*    *table* ...                                                      */
-;*---------------------------------------------------------------------*/
-(define *table* #f)
-
-;*---------------------------------------------------------------------*/
-;*    *load-once-mutex* ...                                            */
-;*---------------------------------------------------------------------*/
-(define *load-once-mutex* (make-mutex "load-once"))
-
-;*---------------------------------------------------------------------*/
-;*    load-once ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (load-once file)
-   (mutex-lock! *load-once-mutex*)
-   (unless (hashtable? *table*) (set! *table* (make-hashtable)))
-   (let* ((f (file-name-unix-canonicalize file))
-	  (g (hashtable-get *table* f)))
-      (if g
-	  (mutex-unlock! *load-once-mutex*)
-	  (begin
-	     (hashtable-put! *table* f #t)
-	     (mutex-unlock! *load-once-mutex*)
-	     (with-handler
-		(lambda (e)
-		   ;; unload the file on error
-		   (mutex-lock! *load-once-mutex*)
-		   (hashtable-remove! *table* f)
-		   (mutex-unlock! *load-once-mutex*)
-		   (raise e))
-		(hop-load f))))))
-
-;*---------------------------------------------------------------------*/
-;*    load-once-unmark! ...                                            */
-;*    -------------------------------------------------------------    */
-;*    Remove a file name from the load-once table                      */
-;*---------------------------------------------------------------------*/
-(define (load-once-unmark! file)
-   (mutex-lock! *load-once-mutex*)
-   (when (hashtable? *table*)
-      (hashtable-remove! *table* (file-name-unix-canonicalize file)))
-   (mutex-unlock! *load-once-mutex*))
-   
 ;*---------------------------------------------------------------------*/
 ;*    shortest-prefix ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -321,21 +280,82 @@
        (delete-file path))))
 
 ;*---------------------------------------------------------------------*/
-;*    autoload-prefix ...                                              */
-;*    -------------------------------------------------------------    */
-;*    Builds a predicate that matches if the request path is a         */
-;*    prefix of STRING.                                                */
+;*    make-url-name ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (autoload-prefix string)
-   (let* ((p string)
-	  (p/ (string-append string "/"))
-	  (lp (string-length p)))
-      (lambda (req)
-	 (with-access::http-request req (path)
-	    (let ((i (string-index path #\?))
-		  (l (string-length path)))
-	       (if (=fx i -1)
-		   (and (substring-at? path p 0)
-			(or (=fx l lp) (eq? (string-ref path lp) #\/)))
-		   (and (>=fx i lp)
-			(substring-at? path p 0 i))))))))
+(define (make-url-name directory file)
+   (let* ((ldir (string-length directory)))
+      (if (and (=fx ldir 1) (char=? (string-ref directory 0) #\.))
+	  file
+	  (let* ((lfile (string-length file))
+		 (len (+fx ldir (+fx lfile 1)))
+		 (str (make-string len #\/)))
+	     (blit-string-ur! directory 0 str 0 ldir)
+	     (blit-string-ur! file 0 str (+fx 1 ldir) lfile)
+	     str))))
+
+;*---------------------------------------------------------------------*/
+;*    output-port-timeout-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo2.8a (define (output-port-timeout-set! p t) #f))
+   (else #unspecified))
+
+(cond-expand
+   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
+   (else #unspecified))
+
+;*---------------------------------------------------------------------*/
+;*    make-client-socket/timeout ...                                   */
+;*---------------------------------------------------------------------*/
+(define (make-client-socket/timeout host port timeout::int msg::obj)
+   (let ((tmt (if (>fx timeout 0)
+		  (micro-seconds timeout)
+		  (micro-seconds (hop-connection-timeout)))))
+      (let loop ((ttl (hop-connection-ttl)))
+	 (let ((res (with-handler
+		       (lambda (e)
+			  (if (>fx ttl 0)
+			      (begin
+				 (hop-verb 1
+					   (hop-color msg msg " REMOTE")
+					   ": " host ":" port
+					   (if (http-request? msg)
+					       (format " (~a)"
+						       (http-request-path msg))
+					       "")
+					   (trace-color 1 " CONNECTION FAILED")
+					   " ttl=" ttl "\n")
+				 (-fx ttl 1))
+			      (raise e)))
+		       (make-client-socket host port :timeout tmt))))
+	    (if (number? res)
+		(loop res)
+		res)))))
+
+;*---------------------------------------------------------------------*/
+;*    micro-seconds ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (micro-seconds ms)
+   (*fx 1000 ms))
+
+;*---------------------------------------------------------------------*/
+;*    input-port-timeout-set! ...                                      */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo2.8a (define (input-port-timeout-set! p t) #f))
+   (else #unspecified))
+
+;*---------------------------------------------------------------------*/
+;*    input-timeout-set! ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (input-timeout-set! port t)
+   (let ((ms (micro-seconds t)))
+      (input-port-timeout-set! port ms)))
+
+;*---------------------------------------------------------------------*/
+;*    output-timeout-set! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (output-timeout-set! port t)
+   (let ((ms (micro-seconds t)))
+      (output-port-timeout-set! port ms)))
+

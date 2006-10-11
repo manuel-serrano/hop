@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan  9 13:43:05 2006                          */
-/*    Last change :  Mon May 29 14:10:44 2006 (serrano)                */
+/*    Last change :  Wed Aug  2 14:39:21 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop sorttable CSS                                                */
@@ -15,9 +15,16 @@ span.hop-sorttable a.hop-sortheader {
 
 span.hop-sorttable span.hop-sortarrow {
   border-style: solid;
+  border-color: transparent;
   border-width: 1px;
   font-size: small;
   font-weight: bold;
+}
+
+span.hop-sorttable span.hop-sortarrow:hover {
+  border-style: dotted;
+  border-color: black;
+  border-width: 1px;
 }
 
 span.hop-sorttable a.hop-sortheader:visited {

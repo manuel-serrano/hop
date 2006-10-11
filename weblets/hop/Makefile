@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Jun 12 13:26:14 2006 (eg)                     */
+#*    Last change :  Thu Aug  3 09:21:14 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -17,7 +17,7 @@ include ../../etc/Makefile.version
 
 HOP_POP         = hop.hop config.hop
 POPULATION	= Makefile .afile hop.hss \
-                  etc/weblet-info etc/logo.png etc/default.png $(HOP_POP) 
+                  etc/weblet.info etc/logo.png etc/default.png $(HOP_POP) 
 
 build: .afile
 

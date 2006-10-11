@@ -48,7 +48,8 @@
 	      (set! this.compiled (gen-JS-sym 'var))
 	      (begin
 		 (set! this.compiled (car *reusable-var-names*))
-		 (set! *reusable-var-names* (cdr *reusable-var-names*)))))
+		 (set! *reusable-var-names* (cdr *reusable-var-names*))))
+	  (set! this.reusable? #t))
 	 (else
 	  (set! this.compiled (gen-JS-sym this.id)))))
 
@@ -66,7 +67,10 @@
       (set! this.compiled "this"))
 
    (define-pmethod (Var-free-name)
-      (set! *reusable-var-names* (cons this.compiled *reusable-var-names*)))
+      (if this.reusable?
+	  (set! *reusable-var-names* (cons this.compiled
+					   *reusable-var-names*)))
+      (delete! this.reusable?))
 
    (define-pmethod (JS-Var-free-name)
       'do-nothing)

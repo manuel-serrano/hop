@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Jun 17 10:54:10 2006 (serrano)                */
+;*    Last change :  Thu Sep 21 15:12:38 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -17,6 +17,8 @@
    (option  (set! *dlopen-init* #t))
 
    (import __hop_param)
+
+   (use    __hop_xml)
    
    (export (class user
 	       (name::bstring read-only)
@@ -33,7 +35,8 @@
 	      (socket (default #f))
 	      (header::pair-nil (default '()))
 	      (content-length::elong read-only (default #e-1))
-	      (char-encoding (default #f)))
+	      (char-encoding (default #f))
+	      (timeout::int (default -1)))
 	   
 	   (class http-request::%http-message
 	      (user (default #f))
@@ -46,20 +49,20 @@
 	      (authorization (default #f))
 	      (proxy-authorization (default #f))
 	      (http::bstring (default "HTTP/1.1"))
-	      host::bstring
-	      path::bstring
+	      (host::bstring (default "localhost"))
+	      (path::bstring (default "/dummy"))
 	      (userinfo read-only (default #f))
 	      (scheme::bstring (default "http"))
 	      (port::bint (default 80))
 	      (method::symbol read-only (default 'GET))
 	      (encoded-path::bstring (default ""))
-	      (timeout::int read-only (default -1)))
+	      (connection::symbol (default 'keep-alive))
+	      (%env (default #f)))
 	   
 	   (abstract-class %http-response::%http-message
-	      (content-type::bstring (default "text/html"))
-	      (request::obj (default #unspecified))
-	      (bodyp::bool read-only (default #t))
-	      (timeout::int (default -1)))
+	      (content-type::bstring (default (hop-default-mime-type)))
+	      (request::http-request (default (instantiate::http-request)))
+	      (bodyp::bool read-only (default #t)))
 
 	   (class http-response-abort::%http-response)
 	   
@@ -72,7 +75,8 @@
 	      (path::bstring read-only)
 	      (userinfo read-only)
 	      (encoded-path::bstring read-only)
-	      (remote-timeout read-only (default #f)))
+	      (remote-timeout read-only)
+	      (connection-timeout read-only))
 
 	   (class http-response-filter::%http-response
 	      (response::%http-response read-only)
@@ -86,10 +90,15 @@
 
 	   (abstract-class %http-response-local::%http-response
 	      (server::bstring (default (hop-server-name)))
-	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
+ 	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
 
 	   (class http-response-hop::%http-response-local
+	      (backend read-only (default (hop-xml-backend)))
 	      (xml read-only))
+	   
+	   (class http-response-js::%http-response-local
+	      (backend read-only (default (hop-xml-backend)))
+	      (value::obj read-only))
 	   
 	   (class http-response-procedure::%http-response-local
 	      (proc::procedure read-only))
@@ -102,13 +111,6 @@
 	   (class http-response-string::%http-response-local
 	      (body::bstring read-only (default "")))
 
-	   ;; this class is obsolete. it should no longer be used
-	   (class http-response-obj::%http-response-local
-	      (body::obj read-only))
-	   
-	   (class http-response-js::%http-response-local
-	      (value::obj read-only))
-	   
 	   (class http-response-cgi::%http-response-local
 	      (cgibin::bstring read-only))
 

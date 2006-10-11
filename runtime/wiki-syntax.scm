@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hopwiki/syntax.scm                      */
+;*    serrano/prgm/project/hop/runtime/wiki-syntax.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Jun  8 10:24:52 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 09:29:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -12,10 +12,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hopwiki_syntax
+(module __hop_wiki-syntax
    
-   (library hop
-	    web)
+   (library web)
+
+   (import  __hop_xml
+	    __hop_read)
 
    (static  (class state
 	       markup::symbol
@@ -42,7 +44,7 @@
 	       (ol::procedure (default <OL>))
 	       (ul::procedure (default <UL>))
 	       (li::procedure (default <LI>))
-	       (b::procedure (default <B>))
+	       (b::procedure (default <STRONG>))
 	       (em::procedure (default <EM>))
 	       (u::procedure (default <U>))
 	       (del::procedure (default <DEL>))
@@ -238,7 +240,7 @@
 		       (wiki-syntax-td syn))))
 	    (unless (is-state? 'table)
 	       (set! trcount 0)
-	       (enter-block! 'table (wiki-syntax-table syn) #f #t))
+	       (enter-block! 'table (wiki-syntax-table syn) #f #f))
 	    (enter-expr! 'tr
 			 (lambda exp
 			    (let ((cl (if (even? trcount)
@@ -294,6 +296,11 @@
        (let ((st (in-bottom-up-state (lambda (n _) (expr? n)))))
 	  (when st (unwind-state! st)))
        (add-expr! (the-html-string))
+       (ignore))
+      ((bol (: (>= 2 (in " \t")) (? #\Return) #\Newline))
+       (let ((st (in-bottom-up-state (lambda (n _) (expr? n)))))
+	  (when st (unwind-state! st)))
+       (add-expr! (the-html-substring 2 (the-length)))
        (ignore))
 
       ;; two consecutive blank lines: end of block
@@ -443,7 +450,7 @@
        (table-cell (string-ref (the-html-substring 2 3) 0)
 		   #t #f (-fx (the-length) 2)))
       
-      ;; standard markups
+      ;; font style
       ("**"
        (let ((s (in-state '**)))
 	  (if s
@@ -495,14 +502,14 @@
 	  (when s (unwind-state! s))
 	  (ignore)))
       
-      ("$$"
-       (let ((s (in-state '$$)))
+      ("%%"
+       (let ((s (in-state '%%)))
 	  (if s
 	      (begin
 		 (unwind-state! s)
 		 (ignore))
 	      (begin
-		 (enter-expr! '$$ (wiki-syntax-math syn) #f)
+		 (enter-expr! '%% (wiki-syntax-math syn) #f)
 		 (ignore)))))
       ("++"
        (let ((s (in-state 'tt)))

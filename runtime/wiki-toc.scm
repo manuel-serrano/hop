@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hopwiki/toc.scm                         */
+;*    serrano/prgm/project/hop/runtime/wiki-toc.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 12 15:53:32 2006                          */
-;*    Last change :  Mon May 29 13:58:39 2006 (serrano)                */
+;*    Last change :  Fri Oct  6 07:23:51 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Wiki toc                                                         */
@@ -12,9 +12,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hopwiki_toc
+(module __hop_wiki-toc
 
-   (library hop)
+   (import  __hop_xml
+	    __hop_read
+	    __hop_dom)
 
    (export  (hop-wiki->toc ::obj #!key (ul <UL>) (li <LI>) (max-depth 3))))
 

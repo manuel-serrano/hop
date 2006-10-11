@@ -1,50 +1,49 @@
 ;; a color chooser with //Sliders//
 (<HTML>
-  (<HEAD>
-     :css "hop-slider.css"
-     :jscript "hop-slider.js"
-     (<SCRIPT> :type "text/javascript"
-	    { var red = 0, green = 0, blue = 0;
-	      function setcolor( el, r, g, b ) {
-	         if( r ) red = r;
-	         if( g ) green = g;
-	         if( b ) blue = b;
-
-		 if( el != null )
-		   el.style.setProperty("background",
-				        "rgb("+red+","+green+","+blue+")",
-				        "");
-              }
-	    }))
- (let* ((colbox (<DIV> :style { border: 1px solid black; width: 60px; height: 60px}))
-        (red (<SLIDER>
-		:caption "top"
-		:min 0 :max 255 :value 60
-		:onchange { setcolor($colbox,this.value,false,false) }))
-        (green (<SLIDER>
+   (<HEAD>
+      :css "hop-slider.css"
+      :jscript "hop-slider.js"
+      ~(define red 0)
+      ~(define geen 0)
+      ~(define blue 0)
+      ~(define (setcolor el r g b)
+	  (if r (set! red r))
+	  (if g (set! green g))
+	  (if b (set! blue b))
+	  (if (not (eq? el #unspecified))
+	      (hop-style-set! el
+			      "background"
+			      (string-append
+			       "rgb("
+			       (number->string red)
+			       ","
+			       (number->string green)
+			       ","
+			       (number->string blue)
+			       ")")))))
+   (let* ((colbox (<DIV> :style "border: 1px solid black; width: 60px; height: 60px"))
+	  (red (<SLIDER>
 		  :caption "top"
-		  :min 0 :max 255 :value 40
-		  :onchange { setcolor($colbox,false,this.value,false) }))
-        (blue (<SLIDER>
-		 :caption "top"
-		 :min 0 :max 255 :value 80
-		 :onchange { setcolor($colbox,false,false,this.value) })))
-    (<BODY>
-       (<H3> "An example of slider")
-       (<TABLE>
-	  (<TR>
-	     (<TD>
-		:width "200px"
-		(<TABLE>
-		   :width "100%"
-		   (<TR> (<TD> red))
-		   (<TR> (<TD> green))
-		   (<TR> (<TD> blue))))
-	     (<TD> colbox)))
-       (<SCRIPT> :type "text/javascript" {
-			  setcolor($colbox,
-				   $(begin red).value,
-				   $(begin green).value,
-				   $(begin blue).value)})))))
-	
-	
+		  :min 0 :max 255 :value 60
+		  :onchange ~(setcolor $colbox this.value #f #f)))
+	  (green (<SLIDER>
+		    :caption "top"
+		    :min 0 :max 255 :value 40
+		    :onchange ~(setcolor $colbox #f this.value #f)))
+	  (blue (<SLIDER>
+		   :caption "top"
+		   :min 0 :max 255 :value 80
+		   :onchange ~(setcolor $colbox #f #f this.value))))
+      (<BODY>
+	 (<H3> "An example of slider")
+	 (<TABLE>
+	    (<TR>
+	       (<TD>
+		  :width "200px"
+		  (<TABLE>
+		     :width "100%"
+		     (<TR> (<TD> red))
+		     (<TR> (<TD> green))
+		     (<TR> (<TD> blue))))
+	       (<TD> colbox)))
+	 ~(setcolor $colbox $red.value $green.value $blue.value))))

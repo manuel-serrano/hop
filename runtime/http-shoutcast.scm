@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Jun  8 10:03:35 2006 (serrano)                */
+;*    Last change :  Tue Aug 22 14:14:24 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -76,7 +76,7 @@
 		(http-write-line p "icy-name: " name)
 		(http-write-line p)
 		;; the body
-		(with-trace 4 'http-response-file
+		(with-trace 4 'http-response-shoutcast
 		   (unwind-protect
 		      (let ((pad (make-string (*fx l16 16) #a000)))
 			 (blit-string! title 0 pad 0 l)
@@ -90,7 +90,9 @@
 			       (loop (+elong offset psize)))))
 		      (begin
 			 (close-input-port pf)
-			 (flush-output-port p)))))))))
+			 (flush-output-port p))))
+		;; close the connection
+		'close)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    icy-name ...                                                     */

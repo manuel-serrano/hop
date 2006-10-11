@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Sat Jun  3 07:37:52 2006 (serrano)                */
+;*    Last change :  Fri Oct  6 07:19:04 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -13,7 +13,6 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hopdoc
-   (library hopwiki)
    (import  hopdoc_config
 	    hopdoc_api
 	    hopdoc_wiki
@@ -22,6 +21,7 @@
 	    hopdoc_tutorials
 	    hopdoc_libraries
 	    hopdoc_weblets
+	    hopdoc_index
 	    hopdoc_search))
 
 ;*---------------------------------------------------------------------*/
@@ -85,6 +85,9 @@
 		     (<WEBLETS> req))
 	    (<NPTAB> :id "doc-tutorials"
 		     (<NPTABHEAD> "Tutorials")
-		     (<TUTORIALS> req))))))
+		     (<TUTORIALS> req))
+	    (<NPTAB> :id "doc-index"
+		     (<NPTABHEAD> "Index")
+		     (<INDEX>))))))
 
 

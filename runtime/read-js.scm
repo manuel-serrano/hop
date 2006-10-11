@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Sat May 13 15:56:56 2006 (serrano)                */
+;*    Last change :  Tue Oct 10 09:25:37 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
@@ -59,6 +59,8 @@
 		((+ (out "${}\""))
 		 (let ((s (the-string)))
 		    (cons s (ignore))))
+		("$$"
+		 (cons "$" (ignore)))
 		("$"
 		 (let ((exp (hop-read iport))
 		       (pos (input-port-position iport)))

@@ -3,6 +3,7 @@
    (include "protobject.sch")
    (include "nodes.sch")
    (import nodes
+	   config
 	   protobject
 	   verbose)
    (export (pobject-conv::pobject prog)))
@@ -41,8 +42,7 @@
    (new-node Program
 	(new-node Part
 		  (scheme->pobject prog (location prog))
-		  #t ;; we want the main-part in statement-form
-		  (lambda (p) (cons p (lambda (p stmt-form?) 'do-nothing))))))
+		  (lambda (p) (cons p (lambda (p) 'do-nothing))))))
    
 (define (expr-list->Body expr-list)
    (new-node Body (expr-list->Begin expr-list)))
@@ -130,14 +130,14 @@
 		(scheme->pobject test (location (cdr exp)))
 		(scheme->pobject then (location (cddr exp)))
 		(scheme->pobject else (location (cdddr exp)))))
-	  ((if . L) (error #f "bad if-form: " exp))
+	  ((if . ?L) (error #f "bad if-form: " exp))
 	  ((case ?key . ?clauses)
 	   (case->pobject key clauses))
 	  ((set! ?var ?expr)
 	   (new-node Set!
 		(attach-location (new-node Var-ref var) (location (cdr exp)))
 		(scheme->pobject expr (location (cddr exp)))))
-	  ((set! . L) (error #f "bad set!-form: " exp))
+	  ((set! . ?L) (error #f "bad set!-form: " exp))
 	  ((let ?bindings . ?body) (let-form->pobject bindings body 'let))
 	  ((letrec ?bindings . ?body) (let-form->pobject bindings body 'letrec))
 	  ((begin . ?body) (new-node Begin (scheme->pobject-map body)))
@@ -156,12 +156,18 @@
 	  ((part ?expr (and ?fun (? procedure?)))
 	   (new-node Part
 		(scheme->pobject expr (location (cdr exp)))
-		#f ;; don't prefer statement-form
 		fun))
 	  ((?operator . ?operands)
-	   (new-node Call
-		(scheme->pobject operator (location exp))
-		(scheme->pobject-map operands)))))
+	   (if (and (config 'return)
+		    (eq? operator 'return!))
+	       (if (or (null? operands)
+		       (not (null? (cdr operands))))
+		   (error #f "bad return! form: " exp)
+		   (new-node Return (scheme->pobject (car operands)
+						     (location operands))))
+	       (new-node Call
+			 (scheme->pobject operator (location exp))
+			 (scheme->pobject-map operands))))))
       ((eq? exp #unspecified)
 	(new-node Const #unspecified))
        ;; unquoted symbols must be var-refs

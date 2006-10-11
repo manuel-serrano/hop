@@ -1,0 +1,31 @@
+This describes how to run HOP inside a Java Virtual Machine. 
+
+== 1. Introduction ==
+
+HOP can either be executed in native mode or in JVM mode. The native
+mode is only operational on Linux systems. The pre-compiled JVM mode
+is available on all computers equipped with a complete Java
+Development Kit 1.4 or greater. In particular, this port is operational
+on Linux, MacOS X, and Microsoft Windows.
+
+~~ As much as possible the native version should be prefered to the JVM
+pre-compiled distribution. The JVM pre-compiled distribution is still
+experimental.
+
+~~ The pre-compiled HOP version is slower that the native version (about 
+a factor of 4) and the database library (++sqlite++) is still missing. 
+In consequence, the pre-compiled JVM versions of HOP cannot use the
+Hz distribution system. This implies that HOP users of the pre-compiled
+versions have to manually manage the install/de-installation of the HOP's
+.hz packaged.
+
+== 2. Requirements ==
+
+An operational JDK 1.4.2 or higher is needed.
+
+== 3. Executing ==
+
+To start HOP, simply launch the jvm with the ++hop.jar++ file. This
+operation is machine dependent. On Unix system, the command looks like:
+
+    java -jar hop-<VERSION>.jar

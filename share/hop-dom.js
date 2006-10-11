@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu May 18 05:34:20 2006 (serrano)                */
+/*    Last change :  Mon Sep 11 11:34:04 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -16,12 +16,12 @@ function dom_add_child( node, e ) {
    if( hop_is_html_element( e ) ) {
       node.appendChild( e );
    } else {
-      if( (e instanceof String) || (typeof e == "string") ) {
+      if( (e instanceof String) || (typeof e == "string") || (typeof e == "number") ) {
 	 node.innerHTML = e;
       } else {
 	 if( sc_isPair( e ) ) {
-	    dom_add_child( node, e.cdr );
 	    dom_add_child( node, e.car );
+	    dom_add_child( node, e.cdr );
 	 }
       }
    }
@@ -32,21 +32,32 @@ function dom_add_child( node, e ) {
 /*---------------------------------------------------------------------*/
 function dom_create( tag, args ) {
    var el = document.createElement( tag );
-   var i = args.length - 1;
+   var l = args.length;
+   var i = 0;
 
-   while( i > 0 ) {
-      var k = args[ i - 1 ];
+   while( i < l ) {
+      var k = args[ i ];
       
       if( sci_isKeyword( k ) ) {
-	 el.setAttribute( k.toJSString(), args[ i ] );
-	 i -= 2;
+	 if( i < (l - 1) ) {
+	    var at = args[ i + 1 ];
+	    if( (at instanceof String) || (typeof at == "string") ) {
+	       if( sc_isSymbol_immutable( at ) ) {
+		  el.setAttribute( k.toJSString(),
+				   sc_symbol2string_immutable( at ) );
+	       } else {
+		  el.setAttribute( k.toJSString(), at );
+	       }
+	    } else {
+	       el.setAttribute( k.toJSString(), at + "" );
+	    }
+	    i += 2;
+	 }
       } else {
 	 dom_add_child( el, args[ i ] );
-	 i--;
+	 i++;
       }
    }
-
-   if( i == 0 ) dom_add_child( el, args[ i ] );
 
    return el;
 }
@@ -417,7 +428,7 @@ function dom_node_type( node ) {
    return node.nodeType();
 }
 function dom_parent_node( node ) {
-   return node.parentNode();
+   return node.parentNode;
 }
 function dom_append_child( node, n ) {
    return node.appendChild( n );
@@ -431,7 +442,7 @@ function dom_clone_node( node ) {
 function dom_insert_before( node, n, r ) {
    return node.insertBefore( n, r );
 }
-function dom_replaceChild( node, n, r ) {
+function dom_replace_child( node, n, r ) {
    return node.replaceChild( n, r );
 }
 function dom_get_element_by_id( document, id ) {
@@ -440,3 +451,17 @@ function dom_get_element_by_id( document, id ) {
 function dom_get_elements_by_tag_name( document, name ) {
    return sci_vector2list( document.getElementsByTagName( name ) );
 }
+function dom_get_elements_by_class( document, name ) {
+   var all = document.getElementsByTagName( "*" );
+   var res = new Array();
+   var n = 0;
+    
+   for( var i = 0; i < all.length; i++ ) {
+      if( all[ i ].className == name ) {
+	 res[ n++ ] = all[ i ];
+      }
+   }
+   
+   return sci_vector2list( res );
+}
+

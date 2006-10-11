@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon May 29 10:58:28 2006 (serrano)                */
+;*    Last change :  Mon Oct  9 08:47:07 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -16,6 +16,8 @@
 
    (include "compiler-macro.sch"
 	    "xml.sch")
+
+   (library web)
 
    (import  __hop_param
 	    __hop_configure
@@ -38,10 +40,13 @@
 ;*    hop-file ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-file path file)
-   (let ((p (find-file/path file path)))
-      (if (string? p)
-	  p
-	  (make-file-name (hop-share-directory) file))))
+   (let* ((p (find-file/path file path))
+	  (f (if (string? p)
+		 p
+		 (make-file-name (hop-share-directory) file))))
+      (string-append "http://"
+		     (hostname) ":" (integer->string (hop-port))
+		     f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-css ...                                                      */
@@ -53,7 +58,7 @@
       :href (cond
 	       ((= (string-length file) 0)
 		(error '<HEAD> "Illegal css" file))
-	       ((char=? (string-ref file 0) (file-separator))
+	       ((char=? (string-ref file 0) #\/)
 		file)
 	       ((substring-at? file "http://" 0)
 		file)
@@ -65,11 +70,11 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-jscript file dir)
    (<SCRIPT>
-      :type "text/javascript"
+      :type (hop-javascript-mime-type)
       :src (cond
 	      ((= (string-length file) 0)
 	       (error '<HEAD> "Illegal jscript" file))
-	      ((char=? (string-ref file 0) (file-separator))
+	      ((char=? (string-ref file 0) #\/)
 	       file)
 	      ((substring-at? file "http://" 0)
 	       file)
@@ -81,9 +86,7 @@
 ;*---------------------------------------------------------------------*/
 (define (head-parse args)
    (let* ((req (the-current-request))
-	  (dir (if (http-request? req)
-		   (list (dirname (http-request-path req)))
-		   '()))
+	  (dir '())
 	  (css '())
 	  (jscript '())
 	  (favicon #f)
@@ -145,6 +148,8 @@
 		(else
 		 (set! rest (cons (car a) rest))))
 	     (loop (cdr a)))
+	    ((not (car a))
+	     (loop (cdr a)))
 	    (else
 	     (set! rest (cons (car a) rest))
 	     (loop (cdr a)))))))
@@ -155,24 +160,25 @@
 (define (<HEAD> . args)
    (multiple-value-bind (dir body)
       (head-parse args)
-      (let ((meta (<META> :http-equiv "Content-Type"
-			  :content (if (eq? (hop-char-encoding) 'UTF-8)
-				       "text/html; charset=UTF-8"
-				       "text/html; charset=ISO-8859-1")))
-	    (css (<LINK> :rel "stylesheet"
-			 :type "text/css"
-			 :href (hop-file dir "hop.css")))
-	    (jscripts (list
-		       (<SCRIPT>
-			  :type "text/javascript"
-			  :src (hop-file dir "hop-autoconf.js"))
-		       (<SCRIPT>
-			  :type "text/javascript"
-			  :src (hop-file dir "hop.js")))))
+      (let* ((meta (<META> :http-equiv "Content-Type"))
+	     (css (<LINK> :rel "stylesheet"
+		     :type "text/css"
+		     :href (hop-file dir "hop.css")))
+	     (jscripts (list
+			(<SCRIPT>
+			   :type (hop-javascript-mime-type)
+			   :src (hop-file dir "hop-autoconf.js"))
+			(<SCRIPT>
+			   :type (hop-javascript-mime-type)
+			   :src (hop-file dir "hop.js"))))
+	     (body (cons css  (append jscripts body)))
+	     (body (if (memq (hop-xml-backend) '(html html-4.01))
+		       (cons meta body)
+		       body)))
 	 (instantiate::xml-markup
 	    (markup 'head)
 	    (attributes '())
-	    (body (cons* meta css (append jscripts body)))))))
+	    (body body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FOOT> ...                                                       */
@@ -210,7 +216,9 @@
 		     ((string? path)
 		      path)
 		     ((string? src)
-		      (format "~a/buttons/~a" (hop-share-directory) src))
+		      (format "~a/buttons/~a"
+			      (url-encode (hop-share-directory))
+			      src))
 		     (else
 		      (error '<FOOT-BUTTON> "Illegal source" src))))))
 				     

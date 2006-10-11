@@ -7,12 +7,16 @@ These functions parses file according to the HOP syntax.
 == Synopsis ==
 
   (hop-read [input-port])
-  (hop-load path [env])
+  (hop-load path [:env] [:mode])
+  (hop-load-once path [:env])
+  (hop-load-modified path [:env])
+  (hop-load-unmark! path)
   (the-loading-file)
+  (the-loading-dir)
   
 == Examples ==
 
-<example>hop-read, hop-load, the-loading-file</example>
+<example>hop-read, hop-load, the-loading-file, the-loading-dir</example>
 
 == Server Definitions ==
 <server>
@@ -28,24 +32,79 @@ These functions parses file according to the HOP syntax.
 
 The function ++hop-read++ reads an entire expression from an input port.
 
-=== ++(hop-load path [env])++ ===
+=== ++(hop-load path [:env] [:mode])++ ===
 <function> hop-load
 
 <arguments>
-^  arguments  ^   type      ^  short description             ^
-| path       |  string      | the file name to be loaded.    |
+^  arguments  ^   type   ^  short description           ^
+| path        |  string  | the file name to be loaded.  |
+| env         |  module  | the eval environment.        |
+| mode        |  symbol  | the load mode.               |
 </arguments>
 
 This function loads the file ++path++. That is, it reads and evaluates
 all the expressions. The expressions are evaluated in the environment
 ++env++. By default the current module's environment is used.
 
+The parameter ++mode++ specifies the loading mode. The --load--
+mode evaluates all the loaded expressions and forces ++hop-load++ to
+only return the value produced by evaluated the last expression.
+The --include-- load mode returns a list of all evaluations.
+
+The function ++hop-load++ is thread safe. No more than one thread
+can simultaneously reads a single file.
+</function>
+
+=== ++(hop-load-once path [:env])++ ===
+<function> hop-load-once
+
+<arguments>
+^  arguments  ^   type   ^  short description           ^
+| path        |  string  | the file name to be loaded.  |
+| env         |  module  | the eval environment.        |
+</arguments>
+
+As ++hop-load++ it loads a file in the ++env++ environment. By contrast
+with ++hop-load++ it does not return any value. Hence, ++hop-load-once++
+can only be used for its effects.
+
+Invoking ++hop-load-once++ with a parameter ++path++ loads the file in
+memory //if not already loaded//. That is, if the file ++path++ is loaded
+//if and only if// it has not already been loaded with ++hop-load-once++.
+
+This function is thread safe.
+</function>
+
+=== ++(hop-load-modified path [:env])++ ===
+<function> hop-load-modified
+
+<arguments>
+^  arguments  ^   type   ^  short description           ^
+| path        |  string  | the file name to be loaded.  |
+| env         |  module  | the eval environment.        |
+</arguments>
+
+As ++hop-load-once++ but in addition, the file is reloaded if the file
+has changed on the disc since it has been loaded.
+</function>
+
+=== ++(hop-load-once-unmark! path)++ ===
+<function> hop-load-once-unmark!
+Unmarks ++path++. The next evaluation of ++(hop-load-once path)++
+reloads the file ++path++.
 </function>
 
 === ++(the-loading-file)++ ===
 <function> the-loading-file
 
 This function returns the name of the file currently being loaded.
+
+</function>
+
+=== ++(the-loading-dir)++ ===
+<function> the-loading-dir
+
+This function returns the dirname of the file currently being loaded.
 
 </function>
 

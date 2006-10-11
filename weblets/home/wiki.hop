@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May 15 06:46:38 2006                          */
-;*    Last change :  Sat Jun  3 09:19:54 2006 (serrano)                */
+;*    Last change :  Fri Oct  6 07:19:37 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME wiki manager                                            */
@@ -13,9 +13,10 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hophome_wiki
+   
    (import  hophome_config
 	    hophome)
-   (library hopwiki)
+
    (export  (wiki->hop file)
 	    (wiki->hop-no-cache file)))
 
@@ -29,7 +30,7 @@
 			    (string-append "home-"
 					   (integer->string (hop-port)))))
       (out (lambda (o p)
-	      (xml-write o p (hop-char-encoding))))))
+	      (xml-write o p (hop-char-encoding) (hop-xml-backend))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki->hop ...                                                    */

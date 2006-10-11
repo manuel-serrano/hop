@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sat Jun 17 15:26:52 2006 (serrano)                */
+#*    Last change :  Tue Oct 10 09:42:34 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -26,7 +26,7 @@ EXEC		= hop
 #*---------------------------------------------------------------------*/
 MODULES		= hop-param parseargs main init
 
-INCLUDES	= eval-macro.sch compiler-macro.sch
+INCLUDES	= 
 
 CLASS_DIR	= o/class_s/bigloo/hop
 
@@ -40,7 +40,7 @@ COLOR		= 32
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION 	= $(INCLUDES) Makefile
+POPULATION 	= $(INCLUDES) $(SOURCES) Makefile
 
 #*---------------------------------------------------------------------*/
 #*    The roost executable                                             */
@@ -51,7 +51,7 @@ build:  o $(BACKEND)
 
 
 native: $(BUILDBINDIR)/$(EXEC)
-jvm: $(CLASS_DIR) $(BUILDBINDIR)/$(EXEC).jvm
+jvm: $(CLASS_DIR) $(BUILDBINDIR)/$(EXEC).jar
 
 o: 
 	mkdir -p $@
@@ -63,9 +63,53 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-$(BUILDBINDIR)/$(EXEC).jvm: .afile .etags .jfile $(BGL_CLASSES)
-	@ $(call compile,BIGLOO,BJVMFLAGS,-o $@ -I o/class_s $(BGL_CLASSES:o/class_s/%=%))
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
+	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+
+jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
+	for p in $(JVMZIPLIBS); do \
+          if [ -f $$p ]; then \
+             $(UNZIP) -d o/class_s -o -u $$p; \
+          else \
+             echo "Warning: Can't find zip file $$p..."; \
+          fi; \
+        done
+	for p in $(JVMINITS); do \
+          if [ -f $$p ]; then \
+             cp $$p o/class_s/lib/hop/$(HOPRELEASE); \
+          else \
+             echo "Warning: Can't find init file $$p..."; \
+          fi; \
+        done
+
+jvm-share:
+	cp -r ../share o/class_s
+	cp -r ../scheme2js/runtime/*.js o/class_s/share
+	cp -r ../weblets o/class_s/share
+	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/share
+
+jvm-list:
+	ls $(SRC)/$(DIR) > $(DEST)/$(DIR)/.list
+	for p in `ls $(SRC)/$(DIR)`; do \
+	  if [ -d $(SRC)/$(DIR)/$$p ]; then \
+            $(MAKE) jvm-list SRC=$(SRC)/$(DIR) DIR=$$p DEST=$(DEST)/$(DIR) || (echo "*** ERROR: $$p"; exit 1); \
+          fi \
+        done
+
+jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
+	cp $(BUILDLIBDIR)/*.init $<
+
+META-INF/MANIFEST.MF: META-INF
+	echo "Manifest-Version: 1.0" > $@
+	echo "Main-Class: bigloo/hop/main" >> $@
+	echo "Created-By: Hop $(VERSION)" >> $@
+
+META-INF:
+	mkdir -p $@
+
+o/class_s/lib/hop/$(HOPRELEASE):
+	mkdir -p $@
 
 #*---------------------------------------------------------------------*/
 #*    SUFFIXES                                                         */
@@ -76,10 +120,10 @@ $(BUILDBINDIR)/$(EXEC).jvm: .afile .etags .jfile $(BGL_CLASSES)
 #*---------------------------------------------------------------------*/
 #*    The implicit `.scm.o' rule                                       */
 #*---------------------------------------------------------------------*/
-o/%.o: %.scm
+o/%.o: %.scm .afile
 	@ $(call compile,BIGLOO,BCFLAGS,$< -o $@ -c)
 
-$(CLASS_DIR)/%.class: %.scm
+$(CLASS_DIR)/%.class: %.scm .afile
 	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/
@@ -114,9 +158,15 @@ dep:
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
-install:
+install: install-$(BACKEND)
+
+install-native:
 	mkdir -p $(HOPBINDIR)
 	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC) $(HOPBINDIR)
+
+install-jvm:
+	mkdir -p $(HOPBINDIR)
+	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC).jar $(HOPBINDIR)
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -131,8 +181,10 @@ clean:
 	/bin/rm -f .afile
 	/bin/rm -f $(OBJECTS)
 	/bin/rm -f $(MODULES:%=%.c)
-	/bin/rm -f $(BGL_CLASSES)
+	/bin/rm -rf o
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
+	/bin/rm -f $(BUILDBINDIR)/$(EXEC).jar
+	/bin/rm -rf META-INF
 
 devclean: clean
 

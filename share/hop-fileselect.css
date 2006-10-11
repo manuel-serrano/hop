@@ -1,0 +1,59 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-fileselect.css                */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Erick Gallesio                                    */
+/*    Creation    :  Mon Apr 10 11:43:00 2006                          */
+/*    Last change :  Sat Sep 16 15:02:55 2006 (serrano)                */
+/*    -------------------------------------------------------------    */
+/*    <FILESELECT> CSS                                                 */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    filebrowse button ...                                            */
+/*---------------------------------------------------------------------*/
+div.hop-filebrowse button:hover {
+  color: blue;
+  border: 2px outset #aaa;
+}
+
+/*---------------------------------------------------------------------*/
+/*    filebrowse div                                                   */
+/*---------------------------------------------------------------------*/
+div.hop-filebrowse {
+  background: #ddd;
+  position: absolute; 
+  top: 20px; 
+  bottom: 13px; 
+  left: 2px; 
+  right: 10px;
+}
+
+div.hop-filebrowse-tree {
+  background: white;
+  overflow: auto; 
+  position: absolute; 
+  top: 5px;
+  bottom: 28px; 
+  left: 5px; 
+  right: 5px;
+  border: 2px inset #ddd;
+  cursor: pointer;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Buttons row                                                      */
+/*---------------------------------------------------------------------*/
+div.hop-filebrowse-buttons {
+  position: absolute; 
+  bottom: 0; 
+  left: 0; 
+  right: 0;
+  cursor: default;
+  text-align: center;
+}
+
+div.hop-filebrowse-buttons button {
+  margin-left: 40px;
+  margin-right: 40px;
+  margin-bottom: 2px;
+}

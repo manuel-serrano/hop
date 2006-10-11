@@ -65,10 +65,9 @@
       res))
 
 (define-pmethod (Part-mark-statements)
-   (let* ((body-res (this.body.traverse))
-	  (res (or body-res this.prefer-statement-form?)))
-      (mark-node! this res)
-      res))
+   (this.body.traverse)
+   (mark-node! this #t)
+   #t)
 
 (define-pmethod (Lambda-mark-statements)
    (this.body.traverse)
@@ -111,7 +110,7 @@
 (define-pmethod (Call-mark-statements)
    (let* ((operands-tmp (list-mark-statements this.operands))
 	  (operator-tmp (this.operator.traverse))
-	  (res (or operands-tmp operator-tmp)))
+	  (res (or this.call/cc-stmt? operands-tmp operator-tmp)))
       (mark-node! this res)
       res))
 
@@ -151,6 +150,7 @@
    #t)
 
 (define-pmethod (Set!-mark-statements)
-   (let ((res (this.val.traverse)))
+   (let ((res (or (this.val.traverse)
+		  this.call/cc-stmt?)))
       (mark-node! this res)
       res))

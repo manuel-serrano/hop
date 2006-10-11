@@ -1,6 +1,7 @@
 == Installation Guides ==
 
   * [[/hop/home/install|HOP Installation page]]
+  * [[/hop/home/install-jvm|Running HOP with a Java Virtual Machine]]
 
 == Development Guides ==
 
@@ -12,4 +13,6 @@
           "Hop, a langage for programming the Web")
   * ,(<A> :href (make-file-name (home-dir) "articles/scheme2js/article.html")
           "Compiling HOP client side code")
+  * ,(<A> :href (make-file-name (home-dir) "articles/hop-kit/article.html")
+          "The Hop development kit")
 

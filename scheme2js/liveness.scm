@@ -42,6 +42,10 @@
 			  (delete! var.live-begin-stack)
 			  (delete! var.live-end-stack)
 			  (set! var.free? #t)))
+   ;; Note: Javascript parameters are assigned from left to right.
+   ;;       An unused parameter is hence only live at its declaration.
+   ;;       This means: an unused parameter's name can be reused for
+   ;;       the next parameter.
    (pcall this Node-liveness nesting))
 
 (define-pmethod (Var-ref-liveness nesting)
