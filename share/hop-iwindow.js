@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Thu Oct 12 14:06:54 2006 (serrano)                */
+/*    Last change :  Thu Oct 12 14:29:51 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -144,8 +144,8 @@ function hop_iwindow_raise( win ) {
 /*    hop_iwindow_drag ...                                             */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_drag( event, win ) {
-   var dx = hop_mouse_x( event ) - win.offsetLeft;
-   var dy = hop_mouse_y( event ) - win.offsetTop;
+   var dx = hop_event_mouse_x( event ) - win.offsetLeft;
+   var dy = hop_event_mouse_y( event ) - win.offsetTop;
    var ocursor = win.el_handle.style.cursor;
 
    hop_iwindow_raise( win );
@@ -157,8 +157,8 @@ function hop_iwindow_drag( event, win ) {
    hop_style_set( win.el_handle, "cursor", "move" );
 
    var mousemove = function( event ) {
-      var nx = (hop_mouse_x( event ) - dx);
-      var ny = (hop_mouse_y( event ) - dy);
+      var nx = (hop_event_mouse_x( event ) - dx);
+      var ny = (hop_event_mouse_y( event ) - dy);
 
       if( win.user_parent ) {
 	 var p = win.parentNode;
@@ -197,8 +197,8 @@ function hop_iwindow_drag( event, win ) {
 /*    hop_iwindow_resize ...                                           */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_resize( event, win, widthp, heightp ) {
-   var x0 = hop_mouse_x( event );
-   var y0 = hop_mouse_y( event );
+   var x0 = hop_event_mouse_x( event );
+   var y0 = hop_event_mouse_y( event );
    var w0 = win.el_main.offsetWidth;
    var h0 = win.el_main.offsetHeight;
    var mousemove;
@@ -207,29 +207,29 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
    
    if( widthp && heightp ) {
       mousemove = function( event ) {
-	 hop_style_set( win.el_main, "width", w0 + (hop_mouse_x( event ) - x0) );
-	 hop_style_set( win.el_main, "height", h0 + (hop_mouse_y( event ) - y0) );
+	 hop_style_set( win.el_main, "width", w0 + (hop_event_mouse_x( event ) - x0) );
+	 hop_style_set( win.el_main, "height", h0 + (hop_event_mouse_y( event ) - y0) );
       };
       hop_add_event_listener( document, "mousemove", mousemove );
    } else {
       if( widthp ) {
 	 mousemove = function( event ) {
-	    hop_style_set( win.el_main, "width", w0 + (hop_mouse_x( event ) - x0) );
+	    hop_style_set( win.el_main, "width", w0 + (hop_event_mouse_x( event ) - x0) );
 	 };
 	 hop_add_event_listener( document, "mousemove", mousemove );
       } else {
 	 if( heightp ) {
 	    mousemove = function( event ) {
-	       hop_style_set( win.el_main, "height", h0 + (hop_mouse_y( event ) - y0) );
+	       hop_style_set( win.el_main, "height", h0 + (hop_event_mouse_y( event ) - y0) );
 	    };
 	    hop_add_event_listener( document, "mousemove", mousemove );
 	 } else {
 	    var l0 = win.offsetLeft;
 	    mousemove = function( event ) {
-	       var w = w0 + (x0 - hop_mouse_y( event ));
+	       var w = w0 + (x0 - hop_event_mouse_y( event ));
 	       hop_style_set( win ,"left", (l0 + w0) - w );
 	       hop_style_set( win.el_main, "width", w );
-	       hop_style_set( win.el_main, "height", h0 + (hop_mouse_y( event ) - y0) );
+	       hop_style_set( win.el_main, "height", h0 + (hop_event_mouse_y( event ) - y0) );
 	    }
 	    hop_add_event_listener( document, "mousemove", mousemove );
 	 }

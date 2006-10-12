@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Oct 12 14:20:12 2006 (serrano)                */
+/*    Last change :  Thu Oct 12 14:29:26 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -212,29 +212,36 @@ function hop_msiep() {
 /*---------------------------------------------------------------------*/
 /*    mouse coords ...                                                 */
 /*---------------------------------------------------------------------*/
-var hop_mouse_x = undefined;
-var hop_mouse_y = undefined;
+var hop_event_mouse_x = undefined;
+var hop_event_mouse_y = undefined;
+var hop_event_key_code = undefined;
 
 if( document.implementation.hasFeature( "Events" , "2.0") ) {
-   hop_mouse_x = function hop_mouse_x( event ) {
+   hop_event_mouse_x = function hop_event_mouse_x( event ) {
       return event.pageX;
    }
-   hop_mouse_y = function hop_mouse_y( event ) {
+   hop_event_mouse_y = function hop_event_mouse_y( event ) {
       return event.pageY;
    }
+   hop_event_key_code = function hop_event_key_code( event ) {
+      return event.which;
+   }
 } else {
-   hop_mouse_x = function hop_mouse_x( event ) {
+   hop_event_mouse_x = function hop_event_mouse_x( event ) {
       if( (document.body != null) && (document.body.scrollLeft != null) ) {
 	 return event.clientX + document.body.scrollLeft;
       } else {
 	 return event.clientX + document.documentElement.scrollLeft;
       }
    }
-   hop_mouse_y = function hop_mouse_y( event ) {
+   hop_event_mouse_y = function hop_event_mouse_y( event ) {
       if( (document.body != null) && (document.body.scrollTop != null) ) {
 	 return event.clientY + document.body.scrollTop;
       } else {
 	 return event.clientY + document.documentElement.scrollTop;
       }
+   }
+   hop_event_key_code = function hop_event_key_code( event ) {
+      return event.keyCode;
    }
 }
