@@ -13,8 +13,7 @@
 	  (if (not (eq? el #unspecified))
 	      (hop-style-set! el
 			      "background"
-			      (string-append
-			       "rgb("
+			      (string-append "rgb("
 			       (number->string red)
 			       ","
 			       (number->string green)
