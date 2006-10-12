@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Sep 21 15:25:00 2006 (serrano)                */
+/*    Last change :  Thu Oct 12 14:20:12 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -171,10 +171,22 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
    }
 } else {
    hop_add_event_listener = function( obj, event, proc, capture ) {
-      return obj.attachEvent( "on" + event, function(_) {return proc(window.event)});
+      var p = function(_) {return proc(window.event)};
+      var i = "on" + event + "hdl";
+
+      if( obj[ i ] == undefined ) obj[ i ] = [];
+      obj[ i ][ proc ] = p;
+
+      return obj.attachEvent( "on" + event, p );
    }
    hop_remove_event_listener = function( obj, event, proc, capture ) {
-      return obj.detachEvent( "on" + event, proc );
+      var i = "on" + event + "hdl";
+      var proc = obj[ i ][ proc ];
+
+      if( proc != undefined ) {
+	 obj[ i ][ proc ] = undefined;
+	 return obj.detachEvent( "on" + event, proc );
+      }
    }
    hop_stop_propagation = function( event, def ) {
       if( !def ) event.cancelBubble = true;
@@ -198,30 +210,31 @@ function hop_msiep() {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_page ...                                                     */
+/*    mouse coords ...                                                 */
 /*---------------------------------------------------------------------*/
-/* var hop_page_x = undefined;                                         */
-/* var hop_page_y = undefined;                                         */
-/*                                                                     */
-/* if( false ) {                                                       */
-/*    if( document.body.scrollLeft ) {                                 */
-/*       hop_page_x = function hop_page_x( event ) {                   */
-/* 	 return event.clientX + document.body.scrollLeft;              */
-/*       }                                                             */
-/*       hop_page_x = function hop_page_x( event ) {                   */
-/* 	 return event.clientY + document.body.scrollTop;               */
-/*       } else {                                                      */
-/*       hop_page_x = function hop_page_x( event ) {                   */
-/* 	 return event.clientX + document.documentElement.scrollLeft;   */
-/*       }                                                             */
-/*       hop_page_x = function hop_page_x( event ) {                   */
-/* 	 return event.clientY + document.documentElement.scrollTop;    */
-/*       }                                                             */
-/* } else {                                                            */
-/*    hop_page_x = function hop_page_x( event ) {                      */
-/*       return event.pageX;                                           */
-/*    }                                                                */
-/*    hop_page_y = function hop_page_y( event ) {                      */
-/*       return event.pageY;                                           */
-/*    }                                                                */
-/* }                                                                   */
+var hop_mouse_x = undefined;
+var hop_mouse_y = undefined;
+
+if( document.implementation.hasFeature( "Events" , "2.0") ) {
+   hop_mouse_x = function hop_mouse_x( event ) {
+      return event.pageX;
+   }
+   hop_mouse_y = function hop_mouse_y( event ) {
+      return event.pageY;
+   }
+} else {
+   hop_mouse_x = function hop_mouse_x( event ) {
+      if( (document.body != null) && (document.body.scrollLeft != null) ) {
+	 return event.clientX + document.body.scrollLeft;
+      } else {
+	 return event.clientX + document.documentElement.scrollLeft;
+      }
+   }
+   hop_mouse_y = function hop_mouse_y( event ) {
+      if( (document.body != null) && (document.body.scrollTop != null) ) {
+	 return event.clientY + document.body.scrollTop;
+      } else {
+	 return event.clientY + document.documentElement.scrollTop;
+      }
+   }
+}

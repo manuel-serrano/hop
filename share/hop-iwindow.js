@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Fri Sep 15 19:18:07 2006 (serrano)                */
+/*    Last change :  Thu Oct 12 14:06:54 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -19,7 +19,7 @@ var hop_iwindow_zindex = 0;
 function hop_iwindow_close( id ) {
    var win = hop_is_html_element( id ) ? id : document.getElementById( id );
 
-   win.style.display = "none";
+   hop_style_set( win, "display", "none" );
 
    /* user event */
    if( win.onclose ) win.onclose();
@@ -44,11 +44,11 @@ function hop_iwindow_maximize( id ) {
    } else {
       if( win.maximized ) {
 	 win.maximized = false;
-      
-	 win.el_main.style.width = win.oldwidth;
-	 win.el_main.style.height = win.oldheight;
-	 win.style.top = win.oldtop;
-	 win.style.left = win.oldleft;
+
+	 hop_style_set( win.el_main, "width", win.oldwidth );
+	 hop_style_set( win.el_main, "height", win.oldheight );
+	 hop_style_set( win.style, "top", win.oldtop );
+	 hop_style_set( win.style, "left", win.oldleft );
       } else {
 	 win.maximized = true;
       
@@ -59,22 +59,24 @@ function hop_iwindow_maximize( id ) {
 
 	 if( win.user_parent ) {
 	    var p = win.parentNode;
-	    
-	    win.el_main.style.width = p.offsetWidth -
-	       win.el_shadow_box.offsetWidth;
-	    win.el_main.style.height = p.offsetHeight -
-	       win.el_shadow_box.offsetHeight;
 
-	    win.style.top = hop_element_y( p ) + 1;
-	    win.style.left = hop_element_x( p ) + 1;
+	    hop_style_set( win.el_main, "width",
+			   p.offsetWidth - win.el_shadow_box.offsetWidth );
+	    hop_style_set( win.el_main, "height",
+			   p.offsetHeight - win.el_shadow_box.offsetHeight );
+
+	    hop_style_set( win, "top", hop_element_y( p ) + 1 );
+	    hop_style_set( win, "left", hop_element_x( p ) + 1 );
 	 } else {
-	    win.el_main.style.width = window.innerWidth -
-	       win.el_shadow_box.offsetWidth - 2;
-	    win.el_main.style.height = window.innerHeight -
-	       win.el_shadow_box.offsetHeight - 2;
+	    hop_style_set( win.el_main, "width",
+			   window.innerWidth -
+			   win.el_shadow_box.offsetWidth - 2 );
+	    hop_style_set( win.el_main, "height",
+			   window.innerHeight -
+			   win.el_shadow_box.offsetHeight - 2 );
 
-	    win.style.top = 0;
-	    win.style.left = 0;
+	    hop_style_set( win, "top", 0 );
+	    hop_style_set( win, "left", 0 );
 	 }
       }
    }
@@ -101,11 +103,11 @@ function hop_iwindow_iconify( id ) {
 	 var old = win.offsetTop;
 	 // MS 3may2006: I think that for IE, we have to use
 	 // document.documentElement.scrollTop or document.body.scrollTop
-	 win.style.top = old + window.pageYOffset;
+	 hop_style_set( win, "top", old + window.pageYOffset );
 	 hop_style_set( win, "position", "absolute" );
       } else {
 	 var old = win.offsetTop;
-	 win.style.top = old - window.pageYOffset;
+	 hop_style_set( win, "top", old - window.pageYOffset );
 	 hop_style_set( win, "position", "fixed" );
       }
    }
@@ -131,7 +133,8 @@ function hop_iwindow_raise( win ) {
       var i;
 
       for( i = 0; i < w.length; i++ ) {
-	 if( w[ i ].style[ "z-index" ] > 0 ) w[ i ].style[ "z-index" ]--;
+	 if( w[ i ].style[ "z-index" ] > 0 )
+	    hop_style_set( w[ i ], "z-index", w[ i ].style[ "z-index" ] - 1 );
       }
       hop_style_set( win, "z-index", 999 );
    }
@@ -141,21 +144,21 @@ function hop_iwindow_raise( win ) {
 /*    hop_iwindow_drag ...                                             */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_drag( event, win ) {
-   var dx = event.clientX - win.offsetLeft;
-   var dy = event.clientY - win.offsetTop;
+   var dx = hop_mouse_x( event ) - win.offsetLeft;
+   var dy = hop_mouse_y( event ) - win.offsetTop;
    var ocursor = win.el_handle.style.cursor;
 
    hop_iwindow_raise( win );
-   
-   win.el_main.style.height = win.el_main.offsetHeight;
-   win.el_main.style.width = win.el_main.offsetWidth;
 
-   win.el_body.style.visibility = "hidden";
-   win.el_handle.style.cursor = "move";
+   hop_style_set( win.el_main, "height", win.el_main.offsetHeight );
+   hop_style_set( win.el_main, "width", win.el_main.offsetWidth );
+
+   hop_style_set( win.el_body, "visibility", "hidden" );
+   hop_style_set( win.el_handle, "cursor", "move" );
 
    var mousemove = function( event ) {
-      var nx = (event.clientX - dx);
-      var ny = (event.clientY - dy);
+      var nx = (hop_mouse_x( event ) - dx);
+      var ny = (hop_mouse_y( event ) - dy);
 
       if( win.user_parent ) {
 	 var p = win.parentNode;
@@ -163,26 +166,29 @@ function hop_iwindow_drag( event, win ) {
 	 var py = hop_element_y( p );
       
 	 if( (nx > px) && ((nx + win.offsetWidth) < (px + p.offsetWidth)) ) {
-	    win.style.left = nx;
+	    hop_style_set( win, "left", nx );
 	 }
 	 if( (ny > py) && ((ny + win.offsetHeight) < (py + p.offsetHeight)) ) {
-	    win.style.top = ny;
+	    hop_style_set( win, "top", ny );
 	 }
       } else {
-	 if( nx > 0 ) win.style.left = nx;
-	 if( ny > 0 ) win.style.top = ny;
+	 if( nx > 0 ) hop_style_set( win, "left", nx );
+	 if( ny > 0 ) hop_style_set( win, "top", ny );
       }
    }
-   hop_add_event_listener( document, "mousemove", mousemove );
 
-   document.onmouseup = function( event ) {
+   var mouseup = function( event ) {
       hop_remove_event_listener( document, "mousemove", mousemove );
-      win.el_handle.style.cursor = ocursor;
-      win.el_body.style.visibility = "visible";
+      hop_remove_event_listener( document, "mouseup", mouseup );
+      hop_style_set( win.el_handle, "cursor", ocursor );
+      hop_style_set( win.el_body, "visibility", "visible" );
 
       /* user event */
       if( win.ondrag ) win.ondrag();
    }
+   
+   hop_add_event_listener( document, "mousemove", mousemove );
+   hop_add_event_listener( document, "mouseup", mouseup );
 
    hop_stop_propagation( event );
 }
@@ -191,52 +197,55 @@ function hop_iwindow_drag( event, win ) {
 /*    hop_iwindow_resize ...                                           */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_resize( event, win, widthp, heightp ) {
-   var x0 = event.clientX;
-   var y0 = event.clientY;
+   var x0 = hop_mouse_x( event );
+   var y0 = hop_mouse_y( event );
    var w0 = win.el_main.offsetWidth;
    var h0 = win.el_main.offsetHeight;
    var mousemove;
 
-   win.el_body.style.display = "none";
+   hop_style_set( win.el_body, "display", "none" );
    
    if( widthp && heightp ) {
       mousemove = function( event ) {
-	 win.el_main.style.width = w0 + (event.clientX - x0);
-	 win.el_main.style.height = h0 + (event.clientY - y0);
+	 hop_style_set( win.el_main, "width", w0 + (hop_mouse_x( event ) - x0) );
+	 hop_style_set( win.el_main, "height", h0 + (hop_mouse_y( event ) - y0) );
       };
       hop_add_event_listener( document, "mousemove", mousemove );
    } else {
       if( widthp ) {
 	 mousemove = function( event ) {
-	    win.el_main.style.width = w0 + (event.clientX - x0);
+	    hop_style_set( win.el_main, "width", w0 + (hop_mouse_x( event ) - x0) );
 	 };
 	 hop_add_event_listener( document, "mousemove", mousemove );
       } else {
 	 if( heightp ) {
 	    mousemove = function( event ) {
-	       win.el_main.style.height = h0 + (event.clientY - y0);
+	       hop_style_set( win.el_main, "height", h0 + (hop_mouse_y( event ) - y0) );
 	    };
 	    hop_add_event_listener( document, "mousemove", mousemove );
 	 } else {
 	    var l0 = win.offsetLeft;
 	    mousemove = function( event ) {
-	       var w = w0 + (x0 - event.clientX);
-	       win.style.left = (l0 + w0) - w;
-	       win.el_main.style.width = w;
-	       win.el_main.style.height = h0 + (event.clientY - y0);
+	       var w = w0 + (x0 - hop_mouse_y( event ));
+	       hop_style_set( win ,"left", (l0 + w0) - w );
+	       hop_style_set( win.el_main, "width", w );
+	       hop_style_set( win.el_main, "height", h0 + (hop_mouse_y( event ) - y0) );
 	    }
 	    hop_add_event_listener( document, "mousemove", mousemove );
 	 }
       }
    }
 
-   document.onmouseup = function( event ) {
-      win.el_body.style.display = "block";
+   var mouseup = function( event ) {
+      hop_style_set( win.el_body, "display", "block" );
       hop_remove_event_listener( document, "mousemove", mousemove );
+      hop_remove_event_listener( document, "mouseup", mouseup );
 
       /* user event */
       if( win.onresize ) win.onresize();
    }
+
+   hop_add_event_listener( document, "mouseup", mouseup );
    
    hop_stop_propagation( event );
 }
@@ -366,11 +375,11 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
       win = make_hop_iwindow( id, klass, parent );
       isnew = true;
    } else {
-      win.style.display = "block";
+      hop_style_set( win, "display", "block" );
    }
 
    /* start hidden otherwise we loose the border on drag! */
-   win.el_body.style.display = "none";
+   hop_style_set( win.el_body, "display", "none" );
 
    if( hop_is_html_element( obj ) ) {
       var c = win.el_body.childNodes;
@@ -404,24 +413,24 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
    win.el_title.innerHTML = title ? title : id;
 
    if( isnew ) {
-      if( x ) win.style.left = x;
-      if( y ) win.style.top = y;
+      if( x ) hop_style_set( win, "left", x );
+      if( y ) hop_style_set( win, "top", y );
 
       if( width ) {
-	 win.el_main.style.width = width;
-	 win.el_content.style.width = "100%";
+	 hop_style_set( win.el_main, "width", width );
+	 hop_style_set( win.el_content, "width", "100%" );
       }
       if( height ) {
-	 win.el_main.style.height = height;
+	 hop_style_set( win.el_main, "height", height );
 /* 	 win.el_content.style.height = "100%";                         */
       }
       
       if( win.onresize ) win.onresize();
    } else {
-      win.el_body.style.top = 0;
+      hop_style_set( win.el_body, "top", 0 );
    }
-   
-   win.el_body.style.display = "block";
+
+   hop_style_set( win.el_body, "display", "block" );
    hop_iwindow_raise( win );
 
    return win;

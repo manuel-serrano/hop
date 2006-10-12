@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Oct 10 09:02:12 2006 (serrano)                */
+;*    Last change :  Thu Oct 12 13:43:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -122,13 +122,12 @@
 		  :width "100%"
 		  (<TR>
 		     (<TD>
-			:width "0*"
 			:class "search-menu-label"
 			:valign "middle"
+			:width "5em"
 			lbl ": ")
 		     (<TD>
 			:valign "bottom"
-			:width "0*"
 			(<INPUT>
 			   :style "width: 100%"
 			   :type "text"
@@ -273,8 +272,8 @@
 				 frame
 				 false false
 				 640 480
-				 (+ event.pageX 100)
-				 (- event.pageY 100)))
+				 (+ (hop-mouse-x event) 100)
+				 (- (hop-mouse-y event) 100)))
       "Run"))
 
 ;*---------------------------------------------------------------------*/
