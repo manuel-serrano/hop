@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Oct 10 09:29:50 2006 (serrano)                */
+;*    Last change :  Sat Oct 14 18:32:28 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -592,12 +592,17 @@
        (with-handler
 	  (lambda (e)
 	     (exception-notify e)
-	     (add-expr! (<SPAN> "***PARSE-ERROR***" (string (the-failure)))))
+	     (add-expr! (<SPAN> "*** PARSE-ERROR:" (string (the-failure)))))
 	  (let ((expr (hop-read (the-port))))
 	     (with-handler
 		(lambda (e)
 		   (exception-notify e)
-		   (add-expr! (<SPAN> "***EVAL-ERROR***"
+		   (add-expr! (<SPAN> "*** EVAL-ERROR:"
+				      (let ((m (eval-module)))
+					 (if (evmodule? m)
+					     (evmodule-name m)
+					     "top-level"))
+				      ":"
 				      (with-output-to-string
 					 (lambda ()
 					    (write expr))))))
