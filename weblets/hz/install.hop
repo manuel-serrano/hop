@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Sat Oct 14 16:31:04 2006 (serrano)                */
+;*    Last change :  Sat Oct 14 17:14:10 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -48,7 +48,8 @@
 		(case status
 		   ((200)
 		    (let ((base (make-file-name (hop-rc-directory) "weblets")))
-		       (unless (file-exists? base) (make-directory base))
+		       (unless (and (file-exists? base) (directory? base))
+			  (make-directory base))
 		       (let ((lst (hz-untar (elong->fixnum clength) p base)))
 			  (if (pair? lst)
 			      (let ((path (make-file-path
@@ -135,20 +136,24 @@
       (lambda (h)
 	 (let ((p (open-input-string h))
 	       (base (make-file-name (hop-rc-directory) "weblets")))
+	    (unless (and (file-exists? base) (directory? base))
+	       (make-directory base))
 	    (unwind-protect
 	       (hz-untar -1 p base)
 	       (close-input-port p))
 	    (let* ((hzdir (make-file-name base name))
-		   (info (make-file-path hzdir
-					 "etc"
-					 (string-append name ".info"))))
-	       (if (not (file-exists? info))
+		   (info (make-file-path hzdir "etc" "weblet.info"))
+		   (info2 (if (file-exists? info)
+			      info
+			      (make-file-path hzdir "etc"
+					      (string-append name ".info")))))
+	       (if (not (file-exists? info2))
 		   (begin
 		      (rm-rf hzdir)
 		      (error 'hz/install-ondemand
 			     "Can't find info file"
 			     info))
-		   (let* ((i (with-input-from-file info read))
+		   (let* ((i (with-input-from-file info2 read))
 			  (v (cond
 				((assq 'version i) => cadr)
 				(else (error
@@ -175,5 +180,5 @@
 		      (apply hz-db-add-entry db n)
 		      (hz-db-close db)
 		      #t)))))
-      :header (if (http-request? req) (http-request-header req) '())
-      :fail (lambda (status port) status)))
+      :header (if (http-request? req) (http-request-header req) '()))
+   #t)
