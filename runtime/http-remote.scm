@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Oct  7 09:25:36 2006 (serrano)                */
+;*    Last change :  Sat Oct 14 16:02:00 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -87,6 +87,7 @@
 		     (raise e))
 		  ;; the header and the request
 		  (with-trace 4 'http-response-header
+		     (trace-item "start-line: " (response-remote-start-line r))
 		     (http-write-line rp (response-remote-start-line r))
 		     ;; if a char is ready and is eof, it means that the
 		     ;; connection is closed
