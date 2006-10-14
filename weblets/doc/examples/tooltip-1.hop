@@ -10,5 +10,5 @@
 	  tp
 	  (<SPAN>
 	     "Come with me"
-	     :onmouseover ~(tooltip-show event $tp (- event.pageX 10) (- event.pageY 100))
+	     :onmouseover ~(tooltip-show event $tp (- (hop-event-mouse-x event) 10) (- (hop-event-mouse-y event) 100))
 	     :onmouseout ~(tooltip-hide))))))

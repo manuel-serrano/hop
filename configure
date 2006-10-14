@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Oct 10 11:21:19 2006 (serrano)                */
+#*    Last change :  Sat Oct 14 11:14:17 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -67,6 +67,8 @@ if [ $USER = "serrano" ]; then
 else
   distribdir=.
 fi
+
+hoprts='"runtime.js" "hop-dom.js" "runtime-interface.js" "hopscheme.js"'
 
 # Argument parsing
 while : ; do
@@ -387,6 +389,7 @@ cat etc/configure.scm.in \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
           -e "s|@JSMIMETYPE@|$jsmimetype|" \
+          -e "s|@HOPRTS@|$hoprts|" \
     >> $configure
 
 # etc/hoprc.hop

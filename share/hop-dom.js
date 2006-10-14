@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Mon Sep 11 11:34:04 2006 (serrano)                */
+/*    Last change :  Sat Oct 14 07:46:22 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -25,6 +25,15 @@ function dom_add_child( node, e ) {
 	 }
       }
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    dom_set_child_node ...                                           */
+/*---------------------------------------------------------------------*/
+function dom_set_child_node( parent, node ) {
+   parent.innerHTML = "";
+   parent.appendChild( node );
+   return node;
 }
    
 /*---------------------------------------------------------------------*/

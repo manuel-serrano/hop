@@ -48,6 +48,7 @@ vectors.
   (dom-owner-document node)
   (dom-has-child-nodes? node)
   (dom-child-nodes node)
+  (dom-set-child-node! node child)
   (dom-first-child node)
   (dom-last-child node)
   (dom-next-sibling node)
@@ -200,6 +201,24 @@ Returns ++#t++ if ++node++ has child nodes. Otherwise, returns ++#f++.
 
 Returns the list of children of ++node++.
 </procedure>
+</function>
+
+=== ++(dom-set-child-node! node new)++ ===
+<function> dom-set-child-node!
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| new              |  element     | an element built by any markup.  |
+</arguments>
+
+Set the new child of ++node++ be ++new++. This function first removes
+all the current children of ++node++ and then add ++new++. This is
+a shorthand for
+
+  (set! node.innerHTML "")
+  (dom-append-child! node new)
+
 </function>
 
 === ++(dom-first-child node)++ ===

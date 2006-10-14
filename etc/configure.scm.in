@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Mon Oct  9 08:53:54 2006 (serrano)                */
+;*    Last change :  Sat Oct 14 11:14:11 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -25,7 +25,8 @@
 	   (hop-contribs-directory)
            (hop-weblets-directory)
            (hop-mime-types-file)
-	   (hop-configure-javascript-mime-type))
+	   (hop-configure-javascript-mime-type)
+	   (hop-runtime-system::pair))
    
    (eval   (export hop-name)
 	   (export hop-version)
@@ -109,4 +110,7 @@
 (define (hop-mime-types-file) "@MIMETYPES@")
 (define (hop-configure-javascript-mime-type) "@JSMIMETYPE@")
 
-           
+;*---------------------------------------------------------------------*/
+;*    hop-runtime-system ...                                           */
+;*---------------------------------------------------------------------*/
+(define (hop-runtime-system) '(@HOPRTS@))

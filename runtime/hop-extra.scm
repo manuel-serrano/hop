@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Oct  9 08:47:07 2006 (serrano)                */
+;*    Last change :  Sat Oct 14 11:24:40 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -91,6 +91,7 @@
 	  (jscript '())
 	  (favicon #f)
 	  (mode #f)
+	  (rts (hop-runtime-system))
 	  (rest '()))
       (let loop ((a args))
 	 (cond
@@ -98,7 +99,7 @@
 	     (let ((css (map! (lambda (file) (hop-css file dir))
 			      (reverse css)))
 		   (jscript (map! (lambda (file) (hop-jscript file dir))
-				  (reverse jscript))))
+				  (append rts (reverse! jscript)))))
 		(values dir
 			(if favicon
 			    (cons (<LINK> :rel "shortcut icon" :href favicon)
@@ -132,6 +133,13 @@
 		     (if (string? (cadr a))
 			 (set! favicon (cadr a))
 			 (error '<HEAD> "Illegal :favicon" (cadr a))))
+		    ((:rts)
+		     (set! mode #f)
+		     (if (boolean? (cadr a))
+			 (if (not (cadr a))
+			     (set! rts '())
+			     (set! rts (hop-runtime-system)))
+			 (error '<HEAD> "Illegal :rts" (cadr a))))
 		    (else
 		     (error '<HEAD>
 			    (format "Unknown ~a argument" (car a))
@@ -158,7 +166,7 @@
 ;*    <HEAD> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
-   (multiple-value-bind (dir body)
+   (multiple-value-bind (dir body rts)
       (head-parse args)
       (let* ((meta (<META> :http-equiv "Content-Type"))
 	     (css (<LINK> :rel "stylesheet"

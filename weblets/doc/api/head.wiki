@@ -41,12 +41,13 @@ times in an invocation. A typical ++<HEAD>++ looks like:
 <markup> <HEAD>
 
 <arguments>
-^  arguments   ^   type     ^   default    ^  short description                   ^
-| :dir         |  string    |     _        | a directory name added to the path.  |
-| :css         |  string    |     _        | a CSS/HSS file name.                 |
-| :jscript     |  string    |     _        | a script file name.                  |
-| :favicon     |  string    |     _        | a favicon file name.                 |
-| objs         |  element   |  empty       | the content of the head.             |
+^  arguments   ^   type     ^   default    ^  short description                    ^
+| :dir         |  string    |     _        | a directory name added to the path.   |
+| :css         |  string    |     _        | a CSS/HSS file name.                  |
+| :jscript     |  string    |     _        | a script file name.                   |
+| :favicon     |  string    |     _        | a favicon file name.                  |
+| :rts         |  bool      |     #t       | adds/removes the Hop runtime system.  |
+| objs         |  element   |  empty       | the content of the head.              |
 </arguments>
 
 The ++<HEAD>++ markup uses special evaluation rules for its
