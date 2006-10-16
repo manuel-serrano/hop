@@ -21,7 +21,8 @@
 	   hophome_demos-rss
 	   hophome_demos-source
 	   hophome_demos-wiki
-	   hophome_demos-rewrite)
+	   hophome_demos-rewrite
+	   hophome_demos-set)
    (export (<DEMO> request)))
 
 ;*---------------------------------------------------------------------*/
@@ -85,6 +86,12 @@
 		     (<ZIMG> (make-service-url home/demos/rewrite)
 			     "utilities-32x32.png" "utilities-48x48.png" inl
 			     500 220)))
+	       (<TR>
+		  (<TD>
+		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/set)
+			     "set-32x32.png" "set-48x48.png" inl
+			     500 400)))
 	       (<TR>
 		  (<TD>
 		     :align "left"
