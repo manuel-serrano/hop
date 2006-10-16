@@ -379,7 +379,7 @@ function dom_create_sorttable() {
 /*---------------------------------------------------------------------*/
 /*    DOM functional interface ...                                     */
 /*    -------------------------------------------------------------    */
-/*    These definitions should be remove when the alias                */
+/*    These definitions should be removed when the alias               */
 /*    facilities of scheme2js will support simple re-writting.         */
 /*---------------------------------------------------------------------*/
 function dom_has_attributes( node ) {
@@ -410,22 +410,22 @@ function dom_child_nodes( node ) {
    return sci_vector2list( node.childNodes );
 }
 function dom_first_child( node ) {
-   return node.firstChild();
+   return node.firstChild;
 }
 function dom_last_child( node ) {
-   return node.lastChild();
+   return node.lastChild;
 }
 function dom_next_sibling( node ) {
-   return node.nextsibling();
+   return node.nextSibling;
 }
 function dom_previous_sibling( node ) {
-   return node.previousSibling();
+   return node.previousSibling;
 }
 function dom_node_name( node ) {
-   return node.nodeName();
+   return node.nodeName;
 }
 function dom_node_type( node ) {
-   return node.nodeType();
+   return node.nodeType;
 }
 function dom_parent_node( node ) {
    return node.parentNode;
