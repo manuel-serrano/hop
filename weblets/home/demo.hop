@@ -142,6 +142,9 @@ clients to be notified by servers.])
 server can cooperate to operate on distant documents. In this simple
 demonstration remote pages are changed on-the-fly by the server that acts
 as a proxy.])
+      (<H2> "Set")
+      (<P> :class "descr" [This demonstration implements another
+game. It shows how to use events to synchronize multiple clients in HOP.])
       (<H2> "Source")
       (<P> :class "descr" [This demonstration uses HOP ,(<EM> "trees") and
 ,(<EM> "pan"). It implements a simple file browser. This browsers may
