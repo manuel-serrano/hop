@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:51 2005                          */
-/*    Last change :  Tue May 16 07:50:26 2006 (serrano)                */
+/*    Last change :  Thu Oct 12 15:10:22 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned CSS                                                    */
@@ -66,18 +66,22 @@ td.hop-paned-cursor {
 }
  
 table.hop-vpaned td.hop-paned-cursor {
-  width: 7px;
+  width: 5px;
 }
 table.hop-vpaned td.hop-paned-cursor > div {
   height: 100%;
-  width: 7px;
+  width: 5px;
 }
 
 table.hop-vpaned div.hop-paned-cursoron {
+  width: 5px;
+  height: 100%;
   background-image: url( "icons/paned-vcursor.png" );
 }
 
 table.hop-vpaned div.hop-paned-cursoroff {
+  width: 5px;
+  height: 100%;
   background-image: url( "icons/paned-vcursor.png" );
 }
 
@@ -94,14 +98,14 @@ div.hop-hpaned > div.hop-paned-cursor {
 }
 
 div.hop-paned-cursor { 
-  height: 7px; 
+  height: 5px; 
   width: 100%;
 }
 
 div.hop-paned-cursoron {
   background-image: url( "icons/paned-hcursor.png" );
 }
-   
+
 div.hop-paned-cursoroff {
   background-image: url( "icons/paned-hcursor.png" );
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Tue Oct 10 11:24:16 2006 (serrano)                */
+;*    Last change :  Thu Oct 12 11:40:49 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -21,6 +21,7 @@
 	    hopsh_login)
    
    (export  (hopsh-eval ::bstring)
+	    (hopsh-eval-string ::bstring)
 	    (hopsh-repl)))
 
 ;*---------------------------------------------------------------------*/
@@ -37,16 +38,22 @@
 		(sigsetmask 0)
 		#unspecified)
 	     (raise e)))
-      (cond
-	 ((=fx (string-length str) 0)
-	  ;; an empty command
-	  "")
-	 ((char=? (string-ref str 0) #\()
-	  ;; a parenthetical expression
-	  (eval-expression str))
-	 (else
-	  ;; a command
-	  (eval-command str)))))
+      (hopsh-eval-string str)))
+
+;*---------------------------------------------------------------------*/
+;*    hopsh-eval-string ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hopsh-eval-string str)
+   (cond
+      ((=fx (string-length str) 0)
+       ;; an empty command
+       "")
+      ((char=? (string-ref str 0) #\()
+       ;; a parenthetical expression
+       (eval-expression str))
+      (else
+       ;; a command
+       (eval-command str))))
 
 ;*---------------------------------------------------------------------*/
 ;*    eval-expression ...                                              */

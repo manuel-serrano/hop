@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Sep 30 08:01:09 2006 (serrano)                */
+;*    Last change :  Thu Oct 12 16:24:29 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -69,7 +69,9 @@
 		   (else
 		    ""))))
 	 (fprintf p "<span id='~a'>" gid)
-	 (display " <script language='JavaScript'>" p)
+	 (display " <script type='" p)
+	 (display (hop-javascript-mime-type) p)
+	 (display "'>" p)
 	 (fprint p
 		 "hop_slider_onchange_set( "
 		 "hop_make_slider( "

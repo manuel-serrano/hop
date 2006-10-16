@@ -78,24 +78,19 @@ div.hop-notepad-tabs {
   border-color: red;
 }
 
-div.hop-notepad-tabs > span {
+div.hop-notepad-tabs span.hop-nptab {
   font-size: small;
   border-color: $border-color;
+  margin: 0 4px 0 0;
 }
 
-div.hop-notepad-tabs > span.hop-nptab-active {
+div.hop-notepad-tabs span.hop-nptab-active {
   background-color: $info-color;
   border-bottom-color: $info-color;
 }
 
 div.hop-notepad-body {
-  border-color: $border-color;
-}
-
-div.hop-notepad-body {
-  border-left: 1px solid $border-color;
-  border-right: 1px solid $border-color;
-  border-bottom: 1px solid $border-color;
+  border: 1px solid $border-color;
   padding: 10px;
   font-size: small;
   background-color: $info-color;

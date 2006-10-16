@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Fri Aug  4 09:09:17 2006 (serrano)                */
+/*    Last change :  Thu Oct 12 15:01:43 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -15,7 +15,8 @@
 function hop_vpaned_mousemove( e, paned ) {
    var val;
 
-   val = ((e.clientX - hop_element_x( paned )) / paned.offsetWidth) * 100;
+   val = ((hop_event_mouse_x( e ) - hop_element_x( paned ))
+	  / paned.offsetWidth) * 100;
    hop_vpaned_fraction_set( paned, Math.round( val ));
 }
 
@@ -24,15 +25,15 @@ function hop_vpaned_mousemove( e, paned ) {
 /*---------------------------------------------------------------------*/
 function hop_vpaned_fraction_set( paned, fraction ) {
    if( (fraction instanceof String) || (typeof fraction == "string") ) {
-      paned.td1.style.width = fraction;
-      paned.td2.style.width = "auto";
+      hop_style_set( paned.td1, "width", fraction );
+      hop_style_set( paned.td2, "width", "auto" );
    } else {
       if( (fraction < 0) || (fraction > 100) ) {
 	 return;
       }
 
-      paned.td1.style.width = fraction + "%";
-      paned.td2.style.width = "auto";
+      hop_style_set( paned.td1, "width", fraction + "%" );
+      hop_style_set( paned.td2 ,"width", "auto" );
    }
 
    if( paned.fraction != fraction ) {
@@ -47,9 +48,9 @@ function hop_vpaned_fraction_set( paned, fraction ) {
 /*    hop_hpaned_mousemove ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_hpaned_mousemove( e, paned ) {
-   var val = e.clientY - hop_element_y( paned );
+   var val = hop_event_mouse_y( e ) - hop_element_y( paned );
 
-   paned.pan1.style.height = val;
+   hop_style_set( paned.pan1, "height", val );
 }
 
 /*---------------------------------------------------------------------*/
@@ -57,13 +58,13 @@ function hop_hpaned_mousemove( e, paned ) {
 /*---------------------------------------------------------------------*/
 function hop_hpaned_fraction_set( paned, fraction ) {
    if( (fraction instanceof String) || (typeof fraction == "string") ) {
-      paned.pan1.style.height = fraction;
+      hop_style_set( paned.pan1, "height", fraction );
    } else {
       if( (fraction < 0) || (fraction > 100) ) {
 	 return;
       }
 
-      paned.pan1.style.height = fraction + "%";
+      hop_style_set( paned.pan1, "height", fraction + "%" );
    }
 
    if( paned.fraction != fraction ) {
@@ -156,7 +157,6 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
    
    // cursor event handling
    var mousemove = function( e ) {
-      if( e == undefined ) e = window.event;
       hop_vpaned_mousemove( e, paned );
    };
 
@@ -164,21 +164,26 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
       hop_remove_event_listener( document, "mousemove", mousemove, true );
    };
    
-   cursor.onmouseover = function( e ) {
-      div.className = "hop-paned-cursoron";
-   };
-
-   cursor.onmouseout = function( e ) {
-      div.className = "hop-paned-cursoroff";
-   };
-
-   cursor.onmousedown = function( e ) {
+   var mousedown = function( e ) {
       hop_add_event_listener( document, "mousemove", mousemove, true );
       hop_add_event_listener( document, "mouseup", delmousemove, true );
       hop_add_event_listener( document, "onblur", delmousemove, true );
       
       hop_stop_propagation( e );
    }
+
+   hop_add_event_listener( cursor, "mousedown", mousedown );
+   
+   var mouseover = function( e ) {
+      div.className = "hop-paned-cursoron";
+   };
+
+   var mouseout = function( e ) {
+      div.className = "hop-paned-cursoroff";
+   };
+
+   hop_add_event_listener( cursor, "mouseover", mouseover );
+   hop_add_event_listener( cursor, "mouseout", mouseout );
    
    // re-parent the two pans
    parent.removeChild( pan1 );
@@ -191,8 +196,8 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
    td1.appendChild( pan1 );
    td2.appendChild( pan2 );
 
-   pan1.style.visibility = "visible";
-   pan2.style.visibility = "visible";
+   hop_style_set( pan1, "visibility", "visible" );
+   hop_style_set( pan2, "visibility", "visible" );
    
    paned.pan1 = pan1;
    paned.pan2 = pan2;
@@ -215,7 +220,7 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
    // the paned
    var paned = document.createElement( "div" );
    paned.className = klass,
-   paned.style.height = "inherit";
+   hop_style_set( paned, "height", "inherit" );
 
    // the cursor
    pcursor = document.createElement( "div" );
@@ -231,13 +236,13 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
 
    cursor = document.createElement( "div" );
    cursor.className = "hop-paned-cursoroff";
-   cursor.style.width = "100%";
-   cursor.style.height = "100%";
+   hop_style_set( cursor, "width", "100%" );
+   hop_style_set( cursor, "height", "100%" );
    
    pcursor.appendChild( cursor );
    
-   pan1.style.visibility = "visible";
-   pan2.style.visibility = "visible";
+   hop_style_set( pan1, "visibility", "visible" );
+   hop_style_set( pan2, "visibility", "visible" );
 
    paned.pan1 = pan1;
    paned.pan2 = pan2;
@@ -247,7 +252,6 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
 
    // cursor event handling
    var mousemove = function( e ) {
-      if( e == undefined ) e = window.event;
       hop_hpaned_mousemove( e, paned );
    };
 
@@ -255,20 +259,24 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
       hop_remove_event_listener( document, "mousemove", mousemove, true );
    };
 
-   cursor.onmouseover = function( e ) {
-      cursor.className = "hop-paned-cursoron";
-   };
-
-   cursor.onmouseout = function( e ) {
-      cursor.className = "hop-paned-cursoroff";
-   };
-
-   cursor.onmousedown = function( e ) {
+   var mousedown = function( e ) {
       hop_add_event_listener( document, "mousemove", mousemove, true );
       hop_add_event_listener( document, "mouseup", delmousemove, true );
       hop_add_event_listener( document, "onblur", delmousemove, true );
    }
-      
+
+   hop_add_event_listener( cursor, "mousedown", mousedown );
+   
+   var mouseover = function( e ) {
+      cursor.className = "hop-paned-cursoron";
+   };
+   var mouseout = function( e ) {
+      cursor.className = "hop-paned-cursoroff";
+   };
+
+   hop_add_event_listener( cursor, "mouseover", mouseover );
+   hop_add_event_listener( cursor, "mouseout", mouseout );
+   
    return paned;
 }
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Wed Aug  2 15:52:27 2006 (serrano)                */
+/*    Last change :  Thu Oct 12 16:38:41 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -180,19 +180,23 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
       hop_remove_event_listener( doc, "mousemove", mousemove, true );
    };
    
-   cursor.onmouseover = function( e ) {
+   var onmouseover = function( e ) {
       div.className = "cursoron";
    };
 
-   cursor.onmouseout = function( e ) {
+   var onmouseout = function( e ) {
       div.className = "cursoroff";
    };
 
-   cursor.onmousedown = function( e ) {
+   var onmousedown = function( e ) {
       hop_add_event_listener( doc, "mousemove", mousemove, true );
       hop_add_event_listener( doc, "mouseup", delmousemove, true );
       hop_add_event_listener( doc, "onblur", delmousemove, true );
    }
+
+   hop_add_event_listener( cursor, "mouseover", onmouseover );
+   hop_add_event_listener( cursor, "mouseout", onmouseout );
+   hop_add_event_listener( cursor, "mousedown", onmousedown );
    
    // line event handling
    var onlineclick = function( e ) {
@@ -202,8 +206,8 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
       hop_slider_value_set( slider, val );
    }
 
-   line1.onclick = onlineclick;
-   line2.onclick = onlineclick;
+   hop_add_event_listener( line1, "click", onlineclick );
+   hop_add_event_listener( line2, "click", onlineclick );
 
    slider.value = min - 1;
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Wed Aug  2 16:01:05 2006 (serrano)                */
+/*    Last change :  Thu Oct 12 16:37:06 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
@@ -54,7 +54,7 @@ table.hop-slider div.cursoroff {
 }
 
 table.hop-slider td.caption {
-  font-family: Arial,Helvetica,sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-weight: bold; 
   font-size: 11px;
 }

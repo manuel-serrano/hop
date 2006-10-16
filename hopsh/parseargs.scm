@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Oct 10 11:16:23 2006 (serrano)                */
+;*    Last change :  Thu Oct 12 11:40:20 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -32,7 +32,8 @@
 	 (exprs '())
 	 (h "localhost")
 	 (p (hop-port))
-	 (login #f))
+	 (login #f)
+	 (command-string #f))
       (args-parse (cdr args)
          ((("-h" "--help") (help "This message"))
 	  (print "HopSh v" (hop-version))
@@ -48,6 +49,8 @@
           (exit 0))
 	 (("-q" (help "Do not load an init file"))
 	  (set! loadp #f))
+	 (("-c" ?string (help "Read commands from the command STRING"))
+	  (set! command-string string))
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
 	 (("--rc-dir" ?dir (help "Set rc directory"))
@@ -92,7 +95,15 @@
 		    (%hopsh-load-rc (make-file-name (hop-etc-directory) (hop-rc-file)))))))
       (hopsh-host-set! h)
       (hop-port-set! p)
-      (for-each hopsh-eval exprs)))
+      (for-each hopsh-eval exprs)
+      (when (string? command-string)
+	 (with-handler
+	    (lambda (e)
+	       (exception-notify e)
+	       (exit 1))
+	    (begin
+	       (print (hopsh-eval-string command-string))
+	       (exit 0))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %hopsh-load-rc ...                                               */
