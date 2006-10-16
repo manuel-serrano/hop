@@ -21,7 +21,7 @@
  * 
  *           Author: Erick Gallesio [eg@essi.fr]
  *    Creation date: 12-Oct-2006 10:05 (eg)
- * Last file update: 16-Oct-2006 12:17 (eg)
+ * Last file update: 16-Oct-2006 13:57 (eg)
  */
 
 var flashproxy;
@@ -30,9 +30,11 @@ var soundPool = new Array();
 
 function hop_sound_init() {
     var uid = new Date().getTime();
-    flashProxy = new FlashProxy(uid, 'JavaScriptFlashGateway.swf');
+    var flashdir = hop_share_directory() + "/flash/";
+    var tag; 
 
-    var tag = new FlashTag('HopSound.swf', 600, 325);
+    flashProxy = new FlashProxy(uid, flashdir + 'JavaScriptFlashGateway.swf');
+    tag = new FlashTag(flashdir + 'HopSound.swf', 600, 325);
     tag.setFlashvars('lcId='+uid);
     tag.write(document);
 }
