@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Fri Aug 25 09:37:26 2006 (serrano)                */
+;*    Last change :  Tue Oct 17 10:37:56 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -29,6 +29,7 @@
 	   (dom-parent-node node)
 	   (dom-previous-sibling node)
 	   (dom-append-child! ::xml-markup new)
+	   (dom-set-child-node! ::xml-markup new)
 	   (generic dom-clone-node ::obj ::bool)
 	   (dom-has-attributes? node)
 	   (dom-has-child-nodes? node)
@@ -38,6 +39,7 @@
 	   (dom-replace-child! node new old)
 	   (generic dom-get-element-by-id obj ::bstring)
 	   (dom-get-elements-by-tag-name::pair-nil obj ::bstring)
+	   (dom-get-elements-by-class::pair-nil obj ::bstring)
 	   (dom-get-attribute node ::bstring)
 	   (dom-has-attribute?::bool node ::bstring)
 	   (dom-remove-attribute! node name)
@@ -256,6 +258,20 @@
       (set! body (cons new (remq! new body)))))
 
 ;*---------------------------------------------------------------------*/
+;*    dom-set-child-node! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (dom-set-child-node! node::xml-markup new)
+   (with-access::xml-markup node (body)
+      (for-each (lambda (o) (dom-remove-child! node o)) body)
+      (let ((doc (dom-owner-document node)))
+	 (when (xml-document? doc)
+	    (with-access::xml-document doc (%idtable)
+	       (let ((id (xml-element-id new)))
+		  (hashtable-remove! %idtable id)
+		  (hashtable-put! %idtable id new)))))
+      (set! body (list new))))
+
+;*---------------------------------------------------------------------*/
 ;*    dom-clone-node ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-generic (dom-clone-node obj deep::bool)
@@ -439,6 +455,26 @@
 		 (loop (xml-markup-body obj))))
 	    (else
 	     '())))))
+
+;*---------------------------------------------------------------------*/
+;*    dom-get-elements-by-class ...                                    */
+;*---------------------------------------------------------------------*/
+(define (dom-get-elements-by-class::pair-nil obj name)
+   (let loop ((obj obj))
+      (cond
+	 ((pair? obj)
+	  (append-map loop obj))
+	 ((xml-markup? obj)
+	  (let ((c (dom-get-attribute obj "class")))
+	     ;; CARE: may be we should check that name is part
+	     ;; of the class attribute. If we decide to change this,
+	     ;; the change should be reported in the JS implementation
+	     ;; inside the file hop-dom.js
+	     (if (and (string? c) (string=? c name))
+		 (cons obj (loop (xml-markup-body obj)))
+		 (loop (xml-markup-body obj)))))
+	 (else
+	  '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-attribute ...                                            */

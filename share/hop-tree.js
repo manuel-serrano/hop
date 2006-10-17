@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Sun Sep 17 15:10:11 2006 (serrano)                */
+/*    Last change :  Tue Oct 17 07:49:04 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -23,7 +23,7 @@ function hop_tree_close( tree ) {
       }
    
       tree.img_folder.src = tree.src_folderc;
-      hop_style_set( tree.body, "display", "none" );
+      node_style_set( tree.body, "display", "none" );
 
       /* recursively close the subtree */
       var children = tree.body.childNodes;
@@ -54,7 +54,7 @@ function hop_tree_open( tree ) {
    }
    
    tree.img_folder.src = tree.src_foldero;
-   hop_style_set( tree.body, "display", "block" );
+   node_style_set( tree.body, "display", "block" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -273,7 +273,7 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
    
    /* the (empty) body */
    var body = document.createElement( "div" );
-   hop_style_set( body, "display", "none" );
+   node_style_set( body, "display", "none" );
    body.className = "hop-tree-body";
    tree.appendChild( body );
 

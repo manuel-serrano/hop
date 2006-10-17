@@ -11,15 +11,15 @@
 	  (if g (set! green g))
 	  (if b (set! blue b))
 	  (if (not (eq? el #unspecified))
-	      (hop-style-set! el
-			      "background"
-			      (string-append "rgb("
-			       (number->string red)
-			       ","
-			       (number->string green)
-			       ","
-			       (number->string blue)
-			       ")")))))
+	      (node-style-set! el
+			       :background
+			       (string-append "rgb("
+					      (number->string red)
+					      ","
+					      (number->string green)
+					      ","
+					      (number->string blue)
+					      ")")))))
    (let* ((colbox (<DIV> :style "border: 1px solid black; width: 60px; height: 60px"))
 	  (red (<SLIDER>
 		  :caption "top"

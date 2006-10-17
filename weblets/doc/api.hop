@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Sat Sep 30 07:03:26 2006 (serrano)                */
+;*    Last change :  Tue Oct 17 10:44:32 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -350,20 +350,24 @@
 	    (set! *index-table* (make-hashtable))
 	    (hashtable-for-each *markup-table*
 				(lambda (k o)
-				   (hashtable-put! *index-table* k
-						   (list 1 o))))
+				   (unless (hashtable-get *index-table* k)
+				      (hashtable-put! *index-table* k
+						      (list 1 o)))))
 	    (hashtable-for-each *server-table*
 				(lambda (k o)
-				   (hashtable-put! *index-table* k
-						   (list 0 o))))
+				   (unless (hashtable-get *index-table* k)
+				      (hashtable-put! *index-table* k
+						      (list 0 o)))))
 	    (hashtable-for-each *class-table*
 				(lambda (k o)
-				   (hashtable-put! *index-table* k
-						   (list 0 o))))
+				   (unless (hashtable-get *index-table* k)
+				      (hashtable-put! *index-table* k
+						      (list 0 o)))))
 	    (hashtable-for-each *client-table*
 				(lambda (k o)
-				   (hashtable-put! *index-table* k
-						   (list 0 o))))))))
+				   (unless (hashtable-get *index-table* k)
+				      (hashtable-put! *index-table* k
+						      (list 0 o)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-markups ...                                                  */

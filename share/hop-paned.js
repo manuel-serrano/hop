@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Thu Oct 12 15:01:43 2006 (serrano)                */
+/*    Last change :  Tue Oct 17 07:48:49 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -25,15 +25,15 @@ function hop_vpaned_mousemove( e, paned ) {
 /*---------------------------------------------------------------------*/
 function hop_vpaned_fraction_set( paned, fraction ) {
    if( (fraction instanceof String) || (typeof fraction == "string") ) {
-      hop_style_set( paned.td1, "width", fraction );
-      hop_style_set( paned.td2, "width", "auto" );
+      node_style_set( paned.td1, "width", fraction );
+      node_style_set( paned.td2, "width", "auto" );
    } else {
       if( (fraction < 0) || (fraction > 100) ) {
 	 return;
       }
 
-      hop_style_set( paned.td1, "width", fraction + "%" );
-      hop_style_set( paned.td2 ,"width", "auto" );
+      node_style_set( paned.td1, "width", fraction + "%" );
+      node_style_set( paned.td2 ,"width", "auto" );
    }
 
    if( paned.fraction != fraction ) {
@@ -50,7 +50,7 @@ function hop_vpaned_fraction_set( paned, fraction ) {
 function hop_hpaned_mousemove( e, paned ) {
    var val = hop_event_mouse_y( e ) - hop_element_y( paned );
 
-   hop_style_set( paned.pan1, "height", val );
+   node_style_set( paned.pan1, "height", val );
 }
 
 /*---------------------------------------------------------------------*/
@@ -58,13 +58,13 @@ function hop_hpaned_mousemove( e, paned ) {
 /*---------------------------------------------------------------------*/
 function hop_hpaned_fraction_set( paned, fraction ) {
    if( (fraction instanceof String) || (typeof fraction == "string") ) {
-      hop_style_set( paned.pan1, "height", fraction );
+      node_style_set( paned.pan1, "height", fraction );
    } else {
       if( (fraction < 0) || (fraction > 100) ) {
 	 return;
       }
 
-      hop_style_set( paned.pan1, "height", fraction + "%" );
+      node_style_set( paned.pan1, "height", fraction + "%" );
    }
 
    if( paned.fraction != fraction ) {
@@ -196,8 +196,8 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
    td1.appendChild( pan1 );
    td2.appendChild( pan2 );
 
-   hop_style_set( pan1, "visibility", "visible" );
-   hop_style_set( pan2, "visibility", "visible" );
+   node_style_set( pan1, "visibility", "visible" );
+   node_style_set( pan2, "visibility", "visible" );
    
    paned.pan1 = pan1;
    paned.pan2 = pan2;
@@ -220,7 +220,7 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
    // the paned
    var paned = document.createElement( "div" );
    paned.className = klass,
-   hop_style_set( paned, "height", "inherit" );
+   node_style_set( paned, "height", "inherit" );
 
    // the cursor
    pcursor = document.createElement( "div" );
@@ -236,13 +236,13 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
 
    cursor = document.createElement( "div" );
    cursor.className = "hop-paned-cursoroff";
-   hop_style_set( cursor, "width", "100%" );
-   hop_style_set( cursor, "height", "100%" );
+   node_style_set( cursor, "width", "100%" );
+   node_style_set( cursor, "height", "100%" );
    
    pcursor.appendChild( cursor );
    
-   hop_style_set( pan1, "visibility", "visible" );
-   hop_style_set( pan2, "visibility", "visible" );
+   node_style_set( pan1, "visibility", "visible" );
+   node_style_set( pan2, "visibility", "visible" );
 
    paned.pan1 = pan1;
    paned.pan2 = pan2;

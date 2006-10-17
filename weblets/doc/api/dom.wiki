@@ -76,9 +76,11 @@ vectors.
 
 == Server & Client Definitions ==
 <server>
+<client>
 
 === ++(dom-has-attributes? node)++ ===
 <function> dom-has-attributes?
+<procedure> dom-has-attributes?
 <procedure> hasAttributes
 
 <arguments>
@@ -88,10 +90,12 @@ vectors.
 
 Returns ++#t++ if ++node++ has //attributes//. Otherwise, returns ++#f++.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-get-attributes node)++ ===
 <function> dom-get-attributes
+<procedure> dom-get-attributes
 <procedure> getAttributes
 
 <arguments>
@@ -101,10 +105,12 @@ Returns ++#t++ if ++node++ has //attributes//. Otherwise, returns ++#f++.
 
 Returns the list of ++node++ //attributes//.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-has-attribute? node name)++ ===
 <function> dom-has-attribute?
+<procedure> dom-has-attribute?
 <procedure> hasAttribute
 
 <arguments>
@@ -116,10 +122,12 @@ Returns the list of ++node++ //attributes//.
 Returns ++#t++ if ++node++ has attribute ++name++. Otherwise, 
 returns ++#f++.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-get-attribute node name)++ ===
 <function> dom-get-attribute
+<procedure> dom-get-attribute
 <procedure> getAttribute
 
 <arguments>
@@ -131,10 +139,12 @@ returns ++#f++.
 Returns the value of attribute ++name++ of ++node++. If ++node++ does not
 have that attribute, the behavior is unspecified.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-remove-attribute! node name)++ ===
 <function> dom-remove-attribute!
+<procedure> dom-remove-attribute!
 <procedure> removeAttribute
 
 <arguments>
@@ -146,10 +156,12 @@ have that attribute, the behavior is unspecified.
 Removes the attribute ++name++ from ++node++. If ++node++ does not
 have that attribute, the behavior is unspecified.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-set-attribute! node name value)++ ===
 <function> dom-set-attribute!
+<procedure> dom-set-attribute!
 <procedure> setAttribute
 
 <arguments>
@@ -162,10 +174,12 @@ have that attribute, the behavior is unspecified.
 Sets a new ++value++ for the attribute ++name++ from ++node++. If ++node++ 
 does not have that attribute, the behavior is unspecified.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-owner-document node)++ ===
 <function> dom-owner-document
+<procedure> dom-owner-document
 <procedure> ownerDocument
 
 <arguments>
@@ -175,10 +189,12 @@ does not have that attribute, the behavior is unspecified.
 
 Returns the document that //owns// ++node++.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-has-child-nodes? node)++ ===
 <function> dom-has-child-nodes?
+<procedure> dom-has-child-nodes?
 <procedure> hasChildNodes
 
 <arguments>
@@ -188,10 +204,12 @@ Returns the document that //owns// ++node++.
 
 Returns ++#t++ if ++node++ has child nodes. Otherwise, returns ++#f++.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-child-nodes node)++ ===
 <function> dom-child-nodes
+<procedure> dom-child-nodes
 <procedure> childNodes
 
 <arguments>
@@ -201,10 +219,12 @@ Returns ++#t++ if ++node++ has child nodes. Otherwise, returns ++#f++.
 
 Returns the list of children of ++node++.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-set-child-node! node new)++ ===
 <function> dom-set-child-node!
+<procedure> dom-set-child-node!
 
 <arguments>
 ^  arguments       ^   type       ^  short description               ^
@@ -219,12 +239,15 @@ a shorthand for
   (set! node.innerHTML "")
   (dom-append-child! node new)
 
+</procedure>
 </function>
 
 === ++(dom-first-child node)++ ===
 === ++(dom-last-child node)++ ===
 <function> dom-first-child
 <function> dom-last-child
+<procedure> dom-first-child
+<procedure> dom-last-child
 <procedure> firstChild
 <procedure> lastChild
 
@@ -236,6 +259,8 @@ a shorthand for
 Returns the first (respectively the last) child of ++node++.
 </procedure>
 </procedure>
+</procedure>
+</procedure>
 </function>
 </function>
 
@@ -243,6 +268,8 @@ Returns the first (respectively the last) child of ++node++.
 === ++(dom-previous-sibling node)++ ===
 <function> dom-next-sibling
 <function> dom-previous-sibling
+<procedure> dom-next-sibling
+<procedure> dom-previous-sibling
 <procedure> nextSibling
 <procedure> previousSibling
 
@@ -254,6 +281,8 @@ Returns the first (respectively the last) child of ++node++.
 Returns the next (respectively the previous) sibling of ++node++.
 </procedure>
 </procedure>
+</procedure>
+</procedure>
 </function>
 </function>
 
@@ -261,6 +290,8 @@ Returns the next (respectively the previous) sibling of ++node++.
 === ++(dom-node-type node)++ ===
 <function> dom-node-name
 <function> dom-node-type
+<procedure> dom-node-name
+<procedure> dom-node-type
 <procedure> nodeName
 <procedure> nodeType
 
@@ -272,23 +303,14 @@ Returns the next (respectively the previous) sibling of ++node++.
 Returns the name (respectively the type) of ++node++.
 </procedure>
 </procedure>
+</procedure>
+</procedure>
 </function>
-</function>
-
-=== ++(dom-node-eval node)++ ===
-<function> dom-node-eval
-
-<arguments>
-^  arguments       ^   type       ^  short description               ^
-| node             |  element     | an element built by any markup.  |
-</arguments>
-
-Evaluates all the scripts children of ++node++. It returns the last
-evaluated value.
 </function>
 
 === ++(dom-parent-node node)++ ===
 <function> dom-parent-node
+<procedure> dom-parent-node
 <procedure> parentNode
 
 <arguments>
@@ -298,12 +320,15 @@ evaluated value.
 
 Returns the parent of ++node++.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-append-child! node child)++ ===
 === ++(dom-remove-child! node child)++ ===
 <function> dom-append-child!
 <function> dom-remove-child!
+<procedure> dom-append-child!
+<procedure> dom-remove-child!
 <procedure> appendChild
 <procedure> removeChild
 
@@ -316,11 +341,14 @@ Returns the parent of ++node++.
 Adds (respec. removes) a new ++child++ to (respec. from) ++node++.
 </procedure>
 </procedure>
+</procedure>
+</procedure>
 </function>
 </function>
 
 === ++(dom-clone-node node deep)++ ===
 <function> dom-clone-node
+<procedure> dom-clone-node
 <procedure> cloneNode
 
 <arguments>
@@ -333,10 +361,12 @@ Clones ++node++. If the argument ++deep++ is ++#t++ the cloning is deep
 (i.e., children are recursively cloned too). Otherwise, it is shallow
 (i.e., children are not cloned).
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-insert-before! node new ref)++ ===
 <function> dom-insert-before!
+<procedure> dom-insert-before!
 <procedure> insertBefore
 
 <arguments>
@@ -350,10 +380,12 @@ Inserts a ++new++ node in the children list of ++node++, just after the
 element ++ref++. If the element ++ref++ is not the children list, the
 behavior is unspecified.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-replace-child! node new old)++ ===
 <function> dom-replace-child!
+<procedure> dom-replace-child!
 <procedure> replaceChild
 
 <arguments>
@@ -366,10 +398,12 @@ behavior is unspecified.
 Replaces the ++old++ with a ++new++ node in the children list of ++node++.
 If the element ++old++ is not the children list, nothing happens.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-get-element-by-id document id)++ ===
 <function> dom-get-element-by-id
+<procedure> dom-get-element-by-id
 <procedure> getElementById
 
 <arguments>
@@ -388,10 +422,12 @@ by the ++<HTML>++ markup. This restriction does not apply to server code.
 ~~ Note 2: normally identifier are unique so a document should not contain 
 two or more elements with the same identifier.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-get-elements-by-tag-name document name)++ ===
 <function> dom-get-elements-by-tag-name
+<procedure> dom-get-elements-by-tag-name
 <procedure> getElementsByTagName
 
 <arguments>
@@ -408,10 +444,12 @@ characters is used to compare identifiers.
 ~~ Note: On client code, ++node++ must a document, i.e., an element built
 by the ++<HTML>++ markup. This restriction does not apply to server code.
 </procedure>
+</procedure>
 </function>
 
 === ++(dom-get-elements-by-class document name)++ ===
 <function> dom-get-elements-by-class
+<procedure> dom-get-elements-by-class
 <procedure> getElementsByClass
 
 <arguments>
@@ -426,6 +464,7 @@ characters is used to compare identifiers.
 
 ~~ Note: On client code, ++node++ must a document, i.e., an element built
 by the ++<HTML>++ markup. This restriction does not apply to server code.
+</procedure>
 </procedure>
 </function>
 
@@ -448,6 +487,44 @@ the tree. In general, it should not be directly called by user source code.
 </function>
 
 </server>
+
+== Client only Definitions ==
+<client>
+
+=== ++(dom-node-eval node)++ ===
+<procedure> dom-node-eval
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Evaluates all the scripts children of ++node++. It returns the last
+evaluated value.
+</procedure>
+
+=== ++(node-style-set! node style value)++ ===
+<procedure> node-style-set!
+
+<arguments>
+^  arguments       ^   type           ^  short description                      ^
+| node             |  element         | an element.                             |
+| style            |  keyword/string  | the style field identifier.             |
+| value            |  value           | the style field value.                  |
+</arguments>
+
+This client function sets a new value of a style field. The value
+can be any Hop value and the field can be denoted by its name (a string)
+or its identifier (a keyword). Example:
+
+  (let ((n (dom-get-element-by-id document 'a-box)))
+     (node-style-set! n :background "#eee")
+     (node-style-set! n :opacity 0.4))
+
+
+</procedure>
+</client>
+
 
 == See also ==
 <see-also>dom-, get-element-by-id</see-also>

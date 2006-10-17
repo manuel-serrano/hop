@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Oct 10 16:02:46 2006 (serrano)                */
+/*    Last change :  Tue Oct 17 10:53:42 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -219,13 +219,13 @@ function hop_default_failure( http ) {
    if( !div ) {
       div = document.createElement( "div" );
       div.id = "hop_default_failure";
-      hop_style_set( div, "position", "absolute" );
-      hop_style_set( div, "top", "100" );
-      hop_style_set( div, "z-index", "10000" );
-      hop_style_set( div, "width", "100%" );
-      hop_style_set( div, "padding", "0" );
+      node_style_set( div, "position", "absolute" );
+      node_style_set( div, "top", "100" );
+      node_style_set( div, "z-index", "10000" );
+      node_style_set( div, "width", "100%" );
+      node_style_set( div, "padding", "0" );
       div.align = "center";
-      hop_style_set( div, "background", "transparent" );
+      node_style_set( div, "background", "transparent" );
 
       div.innerHTML = t;
 
@@ -256,16 +256,16 @@ function hop_failure_alert( http ) {
 function hop_anim( title ) {
    var vis = document.createElement( "div" );
       
-   hop_style_set( vis, "position", "fixed" );
-   hop_style_set( vis, "top", "5px" );
-   hop_style_set( vis, "right", "5px" );
-   hop_style_set( vis, "z-index", "100" );
-   hop_style_set( vis, "background", "#eeeeee" );
-   hop_style_set( vis, "border-color", "black" );
-   hop_style_set( vis, "border-style", "outset" );
-   hop_style_set( vis, "border-width", "1px" );
-   hop_style_set( vis, "padding", "2px" );
-   hop_style_set( vis, "-moz-opacity", "0.7" );
+   node_style_set( vis, "position", "fixed" );
+   node_style_set( vis, "top", "5px" );
+   node_style_set( vis, "right", "5px" );
+   node_style_set( vis, "z-index", "100" );
+   node_style_set( vis, "background", "#eeeeee" );
+   node_style_set( vis, "border-color", "black" );
+   node_style_set( vis, "border-style", "outset" );
+   node_style_set( vis, "border-width", "1px" );
+   node_style_set( vis, "padding", "2px" );
+   node_style_set( vis, "-moz-opacity", "0.7" );
       
    vis.title = title;
 
@@ -747,6 +747,21 @@ function hop_clear_timeout( id ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_load ...                                                     */
+/*---------------------------------------------------------------------*/
+function hop_load( src ) {
+   var script = document.createElement( "script" );
+   script.src = src;
+   var holder = document.getElementsByTagName( "head" );
+
+   if( holder != null ) {
+      holder[ 0 ].appendChild( script );
+   } else {
+      alert( "*** Hop Error, Can't find HEAD element" );
+   }
+}
+      
+/*---------------------------------------------------------------------*/
 /*    hop_serialize ...                                                */
 /*---------------------------------------------------------------------*/
 function hop_serialize( item ) {
@@ -903,23 +918,6 @@ function hop_serialize_date( item ) {
    var ms = utc.substring( 0, utc.length - 3 );
 
    return 'd' + hop_serialize_word( ms.length ) + ms;
-}
-
-/*---------------------------------------------------------------------*/
-/*    getElementsByClass document method ...                           */
-/*---------------------------------------------------------------------*/
-document.getElementsByClass = function( className ) {
-   var all = document.getElementsByTagName( "*" );
-   var res = new Array();
-   var n = 0;
-    
-   for( var i = 0; i < all.length; i++ ) {
-      if( all[ i ].className == className ) {
-	 res[ n++ ] = all[ i ];
-      }
-   }
-   
-   return res;
 }
 
 /* {*---------------------------------------------------------------------*} */

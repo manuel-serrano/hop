@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu Oct 12 14:30:35 2006 (serrano)                */
+;*    Last change :  Tue Oct 17 10:33:06 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -272,8 +272,8 @@
 				 frame
 				 false false
 				 640 480
-				 (+ (hop-event-mouse-x event) 100)
-				 (- (hop-event-mouse-y event) 100)))
+				 (+ (event-mouse-x event) 100)
+				 (- (event-mouse-y event) 100)))
       "Run"))
 
 ;*---------------------------------------------------------------------*/

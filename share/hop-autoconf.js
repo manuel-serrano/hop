@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Oct 12 14:35:30 2006 (serrano)                */
+/*    Last change :  Tue Oct 17 07:42:58 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -129,26 +129,36 @@ if( (hop_is_http_json_autoconf.propertyIsEnumerable != undefined)
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_style_set ...                                                */
+/*    node_style_set ...                                               */
 /*---------------------------------------------------------------------*/
-var hop_style_set = undefined;
+var node_style_set = undefined;
 
-function hop_style_set_native( obj, property, value ) {
-   obj.style.setProperty( property, value, "" );
+function node_style_set_native( obj, prop, value ) {
+   if( sc_isKeyword( prop ) )
+      prop = sc_keyword2string_mutable( prop );
+   if( !(value instanceof String) && (typeof value != "string") )
+      value = value.toString();
+   
+   obj.style.setProperty( prop, value, "" );
 }
 
-function hop_style_set_array( obj, property, value ) {
-   obj.style[ property ] = value;
+function node_style_set_array( obj, property, value ) {
+   if( sc_isKeyword( prop ) )
+      prop = sc_keyword2string_mutable( prop );
+   if( !(value instanceof String) && (typeof value != "string") )
+      value = value.toString();
+   
+   obj.style[ prop ] = value;
 }
 
-hop_style_set = function( obj, property, value ) {
+node_style_set = function( obj, property, value ) {
    if( obj.style.setProperty != undefined ) {
-      hop_style_set = hop_style_set_native;
+      node_style_set = node_style_set_native;
    } else {
-      hop_style_set = hop_style_set_array;
+      node_style_set = node_style_set_array;
    }
 
-   return hop_style_set( obj, property, value );
+   return node_style_set( obj, property, value );
 }
 
 /*---------------------------------------------------------------------*/

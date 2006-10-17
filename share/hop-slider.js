@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Thu Oct 12 16:38:41 2006 (serrano)                */
+/*    Last change :  Tue Oct 17 07:48:57 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -84,8 +84,8 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    slider.cellpadding = 0;
    slider.cellspacing = 0;
    slider.border = 0;
-   hop_style_set( slider, "border-collapse", "collapse" );
-   hop_style_set( slider, "border-spacing", "0" )
+   node_style_set( slider, "border-collapse", "collapse" );
+   node_style_set( slider, "border-spacing", "0" )
    parent.appendChild( slider );
 
    tbody = doc.createElement( "tbody" );
