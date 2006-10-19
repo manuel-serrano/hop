@@ -21,10 +21,17 @@
  * 
  *           Author: Erick Gallesio [eg@essi.fr]
  *    Creation date: 12-Oct-2006 10:05 (eg)
- * Last file update: 16-Oct-2006 13:57 (eg)
+ * Last file update: 19-Oct-2006 16:10 (eg)
  */
 
-var flashproxy;
+/* load the JavaScript Flash Proxy */
+hop_append_script(hop_share_directory() + "/flash/JavaScriptFlashGateway.js");
+
+/* load the sound API */
+hop_append_script(hop_share_directory() + "/hop-sound.scm");
+
+
+var flashProxy;
 var soundCounter = 0;
 var soundPool = new Array();
 
@@ -34,7 +41,7 @@ function hop_sound_init() {
     var tag; 
 
     flashProxy = new FlashProxy(uid, flashdir + 'JavaScriptFlashGateway.swf');
-    tag = new FlashTag(flashdir + 'HopSound.swf', 600, 325);
+    tag = new FlashTag(flashdir + 'HopSound.swf', 1, 1);
     tag.setFlashvars('lcId='+uid);
     tag.write(document);
 }
@@ -56,47 +63,9 @@ function hop_sound_load(snd, streaming) {
     flashProxy.call('new_sound', snd.id, snd.url, str? 1 : 0);
 }
 
-function hop_sound_start(snd, loop)
-{
-    if (loop == undefined) loop = 1;
-    flashProxy.call('start', snd.id, loop);
-}
-
-function hop_sound_stop(snd)
-{
-    flashProxy.call('stop', snd.id);
-}
-
-function hop_sound_pause(snd)
-{
-    flashProxy.call('pause', snd.id);
-}
-
-function hop_sound_get_volume(snd)
-{
-    return snd.volume
-}
-
-function hop_sound_set_volume(snd, value)
-{
-    flashProxy.call('setVolume', snd.id, value);
-    snd.volume = value;
-}
-
-function hop_sound_get_pan(snd)
-{
-    return snd.pan;
-}
-
-function hop_sound_set_pan(snd, value)
-{
-    flashProxy.call('setPan', snd.id, value);
-    snd.pan = value;
-}
-
 /* ====================================================================== *\
  *  
- * Handlers 
+ * Handlers (these function are called from AS)
  * 
 \* ====================================================================== */
 
@@ -117,6 +86,3 @@ function hop_sound_onCompleteHandler(id)
 	snd.onSoundComplete();
     }
 }
-
-// Initialize the sound system 
-hop_sound_init();

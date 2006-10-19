@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Oct 13 12:15:45 2006 (eg)                     */
+#*    Last change :  Tue Oct 17 11:23:14 2006 (eg)                     */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -30,7 +30,8 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-editor.js hop-editor.css \
                   hop-fileselect.js hop-fileselect.css \
                   hopscheme.js \
-                  hop-debug.js hop-debug.css hop-sound.js \
+                  hop-debug.js hop-debug.css \
+		  hop-sound.js hop-sound.scm \
                   hop.scm icons buttons editor flash Makefile
 
 #*---------------------------------------------------------------------*/
@@ -68,6 +69,7 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-debug.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-debug.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-sound.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-sound.scm $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hopscheme.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/base64.js $(HOPSHAREDIR) && \

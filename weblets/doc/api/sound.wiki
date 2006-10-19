@@ -1,0 +1,144 @@
+<doc> Sound
+
+== Description ==
+
+The functions described in this page permits sound manipulation. Hop 
+uses the //Macromedia Flash Player// for producing sound on the client.
+The player actually used in Hop also uses the Flash JavaScript
+Gateway package of Macromedia. 
+
+== Synopsis ==
+
+=== Client ===
+
+  (hop-make-sound url . args)
+  (hop-sound-play sound [count])
+  (hop-sound-pause sound)
+  (hop-sound-stop sound)
+  (hop-sound-volume sound)
+  (hop-sound-volume-set! sound)
+  (hop-sound-pan sound)
+  (hop-sound-pan-set! sound)
+
+
+=== Requirements ===
+
+Client codes using //Sound// need to load the script
+++hop-sound.js++.  Hence, documents using //Sound//
+must include in their header, the following statement:
+
+
+  (<HEAD> :jscript "hop-sound.js")
+
+
+== Examples ==
+<example>hop-make-sound</example>
+
+== Client Definitions ==
+<client>
+
+=== ++(hop-make-sound url :stream :onload :onplayed )++ ===
+<function> hop-make-sound
+
+This function takes as first argument the URL of the sound to play (as
+a string) followed by a list of keyword and values described below
+
+<arguments>
+^  attributes  ^   type     ^   default  ^  short description                             ^
+| :stream      |  boolean   |  #t        | stream the sound instead of loading it.        |
+| :onload      |  function  |            | callback function when sound has been loaded.  |
+| :onplayed    |  function  |            | callback function when sound has been played.  |
+</arguments>
+
+The argument **:stream** specifies if the sound is streamed from the given URL. 
+Note that streamed sounds are automatically played.
+
+The argument **:onload** must be a function taking one parameter. This function
+is called when the sound has been completely loaded. The parameter passed 
+to the callback is a boolean indicating if the load has succeeded or not.
+
+The argument **:onplayed** must be a function taking no parameter. This function is 
+called when the sound has been played.
+
+</function>
+
+=== ++(hop-sound-play sound [count])++ ===
+<function> hop-sound-play
+
+<arguments>
+^  argument  ^   type    ^  short description                                       ^
+| sound      |  sound    | the sound to be played.                                  |
+| count      |  integer  | how much times the sound must be played. Defaults to 1.  |
+</arguments>
+</function>
+
+=== ++(hop-sound-stop sound)++ ===
+<function> hop-sound-stop
+
+<arguments>
+^  argument  ^   type    ^  short description                                       ^
+| sound      | sound     | the sound to be stopped.                                 |
+</arguments>
+</function>
+
+=== ++(hop-sound-pause sound)++ ===
+<function> hop-sound-pause
+
+<arguments>
+^  argument  ^   type    ^  short description                                       ^
+| sound      |  sound    | the sound to be paused.                                  |
+</arguments>
+</function>
+
+=== ++(hop-sound-volume sound)++ ===
+<function> hop-sound-volume
+
+<arguments>
+^  argument  ^   type    ^  short description                                       ^
+| sound      |  sound    | the sound.                                               |
+</arguments>
+
+The value returned is an integer in the range 0 .. 100.
+</function>
+
+
+=== ++(hop-sound-volume-set! sound)++ ===
+<function> hop-sound-volume-set!
+
+<arguments>
+^  argument  ^   type    ^  short description                                       ^
+| sound      |  sound    | the sound .                                              |
+| value      |  integer  | sound value between 0 and 100.                           |
+</arguments>
+</function>
+
+=== ++(hop-sound-pan sound)++ ===
+<function> hop-sound-pan
+
+<arguments>
+^  argument  ^   type   ^  short description                                        ^
+| sound      |  sound   | the sound.                                                |
+</arguments>
+
+This function returns the value of the balance for the given sound (-100 
+for left, 0 for centered and +100 for right).
+</function>
+
+
+=== ++(hop-sound-pan-set! sound)++ ===
+<function> hop-sound-pan-set!
+
+<arguments>
+^  argument  ^   type    ^  short description                      ^
+| sound      |  sound    | the sound.                              |
+| value      |  integer  | panoramic value between -100 and +100.  |
+</arguments>
+</function>
+
+
+</client>
+
+== See also ==
+
+
+</doc>
