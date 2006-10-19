@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Aug 25 09:33:50 2006 (serrano)                */
+;*    Last change :  Wed Oct 18 12:23:22 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -475,8 +475,9 @@
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure)
    (with-trace 3 'http-send-request
-      (with-access::http-request req (method path http host port header socket userinfo authorization timeout)
-	 (let* ((remote (make-client-socket/timeout host port timeout req))
+      (with-access::http-request req (scheme method path http host port header socket userinfo authorization timeout)
+	 (let* ((ssl (eq? scheme 'https))
+		(remote (make-client-socket/timeout host port timeout req ssl))
 		(rp (socket-output remote))
 		(ip (socket-input remote)))
 	    (when (> timeout 0)

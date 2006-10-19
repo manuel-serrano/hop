@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sat Oct 14 18:32:28 2006 (serrano)                */
+;*    Last change :  Wed Oct 18 13:51:17 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -129,9 +129,9 @@
 ;*    *wiki-grammar* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *wiki-grammar*
-   (regular-grammar ((punct (in "+*=/_-$#"))
+   (regular-grammar ((punct (in "+*=/_-$#%"))
 		     (blank (in "<>^|:~;,`'(){}[] \\\n"))
-		     (letter (out "<>+^|*=/_-$#:~;,`'(){}[] \\\n"))
+		     (letter (out "<>+^|*=/_-$#%:~;,`'(){}[] \\\n"))
 		     syn state result trcount)
 
       ;; misc

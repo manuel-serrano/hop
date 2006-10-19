@@ -31,7 +31,7 @@
     (set! *additional-bigloo-libraries*
 	  (cons* 'bigloomultimedia
 		 'biglooweb
-		 'bigloopth
+                 'bigloossl
 		 *additional-bigloo-libraries*)))
    (bigloo-eval
     #unspecified))

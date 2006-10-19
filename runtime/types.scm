@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Oct 14 11:08:04 2006 (serrano)                */
+;*    Last change :  Wed Oct 18 12:25:08 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -52,7 +52,7 @@
 	      (host::bstring (default "localhost"))
 	      (path::bstring (default "/dummy"))
 	      (userinfo read-only (default #f))
-	      (scheme::bstring (default "http"))
+	      (scheme::symbol (default 'http))
 	      (port::bint (default 80))
 	      (method::symbol read-only (default 'GET))
 	      (encoded-path::bstring (default ""))
@@ -69,7 +69,7 @@
 	   (class http-response-remote::%http-response
 	      (http::bstring read-only)
 	      (host::bstring read-only)
-	      (scheme::bstring read-only)
+	      (scheme::symbol read-only)
  	      (port::bint read-only)
 	      (method::symbol read-only)
 	      (path::bstring read-only)

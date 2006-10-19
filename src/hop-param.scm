@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Sep 29 11:07:51 2006 (serrano)                */
+;*    Last change :  Tue Oct 17 17:35:24 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -24,14 +24,14 @@
 	    
 	    (hop-max-reply-persite-thread::int)
 	    (hop-max-reply-persite-thread-set! ::int)
-
+	    
 	    (hop-autoload-directories::pair-nil)
 	    (hop-autoload-directories-set! ::pair-nil)
 	    (hop-autoload-directory-add! ::bstring)
-
+	    
 	    (hop-preload-libraries::pair-nil)
 	    (hop-preload-libraries-set! ::pair-nil)
-
+	    
 	    (hop-proxy-authentication::bool)
 	    (hop-proxy-authentication-set! ::bool)
 	    
@@ -40,12 +40,15 @@
 	    
 	    (hop-proxy-remote-authentication::bool)
 	    (hop-proxy-remote-authentication-set! ::bool)
-
+	    
 	    (hop-log-file::obj)
 	    (hop-log-file-set! ::obj)
-
+	    
 	    (hop-scheduling::symbol)
-	    (hop-scheduling-set! ::symbol))
+	    (hop-scheduling-set! ::symbol)
+	    
+	    (hop-enable-https::bool)
+	    (hop-enable-https-set! ::bool))
 
    (eval    (export-exports)))
 
@@ -53,10 +56,10 @@
 ;*    Thread management                                                */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-max-accept-thread
-   10)
+   7)
 
 (define-parameter hop-max-reply-thread
-   10)
+   13)
 
 (define-parameter hop-max-reply-persite-thread
    4)
@@ -107,3 +110,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-scheduling
    'cohort)
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-https ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-https
+   #f)

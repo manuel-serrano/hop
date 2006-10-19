@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Oct 11 09:29:51 2006 (serrano)                */
+;*    Last change :  Wed Oct 18 12:25:53 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -93,6 +93,7 @@
 	  (with-access::http-request m (content-length method path)
 	     (let* ((n (if (hop-enable-proxing)
 			   (instantiate::http-response-remote
+			      (scheme (http-request-scheme m))
 			      (method (http-request-method m))
 			      (host (http-request-host m))
 			      (port (http-request-port m))
@@ -101,7 +102,6 @@
 			      (encoded-path (http-request-encoded-path m))
 			      (http (http-request-http m))
 			      (header (http-request-header m))
-			      (scheme (http-request-scheme m))
 			      (bodyp (not (eq? method 'HEAD)))
 			      (content-length content-length)
 			      (request req)
@@ -193,9 +193,10 @@
       (trace-item "header=" header)
       (if (and (procedure? fail) (not (correct-arity? fail 2)))
 	  (error 'with-url "Illegal fail handler" fail)
-	  (multiple-value-bind (_ userinfo host port path)
+	  (multiple-value-bind (scheme userinfo host port path)
 	     (url-parse url)
 	     (let ((r (instantiate::http-request
+			 (scheme (string->symbol scheme))
 			 (id hop-to-hop-id)
 			 (userinfo userinfo)
 			 (host host)

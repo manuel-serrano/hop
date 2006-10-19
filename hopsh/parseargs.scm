@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Oct 12 11:40:20 2006 (serrano)                */
+;*    Last change :  Wed Oct 18 11:45:28 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -76,6 +76,10 @@
 	  (set! h host))
 	 ((("-p" "--port") ?port (help (format "Port number (default: ~s)" p)))
 	  (set! p (string->integer port)))
+	 ((("-s" "--enable-https") (help (format "Enable HTTPS")))
+	  (hopsh-enable-https-set! #t))
+	 (("--disable-https" (help (format "Disable HTTPS")))
+	  (hopsh-enable-https-set! #f))
 	 ((("-l" "--login") ?user (help "Specify user log in"))
 	  (set! login user))
 	 (("-?dummy")

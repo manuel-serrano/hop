@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Oct 14 16:02:00 2006 (serrano)                */
+;*    Last change :  Thu Oct 19 11:54:57 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -60,13 +60,14 @@
 (define-method (http-response r::http-response-remote socket)
    (with-trace 3 'http-response::http-response-remote
       (let loop ()
-	 (with-access::http-response-remote r (host port header content-length remote-timeout request connection-timeout)
+	 (with-access::http-response-remote r (scheme host port header content-length remote-timeout request connection-timeout)
 	    (trace-item "remotehost=" host
 			" remoteport=" port
 			" connection-timeout=" connection-timeout)
 	    (let* ((host (or (hop-proxy-host) host))
 		   (port (or (hop-proxy-port) port))
-		   (remote (remote-get-socket host port connection-timeout request))
+		   (ssl (eq? scheme 'https))
+		   (remote (remote-get-socket host port connection-timeout request ssl))
 		   (rp (connection-output remote))
 		   (sp (socket-input socket)))
 	       ;; verb
@@ -172,8 +173,11 @@
 			     (unless (=elong cl #e0)
 				(send-chars ip op cl))
 			     (response-chunks ip op))))
-		     ;; what to do with the remote connection
-		     (if (or (eq? connection 'close)
+		     ;; what to do with the remote connection. if the
+		     ;; status code is not 200, we always close the connection
+		     ;; in order to avoid, in particular, re-direct problems.
+		     (if (or (=fx status-code 200)
+			     (eq? connection 'close)
 			     (not (hop-enable-keep-alive)))
 			 (connection-close! remote)
 			 (connection-keep-alive! remote))
@@ -210,7 +214,7 @@
 ;*    it first checks if it happens to still have an old connection    */
 ;*    with that host.                                                  */
 ;*---------------------------------------------------------------------*/
-(define (remote-get-socket host port timeout request)
+(define (remote-get-socket host port timeout request ssl)
    (define (purge-table!)
       (with-trace 5 'purge-table!
 	 (trace-item "before purge, table-length="
@@ -226,9 +230,7 @@
 		     (hashtable-size *connection-table*))))
    (define (get-new-connection! register)
       (with-trace 4 'register-new-connection
-	 ;; unclock before establishing the connection
-	 (mutex-unlock! *remote-lock*)
-	 (let ((socket (make-client-socket/timeout host port timeout request)))
+	 (let ((socket (make-client-socket/timeout host port timeout request ssl)))
 	    ;; relock the whole stuff
 	    (mutex-lock! *remote-lock*)
 	    (set! *remote-id* (+elong *remote-id* #e1))
@@ -252,7 +254,6 @@
    (define (get-connection)
       (with-trace 4 'get-connection
 	 (trace-item "host=" host)
-	 (mutex-lock! *remote-lock*)
 	 (let ((old (hashtable-get *connection-table* host)))
 	    (if (connection? old)
 		(if (and (not (connection-locked old))
@@ -265,9 +266,13 @@
 		       old)
 		    ;; we have a collision in the hashtable, we
 		    ;; cannot store the new connection
-		    (get-new-connection! #f))
+		    (begin
+		       (mutex-unlock! *remote-lock*)
+		       (get-new-connection! #f)))
 		;; create a new connection and registers it
-		(get-new-connection! #t)))))
+		(begin
+		   (mutex-unlock! *remote-lock*)
+		   (get-new-connection! #t))))))
    (get-connection))
    
 ;*---------------------------------------------------------------------*/

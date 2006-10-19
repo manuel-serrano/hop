@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jul 26 15:48:12 2006 (serrano)                */
+;*    Last change :  Wed Oct 18 13:53:50 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -103,7 +103,7 @@
 	       (http-url-parse pi2)
 	       (trace-item "scheme=" s " user=" u
 			   " hostname=" h " port=" p " abspath=[" a "]")
-	       (set! scheme s)
+	       (set! scheme (string->symbol s))
 	       (set! hostname h)
 	       (set! port p)
 	       (set! abspath a)

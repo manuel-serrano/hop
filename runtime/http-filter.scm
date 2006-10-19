@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Sun Jul 23 15:49:24 2006 (serrano)                */
+;*    Last change :  Wed Oct 18 12:27:21 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -38,13 +38,14 @@
 ;*    http-filter ::http-response-remote ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (http-filter r::http-response-remote f socket)
-   (with-access::http-response-remote r (host port header content-length timeout request)
+   (with-access::http-response-remote r (scheme host port header content-length timeout request)
       (trace-item "remotehost=" host
 		  " remoteport=" port
 		  " timeout=" timeout)
-      (let* ((host (or (hop-proxy-host) host))
+      (let* ((ssl (eq? scheme 'https))
+	     (host (or (hop-proxy-host) host))
 	     (port (or (hop-proxy-port) port))
-	     (rsock (make-client-socket/timeout host port timeout request))
+	     (rsock (make-client-socket/timeout host port timeout request ssl))
 	     (rp (socket-output rsock))
 	     (sp (socket-input socket)))
 	 (hop-verb 4

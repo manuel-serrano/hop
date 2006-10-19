@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Oct 11 09:28:53 2006 (serrano)                */
+;*    Last change :  Tue Oct 17 17:41:17 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -16,7 +16,8 @@
 
    (library pthread
 	    web
-	    hop)
+	    hop
+	    ssl)
 
    (import  hop_parseargs
 	    hop_param)
@@ -52,8 +53,12 @@
    (for-each (lambda (l) (eval `(library-load ',l))) (hop-preload-libraries))
    ;; parse the command line
    (parse-args args)
-   (hop-verb 1 "Starting hop (v" (hop-version) ", " (hop-backend)
-	     ") on port " (hop-port) ":\n")
+   (hop-verb 1 "Starting hop (v" (hop-version)
+	     ", " (hop-backend)
+	     ") "
+	     (if (hop-enable-https) "https" "http")
+	     " on port " (hop-port)
+	     ":\n")
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! hop-load-modified)
@@ -67,26 +72,34 @@
       (lambda (e)
 	 (exception-notify e)
 	 (exit 1))
-      (let ((s (make-server-socket (hop-port)))
-	    (ap (make-threads-pool 'accpt (hop-max-accept-thread) -1))
-	    (rp (case (hop-scheduling)
-		   ((cohort)
-		    (make-threads-pool 'reply (hop-max-reply-thread) -1))
-		   ((simple)
-		    #f)
-		   (else
-		    (error 'hop
-			   "Illegal scheduling policy"
-			   (hop-scheduling))))))
-	 (let loop ((n 1))
-	    (with-handler
-	       (lambda (e)
-		  (exception-notify e))
-	       (let liip ()
-		  (accept-connection s ap rp n)
-		  (set! n (+fx n 1))
-		  (liip)))
-	    (loop n)))))
+      (let* ((ap (make-threads-pool 'accpt (hop-max-accept-thread) -1))
+	     (rp (case (hop-scheduling)
+		    ((cohort)
+		     (make-threads-pool 'reply (hop-max-reply-thread) -1))
+		    ((simple)
+		     #f)
+		    (else
+		     (error 'hop
+			    "Illegal scheduling policy"
+			    (hop-scheduling)))))
+	     (s (if (hop-enable-https)
+		    (make-ssl-server-socket (hop-port) ap rp)
+		    (make-server-socket (hop-port) ap rp))))
+	 (hop-main-loop s ap rp))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-main-loop ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hop-main-loop s ap rp)
+   (let loop ((n 1))
+      (with-handler
+	 (lambda (e)
+	    (exception-notify e))
+	 (let liip ()
+	    (accept-connection s ap rp n)
+	    (set! n (+fx n 1))
+	    (liip)))
+      (loop n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */

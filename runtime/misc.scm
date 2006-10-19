@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Oct 11 05:32:41 2006 (serrano)                */
+;*    Last change :  Wed Oct 18 12:22:57 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_misc
 
+   (library ssl)
+   
    (import  __hop_param
 	    __hop_types
 	    __hop_read)
@@ -35,7 +37,7 @@
 	   (escape-string::bstring ::bstring)
 	   (delete-path ::bstring)
 	   (make-url-name::bstring ::bstring ::bstring)
-	   (make-client-socket/timeout ::bstring ::int ::int ::obj)
+	   (make-client-socket/timeout ::bstring ::int ::int ::obj ::bool)
 	   (inline micro-seconds::int ::int)
 	   (inline input-timeout-set! ::input-port ::int)
 	   (inline output-timeout-set! ::output-port ::int)))
@@ -307,7 +309,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-client-socket/timeout ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (make-client-socket/timeout host port timeout::int msg::obj)
+(define (make-client-socket/timeout host port timeout::int msg::obj ssl::bool)
    (let ((tmt (if (>fx timeout 0)
 		  (micro-seconds timeout)
 		  (micro-seconds (hop-connection-timeout)))))
@@ -327,7 +329,9 @@
 					   " ttl=" ttl "\n")
 				 (-fx ttl 1))
 			      (raise e)))
-		       (make-client-socket host port :timeout tmt))))
+		       (if ssl
+			   (make-ssl-client-socket host port :timeout tmt)
+			   (make-client-socket host port :timeout tmt)))))
 	    (if (number? res)
 		(loop res)
 		res)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Oct 11 05:26:38 2006 (serrano)                */
+;*    Last change :  Tue Oct 17 17:29:04 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -103,9 +103,13 @@
 	 
 	 ;; Run
 	 (section "Run")
-	 ((("-p" "--port") ?port (help (format "Port number [~s]" p)))
+	 ((("-p" "--http-port") ?port (help (format "Port number [~s]" p)))
 	  (set! p (string->integer port)))
-	 ((("-s" "--session") ?session (help "Set session identifier"))
+	 ((("-s" "--enable-https") (help (format "Enable HTTPS")))
+	  (hop-enable-https-set! #t))
+	 (("--disable-https" (help (format "Disable HTTPS")))
+	  (hop-enable-https-set! #f))
+	 ((("-i" "--session-id") ?session (help "Set session identifier"))
 	  (hop-session-set! (string->integer session)))
 	 (("--no-job-restore" (help "Don't restore jobs"))
 	  (hop-job-restore-set! #f))
