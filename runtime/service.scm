@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Oct 11 09:38:00 2006 (serrano)                */
+;*    Last change :  Fri Oct 20 11:12:51 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -39,7 +39,8 @@
 	    (procedure->service::hop-service ::procedure)
             (%eval::%http-response ::obj ::http-request ::procedure)
 	    (service-filter ::http-request)
-	    (register-service!::hop-service ::hop-service)))
+	    (register-service!::hop-service ::hop-service)
+	    (expired-service-path?::bool ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
@@ -265,14 +266,17 @@
 		  (mutex-unlock! *service-mutex*)
 		  (cond
 		     ((hop-service? svc)
-		      (with-access::hop-service svc (%exec ttl)
+		      (with-access::hop-service svc (%exec ttl path)
 			 (cond
 			    ((=fx ttl 1)
 			     (unregister-service! svc))
 			    ((>fx ttl 1)
 			     (set! ttl (-fx ttl 1))))
-			 (unless (service-expired? svc)
-			    (scheme->response (%exec req) req))))
+			 (if (service-expired? svc)
+			     (begin
+				(mark-service-path-expired! path)
+				#f)
+			     (scheme->response (%exec req) req))))
 		     (else
 		      (let ((init (hop-initial-weblet)))
 			 (when (and (string? init)
@@ -332,7 +336,11 @@
 (define (flush-expired-services!)
    (hashtable-filter! *service-table*
 		      (lambda (key svc)
-			 (not (service-expired? svc)))))
+			 (if (service-expired? svc)
+			     (with-access::hop-service svc (path)
+				(mark-service-path-expired! path)
+				#f)
+			     #t))))
 			 
 ;*---------------------------------------------------------------------*/
 ;*    unregister-service! ...                                          */
@@ -343,3 +351,35 @@
       (hashtable-remove! *service-table* path)
       (hashtable-remove! *service-table* (string-append path "/"))
       (mutex-unlock! *service-mutex*)))
+
+;*---------------------------------------------------------------------*/
+;*    *expiration-table*                                               */
+;*---------------------------------------------------------------------*/
+(define *expiration-table*
+   (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    *expiration-mutex* ...                                           */
+;*---------------------------------------------------------------------*/
+(define *expiration-mutex* (make-mutex))
+
+;*---------------------------------------------------------------------*/
+;*    expired-service-path? ...                                        */
+;*---------------------------------------------------------------------*/
+(define (expired-service-path? path)
+   (mutex-lock! *expiration-mutex*)
+   (let ((r (hashtable-get *expiration-table* path)))
+      (mutex-unlock! *expiration-mutex*)
+      r))
+
+;*---------------------------------------------------------------------*/
+;*    mark-service-path-expired! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (mark-service-path-expired! path)
+   (mutex-lock! *expiration-mutex*)
+   (tprint "mark expired: " path)
+   (hashtable-put! *expiration-table* path #t)
+   (mutex-unlock! *expiration-mutex*)
+   #f)
+   
+   

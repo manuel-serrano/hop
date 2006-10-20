@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Thu Sep 21 19:00:52 2006 (serrano)                */
+;*    Last change :  Fri Oct 20 10:39:51 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -206,7 +206,7 @@
 		    (string-append "hop-filebrowse " class)
 		    "hop-filebrowse")
 	 :value value
-	 :onclick (format "~a; hop_stop_propagation( event, false ); this.onselect = ~a; hop_filebrowse( ~a, '~a', '~a', this.value, '~a', ~a, event.clientX, event.clientY, ~a, ~a )"
+	 :onclick (format "~a; hop_stop_propagation( event, false ); this.onselect = ~a; hop_filebrowse( ~a, '~a', '~a', this.value, '~a', ~a, hop_event_mouse_x( event ), hop_event_mouse_y( event ), ~a, ~a )"
 			  ;; user onclick
 			  (cond
 			     ((xml-tilde? onclick)

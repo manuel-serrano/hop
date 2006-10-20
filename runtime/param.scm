@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Oct 17 17:26:57 2006 (serrano)                */
+;*    Last change :  Fri Oct 20 11:17:07 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -755,7 +755,7 @@
 ;*    hop-service-default-timeout ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-default-timeout
-   (* 2 24 60))
+   (* 2 24 60 60))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-flush-pace ...                                       */

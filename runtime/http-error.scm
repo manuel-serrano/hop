@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Oct  7 09:28:17 2006 (serrano)                */
+;*    Last change :  Fri Oct 20 11:17:30 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -203,7 +203,7 @@
 ;*    http-service-not-found ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (http-service-not-found file)
-   (define (illegal-service msg)
+   (define (illegal-service key msg)
       (instantiate::http-response-hop
 	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 404 Not Found")
@@ -220,26 +220,34 @@
 				(<TABLE>
 				   :style "35em"
 				   (<TR> (<ETD> :class "title"
-						(format "~a service!"
-							(string-capitalize msg))))
+					    (format "~a service!"
+						    (string-capitalize key))))
 				   (<TR> (<ETD> :class "msg"
-						(<SPAN> :class "filenotfound"
-							file)))
+					    (<SPAN> :class "filenotfound"
+					       file)))
 				   (<TR> (<ETD> :class "dump"
-						(<SPAN> (format "You are trying to executed an ~a service!
+					    (<SPAN> msg)))))))))))))
+   (define (illegal-service-message msg)
+      (format "You are trying to execute an ~a service!
 <br><br>
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
 can no longer be executed.<br><br>
-Reloading the page is the only workaround." msg))))))))))))))
-   (define (http-invalidated-service file)
-      (illegal-service "invalidated"))
-   (define (http-unknown-service file)
-      (illegal-service "unknown"))
+Reloading the page is the only workaround." msg))
    (let ((svc (make-file-name (hop-service-base) (hop-service-weblet-name))))
-      (if (substring-at? file svc 0)
-	  (http-invalidated-service file)
-	  (http-unknown-service file))))
+      (cond
+	 ((expired-service-path? file)
+	  (illegal-service "expired"
+			   "Your are trying to executed an expired service!
+<br><br>
+This happens because at creation time, the service has been registered with
+a timeout which has now expired. The service is then no longer available."))
+	 ((substring-at? file svc 0)
+	  (illegal-service "invalidated"
+			   (illegal-service-message "invalidated")))
+	 (else
+	  (illegal-service "unknown"
+			   (illegal-service-message "unknown"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-permission-denied ...                                       */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Tue Oct 17 07:48:57 2006 (serrano)                */
+/*    Last change :  Fri Oct 20 10:15:20 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -15,7 +15,9 @@
 function hop_slider_mousemove( e, slider ) {
    var val;
 
-   val = ((e.clientX - hop_element_x( slider )) / slider.offsetWidth)
+/*    val = ((e.clientX - hop_element_x( slider )) / slider.offsetWidth) */
+/*       * (slider.max - slider.min);                                  */
+   val = ((hop_event_mouse_x( e ) - hop_element_x( slider )) / slider.offsetWidth)
       * (slider.max - slider.min);
    hop_slider_value_set( slider, Math.round( val ) + slider.min );
 }
@@ -202,7 +204,8 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    var onlineclick = function( e ) {
       var val;
 
-      val = ((e.clientX - hop_element_x( slider )) / slider.offsetWidth) * 100;
+/*       val = ((e.clientX - hop_element_x( slider )) / slider.offsetWidth) * 100; */
+      val = ((hop_event_mouse_x( e ) - hop_element_x( slider )) / slider.offsetWidth) * 100;
       hop_slider_value_set( slider, val );
    }
 
