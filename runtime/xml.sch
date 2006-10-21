@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 15:24:40 2005                          */
-;*    Last change :  Sat Oct 21 15:27:55 2006 (serrano)                */
+;*    Last change :  Sun Oct 22 00:36:51 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML macros                                                       */
@@ -40,7 +40,7 @@
 		     (loop (cddr args)
 			   attr
 			   (cons (cons (keyword->symbol (car args))
-				       (tilde-make-thunk (cadr args)))
+				       (cadr args))
 				 init)
 			   body
 			   id))
@@ -94,7 +94,7 @@
 		     (loop (cddr args)
 			   attr
 			   (cons (cons (keyword->symbol (car args))
-				       (tilde-make-thunk (cadr args)))
+				       (cadr args))
 				 init)
 			   body
 			   id))

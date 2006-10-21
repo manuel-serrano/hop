@@ -17,21 +17,21 @@ table.hop-tree {
   font-size: 12px;
   margin: 0;
   padding: 0;
-  border: 0;
+  border-width: 0;
   border-collapse: collapse;
   border-spacing: 0;
 }
 
 table.hop-tree td {
   vertical-align: middle;
-  border: 0;
+  border-width: 0;
   padding: 0;
   margin: 0;
 }
 
 table.hop-tree td img, table.hop-tree td span {
   vertical-align: middle;
-  border: 0;
+  border-width: 0;
   padding: 0;
   margin: 0;
 }
@@ -41,7 +41,7 @@ table.hop-tree-leaf {
   font-size: 10px;
   margin: 0;
   padding: 0;
-  border: 0;
+  border-width: 0;
   border-collapse: collapse;
   border-spacing: 0;
 }
@@ -67,7 +67,7 @@ img.hop-tree-openclose {
 /*---------------------------------------------------------------------*/
 tr.hop-tree-row-unselected {
   background: inherit;
-  border: 0;
+  border-width: 0;
 }
 
 tr.hop-tree-row-selected {
@@ -79,7 +79,7 @@ tr.hop-tree-row-selected {
 /*    Tree body                                                        */
 /*---------------------------------------------------------------------*/
 div.hop-tree-body {
-  border: 0;
+  border-width: 0;
   margin: 0;
   padding: 0;
 }

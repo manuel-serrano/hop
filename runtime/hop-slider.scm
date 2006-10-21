@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Oct 12 16:24:29 2006 (serrano)                */
+;*    Last change :  Sun Oct 22 00:45:18 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-slider
 
+   (library web)
+   
    (include "compiler-macro.sch"
 	    "xml.sch")
 
@@ -38,10 +40,10 @@
 ;*    <SLIDER> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SLIDER> ((id #unspecified string)
-			       (value 0 integer)
-			       (min 0 integer)
-			       (max 100 integer)
-			       (step 1 integer)
+			       (value 0)
+			       (min 0)
+			       (max 100)
+			       (step 1)
 			       (onchange #f)
 			       (caption "top"))
    (instantiate::html-slider
@@ -54,7 +56,20 @@
       (onchange onchange)
       (caption caption)
       (body '())))
-	    
+
+;*---------------------------------------------------------------------*/
+;*    valueof ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (valueof attr obj)
+   (cond
+      ((integer? obj)
+       obj)
+      ((xml-tilde? obj)
+       (format "function(){return ~a}()"
+	       (xml-attribute-encode (xml-tilde-body obj))))
+      (else
+       (error 'SLIDER (format "Illegal ~a" attr) obj))))
+       
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-slider ...                                      */
 ;*---------------------------------------------------------------------*/
@@ -76,10 +91,17 @@
 		 "hop_slider_onchange_set( "
 		 "hop_make_slider( "
 		 "document.getElementById( '" gid "' ), "
-		 "'" id "', "
-		 min ", " max ", " step ", "
-		 value ", \"" caption "\" )"
-		 ", function() { " oc " } )"))
+		 "'" id "', ")
+	 (xml-write-initializer min p)
+	 (display "," p)
+	 (xml-write-initializer max p)
+	 (display "," p)
+	 (xml-write-initializer step p)
+	 (display "," p)
+	 (xml-write-initializer value p)
+	 (display "," p)
+	 (xml-write-initializer caption p)
+	 (fprint p"), function() { " oc " } )"))
       (display " </script>" p)
       (display "</span>" p)))
 

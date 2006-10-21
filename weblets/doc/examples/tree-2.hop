@@ -2,9 +2,7 @@
 (let ((d (hop-share-directory)))
    
    (define (directory->tree id dir shape)
-      (<TREE>
-	 :id id
-	 :multiselect #t
+      (<TREE> :id id :multiselect #t
 	 (<TRHEAD> :value dir shape)
 	 (<TRBODY>
 	    (<DELAY>
@@ -23,18 +21,13 @@
       (<BODY>
 	 (let ((tree (directory->tree "t" d (basename d))))
 	    (list
-	     (<BUTTON>
-		:onclick ~(tree-open $tree)
+	     (<BUTTON> :onclick ~(tree-open $tree)
 		"Open tree")
-	     (<BUTTON>
-		:onclick ~(tree-close $tree)
+	     (<BUTTON> :onclick ~(tree-close $tree)
 		"Close tree")
-	     (<BUTTON>
-		:onclick
-		~(alert "selection=" (tree-selection $tree))
+	     (<BUTTON> :onclick ~(alert "selection=" (tree-selection $tree))
 		"Show current selection")
-	     (<BUTTON>
-		:onclick ~(tree-reset! $tree)
+	     (<BUTTON> :onclick ~(tree-reset! $tree)
 		"Reset selection")
 	     (<BR>)
 	     (<BR>)

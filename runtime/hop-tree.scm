@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Oct  9 08:48:27 2006 (serrano)                */
+;*    Last change :  Sat Oct 21 18:00:37 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -15,14 +15,16 @@
 (module __hop_hop-tree
 
    (include "compiler-macro.sch"
-	    "xml.sch")
+	    "xml.sch"
+	    "service.sch")
 
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
 	    __hop_misc
 	    __hop_js-lib
-	    __hop_service)
+	    __hop_service
+	    __hop_hop)
 
    (static  (class html-tree::xml-element
 	       (foldero read-only)

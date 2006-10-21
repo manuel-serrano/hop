@@ -15,14 +15,14 @@
 div.hop-paned {
   width: 100%;
   height: inherit;
-  border: 0;
+  border-width: 0;
   border: 1px inset black;
   padding: 0;
   margin: 0;
 }
 
 div.hop-paned-cursoron {
-  border: 0;
+  border-width: 0;
   cursor: move;
   background: rgb(150,150,150);
   background-repeat: no-repeat;
@@ -30,7 +30,7 @@ div.hop-paned-cursoron {
 }
    
 div.hop-paned-cursoroff {
-  border: 0;
+  border-width: 0;
   background: rgb(204,204,204);
   background-repeat: no-repeat;
   background-position: center;
@@ -53,14 +53,14 @@ td.hop-vpaned-pan {
 }
 
 table.hop-vpaned > div.hop-pan {
-  border: 0;
+  border-width: 0;
   height: 100%;
 }
 
 td.hop-paned-cursor {
   text-align: center;
   vertical-align: middle;
-  border: 0;
+  border-width: 0;
   margin: 0;
   padding: 0;
 }

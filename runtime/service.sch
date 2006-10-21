@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Sat Oct  7 17:49:19 2006 (serrano)                */
+;*    Last change :  Sat Oct 21 17:41:42 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -163,7 +163,7 @@
       (cond
 	 ((null? args)
 	  `(with-hop-response ,(%invoke-service arg0)
-			      (lambda (_) #f)
+			      (lambda (v) v)
 			      #f))
 	 ((null? (cdr args))
 	  `(with-hop-response ,(%invoke-service arg0)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Oct 10 07:57:19 2006 (serrano)                */
+;*    Last change :  Sun Oct 22 01:22:29 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hopsh weblet                                                 */
@@ -52,6 +52,16 @@
 ;*    hopsh-dir ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define hopsh-dir (dirname (the-loading-file)))
+
+;*---------------------------------------------------------------------*/
+;*    hopsh/documentation ...                                          */
+;*---------------------------------------------------------------------*/
+(define-service (hopsh/documentation)
+   (let* ((file (string-append hopsh-dir "/etc/hopsh.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HOPSH> ...                                                      */

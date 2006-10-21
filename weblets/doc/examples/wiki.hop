@@ -42,6 +42,7 @@
 
 
 (<HTML>
+   (<HEAD>)
    (<BODY>
       (<H3> "Live editor")
       (<TEXTAREA>

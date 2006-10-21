@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Oct 21 15:58:42 2006 (serrano)                */
+;*    Last change :  Sun Oct 22 00:51:54 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -97,6 +97,7 @@
 
  	    (generic xml-write ::obj ::output-port ::symbol ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port)
+	    (generic xml-write-initializer ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port)
 
 	    (string->html ::bstring)
@@ -359,8 +360,7 @@
 		   (not (xml-event-handler-attribute? (car args))))
 	      (loop (cddr args)
 		    attr
-		    (cons (cons (keyword->symbol (car args))
-				(tilde-make-thunk (cadr args)))
+		    (cons (cons (keyword->symbol (car args)) (cadr args))
 			  init)
 		    body
 		    id))
@@ -657,9 +657,9 @@
 	  (display var p)
 	  (display "[\"" p)
 	  (display (if (eq? id 'class) "className" id) p)
-	  (display "\"]=(" p)
-	  (display (xml-attribute-encode (xml-tilde-body tilde)) p)
-	  (display ")();" p))))
+	  (display "\"]=" p)
+	  (xml-write-initializer tilde p)
+	  (display ";" p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-style-initialization ...                               */
@@ -671,8 +671,8 @@
    (display "hop_style_attribute_set(" p)
    (display var p)
    (display "," p)
-   (display (xml-attribute-encode (xml-tilde-body tilde)) p)
-   (display "());" p))
+   (xml-write-initializer tilde p)
+   (display ");" p))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::xml-tilde ...                              */
@@ -903,3 +903,22 @@
 (define (tilde-make-thunk t)
    (instantiate::xml-tilde
       (body (string-append "function() { return " (xml-tilde-body t) "}"))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-initializer ...                                        */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-write-initializer obj p)
+   (cond
+      ((string? obj)
+       (write obj p))
+      (else
+       (display obj p))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-initializer ::xml-tilde ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-initializer obj::xml-tilde p)
+   (display "(function(){return " p)
+   (display (xml-attribute-encode (xml-tilde-body obj)) p)
+   (display "})()" p))
+   
