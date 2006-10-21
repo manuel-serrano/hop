@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Oct 17 17:35:24 2006 (serrano)                */
+;*    Last change :  Sat Oct 21 13:40:13 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -48,8 +48,11 @@
 	    (hop-scheduling-set! ::symbol)
 	    
 	    (hop-enable-https::bool)
-	    (hop-enable-https-set! ::bool))
-
+	    (hop-enable-https-set! ::bool)
+	    
+	    (hop-https-protocol::symbol)
+	    (hop-https-protocol-set! ::symbol))
+   
    (eval    (export-exports)))
 
 ;*---------------------------------------------------------------------*/
@@ -116,3 +119,6 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-https
    #f)
+
+(define-parameter hop-https-protocol
+   'ssl)

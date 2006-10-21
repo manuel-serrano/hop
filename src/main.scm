@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Oct 17 17:41:17 2006 (serrano)                */
+;*    Last change :  Sat Oct 21 15:16:37 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -56,7 +56,8 @@
    (hop-verb 1 "Starting hop (v" (hop-version)
 	     ", " (hop-backend)
 	     ") "
-	     (if (hop-enable-https) "https" "http")
+	     (if (hop-enable-https)
+		 (format "https (~a)" (hop-https-protocol)) "http")
 	     " on port " (hop-port)
 	     ":\n")
    ;; setup the hop readers
@@ -83,8 +84,9 @@
 			    "Illegal scheduling policy"
 			    (hop-scheduling)))))
 	     (s (if (hop-enable-https)
-		    (make-ssl-server-socket (hop-port) ap rp)
-		    (make-server-socket (hop-port) ap rp))))
+		    (make-ssl-server-socket (hop-port)
+					    :protocol (hop-https-protocol))
+		    (make-server-socket (hop-port)))))
 	 (hop-main-loop s ap rp))))
 
 ;*---------------------------------------------------------------------*/
@@ -114,15 +116,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    accept-connection ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (accept-connection s::socket accept-pool::pool reply-pool::pool n::int)
+(define (accept-connection s::socket accept-pool::pool reply-pool::obj n::int)
    (let ((sock (socket-accept s)))
       (when (socket? sock)
 	 (hop-verb 1 (hop-color n n " CONNECT"))
 	 (hop-verb 2
 		   " (" (pool-thread-available accept-pool)
 		   "/" (hop-max-accept-thread)
-		   "-" 
-		   (pool-thread-available reply-pool)
+		   "-"
+		   (if (pool? reply-pool)
+		       (pool-thread-available reply-pool)
+		       "")
 		   "/" (hop-max-reply-thread)
 		   ")")
 	 (hop-verb 1
@@ -136,7 +140,7 @@
 ;*---------------------------------------------------------------------*/
 (define (handle-connection sock
 			   accept-pool::pool
-			   reply-pool::pool
+			   reply-pool
 			   timeout::int
 			   id::int
 			   mode::symbol)
@@ -154,23 +158,25 @@
 (define (http-connect sock accept-pool reply-pool timeout id mode)
    (let ((req (with-handler
 		 (lambda (e)
-		    (unless (and (eq? mode 'keep-alive)
-				 (or (&io-timeout-error? e)
-				     (and (&io-parse-error? e)
-					  (eof-object? (&io-parse-error-obj e)))))
-		       (when (&error? e) (error-notify e))
-		       (when (and (&io-unknown-host-error? e)
-				  (not (socket-down? sock)))
-			  (with-handler
-			     (lambda (e) #unspecified)
-			     (unless (&io-sigpipe-error? e)
-				(let ((resp ((or (hop-http-request-error)
-						 http-request-error)
-					     e)))
-				   (http-response resp sock)))))
-		       (hop-verb 1 (hop-color id id " ABORTING")
-				 " " (trace-color 1 (find-runtime-type e))
-				 "\n"))
+		    (if (and (eq? mode 'keep-alive)
+			     (or (&io-timeout-error? e)
+				 (and (&io-parse-error? e)
+				      (eof-object? (&io-parse-error-obj e)))))
+			(hop-verb 2 (hop-color id id " SHUTTING DOWN") "\n")
+			(begin
+			   (when (&error? e) (error-notify e))
+			   (when (and (&io-unknown-host-error? e)
+				      (not (socket-down? sock)))
+			      (with-handler
+				 (lambda (e) #unspecified)
+				 (unless (&io-sigpipe-error? e)
+				    (let ((resp ((or (hop-http-request-error)
+						     http-request-error)
+						 e)))
+				       (http-response resp sock)))))
+			   (hop-verb 1 (hop-color id id " ABORTING")
+				     " " (trace-color 1 (find-runtime-type e))
+				     "\n")))
 		    (socket-close sock)
 		    #f)
 		 (http-parse-request sock id timeout))))
@@ -181,7 +187,9 @@
 		      " (" (pool-thread-available accept-pool)
 		      "/" (hop-max-accept-thread)
 		      "-" 
-		      (pool-thread-available reply-pool)
+		      (if (pool? reply-pool)
+			  (pool-thread-available reply-pool)
+			  "")
 		      "/" (hop-max-reply-thread)
 		      ")")
 	    (hop-verb 1
@@ -195,8 +203,10 @@
 		      " ("
 		      (pool-thread-available accept-pool)
 		      "/" (hop-max-accept-thread)
-		      "-" 
-		      (pool-thread-available reply-pool)
+		      "-"
+		      (if (pool? reply-pool)
+			  (pool-thread-available reply-pool)
+			  "")
 		      "/" (hop-max-reply-thread) "): "
 		      method " "
 		      scheme "://" host ":" port (string-for-read path)

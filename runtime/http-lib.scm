@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Sat Oct  7 09:44:49 2006 (serrano)                */
+;*    Last change :  Sat Oct 21 10:14:55 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -403,7 +403,7 @@
 ;*    http-parse-status-line ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    The syntax of the status (section 6.1 of http/1.1) is defined    */
-;*    as follow:                                                       */
+;*    as follows:                                                      */
 ;*    Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF  */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-status-line ip)

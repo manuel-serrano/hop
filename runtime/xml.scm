@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Oct  9 08:54:37 2006 (serrano)                */
+;*    Last change :  Sat Oct 21 15:58:42 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -55,6 +55,7 @@
 	    (class xml-markup::xml
 	       (markup::symbol read-only)
 	       (attributes::pair-nil (default '()))
+	       (initializations::pair-nil (default '()))
 	       body::pair-nil)
 
 	    (class xml-html::xml-markup)
@@ -80,6 +81,8 @@
 	    (xml-markup-is? ::obj ::symbol)
 
 	    (xml-make-id::bstring #!optional id (markup 'HOP))
+
+	    (xml-event-handler-attribute?::bool ::keyword)
 	    
 	    (hop-get-xml-backend::xml-backend ::symbol)
 
@@ -103,7 +106,7 @@
 	    (tilde->string::bstring ::xml-tilde)
 	    (tilde-compose::xml-tilde ::xml-tilde ::xml-tilde)
 	    (tilde-make-thunk::xml-tilde ::xml-tilde)
-	    
+
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
 	    (<ACRONYM> . ::obj)
@@ -329,6 +332,7 @@
 (define (%make-xml-element el args)
    (let loop ((args args)
 	      (attr '())
+	      (init '())
 	      (body '())
 	      (id #unspecified))
       (cond
@@ -338,28 +342,41 @@
 		      (string-downcase
 		       (symbol->string el))))
 	     (attributes (reverse! attr))
+	     (initializations (reverse! init))
 	     (id (xml-make-id id el))
 	     (body (reverse! body))))
 	 ((keyword? (car args))
-	  (if (null? (cdr args))
+	  (cond
+	     ((null? (cdr args))
 	      (error (symbol-append '< el '>)
 		     "attribute value missing"
-		     (car args))
-	      (if (eq? (car args) :id)
-		  (if (string? (cadr args))
-		      (loop (cddr args) attr body (cadr args))
-		      (bigloo-type-error el "string" (cadr args)))
-		  (loop (cddr args)
-			(cons (cons (keyword->string (car args)) (cadr args))
-			      attr)
-			body
-			id))))
+		     (car args)))
+	     ((eq? (car args) :id)
+	      (if (string? (cadr args))
+		  (loop (cddr args) attr init body (cadr args))
+		  (bigloo-type-error el "string" (cadr args))))
+	     ((and (xml-tilde? (cadr args))
+		   (not (xml-event-handler-attribute? (car args))))
+	      (loop (cddr args)
+		    attr
+		    (cons (cons (keyword->symbol (car args))
+				(tilde-make-thunk (cadr args)))
+			  init)
+		    body
+		    id))
+	     (else
+	      (loop (cddr args)
+		    (cons (cons (keyword->string (car args)) (cadr args))
+			  attr)
+		    init
+		    body
+		    id))))
 	 ((null? (car args))
-	  (loop (cdr args) attr body id))
+	  (loop (cdr args) attr init body id))
 	 ((pair? (car args))
-	  (loop (append (car args) (cdr args)) attr body id))
+	  (loop (append (car args) (cdr args)) attr init body id))
 	 (else
-	  (loop (cdr args) attr (cons (car args) body) id)))))
+	  (loop (cdr args) attr init (cons (car args) body) id)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-markup-is? ...                                               */
@@ -382,6 +399,15 @@
    (if (string? id)
        id
        (if-debug (symbol->string (gensym markup)) (symbol->string (gensym)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-event-handler-attribute? ...                                 */
+;*    -------------------------------------------------------------    */
+;*    This is a gross hack. Currently, we consider that all attributes */
+;*    whose name start with "on" are event handlers!                   */
+;*---------------------------------------------------------------------*/
+(define (xml-event-handler-attribute? keyword)
+   (substring-at? (keyword->string! keyword) "on" 0))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
@@ -531,7 +557,8 @@
 	  (for-each (lambda (b) (xml-write b p encoding backend)) body)
 	  (display "</" p)
 	  (display markup p)
-	  (display ">" p)))))
+	  (display ">" p)))
+      (xml-write-initializations obj p encoding backend)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-empty-element ...                                */
@@ -596,6 +623,57 @@
 	  (display (xml-attribute-encode attr) p)))
       (display "'" p)))
 
+;*---------------------------------------------------------------------*/
+;*    xml-write-initializations ...                                    */
+;*---------------------------------------------------------------------*/
+(define (xml-write-initializations obj p encoding backend)
+   (with-access::xml-element obj (id initializations)
+      (when (pair? initializations)
+	 (with-access::xml-backend backend (script-start script-stop)
+	    (display "<script type='" p)
+	    (display (hop-javascript-mime-type) p)
+	    (display "'>" p)
+	    (let ((var (gensym)))
+	       (display "var " p)
+	       (display var p)
+	       (display " = document.getElementById( \"" p)
+	       (display id p)
+	       (display "\" );" p)
+	       (when script-start (display script-start p))
+	       (for-each (lambda (a)
+			    (xml-write-initialization (cdr a) (car a) var p)
+			    (newline p))
+			 initializations)
+	       (when script-stop (display script-stop p))
+	       (display "</script>\n" p))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-initialization ...                                     */
+;*---------------------------------------------------------------------*/
+(define (xml-write-initialization tilde id var p)
+   (if (eq? id 'style)
+       (xml-write-style-initialization tilde var p)
+       (begin
+	  (display var p)
+	  (display "[\"" p)
+	  (display (if (eq? id 'class) "className" id) p)
+	  (display "\"]=(" p)
+	  (display (xml-attribute-encode (xml-tilde-body tilde)) p)
+	  (display ")();" p))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-style-initialization ...                               */
+;*    -------------------------------------------------------------    */
+;*    Style is special because it is a read-only attributes and        */
+;*    because its value can be evaluated to a JavaScript object.       */
+;*---------------------------------------------------------------------*/
+(define (xml-write-style-initialization tilde var p)
+   (display "hop_style_attribute_set(" p)
+   (display var p)
+   (display "," p)
+   (display (xml-attribute-encode (xml-tilde-body tilde)) p)
+   (display "());" p))
+   
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::xml-tilde ...                              */
 ;*---------------------------------------------------------------------*/
@@ -824,4 +902,4 @@
 ;*---------------------------------------------------------------------*/
 (define (tilde-make-thunk t)
    (instantiate::xml-tilde
-      (body (string-append "function() {" (xml-tilde-body t) "}"))))
+      (body (string-append "function() { return " (xml-tilde-body t) "}"))))

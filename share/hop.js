@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Oct 20 10:27:14 2006 (serrano)                */
+/*    Last change :  Sat Oct 21 15:55:29 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -387,7 +387,6 @@ function hop( service, success, failure, sync ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    WithHopError ...                                                 */
 /*---------------------------------------------------------------------*/
 function WithHopError( service ) {
@@ -747,20 +746,73 @@ function hop_clear_timeout( id ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_load_frequency ...                                           */
+/*---------------------------------------------------------------------*/
+var hop_load_frequency = 100;
+
+/*---------------------------------------------------------------------*/
+/*    HopLoadError ...                                                 */
+/*---------------------------------------------------------------------*/
+function HopLoadError( file ) {
+   var e = new Error( "hop-load error" );
+   e.file = file;
+
+   return e;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_load ...                                                     */
 /*---------------------------------------------------------------------*/
-function hop_load( src ) {
+function hop_load( src, timeout ) {
    var script = document.createElement( "script" );
    script.src = src;
+   var loaded = false;
    var holder = document.getElementsByTagName( "head" );
 
+   if( !timeout || (timeout == undefined) ) timeout = -1;
+
    if( holder != null ) {
+      if( timeout != 0 ) script.onload = function( e ) { loaded = true; };
       holder[ 0 ].appendChild( script );
+      if( timeout != 0 ) {
+	 var it;
+	 var p = function() {
+	    if( loaded == true ) {
+	       alert( "timeout=" + loaded );
+	       clearInterval( it );
+	    } else {
+	       if( timeout > 0 ) {
+		  timeout -= hop_load_frequency;
+		  if( timeout <= 0 ) {
+		     alert( "timeout <=0 " + loaded );
+		     clearInterval( it );
+		     throw( new HopLoadError( src ) );
+		  }
+	       }
+	    }
+	 };
+	 it = setInterval( p, hop_load_frequency );
+      }
    } else {
       alert( "*** Hop Error, Can't find HEAD element" );
    }
 }
-      
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_style_attribute_set ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_style_attribute_set( obj, val ) {
+   var expr;
+   if( (val instanceof String) || (typeof val == "string") )
+      expr = eval( val );
+   alert( "expr=" + expr );
+   for( var p in expr ) {
+      alert( "p=" + p + " " + expr[ p ] );
+      node_style_set( obj, p, expr[ p ] );
+   }
+}
+
 /*---------------------------------------------------------------------*/
 /*    hop_serialize ...                                                */
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Oct 11 09:56:58 2006 (serrano)                */
+;*    Last change :  Fri Oct 20 12:43:15 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -212,7 +212,7 @@
    (regular-grammar ((float    (or (: (* digit) "." (+ digit))
 				   (: (+ digit) "." (* digit))))
 		     (letter   (in ("azAZ") (#a128 #a255)))
-		     (kspecial (in "!@~$%^&*></-_+\\=?."))
+		     (kspecial (in "!@$%^&*></-_+\\=?."))
 		     (special  (or kspecial #\:))
 		     (quote    (in "\",'`"))
 		     (paren    (in "()[]{}"))
@@ -461,16 +461,19 @@
        (hop-read-hss (the-port)))
       
       ;; escape sequences
-      ("~("
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       ;; and then, we compute the result list...
-       (list '<TILDE>
-	     ((hop-make-escape)
-	      (the-port)
-	      (make-list!
-	       (collect-up-to ignore "list" (the-port)) (the-port)))))
+;*       ("~("                                                         */
+;*        (set! par-open (+fx 1 par-open))                             */
+;*        (set! par-poses (cons (-fx (input-port-position (the-port)) 1) */
+;* 			     par-poses))                               */
+;*        ;; and then, we compute the result list...                   */
+;*        (list '<TILDE>                                               */
+;* 	     ((hop-make-escape)                                        */
+;* 	      (the-port)                                               */
+;* 	      (make-list!                                              */
+;* 	       (collect-up-to ignore "list" (the-port)) (the-port))))) */
+      ("~"
+       (let ((expr (ignore)))
+	  (list '<TILDE> ((hop-make-escape) (the-port) expr))))
       
       ;; structures
       ("#{"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Oct 20 11:17:07 2006 (serrano)                */
+;*    Last change :  Sat Oct 21 09:30:40 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -142,11 +142,17 @@
 	    (hop-read-timeout::int) 
 	    (hop-read-timeout-set! ::int)
 
+	    (hop-enable-remote-keep-alive::bool) 
+	    (hop-enable-remote-keep-alive-set! ::bool)
+
 	    (hop-enable-keep-alive::bool) 
 	    (hop-enable-keep-alive-set! ::bool)
 
 	    (hop-keep-alive-timeout::int) 
 	    (hop-keep-alive-timeout-set! ::int)
+
+	    (hop-remote-keep-alive-timeout::int) 
+	    (hop-remote-keep-alive-timeout-set! ::int)
 
 	    (hop-max-remote-keep-alive-connection::int)
 	    (hop-max-remote-keep-alive-connection-set! ::int)
@@ -637,13 +643,24 @@
    ;; the number of milli-seconds to wait for parsing http headers
    10000)
 
+(define-parameter hop-enable-remote-keep-alive
+   ;; does hop support keep-alive remote connection (when proxying)
+   #t)
+   
 (define-parameter hop-enable-keep-alive
    ;; does hop support keep-alive connection
-   #t)
+   #t
+   (lambda (v)
+      (unless v (hop-enable-remote-keep-alive-set! v))
+      v))
    
 (define-parameter hop-keep-alive-timeout
    ;; the number of milli-seconds to wait for keep-alive connections
    300)
+
+(define-parameter hop-remote-keep-alive-timeout
+   ;; the number of milli-seconds to keep alive remote connections
+   10000)
 
 (define-parameter hop-max-remote-keep-alive-connection
    ;; the max number of keep-alive remote (proxing) connections
