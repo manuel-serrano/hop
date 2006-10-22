@@ -1,0 +1,52 @@
+;; a canvas for rotating and scaling images
+(let ((canvas (<CANVAS> :style "border: 5px solid black"
+		 :width 200 :height 200))
+      (src (make-file-path (hop-icons-directory) "bookcase.png")))
+   (tprint "src=" src)
+   (<HTML>
+      (<HEAD> :jscript "hop-slider.js" :css "hop-slider.css")
+      ~(define (draw-image ctx img orientation x y zoom)
+	  (ctx.clearRect 0 0 200 200)
+	  (let ((w img.width)
+		(h img.height)
+		(pi (* 4 (atan 1))))
+	     (ctx.save)
+	     (ctx.translate x y)
+	     (ctx.scale zoom zoom)
+	     (case orientation
+		((upsidedown)
+		 (ctx.translate w h)
+		 (ctx.rotate pi))
+		((seascape)
+		 (ctx.translate 0 w)
+		 (ctx.rotate (* 3 (/ pi 2))))
+		((landscape)
+		 (ctx.translate h 0)
+		 (ctx.rotate (/ pi 2)))
+		(else
+		 #unspecified))
+	     (ctx.drawImage img 0 0)
+	     (ctx.restore)))
+      (<BODY>
+	 :onload ~(begin
+		     (set! ctx ($canvas.getContext "2d"))
+		     (draw 'portrait))
+	 ~(define ctx #unspecified)
+	 ~(define img (let ((i (new Image)))
+			 (set! i.src $src)
+			 i))
+	 ~(define zoom 100)
+	 ~(define (draw orientation)
+	     (draw-image ctx img orientation 50 50 (/ zoom 100)))
+	 (<DIV> :align 'center
+	    (<DIV>
+	       (<BUTTON> :onclick ~(draw 'portrait) "portrait")
+	       (<BUTTON> :onclick ~(draw 'landscape) "landscape")
+	       (<BUTTON> :onclick ~(draw 'seascape) "seascape")
+	       (<BUTTON> :onclick ~(draw 'upsidedown) "upsidedown")
+	       (<DIV> :style "width: 400px"
+		  (<SLIDER> :caption "top" :min 1 :max 200 :value ~zoom
+		     :onchange ~(begin
+				   (set! zoom this.value)
+				   (draw 'portrait)))))
+	    canvas))))
