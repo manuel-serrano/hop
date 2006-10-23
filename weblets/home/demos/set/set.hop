@@ -168,7 +168,7 @@
 		    (string=? "" login)
 		    (any? (lambda (player)
 			     (string=? login (Player-login player)))
-			  (Game-players g)))
+			  (Game-players (cdr g))))
 		(<HTML>
 		   (<BODY>
 		      "Login is invalid or already used")))
