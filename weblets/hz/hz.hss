@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Fri Aug  4 12:00:16 2006 (serrano)                */
+/*    Last change :  Mon Oct 23 15:00:45 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -96,7 +96,7 @@ textarea {
 /*--- main table ------------------------------------------------------*/
 main {
   width: 45em;
-  margin-top: 50px;
+  margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
   background: white;

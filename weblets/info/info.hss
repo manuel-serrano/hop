@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sun May 14 17:44:58 2006 (serrano)                */
+/*    Last change :  Mon Oct 23 15:02:09 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
@@ -24,7 +24,7 @@ table.info img {
 
 table.info {
   width: 45em;
-  margin-top: 50px;
+  margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
   background: white;

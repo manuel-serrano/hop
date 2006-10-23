@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:47:11 2006                          */
-;*    Last change :  Mon May 29 07:58:20 2006 (serrano)                */
+;*    Last change :  Mon Oct 23 15:01:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Various hz widgets                                               */
@@ -45,7 +45,6 @@
 			      "Hz -- Hop Weblets Admin")))
 		     (<TR>
 			(apply <TD> content)))))))
-      (<HR>)
       (<FOOTER>)))
 
 ;*---------------------------------------------------------------------*/
