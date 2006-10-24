@@ -180,7 +180,7 @@
 (install-expander! 'cond
 		   (lambda (x e)
 		      (e (match-case x
-			    ((?-) #unspecified)
+			    ((?-) #f)
 			    ((?- (else . ?alternate))
 			     `(begin ,@alternate))
 			    ((?- (?test) . ?rest)
