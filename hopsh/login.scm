@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 10 07:50:17 2006                          */
-;*    Last change :  Tue Oct 10 11:25:52 2006 (serrano)                */
+;*    Last change :  Mon Oct 23 15:46:36 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with HopSh login                                         */
@@ -37,7 +37,7 @@
       (display "login: ")
       (set! user (read-line))
       (flush-output-port (current-output-port)))
-   (unless (string=? user "")
+   (unless (or (not (string? user)) (string=? user ""))
       (hopsh-user-set! user)
       (display "password: ")
       (flush-output-port (current-output-port))

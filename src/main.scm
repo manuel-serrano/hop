@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Oct 21 15:16:37 2006 (serrano)                */
+;*    Last change :  Tue Oct 24 13:10:22 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -261,7 +261,7 @@
 			 (http-response resp sock))))))
 	 (socket-close sock)
 	 #f)
-      (let ((hp (hop req)))
+      (let ((hp (request->response req)))
 	 (hop-verb 4 (hop-color req req " EXEC")
 		   " ("
 		   (pool-thread-available accept-pool)

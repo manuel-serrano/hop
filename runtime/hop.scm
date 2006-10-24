@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Oct 18 12:25:53 2006 (serrano)                */
+;*    Last change :  Tue Oct 24 13:10:03 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -40,7 +40,7 @@
    
    (export  (the-current-request::obj)
 	    (request-get::obj ::symbol)
-	    (hop::%http-response ::http-request)
+	    (request->response::%http-response ::http-request)
 	    (with-url ::bstring ::procedure #!key fail (header '()))
 	    (with-remote-host ::bstring ::hop-service ::pair-nil ::procedure ::obj)
 	    (generic with-hop-response obj proc fail)))
@@ -79,14 +79,14 @@
 	     '()))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop ...                                                          */
+;*    request->response ...                                            */
 ;*    -------------------------------------------------------------    */
 ;*    This function assumes that (HOP-FILTERS) returns a read-only     */
 ;*    data structure. In other words, it assumes that no other thread  */
 ;*    can change the list (HOP-FILTERS) in the background. Because of  */
 ;*    this assumption, no lock is needed in this function.             */
 ;*---------------------------------------------------------------------*/
-(define (hop req::http-request)
+(define (request->response req::http-request)
    (let loop ((m req)
 	      (filters (hop-filters)))
       (if (null? filters)

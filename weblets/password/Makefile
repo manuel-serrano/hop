@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Aug  3 09:21:31 2006 (serrano)                */
+#*    Last change :  Mon Oct 23 15:12:04 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the password weblet                              */
@@ -19,7 +19,7 @@ include ../../etc/Makefile.version
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile password.hss password.hop \
-		  etc/weblet.info etc/logo.png
+		  etc/weblet.info etc/logo.png etc/password.wiki
 
 build:
 
