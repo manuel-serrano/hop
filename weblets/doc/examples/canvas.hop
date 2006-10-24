@@ -1,8 +1,7 @@
 ;; a canvas for rotating and scaling images
 (let ((canvas (<CANVAS> :style "border: 5px solid black"
 		 :width 200 :height 200))
-      (src (make-file-path (hop-icons-directory) "bookcase.png")))
-   (tprint "src=" src)
+      (src (make-file-path (hop-icons-directory) "hop.png")))
    (<HTML>
       (<HEAD> :jscript "hop-slider.js" :css "hop-slider.css")
       ~(define (draw-image ctx img orientation x y zoom)
@@ -30,14 +29,16 @@
       (<BODY>
 	 :onload ~(begin
 		     (set! ctx ($canvas.getContext "2d"))
-		     (draw 'portrait))
+		     (draw orientation))
 	 ~(define ctx #unspecified)
 	 ~(define img (let ((i (new Image)))
 			 (set! i.src $src)
 			 i))
 	 ~(define zoom 100)
-	 ~(define (draw orientation)
-	     (draw-image ctx img orientation 50 50 (/ zoom 100)))
+	 ~(define orientation "portrait")
+	 ~(define (draw or)
+	     (set! orientation or)
+	     (draw-image ctx img or 50 50 (/ zoom 100)))
 	 (<DIV> :align 'center
 	    (<DIV>
 	       (<BUTTON> :onclick ~(draw 'portrait) "portrait")
@@ -48,5 +49,5 @@
 		  (<SLIDER> :caption "top" :min 1 :max 200 :value ~zoom
 		     :onchange ~(begin
 				   (set! zoom this.value)
-				   (draw 'portrait)))))
+				   (draw orientation)))))
 	    canvas))))

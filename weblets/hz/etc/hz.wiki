@@ -1,0 +1,23 @@
+<doc> HZ -- Hop weblets manager
+
+== Description ==
+
+[[hz|HZ]] manages Hop weblets //installation//, //update//, and //removal//. 
+It operates installation across the web.
+
+== Services ==
+
+HZ defines several services:
+
+  - ++[[hz]]++: This is the main entry point for HZ. It shows a
+ graphical user interface that lets user update their system (i.e., make
+ it in sync with the remote global Hop weblets server).
+  - ++[[hz/preferences]]++: Lets user customize HZ.
+  - ++hz/install-ondemand++: This lets users install weblet not registered
+ in the global remote HZ repository. It service takes two arguments:
+   - ++name++, the name of the weblet
+   - ++url++, the url (that could use the ++file://++ syntax) specifying the
+ location of the weblet. 
+
+</doc>
+

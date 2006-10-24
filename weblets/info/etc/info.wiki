@@ -1,0 +1,9 @@
+<doc> INFO -- Report information about the Hop broker
+
+== Description ==
+
+[[info|INFO]] provides information about the state of the currently running 
+Hop broker. For instance, it reports about the up time, the cache status, etc.
+
+</doc>
+

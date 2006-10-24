@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Aug  3 09:21:25 2006 (serrano)                */
+#*    Last change :  Tue Oct 24 14:58:59 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
@@ -18,7 +18,8 @@ include ../../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile info.hss info.hop etc/weblet.info etc/logo.png
+POPULATION	= Makefile info.hss info.hop \
+                  etc/weblet.info etc/logo.png etc/info.wiki
 
 build:
 

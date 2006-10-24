@@ -1,0 +1,9 @@
+<doc> DOC -- Hop self hosting documentation
+
+== Description ==
+
+DOC is the Hop documentation system. It is the one you are presently
+using for visualizing this page!
+
+</doc>
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed May 24 15:12:04 2006 (serrano)                */
+;*    Last change :  Tue Oct 24 14:58:41 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -87,11 +87,6 @@
 						     (lambda ()
 							(<MISC>))))
 					       (<NPTAB>
-						  (<NPTABHEAD> "Weblets")
-						  (<DELAY>
-						     (lambda ()
-							(<WEBLETS>))))
-					       (<NPTAB>
 						  (<NPTABHEAD> "Caches")
 						  (<DELAY>
 						     (lambda ()
@@ -125,21 +120,6 @@
       (<TR>
 	 (<TH> :align 'right "Arch")
 	 (<TD> :align 'left (os-arch)))))
-
-;*---------------------------------------------------------------------*/
-;*    <WEBLETS> ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (<WEBLETS>)
-   (<TABLE>
-      :class "hop-info"
-      (map (lambda (rf)
-	      (<TR>
-		 (<TD>
-		    (<A> :href (hop-service-path rf) (hop-service-id rf)))))
-	   (sort (hop-weblets)
-		 (lambda (rf1 rf2)
-		    (string<? (hop-service-path rf1)
-			      (hop-service-path rf2)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <CACHES> ...                                                     */

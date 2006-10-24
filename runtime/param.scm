@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Oct 21 09:30:40 2006 (serrano)                */
+;*    Last change :  Tue Oct 24 14:26:01 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -85,6 +85,7 @@
 	    (hop-path-set! ::pair-nil)
 	    
 	    (hop-server-hostname::bstring)
+	    (hop-server-hostip::bstring)
 
 	    (hop-service-base::bstring)
 	    
@@ -479,6 +480,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-server-hostname
    (hostname))
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-hostip ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-hostip
+   (host (hop-server-hostname)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-base ...                                             */
