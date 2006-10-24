@@ -3,8 +3,5 @@
  (author "M. Serrano")
  (sdescr "HOP Web filtering.")
  (about-service "about")
- (autoload (let ((pred (autoload-prefix
-			(make-file-name (hop-service-base) "webfilter"))))
-	      (lambda (req)
-		 (or (not (http-request-localhostp req))
-		     (pred req))))))
+ (rc (hop-load-once (make-file-path (hop-weblets-directory) "webfilter" "webfilter.hop")))
+ (autoload #f))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Oct 11 09:36:50 2006 (serrano)                */
+;*    Last change :  Tue Oct 24 21:31:25 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -113,15 +113,18 @@
 		    (url (make-url-name (hop-service-base) name))
 		    (path (cadr (assq 'weblet x)))
 		    (autopred (assq 'autoload x))
+		    (rc (assq 'rc x))
 		    (opath (hashtable-get *weblet-table* name)))
+		(when (pair? rc) (eval (cadr rc)))
 		(cond
 		   ((string? opath)
 		    (warn name opath path))
 		   ((pair? autopred)
-		    (hashtable-put! *weblet-table* name path)
-		    (hop-verb 2 "Setting autoload " path " on "
-			      (cadr autopred) "\n")
-		    (autoload path (eval (cadr autopred))))
+		    (when (cadr autopred)
+		       (hashtable-put! *weblet-table* name path)
+		       (hop-verb 2 "Setting autoload " path " on "
+				 (cadr autopred) "\n")
+		       (autoload path (eval (cadr autopred)))))
 		   (else
 		    (hashtable-put! *weblet-table* name path)
 		    (install-autoload-prefix path url))))

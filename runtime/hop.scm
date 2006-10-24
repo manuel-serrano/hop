@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Oct 24 13:10:03 2006 (serrano)                */
+;*    Last change :  Tue Oct 24 21:07:40 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -82,9 +82,10 @@
 ;*    request->response ...                                            */
 ;*    -------------------------------------------------------------    */
 ;*    This function assumes that (HOP-FILTERS) returns a read-only     */
-;*    data structure. In other words, it assumes that no other thread  */
-;*    can change the list (HOP-FILTERS) in the background. Because of  */
-;*    this assumption, no lock is needed in this function.             */
+;*    immutable data structure. In other words, it assumes that no     */
+;*    other thread can change the list (HOP-FILTERS) in the            */
+;*    background. Because of this assumption, no lock is needed in     */
+;*    this function.                                                   */
 ;*---------------------------------------------------------------------*/
 (define (request->response req::http-request)
    (let loop ((m req)

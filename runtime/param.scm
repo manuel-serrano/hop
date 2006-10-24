@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Oct 24 14:26:01 2006 (serrano)                */
+;*    Last change :  Tue Oct 24 21:23:07 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -344,7 +344,7 @@
    '()
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error 'hop-filters-set! "Filters close" #f)
+	  (error 'hop-filters-set! "Filters closed" #f)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
@@ -414,7 +414,11 @@
 ;*    hop-http-response-local-hooks ...                                */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-http-response-local-hooks
-   '())
+   '()
+   (lambda (v)
+      (if (not *hop-filters-open*)
+	  (error 'hop-http-response-local-hook-set! "Hooks closed" #f)
+	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-response-local-hook-add! ...                            */
@@ -438,7 +442,11 @@
 ;*    hop-http-response-remote-hooks ...                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-http-response-remote-hooks
-   '())
+   '()
+   (lambda (v)
+      (if (not *hop-filters-open*)
+	  (error 'hop-http-response-remote-hook-set! "Hooks closed" #f)
+	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-response-remote-hook-add! ...                           */

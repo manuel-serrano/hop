@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Aug 15 15:29:50 2006 (serrano)                */
+;*    Last change :  Tue Oct 24 21:32:01 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -61,7 +61,7 @@
 ;*---------------------------------------------------------------------*/
 (define (load-blacklist t f)
    (when (file-exists? f)
-      (hop-verb 1 "Loading domain blacklist `" f "'...\n")
+      (hop-verb 2 "Loading domain blacklist `" f "'...\n")
       (with-input-from-file f
 	 (lambda ()
 	    (let loop ()

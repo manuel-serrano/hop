@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Oct 20 11:17:30 2006 (serrano)                */
+;*    Last change :  Tue Oct 24 21:26:53 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -233,7 +233,7 @@
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
 can no longer be executed.<br><br>
-Reloading the page is the only workaround." msg))
+Reloading the page is the only way to fix this problem." msg))
    (let ((svc (make-file-name (hop-service-base) (hop-service-weblet-name))))
       (cond
 	 ((expired-service-path? file)
@@ -395,7 +395,7 @@ a timeout which has now expired. The service is then no longer available."))
 This is generally due to a restart of the server.
 On restart the server invalidates all anonymous services that hence
 can no longer be executed.<br><br>
-Reloading the page is the only workaround.")))))))))))))
+Reloading the page is the only way to fix this problem.")))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-corrupted-service-error ...                                 */
