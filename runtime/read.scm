@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Oct 20 12:43:15 2006 (serrano)                */
+;*    Last change :  Fri Oct 27 08:46:33 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -277,7 +277,7 @@
 	      (integer->char (string->integer (the-substring 2 5))))))
       ((: "#\\" (>= 3 digit))
        (integer->char (string->integer (the-substring 2 0) 8)))
-      ((: "#\\" (or letter digit special (in "|#; " quote paren)))
+      ((: "#\\" (or letter digit special (in "~|#; " quote paren)))
        (string-ref (the-string) 2))
       ((: "#\\" (>= 2 letter))
        (let ((char-name (string->symbol

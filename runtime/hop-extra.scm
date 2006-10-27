@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Oct 14 11:24:40 2006 (serrano)                */
+;*    Last change :  Fri Oct 27 08:42:28 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -44,9 +44,14 @@
 	  (f (if (string? p)
 		 p
 		 (make-file-name (hop-share-directory) file))))
-      (string-append "http://"
-		     (hostname) ":" (integer->string (hop-port))
-		     f)))
+      ;; CARE: ms 27oct2006. This used to construct a fully qualified
+      ;; reference using a http:// schema such as:
+      ;;   (format "http://~a:~a~a" (hostname) (hop-port) f)
+      ;; This is incorrect because it forces the introduction of the hostname
+      ;; which should actually depend on the request. I think that host
+      ;; relative answer works too. 
+      f))
+      
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-css ...                                                      */
