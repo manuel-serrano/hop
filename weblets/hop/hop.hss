@@ -36,7 +36,7 @@ $(define deep-orange "#ffae2b")
 body {
   background-color: #e0e0e0;
   font-family: $font-family;
-  overflow: scroll;
+  overflow: auto;
 }
 
 img.logo {
@@ -83,7 +83,7 @@ td.logo {
   
 td.logo:hover {
   border: 1px outset #777;
-  background-color: #f7f7f7;
+  background-color: #e7e7e7;
   -moz-border-radius: 0.5em;
 }
 
