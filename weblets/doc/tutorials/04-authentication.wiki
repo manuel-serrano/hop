@@ -53,10 +53,28 @@ it uses three complementary techniques.
  these contain unencrypted user authentication.
   - //Cookies// may hold users authentication.
 
-
 The authenticated user is stored in the ++user++ field of the instance
 of the class ::http-request that represents the request. It can be
 used by service for implementing access restriction.
+
+== The anonymous user ==
+
+By default, Hop creates an anonymous user whose access permissions are
+specified in system the ++hoprc.hop++ file. This settings might change
+from version to another but in general the anonymous user is only
+allowed to access the Hop ++[[doc]]++, ++[[password]]++, and ++[[home]]++
+weblets.
+ 
+~~ Defining a custom //anonymous// user is the standard way for specifying 
+access permission to un-authenticated user. If one needs to grant access
+to its own weblet ++foo++. One might add to his ++hoprc.hop++ the following
+declaration:
+
+<code>
+  (add-user! "anonymous"
+             :directories (cons "<MY-DIRECTORY>" (hop-path))
+             :services '(foo))
+</code>
 
 == Implementing access restriction in services ==
 

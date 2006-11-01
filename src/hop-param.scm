@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Oct 21 13:40:13 2006 (serrano)                */
+;*    Last change :  Wed Nov  1 16:55:02 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -52,7 +52,7 @@
 	    
 	    (hop-https-protocol::symbol)
 	    (hop-https-protocol-set! ::symbol))
-   
+
    (eval    (export-exports)))
 
 ;*---------------------------------------------------------------------*/

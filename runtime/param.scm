@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Oct 24 21:23:07 2006 (serrano)                */
+;*    Last change :  Wed Nov  1 08:24:56 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -648,7 +648,7 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-connection-ttl
    ;; the number of retry when a connection cannot be established
-   10)
+   5)
 
 (define-parameter hop-connection-timeout
    ;; a number of milli-seconds before a connection fails

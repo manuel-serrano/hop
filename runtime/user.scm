@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Jul 21 18:07:50 2006 (serrano)                */
+;*    Last change :  Wed Nov  1 17:01:09 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -29,7 +29,8 @@
 	    (authorized-path?::bool ::http-request ::bstring)
 	    (user-authorized-service?::bool ::obj ::symbol)
 	    (authorized-service?::bool ::http-request ::symbol)
-	    (user-access-denied ::http-request)))
+	    (user-access-denied ::http-request)
+	    (anonymous-user::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *user-mutex* ...                                                 */
@@ -71,23 +72,27 @@
 	      (d '()))
       (cond
 	 ((null? a)
-	  (if (string? p)
-	      (let ((u (instantiate::user
-			  (name name)
-			  (groups g)
-			  (password p)
-			  (services s)
-			  (directories d)))
-		    (k (make-user-key name p)))
-		 (with-lock *user-mutex*
-		    (lambda ()
-		       (unless (hashtable? *users*)
-			  (set! *users* (make-hashtable)))
-		       (if (hashtable-get *users* name)
-			   (error 'add-user! "User already added" name)
-			   (hashtable-put! *users* name u))))
-		 u)
-	      (error 'add-user! "Password missing" p)))
+	  (let ((u (instantiate::user
+		      (name name)
+		      (groups g)
+		      (password (or p (symbol->string (gensym))))
+		      (services s)
+		      (directories d)))
+		(k (make-user-key name p)))
+	     (with-lock *user-mutex*
+		(lambda ()
+		   (unless (hashtable? *users*)
+		      (set! *users* (make-hashtable)))
+		   (if (hashtable-get *users* name)
+		       (if (string=? name "anonymous")
+			   (begin
+			      ;; the anonymous user is special because it
+			      ;; is the only user that can be redefined.
+			      (hashtable-remove! *users* name)
+			      (hashtable-put! *users* name u))
+			   (error 'add-user! "User already added" name))
+		       (hashtable-put! *users* name u))))
+	     u))
 	 ((or (not (keyword? (car a))) (null? (cdr a)))
 	  (error 'add-user! "Illegal arguments" args))
 	 (else
@@ -128,12 +133,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    *authenticated-users* ...                                        */
 ;*    -------------------------------------------------------------    */
-;*    We use a two level cache. A pair of globla variables for         */
+;*    We use a two level cache. A pair of global variables for         */
 ;*    level 1 and a hashtable for level 2.                             */
 ;*---------------------------------------------------------------------*/
 (define *authenticated-users* (make-hashtable 5))
 (define *last-authentication* #f)
 (define *last-user* #f)
+(define *anonymous-user* #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    anonymous-user ...                                               */
+;*---------------------------------------------------------------------*/
+(define (anonymous-user)
+   (cond
+      ((user? *anonymous-user*)
+       *anonymous-user*)
+      ((eq? *anonymous-user* #unspecified)
+       (if (hashtable? *users*)
+	   (set! *anonymous-user* (hashtable-get *users* "anonymous"))
+	   (set! *anonymous-user* #f))
+       *anonymous-user*)
+      (else
+       *anonymous-user*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-cached-user ...                                             */

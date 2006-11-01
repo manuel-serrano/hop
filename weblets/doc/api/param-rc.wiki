@@ -2,7 +2,8 @@
 
 == Description ==
 
-These server parameters control the files loaded when HOP execution starts.
+These server parameters control the RC file loaded when HOP execution starts.
+Examples of such file can be found in the tutorial section.
 
 == Synopsis ==
 

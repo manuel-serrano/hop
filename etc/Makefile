@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Sep 29 11:28:27 2006 (serrano)                */
+#*    Last change :  Wed Nov  1 16:32:24 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -27,7 +27,10 @@ POPULATION	= Makefile Makefile.contrib \
 install:
 	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
 	chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
+	cp hoprc.hop $(DESTDIR)$(HOPETCDIR)/hoprc.hop
+	chmod $(BMASK) $(DESTDIR)$(HOPETCDIR)/hoprc.hop
 
 uninstall:
 	$(RM) -f $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
+	$(RM) -f $(DESTDIR)$(HOPETCDIR)/hoprc.hop
 

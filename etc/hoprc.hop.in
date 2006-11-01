@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 26 08:20:34 2006                          */
-;*    Last change :  Thu Mar 30 07:43:32 2006 (serrano)                */
+;*    Last change :  Wed Nov  1 16:43:21 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP runtime command file.                                        */
@@ -49,6 +49,10 @@
 ;;   	   :password "384a653ec489344fe22c4f436a7bd82c"
 ;;   	   :directories (cons "/users/guest" (hop-path))
 ;;   	   :services '(hopcal))
+(add-user! "anonymous"
+	   :services '(home doc doc/example password)
+	   :directories (hop-path))
+
 (when (file-exists? (make-file-name (hop-etc-directory) "passwd.hop"))
    (hop-load (make-file-name (hop-etc-directory) "passwd.hop")))
 
@@ -68,10 +72,14 @@
 ;*    multithreading                                                   */
 ;*---------------------------------------------------------------------*/
 ;; The number of running threads accepting connections
-;(hop-max-accept-thread-set! 10)
+;(hop-max-accept-thread-set! 8)
 
 ;; The number of running threads handling answer
-;(hop-max-reply-thread-set! 10)
+;(hop-max-reply-thread-set! 12)
 
-;; The maximun number of simultaneous request per site
-;(hop-max-reply-persite-thread-set! 4)
+;*---------------------------------------------------------------------*/
+;*    Default HTML back-end                                            */
+;*---------------------------------------------------------------------*/
+;; The default back-end used for generating HTML
+;(hop-xml-backend-set! 'xhtml-1.0)
+(hop-xml-backend-set! 'html-4.01)

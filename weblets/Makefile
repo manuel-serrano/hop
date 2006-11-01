@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Oct  7 17:54:24 2006 (serrano)                */
+#*    Last change :  Wed Nov  1 16:28:50 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -48,7 +48,7 @@ install:
 	mkdir -p $(HOPWEBLETSDIR) && \
 	chmod a+rx $(HOPWEBLETSDIR) && \
 	for p in $(POPDIRS); do \
-           ($(MAKE) install-weblet DIR=$$p || exit 1) \
+           $(MAKE) install-weblet DIR=$$p || exit 1; \
         done
 
 #*---------------------------------------------------------------------*/
@@ -65,10 +65,12 @@ install-weblet:
         chmod a+rx,u+rwx $(HOPWEBLETSDIR)/$(DIR) && \
 	for f in $(DIR)/*; do \
           if [ -d $$f ]; then \
-            install -m a+rx,u+rwx -d $$f || exit 1; \
+            install -m a+rx,u+rwx -d $$f || exit 1 && \
             make install-weblet DIR=$$f || exit 1; \
           else \
-	    install -m a+r,u+r $$f $(HOPWEBLETSDIR)/$(DIR) || exit 1; \
+            if [ -f $$f ]; then \
+	      install -m a+r,u+r $$f $(HOPWEBLETSDIR)/$(DIR) || exit 1; \
+            fi; \
           fi; \
         done; \
         if [ -f $(DIR)/.afile ]; then \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Oct 24 21:02:26 2006 (serrano)                */
+;*    Last change :  Wed Nov  1 11:26:27 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -62,8 +62,10 @@
 	    (set! socket sock)
 	    (set! localclientp localc)
 	    (set! localhostp localh)
-	    (when (and (not user) localhostp (string? userinfo))
-	       (set! user (find-authenticated-user userinfo)))
+	    (when (and (not user) localhostp)
+	       (if (string? userinfo)
+		   (set! user (find-authenticated-user userinfo))
+		   (set! user (anonymous-user))))
 	    req))))
 
 ;*---------------------------------------------------------------------*/
