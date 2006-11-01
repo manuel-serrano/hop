@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Oct 18 12:59:45 2006 (serrano)                */
+;*    Last change :  Wed Nov  1 17:27:04 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -41,6 +41,11 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; set the library load path
+   (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
+      (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
+   ;; preload the hop library
+   (eval `(library-load 'hop))
    ;; parse the command line
    (parse-args args)
    (hop-verb 1 "Starting hopsh (v" (hop-version) "):\n")

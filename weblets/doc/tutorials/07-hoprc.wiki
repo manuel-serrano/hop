@@ -1,0 +1,82 @@
+<doc> Hop RC file
+
+== Description ==
+
+This tutorial explains how Hop reads its RC file and how such files
+can be customized by users.
+
+~~ The RC file is generally used for customizing the Hop server. It can
+contains specifications for:
+
+  * the declaration of users.
+  * specifying search paths.
+  * specifying the number of threads for handling requests.
+  * enabling/disabling facilities.
+
+
+== Finding the RC file ==
+
+When Hop starts, unless the command line ++-q++ is used, it reads,
+**if it finds one**, a //runtime command// (RC) file whose name is 
+given by the parameter ,(<APIREF> "hop-rc-file" "param-rc.wiki").
+The algorithm used by Hop for searching that file is:
+
+<code>
+  (let ((home (or (getenv "HOME") "/"))
+        (host (hostname)))
+     (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
+        (if (string? host)
+            (let ((home/host (string-append home "/.config/hop." host)))
+               (if (and (file-exists? home/host) (directory? home/host))
+                   home/host
+                   (if (string=? (suffix host) "")
+                       (let ((home/def (make-file-name home ".config/hop")))
+                          (cond
+                             ((and (file-exists? home/def) (directory? home/def))
+                              home/def)
+                             (else
+                              home)))
+                       (loop (prefix host))))))))
+</code>
+
+If no user RC file is found, Hop defaults to:
+
+<code>
+  (make-file-name (hop-etc-directory) (hop-rc-file))
+</code>
+
+== Creating a custom file ==
+
+In order to create a custom RC file, it is best to start with the one
+that comes with the regular Hop installation. 
+
+~~ The Hop RC file follows the Hop syntax. That is the HOP RC file
+contains a sequence of Hop expressions. In particular, it might
+contain //settings// (paths, users, etc.) or definitions (function
+definitions or weblet definitions).
+
+=== Loading the default hoprc.hop file from a user file ===
+
+It might be useful, from a user RC file, to load the default RC file
+installed with Hop. This might be done with the following expression:
+
+<code>
+  (let ((path (make-file-name (hop-etc-directory) "hoprc.hop")))
+     (when (file-exists? path) (hop-load path)))
+</code>
+
+=== Adding new paths ===
+
+In the following section, we show how to add new weblets search paths.
+
+<code>
+  (hop-autoload-directory-add! "/users/serrano/prgm/project/hop/private")
+  (hop-autoload-directory-add! "/users/serrano/prgm/project/hop/devel")
+  ;; use private copy of weblets
+  (hop-autoload-directory-add! "/users/serrano/prgm/project/hop/weblets")
+  ;; working weblets
+  (hop-autoload-directory-add! "/users/serrano/prgm/project/hop/work/weblets")
+</code>
+
+
+</doc>

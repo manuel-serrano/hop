@@ -17,7 +17,7 @@ invoked from client. This page describes how to create and how to use
   (procedure->service proc)
 
   (hop-autoload-directories)
-  (hop-autoload-directories-add! path)
+  (hop-autoload-directory-add! path)
   (hop-autoload-directories-set! list)
 
 
@@ -116,10 +116,10 @@ The function ++procedure->service++ creates an anonymous service that
 wraps the procedure ++proc++.
 
 === ++(hop-autoload-directories)++ ===
-=== ++(hop-autoload-directories-add! string)++ ===
+=== ++(hop-autoload-directory-add! string)++ ===
 === ++(hop-autoload-directories-set! list)++ ===
 <parameter> hop-autoload-directories
-<parameter> hop-autoload-directories-add!
+<parameter> hop-autoload-directory-add!
 <parameter> hop-autoload-directories-set!
 
 This parameter specifies the path scanned by HOP on startup to find all
