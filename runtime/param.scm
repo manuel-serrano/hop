@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Nov  1 08:24:56 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 10:28:54 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -90,6 +90,7 @@
 	    (hop-service-base::bstring)
 	    
 	    (hop-service-weblet-name::bstring)
+	    (hop-service-weblet-wid::symbol)
 
 	    (hop-initial-weblet::bstring)
 	    (hop-initial-weblet-set! ::bstring)
@@ -519,6 +520,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-weblet-name
    (format "svc-~a" (hop-session)))
+
+(define-parameter hop-service-weblet-wid
+   (string->symbol (hop-service-weblet-name)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-proxing ...                                           */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Tue Oct 24 14:55:00 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 09:41:03 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -28,10 +28,7 @@
 ;*    doc ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (doc)
-   (let ((req (the-current-request)))
-      (if (authorized-service? req 'doc)
-	  (doc-main req #f)
-	  (user-access-denied req))))
+   (doc-main #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc/documentation ...                                            */
@@ -47,20 +44,17 @@
 ;*    doc/weblet ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/weblet weblet)
-   (let ((req (the-current-request)))
-      (if (authorized-service? req 'doc)
-	  (begin
-	     (setup-api-tables!)
-	     (doc-main req (<SCRIPT>
-			      :type "text/javascript"
-			      (select-weblet-pad-on-load weblet))))
-	  (user-access-denied req))))
+   (setup-api-tables!)
+   (doc-main (<SCRIPT>
+		:type "text/javascript"
+		(select-weblet-pad-on-load weblet))))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-main ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (doc-main req script)
-   (let ((prefs (make-file-name (doc-rc-directory) "doc.prefs")))
+(define (doc-main script)
+   (let ((req (the-current-request))
+	 (prefs (make-file-name (doc-rc-directory) "doc.prefs")))
       (thread-start! (make-thread (lambda () (setup-api-tables!))))
       (when (file-exists? prefs) (doc-preferences-load prefs))
       (<DOC>

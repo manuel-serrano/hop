@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Wed Nov  1 17:01:09 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 11:14:54 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -20,17 +20,17 @@
    
    (export  (add-user! ::bstring . opt)
 	    (user-exists? ::bstring)
-	    (users-added?::bool)
+	    (anonymous-user::user)
 	    (find-authenticated-user ::bstring)
 	    (find-user ::bstring ::bstring)
 	    (find-user/encrypt ::bstring ::bstring ::procedure)
-	    (user-authorized-request?::bool ::obj ::http-request)
-	    (user-authorized-path?::bool ::obj ::bstring)
+	    (user-authorized-request?::bool ::user ::http-request)
+	    (user-authorized-path?::bool ::user ::bstring)
 	    (authorized-path?::bool ::http-request ::bstring)
-	    (user-authorized-service?::bool ::obj ::symbol)
+	    (user-authorized-service?::bool ::user ::symbol)
 	    (authorized-service?::bool ::http-request ::symbol)
 	    (user-access-denied ::http-request)
-	    (anonymous-user::obj)))
+	    (user-service-denied ::http-request ::user ::symbol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *user-mutex* ...                                                 */
@@ -40,13 +40,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    *users* ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define *users* #f)
-
-;*---------------------------------------------------------------------*/
-;*    users-added? ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (users-added?)
-   (hashtable? *users*))
+(define *users* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-user-key ...                                                */
@@ -81,8 +75,6 @@
 		(k (make-user-key name p)))
 	     (with-lock *user-mutex*
 		(lambda ()
-		   (unless (hashtable? *users*)
-		      (set! *users* (make-hashtable)))
 		   (if (hashtable-get *users* name)
 		       (if (string=? name "anonymous")
 			   (begin
@@ -109,7 +101,13 @@
 	      (if (not (or (eq? (cadr a) '*)
 			   (and (list? (cadr a)) (every? symbol? (cadr a)))))
 		  (error 'add-user! "Illegal services" (cadr a))
-		  (loop (cddr a) g p (if (eq? s '*) s (cadr a)) d)))
+		  (loop (cddr a) g p
+			(if (eq? s '*)
+			    s
+			    (if (eq? (cadr a) '*)
+				'*
+				(cons (hop-service-weblet-wid) (cadr a))))
+			d)))
 	     ((:directories)
 	      (cond
 		 ((eq? (cadr a) '*)
@@ -127,8 +125,7 @@
 (define (user-exists? name)
    (with-lock *user-mutex*
       (lambda ()
-	 (and (hashtable? *users*)
-	      (user? (hashtable-get *users* name))))))
+	 (user? (hashtable-get *users* name)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *authenticated-users* ...                                        */
@@ -145,16 +142,13 @@
 ;*    anonymous-user ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (anonymous-user)
-   (cond
-      ((user? *anonymous-user*)
-       *anonymous-user*)
-      ((eq? *anonymous-user* #unspecified)
-       (if (hashtable? *users*)
-	   (set! *anonymous-user* (hashtable-get *users* "anonymous"))
-	   (set! *anonymous-user* #f))
-       *anonymous-user*)
-      (else
-       *anonymous-user*)))
+   (if (user? *anonymous-user*)
+       *anonymous-user*
+       (let ((a (hashtable-get *users* "anonymous")))
+	  (if (user? a)
+	      (set! *anonymous-user* a)
+	      (error 'anonymous-user "No anonymous user declared" a))
+	  *anonymous-user*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-cached-user ...                                             */
@@ -183,7 +177,6 @@
 ;*---------------------------------------------------------------------*/
 (define (find-authenticated-user auth)
    (and (string? auth)
-	(users-added?)
 	(or (find-cached-user auth)
 	    (let* ((dauth (http-decode-authentication auth))
 		   (len (string-length dauth))
@@ -200,21 +193,19 @@
 ;*    find-user ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-user user-name encoded-passwd)
-   (and (users-added?)
-	(let ((u (hashtable-get *users* user-name)))
-	   (and (user? u)
-		(string=? encoded-passwd (user-password u))
-		u))))
+   (let ((u (hashtable-get *users* user-name)))
+      (and (user? u)
+	   (string=? encoded-passwd (user-password u))
+	   u)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-user/encrypt ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (find-user/encrypt user-name encoded-passwd encrypt)
-   (and (users-added?)
-	(let ((u (hashtable-get *users* user-name)))
-	   (and (user? u)
-		(string=? encoded-passwd (encrypt (user-password u)))
-		u))))
+   (let ((u (hashtable-get *users* user-name)))
+      (and (user? u)
+	   (string=? encoded-passwd (encrypt (user-password u)))
+	   u)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-hopaccess ...                                               */
@@ -238,22 +229,20 @@
 (define (user-authorized-path? user path)
    (define (path-member path dirs)
       (any? (lambda (d) (substring-at? path d 0)) dirs))
-   (or (not (users-added?))
-       (and (user? user)
-	    (with-access::user user (directories)
-	       (or (eq? directories '*)
-		   (path-member (file-name-unix-canonicalize path)
-				directories)))
-	    (let ((hopaccess (find-hopaccess path)))
-	       (or (not hopaccess)
-		   (let ((access (with-input-from-file hopaccess read)))
-		      (cond
-			 ((eq? access '*)
-			  #t)
-			 ((list? access)
-			  (member (user-name user) access))
-			 (else
-			  #f))))))))
+   (and (with-access::user user (directories)
+	   (or (eq? directories '*)
+	       (path-member (file-name-unix-canonicalize path)
+			    directories)))
+	(let ((hopaccess (find-hopaccess path)))
+	   (or (not hopaccess)
+	       (let ((access (with-input-from-file hopaccess read)))
+		  (cond
+		     ((eq? access '*)
+		      #t)
+		     ((list? access)
+		      (member (user-name user) access))
+		     (else
+		      #f)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    authorized-path? ...                                             */
@@ -266,10 +255,8 @@
 ;*    user-authorized-service? ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-service? user service)
-   (or (not (users-added?))
-       (and (user? user)
-	    (with-access::user user (services)
-	       (or (eq? services '*) (memq service services))))
+   (or (with-access::user user (services)
+	  (or (eq? services '*) (memq service services)))
        ((hop-authorize-service-hook) user service)))
 
 ;*---------------------------------------------------------------------*/
@@ -283,10 +270,8 @@
 ;*    user-authorized-request? ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-request? user req)
-   (or (and (not (users-added?)) (http-request-localclientp req))
-       (and (user? user)
-	    (with-access::http-request req (path)
-	       (user-authorized-path? user path)))
+   (or (with-access::http-request req (path)
+	  (user-authorized-path? user path))
        ((hop-authorize-request-hook) user req)))
 
 ;*---------------------------------------------------------------------*/
@@ -303,3 +288,12 @@
 			(http-request-path req))
 		"Protected Area! Authentication required."))))
 
+;*---------------------------------------------------------------------*/
+;*    user-service-denied ...                                          */
+;*---------------------------------------------------------------------*/
+(define (user-service-denied req user svc)
+   (instantiate::http-response-authentication
+      (header '((WWW-Authenticate: . "Basic realm=\"Hop authentication\"")))
+      (request req)
+      (body (format "User `~a' is not allowed to execute service `~a'."
+		    (user-name user) svc))))

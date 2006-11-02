@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Sat Oct 21 17:41:42 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 10:52:04 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    $service/filter ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro ($service/filter svcurl timeout ttl args . body)
+(define-pervasive-macro ($service/filter url wid timeout ttl args . body)
    (define (service-js-arguments formals)
       (if (null? formals)
 	  "[]"
@@ -33,7 +33,6 @@
 	     "function() { return hop_service_url_varargs( ~s, arguments ) }")
 	,path))
    (let* ((ca (gensym 'ca))
-	  (url (gensym 'url))
 	  (req (gensym 'req))
 	  (proc (gensym 'proc))
 	  (exec (gensym 'exec))
@@ -55,9 +54,9 @@
 						      `(cgi-arg ,(symbol->string a) ,ca))
 						   args)))
 				`(,proc (error '$service/filter "not implement" "yet"))))))
-	      (,url ,svcurl)
 	      (,path (make-url-name (hop-service-base) ,url))
 	      (svc (instantiate::hop-service
+		      (wid ,wid)
 		      (id (string->symbol ,url))
 		      (path ,path)
 		      (args ',args)
@@ -77,8 +76,10 @@
 	 (args (cdr decl)))
       (if (not (and (pair? decl) (every? symbol? decl)))
 	  (error 'define-service "Illegal service declaration" decl)
-	  `(define ,id
-	      ($service/filter ,(symbol->string id) -1 -1 ,args ,@body)))))
+	  (let* ((url (symbol->string id))
+		 (wid (string->symbol (car (file-name->list url)))))
+	     `(define ,id
+		 ($service/filter ,url ',wid -1 -1 ,args ,@body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service ...                                                      */
@@ -94,7 +95,9 @@
 	      (error 'service
 		     "Illegal service (empty body)"
 		     (cons 'service args))
-	      `($service/filter (get-service-url) ,tmt ,ttl ,(car a) ,@(cdr a))))
+	      `($service/filter (get-service-url)
+				(string->symbol (hop-service-weblet-name))
+				,tmt ,ttl ,(car a) ,@(cdr a))))
 	 ((eq? (car a) :timeout)
 	  (if (null? (cdr a))
 	      (error 'service

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Oct 22 01:22:29 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 11:18:24 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hopsh weblet                                                 */
@@ -16,10 +16,14 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hopsh ...                                                        */
+;*    -------------------------------------------------------------    */
+;*    HOPSH implements its own access policy because, it is too        */
+;*    dangerous to execute an expression if no authentication is       */
+;*    provided.                                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (hopsh exp)
    (let ((req (the-current-request)))
-      (if (and (users-added?) (authorized-service? req 'hopsh))
+      (if (authorized-service? req 'hopsh)
 	  (if (not exp)
 	      (<HOPSH>)
 	      (with-handler
@@ -36,7 +40,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hopsh/string exp)
    (let ((req (the-current-request)))
-      (if (and (users-added?) (authorized-service? req 'hopsh))
+      (if (authorized-service? req 'hopsh)
 	  (if (not exp)
 	      (<HOPSH>)
 	      (with-handler

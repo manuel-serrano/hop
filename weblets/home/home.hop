@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu Aug  3 08:41:05 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 12:45:12 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -165,6 +165,16 @@ implemented you can send comments and remarks to "
 					   :class "motd"
 					   (with-input-from-file f read-string))
 					""))])))))))
+
+;*---------------------------------------------------------------------*/
+;*    home/documentation ...                                           */
+;*---------------------------------------------------------------------*/
+(define-service (home/documentation)
+   (let* ((file (string-append (home-dir) "/etc/home.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/install ...                                                 */

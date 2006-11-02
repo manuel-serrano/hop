@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Aug 24 15:18:27 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 10:38:59 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -230,7 +230,7 @@
 	resp)
        (else
 	(with-access::http-request req (user host port path header)
-	   (if (or (not (users-added?)) (user? user))
+	   (if (not (eq? user (anonymous-user)))
 	       resp
 	       (instantiate::http-response-string
 		  (request req)

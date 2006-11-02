@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Nov  1 10:56:31 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 09:38:23 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -120,14 +120,25 @@
 	      (uri::bstring read-only))
 
 	   (class hop-service
+	      ;; the service identifier (e.g., doc/example)
 	      (id::symbol read-only)
+	      ;; the weblet identifier (e.g., doc)
+	      (wid::symbol read-only)
+	      ;; the path associated with the service
 	      (path::bstring read-only)
+	      ;; the service formals
 	      (args::obj read-only)
+	      ;; the implementation body
 	      (%exec::procedure read-only)
+	      ;; the user procedure associated
 	      (proc::procedure read-only)
+	      ;; the JS code calling that service
 	      (javascript::bstring read-only)
+	      ;; a time stamp
 	      (creation::elong read-only)
+	      ;; a timeout in second
 	      (timeout::long read-only (default -1))
+	      ;; the number of times the service might be called
 	      (ttl::long (default -1)))
 
 	   (http-request-hook-add! ::http-request ::procedure)))

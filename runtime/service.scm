@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Oct 20 11:12:51 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 11:17:04 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -29,7 +29,8 @@
 	    __hop_cgi
 	    __hop_xml
 	    __hop_hop-extra
-	    __hop_js-lib)
+	    __hop_js-lib
+	    __hop_user)
    
    (export  (get-service-url::bstring)
 	    (hop-service-path? ::bstring)
@@ -259,24 +260,27 @@
 (define (service-filter req)
    (when (http-request-localhostp req)
       (let loop ()
-	 (with-access::http-request req (path)
+	 (with-access::http-request req (path user)
 	    (when (hop-service-path? path)
 	       (mutex-lock! *service-mutex*)
 	       (let ((svc (hashtable-get *service-table* path)))
 		  (mutex-unlock! *service-mutex*)
 		  (cond
 		     ((hop-service? svc)
-		      (with-access::hop-service svc (%exec ttl path)
+		      (with-access::hop-service svc (%exec ttl path id wid)
 			 (cond
 			    ((=fx ttl 1)
 			     (unregister-service! svc))
 			    ((>fx ttl 1)
 			     (set! ttl (-fx ttl 1))))
-			 (if (service-expired? svc)
-			     (begin
-				(mark-service-path-expired! path)
-				#f)
-			     (scheme->response (%exec req) req))))
+			 (cond
+			    ((service-expired? svc)
+			     (mark-service-path-expired! path)
+			     #f)
+			    ((user-authorized-service? user wid)
+			     (scheme->response (%exec req) req))
+			    (else
+			     (user-service-denied req user id)))))
 		     (else
 		      (let ((init (hop-initial-weblet)))
 			 (when (and (string? init)
@@ -377,7 +381,6 @@
 ;*---------------------------------------------------------------------*/
 (define (mark-service-path-expired! path)
    (mutex-lock! *expiration-mutex*)
-   (tprint "mark expired: " path)
    (hashtable-put! *expiration-table* path #t)
    (mutex-unlock! *expiration-mutex*)
    #f)

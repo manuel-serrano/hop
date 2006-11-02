@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Oct 24 21:32:01 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 14:34:45 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -322,7 +322,11 @@ Google, each containing a forward pointer to the actual URL.])))
 	       txt2)))))
    
 ;*---------------------------------------------------------------------*/
-;*    info weblet ...                                                  */
+;*    webfilter ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    WEBFILTER falls into the admin tools, hence, in addition to be   */
+;*    granted the right to execute WEBFILTER, the ADMIN right must be  */
+;*    granted for executing it.                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (webfilter)
    (let ((req (the-current-request)))
@@ -364,6 +368,16 @@ Google, each containing a forward pointer to the actual URL.])))
 						  (<FLASH>)))))))))))
 		(<FOOT>)))
 	  (user-access-denied req))))
+
+;*---------------------------------------------------------------------*/
+;*    webfilter/documentation ...                                      */
+;*---------------------------------------------------------------------*/
+(define-service (webfilter/documentation)
+   (let* ((file (string-append webfilter-dir "/etc/webfilter.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-headers-rewrite ...                                         */

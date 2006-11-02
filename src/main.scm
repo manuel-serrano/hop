@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Nov  1 16:54:53 2006 (serrano)                */
+;*    Last change :  Thu Nov  2 10:39:24 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -271,9 +271,8 @@
 		   "/" (hop-max-reply-thread) "): "
 		   (find-runtime-type hp)
 		   " "
-		   (if (user? (http-request-user req))
-		       (user-name (http-request-user req))
-		       "anonymous") "\n")
+		   (user-name (http-request-user req))
+		   "\n")
 	 (let ((connection (http-response hp sock)))
 	    (hop-verb 2 (hop-color req req " END")
 		      " ("

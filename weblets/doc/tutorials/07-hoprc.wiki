@@ -45,7 +45,7 @@ If no user RC file is found, Hop defaults to:
   (make-file-name (hop-etc-directory) (hop-rc-file))
 </code>
 
-== Creating a custom file ==
+== Creating a custom RC file ==
 
 In order to create a custom RC file, it is best to start with the one
 that comes with the regular Hop installation. 
@@ -65,12 +65,25 @@ installed with Hop. This might be done with the following expression:
      (when (file-exists? path) (hop-load path)))
 </code>
 
+=== Creating Users ===
+
+Users may be created as follows:
+
+<code>
+  (add-user! "turing"
+             :password "7cfc0ea2b67e6d80366f014674cb6cd9"
+             :directories '("/university/manchester")
+             :services '(enigma))
+  (add-user! "doe"
+             :password "8ccef0a26eb76d0836f064716c64bcd9"
+             :services '(welcome))
+</code>
+
 === Adding new paths ===
 
 In the following section, we show how to add new weblets search paths.
 
 <code>
-  (hop-autoload-directory-add! "/users/serrano/prgm/project/hop/private")
   (hop-autoload-directory-add! "/users/serrano/prgm/project/hop/devel")
   ;; use private copy of weblets
   (hop-autoload-directory-add! "/users/serrano/prgm/project/hop/weblets")

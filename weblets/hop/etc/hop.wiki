@@ -1,0 +1,9 @@
+<doc> HOP -- Hop main page
+
+== Description ==
+
+[[hop|HOP]] implements the Hop main page. It dynamically find the available
+weblets and let them been spawned by a simple click.
+
+</doc>
+

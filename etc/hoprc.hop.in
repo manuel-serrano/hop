@@ -49,8 +49,11 @@
 ;;   	   :password "384a653ec489344fe22c4f436a7bd82c"
 ;;   	   :directories (cons "/users/guest" (hop-path))
 ;;   	   :services '(hopcal))
-(add-user! "anonymous"
-	   :services '(home doc doc/example password)
+;; 
+;; It is required to define the "anonymous" user. An error will be raised
+;; if this user is not declared when the first request is intercepted.
+(add-user! "anonymous" 
+           :services '(home doc password)
 	   :directories (hop-path))
 
 (when (file-exists? (make-file-name (hop-etc-directory) "passwd.hop"))
