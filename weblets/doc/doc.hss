@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Oct 23 14:58:48 2006 (serrano)                */
+/*    Last change :  Fri Nov  3 09:14:56 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -38,7 +38,7 @@ $(define deep-blue "#00a")
 $(define deep-green "#0a0")
 $(define deep-magenta "#7a459e")
 $(define deep-magenta2 "#4a346c")
-$(define deep-orange "#ffae2b")
+$(define deep-orange "#d89220")
 $(define inner-href-color "#5c35a4")
 
 $(define server-color "#00a")
@@ -693,6 +693,10 @@ table.search-result span.search-label {
 /*    tutorials                                                        */
 /*---------------------------------------------------------------------*/
 $(hop-hss-type! "tutorials" "div.tutorials")
+
+doc span.tutorialref {
+  color: $deep-orange;
+}
 
 tutorials div.tutorial-title {
   border: 1px solid $border-color;

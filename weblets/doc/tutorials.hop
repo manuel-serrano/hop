@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Thu May 18 18:02:33 2006 (serrano)                */
+;*    Last change :  Fri Nov  3 09:11:44 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -20,7 +20,8 @@
 	   hopdoc_widgets
 	   hopdoc_search)
    
-   (export (<TUTORIALS> req)))
+   (export (<TUTORIALS> req)
+	   (<TUTORIALREF> lbl file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TUTORIALS> ...                                                  */
@@ -29,11 +30,29 @@
    (let ((pagearea (<DIV> :class "pagearea"
 			  :id "pad-tutorials"
 			  "Please, select a tutorial."))
-	 (syntax (make-wiki-request-syntax *tutorial-syntax* req)))
+	 (syntax (make-wiki-request-syntax *tutorial-syntax*)))
       (<DIV>
 	 :class "tutorials"
 	 (<TUTORIALS-MAIN> "pad-tutorials" syntax)
 	 pagearea)))
+
+;*---------------------------------------------------------------------*/
+;*    <TUTORIALREF> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<TUTORIALREF> lbl file)
+   (<SPAN> 
+      :class "href tutorialref" 
+      :onclick ~(with-hop ($(service ()
+			       (doc-page (make-file-name (doc-tutorials-dir)
+							 file)
+					 (make-wiki-request-syntax
+					  *tutorial-syntax*))))
+		   (lambda (h)
+		      (let ((el (document.getElementById "pad-tutorials")))
+			 (set! el.innerHTML h)
+			 (notepad-select "doc-notepad" "doc-tutorials")
+			 (window.scrollTo 0 0))))
+      lbl))
 
 ;*---------------------------------------------------------------------*/
 ;*    *tutorial-syntax* ...                                            */

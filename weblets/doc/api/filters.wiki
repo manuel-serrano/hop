@@ -19,6 +19,11 @@ HOP executes all the filters in the inverse order of addition until one
 filter returns a response. If no filter matches a request, HOP assumes that
 a local file whose path is designed in the URL is to be served.
 
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+For security reasons, filters can only be added or removed in the 
+,(<TUTORIALREF> "RC file" "07-hoprc.wiki"). That is, it is no longer possible 
+to add or remove any filter as
+soon as the first request has been handle by Hop. ])
 
 == Synopsis ==
 

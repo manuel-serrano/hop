@@ -28,7 +28,6 @@ declarations.
 === server functions ===
 
   (add-user! arg ...)
-  (users-added?)
   (user-exists? string)
   (find-user string string)
   (find-user/encrypt string string procedure)
@@ -168,7 +167,12 @@ the permission to execute such a service.
 </arguments>
 
 The function ++add-user!++ returns an opaque structure denoting a
-unique user. Here are the meaning of its optional arguments:
+unique user. For security reasons, users can only be defined in the 
+,(<TUTORIALREF> "RC file" "07-hoprc.wiki").
+In other words, the function ++add-user!++ can only be used in the 
+,(<TUTORIALREF> "RC file" "07-hoprc.wiki").
+Users cannot be added as soon as the first Hop request has been
+intercepted. Here are the meaning of its optional arguments:
 
   * :password - The user encrypted password. This encryption should
  be computed using the
@@ -188,7 +192,7 @@ unique user. Here are the meaning of its optional arguments:
  ,(<APIREF> "service" "service.wiki") in the list can be executed.
 
 
-Examples:
+~~ Examples:
 
   ;; an administrator that can go everywhere and execute everthing
   (add-user! "admin"
@@ -202,13 +206,6 @@ Examples:
              :password "75874d556834ccb5361316184780089c"
              :directories '("/tmp/guest"))
 
-</function>
-
-=== ++(users-added?)++ ===
-<function> users-added?
-This predicate returns ++#t++ if and only if a user has already be
-registered (i.e., the function ++add-user!++ has already been called).
-Otherwise, it returns ++#f++.
 </function>
 
 === ++(user-exists? name)++ ===

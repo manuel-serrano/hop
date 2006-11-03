@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Thu Nov  2 09:41:03 2006 (serrano)                */
+;*    Last change :  Fri Nov  3 07:16:18 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -71,8 +71,7 @@
 			:class "core"
 			(doc-page
 			 (make-file-name (doc-core-dir) "core.wiki")
-			 (make-wiki-request-syntax (doc-wiki-syntax)
-						   req))))
+			 (make-wiki-request-syntax (doc-wiki-syntax)))))
 	    (<NPTAB> :id "doc-libraries"
 		     (<NPTABHEAD> "Libraries")
 		     (<LIBRARIES>))
@@ -82,8 +81,7 @@
 			:class "wiki"
 			(doc-page
 			 (make-file-name (doc-wiki-dir) "syntax.wiki")
-			 (make-wiki-request-syntax (doc-wiki-syntax)
-						   req))))
+			 (make-wiki-request-syntax (doc-wiki-syntax)))))
 	    (<NPTAB> :id "doc-weblets"
 		     (<NPTABHEAD> "Weblets")
 		     (<WEBLETS> req))

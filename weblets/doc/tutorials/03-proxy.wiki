@@ -4,14 +4,15 @@
 
 The HOP programming environment rests on a programming language
 **and** a //web server//. This web server can also be configured for
-being used as a //web proxy//. That is, it may act simultaneously as a
-server and as a proxy. That is, when a request targeting a distant
-server hits the HOP proxy it may decide to respond by itself (for
-instance, when implementing caching) or it may redirect the request to
-another server. In addition to being used for implementing ,(<APIREF>
-(<I> "weblet") "service.wiki") as demonstrated in the other tutorials,
-a HOP server might also be used to filters remote requests. This
-tutorial focuses on this last aspect.
+being used as a //web proxy// (see the ,(<TUTORIALREF> "Access
+Control" "04-authentication.wiki") tutorial). That is, it may act
+simultaneously as a server and as a proxy. That is, when a request
+targeting a distant server hits the HOP proxy it may decide to respond
+by itself (for instance, when implementing caching) or it may redirect
+the request to another server. In addition to being used for
+implementing ,(<APIREF> (<I> "weblet") "service.wiki") as demonstrated
+in the other tutorials, a HOP server might also be used to filters
+remote requests. This tutorial focuses on this last aspect.
 
 == Transforming Web sites ==
 

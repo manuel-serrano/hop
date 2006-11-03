@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Thu Nov  2 11:14:54 2006 (serrano)                */
+;*    Last change :  Fri Nov  3 07:27:26 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -18,7 +18,8 @@
 	    __hop_types
 	    __hop_http-lib)
    
-   (export  (add-user! ::bstring . opt)
+   (export  (users-close!)
+	    (add-user! ::bstring . opt)
 	    (user-exists? ::bstring)
 	    (anonymous-user::user)
 	    (find-authenticated-user ::bstring)
@@ -56,9 +57,28 @@
    (make-user-key (user-name u) (user-password u)))
 
 ;*---------------------------------------------------------------------*/
+;*    *users-open* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define *users-open* #t)
+
+;*---------------------------------------------------------------------*/
+;*    users-close! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (users-close!)
+   (set! *users-open* #f))
+   
+;*---------------------------------------------------------------------*/
 ;*    add-user! ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (add-user! name . args)
+   (if *users-open*
+       (%add-user! name args)
+       (error 'add-user! "Users closed" #f)))
+
+;*---------------------------------------------------------------------*/
+;*    %add-user! ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (%add-user! name args)
    (let loop ((a args)
 	      (g '())
 	      (p #f)
@@ -76,13 +96,9 @@
 	     (with-lock *user-mutex*
 		(lambda ()
 		   (if (hashtable-get *users* name)
-		       (if (string=? name "anonymous")
-			   (begin
-			      ;; the anonymous user is special because it
-			      ;; is the only user that can be redefined.
-			      (hashtable-remove! *users* name)
-			      (hashtable-put! *users* name u))
-			   (error 'add-user! "User already added" name))
+		       (begin
+			  (hashtable-remove! *users* name)
+			  (hashtable-put! *users* name u))
 		       (hashtable-put! *users* name u))))
 	     u))
 	 ((or (not (keyword? (car a))) (null? (cdr a)))

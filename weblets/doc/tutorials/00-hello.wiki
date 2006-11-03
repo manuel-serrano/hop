@@ -47,7 +47,7 @@ that is //autoloaded// by HOP.
 
 === Load on startup ===
 
-On startup, HOP loads the RC file:
+On startup, HOP loads the ,(<TUTORIALREF> "RC file" "07-hoprc.wiki"):
 ,(let ((path (make-file-name (hop-rc-directory) (hop-rc-file))))
     (if (file-exists? path)
 	(<FL>

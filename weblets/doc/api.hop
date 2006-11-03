@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Tue Oct 17 10:44:32 2006 (serrano)                */
+;*    Last change :  Fri Nov  3 07:16:06 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -96,7 +96,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api page)
    (setup-api-tables!)
-   (let ((s (make-wiki-request-syntax *server-syntax* (the-current-request))))
+   (let ((s (make-wiki-request-syntax *server-syntax*)))
       (doc-page page s)))
 
 ;*---------------------------------------------------------------------*/

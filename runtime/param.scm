@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Nov  2 10:28:54 2006 (serrano)                */
+;*    Last change :  Fri Nov  3 07:26:44 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -61,6 +61,7 @@
 	    (hop-http-response-error::obj)
 	    (hop-http-response-error-set! ::obj)
 
+	    (hop-filters-close!)
 	    (hop-filters::pair-nil)
 	    (hop-filters-set! ::pair-nil)
 	    (hop-filter-add! ::procedure)
@@ -325,15 +326,15 @@
    *filter-mutex*)
 
 ;*---------------------------------------------------------------------*/
-;*    *hop-filters-open* ...                                          */
+;*    *hop-filters-open* ...                                           */
 ;*---------------------------------------------------------------------*/
 (define *hop-filters-open*
    #t)
 
 ;*---------------------------------------------------------------------*/
-;*    hop-filter-open! ...                                             */
+;*    hop-filters-close! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (hop-filter-close!)
+(define (hop-filters-close!)
    (with-lock (hop-filter-mutex)
       (lambda ()
 	 (set! *hop-filters-open* #f))))

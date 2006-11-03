@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Nov  2 10:39:24 2006 (serrano)                */
+;*    Last change :  Fri Nov  3 07:27:33 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -68,6 +68,9 @@
    (hop-filter-add-always-first! autoload-filter)
    ;; start the job scheduler
    (job-start-scheduler!)
+   ;; close filters and users registration before starting
+   (hop-filters-close!)
+   (users-close!)
    ;; start the hop main loop
    (with-handler
       (lambda (e)
