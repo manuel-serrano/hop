@@ -1,9 +1,0 @@
-;; automatically generated, don't edit
-;; /users/serrano/prgm/project/hop/weblets/hop
-;; Wed Oct 11 16:14:56 2006
-
-(
-  (hophop_config "config.hop")
-  (hophop "hop.hop")
-)
-

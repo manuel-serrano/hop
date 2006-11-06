@@ -1,15 +1,38 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-autoconf.js                   */
+/*    serrano/prgm/project/hop/etc//hop-autoconf.js.in                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Oct 12 14:35:30 2006 (serrano)                */
+/*    Last change :  Mon Oct 16 14:01:00 2006 (eg)                     */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
 /*    availabilities.                                                  */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Hop server directories ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_etc_directory() { 
+    return  "@ETCDIR@";
+}
+function hop_bin_directory() {
+    return "@BINDIR@";
+ }
+function hop_lib_directory() {
+    return "@LIBDIR@";
+}
+function hop_share_directory() {
+    return "@SHAREDIR@";
+}
+function hop_contribs_directory() {
+    return "@CONTRIBSDIR@";
+}
+function hop_weblets_directory() {
+    return "@WEBLETSDIR@";
+}
+
 
 /*---------------------------------------------------------------------*/
 /*    DOMFormElement ...                                               */
