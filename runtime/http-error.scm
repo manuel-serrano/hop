@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Nov  7 08:27:20 2006 (serrano)                */
+;*    Last change :  Tue Nov  7 08:31:59 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -416,7 +416,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD>
-			     (<EIMG> :src (format "~a/icons/notfound.png"
+			     (<EIMG> :src (format "~a/icons/error.png"
 						  (hop-share-directory))))
 			  (<ETD>
 			     (<TABLE>
@@ -531,7 +531,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (format
-					      "http://~a:~a~a/icons/notfound.png"
+					      "http://~a:~a~a/icons/error.png"
 					      (hostname)
 					      (hop-port)
 					      (hop-share-directory))))
