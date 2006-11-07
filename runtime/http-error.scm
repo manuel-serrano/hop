@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Oct 24 21:26:53 2006 (serrano)                */
+;*    Last change :  Tue Nov  7 08:27:20 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -83,7 +83,6 @@
 			  (<TR>
 			     (<TH> :align 'right "path:")
 			     (<TD> (<TT> (http-request-path req))))))))))
-      
       (cond
 	 ((&io-unknown-host-error? e)
 	  (http-unknown-host (&error-obj e)))
@@ -94,6 +93,14 @@
 	 (else
 	  (http-internal-error e msg)))))
 
+;*---------------------------------------------------------------------*/
+;*    <EHEAD> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<EHEAD>)
+   (<HEAD>
+      (<BASE> :href (format "http://~a:~a" (hop-server-hostname) (hop-port)))
+      :css (format "~a/hop-error.hss" (hop-share-directory))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    <EIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
@@ -106,8 +113,10 @@
 (define-xml-compound <ETD> ((id #unspecified string)
 			    (class #f)
 			    (style "" string)
+			    (valign 'middle)
 			    body)
-   (let* ((default "vertical-align: middle; text-align: left; font-weight: bold")
+   (let* ((default (format "vertical-align: ~a; text-align: left; font-weight: bold"
+			   valign))
 	  (add (cond
 		  ((not class)
 		   "")
@@ -154,11 +163,7 @@
       (start-line "HTTP/1.0 404 Not Found")
       (request (instantiate::http-request))
       (xml (<HTML>
-	      (<HEAD> :css
-		      (format "http://~a:~a~a/hop-error.hss"
-			      (hostname)
-			      (hop-port)
-			      (hop-share-directory)))
+	      (<EHEAD>)
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -183,7 +188,7 @@
       (request (instantiate::http-request))
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
-	      (<HEAD> :css "hop-error.hss")
+	      (<EHEAD>)
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -208,7 +213,7 @@
 	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
-		 (<HEAD> :css "hop-error.hss")
+		 (<EHEAD>)
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
@@ -296,7 +301,7 @@ a timeout which has now expired. The service is then no longer available."))
 	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 501 Internal Server Error")
 	 (xml (<HTML>
-		 (<HEAD> :css "hop-error.hss")
+		 (<EHEAD>)
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
@@ -343,7 +348,7 @@ a timeout which has now expired. The service is then no longer available."))
 	 (request req)
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (xml (<HTML>
-		 (<HEAD> :css "hop-error.hss")
+		 (<EHEAD>)
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
@@ -372,7 +377,7 @@ a timeout which has now expired. The service is then no longer available."))
       (request req)
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
-	      (<HEAD> :css "hop-error.hss")
+	      (<EHEAD>)
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -405,7 +410,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (request req)
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
-	      (<HEAD> :css "hop-error.hss")
+	      (<EHEAD>)
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -443,7 +448,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (request (instantiate::http-request))
       (start-line "HTTP/1.0 200 ok")
       (xml (<HTML>
-	      (<HEAD> :css "hop-error.hss")
+	      (<EHEAD>)
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -453,9 +458,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 						  (hop-share-directory))))
 			  (<ETD>
 			     (<TABLE>
-				(<TR> (<ETD> :id "title" "warning"))
-				(<TR> (<ETD> :id "msg" msg))
-				(<TR> (<ETD> :id "dump" (or dump "")))))))))))))
+				(<TR> (<ETD> :class "title" "warning"))
+				(<TR> (<ETD> :class "msg" msg))
+				(<TR> (<ETD> :class "dump" (or dump "")))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-service-unavailable ...                                     */
@@ -465,11 +470,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (request (instantiate::http-request))
       (start-line "HTTP/1.0 503 Service Unavailable")
       (xml (<HTML>
-	      (<HEAD> :css
-		 (format "http://~a:~a~a/hop-error.hss"
-			 (hostname)
-			 (hop-port)
-			 (hop-share-directory)))
+	      (<EHEAD>)
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
@@ -482,9 +483,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 					   (hop-share-directory))))
 			  (<ETD>
 			     (<TABLE>
-				(<TR> (<ETD> :id "title" "Service Unavailable"))
-				(<TR> (<ETD> :id "msg" ""))
-				(<TR> (<ETD> :id "dump"
+				(<TR> (<ETD> :class "title" "Service Unavailable"))
+				(<TR> (<ETD> :class "msg" ""))
+				(<TR> (<ETD> :class "dump"
 					 (<PRE> e)))))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -496,11 +497,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 503 Service Unavailable")
 	 (xml (<HTML>
-		 (<HEAD> :css
-		    (format "http://~a:~a~a/hop-error.hss"
-			    (hostname)
-			    (hop-port)
-			    (hop-share-directory)))
+		 (<EHEAD>)
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
@@ -513,9 +510,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 					      (hop-share-directory))))
 			     (<ETD>
 				(<TABLE>
-				   (<TR> (<ETD> :id "title" "An error occured while exchanging with a remote host"))
-				   (<TR> (<ETD> :id "msg" host))
-				   (<TR> (<ETD> :id "dump"
+				   (<TR> (<ETD> :class "title" "An error occured while exchanging with a remote host"))
+				   (<TR> (<ETD> :class "msg" host))
+				   (<TR> (<ETD> :class "dump"
 					    (<PRE> s))))))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -527,16 +524,12 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
-		 (<HEAD> :css
-			 (format "http://~a:~a~a/hop-error.hss"
-				 (hostname)
-				 (hop-port)
-				 (hop-share-directory)))
+		 (<EHEAD>)
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
-			     (<ETD>
+			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (format
 					      "http://~a:~a~a/icons/notfound.png"
 					      (hostname)
@@ -544,12 +537,12 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 					      (hop-share-directory))))
 			     (<ETD>
 				(<TABLE>
-				   (<TR> (<ETD> :id "title" "IO Error"))
-				   (<TR> (<ETD> :id "msg"
+				   (<TR> (<ETD> :class "title" "IO Error"))
+				   (<TR> (<ETD> :class "msg"
 						(list (find-runtime-type e)
 						      ": "
 						      (&error-msg e))))
-				   (<TR> (<ETD> :id "dump"
+				   (<TR> (<ETD> :class "dump"
 						(<PRE> (html-string-encode s)))))))))))))))
 
 ;*---------------------------------------------------------------------*/

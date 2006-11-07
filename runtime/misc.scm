@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Mon Oct 23 15:24:05 2006 (serrano)                */
+;*    Last change :  Tue Nov  7 07:32:23 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -316,7 +316,7 @@
       (let loop ((ttl (hop-connection-ttl)))
 	 (let ((res (with-handler
 		       (lambda (e)
-			  (if (>fx ttl 0)
+			  (if (and (>fx ttl 0) (&io-timeout-error? e))
 			      (begin
 				 (hop-verb 1
 					   (hop-color msg msg " REMOTE")
