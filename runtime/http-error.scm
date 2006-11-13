@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Nov  7 08:31:59 2006 (serrano)                */
+;*    Last change :  Fri Nov 10 14:16:32 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -74,6 +74,7 @@
 		    (<TD>
 		       :class "request-info"
 		       (<TABLE>
+			  (<COLGROUP> (<COL> :width "0*"))
 			  (<TR>
 			     (<TH> :align 'right "host:")
 			     (<TD> (<TT> (http-request-host req))))
@@ -168,11 +169,10 @@
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
-			  (<ETD>
-			     (<EIMG> :src (format "http://~a:~a~a/icons/notfound.png"
-						  (hostname)
-						  (hop-port)
-						  (hop-share-directory))))
+			  (<ETD> :class "logo" :valign 'top
+			     (<EIMG> :src (string-append
+					   (hop-share-directory)
+					   "/icons/notfound.png")))
 			  (<ETD>
 			     (<TABLE>
 				(<TR> (<ETD> :class "title" "Unknown Host"))
@@ -193,9 +193,10 @@
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
-			  (<ETD>
-			     (<EIMG> :src (format "~a/icons/notfound.png"
-						  (hop-share-directory))))
+			  (<ETD> :class "logo" :valign 'top
+			     (<EIMG> :src (string-append
+					   (hop-share-directory)
+					   "/icons/notfound.png")))
 			  (<ETD>
 			     (<TABLE>
 				:style "35em"
@@ -218,9 +219,10 @@
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
-			     (<ETD>
-				(<EIMG> :src (format "~a/icons/notfound.png"
-						     (hop-share-directory))))
+			     (<ETD> :class "logo" :valign 'top
+				(<EIMG> :src (string-append
+					      (hop-share-directory)
+					      "/icons/notfound.png")))
 			     (<ETD>
 				(<TABLE>
 				   :style "35em"
@@ -306,9 +308,10 @@ a timeout which has now expired. The service is then no longer available."))
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
-			     (<ETD>
-				(<EIMG> :src (format "~a/icons/error.png"
-						     (hop-share-directory))))
+			     (<ETD> :class "logo" :valign 'top
+				(<EIMG> :src (string-append
+					      (hop-share-directory)
+					      "/icons/error.png")))
 			     (<ETD>
 				(<TABLE>
 				   (<TR>
@@ -353,9 +356,10 @@ a timeout which has now expired. The service is then no longer available."))
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
-			     (<ETD>
-				(<EIMG> :src (format "~a/icons/error.png"
-						     (hop-share-directory))))
+			     (<ETD> :class "logo" :valign 'top
+				(<EIMG> :src (string-append
+					      (hop-share-directory)
+					      "/icons/error.png")))
 			     (<ETD>
 				(<TABLE>
 				   (<TR>
@@ -382,9 +386,10 @@ a timeout which has now expired. The service is then no longer available."))
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
-			  (<ETD>
-			     (<EIMG> :src (format "~a/icons/notfound.png"
-						  (hop-share-directory))))
+			  (<ETD> :class "logo" :valign 'top
+			     (<EIMG> :src (string-append
+					   (hop-share-directory)
+					   "/icons/notfound.png")))
 			  (<ETD>
 			     (<TABLE>
 				:style "35em"
@@ -415,9 +420,10 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
-			  (<ETD>
-			     (<EIMG> :src (format "~a/icons/error.png"
-						  (hop-share-directory))))
+			  (<ETD> :class "logo" :valign 'top
+			     (<EIMG> :src (string-append
+					   (hop-share-directory)
+					   "/icons/error.png")))
 			  (<ETD>
 			     (<TABLE>
 				:style "35em"
@@ -453,9 +459,10 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
-			  (<ETD>
-			     (<EIMG> :src (format "~a/icons/warning.png"
-						  (hop-share-directory))))
+			  (<ETD> :class "logo" :valign 'top
+			     (<EIMG> :src (string-append
+					   (hop-share-directory)
+					   "/icons/warning.png")))
 			  (<ETD>
 			     (<TABLE>
 				(<TR> (<ETD> :class "title" "warning"))
@@ -475,12 +482,10 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
-			  (<ETD>
-			     (<EIMG> :src (format
-					   "http://~a:~a~a/icons/error.png"
-					   (hostname)
-					   (hop-port)
-					   (hop-share-directory))))
+			  (<ETD> :class "logo" :valign 'top
+			     (<EIMG> :src (string-append
+					   (hop-share-directory)
+					   "/icons/error.png")))
 			  (<ETD>
 			     (<TABLE>
 				(<TR> (<ETD> :class "title" "Service Unavailable"))
@@ -502,12 +507,10 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
-			     (<ETD>
-				(<EIMG> :src (format
-					      "http://~a:~a~a/icons/error.png"
-					      (hostname)
-					      (hop-port)
-					      (hop-share-directory))))
+			     (<ETD> :class "logo" :valign 'top
+				(<EIMG> :src (string-append
+					      (hop-share-directory)
+					      "/icons/error.png")))
 			     (<ETD>
 				(<TABLE>
 				   (<TR> (<ETD> :class "title" "An error occured while exchanging with a remote host"))
@@ -530,11 +533,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src (format
-					      "http://~a:~a~a/icons/error.png"
-					      (hostname)
-					      (hop-port)
-					      (hop-share-directory))))
+				(<EIMG> :src (string-append
+					      (hop-share-directory)
+					      "/icons/error.png")))
 			     (<ETD>
 				(<TABLE>
 				   (<TR> (<ETD> :class "title" "IO Error"))

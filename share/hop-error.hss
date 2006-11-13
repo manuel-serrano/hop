@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jan 18 15:46:42 2006                          */
-/*    Last change :  Tue Nov  7 07:52:57 2006 (serrano)                */
+/*    Last change :  Fri Nov 10 14:13:53 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The CSS for showing errors.                                      */
@@ -72,6 +72,7 @@ table.error td.dump pre {
 
 td.request-info {
   padding-left: 10px;
+  text-align: left;
 }
 
 td.request-info table th {
@@ -79,7 +80,7 @@ td.request-info table th {
 }
 
 td.request-info tt {
-  font-size: xx-large;
+  font-size: large;
   color: blue;
 }
 

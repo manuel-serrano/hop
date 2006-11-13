@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Oct 21 11:17:05 2006 (serrano)                */
+;*    Last change :  Wed Nov  8 13:05:24 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -206,7 +206,7 @@
 ;*---------------------------------------------------------------------*/
 (define (connection-timeout? c now)
    (with-access::connection c (date)
-      (let ((age (*fx 1000 (elong->fixnum (-second now date)))))
+      (let ((age (*fx 1000 (elong->fixnum (-elong now date)))))
 	 (>=fx age (hop-remote-keep-alive-timeout)))))
 
 ;*---------------------------------------------------------------------*/

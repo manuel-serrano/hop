@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Nov  1 17:27:04 2006 (serrano)                */
+;*    Last change :  Fri Nov 10 21:07:35 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -35,7 +35,7 @@
 		 (if (>=fx (hop-verbose) ,v)
 		     (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))
 	 (else
-	  `(hop-verb ,@(map (lambda (x) (e x e))) (cdr x))))))
+	  `(hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */

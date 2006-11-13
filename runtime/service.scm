@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Nov  2 11:17:04 2006 (serrano)                */
+;*    Last change :  Wed Nov  8 13:03:35 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -331,8 +331,8 @@
 (define (service-expired? svc)
    (with-access::hop-service svc (creation timeout path)
       (and (>fx timeout 0)
-	   (>second (date->seconds (current-date))
-		    (+second creation timeout)))))
+	   (>elong (date->seconds (current-date))
+		   (+elong creation timeout)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    flush-expired-services! ...                                      */
