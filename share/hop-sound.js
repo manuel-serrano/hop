@@ -1,7 +1,7 @@
 /*
  * hop-sound.js			-- Sound Support for HOP
  * 
- * Copyright © 2006 Erick Gallesio - I3S-CNRS/ESSI <eg@essi.fr>
+ * Copyright  2006 Erick Gallesio - I3S-CNRS/ESSI <eg@essi.fr>
  * 
  * 
  * This program is free software; you can redistribute it and/or modify

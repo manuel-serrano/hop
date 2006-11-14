@@ -554,6 +554,7 @@
      ("text/html" "html" "htm" "shtml")
      ("text/css" "css" "hss")
      ("application/x-javascript" "js")
+     ("application/xml" "xml" "rss")
      ;; audio
      ("audio/audible" "aa")
      ("audio/aac" "aac")
