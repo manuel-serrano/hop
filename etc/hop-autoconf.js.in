@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/etc//hop-autoconf.js.in                 */
+/*    serrano/prgm/project/hop/etc/hop-autoconf.js.in                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Oct 16 14:01:00 2006 (eg)                     */
+/*    Last change :  Tue Nov 14 17:02:21 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -43,7 +43,19 @@ if( window.HTMLFormElement == undefined ) {
 }
 
 if( window.HTMLCollection == undefined ) {
-   window.HTMLCollection = false;
+   window.HTMLCollection = function() { return false; };
+}
+
+if( window.HTMLInputElement == undefined ) {
+   window.HTMLInputElement = function() { return false; };
+}
+
+if( window.HTMLTextAreaElement == undefined ) {
+   window.HTMLTextAreaElement = function() { return false; };
+}
+
+if( window.HTMLSelectElement == undefined ) {
+   window.HTMLSelectElement = function() { return false; };
 }
 
 /*---------------------------------------------------------------------*/
@@ -213,12 +225,14 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
    }
    hop_remove_event_listener = function( obj, event, proc, capture ) {
       var i = "on" + event + "hdl";
-      var proc = obj[ i ][ proc ];
+      var p = obj[ i ][ proc ];
 
-      if( proc != undefined ) {
-	 obj[ i ][ proc ] = undefined;
-	 return obj.detachEvent( "on" + event, proc );
+      if( p != undefined ) {
+	 obj[ i ][ p ] = undefined;
+	 return obj.detachEvent( "on" + event, p );
       }
+
+      return false;
    }
    hop_stop_propagation = function( event, def ) {
       if( !def ) event.cancelBubble = true;
@@ -248,7 +262,7 @@ var hop_event_mouse_x = undefined;
 var hop_event_mouse_y = undefined;
 var hop_event_key_code = undefined;
 
-if( document.implementation.hasFeature( "Events" , "2.0") ) {
+if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
    hop_event_mouse_x = function hop_event_mouse_x( event ) {
       return event.pageX;
    }
@@ -260,17 +274,19 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
    }
 } else {
    hop_event_mouse_x = function hop_event_mouse_x( event ) {
-      if( (document.body != null) && (document.body.scrollLeft != null) ) {
-	 return event.clientX + document.body.scrollLeft;
-      } else {
+      if( (document.body != null) &&
+	  (document.documentElement.scrollLeft != null) ) {
 	 return event.clientX + document.documentElement.scrollLeft;
+      } else {
+	 return event.clientX + document.body.scrollLeft;
       }
    }
    hop_event_mouse_y = function hop_event_mouse_y( event ) {
-      if( (document.body != null) && (document.body.scrollTop != null) ) {
-	 return event.clientY + document.body.scrollTop;
-      } else {
+      if( (document.body != null) &&
+	  (document.documentElement.scrollTop != null) ) {
 	 return event.clientY + document.documentElement.scrollTop;
+      } else {
+	 return event.clientY + document.body.scrollTop;
       }
    }
    hop_event_key_code = function hop_event_key_code( event ) {

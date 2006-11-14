@@ -3,11 +3,57 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Thu Oct 12 14:43:37 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 16:29:23 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW CSS                                                  */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    shadow                                                           */
+/*---------------------------------------------------------------------*/
+table.hop-iwindow-shadow {
+  padding: 0;
+  border-width: 0;
+  border-spacing: 0;
+}
+
+table.hop-iwindow-shadow td.hop-shadow-ne {
+  font-size: 2pt;
+  width: 8px;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-ne.png" );
+}
+
+table.hop-iwindow-shadow td.hop-shadow-e {
+  font-size: 2pt;
+  width: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-e.png" );
+}
+
+table.hop-iwindow-shadow td.hop-shadow-sw {
+  font-size: 2pt;
+  width: 8px;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-sw.png" );
+}
+
+table.hop-iwindow-shadow td.hop-shadow-s {
+  font-size: 2pt;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-s.png" );
+}
+
+table.hop-iwindow-shadow td.hop-shadow-se {
+  font-size: 2pt;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-se.png" );
+}
 
 /*---------------------------------------------------------------------*/
 /*    main frame                                                       */
@@ -17,55 +63,22 @@ div.hop-iwindow {
   background: none;
 }
 
-/*---------------------------------------------------------------------*/
-/*    shadow                                                           */
-/*---------------------------------------------------------------------*/
-table.hop-iwindow-shadow td.hop-iwindow-shadow-ne {
-  font-size: 2pt;
-  width: 8px;
-  height: 8px;
-  background: none;
-  background-image: url( "icons/iwindow-shadow-ne.png" );
-}
-
-table.hop-iwindow-shadow td.hop-iwindow-shadow-e {
-  font-size: 2pt;
-  width: 8px;
-  background: none;
-  background-image: url( "icons/iwindow-shadow-e.png" );
-}
-
-table.hop-iwindow-shadow td.hop-iwindow-shadow-sw {
-  font-size: 2pt;
-  width: 8px;
-  height: 8px;
-  background: none;
-  background-image: url( "icons/iwindow-shadow-sw.png" );
-}
-
-table.hop-iwindow-shadow td.hop-iwindow-shadow-s {
-  font-size: 2pt;
-  height: 8px;
-  background: none;
-  background-image: url( "icons/iwindow-shadow-s.png" );
-}
-
-table.hop-iwindow-shadow td.hop-iwindow-shadow-se {
-  font-size: 2pt;
-  height: 8px;
-  background: none;
-  background-image: url( "icons/iwindow-shadow-se.png" );
-}
+div.hop-iwindow-inner {
+  border: 1px solid black;
+}  
 
 /*---------------------------------------------------------------------*/
-/*    title line                                                       */
+/*    handle                                                           */
 /*---------------------------------------------------------------------*/
-table.hop-iwindow td.hop-iwindow-top {
+div.hop-iwindow div.hop-iwindow-handle {
+  position: absolute;
   height: 13px;
-  max-height: 13px;
+  top: 0;
+  left: 0; 
+  right: 8px;
 }
 
-table.hop-iwindow table.hop-iwindow-handle {
+div.hop-iwindow table.hop-iwindow-handle {
   border-left: 1px solid black;
   border-right: 1px solid black;
   border-top: 1px solid #555;
@@ -75,7 +88,7 @@ table.hop-iwindow table.hop-iwindow-handle {
   cursor: default;
 }
 
-table.hop-iwindow td.hop-iwindow-iconify {
+div.hop-iwindow td.hop-iwindow-iconify {
   background-image: url( "icons/iwindow-icon.png" );
   background-repeat: no-repeat;
   background-position: left;
@@ -84,7 +97,7 @@ table.hop-iwindow td.hop-iwindow-iconify {
   width: 13px;
 }
 
-table.hop-iwindow td.hop-iwindow-maximize {
+div.hop-iwindow td.hop-iwindow-maximize {
   background-image: url( "icons/iwindow-maximize.png" );
   background-repeat: no-repeat;
   background-position: left;
@@ -93,7 +106,7 @@ table.hop-iwindow td.hop-iwindow-maximize {
   width: 13px;
 }
 
-table.hop-iwindow td.hop-iwindow-close {
+div.hop-iwindow td.hop-iwindow-close {
   background-image: url( "icons/iwindow-close.png" );
   background-repeat: no-repeat;
   background-position: right;
@@ -103,17 +116,17 @@ table.hop-iwindow td.hop-iwindow-close {
 }
 
 /*--- The title -------------------------------------------------------*/
-table.hop-iwindow td.hop-iwindow-up-title {
+div.hop-iwindow td.hop-iwindow-up-title {
   vertical-align: middle;
 }
 
-table.hop-iwindow td.hop-iwindow-up-title table {
+div.hop-iwindow td.hop-iwindow-up-title table {
   font-size: 11px;
   font-weight: bold;
   color: #ff9f1a;
 }
 
-table.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-left {
+div.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-left {
   background-image: url( "icons/iwindow-title-left.png" );
   background-repeat: no-repeat;
   background-position: left;
@@ -122,7 +135,7 @@ table.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-left {
   width: 10px;
 }
 
-table.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-middle {
+div.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-middle {
   background-image: url( "icons/iwindow-title.png" );
   background-repeat: repeat;
   background-position: center;
@@ -130,7 +143,7 @@ table.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-middle {
   text-align: center;
 }
 
-table.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-right {
+div.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-right {
   background-image: url( "icons/iwindow-title-right.png" );
   background-repeat: no-repeat;
   background-position: right;
@@ -140,37 +153,47 @@ table.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-right {
 }
 
 /*---------------------------------------------------------------------*/
-/*    body                                                             */
+/*    content                                                          */
 /*---------------------------------------------------------------------*/
-table.hop-iwindow td.hop-iwindow-content {
-  border-left: 1px solid #555;
-  border-right: 1px solid #555;
+div.hop-iwindow div.hop-iwindow-content {
+  position: absolute;
+  top: 20px; 
+  padding-top: 2px;
+  bottom: 12px; 
+  left: 1px; 
+  right: 9px;
+  border-top: 0;
+  border-bottom: 0;
   background: white;
 }
 
 /*---------------------------------------------------------------------*/
 /*    bottom line                                                      */
 /*---------------------------------------------------------------------*/
-table.hop-iwindow tr.hop-iwindow-bottom td {
+div.hop-iwindow div.hop-iwindow-foot {
+  position: absolute;
   height: 4px;
+  bottom: 8px;
+  left: 0; 
+  right: 8px;
 }
 
-table.hop-iwindow tr.hop-iwindow-bottom td table {
+div.hop-iwindow div.hop-iwindow-foot table {
   font-size: 2pt;
 }
 
-table.hop-iwindow td.hop-iwindow-bottom-left {
+div.hop-iwindow td.hop-iwindow-bottom-left {
   width: 25px;
   background-image: url( "icons/iwindow-bottom-left.png" );
   cursor: sw-resize;
 }
 
-table.hop-iwindow td.hop-iwindow-bottom-middle {
+div.hop-iwindow td.hop-iwindow-bottom-middle {
   background-image: url( "icons/iwindow-bottom-middle.png" );
   cursor: s-resize;
 }
 
-table.hop-iwindow td.hop-iwindow-bottom-right {
+div.hop-iwindow td.hop-iwindow-bottom-right {
   width: 25px;
   background-image: url( "icons/iwindow-bottom-right.png" );
   cursor: se-resize;

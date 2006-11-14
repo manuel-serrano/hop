@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:47:11 2006                          */
-;*    Last change :  Mon Oct 23 15:01:24 2006 (serrano)                */
+;*    Last change :  Tue Nov 14 18:07:07 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Various hz widgets                                               */
@@ -60,10 +60,6 @@
 	 :href "http://jigsaw.w3.org/css-validator/check/referer"
 	 :title "Valid CSS"
 	 :src "html401.png")
-      (<FOOT-BUTTON>
-	 :href "http://validator.w3.org/check/referer"
-	 :title "Valid XHTML"
-	 :src "xhtml.png")
       (<FOOT-BUTTON>
 	 :href "http://jigsaw.w3.org/css-validator/check/referer"
 	 :title "Valid CSS"

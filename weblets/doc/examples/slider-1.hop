@@ -7,5 +7,8 @@
 	 (list
 	  (<DIV> :style { width: 300px }
 	     (<SLIDER> :caption "top" :min 6 :max 20 :value 10
-		:onchange ~(node-style-set! $d :font-size this.value)))
+		:onchange ~(node-style-set! $d :font-size
+					    (string-append
+					     (* 10 (number->string this.value))
+					     "%"))))
 	  (<DIV> :align "center" :style "border: 1px solid #ccc" d)))))

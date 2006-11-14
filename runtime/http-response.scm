@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Nov 14 08:49:28 2006 (serrano)                */
+;*    Last change :  Tue Nov 14 18:01:18 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -229,6 +229,7 @@
 (define (response-directory rep dir)
    (instantiate::http-response-hop
       (backend (hop-xml-backend))
+      (content-type (xml-backend-mime-type (hop-xml-backend)))
       (char-encoding (request-encoding (%http-response-request rep)))
       (request (%http-response-request rep))
       (xml (if (%http-response-bodyp rep)
@@ -435,6 +436,7 @@
       ((response-is-xml? obj)
        (instantiate::http-response-hop
 	  (backend (hop-xml-backend))
+	  (content-type (xml-backend-mime-type (hop-xml-backend)))
 	  (char-encoding (request-encoding req))
 	  (request req)
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
@@ -456,8 +458,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::xml req)
    (instantiate::http-response-hop
-      (backend (hop-xml-backend))
       (request req)
+      (backend (hop-xml-backend))
+      (content-type (xml-backend-mime-type (hop-xml-backend)))
       (char-encoding (request-encoding req))
       (bodyp (not (eq? (http-request-method req) 'HEAD)))
       (xml obj)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Nov 14 10:39:33 2006 (serrano)                */
+;*    Last change :  Tue Nov 14 18:06:52 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -83,7 +83,7 @@
 	    (<FOOT-BUTTON>
 	       :href "http://validator.w3.org/check/referer"
 	       :title "Valid xml"
-	       :src "xhtml.png")
+	       :src "html401.png")
 	    (<FOOT-BUTTON>
 	       :href "http://jigsaw.w3.org/css-validator/check/referer"
 	       :title "Valid CSS"

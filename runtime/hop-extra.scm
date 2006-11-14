@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Nov  7 07:47:14 2006 (serrano)                */
+;*    Last change :  Tue Nov 14 17:34:19 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -108,8 +108,8 @@
 		(values dir
 			(if favicon
 			    (cons (<LINK> :rel "shortcut icon" :href favicon)
-				  (append (append rest css) jscript))
-			    (append rest (append css jscript))))))
+				  (append (append css rest) jscript))
+			    (append (append css jscript) rest)))))
 	    ((pair? (car a))
 	     (loop (append (car a) (cdr a))))
 	    ((null? (car a))
@@ -171,7 +171,7 @@
 ;*    <HEAD> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
-   (multiple-value-bind (dir body rts)
+   (multiple-value-bind (dir body)
       (head-parse args)
       (let* ((meta (<META> :http-equiv "Content-Type"))
 	     (css (<LINK> :rel "stylesheet"
@@ -188,7 +188,7 @@
 			      (and (xml-markup? x)
 				   (xml-markup-is? x 'base)))
 			   body))
-	     (body (cons css  (append jscripts body)))
+	     (body (cons css (append jscripts body)))
 	     (body (if (memq (hop-xml-backend) '(html html-4.01))
 		       (cons meta body)
 		       body))

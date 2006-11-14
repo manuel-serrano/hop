@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Nov 14 11:22:41 2006 (serrano)                */
+;*    Last change :  Tue Nov 14 18:04:28 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -243,13 +243,13 @@
    (instantiate::xml-backend
       (id 'xhtml-1.0)
       (mime-type "application/xhtml+xml")
-      (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">")
+      (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">")
       (html-attributes (hop-xhtml-xmlns))
       (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>")
       (no-end-tags-elements '())
       ;; XHTML scripts have to be protected
-;*       (script-start "\n<![CDATA[\n")                                */
-;*       (script-stop "]]>")                                           */
+      (script-start "\n<![CDATA[\n")
+      (script-stop "]]>\n")
       ;; the meta-format contains the closing />
       (meta-format "/>")))
 
@@ -257,7 +257,7 @@
 ;*    hop-xml-backend ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-xml-backend
-   *xhtml-backend*
+   *html-4.01-backend*
    (lambda (v)
       (if (xml-backend? v)
 	  v
@@ -854,6 +854,7 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <IMG> ((id #unspecified string)
 			    (inline #f boolean)
+			    (alt #f)
 			    (src #unspecified string)
 			    (attributes)
 			    body)
@@ -873,7 +874,7 @@
 	  (instantiate::xml-empty-element
 	     (markup 'img)
 	     (id (xml-make-id id 'img))
-	     (attributes (cons `(src . ,src) attributes))
+	     (attributes (cons* `(src . ,src) `(alt . ,(or alt src)) attributes))
 	     (body '())))))
 	  
 ;*---------------------------------------------------------------------*/

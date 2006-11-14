@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Nov  8 13:03:35 2006 (serrano)                */
+;*    Last change :  Tue Nov 14 17:59:09 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -195,6 +195,7 @@
    (let ((s (hop->json (procedure->service (lambda (res) (cont res))))))
       (instantiate::http-response-hop
 	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (request req)
 	 (xml (<HTML>
 		 (<HEAD>)
