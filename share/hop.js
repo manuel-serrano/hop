@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Oct 21 15:55:29 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 13:20:01 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -527,16 +527,17 @@ function hop_tooltip_show( event, id, ux, uy ) {
       }
 
       if( hop_is_html_element( hop_current_tooltip ) ) {
-	 hop_current_tooltip.style.visibility = "hidden";
+	 node_style_set( hop_current_tooltip, "visibility", "hidden" );
       }
 
-      el.style.visibility = "visible";
+      node_style_set( el, "visibility", "visible" );
+      
       var x = ux != undefined ? ux : event.pageX - 200;
       var y = uy != undefined ? uy : event.pageY - 200;
       var b = document.getElementsByTagName( "body" )[ 0 ];
-      
-      el.style.left = (x < 0) ? 0 : x;
-      el.style.top = (y < 0) ? 0: y;
+
+      node_style_set( el, "left", (x < 0) ? 0 : (x + "px") );
+      node_style_set( el, "top", (y < 0) ? 0: (y + "px") );
 
       // re-parent the popup
       if( el.parentNode != b ) {
@@ -553,7 +554,7 @@ function hop_tooltip_show( event, id, ux, uy ) {
 /*---------------------------------------------------------------------*/
 function hop_tooltip_hide() {
    if( hop_is_html_element( hop_current_tooltip ) ) {
-      hop_current_tooltip.style.visibility = "hidden";
+      node_style_set( hop_current_tooltip, "visibility", "hidden" );
       hop_current_tooltip = null;
    }
 }
@@ -806,9 +807,8 @@ function hop_style_attribute_set( obj, val ) {
    var expr;
    if( (val instanceof String) || (typeof val == "string") )
       expr = eval( val );
-   alert( "expr=" + expr );
+   
    for( var p in expr ) {
-      alert( "p=" + p + " " + expr[ p ] );
       node_style_set( obj, p, expr[ p ] );
    }
 }

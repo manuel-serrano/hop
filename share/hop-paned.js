@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Tue Nov 14 11:42:47 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 13:18:59 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -175,6 +175,7 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
    hop_add_event_listener( cursor, "mousedown", mousedown );
    
    var mouseover = function( e ) {
+      alert( "GLOP" );
       div.className = "hop-paned-cursoron";
    };
 
@@ -182,8 +183,8 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
       div.className = "hop-paned-cursoroff";
    };
 
-   hop_add_event_listener( cursor, "mouseover", mouseover );
-   hop_add_event_listener( cursor, "mouseout", mouseout );
+   hop_add_event_listener( cursor, "mouseover", mouseover, true );
+   hop_add_event_listener( cursor, "mouseout", mouseout, true );
    
    // re-parent the two pans
    parent.removeChild( pan1 );
@@ -274,8 +275,8 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
       cursor.className = "hop-paned-cursoroff";
    };
 
-   hop_add_event_listener( cursor, "mouseover", mouseover );
-   hop_add_event_listener( cursor, "mouseout", mouseout );
+   hop_add_event_listener( cursor, "mouseover", mouseover, true );
+   hop_add_event_listener( cursor, "mouseout", mouseout, true );
    
    return paned;
 }
