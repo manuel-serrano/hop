@@ -1,0 +1,24 @@
+;; Volume and Panoramic Tuning
+(let ((vol (<SLIDER> :caption "bottom" :min 0 :max 100 :step 5
+		     :onchange ~(hop-sound-volume-set! snd this.value)))
+      (bal (<SLIDER> :caption "bottom" :min -100 :max 100 :step 5
+		     :onchange ~(hop-sound-pan-set! snd this.value))))
+  (<HTML>
+   (<H2> "Volume and Balance Tuning")
+   (<HEAD> :jscript "hop-sound.js"
+	   :css "hop-slider.css" :jscript "hop-slider.js"
+	   (<TITLE> "Testing Sound"))
+   
+   (<BODY>
+    ~(define snd (hop-make-sound (string-append (hop_weblets_directory)
+						"/doc/etc/sound2.mp3")
+		     :stream #f
+		     :onload (lambda (_)
+			       (slider-value-set! $vol 100)
+			       (slider-value-set! $bal 0)
+			       (hop-sound-play snd))))
+    (<TABLE> :style { width: 500px }
+	     (<TR> (<TH> "Volume: " :style {width: 100px}) (<TD> vol))
+	     (<TR> (<TH> "Balance: " :style {width: 100px}) (<TD> bal)))
+    (<BUTTON> "Play" :onclick ~(hop-sound-play snd)))))
+    

@@ -1,0 +1,212 @@
+(module hophome_demos-set
+;   (include "util.sch")
+   (library hopscheme)
+   (import hophome_demos-set-game)
+   (export (home/demos/set)))
+
+;; TODO: include "util.sch" doesn't work...
+;; =======================================
+(define *home-directory* (string-append (dirname (the-loading-file)) "/"))
+
+(define *set-lock* (make-mutex "set"))
+
+(define (rel-path path)
+   (string-append *home-directory* path))
+
+(define (<CHECKBOX> name checked? . L)
+   (if checked?
+       (apply <INPUT> (cons* :name name :type "checkbox" :checked "checked" L))
+       (apply <INPUT> (cons* :name name :type "checkbox" L))))
+
+(define (<TEXT-FIELD> name . L)
+   (apply <INPUT> (cons* :name name :type "text" L)))
+
+(define (<SUBMIT> label . L)
+   (apply <INPUT> (cons* :value label :type "submit" L)))
+
+(define (<RESET> label . L)
+   (apply <INPUT> (cons* :value label :type "reset" L)))
+;; =======================================
+
+(define *small-card-width* 51) 
+(define *small-card-height* 76) 
+
+(define *games* '())
+
+(define-service (home/demos/set)
+   (let ((join-login (<INPUT> :type "hidden" :name "login"))
+	 (new-login (<INPUT> :type "hidden" :name "login")))
+      (<HTML>
+	 (<BODY>
+	    (<DIV>
+	       :id "createJoin-div"
+	       (<TABLE>
+		  (<TR>
+		     (<TD> :colspan 2
+			   (<DIV>
+			      :id "player-name-div"
+			      "Play as " (<INPUT> :type "text" :name "login"
+						  :onchange
+						  ~(begin
+						      (set! $join-login.value this.value)
+						      (set! $new-login.value this.value))))))
+		  (<TR>
+		     (<TH> "Join a game")
+		     (<TH> "Create a new game"))
+		  (<TR>
+		     (<TD>
+			(<DIV>
+			   :id "join-game-div"
+			   (<FORM>
+			      :id "join-game-form"
+			      :action home/demos/set/join-game
+			      join-login
+			      (<TABLE>
+				 (<TR>
+				    (<TD>
+				       (<SELECT> :name "name"
+						 (map (lambda (g)
+							 (<OPTION> (car g)))
+						      (filter (lambda (g)
+								 (eq? (Game-state (cdr g)) 'open))
+							      *games*)))))
+				 (<TR>
+				    (<TD> :align "right"
+					  (<SUBMIT> "Join")))))))
+		     (<TD>
+			(<DIV>
+			   :id "new-game-div"
+			   (<FORM>
+			      new-login
+			      :id "new-game-form"
+			      :action home/demos/set/new-game
+			      (<TABLE>
+				 (<TR>
+				    (<TD>
+				       "Game Name: ")
+				    (<TD> (<TEXT-FIELD> "name")))
+				 (<TR>
+				    (<TD>
+				       "Rounds: ")
+				    (<TD> (<TEXT-FIELD> "rounds")))
+				 (<TR> (<TD> :align "right"  :colspan 2
+					     (<SUBMIT> "Create"))))))))))
+	    (<FONT>
+	       :size -2
+	       (<DIV>
+		  :id "rules-div"
+		  (<H2> "Rules")
+		  (<P> "The goal of this game is to find as fast as possible "
+		       "matching sets out of 12 cards. A card has "
+		       "four properties:")
+		  (<UL>
+		     (<LI> "its color (red, green or blue)")
+		     (<LI> "its form (rectangle, circle or wave")
+		     (<LI> "the number of forms (1 to 3)")
+		     (<LI> "its textur (full, half or empty"))
+		  (<P> "A set of three matches, if for each property, all cards "
+		       "are either different or equal.")
+		  (<TABLE>
+		     (<TR> (<TH> :colspan 2 "Valid Exemples"))
+		     (<TR> (<TD>
+			      (<IMG> :height *small-card-height*
+				     :width *small-card-width*
+				     :src (rel-path "pics/bc1e.png"))
+			      (<IMG> :height *small-card-height*
+				     :width *small-card-width*
+				     :src (rel-path "pics/bc2e.png"))
+			      (<IMG> :height *small-card-height*
+				     :width *small-card-width*
+				     :src (rel-path "pics/bc3e.png")))
+			   (<TD>
+			      (<FONT>
+				 :size -3
+				 (<UL>
+				    (<LI> "same color (blue)")
+				    (<LI> "same form (circle)")
+				    (<LI> "different number")
+				    (<LI> "same texture (empty)")))))
+		     (<TR> (<TD>
+			      (<IMG> :height *small-card-height*
+				     :width *small-card-width*
+				     :src (rel-path "pics/bw2h.png"))
+			      (<IMG> :height *small-card-height*
+				     :width *small-card-width*
+				     :src (rel-path "pics/gc2e.png"))
+			      (<IMG> :height *small-card-height*
+				     :width *small-card-width*
+				     :src (rel-path "pics/rr2f.png")))
+			   (<TD>
+			      (<FONT>
+				 :size -3
+				 (<UL>
+				    (<LI> "different color")
+				    (<LI> "different form")
+				    (<LI> "same number")
+				    (<LI> "different texture"))))))))))))
+			      
+
+(define-service (home/demos/set/join-game login name)
+;   (tprint "login : " login)
+   (with-lock *set-lock*
+      (lambda ()
+	 (let ((g (assoc name *games*)))
+	    (cond
+	       ((not g)
+		(<HTML>
+		   (<BODY>
+		      "Game does not exist.")))
+	       ((eq? (Game-state (cdr g)) 'playing)
+		(<HTML>
+		   (<BODY>
+		      "Game has already started.")))
+	       ((eq? (Game-state (cdr g)) 'game-over)
+		(<HTML>
+		   (<BODY>
+		      "Game has already finished.")))
+	       ((or (not (string? login))
+		    (string=? "" login)
+		    (any? (lambda (player)
+			     (string=? login (Player-login player)))
+			  (Game-players (cdr g))))
+		(<HTML>
+		   (<BODY>
+		      "Login is invalid or already used")))
+	       (else
+		(<GAME> login (cdr g) #f)))))))
+
+(define-service (home/demos/set/new-game login name rounds)
+;   (tprint "login: " login "\n"
+;	   "name: " name "\n"
+;	   "rounds: " rounds)
+   (if (string? rounds)
+       (set! rounds (string->number rounds)))
+   (with-lock *set-lock*
+      (lambda ()
+	 (cond
+	    ((or (not (string? login))
+		 (string=? "" login))
+	     (<HTML>
+		(<BODY>
+		   "Login is invalid")))
+	    ((or (not (string? name))
+		 (string=? "" name)
+		 (any? (lambda (g)
+			  (string=? name (car g)))
+		       *games*))
+	     (<HTML>
+		(<BODY>
+		   "Game name is invalid, or already taken")))
+	    ((or (not (number? rounds))
+		 (<= rounds 0))
+	     (<HTML>
+		(<BODY>
+		   "Game rounds must be > 0")))
+	    (else
+	     (let ((g (new-game name rounds)))
+		(set! *games* (cons (cons name g) *games*))
+		(instantiate::http-response-string
+		   (start-line "HTTP/1.0 301 Moved Permanently")
+		   (header (list (cons 'location: (make-service-url
+						   (service :ttl 1 ()
+						      (<GAME> login g #t)))))))))))))

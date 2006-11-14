@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Fri Jun 23 11:17:05 2006 (serrano)                */
+;*    Last change :  Mon Nov 13 09:40:05 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -111,7 +111,7 @@
 	     (<DIV> (make-palette id)))))
   
   (let ((bg (make-file-name *icons-dir* "ed-silver-bg.png")))
-    (<DIV>
+    (<DIV> :id (string-append id "-toolbars")
      ;; The (not yet visible) color palette
      (<PALETTE>)
      ;; First line of the toolbar

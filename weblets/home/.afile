@@ -1,6 +1,6 @@
 ;; automatically generated, don't edit
 ;; /users/serrano/prgm/project/hop/weblets/home
-;; Tue Nov  7 07:06:34 2006
+;; Tue Nov 14 10:39:43 2006
 
 (
   (hophome_config "config.hop")
@@ -9,6 +9,8 @@
   (hophome_demos-repl "demos/repl/repl.hop")
   (hophome_demos-rewrite "demos/rewrite/rewrite.hop")
   (hophome_demos-rss "demos/rss/rss.hop")
+  (hophome_demos-set-game "demos/set/game.hop")
+  (hophome_demos-set "demos/set/set.hop")
   (hophome_demos-source "demos/source/source.hop")
   (hophome_demos-sudoku "demos/sudoku/sudoku.hop")
   (hophome_demos-wiki "demos/wiki/wiki.hop")

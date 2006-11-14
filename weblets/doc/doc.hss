@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Nov  3 09:14:56 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 11:31:23 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -73,6 +73,10 @@ tt {
   color: #300;
 }
 
+table td {
+  text-align: left;
+}
+
 /*--- forms -----------------------------------------------------------*/
 button {
   border-width: 1px;
@@ -130,6 +134,7 @@ div#title {
   border-bottom: 1px solid $border-color;
   margin-bottom: 20px;
   padding-bottom: 1px;
+  text-align: left;
 }
 
 div#result {
@@ -171,7 +176,6 @@ table.popup-menu {
 }
 
 table.popup-menu td tt:hover {
-/*   color: $inner-href-color;                                         */
   text-decoration: underline;
 }
 
@@ -206,35 +210,27 @@ table.popup-menu td tt:hover {
 /*--- notepad ---------------------------------------------------------*/
 div.hop-notepad-title {
   background-color: transparent;
-  padding: 0 10px 20px 0;
+}
+
+div.hop-notepad-body {
+  border-color: $border-color;
+  font-size: small;
+  background-color: $doc-color;
+  width: 74em;
 }
 
 div.hop-notepad-tabs {
   background-color: transparent;
-  clear: left;
-  text-align: left;
-  padding: 0;
-  padding-left: 10px;
-  padding-right: 5%;
-  margin-left: 10px;
 }
 
 div.hop-notepad-tabs span.hop-nptab {
   font-size: small;
   border-color: $border-color;
-  margin: 0 4px 0 0;
 }
 
 div.hop-notepad-tabs span.hop-nptab-active {
   background-color: $doc-color;
   border-bottom-color: $doc-color;
-}
-
-div.hop-notepad-body {
-  border: 1px solid $border-color;
-  padding: 10px;
-  font-size: small;
-  background-color: $doc-color;
 }
 
 div.hop-notepad-body-tab {
@@ -274,8 +270,6 @@ span.edit:hover {
 
 span.edit:hover {
   text-decoration: underline;
-/*   color: $deep-blue;                                                */
-/*   color: $inner-href-color;                                         */
 }
 
 /*---------------------------------------------------------------------*/
@@ -294,21 +288,25 @@ search-bar {
 }
 
 search-menu {
-  font-size: 10pt;
   border-collapse: collapse;
 }
 
 search-menu input[type=text] {
+  font-size: 100%;
 }
 
 search-menu table.search-menu-input {
-  font-size: 10pt;
+  font-size: 90%;
   font-weight: bold;
+}
+
+search-menu table.search-menu-input td.search-menu-label {
+  width: 5em;
 }
 
 search-menu table.search-menu-menu {
   border-top: 1px solid $border-color;
-  font-size: 6pt;
+  font-size: 70%;
   width: 100%;
   cursor: pointer;
 }
@@ -318,10 +316,18 @@ search-menu table.search-menu-menu td.search-letter:hover {
   background-color: $deep-blue;
 }
 
+div.iwindow-menu {
+  position: fixed;
+}
+
 /*--- api-index -------------------------------------------------------*/
 table.api-index {
   font-size: x-small;
   width: 100%;
+}
+
+table.api-index td {
+  text-align: left;
 }
 
 table.api-index span.href {
@@ -796,6 +802,7 @@ core {
   background: white;
   padding: 2px;
   border: 1px solid $border-color;
+  text-align: left;
 }
 
 core div.doc-title th {

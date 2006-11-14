@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Oct 18 13:51:17 2006 (serrano)                */
+;*    Last change :  Mon Nov 13 11:16:06 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -71,7 +71,7 @@
 	       (keyword::procedure (default (lambda (x) x)))
 	       (type::procedure (default (lambda (x) x)))
 	       (plugins::procedure (default (lambda (id) #f))))
-	    
+
 	    (wiki-string->hop ::bstring #!optional syntax)
 	    (wiki-file->hop ::bstring #!optional syntax)
 	    (wiki-input-port->hop ::input-port #!optional syntax)))

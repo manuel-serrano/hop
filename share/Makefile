@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Sep 14 14:53:07 2006 (serrano)                */
+#*    Last change :  Mon Nov 13 09:44:53 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -20,7 +20,7 @@ include ../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-error.hss hop-paned.js hop-table.js hop.css \
-                  hop-autoconf.js hop.js hop-dom.js hop-fx.js \
+                  hop.js hop-dom.js hop-fx.js \
                   md5.js base64.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css \
                   hop-notepad.css hop-slider.js hop-tabslider.js \
@@ -31,7 +31,8 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-fileselect.js hop-fileselect.css \
                   hopscheme.js \
                   hop-debug.js hop-debug.css \
-                  hop.scm icons buttons editor Makefile
+		  hop-sound.js hop-sound.scm \
+                  hop.scm icons buttons editor flash Makefile
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -67,6 +68,8 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-fileselect.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-debug.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-debug.css $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-sound.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-sound.scm $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hopscheme.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/base64.js $(HOPSHAREDIR) && \
@@ -78,7 +81,10 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/buttons/* $(HOPSHAREDIR)/buttons && \
 	mkdir -p $(HOPSHAREDIR)/editor && \
 	chmod a+rx $(HOPSHAREDIR)/editor && \
-	install -m a+r $(BUILDSHAREDIR)/editor/* $(HOPSHAREDIR)/editor
+	install -m a+r $(BUILDSHAREDIR)/editor/* $(HOPSHAREDIR)/editor && \
+	mkdir -p $(HOPSHAREDIR)/flash && \
+	chmod a+rx $(HOPSHAREDIR)/flash && \
+	install -m a+r $(BUILDSHAREDIR)/flash/* $(HOPSHAREDIR)/flash
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -118,4 +124,6 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \
 	/bin/rm -rf $(HOPSHAREDIR)/icons && \
 	/bin/rm -rf $(HOPSHAREDIR)/buttons && \
-	/bin/rm -rf $(HOPSHAREDIR)/editor 
+	/bin/rm -rf $(HOPSHAREDIR)/editor && \
+	/bin/rm -rf $(HOPSHAREDIR)/flash
+

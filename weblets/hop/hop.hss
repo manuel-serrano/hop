@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Oct 23 14:58:25 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 08:51:10 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -64,6 +64,7 @@ div#title {
   border-bottom: 1px solid $border-color;
   margin-bottom: 20px;
   padding-bottom: 1px;
+  text-align: left;
 }
 
 div#result {
@@ -83,7 +84,7 @@ td.logo {
   
 td.logo:hover {
   border: 1px outset #777;
-  background-color: #e7e7e7;
+  background-color: #fbffe1;
   -moz-border-radius: 0.5em;
 }
 

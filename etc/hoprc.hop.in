@@ -84,5 +84,6 @@
 ;*    Default HTML back-end                                            */
 ;*---------------------------------------------------------------------*/
 ;; The default back-end used for generating HTML
-;(hop-xml-backend-set! 'xhtml-1.0)
-(hop-xml-backend-set! 'html-4.01)
+;(hop-xml-backend-set! 'html-4.01)
+(hop-xml-backend-set! 'xhtml-1.0)
+

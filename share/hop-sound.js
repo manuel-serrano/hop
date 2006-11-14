@@ -1,0 +1,88 @@
+/*
+ * hop-sound.js			-- Sound Support for HOP
+ * 
+ * Copyright © 2006 Erick Gallesio - I3S-CNRS/ESSI <eg@essi.fr>
+ * 
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, 
+ * USA.
+ * 
+ *           Author: Erick Gallesio [eg@essi.fr]
+ *    Creation date: 12-Oct-2006 10:05 (eg)
+ * Last file update: 19-Oct-2006 16:10 (eg)
+ */
+
+/* load the JavaScript Flash Proxy */
+dom_add_head_script(hop_share_directory() + "/flash/JavaScriptFlashGateway.js");
+
+/* load the sound API */
+dom_add_head_script(hop_share_directory() + "/hop-sound.scm");
+
+
+var flashProxy;
+var soundCounter = 0;
+var soundPool = new Array();
+
+function hop_sound_init() {
+    var uid = new Date().getTime();
+    var flashdir = hop_share_directory() + "/flash/";
+    var tag; 
+
+    flashProxy = new FlashProxy(uid, flashdir + 'JavaScriptFlashGateway.swf');
+    tag = new FlashTag(flashdir + 'HopSound.swf', 1, 1);
+    tag.setFlashvars('lcId='+uid);
+    tag.write(document);
+}
+
+function hop_make_sound(url) {
+    var snd = new Object();
+    
+    snd.id            = soundCounter++;
+    snd.url           = url;
+    snd.volume	      = 100;
+    snd.pan	      = 0;
+    soundPool[snd.id] = snd;
+    return snd;
+}
+
+function hop_sound_load(snd, streaming) {
+    var str = (streaming == undefined) ?  true : streaming;
+    // Problem when deserializing booleans ==> Use an int.
+    flashProxy.call('new_sound', snd.id, snd.url, str? 1 : 0);
+}
+
+/* ====================================================================== *\
+ *  
+ * Handlers (these function are called from AS)
+ * 
+\* ====================================================================== */
+
+function hop_sound_onLoadHandler(id, success)
+{
+    var snd = soundPool[id];
+
+    if (snd.onLoad != undefined) {
+	snd.onLoad(success);
+    }
+}
+
+function hop_sound_onCompleteHandler(id)
+{
+    var snd = soundPool[id];
+
+    if (snd.onSoundComplete != undefined) {
+	snd.onSoundComplete();
+    }
+}

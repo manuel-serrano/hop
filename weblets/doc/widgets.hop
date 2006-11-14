@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Oct 17 10:33:06 2006 (serrano)                */
+;*    Last change :  Tue Nov 14 11:00:57 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -73,7 +73,7 @@
 	    (<FOOT-BUTTON>
 	       :href "http://validator.w3.org/check/referer"
 	       :title "Valid CSS"
-	       :src "html401.png")
+	       :src "xhtml.png")
 	    (<FOOT-BUTTON>
 	       :href "http://jigsaw.w3.org/css-validator/check/referer"
 	       :title "Valid CSS"
@@ -105,10 +105,20 @@
 		(if (> h.length 0)
 		    (begin
 		       (set! menu.innerHTML h)
-		       (set! menu.style.top (+ 12 (hop_element_y el)))
-		       (set! menu.style.left (- (hop_element_x el) 10))
-		       (set! menu.style.display "block"))
-		    (set! menu.style.display "none"))))
+		       (node-style-set! menu
+					:top
+					(string-append
+					 (number->string
+					  (+ 12 (hop_element_y el)))
+					 "px"))
+		       (node-style-set! menu
+					:left
+					(string-append
+					 (number->string
+					  (- (hop_element_x el) 10))
+					 "px"))
+		       (node-style-set! menu :display "block"))
+		    (node-style-set! menu :display "none"))))
 	  #f))
    
    (let ((size (-fx 22 (string-length lbl))))
@@ -121,10 +131,9 @@
 		  :class "search-menu-input"
 		  :width "100%"
 		  (<TR>
-		     (<TD>
+		     (<TD> 
 			:class "search-menu-label"
 			:valign "middle"
-			:width "5em"
 			lbl ": ")
 		     (<TD>
 			:valign "bottom"
@@ -135,7 +144,7 @@
 					 (iwindow-open
 					  "doc/search"
 					  ($keypress this.value)
-					  false "hop-iwindow menu"
+					  false "iwindow-menu"
 					  500 300
 					  (- window.innerWidth 550) 10))
 			   :title "Hit [return] to search"))))))

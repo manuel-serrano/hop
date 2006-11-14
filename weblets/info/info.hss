@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Oct 23 15:02:09 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 11:31:26 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
@@ -20,6 +20,10 @@ body {
 
 table.info img {
   padding: 20px;
+}
+
+table td {
+  text-align: left;
 }
 
 table.info {
@@ -65,35 +69,26 @@ table td {
 
 div.hop-notepad-title {
   background: transparent;
-  padding: 0 10px 20px 0;
-  border-color: red;
+}
+
+div.hop-notepad-body {
+  border-color: $border-color;
+  font-size: small;
+  background-color: $info-color;
 }
 
 div.hop-notepad-tabs {
   background: transparent;
-  clear: left;
-  text-align: left;
-  padding: 10px 0 0 5%;
-  margin-left: 10px;
-  border-color: red;
 }
 
 div.hop-notepad-tabs span.hop-nptab {
   font-size: small;
   border-color: $border-color;
-  margin: 0 4px 0 0;
 }
 
 div.hop-notepad-tabs span.hop-nptab-active {
   background-color: $info-color;
   border-bottom-color: $info-color;
-}
-
-div.hop-notepad-body {
-  border: 1px solid $border-color;
-  padding: 10px;
-  font-size: small;
-  background-color: $info-color;
 }
 
 div.hop-notepad-body-tab {
@@ -115,8 +110,9 @@ table.hop-info th:after {
 
 table.hop-info td {
   font-family: monospace;
-  font-size: large;
+  font-size: medium;
   vertical-align: bottom;
+  color: #008;
 }
 
 div.traffic {

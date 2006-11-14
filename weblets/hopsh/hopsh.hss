@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Oct 23 15:03:37 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 11:35:01 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    history simple CSS                                               */
@@ -18,6 +18,10 @@ body {
 
 img {
   padding: 20px;
+}
+
+table td {
+  text-align: left;
 }
 
 table.hopsh {

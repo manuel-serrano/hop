@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Apr 10 11:43:00 2006                          */
-/*    Last change :  Fri Aug  4 09:08:28 2006 (serrano)                */
+/*    Last change :  Mon Nov 13 09:47:27 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    <EDITOR> JavaScript support                                      */
 /*=====================================================================*/
@@ -47,7 +47,10 @@ function hop_edit_init(id, popups_dir, submit, cancel)
     for (var i=0; i < document.forms.length; i++) {
        hop_add_event_listener( document.forms[i],
 			       "submit",
-			       function (e) { hop_edit_update_textarea(id); },
+			       function (e) { 
+			          if (!hop_edit_src)
+			             hop_edit_update_textarea(id); 
+			       },
 			       true );
     }
     // Initialize Selection boxes
@@ -73,7 +76,6 @@ function hop_edit_keypress_hdlr(e, id)
 	  case 98:  hop_edit_action(id, "bold"); break;
 	  case 105: hop_edit_action(id, "italic"); break;
 	  case 117: hop_edit_action(id, "underline"); break;
-	  case 113: hop_edit_update_interface2(id); break;
 	  default: propagate = true;
 	}
 	if (!propagate) {
@@ -320,6 +322,46 @@ function hop_edit_view_source(id)
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_edit_view_only_source ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_edit_view_only_source(id)
+{
+    var iframe = document.getElementById("hop-edit" + id);
+    var txt    = document.getElementById(id);
+    var tools  = document.getElementById(id + "-toolbars");
+
+    // Swap Iframe and Textarea
+    iframe.style.display = "none";
+    txt.value = iframe.contentDocument.body.innerHTML;
+    txt.style.display = "block";
+    // Hide the toolbars
+    tools.style.display = "none";
+    // Retain that we see the text mode
+    hop_edit_src = true;
+    hop_edit_in_iframe = false;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_edit_view_html ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_edit_view_html(id)
+{
+    var iframe = document.getElementById("hop-edit" + id);
+    var txt    = document.getElementById(id);
+    var tools  = document.getElementById(id + "-toolbars");
+	
+    // Swap Iframe and Textarea
+    iframe.contentDocument.body.innerHTML = txt.value;
+    txt.style.display = "none";
+    iframe.style.display = "block";
+    
+    // Show the toolbars
+    tools.style.display = "block";
+    // Retain that we see the HTML mode
+    hop_edit_src = false;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_edit_update_interface ...                                    */
 /*---------------------------------------------------------------------*/
 
@@ -347,18 +389,5 @@ function hop_edit_update_interface(id)
 	document.getElementById("hop-edit-styles-" + id).value = fmt;
 
 	//    alert("FMT /" +font+ "/" + size + "/" + fmt + "/");
-    }
-}
-
-
-function hop_edit_update_interface2(id)
-{
-    if (hop_edit_in_iframe) {
-	var doc  = document.getElementById("hop-edit" + id).contentDocument;
-	var font = doc.queryCommandValue("fontname");
-	var size = doc.queryCommandValue("fontsize"); 
-	var fmt  = doc.queryCommandValue("formatblock"); 
-	
-	alert("FMT /" +font+ "/" + size + "/" + fmt + "/");
     }
 }

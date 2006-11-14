@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Mon Oct 23 15:00:45 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 11:36:59 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -93,6 +93,10 @@ textarea {
   color: blue;
 }
 
+table td {
+  text-align: left;
+}
+
 /*--- main table ------------------------------------------------------*/
 main {
   width: 45em;
@@ -146,23 +150,15 @@ foot table.foot-logo {
 /*--- notepad ---------------------------------------------------------*/
 div.hop-notepad-title {
   background: transparent;
-  padding: 0 10px 20px 0;
 }
 
 div.hop-notepad-tabs {
   background: transparent;
-  clear: left;
-  text-align: left;
-  padding: 0;
-  padding-left: 10px;
-  padding-right: 5%;
-  margin-left: 10px;
 }
 
 div.hop-notepad-tabs span.hop-nptab {
   font-size: small;
   border-color: $border-color;
-  margin: 0 4px 0 0;
 }
 
 div.hop-notepad-tabs span.hop-nptab-active {
@@ -175,10 +171,7 @@ div.hop-notepad-body {
 }
 
 div.hop-notepad-body {
-  border-left: 1px solid $border-color;
-  border-right: 1px solid $border-color;
-  border-bottom: 1px solid $border-color;
-  padding: 10px;
+  border-color: $border-color;
   font-size: small;
   background-color: $info-color;
 }

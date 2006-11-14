@@ -1,0 +1,260 @@
+(module hophome_demos-set-game
+;   (include "util.sch")
+   (library hopscheme)
+   (export
+    (class Player
+       (login::bstring read-only)
+       (event::hop-event read-only)
+       score::int)
+    (class Game
+       lock
+       (name::bstring read-only)
+       state::bool
+       players::pair-nil
+       (rounds::int read-only)
+       board)
+    (new-game name rounds)
+    (<GAME> login game can-start?)))
+
+;; TODO: include "util.sch" doesn't work...
+;; =======================================
+(define *home-directory* (string-append (dirname (the-loading-file)) "/"))
+
+(define (rel-path path)
+   (string-append *home-directory* path))
+
+(define (<CHECKBOX> name checked? . L)
+   (if checked?
+       (apply <INPUT> (cons* :name name :type "checkbox" :checked "checked" L))
+       (apply <INPUT> (cons* :name name :type "checkbox" L))))
+
+(define (<TEXT-FIELD> name . L)
+   (apply <INPUT> (cons* :name name :type "text" L)))
+
+(define (<SUBMIT> label . L)
+   (apply <INPUT> (cons* :value label :type "submit" L)))
+
+(define (<RESET> label . L)
+   (apply <INPUT> (cons* :value label :type "reset" L)))
+;; =======================================
+
+(define *card-width* 72)
+(define *card-height* 92)
+
+(define *margin* 25)
+(define *card-margin* 10)
+
+(define (new-game name rounds)
+   (instantiate::Game
+      (lock (make-mutex (string-append "game-" name)))
+      (name name)
+      (state 'open)
+      (players '())
+      (rounds rounds)
+      (board #unspecified)))
+
+(define (valid-set? board set)
+   (define (equal-or-different? p1 p2 p3)
+      (or (and (eq? p1 p2) (eq? p2 p3))
+	  (not (or (eq? p1 p2)
+		   (eq? p2 p3)
+		   (eq? p1 p3)))))
+
+   (every? equal-or-different?
+	   (vector-ref board (car set))
+	   (vector-ref board (cadr set))
+	   (vector-ref board (caddr set))))
+   
+(define (new-board)
+   (define (possible-configuration? board)
+      (let ((board-size (vector-length board)))
+	 (let loop ((i 0)
+		    (j 1)
+		    (k 2))
+	    (if (and (< i board-size)
+		     (< j board-size)
+		     (< k board-size)
+		     (valid-set? board (list i j k)))
+		   #t
+		(cond
+		   ((< k (- board-size 1))
+		    (loop i j (+ k 1)))
+		   ((< j (- board-size 1))
+		    (loop i (+ j 1) (+ j 2)))
+		   ((< i (- board-size 1))
+		    (loop (+ i 1) (+ i 2) (+ i 3)))
+		   (else #f))))))
+   
+   (define (random-card)
+      (let ((nb (+ (random 3) 1))
+	    (color (vector-ref '#(red green blue) (random 3)))
+	    (texture (vector-ref '#(full half empty) (random 3)))
+	    (form (vector-ref '#(rectangle wave circle) (random 3))))
+	 (list nb color texture form)))
+      
+   (define (fill-board! board)
+      (let loop ((i 0))
+	 (when (< i (vector-length board))
+	    (vector-set! board i (random-card))
+	    (loop (+ i 1))))
+      (if (not (possible-configuration? board))
+	  (fill-board! board)))
+      
+   (let ((board (make-vector 12)))
+      (fill-board! board)
+      board))
+
+(define (set-submit player game set)
+   (with-lock (Game-lock game)
+      (lambda ()
+	 (with-access::Player player (login event score)
+	    (with-access::Game game (state board rounds)
+	       (if (eq? state 'playing)
+		   (if (and (list? set)
+			    (= 3 (length set))
+			    (valid-set? board set))
+		       (begin
+			  ;(tprint "valid set for " login)
+			  (set! score (+ 1 score))
+			  (if (>= score rounds)
+			      (begin
+				 (set! state 'game-over)
+				 (update-scores game)
+				 (publish-winner game login))
+			      (begin
+				 (next-board! game)
+				 (update-scores game))))
+		       ;(tprint "not valid: " set)
+		       )
+		   ;(tprint "game-over")
+		   ))))))
+
+(define (next-board! game)
+   (with-access::Game game (board players)
+      (set! board (new-board))
+      (for-each (lambda (player)
+		   (upload-board player board))
+		players)))
+
+(define (upload-board player board)
+   (with-access::Player player (event)
+      (signal-hop-event! event (with-output-to-string
+				  (lambda ()
+				     (write `(board ,board)))))))
+
+(define (start-game game)
+   ;(tprint "starting game")
+   (with-access::Game game (state)
+      (set! state 'playing))
+   (next-board! game))
+
+(define (update-scores game)
+   (with-access::Game game (players)
+      (let* ((players/scores (map (lambda (player)
+				     (with-access::Player player (score login)
+					(cons login score)))
+				  players))
+	     (scores (with-output-to-string
+			(lambda ()
+			   (write players/scores)))
+		     (reverse players/scores))
+	     (scores-str (with-output-to-string
+			    (lambda ()
+			       (write `(score ,scores))))))
+	 (for-each (lambda (player)
+		      (signal-hop-event!
+		       (Player-event player)
+		       scores-str))
+		   players))))
+
+(define (publish-winner game login)
+   (for-each
+    (lambda (player)
+       (with-access::Player player (event)
+	  (signal-hop-event! event (with-output-to-string
+				      (lambda ()
+					 (write `(winner ,login)))))))
+    (Game-players game)))
+   
+(define (<GAME> login game can-start?)
+   (define (<CARD> id)
+      (let* ((x (modulo id 4))
+	     (y (/fx id 4))
+	     (x-pos-str (number->string (+ *margin* (* x (+ *card-width*
+							    *card-margin*)))))
+	     (y-pos-str (number->string (+ *margin* (* y (+ *card-height*
+							    *card-margin*))))))
+	 (<IMG> :width *card-width*
+		:height *card-height*
+		:id (string-append "card" (number->string id))
+		:style (string-append "position: absolute;"
+				      "top: " y-pos-str "px; "
+				      "left: " x-pos-str "px;"
+				      "z-index: 1; "
+				      "cursor: pointer;")
+		:src (rel-path "pics/waiting.png"))))
+
+   (define (<BORDER> id)
+      (<IMG> :width (+ *card-width* 2)
+	     :height (+ *card-height* 2)
+	     :id (string-append "border" (number->string id))
+	     :style (string-append "position: absolute; "
+				   "top: 0px; "
+				   "left: 0px; "
+				   "display: none; "
+				   "z-index: 0;")
+	     :src (rel-path "pics/border.png")))
+
+   (let* ((event (instantiate::hop-event
+		    (name (string-append login "-event"))))
+	  (player (instantiate::Player
+		     (login login)
+		     (event event)
+		     (score 0)))
+	  (cards (map <CARD> (iota 12)))
+	  (borders (map <BORDER> (iota 3)))
+	  (scores-div (<DIV> :id "scores"
+			     :style (string-append
+				     "margin-top: " (number->string *margin*) "px;"))))
+      (with-access::Game game (players)
+	 (set! players (cons player players)))
+      (<HTML>
+	 (<HEAD>
+	    (<SCRIPT> :type "text/javascript"
+		      :src (rel-path "set.scm")))
+	 (<BODY>
+	    (<DIV>
+	       :style (string-append "width: "
+				     (number->string (* (+ *card-margin*
+							   *card-width*)
+							4))
+				     "px; "
+				     "height: "
+				     (number->string (* (+ *card-margin*
+							   *card-height*)
+							3))
+				     "px; "
+				     "margin-left: " (number->string *margin*) ";"
+				     "float: left;")
+	       :id "board"
+	       borders
+	       cards)
+	    scores-div
+	    (if can-start?
+		(<DIV>
+		   (<BUTTON> :onclick ~(begin
+					  (set! this.style.display "none")
+					  (hop ($(service ()
+						    (start-game game)))))
+			     "Start Game")))
+	    (<HOP-EVENT> :event event
+			 :handler ~(event-handler event))
+	    ~(begin
+		(define (rel-path path) (string-append $*home-directory* path))
+		(define (submit-set! set) (hop ($(service (set)
+						    (set-submit player game set))
+						 set)))
+		(init-game $(list->vector cards)
+			   $(list->vector borders)
+			   $scores-div)
+		(hop ($(service () (update-scores game)))))))))

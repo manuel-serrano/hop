@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Oct 22 00:51:54 2006 (serrano)                */
+;*    Last change :  Tue Nov 14 11:22:41 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -229,7 +229,7 @@
    (instantiate::xml-backend
       (id 'html-4.01)
       (mime-type "text/html")
-      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n")
+      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Strict//EN\">\n")
       (html-attributes '())
       (header-format "")
       (no-end-tags-elements '(meta link))
@@ -248,8 +248,8 @@
       (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>")
       (no-end-tags-elements '())
       ;; XHTML scripts have to be protected
-      (script-start "<![CDATA[")
-      (script-stop "]]>")
+;*       (script-start "\n<![CDATA[\n")                                */
+;*       (script-stop "]]>")                                           */
       ;; the meta-format contains the closing />
       (meta-format "/>")))
 
@@ -257,7 +257,7 @@
 ;*    hop-xml-backend ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-xml-backend
-   *html-4.01-backend*
+   *xhtml-backend*
    (lambda (v)
       (if (xml-backend? v)
 	  v

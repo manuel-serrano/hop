@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Nov  1 16:18:01 2006 (serrano)                */
+#*    Last change :  Mon Nov 13 09:50:03 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -21,6 +21,7 @@ HOP_POP         = doc.hop config.hop \
 POPULATION	= Makefile .afile doc.hss \
                   examples api core wiki tutorials etc/weblet.info \
                   etc/logo.png etc/doc.wiki \
+                  etc/sound1.mp3 etc/sound2.mp3 \
                   $(HOP_POP)
 
 build: .afile

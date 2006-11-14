@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Tue Oct 17 07:48:49 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 11:42:47 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -50,7 +50,7 @@ function hop_vpaned_fraction_set( paned, fraction ) {
 function hop_hpaned_mousemove( e, paned ) {
    var val = hop_event_mouse_y( e ) - hop_element_y( paned );
 
-   node_style_set( paned.pan1, "height", val );
+   node_style_set( paned.pan1, "height", val + "px" );
 }
 
 /*---------------------------------------------------------------------*/

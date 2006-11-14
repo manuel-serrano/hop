@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Fri Aug  4 12:44:41 2006 (serrano)                */
+;*    Last change :  Mon Nov 13 09:54:22 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -21,7 +21,8 @@
 	   hophome_demos-rss
 	   hophome_demos-source
 	   hophome_demos-wiki
-	   hophome_demos-rewrite)
+	   hophome_demos-rewrite
+	   hophome_demos-set)
    (export (<DEMO> request)))
 
 ;*---------------------------------------------------------------------*/
@@ -88,6 +89,12 @@
 	       (<TR>
 		  (<TD>
 		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/set)
+			     "set-32x32.png" "set-48x48.png" inl
+			     500 400)))
+	       (<TR>
+		  (<TD>
+		     :align "left"
 		     (<ZIMG> (make-service-url home/demos/source)
 			     "computer-32x32.png" "computer-48x48.png" inl
 			     700 500))))))))
@@ -135,6 +142,9 @@ clients to be notified by servers.])
 server can cooperate to operate on distant documents. In this simple
 demonstration remote pages are changed on-the-fly by the server that acts
 as a proxy.])
+      (<H2> "Set")
+      (<P> :class "descr" [This demonstration implements another
+game. It shows how to use events to synchronize multiple clients in HOP.])
       (<H2> "Source")
       (<P> :class "descr" [This demonstration uses HOP ,(<EM> "trees") and
 ,(<EM> "pan"). It implements a simple file browser. This browsers may

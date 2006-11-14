@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Nov  2 12:47:04 2006 (serrano)                */
+;*    Last change :  Tue Nov 14 09:04:16 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -27,22 +27,33 @@
    (make-file-name (hop-weblets-directory) "info"))
 
 ;*---------------------------------------------------------------------*/
+;*    traffic-hookingp ...                                             */
+;*---------------------------------------------------------------------*/
+(define traffic-hookingp #f)
+
+;*---------------------------------------------------------------------*/
 ;*    traffic-hook ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (traffic-hook)
+(define traffic-hook
    (lambda (req rep)
-      (with-access::http-request req (http host port path user date)
-	 (signal-hop-event! info-event
-			    (<TR> :class "remote"
+      (when traffic-hookingp
+	 (with-access::http-request req (http host port path user date)
+	    (signal-hop-event! info-event
+			       (<TR> :class "remote"
 				  (<TD> :nowrap #t
-					host ":" port)
+				     host ":" port)
 				  (<TD> :nowrap #t
-					path)
+				     path)
 				  (<TD> :nowrap #t
-					(if (user? user) (user-name user) ""))
+				     (if (user? user) (user-name user) ""))
 				  (<TD> :nowrap #t
-					date)))
-	 rep)))
+				     date)))))
+      rep))
+
+;*---------------------------------------------------------------------*/
+;*    remote-hook ...                                                  */
+;*---------------------------------------------------------------------*/
+(hop-http-response-remote-hook-add! traffic-hook)
 
 ;*---------------------------------------------------------------------*/
 ;*    info weblet ...                                                  */
@@ -52,21 +63,15 @@
 ;*    granted for executing it.                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (info)
-   (let ((req (the-current-request))
-	 (hook (traffic-hook)))
-      (hop-http-response-remote-hook-add! hook)
+   (let ((req (the-current-request)))
       (if (authorized-service? req 'admin)
 	  (<HTML>
 	     (<HEAD> :css "hop-notepad.css" "hop-sorttable.css"
 		     :css (format "~a/info.hss" info-dir)
 		     :jscript "hop-notepad.js" "hop-sorttable.js")
 	     (<BODY>
-		:onunload {
-		   hop( $(service ()
-			   (hop-http-response-remote-hook-remove! hook)
-			   #f)(),
-			false, false, false );
-		}
+		:onunload ~(with-hop ($(service ()
+					  (set! traffic-hookingp #f))))
 		(<DIV>
 		   :align "center"
 		   (<TABLE>
@@ -117,6 +122,7 @@
 ;*    <MISC> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<MISC>)
+   (set! traffic-hookingp #f)
    (<TABLE>
       :class "hop-info"
       (<TR>
@@ -139,6 +145,7 @@
 ;*    <CACHES> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<CACHES>)
+   (set! traffic-hookingp #f)
    (define (info-cache c)
       (let* ((l (cache->list c))
 	     (d (<DIV>
@@ -215,6 +222,7 @@
 ;*    <TRAFFIC> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (<TRAFFIC>)
+   (set! traffic-hookingp #t)
    (let* ((row (<TR>
 		  :class "title"
 		  (<TH> "host")

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Oct 23 15:03:16 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 11:34:09 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WEBFILTER HOP CSS                                                */
@@ -30,6 +30,10 @@ table.webfilter {
   border: 1px solid $border-color;
   background: white;
   -moz-border-radius: 0.5em;
+}
+
+table td {
+  text-align: left;
 }
 
 table.webfilter td#user-name {
@@ -66,23 +70,15 @@ table td {
 
 div.hop-notepad-title {
   background: transparent;
-  padding: 0 10px 20px 0;
-  border-color: red;
 }
 
 div.hop-notepad-tabs {
   background: transparent;
-  clear: left;
-  text-align: left;
-  padding: 10px 0 0 5%;
-  margin-left: 10px;
-  border-color: red;
 }
 
 div.hop-notepad-tabs span.hop-nptab {
   font-size: small;
   border-color: $border-color;
-  margin: 0 4px 0 0;
 }
 
 div.hop-notepad-tabs span.hop-nptab-active {
@@ -91,10 +87,7 @@ div.hop-notepad-tabs span.hop-nptab-active {
 }
 
 div.hop-notepad-body {
-  border: 1px solid $border-color;
-  border-right: 1px solid $border-color;
-  border-bottom: 1px solid $border-color;
-  padding: 10px;
+  border-color: $border-color;
   font-size: small;
   background-color: $webfilter-color;
 }

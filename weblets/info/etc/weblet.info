@@ -2,4 +2,6 @@
  (author "M. Serrano")
  (version "1.0.0")
  (sdescr "General informations on the running Hop.")
- (about-service "about"))
+ (about-service "about")
+ (rc (hop-load-once (make-file-path (hop-weblets-directory) "info" "info.hop")))
+ (autoload #f))

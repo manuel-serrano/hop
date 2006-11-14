@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Oct 14 11:14:17 2006 (serrano)                */
+#*    Last change :  Mon Nov 13 09:36:49 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -457,6 +457,22 @@ echo ";* Automatically generated file (don't edit) */" > $init
 
 cat etc/hopwiki.init.in \
     | sed -e "s|@VERSION@|$version|" \
+    >> $init
+echo "" >> $init
+
+# share/hop-autoconf.js
+init=share/hop-autoconf.js
+mkdir -p share
+rm -f $init 2> /dev/null
+echo "/* Automatically generated file (don't edit) */" > $init
+
+cat etc/hop-autoconf.js.in \
+    | sed -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@ETCDIR@|$etcdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
     >> $init
 echo "" >> $init
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Tue Oct 10 16:42:25 2006 (serrano)                */
+/*    Last change :  Tue Nov 14 09:13:53 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -78,4 +78,6 @@ function hop_notepad_select( id1, id2 ) {
    }
 
    alert( "*** Hop Error: hop_notepad_select -- Can't find pad `" + id2 + "'");
+
+   return false;
 }
