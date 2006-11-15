@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Nov 13 11:55:26 2006 (serrano)                */
+;*    Last change :  Wed Nov 15 11:06:27 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -411,14 +411,14 @@
        (read-quote 'unquote-splicing (the-port) ignore))
       
       ;; lists
-      ((in "(")
+      ("("
        ;; we increment the number of open parenthesis
        (set! par-open (+fx 1 par-open))
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
        ;; and then, we compute the result list...
        (make-list! (collect-up-to ignore "list" (the-port)) (the-port)))
-      ((in ")")
+      (")"
        ;; we decrement the number of open parenthesis
        (set! par-open (-fx par-open 1))
        (if (<fx par-open 0)
@@ -441,7 +441,82 @@
        (set! par-open (+fx 1 par-open))
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
-       (list->vector (reverse! (collect-up-to ignore "vector" (the-port)))))
+       (list->vector
+	(reverse! (collect-up-to ignore "vector" (the-port)))))
+      
+      ;; homogeneous vectors
+      ("#s8("
+       ;; we increment the number of open parenthesis
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       (list->s8vector
+	(reverse! (collect-up-to ignore "s8vector" (the-port)))))
+      ("#u8("
+       ;; we increment the number of open parenthesis
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       (list->u8vector
+	(reverse! (collect-up-to ignore "u8vector" (the-port)))))
+      ("#s16("
+       ;; we increment the number of open parenthesis
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       (list->s16vector
+	(reverse! (collect-up-to ignore "s16vector" (the-port)))))
+      ("#u16("
+       ;; we increment the number of open parenthesis
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       (list->u16vector
+	(reverse! (collect-up-to ignore "u16vector" (the-port)))))
+      ("#s32("
+       ;; we increment the number of open parenthesis
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       (list->s32vector
+	(reverse! (collect-up-to ignore "s32vector" (the-port)))))
+
+      ("#u32("
+       ;; we increment the number of open parenthesis
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       (list->u32vector
+	(reverse! (collect-up-to ignore "u32vector" (the-port)))))
+      ("#s64("
+       ;; we increment the number of open parenthesis
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       (list->s64vector
+	(reverse! (collect-up-to ignore "s64vector" (the-port)))))
+      ("#u64("
+       ;; we increment the number of open parenthesis
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       (list->u64vector
+	(reverse! (collect-up-to ignore "u32vector" (the-port)))))
+      ("#f32("
+       ;; we increment the number of open parenthesis
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       (list->f32vector
+	(reverse! (collect-up-to ignore "f32vector" (the-port)))))
+      ("#f64("
+       ;; we increment the number of open parenthesis
+       (set! par-open (+fx 1 par-open))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
+			     par-poses))
+       (list->f64vector
+	(reverse! (collect-up-to ignore "f64vector" (the-port)))))
+      
       ((: "#" (: letter (* id)) "(")
        ;; we increment the number of open parenthesis
        (set! par-open (+fx 1 par-open))
@@ -460,17 +535,6 @@
       ("@{"
        (hop-read-hss (the-port)))
       
-      ;; escape sequences
-;*       ("~("                                                         */
-;*        (set! par-open (+fx 1 par-open))                             */
-;*        (set! par-poses (cons (-fx (input-port-position (the-port)) 1) */
-;* 			     par-poses))                               */
-;*        ;; and then, we compute the result list...                   */
-;*        (list '<TILDE>                                               */
-;* 	     ((hop-make-escape)                                        */
-;* 	      (the-port)                                               */
-;* 	      (make-list!                                              */
-;* 	       (collect-up-to ignore "list" (the-port)) (the-port))))) */
       ("~"
        (let ((expr (ignore)))
 	  (list '<TILDE> ((hop-make-escape) (the-port) expr))))
