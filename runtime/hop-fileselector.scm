@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Fri Oct 20 10:39:51 2006 (serrano)                */
+;*    Last change :  Wed Nov 15 09:55:11 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -199,7 +199,7 @@
    (let ((svc (if (eq? filter #unspecified)
 		  (get-default-filebrowser-service)
 		  (make-filebrowser-service filter)))
-	 (id (xml-make-id id 'FILESELECT)))
+	 (id (xml-make-id id 'FILEBROWSE)))
       (<BUTTON>
 	 :id id
 	 :class (if (string? class)

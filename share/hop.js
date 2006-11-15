@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Nov 14 17:01:01 2006 (serrano)                */
+/*    Last change :  Wed Nov 15 10:42:42 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -172,7 +172,7 @@ function hop_eval( proc ) {
 function hop_node_eval( node ) {
    var res;
    var scripts = node.getElementsByTagName( "script" );
-
+   
    for ( var j = 0; j < scripts.length; j++ ) {
       if( scripts[ j ].childNodes.length > 0 ) {
 	 res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
@@ -188,7 +188,9 @@ function hop_node_eval( node ) {
 function hop_js_eval( http ) {
    if( http.responseText != null ) {
       var node = document.createElement( "div" );
-      
+
+      /* I don't why yet, IE 7 does not include SCRIPT nodes */
+      /* in the resulting node!                              */
       node.innerHTML = http.responseText;
 
       return hop_node_eval( node );

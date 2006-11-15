@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Nov 14 07:51:58 2006 (serrano)                */
+/*    Last change :  Wed Nov 15 10:41:26 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -507,3 +507,28 @@ document.getElementsByClass = function( className ) {
    return res;
 }
 
+/* {*---------------------------------------------------------------------*} */
+/* {*    dom_node_get_elements_by_tag_name ...                            *} */
+/* {*---------------------------------------------------------------------*} */
+/* function dom_node_get_elements_by_tag_name( node, tag ) {           */
+/*    var t = tag.toUpperCase();                                       */
+/*    var res = new Array();                                           */
+/*                                                                     */
+/*    var iter = function( node ) {                                    */
+/*       if( node.nodeType == 1 ) {                                    */
+/* 	 var children = node.childNodes;                               */
+/*                                                                     */
+/* 	 if( node.tagName == t ) {                                     */
+/* 	    res.push( node );                                          */
+/* 	 }                                                             */
+/*                                                                     */
+/* 	 for( var i = 0; i < children.length; i++ ) {                  */
+/* 	    iter( children[ i ] );                                     */
+/* 	 }                                                             */
+/*       }                                                             */
+/*    }                                                                */
+/*                                                                     */
+/*    iter( node );                                                    */
+/*                                                                     */
+/*    return res;                                                      */
+/* }                                                                   */
