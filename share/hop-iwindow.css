@@ -3,57 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Tue Nov 14 16:29:23 2006 (serrano)                */
+/*    Last change :  Wed Nov 15 05:50:31 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW CSS                                                  */
 /*=====================================================================*/
-
-/*---------------------------------------------------------------------*/
-/*    shadow                                                           */
-/*---------------------------------------------------------------------*/
-table.hop-iwindow-shadow {
-  padding: 0;
-  border-width: 0;
-  border-spacing: 0;
-}
-
-table.hop-iwindow-shadow td.hop-shadow-ne {
-  font-size: 2pt;
-  width: 8px;
-  height: 8px;
-  background: none;
-  background-image: url( "icons/iwindow-shadow-ne.png" );
-}
-
-table.hop-iwindow-shadow td.hop-shadow-e {
-  font-size: 2pt;
-  width: 8px;
-  background: none;
-  background-image: url( "icons/iwindow-shadow-e.png" );
-}
-
-table.hop-iwindow-shadow td.hop-shadow-sw {
-  font-size: 2pt;
-  width: 8px;
-  height: 8px;
-  background: none;
-  background-image: url( "icons/iwindow-shadow-sw.png" );
-}
-
-table.hop-iwindow-shadow td.hop-shadow-s {
-  font-size: 2pt;
-  height: 8px;
-  background: none;
-  background-image: url( "icons/iwindow-shadow-s.png" );
-}
-
-table.hop-iwindow-shadow td.hop-shadow-se {
-  font-size: 2pt;
-  height: 8px;
-  background: none;
-  background-image: url( "icons/iwindow-shadow-se.png" );
-}
 
 /*---------------------------------------------------------------------*/
 /*    main frame                                                       */
@@ -75,7 +29,7 @@ div.hop-iwindow div.hop-iwindow-handle {
   height: 13px;
   top: 0;
   left: 0; 
-  right: 8px;
+  right: 1px;
 }
 
 div.hop-iwindow table.hop-iwindow-handle {
@@ -159,9 +113,9 @@ div.hop-iwindow div.hop-iwindow-content {
   position: absolute;
   top: 20px; 
   padding-top: 2px;
-  bottom: 12px; 
+  bottom: 4px; 
   left: 1px; 
-  right: 9px;
+  right: 1px;
   border-top: 0;
   border-bottom: 0;
   background: white;
@@ -173,9 +127,9 @@ div.hop-iwindow div.hop-iwindow-content {
 div.hop-iwindow div.hop-iwindow-foot {
   position: absolute;
   height: 4px;
-  bottom: 8px;
+  bottom: 0px;
   left: 0; 
-  right: 8px;
+  right: 0;
 }
 
 div.hop-iwindow div.hop-iwindow-foot table {
@@ -198,4 +152,64 @@ div.hop-iwindow td.hop-iwindow-bottom-right {
   background-image: url( "icons/iwindow-bottom-right.png" );
   cursor: se-resize;
 }
+
+/*---------------------------------------------------------------------*/
+/*    shadow                                                           */
+/*---------------------------------------------------------------------*/
+table.hop-iwindow-shadow {
+  padding: 0;
+  border-width: 0;
+  border-spacing: 0;
+}
+
+table.hop-iwindow-shadow td.hop-shadow-ne {
+  font-size: 2pt;
+  width: 8px;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-ne.png" );
+}
+
+table.hop-iwindow-shadow td.hop-shadow-e {
+  font-size: 2pt;
+  width: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-e.png" );
+}
+
+table.hop-iwindow-shadow td.hop-shadow-sw {
+  font-size: 2pt;
+  width: 8px;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-sw.png" );
+}
+
+table.hop-iwindow-shadow td.hop-shadow-s {
+  font-size: 2pt;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-s.png" );
+}
+
+table.hop-iwindow-shadow td.hop-shadow-se {
+  font-size: 2pt;
+  height: 8px;
+  background: none;
+  background-image: url( "icons/iwindow-shadow-se.png" );
+}
+
+div.hop-iwindow table.hop-iwindow-shadow  div.hop-iwindow-handle {
+  right: 8px;
+}
+  
+div.hop-iwindow table.hop-iwindow-shadow div.hop-iwindow-content {
+  bottom: 12px; 
+  right: 9px;
+}
+
+div.hop-iwindow table.hop-iwindow-shadow div.hop-iwindow-foot {
+  bottom: 8px;
+  right: 8px;
+}  
 

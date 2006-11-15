@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Tue Nov 14 13:18:59 2006 (serrano)                */
+/*    Last change :  Wed Nov 15 06:20:41 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -15,7 +15,7 @@
 function hop_vpaned_mousemove( e, paned ) {
    var val;
 
-   val = ((hop_event_mouse_x( e ) - hop_element_x( paned ))
+   val = ((hop_event_mouse_x( e ) - hop_element_x( paned ) - 2)
 	  / paned.offsetWidth) * 100;
    hop_vpaned_fraction_set( paned, Math.round( val ));
 }
@@ -149,11 +149,11 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
    
    td1.className = "hop-vpaned-pan";
    td2.className = "hop-vpaned-pan";
-   cursor.className = "hop-paned-cursor";
+   cursor.className = "hop-paned-cursor hop-paned-cursoroff";
    
-   div = document.createElement( "div" );
-   div.className = "hop-paned-cursoroff";
-   cursor.appendChild( div );
+/*    div = document.createElement( "div" );                           */
+/*    div.className = "hop-paned-cursoroff";                           */
+/*    cursor.appendChild( div );                                       */
    
    // cursor event handling
    var mousemove = function( e ) {
@@ -175,12 +175,11 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
    hop_add_event_listener( cursor, "mousedown", mousedown );
    
    var mouseover = function( e ) {
-      alert( "GLOP" );
-      div.className = "hop-paned-cursoron";
+      cursor.className = "hop-paned-cursor hop-paned-cursoron";
    };
 
    var mouseout = function( e ) {
-      div.className = "hop-paned-cursoroff";
+      cursor.className = "hop-paned-cursor hop-paned-cursoroff";
    };
 
    hop_add_event_listener( cursor, "mouseover", mouseover, true );

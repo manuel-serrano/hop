@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Tue Nov 14 16:24:57 2006 (serrano)                */
+/*    Last change :  Wed Nov 15 05:54:30 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -65,22 +65,34 @@ function hop_iwindow_maximize( id ) {
 	 if( win.user_parent ) {
 	    var p = win.parentNode;
 
-	    node_style_set( win.el_win, "width",
-			    (p.offsetWidth - win.el_shadow_box.offsetWidth) +
-			    "px" );
-	    node_style_set( win.el_win, "height",
-			   (p.offsetHeight - win.el_shadow_box.offsetHeight) +
-	                   "px" );
+	    if( win.el_shadow_box != null ) {
+	       node_style_set( win.el_win, "width",
+			       (p.offsetWidth - win.el_shadow_box.offsetWidth) +
+			       "px" );
+	       node_style_set( win.el_win, "height",
+			       (p.offsetHeight - win.el_shadow_box.offsetHeight) +
+			       "px" );
+	    } else {
+	       node_style_set( win.el_win, "width", p.offsetWidth + "px" );
+	       node_style_set( win.el_win, "height", p.offsetHeight + "px" );
+	    }
 
 	    node_style_set( win, "top", (hop_element_y( p ) + 1) + "px" );
 	    node_style_set( win, "left", (hop_element_x( p ) + 1) + "px" );
 	 } else {
-	    node_style_set( win.el_win, "width",
-			   window.innerWidth -
-			   (win.el_shadow_box.offsetWidth - 2) + "px" );
-	    node_style_set( win.el_win, "height",
-			   window.innerHeight -
-			   (win.el_shadow_box.offsetHeight - 2) + "px" );
+	    if( win.el_shadow_box != null ) {
+	       node_style_set( win.el_win, "width",
+			       window.innerWidth -
+			       (win.el_shadow_box.offsetWidth - 2) + "px" );
+	       node_style_set( win.el_win, "height",
+			       window.innerHeight -
+			       (win.el_shadow_box.offsetHeight - 2) + "px" );
+	    } else {
+	       node_style_set( win.el_win, "width",
+			       (window.innerWidth - 2) + "px" );
+	       node_style_set( win.el_win, "height",
+			       (window.innerHeight - 2) + "px" );
+	    }
 
 	    node_style_set( win, "top", 0 );
 	    node_style_set( win, "left", 0 );

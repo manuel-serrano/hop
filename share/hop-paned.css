@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:51 2005                          */
-/*    Last change :  Tue Nov 14 11:49:49 2006 (serrano)                */
+/*    Last change :  Wed Nov 15 06:19:39 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned CSS                                                    */
@@ -73,15 +73,23 @@ table.hop-vpaned td.hop-paned-cursor > div {
   width: 5px;
 }
 
-table.hop-vpaned div.hop-paned-cursoron {
-  width: 5px;
+table.hop-vpaned td.hop-paned-cursor {
   height: 100%;
+  width: 5px;
+}
+
+table.hop-vpaned td.hop-paned-cursoron {
+  cursor: move;
+  background: rgb(150,150,150);
+  background-repeat: no-repeat;
+  background-position: center;
   background-image: url( "icons/paned-vcursor.png" );
 }
 
-table.hop-vpaned div.hop-paned-cursoroff {
-  width: 5px;
-  height: 100%;
+table.hop-vpaned td.hop-paned-cursoroff {
+  background: rgb(204,204,204);
+  background-repeat: no-repeat;
+  background-position: center;
   background-image: url( "icons/paned-vcursor.png" );
 }
 
@@ -97,15 +105,15 @@ div.hop-hpaned > div.hop-paned-cursor {
   border-top: 1px inset black;
 }
 
-div.hop-paned-cursor { 
+table.hop-hpaned div.hop-paned-cursor { 
   height: 5px; 
   width: 100%;
 }
 
-div.hop-paned-cursoron {
+table.hop-hpaned div.hop-paned-cursoron {
   background-image: url( "icons/paned-hcursor.png" );
 }
 
-div.hop-paned-cursoroff {
+table.hop-hpaned div.hop-paned-cursoroff {
   background-image: url( "icons/paned-hcursor.png" );
 }
