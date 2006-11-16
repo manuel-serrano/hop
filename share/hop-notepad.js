@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Tue Nov 14 09:13:53 2006 (serrano)                */
+/*    Last change :  Thu Nov 16 17:20:53 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -68,7 +68,8 @@ function hop_notepad_inner_select( np, to ) {
 function hop_notepad_select( id1, id2 ) {
    var np = hop_is_html_element( id1 ) ? id1 : document.getElementById( id1 );
    var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );
-   var tabs = np.childNodes[ 1 ];
+   var tabs = ((np.childNodes[ 1 ].className == "hop-notepad-tabs") ?
+	       np.childNodes[ 1 ] : (np.childNodes[ 0 ]));
    var i;
 
    for( i = 0; i < tabs.childNodes.length; i++ ) {

@@ -216,7 +216,6 @@ div.hop-notepad-body {
   border-color: $border-color;
   font-size: small;
   background-color: $doc-color;
-  width: 74em;
 }
 
 div.hop-notepad-tabs {
