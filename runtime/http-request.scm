@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Nov  1 11:26:27 2006 (serrano)                */
+;*    Last change :  Fri Nov 17 09:31:05 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -63,9 +63,10 @@
 	    (set! localclientp localc)
 	    (set! localhostp localh)
 	    (when (and (not user) localhostp)
-	       (if (string? userinfo)
-		   (set! user (find-authenticated-user userinfo))
-		   (set! user (anonymous-user))))
+	       (set! user (if (string? userinfo)
+			      (or (find-authenticated-user userinfo)
+				  (anonymous-user))
+			      (anonymous-user))))
 	    req))))
 
 ;*---------------------------------------------------------------------*/
@@ -145,9 +146,12 @@
 		  (proxy-authorization pauth)
 		  (connection connection)
 		  (user (or (and (string? auth)
-				 (find-authenticated-user auth))
+				 (or (find-authenticated-user auth)
+				     (anonymous-user)))
 			    (and (string? pauth)
-				 (find-authenticated-user pauth))))))))))
+				 (or (find-authenticated-user pauth)
+				     (anonymous-user)))
+			    (anonymous-user)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-file-name-canonicalize! ...                                 */

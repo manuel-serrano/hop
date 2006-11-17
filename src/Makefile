@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Oct 10 09:42:34 2006 (serrano)                */
+#*    Last change :  Fri Nov 17 10:05:03 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -63,7 +63,7 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
+$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-etc jvm-lib
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
@@ -88,6 +88,11 @@ jvm-share:
 	cp -r ../scheme2js/runtime/*.js o/class_s/share
 	cp -r ../weblets o/class_s/share
 	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/share
+
+jvm-etc:
+	mkdir -p o/class_s/etc
+	cp ../etc/hoprc.hop o/class_s/etc
+	$(MAKE) -s jvm-list SRC=.. DIR=etc DEST=o/class_s
 
 jvm-list:
 	ls $(SRC)/$(DIR) > $(DEST)/$(DIR)/.list

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Nov 13 17:05:28 2006 (serrano)                */
+;*    Last change :  Fri Nov 17 09:30:38 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -16,7 +16,8 @@
    
    (import  __hop_param
 	    __hop_types
-	    __hop_http-lib)
+	    __hop_http-lib
+	    __hop_misc)
    
    (export  (users-close!)
 	    (add-user! ::bstring . opt)
@@ -196,14 +197,15 @@
 	(or (find-cached-user auth)
 	    (let* ((dauth (http-decode-authentication auth))
 		   (len (string-length dauth))
-		   (i (string-index dauth #\:))
-		   (u (and (>=fx i 0)
-			   (let* ((n (substring dauth 0 i))
-				  (p (substring dauth (+fx i 1) len)))
-			      (find-user n (md5sum (format "~a ~a" n p)))))))
-	       (when (user? u)
-		  (add-cached-user! auth u))
-	       u))))
+		   (i (string-index dauth #\:)))
+	       (and (>fx i 0)
+		    (let* ((n (substring dauth 0 i))
+			   (p (substring dauth (+fx i 1) len))
+			   (u (find-user n (md5sum (format "~a ~a" n p)))))
+		       (if (user? u)
+			   (add-cached-user! auth u)
+			   (hop-verb 2 "Can't authentify user: " n))
+		       u))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-user ...                                                    */
