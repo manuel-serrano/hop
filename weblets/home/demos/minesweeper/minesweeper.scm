@@ -7,6 +7,7 @@
 (define *height* 15)
 (define *nb-mines* 20)
 (define *missing-cells* 0)
+(define *nb-marked-bombs* 0)
 
 
 (define *blank-img* (img-path "blank.gif"))
