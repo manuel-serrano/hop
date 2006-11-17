@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Nov 15 11:06:27 2006 (serrano)                */
+;*    Last change :  Fri Nov 17 08:43:26 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -206,6 +206,71 @@
       (read/rp g port)))
 
 ;*---------------------------------------------------------------------*/
+;*    *sharp-grammar* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *sharp-grammar*
+   (regular-grammar ()
+      
+      ;; characters
+      ((: (uncase "a") (= 3 digit))
+       (let ((string (the-string)))
+	  (if (not (=fx (the-length) 4))
+	      (read-error "Illegal ascii character" string (the-port))
+	      (integer->char (string->integer (the-substring 1 4))))))
+
+      ;; ucs-2 characters
+      ((: "u" (= 4 xdigit))
+       (integer->ucs2 (string->integer (the-substring 1 5) 16)))
+      
+      ;; ucs2 strings
+      ((: "u\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
+       (let ((str (the-substring 2 (-fx (the-length) 1))))
+  	  (utf8-string->ucs2-string str)))
+      
+      ;; fixnums
+      ((: "b" (? (in "-+")) (+ (in ("01"))))
+       (string->integer (the-substring 1 (the-length)) 2))
+      ((: "o" (? (in "-+")) (+ (in ("07"))))
+       (string->integer (the-substring 1 (the-length)) 8))
+      ((: "d" (? (in "-+")) (+ (in ("09"))))
+       (string->integer (the-substring 1 (the-length)) 10))
+      ((: "e" (? (in "-+")) (+ digit))
+       (string->elong (the-substring 1 (the-length)) 10))
+      ((: "ex" (+ xdigit))
+       ($strtoeul (the-substring 2 (the-length)) 0 16))
+      ((: "l" (? (in "-+")) (+ digit))
+       (string->llong (the-substring 1 (the-length)) 10))
+      ((: "lx" (+ xdigit))
+       ($strtoull (the-substring 2 (the-length)) 0 16))
+      ((: "x" (? (in "-+")) (+ (in (uncase (in ("09af"))))))
+       (string->integer (the-substring 1 (the-length)) 16))
+      
+       ;; unspecified and eof-object
+      ((: (in "ue") (+ (in "nspecified-objt")))
+       (let ((symbol (string->symbol (string-upcase! (the-string)))))
+	  (cond
+	     ((eq? symbol 'UNSPECIFIED)
+	      unspec)
+	     ((eq? symbol 'EOF-OBJECT)
+	      beof)
+	     (else
+	      (read-error "Illegal identifier"
+			  (string-append "#" (symbol->string symbol))
+			  (the-port))))))
+      
+      ;; constants
+      ((: "<" (+ (or digit (uncase (in "afAF")))) ">")
+       (if (not (=fx (the-length) 6))
+	   (read-error "Illegal constant" (the-string) (the-port))
+	   (make-cnst (string->integer (the-substring 1 5) 16))))
+
+     (else
+       (let ((c (the-failure)))
+	  (if (char? c)
+	      (read-error "Illegal token" (string #\# c) (the-port))
+	      (read-error "Illegal char" c (the-port)))))))
+      
+;*---------------------------------------------------------------------*/
 ;*    *hop-grammar* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *hop-grammar*
@@ -265,7 +330,6 @@
 	      (set! *bigloo-interpreter* #t)
 	      (ignore)))))
       
-      ;; characters
       ((: (uncase "#a") (= 3 digit))
        (let ((string (the-string)))
 	  (if (not (=fx (the-length) 5))
@@ -301,38 +365,18 @@
 	       (input-port-name     (the-port))
 	       (input-port-position (the-port)))))))
       
-      ;; ucs-2 characters
-      ((: "#u" (= 4 xdigit))
-       (integer->ucs2 (string->integer (the-substring 2 6) 16)))
-      
       ;; strings with newline in them in addition to compute
       ;; the string, we have to count the number of newline
       ;; in order to increment the line-num variable strings
       ((: (? #\#) "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (the-substring 0 (-fx (the-length) 1))))
 	  (escape-C-string str)))
-      ;; ucs2 strings
-      ((: "#u\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (the-substring 3 (-fx (the-length) 1))))
-  	  (utf8-string->ucs2-string str)))
       
       ;; fixnums
       ((: (? "+") (+ digit))
        (the-integer))
       ((: "-" (+ digit))
        (the-integer))
-      ((: "#b" (? (in "-+")) (+ (in ("02"))))
-       (string->integer (the-substring 2 (the-length)) 2))
-      ((: "#o" (? (in "-+")) (+ (in ("07"))))
-       (string->integer (the-substring 2 (the-length)) 8))
-      ((: "#d" (? (in "-+")) (+ (in ("09"))))
-       (string->integer (the-substring 2 (the-length)) 10))
-      ((: "#x" (? (in "-+")) (+ (in (uncase (in ("09af"))))))
-       (string->integer (the-substring 2 (the-length)) 16))
-      ((: "#e" (? (in "-+")) (+ digit))
-       (string->elong (the-substring 2 (the-length)) 10))
-      ((: "#l" (? (in "-+")) (+ digit))
-       (string->llong (the-substring 2 (the-length)) 10))
       
       ;; flonum
       ((: (? (in "-+"))
@@ -350,38 +394,11 @@
 	    (input-port-position (the-port)))
 	   *dotted-mark*))
       
-      ;; unspecified and eof-object
-      ((: "#" (in "ue") (+ (in "nspecified-objt")))
-       (let ((symbol (string->symbol
-		      (string-upcase!
-		       (the-substring 1 (the-length))))))
-	  (cond
-	     ((eq? symbol 'UNSPECIFIED)
-	      unspec)
-	     ((eq? symbol 'EOF-OBJECT)
-	      beof)
-	     (else
-	      (read-error/location
-	       "Illegal identifier"
-	       symbol
-	       (input-port-name     (the-port))
-	       (input-port-position (the-port)))))))
-      
       ;; booleans
       ((: "#" (uncase #\t))
        #t)
       ((: "#" (uncase #\f))
        #f)
-      
-      ;; constants
-      ((: "#<" (+ (or digit (uncase (in "afAF")))) ">")
-       (if (not (=fx (the-length) 7))
-	   (read-error/location
-	    "Illegal constant"
-	    (the-string)
-	    (input-port-name     (the-port))
-	    (input-port-position (the-port)))
-	   (make-cnst (string->integer (the-substring 2 6) 16))))
       
       ;; keywords
       ((or (: ":" (+ kid) (* (or kid special)))
@@ -428,7 +445,7 @@
 	   (begin
 	      (set! par-poses (cdr par-poses))
 	      *end-of-list*)))
-      
+       
       ;; list of strings
       (#\[
        (let ((exp (read/rp *text-grammar* (the-port)
@@ -443,89 +460,48 @@
 			     par-poses))
        (list->vector
 	(reverse! (collect-up-to ignore "vector" (the-port)))))
-      
-      ;; homogeneous vectors
-      ("#s8("
-       ;; we increment the number of open parenthesis
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       (list->s8vector
-	(reverse! (collect-up-to ignore "s8vector" (the-port)))))
-      ("#u8("
-       ;; we increment the number of open parenthesis
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       (list->u8vector
-	(reverse! (collect-up-to ignore "u8vector" (the-port)))))
-      ("#s16("
-       ;; we increment the number of open parenthesis
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       (list->s16vector
-	(reverse! (collect-up-to ignore "s16vector" (the-port)))))
-      ("#u16("
-       ;; we increment the number of open parenthesis
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       (list->u16vector
-	(reverse! (collect-up-to ignore "u16vector" (the-port)))))
-      ("#s32("
-       ;; we increment the number of open parenthesis
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       (list->s32vector
-	(reverse! (collect-up-to ignore "s32vector" (the-port)))))
 
-      ("#u32("
-       ;; we increment the number of open parenthesis
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       (list->u32vector
-	(reverse! (collect-up-to ignore "u32vector" (the-port)))))
-      ("#s64("
-       ;; we increment the number of open parenthesis
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       (list->s64vector
-	(reverse! (collect-up-to ignore "s64vector" (the-port)))))
-      ("#u64("
-       ;; we increment the number of open parenthesis
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       (list->u64vector
-	(reverse! (collect-up-to ignore "u32vector" (the-port)))))
-      ("#f32("
-       ;; we increment the number of open parenthesis
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       (list->f32vector
-	(reverse! (collect-up-to ignore "f32vector" (the-port)))))
-      ("#f64("
-       ;; we increment the number of open parenthesis
-       (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
-       (list->f64vector
-	(reverse! (collect-up-to ignore "f64vector" (the-port)))))
-      
+      ;; typed vectors
       ((: "#" (: letter (* id)) "(")
-       ;; we increment the number of open parenthesis
        (set! par-open (+fx 1 par-open))
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
-       (let* ((id  (let ((str (the-substring 1 (-fx (the-length) 1))))
-		      (string->symbol str)))
-	      (l   (reverse! (collect-up-to ignore "vector" (the-port)))))
-	  (list->tvector id l)))
+       (let ((s (the-substring 1 -1)))
+	  (cond
+	     ((string=? s "s8")
+	      (list->s8vector
+	       (reverse! (collect-up-to ignore "s8vector" (the-port)))))
+	     ((string=? s "u8")
+	      (list->u8vector
+	       (reverse! (collect-up-to ignore "u8vector" (the-port)))))
+	     ((string=? s "s16")
+	      (list->s16vector
+	       (reverse! (collect-up-to ignore "s16vector" (the-port)))))
+	     ((string=? s "u16")
+	      (list->u16vector
+	       (reverse! (collect-up-to ignore "u16vector" (the-port)))))
+	     ((string=? s "s32")
+	      (list->s32vector
+	       (reverse! (collect-up-to ignore "s32vector" (the-port)))))
+	     ((string=? s "u32")
+	      (list->u32vector
+	       (reverse! (collect-up-to ignore "u32vector" (the-port)))))
+	     ((string=? s "s64")
+	      (list->s64vector
+	       (reverse! (collect-up-to ignore "s64vector" (the-port)))))
+	     ((string=? s "u64")
+	      (list->u64vector
+	       (reverse! (collect-up-to ignore "u64vector" (the-port)))))
+	     ((string=? s "f32")
+	      (list->f32vector
+	       (reverse! (collect-up-to ignore "f32vector" (the-port)))))
+	     ((string=? s "f64")
+	      (list->f64vector
+	       (reverse! (collect-up-to ignore "f64vector" (the-port)))))
+	     (else
+	      (let* ((id (string->symbol s))
+		     (l (reverse! (collect-up-to ignore "vector" (the-port)))))
+		 (list->tvector id l))))))
       
       ;; javascript (this reads up to the closing bracket).
       ("{"
@@ -578,6 +554,10 @@
 	  (if (not (pair? cell))
 	      (lambda () no)
 	      (cdr cell))))
+      
+      ;; special tokens
+      ("#"
+	(read/rp *sharp-grammar* (the-port)))
       
       ;; error or eof
       (else
