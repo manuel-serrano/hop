@@ -7,9 +7,8 @@
 (define-service (home/demos/minesweeper)
    (<HTML>
       (<HEAD>
-	 (<SCRIPT> ~(define *minesweeper-directory* $*minesweeper-directory*)))
-      (<HOP-SCHEME-HEAD>
-	 :sscript (string-append *minesweeper-directory* "minesweeper.scm"))
+	 :jscript (string-append *minesweeper-directory* "minesweeper.scm")
+	 (<BASE> :href (format "http://~a:~a~a" (hop-server-hostname) (hop-port) *minesweeper-directory*)))
       (<BODY>
 	 (<TABLE>
 	    (<TR>

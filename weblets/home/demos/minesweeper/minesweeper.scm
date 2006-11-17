@@ -1,5 +1,5 @@
 (define (img-path file)
-   (string-append *minesweeper-directory* file))
+   file)
 
 (define *game-over* #f)
 
@@ -172,13 +172,23 @@
 (define (board-init!)
    (let ((board-div (document.getElementById "board"))
 	 (line-div #f))
+      (node-style-set! board-div "padding" 0)
+      (node-style-set! board-div "margin" 0)
+      (node-style-set! board-div "border" 0)
       (set! board-div.style.visibility "hidden")
       (for-each-cell (lambda (cell)
+			(node-style-set! cell "padding" 0)
+			(node-style-set! cell "margin" 0)
+			(node-style-set! cell "border" 0)
 			(if (= cell.mine.y 0)
-			     (begin
-				(set! line-div (document.createElement "div"))
-				(board-div.appendChild line-div)))
-			 (line-div.appendChild cell)))
+			    (begin
+			       (set! line-div (document.createElement "div"))
+			       (node-style-set! line-div "padding" 0)
+			       (node-style-set! line-div "margin" 0)
+			       (node-style-set! line-div "border" 0)
+			       (node-style-set! line-div "height" "15px")
+			       (board-div.appendChild line-div)))
+			(line-div.appendChild cell)))
       (set! board-div.style.visibility "visible")))
 
 (define (game-start!)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Nov 17 07:49:32 2006 (serrano)                */
+;*    Last change :  Fri Nov 17 10:32:54 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -512,10 +512,12 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (string-append
 					      (hop-share-directory)
-					      "/icons/error.png")))
+					      (if (&io-timeout-error? e)
+						  "/icons/warning.png"
+						  "/icons/error.png"))))
 			     (<ETD>
 				(<TABLE>
-				   (<TR> (<ETD> :class "title" "An error occured while exchanging with a remote host"))
+				   (<TR> (<ETD> :class "title" "An error occured while talking with a remote host"))
 				   (<TR> (<ETD> :class "msg" host))
 				   (<TR> (<ETD> :class "dump"
 					    (<PRE> s))))))))))))))
@@ -537,7 +539,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (string-append
 					      (hop-share-directory)
-					      "/icons/error.png")))
+					      (if (&io-timeout-error? e)
+						  "/icons/warning.png"
+						  "/icons/error.png"))))
 			     (<ETD>
 				(<TABLE>
 				   (<TR> (<ETD> :class "title" "IO Error"))
