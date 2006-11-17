@@ -105,7 +105,7 @@
 	     (set! ,(symbol-append class '.proto. method-name!)
 		   ,define-name!))))
    `(begin
-       ,@(map gen-traverse (iota 3))))
+       ,@(map gen-traverse (iota 4))))
 
 (define (node n)
    (hashtable-get (thread-parameter '*nodes*) n))
@@ -146,6 +146,14 @@
    (set! Var-ref.proto (new Node))
    (proto-traverses Var-ref)
 
+   ;; only short-term meaning.
+   ;; after symbol-pass a Runtime-Var-ref is identical to a Var-ref node.
+   ;; and not all Runtime-refs are Runtime-Var-refs.
+   (define-node (Runtime-Var-ref id)
+      (set! this.id id))
+   (set! Runtime-Var-ref.proto (empty-pobject Var-ref))
+   (proto-traverses Runtime-Var-ref)
+
    (define-node (Decl id)
       (set! this.id id))
    (set! Decl.proto (empty-pobject Var-ref))
@@ -160,20 +168,20 @@
    (set! Program.proto (new Scope))
    (proto-traverses Program body)
 
-   ;; a Part represents a functional part of a program. Besides of free variables
+   ;; a Module represents a functional part of a program. Besides of free variables
    ;; the generated code should be fully functionally.
    ;; the given function is called before code-generation with the current port
    ;; as parameter and must return a
    ;; pair containing a port as 'car' and a function to close the port as cdr.
    ;; the closing function should have the following signature:
    ;;  (define (close-port p::port is-statement-form?::bool) ...)
-   ;; A part is *not* a scope. Two parts at the same level can therefore share
-   ;; variables.
-   (define-node (Part body fun)
+   ;; A Module is currently *not* a scope. Two parts at the same level can
+   ;; therefore share  variables.
+   (define-node (Module body fun)
       (set! this.body body)
       (set! this.fun fun))
-   (set! Part.proto (empty-pobject Node))
-   (proto-traverses Part body)
+   (set! Module.proto (empty-pobject Node))
+   (proto-traverses Module body)
 
    ;; Body must receive an expr. (usually a Begin).
    ;; this way there's only one class sequencing exprs.
@@ -241,29 +249,11 @@
    (set! Define.proto (empty-pobject Set!))
    (proto-traverses Define lvalue val)
 
-   (define-node (Bind-exit escape body)
-      (set! this.escape escape)
-      (set! this.body body)
-      (let ((s (gensym 'bind-exit)))
-	 (set! this.result-decl (new Decl s))
-	 (set! this.invoc-body (new Var-ref s))))
-   (set! Bind-exit.proto (empty-pobject Scope))
-   (proto-traverses Bind-exit escape body result-decl invoc-body)
-
    (define-node (Call operator operands)
       (set! this.operator operator)
       (set! this.operands operands))
    (set! Call.proto (new Node))
    (proto-traverses Call operator (operands))
-
-   (define-node (With-handler handler body)
-      (let ((s (gensym 'exception)))
-	 (set! this.exception (new Decl s))
-	 (set! this.catch (new Call handler (list (new Var-ref s)))))
-      (set! this.body body))
-   (set! With-handler.proto (new Node))
-   (proto-traverses With-handler exception catch body)
-
 
    ;; optimization-nodes
 
@@ -283,11 +273,30 @@
    (set! Return.proto (new Node))
    (proto-traverses Return val)
 
-   (define-node (Closure-alloc allocated-vars body)
-      (set! this.allocated-vars allocated-vars)
-      (set! this.body body))
+   (define-node (Closure-alloc)
+      'do-nothing)
    (set! Closure-alloc.proto (new Node))
-   (proto-traverses Closure-alloc body)
+   (proto-traverses Closure-alloc)
+
+   (define-node (Closure-use closures body)
+      (set! this.closures closures)
+      (set! this.body body))
+   (set! Closure-use.proto (new Node))
+   (proto-traverses Closure-use (closures) body)
+
+   (define-node (Closure-with-use closures body)
+      (set! this.closures closures)
+      (set! this.body body))
+   (set! Closure-with-use.proto (empty-pobject Closure-use))
+   (proto-traverses Closure-with-use (closures) body)
+
+   (define-node (Closure-ref id var)
+      (set! this.id id)
+      (set! this.var var)
+      (set! this.obj-ref (var.obj.reference))
+      (set! this.field-ref (var.field.reference)))
+   (set! Closure-ref.proto (new Node))
+   (proto-traverses Closure-ref obj-ref field-ref)
 
    (define-node (Labelled body label)
       (set! this.body body)
@@ -311,5 +320,16 @@
       (set! this.body body))
    (set! While.proto (new Node))
    (proto-traverses While test body)
+
+   (define-node (Call/cc-Call operator operands)
+      (set! this.operator operator)
+      (set! this.operands operands))
+   (set! Call/cc-Call.proto (empty-pobject Call))
+   (proto-traverses Call/cc-Call operator (operands))
+
+   (define-node (Call/cc-Resume index)
+      (set! this.indices/vars (list (cons index #f))))
+   (set! Call/cc-Resume.proto (empty-pobject Node))
+   (proto-traverses Call/cc-Resume)
    )
    

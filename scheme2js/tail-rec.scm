@@ -4,6 +4,7 @@
    (include "tools.sch")
    (option (loadq "protobject-eval.sch"))
    (import protobject
+	   deep-clone
 	   config
 	   nodes
 	   symbol
@@ -25,12 +26,14 @@
    ;; - non-captured variables: just before the continue-call the
    ;; loop-variables are assigned to tmp-variables, and then assigned
    ;; back to their loop-variables.
-   ;; - captured variables: The formal/vaarg is replaced by a tmp-variable. At
-   ;; the beginning of the loop, we assign the "normal" variable (eg. x=tmp-x),
-   ;; and just before the callback we put the updated value into the
-   ;; tmp-variable.
-   ;; This is necessary to capture the variables
-   ;; correctly with the 'with' statement. The beginning-part is done in the
+   ;; - captured variables: any captured formal/vaarg is replaced by a
+   ;; tmp-variable. At the beginning of the loop, we assign the "normal"
+   ;; variable (eg. x=tmp-x), and just before the recursive call we put the
+   ;; updated value into the tmp-variable.
+   ;; This is necessary to capture the variables correctly with the 'with'
+   ;; statement. [not sure what I meant here :( ]
+   ;;
+   ;; The transformation is split into two parts. The beginning-part is done in the
    ;; "Lambda-tail-rec" function.
    ;; ex:
    ;; (define (foo x y z) ;; x is captured, y and z aren't.
@@ -60,7 +63,7 @@
    ;;             (continue!))
    ;;
    ;; An optimization reduces the 'tmp-variable'-affections,  by directly
-   ;; assigning to the loop-variable.
+   ;; assigning to the loop-variable if possible.
 
    (define (optimize-tail-rec call-node target)
       ;; we are creating quite some tmp-vars in this function, but we have a
@@ -247,11 +250,17 @@
 			       (cons (var.assig new-val)
 				     rev-res))))))))
 
+      ;; captured formals/vaargs are not reused as is, but are replaced by
+      ;; temporary variables. This way only few occurences of these variables
+      ;; need to be changed. The captured vars are marked with the property
+      ;; 'tmp-var-decl' and then replaced once the body of the function has
+      ;; been traversed and the control comes back to the Lambda-traverse.
+      ;; If there's already a tmp-var-decl, we use it.
       (define (replace-captured-formals/vaarg! vars)
 	 (map! (lambda (var)
 		  (cond
 		     (var.tmp-var-decl => (lambda (tmp-var-decl)
-					     tmp-var-decl))
+					     tmp-var-decl.var))
 		     (var.captured?
 		      (let ((tmp-var-decl (Decl-of-new-Var var.id)))
 			 (set! var.tmp-var-decl tmp-var-decl)
@@ -286,12 +295,19 @@
 		      (set! var.new-val (cdr p)))
 		   capture-free-vars
 		   assig-mapping)
-	 (let ((assigs (non-cyclic-assigs capture-free-vars)))
-	 
-	    ;; replace call by reassig of vars, followed by 'continue'
-	    (new-node Begin (append assigs
-				    (list (new-node Tail-rec-call
-						    tail-rec-label)))))))
+	 (let* ((assigs (non-cyclic-assigs capture-free-vars))
+		;; reassig of vars, followed by 'continue'
+		(bnode (new-node Begin
+				 (append assigs
+					 (list (new-node Tail-rec-call
+							 tail-rec-label))))))
+	    (if (not target.potential-call/cc?)
+		bnode
+		;; we can only loop, if there hasn't been any call/cc during
+		;; the last iteration.
+		(new-node If ((new-node Call/cc-indicator-Var).reference)
+			  (deep-clone call-node)
+			  bnode)))))
    
    (define-pmethod (Node-tail-rec! current-fun)
       (this.traverse1! current-fun))
@@ -325,7 +341,9 @@
 		    (loop (cdr formals-ptr)
 			  rev-exchanged)))))
 		    
-      (let ((new-body (this.body.traverse! this)))
+      (let* ((new-body (this.body.traverse! this))
+	     (return new-body)
+	     (return-val return.val))
 	 (if this.tail-recced?
 	     (let* ((tail-rec-label this.tail-rec-label)
 		    (escaping-f/v-mapping (escaping-formal/vaarg-exchange!))
@@ -335,11 +353,12 @@
 					      ((cdr vp).var.reference)))
 				 escaping-f/v-mapping))
 		    (loop-body (new-node Begin (append! prolog
-							(list new-body))))
+							(list return-val))))
 		    (loop (new-node Tail-rec loop-body tail-rec-label)))
 		(delete! this.tail-rec-label)
 		(delete! this.tail-recced?)
-		(set! this.body loop))
+		(set! return.val loop)
+		(set! this.body return)) ;; should not be necessary
 	     (set! this.body new-body)))
       this)
    
@@ -351,8 +370,6 @@
       
       (let ((op this.operator))
 	 (set! this.operator (op.traverse! current-fun)) ;; might be a lambda
-	 (if this.tail?
-	     (set! this.tail-call #t))
 	 (if (and this.tail?
 		  current-fun
 		  (config 'optimize-tail-rec)

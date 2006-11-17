@@ -349,7 +349,8 @@
    (if (inherits-from? operator (node 'Var-ref))
        (let* ((var operator.var)
 	      (id var.js-id)
-	      (optimize-fun (and (not var.muted?)
+	      (optimize-fun (and (inherits-from? var (node 'JS-Var))
+				 (not var.muted?)
 				 id
 				 (assq id *optimizable-operators*))))
 	  (and optimize-fun ((cadr optimize-fun) p operands)))))

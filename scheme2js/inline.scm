@@ -4,13 +4,14 @@
    (include "tools.sch")
    (option (loadq "protobject-eval.sch"))
    (import protobject
+	   deep-clone
 	   config
 	   nodes
 	   var
 	   side
 	   locals
 	   use-count
-	   nested-funs
+	   nested-closures
 	   fun-size
 	   transform-util
 	   verbose)
@@ -27,7 +28,7 @@
    (and (can-be-inlined? var)
  	(< nested-counter 3)
  	(or (= var.uses 1)
- 	    (and (not var.single-value.nested-funs?)
+ 	    (and (not var.single-value.nested-closures?)
  		 (< var.single-value.size (/ 30 (+ nested-counter 1)))))))
 
 (define (inline! tree)
@@ -43,7 +44,7 @@
 		 (side-effect tree)
 		 (use-count tree)))
 	  (fun-size tree)
-	  (nested-funs tree)
+	  (nested-closures tree)
 	  (locals tree
 		  #t)   ;; collect formals.
 	  (if (or (clone-funs tree)
@@ -75,74 +76,12 @@
 		    (set! this.operator var.single-value)))))
       (this.traverse0!))
    
-   (verbose " clone-funs")
+   (verbose " single-use")
    (overload traverse! single-use! (Node
 				   Set!
 				   Call)
 	     (tree.traverse!))
    (> single-use-inline-count 0))
-
-(define (clone-fun fun)
-   (define to-clone (make-eq-hashtable))
-   
-   (define label-ht (make-eq-hashtable))
-   (define (label-map label)
-      (or (hashtable-get label-ht label)
-	  (let ((label-replacement (gensym 'label)))
-	     (hashtable-put! label-ht label-replacement label-replacement)
-	     (hashtable-put! label-ht label label-replacement)
-	     label-replacement)))
-   
-   (define (to-clone-add! ht)
-      (hashtable-for-each ht
-			  (lambda (key val)
-			     (hashtable-put! to-clone key #t))))
-   
-   (define-pmethod (Var-deep-clone cloned-ht)
-      (if (hashtable-get to-clone this)
-	  (pcall this pobject-deep-clone cloned-ht)
-	  this))
-
-   (define-pmethod (Lambda-deep-clone cloned-ht)
-      (to-clone-add! this.local-vars)
-      (pcall this pobject-deep-clone cloned-ht))
-
-   (define-pmethod (Call-deep-clone cloned-ht)
-      (let ((cloned-fun this.cloned-fun))
-	 (delete! this.cloned-fun)
-	 (let ((res (pcall this pobject-deep-clone cloned-ht)))
-	    (if cloned-fun
-		(set! this.cloned-fun cloned-fun))
-	    res)))
-
-   (define-pmethod (Tail-rec-deep-clone cloned-ht)
-      (let ((res (pcall this pobject-deep-clone cloned-ht)))
-	 (set! res.label (label-map res.label))
-	 res))
-
-   (define-pmethod (Tail-rec-call-deep-clone cloned-ht)
-      (let ((res (pcall this pobject-deep-clone cloned-ht)))
-	 (set! res.label (label-map res.label))
-	 res))
-
-   (define-pmethod (With-handler-deep-clone cloned-ht)
-      (to-clone-add! this.local-vars)
-      (pcall this pobject-deep-clone cloned-ht))
-   
-   (define-pmethod (Labelled-deep-clone cloned-ht)
-      (let ((res (pcall this pobject-deep-clone cloned-ht)))
-	 (set! res.label (label-map res.label))
-	 res))
-
-   (to-clone-add! fun.local-vars)
-   (overload deep-clone deep-clone (Var
-				    Lambda
-				    Call
-				    Tail-rec
-				    Tail-rec-call
-				    With-handler
-				    Labelled)
-	     (pcall fun pobject-deep-clone (make-eq-hashtable))))
 
 (define (clone-funs tree)
    (define clone-funs-counter 0)
@@ -157,7 +96,7 @@
 		 (var op.var))
 	     (if (good-for-inlining? var nested-counter)
 		 (let* ((single-value var.single-value)
-			(cloned (clone-fun single-value)))
+			(cloned (deep-clone single-value)))
 		    (set! clone-funs-counter (+ clone-funs-counter 1))
 		    (set! this.cloned-fun cloned)
 		    (cloned.traverse (+ nested-counter 1)))))))

@@ -13,7 +13,7 @@
    (define-pmethod (Node-locals ht)
       (this.traverse1 ht))
    
-   (define-pmethod (Part-locals ht)
+   (define-pmethod (Module-locals ht)
       (let ((new-ht (make-eq-hashtable)))
 	 (set! this.local-vars new-ht)
 	 (this.traverse1 new-ht)))
@@ -27,22 +27,18 @@
 	     ;; don't go into formals and vaarg.
 	     (this.body.traverse new-ht))))
 
-   (define-pmethod (With-handler-locals ht)
-      (let ((new-ht (make-eq-hashtable)))
-	 (set! this.local-vars new-ht)
-	 (if collect-formals?
-	     (this.exception.traverse new-ht))
-	 (this.catch.traverse ht)
-	 (this.body.traverse ht)))
-   
+   (define-pmethod (Closure-ref-locals ht)
+      ;; don't go into field-ref
+      (this.obj-ref.traverse ht))
+
    (define-pmethod (Decl-locals ht)
       (hashtable-put! ht this.var #t))
    
    (verbose " locals (collect)")
    (overload traverse locals (Node
-			      Part
+			      Module
 			      Lambda
-			      With-handler
+			      Closure-ref
 			      Decl)
 	     (tree.traverse #f)))
 

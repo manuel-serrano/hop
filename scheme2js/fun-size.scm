@@ -28,4 +28,6 @@
 
 (define-pmethod (Fun-fun-size surrounding-scope)
    (set! this.size 0)
-   (this.traverse1 this))
+   (this.traverse1 this)
+   (when surrounding-scope
+      (set! surrounding-scope.size (+ surrounding-scope.size this.size))))

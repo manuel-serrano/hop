@@ -16,14 +16,14 @@
    (verbose "constants")
    (set! *constants* (make-eq-hashtable))
    (overload traverse! constants! (Node
-				   Part
+				   Module
 				   Const)
 	     (tree.traverse!)))
 
 (define-pmethod (Node-constants!)
    (this.traverse0!))
 
-(define-pmethod (Part-constants!)
+(define-pmethod (Module-constants!)
    (let ((old-constants *constants*))
       (set! *constants* (make-eq-hashtable))
       (let ((new-body (this.body.traverse!))

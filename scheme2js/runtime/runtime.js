@@ -5,8 +5,6 @@ var sc_JS_GLOBALS = this; /// export *js*
 
 var sc_SYMBOL_PREFIX = "\u1E9C"; // "\u1E9D\u1E9E\u1E9F";
 
-var sc_TAIL_CALLS;
-
 var __sc_LINE=-1;
 var __sc_FILE="";
 
@@ -46,6 +44,42 @@ function sc_error_immutable() {  /// export
 	    }
 	});
     throw t;
+}
+
+function sc_withHandlerLambda(handler, body) { /// export-higher with-handler-lambda
+    try {
+	return body();
+    } catch(e) {
+	if (!e._internalException)
+	    return handler(e);
+	else
+	    throw e;
+    }
+}
+
+function sc_withHandlerLambda_callcc(handler, body) { /// export-higher with-handler-lambda
+    var sc_storage = SC_CALLCC_STORAGE;
+    if (sc_storage['doCall/CcDefault?']) {
+    } else if (sc_storage['doCall/CcRestore?']) {
+	var _sc_frame = sc_storage.pop();
+	handler = _sc_frame.handler;
+	body = sc_storage.callNextFunction();
+    } else { // root-fun?
+	return sc_callCcRoot(this, arguments);
+    }
+    try {
+	return body();
+    } catch(e) {
+	if (!e._internalException)
+	    return handler(e);
+	if (e instanceof sc_CallCcException && e.backup) {
+	    _sc_frame = new Object();
+	    _sc_frame.callee = sc_withHandlerLambda_callcc;
+	    _sc_frame.handler = handler;
+	    e.push(_sc_frame);
+	}
+	throw e;
+    }
 }
 
 var sc_properties = new Object();
@@ -774,7 +808,8 @@ function sc_Char(c) {
 	return cached;
     this.val = c;
     sc_Char.lazy[c] = this;
-    return undefined; // for FF2.0
+    // add return, so FF does not complain.
+    return undefined;
 }
 sc_Char.lazy = new Object();
 // thanks to Eric
@@ -1181,6 +1216,7 @@ function sc_isProcedure(o) { /// export
     return (typeof o === "function");
 }
 
+// no need for _callcc version
 function sc_apply(proc) { /// export-higher
     var args = new Array();
     // first part of arguments are not in list-form.
@@ -1192,31 +1228,6 @@ function sc_apply(proc) { /// export-higher
 	l = l.cdr;
     }
     return proc.apply(null, args);
-}
-
-function sc_apply_callcc(proc) { /// export
-    var sc_storage = sc_CALLCC_STORAGE;
-    if (sc_storage.doRestore) {
-	proc = sc_storage.getNextFrame();
-	// we only need to call the correct procedure again.
-	// the proc itself needs to store everything it needs (in particular the params).
-    } else {
-	sc_storage.push(proc);
-    }
-    try {
-	var args = new Array();
-	// first part of arguments are not in list-form.
-	for (var i = 1; i < arguments.length - 1; i++)
-	    args.push(arguments[i]);
-	var l = arguments[arguments.length - 1];
-	while (l != null) {
-	    args.push(l.car);
-	    l = l.cdr;
-	}
-	return proc.apply(null, args);
-    } finally {
-	sc_storage.pop();
-    }
 }
 
 function sc_map1(proc, l1) {
@@ -1256,35 +1267,52 @@ function sc_map(proc, l1, l2, l3) { /// export-higher
 }
 
 function sc_map_callcc(proc) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    if (sc_storage.doRestore) {
-	var sc_frame = sc_storage.getNextFrame();
-    } else {
-	var sc_frame = new Object();
-	sc_frame.proc = proc;
-	sc_frame.arguments = arguments;
-	sc_frame.nbApplyArgs = arguments.length - 1;
-	sc_frame.applyArgs = new Array(sc_frame.nbApplyArgs);
-	sc_frame.revres = null;
-	sc_storage.push(sc_frame);
-    }
-    with(sc_frame) {
-	try {
-	    if(sc_storage.doRestore) {
-		revres = sc_cons(proc(), revres);
-	    }
-	    while (arguments[1] !== null) {
-		for (var i = 0; i < nbApplyArgs; i++) {
-		    applyArgs[i] = arguments[i + 1].car;
-		    arguments[i + 1] = arguments[i + 1].cdr;
-		}
-		revres = sc_cons(proc.apply(null, applyArgs), revres);
-	    }
-	    
-	    return sc_destReverseAppend(revres, null);
-	} finally {
-	    sc_storage.pop();
+    var sc_storage = SC_CALLCC_STORAGE;
+    if (sc_storage['doCall/CcDefault?']) {
+	var args = arguments;
+	var revres = null;
+    } else if (sc_storage['doCall/CcRestore?']) {
+	var _sc_frame = sc_storage.pop();
+	args = new Array();
+	// can't use .concat, as 'arguments' is not an array.
+	// do not copy procedure (_sc_frame.args[0])
+	for (var i = 1; i < _sc_frame.args.length; i++) {
+	    args[i] = _sc_frame.args[i];
 	}
+	revres = _sc_frame.revres;
+	proc = _sc_frame.proc;
+	try {
+	    revres = sc_cons(sc_storage.callNext(), revres);
+	} catch(e) {
+	    if (e instanceof sc_CallCcException && e.backup) {
+		e.push(_sc_frame);
+	    }
+	    throw e;
+	}
+    } else { // root-fun?
+	return sc_callCcRoot(this, arguments);
+    }
+    try {
+	var nbApplyArgs = args.length - 1;
+	var applyArgs = new Array(nbApplyArgs);
+	while (args[1] !== null) {
+	    for (var i = 0; i < nbApplyArgs; i++) {
+		applyArgs[i] = args[i + 1].car;
+		args[i + 1] = args[i + 1].cdr;
+	    }
+	    revres = sc_cons(proc.apply(null, applyArgs), revres);
+	}
+	return sc_destReverseAppend(revres, null);
+    } catch (e) {
+	if (e instanceof sc_CallCcException && e.backup) {
+	    var _sc_frame = new Object();
+	    _sc_frame.args = args;
+	    _sc_frame.revres = revres;
+	    _sc_frame.proc = proc;
+	    _sc_frame.callee = sc_map_callcc;
+	    e.push(_sc_frame);
+	}
+	throw e;
     }
 }
 
@@ -1316,7 +1344,8 @@ function sc_forEach(proc, l1, l2, l3) { /// export-higher
 	}
 	proc.apply(null, applyArgs);
     }
-    return undefined; // for FF2.0
+    // add return so FF does not complain.
+    return undefined;
 }
 
 function sc_forEach_callcc(proc, l1) { /// export-higher
@@ -1326,15 +1355,7 @@ function sc_forEach_callcc(proc, l1) { /// export-higher
 function sc_force(o) { /// export-higher
     return o();
 }
-function sc_force_callcc(o) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    if (sc_storage.doRestore) {
-	o = sc_storage.getNextFrame();
-    } else {
-	sc_storage.push(o);
-    }
-    return o();
-}
+
 function sc_makePromise(proc) { /// export
     var isResultReady = false;
     var result = undefined;
@@ -1354,6 +1375,7 @@ function sc_Values(values) {
     this.values = values;
 }
 
+// no need for _callcc version
 function sc_values() { /// export
     if (arguments.length === 1)
 	return arguments[0];
@@ -1370,26 +1392,30 @@ function sc_callWithValues(producer, consumer) { /// export-higher
 }
 
 function sc_callWithValues_callcc(producer, consumer) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    if (sc_storage.doRestore) {
-	var sc_frame = sc_storage.getNextFrame();
-    } else {
-	var sc_frame = new Object();
-	sc_frame.producer = producer;
-	sc_frame.consumer = consumer;
-	sc_storage.push(sc_frame);
+    var sc_storage = SC_CALLCC_STORAGE;
+    if (sc_storage['doCall/CcDefault?']) {
+    } else if (sc_storage['doCall/CcRestore?']) {
+	var _sc_frame = sc_storage.pop();
+	consumer = _sc_frame.consumer;
+	producer = sc_storage.callNextFunction();
+    } else { // root-fun?
+	return sc_callCcRoot(this, arguments);
     }
     try {
-	if (!('produced' in sc_frame)) {
-	    sc_frame.produced = sc_frame.producer();
+	var produced = producer();
+    } catch (e) {
+	if (e instanceof sc_CallCcException && e.backup) {
+	    var _sc_frame = new Object();
+	    _sc_frame.callee = sc_callWithValues_callcc;
+	    _sc_frame.consumer = consumer;
+	    e.push(_sc_frame);
 	}
-	if (sc_frame.produced instanceof sc_Values)
-	    return sc_frame.consumer.apply(null, sc_frame.produced.values);
-	else
-	    return sc_frame.consumer(sc_frame.produced);
-    } finally {
-	sc_storage.pop();
+	throw e;
     }
+    if (produced instanceof sc_Values)
+	return consumer.apply(null, produced.values);
+    else
+	return consumer(produced);
 }
 
 function sc_dynamicWind(before, thunk, after) { /// export-higher
@@ -1402,30 +1428,85 @@ function sc_dynamicWind(before, thunk, after) { /// export-higher
     }
 }
 
+var sc_DYNAMIC_WIND_COUNTER = 0; // unique id for each dynamic-wind
+
 function sc_dynamicWind_callcc(before, thunk, after) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    if (sc_storage.doRestore) {
-	var sc_frame = sc_storage.getNextFrame();
-    } else {
-	var sc_frame = new Object();
-	sc_frame.before = before;
-	sc_frame.thunk = thunk;
-	sc_frame.after = after;
-	sc_frame.state = 'before';
-	sc_storage.push(sc_frame);
+    var sc_storage = SC_CALLCC_STORAGE;
+    var callCc_tmp;
+    if (sc_storage['doCall/CcDefault?']) {
+	var id = sc_DYNAMIC_WIND_COUNTER++;
+	var sc_state = 'before';
+    } else if (sc_storage['doCall/CcRestore?']) {
+	var _sc_frame = sc_storage.pop();
+	sc_state = _sc_frame.sc_state;
+	id = _sc_frame.id;
+	before = _sc_frame.before;
+	thunk = _sc_frame.thunk;
+	after = _sc_frame.after;
+	res = _sc_frame.res;
+	caught_exception = _sc_frame.caught_exception;
+	switch (sc_state) {
+	case 'before':
+	    before = sc_storage.callNextFunction();
+	    break;
+	case 'during':
+	    thunk = sc_storage.callNextFunction();
+	    break;
+	case 'after':
+	    after = sc_storage.callNextFunction();
+	    break;
+	case 'exception':
+	    var remainingAfter = sc_storage.callNextFunction();
+	    break;
+	}
+    } else { // root-fun?
+	return sc_callCcRoot(this, arguments);
     }
     try {
-	if (sc_frame.state == 'before') {
-	    sc_frame.before();
-	    sc_frame.state = 'thunk';
+	try {
+	    switch (sc_state) {
+	    case 'before':
+		before();
+	    case 'during':
+		sc_state = 'during';
+		res = thunk();
+	    case 'after':
+		sc_state = 'after';
+		after();
+		return res;
+	    case 'exception':
+		remainingAfter();
+		throw caught_exception;
+	    }
+	} catch (e_inner) {
+	    if (!(e_inner instanceof sc_CallCcException) &&
+		sc_state === 'during') {
+		var caught_exception = e_inner;
+		sc_state = 'exception';
+		after();
+	    }
+	    throw e_inner;
 	}
-	var res = sc_frame.thunk();
-	return res;
-    } finally {
-	if (sc_frame.state != 'before')
-	    sc_frame.after();
-	sc_storage.pop();
+    } catch (e) {
+	if (e instanceof sc_CallCcException && e.backup) {
+	    var _sc_frame = new Object();
+	    _sc_frame.callee = sc_dynamicWind_callcc;
+	    _sc_frame.sc_state = sc_state;
+	    _sc_frame.id = id;
+	    _sc_frame.before = before;
+	    _sc_frame.thunk = thunk;
+	    _sc_frame.after = after;
+	    _sc_frame.res = res;
+	    _sc_frame.caught_exception = caught_exception;
+	    e.push(_sc_frame);
+	}
+	if (sc_state === 'during' &&
+	    (e instanceof sc_CallCcException)) {
+	    e.pushDynamicWind({ id: id, before: before, after: after });
+	}
+	throw e;
     }
+    return undefined; // for FF2.0
 }
 
 // TODO: eval/scheme-report-environment/null-environment/interaction-environment
@@ -1494,6 +1575,7 @@ function sc_deleteJsField(o, field) { /// export js-field-delete!
     delete o[field];
 }
 
+// no need for _callcc version
 function sc_jsCall(o, fun) { /// export-higher
     var args = new Array();
     for (var i = 2; i < arguments.length; i++)
@@ -1501,61 +1583,12 @@ function sc_jsCall(o, fun) { /// export-higher
     return fun.apply(o, args);
 }
 
-function sc_jsCall_callcc(o, fun) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    if (sc_storage.doRestore) {
-	var sc_frame = sc_storage.getNextFrame();
-	o = sc_frame.o;
-	fun = sc_frame.fun;
-    } else {
-	// we don't need to store the arguments, as they called function needs
-	// to store it's parameters anyways.
-	var sc_frame = new Object();
-	sc_frame.o = o;
-	sc_frame.fun = fun;
-	sc_storage.push(sc_frame);
-    }
-    try {
-	var args = new Array();
-	for (var i = 2; i < arguments.length; i++)
-	    args[i-2] = arguments[i];
-	return fun.apply(o, args);
-    } finally {
-	sc_storage.pop();
-    }
-}
-
+// no need for _callcc version
 function sc_jsMethodCall(o, field) { /// export-higher
     var args = new Array();
     for (var i = 2; i < arguments.length; i++)
 	args[i-2] = arguments[i];
     return o[field].apply(o, args);
-}
-
-function sc_jsMethodCall_callcc(o, field) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    var fun;
-    var args;
-    if (sc_storage.doRestore) {
-	var sc_frame = sc_storage.getNextFrame();
-	o = sc_frame.o;
-	fun = sc_frame.fun;
-    } else {
-	// we don't need to store the arguments, as they called function needs
-	// to store it's parameters anyways.
-	var sc_frame = new Object();
-	sc_frame.o = o;
-	sc_frame.fun = fun = o[field];
-	args = new Array();
-	for (var i = 2; i < arguments.length; i++)
-	    args[i-2] = arguments[i];
-	sc_storage.push(sc_frame)
-    }
-    try {
-	return fun.apply(o, args);
-    } finally {
-	sc_storage.pop();
-    }
 }
 
 // HACK: we don't export jsNew as higher, as we can't handle it in our call/cc anyways.
@@ -1577,7 +1610,8 @@ function sc_Keyword(str) {
 
     sc_Keyword.lazy[str] = this;
     this.val = str;
-    return undefined; // for FF2.0
+    // add return so FF does not complain.
+    return undefined;
 }
 sc_Keyword.lazy = new Object;
 
@@ -1647,10 +1681,10 @@ sc_InputPort.prototype.close = function() {
 function sc_ErrorInputPort() {
 };
 sc_ErrorInputPort.prototype = new sc_InputPort();
-sc_ErrorInputPort.getNextChar = function() {
+sc_ErrorInputPort.prototype.getNextChar = function() {
     throw "can't read from error-port.";
 };
-sc_ErrorInputPort.isCharReady = function() {
+sc_ErrorInputPort.prototype.isCharReady = function() {
     return false;
 };
     
@@ -2133,25 +2167,12 @@ function sc_withInputFromPort(p, thunk) { /// export-higher
 }
 
 function sc_withInputFromPort_callcc(p, thunk) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    if (sc_storage.doRestore) {
-	var sc_frame = sc_storage.getNextFrame();
-	p = sc_frame.p;
-	thunk = sc_frame.thunk;
-    } else {
-	var sc_frame = new Object();
-	sc_frame.p = p;
-	sc_frame.thunk = thunk;
-	sc_storage.push(sc_frame);
-    }
-    try {
-	var tmp = SC_DEFAULT_IN; // THREAD: shared var.
-	SC_DEFAULT_IN = p;
-	return thunk();
-    } finally {
-	SC_DEFAULT_IN = tmp;
-	sc_storage.pop();
-    }
+    // no need to verify for "restore...". All operations are safe, and
+    // dynamicWind_callcc will handle the rest.
+    var tmp = SC_DEFAULT_IN;
+    return sc_dynamicWind_callcc(function() { SC_DEFAULT_IN = p; },
+				 thunk,
+				 function() { SC_DEFAULT_IN = tmp; });
 }
 
 function sc_withInputFromString_mutable(s, thunk) { /// export-higher
@@ -2159,10 +2180,7 @@ function sc_withInputFromString_mutable(s, thunk) { /// export-higher
 }
 
 function sc_withInputFromString_mutable_callcc(s, thunk) { /// export-higher
-    if (sc_CALLCC_STORAGE.doRestore)
-	return sc_withInputFromPort_callcc();
-    else
-	return sc_withInputFromString_immutable_callcc(s.val, thunk);
+    return sc_withInputFromString_immutable_callcc(s.val, thunk);
 }
 
 function sc_withInputFromString_immutable(s, thunk) { /// export-higher
@@ -2170,10 +2188,7 @@ function sc_withInputFromString_immutable(s, thunk) { /// export-higher
 }
 
 function sc_withInputFromString_immutable_callcc(s, thunk) { /// export-higher
-    if (sc_CALLCC_STORAGE.doRestore)
-	return sc_withInputFromPort_callcc();
-    else
-	return sc_withInputFromPort_callcc(new sc_StringInputPort(s), thunk);
+    return sc_withInputFromPort_callcc(new sc_StringInputPort(s), thunk);
 }
 
 function sc_withOutputToPort(p, thunk) { /// export-higher
@@ -2187,25 +2202,12 @@ function sc_withOutputToPort(p, thunk) { /// export-higher
 }
 
 function sc_withOutputToPort_callcc(p, thunk) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    if (sc_storage.doRestore) {
-	var sc_frame = sc_storage.getNextFrame();
-	p = sc_frame.p;
-	thunk = sc_frame.thunk;
-    } else {
-	var sc_frame = new Object();
-	sc_frame.p = p;
-	sc_frame.thunk = thunk;
-	sc_storage.push(sc_frame);
-    }
-    try {
-	var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
-	SC_DEFAULT_OUT = p;
-	return thunk();
-    } finally {
-	SC_DEFAULT_OUT = tmp;
-	sc_storage.pop();
-    }
+    // no need to verify for "restore...". All operations are safe, and
+    // dynamicWind_callcc will handle the rest.
+    var tmp = SC_DEFAULT_OUT;
+    sc_dynamicWind_callcc(function() { SC_DEFAULT_OUT = p; },
+			  thunk,
+			  function() { SC_DEFAULT_OUT = tmp; });
 }
 
 function sc_withOutputToString_mutable(thunk) { /// export-higher
@@ -2214,44 +2216,43 @@ function sc_withOutputToString_mutable(thunk) { /// export-higher
     return p.close();
 }
 
-function sc_withOutputToString_mutable_callcc(thunk) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    var p;
-    if (sc_storage.doRestore) {
-	p = sc_storage.getNextFrame();
-    } else {
-	p = new sc_StringOutputPort_mutable();
-	sc_storage.push(p);
-    }
-    try {
-	sc_withOutputToPort(p, thunk);
-	return p.close();
-    } finally {
-	sc_storage.pop();
-    }
-}
-
 function sc_withOutputToString_immutable(thunk) { /// export-higher
     var p = new sc_StringOutputPort_immutable();
     sc_withOutputToPort(p, thunk);
     return p.close();
 }
 
-function sc_withOutputToString_immutable_callcc(thunk) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    var p;
-    if (sc_storage.doRestore) {
-	p = sc_storage.getNextFrame();
-    } else {
-	p = new sc_StringOutputPort_immutable();
-	sc_storage.push(p);
+function sc_withOutputToString_callcc(p, thunk) {
+    var sc_storage = SC_CALLCC_STORAGE;
+    if (sc_storage['doCall/CcDefault?']) {
+	var delegate = sc_withOutputToPort_callcc;
+    } else if (sc_storage['doCall/CcRestore?'])  {
+	var sc_frame = sc_storage.pop();
+	p = sc_frame.p;
+	delegate = sc_storage.callNextFunction();
+    } else { // root-fun?
+	return sc_callCcRoot(this, arguments);
     }
     try {
-	sc_withOutputToPort(p, thunk);
+	delegate(p, thunk);
 	return p.close();
-    } finally {
-	sc_storage.pop();
+    } catch (e) {
+	if (e instanceof sc_CallCcException && e.backup) {
+	    var sc_frame = new Object();
+	    sc_frame.callee = sc_withOutputToString_mutable_callcc;
+	    sc_frame.p = p;
+	    e.push(sc_frame);
+	}
+	throw e;
     }
+}
+
+function sc_withOutputToString_mutable_callcc(thunk) { /// export-higher
+    return sc_withOutputToString_callcc(new sc_StringOutputPort_mutable(), thunk);
+}
+
+function sc_withOutputToString_immutable_callcc(thunk) { /// export-higher
+    return sc_withOutputToString_callcc(new sc_StringOutputPort_immutable(), thunk);
 }
 
 /* with-output-to-procedure proc must not call call/cc! */
@@ -2515,7 +2516,9 @@ function sc_doDisplay(p, o) {
     else
 	o.doDisplay(p);
 }
-
+Object.prototype.doDisplay = function(p) {
+    p.appendJSString(this.toString());
+}
 Number.prototype.doDisplay = Number.prototype.doWrite;
 
 var String_prototype_doDisplay_mutable = String_prototype_doWrite_mutable;
@@ -2813,10 +2816,6 @@ function sc_hashtableForEach(ht, f) { /// export-higher
     }
 }
 function sc_hashtableForEach_callcc(ht, f) { /// export-higher
-    var sc_storage = sc_CALLCC_STORAGE;
-    if (sc_storage.doRestore) {
-	return sc_forEach_callcc();
-    }
     var l = null;
     for (var v in ht) {
 	if (ht[v] instanceof sc_HashtableElement)
@@ -2824,7 +2823,6 @@ function sc_hashtableForEach_callcc(ht, f) { /// export-higher
     }
     sc_forEach_callcc(function(e) { f(e.key, e.val); },
 		      l);
-    return undefined; // for FF2.0
 }
 
 function sc_hashtableContains(ht, key) { /// export hashtable-contains?
@@ -2872,24 +2870,98 @@ sc_Char.prototype.getHash = sc_counterHash;
 sc_Hashtable.prototype.getHash = sc_counterHash;
 
 
-function sc_TailCall(funThis, args) {
-    this._internalException = true;
-    this.funThis = funThis;
-    this.arguments = args;
+function sc_Trampoline(args, maxTailCalls) {
+    this['__trampoline return__'] = true;
+    this.args = args;
+    this.MAX_TAIL_CALLs = maxTailCalls;
 }
+// TODO: call/cc stuff
+sc_Trampoline.prototype.restart = function() {
+    var o = this;
+    while (true) {
+	// set both globals.
+	SC_TAIL_OBJECT.calls = o.MAX_TAIL_CALLs-1;
+	var fun = o.args.callee;
+	var res = fun.apply(SC_TAIL_OBJECT, o.args);
+	if (res instanceof sc_Trampoline)
+	    o = res;
+	else
+	    return res;
+    }
+}
+
+function sc_bindExitLambda(proc) { /// export-higher bind-exit-lambda
+    var escape_obj = new sc_BindExitException();
+    var escape = function(res) {
+	escape_obj.res = res;
+	throw escape_obj;
+    };
+    try {
+	return proc(escape);
+    } catch(e) {
+	if (e === escape_obj) {
+	    return e.res;
+	}
+	throw e;
+    }
+}
+function sc_bindExitLambda_callcc(proc) { /// export-higher bind-exit-lambda
+    var sc_storage = SC_CALLCC_STORAGE;
+    if (sc_storage['doCall/CcDefault?']) {
+	var escape_obj = new sc_BindExitException();
+	var escape = function(res) {
+	    escape_obj.res = res;
+	    throw escape_obj;
+	};
+    } else if (sc_storage['doCall/CcRestore?'])  {
+	var sc_frame = sc_storage.pop();
+	escape_obj = sc_frame.escape_obj;
+	proc = sc_storage.callNextFunction();
+    } else { // root-fun?
+	return sc_callCcRoot(this, arguments);
+    }
+    try {
+	return proc(escape);
+    } catch(e) {
+	if (e === escape_obj) {
+	    return e.res;
+	}
+	if (e instanceof sc_CallCcException && e.backup) {
+	    var sc_frame = new Object();
+	    sc_frame.callee = sc_bindExitLambda_callcc;
+	    sc_frame.proc = proc;
+	    sc_frame.escape_obj = escape_obj;
+	    e.push(sc_frame);
+	}
+	throw e;
+    }
+}
+function sc_BindExitException() {
+    this._internalException = true;
+}
+
+var SC_SCM2JS_GLOBALS = new Object();
 
 // default tail-call depth.
 // normally the program should set it again. but just in case...
-var sc_TAIL_CALLS = 20;
+var SC_TAIL_OBJECT = new Object();
+SC_SCM2JS_GLOBALS.TAIL_OBJECT = SC_TAIL_OBJECT;
 
 function sc_CallCcStorage() {
-    this.frames = new Array();
+    this['__call/cc-Object'] = true;
+    this['doCall/CcDefault?'] = true;
+    this.dynamicWinds = [];
 }
 sc_CallCcStorage.prototype.push = function(frame) {
+    if (!this.frames)
+	this.frames = new Array();
     this.frames.push(frame);
 };
 sc_CallCcStorage.prototype.pop = function() {
-    this.frames.pop();
+    return this.frames.pop();
+};
+sc_CallCcStorage.prototype.peek = function() {
+    return this.frames[this.frames.length - 1];
 };
 sc_CallCcStorage.prototype.popAll = function() {
     this.frames.length = 0;
@@ -2903,8 +2975,20 @@ sc_CallCcStorage.prototype.length = function() {
 sc_CallCcStorage.prototype.duplicate = function() {
     var dupl = new sc_CallCcStorage();
     dupl.frames = this.frames.concat();
-    if (this.firstCall) dupl.firstCall = this.firstCall;
+    dupl.rootFun = this.rootFun;
+    dupl.rootThis = this.rootThis;
+    dupl.dynamicWinds = this.dynamicWinds;
     return dupl;
+};
+sc_CallCcStorage.prototype.callNext = function() {
+    var nextFrame = this.frames[this.frames.length-1];
+    return nextFrame.callee.call(nextFrame.this_);
+};
+sc_CallCcStorage.prototype.callNextFunction = function() {
+    var storage = this;
+    return function() {
+	return storage.callNext();
+    };
 };
 
 sc_CallCcStorage.prototype.resetFrameIterator = function() {
@@ -2914,101 +2998,200 @@ sc_CallCcStorage.prototype.getNextFrame = function() {
     return this.frames[this.frameIndex++];
 };
 
-var sc_CALLCC_STORAGE = new sc_CallCcStorage();
+function sc_CallCcException() {
+    this._internalException = true;
+    this.storage = new sc_CallCcStorage();
+    this.dynamicWinds = [];
+};
+sc_CallCcException.prototype.push = function(frame) {
+    this.storage.push(frame);
+};
+sc_CallCcException.prototype.pushDynamicWind =  function(dynamicWind) {
+    this.dynamicWinds.push(dynamicWind);
+};
+
+function sc_callcc(proc) { /// export-higher call/cc call-with-current-continuation
+
+    var sc_storage = SC_CALLCC_STORAGE;
+    if (sc_storage['doCall/CcDefault?']) {
+	/* do nothing */
+    } else if (sc_storage['doCall/CcRestore?'])  {
+	throw "call/cc can never be used in restoration context";
+    } else { // root-fun?
+	return sc_callCcRoot(this, arguments);
+    }
+
+    var e = new sc_CallCcException();
+
+    // push last frame (artificially created).
+    var sc_frame = new Object();
+    // short-cut call/cc and continue directly with "whenRestored".
+    // 'whenRestored' will either call 'proc' or return the value (when invoked as continuation).
+    sc_frame.callee = function() {
+	var sc_storage = SC_CALLCC_STORAGE;
+	sc_storage['doCall/CcDefault?'] = true;
+	sc_storage['doCall/CcRestore?'] = false;
+	sc_storage.popAll();
+	return sc_storage.whenRestored();
+    };
+    sc_frame.this_ = null;
+    e.push(sc_frame);
+
+    // we are retrieving all frames.
+    e.backup = true;
+
+    // just in case the exception is not handled. -> nice error-message.
+    e.text = "call/cc-exception_backup";
+
+    // at root call this function
+    e.atRoot = function() {
+	// backuping is done.
+	e.backup = false;
+
+	// backup e.dynamicWinds. these are the dynamicWinds of the stack-frames.
+	e.storage.dynamicWinds = e.dynamicWinds;
+
+	// the continuation function...
+	var k = function(val) {
+	    // 
+	    if (!SC_CALLCC_STORAGE['doCall/CcDefault?']) {
+		// apparently we are not called out of regular scheme-code.
+		// make the best out of it...
+		return sc_callCcRoot(null, arguments);
+	    }
+	    var e_invoke = new sc_CallCcException();
+	    e_invoke.text = "call/cc-exception_invocation";
+	    e_invoke.atRoot = function() { /* do nothing */ };
+	    e_invoke.storage = e.storage; // use the backuped stack-frames.
+	    e_invoke.whenRestored = function() { return val; };
+
+	    // throw exception to invoke the continuation
+	    throw e_invoke;
+	};
+	e.whenRestored = function() { return proc(k); };
+    };
+
+    // throw e, thus starting the backup.
+    throw e;
+}
+
+function sc_callCcRestart(e) {
+    // fromStack is the dynamic-winds stack from the continuation we are coming from
+    // toStack is the dynamic-winds stack we are going to.
+    // for both stacks: last element is top-level-dynamic-wind. ie stack[0] is the most nested one.
+    // continueFun is the fun we are going to execute once we have executed all the
+    // dynamicwinds.
+    function dynamicWindsAndContinue(fromStack, toStack, continueFun) {
+	var i = fromStack.length - 1;
+	var j = toStack.length - 1;
+	// find the shared part of dynamic-winds.
+	while (i >= 0 &&
+	       j >= 0 &&
+	       fromStack[i].id === toStack[j].id) {
+	    i--;
+	    j--;
+	}
+	
+	var toDos = [];
+	// 0->i are afters we need to run.
+	// j->0 are befores we need to run.    
+	for (var k = 0; k <= i; k++) {
+	    toDos.push(fromStack[k].after);
+	}
+	for (var k = j; k >= 0; k--) {
+	    toDos.push(toStack[k].before);
+	}
+	if (toDos.length == 0)
+	    return continueFun;
+	else
+	    toDos.push(continueFun);
+	
+	return function() {
+	    var sc_storage = SC_CALLCC_STORAGE;
+	    if (sc_storage['doCall/CcDefault?']) {
+		var i = 0;
+		var f = toDos[i];
+	    } else if (sc_storage['doCall/CcRestore?'])  {
+		var sc_frame = sc_storage.pop();
+		i = sc_frame.i;
+		f = sc_storage.callNextFunction();
+	    } else { // root-fun?
+		return sc_callCcRoot(this, arguments);
+	    }
+	    try {
+		do {
+		    var res = f();
+		    i++;
+		    f = toDos[i]; // in JS we can access elements out of boundaries.
+		} while (i < toDos.length);
+		return res;
+	    } catch (e) {
+		if (e instanceof sc_CallCcException && e.backup) {
+		    var sc_frame = new Object();
+		    sc_frame.callee = arguments.callee;
+		    sc_frame.i = i;
+		    e.push(sc_frame);
+		}
+		throw e;
+	    }
+	};
+    }
+	
+    while (true) {
+	try {
+	    e.atRoot();
+	    // always duplicate the storage.
+	    // (each restored function will pop its frame).
+	    var sc_storage = e.storage.duplicate();
+
+	    // we have a new storage...
+	    SC_CALLCC_STORAGE = sc_storage;
+	    SC_SCM2JS_GLOBALS.CALLCC_STORAGE = SC_CALLCC_STORAGE;
+
+	    // once restored executed the dynamic winds first.
+	    sc_storage.whenRestored = dynamicWindsAndContinue(e.dynamicWinds,
+							      sc_storage.dynamicWinds,
+							      e.whenRestored);
+	    sc_storage['doCall/CcDefault?'] = false;
+	    sc_storage['doCall/CcRestore?'] = true;
+	    // and GO!
+	    return sc_storage.callNext();
+	} catch (e2) {
+	    if (e2 instanceof sc_CallCcException) {
+		e = e2;
+	    } else
+		throw e2;
+	}
+    }
+}
+
+var SC_CALLCC_STORAGE = new Object();
+SC_CALLCC_STORAGE['doCall/CcDefault?'] = false;
+SC_CALLCC_STORAGE['doCall/CcRestore?'] = false;
+SC_CALLCC_STORAGE['__call/cc-Object'] = true;
+SC_SCM2JS_GLOBALS.CALLCC_STORAGE = SC_CALLCC_STORAGE;
+
+function sc_callCcRoot(rootThis, rootArguments) {
+    var tmp = SC_CALLCC_STORAGE;
+    try {
+	SC_CALLCC_STORAGE = new sc_CallCcStorage();
+	SC_SCM2JS_GLOBALS.CALLCC_STORAGE = SC_CALLCC_STORAGE;
+	return rootArguments.callee.apply(rootThis, rootArguments);
+    } catch (e) {
+	if (e instanceof sc_CallCcException) {
+	    return sc_callCcRestart(e);
+	} else
+	    throw e;
+    } finally {
+	SC_CALLCC_STORAGE = tmp;
+	SC_SCM2JS_GLOBALS.CALLCC_STORAGE = SC_CALLCC_STORAGE;
+    }
+	
+}
+
 var sc_EMPTY_CALLCC;
 sc_callcc(function(k) { sc_EMPTY_CALLCC = k; });
 
-function sc_CallCcException() {
-    this._internalException = true;
-}
-
-function sc_callcc(proc) { /// export-higher call/cc call-with-current-continuation
-    function backup(storage) {
-	var backup = storage.duplicate();
-	for (var i = 0; i < backup.frames.length; i++) {
-	    if (!backup.frames[i].closureAllocation) {
-		backup.frames[i].savedRestoreIndex = backup.frames[i].sc_callCcIndex;
-		backup.frames[i].savedCallCcFun = backup.frames[i].sc_callCcFun;
-	    }
-	}
-	return backup;
-    };
-    
-    function restore(backup, returnValue) {
-	var dupl = backup.duplicate();
-	dupl.doRestore = true;
-	dupl.returnValue = returnValue;
-	for (var i = 0; i < dupl.frames.length; i++) {
-	    if (!dupl.frames[i].closureAllocation) {
-		dupl.frames[i].sc_callCcRestoreIndex = dupl.frames[i].savedRestoreIndex;
-		dupl.frames[i].sc_callCcFun = dupl.frames[i].savedCallCcFun;
-	    }
-	}
-	var e = new sc_CallCcException();
-	e.token = backup.token;
-	e.storage = dupl;
-	e.text = "call/cc-exception";
-	e.root = function() {
-	    sc_CALLCC_STORAGE = dupl;
-	    sc_CALLCC_STORAGE.resetFrameIterator();
-	};
-	if (sc_CALLCC_STORAGE.length() > 0) {
-	    throw e;
-	} else {
-	    // we are not called out of a Scheme-function.
-	    // Just invoke the continuation ourselves...
-	    e.root();
-	    sc_callCcRestart(e);
-	}
-    };
-
-    var storage = sc_CALLCC_STORAGE;
-    if (storage.doRestore) {
-	delete storage.doRestore;
-	for (var i = 0; i < storage.frames.length; i++) {
-	    // reset the callCcRestoreIndex.
-	    if (!storage.frames[i].closureAllocation)
-		storage.frames[i].sc_callCcRestoreIndex = 0;
-	}
-	var tmp = storage.returnValue;
-	delete storage.returnValue;
-	return tmp;
-    } else {
-	var b = backup(sc_CALLCC_STORAGE);
-	var token = new Object();
-	b.token = token;
-	var k = function(returnValue) {
-	    restore(b, returnValue);
-	};
-	try {
-	    return proc(k);
-	} catch (e) {
-	    if (e instanceof sc_CallCcException &&
-		e.token === token) {
-		// shortcut
-		return e.storage.returnValue;
-	    } else throw e;
-	}
-    }
-}
-
-function sc_callCcRestart(exc) {
-    while (true) {
-	try {
-	    exc.root();
-	    if (sc_CALLCC_STORAGE.firstCall) {
-		return sc_CALLCC_STORAGE.firstCall();
-	    }
-	    return undefined;
-	} catch (e) {
-	    if (e instanceof sc_CallCcException)
-		exc = e;
-	    else
-		throw e;
-	}
-    }
-    return undefined; // for FF2.0
-}
 
 var sc_INDEX_OBJECT_HASH = new Array;
 
@@ -3020,12 +3203,4 @@ function sc_getCallCcIndexObject(index) {
 	sc_INDEX_OBJECT_HASH[index] = tmp;
 	return tmp;
     }
-}
-
-function sc_BindExitException() {
-    this._internalException = true;
-}
-
-function sc_CurrentDate() { /// export current-date
-   return new Date();
 }

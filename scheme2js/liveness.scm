@@ -3,6 +3,7 @@
    (include "nodes.sch")
    (option (loadq "protobject-eval.sch"))
    (import protobject
+	   captured-vars
 	   nodes
 	   verbose)
    (export (liveness tree::pobject)))
@@ -13,6 +14,7 @@
 ;; we define the var's range as the shared levels.
 (define (liveness tree)
    (verbose "liveness")
+   (captured-vars tree)
    (overload traverse clean (Node Decl)
 	     (tree.traverse))
    (overload traverse liveness (Node
@@ -97,6 +99,11 @@
    (this.traverse0))
 
 (define-pmethod (Decl-rev-liveness)
+;   (if this.done
+;       (error "Decl-rev-liveness"
+;	      "Recursive nodes"
+;	      this.var.id)
+;       (set! this.done #t))
    (let ((var this.var))
       (if var.live-begin
 	  (error "Decl-rev-liveness"

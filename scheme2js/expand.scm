@@ -1,15 +1,19 @@
 (module expand
    (import verbose)
+   (include "tools.sch")
    (export (my-expand x)
 	   (install-expander! id e)
 	   (add-pre-expand! f::procedure)
-	   (pre-expand! x))
+	   (pre-expand! x)
+	   (identify-expander x e macros-ht))
    (eval (export add-pre-expand!)))
 
 (define *pre-expanders* '())
 
 (define *mutex* (make-mutex))
 
+;; pre-expander is shared by all parallel computations.
+;; TODO: remove pre-expander.
 (define (add-pre-expand! f)
    (mutex-lock! *mutex*)
    (set! *pre-expanders* (cons f *pre-expanders*))
@@ -30,123 +34,47 @@
 
 (define (my-expand x)
    (verbose "expanding")
-   (scheme2js-initial-expander x scheme2js-initial-expander))
+   (scheme2js-initial-expander x scheme2js-initial-expander (make-eq-hashtable)))
 
-(define (scheme2js-initial-expander x e)
+;; macros can not be global variable. (Parallel compilation could
+;; yield bad results).
+(define (scheme2js-initial-expander x e macros-ht)
    (let ((e1 (cond
 		((symbol? x) symbol-expander)
 		((not (pair? x)) identify-expander)
 		((symbol? (car x))
-		 (if (expander? (car x))
-		     (expander (car x))
-		     application-expander))
+		 (cond
+		    ;; user-defined macros win over compiler-macros
+		    ((hashtable-get macros-ht (car x))
+		     => (lambda (macro-e)
+			   macro-e))
+		    ;; compiler-macros
+		    ((expander (car x))
+		     => (lambda (expander)
+			   expander))
+		    (else
+		     application-expander)))
 		(else
 		 application-expander)))
 	 (pre-expanded-x (pre-expand! x)))
-      (e1 pre-expanded-x e)))
+      (e1 pre-expanded-x e macros-ht)))
 
-(define (symbol-expander x e)
+(define (symbol-expander x e macros-ht)
    x)
 	     
-(define (identify-expander x e) x)
+(define (identify-expander x e macros-ht) x)
 
-(define (application-expander x e)
-   (map! (lambda (y) (e y e)) x))
+(define (application-expander x e macros-ht)
+   (map! (lambda (y) (e y e macros-ht)) x))
 
-(define *expander-list* '())
+;; compiler expanders are shared by all parallel compilations.
+(define *expanders* (make-eq-hashtable))
 
 (define (expander? id)
-   (pair? (assq id *expander-list*)))
+   (and (hashtable-get *expanders* id) #t))
 
 (define (expander id)
-   (cdr (assq id *expander-list*)))
+   (hashtable-get *expanders* id))
 
 (define (install-expander! id e)
-   (set! *expander-list* (cons (cons id e)
-			       *expander-list*)))
-
-;; don't go into quotes.
-(install-expander! 'quote identify-expander)
-
-(define (pair-map f p)
-   (cond
-      ((null? p) '())
-      ((pair? p) (cons (f (car p))
-		       (pair-map f (cdr p))))
-      (else (f p))))
-
-(define (pair-map! f p)
-   (let loop ((p p))
-      (cond
-	 ((null? p) 'done)
-	 ((pair? p) (set-car! p (f (car p)))
-		    (if (pair? (cdr p))
-			(pair-map! f (cdr p))
-			(set-cdr! p (f (cdr p)))))
-	 (else (error "pair-map! (expand)"
-		      "pair-map! should never encounter atom"
-		      p))))
-   p)
-
-;; works for (define (f ...) ..) and (lambda (...) ...)
-(define (formals-aware-expander x e)
-   (if (pair? (cadr x))
-       (let ((formals-pair (cdr x)))
-	  (set-car! formals-pair
-		    (pair-map! (lambda (y) (e y e)) (car formals-pair)))
-	  (set-cdr! formals-pair (map! (lambda (y) (e y e))
-				       (cdr formals-pair)))
-	  x)
-       (application-expander x e)))
-
-(install-expander! 'lambda formals-aware-expander)
-(install-expander! 'bind-exit formals-aware-expander)
-
-(install-expander! 'define-expander
-		   (lambda (x e)
-		      (let ((id (cadr x))
-			    (expander (caddr x)))
-			 (install-expander! id (eval expander))
-			 #unspecified)))
-
-(install-expander!
- 'define-macro
- (lambda (x e)
-    (match-case x
-       ((?- (?name . ?args) . ?body)
-	(install-expander!
-	 name
-	 (eval `(lambda (x e)
-		   (define (deep-copy o)
-		      (cond
-			 ((epair? o)
-			  (econs (deep-copy (car o))
-				 (deep-copy (cdr o))
-				 (deep-copy (cer o))))
-			 ((pair? o)
-			  (cons (deep-copy (car o)) (deep-copy (cdr o))))
-			 ((vector? o)
-			  (copy-vector o (vector-length o)))
-			 ((string? o)
-			  (string-copy o))
-			 (else
-			  o)))
-
-		   ;; macros might reference lists twice.
-		   ;; by deep-copying the result, we are sure, that
-		   ;; we don't share anything.
-		   (e (deep-copy
-		       (let ,(destructure args '(cdr x) '())
-			  ,@body))
-		      e)))))
-       (else
-	(error "define-macro" "Illegal 'define-macro' syntax" x)))))
-
-(define (destructure pat arg bindings)
-   (cond
-      ((null? pat) bindings)
-      ((symbol? pat) `((,pat ,arg) ,@bindings))
-      ((pair? pat)
-       (destructure (car pat)
-		    `(car ,arg)
-		    (destructure (cdr pat) `(cdr ,arg) bindings)))))
+   (hashtable-put! *expanders* id e))

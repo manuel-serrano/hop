@@ -40,7 +40,7 @@
    (verbose "list->pobject")
    (nodes-init!)
    (new-node Program
-	(new-node Part
+	(new-node Module
 		  (scheme->pobject prog (location prog))
 		  (lambda (p) (cons p (lambda (p) 'do-nothing))))))
    
@@ -86,26 +86,32 @@
       (new-node Let-form pobject-bindings (expr-list->Body body) kind)))
 
 (define (case->pobject key clauses)
-   (define (clause->pobject clause maybe-default-clause?)
+   (define (clause->pobject clause last?)
       (let* ((consts (car clause))
 	     (raw-exprs (cdr clause))
 	     (exprs (scheme->pobject-map raw-exprs))
 	     (begin-expr (new-node Begin exprs)))
-	 (if (and maybe-default-clause?
+	 (if (and last?
 		  (eq? consts 'else))
 	     (new-node Clause '() begin-expr #t)
 	     (new-node Clause (map (lambda (const)
 				 (new-node Const const))
 			      consts)
-		  begin-expr #f))))
+		       begin-expr
+		       #f))))
    
    (define (clauses->pobjects clauses rev-result)
       (cond
 	 ((null? clauses) ;; should never happen
 	  (reverse! rev-result))
 	 ((null? (cdr clauses))
-	  (reverse! (cons (clause->pobject (car clauses) #t)
-			  rev-result)))
+	  (let ((rev-all-clauses (cons (clause->pobject (car clauses) #t)
+				       rev-result)))
+	     ;; if there was no default clause, we add one.
+	     (if (car rev-all-clauses).default-clause?
+		 (reverse! rev-all-clauses)
+		 (reverse! (cons (clause->pobject '(else #unspecified) #t)
+				 rev-all-clauses)))))
 	 (else
 	  (clauses->pobjects (cdr clauses)
 			     (cons (clause->pobject (car clauses) #f)
@@ -145,18 +151,19 @@
 	   (new-node Define
 		(attach-location (new-node Decl var) (location (cdr exp)))
 		(scheme->pobject expr (location (cddr exp)))))
-	  ((bind-exit (?escape) . ?body)
-	   (new-node Bind-exit (new-node Decl escape) (expr-list->Body body)))
-	  ((with-handler ?handler . ?body)
-	   (new-node With-handler
-		     (scheme->pobject handler (location (cdr exp)))
-		     (expr-list->Body body)))
 	  ((pragma ?str)
 	   (new-node Pragma str))
+	  ;; 'part' is obsolete.
 	  ((part ?expr (and ?fun (? procedure?)))
-	   (new-node Part
-		(scheme->pobject expr (location (cdr exp)))
-		fun))
+	   (new-node Module
+		     (scheme->pobject expr (location (cdr exp)))
+		     fun))
+	  ((module ?expr (and ?fun (? procedure?)))
+	   (new-node Module
+		     (scheme->pobject expr (location (cdr exp)))
+		     fun))
+	  ((runtime-ref ?id (? procedure?))
+	   (new-node Runtime-Var-ref id))
 	  ((?operator . ?operands)
 	   (if (and (config 'return)
 		    (eq? operator 'return!))

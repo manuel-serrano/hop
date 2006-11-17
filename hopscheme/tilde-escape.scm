@@ -16,8 +16,8 @@
 
 (define (new-scheme-expr p expr)
    (let* ((proxy (list 'begin #f))
-	  (part
-	   (list 'part expr
+	  (module
+	   (list 'module expr
 		 (lambda (p)
 		    (cons (open-output-string)
 			  (lambda (string-port)
@@ -28,8 +28,8 @@
       (hashtable-update! *rev-scheme-exprs*
 			 p
 			 (lambda (old-l)
-			    (cons part old-l))
-			 (list part))
+			    (cons module old-l))
+			 (list module))
       proxy))
 
 (hop-make-escape-set! new-scheme-expr)

@@ -11,9 +11,11 @@
 ;; but then anytime. so don't assume nodes exist or not.
 (define (tail-exprs tree intermediate-nodes-are-tail?)
    (verbose "tail")
+   (overload traverse clean (Node)
+	     (tree.traverse))
    (overload traverse tail (Node
 			    Program
-			    (Part Inter-tail)
+			    (Module Inter-tail)
 			    (Const Value-tail)
 			    (Var-ref Value-tail)
 			    (Scope Inter-tail)
@@ -23,18 +25,22 @@
 			    Clause
 			    (Set! Enclosing-tail)
 			    Begin
-			    Bind-exit
-			    With-handler
 			    (Call Enclosing-tail)
 			    (Tail-rec Inter-tail)
 			    (While Inter-tail)
 			    (Tail-rec-call Value-tail)
 			    Return
-			    (Closure-alloc Inter-tail)
-			    (Labelled Inter-tail)
+			    (Closure-alloc Value-tail)
+			    Closure-use
+			    (Closure-ref Value-tail)
+			    Labelled
 			    Break
 			    (Pragma Value-tail))
 	     (tree.traverse #f intermediate-nodes-are-tail?)))
+
+(define-pmethod (Node-clean)
+   (delete! this.tail?)
+   (this.traverse0))
 
 (define-pmethod (Node-tail tail? inter-tail?)
    (error #f "tail. forgot node-type" this))
@@ -91,23 +97,20 @@
 	  ((car exprs).traverse #f inter-tail?)
 	  (loop (cdr exprs))))))
 
-(define-pmethod (Bind-exit-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.escape.traverse #f inter-tail?)
-   (this.body.traverse tail? inter-tail?)
-   (this.result-decl.traverse #f inter-tail?)
-   (this.invoc-body.traverse tail? inter-tail?))
-
-(define-pmethod (With-handler-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.exception.traverse #f inter-tail?)
-   (this.catch.traverse tail? inter-tail?)
-   (this.body.traverse tail? inter-tail?))
-
 (define-pmethod (Return-tail tail? inter-tail?)
    (set! this.tail? tail?)
    (this.val.traverse #t inter-tail?))
 
+(define-pmethod (Closure-use-tail tail? inter-tail?)
+   (set! this.tail? (and inter-tail? tail?))
+   (this.body.traverse tail? inter-tail?))
+
+(define-pmethod (Labelled-tail tail? inter-tail?)
+   (set! this.tail? (and inter-tail? tail?))
+   (set! this.break-tail? tail?)
+   (this.traverse2 tail? inter-tail?)
+   (delete! this.break-tail?))
+
 (define-pmethod (Break-tail tail? inter-tail?)
    (set! this.tail? tail?)
-   (this.val.traverse this.labelled.tail? inter-tail?))
+   (this.val.traverse this.labelled.break-tail? inter-tail?))

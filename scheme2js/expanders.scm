@@ -1,40 +1,112 @@
 (module expanders
    (import expand))
 
+(define (runtime-ref id)
+   ;; we use a function to differenciate this construct
+   ;; from similar user-constructs.
+   (list 'runtime-ref id (lambda () 'runtime-ref)))
+
+;; don't go into quotes.
+(install-expander! 'quote identify-expander)
+
+;; lambda.
+;; get all args (including var-arg), and declare them as locally defined (ie.
+;; add them to the Lenv).
+(install-expander!
+ 'lambda
+ (lambda (x e macros-ht)
+    ;; ignore formal
+    (set-cdr! (cdr x) (map! (lambda (y) (e y e macros-ht))
+			    (cddr x)))
+    x))
+
+;; not used.
+; (install-expander!
+;  'define-expander
+;  (lambda (x e)
+;     (let ((id (cadr x))
+; 	  (expander (caddr x)))
+;        (install-expander! id (eval expander))
+;        #unspecified)))
+
+(install-expander!
+ 'define-macro
+ (lambda (x e macros-ht)
+    (define (destructure pat arg bindings)
+       (cond
+	  ((null? pat) bindings)
+	  ((symbol? pat) `((,pat ,arg) ,@bindings))
+	  ((pair? pat)
+	   (destructure (car pat)
+			`(car ,arg)
+			(destructure (cdr pat) `(cdr ,arg) bindings)))))
+
+    (match-case x
+       ((?- (?name . ?args) . ?body)
+	(hashtable-put!
+	 macros-ht
+	 name
+	 (eval `(lambda (x e macros-ht)
+		   (define (deep-copy o)
+		      (cond
+			 ((epair? o)
+			  (econs (deep-copy (car o))
+				 (deep-copy (cdr o))
+				 (deep-copy (cer o))))
+			 ((pair? o)
+			  (cons (deep-copy (car o)) (deep-copy (cdr o))))
+			 ((vector? o)
+			  (copy-vector o (vector-length o)))
+			 ((string? o)
+			  (string-copy o))
+			 (else
+			  o)))
+
+		   ;; macros might reference lists twice.
+		   ;; by deep-copying the result, we are sure, that
+		   ;; we don't share anything.
+		   (e (deep-copy
+		       (let ,(destructure args '(cdr x) '())
+			  ,@body))
+		      e macros-ht))))
+	#unspecified)
+       (else
+	(error "define-macro" "Illegal 'define-macro' syntax" x)))))
+
 (install-expander! 'when
-		   (lambda (x e)
+		   (lambda (x e macros-ht)
 		      (match-case x
 			 ((?- ?test . ?body)
 			  (e
 			   `(if ,test (begin ,@body))
-			   e))
+			   e macros-ht))
 			 (else
 			  (error "when-expand" "Invalid when form: " x)))))
 
 (install-expander! 'unless
-		   (lambda (x e)
+		   (lambda (x e macros-ht)
 		      (match-case x
 			 ((?- ?test . ?body)
 			  (e
 			   `(if (not ,test) (begin ,@body))
-			   e))
+			   e macros-ht))
 			 (else
 			  (error "unless-expand" "Invalid unless form: " x)))))
 
 (install-expander! 'define
-		   (lambda (x e)
+		   (lambda (x e macros-ht)
 		      (match-case x
 			 ((?- (?fun . ?formals) . ?body)
 			  (e
 			   `(define ,fun (lambda ,formals ,@body))
-			   e))
+			   e macros-ht))
 			 ((?- ?var ?val)
-			  `(define ,(e var e) ,(e val e)))
+			  `(define ,(e var e macros-ht) ,(e val e macros-ht)))
 			 (else
 			  (error #f "Invalid define-form: " x)))))
 
 (install-expander! 'or
-		   (lambda (x e)
+		   (lambda (x e macros-ht)
 		      (match-case x
 			 ((?-) #f)
 			 ((?- . ?tests)
@@ -45,10 +117,10 @@
 					(if ,tmp-var
 					    ,tmp-var
 					    (or ,@(cdr tests))))))
-			     e)))))
+			     e macros-ht)))))
 
 (install-expander! 'and
-		   (lambda (x e)
+		   (lambda (x e macros-ht)
 		      (match-case x
 			 ((?-) #t)
 			 ((?- . ?tests)
@@ -57,10 +129,10 @@
 				 `(if ,(car tests)
 				      (and ,@(cdr tests))
 				      #f))
-			     e)))))
+			     e macros-ht)))))
 
 (install-expander! 'do
-		   (lambda (x e)
+		   (lambda (x e macros-ht)
 		      (match-case x
 			 ((?- ?bindings (?test . ?finally) . ?commands)
 			  (let ((loop (gensym 'doloop)))
@@ -78,7 +150,7 @@
 							    (car bind)
 							    (caddr bind)))
 						     bindings)))))
-				e))))))
+				e macros-ht))))))
 
 (define (quasiquote-expand! x level)
    ;; conservative: if the function returns #f, then there's
@@ -90,7 +162,8 @@
 		 (not (pair? p)))
 	     #f)
 	    ((or (pair? (car p))
-		 (vector? (car p)))
+		 (vector? (car p))
+		 (eq? (car p) 'unquote))
 	     #t)
 	    (else
 	     (loop (cdr p))))))
@@ -134,7 +207,7 @@
 	     (match-case x
 		(((unquote-splicing ?unquoted-list))
 		 (if (= level 0)
-		     (set-cdr! last-pair unquoted-list)
+		     (set-cdr! last-pair (list unquoted-list))
 		     (begin
 			(set-car! x (quasiquote-expand! (car x) (- level 1)))
 			(loop (cdr x) x))))
@@ -146,6 +219,12 @@
 		     (begin
 			(set-car! x (quasiquote-expand! (car x) (- level 1)))
 			(loop (cdr x) x))))
+		((unquote . ?rest)
+		 (set-car! x (cons 'unquote-splicing rest))
+		 (set-cdr! x '())
+		 (loop x last-pair))
+		((unquote)
+		 (error "quasiquote-expander" "Illegal Unquote form" x))
 		((?fst . ?-)
 		 (set-car! x (quasiquote-expand! fst level))
 		 (loop (cdr x)
@@ -155,30 +234,17 @@
 	  head))))
 
 (install-expander! 'quasiquote
-		   (lambda (x e)
+		   (lambda (x e macros-ht)
 		      (if (or (null? (cdr x))
 			      (not (pair? (cdr x)))
 			      (not (null? (cddr x))))
 			  (error "quasiquote-expander"
 				 "Illegal Quasiquote form"
 				 x))
-		      (e (quasiquote-expand! (cadr x) 0) e)))
-; 		      (e (match-case (cadr x)
-; 			    (((unquote-splicing ?unquoted-list) . ?rest)
-; 			     `(append ,unquoted-list
-; 				      ,(list 'quasiquote rest)))
-; 			    ((unquote ?datum)
-; 			     datum)
-; 			    ((?y . ?z)
-; 			     `(cons ,(list 'quasiquote y) ,(list 'quasiquote z)))
-; 			    (#(???-)
-; 			     `(list->vector ,(list 'quasiquote (vector->list (cadr x)))))
-; 			    (?- ;; atom
-; 			     `(quote ,(cadr x))))
-; 			 e)))
+		      (e (quasiquote-expand! (cadr x) 0) e macros-ht)))
 
 (install-expander! 'cond
-		   (lambda (x e)
+		   (lambda (x e macros-ht)
 		      (e (match-case x
 			    ((?-) #f)
 			    ((?- (else . ?alternate))
@@ -195,41 +261,18 @@
 			     `(if ,test
 				  (begin ,@consequent)
 				  (cond ,@rest))))
-			 e)))
-
-;; not needed anymore, as we have a 'case'-node now
-'(install-expander! 'case
-		   (lambda (x e)
-		      (e (let ((key (gensym 'key))
-			       (key-expr (cadr x))
-			       (clauses (cddr x)))
-			    `(let ((,key ,key-expr))
-				,(let loop ((clauses clauses))
-				    (match-case clauses
-				       (() #unspecified)
-				       (((else . ?alternate))
-					`(begin ,@alternate))
-				       (((?data . ?consequent) . ?rest)
-					`(if (or ,@(map
-						    (lambda (datum)
-						       `(eqv? ,(list 'quote
-								    datum)
-							      ,key))
-							data))
-					     (begin ,@consequent)
-					     ,(loop rest)))))))
-			 e)))
+			 e macros-ht)))
 
 ;; transform let* into nested lets
 (install-expander! 'let*
-		   (lambda (x e)
+		   (lambda (x e macros-ht)
 		      (let ((bindings (cadr x)))
 			 (e `(let (,(car bindings))
 				,@(if (null? (cdr bindings))
 				      (cddr x) ;; body
 				      `((let* ,(cdr bindings)
 					   ,@(cddr x)))))
-			    e))))
+			    e macros-ht))))
 		      
 (define (expand-named-let expr)
    (let* ((loop-name (cadr expr))
@@ -246,23 +289,23 @@
       `(letrec ((,loop-name (lambda ,vars ,@body)))
 	  (,loop-name ,@init-values))))
 
-(define (expand-let x e)
+(define (expand-let x e macros-ht)
    (let* ((bindings (cadr x))
 	  (body (cddr x)))
       `(let ,(map (lambda (binding)
-		     (list (e (car binding) e)
-			   (e (cadr binding) e)))
+		     (list (e (car binding) e macros-ht)
+			   (e (cadr binding) e macros-ht)))
 		  bindings)
-	  ,@(map (lambda (y) (e y e)) body))))
+	  ,@(map (lambda (y) (e y e macros-ht)) body))))
 
 (install-expander! 'let ;; named let
-		   (lambda (x e)
+		   (lambda (x e macros-ht)
 		      (if (symbol? (cadr x))
-			  (e (expand-named-let x) e)
-			  (expand-let x e))))
+			  (e (expand-named-let x) e macros-ht)
+			  (expand-let x e macros-ht))))
 
 (install-expander! 'define-struct
- (lambda (x e)
+ (lambda (x e macros-ht)
     (let* ((name (cadr x))
 	   (fields (map (lambda (f)
 			   (if (pair? f) (car f) f))
@@ -311,12 +354,13 @@
 		  field-setters)))))
 
 (install-expander! 'delay
-		   (lambda (x e)
-		      (e `(make-promise (lambda () ,@(cdr x))) e)))
+		   (lambda (x e macros-ht)
+		      (e `(,(runtime-ref 'make-promise)
+			   (lambda () ,@(cdr x))) e macros-ht)))
 
 (install-expander!
  'for-each
- (lambda (x e)
+ (lambda (x e macros-ht)
     (match-case x
        ((?- ?proc . ?Ls)
 	(e
@@ -332,13 +376,13 @@
 		    (,tmp-f ,@(map (lambda (id)
 				      `(car ,id))
 				   L-ids)))))
-	 e))
+	 e macros-ht))
        (else
 	(error "for-each-expander" "Invalid for-each-form: " x)))))
 
 (install-expander!
  'map
- (lambda (x e)
+ (lambda (x e macros-ht)
     (match-case x
        ((?- ?proc . ?Ls)
 	(e
@@ -366,13 +410,13 @@
 				   ,@(map (lambda (id)
 					     `(cdr ,id))
 					  L-ids)))))))
-	 e))
+	 e macros-ht))
        (else
 	(error "map-expander" "Invalid map-form: " x)))))
 
 (install-expander!
  'map!
- (lambda (x e)
+ (lambda (x e macros-ht)
     (match-case x
        ((?- ?proc ?L1 . ?Lrest)
 	(e
@@ -396,6 +440,35 @@
 			    (,loop ,@(map (lambda (id)
 					     `(cdr ,id))
 					  L-ids)))))))
-	 e))
+	 e macros-ht))
        (else
 	(error "map!-expander" "Invalid map!-form: " x)))))
+
+(install-expander!
+ 'bind-exit
+ (lambda (x e macros-ht)
+    (match-case x
+       ((?- (?escape) ?expr . ?Lrest)
+	(e
+	 `(,(runtime-ref 'bind-exit-lambda)
+	   (lambda (,escape)
+	      ,expr
+	      ,@Lrest))
+	 e macros-ht))
+       (else
+	(error "bind-exit" "Invalid bind-exit-form: " x)))))
+
+(install-expander!
+ 'with-handler
+ (lambda (x e macros-ht)
+    (match-case x
+       ((?- ?handler ?expr . ?Lrest)
+	(e
+	 `(,(runtime-ref 'with-handler-lambda)
+	   ,handler
+	   (lambda ()
+	      ,expr
+	      ,@Lrest))
+	 e macros-ht))
+       (else
+	(error "with-handler" "Invalid with-handler-form: " x)))))

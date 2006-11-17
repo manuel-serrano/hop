@@ -24,14 +24,11 @@
 (define (gather-info tree)
    (overload traverse gather (Node
 			      Scope
-			      Closure-alloc
 			      If
 			      Case
 			      Tail-rec
 			      Set!
 			      Begin
-			      Bind-exit
-			      With-handler
 			      Call
 			      Tail-rec-call)
 	     (set! (node 'Node).proto.default-traverse-value '())
@@ -53,12 +50,6 @@
 (define-pmethod (Scope-gather surrounding-tail-rec)
    (this.traverse1 #f)
    '())
-
-(define-pmethod (Closure-alloc-gather surrounding-tail-rec)
-   ;; surrounding-tail-rec must be a node, otherwise we screwed up.
-   [assert (surrounding-tail-rec) surrounding-tail-rec]
-   (set! surrounding-tail-rec.contains-closure-allocs? #t)
-   (this.traverse1 surrounding-tail-rec))
 
 (define-pmethod (If-gather surrounding-tail-rec)
    (let ((test-tr-calls (this.test.traverse surrounding-tail-rec))
@@ -83,20 +74,6 @@
 (define-pmethod (Begin-gather surrounding-tail-rec)
    (apply union (map (lambda (n) (n.traverse surrounding-tail-rec))
 		     this.exprs)))
-
-(define-pmethod (Bind-exit-gather surrounding-tail-rec)
-   ;; don't need to visit the escape- and result-var
-   (let ((invoc-body-tr-calls
-	  (this.invoc-body.traverse surrounding-tail-rec)))
-      [assert (invoc-body-tr-calls) (null? invoc-body-tr-calls)])
-   (this.body.traverse surrounding-tail-rec))
-
-(define-pmethod (With-handler-gather surrounding-tail-rec)
-   ;; don't need to visit the exception-var
-   (let ((catch-tr-calls (this.catch.traverse surrounding-tail-rec))
-	 (body-tr-calls (this.body.traverse surrounding-tail-rec)))
-      [assert (catch-tr-calls) (null? catch-tr-calls)]
-      body-tr-calls))
 
 (define-pmethod (Call-gather surrounding-tail-rec)
    (apply union (map (lambda (n) (n.traverse surrounding-tail-rec))
@@ -171,11 +148,12 @@
 					Tail-rec)
 	     (tree.traverse!)))
 
+;; n.while-tail is true, if n is a tail-node within the enclosing while.
 (define (while-tail tree)
    (verbose " while-tail")
    (overload traverse tail (Node
 			    Program
-			    (Part Inter-tail)
+			    (Module Inter-tail)
 			    (Const Value-tail)
 			    (Var-ref Value-tail)
 			    (Scope Inter-tail)
@@ -185,14 +163,14 @@
 			    Clause
 			    (Set! Enclosing-tail)
 			    Begin
-			    Bind-exit
-			    With-handler
 			    (Call Enclosing-tail)
 			    (Tail-rec Inter-tail)
 			    While
 			    (Tail-rec-call Value-tail)
 			    Return
-			    (Closure-alloc Inter-tail)
+			    (Closure-alloc Value-tail)
+			    Closure-use
+			    (Closure-ref Value-tail)
 			    (Labelled Inter-tail)
 			    Break
 			    (Pragma Value-tail))
@@ -251,22 +229,13 @@
 	  ((car exprs).traverse #f)
 	  (loop (cdr exprs))))))
 
-(define-pmethod (Bind-exit-tail tail?)
-   (set! this.while-tail? #f)
-   (this.escape.traverse #f)
-   (this.body.traverse tail?)
-   (this.result-decl.traverse #f)
-   (this.invoc-body.traverse tail?))
-
-(define-pmethod (With-handler-tail tail?)
-   (set! this.while-tail? #f)
-   (this.exception.traverse #f)
-   (this.catch.traverse tail?)
-   (this.body.traverse tail?))
-
 (define-pmethod (Return-tail tail?)
    (set! this.while-tail? #f)
    (this.val.traverse #f))
+
+(define-pmethod (Closure-use-tail tail?)
+   (set! this.while-tail? #f)
+   (this.body.traverse tail?))
 
 (define-pmethod (Break-tail tail?)
    (set! this.while-tail? #f)
@@ -286,18 +255,23 @@
 	     (tree.traverse! #f #f)))
 
 (define-pmethod (Node-finish! continue-label break-labelled)
-   (if (and this.while-tail?
-	    break-labelled)
-       (new-node Break (this.traverse2! #f #f) break-labelled)
-       (this.traverse2! continue-label break-labelled)))
+   (let ((this-while-tail? this.while-tail?))
+      (delete! this.while-tail?)
+      (if (and this-while-tail?
+	       break-labelled)
+	  (new-node Break (this.traverse2! #f #f) break-labelled)
+	  (this.traverse2! continue-label break-labelled))))
 
 (define-pmethod (While-finish! continue-label break-labelled)
+   (delete! this.while-tail?)
    (this.traverse2! this.continue-label this.break-labelled))
 
 (define-pmethod (Tail-rec-finish! continue-label break-labelled)
+   (delete! this.while-tail?)
    (this.traverse2! #f #f))
 
 (define-pmethod (Tail-rec-call-finish! continue-label break-labelled)
+   (delete! this.while-tail?)
    (if (and continue-label
 	    (eq? this.label continue-label))
        (new-node Const #unspecified)

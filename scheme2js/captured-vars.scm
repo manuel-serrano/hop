@@ -16,18 +16,32 @@
 ;; of its variables. That is, if a function has free variables, but the
 ;; lifetime of the function itself is shorter than those of its free variables,
 ;; the function is not considered to be a closure (and the '.captured-vars'
-;; would be empty.
+;; would be empty).
 (define (captured-vars tree::pobject)
    (verbose " collect captured")
+   (overload traverse clean (Node
+			     Lambda
+			     Decl)
+	     (tree.traverse))
    (overload traverse cc (Node
 			  Program
-			  (Part Scope-cc)
+			  Module
 			  Lambda
 			  Call
 			  Set!
-			  (With-handler Scope-cc)
 			  Var-ref)
 	     (tree.traverse '())))
+
+(define-pmethod (Node-clean)
+   (this.traverse0))
+
+(define-pmethod (Lambda-clean)
+   (this.traverse0)
+   (delete! this.closure?)
+   (delete! this.captured-vars))
+
+(define-pmethod (Decl-clean)
+   (delete! this.var.captured?))
 
 (define (mark-closure! proc)
    (unless proc.closure? ;; already done
@@ -72,6 +86,9 @@
 		   (hashtable-put! imported-ht var #t))
 		this.imported)
       (this.traverse1 (cons imported-ht visible-vars))))
+
+(define-pmethod (Module-cc visible-vars)
+   (pcall this Scope-cc visible-vars))
 
 (define-pmethod (Lambda-cc visible-vars)
    (if this.free-vars?

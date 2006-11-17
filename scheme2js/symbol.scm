@@ -27,7 +27,7 @@
 		js-interface)
 
       (collect tree symbol-table)
-      (resolve tree symbol-table js-symbol-add!)
+      (resolve tree symbol-table js-var-scope js-symbol-add!)
 
       (set! tree.id->js-var (lambda (id::symbol)
 			       (scope-symbol-var js-var-scope id)))
@@ -74,7 +74,6 @@
 			       Set!
 			       Program
 			       Scope
-			       With-handler
 			       Lambda)
 	     (tree.traverse symbol-table #f)))
 
@@ -119,13 +118,6 @@
       (set! this.scope local-scope)
       (this.traverse2 (add-scope symbol-table local-scope) #f)))
 
-(define-pmethod (With-handler-collect symbol-table is-global?)
-   (let ((local-scope (make-scope)))
-      (set! this.scope local-scope) ;; just for the exception
-      (this.exception.traverse (add-scope symbol-table local-scope) #f)
-      (this.catch.traverse symbol-table is-global?)
-      (this.body.traverse symbol-table is-global?)))
-
 (define-pmethod (Lambda-collect symbol-table is-global?)
    (let* ((local-scope (make-scope))
 	  (new-symbol-table (add-scope symbol-table local-scope)))
@@ -138,7 +130,7 @@
 ;; ============================================================================
 ;; resolves all variables: each var-ref gets a pointer to its var.
 ;; ============================================================================
-(define (resolve tree symbol-table js-symbol-add!)
+(define (resolve tree symbol-table js-var-scope js-symbol-add!)
    
    (define-pmethod (Node-resolve symbol-table)
       (this.traverse1 symbol-table))
@@ -153,6 +145,12 @@
 	     (pcall this Var-ref-resolve symbol-table))
 	    (else
 	     (error #f "Unresolved symbol: " this.id)))))
+
+   ;; runtime-var-refs directly queries the js-var-scope (short-cutting the
+   ;; intermediate scopes).
+   (define-pmethod (Runtime-Var-ref-resolve symbol-table)
+      (let ((var (scope-symbol-var js-var-scope this.id)))
+	 (set! this.var var)))
    
    (define-pmethod (Decl-resolve symbol-table)
       ;; do nothing.
@@ -164,11 +162,6 @@
       ;; optimized anyways.
       (this.traverse1 (add-scope symbol-table this.scope)))
 
-   (define-pmethod (With-handler-resolve symbol-table)
-      ;; don't need to revisit the exception-var-decl
-      (this.catch.traverse (add-scope symbol-table this.scope))
-      (this.body.traverse symbol-table))
-   
    (define-pmethod (Let-form-resolve symbol-table)
       (let* ((extended-table (add-scope symbol-table this.scope))
 	     (bindings-table (if (eq? this.kind 'let)
@@ -188,8 +181,8 @@
    (verbose "  resolving")
    (overload traverse resolve (Node
 			       Var-ref
+			       Runtime-Var-ref
 			       Decl
 			       Scope
-			       With-handler
 			       Let-form)
 	     (tree.traverse symbol-table)))

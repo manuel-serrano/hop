@@ -9,7 +9,11 @@
 	   var
 	   verbose
 	   gen-js)
-   (export (gen-var-names tree)))
+   (export (gen-var-names tree)
+	   (call/cc-indicator-name index)))
+
+(define (call/cc-indicator-name index)
+   (string-append "sc_callccIndicator" (number->string index) "_"))
 
 (define (gen-var-names tree)
    (define *reusable-var-names* '())
@@ -36,6 +40,18 @@
 		   (var.free-name))
 		(or this.live-end-vars '())))
 
+   (define-pmethod (Closure-ref-name-gen)
+      (for-each (lambda (var)
+		   (var.allocate-name #t))
+		(or this.live-begin-vars '()))
+      (this.traverse0)
+      (let ((var this.var))
+	 (if (not var.compiled) ;; imported, captured or something else
+	     (var.allocate-name #f)))
+      (for-each (lambda (var)
+		   (var.free-name))
+		(or this.live-end-vars '())))
+
    (define-pmethod (Var-allocate-name use-generic-name?)
       (cond
 	 (this.compiled
@@ -53,6 +69,14 @@
 	 (else
 	  (set! this.compiled (gen-JS-sym this.id)))))
 
+   (define-pmethod (Field-Var-allocate-name use-generic-name?)
+      (this.obj.allocate-name #f)
+      (this.field.allocate-name #f)
+      (if this.compiled
+	  'do-nothing
+	  (set! this.compiled
+		(string-append this.obj.compiled "." this.field.compiled))))
+
    ; (define-pmethod (Var-allocate-name)
    ;    (let ((compiled this.compiled))
    ;       (or compiled
@@ -66,22 +90,24 @@
    (define-pmethod (JS-This-Var-allocate-name use-generic-name?)
       (set! this.compiled "this"))
 
+   (define-pmethod (Call/cc-indicator-Var-allocate-name use-generic-name?)
+      (set! this.compiled (call/cc-indicator-name this.indicator-index)))
+
    (define-pmethod (Var-free-name)
       (if this.reusable?
 	  (set! *reusable-var-names* (cons this.compiled
 					   *reusable-var-names*)))
       (delete! this.reusable?))
 
-   (define-pmethod (JS-Var-free-name)
-      'do-nothing)
-
    ;; ===================================================================
    ;; procedure starts here
    ;; ===================================================================
    (verbose "  generating names for vars")
    (set! *reusable-var-names* '())
-   (overload traverse name-gen (Node Var-ref)
-	     (overload allocate-name allocate-name (Var JS-Var JS-This-Var)
-		       (overload free-name free-name (Var JS-Var)
+   (overload traverse name-gen (Node Var-ref Closure-ref)
+	     (overload allocate-name allocate-name (Var Field-Var JS-Var
+							JS-This-Var
+							Call/cc-indicator-Var)
+		       (overload free-name free-name (Var)
 				 (tree.traverse))))
    (set! *reusable-var-names* '()))

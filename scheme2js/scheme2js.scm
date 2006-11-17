@@ -16,6 +16,7 @@
 	   node-elimination
 	   traverse
 	   inline
+	   loop-hoist
 	   constant-propagation
 	   var-propagation
 	   while
@@ -26,7 +27,8 @@
 	   rm-unused-vars
 	   locations
 	   callcc
-	   verbose)
+	   verbose
+	   check)
    (main my-main)
    (export (scheme2js top-level::pair-nil js-interface::pair-nil config p)
 	   (scheme2js-compile-files! in-files::pair
@@ -44,6 +46,7 @@
 		  (unresolved=JS #f)
 		  (optimize-tail-rec #t)
 		  (do-inlining #t)
+		  (loop-hoist #t)
 		  (inline-globals #f)
 		  (constant-propagation #t)
 		  (var-propagation #t)
@@ -53,7 +56,7 @@
 		  (optimize-var-number #f)
 		  (optimize-boolify #t)
 		  (optimize-set! #t)
-		  (encapsulate-parts #f)
+		  (encapsulate-modules #f)
 		  (trampoline #f)
 		  (print-locations #f)
 		  (return #f)
@@ -99,12 +102,15 @@
 				  (not (memq id
 					     '(imported traverse traverse0
 							traverse1 traverse2
+							traverse3
 							traverse0! traverse1!
-							traverse2! clone
+							traverse2! traverse3!
+							clone
 							deep-clone
 							already-defined?
 							single-value
-							var
+							target
+			;				var
    ))))))))
 
 (define *out-file* #f)
@@ -131,14 +137,14 @@
       (("--mutable-strings"
 	(help "use mutable strings."))
        (hashtable-put! config-ht 'mutable-strings #t))
-      (("--encapsulate-parts"
-	(help "encapsulates subparts, so they don't flood the surrounding scope with local vars."))
-       (hashtable-put! config-ht 'encapsulate-parts #t))
+      (("--encapsulate-modules"
+	(help "encapsulates modules, so they don't flood the surrounding scope with local vars."))
+       (hashtable-put! config-ht 'encapsulate-modules #t))
       (("--optimize-var-number"
 	(help "reduce used variables by reusing existing vars."))
        (hashtable-put! config-ht 'optimize-var-number #t))
       (("--optimize-while"
-	(help "unstable while-optim."))
+	(help "while-optimization"))
        (hashtable-put! config-ht 'while #t))
       (("--no-inlining"
 	(help "don't inline at all"))
@@ -158,6 +164,9 @@
       (("--no-tailrec"
 	(help "don't optimize tail-recs."))
        (hashtable-put! config-ht 'optimize-tail-rec #f))
+      (("--with-closures"
+	(help "use the 'with'-keyword to implement closures"))
+       (hashtable-put! config-ht 'with-closures #t))
       (("--trampoline"
 	(help "add trampolines around tail-recursive calls"))
        (hashtable-put! config-ht 'trampoline #t))
@@ -210,6 +219,8 @@
       (if (eq? (config 'debug-stage) 'symbol) (dot-out p tree))
       (node-elimination! tree)
       (if (eq? (config 'debug-stage) 'node-elim1) (dot-out p tree))
+      (callcc-early tree)
+      (if (eq? (config 'debug-stage) 'call/cc-early) (dot-out p tree))
       (tail-rec! tree)
       (if (eq? (config 'debug-stage) 'tail) (dot-out p tree))
       (inline! tree)
@@ -220,6 +231,8 @@
       (if (eq? (config 'debug-stage) 'var-propagation) (dot-out p tree))
       (rm-unused-vars! tree)
       (if (eq? (config 'debug-stage) 'rm-unused-vars) (dot-out p tree))
+      (loop-hoist! tree)
+      (if (eq? (config 'debug-stage) 'loop-hoist) (dot-out p tree))
       (capture! tree)
       (if (eq? (config 'debug-stage) 'capture) (dot-out p tree))
       (node-elimination! tree)
@@ -239,6 +252,8 @@
       (if (eq? (config 'debug-stage) 'node-elim3) (dot-out p tree))
       (callcc-late tree)
       (if (eq? (config 'debug-stage) 'call/cc-late) (dot-out p tree))
+      ;(check tree)
+      ;(if (eq? (config 'debug-stage) 'check) (dot-out p tree))
       (locations tree)
       (if (eq? (config 'debug-stage) 'locations) (dot-out p tree))
       (let* ((out-p (if (config 'debug-stage)

@@ -20,7 +20,7 @@
 	   verbose
 	   allocate-names))
 
-(define *max-tail-call-depth* 20)
+(define *max-tail-call-depth* 40)
 
 (define (default-max-tail-call-depth)
    *max-tail-call-depth*)
@@ -45,9 +45,10 @@
 (define (gen-code tree p)
    (verbose "  generating code")
    (overload compile compile
-	     (Node Program Part Node Const Var-ref Lambda
-		   If Case Clause Set! Begin Bind-exit With-handler
-		   Call Tail-rec While Tail-rec-call Return
+	     (Node Program Module Node Const Var-ref Lambda
+		   If Case Clause Set! Begin Call/cc-Resume
+		   Call Call/cc-Call Tail-rec While Tail-rec-call Return
+		   Closure-use Closure-with-use Closure-ref
 		   Closure-alloc Labelled Break Pragma)
 	     (tree.compile p)))
 
@@ -57,6 +58,18 @@
 ;; TODO: *last-line* is not thread-safe!
 (define *last-line* 0)
 (define *last-file* "")
+
+(define (scm2js-globals-init p)
+   (p-display p "var scm2js_globals = SC_SCM2JS_GLOBALS;\n"))
+(define (scm2js-global global)
+   (string-append "scm2js_globals." global))
+
+;; TODO propose other global access as option.
+; (define (scm2js-globals-init p)
+;    'do-nothing)
+; (define (scm2js-global global)
+;    (string-append "SC_" global))
+
 
 (define-macro (check-stmt-form node p . Lbody)
    `(if (statement-form? ,node)
@@ -98,8 +111,8 @@
 	  (iter (cdr els) sep default))))
    (iter els sep (and (not (null? Ldefault)) (car Ldefault))))
 
-(define-pmethod (Node-compile)
-   (error #f "forgot node-type: " this))
+(define-pmethod (Node-compile ignored)
+   (error #f "forgot node-type: " (pobject-name this)))
 
 (define (small-list/pair? l)
    (define (smaller? l n)
@@ -175,72 +188,74 @@
 (define-pmethod (Program-compile p)
    (this.body.compile p))
 
-(define-pmethod (Part-compile p)
+(define-pmethod (Module-compile p)
    (define (trampoline-start-code p)
       (when (config 'trampoline)
-	 (p-display p "sc_TAIL_CALLS = " (max-tail-call-depth) ";\n")
-	 (p-display p "var sc_f;\n")
-	 (p-display p "var sc_funTailCalls = sc_TAIL_CALLS + 1;\n")))
+	 (p-display p "var sc_tailTmp;\n")
+	 (p-display p (scm2js-global "TAIL_OBJECT") ".calls = " (max-tail-call-depth) ";\n")
+	 (p-display p "var sc_funTailCalls = " (max-tail-call-depth)";\n")))
       
    (define (split-globals local-vars)
       ;; HACK; TODO: outer-vars are for now just global vars.
-      ;;    should be all vars that are visible to the outside of the part
-      ;;    maybe not. depends on 'semantics' of Part...
+      ;;    should be all vars that are visible to the outside of the module
+      ;;    maybe not. depends on 'semantics' of Module...
       (let ((outer-vars (make-eq-hashtable))
-	    (part-vars (make-eq-hashtable)))
+	    (module-vars (make-eq-hashtable)))
 	 (hashtable-for-each local-vars
 			     (lambda (var ignored)
 				(hashtable-put! (if var.is-global?
 						    outer-vars
-						    part-vars)
+						    module-vars)
 						var
 						#t)))
-	 (cons outer-vars part-vars)))
+	 (cons outer-vars module-vars)))
 
-   (let* ((outer/part-vars (if (or (config 'encapsulate-parts)
+   (let* ((outer/module-vars (if (or (config 'encapsulate-modules)
 				   (config 'call/cc))
 			       (split-globals this.local-vars)
 			       (cons this.local-vars #f)))
-	  (outer-vars (car outer/part-vars))
+	  (outer-vars (car outer/module-vars))
 	  (outer-vars? (not (= 0 (hashtable-size outer-vars))))
-	  (part-vars (cdr outer/part-vars))
+	  (module-vars (cdr outer/module-vars))
 
-	  (part-filter-fun this.fun)
-	  (part-filter-port/close (part-filter-fun p))
-	  (part-filter-port (car part-filter-port/close))
-	  (part-filter-close (cdr part-filter-port/close))
+	  (module-filter-fun this.fun)
+	  (module-filter-port/close (module-filter-fun p))
+	  (module-filter-port (car module-filter-port/close))
+	  (module-filter-close (cdr module-filter-port/close))
 	  
 	  (encapsulated (if (or (config 'call/cc)
-				(and (config 'encapsulate-parts)
+				(and (config 'encapsulate-modules)
 				     '(HACK HACK HACK we need a body at the
 					    moment cause we introduced a
 					    'return in the
 					    hack-encapsulation-pass))
-				(and (and part-vars
-					  (> (hashtable-size part-vars) 0))))
+				(and (and module-vars
+					  (> (hashtable-size module-vars) 0))))
 			    (let ((fun (new-node Lambda '() #f this.body)))
-			       (set! fun.local-vars (or part-vars (make-eq-hashtable)))
+			       (set! fun.local-vars (or module-vars (make-eq-hashtable)))
+			       (if this.indices/indicators
+				   (set! fun.indices/indicators
+					 this.indices/indicators))
 			       fun)
 			    #f)))
-      (verbose (config 'call/cc))
-      (verbose (not encapsulated))
+      (scm2js-globals-init p)
       (trampoline-start-code p)
       (set! this.body.source-element? #t)
       (if outer-vars?
 	  (hashtable-for-each outer-vars
 			      (lambda (var ignored)
-				 (p-display part-filter-port
+				 (p-display module-filter-port
 					    "var " var.compiled ";\n")
 				 (set! var.encapsulated? #t))))
       (if encapsulated
 	  (begin
-	     (p-display part-filter-port "(")
-	     (encapsulated.compile part-filter-port)
-	     (p-display part-filter-port
-			").call(this)"))
-	  (this.body.compile part-filter-port))
+	     (p-display module-filter-port "(")
+	     (encapsulated.compile module-filter-port)
+	     (p-display module-filter-port
+			").call(this)\n"))
+	  (this.body.compile module-filter-port))
 
-      (part-filter-close part-filter-port)))
+      (module-filter-close module-filter-port)))
 
 
 ;; Llvalue/stmt?, if given, indicate, that this lambda should be assigned to
@@ -258,37 +273,11 @@
 		    *tmp-var* "--) {\n")
 	 (p-display p L " = sc_cons(arguments[" *tmp-var* "], " L ");\n}\n")))
 
-   (define (trampoline-start-code p in-call/cc?)
+   (define (trampoline-start-code p)
       (p-display
        p
-       "var sc_funTailCalls;\n"
-       "var sc_f;\n"
-       "if (!(sc_funTailCalls=sc_TAIL_CALLS)) throw new sc_TailCall(this, arguments);\n"
-       "sc_TAIL_CALLS=" (max-tail-call-depth) ";\n"
-       "try {\n"))
-
-   (define (trampoline-end-code p in-call/cc)
-      (p-display
-       p
-       "\n} catch (e) {\n"
-       "    if (sc_funTailCalls === " (max-tail-call-depth) ") {\n"
-       "       var tmpExc = e;\n"
-       "       while (tmpExc instanceof sc_TailCall) {\n"
-       "           try {\n"
-       "              sc_TAIL_CALLS=sc_funTailCalls-1;\n"
-       (if in-call/cc
-	   "            sc_callCcFun = tmpExc.arguments.callee;\n"
-	   "")
-       "              return tmpExc.arguments.callee.apply(tmpExc.funThis,"
-       " tmpExc.arguments);\n"
-       "           } catch (e2) {\n"
-       "              tmpExc = e2;\n"
-       "           }\n"
-       "       }\n"
-       "       throw tmpExc;\n"
-       "    } else\n"
-       "       throw e;\n"
-       "} finally { sc_TAIL_CALLS = sc_funTailCalls; }"))
+       "var sc_tailTmp;\n"
+       "var sc_funTailCalls = " (scm2js-global "TAIL_OBJECT") ".calls;\n"))
 
    (define (var-names formals vaarg vars-ht)
       (append (map (lambda (n)
@@ -298,53 +287,160 @@
 		       formals))
 	      (hashtable-key-list vars-ht)))
    
-   (define (call/cc-start-code p formals vaarg vars-ht)
-      (p-display
-       p
-       "var sc_storage = sc_CALLCC_STORAGE;\n"
-       "if (sc_storage.doRestore) {\n"
-       "  var sc_frame = sc_storage.getNextFrame();\n"
-       "} else {\n"
-       "  if (sc_storage.length() == 0 && !sc_storage.firstCall) {\n"
-       "        sc_storage.firstCall = arguments.callee;\n"
-       "  }\n"
-       "  var sc_frame = new Object();\n"
-       "  sc_frame.sc_callCcRestoreIndex = 0;\n"
-       "  sc_frame.sc_callCcIndex = 0;\n"
-       "  sc_frame.sc_callCcFun = undefined;\n"
-       "  sc_storage.push(sc_frame);\n")
-      (if this.vaarg
-	  (vaarg-code vaarg.var (length this.formals)))
-      (for-each (lambda (formal/vaarg)
-		   (let ((var-name formal/vaarg.var.compiled))
+   (define (call/cc-start-code p formals vaarg locals indices/vars indices/indicators)
+      (let* ((formal-vars (map (lambda (n) n.var) formals))
+	     (formal/vaarg-vars (if vaarg
+				    (cons vaarg.var formal-vars)
+				    formal-vars))
+	     (local/formal-vars (append! (hashtable-key-list locals)
+					 formal/vaarg-vars))
+	     (local/formal-names (map (lambda (v)
+					 v.compiled)
+				      local/formal-vars)))
+	 (p-display
+	  p
+	  "var sc_callCcTmp;\n"
+	  "var sc_callCcIndex = 0;\n"
+	  "var sc_callCcState;\n"
+	  "var sc_callCcFrame = false;\n"
+	  "if (" (scm2js-global "CALLCC_STORAGE") "['doCall/CcDefault?']) {\n")
+	 (if indices/indicators
+	     (let ((ht (make-eq-hashtable)))
+		(for-each (lambda (index/indicator-indices)
+			     (for-each (lambda (indicator-index)
+					  (hashtable-put! ht indicator-index #t))
+				       (cdr index/indicator-indices)))
+			  indices/indicators)
+		(hashtable-for-each ht
+				    (lambda (indicator-index ignored)
+				       (p-display
+					p
+					"    var " (call/cc-indicator-name
+						indicator-index)
+					" = false;\n"))))
+	     (p-display p "   /* do nothing */\n"))
+	 (p-display
+	  p
+	  "} else if (" (scm2js-global "CALLCC_STORAGE") "['doCall/CcRestore?']) {\n"
+	  "  sc_callCcState = " (scm2js-global "CALLCC_STORAGE") ".pop();\n"
+	  "  sc_callCcIndex = sc_callCcState.sc_callCcIndex;\n"
+	  "  sc_callCcFrame = sc_callCcState.frame;\n")
+	 (for-each (lambda (var-name)
 		      (p-display
 		       p
-		       "  sc_frame." var-name " = " var-name ";\n")))
-		(if vaarg
-		    (cons vaarg formals)
-		    formals))
-      (hashtable-for-each vars-ht
-			  (lambda (var-name ignored)
+		       "  " var-name " = sc_callCcFrame." var-name ";\n"))
+		   local/formal-names)
+	 (p-display
+	  p
+	  "  try {\n"
+	  "    sc_callCcTmp = "
+	  (scm2js-global "CALLCC_STORAGE") ".callNext();\n")
+	 
+	 (when (not (null? indices/vars))
+	    (p-display
+	     p
+	     "    switch (sc_callCcIndex) {\n")
+	    (for-each (lambda (index/var)
+			 (if (cdr index/var)
 			     (p-display
 			      p
-			      "  sc_frame." var-name " = undefined;\n")))
-      (p-display p "}\n")
-      (p-display p
-		 "with(sc_frame) {\n"
-		 "try {\n"))
+			      "case " (car index/var) ": "
+			      (cdr index/var).compiled " = sc_callCcTmp; break;")))
+		      indices/vars)
+	    (p-display
+	     p
+	     "    }\n"))
 
-   (define (call/cc-end-code p)
-      (p-display
-       p
-       "} catch (e) {\n"
-       "  if (e instanceof sc_CallCcException && sc_storage.length() == 1) {\n"
-       "    return sc_callCcRestart(e);\n"
-       "  } else \n"
-       "    throw e;\n"
-       "} finally {\n"
-       "  sc_storage.pop();\n"
-       "}\n" ;; try
-       "}\n")) ;; whith
+	 (when indices/indicators
+	    (p-display
+	     p
+	     "    switch (sc_callCcIndex) {\n")
+	    (for-each (lambda (index/indicator-indices)
+			 (p-display
+			  p
+			  "      "
+			  "case " (car index/indicator-indices) ":\n")
+			 (for-each (lambda (indicator-index)
+				      (p-display
+				       p
+				       "        "
+				       (call/cc-indicator-name indicator-index)
+				       " = true;\n"))
+				   (cdr index/indicator-indices))
+			 (p-display
+			  p
+			  "        break;\n"))
+		      indices/indicators)
+	    (p-display
+	     p
+	     "    }\n"))
+	 (p-display
+	  p
+	  "  } catch(e) {\n"
+	  "    if (e instanceof sc_CallCcException && e.backup) {\n"
+	  "       e.push(sc_callCcState);\n"
+	  "    }\n"
+	  "    throw e;\n"
+	  "  }\n"
+	  "} else { // root-fun\n"
+	  "  return sc_callCcRoot(this, arguments);\n"
+	  "}\n"
+	  "try {\n")))
+
+   (define (call/cc-end-code p formals vaarg locals)
+      (let* ((formal-vars (map (lambda (n) n.var) formals))
+	     (formal/vaarg-vars (if vaarg
+				    (cons vaarg.var formal-vars)
+				    formal-vars))
+	     (local/formal-vars (append! (hashtable-key-list locals)
+					 formal/vaarg-vars))
+	     (muted-locals-str (map (lambda (v) v.compiled)
+				    (filter (lambda (v)
+					       v.muted?)
+					    local/formal-vars)))
+	     (constant-locals-str (map (lambda (v) v.compiled)
+				       (filter (lambda (v)
+						  (not v.muted?))
+					       local/formal-vars))))
+	 (p-display
+	  p
+	  "} catch (e) {\n"
+	  "  if (e instanceof sc_CallCcException &&"
+	  " e.backup && sc_callCcIndex !== 0) {\n" ;; if 0 then it was a tail-call.
+	  "    if (!sc_callCcFrame)\n"
+	  "      sc_callCcFrame = new Object();\n"
+	  "    sc_callCcState = new Object();\n"
+	  "    sc_callCcState.sc_callCcIndex = sc_callCcIndex;\n"
+	  "    sc_callCcState.frame = sc_callCcFrame;\n"
+	  ;; if we were a tail-call target undo this. (Call/cc removes the caller).
+	  "    sc_callCcState.this_ ="
+	  "(this === " (scm2js-global "TAIL_OBJECT") ")? null: this;\n"
+	  "    sc_callCcState.callee = arguments.callee;\n")
+	 (for-each (lambda (var-name)
+		      (p-display
+		       p
+		       "     sc_callCcFrame." var-name " = " var-name ";\n"))
+		   constant-locals-str)
+	 (p-display
+	  p
+	  "    e.push(sc_callCcState);\n"
+	  "  }\n"
+	  "  throw e;\n"
+	  "}\n") ;; try
+	 (when (not (null? muted-locals-str))
+	    (p-display
+	     p
+	     "finally {\n"
+	     "  if (sc_callCcFrame) {\n")
+	    (for-each (lambda (var-name)
+			 (p-display
+			  p
+			  "     sc_callCcFrame." var-name " = " var-name ";\n"))
+		      muted-locals-str)
+	    (p-display
+	     p
+	     "  }"
+	     "}\n")))) ;; try
 
    (let* ((locals this.local-vars)
 	  (local-vars-ht (make-hashtable))
@@ -357,29 +453,30 @@
 			  (cadr Llvalue/stmt?/source-element?))))
 	  (source-element? (and (not (null? Llvalue/stmt?/source-element?))
 				(caddr Llvalue/stmt?/source-element?)))
-	  (declaration? (and source-element?
+	  (declaration? (and #f
+			     source-element?
 			     lvalue
 			     stmt?
 			     
 			     ;; if we optimize the var-number we might reuse
 			     ;; variables. Don't play with that...
 			     (not (config 'optimize-var-number))
-
+			     
 			     ;; call/cc has bad property of putting
 			     ;; declarations into an anonymous function.
 			     ;; the variable itself is however still accessible
 			     ;; outside this function. -> we can't do
 			     ;; declarations then.
 			     (not lvalue.var.encapsulated?)
-
+			     
 			     lvalue.var.single-value ;; not muted or anything
-
+			     
 			     ;; a declaration puts the assignment at the
 			     ;; beginning of the scope. This is not good, if we
 			     ;; want to access 'with' variables, that represent
 			     ;; closures...
 			     (not this.references-tail-rec-variables?)))
-
+	  
 	  ;; a function can't be alone as statement. ie.
 	  ;; function () {}; is not a valid statement.
 	  ;; but
@@ -396,9 +493,10 @@
 				  (and (not stmt?)
 				       (or lvalue
 					   needs-trampoline?))))
-
+	  
 	  (needs-call/cc? (and this.body.call/cc-range
-			       (not (null? this.body.call/cc-range)))))
+			       (not (null? this.body.call/cc-range))))
+	  (needs-scm2js-globals? (or needs-trampoline? needs-call/cc?)))
       
       ;; local-vars-ht will contain the var-names. by putting them into a
       ;; hashtable we remove the duplicates. Not very elegant, but it should work ;)
@@ -410,68 +508,51 @@
 	  (p-display p "("))
       
       (cond
-	 ;; if we don't have a lvalue, we use "sc_f" as temporary variable...
-	 ((and needs-trampoline?
-	       (not lvalue))
-	  (p-display p "sc_f = function ("))
-	 ;; if it's a declaration we write the beginning of it: 'function name('
-	 (declaration?
-	  (p-display p "function ")
-	  (lvalue.compile p)
-	  (p-display p "("))
+	 ; 	 ;; if it's a declaration we write the beginning of it: 'function name('
+	 ; 	 (declaration?
+	 ; 	  (p-display p "function ")
+	 ; 	  (lvalue.compile p)
+	 ; 	  (p-display p "("))
 	 ;; if it's an assignment: 'lval = function('
 	 (lvalue
 	  (lvalue.compile p)
-	  (p-display p " = function("))
+	  (p-display p " = "))
 	 (else
-	  (p-display p "function(")))
-	  
+	  'do-nothing))
+      
+      (p-display p "function(")
+      
       (compile-separated-list p this.formals ", ")
       (p-display p ") {\n")
-      (if needs-call/cc?
-	  (call/cc-start-code p this.formals this.vaarg local-vars-ht)
-	  (begin
-	     (if this.vaarg
-		 (vaarg-code this.vaarg.var (length this.formals)))
-	     (hashtable-for-each local-vars-ht
-				 (lambda (var ignored)
-				    (p-display p "var " var ";\n")))))
+      (if this.vaarg
+	  (vaarg-code this.vaarg.var (length this.formals)))
+      (hashtable-for-each local-vars-ht
+			  (lambda (var ignored)
+			     (p-display p "var " var ";\n")))
+      (if needs-scm2js-globals?
+	  (scm2js-globals-init p))
       (if needs-trampoline?
-	  (trampoline-start-code p needs-call/cc?))
+	  (trampoline-start-code p))
+      (if needs-call/cc?
+	  (call/cc-start-code p this.formals this.vaarg
+			      locals
+			      this.body.call/cc-range
+			      this.indices/indicators))
       (if (and source-element?
 	       (not needs-trampoline?)
 	       (not needs-call/cc?))
 	  (set! this.body.source-element? #t))
       (this.body.compile p)
-      (if needs-trampoline?
-	  (trampoline-end-code p needs-call/cc?))
       (if needs-call/cc?
-	  (call/cc-end-code p))
+	  (call/cc-end-code p this.formals this.vaarg locals))
+      
       ;; with the following p-display we close the function-body.
       (p-display p "\n}\n")
       
-      (when needs-trampoline?
-	 (if stmt?
-	     ;; we don't need a semicolon if it was a declaration, but
-	     ;; it doesn't hurt.
-	     (p-display p "; ")
-	     (p-display p ", "))
-	 (if lvalue
-	     (lvalue.compile p)
-	     (p-display p "sc_f"))
-	 (p-display p ".hasTailCalls = true")
-	 (if (and (not stmt?)
-		  (not lvalue)) ;; we need to return the function...
-	     ;; if there's a lvalue, we have an assignment. and assignments
-	     ;; return unspecified values...
-	     (p-display p ", sc_f"))
-	 ;; if there's a closing semicolon needed it will be written later on.
-	 )
-
       ;; close the previously opened parenthesis
       (if needs-parenthesis?
 	  (p-display p ")"))
-
+      
       ;; add the stmt-semicolon. In theory we don't need any when it's a
       ;; function declaration, but this simplifies the code, and some editors
       ;; prefer the semicolon.
@@ -497,13 +578,13 @@
 	  ((and this.call/cc-then-range
 		this.call/cc-else-range)
 	   (p-display p
-		      "if (sc_callCcRestoreIndex && sc_callCcRestoreIndex <= "
-		      (apply max this.call/cc-then-range)
-		      "    || (!sc_callCcRestoreIndex &&"))
+		      "if (sc_callCcIndex && sc_callCcIndex <= "
+		      (apply max (map car this.call/cc-then-range))
+		      "    || (!sc_callCcIndex &&"))
 	  (this.call/cc-then-range
-	   (p-display p "if (sc_callCcRestoreIndex || ("))
+	   (p-display p "if (sc_callCcIndex || ("))
 	  (else
-	   (p-display p "if (!sc_callCcRestoreIndex && (")))
+	   (p-display p "if (!sc_callCcIndex && (")))
        (compile-boolified p this.test)
        (p-display p ")) ")
        (this.then.compile p)
@@ -514,8 +595,9 @@
        (compile-boolified p this.test)
        (p-display p ") ")
        (this.then.compile p)
-       (p-display p "\nelse\n")
-       (this.else.compile p))
+       (unless (inherits-from? this.else (node 'Const)) ;; avoid common case 'undefined'
+	  (p-display p "\nelse\n")
+	  (this.else.compile p)))
       (else
        (p-display p "(")
        (compile-boolified p this.test)
@@ -527,8 +609,8 @@
 
 (define-pmethod (Case-compile p)
    (p-display p "switch (")
-   (if this.call/cc-range
-       (p-display p "sc_callCcRestoreIndex?sc_getCallCcIndexObject(sc_callCcRestoreIndex):"))
+   (when this.call/cc-range
+      (p-display p "sc_callCcIndex? sc_getCallCcIndexObject(sc_callCcIndex) :"))
    (this.key.compile p)
    (p-display p ") {\n")
    (for-each (lambda (clause)
@@ -544,10 +626,17 @@
 	  (this.expr.compile p)
 	  (p-display p "\nbreak;"))
        (begin
-	  (if this.call/cc-range
-	      (for-each (lambda (index)
-			   (p-display p "case sc_getCallCcIndexObject("
-				      index "):\n") )
+	  (when this.call/cc-range
+	      (for-each (lambda (index/var)
+			   (let ((index (car index/var)))
+			      ;; sc_storage can not be used as key, and will hence
+			      ;; never match.
+			      (p-display
+			       p
+			       "case (sc_callCcIndex === " index "?"
+			       "sc_getCallCcIndexObject(" index "):"
+			       ;; storage can't clash with user values
+			       (scm2js-global "CALLCC_STORAGE") "):\n")))
 			this.call/cc-range))
 	  (for-each (lambda (const)
 		       (p-display p "case ")
@@ -574,15 +663,26 @@
 	    (compile-unoptimized-set! p this)))))
 
 (define-pmethod (Begin-compile p)
+   ;; if only the first element has a call/cc range we don't need a switch, as
+   ;; we are entering the first element anyways.
+   (define (only-first-el-has-call/cc-range?)
+      (not (any? (lambda (n)
+		    (let ((call/cc-range n.call/cc-range))
+		       (and call/cc-range
+			    (not (null? call/cc-range)))))
+		 (cdr this.exprs))))
    (cond
       ((and this.call/cc-range
-	    (not (null? this.call/cc-range)))
-       (p-display p "switch (sc_callCcRestoreIndex) { case 0:")
+	    (not (null? this.call/cc-range))
+	    (not (only-first-el-has-call/cc-range?)))
+       (p-display p
+		  "switch (sc_callCcIndex) {\n"
+		  "case 0:\n")
        (for-each (lambda (n)
 		    (let ((call/cc-range n.call/cc-range))
 		       (when (and call/cc-range (not (null? call/cc-range)))
-			  (for-each (lambda (i)
-				       (p-display p "case " i ":\n"))
+			  (for-each (lambda (index/var)
+				       (p-display p "case " (car index/var) ":\n"))
 				    call/cc-range)))
 		    (n.compile p))
 		 this.exprs)
@@ -604,99 +704,82 @@
        (compile-separated-list p this.exprs ", ")
        (p-display p ")"))))
 
-(define-pmethod (Bind-exit-compile p)
-   (let ((escape-obj (gen-JS-sym 'escape_obj)))
-      (p-display p "{\n")
-      (if this.call/cc-range
-	 (p-display p
-		    "if (!sc_storage.doRestore) {\n"
-		    "sc_frame." escape-obj " = new sc_BindExitException();\n"
-		    "sc_frame.")
-	 (p-display p
-		    "var " escape-obj " = new sc_BindExitException();\n"
-		    "var "))
-      (this.escape.compile p)
-      (p-display p
-		 " = function (res) {\n")
-      (p-display p
-		 escape-obj ".res = res;"
-		 "throw " escape-obj ";"
-		 "};\n")
-      (if this.call/cc-range
-	  (p-display p "}")) ;; close if
-      (p-display p "try {\n")
-      (this.body.compile p)
-      (p-display p "} catch (exc) {\n"
-		 "if (exc === " escape-obj ") {\n")
-      (this.result-decl.compile p)
-      (p-display p " = exc.res;\n")
-      (this.invoc-body.compile p)
-      (p-display p
-		 "\n} else throw exc;\n"
-		 "}\n"
-		 "}\n")))
+(define-pmethod (Call/cc-Resume-compile p)
+   (p-display
+    p
+    "sc_callCcIndex = 0;\n"))
 
-(define-pmethod (With-handler-compile p)
-   (let ((exception this.exception.var.compiled))
-      (p-display p "try {\n")
-      (this.body.compile p)
-      (p-display p
-		 "} catch (" exception ") {\n"
-		 "if (!" exception "._internalException) {\n")
-      (this.catch.compile p)
-      (p-display p
-		 "\n} else throw " exception ";\n"
-		 "}\n")))
+(define-pmethod (Call/cc-Call-compile p)
+   (if (statement-form? this)
+       (p-display p "{ sc_callCcIndex = " this.call/cc-index ";\n")
+       (p-display p "(sc_callCcIndex = " this.call/cc-index ", "))
+   (pcall this Call-compile p)
+   (if (statement-form? this)
+       (p-display p "}\n")
+       (p-display p ")")))
+
+(define (tail-call-compile n p)
+   (define (tail-call n tail-obj)
+      (p-display p "(" tail-obj ".f =")
+      (n.operator.compile p)
+;      (p-display p ".call(" tail-obj)
+      (p-display p "," tail-obj ".f(")
+;      (if (not (null? n.operands))
+;	  (p-display p ", "))
+      (compile-separated-list p n.operands ", ")
+      (p-display p "))"))
+   
+      
+   (p-display
+    p
+    "(\n"
+    "  (this === (sc_tailTmp =" (scm2js-global "TAIL_OBJECT") "))?\n"
+    "  ((!sc_funTailCalls)?\n"
+    "    (sc_tailTmp = [")
+   (compile-separated-list p n.operands ", ")
+   (p-display
+    p
+    "],\n"
+    "    sc_tailTmp.callee = ")
+   (n.operator.compile p)
+   (p-display
+    p
+    ",\n"
+    "    new sc_Trampoline(sc_tailTmp, " (max-tail-call-depth) "))\n"
+    "    :\n"
+    "    (this.calls = sc_funTailCalls - 1,\n"
+    "     ")
+   (tail-call n "sc_tailTmp")
+   (p-display
+    p
+    ")\n   ):(\n"
+    "    sc_tailTmp.calls = " (max-tail-call-depth) ","
+    "    sc_tailTmp = ")
+   (tail-call n "sc_tailTmp") ;(scm2js-global "TAIL_OBJECT"))
+   (p-display
+    p
+    ",\n"
+    "    ((typeof sc_tailTmp === 'object' &&"
+    "sc_tailTmp instanceof sc_Trampoline)?\n"
+    "       sc_tailTmp.restart() :\n"
+    "       sc_tailTmp)\n"
+    "  )\n"
+    ")\n"))
 
 (define-pmethod (Call-compile p)
-   (define (tail-call-op-compile op-compile)
-      (cond
-	 ((and (config 'trampoline)
-	       this.certain-tail-call?)
-	  (p-display p "sc_TAIL_CALLS=sc_funTailCalls-1,")
-	  (op-compile))
-	 ((and (config 'trampoline)
-	       this.tail-call?
-	       (instance-of? this.operator (node 'Var-ref)))
-	  (p-display p "(")
-	  (op-compile)
-	  (p-display p
-		     ".hasTailCalls?sc_TAIL_CALLS=sc_funTailCalls-1:true),")
-	  (op-compile))
-	 ((and (config 'trampoline)
-	       this.tail-call?)
-	  (p-display p "sc_f =")
-	  (op-compile)
-	  (p-display p
-		     ", (sc_f.hasTailCalls?"
-		     "sc_TAIL_CALLS=sc_funTailCalls-1"
-		     ":true), sc_f"))
-	 (else
-	  (op-compile))))
-
-   (define (call/cc-op-compile op-compile)
-      (if this.call/cc-index
-	  (begin
-	     (p-display p
-			"(sc_callCcIndex=" this.call/cc-index ","
-			"(sc_storage.doRestore? sc_callCcFun: sc_callCcFun=")
-	     (op-compile)
-	     (p-display p
-			"))"))
-	  (op-compile)))
-      
    (check-stmt-form
     this p
-    (let ((operator this.operator))
-       (unless (and (config 'optimize-calls)
-		    (compile-optimized-call p operator this.operands))
-	  (p-display p "(")
-	  (tail-call-op-compile
-	   (lambda () (call/cc-op-compile
-		       (lambda () (this.operator.compile p)))))
-	  (p-display p "(")
-	  (compile-separated-list p this.operands ", ")
-	  (p-display p "))")))))
+    (if this.tail-call?
+	(tail-call-compile this p)
+	(let ((operator this.operator))
+	   (unless (and (config 'optimize-calls)
+			(compile-optimized-call p operator this.operands))
+	      (p-display p "(")
+	      (operator.compile p)
+	      (p-display p "(")
+	      (compile-separated-list p this.operands ", ")
+	      (p-display p ")")
+	      (p-display p ")"))))))
 
 (define-pmethod (Tail-rec-compile p)
    (let ((label (and this.label (mangle-JS-sym this.label))))
@@ -712,7 +795,7 @@
    ;; while nodes shouldn't need their label.
    (p-display p "while (")
    (if this.call/cc-range
-       (p-display p "sc_callCcRestoreIndex || "))
+       (p-display p "sc_callCcIndex || "))
    (this.test.compile p)
    (p-display p ") {\n")
    (this.body.compile p)
@@ -730,37 +813,47 @@
    (p-display p ";\n"))
 
 (define-pmethod (Closure-alloc-compile p)
-   (p-display p "{\n")
-   (if this.call/cc-range
-       (p-display p
-		  "if (sc_storage.doRestore) {\n"
-		  " var " *tmp-var* " = sc_storage.getNextFrame();"
-		  "} else {\n"))
-   (p-display p
-	      "var " *tmp-var* " = new Object();\n")
-   (for-each (lambda (var)
-		(p-display p *tmp-var* "." var.compiled " = undefined;\n"))
-	     this.allocated-vars)
-   (if this.call/cc-range
-       (p-display p
-		  *tmp-var* ".closureAllocation = true;\n"
-		  "sc_storage.push(" *tmp-var* ");\n"
-		  "}\n"))
-   (p-display p
-	      "with(" *tmp-var* ") {\n")
-   (if this.call/cc-range
-       (p-display p
-		  "try { \n"))
-   (this.body.compile p)
-   (if this.call/cc-range
-       (p-display p
-		  "\n"
-		  "} finally {"
-		  "sc_storage.pop();\n"
-		  "}\n"))
-   (p-display p
-	      "}\n}"))
+   (p-display p "(new Object())"))
 
+(define-pmethod (Closure-use-compile p)
+   (define (p-display-closures p closures)
+      (p-display p
+		 (car closures).var.compiled)
+      (for-each (lambda (closure)
+		   (p-display p
+			      ", "
+			      closure.var.compiled))
+		(cdr closures)))
+   
+   (check-stmt-form
+    this p
+    (p-display p "function(")
+    (p-display-closures p this.closures)
+    (p-display p ") { return ")
+    (this.body.compile p)
+    (p-display p "; }(")
+    (p-display-closures p this.closures)
+    (p-display p ")")))
+
+(define-pmethod (Closure-with-use-compile p)
+   (for-each (lambda (closure)
+		(p-display
+		 p
+		 "with (" closure.var.compiled ") {\n"))
+	     this.closures)
+   (this.body.compile p)
+   (for-each (lambda (closure)
+		(p-display
+		 p
+		 "}"))
+	     this.closures)
+   (p-display p "\n"))
+
+(define-pmethod (Closure-ref-compile p)
+   (check-stmt-form
+    this p
+    (p-display p this.var.compiled)))
+   
 (define-pmethod (Labelled-compile p)
    (p-display p (mangle-JS-sym this.label) ":{\n")
    (this.body.compile p)

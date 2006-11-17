@@ -22,7 +22,8 @@
 		      ;; next test not strictly necessary, but
 		      ;; simplifies cases like "(set! x (- x 1 2 3))"
 		      (null? (cddr operands))
-		      (inherits-from? (car operands) (node 'Var-ref))
+		      (or (inherits-from? (car operands) (node 'Var-ref))
+			  (inherits-from? (car operands) (node 'Closure-ref)))
 		      (eq? (car operands).var lvar)
 		      (inherits-from? operator (node 'Var-ref))
 		      (not operator.var.muted?))

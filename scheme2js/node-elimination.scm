@@ -14,7 +14,9 @@
 					  Body
 					  Let-form
 					  Set!
-					  Begin)
+					  Begin
+					  Labelled
+					  Break)
 	     (tree.traverse!)))
 
 (define-pmethod (Node-node-elimination!)
@@ -120,3 +122,16 @@
 		 (loop (cdr exprs)
 		       head          ;; keep head
 		       exprs)))))))) ;; we are the last pair that got through
+
+;; remove unused labels.
+(define-pmethod (Labelled-node-elimination!)
+   (this.traverse0!)
+   (if (not this.used?)
+       this.body
+       (begin
+	  (delete! this.used?)
+	  this)))
+
+(define-pmethod (Break-node-elimination!)
+   (set! this.labelled.used? #t)
+   this)

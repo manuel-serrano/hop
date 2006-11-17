@@ -17,7 +17,6 @@
    (overload traverse side (Node
 			    Program
 			    Lambda
-			    Bind-exit
 			    Set!)
 	     (tree.traverse)))
 
@@ -55,12 +54,6 @@
        (set! this.vaarg.var.already-defined? #t))
    ;; revisits the formals, but doesn't make any difference.
    (this.traverse0))
-
-(define-pmethod (Bind-exit-side)
-   (set! this.escape.var.already-defined? #t)
-   (set! this.result-decl.var.already-defined? #t)
-   (this.body.traverse)
-   (this.invoc-body.traverse))
 
 (define-pmethod (Set!-side)
    (this.val.traverse)

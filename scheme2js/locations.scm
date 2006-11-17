@@ -80,17 +80,6 @@
    (define-pmethod (Begin-loc)
       (multi-traverse this this.exprs))
 
-   (define-pmethod (Bind-exit-loc)
-      (multi-traverse this (list this.escape
-				 this.body
-				 this.result-decl
-				 this.invoc-body)))
-   
-   (define-pmethod (With-handler-loc)
-      (multi-traverse this (list this.exception
-				 this.catch
-				 this.body)))
-
    (define-pmethod (Set!-loc)
       (multi-traverse this (list this.lvalue this.val)))
 
@@ -108,8 +97,6 @@
 			      Case
 			      Clause
 			      Begin
-			      Bind-exit
-			      With-handler
 			      Set!
 			      Call
 			      While)

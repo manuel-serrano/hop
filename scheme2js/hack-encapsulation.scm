@@ -10,25 +10,28 @@
 	   verbose)
    (export (hack-encapsulation! tree::pobject)))
 
+;; if we are encapsulation the parts (ie putting it into an anonymous
+;; function), then we need/want a 'return' in the anonymous function.
+;; this should all become better, once we have modules.
 (define (hack-encapsulation! tree::pobject)
    (verbose " hack-encapsulation")
    (overload traverse encapsulate (Node
-				     Part)
+				   Module)
 	     (tree.traverse)))
 
 (define-pmethod (Node-encapsulate)
    (this.traverse0))
 
-(define-pmethod (Part-encapsulate)
+(define-pmethod (Module-encapsulate)
    (this.traverse0)
    (if (or (config 'call/cc)
 	   (config 'encapsulate-parts))
-       (let ((part-decl (Decl-of-new-Var (gensym 'partVar))))
-	  (set! this.part-var part-decl.var)
+       (let ((module-decl (Decl-of-new-Var (gensym 'moduleVar))))
+	  (set! this.part-var module-decl.var)
 	  (set! this.body
 		(new-node Begin
 			  (list (new-node Set!
-					  part-decl
+					  module-decl
 					  this.body)
 				(new-node Return
-					  (part-decl.var.reference))))))))
+					  (module-decl.var.reference))))))))

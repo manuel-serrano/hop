@@ -10,7 +10,9 @@
 	   free-vars
 	   captured-vars
 	   tail
-	   verbose)
+	   verbose
+	   config
+	   var)
    (export (capture! tree::pobject)))
 
 (define *empty-hashtable* (make-eq-hashtable))
@@ -50,11 +52,12 @@
    (tail-rec-escapes tree)
 
    (latest-allocation tree)
-   (allocate-captured! tree))
+   (allocate-captured! tree)
+   (finish-allocation! tree))
 
 ;; every tail-rec receives a list of variables, that are captured within the loop.
 (define (tail-rec-escapes tree)
-   (verbose " latest allocation")
+   (verbose " tail-rec escapes")
    (overload traverse tail-rec-escapes (Node
 					Lambda
 					Tail-rec
@@ -73,9 +76,9 @@
       (this.traverse1 rec-escapes)))
 
 (define-pmethod (Decl-tail-rec-escapes ht)
-   (if (and ht
-	    this.var.captured?)
-       (hashtable-put! ht this.var #t)))
+   (when (and ht
+	      this.var.captured?)
+	 (hashtable-put! ht this.var #t)))
 
 (define (latest-allocation tree)
    (verbose " latest allocation")
@@ -87,8 +90,6 @@
 			      Clause
 			      Begin
 			      Tail-rec
-			      Bind-exit
-			      With-handler
 			      Set!
 			      Call)
 	     (set! (node 'Node).proto.default-traverse-value '())
@@ -223,30 +224,6 @@
 	  (set! this.latest merged-latest))
       merged-latest))
 
-(define-pmethod (Bind-exit-latest tail-rec-escapes)
-   ;; we don't need to go into the result-decl.
-   (let* ((escape-latest (this.escape.traverse tail-rec-escapes))
-	  (body-latest (this.body.traverse tail-rec-escapes))
-	  (invoc-body-latest (this.invoc-body.traverse tail-rec-escapes))
-	  (merged-latest (latest-merge escape-latest
-				       body-latest
-				       invoc-body-latest)))
-      (if (and tail-rec-escapes
-	       (not (null? escape-latest))) ;; implies body or invoc-body-latest
-	  (set! this.latest merged-latest))
-      merged-latest))
-
-(define-pmethod (With-handler-latest tail-rec-escapes)
-   ;; we don't need to go into the exception-var-decl
-   (let* ((catch-latest (this.catch.traverse tail-rec-escapes))
-	  (body-latest (this.body.traverse tail-rec-escapes))
-	  (merged-latest (latest-merge catch-latest body-latest)))
-      (if (and tail-rec-escapes
-	       (not (or (null? catch-latest)
-			(null? body-latest))))
-	  (set! this.latest merged-latest))
-      merged-latest))
-
 (define-pmethod (Call-latest tail-rec-escapes)
    (if (not tail-rec-escapes)
        (begin
@@ -296,13 +273,30 @@
 	(let ((diff (difference latest already-allocated)))
 	   (and (not (null? diff))
 		diff))))
-   
+
 (define-pmethod (Node-alloc! already-allocated)
    (let ((diff (diff-vars this.latest already-allocated)))
       (delete! this.latest)
       (if diff
-	  (let ((new-this (this.traverse1! #t)))
-	     (new-node Closure-alloc diff new-this))
+	  (let* ((new-this (this.traverse1! #t))
+		 (closure-decl (Decl-of-new-Var (gensym 'closure)))
+		 (closure-var closure-decl.var)
+		 (alloc (new-node Closure-alloc))
+		 (assig (new-node Set! closure-decl alloc))
+		 (b-node (new-node Begin (list assig new-this))))
+	     (set! closure-decl.var.captured? #t)
+	     (set! closure-decl.var.closure-object? #t)
+	     (for-each (lambda (v)
+			  (let ((ref-id (symbol-append closure-var.id
+						       '_
+						       v.id)))
+			     (set! v.closure-var
+				   (new-node Field-Var
+					     ref-id
+					     closure-var
+					     v))))
+		       diff)
+	     b-node)
 	  (this.traverse1! already-allocated))))
 
 (define-pmethod (Tail-rec-alloc! already-allocated)
@@ -313,5 +307,70 @@
    (let ((diff (diff-vars this.latest already-allocated)))
       (delete! this.latest)
       (if diff
-	  (new-node Closure-alloc diff this)
+	  (let* ((new-this (this.traverse1! #t))
+		 (closure-decl (Decl-of-new-Var (gensym 'closure)))
+		 (closure-var closure-decl.var)
+		 (alloc (new-node Closure-alloc))
+		 (assig (new-node Set! closure-decl alloc))
+		 (b-node (new-node Begin (list assig new-this))))
+	     (set! closure-decl.var.captured? #t)
+	     (set! closure-decl.var.closure-object? #t)
+	     (for-each (lambda (v)
+			  (let ((ref-id (symbol-append closure-var.id
+						       '_
+						       v.id)))
+			     (set! v.closure-var
+				   (new-node Field-Var
+					     ref-id
+					     closure-var
+					     v))))
+		       diff)
+	     b-node)
 	  this)))
+
+(define (finish-allocation! tree)
+   (verbose " finish allocation")
+   (overload traverse! finish! (Node
+				Var-ref
+				Lambda)
+	     (tree.traverse! (make-eq-hashtable))))
+
+(define-pmethod (Node-finish! with-variables)
+   (this.traverse1! with-variables))
+
+(define-pmethod (Var-ref-finish! with-variables)
+   (if (and this.var.closure-var
+	    (not (hashtable-get with-variables this.var)))
+       (this.var.closure-var.reference)
+       this))
+
+(define-pmethod (Lambda-finish! with-variables)
+   (let ((closure-obj-vars '()))
+      (if this.captured-vars
+	  (hashtable-for-each this.captured-vars
+			      (lambda (key ignored)
+				 (if (and key.closure-var
+					  (not (memq key.closure-var.obj
+						     closure-obj-vars)))
+				     (set! closure-obj-vars
+					   (cons key.closure-var.obj
+						 closure-obj-vars))))))
+      (cond
+	 ((null? closure-obj-vars)
+	  (this.traverse1! with-variables))
+	 ((config 'with-closures)
+	  (hashtable-for-each this.captured-vars
+			      (lambda (v ignored)
+				 (hashtable-put! with-variables v #t)))
+	  (this.traverse1! with-variables)
+	  (hashtable-for-each this.captured-vars
+			      (lambda (v ignored)
+				 (hashtable-remove! with-variables v)))
+	  (new-node Closure-with-use
+		    (map (lambda (v) (v.reference)) closure-obj-vars)
+		    this))
+	 (else
+	  (this.traverse1! with-variables)
+	  (new-node Closure-use
+		    (map (lambda (v) (v.reference)) closure-obj-vars)
+		    this)))))

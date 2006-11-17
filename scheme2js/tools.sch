@@ -35,3 +35,6 @@
       `(let ((,fst ,(car L)))
 	  ,@(cdr L)
 	  ,fst)))
+
+(define-macro (cons-set! lvalue val)
+   `(set! ,lvalue (cons ,val (or ,lvalue '()))))

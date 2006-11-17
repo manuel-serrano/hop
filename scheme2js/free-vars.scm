@@ -12,11 +12,28 @@
 
 (define (free-vars tree::pobject)
    (verbose " free vars")
+   (overload traverse clean (Node
+			     (Module Fun-clean)
+			     (Lambda Fun-clean)
+			     Var-ref)
+	     (tree.traverse))
    (overload traverse capt-fun (Node
-				(Part Fun-capt-fun)
+				(Module Fun-capt-fun)
 				(Lambda Fun-capt-fun)
-				Var-ref)
+				Var-ref
+				Closure-ref)
 	     (tree.traverse #f (make-eq-hashtable))))
+
+(define-pmethod (Node-clean)
+   (this.traverse0))
+
+(define-pmethod (Fun-clean)
+   (delete! this.free-vars)
+   (delete! this.free-vars?)
+   (this.traverse0))
+
+(define-pmethod (Var-ref-clean)
+   (delete! this.var.escapes?))
 
 (define-pmethod (Node-capt-fun local-scope free-vars)
    (this.traverse2 local-scope free-vars))
@@ -34,14 +51,18 @@
       ;; In this case the "Var-ref-capt-fun" checks for local vars, but once we
       ;; got out of the nested Lambda, we still have the now local vars in it.
       (hashtable-for-each local-vars
-			  (lambda (key val)
-			     (hashtable-remove! fun-free-vars key)))
+			  (lambda (var ignored)
+			     (hashtable-remove! fun-free-vars var)))
       
       ;; store remaining free vars
       (if (> (hashtable-size fun-free-vars) 0)
 	  (begin
 	     (set! this.free-vars? #t)
-	     (set! this.free-vars fun-free-vars))
+	     (set! this.free-vars fun-free-vars)
+	     ;; mark these vars as escaping
+	     (hashtable-for-each fun-free-vars
+				 (lambda (var ignored)
+				    (set! var.escapes? #t))))
 	  (set! this.free-vars *empty-hashtable*))
 
       ;; pass free vars to parent-fun.
@@ -54,3 +75,7 @@
       (unless (hashtable-get local-scope var)
 	 (hashtable-put! free-vars var #t))))
 
+(define-pmethod (Closure-ref-capt-fun local-scope free-vars)
+   (let ((obj-var this.var.obj))
+      (unless (hashtable-get local-scope obj-var)
+	 (hashtable-put! free-vars obj-var #t))))

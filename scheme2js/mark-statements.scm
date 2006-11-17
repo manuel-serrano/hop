@@ -15,19 +15,18 @@
 (define (mark-statements tree::pobject)
    (verbose "  mark-statements")
    (overload traverse mark-statements (Node
-				       Part
+				       Module
 				       Lambda
 				       If
 				       Case
 				       Begin
-				       Bind-exit
-				       With-handler
+				       Call/cc-Call
 				       Call
 				       Tail-rec
 				       While
 				       Tail-rec-call
+				       Closure-with-use
 				       Return
-				       Closure-alloc
 				       Labelled
 				       Break
 				       Set!)
@@ -64,7 +63,7 @@
       (mark-node! this res)
       res))
 
-(define-pmethod (Part-mark-statements)
+(define-pmethod (Module-mark-statements)
    (this.body.traverse)
    (mark-node! this #t)
    #t)
@@ -93,24 +92,16 @@
       (mark-node! this res)
       res))
 
-(define-pmethod (Bind-exit-mark-statements)
-   ;; don't need to go into escape and result-vars.
-   (this.body.traverse)
-   (this.invoc-body.traverse)
-   (mark-node! this #t)
-   #t)
-
-(define-pmethod (With-handler-mark-statements)
-   ;; don't need to go into exception-var
-   (this.catch.traverse)
-   (this.body.traverse)
-   (mark-node! this #t)
-   #t)
-
+(define-pmethod (Call/cc-Call-mark-statements)
+   (let* ((operands-tmp (list-mark-statements this.operands))
+	  (operator-tmp (this.operator.traverse)))
+      (mark-node! this #t)
+      #t))
+   
 (define-pmethod (Call-mark-statements)
    (let* ((operands-tmp (list-mark-statements this.operands))
 	  (operator-tmp (this.operator.traverse))
-	  (res (or this.call/cc-stmt? operands-tmp operator-tmp)))
+	  (res (or operands-tmp operator-tmp)))
       (mark-node! this res)
       res))
 
@@ -129,13 +120,12 @@
    (mark-node! this #t)
    #t)
 
-(define-pmethod (Return-mark-statements)
-   (this.val.traverse)
+(define-pmethod (Closure-with-use-mark-statements)
    (mark-node! this #t)
    #t)
 
-(define-pmethod (Closure-alloc-mark-statements)
-   (this.body.traverse)
+(define-pmethod (Return-mark-statements)
+   (this.val.traverse)
    (mark-node! this #t)
    #t)
 

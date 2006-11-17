@@ -88,7 +88,8 @@
 	  (if (inherits-from? op (node 'Var-ref))
 	      (let* ((var op.var)
 		     (id var.js-id))
-		 (if (and (not var.muted?)
+		 (if (and (inherits-from? var (node 'JS-Var)) ;; should be true
+			  (not var.muted?)
 			  id
 			  (memq id *bool-operators*))
 		     (n.compile p)

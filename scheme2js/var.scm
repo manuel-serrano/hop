@@ -33,14 +33,27 @@
    (set! Var.proto.clone pobject-clone)
    (set! Var.proto.deep-clone pobject-deep-clone)
 
+   (define-node (Field-Var id obj-var field-id-var)
+      (set! this.id id)
+      (set! this.obj obj-var)
+      (set! this.field field-id-var))
+   (set! Field-Var.proto (empty-pobject Var))
+   (set! Field-Var.proto.clone pobject-clone)
+   (set! Field-Var.proto.deep-clone pobject-deep-clone)
+
    (define-pmethod (Var-reference)
       (let ((var-ref (new-node Var-ref this.id)))
 	 (set! var-ref.var this)
 	 var-ref))
    (set! Var.proto.reference Var-reference)
 
+   (define-pmethod (Field-Var-reference)
+      (let ((closure-ref (new-node Closure-ref this.id this)))
+	 closure-ref))
+   (set! Field-Var.proto.reference Field-Var-reference)
+
    (define-pmethod (Var-assig val)
-      (let ((var-ref (pcall this Var-reference)))
+      (let ((var-ref (this.reference)))
 	 (new-node Set! var-ref val)))
    (set! Var.proto.assig Var-assig)
 
@@ -53,11 +66,17 @@
    (set! JS-Var.proto.imported? #t)
 
    (define-node (JS-This-Var)
-      (set! this.id 'this))
+      (set! this.id 'this)
+      (set! this.js-id 'this))
    (set! JS-This-Var.proto (empty-pobject JS-Var))
    (set! JS-This-Var.proto.assig
 	 (pmethod (val)
-		  (error #f "JS this variable must not be modified." val))))
+		  (error #f "JS this variable must not be modified." val)))
+
+   (define-node (Call/cc-indicator-Var)
+      (set! this.id 'call/cc-indicator)
+      (set! this.js-id 'call/cc-indicator-dummy))
+   (set! Call/cc-indicator-Var.proto (empty-pobject JS-Var)))
 
 (define (Decl-of-new-Var id)
    (let ((decl (new-node Decl id))

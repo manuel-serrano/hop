@@ -32,10 +32,10 @@ _BGL_OBJECTS	= capture compile constants expanders \
 	gen-js inline js-interface liveness node-elimination \
 	nodes pobject-conv protobject scheme2js side statements symbol \
 	tail-rec tail transform-util traverse var expand verbose \
-	dot-expand allocate-names config locals use-count nested-funs \
+	dot-expand allocate-names config locals use-count nested-closures \
 	constant-propagation fun-size rm-unused-vars captured-vars \
 	free-vars var-propagation mark-statements while trampoline \
-	locations callcc hack-encapsulation
+	locations callcc hack-encapsulation loop-hoist check deep-clone
 
 _OBJECTS	= $(_BGL_OBJECTS)
 
