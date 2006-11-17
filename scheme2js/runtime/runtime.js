@@ -774,6 +774,7 @@ function sc_Char(c) {
 	return cached;
     this.val = c;
     sc_Char.lazy[c] = this;
+    return undefined; // for FF2.0
 }
 sc_Char.lazy = new Object();
 // thanks to Eric
@@ -1315,6 +1316,7 @@ function sc_forEach(proc, l1, l2, l3) { /// export-higher
 	}
 	proc.apply(null, applyArgs);
     }
+    return undefined; // for FF2.0
 }
 
 function sc_forEach_callcc(proc, l1) { /// export-higher
@@ -1575,6 +1577,7 @@ function sc_Keyword(str) {
 
     sc_Keyword.lazy[str] = this;
     this.val = str;
+    return undefined; // for FF2.0
 }
 sc_Keyword.lazy = new Object;
 
@@ -2267,12 +2270,6 @@ function sc_withOutputToProcedure_immutable_callcc(proc, thunk) { /// export-hig
     return sc_withOutputToPort_callcc(new sc_GenericOutputPort(proc), thunk);
 }
 
-function sc_GenericOutputPort(appendJSString, close) {
-    this.appendJSString = appendJSString;
-    if (close)
-	this.close = close;
-}
-
 function sc_openOutputString_mutable() { /// export
     return new sc_StringOutputPort_mutable();
 }
@@ -2413,7 +2410,7 @@ function sc_doWrite(p, o) {
     else if (o === undefined)
 	p.appendJSString("#unspecified");
     else
-	return o.doWrite(p);
+	o.doWrite(p);
 }
 
 function sc_escapeWriteString(s) {
@@ -2449,10 +2446,10 @@ function sc_escapeWriteString(s) {
 Number.prototype.doWrite = function(p) {
     p.appendJSString(this.toString());
 }
-String_prototype_doWrite_mutable = function(p) {
+var String_prototype_doWrite_mutable = function(p) {
     p.appendJSString(this);
 }
-String_prototype_doWrite_immutable = function(p) {
+var String_prototype_doWrite_immutable = function(p) {
     // TODO: handle escape-chars symbols
 
     if (this.charAt(0) !== sc_SYMBOL_PREFIX)
@@ -2516,13 +2513,13 @@ function sc_doDisplay(p, o) {
     else if (o === undefined)
 	p.appendJSString("#unspecified");
     else
-	return o.doDisplay(p);
+	o.doDisplay(p);
 }
 
 Number.prototype.doDisplay = Number.prototype.doWrite;
 
-String_prototype_doDisplay_mutable = String_prototype_doWrite_mutable;
-String_prototype_doDisplay_immutable = function(p) {
+var String_prototype_doDisplay_mutable = String_prototype_doWrite_mutable;
+var String_prototype_doDisplay_immutable = function(p) {
     if (this.charAt(0) !== sc_SYMBOL_PREFIX)
 	p.appendJSString(this);
     else
@@ -2635,8 +2632,8 @@ function sc_doWriteCircle(p, o, symb) {
 
 // extra arguments (in our case 'symb') are going to be lost. so no prob.
 Number.prototype.doWriteCircle = Number.prototype.doWrite;
-String_prototype_doWriteCircle_mutable = String_prototype_doWrite_mutable;
-String_prototype_doWriteCircle_immutable = String_prototype_doWrite_immutable;
+var String_prototype_doWriteCircle_mutable = String_prototype_doWrite_mutable;
+var String_prototype_doWriteCircle_immutable = String_prototype_doWrite_immutable;
 Function.prototype.doWriteCircle = Function.prototype.doWrite;
 Boolean.prototype.doWriteCircle = Boolean.prototype.doWrite;
 
@@ -2827,6 +2824,7 @@ function sc_hashtableForEach_callcc(ht, f) { /// export-higher
     }
     sc_forEach_callcc(function(e) { f(e.key, e.val); },
 		      l);
+    return undefined; // for FF2.0
 }
 
 function sc_hashtableContains(ht, key) { /// export hashtable-contains?
@@ -3001,7 +2999,7 @@ function sc_callCcRestart(exc) {
 	    if (sc_CALLCC_STORAGE.firstCall) {
 		return sc_CALLCC_STORAGE.firstCall();
 	    }
-	    return;
+	    return undefined;
 	} catch (e) {
 	    if (e instanceof sc_CallCcException)
 		exc = e;
@@ -3009,6 +3007,7 @@ function sc_callCcRestart(exc) {
 		throw e;
 	}
     }
+    return undefined; // for FF2.0
 }
 
 var sc_INDEX_OBJECT_HASH = new Array;
