@@ -3204,3 +3204,7 @@ function sc_getCallCcIndexObject(index) {
 	return tmp;
     }
 }
+
+function sc_CurrentDate() { /// export current-date
+   return new Date();
+}
