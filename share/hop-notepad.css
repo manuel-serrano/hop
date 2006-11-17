@@ -3,20 +3,20 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Wed Nov 15 11:57:51 2006 (serrano)                */
+/*    Last change :  Fri Nov 17 07:44:13 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad                                                      */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
-/*    Title                                                            */
+/*    title                                                            */
 /*---------------------------------------------------------------------*/
 div.hop-notepad-title {
+  background-color: transparent;
   margin: 0;
   border-width: 0;
   text-align: left;
-  background: white;
   padding: 0 10px 20px 0;
   font-family: sans-serif;
   font-style: italic;
@@ -24,7 +24,7 @@ div.hop-notepad-title {
 }
 
 /*---------------------------------------------------------------------*/
-/*    Body                                                             */
+/*    body                                                             */
 /*---------------------------------------------------------------------*/
 div.hop-notepad-body {
   border: 1px solid #777;
@@ -45,6 +45,7 @@ div.hop-notepad-body-tab {
 /*    Tabs line                                                        */
 /*---------------------------------------------------------------------*/
 div.hop-notepad-tabs {
+  background-color: transparent;
   clear: left;
   border: 0;
   border-width: 0;
@@ -52,8 +53,7 @@ div.hop-notepad-tabs {
   padding: 0;
   margin: 0;
   padding-left: 10px;
-  background: white;
-  margin-bottom: -1px;
+  margin-bottom: 0px;
 }
 
 /*---------------------------------------------------------------------*/
@@ -70,6 +70,8 @@ div.hop-notepad-tabs span.hop-nptab {
   border-color: #777;
   border-style: solid;
   text-decoration: none;
+  margin-bottom: -1px;
+  padding-bottom: 1px;
 }
 
 div.hop-notepad-tabs span.hop-nptab-active {
@@ -81,7 +83,7 @@ div.hop-notepad-tabs span.hop-nptab-active {
 div.hop-notepad-tabs span.hop-nptab-inactive {
   color: black;
   background: white;
-  border-bottom-color: #777;
+  border-bottom-width: #777;
 }
 
 div.hop-notepad-tabs span.hop-nptab-inactive:hover {

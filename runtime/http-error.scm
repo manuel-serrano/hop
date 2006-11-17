@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Nov 10 14:16:32 2006 (serrano)                */
+;*    Last change :  Fri Nov 17 07:49:32 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -311,7 +311,9 @@ a timeout which has now expired. The service is then no longer available."))
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (string-append
 					      (hop-share-directory)
-					      "/icons/error.png")))
+					      (if (&io-timeout-error? e)
+						  "/icons/warning.png"
+						  "/icons/error.png"))))
 			     (<ETD>
 				(<TABLE>
 				   (<TR>

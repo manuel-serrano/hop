@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Nov 13 11:16:06 2006 (serrano)                */
+;*    Last change :  Fri Nov 17 08:03:32 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -576,11 +576,23 @@
        (let* ((s (the-substring 2 -2))
 	      (i (string-index s "|"))
 	      (href (wiki-syntax-href syn)))
+	  (define (link-val s)
+	     (if (and (>fx (string-length s) 3)
+		      (substring-at? s ",(" 0))
+		 (with-input-from-string (substring s 1 (string-length s))
+		    (lambda ()
+		       (with-handler
+			  (lambda (e)
+			     (exception-notify e)
+			     "")
+			  (eval (hop-read (current-input-port))))))
+		 s))
 	  (add-expr!
 	   (if (=fx i -1)
-	       (href s s)
+	       (let ((v (link-val s)))
+		  (href v v))
 	       (let ((s2 (substring s (+fx i 1) (string-length s))))
-		  (href (substring s 0 i)
+		  (href (link-val (substring s 0 i))
 			(wiki-string->hop
 			 (substring s (+fx i 1) (string-length s))
 			 syn)))))

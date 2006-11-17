@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Nov 15 08:39:49 2006 (serrano)                */
+/*    Last change :  Fri Nov 17 07:45:14 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -208,22 +208,13 @@ table.popup-menu td tt:hover {
 }
 
 /*--- notepad ---------------------------------------------------------*/
-div.hop-notepad-title {
-  background-color: transparent;
-}
-
 div.hop-notepad-body {
   border-color: $border-color;
   font-size: small;
   background-color: $doc-color;
 }
 
-div.hop-notepad-tabs {
-  background-color: transparent;
-}
-
 div.hop-notepad-tabs span.hop-nptab {
-  font-size: small;
   border-color: $border-color;
 }
 
@@ -235,7 +226,7 @@ div.hop-notepad-tabs span.hop-nptab-active {
 div.hop-notepad-body-tab {
   border-color: blue;
   background-color: $doc-color;
-}  
+}
 
 table.hop-doc {
   font-size: small;
@@ -244,7 +235,7 @@ table.hop-doc {
 table.hop-doc th {
   vertical-align: top;
 }
-  
+
 table.hop-doc th:after {
   content: ":";
 }
