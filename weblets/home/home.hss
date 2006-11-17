@@ -76,6 +76,10 @@ h1 {
   font-size: 100%;
 }
 
+table td {
+  text-align: left;
+}
+
 /*--- forms -----------------------------------------------------------*/
 button {
   border-width: 1px;

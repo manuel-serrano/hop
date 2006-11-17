@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Nov 14 17:59:09 2006 (serrano)                */
+;*    Last change :  Fri Nov 17 11:43:47 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -278,7 +278,8 @@
 			    ((service-expired? svc)
 			     (mark-service-path-expired! path)
 			     #f)
-			    ((user-authorized-service? user wid)
+			    ((or (user-authorized-service? user wid)
+				 (user-authorized-service? user id))
 			     (scheme->response (%exec req) req))
 			    (else
 			     (user-service-denied req user id)))))
