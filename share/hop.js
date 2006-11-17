@@ -471,6 +471,7 @@ function with_hop_callcc( service ) {
 	 sc_EMPTY_CALLCC(); // abort execution here.
       });
    }
+   return undefined; // for FF2.0
 }
 
 /*---------------------------------------------------------------------*/

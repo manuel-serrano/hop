@@ -1,5 +1,6 @@
 (define *cards* #unspecified)
 (define *score* #unspecified)
+(define *borders* #unspecified)
 (define *nb-selected-cards* 0)
 (define *game-state* 'insert-coins)
   

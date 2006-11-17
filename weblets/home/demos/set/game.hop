@@ -234,7 +234,7 @@
 							   *card-height*)
 							3))
 				     "px; "
-				     "margin-left: " (number->string *margin*) ";"
+				     "margin-left: " (number->string *margin*) "px;"
 				     "float: left;")
 	       :id "board"
 	       borders
