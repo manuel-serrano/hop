@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Mon Nov 13 14:33:54 2006 (serrano)                */
+;*    Last change :  Fri Nov 17 08:17:36 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -155,7 +155,8 @@
 	     (<TH>
 		:align 'left title)
 	     (<TD>
-		:align 'right "[ "
+		:class "edit"
+		"[ "
 		(<SPAN>
 		   :class "edit"
 		   :onclick ~(window.open $(make-service-url doc/edit (input-port-name port)))

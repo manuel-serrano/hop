@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Nov 17 07:45:14 2006 (serrano)                */
+/*    Last change :  Fri Nov 17 08:17:22 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -364,6 +364,10 @@ div.doc-title th {
 
 div.doc-title td {
   font-size: x-small;
+}
+
+div.doc-title td.edit {
+  text-align: right;
 }
 
 doc pre, doc textarea {
