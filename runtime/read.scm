@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Nov 17 08:43:26 2006 (serrano)                */
+;*    Last change :  Fri Nov 17 09:03:33 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -284,6 +284,8 @@
 		     (id       (: (* digit)
 				  (or letter special)
 				  (* (or letter special digit (in "'`")))))
+		     (letterid (: (or letter special)
+				  (* (or letter special digit (in "'`")))))
 		     (kid      (or digit letter kspecial))
 		     (blank    (in #\Space #\Tab #a012 #a013))
 		     
@@ -462,7 +464,7 @@
 	(reverse! (collect-up-to ignore "vector" (the-port)))))
 
       ;; typed vectors
-      ((: "#" (: letter (* id)) "(")
+      ((: "#" letterid "(")
        (set! par-open (+fx 1 par-open))
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
