@@ -12,10 +12,13 @@ invoked from client. This page describes how to create and how to use
 
   (service (arg ...) ...)
   (define-service (name arg ...) ...)
+  (service-base svc req)
   (make-hop-service-url svc arg ...)
   (make-service-url svc arg ...)
   (procedure->service proc)
 
+  (hop-service-load-path svc)
+  
   (hop-autoload-directories)
   (hop-autoload-directory-add! path)
   (hop-autoload-directories-set! list)
@@ -78,6 +81,39 @@ A service whose name contains no slash character is called a **//weblet//**.
 
 </function>
 
+=== ++(service-base svc req)++ ===
+<function> service-base
+<arguments>
+^  arguments       ^   type           ^  short description              ^
+| svc              |  service         | the service.                    |
+| req              |  ::http-request  | a request.                      |
+</arguments>
+
+The function ++service-base++ computes the URI that denotes the file
+implementing the service ++svc++. See also ++hop-service-load-path++.
+
+~~ In general this base is used inside the ++<HEAD>++ markup :base
+attribute. Using the base associated with a service is useful when
+that service requires local resources such as images and when it is
+convenient to store these resources one a directory containing the
+implementation of ++svc++. For instance, let's suppose a service
+++foo++ implemented in a file ++dir/foo.hop++ that uses an image
+++img.jpg++ stored inside the directory ++dir/images++. In order to
+use the relative reference ++images/imp.jpg++ for denoting the image,
+it is required to define a ++<HEAD>++ element whose :base attribute is
+given by ++(service-base foo (current-request))++.
+
+
+  (define-service (foo)
+    (<HTML>
+      (<HEAD> :base (service-base foo (current-request)))
+      (<BODY> ... (<IMG> :src "images/img.jpg") ...)))
+
+
+    
+
+</function>
+
 === ++(make-hop-service-url svc arg<sub>0</sub> ...)++ ===
 <function> make-hop-service-url
 
@@ -90,6 +126,7 @@ A service whose name contains no slash character is called a **//weblet//**.
 The function ++make-hop-service-url++ forges an URL from a service and
 from arguments. This name can be used on the server to invoke the service
 from a distant server (see ++http-send-request++).
+</function>
 
 === ++(make-service-url svc arg<sub>0</sub> ...)++ ===
 <function> make-service-url
@@ -103,6 +140,7 @@ from a distant server (see ++http-send-request++).
 The function ++make-service-url++ forges an URL from a service and
 from arguments that is suitable for invoking the service from a client.
 In particular, the URL can be used in client ++<FORM>++ markups.
+</function>
 
 === ++(procedure->service proc)++ ===
 <function> procedure->service
@@ -114,6 +152,19 @@ In particular, the URL can be used in client ++<FORM>++ markups.
 
 The function ++procedure->service++ creates an anonymous service that
 wraps the procedure ++proc++.
+</function>
+
+=== ++(hop-service-load-path)++ ===
+<function> hop-service-load-path
+
+<arguments>
+^  arguments       ^   type       ^  short description              ^
+| svc              |  service     | a service.                      |
+</arguments>
+
+The function ++hop-service-load-path++ returns the name of the file
+containing the implementation of the service ++svc++ (see ++service-base++).
+</function>
 
 === ++(hop-autoload-directories)++ ===
 === ++(hop-autoload-directory-add! string)++ ===

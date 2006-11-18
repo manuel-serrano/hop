@@ -7,7 +7,7 @@
       (<TR> (<TD> (<TT> (format "&amp;#~a;" c))) (<TD> (format "&#~a;" c))))
    
    (<HTML>
-      (<HEAD> :jscript "hop-sorttable.js" :css "hop-sorttable.css")
+      (<HEAD> :include "hop-sorttable")
       (<BODY>
 	 (<SORTTABLE>
 	    :border 1

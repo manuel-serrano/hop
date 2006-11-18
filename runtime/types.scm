@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Nov  2 09:38:23 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 13:49:39 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -57,6 +57,7 @@
 	      (method::symbol read-only (default 'GET))
 	      (encoded-path::bstring (default ""))
 	      (connection::symbol (default 'keep-alive))
+	      (service::obj (default #unspecified))
 	      (%env (default #f)))
 	   
 	   (abstract-class %http-response::%http-message
@@ -139,7 +140,9 @@
 	      ;; a timeout in second
 	      (timeout::long read-only (default -1))
 	      ;; the number of times the service might be called
-	      (ttl::long (default -1)))
+	      (ttl::long (default -1))
+	      ;; the load path
+	      (load-path::obj read-only (default #f)))
 
 	   (http-request-hook-add! ::http-request ::procedure)))
    

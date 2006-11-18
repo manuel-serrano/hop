@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Nov 14 18:04:28 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 13:53:51 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -232,9 +232,9 @@
       (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Strict//EN\">\n")
       (html-attributes '())
       (header-format "")
-      (no-end-tags-elements '(meta link))
+      (no-end-tags-elements '(link))
       ;; the meta-format contains the closing >
-      (meta-format "http-equiv=\"Content-type\" content=\"~a; charset=~a\">")))
+      (meta-format "content=\"~a; charset=~a\">")))
 
 ;*---------------------------------------------------------------------*/
 ;*    *xhtml-backend* ...                                              */
@@ -517,7 +517,7 @@
       (display markup p)
       (xml-write-attributes attributes p)
       (with-access::xml-backend backend (meta-format mime-type)
-	 (fprint p meta-format mime-type encoding))
+	 (fprintf p meta-format mime-type encoding))
       (newline p)))
 
 ;*---------------------------------------------------------------------*/

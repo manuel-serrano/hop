@@ -105,9 +105,9 @@ users granted the permission to execute a service named
 
 <code>
   (define-service (weblet-1)
-     (if (authorized-service? (the-current-request) 'service-1)
+     (if (authorized-service? (current-request) 'service-1)
          ... the actual implementation ...
-         (user-access-denied (the-current-request))))
+         (user-access-denied (current-request))))
 </code>
 
 If the authentication fails, the server sends back a //request for 
@@ -126,7 +126,7 @@ sake of the example, let us study the implementation of the authentication of
 
 <code>
   (define-service (hz)
-     (let ((req (the-current-request)))
+     (let ((req (current-request)))
         (if (users-added?)
             (let ((user (hz-get-access req)))
                (if (and (user? user) (authorized-service? req 'hz))
@@ -236,7 +236,7 @@ Access can be granted //globally// using the ++hop-path-access-control++
 and ++hop-service-access-control++ parameters. These two parameters
 return procedure acception two parameters:
 
-  - the current request (++the-current-request++),
+  - the current request (++current-request++),
   - either a string denoting the path ++hop-path-access-control++ or a
  symbol denoting the service name of ++hop-service-access-control++.
 

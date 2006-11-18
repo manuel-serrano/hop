@@ -1,6 +1,6 @@
 ;; a basic example of //Slider//
 (<HTML>
-   (<HEAD> :css "hop-slider.css" :jscript "hop-slider.js")
+   (<HEAD> :include "hop-slider")
    (<BODY>
       (let ((d (<DIV> :style "width: 50%; font-size: 10"
 		  "The first time I laid eyes on Terry Lenox, he was drunk in a Rolls Royce Silverwraith.")))

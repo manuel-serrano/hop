@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Nov  2 11:18:24 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 15:22:40 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hopsh weblet                                                 */
@@ -22,10 +22,10 @@
 ;*    provided.                                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (hopsh exp)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (if (authorized-service? req 'hopsh)
 	  (if (not exp)
-	      (<HOPSH>)
+	      (<HOPSH> req)
 	      (with-handler
 		 (lambda (e)
 		    (with-error-to-string
@@ -39,10 +39,10 @@
 ;*    hopsh ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (hopsh/string exp)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (if (authorized-service? req 'hopsh)
 	  (if (not exp)
-	      (<HOPSH>)
+	      (<HOPSH> req)
 	      (with-handler
 		 (lambda (e)
 		    (with-error-to-string
@@ -53,15 +53,11 @@
 	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
-;*    hopsh-dir ...                                                    */
-;*---------------------------------------------------------------------*/
-(define hopsh-dir (dirname (the-loading-file)))
-
-;*---------------------------------------------------------------------*/
 ;*    hopsh/documentation ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (hopsh/documentation)
-   (let* ((file (string-append hopsh-dir "/etc/hopsh.wiki"))
+   (let* ((base (dirname (hop-service-load-path hopsh/documentation)))
+	  (file (string-append base "/etc/hopsh.wiki"))
 	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")
@@ -70,11 +66,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    <HOPSH> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (<HOPSH>)
+(define (<HOPSH> req)
    (let ((i (<INPUT> :type 'text :name "expression" :size 90))
 	 (r (<PRE> :id "result" "&nbsp;")))
       (<HTML>
-	 (<HEAD> :dir hopsh-dir :css "hopsh.hss")
+	 (<HEAD>
+	    :title "Hop Sh"
+	    :base (service-base hopsh req)
+	    :css "hopsh.hss")
 	 (<BODY>
 	    (<DIV>
 	       :align "center"
@@ -82,8 +81,7 @@
 		  :class "hopsh"
 		  (<TR>
 		     (<TD>
-			(<IMG> :src
-			   (format "~a/etc/logo.png" hopsh-dir)))
+			(<IMG> :src "etc/logo.png"))
 		     (<TD>
 			(<TABLE>
 			   (<TR>

@@ -5,7 +5,7 @@
 	   (iota 10))))
 
 (<HTML>
-   (<HEAD> :jscript "hop-iwindow.js" :css "hop-iwindow.css")
+   (<HEAD> :include "hop-iwindow")
    (<BODY>
       (<BUTTON>
 	 :onclick ~(iwindow-open "iota" $iwindow/iota)

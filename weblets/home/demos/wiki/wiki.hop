@@ -5,15 +5,16 @@
    (instantiate::hop-event
       (name "wikiedit")))
 
-(define *wiki-directory* (dirname (the-loading-file)))
-
 (define-service (wikiedit/update src)
    (broadcast-hop-event! wikiedit-event (wikiedit-compile src)))
 
 (define-service (wikiedit/view)
    (let ((d (<DIV> :class "view" "")))
       (<HTML>
-	 (<HEAD> :dir *wiki-directory* :css "wiki.hss")
+	 (<HEAD>
+	    :title "wikiedit"
+	    :base (service-base wikiedit/view (current-request))
+	    :css "wiki.hss")
 	 (<BODY>
 	    :class "view"
 	    d
@@ -32,7 +33,10 @@
 
 (define-service (home/demos/wiki)
    (<HTML>
-      (<HEAD> :dir *wiki-directory* :css "wiki.hss")
+      (<HEAD>
+	 :title "Home Wiki demo"
+	 :base (service-base home/demos/wiki (current-request))
+	 :css "wiki.hss")
       (<BODY>
 	 (<H1> "Live editor")
 	 (<TEXTAREA>

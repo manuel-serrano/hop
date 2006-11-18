@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 11:31:17 2006                          */
-;*    Last change :  Tue May 30 07:51:57 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 16:01:29 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ authentication                                                */
@@ -97,7 +97,10 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-authenticate req)
    (<HTML>
-      (<HEAD> :dir (hz-dir) :css "hz.hss")
+      (<HEAD>
+	 :title "Hz Authentication"
+	 :base (service-base hz/setcookie req)
+	 :css "hz.hss")
       (<ABODY>
 	 (<DIV>
 	    :id "body"

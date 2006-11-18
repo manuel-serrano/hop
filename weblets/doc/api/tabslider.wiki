@@ -23,7 +23,7 @@ They also need to load the ++hop-tabslider.css++ style sheet.  Hence, documents
 using //tabsliders// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-tabslider.js" :css "hop-tabslider.css")
+  (<HEAD> :include "hop-tabslider")
 
 
 == Examples ==

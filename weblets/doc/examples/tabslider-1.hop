@@ -1,7 +1,7 @@
 ;; A simple tabslider
 (<HTML>
    (<HEAD>
-      :css "hop-tabslider.css" :jscript "hop-tabslider.js"
+      :include "hop-tabslider"
       (<STYLE> :type "text/css" {
   div.hop-tabslider {
     width: 100%;

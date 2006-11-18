@@ -3,7 +3,7 @@
 		 :width 200 :height 200))
       (src (make-file-path (hop-icons-directory) "hop.png")))
    (<HTML>
-      (<HEAD> :jscript "hop-slider.js" :css "hop-slider.css")
+      (<HEAD> :include "hop-slider")
       ~(define (draw-image ctx img orientation x y zoom)
 	  (ctx.clearRect 0 0 200 200)
 	  (let ((w img.width)

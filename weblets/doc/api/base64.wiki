@@ -18,7 +18,7 @@ Client codes using //BASE64// facilities need to load the
 script ++base64.js++. Hence, documents using //BASE64// must include in their 
 header, the following statement:
 
-  (<HEAD> :jscript "base64.js")
+  (<HEAD> :include "base64")
 
 
 == Examples ==

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Thu Nov  2 11:18:58 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 15:59:29 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -26,7 +26,7 @@
 ;*    hz ...                                                           */
 ;*---------------------------------------------------------------------*/
 (define-service (hz)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (multiple-value-bind (user mode)
 	 (hz-get-access req)
 	 (cond
@@ -41,7 +41,8 @@
 ;*    hz/documentation ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/documentation)
-   (let* ((file (string-append (hz-dir) "/etc/hz.wiki"))
+   (let* ((base (dirname (hop-service-load-path hz/documentation)))
+	  (file (string-append base "/etc/hz.wiki"))
 	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")
@@ -51,7 +52,7 @@
 ;*    hz/install-ondemand ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/install-ondemand name url)
-   (hz-install-from-url #t (the-current-request) name url))
+   (hz-install-from-url #t (current-request) name url))
 
 ;*---------------------------------------------------------------------*/
 ;*    logout ...                                                       */
@@ -103,7 +104,7 @@
        (error 'hz "URL is empty" url))
       (else
        (let* ((prefix (format "http://~a:~a" (hostname) (hop-port)))
-	      (req (the-current-request))
+	      (req (current-request))
 	      (url (cond
 		      ((substring=? "http://" url 7)
 		       url)
@@ -127,7 +128,7 @@
   
   (<DIV> :class "hz-ondemand-install"
     (<FORM> :action (service (url)
-		       (hz-direct-install (the-current-request)
+		       (hz-direct-install (current-request)
 					  (find-weblet-name url)
 					  url))
 	(<B> "Weblet URL: ")
@@ -144,13 +145,12 @@
 	 (prefs (make-file-name (hz-rc-directory) "hz.prefs")))
       (when (file-exists? prefs) (hz-preferences-load prefs))
       (<HTML>
-	 (<HEAD> :dir (hz-dir)
-		 :jscript "hop-notepad.js" :css "hop-notepad.css"
-		 :jscript "hop-paned.js" :css "hop-paned.css"
-		 :jscript "hop-tree.js" :css "hop-tree.css"
-		 :jscript "hop-foldlist.js" :css "hop-foldlist.css"
-		 :jscript "hop-iwindow.js" :css "hop-iwindow.css"
-		 :css "hz.hss")
+	 (<HEAD>
+	    :title "Hop Hz"
+	    :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
+	    :include "hop-iwindow"
+	    :base (service-base hz req)
+	    :css "hz.hss")
 	 (<ABODY>
 	    (<DIV>
 	       :id "body"
@@ -189,21 +189,21 @@
 ;*    hz/preferences ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/preferences)
-   (if (not (authorized-service? (the-current-request) 'admin))
-       (user-access-denied req)
-       (<HTML>
-	  (<HEAD> :dir (hz-dir)
-		  :jscript "hop-notepad.js" :css "hop-notepad.css"
-		  :jscript "hop-paned.js" :css "hop-paned.css"
-		  :jscript "hop-tree.js" :css "hop-tree.css"
-		  :jscript "hop-foldlist.js" :css "hop-foldlist.css"
-		  :jscript "hop-iwindow.js" :css "hop-iwindow.css"
-		  :css "hz.hss")
-	  (<ABODY>
-	     (<DIV>
-		:id "body"
-		(<PREFERENCES>
-		   (make-file-name (hz-rc-directory) "hz.prefs")))))))
+   (let ((req (current-request)))
+      (if (not (authorized-service? req 'admin))
+	  (user-access-denied req)
+	  (<HTML>
+	     (<HEAD>
+		:title "Hop Hz"
+		:include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
+		:include "hop-iwindow"
+		:base (service-base hz/preferences req)
+		:css "hz.hss")
+	     (<ABODY>
+		(<DIV>
+		   :id "body"
+		   (<PREFERENCES>
+		      (make-file-name (hz-rc-directory) "hz.prefs"))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PREFERENCES> ...                                                */
@@ -224,7 +224,7 @@
 ;*    authentication when used on a local server.                      */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/list)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (if (or (http-request-localhostp req)
 	      (authorized-service? req 'hz)
 	      (authorized-service? req 'hz/list))
@@ -243,13 +243,10 @@
 (define (hz-list req)
    (let ((db (hz-get-repository-db)))
       (<HTML>
-	 (<HEAD> :dir (hz-dir)
-		 :jscript "hop-notepad.js" :css "hop-notepad.css"
-		 :jscript "hop-paned.js" :css "hop-paned.css"
-		 :jscript "hop-tree.js" :css "hop-tree.css"
-		 :jscript "hop-foldlist.js" :css "hop-foldlist.css"
-		 :jscript "hop-iwindow.js" :css "hop-iwindow.css"
-		 :css "hz.hss")
+	 (<HEAD>
+	    :title "Hop Hz"
+	    :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
+	    :include "hop-iwindow")
 	 (<BODY>
 	    :class "hz-list"
 	    (<TREE>

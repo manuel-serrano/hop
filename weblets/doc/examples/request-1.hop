@@ -1,6 +1,6 @@
-;; A service using ++the-current-request++
+;; A service using ++current-request++
 (define-service (doc/demo/request arg)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (<TABLE>
 	 (<TR> (<TH> "path:") (<TD> (http-request-encoded-path req)))
 	 (<TR> (<TH> "host:") (<TD> (http-request-host req)))

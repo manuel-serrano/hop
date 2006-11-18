@@ -16,7 +16,8 @@ Client code using //MD5// facilities needs to load the script
 ++md5.js++. Hence, documents using //MD5// must include in their
 header, the following statement:
 
-  (<HEAD> :jscript "md5.js")
+  (<HEAD> :include "md5")
+
 
 == Server & Client Definitions ==
 

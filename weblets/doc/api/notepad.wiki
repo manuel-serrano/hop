@@ -34,7 +34,7 @@ They also need to load the ++hop-notepad.css++ style sheet. Hence, documents
 using //Notepads// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css")
+  (<HEAD> :include "hop-notepad")
 
 
 == Examples ==

@@ -3,15 +3,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Mon May 29 07:41:05 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 16:16:51 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
 
 (module hophome_demos-sudoku
    (export home/demos/sudoku))
-
-(define *sudoku-directory* (dirname (the-loading-file)))
 
 ;;; ======================================================================
 ;;;	STklos dotimes ...
@@ -179,13 +177,10 @@
 	 (board (init-sudoku level)))
     (<HTML>
      (<HEAD>
-	:dir *sudoku-directory*
-	(<HOP-SCHEME-HEAD> :sscript (make-file-name *sudoku-directory* "sudoku.scm"))
-	:css "sudoku.hss")
+	:base (service-base home/demos/sudoku (current-request))
+	:jscript "sudoku.scm" :css "sudoku.hss")
      (<BODY>
-      (<DIV> :class "sudoku-title" (<IMG> :src
-					  (make-file-name *sudoku-directory*
-							  "sudoku.png")))
+      (<DIV> :class "sudoku-title" (<IMG> :src "sudoku.png"))
       (<DIV> :class "sudoku-panel"
 	 (<H2>  "Menu")
 	 (<DIV> :class "sudoku-menu"

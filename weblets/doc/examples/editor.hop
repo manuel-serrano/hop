@@ -2,7 +2,7 @@
 ;; (Cancel button does nothing)
 (<HTML>
    (<HEAD>
-      :jscript "hop-editor.js" :css "hop-editor.css")
+      :include "hop-editor")
    (<BODY>
       :style "background: #7782D9"
       (<EDITOR>
@@ -12,6 +12,5 @@
 	 ;; What follows is the initial content of the editor.
 	 (<B> "Hello, ") "world"
 	 (<BR>)
-	 (<IMG> :src (make-file-path (hop-icons-directory)
-				     "logo.png")))))
+	 (<IMG> :src (make-file-path (hop-icons-directory) "logo.png")))))
       

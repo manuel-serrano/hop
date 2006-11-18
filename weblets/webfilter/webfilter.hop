@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Nov 10 13:28:31 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 15:20:46 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -329,12 +329,14 @@ Google, each containing a forward pointer to the actual URL.])))
 ;*    granted for executing it.                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (webfilter)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (if (authorized-service? req 'admin)
 	  (<HTML>
-	     (<HEAD> :css "hop-notepad.css" "hop-sorttable.css"
-		     :css (format "~a/webfilter.hss" webfilter-dir)
-		     :jscript "hop-notepad.js" "hop-sorttable.js")
+	     (<HEAD>
+		:title "Hop Webfilter"
+		:include "hop-notepad" "hop-sorttable"
+		:base (service-base webfilter req)
+		:css "webfilter.hss")
 	     (<BODY>
 		(<DIV>
 		   :align "center"
@@ -342,8 +344,7 @@ Google, each containing a forward pointer to the actual URL.])))
 		      :class "webfilter"
 		      (<TR>
 			 (<TD>
-			    (<IMG> :src
-				   (format "~a/etc/logo.png" webfilter-dir)))
+			    (<IMG> :src "etc/logo.png"))
 			 (<TD>
 			    (<TABLE>
 			       (<TR>
@@ -373,7 +374,8 @@ Google, each containing a forward pointer to the actual URL.])))
 ;*    webfilter/documentation ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-service (webfilter/documentation)
-   (let* ((file (string-append webfilter-dir "/etc/webfilter.wiki"))
+   (let* ((base (dirname (hop-service-load-path webfilter/documentation)))
+	  (file (string-append base "/etc/webfilter.wiki"))
 	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")
@@ -482,13 +484,15 @@ Google, each containing a forward pointer to the actual URL.])))
 ;*    webfilter/preferences ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (webfilter/preferences)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (if (not (user-authorized-service? (http-request-user req) 'admin))
 	  (user-access-denied req)
 	  (<HTML>
-	     (<HEAD> :css "hop-notepad.css" "hop-sorttable.css"
-		     :css (format "~a/webfilter.hss" webfilter-dir)
-		     :jscript "hop-notepad.js" "hop-sorttable.js")
+	     (<HEAD>
+		:title "Hop Webfilter preferences"
+		:include "hop-notepad" "hop-sorttable"
+		:base (service-base webfilter/preferences req)
+		:css "webfilter.hss")
 	     (<BODY>
 		(<CENTER>
 		   (<TABLE>

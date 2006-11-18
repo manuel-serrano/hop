@@ -20,7 +20,7 @@ Documents using //windows// need to load the script
 must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-window.js")
+  (<HEAD> :include "hop-window")
 
 
 == Examples ==

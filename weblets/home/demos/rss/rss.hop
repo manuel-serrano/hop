@@ -1,8 +1,6 @@
 (module hophome_demos-rss
    (export (home/demos/rss)))
 
-(define *rss-directory* (dirname (the-loading-file)))
-
 (define (make-rss channel items)
    (<FL> items))
 
@@ -30,8 +28,9 @@
 (define-service (home/demos/rss)
    (<HTML>
       (<HEAD>
-	 :dir *rss-directory*
-	 :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+	 :title "Home Rss demo"
+	 :include "hop-foldlist"
+	 :base (service-base home/demos/rss (current-request))
 	 :css "rss.hss")
       (<BODY>
 	 (<FL>

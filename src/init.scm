@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Nov 10 13:20:51 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 15:23:25 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -17,16 +17,6 @@
    (library hop)
    
    (import  hop_param))
-
-;*---------------------------------------------------------------------*/
-;*    hop alias ...                                                    */
-;*---------------------------------------------------------------------*/
-(hop-filter-add-always-first!
- (lambda (req)
-    (with-access::http-request req (host port path)
-       (when (is-local? host)
-	  (set! host "localhost")
-	  (set! port (hop-port))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *hss-mutex* ...                                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Thu Nov  2 10:52:04 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 15:09:57 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -65,7 +65,8 @@
 		      (javascript ,(jscript vargs path))
 		      (creation (date->seconds (current-date)))
 		      (timeout ,timeout)
-		      (ttl ,ttl))))
+		      (ttl ,ttl)
+		      (load-path (the-loading-file)))))
 	  (register-service! svc))))
 
 ;*---------------------------------------------------------------------*/
@@ -135,7 +136,7 @@
        `(begin ,body))
       ((null? (cdr bindings))
        `(%eval (list ,(cadr (car bindings)))
-	       (the-current-request)
+	       (current-request)
 	       (lambda (,(caar bindings)) ,@body)))
       (else
        (let ((vec (gensym)))
@@ -144,7 +145,7 @@
 		     (nbindings '()))
 	     (if (null? obindings)
 		 `(%eval (list ,@(map cadr bindings))
-			 (the-current-request)
+			 (current-request)
 			 (lambda (,vec) (let ,nbindings ,@body)))
 		 (let ((binding (car obindings)))
 		    (loop (cdr obindings)

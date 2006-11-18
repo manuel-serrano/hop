@@ -26,7 +26,7 @@ They also need to load the ++hop-foldlist.css++ style sheet.  Hence, documents
 using //foldlists// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-foldlist.js" :css "hop-foldlist.css")
+  (<HEAD> :include "hop-foldlist")
 
 
 == Examples ==

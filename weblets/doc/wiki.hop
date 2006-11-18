@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Fri Nov 17 08:17:36 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 09:22:45 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -73,7 +73,7 @@
 ;*    make-wiki-request-syntax ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (make-wiki-request-syntax initial-syntax)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (if (authorized-service? req 'admin)
 	  (duplicate::wiki-syntax initial-syntax
 	     (plugins (lambda (id)

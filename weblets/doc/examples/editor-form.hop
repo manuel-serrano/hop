@@ -1,8 +1,7 @@
 ;; An editor in a form
-
 (<HTML>
    (<HEAD>
-      :jscript "hop-editor.js" :css "hop-editor.css")
+      :include "hop-editor")
    (<BODY>
       :style "background: #7782D9"
       (<FORM> :action (service (title content)

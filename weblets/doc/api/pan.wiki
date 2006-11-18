@@ -32,7 +32,7 @@ They also need to load the ++hop-paned.css++ style sheet. Hence, documents
 using //Paneds// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-paned.js" :css "hop-paned.css")
+  (<HEAD> :include "hop-paned")
 
 
 == Examples ==

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Nov 14 18:06:52 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 16:20:38 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -16,18 +16,18 @@
 
    (import hophome_config)
    
-   (export (<HOME> . obj)))
+   (export (<HOME> base . obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HOME> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (<HOME> . obj)
+(define (<HOME> base . obj)
    (<HTML>
-      (<HEAD> :jscript "hop-notepad.js" :css "hop-notepad.css" 
-	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
-	      :jscript "hop-foldlist.js" :css "hop-foldlist.css"
-	      :css (make-file-name (home-dir) "home.hss")
-	      (<TITLE> "Hop Home page"))
+      (<HEAD>
+	 :title "Hop Home page"
+	 :include "hop-notepad" "hop-iwindow" "hop-foldlist"
+	 :base base
+	 :css "home.hss")
       (<BODY>
 	 (<DIV>
 	    :align "center"
@@ -38,7 +38,7 @@
 		     :valign "top"
 		     (<IMG> :class "logo"
 			    :alt "Home page logo" 
-			    :src (format "~a/etc/logo.png" (home-dir))))
+			    :src "etc/logo.png"))
 		  (<TD>
 		     :valign "top"
 		     (<TABLE>

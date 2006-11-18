@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Nov 10 13:17:53 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 09:56:59 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -51,7 +51,7 @@
 	    
 	    (hop-proxy-host::obj)
 	    (hop-proxy-host-set! ::obj)
-	    
+
 	    (hop-log::int)
 	    (hop-log-set! ::int)
 	    

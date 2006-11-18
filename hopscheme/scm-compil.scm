@@ -53,7 +53,7 @@
 ;*---------------------------------------------------------------------*/
 ;; deprecated now.
 (define (<HOP-SCHEME-HEAD> . obj)
-   (let* ((req (the-current-request))
+   (let* ((req (current-request))
 	  (dir (if (http-request? req)
 		   (list (dirname (http-request-path req)))
 		   '()))

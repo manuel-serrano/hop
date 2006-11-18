@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Nov 17 09:03:33 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 16:33:15 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -748,7 +748,7 @@
 	     (if (input-port? port)
 		 (let ((t (current-thread))
 		       (m (eval-module))
-		       (f *the-loading-file*))
+		       (f (the-loading-file)))
 		    (unwind-protect
 		       (begin
 			  (hop-load-afile (dirname path))
@@ -773,7 +773,9 @@
 		       (begin
 			  (close-input-port port)
 			  (eval-module-set! m)
-			  (set! *the-loading-file* f))))
+			  (if (thread? t)
+			      (thread-specific-set! t f)
+			      (set! *the-loading-file* f)))))
 		 (raise (instantiate::&io-port-error
 			   (proc 'hop-load)
 			   (msg "Can't open file")

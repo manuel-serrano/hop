@@ -9,11 +9,11 @@ The ::http-request class is used for representing HOP requests.
 === server ===
 
   (class http-request::%http-message ...)
-  (the-current-request)
+  (current-request)
 
 == Examples ==
 
-<example>http-request, the-current-request</example>
+<example>http-request, current-request</example>
 
 == Server Definitions ==
 <server>
@@ -46,15 +46,15 @@ The ::http-request class is used for representing HOP requests.
 </fields>
 </class>
 
-=== ++(the-current-request)++ ===
-<function> the-current-request
+=== ++(current-request)++ ===
+<function> current-request
 
-The function ++the-current-request++ is bound in the body of all
+The function ++current-request++ is bound in the body of all
 services. It returns an object representing the current HOP request.
 That is, the request that has yield the service invocation.
 
 </function>
 
 == See also ==
-<see-also>the-current-request, http-request, http-response</see-also>
+<see-also>current-request, http-request, http-response</see-also>
 </doc>

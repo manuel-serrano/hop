@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu Nov  2 12:45:12 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 16:19:07 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -74,7 +74,7 @@
 ;*    home ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define-service (home)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (home-add-log! req)
       (home-main req)))
 
@@ -83,6 +83,7 @@
 ;*---------------------------------------------------------------------*/
 (define (home-main req)
    (<HOME>
+      (service-base home req)
       (<NOTEPAD>
 	 :id "home-notepad"
 	 (<NPHEAD> "")
@@ -170,7 +171,8 @@ implemented you can send comments and remarks to "
 ;*    home/documentation ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-service (home/documentation)
-   (let* ((file (string-append (home-dir) "/etc/home.wiki"))
+   (let* ((base (dirname (hop-service-load-path home/documentation)))
+	  (file (string-append base "/etc/home.wiki"))
 	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")
@@ -181,7 +183,8 @@ implemented you can send comments and remarks to "
 ;*---------------------------------------------------------------------*/
 (define-service (home/install)
    (<HTML>
-      (<HEAD> :css (make-file-name (home-dir) "home.hss"))
+      (<HEAD> :base (service-base home/install (current-request))
+	 :css "home.hss")
       (<BODY> :style "background: white; font-size: small"
 	      (wiki->hop "install.wiki"))))
 
@@ -190,7 +193,8 @@ implemented you can send comments and remarks to "
 ;*---------------------------------------------------------------------*/
 (define-service (home/install-jvm)
    (<HTML>
-      (<HEAD> :css (make-file-name (home-dir) "home.hss"))
+      (<HEAD> :base (service-base home/install (current-request))
+	 :css "home.hss")
       (<BODY> :style "background: white; font-size: small"
 	      (wiki->hop "install-jvm.wiki"))))
 
@@ -199,7 +203,7 @@ implemented you can send comments and remarks to "
 ;*---------------------------------------------------------------------*/
 (define-service (home/submit-hz file)
    (let ((path (cgi-post-arg-field :file file)))
-      (home-main (the-current-request))))
+      (home-main (current-request))))
 
 ;*---------------------------------------------------------------------*/
 ;*    downloads ...                                                    */

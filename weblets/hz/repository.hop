@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Wed Sep 20 14:30:07 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 16:00:28 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -65,9 +65,9 @@
 ;*    hz/repository ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/repository)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (if (user-authorized-service? (http-request-user req) 'super-admin)
-	  (hz-update-repository)
+	  (hz-update-repository req)
 	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
@@ -187,11 +187,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-update-repository ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (hz-update-repository)
+(define (hz-update-repository req)
    (<HTML>
-      (<HEAD> :dir (hz-dir) 
-	      :jscript "hop-iwindow.js" :css "hop-iwindow.css"
-	      :css "hz.hss")
+      (<HEAD>
+	 :title "Hz Repository"
+	 :include "hop-iwindow"
+	 :base (service-base hz/repository req)
+	 :css "hz.hss")
       (let ((author (<INPUT> :type 'text :size 30))
 	    (category (<INPUT> :type 'text :size 20))
 	    (hop (<INPUT> :type 'text :size "100%"))

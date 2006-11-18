@@ -1,6 +1,6 @@
 ;; Play a sound
 (<HTML>
- (<HEAD> :jscript "hop-sound.js" 
+ (<HEAD> :include "hop-sound" 
     (<TITLE> "Testing Sound"))
  (<BODY>
   (<H2> "Play a sound")

@@ -1,21 +1,14 @@
 (module hophome_demos-repl
    (export (home/demos/repl)))
 
-(define *repl-directory* (dirname (the-loading-file)))
-
 ;; main function
 (define-service (home/demos/repl)
    (<HTML>
       (<HEAD>
-	 :dir *repl-directory*
-	 :jscript "hop-iwindow.js" :css "hop-iwindow.css"
-	 :jscript "hop-notepad.js" :css "hop-notepad.css"
-	 :jscript "hop-tree.js" :css "hop-tree.css"
-	 :jscript "hop-tabslider.js" :css "hop-tabslider.css"
-	 :jscript "hop-foldlist.js" :css "hop-foldlist.css"
-	 :jscript "hop-paned.js" :css "hop-paned.css"
-	 :jscript "hop-sorttable.js" :css "hop-sorttable.css"
-	 :jscript "hop-dom.js" :jscript "hop-fx.js" :jscript "base64.js"
+	 :title "Home Repl demo"
+	 :include "hop-iwindow" "hop-notepad" "hop-tree"
+	 :include "hop-tabslider" "hop-foldlist" "hop-paned"
+	 :include "hop-sorttable" "hop-fx" "base64"
 	 :css "repl.hss")
       (<BODY>
 	 (<DIV>

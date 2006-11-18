@@ -1,6 +1,6 @@
 ;; An example of base64 encoding/decoding
 (<HTML>
-   (<HEAD> :jscript "base64.js")
+   (<HEAD> :include "base64")
    (let ((out (<SPAN> "")))
       (<BODY>
 	 "Hit [return] on the text above for encoding on the client

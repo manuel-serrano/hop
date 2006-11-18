@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Nov 13 08:17:26 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 09:18:18 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -38,7 +38,7 @@
 	    __hop_hop-foldlist
 	    __hop_event)
    
-   (export  (the-current-request::obj)
+   (export  (current-request::obj)
 	    (request-get::obj ::symbol)
 	    (request->response::%http-response ::http-request)
 	    (with-url ::bstring ::procedure #!key fail (header '()))
@@ -46,9 +46,9 @@
 	    (generic with-hop-response obj proc fail)))
 
 ;*---------------------------------------------------------------------*/
-;*    the-current-request ...                                          */
+;*    current-request ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (the-current-request)
+(define (current-request)
    (let ((d (thread-data (hop-current-thread))))
       (if (http-request? d)
 	  d
@@ -58,7 +58,7 @@
 ;*    request-get ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (request-get key)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (if req
 	  (with-access::http-request req (%env)
 	     (unless %env (set! %env (request-env-parse req)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Mon Nov 13 09:54:22 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 16:26:38 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -104,51 +104,55 @@
 ;*---------------------------------------------------------------------*/
 (define-service (home/demos/tips)
    (<HTML>
-      (<HEAD> :css (make-file-name (home-dir) "tips.hss"))
-      (<H1> "This is the HOP demonstration playground.")
-      (<P> [It illustrates various features provided by HOP. It shows
+      (<HEAD>
+	 :title "Home Tips"
+	 :base (service-base home/demos/tips (current-request))
+	 :css "tips.hss")
+      (<BODY>
+       (<H1> "This is the HOP demonstration playground.")
+       (<P> [It illustrates various features provided by HOP. It shows
 some of the HTML extensions provided by HOP (for instance for implementing
 this simple window manager). It shows how to programs application where
 ,(<EM> "client") computations and ,(<EM> "server") computations are
 simultaneously involved. It also illustrates some of the HOP libraries
 such as libraries for accessing and parsing ressources over the network. This
 playground contains the following demonstrations:])
-      (<H2> "Sudoku")
-      (<P> :class "descr" [This implements a ,(<EM> "Sudoku") game.
+       (<H2> "Sudoku")
+       (<P> :class "descr" [This implements a ,(<EM> "Sudoku") game.
  The programs show how client side and server side computations coexist])
-      (<H2> "Minesweeper")
-      (<P> :class "descr" [This demonstration implements a simple
+       (<H2> "Minesweeper")
+       (<P> :class "descr" [This demonstration implements a simple
  ,(<EM> "Minesweeper") game. It shows how to program client side applications
  in HOP.])
-      (<H2> "Rss")
-      (<P> :class "descr" [This implements a ,(<EM> "RSS") reader. It
+       (<H2> "Rss")
+       (<P> :class "descr" [This implements a ,(<EM> "RSS") reader. It
  illustrates the HOP widget for ,(<EM> "fold lists"). It shows how to use
  this widget can be used for implementing ,(<EM> "lazy") unfolding. In this
  demonstration, RSS feeds are fetched from the network and parsed only
  when items are unfolded. This demonstration also shows how to
  program applications that uses third party servers.])
-      (<H2> "Repl")
-      (<P> :class "descr" [This is a HOP client side interpreter. Each time,
+       (<H2> "Repl")
+       (<P> :class "descr" [This is a HOP client side interpreter. Each time,
  the \[return\] key is pressed. The expression after the prompt (the string
  ,(<TT> ":=>")) is sent to the server for compilation. Once back, it is
  evaluated on the client browser. The expressions may refer to the whole
  HOP client side API. In particular, they can manipulate the current DOM.])
-      (<H2> "Wiki")
-      (<P> :class "descr" [This demonstration uses the HOP Wiki library. It
+       (<H2> "Wiki")
+       (<P> :class "descr" [This demonstration uses the HOP Wiki library. It
 also shows how HOP ,(<EM> "signals") can be deployed for allowing external
 clients to be notified by servers.])
-      (<H2> "Rewrite")
-      (<P> :class "descr" [This demonstration shows how the client and the
+       (<H2> "Rewrite")
+       (<P> :class "descr" [This demonstration shows how the client and the
 server can cooperate to operate on distant documents. In this simple
 demonstration remote pages are changed on-the-fly by the server that acts
 as a proxy.])
-      (<H2> "Set")
-      (<P> :class "descr" [This demonstration implements another
+       (<H2> "Set")
+       (<P> :class "descr" [This demonstration implements another
 game. It shows how to use events to synchronize multiple clients in HOP.])
-      (<H2> "Source")
-      (<P> :class "descr" [This demonstration uses HOP ,(<EM> "trees") and
+       (<H2> "Source")
+       (<P> :class "descr" [This demonstration uses HOP ,(<EM> "trees") and
 ,(<EM> "pan"). It implements a simple file browser. This browsers may
-be used to access the whole source code of this playground.])))
+be used to access the whole source code of this playground.]))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TIPS> ...                                                       */
@@ -191,8 +195,8 @@ be used to access the whole source code of this playground.])))
 ;*---------------------------------------------------------------------*/
 (define (<ZIMG> svc s1 s2 inl . r)
    (let ((id (xml-make-id))
-	 (p1 (format "~a/etc/icons/~a" (home-dir) s1))
-	 (p2 (format "~a/etc/icons/~a" (home-dir) s2))
+	 (p1 (format "etc/icons/~a" s1))
+	 (p2 (format "etc/icons/~a" s2))
 	 (w (if (pair? r) (car r) "200"))
 	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
 	 (t (string-capitalize (basename svc))))
@@ -208,9 +212,9 @@ be used to access the whole source code of this playground.])))
 			     (p (document.getElementById "demo-playground")))
 			  (set! frame.className "demos")
 			  (set! frame.src $svc)
-			  (set! frame.style.border "0")
-			  (set! frame.style.width "100%")
-			  (set! frame.style.height "100%")
+			  (node-style-set! frame :width "100%")
+			  (node-style-set! frame :height "100%")
+			  (node-style-set! frame :border-width 0)
 			  (let* ((w (iwindow-open $t
 						  frame
 						  false false

@@ -10,7 +10,7 @@
 		       :min 0 :max 255 :value ~blue
 		       :onchange ~(begin (set! blue this.value) (showcolor!)))))
    (<HTML>
-      (<HEAD> :css "hop-slider.css" :jscript "hop-slider.js"
+      (<HEAD> :include "hop-slider")
 	 ~(define red 60)
 	 ~(define green 40)
 	 ~(define blue 80)

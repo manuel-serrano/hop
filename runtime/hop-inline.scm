@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Mon Sep 11 17:07:09 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 09:18:11 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -51,7 +51,7 @@
       (else
        (multiple-value-bind (_ userinfo host port path)
 	  (url-parse src)
-	  (let* ((req (the-current-request))
+	  (let* ((req (current-request))
 		 (auth (and (http-request? req)
 			    (http-request-authorization req))))
 	     (if early

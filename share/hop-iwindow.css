@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Wed Nov 15 05:50:31 2006 (serrano)                */
+/*    Last change :  Sat Nov 18 06:53:42 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW CSS                                                  */
@@ -111,7 +111,7 @@ div.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-right {
 /*---------------------------------------------------------------------*/
 div.hop-iwindow div.hop-iwindow-content {
   position: absolute;
-  top: 20px; 
+  top: 18px; 
   padding-top: 2px;
   bottom: 4px; 
   left: 1px; 

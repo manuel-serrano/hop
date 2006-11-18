@@ -28,7 +28,7 @@ They also need to load the ++hop-slider.css++ style sheet.  Hence, documents
 using //sliders// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-slider.js" :css "hop-slider.css")
+  (<HEAD> :include "hop-slider")
 
 
 == Examples ==
