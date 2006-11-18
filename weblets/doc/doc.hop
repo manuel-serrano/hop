@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Sat Nov 18 15:29:35 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 17:01:06 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -55,11 +55,10 @@
 ;*---------------------------------------------------------------------*/
 (define (doc-main script)
    (let* ((req (current-request))
-	  (prefs (make-file-name (doc-rc-directory) "doc.prefs"))
-	  (base (service-base doc req)))
+	  (prefs (make-file-name (doc-rc-directory) "doc.prefs")))
       (thread-start! (make-thread (lambda () (setup-api-tables!))))
       (when (file-exists? prefs) (doc-preferences-load prefs))
-      (<DOC> :base base :script script
+      (<DOC> :script script
 	 (<NOTEPAD>
 	    :id "doc-notepad"
 	    (<NPHEAD> "")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Sat Nov 18 15:33:38 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 17:00:33 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -30,16 +30,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    <DOC> ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <DOC> ((base #unspecified string)
-			    (script #f)
+(define-xml-compound <DOC> ((script #f)
 			    body)
    (<HTML>
       (<HEAD>
 	 :title "Hop documentation center (APIs &amp; libraries)"
-	 :base base
 	 :include "hop-notepad" "hop-sorttable" "hop-foldlist" "hop-iwindow"
 	 :include "hop-fx"
-	 :css "doc.hss"
+	 :css (string-append (doc-dir) "/doc.hss")
 	 script)
       (<BODY>
 	 (<DIV>
@@ -50,7 +48,8 @@
 		  (<TD>
 		     :valign "top"
 		     (<IMG> :class "logo"
-			:src "etc/logo.png" :alt "Hop Doc logo"))
+			:alt "Hop Doc logo"
+			:src (string-append (doc-dir) "/etc/logo.png")))
 		  (<TD>
 		     :valign "top"
 		     (<TABLE>
