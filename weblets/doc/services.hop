@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Sat Nov 18 15:29:39 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:26:08 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -30,7 +30,7 @@
 		    :class "editor"
 		    :rows 70 :cols 80
 		    (with-input-from-file file read-string)))
-	 (base (service-base doc/edit (current-request))))
+	 (base (service-base-url doc/edit (current-request))))
       (<DOC> :base base
 	 (<BUTTON>
 	    :onclick ~(if (confirm "Save the document?")

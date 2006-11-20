@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Sat Nov 18 09:22:45 2006 (serrano)                */
+;*    Last change :  Mon Nov 20 08:15:21 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -74,17 +74,17 @@
 ;*---------------------------------------------------------------------*/
 (define (make-wiki-request-syntax initial-syntax)
    (let ((req (current-request)))
-      (if (authorized-service? req 'admin)
-	  (duplicate::wiki-syntax initial-syntax
-	     (plugins (lambda (id)
-			  (case id
-			     ((<doc>)
-			      (if (http-request-localhostp req)
-				  <DOC/emacs>
-				  <DOC/edit>))
-			     (else
-			      ((wiki-syntax-plugins initial-syntax) id))))))
-	  initial-syntax)))
+      (duplicate::wiki-syntax initial-syntax
+	 (plugins (lambda (id)
+		     (case id
+			((<doc>)
+			 (if (authorized-service? req 'admin)
+			     (if (http-request-localhostp req)
+				 <DOC/emacs>
+				 <DOC/edit>)
+			     <WIKI-DOC>))
+			(else
+			 ((wiki-syntax-plugins initial-syntax) id))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI-DOC> ...                                                   */

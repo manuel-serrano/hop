@@ -4,7 +4,7 @@
 (define-service (home/demos/minesweeper)
    (<HTML>
       (<HEAD>
-	 :base (service-base home/demos/minesweeper (current-request))
+	 :base (service-base-url home/demos/minesweeper (current-request))
 	 :jscript "minesweeper.scm")
       (<BODY>
 	 (<TABLE>

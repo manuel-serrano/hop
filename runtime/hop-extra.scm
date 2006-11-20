@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Nov 18 15:17:15 2006 (serrano)                */
+;*    Last change :  Mon Nov 20 07:48:14 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -54,6 +54,22 @@
 ;*---------------------------------------------------------------------*/
 (define (head-parse args)
    
+   (define (absolute-path p dir)
+      (cond
+	 ((not dir)
+	  p)
+	 ((=fx (string-length p) 0)
+	  p)
+	 ((char=? (string-ref p 0) #\/)
+	  p)
+	 ((and (>fx (string-length p) 8)
+	       (substring-at? p "http" 0)
+	       (or (substring-at? p "://" 4)
+		   (substring-at? p "s://" 4)))
+	  p)
+	 (else
+	  (string-append dir "/" p))))
+   
    (define (jscript p)
       (<SCRIPT> :type (hop-javascript-mime-type) :src p))
    
@@ -62,7 +78,7 @@
    
    (define (css p)
       (<LINK> :rel "stylesheet" :type "text/css" :href p))
-
+   
    (define (incl f)
       (let ((js (let ((p (make-file-name (hop-share-directory)
 					 (string-append f ".js"))))
@@ -80,7 +96,7 @@
 						 (string-append f ".css"))))
 			   (when (file-exists? p)
 			      (css p)))))))
-
+	 
 	 (if js
 	     (if css
 		 (list js css)
@@ -92,6 +108,7 @@
    (let loop ((a args)
 	      (mode #f)
 	      (rts #t)
+	      (dir #f)
 	      (els '()))
       (cond
 	 ((null? a)
@@ -100,41 +117,72 @@
 		 (append head-runtime-system body)
 		 body)))
 	 ((pair? (car a))
-	  (loop (append (car a) (cdr a)) mode rts els))
+	  (loop (append (car a) (cdr a)) mode rts dir els))
 	 ((null? (car a))
-	  (loop (cdr a) mode rts els))
+	  (loop (cdr a) mode rts dir els))
 	 ((keyword? (car a))
 	  (if (null? (cdr a))
 	      (error '<HEAD> (format "Missing ~a value" (car a)) a)
 	      (case (car a)
 		 ((:css)
-		  (if (string? (cadr a))
-		      (loop (cddr a) :css rts (cons (css (cadr a)) els))
-		      (error '<HEAD> "Illegal :css" (cadr a))))
+		  (cond
+		     ((string? (cadr a))
+		      (loop (cddr a) :css rts dir
+			    (cons (css (absolute-path (cadr a) dir)) els)))
+		     ((pair? (cadr a))
+		      (let ((css-files (map (lambda (f)
+					       (css (absolute-path f dir)))
+					    (cadr a))))
+			 (loop (cddr a) :css rts dir
+			       (append! (reverse! css-files) els))))
+		     (else
+		      (error '<HEAD> "Illegal :css" (cadr a)))))
 		 ((:jscript)
-		  (if (string? (cadr a))
-		      (loop (cddr a) :jscript rts (cons (jscript (cadr a)) els))
-		      (error '<HEAD> "Illegal :jscript" (cadr a))))
+		  (cond
+		     ((string? (cadr a))
+		      (loop (cddr a) :jscript rts dir
+			    (cons (jscript (absolute-path (cadr a) dir)) els)))
+		     ((pair? (cadr a))
+		      (let ((js-files (map (lambda (f)
+					      (jscript (absolute-path f dir)))
+					   (cadr a))))
+			 (loop (cddr a) :jscript rts dir
+			       (append! (reverse! js-files) els))))
+		     (else
+		      (error '<HEAD> "Illegal :jscript" (cadr a)))))
 		 ((:favicon)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts (cons (favicon (cadr a)) els))
+		      (loop (cddr a) #f rts dir
+			    (cons (favicon (absolute-path (cadr a) dir)) els))
 		      (error '<HEAD> "Illegal :favicon" (cadr a))))
 		 ((:include)
-		  (if (string? (cadr a))
-		      (loop (cddr a) :include rts (append (incl (cadr a)) els))
-		      (error '<HEAD> "Illegal :include" (cadr a))))
+		  (cond
+		     ((string? (cadr a))
+		      (loop (cddr a) :include rts dir
+			    (append (incl (cadr a)) els)))
+		     ((pair? (cadr a))
+		      (loop (cddr a) :include rts dir
+			    (append (reverse! (append-map incl (cadr a))) els)))
+		     (else
+		      (error '<HEAD> "Illegal :include" (cadr a)))))
 		 ((:rts)
 		  (if (boolean? (cadr a))
-		      (loop (cddr a) #f (cadr a) els)
+		      (loop (cddr a) #f (cadr a) dir els)
 		      (error '<HEAD> "Illegal :rts" (cadr a))))
 		 ((:title)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts (cons (<TITLE> (cadr a)) els))
+		      (loop (cddr a) #f rts dir
+			    (cons (<TITLE> (cadr a)) els))
 		      (error '<HEAD> "Illegal :title" (cadr a))))
 		 ((:base)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts (cons (<BASE> :href (cadr a)) els))
+		      (loop (cddr a) #f rts dir
+			    (cons (<BASE> :href (cadr a)) els))
 		      (error '<HEAD> "Illegal :title" (cadr a))))
+		 ((:dir)
+		  (if (string? (cadr a))
+		      (loop (cddr a) #f rts (cadr a) els)
+		      (error '<HEAD> "Illegal :dir" (cadr a))))
 		 (else
 		  (error '<HEAD>
 			 (format "Unknown ~a argument" (car a))
@@ -142,17 +190,21 @@
 	 ((string? (car a))
 	  (case mode
 	     ((:css)
-	      (loop (cdr a) mode rts (cons (css (car a)) els)))
+	      (loop (cdr a) mode rts dir
+		    (cons (css (absolute-path (car a) dir)) els)))
 	     ((:jscript)
-	      (loop (cdr a) mode rts (cons (jscript (car a)) els)))
+	      (loop (cdr a) mode rts dir
+		    (cons (jscript (absolute-path (car a) dir)) els)))
 	     ((:include)
-	      (loop (cdr a) mode rts (append (incl (car a)) els)))
+	      (loop (cdr a) mode rts dir
+		    (append (incl (car a)) els)))
 	     (else
-	      (loop (cdr a) #f rts (cons (car a) els)))))
+	      (loop (cdr a) #f rts dir
+		    (cons (car a) els)))))
 	 ((not (car a))
-	  (loop (cdr a) #f rts els))
+	  (loop (cdr a) #f rts dir els))
 	 (else
-	  (loop (cdr a) #f rts (cons (car a) els))))))
+	  (loop (cdr a) #f rts dir (cons (car a) els))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HEAD> ...                                                       */

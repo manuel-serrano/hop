@@ -36,7 +36,7 @@
    (<HTML>
       (<HEAD>
 	 :title "Home Source demo"
-	 :base (service-base home/demos/source (current-request))
+	 :base (service-base-url home/demos/source (current-request))
 	 :include "hop-paned" "hop-tree"
 	 :css "source.hss")
       (<BODY>

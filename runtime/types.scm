@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Nov 18 13:49:39 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:00:49 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -141,8 +141,10 @@
 	      (timeout::long read-only (default -1))
 	      ;; the number of times the service might be called
 	      (ttl::long (default -1))
-	      ;; the load path
-	      (load-path::obj read-only (default #f)))
+	      ;; the resource directory (that contains the source file)
+	      (resource::obj (default #f))
+	      ;; the source file
+	      (source::obj read-only (default #f)))
 
 	   (http-request-hook-add! ::http-request ::procedure)))
    

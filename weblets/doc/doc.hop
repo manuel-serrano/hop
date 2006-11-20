@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Sat Nov 18 17:01:06 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:35:07 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -34,8 +34,7 @@
 ;*    doc/documentation ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/documentation)
-   (let* ((base (dirname (hop-service-load-path doc/documentation)))
-	  (file (string-append base "/etc/doc.wiki"))
+   (let* ((file (service-resource doc/documentation "etc/doc.wiki"))
 	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")

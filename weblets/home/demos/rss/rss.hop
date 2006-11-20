@@ -30,7 +30,7 @@
       (<HEAD>
 	 :title "Home Rss demo"
 	 :include "hop-foldlist"
-	 :base (service-base home/demos/rss (current-request))
+	 :base (service-base-url home/demos/rss (current-request))
 	 :css "rss.hss")
       (<BODY>
 	 (<FL>

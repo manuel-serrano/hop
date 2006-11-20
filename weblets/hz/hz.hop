@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Sat Nov 18 15:59:29 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:36:29 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -41,8 +41,7 @@
 ;*    hz/documentation ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/documentation)
-   (let* ((base (dirname (hop-service-load-path hz/documentation)))
-	  (file (string-append base "/etc/hz.wiki"))
+   (let* ((file (service-resource hz/documentation "etc/hz.wiki"))
 	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")

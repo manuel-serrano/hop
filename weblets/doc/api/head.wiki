@@ -36,7 +36,7 @@ times in an invocation. A typical ++<HEAD>++ looks like:
 
 == Examples ==
 
-<example><HEAD>, <FOOT>, <FOOT-BUTTON></example>
+<example><HEAD>, service-base-url, service-resource, <FOOT>, <FOOT-BUTTON></example>
 
 == Server Definitions ==
 <server>
@@ -49,6 +49,7 @@ times in an invocation. A typical ++<HEAD>++ looks like:
 | :title       |  string    |     _        | The title of the document.            |
 | :base        |  URI       |     _        | The base URI for the document.        |
 | :include     |  string    |     _        | A system resource.                    |
+| :dir         |  string    |     _        | a directory name added to the path.   |
 | :css         |  string    |     _        | a CSS/HSS file name.                  |
 | :jscript     |  string    |     _        | a script file name.                   |
 | :favicon     |  string    |     _        | a favicon file name.                  |
@@ -73,7 +74,36 @@ overrides the previous ones).
  a resource. The :include attribute is a shorthand for a list of :css and :jscript
  attributes. For instance ++:include "hop-notepad"++ is actually equivalent to
  ++:css (make-file-name (hop-share-directory) "hop-notepad.css")++
- ++:jscript (make-file-name (hop-share-directory) "hop-notepad.js")++.
+ ++:jscript (make-file-name (hop-share-directory) "hop-notepad.js")++. See also
+ ++service-base-url++ and ++service-resource++.
+  * The attribute :dir is a //meta-attribute//. It sets a base name used to
+ complete relative file names. This name is used to complete ++css++, 
+ ++jscript++, and ++favicon++ relative file names. By default no completion
+ of relative file names is performed.
+The :dir attribute is a simple shorthand. It prevents from using absolute
+file names for each local :css of :jscript attributes. That is:
+
+  (<HEAD> 
+     :css (service-resource svc "foo.css")
+     :jscript (service-resource svc "foo.js")
+     :jscript "/usr/share/hop/bar.js")
+
+
+Can be re-written:
+
+  (<HEAD> 
+     :dir (service-resource svc)
+     :css "foo.css"
+     :jscript "foo.js"
+     :jscript "/usr/share/hop/bar.js")
+
+
+Note that only relative path are complete with the :dir value. In the example
+above, the path ++"/usr/share/hop/bar.js"++ is not modified by the :dir
+attribute.
+  * The attribute :css adds a new element to the list of CSS/HSS used in the 
+ document. This list is initially empty. Files using relative names are searched
+ in the //search path// as described above.
   * The attribute :css adds a new element to the list of CSS/HSS used in the 
  document. This list is initially empty. Files using relative names are searched
  in the //search path// as described above.
@@ -83,6 +113,8 @@ overrides the previous ones).
   * The attribute :favicon specifies an small image to be used in the URL
  area of the web browser. Image files using relative names are searched
  in the //search path// as specified with the :dir attribute.
+
+
 </markup>
 
 === <FOOT> ===

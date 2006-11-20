@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Sat Nov 18 16:00:28 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:30:15 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -192,7 +192,7 @@
       (<HEAD>
 	 :title "Hz Repository"
 	 :include "hop-iwindow"
-	 :base (service-base hz/repository req)
+	 :base (service-base-url hz/repository req)
 	 :css "hz.hss")
       (let ((author (<INPUT> :type 'text :size 30))
 	    (category (<INPUT> :type 'text :size 20))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Nov 18 16:33:03 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:34:10 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -42,7 +42,8 @@
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)
 	    (expired-service-path?::bool ::bstring)
-	    (service-base ::hop-service ::http-request)))
+	    (service-resource::bstring ::hop-service #!optional file)
+	    (service-base-url::bstring ::hop-service ::http-request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
@@ -388,15 +389,21 @@
    (hashtable-put! *expiration-table* path #t)
    (mutex-unlock! *expiration-mutex*)
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    service-resource ...                                             */
+;*---------------------------------------------------------------------*/
+(define (service-resource svc #!optional file)
+   (with-access::hop-service svc (resource)
+      (if (string? file)
+	  (string-append resource "/" file)
+	  resource)))
    
 ;*---------------------------------------------------------------------*/
-;*    service-base ...                                                 */
+;*    service-base-url ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (service-base svc req)
+(define (service-base-url svc req)
    (with-access::http-request req (scheme host port)
       (format "~a://~a:~a~a/"
 	      (if (eq? scheme '*) "http" scheme) host port
-	      (let ((p (hop-service-load-path svc)))
-		 (if (string? p)
-		     (dirname p)
-		     (hop-service-base))))))
+	      (service-resource svc))))

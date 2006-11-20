@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Sat Nov 18 16:26:38 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:27:14 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -106,7 +106,7 @@
    (<HTML>
       (<HEAD>
 	 :title "Home Tips"
-	 :base (service-base home/demos/tips (current-request))
+	 :base (service-base-url home/demos/tips (current-request))
 	 :css "tips.hss")
       (<BODY>
        (<H1> "This is the HOP demonstration playground.")

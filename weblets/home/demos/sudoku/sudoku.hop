@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Sat Nov 18 16:16:51 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:28:08 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
@@ -177,7 +177,7 @@
 	 (board (init-sudoku level)))
     (<HTML>
      (<HEAD>
-	:base (service-base home/demos/sudoku (current-request))
+	:base (service-base-url home/demos/sudoku (current-request))
 	:jscript "sudoku.scm" :css "sudoku.hss")
      (<BODY>
       (<DIV> :class "sudoku-title" (<IMG> :src "sudoku.png"))

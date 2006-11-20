@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Sat Nov 18 15:09:57 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:00:57 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -66,7 +66,10 @@
 		      (creation (date->seconds (current-date)))
 		      (timeout ,timeout)
 		      (ttl ,ttl)
-		      (load-path (the-loading-file)))))
+		      (resource (and (string? (the-loading-file))
+				     (dirname (the-loading-file))))
+		      (source (and (string? (the-loading-file))
+				   (basename (the-loading-file)))))))
 	  (register-service! svc))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Nov 18 15:22:40 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:36:10 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hopsh weblet                                                 */
@@ -56,8 +56,7 @@
 ;*    hopsh/documentation ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (hopsh/documentation)
-   (let* ((base (dirname (hop-service-load-path hopsh/documentation)))
-	  (file (string-append base "/etc/hopsh.wiki"))
+   (let* ((file (service-resource hopsh/documentation "etc/hopsh.wiki"))
 	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")
@@ -72,7 +71,7 @@
       (<HTML>
 	 (<HEAD>
 	    :title "Hop Sh"
-	    :base (service-base hopsh req)
+	    :base (service-base-url hopsh req)
 	    :css "hopsh.hss")
 	 (<BODY>
 	    (<DIV>
