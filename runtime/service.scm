@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Nov 19 07:34:10 2006 (serrano)                */
+;*    Last change :  Mon Nov 20 10:37:16 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -184,8 +184,8 @@
 		  (res '()))
 	  (cond
 	     ((null? (cdr exp))
-	      (apply string-append "new Array( "
-		     (reverse! (cons* ")" (exp->eval-string (car exp)) res))))
+	      (apply string-append "["
+		     (reverse! (cons* "]" (exp->eval-string (car exp)) res))))
 	     (else
 	      (loop (cdr exp)
 		    (cons* "," (exp->eval-string (car exp)) res)))))))

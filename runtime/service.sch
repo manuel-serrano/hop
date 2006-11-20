@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 14:53:24 2005                          */
-;*    Last change :  Sun Nov 19 07:00:57 2006 (serrano)                */
+;*    Last change :  Mon Nov 20 10:43:13 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop macros                                                       */
@@ -134,14 +134,8 @@
 		   (else
 		    (error '$roundtrip "Illegal binding" binding))))
 	     bindings)
-   (cond
-      ((null? bindings)
-       `(begin ,body))
-      ((null? (cdr bindings))
-       `(%eval (list ,(cadr (car bindings)))
-	       (current-request)
-	       (lambda (,(caar bindings)) ,@body)))
-      (else
+   (if (null? bindings)
+       `(begin ,body)
        (let ((vec (gensym)))
 	  (let loop ((obindings bindings)
 		     (i 0)
@@ -154,7 +148,7 @@
 		    (loop (cdr obindings)
 			  (+fx i 1)
 			  (cons `(,(car binding) (vector-ref ,vec ,i))
-				nbindings)))))))))
+				nbindings))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop ...                                                     */
