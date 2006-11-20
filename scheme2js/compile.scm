@@ -183,7 +183,10 @@
 (define-pmethod (Var-ref-compile p)
    (check-stmt-form
     this p
-    (p-display p this.var.compiled)))
+    ;; don't generate useless statement (like "x;")
+    ;; this only happens when "this" is a Decl.
+    (unless (statement-form? this)
+       (p-display p this.var.compiled))))
 
 (define-pmethod (Program-compile p)
    (this.body.compile p))
