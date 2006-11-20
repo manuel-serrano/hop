@@ -1,8 +1,6 @@
  (<HTML>
     (<HEAD>
-       :jscript "hop-fileselect.js" :css "hop-fileselect.css"
-       :jscript "hop-iwindow.js" :css "hop-iwindow.css"
-       :jscript "hop-tree.js" :css "hop-tree.css")
+       :include "hop-fileselect" "hop-iwindow" "hop-tree")
     (<BODY>
        (<FILEBROWSE>
 	  :value "/" :path "/tmp"

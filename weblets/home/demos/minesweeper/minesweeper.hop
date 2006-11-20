@@ -1,15 +1,11 @@
 (module hophome_demos-minesweeper
    (export (home/demos/minesweeper)))
 
-(define *minesweeper-directory*
-   (string-append (dirname (the-loading-file)) "/"))
-
 (define-service (home/demos/minesweeper)
    (<HTML>
       (<HEAD>
-	 (<SCRIPT> ~(define *minesweeper-directory* $*minesweeper-directory*)))
-      (<HOP-SCHEME-HEAD>
-	 :sscript (string-append *minesweeper-directory* "minesweeper.scm"))
+	 :base (service-base-url home/demos/minesweeper (current-request))
+	 :jscript "minesweeper.scm")
       (<BODY>
 	 (<TABLE>
 	    (<TR>

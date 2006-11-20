@@ -20,7 +20,7 @@ Documents using //iwindows// need to load the script
 must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-iwindow.js" :css "hop-iwindow.css")
+  (<HEAD> :include "hop-iwindow")
 
 
 == Examples ==

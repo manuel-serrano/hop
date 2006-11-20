@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:47:11 2006                          */
-;*    Last change :  Tue Nov 14 18:07:07 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 16:05:08 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Various hz widgets                                               */
@@ -31,9 +31,7 @@
 	    (<TR>
 	       (<TD>
 		  :class "logo"
-		  (<IMG> :class "logo"
-			 :src (format "~a/etc/logo.png"
-				      (hz-dir))))
+		  (<IMG> :class "logo" :src "etc/logo.png"))
 	       (<TD>
 		  :class "main"
 		  :valign 'top

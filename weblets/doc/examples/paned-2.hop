@@ -1,6 +1,6 @@
 ;; A //Paned// with a fixed initial fraction
 (<HTML>
-   (<HEAD> :css "hop-paned.css" :jscript "hop-paned.js")
+   (<HEAD> :include "hop-paned")
    (<BODY>
       (<PANED>
 	 :fraction "250px"

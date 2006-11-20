@@ -83,7 +83,7 @@ div.hop-notepad-tabs span.hop-nptab-active {
 div.hop-notepad-tabs span.hop-nptab-inactive {
   color: black;
   background: white;
-  border-bottom-width: #777;
+  border-bottom-color: #777;
 }
 
 div.hop-notepad-tabs span.hop-nptab-inactive:hover {

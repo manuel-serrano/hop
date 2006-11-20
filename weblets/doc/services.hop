@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Fri Oct  6 07:19:15 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:26:08 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -29,8 +29,9 @@
    (let ((editor (<TEXTAREA>
 		    :class "editor"
 		    :rows 70 :cols 80
-		    (with-input-from-file file read-string))))
-      (<DOC>
+		    (with-input-from-file file read-string)))
+	 (base (service-base-url doc/edit (current-request))))
+      (<DOC> :base base
 	 (<BUTTON>
 	    :onclick ~(if (confirm "Save the document?")
 			  (with-hop ($(service (body)
@@ -47,12 +48,12 @@
 ;*    doc/example ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/example expr)
-   (if (authorized-service? (the-current-request) 'doc/example)
+   (if (authorized-service? (current-request) 'doc/example)
        (with-handler
 	  (lambda (e)
 	     (http-internal-error e "Error in source code"))
 	  (instantiate::http-response-hop
-	     (request (the-current-request))
+	     (request (current-request))
 	     (content-type "text/html")
 	     (bodyp #t)
 	     (xml (with-input-from-string expr
@@ -62,18 +63,18 @@
 			      (if (eof-object? e)
 				  v
 				  (loop (eval e))))))))))
-       (user-access-denied (the-current-request))))
+       (user-access-denied (current-request))))
    
 ;*---------------------------------------------------------------------*/
 ;*    doc/example-file ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/example-file file)
-   (if (authorized-service? (the-current-request) 'doc/example)
+   (if (authorized-service? (current-request) 'doc/example)
        (with-handler
 	  (lambda (e)
 	     (http-internal-error e "Error in source code"))
 	  (instantiate::http-response-hop
-	     (request (the-current-request))
+	     (request (current-request))
 	     (content-type "text/html")
 	     (bodyp #t)
 	     (xml (with-input-from-file (make-file-path (doc-dir) "examples" file)
@@ -83,5 +84,5 @@
 			      (if (eof-object? e)
 				  v
 				  (loop (eval e))))))))))
-       (user-access-denied (the-current-request))))
+       (user-access-denied (current-request))))
    

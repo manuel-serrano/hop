@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Nov 17 07:49:32 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 14:51:33 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -25,7 +25,8 @@
 	    __hop_xml
 	    __hop_hop-extra
 	    __hop_service
-	    __hop_misc)
+	    __hop_misc
+	    __hop_hop)
    
    (export  (http-request-error::%http-response ::&error)
 	    (http-response-error::%http-response ::&error ::http-request)
@@ -97,10 +98,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    <EHEAD> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (<EHEAD>)
-   (<HEAD>
-      (<BASE> :href (format "http://~a:~a" (hop-server-hostname) (hop-port)))
-      :css (format "~a/hop-error.hss" (hop-share-directory))))
+(define (<EHEAD> req)
+   (if (http-request? req)
+       (with-access::http-request req (scheme host port)
+	  (<HEAD>
+	     :base (format "~a://~a:~a~a/"
+			   (if (eq? scheme '*) "http" scheme) host port
+			   (hop-share-directory))
+	     :include "hop-error"))
+       (<HEAD>
+	  :base (format "http://~a:~a~a"/ (hostname) (hop-port)
+			(hop-share-directory))
+	  :import "hop-error")))
    
 ;*---------------------------------------------------------------------*/
 ;*    <EIMG> ...                                                       */
@@ -162,17 +171,15 @@
 (define (http-unknown-host host)
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 404 Not Found")
-      (request (instantiate::http-request))
+      (request (current-request))
       (xml (<HTML>
-	      (<EHEAD>)
+	      (<EHEAD> (current-request))
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src (string-append
-					   (hop-share-directory)
-					   "/icons/notfound.png")))
+			     (<EIMG> :src "icons/notfound.png"))
 			  (<ETD>
 			     (<TABLE>
 				(<TR> (<ETD> :class "title" "Unknown Host"))
@@ -185,18 +192,16 @@
 ;*---------------------------------------------------------------------*/
 (define (http-file-not-found file)
    (instantiate::http-response-hop
-      (request (instantiate::http-request))
+      (request (current-request))
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
-	      (<EHEAD>)
+	      (<EHEAD> (current-request))
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src (string-append
-					   (hop-share-directory)
-					   "/icons/notfound.png")))
+			     (<EIMG> :src "icons/notfound.png"))
 			  (<ETD>
 			     (<TABLE>
 				:style "35em"
@@ -211,18 +216,16 @@
 (define (http-service-not-found file)
    (define (illegal-service key msg)
       (instantiate::http-response-hop
-	 (request (instantiate::http-request))
+	 (request (current-request))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
-		 (<EHEAD>)
+		 (<EHEAD> (current-request))
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src (string-append
-					      (hop-share-directory)
-					      "/icons/notfound.png")))
+				(<EIMG> :src "icons/notfound.png"))
 			     (<ETD>
 				(<TABLE>
 				   :style "35em"
@@ -300,20 +303,18 @@ a timeout which has now expired. The service is then no longer available."))
 (define (http-internal-error e msg)
    (let ((s (with-error-to-string (lambda () (error-notify e)))))
       (instantiate::http-response-hop
-	 (request (instantiate::http-request))
+	 (request (current-request))
 	 (start-line "HTTP/1.0 501 Internal Server Error")
 	 (xml (<HTML>
-		 (<EHEAD>)
+		 (<EHEAD> (current-request))
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src (string-append
-					      (hop-share-directory)
-					      (if (&io-timeout-error? e)
-						  "/icons/warning.png"
-						  "/icons/error.png"))))
+				(<EIMG> :src (if (&io-timeout-error? e)
+						 "icons/warning.png"
+						 "icons/error.png")))
 			     (<ETD>
 				(<TABLE>
 				   (<TR>
@@ -353,15 +354,13 @@ a timeout which has now expired. The service is then no longer available."))
 	 (request req)
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (xml (<HTML>
-		 (<EHEAD>)
+		 (<EHEAD> req)
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src (string-append
-					      (hop-share-directory)
-					      "/icons/error.png")))
+				(<EIMG> :src "icons/error.png"))
 			     (<ETD>
 				(<TABLE>
 				   (<TR>
@@ -383,15 +382,13 @@ a timeout which has now expired. The service is then no longer available."))
       (request req)
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
-	      (<EHEAD>)
+	      (<EHEAD> req)
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src (string-append
-					   (hop-share-directory)
-					   "/icons/notfound.png")))
+			     (<EIMG> :src "icons/notfound.png"))
 			  (<ETD>
 			     (<TABLE>
 				:style "35em"
@@ -417,15 +414,13 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (request req)
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
-	      (<EHEAD>)
+	      (<EHEAD> req)
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src (string-append
-					   (hop-share-directory)
-					   "/icons/error.png")))
+			     (<EIMG> :src "icons/error.png"))
 			  (<ETD>
 			     (<TABLE>
 				:style "35em"
@@ -453,18 +448,16 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-warning msg #!optional dump)
    (instantiate::http-response-hop
-      (request (instantiate::http-request))
+      (request (current-request))
       (start-line "HTTP/1.0 200 ok")
       (xml (<HTML>
-	      (<EHEAD>)
+	      (<EHEAD> (current-request))
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src (string-append
-					   (hop-share-directory)
-					   "/icons/warning.png")))
+			     (<EIMG> :src "icons/warning.png"))
 			  (<ETD>
 			     (<TABLE>
 				(<TR> (<ETD> :class "title" "warning"))
@@ -476,18 +469,16 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-service-unavailable e)
    (instantiate::http-response-hop
-      (request (instantiate::http-request))
+      (request (current-request))
       (start-line "HTTP/1.0 503 Service Unavailable")
       (xml (<HTML>
-	      (<EHEAD>)
+	      (<EHEAD> (current-request))
 	      (<BODY>
 		 (<CENTER>
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src (string-append
-					   (hop-share-directory)
-					   "/icons/error.png")))
+			     (<EIMG> :src "icons/error.png"))
 			  (<ETD>
 			     (<TABLE>
 				(<TR> (<ETD> :class "title" "Service Unavailable"))
@@ -501,21 +492,21 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 (define (http-remote-error host e)
    (let ((s (with-error-to-string (lambda () (error-notify e)))))
       (instantiate::http-response-hop
-	 (request (instantiate::http-request))
+	 (request (current-request))
 	 (start-line "HTTP/1.0 503 Service Unavailable")
 	 (xml (<HTML>
-		 (<EHEAD>)
+		 (<EHEAD> (current-request))
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src (string-append
-					      (hop-share-directory)
-					      "/icons/error.png")))
+				(<EIMG> :src (if (&io-timeout-error? e)
+						 "icons/warning.png"
+						 "icons/error.png")))
 			     (<ETD>
 				(<TABLE>
-				   (<TR> (<ETD> :class "title" "An error occured while exchanging with a remote host"))
+				   (<TR> (<ETD> :class "title" "An error occured while talking with a remote host"))
 				   (<TR> (<ETD> :class "msg" host))
 				   (<TR> (<ETD> :class "dump"
 					    (<PRE> s))))))))))))))
@@ -526,18 +517,18 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 (define (http-io-error e)
    (let ((s (with-error-to-string (lambda () (error-notify e)))))
       (instantiate::http-response-hop
-	 (request (instantiate::http-request))
+	 (request (current-request))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
-		 (<EHEAD>)
+		 (<EHEAD> (current-request))
 		 (<BODY>
 		    (<CENTER>
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src (string-append
-					      (hop-share-directory)
-					      "/icons/error.png")))
+				(<EIMG> :src (if (&io-timeout-error? e)
+						 "icons/warning.png"
+						 "icons/error.png")))
 			     (<ETD>
 				(<TABLE>
 				   (<TR> (<ETD> :class "title" "IO Error"))

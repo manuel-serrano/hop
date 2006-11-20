@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Nov 14 17:34:19 2006 (serrano)                */
+;*    Last change :  Mon Nov 20 07:48:14 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -37,168 +37,197 @@
 	    (<SORTTABLE> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-file ...                                                     */
+;*    head-runtime-system ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hop-file path file)
-   (let* ((p (find-file/path file path))
-	  (f (if (string? p)
-		 p
-		 (make-file-name (hop-share-directory) file))))
-      ;; CARE: ms 27oct2006. This used to construct a fully qualified
-      ;; reference using a http:// schema such as:
-      ;;   (format "http://~a:~a~a" (hostname) (hop-port) f)
-      ;; This is incorrect because it forces the introduction of the hostname
-      ;; which should actually depend on the request. I think that host
-      ;; relative answer works too. 
-      f))
-      
-
-;*---------------------------------------------------------------------*/
-;*    hop-css ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (hop-css file dir)
-   (<LINK>
-      :rel "stylesheet"
-      :type "text/css"
-      :href (cond
-	       ((= (string-length file) 0)
-		(error '<HEAD> "Illegal css" file))
-	       ((char=? (string-ref file 0) #\/)
-		file)
-	       ((substring-at? file "http://" 0)
-		file)
-	       (else
-		(hop-file dir file)))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-jscript ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (hop-jscript file dir)
-   (<SCRIPT>
-      :type (hop-javascript-mime-type)
-      :src (cond
-	      ((= (string-length file) 0)
-	       (error '<HEAD> "Illegal jscript" file))
-	      ((char=? (string-ref file 0) #\/)
-	       file)
-	      ((substring-at? file "http://" 0)
-	       file)
-	      (else
-	       (hop-file dir file)))))
+(define head-runtime-system
+   (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
+	    (<LINK> :rel "stylesheet" :type "text/css"
+	       :href p))
+	 (map (lambda (f)
+		 (let ((p (make-file-name (hop-share-directory) f)))
+		    (<SCRIPT> :type (hop-configure-javascript-mime-type)
+		       :src p)))
+	      (hop-runtime-system))))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-parse ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (head-parse args)
-   (let* ((req (the-current-request))
-	  (dir '())
-	  (css '())
-	  (jscript '())
-	  (favicon #f)
-	  (mode #f)
-	  (rts (hop-runtime-system))
-	  (rest '()))
-      (let loop ((a args))
-	 (cond
-	    ((null? a)
-	     (let ((css (map! (lambda (file) (hop-css file dir))
-			      (reverse css)))
-		   (jscript (map! (lambda (file) (hop-jscript file dir))
-				  (append rts (reverse! jscript)))))
-		(values dir
-			(if favicon
-			    (cons (<LINK> :rel "shortcut icon" :href favicon)
-				  (append (append css rest) jscript))
-			    (append (append css jscript) rest)))))
-	    ((pair? (car a))
-	     (loop (append (car a) (cdr a))))
-	    ((null? (car a))
-	     (loop (cdr a)))
-	    ((keyword? (car a))
-	     (if (null? (cdr a))
-		 (error '<HEAD> (format "Missing ~a value" (car a)) a)
-		 (case (car a)
-		    ((:dir)
-		     (set! mode :dir)
-		     (if (string? (cadr a))
-			 (set! dir (cons (cadr a) dir))
-			 (error '<HEAD> "Illegal :dir" (cadr a))))
-		    ((:css)
-		     (set! mode :css)
-		     (if (string? (cadr a))
-			 (set! css (cons (cadr a) css))
-			 (error '<HEAD> "Illegal :css" (cadr a))))
-		    ((:jscript)
-		     (set! mode :jscript)
-		     (if (string? (cadr a))
-			 (set! jscript (cons (cadr a) jscript))
-			 (error '<HEAD> "Illegal :jscript" (cadr a))))
-		    ((:favicon)
-		     (set! mode #f)
-		     (if (string? (cadr a))
-			 (set! favicon (cadr a))
-			 (error '<HEAD> "Illegal :favicon" (cadr a))))
-		    ((:rts)
-		     (set! mode #f)
-		     (if (boolean? (cadr a))
-			 (if (not (cadr a))
-			     (set! rts '())
-			     (set! rts (hop-runtime-system)))
-			 (error '<HEAD> "Illegal :rts" (cadr a))))
-		    (else
-		     (error '<HEAD>
-			    (format "Unknown ~a argument" (car a))
-			    (cadr a)))))
-	     (loop (cddr a)))
-	    ((string? (car a))
-	     (case mode
-		((:dir)
-		 (set! dir (cons (car a) dir)))
-		((:css)
-		 (set! css (cons (car a) css)))
-		((:jscript)
-		 (set! jscript (cons (car a) jscript)))
-		(else
-		 (set! rest (cons (car a) rest))))
-	     (loop (cdr a)))
-	    ((not (car a))
-	     (loop (cdr a)))
-	    (else
-	     (set! rest (cons (car a) rest))
-	     (loop (cdr a)))))))
+   
+   (define (absolute-path p dir)
+      (cond
+	 ((not dir)
+	  p)
+	 ((=fx (string-length p) 0)
+	  p)
+	 ((char=? (string-ref p 0) #\/)
+	  p)
+	 ((and (>fx (string-length p) 8)
+	       (substring-at? p "http" 0)
+	       (or (substring-at? p "://" 4)
+		   (substring-at? p "s://" 4)))
+	  p)
+	 (else
+	  (string-append dir "/" p))))
+   
+   (define (jscript p)
+      (<SCRIPT> :type (hop-javascript-mime-type) :src p))
+   
+   (define (favicon p)
+      (<LINK> :rel "shortcut icon" :href p))
+   
+   (define (css p)
+      (<LINK> :rel "stylesheet" :type "text/css" :href p))
+   
+   (define (incl f)
+      (let ((js (let ((p (make-file-name (hop-share-directory)
+					 (string-append f ".js"))))
+		   (if (file-exists? p)
+		       (jscript p)
+		       (let ((p (make-file-name (hop-share-directory)
+						(string-append f ".scm"))))
+			  (when (file-exists? p)
+			     (jscript p))))))
+	    (css (let ((p (make-file-name (hop-share-directory)
+					  (string-append f ".hss"))))
+		    (if (file-exists? p)
+			(css p)
+			(let ((p (make-file-name (hop-share-directory)
+						 (string-append f ".css"))))
+			   (when (file-exists? p)
+			      (css p)))))))
+	 
+	 (if js
+	     (if css
+		 (list js css)
+		 (list js))
+	     (if css
+		 (list css)
+		 (error '<HEAD> "Can't find include file" f)))))
+   
+   (let loop ((a args)
+	      (mode #f)
+	      (rts #t)
+	      (dir #f)
+	      (els '()))
+      (cond
+	 ((null? a)
+	  (let ((body (reverse! els)))
+	     (if rts
+		 (append head-runtime-system body)
+		 body)))
+	 ((pair? (car a))
+	  (loop (append (car a) (cdr a)) mode rts dir els))
+	 ((null? (car a))
+	  (loop (cdr a) mode rts dir els))
+	 ((keyword? (car a))
+	  (if (null? (cdr a))
+	      (error '<HEAD> (format "Missing ~a value" (car a)) a)
+	      (case (car a)
+		 ((:css)
+		  (cond
+		     ((string? (cadr a))
+		      (loop (cddr a) :css rts dir
+			    (cons (css (absolute-path (cadr a) dir)) els)))
+		     ((pair? (cadr a))
+		      (let ((css-files (map (lambda (f)
+					       (css (absolute-path f dir)))
+					    (cadr a))))
+			 (loop (cddr a) :css rts dir
+			       (append! (reverse! css-files) els))))
+		     (else
+		      (error '<HEAD> "Illegal :css" (cadr a)))))
+		 ((:jscript)
+		  (cond
+		     ((string? (cadr a))
+		      (loop (cddr a) :jscript rts dir
+			    (cons (jscript (absolute-path (cadr a) dir)) els)))
+		     ((pair? (cadr a))
+		      (let ((js-files (map (lambda (f)
+					      (jscript (absolute-path f dir)))
+					   (cadr a))))
+			 (loop (cddr a) :jscript rts dir
+			       (append! (reverse! js-files) els))))
+		     (else
+		      (error '<HEAD> "Illegal :jscript" (cadr a)))))
+		 ((:favicon)
+		  (if (string? (cadr a))
+		      (loop (cddr a) #f rts dir
+			    (cons (favicon (absolute-path (cadr a) dir)) els))
+		      (error '<HEAD> "Illegal :favicon" (cadr a))))
+		 ((:include)
+		  (cond
+		     ((string? (cadr a))
+		      (loop (cddr a) :include rts dir
+			    (append (incl (cadr a)) els)))
+		     ((pair? (cadr a))
+		      (loop (cddr a) :include rts dir
+			    (append (reverse! (append-map incl (cadr a))) els)))
+		     (else
+		      (error '<HEAD> "Illegal :include" (cadr a)))))
+		 ((:rts)
+		  (if (boolean? (cadr a))
+		      (loop (cddr a) #f (cadr a) dir els)
+		      (error '<HEAD> "Illegal :rts" (cadr a))))
+		 ((:title)
+		  (if (string? (cadr a))
+		      (loop (cddr a) #f rts dir
+			    (cons (<TITLE> (cadr a)) els))
+		      (error '<HEAD> "Illegal :title" (cadr a))))
+		 ((:base)
+		  (if (string? (cadr a))
+		      (loop (cddr a) #f rts dir
+			    (cons (<BASE> :href (cadr a)) els))
+		      (error '<HEAD> "Illegal :title" (cadr a))))
+		 ((:dir)
+		  (if (string? (cadr a))
+		      (loop (cddr a) #f rts (cadr a) els)
+		      (error '<HEAD> "Illegal :dir" (cadr a))))
+		 (else
+		  (error '<HEAD>
+			 (format "Unknown ~a argument" (car a))
+			 (cadr a))))))
+	 ((string? (car a))
+	  (case mode
+	     ((:css)
+	      (loop (cdr a) mode rts dir
+		    (cons (css (absolute-path (car a) dir)) els)))
+	     ((:jscript)
+	      (loop (cdr a) mode rts dir
+		    (cons (jscript (absolute-path (car a) dir)) els)))
+	     ((:include)
+	      (loop (cdr a) mode rts dir
+		    (append (incl (car a)) els)))
+	     (else
+	      (loop (cdr a) #f rts dir
+		    (cons (car a) els)))))
+	 ((not (car a))
+	  (loop (cdr a) #f rts dir els))
+	 (else
+	  (loop (cdr a) #f rts dir (cons (car a) els))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HEAD> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
-   (multiple-value-bind (dir body)
-      (head-parse args)
-      (let* ((meta (<META> :http-equiv "Content-Type"))
-	     (css (<LINK> :rel "stylesheet"
-		     :type "text/css"
-		     :href (hop-file dir "hop.css")))
-	     (jscripts (list
-			(<SCRIPT>
-			   :type (hop-javascript-mime-type)
-			   :src (hop-file dir "hop-autoconf.js"))
-			(<SCRIPT>
-			   :type (hop-javascript-mime-type)
-			   :src (hop-file dir "hop.js"))))
-	     (base (filter (lambda (x)
-			      (and (xml-markup? x)
-				   (xml-markup-is? x 'base)))
-			   body))
-	     (body (cons css (append jscripts body)))
-	     (body (if (memq (hop-xml-backend) '(html html-4.01))
-		       (cons meta body)
-		       body))
-	     (body (if (pair? base)
-		       (append base body)
-		       body)))
-	 (instantiate::xml-markup
-	    (markup 'head)
-	    (attributes '())
-	    (body body)))))
+   (let* ((body0 (head-parse args))
+	  (ubase (filter (lambda (x)
+			    (xml-markup-is? x 'base))
+			 body0))
+	  (body1 (if (pair? ubase)
+		     (cons (car (last-pair ubase))
+			   (filter! (lambda (x)
+				       (not (xml-markup-is? x 'base)))
+				    body0))
+		     body0))
+	  (body2 (if (not (xml-markup-is? (car body0) 'meta))
+		     (let ((meta (<META> :http-equiv "Content-Type")))
+			(cons meta body1))
+		     body1)))
+      (instantiate::xml-markup
+	 (markup 'head)
+	 (attributes '())
+	 (body body2))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FOOT> ...                                                       */

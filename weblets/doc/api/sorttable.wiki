@@ -23,7 +23,7 @@ Client codes using //sorttables// need to load the script ++hop-sorttable.js++.
 They also need to load the ++hop-sorttable.css++ style sheet. Hence, documents
 using this widget must include in their header, the following statement:
 
-  (<HEAD> :jscript "hop-sorttable.js" :css "hop-sorttable.css")
+  (<HEAD> :include "hop-sorttable")
 
 
 == Examples ==

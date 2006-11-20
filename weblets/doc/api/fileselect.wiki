@@ -28,7 +28,7 @@ Client codes using //File selectors// need to load the script
 selectors// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-fileselect.js" :css "hop-fileselect.css")
+  (<HEAD> :include "hop-fileselect")
 
 
 Client codes using //File browsers// need to load the script
@@ -38,9 +38,8 @@ also need to load the ++hop-fileselect.css++, ++hop-tree.css++, and
 browsers// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-fileselect.js" :css "hop-fileselect.css"
-          :jscript "hop-tree.js" :css "hop-tree.css"
-          :jscript "hop-iwindow.js" :css "hop-iwindow.css")
+  (<HEAD> :include "hop-fileselect" "hop-tree" "hop-iwindow")
+
 
 
 == Examples ==

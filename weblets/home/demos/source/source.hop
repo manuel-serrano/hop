@@ -35,9 +35,9 @@
 (define-service (home/demos/source)
    (<HTML>
       (<HEAD>
-	 :dir *source-directory*
-	 :css "hop-paned.css" :css "hop-tree.css"
-	 :jscript "hop-paned.js" :jscript "hop-tree.js"
+	 :title "Home Source demo"
+	 :base (service-base-url home/demos/source (current-request))
+	 :include "hop-paned" "hop-tree"
 	 :css "source.hss")
       (<BODY>
 	 (<H3> "Source code browser")

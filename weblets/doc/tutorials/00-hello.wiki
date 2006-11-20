@@ -56,7 +56,7 @@ On startup, HOP loads the ,(<TUTORIALREF> "RC file" "07-hoprc.wiki"):
 	      (with-input-from-file path
 		 (lambda ()
 		    (<PRE>
-		       :style "max-width: 80em overflow: auto"
+		       :style "max-width: 80em; overflow: auto"
 		       :class "source"
 		       (decorate-api-code
 			(read-string (current-input-port))))))))
@@ -132,5 +132,42 @@ We now add a parameter to the service.
 after the question mark (++?++). This conforms to the
 [[http://www.w3.org/Protocols/rfc2616/rfc2616.html|HTTP]] URL
 encoding.
+
+== Style Sheets, Scripts, and Images ==
+
+In this section, we denote //resource// any additional file related to 
+a service. A resource can either be a script file, image, etc. This section
+presents how to refer to them with a Hop source code.
+
+~~ Frequently, it is convenient to store the resources in the same directory
+that the one containing the source code of the service. This directory
+can be obtained with the following expression:
+
+<code>
+  (service-resource svc)
+</code>
+
+In order to forge an absolute path for a resource ++rsc++ a second argument
+can be sent to ++service-resource++. That is, the absolute path for the
+resource ++rsc++ of the service ++svc++ is given by:
+
+<code>
+  (service-resource svc rsc)
+</code>
+
+Here is a complete example that uses ++service-resource++. First it is used
+to provide a value to a ++<HEAD>>++ attribute :dir. Then, it is used to
+refer to a image.
+
+<code>
+  (define-service (hello who)
+     (<HTML>
+       (<HEAD>
+         :title "A simple weblet"
+         :dir (service-resource hello)
+         :css "hello.hss")
+       (<BODY>
+         (<IMG> :href (service-resource hello "hello.jpg"))))) 
+</code>
 
 </doc>

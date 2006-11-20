@@ -119,7 +119,7 @@ unfolded.
 
   (<HTML>
      (<HEAD> 
-        :jscript "hop-foldlist.js" :css "hop-foldlist.css"
+        :include "hop-foldlist"
         (<STYLE> :type "text/css" "table { font-size: xx-small }"))
      (<BODY>
         (<DIV>

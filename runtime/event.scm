@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Oct  9 08:46:49 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 09:17:52 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -62,7 +62,7 @@
       (set! %service
 	    (procedure->service
 	     (lambda (name)
-		(let ((req (the-current-request)))
+		(let ((req (current-request)))
 		   (if %closep
 		       (instantiate::http-response-string
 			  (start-line "HTTP/1.0 400 Bad Request")

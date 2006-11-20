@@ -1,6 +1,6 @@
 ;; A simple //tooltip//
 (<HTML>
-   (<HEAD> :css "hop.css" :jscript "hop.js")
+   (<HEAD>)
    (<BODY>
       (let ((tp (<TOOLTIP> (<TABLE>
 			      (<TR> (<TH> :colspan 2 "A tooltip"))

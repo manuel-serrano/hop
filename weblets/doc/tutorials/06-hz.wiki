@@ -62,11 +62,9 @@ all the files are created in a directory named
   (module roman
      (import roman-convert))
   
-  (define roman-dir (dirname (the-loading-file)))
-  
   (define-service (roman num)
      (<HTML>
-       (<HEAD> :dir roman-dir :css "roman.hss")
+       (<HEAD> :base (service-base roman (current-request)) :css "roman.hss")
        (<BODY>
           (<TABLE> 
               (<TR> 
@@ -75,31 +73,20 @@ all the files are created in a directory named
           (<FOOT>))))
 
   (define-service (roman/preferences)
-     (if (not (authorized-service? (the-current-request) 'admin))
+     (if (not (authorized-service? (current-request) 'admin))
          (user-access-denied req)
          (<HTML>
             (<BODY>
               "No preference for this weblet"))))
 
   (define-service (roman/documentation)
-     (if (not (authorized-service? (the-current-request) 'admin))
-         (user-access-denied req)
-         (<HTML>
-            (<BODY>
-              "This service compute roman -> arabic number representation.
+     (<HTML>
+        (<BODY>
+           "This service compute roman -> arabic number representation.
 
 The service roman accepts one roman number. It displays a table to
-two colums with the roman and the arabic representation."))))
+two colums with the roman and the arabic representation.")))
 </code>
-
-The variable ++roman-dir++ is bound to the directory name that contains the
-source file ++roman.hop++, once installed. Note it is not possible to 
-eliminate the variable definition and to substitute the expression 
-++(dirname (the-loading-file))++ in the ++<HEAD>++ statement. Indeed, the 
-function ++the-loading-file++ always returns the name of the file //currently//
-in load. Hence, only when the file ++roman.hop++ is currently in load
-the evaluation of ++(the-loading-file)++ returns the actual path of that
-file. Further invocations of this function will return different values.
 
 ~~ The use of the markup ++<FOOT>++ insert the HOP button at the end of the
 page. Inserting the HOP button advertise that the Web page is actually served
@@ -241,7 +228,7 @@ to provide his package with a file ++etc/XXX.wiki++ and implement the
 
 <code>
    (define-service (XXX/documentation)
-      (let* ((file (string-append (XXX-dir) "/etc/XXX.wiki"))
+      (let* ((file (service-resource XXX/documentation "/etc/XXX.wiki"))
              (url (format "/hop/doc/weblet?weblet=~a" file)))
          (instantiate::http-response-string
             (start-line "HTTP/1.0 301 Moved Permanently")

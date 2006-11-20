@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Nov 14 09:04:16 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:34:47 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -19,12 +19,6 @@
 ;*---------------------------------------------------------------------*/
 (define info-event
    (instantiate::hop-event (name "connect")))
-
-;*---------------------------------------------------------------------*/
-;*    info-dir ...                                                     */
-;*---------------------------------------------------------------------*/
-(define info-dir
-   (make-file-name (hop-weblets-directory) "info"))
 
 ;*---------------------------------------------------------------------*/
 ;*    traffic-hookingp ...                                             */
@@ -63,12 +57,14 @@
 ;*    granted for executing it.                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (info)
-   (let ((req (the-current-request)))
+   (let ((req (current-request)))
       (if (authorized-service? req 'admin)
 	  (<HTML>
-	     (<HEAD> :css "hop-notepad.css" "hop-sorttable.css"
-		     :css (format "~a/info.hss" info-dir)
-		     :jscript "hop-notepad.js" "hop-sorttable.js")
+	     (<HEAD>
+		:title "Hop Info weblet"
+		:base (service-base-url info req)
+		:include "hop-notepad" "hop-sorttable"
+		:css "info.hss")
 	     (<BODY>
 		:onunload ~(with-hop ($(service ()
 					  (set! traffic-hookingp #f))))
@@ -78,7 +74,7 @@
 		      :class "info"
 		      (<TR>
 			 (<TD>
-			    (<IMG> :src (format "~a/etc/logo.png" info-dir)))
+			    (<IMG> :src "etc/logo.png"))
 			 (<TD>
 			    (<TABLE>
 			       (<TR>
@@ -112,7 +108,7 @@
 ;*    info/documentation ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-service (info/documentation)
-   (let* ((file (string-append info-dir "/etc/info.wiki"))
+   (let* ((file (hop-resource info/documentation "etc/info.wiki"))
 	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")

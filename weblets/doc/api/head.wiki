@@ -9,7 +9,11 @@ non-standard way of evaluating its attributes which can occur several
 times in an invocation. A typical ++<HEAD>++ looks like:
 
   (<HEAD>
-     :dir <a-path>
+     :title <a-title>
+     :base <a-base>
+     ...
+     :include <foo> ...
+     ...
      :jscript <foo1.js> :css <foo1.css>
      ...
      :jscript <fooN.js> :css <fooN.css>
@@ -32,7 +36,7 @@ times in an invocation. A typical ++<HEAD>++ looks like:
 
 == Examples ==
 
-<example><HEAD>, <FOOT>, <FOOT-BUTTON></example>
+<example><HEAD>, service-base-url, service-resource, <FOOT>, <FOOT-BUTTON></example>
 
 == Server Definitions ==
 <server>
@@ -42,6 +46,9 @@ times in an invocation. A typical ++<HEAD>++ looks like:
 
 <arguments>
 ^  arguments   ^   type     ^   default    ^  short description                    ^
+| :title       |  string    |     _        | The title of the document.            |
+| :base        |  URI       |     _        | The base URI for the document.        |
+| :include     |  string    |     _        | A system resource.                    |
 | :dir         |  string    |     _        | a directory name added to the path.   |
 | :css         |  string    |     _        | a CSS/HSS file name.                  |
 | :jscript     |  string    |     _        | a script file name.                   |
@@ -57,13 +64,46 @@ than once in the arguments list. In such a case the values are
 accumulated (while with other markups, the last provided value
 overrides the previous ones).
 
-  * The attribute :dir is a //meta-attribute//. It add a new directory to
- the //search path//. This path is used to find ++css++, ++jscript++, and 
- ++favicon++ files. By default the search path is initialized with a list 
- containing the following elements:
-     * the value of the ++hop-share-directory++ parameter.
-     * the directory component of the URL of the current request.
- Each occurrence of a :dir attribute adds a new directory in the path.
+  * The attribute :title specifies the name of the document.
+  * The attribute :base specifies the base URI for the document. Relative
+ URI are complete with the base URI. If the base is not specified, the actual
+ URL of the current document is used to automatically compute a base URI.
+  * The attribute :include adds a Hop resource. A Hop resource might optionally
+ be composed of a script file and a CSS/HSS file. The :include attributes force
+ Hop to scan its installation directory in order to find the file associated with
+ a resource. The :include attribute is a shorthand for a list of :css and :jscript
+ attributes. For instance ++:include "hop-notepad"++ is actually equivalent to
+ ++:css (make-file-name (hop-share-directory) "hop-notepad.css")++
+ ++:jscript (make-file-name (hop-share-directory) "hop-notepad.js")++. See also
+ ++service-base-url++ and ++service-resource++.
+  * The attribute :dir is a //meta-attribute//. It sets a base name used to
+ complete relative file names. This name is used to complete ++css++, 
+ ++jscript++, and ++favicon++ relative file names. By default no completion
+ of relative file names is performed.
+The :dir attribute is a simple shorthand. It prevents from using absolute
+file names for each local :css of :jscript attributes. That is:
+
+  (<HEAD> 
+     :css (service-resource svc "foo.css")
+     :jscript (service-resource svc "foo.js")
+     :jscript "/usr/share/hop/bar.js")
+
+
+Can be re-written:
+
+  (<HEAD> 
+     :dir (service-resource svc)
+     :css "foo.css"
+     :jscript "foo.js"
+     :jscript "/usr/share/hop/bar.js")
+
+
+Note that only relative path are complete with the :dir value. In the example
+above, the path ++"/usr/share/hop/bar.js"++ is not modified by the :dir
+attribute.
+  * The attribute :css adds a new element to the list of CSS/HSS used in the 
+ document. This list is initially empty. Files using relative names are searched
+ in the //search path// as described above.
   * The attribute :css adds a new element to the list of CSS/HSS used in the 
  document. This list is initially empty. Files using relative names are searched
  in the //search path// as described above.
@@ -73,6 +113,8 @@ overrides the previous ones).
   * The attribute :favicon specifies an small image to be used in the URL
  area of the web browser. Image files using relative names are searched
  in the //search path// as specified with the :dir attribute.
+
+
 </markup>
 
 === <FOOT> ===

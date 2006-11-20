@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Oct 17 17:29:04 2006 (serrano)                */
+;*    Last change :  Fri Nov 17 11:16:16 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -162,13 +162,14 @@
       (hop-autoload-directory-add!
        (make-file-name (hop-rc-directory) "weblets"))
       (when hopp (load-hop))
-      (when loadp
+      (if loadp
 	 (if (string? rc-file)
 	     (%hop-load-rc rc-file)
 	     (let ((path (make-file-name (hop-rc-directory) (hop-rc-file))))
 		(if (file-exists? path)
 		    (%hop-load-rc path)
-		    (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file)))))))
+		    (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file))))))
+	 (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file))))
       (when replp (hop-repl))
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
       (hop-port-set! p)

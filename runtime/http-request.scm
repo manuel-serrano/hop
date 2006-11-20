@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Nov 17 09:31:05 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 15:15:37 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -53,10 +53,6 @@
 			 (let ((ip (host (http-request-host req))))
 			    (or (string=? ip (socket-local-address sock))
 				(string=? ip (hop-server-hostip)))))))
-;* 	 (tprint "localh=" localh " addr=" (socket-local-address sock) */
-;* 		 " hosti=" (hop-server-hostip) " host="                */
-;* 		 (http-request-host req)                               */
-;* 		 " host of host=" (host (http-request-host req)))      */
 	 (input-timeout-set! port 0)
 	 (with-access::http-request req (socket localclientp localhostp user userinfo)
 	    (set! socket sock)

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Nov 17 09:17:11 2006 (serrano)                */
+#*    Last change :  Sat Nov 18 09:30:12 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -68,7 +68,7 @@ else
   distribdir=.
 fi
 
-hoprts='"runtime.js" "hop-dom.js" "runtime-interface.js" "hopscheme.js"'
+hoprts='"hop-autoconf.js" "hop.js" "runtime.js" "hop-dom.js" "runtime-interface.js" "hopscheme.js"'
 
 # Argument parsing
 while : ; do

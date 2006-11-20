@@ -28,7 +28,7 @@ Client codes using //Sound// need to load the script
 must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-sound.js")
+  (<HEAD> :include "hop-sound")
 
 
 == Examples ==

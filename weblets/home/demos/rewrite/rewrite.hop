@@ -1,14 +1,15 @@
 (module hophome_demos-rewrite
    (export (home/demos/rewrite)))
 
-(define *rewrite-directory* (dirname (the-loading-file)))
-
 (define-service (home/demos/rewrite)
    (let ((url (<INPUT> :size 60 :value "http://www.kernel.org"))
 	 (o (<INPUT> :size 30 :value "Linux"))
 	 (n (<INPUT> :size 30 :value "Xinul")))
       (<HTML>
-	 (<HEAD> :dir *rewrite-directory* :css "rewrite.hss")
+	 (<HEAD>
+	    :title "Home rewrite demo"
+	    :base (service-base-url home/demos/rewrite (current-request))
+	    :css "rewrite.hss")
 	 (<BODY>
 	    (<H1> "Rewrite the following URL")
 	    url

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Thu Aug  3 09:13:13 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 13:49:17 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -25,7 +25,8 @@
 	    __hop_xml
 	    __hop_cgi
 	    __hop_service
-	    __hop_js-lib)
+	    __hop_js-lib
+	    __hop_read)
 
    (export (preferences-editor ::obj ::obj ::obj)))
 

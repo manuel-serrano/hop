@@ -23,7 +23,7 @@ They also need to load the ++hop-editor.css++ style sheet.  Hence, documents
 using //editors// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-editor.js" :css "hop-editor.css")
+  (<HEAD> :include "hop-editor")
 
 
 == Examples ==

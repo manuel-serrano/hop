@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Sat Jun  3 05:47:57 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 16:04:46 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -109,10 +109,8 @@
 					 (let* ((icon (cond
 							 ((assoc c (hz-category-icons)) => cdr)
 							 (else "file.png")))
-						(ifile (make-file-path (hz-dir)
-								       "etc"
-								       "icons"
-								       icon)))
+						(ifile (make-file-path
+							"etc" "icons" icon)))
 					    (map (lambda (e)
 						    (let ((s (service ()
 								;; we have to reload the entry
@@ -179,8 +177,7 @@
 	 (<TR>
 	    (<TD>
 	       :class "icon"
-	       (<IMG>
-		  :src (make-file-path (hz-dir) "etc" "icons" "apply.png")))
+	       (<IMG> :src "etc/icons/apply.png"))
 	    (<TD>
 	       :class "action"
 	       (<SPAN>
@@ -193,8 +190,7 @@
 	 (<TR>
 	    (<TD>
 	       :class "icon"
-	       (<IMG>
-		  :src (make-file-path (hz-dir) "etc" "icons" "package.png")))
+	       (<IMG> :src "etc/icons/package.png"))
 	    (<TD>
 	       :class "action"
 	       (<SPAN>
@@ -208,8 +204,7 @@
 	 (list
 	  (<TD>
 	     :class "icon"
-	     (<IMG>
-		:src (make-file-path (hz-dir) "etc" "icons" "run.png")))
+	     (<IMG> :src "etc/icons/run.png"))
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
@@ -223,8 +218,7 @@
 	 (list
 	  (<TD>
 	     :class "icon"
-	     (<IMG>
-		:src (make-file-path (hz-dir) "etc" "icons" "config.png")))
+	     (<IMG> :src "etc/icons/config.png"))
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
@@ -238,8 +232,7 @@
 	 (list
 	  (<TD>
 	     :class "icon"
-	     (<IMG>
-		:src (make-file-path (hz-dir) "etc" "icons" "doc.png")))
+	     (<IMG> :src "etc/icons/doc.png"))
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
@@ -253,8 +246,7 @@
 	 (list
 	  (<TD>
 	     :class "icon"
-	     (<IMG>
-		:src (make-file-path (hz-dir) "etc" "icons" "remove.png")))
+	     (<IMG> :src "etc/icons/remove.png"))
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
@@ -268,8 +260,7 @@
 	 (list
 	  (<TD>
 	     :class "icon"
-	     (<IMG>
-		:src (make-file-path (hz-dir) "etc" "icons" "delete.png")))
+	     (<IMG> :src "etc/icons/delete.png"))
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
@@ -283,8 +274,7 @@
 	 (list 
 	  (<TD>
 	     :class "icon"
-	     (<IMG>
-		:src (make-file-path (hz-dir) "etc" "icons" "update.png")))
+	     (<IMG> :src "etc/icons/update.png"))
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
@@ -343,8 +333,7 @@
 	 (<TR>
 	    (<TD>
 	       :class "icon"
-	       (<IMG>
-		  :src (make-file-path (hz-dir) "etc" "icons" "warning.png")))
+	       (<IMG> "etc/icons/warning.png"))
 	    (<TD>
 	       (<SPAN>
 		  "HOP " (hop-version) " incompatible, required " msg))))

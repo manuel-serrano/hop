@@ -1,6 +1,6 @@
 ;; A simple //Notepad//
 (<HTML>
-   (<HEAD> :css "hop-notepad.css" :jscript "hop-notepad.js")
+   (<HEAD> :include "hop-notepad")
    (<BODY>
       (<NOTEPAD>
 	 (<NPTAB>

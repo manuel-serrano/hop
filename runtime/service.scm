@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Nov 14 17:59:09 2006 (serrano)                */
+;*    Last change :  Sun Nov 19 07:34:10 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -41,7 +41,9 @@
             (%eval::%http-response ::obj ::http-request ::procedure)
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)
-	    (expired-service-path?::bool ::bstring)))
+	    (expired-service-path?::bool ::bstring)
+	    (service-resource::bstring ::hop-service #!optional file)
+	    (service-base-url::bstring ::hop-service ::http-request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
@@ -261,13 +263,14 @@
 (define (service-filter req)
    (when (http-request-localhostp req)
       (let loop ()
-	 (with-access::http-request req (path user)
+	 (with-access::http-request req (path user service)
 	    (when (hop-service-path? path)
 	       (mutex-lock! *service-mutex*)
 	       (let ((svc (hashtable-get *service-table* path)))
 		  (mutex-unlock! *service-mutex*)
 		  (cond
 		     ((hop-service? svc)
+		      (set! service svc)
 		      (with-access::hop-service svc (%exec ttl path id wid)
 			 (cond
 			    ((=fx ttl 1)
@@ -278,7 +281,8 @@
 			    ((service-expired? svc)
 			     (mark-service-path-expired! path)
 			     #f)
-			    ((user-authorized-service? user wid)
+			    ((or (user-authorized-service? user wid)
+				 (user-authorized-service? user id))
 			     (scheme->response (%exec req) req))
 			    (else
 			     (user-service-denied req user id)))))
@@ -385,5 +389,21 @@
    (hashtable-put! *expiration-table* path #t)
    (mutex-unlock! *expiration-mutex*)
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    service-resource ...                                             */
+;*---------------------------------------------------------------------*/
+(define (service-resource svc #!optional file)
+   (with-access::hop-service svc (resource)
+      (if (string? file)
+	  (string-append resource "/" file)
+	  resource)))
    
-   
+;*---------------------------------------------------------------------*/
+;*    service-base-url ...                                             */
+;*---------------------------------------------------------------------*/
+(define (service-base-url svc req)
+   (with-access::http-request req (scheme host port)
+      (format "~a://~a:~a~a/"
+	      (if (eq? scheme '*) "http" scheme) host port
+	      (service-resource svc))))

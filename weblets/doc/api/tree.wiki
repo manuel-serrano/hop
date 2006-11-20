@@ -35,7 +35,7 @@ They also need to load the ++hop-tree.css++ style sheet. Hence, documents
 using //Trees// must include in their header, the following statement:
 
 
-  (<HEAD> :jscript "hop-tree.js" :css "hop-tree.css")
+  (<HEAD> :include "hop-tree")
 
 
 == Examples ==

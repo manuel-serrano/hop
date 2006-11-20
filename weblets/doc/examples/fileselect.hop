@@ -1,5 +1,5 @@
 (<HTML>
-   (<HEAD> :jscript "hop-fileselect.js" :css "hop-fileselect.css")
+   (<HEAD> :include "hop-fileselect")
    (<BODY>
       (<FILESELECT>
 	 :value "/tmp"

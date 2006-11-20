@@ -39,7 +39,8 @@
 	   (export hop-contribs-directory)
            (export hop-weblets-directory)
            (export hop-mime-types-file)
-	   (export hop-configure-javascript-mime-type)))
+	   (export hop-configure-javascript-mime-type)
+           (export hop-runtime-system)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure ...                                                */

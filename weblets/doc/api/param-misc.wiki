@@ -95,6 +95,11 @@ a symbol it should be one of:
 
 </parameter>
 </parameter>
-</server>
 
+=== ++hop-service-base++ ===
+<parameter> hop-service-base
+The base name for services URL (see ++define-service++).
+</parameter>
+
+</server>
 </doc>

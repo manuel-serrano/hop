@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Wed Nov 15 09:55:11 2006 (serrano)                */
+;*    Last change :  Sat Nov 18 13:48:56 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -28,7 +28,8 @@
 	    __hop_hop-tree
 	    __hop_user
 	    __hop_hop
-	    __hop_css)
+	    __hop_css
+	    __hop_read)
 
    (export  (<FILESELECT> . ::obj)
 	    (<FILEBROWSE> . ::obj)
@@ -63,7 +64,7 @@
 (define (get-fileselect-service)
    (unless *fileselect-service*
       (set! *fileselect-service*
-	    (service (d o) (auto-complete (the-current-request) d))))
+	    (service (d o) (auto-complete (current-request) d))))
    *fileselect-service*)
 
 ;*---------------------------------------------------------------------*/
@@ -164,7 +165,7 @@
 (define (make-filebrowser-service predicate)
    (service (ident wident value path multi)
       (let ((onselect (format "var o=document.getElementById( '~a' ); o.value = this.selection.value; o.onselect();" ident)))
-	 (browse (the-current-request) wident value path predicate multi onselect))))
+	 (browse (current-request) wident value path predicate multi onselect))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-default-filebrowser-service ...                              */
@@ -273,7 +274,7 @@
 		   body))
 	  (svc (service (ident wident value path multi)
 		  (let ((onselect (format "~a( this.value )" hdl)))
-		     (browse (the-current-request) wident value path
+		     (browse (current-request) wident value path
 			     filter multiselect onselect)))))
       (format "hop_stop_propagation( event, false ); hop_filebrowse( ~a, '~a', '~a', '~a', '~a', ~a, 0, 0, ~a, ~a )"
 	      ;; service

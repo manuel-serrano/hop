@@ -1,6 +1,6 @@
 ;; //Inline// tabs vs //on-demand// tabs
 (<HTML>
-   (<HEAD> :css "hop-notepad.css" :jscript "hop-notepad.js")
+   (<HEAD> :include "hop-notepad")
    (<BODY>
       (<NOTEPAD>
 	 (<NPHEAD>

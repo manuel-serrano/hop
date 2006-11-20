@@ -89,7 +89,7 @@ document center.
 	      (with-input-from-file path
 		 (lambda ()
 		    (<PRE>
-		       :style "max-width: 80em overflow: auto"
+		       :style "max-width: 80em; overflow: auto"
 		       :class "source"
 		       (decorate-api-code
 			(read-string (current-input-port))))))))

@@ -12,6 +12,8 @@ invoked from client. This page describes how to create and how to use
 
   (service (arg ...) ...)
   (define-service (name arg ...) ...)
+  (service-resource svc ...)
+  (service-base-url svc req)
   (make-hop-service-url svc arg ...)
   (make-service-url svc arg ...)
   (procedure->service proc)
@@ -71,10 +73,108 @@ before being invalidated.
 | body             |  expression  | the body of the service.        |
 </arguments>
 
-This special form defines an //named// service on the client. That is,
-no public URL is associated with this service. The ++name++ is a symbol
-containing only letters, digits and, at most, on slash (++/++) character.
-A service whose name contains no slash character is called a **//weblet//**.
+The ++name++ is a symbol containing only letters, digits and, at most,
+on slash (++/++) character.  A service whose name contains no slash
+character is called a **//weblet//**.
+
+This special form defines an //named// service on the client. It differs
+from the form ++service++ in two respects:
+  * it binds the service to a global variable ++name++.
+  * it binds the service with a public URL that can be used to invoke the
+ service. The URL is forged by containing the value returned by
+ ++hop-service-base++, the separator ++/++, and the ++name++ of the service.
+ In the current setting ++hop-service-base++ being ++",(hop-service-base)"++,
+ The form ++(define-service (foo/bar ...) ..)++ would bind the service to the
+ URL ++",(string-append (hop-service-base) "/foo/bar")"++.
+
+</function>
+
+=== ++(service-resource svc [file])++ ===
+<function> service-resource
+<arguments>
+^  arguments       ^   type            ^  short description              ^
+| svc              |  service          | the service.                    |
+| file             |  ::bstring or #f  | a relative file name.           |
+</arguments>
+
+The function ++service-resource++ constructs a file name that is relative
+to the //resource directory// of the service ++svc++. The service resource
+directory is the directory that contains the source file of the service.
+Typically this is the directory where the autoload service source file
+is stored. See also ++service-base-url++.
+
+~~ let's suppose a service ++foo++ implemented in a file
+++dir/foo.hop++ that uses an image ++img.jpg++ stored inside the
+directory ++dir/images++ and a HSS file ++dir/foo.hss++. Referring to
+++img.jpg++ and ++foo.hss++ could be done via ++(service-resource foo ...)++.
+This is illustrated by the following example.
+
+  (define-service (foo)
+    (<HTML>
+      (<HEAD> 
+         :css (service-resource foo "foo.hss")
+         ...)
+      (<BODY> ... (<IMG> :src (service-resource foo "images/img.jpg")) ...)))
+
+
+=== ++(service-base-url svc req)++ ===
+<function> service-base-url
+<arguments>
+^  arguments       ^   type           ^  short description              ^
+| svc              |  service         | the service.                    |
+| req              |  ::http-request  | a request.                      |
+</arguments>
+
+The function ++service-base-url++ computes the URL that denotes the file
+implementing the service ++svc++. It differs from ++service-resource++
+by constructing an absolute URL with a protocol, a host name, a host port,
+and a file name. 
+
+~~ In general ++service-base-url++ is used inside the ++<HEAD>++ markup :base
+attribute. Using the base associated with a service is useful when
+that service requires local resources such as images and when it is
+convenient to store these resources one a directory containing the
+implementation of ++svc++. For instance, let's suppose a service
+++foo++ implemented in a file ++dir/foo.hop++ that uses an image
+++img.jpg++ stored inside the directory ++dir/images++. In order to
+use the relative reference ++images/imp.jpg++ for denoting the image,
+it is required to define a ++<HEAD>++ element whose :base attribute is
+given by ++(service-base-url foo (current-request))++.
+
+
+  (define-service (foo)
+    (<HTML>
+      (<HEAD> 
+         :base (service-base-url foo (current-request))
+         :css "foo.hss"
+         ...)
+      (<BODY> 
+         ... 
+         (<IMG> :src "images/img.jpg")
+         ...)))
+
+
+~~ One has to keep in mind that setting the :base of a document affects
+**all** its relative references. In particular, in the following example:
+
+    (<HTML>
+      (<HEAD> 
+         :base (service-base-url foo (current-request))
+         ...)
+      (<BODY> 
+         ... 
+         (<A> :href "#lbl1")))
+
+
+the URI ++"#lbl1"++ no longer refers to the current document URL. It 
+actually refers to ++http://XXX/dir/#lbl1++ which is probably not a valid
+URL! The :base attribute has to be used cautionly. 
+
+~~ Some web browsers poorly implement the ++<BASE>++ markup of the
+++<HEAD>++ section. These browsers (typically 
+[[http://www.mozilla.org|Firefox]]) requires the base URI to a a URL.
+Which such browsers the :base attribute cannot be produce by the
+function ++(service-resource ...)++ which produces a relative URI.
 
 </function>
 
@@ -90,6 +190,7 @@ A service whose name contains no slash character is called a **//weblet//**.
 The function ++make-hop-service-url++ forges an URL from a service and
 from arguments. This name can be used on the server to invoke the service
 from a distant server (see ++http-send-request++).
+</function>
 
 === ++(make-service-url svc arg<sub>0</sub> ...)++ ===
 <function> make-service-url
@@ -103,6 +204,7 @@ from a distant server (see ++http-send-request++).
 The function ++make-service-url++ forges an URL from a service and
 from arguments that is suitable for invoking the service from a client.
 In particular, the URL can be used in client ++<FORM>++ markups.
+</function>
 
 === ++(procedure->service proc)++ ===
 <function> procedure->service
@@ -114,6 +216,7 @@ In particular, the URL can be used in client ++<FORM>++ markups.
 
 The function ++procedure->service++ creates an anonymous service that
 wraps the procedure ++proc++.
+</function>
 
 === ++(hop-autoload-directories)++ ===
 === ++(hop-autoload-directory-add! string)++ ===
