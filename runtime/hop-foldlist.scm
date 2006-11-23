@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Fri Aug 25 09:49:25 2006 (serrano)                */
+;*    Last change :  Thu Nov 23 11:42:39 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -23,12 +23,14 @@
 	    __hop_misc)
 
    (static  (class html-foldlist::xml-element
+	       (cname::bstring read-only)
 	       (spacing (default 0))
 	       (icono (default #f))
 	       (iconc (default #f)))
 	    (class html-flitem::xml-element
 	       (open (default #f)))
-	    (class html-flhead::xml-element))
+	    (class html-flhead::xml-element
+	       (cname::bstring read-only)))
 
    (export  (<FL> . ::obj)
 	    (<FLITEM> . ::obj)
@@ -38,12 +40,16 @@
 ;*    <FL> ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <FL> ((id #unspecified string)
+			   (class #unspecified string)
 			   (spacing 0)
 			   (icono #f)
 			   (iconc #f)
 			   body)
   (let ((res (instantiate::html-foldlist
 	         (markup 'fl)
+		 (cname (if (string? class)
+			    (string-append "hop-fl " class)
+			    "hop-fl"))
 		 (id (xml-make-id id 'FL))
 		 (spacing spacing)
 		 (icono icono)
@@ -62,7 +68,8 @@
 ;;;    xml-write ::html-foldlist ...
 ;;;
 (define-method (xml-write obj::html-foldlist p encoding backend)
-  (fprintf p "<table class='hop-fl' id='~a' cellpadding='0' cellspacing='~a'>"
+  (fprintf p "<table class='~a' id='~a' cellpadding='0' cellspacing='~a'>"
+	   (html-foldlist-cname obj)
 	   (html-foldlist-id obj) (html-foldlist-spacing obj))
   (xml-write (html-foldlist-body obj) p encoding backend)
   (display "</table>" p))
@@ -135,9 +142,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FLHEAD> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <FLHEAD> ((id #unspecified string) body)
+(define-xml-compound <FLHEAD> ((id #unspecified string)
+			       (class #unspecified string)
+			       body)
   (instantiate::html-flhead
      (markup 'flhead)
+     (cname (if (string? class)
+		(string-append "hop-fl-head " class)
+		"hop-fl-head"))
      (id (xml-make-id id 'FLHEAD))
      (body body)))
 
@@ -145,7 +157,7 @@
 ;;;    xml-write ::html-flhead ...
 ;;;
 (define-method (xml-write obj::html-flhead p encoding backend)
-  (display "<span class='hop-fl-head'>" p)
+  (display (format "<span class='~a'>" (html-flhead-cname obj)) p)
   (xml-write (html-flhead-body obj) p encoding backend)
   (display "</span>" p))
 

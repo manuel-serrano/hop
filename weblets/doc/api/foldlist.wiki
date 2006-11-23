@@ -42,6 +42,7 @@ using //foldlists// must include in their header, the following statement:
 <arguments>
 ^  attributes  ^   type              ^   default    ^  short description      ^
 | :id          |  string             |  //random//  | element identifier.     |
+| :class       |  string             |              | element class name.     |
 | :spacing     |  integer            |      0       |                         |
 | :icono       |  string             |  //false//   | the open image.         |
 | :iconc       |  string             |  //false//   | the close image.        |
@@ -70,6 +71,7 @@ markup, then the item is re-computed each time it is re-open.
 <arguments>
 ^  attributes  ^   type      ^   default    ^  short description           ^
 | :id          |  string     |  //random//  | element identifier.          |
+| :class       |  string     |              | element class name.          |
 | body         | HTML tree   |              | the body.                    |
 </arguments>
 
