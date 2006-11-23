@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Thu Nov 23 11:50:07 2006 (serrano)                */
+;*    Last change :  Thu Nov 23 14:16:30 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -24,6 +24,7 @@
 
    (static  (class html-foldlist::xml-element
 	       (cname::bstring read-only)
+	       (stop::bool (default #t))
 	       (spacing (default 0))
 	       (icono (default #f))
 	       (iconc (default #f)))
@@ -106,42 +107,46 @@
 				       "triangle-right.png"))))
 	 (cond
 	    ((not (pair? body))
-	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s)'>"
-		      id icono iconc))
+	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s) ~a'>"
+		      id icono iconc
+		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" "")))
 	    ((and (pair? body)
 		  (xml-delay? (car body))
 		  (null? (cdr body)))
 	     (fprintf p
-		      "<tr onclick='hop_fold_item_toggle_service(~s,~s,~s,~s)'>"
+		      "<tr onclick='hop_fold_item_toggle_service(~s,~s,~s,~s) ~a'>"
 		      id icono iconc
 		      (hop-service-path
 		       (procedure->service
-			(xml-delay-thunk (car body)))))
+			(xml-delay-thunk (car body))))
+		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))
 	     (set-car! body ""))
 	    ((and (pair? body)
 		  (pair? (cdr body))
 		  (xml-delay? (cadr body))
 		  (null? (cddr body)))
 	     (fprintf p
-		      "<tr onclick='hop_fold_item_toggle_service(~s,~s,~s,~s)'>"
+		      "<tr onclick='hop_fold_item_toggle_service(~s,~s,~s,~s) ~a'>"
 		      id icono iconc
 		      (hop-service-path
 		       (procedure->service
-			(xml-delay-thunk (cadr body)))))
+			(xml-delay-thunk (cadr body))))
+		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))
 	     (set-car! (cdr body) ""))
 	    (else
-	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s)'>"
-		      id icono iconc)))
-	 (fprintf p "<td class='~a'><img class='hop-fl-img' id=~s src=~s/></td><td width='100%'>"
-		  (html-flitem-cname obj)
-		  (string-append id "-img") (if open icono iconc))
+	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s) ~a'>"
+		      id icono iconc
+		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))))
+	 (fprintf p "<td><img class='hop-fl-img' id=~s src=~s/></td><td width='100%' class='~a'>"
+		  (string-append id "-img") (if open icono iconc)
+		  (html-flitem-cname obj))
 	 (when (and (pair? tmp)
 		    (xml-element? (car tmp))
 		    (eq? (xml-element-markup (car tmp)) 'flhead))
 	    (xml-write (car tmp) p encoding backend)
 	    (set! tmp (cdr tmp)))
-	 (fprintf p "</td></tr><tr><td></td><td><div id='~a' style='display:~a'>"
-		  id (if open "block" "none"))
+	 (fprintf p "</td></tr><tr><td></td><td class='hop-fl-item-body'><div class='~a' id='~a' style='display:~a'>"
+		  (html-flitem-cname obj) id (if open "block" "none"))
 	 (xml-write tmp p encoding backend)
 	 (display "</div></td></tr>" p))))
   

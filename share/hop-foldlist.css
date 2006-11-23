@@ -3,28 +3,32 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Wed Apr 26 17:56:35 2006 (serrano)                */
+/*    Last change :  Thu Nov 23 12:18:18 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implemenetation                                    */
 /*=====================================================================*/
 
 .hop-fl {
-    margin: 2px;
-    width: 100%;
-    padding: 0;
-    margin: 0;
+  margin: 2px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
-.hop-fl IMG.hop-fl-img {
-    cursor: pointer;
+.hop-fl td.hop-fl-item {
+  margin-left: 4px;
+  cursor: pointer;
 }
 
-.hop-fl SPAN.hop-fl-head {
-    cursor: pointer;
-    font-weight: bold;
-    margin-left: 4px;
+.hop-fl td.hop-fl-item:hover {
+  color: #008;
 }
 
-.hop-fl DIV.hop-fl-item {
-    margin-left: 4px;
+.hop-fl img.hop-fl-img {
 }
+
+.hop-fl span.hop-fl-head {
+  font-weight: bold;
+  margin-left: 4px;
+}
+
