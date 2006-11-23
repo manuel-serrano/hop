@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Nov 18 14:51:33 2006 (serrano)                */
+;*    Last change :  Thu Nov 23 17:26:51 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -100,10 +100,11 @@
 ;*---------------------------------------------------------------------*/
 (define (<EHEAD> req)
    (if (http-request? req)
-       (with-access::http-request req (scheme host port)
+       (with-access::http-request req (scheme host port socket)
 	  (<HEAD>
 	     :base (format "~a://~a:~a~a/"
-			   (if (eq? scheme '*) "http" scheme) host port
+			   (if (eq? scheme '*) "http" scheme)
+			   (socket-local-address socket) (hop-port)
 			   (hop-share-directory))
 	     :include "hop-error"))
        (<HEAD>
