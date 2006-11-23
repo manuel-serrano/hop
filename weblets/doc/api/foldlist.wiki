@@ -42,7 +42,7 @@ using //foldlists// must include in their header, the following statement:
 <arguments>
 ^  attributes  ^   type              ^   default    ^  short description      ^
 | :id          |  string             |  //random//  | element identifier.     |
-| :class       |  string             |              | element class name.     |
+| :class       |  string             |  //hop-fl//  | element class name.     |
 | :spacing     |  integer            |      0       |                         |
 | :icono       |  string             |  //false//   | the open image.         |
 | :iconc       |  string             |  //false//   | the close image.        |
@@ -55,9 +55,10 @@ using //foldlists// must include in their header, the following statement:
 <markup> <FLITEM>
 
 <arguments>
-^  attributes  ^   type      ^   default    ^  short description           ^
-| :id          |  string     |  //random//  | element identifier.          |
-| body         | HTML tree   |              | the body.                    |
+^  attributes  ^   type      ^   default         ^  short description      ^
+| :id          |  string     |  //random//       | element identifier.     |
+| :class       |  string     |  //hop-fl-item//  | element class name.     |
+| body         | HTML tree   |                   | the body.               |
 </arguments>
 
 When the body of the ++<FLITEM>++ is an object built with the ++<DELAY>++
@@ -69,10 +70,10 @@ markup, then the item is re-computed each time it is re-open.
 <markup> <FLHEAD>
 
 <arguments>
-^  attributes  ^   type      ^   default    ^  short description           ^
-| :id          |  string     |  //random//  | element identifier.          |
-| :class       |  string     |              | element class name.          |
-| body         | HTML tree   |              | the body.                    |
+^  attributes  ^   type      ^   default        ^  short description      ^
+| :id          |  string     |  //random//      | element identifier.     |
+| :class       |  string     |  //hop-fl-head// | element class name.     |
+| body         | HTML tree   |                  | the body.               |
 </arguments>
 
 </markup>

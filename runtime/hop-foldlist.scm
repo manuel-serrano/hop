@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Thu Nov 23 11:42:39 2006 (serrano)                */
+;*    Last change :  Thu Nov 23 11:50:07 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -28,6 +28,7 @@
 	       (icono (default #f))
 	       (iconc (default #f)))
 	    (class html-flitem::xml-element
+	       (cname::bstring read-only)
 	       (open (default #f)))
 	    (class html-flhead::xml-element
 	       (cname::bstring read-only)))
@@ -79,10 +80,14 @@
 ;*    <FLITEM> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <FLITEM> ((id #unspecified string)
+			       (class #unspecified string)
 			       (open #f)
 			       body)
   (instantiate::html-flitem
      (markup 'flitem)
+     (cname (if (string? class)
+		(string-append "hop-fl-item " class)
+		"hop-fl-item"))
      (id (xml-make-id id 'FLITEM))
      (open open)
      (body body)))
@@ -127,7 +132,8 @@
 	    (else
 	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s)'>"
 		      id icono iconc)))
-	 (fprintf p "<td><img class='hop-fl-img' id=~s src=~s/></td><td width='100%'>"
+	 (fprintf p "<td class='~a'><img class='hop-fl-img' id=~s src=~s/></td><td width='100%'>"
+		  (html-flitem-cname obj)
 		  (string-append id "-img") (if open icono iconc))
 	 (when (and (pair? tmp)
 		    (xml-element? (car tmp))
