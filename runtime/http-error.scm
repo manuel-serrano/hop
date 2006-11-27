@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Nov 23 17:26:51 2006 (serrano)                */
+;*    Last change :  Sun Nov 26 18:48:17 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -510,7 +510,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 				   (<TR> (<ETD> :class "title" "An error occured while talking with a remote host"))
 				   (<TR> (<ETD> :class "msg" host))
 				   (<TR> (<ETD> :class "dump"
-					    (<PRE> s))))))))))))))
+					    (<PRE> (html-string-encode s)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-io-error ...                                                */

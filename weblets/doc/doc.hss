@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Nov 17 08:17:22 2006 (serrano)                */
+/*    Last change :  Mon Nov 27 10:48:19 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -477,7 +477,6 @@ div.doc-arguments table, div.doc-fields table {
   background-color: $table-background;
 }
 
-table tr.hopwiki-row-odd, 
 table tr.hopwiki-row-odd {
   background-color: $(color-lighter table-background);
 }
@@ -509,7 +508,6 @@ doc span.doc-link {
 
 doc span.doc-link:hover {
   text-decoration: underline;
-/*   color: $inner-href-color;                                         */
 }
   
 doc span.doc-keyword {
@@ -689,6 +687,32 @@ table.search-result span.search-label {
   color: $deep-orange;
 }
   
+/*--- symbol ----------------------------------------------------------*/
+table.symbol-table {
+  font-size: 80%;
+}
+
+table.symbol-table th {
+  text-align: center;
+}
+
+table.symbol-table tr.head {
+  background: #ccc;
+  color: black;
+}
+
+table.symbol-table td.name {
+  text-align: left;
+}
+
+table.symbol-table td.char {
+  text-align: right;
+}
+
+table.symbol-table td.encoding {
+  text-align: left;
+}
+
 /*---------------------------------------------------------------------*/
 /*    tutorials                                                        */
 /*---------------------------------------------------------------------*/

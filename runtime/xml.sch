@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 15:24:40 2005                          */
-;*    Last change :  Sun Oct 22 00:36:51 2006 (serrano)                */
+;*    Last change :  Fri Nov 24 07:31:06 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML macros                                                       */
@@ -18,15 +18,13 @@
 	  (let loop ((args args)
 		     (attr '())
 		     (init '())
-		     (body '())
-		     (id   #unspecified))
+		     (body '()))
 	     (cond
 		((null? args)
 		 ,(if (null? exp)
 		      `(,(symbol-append 'instantiate:: type)
 			(markup ',(string->symbol
-				   (string-downcase
-				    (symbol->string el))))
+				   (symbol->string el)))
 			(attributes attr)
 			(initializations init)
 			(body (reverse! body)))
@@ -34,7 +32,11 @@
 		((keyword? (car args))
 		 (cond
 		    ((null? (cdr args))
-		     (error ',name "attribute value missing" (car args)))
+		     (loop '()
+			   attr
+			   (cons (cons (keyword->symbol (car args)) #t)
+				 init)
+			   body))
 		    ((and (xml-tilde? (cadr args))
 			  (not (xml-event-handler-attribute? (car args))))
 		     (loop (cddr args)
@@ -42,22 +44,20 @@
 			   (cons (cons (keyword->symbol (car args))
 				       (cadr args))
 				 init)
-			   body
-			   id))
+			   body))
 		    (else
 		     (loop (cddr args)
 			   (cons (cons (keyword->symbol (car args))
 				       (cadr args))
 				 attr)
 			   init
-			   body
-			   id))))
+			   body))))
 		((null? (car args))
-		 (loop (cdr args) attr init body id))
+		 (loop (cdr args) attr init body))
 		((pair? (car args))
-		 (loop (append (car args) (cdr args)) attr init body id))
+		 (loop (append (car args) (cdr args)) attr init body))
 		(else
-		 (loop (cdr args) attr init (cons (car args) body) id))))))
+		 (loop (cdr args) attr init (cons (car args) body)))))))
    (define (define-xml-constructor-with-id name el exp)
       `(define (,name . args)
 	  (let loop ((args args)
@@ -70,8 +70,7 @@
 		 ,(if (null? exp)
 		      `(,(symbol-append 'instantiate:: type)
 			(markup ',(string->symbol
-				   (string-downcase
-				    (symbol->string el))))
+				   (symbol->string el)))
 			(id (xml-make-id id ',el))
 			(attributes attr)
 			(initializations init)
@@ -80,7 +79,14 @@
 		((keyword? (car args))
 		 (cond
 		    ((null? (cdr args))
-		     (error ',name "attribute value missing" (car args)))
+		     (if (eq? (car args) :id)
+			 (error ',name ":id value missing" (car args))
+			 (loop '()
+			       attr
+			       (cons (cons (keyword->symbol (car args)) #t)
+				     init)
+			       body
+			       id)))
 		    ((eq? (car args) :id)
 		     (if (string? (cadr args))
 			 (loop (cddr args)
@@ -117,7 +123,9 @@
 	 ((and (>fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\<)
 	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
-	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1))))
+	  (let ((el (string->symbol
+		     (string-downcase!
+		      (substring s 1 (-fx (string-length s) 1)))))
 		(css (memq :hss-type exp))
 		(markup (memq :markup exp)))
 	     (when (and (pair? markup) (pair? (cdr markup)))
@@ -244,24 +252,26 @@
 				  (match-case b
 				     (((and (? symbol?) ?id) ?init . ?-)
 				      `((eq? (car ,args) ,(symbol->keyword id))
-					(when (null? (cdr ,args))
-					   (error ',m
-						  ,(format "Illegal :~a" id)
-						  (car ,args)))
-					(set! ,id (cadr ,args))
-					(,loop (cddr ,args))))
+					(if (null? (cdr ,args))
+					    (begin
+					       (set! ,id #t)
+					       (,loop '()))
+					    (begin
+					       (set! ,id (cadr ,args))
+					       (,loop (cddr ,args))))))
 				     (((and (? symbol?) ?id))
 				      `((keyword? (car ,args))
-					(when (null? (cdr ,args))
-					   (error ',m
-						  ,(format "Illegal :~a" id)
-						  (car ,args)))
-					(set! ,id
-					      (cons (cons
-						     (keyword->symbol
-						      (car ,args))
-						     (cadr ,args)) ,id))
-					(,loop (cddr ,args))))
+					(if (null? (cdr ,args))
+					    (begin
+					       (set! ,id #t)
+					       (,loop '()))
+					    (begin
+					       (set! ,id
+						     (cons (cons
+							    (keyword->symbol
+							     (car ,args))
+							    (cadr ,args)) ,id))
+					       (,loop (cddr ,args))))))
 				     ((? symbol?)
 				      `((not (keyword? (car ,args)))
 					(if (pair? (car ,args))

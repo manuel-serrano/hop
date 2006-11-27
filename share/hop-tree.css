@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul 19 10:48:00 2005                          */
-/*    Last change :  Sun Sep 17 15:16:04 2006 (serrano)                */
+/*    Last change :  Mon Nov 27 08:48:37 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Tree CSS                                                     */
@@ -72,7 +72,7 @@ tr.hop-tree-row-unselected {
 
 tr.hop-tree-row-selected {
   background: #6b5dff;
-  border: 1px solid black;
+  border-width: 0;
 }
 
 /*---------------------------------------------------------------------*/

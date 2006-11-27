@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sat Oct 14 12:47:13 2006 (serrano)                */
+;*    Last change :  Mon Nov 27 10:00:01 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -49,6 +49,7 @@
 	   __hop_hop-foldlist
 	   __hop_hop-editor
 	   __hop_hop-fileselector
+	   __hop_hop-sym
 	   __hop_event
 	   __hop_color
 	   __hop_prefs
