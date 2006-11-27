@@ -1,0 +1,77 @@
+<doc> Symbols (aka, special characters)
+
+== Description ==
+
+The markup ++<SYM>++ is a convenience markup for naming special
+HTML characters.
+
+== Synopsis ==
+
+=== Server ===
+
+  (<SYM> sym)
+  (hop-symbol-alist)
+
+
+== Examples ==
+
+<example><SYM>, hop-symbol-alist</example>
+
+== Server Definitions ==
+<server>
+
+=== ++<SYM>++ ===
+<markup> <SYM>
+
+<arguments>
+^  attributes   ^   type     ^   default    ^  short description     ^
+|  symbol       |  symbol    |      -       |  The symbol name.      |
+</arguments>
+</markup>
+
+Introduce a special character in the output document. The document is
+referenced to by its name. The names are:
+
+,(let* ((l (hop-symbol-alist))
+      	(l2 (list-split! l 
+                         (inexact->exact (ceiling (/ (length l) 3)))
+		         (cons "&nbsp;" "&nbsp;")))
+        (c 0))
+   (<DIV> :align 'center
+     (<TABLE>
+        :class "symbol-table"
+      (<COLGROUP> :span 9 :width "11.1%")
+        (<TR> :class "head"
+            (<TH> "Name") (<TH> :colspan 2 "character")
+            (<TH> "Name") (<TH> :colspan 2 "character")
+            (<TH> "Name") (<TH> :colspan 2 "character"))
+        (apply map 
+           (lambda l 
+              (<TR> :class
+                  (begin 
+                       (set! c (+fx 1 c))
+                     (if (even? c) "hopwiki-row-odd" "hopwiki-row-even"))
+                    (append-map 
+                     (lambda (e)
+                           (list (<TD> :class "name"
+                                  (car e)) 
+                                 (<TD> :class "char"
+                                  (cdr e))
+                                 (<TD> :class "encoding"
+                                  (html-string-encode (cdr e)))))
+                       l)))
+           l2))))
+  
+=== ++(hop-symbol-alist)++ ===
+<procedure> hop-symbol-alist
+
+Returns the a-list made of characters name and HTML representation.
+</procedure>
+
+<server>
+
+== See also ==
+<see-also><SYM>, hop-symbol-alist</see-also>
+
+
+</doc>
