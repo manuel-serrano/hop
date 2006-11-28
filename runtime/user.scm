@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Nov 17 09:30:38 2006 (serrano)                */
+;*    Last change :  Tue Nov 28 09:26:17 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -74,7 +74,7 @@
 (define (add-user! name . args)
    (if *users-open*
        (%add-user! name args)
-       (error 'add-user! "Users closed" #f)))
+       (error 'add-user! "User registration closed" #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %add-user! ...                                                   */

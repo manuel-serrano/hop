@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Nov 18 14:59:00 2006 (serrano)                */
+;*    Last change :  Tue Nov 28 09:42:42 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -46,11 +46,17 @@
 (define (main args)
    ;; catch critical signals
    (signal-init!)
+   ;; set the Hop cond-expand identification
+   (register-eval-srfi! 'hop)
+   (register-eval-srfi! (string->symbol (format "hop-~a" (hop-version))))
    ;; set the library load path
    (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
       (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
    ;; preload the hop libraries
    (for-each (lambda (l) (eval `(library-load ',l))) (hop-preload-libraries))
+   ;; setup the hop readers
+   (bigloo-load-reader-set! hop-read)
+   (bigloo-load-module-set! hop-load-modified)
    ;; parse the command line
    (parse-args args)
    (hop-verb 1 "Starting hop (v" (hop-version)
@@ -60,9 +66,6 @@
 		 (format "https (~a)" (hop-https-protocol)) "http")
 	     " on port " (hop-port)
 	     ":\n")
-   ;; setup the hop readers
-   (bigloo-load-reader-set! hop-read)
-   (bigloo-load-module-set! hop-load-modified)
    ;; install the builtin filters
    (hop-filter-add! service-filter)
    (hop-filter-add-always-first! autoload-filter)
