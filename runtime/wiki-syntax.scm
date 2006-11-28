@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Nov 17 08:03:32 2006 (serrano)                */
+;*    Last change :  Tue Nov 28 10:05:32 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -256,12 +256,15 @@
 	 (let ((st (in-state 'tc)))
 	    (if (state? st)
 		(let ((align (cond
-				((state-value st) (if leftp "center" "right"))
-				(leftp "left")
-				(else "center"))))
+				((state-value st)
+				 (if leftp
+				     "text-align:center"
+				     "text-align: right"))
+				(leftp "text-align: left")
+				(else "text-align: center"))))
 		   (if (>fx cs 1)
-		       (unwind-state! st :colspan cs :align align)
-		       (unwind-state! st :align align))
+		       (unwind-state! st :colspan cs :style align)
+		       (unwind-state! st :style align))
 		   (pop-state!)
 		   (ignore))
 		(begin
@@ -272,15 +275,18 @@
 	 (let ((st (in-state 'tc)))
 	    (if (state? st)
 		(let ((align (cond
-				((state-value st) (if leftp "center" "right"))
-				(leftp "left")
-				(else "center")))
+				((state-value st)
+				 (if leftp
+				     "text-align:center"
+				     "text-align: right"))
+				(leftp "text-align: left")
+				(else "text-align: center")))
 		      (tc (if (char=? char #\^)
 			      (wiki-syntax-th syn)
 			      (wiki-syntax-td syn))))
 		   (if (>fx cs 1)
-		       (unwind-state! st :colspan cs :align align)
-		       (unwind-state! st :align align))
+		       (unwind-state! st :colspan cs :style align)
+		       (unwind-state! st :style align))
 		   (enter-expr! 'tc tc rightp)
 		   (ignore))
 		(begin
