@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul 19 10:48:00 2005                          */
-/*    Last change :  Mon Nov 27 08:48:37 2006 (serrano)                */
+/*    Last change :  Tue Nov 28 10:38:12 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Tree CSS                                                     */
@@ -14,7 +14,7 @@
 /*---------------------------------------------------------------------*/
 table.hop-tree {
   font-family: Tahoma, Verdana;
-  font-size: 12px;
+  font-size: 11px;
   margin: 0;
   padding: 0;
   border-width: 0;
@@ -38,7 +38,7 @@ table.hop-tree td img, table.hop-tree td span {
 
 table.hop-tree-leaf {
   font-family: Tahoma, Verdana;
-  font-size: 10px;
+  font-size: 10x;
   margin: 0;
   padding: 0;
   border-width: 0;
@@ -68,6 +68,8 @@ img.hop-tree-openclose {
 tr.hop-tree-row-unselected {
   background: inherit;
   border-width: 0;
+  padding: 0;
+  margin: 0;
 }
 
 tr.hop-tree-row-selected {

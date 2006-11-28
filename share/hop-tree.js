@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Tue Nov 14 13:18:47 2006 (serrano)                */
+/*    Last change :  Tue Nov 28 10:26:20 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -224,6 +224,7 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
    
    table.setAttribute( "cellpadding", 0 );
    table.setAttribute( "cellspacing", 0 );
+   table.setAttribute( "border", 0 );
    table.className = "hop-tree";
    
    var tb = document.createElement( "tbody" );
@@ -330,6 +331,7 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
 
    leaf.setAttribute( "cellpadding", 0 );
    leaf.setAttribute( "cellspacing", 0 );
+   leaf.setAttribute( "border", 0 );
    leaf.className = "hop-tree-leaf";
 
    var tb = document.createElement( "tbody" );
