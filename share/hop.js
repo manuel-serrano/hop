@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Nov 20 10:36:34 2006 (serrano)                */
+/*    Last change :  Tue Nov 28 08:13:10 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -268,6 +268,8 @@ function hop_anim( title ) {
    node_style_set( vis, "border-width", "1px" );
    node_style_set( vis, "padding", "2px" );
    node_style_set( vis, "-moz-opacity", "0.7" );
+   node_style_set( vis, "width", "16px" );
+   node_style_set( vis, "height", "16px" );
       
    vis.title = title;
 

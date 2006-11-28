@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Nov 26 18:48:17 2006 (serrano)                */
+;*    Last change :  Mon Nov 27 17:55:57 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -314,7 +314,7 @@ a timeout which has now expired. The service is then no longer available."))
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
-						 "icons/warning.png"
+						 "icons/error2.png"
 						 "icons/error.png")))
 			     (<ETD>
 				(<TABLE>
@@ -503,7 +503,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
-						 "icons/warning.png"
+						 "icons/error2.png"
 						 "icons/error.png")))
 			     (<ETD>
 				(<TABLE>
@@ -528,7 +528,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
-						 "icons/warning.png"
+						 "icons/erro2.png"
 						 "icons/error.png")))
 			     (<ETD>
 				(<TABLE>
