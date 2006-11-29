@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Nov 27 10:48:19 2006 (serrano)                */
+/*    Last change :  Wed Nov 29 08:23:29 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -26,6 +26,7 @@ $(define table-header-foreground "#fff")
 $(define table-background "#d8d7ff")
 $(define popup-menu-color "#eeeeee")
 $(define popup-menu-border "1px solid #bbb")
+$(define popup-shadow "0.2em 0.2em #ccc")
 $(define server-code-background "#eeeeff")
 $(define client-code-background "#eeffee")
 $(define keyword-color "#bb0088")
@@ -162,6 +163,7 @@ div.popup-menu {
   z-index: 10;
   background-color: $popup-menu-color;
   border: $popup-menu-border;
+  box-shadow: $popup-shadow;
   -moz-opacity: $doc-opacity;
 }
 
