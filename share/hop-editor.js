@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Apr 10 11:43:00 2006                          */
-/*    Last change :  Mon Nov 13 09:47:27 2006 (serrano)                */
+/*    Last change :  Wed Nov 29 09:23:58 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    <EDITOR> JavaScript support                                      */
 /*=====================================================================*/
@@ -71,8 +71,8 @@ function hop_edit_keypress_hdlr(e, id)
     if (e==undefined) e=window.event;
     if (e.ctrlKey) {
 	var propagate=false,
-	    char=e.charCode;
-	switch (char) {
+	    c=e.charCode;
+	switch (c) {
 	  case 98:  hop_edit_action(id, "bold"); break;
 	  case 105: hop_edit_action(id, "italic"); break;
 	  case 117: hop_edit_action(id, "underline"); break;

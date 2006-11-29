@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Nov 28 08:13:10 2006 (serrano)                */
+/*    Last change :  Wed Nov 29 11:07:39 2006 (serrano)                */
 /*    Copyright   :  2004-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -169,13 +169,26 @@ function hop_eval( proc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_node_eval ...                                                */
 /*---------------------------------------------------------------------*/
-function hop_node_eval( node ) {
+function hop_node_eval( node, text ) {
    var res;
    var scripts = node.getElementsByTagName( "script" );
-   
-   for ( var j = 0; j < scripts.length; j++ ) {
-      if( scripts[ j ].childNodes.length > 0 ) {
-	 res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+
+   if( scripts.length > 0 ) {
+      for ( var j = 0; j < scripts.length; j++ ) {
+	 if( scripts[ j ].childNodes.length > 0 ) {
+	    res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+	 }
+      }
+   } else {
+      var script = text.match( /<script[^>]*>/i );
+      if( script != null ) {
+	 /* I don't why yet, IE 7 does not include SCRIPT nodes */
+	 /* in the resulting node!                              */
+	 var start = script.index + script[ 0 ].length;
+	 var end = text.search( /<[/]script>/i );
+	 if( (end != null) && (end > start) ) {
+	    res = eval( text.substr( start, end - start ) );
+	 }
       }
    }
 
@@ -189,11 +202,9 @@ function hop_js_eval( http ) {
    if( http.responseText != null ) {
       var node = document.createElement( "div" );
 
-      /* I don't why yet, IE 7 does not include SCRIPT nodes */
-      /* in the resulting node!                              */
       node.innerHTML = http.responseText;
 
-      return hop_node_eval( node );
+      return hop_node_eval( node, http.responseText );
    }
 
    return false;

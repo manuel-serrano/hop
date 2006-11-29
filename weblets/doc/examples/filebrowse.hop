@@ -3,7 +3,7 @@
        :include "hop-fileselect" "hop-iwindow" "hop-tree")
     (<BODY>
        (<FILEBROWSE>
-	  :value "/" :path "/tmp"
+	  :value "/" :path "/tmp" :text "/tmp"
 	  :filter (lambda (d)
 		     (or (not (directory? d))
 			 (not (string=? (basename d) "lost+found"))))

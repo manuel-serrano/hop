@@ -41,7 +41,6 @@ browsers// must include in their header, the following statement:
   (<HEAD> :include "hop-fileselect" "hop-tree" "hop-iwindow")
 
 
-
 == Examples ==
 
 <example><FILESELECT>, <FILEBROWSE></example>
