@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Nov 15 10:41:26 2006 (serrano)                */
+/*    Last change :  Fri Dec  1 18:38:37 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -483,9 +483,10 @@ function dom_get_elements_by_class( document, name ) {
    var all = document.getElementsByTagName( "*" );
    var res = new Array();
    var n = 0;
+   var re = new RegExp( name + " |" + name + "$", "g" );
     
    for( var i = 0; i < all.length; i++ ) {
-      if( all[ i ].className == name ) {
+      if( re.exec( all[ i ].className ) ) {
 	 res[ n++ ] = all[ i ];
       }
    }
@@ -497,38 +498,13 @@ document.getElementsByClass = function( className ) {
    var all = document.getElementsByTagName( "*" );
    var res = new Array();
    var n = 0;
+   var re = new RegExp( name + " |" + name + "$", "g" );
     
    for( var i = 0; i < all.length; i++ ) {
-      if( all[ i ].className == className ) {
+      if( re.exec( all[ i ].className ) ) {
 	 res[ n++ ] = all[ i ];
       }
    }
    
    return res;
 }
-
-/* {*---------------------------------------------------------------------*} */
-/* {*    dom_node_get_elements_by_tag_name ...                            *} */
-/* {*---------------------------------------------------------------------*} */
-/* function dom_node_get_elements_by_tag_name( node, tag ) {           */
-/*    var t = tag.toUpperCase();                                       */
-/*    var res = new Array();                                           */
-/*                                                                     */
-/*    var iter = function( node ) {                                    */
-/*       if( node.nodeType == 1 ) {                                    */
-/* 	 var children = node.childNodes;                               */
-/*                                                                     */
-/* 	 if( node.tagName == t ) {                                     */
-/* 	    res.push( node );                                          */
-/* 	 }                                                             */
-/*                                                                     */
-/* 	 for( var i = 0; i < children.length; i++ ) {                  */
-/* 	    iter( children[ i ] );                                     */
-/* 	 }                                                             */
-/*       }                                                             */
-/*    }                                                                */
-/*                                                                     */
-/*    iter( node );                                                    */
-/*                                                                     */
-/*    return res;                                                      */
-/* }                                                                   */
