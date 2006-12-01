@@ -54,6 +54,7 @@ times in an invocation. A typical ++<HEAD>++ looks like:
 | :jscript     |  string    |     _        | a script file name.                   |
 | :favicon     |  string    |     _        | a favicon file name.                  |
 | :rts         |  bool      |     #t       | adds/removes the Hop runtime system.  |
+| :inline      |  bool      |     #f       | enables inline CSS/HSS and scripts.   |
 | objs         |  element   |  empty       | the content of the head.              |
 </arguments>
 
@@ -80,8 +81,12 @@ overrides the previous ones).
  complete relative file names. This name is used to complete ++css++, 
  ++jscript++, and ++favicon++ relative file names. By default no completion
  of relative file names is performed.
-The :dir attribute is a simple shorthand. It prevents from using absolute
-file names for each local :css of :jscript attributes. That is:
+ The :dir attribute is a simple shorthand. It prevents from using absolute
+ file names for each local :css of :jscript attributes. That is:
+  * The attribute :inline enables inlining of local scripts and CSS/HSS files.
+ Note that only local (i.e., files whose name is a relative URL) can be inlined.
+ This option is useful for building stand alone documents. That is documents, 
+ whose complete implementation is contained in one source file.
 
   (<HEAD> 
      :css (service-resource svc "foo.css")
