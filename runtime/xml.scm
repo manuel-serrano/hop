@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Nov 18 13:53:51 2006 (serrano)                */
+;*    Last change :  Thu Nov 30 14:20:28 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -24,7 +24,8 @@
 	    __hop_mime
 	    __hop_misc
 	    __hop_param
-	    __hop_configure)
+	    __hop_configure
+	    __hop_css)
    
    (export  (class xml-backend
 	      (id::symbol read-only)
@@ -161,7 +162,6 @@
 	    (<LABEL> . ::obj)
 	    (<LEGEND> . ::obj)
 	    (<LI> . ::obj)
-	    (<LINK> . ::obj)
 	    (<MAP> . ::obj)
 	    (<MARQUEE> . ::obj)
 	    (<MENU> . ::obj)
@@ -178,7 +178,6 @@
 	    (<Q> . ::obj)
 	    (<S> . ::obj)
 	    (<SAMP> . ::obj)
-	    (<SCRIPT> . ::obj)
 	    (<SELECT> . ::obj)
 	    (<SMALL> . ::obj)
 	    (<SPAN> . ::obj)
@@ -452,7 +451,7 @@
       (with-access::xml-backend backend (script-start script-stop)
 	 (if (pair? attributes)
 	     (begin
-		(display "<script " p)
+		(display "<script" p)
 		(xml-write-attributes attributes p)
 		(display ">" p))
 	     (begin
@@ -789,7 +788,6 @@
 (define-xml-element <LABEL>)
 (define-xml-element <LEGEND>)
 (define-xml-element <LI>)
-(define-xml-markup <LINK>)
 (define-xml-element <MAP>)
 (define-xml-element <MARQUEE>)
 (define-xml-element <MENU>)
@@ -806,7 +804,6 @@
 (define-xml-element <Q>)
 (define-xml-element <S>)
 (define-xml-element <SAMP>)
-(define-xml xml-script #f <SCRIPT>)
 (define-xml-element <SELECT>)
 (define-xml-element <SMALL>)
 (define-xml-element <SPAN>)
@@ -876,7 +873,8 @@
 	     (id (xml-make-id id 'img))
 	     (attributes (cons* `(src . ,src) `(alt . ,(or alt src)) attributes))
 	     (body '())))))
-	  
+
+
 ;*---------------------------------------------------------------------*/
 ;*    string->tilde ...                                                */
 ;*---------------------------------------------------------------------*/

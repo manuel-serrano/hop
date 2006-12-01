@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Sep 13 20:53:56 2006 (serrano)                */
+;*    Last change :  Thu Nov 30 12:19:47 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -30,14 +30,17 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-load-hss file)
    (if (file-exists? file)
-       (let ((p (open-input-file file)))
+       (let ((p (open-input-file file))
+	     (mod (eval-module)))
 	  (if (input-port? p)
 	      (unwind-protect
 		 (begin
 		    ;; each hss file is read inside a dummy empty module
 		    (eval `(module ,(gensym)))
 		    (hop-read-hss p))
-		 (close-input-port p))
+		 (begin
+		    (when mod (eval-module-set! mod))
+		    (close-input-port p)))
 	      (raise (instantiate::&io-port-error
 			(proc 'hop-load)
 			(msg "Can't open file")

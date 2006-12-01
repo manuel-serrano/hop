@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Mon Nov 13 09:40:05 2006 (serrano)                */
+;*    Last change :  Thu Nov 30 14:21:30 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -19,7 +19,8 @@
    (import  __hop_param
 	    __hop_configure
 	    __hop_xml
-	    __hop_misc)
+	    __hop_misc
+	    __hop_hop-extra)
 
    (export  (<EDITOR> . ::obj)))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Nov 23 17:25:06 2006 (serrano)                */
+;*    Last change :  Fri Dec  1 06:42:00 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -43,10 +43,11 @@
 	    (request->response::%http-response ::http-request)
 	    (with-url ::bstring ::procedure #!key fail (header '()))
 	    (with-remote-host ::bstring ::hop-service ::pair-nil ::procedure ::obj)
-	    (generic with-hop-response obj proc fail)))
+	    (generic with-hop-response obj proc fail)
+	    (hop-get-file::obj ::bstring)))
 
 ;*---------------------------------------------------------------------*/
-;*    current-request ...                                          */
+;*    current-request ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (current-request)
    (let ((d (thread-data (hop-current-thread))))
@@ -371,4 +372,39 @@
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-response o::http-response-persistent success fail)
    (success o))
+   
+;*---------------------------------------------------------------------*/
+;*    hop-get-file ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    This function is used by Hop to ask itself files. That is, when  */
+;*    a weblet has to read a file as it was provided by the            */
+;*    broker it can't simply open it because the broker may have       */
+;*    defined filters that tells how to server that very file.         */
+;*    The function HOP-GET-FILE simulates a user request to            */
+;*    the broker.                                                      */
+;*    This function has been first added for implementing the          */
+;*    :inline option of HEAD, LINK, and SCRIPT markups.                */
+;*---------------------------------------------------------------------*/
+(define (hop-get-file path)
+   (let* ((req (instantiate::http-request
+		  (localhostp #t)
+		  (localclientp #t)
+		  (path path)))
+	  (rep (request->response req)))
+      (cond
+	 ((http-response-file? rep)
+	  (with-access::http-response-file rep (file)
+	     (let ((p (open-input-file file)))
+		(if (input-port? p)
+		    (unwind-protect
+		       (read-string p)
+		       (close-input-port p))
+		    #f))))
+	 ((http-response-procedure? rep)
+	  (let ((p (open-output-string)))
+	     (with-access::http-response-procedure rep (proc)
+		(proc p)
+		(close-output-port p))))
+	 (else
+	  #f))))
    

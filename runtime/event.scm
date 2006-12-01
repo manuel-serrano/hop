@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Nov 18 09:17:52 2006 (serrano)                */
+;*    Last change :  Thu Nov 30 14:21:48 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -20,6 +20,7 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
+	    __hop_hop-extra
 	    __hop_misc
 	    __hop_hop
 	    __hop_http-response
