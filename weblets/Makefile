@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Nov  1 16:28:50 2006 (serrano)                */
+#*    Last change :  Sun Dec  3 14:39:06 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -30,7 +30,7 @@ POPDIRS	= hop password hz info webfilter doc home hopsh
 #*---------------------------------------------------------------------*/
 build:
 	for p in $(POPDIRS); do \
-          ($(MAKE) -C $$p build || exit 1) \
+          ($(MAKE) -C $$p build) || exit 1;\
         done
 
 #*---------------------------------------------------------------------*/
@@ -38,7 +38,7 @@ build:
 #*---------------------------------------------------------------------*/
 clean:
 	for p in $(POPDIRS); do \
-          ($(MAKE) -C $$p clean || exit 1) \
+          ($(MAKE) -C $$p clean) || exit 1;\
         done
 
 #*---------------------------------------------------------------------*/

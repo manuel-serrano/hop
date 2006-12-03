@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Nov 27 09:45:04 2006 (serrano)                */
+#*    Last change :  Sun Dec  3 14:39:53 2006 (serrano)                */
 #*    Copyright   :  2006 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -61,4 +61,4 @@ POPULATION	= Makefile .afile doc.hss \
 build: .afile
 
 .afile: $(HOP_POP)
-	$(AFILE) -suffix hop $(POPULATION) > .afile
+	$(AFILE) -suffix hop $(HOP_POP) > .afile
