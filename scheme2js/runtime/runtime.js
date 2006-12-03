@@ -566,6 +566,13 @@ function sc_list() { /// export
     return res;
 }
 
+function sc_iota(num, init) { /// export
+   var res = null;
+   for (var i = num-1; i >= 0; i--)
+      res = new sc_Pair(i+init, res);
+   return res;
+}
+
 function sc_makeList(nbEls, fill) { /// export
     var res = null;
     for (var i = 0; i < nbEls; i++)

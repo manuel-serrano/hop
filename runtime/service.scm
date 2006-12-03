@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Nov 20 10:37:16 2006 (serrano)                */
+;*    Last change :  Sat Dec  2 19:42:35 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -113,16 +113,24 @@
 (define (make-service-url svc . vals)
    (if (not (hop-service? svc))
        (bigloo-type-error 'make-hop-service-url 'service svc)
-       (with-access::hop-service svc (path args)
-	  (if (null? args)
-	      path
+       (with-access::hop-service svc (id path args)
+	  (cond
+	     ((null? args)
+	      (if (null? vals)
+		  path
+		  (error 'make-service-url id "too many arguments provided")))
+	     ((=fx (length args) (length vals))
 	      (apply string-append
 		     path
 		     "?hop-encoding=none"
 		     (map (lambda (f v)
 			     (let ((a (if (string? v) (url-encode v) v)))
 				(format "&~a=~a" f a)))
-			  args vals))))))
+			  args vals)))
+	     ((<fx (length args) (length vals))
+	      (error 'make-service-url id "too many arguments provided"))
+	     (else
+	      (error 'make-service-url id "missing arguments"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */

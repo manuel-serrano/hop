@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Nov 27 17:55:57 2006 (serrano)                */
+;*    Last change :  Sun Dec  3 09:25:24 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -180,7 +180,7 @@
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "icons/notfound.png"))
+			     (<EIMG> :src "icons/error2.png"))
 			  (<ETD>
 			     (<TABLE>
 				(<TR> (<ETD> :class "title" "Unknown Host"))
@@ -202,7 +202,7 @@
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "icons/notfound.png"))
+			     (<EIMG> :src "icons/error2.png"))
 			  (<ETD>
 			     (<TABLE>
 				:style "35em"
@@ -226,7 +226,7 @@
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "icons/notfound.png"))
+				(<EIMG> :src "icons/warning.png"))
 			     (<ETD>
 				(<TABLE>
 				   :style "35em"
@@ -314,7 +314,7 @@ a timeout which has now expired. The service is then no longer available."))
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
-						 "icons/error2.png"
+						 "icons/timeout.png"
 						 "icons/error.png")))
 			     (<ETD>
 				(<TABLE>
@@ -389,7 +389,7 @@ a timeout which has now expired. The service is then no longer available."))
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "icons/notfound.png"))
+			     (<EIMG> :src "icons/stop.png"))
 			  (<ETD>
 			     (<TABLE>
 				:style "35em"
@@ -503,7 +503,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
-						 "icons/error2.png"
+						 "icons/timeout.png"
 						 "icons/error.png")))
 			     (<ETD>
 				(<TABLE>
