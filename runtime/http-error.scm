@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Dec  3 09:25:24 2006 (serrano)                */
+;*    Last change :  Tue Dec  5 09:14:11 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -157,7 +157,7 @@
 (define (<ETABLE> . args)
    (apply <TABLE>
 	  :class "error"
-	  :style "width: 45em; border: 1px solid #bbb;  -moz-border-radius: 0.5em; background: #fff;"
+	  :style "width: 50em; border: 1px solid #bbb; background: #fff; -moz-border-radius: 0.5em"
 	  args))
 
 ;*---------------------------------------------------------------------*/
@@ -182,7 +182,7 @@
 			  (<ETD> :class "logo" :valign 'top
 			     (<EIMG> :src "icons/error2.png"))
 			  (<ETD>
-			     (<TABLE>
+			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title" "Unknown Host"))
 				(<TR> (<ETD> :class "msg"
 					    (<SPAN> :class "filenotfound"
@@ -204,8 +204,7 @@
 			  (<ETD> :class "logo" :valign 'top
 			     (<EIMG> :src "icons/error2.png"))
 			  (<ETD>
-			     (<TABLE>
-				:style "35em"
+			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title" "File not found"))
 				(<TR> (<ETD> :class "msg"
 					    (<SPAN> :class "filenotfound"
@@ -228,8 +227,7 @@
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src "icons/warning.png"))
 			     (<ETD>
-				(<TABLE>
-				   :style "35em"
+				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title"
 					    (format "~a service!"
 						    (string-capitalize key))))
@@ -249,7 +247,7 @@ Reloading the page is the only way to fix this problem." msg))
       (cond
 	 ((expired-service-path? file)
 	  (illegal-service "expired"
-			   "Your are trying to executed an expired service!
+			   "You are trying to executed an expired service!
 <br><br>
 This happens because at creation time, the service has been registered with
 a timeout which has now expired. The service is then no longer available."))
@@ -317,7 +315,7 @@ a timeout which has now expired. The service is then no longer available."))
 						 "icons/timeout.png"
 						 "icons/error.png")))
 			     (<ETD>
-				(<TABLE>
+				(<TABLE> :width "100%"
 				   (<TR>
 				      (<ETD> :class "title" "Internal Error"))
 				   (<TR>
@@ -337,7 +335,7 @@ a timeout which has now expired. The service is then no longer available."))
 		  (<TR>
 		     (<ETD>
 			:class "request-info"
-			(<TABLE>
+			(<TABLE> :width "100%"
 			   (<COLGROUP> (<COL> :width "0*"))
 			   (<TR>
 			      (<TH> :align 'right "host:")
@@ -363,7 +361,7 @@ a timeout which has now expired. The service is then no longer available."))
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src "icons/error.png"))
 			     (<ETD>
-				(<TABLE>
+				(<TABLE> :width "100%"
 				   (<TR>
 				      (<ETD> :class "title"
 					     "Hop service error"))
@@ -391,8 +389,7 @@ a timeout which has now expired. The service is then no longer available."))
 			  (<ETD> :class "logo" :valign 'top
 			     (<EIMG> :src "icons/stop.png"))
 			  (<ETD>
-			     (<TABLE>
-				:style "35em"
+			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title"
 					     "Invalidated service!"
 					     ))
@@ -423,8 +420,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			  (<ETD> :class "logo" :valign 'top
 			     (<EIMG> :src "icons/error.png"))
 			  (<ETD>
-			     (<TABLE>
-				:style "35em"
+			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title"
 					     "Corrupted service!"
 					     ))
@@ -460,7 +456,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			  (<ETD> :class "logo" :valign 'top
 			     (<EIMG> :src "icons/warning.png"))
 			  (<ETD>
-			     (<TABLE>
+			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title" "warning"))
 				(<TR> (<ETD> :class "msg" msg))
 				(<TR> (<ETD> :class "dump" (or dump "")))))))))))))
@@ -481,7 +477,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			  (<ETD> :class "logo" :valign 'top
 			     (<EIMG> :src "icons/error.png"))
 			  (<ETD>
-			     (<TABLE>
+			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title" "Service Unavailable"))
 				(<TR> (<ETD> :class "msg" ""))
 				(<TR> (<ETD> :class "dump"
@@ -506,7 +502,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 						 "icons/timeout.png"
 						 "icons/error.png")))
 			     (<ETD>
-				(<TABLE>
+				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "An error occured while talking with a remote host"))
 				   (<TR> (<ETD> :class "msg" host))
 				   (<TR> (<ETD> :class "dump"
@@ -531,7 +527,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 						 "icons/erro2.png"
 						 "icons/error.png")))
 			     (<ETD>
-				(<TABLE>
+				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "IO Error"))
 				   (<TR> (<ETD> :class "msg"
 						(list (find-runtime-type e)

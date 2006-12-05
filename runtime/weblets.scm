@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Thu Nov 16 17:15:15 2006 (serrano)                */
+;*    Last change :  Sun Dec  3 15:30:28 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -158,7 +158,9 @@
 		   (and (substring-at? path p 0)
 			(or (=fx l lp) (eq? (string-ref path lp) #\/)))
 		   (and (>=fx i lp)
-			(substring-at? path p 0 i))))))))
+			(substring-at? path p 0 i)
+			(or (=fx i lp)
+			    (char=? (string-ref path lp) #\/)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *autoload-mutex* ...                                             */

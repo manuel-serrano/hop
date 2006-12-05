@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Nov 26 18:37:45 2006 (serrano)                */
+;*    Last change :  Sun Dec  3 15:07:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -658,11 +658,11 @@
 
 (define-parameter hop-connection-timeout
    ;; a number of milli-seconds before a connection fails
-   1000)
+   1500)
 
 (define-parameter hop-read-timeout
    ;; the number of milli-seconds to wait for parsing http headers
-   15000)
+   20000)
 
 (define-parameter hop-enable-remote-keep-alive
    ;; does hop support keep-alive remote connection (when proxying)
