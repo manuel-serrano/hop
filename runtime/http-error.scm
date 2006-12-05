@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Dec  5 09:14:11 2006 (serrano)                */
+;*    Last change :  Tue Dec  5 18:57:19 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -108,9 +108,9 @@
 			   (hop-share-directory))
 	     :include "hop-error"))
        (<HEAD>
-	  :base (format "http://~a:~a~a"/ (hostname) (hop-port)
+	  :base (format "http://~a:~a~a/" (hostname) (hop-port)
 			(hop-share-directory))
-	  :import "hop-error")))
+	  :include "hop-error")))
    
 ;*---------------------------------------------------------------------*/
 ;*    <EIMG> ...                                                       */
@@ -172,7 +172,7 @@
 (define (http-unknown-host host)
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 404 Not Found")
-      (request (current-request))
+      (request (or (current-request) (instantiate::http-request)))
       (xml (<HTML>
 	      (<EHEAD> (current-request))
 	      (<BODY>

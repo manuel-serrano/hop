@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Dec  5 09:28:24 2006 (serrano)                */
+;*    Last change :  Tue Dec  5 18:54:53 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -176,7 +176,9 @@
 			   (when (and (&io-unknown-host-error? e)
 				      (not (socket-down? sock)))
 			      (with-handler
-				 (lambda (e) #unspecified)
+				 (lambda (e)
+				    (when (&error? e) (error-notify e))
+				    #unspecified)
 				 (unless (&io-sigpipe-error? e)
 				    (let ((resp ((or (hop-http-request-error)
 						     http-request-error)
