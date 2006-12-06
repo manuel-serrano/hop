@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Thu Nov 30 14:21:30 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 09:58:27 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -13,8 +13,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-editor
 
-   (include "compiler-macro.sch"
-	    "xml.sch")
+   (include "xml.sch")
 
    (import  __hop_param
 	    __hop_configure

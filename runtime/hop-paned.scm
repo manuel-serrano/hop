@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Oct  9 08:47:42 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 09:59:11 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -14,8 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-paned
 
-   (include "compiler-macro.sch"
-	    "xml.sch")
+   (include "xml.sch")
 
    (import  __hop_param
 	    __hop_types

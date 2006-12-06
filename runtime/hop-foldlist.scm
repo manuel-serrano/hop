@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Sun Dec  3 08:19:18 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 09:58:48 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL>. 		                       */
 ;*=====================================================================*/
@@ -13,8 +13,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-foldlist
 
-   (include "compiler-macro.sch"
-	    "xml.sch")
+   (include "xml.sch")
 
    (import  __hop_param
 	    __hop_xml

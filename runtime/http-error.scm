@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Dec  5 18:57:19 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 09:59:41 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -16,8 +16,7 @@
    
    (library web)
    
-   (include "compiler-macro.sch"
-	    "xml.sch")
+   (include "xml.sch")
 
    (import  __hop_param
 	    __hop_configure

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Dec  5 18:54:53 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 15:21:01 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -261,9 +261,9 @@
 		(begin
 		   (cond
 		      ((&error? e)
-		       (error-notify e))
+		       (error-notify (evmeaning-annotate-exception! e)))
 		      ((&warning? e)
-		       (warning-notify e)))
+		       (warning-notify (evmeaning-annotate-exception! e))))
 		   (unless (&io-sigpipe-error? e)
 		      (let ((resp ((or (hop-http-response-error)
  				       http-response-error)

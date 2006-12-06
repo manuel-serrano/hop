@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Nov 30 14:20:28 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 10:00:12 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -16,8 +16,7 @@
 
    (library web)
    
-   (include "compiler-macro.sch"
-	    "param.sch"
+   (include "param.sch"
 	    "xml.sch")
 
    (import  __hop_types

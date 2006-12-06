@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Nov 30 14:21:48 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 09:58:20 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the event loop                             */
@@ -14,8 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_event
 
-   (include "compiler-macro.sch"
-	    "xml.sch")
+   (include "xml.sch")
 
    (import  __hop_param
 	    __hop_types

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Nov 27 09:41:23 2006 (serrano)                */
+#*    Last change :  Wed Dec  6 09:57:08 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -51,8 +51,7 @@ BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
 
 SOURCES		= $(_OBJECTS:%=%.scm)
 
-INCLUDES	= compiler-macro.sch eval-macro.sch xml.sch param.sch \
-                  http-lib.sch service.sch prefs.sch
+INCLUDES	= xml.sch param.sch http-lib.sch service.sch prefs.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -97,27 +96,38 @@ getsources:
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
-o/param.o param.class: ./eval-macro.sch ./param.sch 
-o/html-slider.o html-slider.class: ./compiler-macro.sch ./xml.sch 
-o/html-paned.o html-paned.class: ./compiler-macro.sch ./xml.sch 
-o/http-response.o ./http-response.class: ./http-lib.sch 
-o/param.o ./param.class: ./eval-macro.sch ./param.sch 
-o/html-extra.o html-extra.class: ./compiler-macro.sch ./xml.sch 
-o/event.o event.class: ./compiler-macro.sch ./xml.sch 
-o/html-tree.o html-tree.class: ./compiler-macro.sch ./xml.sch 
-o/http-response.o http-response.class: ./http-lib.sch 
-o/http-lib.o ./http-lib.class: ./http-lib.sch 
-o/service.o ./service.class: ./eval-macro.sch ./service.sch 
-o/html-notepad.o html-notepad.class: ./compiler-macro.sch ./xml.sch 
-o/service.o service.class: ./eval-macro.sch ./service.sch 
-o/xml.o xml.class: ./eval-macro.sch ./xml.sch 
-o/html-extra.o ./html-extra.class: ./compiler-macro.sch ./xml.sch 
-o/builtin.o ./builtin.class: ./compiler-macro.sch ./service.sch 
-o/html-tabslider.o html-tabslider.class: ./compiler-macro.sch ./xml.sch 
-o/builtin.o builtin.class: ./compiler-macro.sch ./service.sch 
-o/http-lib.o http-lib.class: ./http-lib.sch 
-o/xml.o ./xml.class: ./eval-macro.sch ./xml.sch 
-o/http-shoutcast.o http-shoutcast.class: ./http-lib.sch 
-o/html-inline.o html-inline.class: ./compiler-macro.sch ./xml.sch 
+o/param.o param.class: param.sch 
+o/hop-foldlist.o hop-foldlist.class: xml.sch 
+o/http-response.o ./http-response.class: http-lib.sch 
+o/hop-wiki.o hop-wiki.class: xml.sch 
+o/param.o ./param.class: param.sch 
+o/hop-editor.o hop-editor.class: xml.sch 
+o/http-remote.o http-remote.class: http-lib.sch 
+o/weblets.o weblets.class: xml.sch 
+o/hop-fileselector.o hop-fileselector.class: xml.sch service.sch 
+o/event.o event.class: xml.sch 
+o/prefs.o prefs.class: xml.sch service.sch 
+o/hop-inline.o hop-inline.class: xml.sch 
+o/http-error.o http-error.class: xml.sch 
+o/hop-slider.o hop-slider.class: xml.sch 
+o/http-response.o http-response.class: http-lib.sch 
+o/http-lib.o ./http-lib.class: http-lib.sch 
+o/hop-extra.o ./hop-extra.class: xml.sch 
+o/hop-paned.o hop-paned.class: xml.sch 
+o/hop-tree.o ./hop-tree.class: xml.sch service.sch 
+o/service.o ./service.class: service.sch 
+o/service.o service.class: service.sch 
+o/http-filter.o ./http-filter.class: http-lib.sch 
+o/xml.o xml.class: param.sch xml.sch 
+o/hop-extra.o hop-extra.class: xml.sch 
+o/hop-tabslider.o hop-tabslider.class: xml.sch 
+o/hop-notepad.o hop-notepad.class: xml.sch 
+o/http-remote.o ./http-remote.class: http-lib.sch 
+o/http-error.o ./http-error.class: xml.sch 
+o/http-lib.o http-lib.class: http-lib.sch 
+o/xml.o ./xml.class: param.sch xml.sch 
+o/hop-tree.o hop-tree.class: xml.sch service.sch 
+o/http-filter.o http-filter.class: http-lib.sch 
+o/http-shoutcast.o http-shoutcast.class: http-lib.sch 
 
 #bdepend stop

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Wed Nov 29 11:15:46 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 09:58:40 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -14,8 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-fileselector
 
-   (include "compiler-macro.sch"
-	    "xml.sch"
+   (include "xml.sch"
 	    "service.sch")
 
    (import  __hop_param

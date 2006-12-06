@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sun Dec  3 15:30:28 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 10:00:06 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -14,8 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_weblets
 
-   (include "compiler-macro.sch"
-	    "xml.sch")
+   (include "xml.sch")
    
    (import __hop_param
 	   __hop_types

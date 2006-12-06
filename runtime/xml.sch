@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 15:24:40 2005                          */
-;*    Last change :  Fri Nov 24 07:31:06 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 09:56:40 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML macros                                                       */
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-element ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (define-xml type with-id name . exp)
+(define-macro (define-xml type with-id name . exp)
    (define (define-xml-constructor name el exp)
       `(define (,name . args)
 	  (let loop ((args args)
@@ -150,13 +150,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-markup ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (define-xml-markup name . exp)
+(define-macro (define-xml-markup name . exp)
    `(define-xml xml-markup #f ,name ,@exp))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-element ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (define-xml-element id . exp)
+(define-macro (define-xml-element id . exp)
    (define (define-element id el exp)
       (if (null? exp)
 	  `(define (,id . args)
@@ -181,7 +181,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-alias ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (define-xml-alias id alias . opts)
+(define-macro (define-xml-alias id alias . opts)
    (define (define-alias id ea opts)
       `(define (,id . args)
 	  (%make-xml-element ',ea (append args ',opts))))
@@ -212,7 +212,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-compound ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-pervasive-macro (define-xml-compound id bindings . body)
+(define-macro (define-xml-compound id bindings . body)
    (define (define-compound m el bindings body)
       (let ((args (gensym 'args))
 	    (loop (gensym 'loop)))

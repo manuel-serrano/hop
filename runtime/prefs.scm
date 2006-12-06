@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Sat Nov 18 13:49:17 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 09:59:53 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -14,8 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_prefs
 
-   (include "compiler-macro.sch"
-	    "xml.sch"
+   (include "xml.sch"
 	    "service.sch")
 
    (import  __hop_param

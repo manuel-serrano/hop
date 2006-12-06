@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Dec  3 15:07:12 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 09:59:47 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -16,8 +16,7 @@
    
    (library pthread)
    
-   (include "compiler-macro.sch"
-	    "param.sch")
+   (include "param.sch")
 
    (import  __hop_configure
 	    __hop_mime)

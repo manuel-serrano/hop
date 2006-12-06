@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Fri Oct  6 08:47:26 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 09:59:34 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
@@ -14,8 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_wiki
 
-   (include "compiler-macro.sch"
-	    "xml.sch")
+   (include "xml.sch")
 
    (import  __hop_param
 	    __hop_xml
