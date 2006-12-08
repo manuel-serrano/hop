@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Mon Nov 27 10:00:01 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 17:37:21 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -18,6 +18,7 @@
    
    (import __hop_configure
 	   __hop_param
+	   __hop_expanders
 	   __hop_misc
 	   __hop_mime
 	   __hop_types
@@ -95,5 +96,3 @@
 	   (class cache)
 
 	   (class wiki-syntax)))
-	   
-	   

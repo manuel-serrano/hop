@@ -1,17 +1,30 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/compile-macro.sch               */
+;*    serrano/prgm/project/hop/runtime/expanders.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
-;*    Creation    :  Wed Jan 18 13:15:43 2006                          */
-;*    Last change :  Wed Jan 18 13:19:37 2006 (serrano)                */
+;*    Creation    :  Wed Dec  6 16:46:47 2006                          */
+;*    Last change :  Wed Dec  6 18:32:34 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    Library macros                                                   */
+;*    Hop expanders                                                    */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
-;*    define-pervasive-macro ...                                       */
+;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(define-macro (define-pervasive-macro proto . body)
-   `(define-macro ,proto ,@body))
+(module __hop_expanders
 
+   (include "service-expd.sch"
+	    "prefs-expd.sch"
+	    "param-expd.sch"
+	    "xml-expd.sch"
+	    "expanders.sch")
+
+   (export  (hop-install-expanders!)))
+
+
+   
+
+   
+
+	   

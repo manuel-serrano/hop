@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Tue Aug 15 15:29:36 2006 (serrano)                */
+;*    Last change :  Wed Dec  6 18:12:39 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
@@ -14,15 +14,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    This generates three functions: id-load, id-save, and id-edit.   */
 ;*---------------------------------------------------------------------*/
-(define-macro (define-preferences id . clauses)
-
+(define (hop-define-prefs-expander x e)
+   
    (define (make-load id)
       (let ((mod (eval-module)))
 	 `(define (,id file)
 	     ,(if (evmodule? mod)
 		  `(hop-load file :env (eval-find-module ',(evmodule-name mod)))
 		  `(hop-load file)))))
-
+   
    (define (make-save-clause c)
       (match-case c
 	 ((?- ?type ?get ?set)
@@ -44,24 +44,24 @@
 	  #unspecified)
 	 (else
 	  (error 'define-preferences "Illegal clause" c))))
-
-   (define (make-save id)
+   
+   (define (make-save id clauses)
       `(define (,id file)
 	  (with-output-to-file file
 	     (lambda ()
 		,@(map make-save-clause clauses)))
 	  file))
-
+   
    (define (make-value-clause lbl value)
       `(<TR>
 	  (<TH> ,lbl)
 	  (<TD> ,value)))
-
+   
    (define (make-edit-clause/set-get lbl type get set)
       `(<TR>
 	  (<TH> ,lbl)
 	  (<TD> (preferences-editor ',type ,get ,set))))
-
+   
    (define (make-label-clause lbl)
       `(<TR>
 	  (<TH> :class "label" :colspan 2 ,lbl)))
@@ -84,8 +84,8 @@
 	  (make-sep-clause c))
 	 (else
 	  (error 'define-preferences "Illegal clause" c))))
-      
-   (define (make-edit id)
+   
+   (define (make-edit id clauses)
       `(define (,id #!key onclick)
 	  (<TABLE>
 	     :class "preferences"
@@ -106,11 +106,13 @@
 			    "save preferences"))))
 	     ,@(map make-edit-clause clauses))))
    
-   (unless (symbol? id)
-      (error 'define-preferences "Illegal identifier" id))
-
-   `(begin
-       ,(make-load (symbol-append id '-load))
-       ,(make-save (symbol-append id '-save))
-       ,(make-edit (symbol-append id '-edit))))
+   (match-case x
+      ((?- (and (? symbol?) ?id) . ?clauses)
+       (let ((body `(begin
+		       ,(make-load (symbol-append id '-load))
+		       ,(make-save (symbol-append id '-save) clauses)
+		       ,(make-edit (symbol-append id '-edit) clauses))))
+	  (e (evepairify body x) e)))
+      (else
+       (error 'define-preferences "Illegal form" x))))
 

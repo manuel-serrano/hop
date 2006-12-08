@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Dec  6 09:57:08 2006 (serrano)                */
+#*    Last change :  Wed Dec  6 18:27:49 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -37,7 +37,7 @@ _OBJECTS	= param misc types thread \
                   http-filter hop-extra hop-notepad hop-tree hop-slider \
                   hop-paned hop-tabslider hop-inline hop-foldlist \
                   hop-editor hop-fileselector hop-sym \
-                  event color weblets prefs \
+                  event color weblets prefs expanders \
                   hop-wiki wiki-syntax wiki-toc
 
 OBJECTS		= $(_OBJECTS:%=o/%.o) o/configure.o
@@ -51,7 +51,12 @@ BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make-lib.obj
 
 SOURCES		= $(_OBJECTS:%=%.scm)
 
-INCLUDES	= xml.sch param.sch http-lib.sch service.sch prefs.sch
+INCLUDES	= http-lib.sch \
+                  expanders.sch \
+                  xml.sch xml-expd.sch \
+                  param.sch param-expd.sch \
+                  service.sch service-expd.sch \
+                  prefs-expd.sch 
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -111,6 +116,8 @@ o/hop-inline.o hop-inline.class: xml.sch
 o/http-error.o http-error.class: xml.sch 
 o/hop-slider.o hop-slider.class: xml.sch 
 o/http-response.o http-response.class: http-lib.sch 
+o/expanders.o expanders.class: service-expd.sch prefs-expd.sch           \
+      param-expd.sch xml-expd.sch expanders.sch 
 o/http-lib.o ./http-lib.class: http-lib.sch 
 o/hop-extra.o ./hop-extra.class: xml.sch 
 o/hop-paned.o hop-paned.class: xml.sch 

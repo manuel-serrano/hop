@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Nov 18 09:30:12 2006 (serrano)                */
+#*    Last change :  Thu Dec  7 07:49:44 2006 (serrano)                */
 #*    Copyright   :  2004-06 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -423,15 +423,18 @@ cat etc/hop.init.in \
     >> $init
 echo "" >> $init
 
-cat runtime/compiler-macro.sch >> $init
+echo "(cond-expand ((not hop)" >> $init
+cat runtime/xml-expd.sch >> $init
 echo "" >> $init
-cat runtime/xml.sch >> $init
+cat runtime/param-expd.sch >> $init
 echo "" >> $init
-cat runtime/param.sch >> $init
+cat runtime/prefs-expd.sch >> $init
 echo "" >> $init
-cat runtime/prefs.sch >> $init
+cat runtime/service-expd.sch >> $init
 echo "" >> $init
-cat runtime/service.sch >> $init
+cat runtime/expanders.sch >> $init
+echo "" >> $init
+echo "(hop-install-expanders!)) (else #unspecified))" >> $init
 
 # lib/scheme2js.init
 init=lib/scheme2js.init
