@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Sun Nov 19 07:30:15 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:02:26 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -172,7 +172,7 @@
 	    (<TR> (<TD>
 		     :colspan 3
 		     (<DIV> :class "title" len " weblets inspected...")))
-	    (<TR> (<TD> :colspan 3 "&nbsp;"))
+	    (<TR> (<TD> :colspan 3 "&#160;"))
 	    (<TR> (<TH> :class "new" "New")
 		  (<TH> :class "update" "Update")
 		  (<TH> :class "bad" "Bad"))
@@ -226,7 +226,7 @@
 			  :href (string-append (hz-db-inspector-url)
 					       (hz-db-path 'repository))
 			  (hz-db-path 'repository)))
-		  (<VBOX-BLOCK> "&nbsp;")
+		  (<VBOX-BLOCK> "&#160;")
 		  (<VBOX-BLOCK> (<BUTTON>
 				   :title "Build the db by files inspection"
 				   :onclick ~(iwindow-open
@@ -236,11 +236,11 @@
 					      640 400
 					      (/ (- window.innerWidth 640) 2) 50)
 				   "Build/Update Repository DB"))
-		  (<VBOX-BLOCK> "&nbsp;")
+		  (<VBOX-BLOCK> "&#160;")
 		  (<VBOX-BLOCK>
 		     (<SPAN> :class "title" "Add/Update/Remove Weblet entry"))
 		  (<VBOX-SEPARATOR>)
-		  (<VBOX-BLOCK> "&nbsp;")
+		  (<VBOX-BLOCK> "&#160;")
 		  (let* ((create (<BUTTON>
 				    :title "Create a new Weblet entry"
 				    :onclick
@@ -327,7 +327,7 @@
 			      (<TR> (<TH> "max hop version: ") (<TD> maxhop))
 			      (<TR> (<TH> "short descr: ") (<TD> sdescr))
 			      (<TR> (<TH> :id "descr" "descr: ") (<TD> descr))
-			      (<TR> (<TD> "&nbsp;"))
+			      (<TR> (<TD> "&#160;"))
 			      (<TR>
 				 (<TD>
 				    :colspan 2

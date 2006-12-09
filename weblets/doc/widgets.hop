@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Sat Nov 18 17:00:33 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 08:34:01 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -143,11 +143,11 @@
 					  "doc/search"
 					  ($keypress this.value)
 					  false "iwindow-menu"
-					  500 300
+					  640 480
 					  (let ((w (if (number? window.innerWidth)
 						       window.innerWidth
 						       document.documentElement.clientWidth)))
-					     (- w 550))
+					     (- w 700))
 					  10))
 			   :title "Hit [return] to search"))))))
 	 (<TR>

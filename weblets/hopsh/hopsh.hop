@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Nov 19 07:36:10 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:02:10 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hopsh weblet                                                 */
@@ -67,7 +67,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<HOPSH> req)
    (let ((i (<INPUT> :type 'text :name "expression" :size 90))
-	 (r (<PRE> :id "result" "&nbsp;")))
+	 (r (<PRE> :id "result" "&#160;")))
       (<HTML>
 	 (<HEAD>
 	    :title "Hop Sh"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Sat Nov 18 16:04:46 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:02:37 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -290,43 +290,43 @@
       (define (<ACTION-UNMANAGED> id)
 	 (<TR>
 	    (<RUN> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<PREF> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<DOC> id)))
       
       (define (<ACTION-UNINSTALL> id)
 	 (<TR>
 	    (<RUN> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<PREF> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<DOC> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<UNINSTALL> id)))
       
       (define (<ACTION-REMOVE> id)
 	 (<TR>
 	    (<RUN> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<PREF> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<DOC> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<UNINSTALL> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<REMOVE> id)))
       
       (define (<ACTION-UPDATE> id)
 	 (<TR>
 	    (<RUN> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<PREF> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<DOC> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<UPDATE> id)
-	    (<TD> "&nbsp;")
+	    (<TD> "&#160;")
 	    (<UNINSTALL> id)))
       
       (define (<ACTION-INCOMPATIBLE> id msg)
@@ -370,10 +370,10 @@
 	       (<TABLE>
 		  :class "weblet"
 		  (<TR> (<TD> "By " author))
-		  (<TR> (<TD> "&nbsp;"))
+		  (<TR> (<TD> "&#160;"))
 		  (<TR> (<TD> (<P> :class "sdescr" sdescr)))
 		  (<TR> (<TD> (<P> :class "descr" descr)))
-		  (<TR> (<TD> "&nbsp;"))
+		  (<TR> (<TD> "&#160;"))
 		  (<TR> (<TD>
 			   :class "action"
 			   (<DIV>

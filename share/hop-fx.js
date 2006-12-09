@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May  4 16:34:59 2006                          */
-/*    Last change :  Tue Nov 14 15:32:20 2006 (serrano)                */
+/*    Last change :  Sat Dec  9 08:39:36 2006 (serrano)                */
 /*    Copyright   :  2006 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP graphical effects library                                    */
@@ -43,20 +43,20 @@ function hop_fx_fade_background( obj, delay, step, colors ) {
 /*---------------------------------------------------------------------*/
 function hop_fx_make_shadow( cla, obj ) {
    return "\n\
-<TABLE class='" + cla + "' cellspacing='0' cellpadding='0' border='0'>\n\
-  <TR>\n\
-    <TD class='hop-iwindow-shadow-nw' rowspan='2' colspan='2'>\n" +
+<table class='" + cla + "' cellspacing='0' cellpadding='0' border='0'>\n\
+  <tr>\n\
+    <td class='hop-iwindow-shadow-nw' rowspan='2' colspan='2'>\n" +
    (((obj instanceof String) || (typeof obj == "string")) ? obj : obj.innerHTML) +
-   "</TD>\n\
-    <TD class='hop-shadow-ne'>&nbsp;</TD>\n\
-  </TR>\n\
-  <TR>\n\
-    <TD class='hop-shadow-e'>&nbsp;</TD>\n\
-  </TR>\n\
-  <TR>\n\
-    <TD class='hop-shadow-sw'>&nbsp;</TD>\n\
-    <TD class='hop-shadow-s'>&nbsp;</TD>\n\
-    <TD class='hop-shadow-se'>&nbsp;</TD>\n\
-  </TR>\n\
-</TABLE>";
+   "</td>\n\
+    <td class='hop-shadow-ne'>&#160;</td>\n\
+  </tr>\n\
+  <tr>\n\
+    <td class='hop-shadow-e'>&#160;</td>\n\
+  </tr>\n\
+  <tr>\n\
+    <td class='hop-shadow-sw'>&#160;</td>\n\
+    <td class='hop-shadow-s'>&#160;</td>\n\
+    <td class='hop-shadow-se'>&#160;</td>\n\
+  </tr>\n\
+</table>";
 }

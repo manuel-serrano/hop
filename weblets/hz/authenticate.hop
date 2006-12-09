@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 11:31:17 2006                          */
-;*    Last change :  Sun Nov 19 07:30:01 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:02:20 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ authentication                                                */
@@ -129,7 +129,7 @@
 			      (<TH> "Password: ")
 			      (<TD> :colspan 2 pass))
 			   (<TR>
-			      (<TD> :colspan 3 "&nbsp;"))
+			      (<TD> :colspan 3 "&#160;"))
 			   (<TR>
 			      (<TH> "Mode:")
 			      (<TD> :class "mode" "local " local " share "share)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May  8 06:21:47 2006                          */
-;*    Last change :  Sat Sep 30 06:02:35 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:01:35 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP libraries doc.                                           */
@@ -49,7 +49,7 @@
 	 (else
 	  (let ((l2 (list-split! l
 				 (inexact->exact (ceiling (/ (length l) 2)))
-				 "&nbsp;")))
+				 "&#160;")))
 	     (<TABLE>
 		:class "api-index"
 		(<COLGROUP> :span 2 :width "50%")

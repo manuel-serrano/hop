@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 30 06:04:20 2006                          */
-;*    Last change :  Sat Oct  7 16:11:08 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:01:30 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP doc global index.                                        */
@@ -94,7 +94,7 @@
 	    (if (null? lst)
 		(list-split! res
 			     (inexact->exact (ceiling (/ len columns)))
-			     (<TD> "&nbsp;"))
+			     (<TD> "&#160;"))
 		(let* ((el (car lst))
 		       (c1 (char0 (car el) (cadr el))))
 		   (if (char=? c c1)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Sat Nov 18 06:52:25 2006 (serrano)                */
+/*    Last change :  Sat Dec  9 08:39:18 2006 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -281,39 +281,39 @@ function make_hop_iwindow( id, klass, parent ) {
    win.name = "hop-iwindow";
 
    var handle = "\
-<TABLE id='" + id + "-handle' class='hop-iwindow-handle' width='100%'\n\
+<table id='" + id + "-handle' class='hop-iwindow-handle' width='100%'\n\
        cellpadding='0' cellspacing='0' border='0'>\n\
-  <TR class='hop-iwindow-handle'>\n\
-    <TD class='hop-iwindow-iconify' align='left' onclick='hop_iwindow_iconify( \"" + id + "\" )'>&nbsp;</TD>\n\
-    <TD class='hop-iwindow-maximize' align='left' onclick='hop_iwindow_maximize( \"" + id + "\" )'>&nbsp;</TD>\n\
-    <TD class='hop-iwindow-up-title'>\n\
-      <TABLE class='hop-iwindow-title' width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
-        <TR>\n\
-          <TD class='hop-iwindow-title-left'>&nbsp;</TD>\n\
-          <TD id='" + id + "-title' class='hop-iwindow-title-middle'>title</TD>\n\
-          <TD class='hop-iwindow-title-right'>&nbsp;</TD>\n\
-        </TR>\n\
-      </TABLE>\n\
-    </TD> \n\
-    <TD class='hop-iwindow-close' align='right' onclick='hop_iwindow_close( \"" + id + "\" )'>&nbsp;</TD>\n\
-  </TR>\n\
-</TABLE>\n";
+  <tr class='hop-iwindow-handle'>\n\
+    <td class='hop-iwindow-iconify' align='left' onclick='hop_iwindow_iconify( \"" + id + "\" )'>&#160;</td>\n\
+    <td class='hop-iwindow-maximize' align='left' onclick='hop_iwindow_maximize( \"" + id + "\" )'>&#160;</td>\n\
+    <td class='hop-iwindow-up-title'>\n\
+      <table class='hop-iwindow-title' width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
+        <tr>\n\
+          <td class='hop-iwindow-title-left'>&#160;</td>\n\
+          <td id='" + id + "-title' class='hop-iwindow-title-middle'>title</td>\n\
+          <td class='hop-iwindow-title-right'>&#160;</td>\n\
+        </tr>\n\
+      </table>\n\
+    </td> \n\
+    <td class='hop-iwindow-close' align='right' onclick='hop_iwindow_close( \"" + id + "\" )'>&#160;</td>\n\
+  </tr>\n\
+</table>\n";
 
    var foot = "\
-<TABLE width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
-  <TR>\n\
-    <TD id='" + id + "-resize-left' class='hop-iwindow-bottom-left'>&nbsp;</TD>\n\
-    <TD id='" + id + "-resize-middle' class='hop-iwindow-bottom-middle'>&nbsp;</TD>\n\
-    <TD id='" + id + "-resize-right' class='hop-iwindow-bottom-right'>&nbsp;</TD>\n\
-  </TR>\n\
-</TABLE>";
+<table width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
+  <tr>\n\
+    <td id='" + id + "-resize-left' class='hop-iwindow-bottom-left'>&#160;</td>\n\
+    <td id='" + id + "-resize-middle' class='hop-iwindow-bottom-middle'>&#160;</td>\n\
+    <td id='" + id + "-resize-right' class='hop-iwindow-bottom-right'>&#160;</td>\n\
+  </tr>\n\
+</table>";
 
    var t = "\n\
-<DIV class='hop-iwindow-inner' id='" + id + "-win'>\n\
-  <DIV class='hop-iwindow-content' id='" + id + "-content' class='hop-iwindow-content'>\n\</DIV>\n\
-  <DIV class='hop-iwindow-handle id='" + id + "'-handle'>" + handle + "</DIV>\n\
-  <DIV class='hop-iwindow-foot'>" + foot + "</DIV>\n\
-</DIV>";
+<div class='hop-iwindow-inner' id='" + id + "-win'>\n\
+  <div class='hop-iwindow-content' id='" + id + "-content'>\n\</div>\n\
+  <div class='hop-iwindow-handle' id='" + id + "-handle'>" + handle + "</div>\n\
+  <div class='hop-iwindow-foot'>" + foot + "</div>\n\
+</div>";
 
    win.innerHTML = hop_fx_make_shadow( 'hop-iwindow-shadow', t );
 

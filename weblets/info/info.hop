@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Nov 19 07:34:47 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:02:43 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -175,7 +175,7 @@
 						   (cache-entry-path ce)))
 					       l))
 				 1024)))))
-	    (<TR> (<TD> "&nbsp;"))
+	    (<TR> (<TD> "&#160;"))
 	    (<TR>
 	       (<TD> (<BUTTON>
 			:onclick ~(with-hop ($(service ()
@@ -184,7 +184,7 @@
 				     (lambda (h)
 					(set! $d.innerHTML h)))
 			"clear cache")))
-	    (<TR> (<TD> "&nbsp;"))
+	    (<TR> (<TD> "&#160;"))
 	    (<TR>
 	       (<TD> d)))))
    (let ((d (<DIV>

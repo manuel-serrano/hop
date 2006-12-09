@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Sat Oct  7 16:06:39 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:01:42 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -262,7 +262,7 @@
 	    (if (null? lst)
 		(list-split! res
 			     (inexact->exact (ceiling (/ len columns)))
-			     (<TD> "&nbsp;"))
+			     (<TD> "&#160;"))
 		(let ((c1 (char0 (caar lst))))
 		   (if (char=? c c1)
 		       (begin

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Fri Aug 25 10:14:42 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:02:32 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -159,7 +159,7 @@
 			   "Sync"))
 		  (<TH> "last sync date:") (<TD> syncd))))
 	 (<VBOX-SEPARATOR>)
-	 (<VBOX-BLOCK> "&nbsp;")
+	 (<VBOX-BLOCK> "&#160;")
 	 (<VBOX-BLOCK> out))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue Nov 14 08:56:25 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:02:02 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -34,7 +34,7 @@
 			(<COLGROUP>
 			   (<COL> :span len :width width))
 			(hop-builtin-rows len))))
-	    (<TR> (<TD> "&nbsp;"))
+	    (<TR> (<TD> "&#160;"))
 	    (<TR> (<TH> :class "title" "Additional Weblets"))
 	    (<TR> (<TH> :align "left"
 		     (<TABLE> :class "weblets"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Fri Nov  3 07:16:06 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:01:23 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -56,7 +56,7 @@
       (if (pair? l)
 	  (let ((l2 (list-split! l
 				 (inexact->exact (ceiling (/ (length l) 2)))
-				 "&nbsp;")))
+				 "&#160;")))
 	     (<TABLE>
 		:class "api-index"
 		(<COLGROUP> :span 2 :width "50%")

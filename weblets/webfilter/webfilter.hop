@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Nov 19 07:37:05 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:03:10 2006 (serrano)                */
 ;*    Copyright   :  2005-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -306,7 +306,7 @@ Google, each containing a forward pointer to the actual URL.])))
 		     ($txt1).className = this.checked ? "enable" : "disable"
 		  })
 	       txt1
-	       "&nbsp;&nbsp;"
+	       "&#160;&#160;"
 	       (<INPUT>
 		  :type "text"
 		  :size 6

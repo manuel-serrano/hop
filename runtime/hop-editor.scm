@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Wed Dec  6 09:58:27 2006 (serrano)                */
+;*    Last change :  Sat Dec  9 09:00:17 2006 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -67,7 +67,7 @@
 	     :border 0)))
 
   (define (<FILER>)
-    (<TD> "&nbsp;"))
+    (<TD> "&#160;"))
   
   (define (<ICON> name tooltip image)
     (let ((icon (make-file-name *icons-dir* (string-append image ".png"))))
