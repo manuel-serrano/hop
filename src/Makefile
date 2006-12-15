@@ -3,11 +3,10 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Fri Nov 17 10:05:03 2006 (serrano)                */
+#*    Last change :  Thu Dec 14 09:46:45 2006 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
-
 do: build
 
 #*---------------------------------------------------------------------*/
@@ -43,12 +42,11 @@ COLOR		= 32
 POPULATION 	= $(INCLUDES) $(SOURCES) Makefile
 
 #*---------------------------------------------------------------------*/
-#*    The roost executable                                             */
+#*    The hop executable                                               */
 #*---------------------------------------------------------------------*/
 .PHONY: build dobuild
 
 build:  o $(BACKEND)
-
 
 native: $(BUILDBINDIR)/$(EXEC)
 jvm: $(CLASS_DIR) $(BUILDBINDIR)/$(EXEC).jar
@@ -156,6 +154,11 @@ getsources:
 .PHONY: dep
 dep: 
 	@(num=`grep -n '^#bdepend start' Makefile | awk -F: '{ print $$1}' -`;\
+          if [ "$$num " != " " ]; then \
+            head -n `expr $$num - 1` Makefile > /tmp/Makefile.aux; \
+          else \
+            cp Makefile /tmp/Makefile.aux; \
+          fi; \
           head -n `expr $$num - 1` Makefile > /tmp/Makefile.aux)
 	@ $(DEPEND) -strict-obj-dir o -fno-mco $(SOURCES) >> /tmp/Makefile.aux
 	@ mv /tmp/Makefile.aux Makefile
@@ -184,6 +187,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 clean:
 	/bin/rm -f .afile
+	/bin/rm -f .jfile
 	/bin/rm -f $(OBJECTS)
 	/bin/rm -f $(MODULES:%=%.c)
 	/bin/rm -rf o

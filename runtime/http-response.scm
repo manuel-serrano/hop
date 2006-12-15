@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Nov 14 18:01:18 2006 (serrano)                */
+;*    Last change :  Thu Dec 14 09:46:07 2006 (serrano)                */
 ;*    Copyright   :  2004-06 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -194,7 +194,7 @@
 		   (connection (http-request-connection request)))
 		(cond
 		   ((not (input-port? pf))
-		    (let ((rep (if (file-exists? pf)
+		    (let ((rep (if (file-exists? file)
 				   (http-permission-denied file)
 				   (http-file-not-found file))))
 		       (http-response rep socket)))
