@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Tue Nov 28 10:26:20 2006 (serrano)                */
+/*    Last change :  Tue Dec 19 10:24:18 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -143,7 +143,8 @@ function hop_push_vlines( icondir, par, row, level ) {
       hop_push_vlines( icondir, par.parent, row, level - 1 );
       var td = document.createElement( "td" );
       var img = document.createElement( "img" );
-      
+
+      td.className = "hop-tree";
       td.setAttribute( "nowrap", "nowrap" );
       
       img.src = icondir + (( par && !par.last ) ? "/vline.png" : "/empty.png");
@@ -238,6 +239,7 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
 
    /* the plus/minus icon */
    var td1 = document.createElement( "td" );
+   td1.className = "hop-tree";
    td1.setAttribute( "nowrap", "nowrap" );
    
    var join = document.createElement( "img" );
@@ -254,7 +256,8 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
    
    folder.src = fc;
    folder.className = "hop-tree";
-   
+
+   td2.className = "hop-tree";
    td2.setAttribute( "nowrap", "nowrap" );
    td2.onclick = function() {hop_tree_row_toggle_selected( tree, row, true );}
    td2.appendChild( folder );
@@ -343,6 +346,7 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
 
    /* space */
    var td1 = document.createElement( "td" );
+   td1.className = "hop-tree";
    td1.setAttribute( "nowrap", "nowrap" );
    
    var join = document.createElement( "img" );
@@ -358,7 +362,8 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
    
    fimg.src = icon;
    fimg.className = "hop-tree";
-   
+
+   td2.className = "hop-tree";
    td2.onclick = function() {hop_tree_row_toggle_selected( tree, row, true );}
    td2.appendChild( fimg );
    row.appendChild( td2 );
@@ -366,6 +371,7 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
 
    /* the content */
    var e = document.createElement( "span" );
+   e.classname = "hop-tree";
    e.innerHTML= content;
    td2.appendChild( e );
    row.appendChild( td2 );

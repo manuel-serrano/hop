@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul 19 10:48:00 2005                          */
-/*    Last change :  Tue Nov 28 10:38:12 2006 (serrano)                */
+/*    Last change :  Tue Dec 19 10:23:17 2006 (serrano)                */
 /*    Copyright   :  2005-06 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Tree CSS                                                     */
@@ -46,15 +46,15 @@ table.hop-tree-leaf {
   border-spacing: 0;
 }
 
-table.hop-tree-leaf td {
+table.hop-tree-leaf td.hop-tree {
   vertical-align: middle;
 }
 
-table.hop-tree-leaf td span {
+table.hop-tree-leaf td.hop-tree span.hop-tree {
   vertical-align: middle;
 }
 
-table.hop-tree-leaf td img {
+table.hop-tree-leaf td.hop-tree img.hop-tree {
   vertical-align: middle;
 }
 

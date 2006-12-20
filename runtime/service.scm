@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Dec  6 17:24:17 2006 (serrano)                */
+;*    Last change :  Wed Dec 20 08:12:50 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -269,8 +269,8 @@
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
    (when (http-request-localhostp req)
-      (let loop ()
-	 (with-access::http-request req (path user service)
+      (with-access::http-request req (path user service)
+	 (let loop ((path path))
 	    (when (hop-service-path? path)
 	       (mutex-lock! *service-mutex*)
 	       (let ((svc (hashtable-get *service-table* path)))
@@ -295,21 +295,23 @@
 			     (user-service-denied req user id)))))
 		     (else
 		      (let ((init (hop-initial-weblet)))
-			 (when (and (string? init)
-				    (substring-at? path (hop-service-base) 0)
-				    (let ((l1 (string-length path))
-					  (l2 (string-length
-					       (hop-service-base))))
-				       (or (=fx l1 l2)
-					   (and (=fx l1 (+fx l2 1))
-						(char=? (string-ref path l2)
-							#\/)))))
-			    (set! path (string-append (hop-service-base)
-						      "/"
-						      init))
-			    ;; resume the hop loop in order to autoload
-			    ;; the initial weblet
-			    'hop-resume))))))))))
+			 (if (and (string? init)
+				  (substring-at? path (hop-service-base) 0)
+				  (let ((l1 (string-length path))
+					(l2 (string-length
+					     (hop-service-base))))
+				     (or (=fx l1 l2)
+					 (and (=fx l1 (+fx l2 1))
+					      (char=? (string-ref path l2)
+						      #\/)))))
+			     (begin
+				(set! path (string-append (hop-service-base)
+							  "/"
+							  init))
+				;; resume the hop loop in order to autoload
+				;; the initial weblet
+				'hop-resume)
+			     (loop (dirname path))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */
