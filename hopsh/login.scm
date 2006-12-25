@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 10 07:50:17 2006                          */
-;*    Last change :  Fri Dec  1 18:16:03 2006 (serrano)                */
+;*    Last change :  Sat Dec 23 07:08:03 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with HopSh login                                         */
@@ -42,8 +42,13 @@
 	 (when (output-port? tty) (close-output-port tty))))
    (unless (or (not (string? user)) (string=? user ""))
       (hopsh-user-set! user)
-      (let ((passwd (password "password: ")))
-	 (hopsh-login-set!
-	  (string-append "Basic "
-			 (base64-encode (string-append user ":" passwd)))))))
+      (if (<fx (string-index user #\:) 0)
+	  (let ((passwd (password "password: ")))
+	     (hopsh-login-set!
+	      (string-append "Basic "
+			     (base64-encode
+			      (string-append user ":" passwd)))))
+	  (hopsh-login-set!
+	   (string-append "Basic " (base64-encode user))))))
+		
 

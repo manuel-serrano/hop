@@ -35,10 +35,11 @@ treatments on these elements.
 <markup> <WIKI>
 
 <arguments>
-^  attributes  ^   type    ^   default    ^  short description           ^
-| :src         |  string   |  //random//  | a file to be processed.      |
-| :cache       |  boolean  |  _           | an optional cache.           |
-| body         |  element  |  empty       | the text to be processed.    |
+^  attributes  ^   type          ^   default    ^  short description          ^
+| :src         |  string         |  //random//  | a file to be processed.     |
+| :cache       |  boolean        |  _           | an optional cache.          |
+| :syntax      |  ::wiki-syntax  |  _           | an optional wiki syntax.    |
+| body         |  element        |  empty       | the text to be processed.   |
 </arguments>
 
 This markup creates a Hop element from a wiki text. The text can
