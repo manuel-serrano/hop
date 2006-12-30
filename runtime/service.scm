@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Dec 20 16:59:40 2006 (serrano)                */
+;*    Last change :  Sat Dec 30 05:37:45 2006 (serrano)                */
 ;*    Copyright   :  2006 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -295,7 +295,8 @@
 			     (user-service-denied req user id)))))
 		     (else
 		      (let ((init (hop-initial-weblet)))
-			 (if (and (string? init)
+			 (cond
+			    ((and (string? init)
 				  (substring-at? path (hop-service-base) 0)
 				  (let ((l1 (string-length path))
 					(l2 (string-length
@@ -304,15 +305,15 @@
 					 (and (=fx l1 (+fx l2 1))
 					      (char=? (string-ref path l2)
 						      #\/)))))
-			     (begin
-				(set! req-path
-				      (string-append (hop-service-base)
-						     "/"
-						     init))
+			     (set! req-path
+				   (string-append (hop-service-base) "/" init))
 				;; resume the hop loop in order to autoload
 				;; the initial weblet
-				'hop-resume)
-			     (loop (dirname path))))))))))))
+			     'hop-resume)
+			    ((=fx (string-index path #\&) -1)
+			     (loop (dirname path)))
+			    (else
+			     #f)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */
