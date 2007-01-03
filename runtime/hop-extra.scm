@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Dec  6 09:58:33 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Wed Jan  3 16:35:30 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -41,29 +41,37 @@
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-system ...                                          */
 ;*---------------------------------------------------------------------*/
-(define head-runtime-system
-   (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
-	    (<LINK> :rel "stylesheet" :type "text/css"
-	       :href p))
-	 (map (lambda (f)
-		 (let ((p (make-file-name (hop-share-directory) f)))
-		    (<SCRIPT> :type (hop-configure-javascript-mime-type)
-		       :src p)))
-	      (hop-runtime-system))))
+(define head-runtime-system #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-system-inline ...                                   */
 ;*---------------------------------------------------------------------*/
-(define head-runtime-system-inline
-   (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
-	    (<LINK> :rel "stylesheet" :type "text/css" :inline #t
-	       :href p))
-	 (map (lambda (f)
-		 (let ((p (make-file-name (hop-share-directory) f)))
-		    (<SCRIPT> :type (hop-configure-javascript-mime-type)
-		       :inline #t
-		       :src p)))
-	      (hop-runtime-system))))
+(define head-runtime-system-inline #f)
+
+;*---------------------------------------------------------------------*/
+;*    init-extra! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (init-extra!)
+   (unless head-runtime-system
+      (set! head-runtime-system 
+	    (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
+		     (<LINK> :rel "stylesheet" :type "text/css"
+			:href p))
+		  (map (lambda (f)
+			  (let ((p (make-file-name (hop-share-directory) f)))
+			     (<SCRIPT> :type (hop-configure-javascript-mime-type)
+				:src p)))
+		       (hop-runtime-system))))
+      (set! head-runtime-system-inline
+	    (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
+		     (<LINK> :rel "stylesheet" :type "text/css" :inline #t
+			:href p))
+		  (map (lambda (f)
+			  (let ((p (make-file-name (hop-share-directory) f)))
+			     (<SCRIPT> :type (hop-configure-javascript-mime-type)
+				:inline #t
+				:src p)))
+		       (hop-runtime-system))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-parse ...                                                   */
@@ -240,6 +248,7 @@
 ;*    <HEAD> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
+   (init-extra!)
    (let* ((body0 (head-parse args))
 	  (ubase (filter (lambda (x)
 			    (xml-markup-is? x 'base))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Nov 15 13:20:08 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Wed Jan  3 13:34:25 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -55,7 +55,7 @@
    (with-handler
       (lambda (e)
 	 (exception-notify e)
-	 (exit 1))
+	 (exit 2))
       (unwind-protect
 	 (hopsh-repl)
 	 (newline))))
