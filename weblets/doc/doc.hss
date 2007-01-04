@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Nov 29 08:23:29 2006 (serrano)                */
-/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    Last change :  Thu Jan  4 09:18:02 2007 (serrano)                */
+/*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -147,7 +147,7 @@ div#result {
   border-top: 1px solid $border-color;
   margin-top: 10px;
   padding-top: 10px;
-}  
+}
 
 /*--- popup-menu ------------------------------------------------------*/
 div.popup-menu {
@@ -226,7 +226,6 @@ div.hop-notepad-tabs span.hop-nptab-active {
 }
 
 div.hop-notepad-body-tab {
-  border-color: blue;
   background-color: $doc-color;
 }
 
@@ -387,7 +386,7 @@ doc pre, doc textarea {
 div.code pre {
   background-color: $example-background;
 }
-  
+
 doc span.href {
   font-family: $typewriter;
   cursor: default;
@@ -398,11 +397,11 @@ doc span.href {
 pre {
   max-width: 120em;
 }
-  
-doc pre span.href, 
-doc toc span.href, 
-doc pre span.doc-keyword, 
-doc toc span.doc-keyword, 
+
+doc pre span.href,
+doc toc span.href,
+doc pre span.doc-keyword,
+doc toc span.doc-keyword,
 doc pre span.doc-type,
 doc toc span.doc-type {
   font-size: x-small;
@@ -428,7 +427,7 @@ doc span.href:hover {
 doc div.example {
   width: 100%;
 }
-  
+
 doc pre.example, doc textarea.example {
   max-height: 400px;
   margin-top: 5px;
@@ -511,7 +510,7 @@ doc span.doc-link {
 doc span.doc-link:hover {
   text-decoration: underline;
 }
-  
+
 doc span.doc-keyword {
   font-family: $typewriter;
   font-size: small;
@@ -540,9 +539,9 @@ doc toc {
   margin-top: -13px;
   margin-left: 5px;
   min-width: 280px;
-  float: right; 
+  float: right;
   clear: both;
-  background-color: $popup-menu-color; 
+  background-color: $popup-menu-color;
   border: $popup-menu-border;
   -moz-opacity: $doc-opacity;
 }
@@ -579,7 +578,7 @@ doc toc ul ul li a {
   font-weight: normal;
   margin-left: 2px;
 }
-  
+
 doc toc li a:hover {
   text-decoration: underline;
 /*   color: $inner-href-color;                                         */
@@ -688,7 +687,7 @@ table.search-result span.search-label {
   font-style: italic;
   color: $deep-orange;
 }
-  
+
 /*--- symbol ----------------------------------------------------------*/
 table.symbol-table {
   font-size: 80%;
