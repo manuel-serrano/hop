@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Nov 28 10:05:32 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Fri Jan  5 08:54:10 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -583,7 +583,8 @@
 	      (i (string-index s "|"))
 	      (href (wiki-syntax-href syn)))
 	  (define (link-val s)
-	     (if (and (>fx (string-length s) 3)
+	     (cond
+		((and (>fx (string-length s) 3)
 		      (substring-at? s ",(" 0))
 		 (with-input-from-string (substring s 1 (string-length s))
 		    (lambda ()
@@ -591,17 +592,24 @@
 			  (lambda (e)
 			     (exception-notify e)
 			     "")
-			  (eval (hop-read (current-input-port))))))
-		 s))
+			  (let ((e (eval (hop-read (current-input-port)))))
+			     (values e e))))))
+		((=fx (string-index s #\:) -1)
+		 (values (string-append "#" s) s))
+		(else
+		 (values s s))))
 	  (add-expr!
 	   (if (=fx i -1)
-	       (let ((v (link-val s)))
-		  (href v v))
+	       (multiple-value-bind (h n)
+		  (link-val s)
+		  (href h n))
 	       (let ((s2 (substring s (+fx i 1) (string-length s))))
-		  (href (link-val (substring s 0 i))
-			(wiki-string->hop
-			 (substring s (+fx i 1) (string-length s))
-			 syn)))))
+		  (multiple-value-bind (h n)
+		     (link-val (substring s 0 i))
+		     (href h
+			   (wiki-string->hop
+			    (substring s (+fx i 1) (string-length s))
+			    syn))))))
 	  (ignore)))
 
       ;; embedded hop

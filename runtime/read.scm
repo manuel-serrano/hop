@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Nov 18 16:33:15 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Thu Jan  4 12:00:30 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -51,8 +51,8 @@
 		     ((at ?fname ?pos)
 		      pos)
 		     (else
-		      0))
-		  0)))
+		      (-fx (input-port-position port) 1)))
+		  (-fx (input-port-position port) 1))))
       (raise (instantiate::&io-read-error
 		(fname (input-port-name port))
 		(location loc)
@@ -217,7 +217,7 @@
 	  (if (not (=fx (the-length) 4))
 	      (read-error "Illegal ascii character" string (the-port))
 	      (integer->char (string->integer (the-substring 1 4))))))
-
+      
       ;; ucs-2 characters
       ((: "u" (= 4 xdigit))
        (integer->ucs2 (string->integer (the-substring 1 5) 16)))
@@ -245,7 +245,7 @@
       ((: "x" (? (in "-+")) (+ (in (uncase (in ("09af"))))))
        (string->integer (the-substring 1 (the-length)) 16))
       
-       ;; unspecified and eof-object
+      ;; unspecified and eof-object
       ((: (in "ue") (+ (in "nspecified-objt")))
        (let ((symbol (string->symbol (string-upcase! (the-string)))))
 	  (cond
@@ -263,12 +263,12 @@
        (if (not (=fx (the-length) 6))
 	   (read-error "Illegal constant" (the-string) (the-port))
 	   (make-cnst (string->integer (the-substring 1 5) 16))))
-
-     (else
+      
+      (else
        (let ((c (the-failure)))
 	  (if (char? c)
-	      (read-error "Illegal token" (string #\# c) (the-port))
-	      (read-error "Illegal char" c (the-port)))))))
+	      (read-error "Illegal char" c (the-port))
+	      (read-error "Illegal token" (string #\# c) (the-port)))))))
       
 ;*---------------------------------------------------------------------*/
 ;*    *hop-grammar* ...                                                */
