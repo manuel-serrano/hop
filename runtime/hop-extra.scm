@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Jan  3 16:35:30 2007 (serrano)                */
+;*    Last change :  Mon Jan  8 11:57:28 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -304,9 +304,11 @@
 		     ((string? path)
 		      path)
 		     ((string? src)
-		      (format "~a/buttons/~a"
-			      (url-encode (hop-share-directory))
-			      src))
+		      (if (string=? (dirname src) ".")
+			  (format "~a/buttons/~a"
+				  (url-encode (hop-share-directory))
+				  src)
+			  src))
 		     (else
 		      (error '<FOOT-BUTTON> "Illegal source" src))))))
 				     

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Dec 30 05:37:45 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Mon Jan  8 18:18:06 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -97,7 +97,7 @@
    (if (not (hop-service? svc))
        (bigloo-type-error 'make-hop-service-url 'service svc)
        (with-access::hop-service svc (path args)
-	  (if (null? args)
+	  (if (and (null? args) (null? vals))
 	      path
 	      (apply string-append
 		     path

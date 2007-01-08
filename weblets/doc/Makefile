@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Sun Dec  3 14:39:53 2006 (serrano)                */
-#*    Copyright   :  2006 Manuel Serrano                               */
+#*    Last change :  Mon Jan  8 09:09:35 2007 (serrano)                */
+#*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
 #*=====================================================================*/
@@ -28,7 +28,7 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   read.wiki service.wiki slider.wiki sorttable.wiki \
                   sound.wiki sqlite.wiki tabslider.wiki timeout.wiki \
                   tooltip.wiki tree.wiki url.wiki wiki.wiki window.wiki \
-                  xml.wiki symbol.wiki
+                  xml.wiki symbol.wiki rss.wiki
 CORE_POP	= core.wiki
 EXAMPLES_POP	= base64.hop canvas.hop editor-form.hop editor.hop \
                   filebrowse.hop fileselect.hop filter-1.hop filter-2.hop \
