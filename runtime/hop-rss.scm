@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan  8 08:36:26 2007                          */
-;*    Last change :  Mon Jan  8 18:06:46 2007 (serrano)                */
+;*    Last change :  Mon Jan  8 18:18:56 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP RSS bindings                                                 */
