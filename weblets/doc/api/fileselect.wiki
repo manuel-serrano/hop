@@ -98,7 +98,10 @@ When a value of the ++<FILEBROWSE>++ is selected (i.e., when the
 mouse is clicked over a row) the event handler :onselect is
 invoked. 
 
-The event :onclick is executed when the browse button is clicked.
+The event :onclick is executed when the browse "select" button is clicked.
+
+The event :onmousedown is executed when the main browse button is pressed
+down.
 
 The ++<FILEBROWSE>++ widget is aware of access controls. That
 is, it does expose directories for which the access is not granted.

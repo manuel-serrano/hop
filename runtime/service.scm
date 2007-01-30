@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Jan  8 18:18:06 2007 (serrano)                */
+;*    Last change :  Tue Jan 30 19:52:23 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -270,7 +270,8 @@
 (define (service-filter req)
    (when (http-request-localhostp req)
       (with-access::http-request req ((req-path path) user service)
-	 (let loop ((path req-path))
+	 (let loop ((path req-path)
+		    (armed #f))
 	    (when (hop-service-path? path)
 	       (mutex-lock! *service-mutex*)
 	       (let ((svc (hashtable-get *service-table* path)))
@@ -305,13 +306,17 @@
 					 (and (=fx l1 (+fx l2 1))
 					      (char=? (string-ref path l2)
 						      #\/)))))
-			     (set! req-path
-				   (string-append (hop-service-base) "/" init))
-				;; resume the hop loop in order to autoload
-				;; the initial weblet
-			     'hop-resume)
+			     (if armed
+				 (http-service-not-found req-path)
+				 (begin
+				    (set! req-path
+					  (string-append
+					   (hop-service-base) "/" init))
+				    ;; resume the hop loop in order to autoload
+				    ;; the initial weblet
+				    'hop-resume)))
 			    ((=fx (string-index path #\&) -1)
-			     (loop (dirname path)))
+			     (loop (dirname path) #t))
 			    (else
 			     #f)))))))))))
 

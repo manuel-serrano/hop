@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Thu Dec  7 09:35:40 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue Jan 30 19:58:27 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -48,7 +48,8 @@
 ;*    expand-service ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (expand-service url wid timeout ttl args body)
-   (let ((proc (if (symbol? wid) wid 'svc)))
+   (let ((proc (if (symbol? wid) wid 'svc))
+	 (errid (if (symbol? wid) `',wid wid)))
       `(let* ((,proc (lambda ,args ,@body))
 	      (exec (lambda (req)
 		       (let* ((ca (http-request-cgi-args req))
@@ -118,7 +119,7 @@
 		 (else
 		  (let ((svc (expand-service
 			      '(get-service-url)
-			      '(string->symbol (hop-service-weblet-name))
+			      '(hop-service-weblet-wid)
 			      tmt ttl (car a) (cdr a))))
 		     (e (evepairify svc x) e)))))
 	     ((eq? (car a) :timeout)

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Jan 27 07:38:47 2007 (serrano)                */
+#*    Last change :  Tue Jan 30 07:26:03 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -67,6 +67,8 @@ if [ $USER = "serrano" ]; then
 else
   distribdir=.
 fi
+
+ssl=""
 
 hoprts='"hop-autoconf.js" "hop.js" "runtime.js" "hop-dom.js" "runtime-interface.js" "hopscheme.js"'
 
@@ -244,6 +246,21 @@ if [ ! -f $bgllibdir/bigloo/$bglversion/multimedia.heap ]; then
   echo "you have installed Bigloo without the MULTIMEDIA support. Please"
   echo "check your Bigloo installation."
   exit 1;
+fi
+
+#*---------------------------------------------------------------------*/
+#*    SSL                                                              */
+#*---------------------------------------------------------------------*/
+if [ "$ssl " = " " ]; then
+  if [ ! -f $bgllibdir/bigloo/$bglversion/ssl.heap ]; then
+    ssl=no
+  else
+    ssl=yes
+  fi
+fi
+
+if [ "$ssl" = "yes" ]; then
+  bcflags="$bcflags -srfi ssl"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -507,4 +524,5 @@ echo
 echo "Internals:"
 echo "  Mime types............................ $mimetypes"
 echo "  Default JavaScript mime type.......... $jsmimetype"
+echo "  HTTPS support......................... $ssl"
 

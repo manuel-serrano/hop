@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Wed Dec  6 09:58:40 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue Jan 30 20:22:45 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
 ;*=====================================================================*/
@@ -190,6 +190,7 @@
 				   (text "Browse" string)
 				   (width 500 integer)
 				   (height 400 integer)
+				   (onmousedown #f)
 				   (onclick #unspecified)
 				   (onselect #unspecified)
 				   (multiselect #f boolean)
@@ -206,6 +207,7 @@
 		    (string-append "hop-filebrowse " class)
 		    "hop-filebrowse")
 	 :value value
+	 :onmousedown (or onmousedown "")
 	 :onclick (format "~a; hop_stop_propagation( event, false ); this.onselect = ~a; hop_filebrowse( ~a, '~a', '~a', this.value, '~a', ~a, hop_event_mouse_x( event ), hop_event_mouse_y( event ), ~a, ~a )"
 			  ;; user onclick
 			  (cond

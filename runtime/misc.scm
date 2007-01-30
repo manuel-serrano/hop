@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Tue Nov  7 07:32:23 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Tue Jan 30 08:34:11 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
 ;*=====================================================================*/
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_misc
 
-   (library ssl)
+   (cond-expand
+      (ssl (library ssl)))
    
    (import  __hop_param
 	    __hop_types
@@ -330,7 +331,13 @@
 				 (-fx ttl 1))
 			      (raise e)))
 		       (if ssl
-			   (make-ssl-client-socket host port :timeout tmt)
+			   (cond-expand
+			      (ssl
+			       (make-ssl-client-socket host port :timeout tmt))
+			      (else
+			       (error 'make-client-socket/timeout
+				      "SSL not supported"
+				      'make-ssl-client-socket)))
 			   (make-client-socket host port :timeout tmt)))))
 	    (if (number? res)
 		(loop res)

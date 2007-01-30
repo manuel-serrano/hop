@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Dec  6 10:00:06 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Tue Jan 30 20:06:13 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/
@@ -31,6 +31,7 @@
 	       (loaded::bool (default #f))))
    
    (export  (find-weblets-in-directory ::string)
+	    (reset-autoload!)
 	    (install-autoload-weblets! ::pair-nil)
 	    (autoload-prefix::procedure ::bstring)
 	    (autoload ::bstring ::procedure . hooks)
@@ -80,6 +81,17 @@
 ;*    *weblet-lock* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *weblet-lock* (make-mutex "weblets"))
+
+;*---------------------------------------------------------------------*/
+;*    *weblet-autoload-dirs* ...                                       */
+;*---------------------------------------------------------------------*/
+(define *weblet-autoload-dirs* '())
+
+;*---------------------------------------------------------------------*/
+;*    reset-autoload! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (reset-autoload!)
+   (install-autoload-weblets! *weblet-autoload-dirs*))
 
 ;*---------------------------------------------------------------------*/
 ;*    install-autoload-weblets! ...                                    */
@@ -134,6 +146,7 @@
    ;; starts, the lock above is unlikely to be useful.
    (with-lock *weblet-lock*
       (lambda ()
+	 (set! *weblet-autoload-dirs* dirs)
 	 (for-each (lambda (dir)
 		      (for-each maybe-autoload
 				(find-weblets-in-directory dir)))
