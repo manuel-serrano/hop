@@ -178,7 +178,7 @@ Function applications are defined as:
 
 Anonymous services are introduced by the ++service++ form:
 
-  <service> := (service [:ttl <integer>] [:tmt <integer>] [:url <string>] 
+  <service> := (service [:ttl <integer>] [:timeout <integer>] [:url <string>] 
                   (<ident>*) <expression>)
 
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Jan  3 16:36:42 2007 (serrano)                */
+;*    Last change :  Wed Jan 31 08:45:21 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -41,8 +41,8 @@
    (export  (current-request::obj)
 	    (request-get::obj ::symbol)
 	    (request->response::%http-response ::http-request)
-	    (with-url ::bstring ::procedure #!key fail (header '()))
-	    (with-remote-host ::bstring ::hop-service ::pair-nil ::procedure ::obj)
+	    (with-url ::bstring ::obj #!key fail (header '()))
+	    (with-remote-host ::bstring ::hop-service ::pair-nil ::obj ::obj)
 	    (generic with-hop-response obj proc fail)
 	    (hop-get-file::obj ::bstring)))
 
@@ -184,7 +184,7 @@
 (define hop-to-hop-id -1)
 
 ;*---------------------------------------------------------------------*/
-;*    with-url ...                                                     */
+;*    with-url  ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (with-url url success #!key fail (header '()))
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
@@ -193,8 +193,12 @@
    (with-trace 2 'with-url
       (trace-item "url=" url)
       (trace-item "header=" header)
-      (if (and (procedure? fail) (not (correct-arity? fail 2)))
-	  (error 'with-url "Illegal fail handler" fail)
+      (cond
+	 ((and (procedure? fail) (not (correct-arity? fail 2)))
+	  (error 'with-url "Illegal fail handler" fail))
+	 ((and (procedure? success) (not (correct-arity? success 1)))
+	  (error 'with-url "Illegal success handler" success))
+	 (else
 	  (multiple-value-bind (scheme userinfo host port path)
 	     (url-parse url)
 	     (let ((r (instantiate::http-request
@@ -204,10 +208,11 @@
 			 (host host)
 			 (port port)
 			 (header header)
-			 (path path))))
+			 (path path)))
+		   (suc (if (procedure? success) success (lambda (x) x))))
 		(trace-item "remote path=" path)
 		(http-send-request
-		 r (make-http-callback 'with-url r success fail)))))))
+		 r (make-http-callback 'with-url r suc fail))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    with-remote-host ...                                             */
@@ -218,23 +223,28 @@
 	     ": " url ":" (hop-service-id service) "\n")
    (with-trace 2 'with-hop
       (trace-item "url=" url " service=" (hop-service-id service))
-      (if (and (procedure? fail) (not (correct-arity? fail 2)))
-	  (error 'with-url "Illegal fail handler" fail)
+      (cond
+	 ((and (procedure? fail) (not (correct-arity? fail 2)))
+	  (error 'with-hop "Illegal fail handler" fail))
+	 ((and (procedure? success) (not (correct-arity? success 1)))
+	  (error 'with-hop "Illegal success handler" success))
+	 (else
 	  (multiple-value-bind (_ userinfo host port path)
 	     (url-parse url)
-	     (if (and (is-local? host) (=fx port (hop-port)))
-		 (with-hop-response (apply (hop-service-proc service) args)
-				    success fail)
-		 (let* ((path (apply make-hop-service-url service args))
-			(r (instantiate::http-request
-			      (id hop-to-hop-id)
-			      (userinfo userinfo)
-			      (host host)
-			      (port port)
-			      (path path))))
-		    (trace-item "remote path=" path)
-		    (http-send-request
-		     r (make-http-callback 'with-hop r success fail))))))))
+	     (let ((suc (if (procedure? success) success (lambda (x) x))))
+		(if (and (is-local? host) (=fx port (hop-port)))
+		    (with-hop-response (apply (hop-service-proc service) args)
+				       suc fail)
+		    (let* ((path (apply make-hop-service-url service args))
+			   (r (instantiate::http-request
+				 (id hop-to-hop-id)
+				 (userinfo userinfo)
+				 (host host)
+				 (port port)
+				 (path path))))
+		       (trace-item "remote path=" path)
+		       (http-send-request
+			r (make-http-callback 'with-hop r suc fail))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-response ...                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed Jan 31 06:35:51 2007 (serrano)                */
+;*    Last change :  Wed Jan 31 08:40:37 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -233,10 +233,11 @@
 			      ,svc (list ,@opts)
 			      ,(if (pair? (cddr args))
 				   (car (cddr args))
-				   raise)
-			      ,(if (pair? (cdddr args))
+				   #f)
+			      ,(if (and (pair? (cddr args))
+					(pair? (cdddr args)))
 				   (car (cdddr args))
-				   raise)))
+				   #f)))
 	  (else
 	   (error 'with-hop "Illegal service invokation" x))))))
 

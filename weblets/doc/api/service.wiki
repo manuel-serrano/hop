@@ -42,13 +42,14 @@ automatically converted into instances of this class. See the
 description of ++with-hop++ for a detailed presentation of 
 automatic coercions that take place when a service is invoked. 
 
-=== ++(service [:timeout tm] [:ttl tl] (arg<sub>0</sub> ...) body)++ ===
+=== ++(service [:timeout tm] [:ttl tl] [:url u] (arg<sub>0</sub> ...) body)++ ===
 <function> service
 
 <arguments>
 ^  arguments       ^   type       ^  short description              ^
 | :timeout         |  integer     | An optional timeout.            |
 | :ttl             |  integer     | An optional time-to-live.       |
+| :url             |  string      | An optional associated url  .   |
 | arg<sub>0</sub>  |  symbol      | the first argument identifier.  |
 | body             |  expression  | the body of the service.        |
 </arguments>
