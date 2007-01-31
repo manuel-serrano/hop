@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Jan 30 20:10:06 2007 (serrano)                */
+;*    Last change :  Wed Jan 31 05:07:02 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -92,6 +92,11 @@
 						     (lambda ()
 							(<MISC>))))
 					       (<NPTAB>
+						  (<NPTABHEAD> "Config")
+						  (<DELAY>
+						     (lambda ()
+							(<CONFIG>))))
+					       (<NPTAB>
 						  (<NPTABHEAD> "Weblets")
 						  (<DELAY>
 						     (lambda ()
@@ -143,11 +148,45 @@
 	 (<TD> :align 'left (os-arch)))))
 
 ;*---------------------------------------------------------------------*/
+;*    <CONFIG> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<CONFIG>)
+   (<TABLE>
+      :class "hop-info"
+      (<TR>
+	 (<TH> :align 'right "RC directory")
+	 (<TD> :align 'left (hop-rc-directory)))
+      (<TR>
+	 (<TH> :align 'right "RC file")
+	 (<TD> :align 'left (hop-rc-file)))
+      (<TR>
+	 (<TH> :align 'right "Default char encoding")
+	 (<TD> :align 'left (hop-char-encoding)))
+      (<TR>
+	 (<TH> :align 'right "Connection ttl")
+	 (<TD> :align 'left (hop-connection-ttl)))
+      (<TR>
+	 (<TH> :align 'right "Connection timeout")
+	 (<TD> :align 'left (hop-connection-timeout)))
+      (<TR>
+	 (<TH> :align 'right "Keep alive timeout")
+	 (<TD> :align 'left (hop-keep-alive-timeout)))
+      (<TR>
+	 (<TH> :align 'right "Remote keep alive timeout")
+	 (<TD> :align 'left (hop-remote-keep-alive-timeout)))))
+
+;*---------------------------------------------------------------------*/
 ;*    <WEBLETS> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS>)
-   (<BUTTON> :onclick ~(with-hop ($(service () (reset-autoload!))))
-      "Reset autoload table"))
+   (<DIV> :class "autoload"
+      (<BUTTON> :onclick ~(with-hop ($(service () (reset-autoload!))))
+	 "Reset autoload table")
+      (<TABLE> :class "info-autoload"
+	 (<TR> (<TH> "Autoload directories currently used"))
+	 (map (lambda (dir)
+		 (<TR> (<TD> dir)))
+	      (get-autoload-directories)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    <CACHES> ...                                                     */

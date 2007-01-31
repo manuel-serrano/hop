@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Tue Jan 30 19:58:27 2007 (serrano)                */
+;*    Last change :  Wed Jan 31 06:35:51 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -105,7 +105,8 @@
       ((?- . ?args)
        (let loop ((a args)
 		  (tmt '(hop-service-default-timeout))
-		  (ttl -1))
+		  (ttl -1)
+		  (url '(get-service-url)))
 	  (cond
 	     ((or (symbol? (car a))
 		  (and (list? (car a)) (every? symbol? (car a))))
@@ -118,7 +119,7 @@
 			 x))
 		 (else
 		  (let ((svc (expand-service
-			      '(get-service-url)
+			      url
 			      '(hop-service-weblet-wid)
 			      tmt ttl (car a) (cdr a))))
 		     (e (evepairify svc x) e)))))
@@ -129,7 +130,17 @@
 			 x)
 		  (loop (cddr a)
 			(cadr a)
-			ttl)))
+			ttl
+			url)))
+	     ((eq? (car a) :url)
+	      (if (null? (cdr a))
+		  (error 'service
+			 "Illegal service declaration (missing url)"
+			 x)
+		  (loop (cddr a)
+			tmt
+			ttl
+			(cadr a))))
 	     ((eq? (car a) :ttl)
 	      (if (null? (cdr a))
 		  (error 'service
@@ -137,7 +148,8 @@
 			 (cons 'service args))
 		  (loop (cddr a)
 			tmt
-			(cadr a))))
+			(cadr a)
+			url)))
 	     (else
 	      (error 'service "Illegal service declaration" x)))))
       (else

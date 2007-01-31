@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Jan 30 20:11:00 2007 (serrano)                */
+/*    Last change :  Wed Jan 31 05:01:52 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
@@ -204,3 +204,24 @@ div.cache-files {
 table.cache-files {
   font-size: small;
 }
+
+div.autoload {
+  min-height: 150px;
+  overflow: auto;
+  background: white;
+  width: 100%;
+}
+
+table.info-autoload {
+  margin-top: 2ex;
+  border: 1px solid $border-color;
+  width: 100%;
+  font-size: small;
+}
+
+table.info-autoload th {
+  text-align: center;
+  border-bottom: 1px solid $border-color;
+  background: #ddd;
+}
+  
