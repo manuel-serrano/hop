@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Thu Feb  1 20:23:02 2007 (serrano)                */
+#*    Last change :  Thu Feb  1 22:23:02 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -116,7 +116,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).$(SHAREDSUFFIX): \
              FORCELD=true \
              LIBDEST=$@ \
              SONAME=lib$(TARGETNAME)_e-$(HOPRELEASE).$(SHAREDSUFFIX) \
-             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS)"
+             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS) $(HOPCLOSELIBS_E)"
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a: \
