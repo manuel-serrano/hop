@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sat Jun 17 14:13:15 2006 (serrano)                */
-#*    Copyright   :  2006 Manuel Serrano                               */
+#*    Last change :  Thu Feb  1 20:17:54 2007 (serrano)                */
+#*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
 #*=====================================================================*/
@@ -60,7 +60,8 @@ include ../etc/Makefile.library
 
 build: $(BACKEND)
 
-native: heap-c lib-c
+native: heap-c 
+	$(MAKE) HOPCLOSELIBS="$(HOPCLOSELIBS) -lhop_s-$(HOPRELEASE) -lscheme2js_s-$(HOPRELEASE)" lib-c
 jvm: heap-jvm lib-jvm
 dotnet: heap-jvm lib-dotnet
 

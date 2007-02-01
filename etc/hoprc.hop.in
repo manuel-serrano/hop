@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 26 08:20:34 2006                          */
-;*    Last change :  Wed Nov  1 16:43:21 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Thu Feb  1 20:00:57 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP runtime command file.                                        */
 ;*    -------------------------------------------------------------    */
@@ -31,7 +31,7 @@
 ;; 
 ;; A user is declared with the ADD-USER! function, whose syntax is
 ;;
-;;   (add-user! "serrano"
+;;   (add-user! <USERNAME>
 ;;   	   :groups <list-of-symbols>
 ;;   	   :password <PASSWORD>
 ;;   	   :directories <list-of-string> | '*
@@ -87,3 +87,36 @@
 (hop-xml-backend-set! 'html-4.01)
 ;(hop-xml-backend-set! 'xhtml-1.0)
 
+;*---------------------------------------------------------------------*/
+;*    welcome message ...                                              */
+;*---------------------------------------------------------------------*/
+(hop-filter-add!
+ (lambda (req)
+    (if (and (string=? (http-request-path req) "/")
+	     (not (file-exists?
+		   (make-file-name (hop-rc-directory) (hop-rc-file)))))
+	(http-warning [You have reached this page because you
+have started Hop without any configuration file. At that stage, the only
+services that you are allowed to run are:
+,(<UL>
+    (<LI> (<A> :href (format "http://~a:~a/hop/doc" (hostname) (hop-port))
+	     "Doc")
+	  ":The Hop documentation weblet.")
+    (<LI> (<A> :href (format "http://~a:~a/hop/password" (hostname) (hop-port))
+	     "Password")
+	  ": The Hop key generation weblet."))]
+		      [You should fix this at once. For that you should
+generate a file named
+,(<TT> :style "color: #ff881c" (make-file-path (hop-rc-directory) ".config" (hop-rc-file))) or
+,(<TT> :style "color: #ff881c" (make-file-name (hop-rc-directory) (hop-rc-file))).
+
+,(<P>) A good starting point is probably to copy and edit the file
+,(<TT> :style "color: #4adc38" (make-file-name (hop-etc-directory) "hoprc.hop")).
+In order to create an user account, you must use an expression such as:
+
+,(<TT> (<PRE> [(add-user! ",(<I> [your-user-name])"
+   :groups '*
+   :services '*
+   :password ",(<A> :href (format "http://~a:~a/hop/password" (hostname) (hop-port)) (<I> [encrypt-the-key-here]))")]))]))))
+
+           

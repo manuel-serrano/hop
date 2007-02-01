@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Dec  6 09:59:41 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Thu Feb  1 19:59:07 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
 ;*=====================================================================*/
@@ -456,7 +456,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			     (<EIMG> :src "icons/warning.png"))
 			  (<ETD>
 			     (<TABLE> :width "100%"
-				(<TR> (<ETD> :class "title" "warning"))
+				(<TR> (<ETD> :class "title" "Warning"))
 				(<TR> (<ETD> :class "msg" msg))
 				(<TR> (<ETD> :class "dump" (or dump "")))))))))))))
 
