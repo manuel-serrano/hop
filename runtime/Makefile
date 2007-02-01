@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Feb  1 20:11:37 2007 (serrano)                */
+#*    Last change :  Thu Feb  1 20:23:53 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -23,6 +23,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME	= hop
+HOPCLOSELIBS	= $(BGLCLOSELIBS)
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */

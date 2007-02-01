@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Thu Feb  1 20:15:26 2007 (serrano)                */
+#*    Last change :  Thu Feb  1 20:23:25 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -49,7 +49,7 @@ CCFLAGS		= @CCFLAGS@
 #*---------------------------------------------------------------------*/
 #*    Linking                                                          */
 #*---------------------------------------------------------------------*/
-HOPCLOSELIBS	= -lbigloopth_s-$(RELEASE) \
+BGLCLOSELIBS	= -lbigloopth_s-$(RELEASE) \
                   -lbiglooweb_s-$(RELEASE) \
                   -lbigloomultimedia_s-$(RELEASE)
 

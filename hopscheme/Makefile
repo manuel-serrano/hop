@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Thu Feb  1 20:17:54 2007 (serrano)                */
+#*    Last change :  Thu Feb  1 20:24:45 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
@@ -24,6 +24,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME	= hopscheme
+HOPCLOSELIBS	= "$(BGLCLOSELIBS) -lhop_s-$(HOPRELEASE) -lscheme2js_s-$(HOPRELEASE)"
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
@@ -60,8 +61,8 @@ include ../etc/Makefile.library
 
 build: $(BACKEND)
 
-native: heap-c 
-	$(MAKE) HOPCLOSELIBS="$(HOPCLOSELIBS) -lhop_s-$(HOPRELEASE) -lscheme2js_s-$(HOPRELEASE)" lib-c
+native: heap-c lib-c
+	$(MAKE)  lib-c
 jvm: heap-jvm lib-jvm
 dotnet: heap-jvm lib-dotnet
 
