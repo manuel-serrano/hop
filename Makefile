@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat Oct  7 16:34:03 2006 (serrano)                */
+#*    Last change :  Fri Feb  2 07:21:05 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -78,7 +78,7 @@ install: install-quick
 	(cd share && $(MAKE) install)
 	(cd weblets && $(MAKE) install)
 
-install-quick: hop-dirs install-init etc-hoprc
+install-quick: hop-dirs install-init
 	(cd runtime && $(MAKE) install) && \
 	(cd scheme2js && $(MAKE) install) && \
 	(cd hopscheme && $(MAKE) install) && \
@@ -102,13 +102,6 @@ hop-dirs:
 	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)
 	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR)
 	mkdir -p $(DESTDIR)$(HOPETCDIR)
-
-etc-hoprc:
-	if [ -d $(DESTDIR)$(HOPETCDIR) ]; then \
-          if [ ! -f $(DESTDIR)$(HOPETCDIR)/hoprc.hop ]; then \
-            install -m a+r etc/hoprc.hop $(DESTDIR)$(HOPETCDIR); \
-          fi; \
-        fi
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
