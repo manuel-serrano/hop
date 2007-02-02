@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Fri Feb  2 06:34:26 2007 (serrano)                */
+#*    Last change :  Fri Feb  2 06:46:23 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -45,7 +45,6 @@ BDOTNETFLAGS	= @BCFLAGS@ -dotnet -dotnet-mono-workaround -dotnet-pnet-workaround
 BLDOTNETFLAGS   = @BLFLAGS@ 
 BHFLAGS		= -q -mkaddheap -mkaddlib $(EFLAGS)
 CCFLAGS		= @CCFLAGS@
-LDEXTRA		= -L$(BUILDLIBDIR)
 
 #*---------------------------------------------------------------------*/
 #*    Linking                                                          */

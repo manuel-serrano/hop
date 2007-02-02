@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jan 30 07:26:03 2007 (serrano)                */
+#*    Last change :  Fri Feb  2 06:46:38 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -31,7 +31,7 @@ bcflagsdbg="-g -O2 -cg"
 bcflagsbmem="-g2 -O2"
 bcflagsopt="-unsafe -O3"
 
-blflags="-copt \$(CPICFLAGS)"
+blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR)"
 
 mimetypes=/etc/mime.types
 jsmimetype="text/javascript"

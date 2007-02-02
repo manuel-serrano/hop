@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Nov  1 16:32:24 2006 (serrano)                */
-#*    Copyright   :  2006 Manuel Serrano                               */
+#*    Last change :  Fri Feb  2 06:57:46 2007 (serrano)                */
+#*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
