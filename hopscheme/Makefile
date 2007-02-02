@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Thu Feb  1 20:35:38 2007 (serrano)                */
+#*    Last change :  Fri Feb  2 06:32:17 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
@@ -25,6 +25,7 @@ include $(BIGLOOLIBDIR)/Makefile.config
 # the library name
 TARGETNAME	= hopscheme
 HOPCLOSELIBS	= "$(BGLCLOSELIBS) -lhop_s-$(HOPRELEASE) -lscheme2js_s-$(HOPRELEASE)"
+HOPCLOSELIBS_E	= -lhopscheme_s-$(HOPRELEASE)
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
