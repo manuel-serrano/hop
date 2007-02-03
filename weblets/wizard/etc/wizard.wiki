@@ -1,0 +1,17 @@
+<doc> WIZARD -- Wizard for account creation
+
+== Description ==
+
+[[wizard|WIZARD]] let new users create graphical simplistic Hop account. 
+
+
+== Services ==
+
+WIZARD defines one service:
+
+  - ++[[wizard]]++: This is the main entry point of the 
+ WIZARD weblet.
+
+
+</doc>
+

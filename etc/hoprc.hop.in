@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 26 08:20:34 2006                          */
-;*    Last change :  Thu Feb  1 20:00:57 2007 (serrano)                */
+;*    Last change :  Sat Feb  3 18:42:59 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP runtime command file.                                        */
@@ -53,7 +53,7 @@
 ;; It is required to define the "anonymous" user. An error will be raised
 ;; if this user is not declared when the first request is intercepted.
 (add-user! "anonymous" 
-           :services '(home doc password hz/list)
+           :services '(home doc password wizard hz/list)
 	   :directories (hop-path))
 
 (when (file-exists? (make-file-name (hop-etc-directory) "passwd.hop"))
@@ -88,35 +88,60 @@
 ;(hop-xml-backend-set! 'xhtml-1.0)
 
 ;*---------------------------------------------------------------------*/
+;*    no root ...                                                      */
+;*---------------------------------------------------------------------*/
+(when (equal? (getenv "USER") "root")
+   (error 'hop
+	  "Hop is not allowed to be executed as `root',
+Create a dedicated Hop user and run Hop on behalf of him.\n"
+	  "If you know what you are doing and want to run Hop with the
+`root' permissions, edit the Hop configuration file."))
+    
+;*---------------------------------------------------------------------*/
 ;*    welcome message ...                                              */
 ;*---------------------------------------------------------------------*/
-(hop-filter-add!
- (lambda (req)
-    (if (and (string=? (http-request-path req) "/")
-	     (not (file-exists?
-		   (make-file-name (hop-rc-directory) (hop-rc-file)))))
-	(http-warning [You have reached this page because you
-have started Hop without any configuration file. At that stage, the only
-services that you are allowed to run are:
-,(<UL>
-    (<LI> (<A> :href (format "http://~a:~a/hop/doc" (hostname) (hop-port))
-	     "Doc")
-	  ":The Hop documentation weblet.")
-    (<LI> (<A> :href (format "http://~a:~a/hop/password" (hostname) (hop-port))
-	     "Password")
-	  ": The Hop key generation weblet."))]
-		      [You should fix this at once. For that you should
-generate a file named
-,(<TT> :style "color: #ff881c" (make-file-path (hop-rc-directory) ".config" (hop-rc-file))) or
-,(<TT> :style "color: #ff881c" (make-file-name (hop-rc-directory) (hop-rc-file))).
+;; only install the welcome message is the configuration file does not exist
+(unless (file-exists? (make-file-name (hop-rc-directory) (hop-rc-file)))
+   (hop-filter-add!
+    (lambda (req)
+       (if (and (string=? (http-request-path req) "/")
+		(not (file-exists?
+		      (make-file-name (hop-rc-directory) (hop-rc-file)))))
+	   (http-warning [You have reached this page because you
+have started Hop without any configuration file and without any user
+account. At that stage, the only services that you are allowed to run are:
+the Hop
+,(<A> :href (format "http://~a:~a/hop/wizard" (hostname) (hop-port))
+   "wizard"),
+the Hop
+,(<A> :href (format "http://~a:~a/hop/doc" (hostname) (hop-port))
+   "documentation")
+application, and the Hop passwords
+,(<A> :href (format "http://~a:~a/hop/password" (hostname) (hop-port))
+   "encryption")
+weblet.
 
-,(<P>) A good starting point is probably to copy and edit the file
-,(<TT> :style "color: #4adc38" (make-file-name (hop-etc-directory) "hoprc.hop")).
-In order to create an user account, you must use an expression such as:
+,(<P>)
+You must fix that in order to be able to use Hop. New comers are
+encouraged to use the Hop
+,(<A> :href (format "http://~a:~a/hop/wizard" (hostname) (hop-port))
+    "wizard") for creating a simple Hop configuration file.]
+		      
+		      [
+Alternatively, for those that feel more confident, you can generate
+the configuration file by hand. The Hop
+,(<A> :href (format "http://~a:~a/hop/doc" (hostname) (hop-port))
+"documentation") teaches how to proceed.
+,(<P>)
+A good starting point is probably to copy the file
+,(<BR>)
+,(<TT> :style "color: #4adc38"
+   (make-file-name (hop-etc-directory) "hoprc.hop"))
+,(<BR>)
+to
+,(<BR>)
+,(<TT> :style "color: #ff881c"
+    (make-file-path (hop-rc-directory) "hop" ".config" (hop-rc-file)))
+,(<BR>)
+and customize it for your own needs.])))))
 
-,(<TT> (<PRE> [(add-user! ",(<I> [your-user-name])"
-   :groups '*
-   :services '*
-   :password ",(<A> :href (format "http://~a:~a/hop/password" (hostname) (hop-port)) (<I> [encrypt-the-key-here]))")]))]))))
-
-           

@@ -1,0 +1,134 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/wizard/wizard.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 24 13:57:44 2005                          */
+/*    Last change :  Sat Feb  3 19:33:50 2007 (serrano)                */
+/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    history simple CSS                                               */
+/*=====================================================================*/
+
+$(define border-color "#bbb")
+
+body {
+  background: #e0e0e0;
+  font-family: arial;
+}
+
+table.wizard {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  -moz-border-radius: 0.5em;
+}
+
+table.wizard img {
+  padding: 20px;
+}
+
+table.wizard td#user-name {
+  font-weight: bold;
+}
+
+table.wizard td {
+  font-weight: bold;
+}
+
+div#title {
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+
+div#result {
+  text-align: center;
+  width: 30em;
+  font-weight: bold;
+  font-size: large;
+  color: red;
+  border-top: 1px solid $border-color;
+  margin-top: 10px;
+  padding-top: 10px;
+}  
+
+table td {
+  vertical-align: top;
+  text-align: left;
+}
+
+input, button {
+  border-width: 1px;
+}
+  
+/*---------------------------------------------------------------------*/
+/*    wizard                                                           */
+/*---------------------------------------------------------------------*/
+table.wizard-user {
+  border: 1px solid $border-color;
+  background: #ffe;
+  padding: 5px;
+  -moz-border-radius: 0.5em;
+  margin-bottom: 2ex;
+}
+
+table.wizard-admin th {
+  color: #f00;
+}
+
+table.wizard-regular th {
+  color: rgb(241,180,14);
+}
+
+table.wizard-guest th {
+  color: #0e0;
+}
+
+table.wizard-user th {
+  border-bottom: 1px solid $border-color;
+}
+
+table.wizard-user td.comment {
+  width: 45em;
+  color: #558;
+  font-weight: 90%;
+  font-size: 90%;
+  
+}
+
+table.wizard-user img {
+  padding: 5px;
+}
+
+table.wizard-user-body {
+  font-size: 90%;
+}
+
+table.wizard-user-body input[type=password], 
+table.wizard-user-body input[type=text] {
+  border: 0;
+  border-bottom: 1px dotted $border-color;
+  color: blue;
+}
+
+table.wizard-user-body input.required {
+  border-color: red;
+  color: red;
+}
+
+table.wizard-user-body input.optional {
+  border-color: $border-color;
+}
+
+table.wizard tr.buttons td {
+  text-align: center;
+}
+
+div.message {
+  padding-top: 1ex;
+  color: red;
+  text-align: center;
+}

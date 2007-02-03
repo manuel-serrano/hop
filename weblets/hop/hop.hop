@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue Jan 30 19:51:38 2007 (serrano)                */
+;*    Last change :  Fri Feb  2 15:37:06 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -24,7 +24,7 @@
       (hashtable-put! t "home" #t)
       (for-each (lambda (w) (hashtable-put! t w #t)) (hop-builtin-weblets))
       (set! *weblets-table* t))
-   (let* ((len 7) (width (format "~a%" (/ 100. len))))
+   (let* ((len 8) (width (format "~a%" (/ 100. len))))
       (<HOP>
 	 (<TABLE>
 	    :class "directory"

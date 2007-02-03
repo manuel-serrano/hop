@@ -1,0 +1,286 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/wizard/wizard.hop               */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Sat Feb  3 19:35:43 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP account creation wizard                                      */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_wizard)
+
+;*---------------------------------------------------------------------*/
+;*    hoprc-dir ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hoprc-dir
+   (make-file-path (getenv "HOME") ".config" "hop"))
+   
+;*---------------------------------------------------------------------*/
+;*    wizard ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-service (wizard)
+   (<HTML>
+      (<HEAD>
+	 :title "Hop Wizard"
+	 :base (service-base-url wizard (current-request))
+	 :include "md5" "hop-fileselect" "hop-iwindow" "hop-tree" "hop-notepad"
+	 :css "wizard.hss")
+      (<BODY>
+	 ~(define (crypt na pd)
+	     (let* ((str (string-append na " " pd)))
+		(hex_md5 str)))
+	 ~(define exprs '())
+	 ~(define (require id value)
+	     (let ((el (dom-get-element-by-id document id)))
+		(if (string=? value "")
+		    (set! el.className "optional")
+		    (set! el.className "required"))))
+	 ~(define (save-accounts)
+	     (let* ((status (dom-get-element-by-id document "status"))
+		    (message (dom-get-element-by-id document "message"))
+		    (msg (dom-get-element-by-id document "message"))
+		    (apasswd (dom-get-element-by-id document "apasswd").value)
+		    (uname (dom-get-element-by-id document "uname").value)
+		    (upasswd (dom-get-element-by-id document "upasswd").value)
+		    (gname (dom-get-element-by-id document "gname").value)
+		    (gpasswd (dom-get-element-by-id document "gpasswd").value)
+		    (cadmin (crypt "admin" apasswd))
+		    (cuser (if (and (> (string-length uname) 0)
+				    (> (string-length upasswd) 0))
+			       (crypt uname upasswd)
+			       #f))
+		    (cguest (if (and (> (string-length gname) 0)
+				     (> (string-length gpasswd) 0))
+				(crypt uname upasswd)
+				#f)))
+		(cond
+		   ((string=? apasswd "")
+		    (alert "Missing password for `admin' user!"))
+		   ((and (not (string=? uname "")) (string=? upasswd ""))
+		    (alert "Missing password for `regular' user!"))
+		   ((and (not (string=? gname "")) (string=? gpasswd ""))
+		    (alert "Missing password for `regular' user!"))
+		   (else
+		    (with-hop ($wizard/save #f cadmin uname cuser gname cguest)
+		       (lambda (h)
+			  (case (string->symbol (car h))
+			     ((query)
+			      (let ((msg (string-append
+					  "The file `" (cadr h)
+					  "' alread exists. Overide it ?")))
+				 (if (confirm msg)
+				     (with-hop ($wizard/save #t cadmin uname cuser gname cguest)
+					(lambda (h)
+					   (set! status.innerHTML (cadr h))
+					   (set! message.innerHTML
+						 (if (pair? (cddr h))
+						     (caddr h)
+						     ""))))
+				     (begin
+					(set! status.innerHTML "Nothing saved")
+					(set! message.innerHTML "")))))
+			     (else
+			      (set! status.innerHTML (cadr h))
+			      (if (pair? (cddr h))
+				  (set! message.innerHTML (caddr h))
+				  (set! message.innerHTML ""))))))))))
+	 (<DIV> :align "center"
+	    (<TABLE> :class "wizard" 
+	       (<TR>
+		  (<TD>
+		     (<IMG> :src "etc/logo.png"))
+		  (<TD>
+		     (<TABLE>
+			(<TR>
+			   (<TD> :colspan 2
+			      (<DIV> :id "title" "Hop Wizard")))
+			(<TR>
+			   (<TD> :colspan 2
+			      (<ADMIN-USER>)))
+			(<TR>
+			   (<TD> :colspan 2
+			      (<PLAIN-USER>)))
+			(<TR>
+			   (<TD> :colspan 2
+			      (<GUEST-USER>)))
+			(<TR> 
+			   (<TD> :colspan 2
+			      (<BUTTON>
+				 "Create accounts"
+				 :onclick ~(save-accounts))
+			      " "
+			      (<SPAN> :id "status" "")))
+			(<TR>
+			   (<TD> :colspan 2
+			      (<DIV> :class "message"
+				 :id "message" ""))))))))
+	 (<FOOT>))))
+
+;*---------------------------------------------------------------------*/
+;*    <ADMIN-USER> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<ADMIN-USER>)
+   (<TABLE> :class "wizard-user wizard-admin"
+      (<TR> (<TD> (<IMG> :src (make-file-name "etc" "admin.png")))
+	    (<TD> (<TABLE>
+		     (<TR> (<TH> "Admin"))
+		     (<TR> (<TD> (<TABLE> :class "wizard-user-body"
+				    (<TR>
+				       (<TD> "password")
+				       (<TD> ":")
+				       (<TD> (<INPUT> :type 'password
+						:class "required"
+						:id "apasswd"
+						:size 20))))))
+		     (<TR> (<TD> :class "comment"
+			      [This user is granted administration permissions.
+He may install/uninstall softwares. He may add/delete users. Etc.])))))))
+
+;*---------------------------------------------------------------------*/
+;*    <PLAIN-USER> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<PLAIN-USER>)
+   (<TABLE> :class "wizard-user wizard-regular"
+      (<TR> (<TD> (<IMG> :src (make-file-name "etc" "user.png")))
+	    (<TD> (<TABLE>
+		     (<TR> (<TH> "Regular User"))
+		     (<TR> (<TD> (<TABLE> :class "wizard-user-body"
+				    (<TR>
+				       (<TD> "name")
+				       (<TD> ":")
+				       (<TD> (<INPUT> :type 'text
+						:class "optional"
+						:onkeypress
+						~(require "upasswd" this.value)
+						:id "uname"
+						:size 40)))
+				    (<TR>
+				       (<TD> "password")
+				       (<TD> ":")
+				       (<TD> (<INPUT> :type 'password
+						:class "optional"
+						:id "upasswd"
+						:size 20))))))
+		     (<TR> (<TD> :class "comment"
+			      [This user is the regular user, that is the
+user that executes most Hop weblets. It can access the entire disk system.
+The regular user is likely to be the owner of the Hop process.])))))))
+
+;*---------------------------------------------------------------------*/
+;*    <GUEST-USER> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<GUEST-USER>)
+   (<TABLE> :class "wizard-user wizard-guest"
+      (<TR> (<TD> (<IMG> :src (make-file-name "etc" "guest.png")))
+	    (<TD> (<TABLE>
+		     (<TR> (<TH> "Guests"))
+		     (<TR> (<TD> (<TABLE> :class "wizard-user-body"
+				    (<TR>
+				       (<TD> "name")
+				       (<TD> ":")
+				       (<TD> (<INPUT> :type 'text
+						:class "optional"
+						:id "gname"
+						~(require "gpasswd" this.value)
+						:value ""
+						:size 40)))
+				    (<TR>
+				       (<TD> "password")
+				       (<TD> ":")
+				       (<TD> (<INPUT> :type 'password
+						:class "optional"
+						:id "gpasswd"
+						:size 20))))))
+		     (<TR> (<TD> :class "comment"
+			      [This account is used for guest users. Guests
+can only access the directory ,(<TT> "guest") of the Hop RC directory.])))))))
+
+;*---------------------------------------------------------------------*/
+;*    wizard/documentation ...                                         */
+;*---------------------------------------------------------------------*/
+(define-service (wizard/documentation)
+   (let* ((file (service-resource wizard/documentation "etc/wizard.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
+
+;*---------------------------------------------------------------------*/
+;*    wizard/save ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (wizard/save force apasswd uname upasswd gname gpasswd)
+   (let* ((home (getenv "HOME"))
+	  (rc (make-file-name (hoprc-dir) (hop-rc-file)))
+	  (wd (make-file-name (hoprc-dir) "wizard.hop")))
+      (cond
+	 (force
+	  (save (hoprc-dir) rc wd apasswd uname upasswd gname gpasswd))
+	 ((file-exists? (hoprc-dir))
+	  (list 'query (format "File exists ~a" (hoprc-dir))))
+	 ((file-exists? rc)
+	  (list 'query (format "File exists ~a" rc)))
+	 ((file-exists? wd)
+	  (list 'query (format "File exists ~a" wd)))
+	 (else
+	  (save (hoprc-dir) rc wd apasswd uname upasswd gname gpasswd)))))
+
+;*---------------------------------------------------------------------*/
+;*    save ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (save rcdir rcfile passwdfile apasswd uname upasswd gname gpasswd)
+   (unless (and (file-exists? rcdir) (directory? rcdir))
+      (make-directories rcdir))
+   (with-output-to-file rcfile
+      (lambda ()
+	 (print ";; generated file, Hop Wizard " (current-date))
+	 (print ";; default rc file")
+	 (write '(let ((path (make-file-name (hop-etc-directory) "hoprc.hop")))
+		    (when (file-exists? path) (hop-load path))))
+	 (print ";; wizard file")
+	 (write `(hop-load-rc ,(basename passwdfile)))
+	 (newline)))
+   (let ((accounts "admin"))
+      (with-output-to-file passwdfile
+	 (lambda ()
+	    (print ";; generated file, Hop Wizard " (current-date))
+	    (print ";; anonymous user")
+	    (write `(add-user! "anonymous"))
+	    (newline)
+	    (print ";; admin")
+	    (write `(add-user! "admin"
+			       :groups '(admin exec)
+			       :password ,apasswd
+			       :directories '*
+			       :services '*))
+	    (newline)
+	    (when (string? upasswd)
+	       (print ";; " uname)
+	       (set! accounts (string-append "admin, " uname))
+	       (write `(add-user! ,uname
+				  :groups '(exec)
+				  :password ,upasswd
+				  :directories '*
+				  :services '*))
+	       (newline))
+	    (when (string? gpasswd)
+	       (print ";; " gname)
+	       (set! accounts (string-append accounts ", " gname))
+	       (write `(add-user! ,gname
+				  :groups '(guest)
+				  :password ,gpasswd
+				  :directories (cons*
+						(make-file-name
+						 (hop-rc-directory)
+						 "guest")
+						(hop-path))))
+	       (newline))))
+      (list 'save
+	    (format "Accounts for ~a saved in ~a." accounts passwdfile)
+	    "You must now restart Hop!")))
+
+
