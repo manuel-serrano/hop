@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Jan  3 16:39:23 2007 (serrano)                */
+;*    Last change :  Sun Feb  4 16:27:15 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -202,13 +202,23 @@
       (flush-output-port port)))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-proxy-ip-allowed? ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hop-proxy-ip-allowed? req)
+   (or (not (hop-proxy-ip-mask))
+       (with-access::http-request req (socket)
+	  (let ((ip (ipv4->elong (socket-host-address socket))))
+	     (=elong (bit-andelong ip (hop-proxy-ip-mask-word)) ip)))))
+
+;*---------------------------------------------------------------------*/
 ;*    proxy authentication ...                                         */
 ;*---------------------------------------------------------------------*/
 (hop-http-response-remote-hook-add!
  (lambda (req resp)
     (cond
-       ((and (not (hop-proxy-allow-remote-client))
-	     (not (http-request-localclientp req)))
+       ((and (not (http-request-localclientp req))
+	     (or (not (hop-proxy-allow-remote-client))
+		 (not (hop-proxy-ip-allowed? req))))
 	(instantiate::http-response-abort
 	   (request req)))
        ((and (http-request-localclientp req)

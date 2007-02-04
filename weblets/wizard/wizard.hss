@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Feb  3 19:33:50 2007 (serrano)                */
+/*    Last change :  Sun Feb  4 10:03:23 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    history simple CSS                                               */
@@ -32,9 +32,9 @@ table.wizard td#user-name {
   font-weight: bold;
 }
 
-table.wizard td {
-  font-weight: bold;
-}
+/* table.wizard td {                                                   */
+/*   font-weight: bold;                                                */
+/* }                                                                   */
 
 div#title {
   font-size: x-large;
@@ -44,17 +44,6 @@ div#title {
   padding-bottom: 1px;
 }
 
-div#result {
-  text-align: center;
-  width: 30em;
-  font-weight: bold;
-  font-size: large;
-  color: red;
-  border-top: 1px solid $border-color;
-  margin-top: 10px;
-  padding-top: 10px;
-}  
-
 table td {
   vertical-align: top;
   text-align: left;
@@ -63,7 +52,7 @@ table td {
 input, button {
   border-width: 1px;
 }
-  
+
 /*---------------------------------------------------------------------*/
 /*    wizard                                                           */
 /*---------------------------------------------------------------------*/
@@ -72,7 +61,8 @@ table.wizard-user {
   background: #ffe;
   padding: 5px;
   -moz-border-radius: 0.5em;
-  margin-bottom: 2ex;
+  margin-bottom: 1ex;
+  width: 53em;
 }
 
 table.wizard-admin th {
@@ -92,11 +82,9 @@ table.wizard-user th {
 }
 
 table.wizard-user td.comment {
-  width: 45em;
   color: #558;
-  font-weight: 90%;
-  font-size: 90%;
-  
+  font-size: 95%;
+
 }
 
 table.wizard-user img {
@@ -107,16 +95,23 @@ table.wizard-user-body {
   font-size: 90%;
 }
 
-table.wizard-user-body input[type=password], 
-table.wizard-user-body input[type=text] {
+input[type=password], input[type=text] {
   border: 0;
   border-bottom: 1px dotted $border-color;
   color: blue;
 }
 
+table.wizard-proxy input[type=checkbox] {
+  border: 1px;
+}
+
 table.wizard-user-body input.required {
   border-color: red;
   color: red;
+}
+
+td.legend {
+  font-weight: bold;
 }
 
 table.wizard-user-body input.optional {
@@ -131,4 +126,19 @@ div.message {
   padding-top: 1ex;
   color: red;
   text-align: center;
+  font-weight: bold;
+}
+
+table.wizard-internet {
+  width: 100%;
+  font-size: 90%;
+}
+
+table.wizard-proxy {
+  width: 100%;
+  font-size: 90%;
+}
+
+span.head {
+  font-weight: bold;
 }

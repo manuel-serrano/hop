@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Jan 31 13:16:58 2007 (serrano)                */
+;*    Last change :  Sun Feb  4 17:57:16 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -39,6 +39,7 @@
 	   (delete-path ::bstring)
 	   (make-url-name::bstring ::bstring ::bstring)
 	   (make-client-socket/timeout ::bstring ::int ::int ::obj ::bool)
+	   (ipv4->elong::elong ::bstring)
 	   (inline micro-seconds::int ::int)
 	   (inline input-timeout-set! ::input-port ::int)
 	   (inline output-timeout-set! ::output-port ::int)))
@@ -343,6 +344,44 @@
 	    (if (number? res)
 		(loop res)
 		res)))))
+
+;*---------------------------------------------------------------------*/
+;*    iter ...                                                         */
+;*---------------------------------------------------------------------*/
+(define-macro (iter loop v iinit rest)
+   `(let ,loop ((i ,iinit)
+		(,v 0))
+	 (let ((c (string-ref ipv4 i)))
+	    (if (char=? c #\.)
+		,rest
+		(,loop (+fx i 1) (+fx (*fx ,v 10) (char->byte c)))))))
+
+;*---------------------------------------------------------------------*/
+;*    ipv4->elong ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    This function assumes a well formed IPv4 address.                */
+;*---------------------------------------------------------------------*/
+(define (ipv4->elong::elong ipv4::bstring)
+   (define (char->byte c)
+      (-fx (char->integer c) (char->integer #\0)))
+   (define (word v0 v1 v2 v3)
+      (bit-orelong
+       (bit-lshelong (fixnum->elong v0) 24)
+       (bit-orelong (bit-lshelong (fixnum->elong v1) 16)
+		    (bit-orelong (bit-lshelong (fixnum->elong v2) 8)
+				 (fixnum->elong v3)))))
+   (let ((len (string-length ipv4)))
+      (iter loop0 v0 0
+	    (iter loop1 v1 (+fx i 1)
+		  (iter loop2 v2 (+fx i 1)
+			(let loop3 ((i (+fx i 1))
+				    (v3 0))
+			   (if (=fx i len)
+			       (word v0 v1 v2 v3)
+			       (loop3 (+fx i 1)
+				      (+fx (*fx v3 10)
+					   (char->byte
+					    (string-ref ipv4 i)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    micro-seconds ...                                                */
