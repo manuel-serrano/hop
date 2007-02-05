@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Feb  5 06:05:50 2007 (serrano)                */
+#*    Last change :  Mon Feb  5 06:10:27 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -217,9 +217,9 @@ distrib_sans_version:
           fi; \
           if [ "$$devel " = " " ]; then \
             distrib=$$version; \
-            min=; \
+            minor=; \
           else \
-            distrib=$$version-$$devel$$min; \
+            distrib=$$version-$$devel$$minor; \
           fi; \
           (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
 	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
