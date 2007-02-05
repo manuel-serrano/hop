@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Aug  4 09:51:12 2006 (serrano)                */
-/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    Last change :  Mon Feb  5 13:47:06 2007 (serrano)                */
+/*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -275,7 +275,7 @@ iframe.hz {
 div.hop-tab {
   background: white;
   background-repeat: no-repeat;
-  background-position: 50% 50px;
+  background-position: 50% 250px;
   background-image: url( "etc/icons/logo-bg-128x128.png" );
   min-width: 200px;
   min-height: 200px;
@@ -342,6 +342,45 @@ span.icon {
 /*---------------------------------------------------------------------*/
 /*    Download                                                         */
 /*---------------------------------------------------------------------*/
+div.os-download {
+  width: 100%;
+  padding-top: 0.5ex;
+}
+
+div.download-header {
+  text-decoration: underline;
+  font-weight: bold;
+  padding-bottom: 1ex;
+}
+
+table.os-download {
+  font-size: small;
+  -moz-border-radius: 0.5em;
+  border: 1px solid $border-color;
+  padding-right: 2em;
+}
+
+table.os-download-stable {
+  width: 50em;
+  background: #daffbd;
+  margin-bottom: 5ex;
+}
+
+table.os-download-unstable {
+  width: 35em;
+  background: #ffe;
+  margin-bottom: 2ex;
+}
+
+table.os-download td.type {
+  padding-left: 2em;
+  padding-right: 0.5em;
+}
+
+table.os-download th {
+  text-align: left;
+}
+
 table.download {
   font-size: small;
 }

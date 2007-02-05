@@ -1,16 +1,59 @@
 == Getting Hop ==
 
+,(<DIV> :class "os-download" :align 'center
+  (<DIV> :class "download-header" "Stable versions")
+  (<TABLE>
+     :class "os-download os-download-stable"
+     (<COLGROUP> 
+        (<COL>)
+        (<COL> :width "20%")
+        (<COL>)
+        (<COL> :width "20%")
+        (<COL>)
+        (<COL> :width "20%"))
+     (<TR> 
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :src
+             (make-file-path (home-dir) "etc" "icons" "linux.png")))
+        (<TH> "Linux")
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :src
+             (make-file-path (home-dir) "etc" "icons" "macos.png")))
+        (<TH> "MacOS X")
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :src 
+             (make-file-path (home-dir) "etc" "icons" "windows.png")))
+        (<TH> "Windows"))
+     (<TR> 
+         (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
+         (<TD> (<A> :href *stable-jar-url* *stable-jar*))
+         (<TD> (<A> :href *stable-jar-url* *stable-jar*)))))
+
+,(<DIV> :class "os-download" :align 'center
+  (<DIV> :class "download-header" "Unstable versions")
+  (<TABLE>
+     :class "os-download os-download-unstable"
+     (<COLGROUP> 
+        (<COL>)
+        (<COL> :width "50%")
+        (<COL>)
+        (<COL> :width "50%"))
+     (<TR> 
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :src
+             (make-file-path (home-dir) "etc" "icons" "package.png")))
+        (<TH> "Source")
+        (<TD> :rowspan 2 :class "type"
+           (<IMG> :src 
+             (make-file-path (home-dir) "etc" "icons" "java.png")))
+        (<TH> "Pre-compiled JVM"))
+     (<TR> 
+         (<TD> (<A> :href *devel-tar-url* *devel-tar-gz*))
+         (<TD> (<A> :href *devel-jar-url* *devel-jar*)))))
+
+
 ,(<TABLE>
    :class "download"
-   (<TR> (<TH> [The latest ,(<SPAN> :class "stable" "stable") version is:])
-         (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*)))
-   (<TR> (<TH> [The latest ,(<SPAN> :class "unstable" "unstable") version is:])
-         (<TD> (<A> :href *devel-tar-url* *devel-tar-gz*)))
-   (<TR> :colspan 2 (<TD> "&nbsp;"))
-   (<TR> (<TH> [Pre-compiled ,(<SPAN> :class "stable" "stable") JVM bytecodes:])
-         (<TD> (<A> :href *stable-jar-url* *stable-jar*)))
-   (<TR> (<TH> [Pre-compiled ,(<SPAN> :class "unstable" "unstable") JVM bytecodes:])
-         (<TD> (<A> :href *devel-jar-url* *devel-jar*)))
    (<TR> :colspan 2 (<TD> "&nbsp;"))
    (<TR> (<TH> [Older versions may be download by ,(<SPAN> :class "old" "ftp") at:])
          (<TD> (<A> :href (home-ftp-hop-url) (home-ftp-hop-url)))))
