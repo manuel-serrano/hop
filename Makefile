@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Feb  2 07:21:05 2007 (serrano)                */
+#*    Last change :  Mon Feb  5 06:05:50 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -178,6 +178,49 @@ distrib:
           echo "major=$$version" > .hoprelease; \
           echo "state=$$devel" >> .hoprelease; \
           echo "minor=$$min" >> .hoprelease; \
+          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
+	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
+          $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
+          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
+          tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
+          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
+          if [ $(HOPDISTRIBDIR) != "." ]; then \
+            if [ $(HOPDISTRIBDIR) != "" ]; then \
+              /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
+              mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
+            fi \
+          fi; \
+	  echo "Building hop-$(HOPRELEASE).jar..."; \
+          $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
+          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
+          (cd $(HOPTMPDIR)/hop-$$distrib && \
+           ./configure --backend=jvm && \
+           $(MAKE) && \
+           /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.jar && \
+           mv bin/hop.jar $(HOPDISTRIBDIR)/hop-$$distrib.jar) && \
+          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
+        fi
+
+# build a distribution without incrementing the version number
+distrib_sans_version:
+	if [ -f $(HOPTMPDIR)/hop ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop exists!"; \
+          exit 1; \
+        elif [ -f $(HOPTMPDIR)/hop$(HOPRELEASE) ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop$(HOPRELEASE) exists!"; \
+          exit 1; \
+        else \
+          version=$(HOPRELEASE); \
+          devel=$(HOPDEVEL); \
+          if [ -f .hoprelease ]; then \
+             . .hoprelease; \
+          fi; \
+          if [ "$$devel " = " " ]; then \
+            distrib=$$version; \
+            min=; \
+          else \
+            distrib=$$version-$$devel$$min; \
+          fi; \
           (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
 	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
           $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
