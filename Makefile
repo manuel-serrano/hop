@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Feb  5 06:10:27 2007 (serrano)                */
+#*    Last change :  Mon Feb  5 13:48:19 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -202,7 +202,7 @@ distrib:
         fi
 
 # build a distribution without incrementing the version number
-distrib_sans_version:
+distrib-sans-version:
 	if [ -f $(HOPTMPDIR)/hop ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop exists!"; \
           exit 1; \
