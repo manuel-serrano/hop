@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Fri Feb  2 15:37:06 2007 (serrano)                */
+;*    Last change :  Tue Feb  6 13:50:10 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -26,8 +26,10 @@
       (set! *weblets-table* t))
    (let* ((len 8) (width (format "~a%" (/ 100. len))))
       (<HOP>
-	 (<TABLE>
+	 (<TABLE> 
 	    :class "directory"
+	    (<COLGROUP>
+	       (<COL> :span len :width width))
 	    (<TR> (<TH> :class "title" "Builtin Weblets"))
 	    (<TR> (<TD> :align "left"
 		     (<TABLE> :class "weblets"
