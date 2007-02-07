@@ -54,9 +54,15 @@
 
 ,(<TABLE>
    :class "download"
-   (<TR> :colspan 2 (<TD> "&nbsp;"))
-   (<TR> (<TH> [Older versions may be download by ,(<SPAN> :class "old" "ftp") at:])
-         (<TD> (<A> :href (home-ftp-hop-url) (home-ftp-hop-url)))))
+   (<TR> (<TD> "&nbsp;"))
+   (<TR> (<TH> [Older versions may be download by ,(<SPAN> :class "old" "ftp") at:]
+         (<A> :href (home-ftp-hop-url) (home-ftp-hop-url))))
+   (<TR> (<TD> "&nbsp;"))
+   (<TR> (<TD> 
+[Linux users ,(<B> "should") prefer the native version built
+from the source code to the pre-compiled JVM version because it gives 
+much better performance. On Linux, the JVM version should only be considered
+for quick Hop experiments.])))
 
 == Getting Bigloo ==
 
