@@ -68,7 +68,7 @@ for quick Hop experiments.])))
 
 In order to install HOP from the source (for significantly improving
 performance), the ,(<A> :href (home-bigloo-url) "Bigloo") compiler has
-first to be installed. Bigloo version 2.8 or higher is required for
+first to be installed. Bigloo version 2.9 or higher is required for
 compiling HOP.
 
 ~~ Bigloo versions may be downloaded
