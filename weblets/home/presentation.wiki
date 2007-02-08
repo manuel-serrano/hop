@@ -39,10 +39,8 @@ with [[http://www.w3c.org|W3C]] and
 are operational with [[http://www.mozilla.com/|Firefox]],
 [[http://www.mozilla.com/|Mozilla]],
 [[http://www.apple.com/macosx/features/safari|Safari]],
-[[http://www.konqueror.org|Konqueror]], and
-[[http://www.opera.com|Opera]]. On the other hand, they cannot be
-visualized with Internet Explorer version 5 and 6. We hope that IE
-version 7 will improve the situation.
+[[http://www.konqueror.org|Konqueror]], 
+[[http://www.opera.com|Opera]], and IE 7.
 
 
 == Requirement ==
