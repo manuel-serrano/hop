@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Jan  5 08:54:10 2007 (serrano)                */
+;*    Last change :  Thu Feb  8 09:00:46 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -594,7 +594,9 @@
 			     "")
 			  (let ((e (eval (hop-read (current-input-port)))))
 			     (values e e))))))
-		((=fx (string-index s #\:) -1)
+		((or (=fx (string-length s) 0)
+		     (and (not (char=? (string-ref s 0) #\/))
+			  (string-index s #\:) -1))
 		 (values (string-append "#" s) s))
 		(else
 		 (values s s))))
