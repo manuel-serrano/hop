@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Feb  1 19:59:07 2007 (serrano)                */
+;*    Last change :  Fri Feb 16 07:51:32 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -502,7 +502,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 						 "icons/error.png")))
 			     (<ETD>
 				(<TABLE> :width "100%"
-				   (<TR> (<ETD> :class "title" "An error occured while talking with a remote host"))
+				   (<TR> (<ETD> :class "title" "An error occured while talking to a remote host"))
 				   (<TR> (<ETD> :class "msg" host))
 				   (<TR> (<ETD> :class "dump"
 					    (<PRE> (html-string-encode s)))))))))))))))
