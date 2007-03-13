@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Fri Jul 28 16:33:44 2006 (serrano)                */
-#*    Copyright   :  2006 Manuel Serrano                               */
+#*    Last change :  Tue Mar 13 15:16:03 2007 (serrano)                */
+#*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
 #*=====================================================================*/
@@ -24,6 +24,8 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME	= scheme2js
+HOPCLOSELIBS	= $(BGLCLOSELIBS)
+HOPCLOSELIBS_E	= -lscheme2js_s-$(HOPRELEASE)
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
