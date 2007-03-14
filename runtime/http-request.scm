@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Nov 18 15:15:37 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Wed Mar 14 10:26:13 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -42,9 +42,10 @@
 ;*    http-parse-request ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-request sock id timeout)
-   (let ((port (socket-input sock)))
+   (let ((port (socket-input sock))
+	 (out (socket-output sock)))
       (input-timeout-set! port timeout)
-      (let* ((req (read/rp request-line-grammar port id))
+      (let* ((req (read/rp request-line-grammar port id out))
 	     (localc (string=? (socket-local-address sock)
 			       (socket-host-address sock)))
 	     (localh (or (not (hop-enable-proxing))
@@ -71,19 +72,20 @@
 (define request-line-grammar
    (regular-grammar ((SP #\Space)
 		     (CRLF "\r\n")
-		     id)
+		     id
+		     out)
       ((: "GET" SP)
-       (http-parse-method-request 'GET (the-port) id))
+       (http-parse-method-request 'GET (the-port) out id))
       ((: "HOP" SP)
-       (http-parse-method-request 'HOP (the-port) id))
+       (http-parse-method-request 'HOP (the-port) out id))
       ((: "HEAD" SP)
-       (http-parse-method-request 'HEAD (the-port) id))
+       (http-parse-method-request 'HEAD (the-port) out id))
       ((: "POST" SP)
-       (http-parse-method-request 'POST (the-port) id))
+       (http-parse-method-request 'POST (the-port) out id))
       ((: "PUT" SP)
-       (http-parse-method-request 'PUT (the-port) id))
+       (http-parse-method-request 'PUT (the-port) out id))
       ((: "TRACE" SP)
-       (http-parse-method-request 'TRACE (the-port) id))
+       (http-parse-method-request 'TRACE (the-port) out id))
       ((: (+ (in ("AZaz"))) SP)
        (raise (instantiate::&hop-method-error
 		 (proc 'request-line-grammar)
@@ -95,7 +97,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-method-request ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (http-parse-method-request method pi::input-port id)
+(define (http-parse-method-request method pi::input-port po::output-port id)
    (with-trace 3 'http-parse-request
       (let (scheme hostname port abspath http-version userinfo)
 	 (let ((pi2 (if (or #t (>=fx (bigloo-debug) 3))
@@ -118,7 +120,7 @@
 	       (if (input-string-port? pi2)
 		   (close-input-port pi2))))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
-	    (http-read-header pi)
+	    (http-read-header pi po)
 	    (let ((cabspath (http-file-name-canonicalize! abspath))
 		  (connection (or co
 				  (if (string<? http-version "HTTP/1.1")

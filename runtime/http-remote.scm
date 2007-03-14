@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Wed Nov  8 13:05:24 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Wed Mar 14 10:32:11 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
 ;*=====================================================================*/
@@ -151,7 +151,7 @@
 	       (multiple-value-bind (http-version status-code phrase)
 		  (http-parse-status-line ip)
 		  (multiple-value-bind (header _1 _2 cl te _3 _4 connection)
-		     (http-read-header ip)
+		     (http-read-header ip (connection-output remote))
 		     ;; WARNING: phrase contains its terminal \r\n hence
 		     ;; it must be displayed with regular scheme writer,
 		     ;; not HTTP-WRITE-LINE!

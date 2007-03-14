@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Thu Nov 23 17:31:57 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Wed Mar 14 10:29:57 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
 ;*=====================================================================*/
@@ -22,7 +22,7 @@
    (export  (http-parse-error-message ::obj ::input-port)
 	    (http-read-crlf ::input-port)
 	    (http-read-line ::input-port)
-	    (http-read-header::pair-nil ::input-port)
+	    (http-read-header::pair-nil ::input-port ::output-port)
 	    (http-header-field ::pair-nil ::keyword)
 	    (http-header-field-values::pair-nil ::bstring)
 	    (http-cookie-get ::http-request ::bstring #!optional path domain)
@@ -84,7 +84,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-read-header ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (http-read-header p)
+(define (http-read-header p po)
    (define value-grammar
       (regular-grammar ()
 	 ((+ (in " \t"))
@@ -189,6 +189,21 @@
 		 (read/rp crlf-grammar (the-port))
 		 ;; don't store the proxy-authorization in the header
 		 (ignore))
+		((expect:)
+		 (let ((e (read/rp value-grammar (the-port))))
+		    (if (string=? e "100-continue")
+			(begin
+			   (fprint po "HTTP/1.1 100 Continue\r\n")
+			   (flush-output-port po)
+			   (ignore))
+			(begin
+			   (fprint po "HTTP/1.1 417 Expectation Failed\r\n")
+			   (flush-output-port po)
+			   (raise
+			    (instantiate::&io-parse-error
+			       (obj (the-port))
+			       (proc 'expect-heaer)
+			       (msg (format "Expectation failed (~a)" e))))))))
 		(else
 		 (let ((v (read/rp value-grammar (the-port))))
 		    (trace-item "##7 " k " [" v "]")
