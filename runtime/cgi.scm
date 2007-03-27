@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Tue Jan 30 19:56:23 2007 (serrano)                */
+;*    Last change :  Tue Mar 27 17:36:31 2007 (serrano)                */
 ;*    Copyright   :  2003-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -66,11 +66,12 @@
 				      "multipart/form-data; boundary=")
 				     (string-length ctype))))
 		       (cons path
-			     (cgi-multipart->list
-			      (hop-upload-directory)
-			      pi
-			      content-length
-			      boundary)))
+			     (with-handler
+				(lambda (e) '())
+				(cgi-multipart->list (hop-upload-directory)
+						     pi
+						     content-length
+						     boundary))))
 		    (let ((body (read-chars (elong->fixnum content-length) pi)))
 		       (cons path (cgi-args->list body))))))
 	    ((GET PUT)
