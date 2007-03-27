@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Wed Mar 14 10:29:57 2007 (serrano)                */
+;*    Last change :  Wed Mar 14 16:21:35 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -191,6 +191,7 @@
 		 (ignore))
 		((expect:)
 		 (let ((e (read/rp value-grammar (the-port))))
+		    (tprint "GOT ONE: " e)
 		    (if (string=? e "100-continue")
 			(begin
 			   (fprint po "HTTP/1.1 100 Continue\r\n")

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Sat Dec  9 08:39:18 2006 (serrano)                */
+/*    Last change :  Tue Mar 27 13:29:36 2007 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -414,9 +414,13 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
 
       if( width ) {
 	 node_style_set( win.el_win, "width", ((typeof width) == "number") ? (width + "px") : width );
+      } else {
+	 node_style_set( win.el_win, "width", "200px" );
       }
       if( height ) {
 	 node_style_set( win.el_win, "height", ((typeof height) == "number") ? (height + "px") : height );
+      } else {
+	 node_style_set( win.el_win, "height", "200px" );
       }
       
       if( win.onresize ) win.onresize();
