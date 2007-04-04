@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Wed Mar 28 10:53:17 2007 (serrano)                */
+/*    Last change :  Wed Apr  4 16:02:38 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -51,7 +51,6 @@ function hop_notepad_inner_select( np, to ) {
    if( tabs.childNodes[ to ].lang == "delay" ) {
       hop( np.onkeyup()( to ),
 	   function( http ) {
-	      hop_js_eval( http );
 	      hop_replace_inner( bodies.childNodes[ to ] )( http );
 	      hop_notepad_inner_toggle( np, to, tabs, bodies );
            } );
