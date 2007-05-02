@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sun Feb  4 16:27:15 2007 (serrano)                */
+;*    Last change :  Mon Apr 23 07:05:53 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -87,7 +87,7 @@
 		 ((not (file-exists? path))
 		  (let ((i (string-index path #\?)))
 		     (cond
-			((>fx i 0)
+			((and (fixnum? i) (>fx i 0))
 			 (let ((p (substring path 0 i)))
 			    (cond
 			       ((file-exists? p)

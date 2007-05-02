@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Fri Nov  3 09:11:44 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Mon Apr 23 07:08:38 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
 ;*=====================================================================*/
@@ -102,7 +102,7 @@
 	    (if (substring-at? l "<doc> " 0)
 		(substring l 6 (string-length l))
 		(let ((i (string-index l "-")))
-		   (if (>fx i 0)
+		   (if (and (fixnum? i) (>fx i 0))
 		       (substring l (+fx i 1) (-fx (string-length l) 5))
 		       (substring l 0 (-fx (string-length l) 5)))))))))
 

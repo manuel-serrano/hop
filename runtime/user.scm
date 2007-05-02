@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Dec 30 10:30:37 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Mon Apr 23 07:03:36 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -198,7 +198,8 @@
 	    (let* ((dauth (http-decode-authentication auth))
 		   (len (string-length dauth))
 		   (i (string-index dauth #\:)))
-	       (and (>fx i 0)
+	       (and (fixnum? i)
+		    (>fx i 0)
 		    (let* ((n (substring dauth 0 i))
 			   (p (substring dauth (+fx i 1) len))
 			   (u (find-user n (md5sum (format "~a ~a" n p)))))

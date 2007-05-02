@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Sat Dec  9 09:01:23 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Mon Apr 23 07:08:15 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
 ;*=====================================================================*/
@@ -185,7 +185,8 @@
 (define (class-parser k)
    (let ((e (string-index k ":"))
 	 (l (string-length k)))
-      (when (and (>fx e -1)
+      (when (and (fixnum? e)
+		 (>fx e -1)
 		 (<fx e (-fx l 1))
 		 (char=? (string-ref k (+fx e 1)) #\:))
 	 (let* ((ty (substring k (+fx e 2) l))

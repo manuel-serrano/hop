@@ -12,7 +12,8 @@
 ;; but not at start.
 (define (dotted-symbol? id)
    (and (symbol? id)
-	(>fx (string-index (symbol->string id) #\.) 0)))
+	(let ((i (string-index (symbol->string id) #\.)))
+	   (and (fixnum? i) (>fx i 0)))))
 
 (define (starts-with-dot? id)
    (and (symbol? id)

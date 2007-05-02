@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Tue Mar 27 17:36:31 2007 (serrano)                */
+;*    Last change :  Mon Apr 23 07:02:58 2007 (serrano)                */
 ;*    Copyright   :  2003-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -30,7 +30,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-request-url-cgi-args path)
    (let ((i (string-index path #\?)))
-      (if (=fx i -1)
+      (if (or (not i) (=fx i -1))
 	  (list path)
 	  ;; CARE: Je ne sais pas s'il faut toujours faire la conversion
 	  ;; utf8->iso-latin!

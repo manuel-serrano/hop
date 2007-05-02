@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Mon Nov 27 11:15:27 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Mon Apr 23 07:08:59 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
 ;*=====================================================================*/
@@ -121,7 +121,7 @@
   (define (find-weblet-name url)
     (let* ((guess (prefix (basename url)))
 	   (index (string-index guess "-")))
-      (if (> index 0)
+      (if (and (fixnum? index) (>fx index 0))
 	  (substring guess 0 index)
 	  guess)))
   

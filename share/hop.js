@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Apr  4 07:23:13 2007 (serrano)                */
+/*    Last change :  Wed May  2 13:43:49 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -185,7 +185,7 @@ function hop_node_eval( node, text ) {
 	 /* I don't why yet, IE 7 does not include SCRIPT nodes */
 	 /* in the resulting node!                              */
 	 var start = script.index + script[ 0 ].length;
-	 var end = text.search( /<[/]script>/i );
+	 var end = text.search( /<\/script>/i );
 	 if( (end != null) && (end > start) ) {
 	    res = eval( text.substr( start, end - start ) );
 	 }

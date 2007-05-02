@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Jan 31 04:56:46 2007 (serrano)                */
+;*    Last change :  Mon Apr 23 07:03:51 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -173,7 +173,7 @@
 	 (with-access::http-request req (path)
 	    (let ((i (string-index path #\?))
 		  (l (string-length path)))
-	       (if (=fx i -1)
+	       (if (or (not i) (=fx i -1))
 		   (and (substring-at? path p 0)
 			(or (=fx l lp) (eq? (string-ref path lp) #\/)))
 		   (and (>=fx i lp)

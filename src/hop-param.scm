@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Feb  4 18:02:56 2007 (serrano)                */
+;*    Last change :  Mon Apr 23 15:58:09 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -149,4 +149,4 @@
    #f)
 
 (define-parameter hop-https-protocol
-   'ssl)
+   'tlsv1)

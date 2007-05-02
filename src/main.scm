@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Dec  7 08:01:25 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Mon Apr 23 15:49:25 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -93,8 +93,11 @@
 			    "Illegal scheduling policy"
 			    (hop-scheduling)))))
 	     (s (if (hop-enable-https)
-		    (make-ssl-server-socket (hop-port)
-					    :protocol (hop-https-protocol))
+		    (let ((cert (read-certificate "/etc/ssl/certs/hop.pem"))
+			  (pkey (read-private-key "/etc/ssl/private/hop.pem")))
+		       (make-ssl-server-socket (hop-port)
+					       :protocol (hop-https-protocol)
+					       :cert cert :pkey pkey))
 		    (make-server-socket (hop-port)))))
 	 (hop-main-loop s ap rp))))
 

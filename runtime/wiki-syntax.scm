@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Feb  8 09:00:46 2007 (serrano)                */
+;*    Last change :  Mon Apr 23 09:36:54 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -262,7 +262,7 @@
 				     "text-align: right"))
 				(leftp "text-align: left")
 				(else "text-align: center"))))
-		   (if (>fx cs 1)
+		   (if (and (fixnum? cs) (>fx cs 1))
 		       (unwind-state! st :colspan cs :style align)
 		       (unwind-state! st :style align))
 		   (pop-state!)
@@ -601,7 +601,7 @@
 		(else
 		 (values s s))))
 	  (add-expr!
-	   (if (=fx i -1)
+	   (if (or (not i) (=fx i -1))
 	       (multiple-value-bind (h n)
 		  (link-val s)
 		  (href h n))
