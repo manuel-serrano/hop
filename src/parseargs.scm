@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Nov 17 11:16:16 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Wed Apr 25 11:46:27 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -39,9 +39,10 @@
 	 (libraries '())
 	 (exprs '())
 	 (log-file #f)
-	 (be #f))
+	 (be #f)
+	 (files '()))
+      
       (args-parse (cdr args)
-	 
 	 ;; Misc
 	 (section "Misc")
          ((("-h" "--help") (help "This message"))
@@ -146,9 +147,8 @@
 	  (args-parse-usage #f)
 	  (exit 1))
 	 (else
-	  (print "Unknown argument: " else)
-	  (args-parse-usage #f)
-	  (exit 1)))
+	  (set! files (cons else files))))
+
       (when log-file
 	 (let ((p (append-output-file log-file)))
 	    (unless p
@@ -187,7 +187,8 @@
 			       (eval sexp))))))
 		exprs)
       (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
-      (for-each (lambda (l) (eval `(library-load ',l))) libraries)))
+      (for-each (lambda (l) (eval `(library-load ',l))) libraries)
+      (for-each hop-load (reverse! files))))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */

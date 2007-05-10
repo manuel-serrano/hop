@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Apr 23 09:36:54 2007 (serrano)                */
+;*    Last change :  Mon May  7 11:15:12 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -596,7 +596,7 @@
 			     (values e e))))))
 		((or (=fx (string-length s) 0)
 		     (and (not (char=? (string-ref s 0) #\/))
-			  (string-index s #\:) -1))
+			  (not (string-index s #\:))))
 		 (values (string-append "#" s) s))
 		(else
 		 (values s s))))
