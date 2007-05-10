@@ -13,16 +13,16 @@
         (<COL> :width "20%"))
      (<TR> 
         (<TD> :rowspan 2 :class "type"
-           (<IMG> :src
-             (make-file-path (home-dir) "etc" "icons" "linux.png")))
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "linux.png")))
         (<TH> "Linux")
         (<TD> :rowspan 2 :class "type"
-           (<IMG> :src
-             (make-file-path (home-dir) "etc" "icons" "macos.png")))
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "macos.png")))
         (<TH> "MacOS X")
         (<TD> :rowspan 2 :class "type"
-           (<IMG> :src 
-             (make-file-path (home-dir) "etc" "icons" "windows.png")))
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "windows.png")))
         (<TH> "Windows"))
      (<TR> 
          (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
@@ -40,12 +40,12 @@
         (<COL> :width "50%"))
      (<TR> 
         (<TD> :rowspan 2 :class "type"
-           (<IMG> :src
-             (make-file-path (home-dir) "etc" "icons" "package.png")))
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "package.png")))
         (<TH> "Source")
         (<TD> :rowspan 2 :class "type"
-           (<IMG> :src 
-             (make-file-path (home-dir) "etc" "icons" "java.png")))
+           (<IMG> :inline #t
+             :src (make-file-path (home-dir) "etc" "icons" "java.png")))
         (<TH> "Pre-compiled JVM"))
      (<TR> 
          (<TD> (<A> :href *devel-tar-url* *devel-tar-gz*))

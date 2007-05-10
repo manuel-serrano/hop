@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Jan  8 11:57:28 2007 (serrano)                */
+;*    Last change :  Thu May 10 14:53:18 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -273,6 +273,7 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <FOOT> ((id #unspecified string)
 			     (class "foot" string)
+			     (inline #f)
 			     body)
    (<DIV>
       :id (xml-make-id id 'FOOT)
@@ -283,6 +284,7 @@
 	 (<FOOT-BUTTON>
 	    :href "http://hop.inria.fr"
 	    :title "HOP home page"
+	    :inline inline
 	    :src "hop.png")
 	 body)))
 
@@ -294,23 +296,25 @@
 				    (href #f string)
 				    (title #f string)
 				    (path #f)
+				    (inline #f)
 				    (src #f))
    (<A>
       :class class
       :href href
       :title title
       (<IMG> :alt title
-	     :src (cond
-		     ((string? path)
-		      path)
-		     ((string? src)
-		      (if (string=? (dirname src) ".")
-			  (format "~a/buttons/~a"
-				  (url-encode (hop-share-directory))
-				  src)
-			  src))
-		     (else
-		      (error '<FOOT-BUTTON> "Illegal source" src))))))
+	 :inline inline
+	 :src (cond
+		 ((string? path)
+		  path)
+		 ((string? src)
+		  (if (string=? (dirname src) ".")
+		      (format "~a/buttons/~a"
+			      (url-encode (hop-share-directory))
+			      src)
+		      src))
+		 (else
+		  (error '<FOOT-BUTTON> "Illegal source" src))))))
 				     
 ;*---------------------------------------------------------------------*/
 ;*    <TOOLTIP> ...                                                    */
