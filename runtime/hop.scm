@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Jan 31 08:45:21 2007 (serrano)                */
+;*    Last change :  Fri May 11 11:49:49 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -184,7 +184,7 @@
 (define hop-to-hop-id -1)
 
 ;*---------------------------------------------------------------------*/
-;*    with-url  ...                                                     */
+;*    with-url  ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (with-url url success #!key fail (header '()))
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
