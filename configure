@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue May 15 09:19:52 2007 (serrano)                */
+#*    Last change :  Tue May 15 09:29:18 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -443,8 +443,15 @@ mkdir -p lib
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
 
+if [ "$ssl " = "yes " ]; then
+  bigloossl="'bigloossl";
+else
+  bigloossl="";
+fi
+
 cat etc/hop.init.in \
     | sed -e "s|@VERSION@|$version|" \
+    | sed -e "s|@BIGLOOSSL@|$bigloossl|" \
     >> $init
 echo "" >> $init
 

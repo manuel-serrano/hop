@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 09:57:45 2006                          */
-;*    Last change :  Fri Nov 17 10:06:46 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue May 15 09:28:41 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP lib init file.                                           */
 ;*=====================================================================*/
@@ -28,7 +28,7 @@
     (set! *additional-bigloo-libraries*
 	  (cons* 'bigloomultimedia
 		 'biglooweb
-                 'bigloossl
+                 @BIGLOOSSL@
 		 *additional-bigloo-libraries*)))
    (bigloo-eval
     #unspecified))
