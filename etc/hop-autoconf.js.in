@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Wed Nov 29 09:05:13 2006 (serrano)                */
-/*    Copyright   :  2006 Manuel Serrano                               */
+/*    Last change :  Tue May 15 17:23:29 2007 (serrano)                */
+/*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -196,6 +196,55 @@ node_style_set = function( obj, property, value ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    Location events                                                  */
+/*---------------------------------------------------------------------*/
+var hop_location_timeout = 100;
+
+/*---------------------------------------------------------------------*/
+/*    hop_add_location_listener ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_add_location_listener( obj, proc ) {
+   obj.hop_location_proc = proc;
+   var i = window.location.href.indexOf( "#" );
+   if( i == -1 ) {
+      obj.hop_location_href = window.location.href;
+   } else {
+      obj.hop_location_href = window.location.href.substring( 0, i - 1 );
+   }
+   
+   if( obj.hop_location_interval == undefined ) {
+      var check = function() {
+	 if( obj.hop_location_href !== window.location.href ) {
+	    obj.hop_location_href = window.location.href;
+	    obj.hop_location_proc( window.location );
+	    return true;
+	 }
+      }
+      obj.hop_location_interval = setInterval( check, hop_location_timeout );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_remove_location_listener ...                                 */
+/*---------------------------------------------------------------------*/
+function
+hop_remove_location_listener( obj, proc ) {
+   if( obj.hop_location_interval != undefined ) {
+      clearInterval( obj.hop_location_interval );
+      obj.hop_location_interval = undefined;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_location_set ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_location_set( obj, href ) {
+   window.location.href = href;
+   obj.hop_location_href = window.location.href;
+}
+
+/*---------------------------------------------------------------------*/
 /*    Event handlers                                                   */
 /*---------------------------------------------------------------------*/
 var hop_add_event_listener = undefined;
@@ -204,10 +253,18 @@ var hop_stop_propagation = undefined;
 
 if( document.implementation.hasFeature( "Events" , "2.0") ) {
    hop_add_event_listener = function( obj, event, proc, capture ) {
-      return obj.addEventListener( event, proc, capture );
+      if( event == "location" ) {
+	 return hop_add_location_listener( obj, proc );
+      } else {
+	 return obj.addEventListener( event, proc, capture );
+      }
    }
    hop_remove_event_listener = function( obj, event, proc, capture ) {
-      return obj.removeEventListener( event, proc, capture );
+      if( event == "location" ) {
+	 return hop_remove_location_listener( obj, proc );
+      } else {
+	 return obj.removeEventListener( event, proc, capture );
+      }
    }
    hop_stop_propagation = function( event, def ) {
       if( !def ) event.preventDefault();
@@ -215,24 +272,32 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
    }
 } else {
    hop_add_event_listener = function( obj, event, proc, capture ) {
-      var p = function(_) {return proc(window.event)};
-      var i = "on" + event + "hdl";
+      if( event == "location" ) {
+	 return hop_add_location_listener( obj, proc );
+      } else {
+	 var p = function(_) { return proc( window.event ) };
+	 var i = "on" + event + "hdl";
 
-      if( obj[ i ] == undefined ) obj[ i ] = [];
-      obj[ i ][ proc ] = p;
+	 if( obj[ i ] == undefined ) obj[ i ] = [];
+	 obj[ i ][ proc ] = p;
 
-      return obj.attachEvent( "on" + event, p );
+	 return obj.attachEvent( "on" + event, p );
+      }
    }
    hop_remove_event_listener = function( obj, event, proc, capture ) {
-      var i = "on" + event + "hdl";
-      var p = obj[ i ][ proc ];
+      if( event == "location" ) {
+	 return hop_remove_location_listener( obj, proc );
+      } else {
+	 var i = "on" + event + "hdl";
+	 var p = obj[ i ][ proc ];
 
-      if( p != undefined ) {
-	 obj[ i ][ p ] = undefined;
-	 return obj.detachEvent( "on" + event, p );
+	 if( p != undefined ) {
+	    obj[ i ][ p ] = undefined;
+	    return obj.detachEvent( "on" + event, p );
+	 }
+
+	 return false;
       }
-
-      return false;
    }
    hop_stop_propagation = function( event, def ) {
       if( !def ) event.cancelBubble = true;

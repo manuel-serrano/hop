@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Mon May 14 18:16:23 2007 (serrano)                */
+/*    Last change :  Tue May 15 16:49:26 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -33,6 +33,10 @@ function hop_notepad_inner_select( np, to ) {
    var bodies = null;
    var i;
 
+   /* save the history */
+   hop_set_state( np.id, "np", to );
+
+   /* select the correct tab */
    for( i = 0; i < np.childNodes.length; i++ ) {
       if( np.childNodes[ i ].className == "hop-notepad-body" ) {
 	 bodies = np.childNodes[ i ];

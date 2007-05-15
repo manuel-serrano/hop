@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue May 15 09:33:33 2007 (serrano)                */
+;*    Last change :  Tue May 15 14:09:07 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -150,9 +150,9 @@
    (lambda (v)
       (cond-expand
 	 (ssl
-	  (warning "SSL not supporting, disabling https support.")
 	  v)
 	 (else
+	  (warning "SSL not supporting, disabling https support.")
 	  v))))
 
 (define-parameter hop-https-protocol

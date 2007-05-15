@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon May 14 18:12:03 2007 (serrano)                */
+/*    Last change :  Tue May 15 17:19:23 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -1009,48 +1009,69 @@ function hop_serialize_date( item ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    back_button ...                                                  */
+/*    hop_set_state ...                                                */
 /*---------------------------------------------------------------------*/
-var back_button = {
-   hash: "",
-   interval: false,
+function hop_set_state( id, op, val ) {
+   var hash = window.location.hash;
+   var i = hash.indexOf( id + "=" );
 
-   eval: function( hash ) {
-      var match = hash.match( /#([^:]+):([^:]+):([^:]+)/ );
-      if( match != null ) {
-	 var op = match[ 0 ];
-	 var id = match[ 1 ];
-	 var arg = match[ 2 ];
-	 
-	 if( match == "np" ) {
-	    hop_notepad_select( id, arg );
+   if( i == -1 ) {
+      if( hash.length == 0 ) {
+	 hash = "#" + id + "=" + op + ":" + val;
+      } else {
+	 hash += hash + "," + id + "=" + op + ":" + val;
+      }
+   } else {
+      var end = hash.indexOf( ",", i + 1 );
+      if( end == -1 ) {
+	 if( i == 1 ) {
+	    hash =  "#" + id + "=" + op + ":" + val;
+	 } else {
+	    var pref = hash.substring( 0, i );
+	    hash = pref + "," + id + "=" + op + ":" + val;
+	 }
+      } else {
+	 var suf = hash.substring( end );
+	 if( i == 1 ) {
+	    hash = "#" + id + "=" + op + ":" + val + suf;
+	 } else {
+	    var pref = hash.substring( 0, i );
+	    hash = pref + "," + id + "=" + op + ":" + val + suf;
 	 }
       }
-   },
-   
-   check_location: function () {
-      if( hash != window.location.hash ) {
-	 // the URL has changed
-	 hash = window.location.hash;
-	 back_button.eval( hash );
-      }
-   },
-   
-   init: function() {
-      hash = window.location.hash;
-      window.onload = function () {
-	 interval = setInterval( back_button.check_location, 100 );
-      }
-      window.ununload = function () {
-	 if( interval ) { 
-	    clearInterval( interval );
+   }
+      
+   hop_location_set( document, hash );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_eval_state ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_eval_state( location ) {
+   var hash = location.hash;
+
+   if( hash.length > 0 ) {
+      var split = hash.split( "," );
+      for( var i = 0; i < split.length; i++ ) {
+	 var el = hash.match( /#?([^=]+)=([^:]+):([^:]+)+/ );
+	 if( el ) {
+	    var id = el[ 1 ];
+	    var op = el[ 2 ];
+	    var arg = el[ 3 ];
+
+	    if( op == "np" ) {
+	       var np = document.getElementById( id );
+	       hop_notepad_inner_select( np, parseInt( arg ) );
+	    }
 	 }
       }
    }
 }
 
-back_button.init();
-
+window.onload = function() {
+   hop_add_event_listener( document, "location", hop_eval_state );
+};
+      
 /* {*---------------------------------------------------------------------*} */
 /* {*    hopBehaviour class ...                                           *} */
 /* {*---------------------------------------------------------------------*} */
