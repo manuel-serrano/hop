@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed May  2 13:43:49 2007 (serrano)                */
+/*    Last change :  Mon May 14 18:12:03 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -1008,6 +1008,49 @@ function hop_serialize_date( item ) {
    return 'd' + hop_serialize_word( ms.length ) + ms;
 }
 
+/*---------------------------------------------------------------------*/
+/*    back_button ...                                                  */
+/*---------------------------------------------------------------------*/
+var back_button = {
+   hash: "",
+   interval: false,
+
+   eval: function( hash ) {
+      var match = hash.match( /#([^:]+):([^:]+):([^:]+)/ );
+      if( match != null ) {
+	 var op = match[ 0 ];
+	 var id = match[ 1 ];
+	 var arg = match[ 2 ];
+	 
+	 if( match == "np" ) {
+	    hop_notepad_select( id, arg );
+	 }
+      }
+   },
+   
+   check_location: function () {
+      if( hash != window.location.hash ) {
+	 // the URL has changed
+	 hash = window.location.hash;
+	 back_button.eval( hash );
+      }
+   },
+   
+   init: function() {
+      hash = window.location.hash;
+      window.onload = function () {
+	 interval = setInterval( back_button.check_location, 100 );
+      }
+      window.ununload = function () {
+	 if( interval ) { 
+	    clearInterval( interval );
+	 }
+      }
+   }
+}
+
+back_button.init();
+
 /* {*---------------------------------------------------------------------*} */
 /* {*    hopBehaviour class ...                                           *} */
 /* {*---------------------------------------------------------------------*} */
@@ -1046,4 +1089,3 @@ function hop_serialize_date( item ) {
 /*                                                                     */
 /* hopBehaviour.start();                                               */
 /*                                                                     */
-   

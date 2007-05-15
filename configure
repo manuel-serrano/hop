@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Feb 28 19:46:34 2007 (serrano)                */
+#*    Last change :  Tue May 15 09:19:52 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -158,6 +158,12 @@ while : ; do
     --optimize)
       bcflags="$bcflags $bcflagsopt";;
 
+    --enable-ssl)
+      ssl=yes;;
+
+    --disable-ssl)
+      ssl=no;;
+
     -*)
       echo "*** Configure error, unknown option $1" >&2;
       echo >&2;
@@ -186,6 +192,8 @@ while : ; do
       echo "   --debug............... Enables Bigloo debug mode" >&2;
       echo "   --bmem................ Enables Bigloo bmem mode" >&2;
       echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
+      echo "   --enable-ssl.......... Enables SSL support" >&2;
+      echo "   --disable-ssl......... Disables SSL support" >&2;
       exit -1;
   esac
   shift
