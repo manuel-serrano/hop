@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed May 16 07:14:06 2007 (serrano)                */
+/*    Last change :  Wed May 16 11:14:49 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -1009,9 +1009,38 @@ function hop_serialize_date( item ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_set_state ...                                                */
+/*    hop_window_onload_add ...                                        */
 /*---------------------------------------------------------------------*/
-function hop_set_state( id, op, val ) {
+function hop_window_onload_add( proc ) {
+   var oldonload = window.onload;
+
+   if( typeof oldonload != 'function' ) {
+      window.onload = proc;
+   } else {
+      window.onload = function( e ) {
+	 oldonload( e );
+	 proc( e );
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bookmark_state_handler ...                                   */
+/*---------------------------------------------------------------------*/
+var hop_bookmark_state_handler = {};
+var hop_bookmark_state_old_hash = "";
+
+/*---------------------------------------------------------------------*/
+/*    hop_bookmark_state_register_handler ...                          */
+/*---------------------------------------------------------------------*/
+function hop_bookmark_state_register_handler( key, reset, proc ) {
+   hop_bookmark_state_handler[ key ] = { reset: reset, proc: proc };
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bookmark_state_set ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_bookmark_state_set( id, op, val ) {
    var hash = window.location.hash;
    var i = hash.indexOf( id + "=" );
 
@@ -1019,7 +1048,7 @@ function hop_set_state( id, op, val ) {
       if( hash.length == 0 ) {
 	 hash = "#" + id + "=" + op + ":" + val;
       } else {
-	 hash += hash + "," + id + "=" + op + ":" + val;
+	 hash += "," + id + "=" + op + ":" + val;
       }
    } else {
       var end = hash.indexOf( ",", i + 1 );
@@ -1028,7 +1057,7 @@ function hop_set_state( id, op, val ) {
 	    hash =  "#" + id + "=" + op + ":" + val;
 	 } else {
 	    var pref = hash.substring( 0, i );
-	    hash = pref + "," + id + "=" + op + ":" + val;
+	    hash = pref + id + "=" + op + ":" + val;
 	 }
       } else {
 	 var suf = hash.substring( end );
@@ -1040,50 +1069,37 @@ function hop_set_state( id, op, val ) {
 	 }
       }
    }
-      
-   hop_location_set( document, hash );
+   
+/*    hop_location_set( document, hash );                              */
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_state_handler ...                                            */
-/*---------------------------------------------------------------------*/
-var hop_state_handler = {};
-var hop_state_old_hash = "";
-
-/*---------------------------------------------------------------------*/
-/*    hop_state_register_handler ...                                   */
-/*---------------------------------------------------------------------*/
-function hop_state_register_handler( key, reset, proc ) {
-   hop_state_handler[ key ] = { reset: reset, proc: proc };
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_eval_state ...                                               */
+/*    hop_eval_bookmark_state ...                                      */
 /*    -------------------------------------------------------------    */
 /*    If hash.length == 0, then it means that we don't have a          */
 /*    state in the URL. In that very case, we check if old_location    */
 /*    has a state and if it does, we reset all its components.         */
 /*---------------------------------------------------------------------*/
-function hop_eval_state( location ) {
+function hop_eval_bookmark_state( location ) {
    var hash = location.hash;
    var n = (hash.length > 0);
    var h;
 
    if( n ) {
       h = location.hash;
-      hop_state_old_hash = h;
+      hop_bookmark_state_old_hash = h;
    } else {
-      h = hop_state_old_hash;
-      hop_state_old_hash = "";
+      h = hop_bookmark_state_old_hash;
+      hop_bookmark_state_old_hash = "";
    }
    
    if( h.length > 0 ) {
       var split = h.split( "," );
       for( var i = 0; i < split.length; i++ ) {
-	 var el = h.match( /#?([^=]+)=([^:]+):([^:]+)+/ );
+	 var el = split[ i ].match( /#?([^=]+)=([^:]+):([^,]+)+/ );
 	 if( el ) {
 	    var key = el[ 2 ];
-	    var handler = hop_state_handler[ key ];
+	    var handler = hop_bookmark_state_handler[ key ];
 
 	    if( handler != undefined ) {
 	       handler.proc( el[ 1 ], n ? el[ 3 ] : handler.reset );
@@ -1096,9 +1112,9 @@ function hop_eval_state( location ) {
 /*---------------------------------------------------------------------*/
 /*    Install the location event listener                              */
 /*---------------------------------------------------------------------*/
-window.onload = function() {
-   hop_add_event_listener( document, "location", hop_eval_state );
-};
+/* hop_window_onload_add( function( e ) {                              */
+/*    hop_add_event_listener( document, "location", hop_eval_bookmark_state ); */
+/* } );                                                                */
       
 /* {*---------------------------------------------------------------------*} */
 /* {*    hopBehaviour class ...                                           *} */

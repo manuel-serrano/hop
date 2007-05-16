@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Mon Apr 23 07:08:15 2007 (serrano)                */
+;*    Last change :  Wed May 16 09:46:26 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -124,31 +124,32 @@
 ;*    select-api-pad ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (select-api-pad api k #!key (pad "api"))
-   ~(with-hop ($doc/api $api)
-       (lambda (r)
-	  (notepad-select "doc-notepad" $(string-append "doc-" pad))
-	  (let ((el (document.getElementById $(string-append "pad-" pad))))
-	     (set! el.innerHTML r)
-	     (let ((eo (and $k (document.getElementById $k))))
-		(if (and eo (not (null? eo)))
-		    (let ((po eo.offsetTop))
-		       (if (> po 50)
-			   (window.scrollTo 0 (- po 50)))
-		       (let* ((p eo.parentNode)
-			      (ob p.style.border.background))
-			  (hop-fx-fade-background
-			   p
-			   500
-			   40
-			   (vector "#fffd6b"
-				   "#ffff6f"
-				   "#ffff8f"
-				   "#ffffaf"
-				   "#ffffdf"
-				   "#ffffdf"
-				   (if (eq? ob #unspecified)
-				       "transparent"
-				       ob)))))))))))
+   ~(begin
+       (with-hop ($doc/api $api)
+	  (lambda (r)
+	     (notepad-select "doc-notepad" $(string-append "doc-" pad))
+	     (let ((el (document.getElementById $(string-append "pad-" pad))))
+		(set! el.innerHTML r)
+		(let ((eo (and $k (document.getElementById $k))))
+		   (if (and eo (not (null? eo)))
+		       (let ((po eo.offsetTop))
+			  (if (> po 50)
+			      (window.scrollTo 0 (- po 50)))
+			  (let* ((p eo.parentNode)
+				 (ob p.style.border.background))
+			     (hop-fx-fade-background
+			      p
+			      500
+			      40
+			      (vector "#fffd6b"
+				      "#ffff6f"
+				      "#ffff8f"
+				      "#ffffaf"
+				      "#ffffdf"
+				      "#ffffdf"
+				      (if (eq? ob #unspecified)
+					  "transparent"
+					  ob))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hash-parser ...                                                  */

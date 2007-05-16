@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Tue Oct 17 10:54:11 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Wed May 16 11:22:24 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
 ;*=====================================================================*/
@@ -197,4 +197,6 @@
      (event-mouse-x hop_event_mouse_x)
      (event-mouse-y hop_event_mouse_y)
      (event-key-code hop_event_key_code)
-     (html-element? hop_is_html_element)))
+     (html-element? hop_is_html_element)
+     (bookmark-state-set! hop_bookmark_state_set)
+     (bookmark-state-register-handler! hop_bookmark_state_register_handler)))
