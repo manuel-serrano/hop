@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue May 15 17:19:23 2007 (serrano)                */
+/*    Last change :  Wed May 16 07:14:06 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -1045,29 +1045,57 @@ function hop_set_state( id, op, val ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_state_handler ...                                            */
+/*---------------------------------------------------------------------*/
+var hop_state_handler = {};
+var hop_state_old_hash = "";
+
+/*---------------------------------------------------------------------*/
+/*    hop_state_register_handler ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_state_register_handler( key, reset, proc ) {
+   hop_state_handler[ key ] = { reset: reset, proc: proc };
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_eval_state ...                                               */
+/*    -------------------------------------------------------------    */
+/*    If hash.length == 0, then it means that we don't have a          */
+/*    state in the URL. In that very case, we check if old_location    */
+/*    has a state and if it does, we reset all its components.         */
 /*---------------------------------------------------------------------*/
 function hop_eval_state( location ) {
    var hash = location.hash;
+   var n = (hash.length > 0);
+   var h;
 
-   if( hash.length > 0 ) {
-      var split = hash.split( "," );
+   if( n ) {
+      h = location.hash;
+      hop_state_old_hash = h;
+   } else {
+      h = hop_state_old_hash;
+      hop_state_old_hash = "";
+   }
+   
+   if( h.length > 0 ) {
+      var split = h.split( "," );
       for( var i = 0; i < split.length; i++ ) {
-	 var el = hash.match( /#?([^=]+)=([^:]+):([^:]+)+/ );
+	 var el = h.match( /#?([^=]+)=([^:]+):([^:]+)+/ );
 	 if( el ) {
-	    var id = el[ 1 ];
-	    var op = el[ 2 ];
-	    var arg = el[ 3 ];
+	    var key = el[ 2 ];
+	    var handler = hop_state_handler[ key ];
 
-	    if( op == "np" ) {
-	       var np = document.getElementById( id );
-	       hop_notepad_inner_select( np, parseInt( arg ) );
+	    if( handler != undefined ) {
+	       handler.proc( el[ 1 ], n ? el[ 3 ] : handler.reset );
 	    }
 	 }
       }
    }
 }
 
+/*---------------------------------------------------------------------*/
+/*    Install the location event listener                              */
+/*---------------------------------------------------------------------*/
 window.onload = function() {
    hop_add_event_listener( document, "location", hop_eval_state );
 };

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Tue May 15 16:49:26 2007 (serrano)                */
+/*    Last change :  Wed May 16 06:54:12 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -86,3 +86,16 @@ function hop_notepad_select( id1, id2 ) {
 
    return false;
 }
+
+/*---------------------------------------------------------------------*/
+/*    Install the notepad state handler                                */
+/*---------------------------------------------------------------------*/
+hop_state_register_handler(
+   "np", /* key argument */
+   "0",  /* reset value  */
+   function( id, arg ) {
+      var np = document.getElementById( id );
+      hop_notepad_inner_select( np, parseInt( arg ) );
+} );
+
+   
