@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed May 16 11:14:49 2007 (serrano)                */
+/*    Last change :  Wed May 16 17:13:09 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -1070,7 +1070,7 @@ function hop_bookmark_state_set( id, op, val ) {
       }
    }
    
-/*    hop_location_set( document, hash );                              */
+   hop_location_set( document, hash );
 }
 
 /*---------------------------------------------------------------------*/
@@ -1112,9 +1112,11 @@ function hop_eval_bookmark_state( location ) {
 /*---------------------------------------------------------------------*/
 /*    Install the location event listener                              */
 /*---------------------------------------------------------------------*/
-/* hop_window_onload_add( function( e ) {                              */
-/*    hop_add_event_listener( document, "location", hop_eval_bookmark_state ); */
-/* } );                                                                */
+if( hop_enable_location_event ) {
+   hop_window_onload_add( function( e ) {
+      hop_add_event_listener( document, "location", hop_eval_bookmark_state );
+   } );
+}
       
 /* {*---------------------------------------------------------------------*} */
 /* {*    hopBehaviour class ...                                           *} */

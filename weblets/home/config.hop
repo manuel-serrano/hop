@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Thu May 10 14:51:31 2007 (serrano)                */
+;*    Last change :  Wed May 16 17:09:38 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
@@ -30,7 +30,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
 ;*---------------------------------------------------------------------*/
-(define (home-version) "1.0.1")
+(define (home-version) "1.0.2")
 (define (home-date) "2007")
 (define (home-author) "M. Serrano")
 

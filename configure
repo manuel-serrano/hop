@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed May 16 16:44:27 2007 (serrano)                */
+#*    Last change :  Wed May 16 17:14:39 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -69,6 +69,7 @@ else
 fi
 
 ssl=""
+locevent="false"
 
 hoprts='"hop-autoconf.js" "hop.js" "runtime.js" "hop-dom.js" "runtime-interface.js" "hopscheme.js"'
 
@@ -164,6 +165,12 @@ while : ; do
     --disable-ssl)
       ssl=no;;
 
+    --enable-locevent)
+      locevent=true;;
+
+    --disable-locevent)
+      locevent=false;;
+
     -*)
       echo "*** Configure error, unknown option $1" >&2;
       echo >&2;
@@ -194,6 +201,8 @@ while : ; do
       echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
       echo "   --enable-ssl.......... Enables SSL support" >&2;
       echo "   --disable-ssl......... Disables SSL support" >&2;
+      echo "   --enable-locevent..... Enables location event support" >&2;
+      echo "   --disable-locevent.... Disables location event support" >&2;
       exit -1;
   esac
   shift
@@ -514,6 +523,7 @@ cat etc/hop-autoconf.js.in \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@LOCEVENT@|$locevent|" \
     >> $init
 echo "" >> $init
 
