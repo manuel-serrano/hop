@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Nov 13 09:44:53 2006 (serrano)                */
-#*    Copyright   :  2004-06 Manuel Serrano                            */
+#*    Last change :  Mon May 21 09:17:18 2007 (serrano)                */
+#*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -29,6 +29,7 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-iwindow.js hop-iwindow.css \
                   hop-editor.js hop-editor.css \
                   hop-fileselect.js hop-fileselect.css \
+                  hop-tooltip.js \
                   hopscheme.js \
                   hop-debug.js hop-debug.css \
 		  hop-sound.js hop-sound.scm \
@@ -73,6 +74,7 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/md5.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hopscheme.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/base64.js $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-tooltip.js $(HOPSHAREDIR) && \
 	mkdir -p $(HOPSHAREDIR)/icons && \
 	chmod a+rx $(HOPSHAREDIR)/icons && \
 	install -m a+r $(BUILDSHAREDIR)/icons/* $(HOPSHAREDIR)/icons && \
@@ -120,6 +122,7 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop-debug.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-debug.css && \
 	/bin/rm -f $(HOPSHAREDIR)/base64.js && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-tooltip.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hopscheme.js && \
 	/bin/rm -f $(HOPSHAREDIR)/md5.js && \
 	/bin/rm -rf $(HOPSHAREDIR)/icons && \

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed May 16 17:13:09 2007 (serrano)                */
+/*    Last change :  Mon May 21 13:36:44 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -322,7 +322,9 @@ function hop_inner( http, success, failure, vis ) {
 	 var status;
 
 	 if( vis != false ) {
-	    document.body.removeChild( vis );
+	    if( document.body != undefined ) {
+	       document.body.removeChild( vis );
+	    }
 	 }
 
 	 try {
@@ -533,69 +535,6 @@ function hop_event_handler_set( svc, evt, success, failure ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_current_tooltip ...                                          */
-/*---------------------------------------------------------------------*/
-var hop_current_tooltip;
-
-/*---------------------------------------------------------------------*/
-/*    hop_tooltip_show ...                                             */
-/*---------------------------------------------------------------------*/
-function hop_tooltip_show( event, id, ux, uy ) {
-   var el;
-
-   if( hop_is_html_element( id ) ) {
-      el = id;
-   } else {
-      if( (id instanceof String) || (typeof id == "string") ) {
-	 el = document.getElementById( id );
-      } else {
-	 alert( "*** ERROR:hop_tooltip_show:Illegal id -- " + id );
-      }
-   }
-
-   if( hop_is_html_element( el ) && (hop_current_tooltip != el) ) {
-
-      var p = el.parentNode;
-      
-      if( p != document.body ) {
-	 p.removeChild( el );
-	 document.body.appendChild( el );
-      }
-
-      if( hop_is_html_element( hop_current_tooltip ) ) {
-	 node_style_set( hop_current_tooltip, "visibility", "hidden" );
-      }
-
-      node_style_set( el, "visibility", "visible" );
-      
-      var x = ux != undefined ? ux : event.pageX - 200;
-      var y = uy != undefined ? uy : event.pageY - 200;
-      var b = document.getElementsByTagName( "body" )[ 0 ];
-
-      node_style_set( el, "left", (x < 0) ? 0 : (x + "px") );
-      node_style_set( el, "top", (y < 0) ? 0: (y + "px") );
-
-      // re-parent the popup
-      if( el.parentNode != b ) {
-	 el.parentNode.removeChild( el );
-	 b.appendChild( el );
-      }
-
-      hop_current_tooltip = el;
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_tooltip_hide ...                                             */
-/*---------------------------------------------------------------------*/
-function hop_tooltip_hide() {
-   if( hop_is_html_element( hop_current_tooltip ) ) {
-      node_style_set( hop_current_tooltip, "visibility", "hidden" );
-      hop_current_tooltip = null;
-   }
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_set_cookie ...                                               */
 /*---------------------------------------------------------------------*/
 function hop_set_cookie( http ) {
@@ -717,42 +656,6 @@ function hop_request_get( key ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_element_x ...                                                */
-/*---------------------------------------------------------------------*/
-function hop_element_x( obj ) {
-   var res = 0;
-
-   while( obj != null ) {
-      if( typeof obj.offsetLeft == "number" ) 
-	 res += obj.offsetLeft;
-      else {
-	 break;
-      }
-      obj = obj.offsetParent;
-   }
-
-   return res;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_element_y ...                                                */
-/*---------------------------------------------------------------------*/
-function hop_element_y( obj ) {
-   var res = 0;
-
-   while( obj != null ) {
-      if( typeof obj.offsetTop == "number" ) 
-	 res += obj.offsetTop;
-      else {
-	 break;
-      }
-      obj = obj.offsetParent;
-   }
-
-   return res;
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_timeout ...                                                  */
 /*---------------------------------------------------------------------*/
 function hop_timeout( id, timeout, proc, eager ) {
@@ -836,7 +739,6 @@ function hop_load( src, timeout ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    hop_style_attribute_set ...                                      */
 /*---------------------------------------------------------------------*/
 function hop_style_attribute_set( obj, val ) {
@@ -1025,10 +927,30 @@ function hop_window_onload_add( proc ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_update ...                                                   */
+/*    -------------------------------------------------------------    */
+/*    This function is called when a widget select a new child         */
+/*    (e.g., a notepad or a tabslider). It gives a child the           */
+/*    opportunity to update (i.e., to re-compute dimensions).          */
+/*    Widgets interested have to register by setting their             */
+/*    hop_update field (see hop-tabliser.js for an example).           */
+/*---------------------------------------------------------------------*/
+function hop_update( node ) {
+   /* update the children recursively */
+   if( node.hop_update != undefined ) {
+      node.hop_update();
+   }
+   /* traverse the all tree */
+   for( var i = 0; i < node.childNodes.length; i++ ) {
+      hop_update( node.childNodes[ i ] );
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_bookmark_state_handler ...                                   */
 /*---------------------------------------------------------------------*/
+var hop_current_state_bookmark = undefined;
 var hop_bookmark_state_handler = {};
-var hop_bookmark_state_old_hash = "";
 
 /*---------------------------------------------------------------------*/
 /*    hop_bookmark_state_register_handler ...                          */
@@ -1038,74 +960,194 @@ function hop_bookmark_state_register_handler( key, reset, proc ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_bookmark_state_set ...                                       */
+/*    hop_state_entry ...                                              */
 /*---------------------------------------------------------------------*/
-function hop_bookmark_state_set( id, op, val ) {
-   var hash = window.location.hash;
-   var i = hash.indexOf( id + "=" );
+function hop_state_entry( op, val ) {
+   this.op = op;
+   this.val = val;
+}
 
-   if( i == -1 ) {
-      if( hash.length == 0 ) {
-	 hash = "#" + id + "=" + op + ":" + val;
-      } else {
-	 hash += "," + id + "=" + op + ":" + val;
-      }
-   } else {
-      var end = hash.indexOf( ",", i + 1 );
-      if( end == -1 ) {
-	 if( i == 1 ) {
-	    hash =  "#" + id + "=" + op + ":" + val;
+/*---------------------------------------------------------------------*/
+/*    hop_state_bookmark_to_location ...                               */
+/*---------------------------------------------------------------------*/
+function hop_state_bookmark_to_location( state ) {
+   var loc = undefined;
+   
+   for( p in state ) {
+      if( state[ p ] instanceof hop_state_entry ) {
+	 if( loc == undefined ) {
+	    loc = "#" + p + "=" + state[ p ].op + ":" + state[ p ].val;
 	 } else {
-	    var pref = hash.substring( 0, i );
-	    hash = pref + id + "=" + op + ":" + val;
-	 }
-      } else {
-	 var suf = hash.substring( end );
-	 if( i == 1 ) {
-	    hash = "#" + id + "=" + op + ":" + val + suf;
-	 } else {
-	    var pref = hash.substring( 0, i );
-	    hash = pref + "," + id + "=" + op + ":" + val + suf;
+	    loc += "," + p + "=" + state[ p ].op + ":" + state[ p ].val;
 	 }
       }
    }
+
+   return loc;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_location_to_state_bookmark ...                               */
+/*---------------------------------------------------------------------*/
+function hop_location_to_state_bookmark( hash ) {
+   var state = {};
+   var split = hash.split( "," );
+   for( var i = 0; i < split.length; i++ ) {
+      var el = split[ i ].match( /#?([^=]+)=([^:]+):([^,]+)+/ );
+      if( el ) {
+	 var id = el[ 1 ];
+	 var op = el[ 2 ];
+	 var val = el [ 3 ];
+
+	 state[ id ] = new hop_state_entry( op, val );
+      }
+   }
+
+   return state;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_state_bookmark_add ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_state_bookmark_add( id, op, val ) {
+   /* store the new state as a location for bookmarking an history */
+   var hop_state_to_location = function () {
+      var loc = hop_state_bookmark_to_location( hop_current_state_bookmark );
+      var old = window.location.href;
+      var i = old.indexOf( "#" );
+      
+      if( i == -1 ) {
+	 hop_active_location_set( document, old + loc );
+      } else {
+	 hop_active_location_set( document, old.substring( 0, i ) + loc );
+      }
+   }
    
-   hop_location_set( document, hash );
+   if( hop_current_state_bookmark == undefined ) {
+      /* create a new state */
+      hop_current_state_bookmark = {};
+      hop_current_state_bookmark[ id ] = new hop_state_entry( op, val );
+      
+      /* add a new bookmark entry */
+      hop_state_to_location();
+   } else {
+      /* update the current state */
+      var olde = hop_current_state_bookmark[ id ];
+
+      if( olde == undefined ) {
+	 /* add a new entry to the current state */
+	 hop_current_state_bookmark[ id ] = new hop_state_entry( op, val );
+	 
+	 /* add a new bookmark entry */
+	 hop_state_to_location();
+      } else {
+	 if( (olde.op != op) || (olde.val != val) ) {
+	    /* update the current state */
+	    olde.op = op;
+	    olde.val = val;
+	    
+	    /* add a new bookmark entry */
+	    hop_state_to_location();
+	 }
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_state_bookmark_reset ...                                     */
+/*    -------------------------------------------------------------    */
+/*    When there is already an existing state, we have to reset all    */
+/*    its entries.                                                     */
+/*---------------------------------------------------------------------*/
+function hop_state_bookmark_reset() {
+   if( hop_current_state_bookmark != undefined ) {
+      /* there is a state, we reset all the entries */
+      for( p in hop_current_state_bookmark ) {
+	 if( hop_current_state_bookmark[ p ] instanceof hop_state_entry ) {
+	    var op = hop_current_state_bookmark[ p ].op;
+	    var handler =  hop_bookmark_state_handler[ op ];
+	    if( handler != undefined ) {
+	       handler.proc( p, handler.reset );
+	    }
+	 }
+      }
+
+      /* and we erase the state itself */
+      hop_current_state_bookmark = undefined;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_state_bookmark_update ...                                    */
+/*    -------------------------------------------------------------    */
+/*    Compare the two states, reset the entries of the old ones        */
+/*    that are no longer present in the new one. Execute the           */
+/*    entries that are novel in the new state.                         */
+/*---------------------------------------------------------------------*/
+function hop_state_bookmark_update( olds, news ) {
+   if( olds == undefined ) {
+      /* set the new values */
+      for( p in news ) {
+	 if( news[ p ] instanceof hop_state_entry ) {
+	    var op = news[ p ].op;
+	    var handler =  hop_bookmark_state_handler[ op ];
+	    
+	    if( handler != undefined ) {
+	       handler.proc( p, news[ p ].val );
+	    }
+	 }
+      }
+   } else {
+      /* reset all the entries that used to be in old */
+      /* state that are not present in the new one    */
+      for( p in olds ) {
+	 if( (olds[ p ] instanceof hop_state_entry) &&
+	     !(news[ p ] instanceof hop_state_entry) ) {
+	    var op = olds[ p ].op;
+	    var handler =  hop_bookmark_state_handler[ op ];
+
+	    if( handler != undefined ) {
+	       handler.proc( p, handler.reset );
+	    }
+	 }
+      }
+
+      /* update all the entries that are not */
+      /* present and equal in old state      */
+      for( p in news ) {
+	 if( news[ p ] instanceof hop_state_entry ) {
+	    if( !(olds[ p ] instanceof hop_state_entry) ||
+		(news[ p ].op != olds[ p ].op) ||
+		(news[ p ].val != olds[ p ].val) ) {
+	       var op = news[ p ].op;
+	       var handler =  hop_bookmark_state_handler[ op ];
+	       
+	       if( handler != undefined ) {
+		  handler.proc( p, news[ p ].val );
+	       }
+	    }
+	 }
+      }
+   }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_eval_bookmark_state ...                                      */
 /*    -------------------------------------------------------------    */
-/*    If hash.length == 0, then it means that we don't have a          */
-/*    state in the URL. In that very case, we check if old_location    */
-/*    has a state and if it does, we reset all its components.         */
+/*    This function is invoked when the location has changed.          */
 /*---------------------------------------------------------------------*/
 function hop_eval_bookmark_state( location ) {
    var hash = location.hash;
-   var n = (hash.length > 0);
-   var h;
 
-   if( n ) {
-      h = location.hash;
-      hop_bookmark_state_old_hash = h;
+   if( hash.length == 0 ) {
+      hop_state_bookmark_reset();
    } else {
-      h = hop_bookmark_state_old_hash;
-      hop_bookmark_state_old_hash = "";
-   }
-   
-   if( h.length > 0 ) {
-      var split = h.split( "," );
-      for( var i = 0; i < split.length; i++ ) {
-	 var el = split[ i ].match( /#?([^=]+)=([^:]+):([^,]+)+/ );
-	 if( el ) {
-	    var key = el[ 2 ];
-	    var handler = hop_bookmark_state_handler[ key ];
+      var new_state = hop_location_to_state_bookmark( hash );
+      var old_state = hop_current_state_bookmark;
 
-	    if( handler != undefined ) {
-	       handler.proc( el[ 1 ], n ? el[ 3 ] : handler.reset );
-	    }
-	 }
-      }
+      hop_state_bookmark_update( old_state, new_state );
+      
+      hop_current_state_bookmark = new_state;
    }
 }
 

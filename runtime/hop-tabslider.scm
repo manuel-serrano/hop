@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Dec  6 09:59:23 2006 (serrano)                */
+;*    Last change :  Mon May 21 13:51:05 2007 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -25,7 +25,8 @@
    (static  (class html-tabslider::xml-element
 	       (width (default #f))
 	       (height (default #f))
-	       (index (default 0)))
+	       (index (default 0))
+	       (history read-only (default #t)))
 	    (class html-tspage::xml-element)
 	    (class html-tshead::xml-element))
 
@@ -40,6 +41,7 @@
 				  (width #f)
 				  (height #f)
 				  (index 0)
+				  (history #t)
 				  body)
    ;; Verify that the body is a list of <TSPAN>
    (for-each (lambda (x)
@@ -54,25 +56,27 @@
       (width width)
       (height height)
       (index index)
+      (history history)
       (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tabslider ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-tabslider p encoding backend)
-  (with-access::html-tabslider obj (id width height body index)
-     (fprintf p "<div class='hop-tabslider' id='~a'" id)
-     (when (or width height)
-       (fprintf p " style=\"~a~a\""
-		(if width  (format "width: ~a;" width) "")
-		(if height (format "height: ~a;" height) "")))
-     (display ">" p)
-     (xml-write body p encoding backend)
-     (display "</div>" p)
-     (fprintf p
-        "<script type='~a'>hop_tabslider_init('~a', ~a)</script>"
-	(hop-javascript-mime-type)
-	id index)))
+   (with-access::html-tabslider obj (id width height body index history)
+      (fprintf p "<div class='hop-tabslider' id='~a'" id)
+      (when (or width height)
+	 (fprintf p " style=\"~a~a\""
+		  (if width  (format "width: ~a;" width) "")
+		  (if height (format "height: ~a;" height) "")))
+      (display ">" p)
+      (xml-write body p encoding backend)
+      (display "</div>" p)
+      (fprintf p
+	       "<script type='~a'>hop_tabslider_init('~a', ~a, ~a)</script>"
+	       (hop-javascript-mime-type)
+	       id index
+	       (if history "true" "false"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TSPAN> ...                                                      */

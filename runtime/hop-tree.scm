@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Dec 19 09:58:38 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Mon May 21 13:51:22 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -35,7 +35,8 @@
 	       (onselect read-only)
 	       (onunselect read-only)
 	       (cached::bool read-only)
-	       (value read-only))
+	       (value read-only)
+	       (history::bool read-only))
 	    
 	    (class html-trbody::xml-element)
 	    
@@ -61,6 +62,7 @@
 			     (onunselect #f)
 			     (cached #f)
 			     (value #unspecified)
+			     (history #t)
 			     body)
    (let ((head ""))
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
@@ -79,6 +81,7 @@
 	 (foldero foldero)
 	 (folderc folderc)
 	 (open open)
+	 (history history)
 	 (head head)
 	 (multiselect multiselect)
 	 (onselect onselect)
@@ -142,7 +145,8 @@
 			 p::output-port
 			 be::xml-backend)
    (with-access::html-tree obj (id foldero folderc open head body
-				   multiselect onselect onunselect cached value)
+				   multiselect onselect onunselect cached
+				   value history)
       (let ((title (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body head) ps be)
 		      (close-output-port ps)))
@@ -197,8 +201,9 @@
 		 ;; the value associated with the tree
 		 "'"
 		 (if (string? value) (string-escape value #\') "")
-		 "' "
- 		 ")"))))
+		 "', "
+		 (if history "true" "false")
+ 		 " )"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-body ...                                               */

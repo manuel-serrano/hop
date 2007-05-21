@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed May 16 17:14:39 2007 (serrano)                */
+#*    Last change :  Mon May 21 12:18:29 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -69,7 +69,7 @@ else
 fi
 
 ssl=""
-locevent="false"
+locevent="true"
 
 hoprts='"hop-autoconf.js" "hop.js" "runtime.js" "hop-dom.js" "runtime-interface.js" "hopscheme.js"'
 

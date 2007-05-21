@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Tue Dec 19 10:24:18 2006 (serrano)                */
-/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    Last change :  Mon May 21 13:53:33 2007 (serrano)                */
+/*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
@@ -89,8 +89,10 @@ function hop_tree_populate( tree ) {
 /*---------------------------------------------------------------------*/
 function hop_toggle_tree( tree ) {
    if( tree.openp ) {
+      if( tree.history ) hop_state_bookmark_add( tree.id, "tr", "0" );
       hop_tree_close( tree );
    } else {
+      if( tree.history ) hop_state_bookmark_add( tree.id, "tr", "1" );
       hop_tree_open( tree );
    }
 }
@@ -212,7 +214,7 @@ function hop_tree_row_toggle_selected( tree, row ) {
 /*---------------------------------------------------------------------*/
 /*    hop_make_tree ...                                                */
 /*---------------------------------------------------------------------*/
-function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, fo, fc , mu, ons, onus, value ) {
+function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, fo, fc , mu, ons, onus, value, history ) {
    var tree = document.createElement( "div" );
 
    /* safety check */
@@ -290,6 +292,7 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
    tree.row = row;
    tree.level = level;
    tree.openp = false;
+   tree.history = history;
    tree.cachedp = cachedp;
    tree.populated = false;
    tree.last = true;
@@ -445,3 +448,19 @@ function hop_tree_selection( tree ) {
 function hop_tree_id_selection( id ) {
    return hop_tree_selection( document.getElementById( id ) );
 }
+
+/*---------------------------------------------------------------------*/
+/*    Install the tree bookmark state handler                          */
+/*---------------------------------------------------------------------*/
+hop_bookmark_state_register_handler(
+   "tr", /* key argument */
+   "0",  /* reset value  */
+   function( id, arg ) {
+     var tr = document.getElementById( id );
+/*       alert( "tr arg=" + arg );                                     */
+      if( arg == "0" ) {
+	 hop_tree_close( tr );
+      } else {
+	 hop_tree_open( tr );
+      }
+} );

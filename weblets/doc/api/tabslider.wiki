@@ -42,9 +42,13 @@ using //tabsliders// must include in their header, the following statement:
 | :width       |  dimension         |              | the width.              |
 | :height      |  dimension         |              | the height.             |
 | :index       |  integer           |      0       | the selected tab.       |
+| history      |  a boolean         |  //#t//      | enables history.        |
 | body         |  ++<TSPAN>++ list  |              | the list of items.      |
 </arguments>
 
+The argument ++:history++ controls whether an history event is associated
+with selected a tab. When history is enabled, the //back button// of the
+browser restores previously selected tabs.
 </markup>
 
 === ++<TSPAN>++ ===

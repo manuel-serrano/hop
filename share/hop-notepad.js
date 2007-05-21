@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Wed May 16 10:24:41 2007 (serrano)                */
+/*    Last change :  Mon May 21 14:25:58 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -21,6 +21,9 @@ function hop_notepad_inner_toggle( np, to, tabs, bodies ) {
    tabs.childNodes[ to ].className = "hop-nptab hop-nptab-active";
    bodies.childNodes[ to ].style.display = "block";
 
+   /* update the layout of the children of the new tab */
+   hop_update( bodies.childNodes[ to ] );
+
    /* store for next time */
    np.active_tab = to;
 }
@@ -29,22 +32,19 @@ function hop_notepad_inner_toggle( np, to, tabs, bodies ) {
 /*    hop_notepad_inner_select ...                                     */
 /*---------------------------------------------------------------------*/
 function hop_notepad_inner_select( np, to ) {
-   var tabs = null;
-   var bodies = null;
+   var tabs = undefined;
+   var bodies = undefined;
    var i;
-
-   /* save the bookmark history */
-   hop_bookmark_state_set( np.id, "np", to );
 
    /* select the correct tab */
    for( i = 0; i < np.childNodes.length; i++ ) {
       if( np.childNodes[ i ].className == "hop-notepad-body" ) {
 	 bodies = np.childNodes[ i ];
-	 if( tabs != null ) break;
+	 if( tabs != undefined ) break;
       }
       if( np.childNodes[ i ].className == "hop-notepad-tabs" ) {
 	 tabs = np.childNodes[ i ];
-	 if( bodies !=null ) break;
+	 if( bodies != undefined ) break;
       }
    }
 
@@ -52,14 +52,16 @@ function hop_notepad_inner_select( np, to ) {
    if( np.active_tab == undefined ) np.active_tab = 0;
 
    /* invoke remote tab */
-   if( tabs.childNodes[ to ].lang == "delay" ) {
-      hop( np.onkeyup()( to ),
-	   function( http ) {
-	      hop_replace_inner( bodies.childNodes[ to ] )( http );
-	      hop_notepad_inner_toggle( np, to, tabs, bodies );
-           } );
-   } else {
-      hop_notepad_inner_toggle( np, to, tabs, bodies );
+   if( tabs != undefined ) {
+      if( tabs.childNodes[ to ].lang == "delay" ) {
+	 hop( np.onkeyup()( to ),
+	      function( http ) {
+	    hop_replace_inner( bodies.childNodes[ to ] )( http );
+	    hop_notepad_inner_toggle( np, to, tabs, bodies );
+	 } );
+      } else {
+	 hop_notepad_inner_toggle( np, to, tabs, bodies );
+      }
    }
 }
 
@@ -69,20 +71,27 @@ function hop_notepad_inner_select( np, to ) {
 /*    This is a user function that might be invoked with NOTEPAD       */
 /*    and PAN or IDENTs.                                               */
 /*---------------------------------------------------------------------*/
-function hop_notepad_select( id1, id2 ) {
+function hop_notepad_select( id1, id2, history ) {
    var np = hop_is_html_element( id1 ) ? id1 : document.getElementById( id1 );
    var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );
-   var tabs = ((np.childNodes[ 1 ].className == "hop-notepad-tabs") ?
-	       np.childNodes[ 1 ] : (np.childNodes[ 0 ]));
+   var tabs;
    var i;
+
+   if( np.childNodes[ 1 ].className == "hop-notepad-tabs" ) {
+      tabs = np.childNodes[ 1 ];
+   } else {
+      tabs = np.childNodes[ 0 ];
+   }
 
    for( i = 0; i < tabs.childNodes.length; i++ ) {
       if( tabs.childNodes[ i ] == tab ) {
+	 if( history ) hop_state_bookmark_add( np.id, "np", i );
+
 	 return hop_notepad_inner_select( np, i );
       }
    }
 
-   alert( "*** Hop Error: hop_notepad_select -- Can't find pad `" + id2 + "'");
+   alert( "*** Hop Error: hop_notepad_select -- Can't find pad: " + id2 );
 
    return false;
 }
@@ -94,7 +103,7 @@ hop_bookmark_state_register_handler(
    "np", /* key argument */
    "0",  /* reset value  */
    function( id, arg ) {
-      var np = document.getElementById( id );
-      alert( "np arg=" + arg );
-      hop_notepad_inner_select( np, parseInt( arg ) );
+     var np = document.getElementById( id );
+/*       alert( "np arg=" + arg );                                     */
+     hop_notepad_inner_select( np, parseInt( arg ) );
 } );

@@ -58,12 +58,16 @@ using //Trees// must include in their header, the following statement:
 | :onselect     |  function  |     _        | a function to invoke on selection.         |
 | :onunselect   |  function  |     _        | a function to invoke on unselection.       |
 | :value        |  string    |    ++""++    | a string denoting the value of the tree.   |
-| body          |  element   |  empty       | the body.                    |
+| :history      |  boolean   |  //#t//      | enables history recording.                 |
+| body          |  element   |  empty       | the body.                                  |
 </arguments>
 
 This function creates a //tree//. Its first child has to be a
 ++<TRHEAD>++ and its second child a ++<TRBODY>++.
 
+The argument ++:history++ controls whether an history event is associated
+with selected a tab. When history is enabled, the //back button// of the
+browser restores previously selected tabs.
 </markup>
 
 === ++<TRHEAD>++ ===
@@ -131,12 +135,12 @@ Closes the ++tree++.
 Opens the ++tree++.
 </procedure>
 
-=== ++(tree-toggle tree)++ ===
+=== ++(tree-toggle tree [history])++ ===
 <procedure> tree-toggle
 
 <arguments>
-^  arguments  ^   type   ^  short description  ^
-| tree        |   tree   | the tree.        |
+^  arguments  ^   type      ^  short description  ^
+| tree        |   tree      | the tree.           |
 </arguments>
 
 Opens the ++tree++ if closed. Otherwise, closes it.

@@ -1,6 +1,6 @@
 ;; A simple //tooltip//
 (<HTML>
-   (<HEAD>)
+   (<HEAD> :include "hop-tooltip")
    (<BODY>
       (let ((tp (<TOOLTIP> (<TABLE>
 			      (<TR> (<TH> :colspan 2 "A tooltip"))

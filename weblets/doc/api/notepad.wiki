@@ -50,12 +50,16 @@ using //Notepads// must include in their header, the following statement:
 <arguments>
 ^  attributes  ^   type    ^   default    ^  short description          ^
 | :id          |  string   |  //random//  | element identifier.         |
+| :history     |  boolean  |  //#t//      | enables history recording.  |
 | body         |  element  |  empty       | the body.                   |
 </arguments>
 
 This function creates a //notepad//. Its first child can be 
 ++<NPHEAD>++. Its others children are all ++<NPTAB>++.
 
+The argument ++:history++ controls whether an history event is associated
+with selected a tab. When history is enabled, the //back button// of the
+browser restores previously selected tabs.
 </markup>
 
 === ++<NPHEAD>++ ===
@@ -106,16 +110,20 @@ Creates a tab header.
 == Client Definitions ==
 <client>
 
-=== ++(notepad-select notepad tab)++ ===
+=== ++(notepad-select notepad tab [history])++ ===
 <procedure> notepad-select
 
 <arguments>
-^  arguments  ^   type               ^  short description  ^
-| notepad     |  notepad or string   | the notepad.        |
-| tab         |  tab or string       | the tab.            |
+^  arguments  ^   type               ^  short description     ^
+| notepad     |  notepad or string   | the notepad.           |
+| tab         |  tab or string       | the tab.               |
+| history     |  a boolean           | enables history.       |
 </arguments>
 
 This function selects a //tab// in a //notepad//.
+
+The ++history++ argument, when true, records the selection in the
+browser history.
 </procedure>
 </client>
 

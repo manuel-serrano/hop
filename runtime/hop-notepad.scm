@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Dec  6 09:59:03 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Mon May 21 13:42:39 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
 ;*=====================================================================*/
@@ -45,36 +45,35 @@
 ;*---------------------------------------------------------------------*/
 ;*    notepad ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (notepad id attrs head tabs)
+(define (notepad id history attrs head tabs)
    (define svc
       (hop->json
        (procedure->service
 	(lambda (i)
 	   (nptab-get-body (list-ref tabs i))))))
    (define (make-tab-div tab i)
-      (let* ((click (format "hop_notepad_inner_select( document.getElementById( \"~a\" ), ~a )"
-			    id i)))
-	 (with-access::xml-element tab (attributes)
+      (with-access::xml-nptab-element tab (attributes (idt id) body)
+	 (let ((click (format "hop_notepad_select( \"~a\", \"~a\", ~a )"
+			      id idt (if history "true" "false"))))
 	    (set! attributes
 		  (cons* (cons "onclick" click)
 			 (cons "class" (if (=fx i 0)
 					   "hop-nptab-active hop-nptab"
 					   "hop-nptab-inactive hop-nptab"))
 			 attributes)))
-	 (with-access::xml-nptab-element tab (attributes body)
-	    (when (and (xml-delay? (car (xml-element-body tab)))
-		       (null? (cdr (xml-element-body tab))))
-	       (set! attributes (cons (cons "lang" "delay") attributes)))
-	    (<DIV> :class "hop-notepad-body-tab"
-		   :style (if (=fx i 0) "display: block" "display: none")
-		   (cond
-		      ((=fx i 0)
-		       (nptab-get-body tab))
-		      ((and (xml-delay? (car body)) (null? (cdr body)))
-		       ;; we must not eagerly evaluate the tab...
-		       "")
-		      (else
-		       body))))))
+	 (when (and (xml-delay? (car (xml-element-body tab)))
+		    (null? (cdr (xml-element-body tab))))
+	    (set! attributes (cons (cons "lang" "delay") attributes)))
+	 (<DIV> :class "hop-notepad-body-tab"
+	    :style (if (=fx i 0) "display: block" "display: none")
+	    (cond
+	       ((=fx i 0)
+		(nptab-get-body tab))
+	       ((and (xml-delay? (car body)) (null? (cdr body)))
+		;; we must not eagerly evaluate the tab...
+		"")
+	       (else
+		body)))))
    (let ((bodies (map (lambda (t i) (make-tab-div t i))
 		      tabs (iota (length tabs))))
 	 (attrs (append-map (lambda (a)
@@ -93,6 +92,7 @@
 ;*    <NOTEPAD> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <NOTEPAD> ((id #unspecified string)
+				(history #t)
 				(attrs)
 				body)
    (let ((id (xml-make-id id 'NOTEPAD))
@@ -106,7 +106,7 @@
 	     (set! body (filter xml-nptab-element? body))))
       (if (null? body)
 	  (error '<NOTEPAD> "Missing <NPTAB> elements" id)
-	  (notepad id attrs head body))))
+	  (notepad id history attrs head body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <NPHEAD> ...                                                     */

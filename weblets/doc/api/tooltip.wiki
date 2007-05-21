@@ -20,6 +20,16 @@ client side programming. It is only supported on server side.])
 
   (tooltip-hide)
 
+=== Requirements ===
+
+Client codes using //Tooltips// need to load the script
+++hop-tooltip.js++.  That is, user interfaces using //Tooltips// must
+include in their header, the following statement:
+
+
+  (<HEAD> :include "hop-tooltip")
+
+
 == Examples ==
 
 <example><TOOLTIP></example>

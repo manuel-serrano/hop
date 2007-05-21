@@ -40,13 +40,14 @@ using //foldlists// must include in their header, the following statement:
 <markup> <FL>
 
 <arguments>
-^  attributes  ^   type              ^   default    ^  short description      ^
-| :id          |  string             |  //random//  | element identifier.     |
-| :class       |  string             |  //hop-fl//  | element class name.     |
-| :spacing     |  integer            |      0       |                         |
-| :icono       |  string             |  //false//   | the open image.         |
-| :iconc       |  string             |  //false//   | the close image.        |
-| body         |  ++<FLITEM>++ list  |              | the list of items.      |
+^  attributes  ^   type              ^   default    ^  short description          ^
+| :id          |  string             |  //random//  | element identifier.         |
+| :class       |  string             |  //hop-fl//  | element class name.         |
+| :spacing     |  integer            |      0       |                             |
+| :icono       |  string             |  //false//   | the open image.             |
+| :iconc       |  string             |  //false//   | the close image.            |
+| :history     |  boolean            |  //#t//      | enables history recording.  |
+| body         |  ++<FLITEM>++ list  |              | the list of items.          |
 </arguments>
 
 </markup>

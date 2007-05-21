@@ -3,43 +3,79 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Wed Apr  4 16:05:00 2007 (serrano)                */
+/*    Last change :  Mon May 21 14:27:50 2007 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implementation                                     */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    hop_fold_item_close ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_fold_item_close( el, imgo, imgc, history ) {
+   el.style.display = "none";
+   imgo.style.display = "none";
+   imgc.style.display = "block";
+   if( history ) hop_state_bookmark_add( el.id, "fl", "0" );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_fold_item_open ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_fold_item_open(  el, imgo, imgc, history ) {
+   el.style.display = "block";
+   imgo.style.display = "block";
+   imgc.style.display = "none";
+   if( history ) hop_state_bookmark_add( el.id, "fl", "1" );
+}
+   
+/*---------------------------------------------------------------------*/
 /*     hop_fold_item_toggle ...                                        */
 /*---------------------------------------------------------------------*/
-function hop_fold_item_toggle( id, open, close ) {
+function hop_fold_item_toggle( id, history ) {
    var el = document.getElementById( id );
-   var img = document.getElementById( id + "-img" );
+   var imgo = document.getElementById( id + "-imgo" );
+   var imgc = document.getElementById( id + "-imgc" );
    
    if( el.style.display == "block" ) {
-      el.style.display = "none";
-      img.src = close;
+      hop_fold_item_close( el, imgo, imgc, history );
    } else {
-      el.style.display = "block";
-      img.src = open;
+      hop_fold_item_open( el, imgo, imgc, history );
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*     hop_fold_item_toggle_service ...                                */
 /*---------------------------------------------------------------------*/
-function hop_fold_item_toggle_service( id, open, close, svc ) {
+function hop_fold_item_toggle_service( id, history, svc ) {
    var el = document.getElementById( id );
-   var img = document.getElementById( id + "-img" );
+   var imgo = document.getElementById( id + "-imgo" );
+   var imgc = document.getElementById( id + "-imgc" );
 
    if( el.style.display == "block" ) {
-      el.style.display = "none";
-      img.src = close;
+      hop_fold_item_close( el, imgo, imgc, history );
    } else {
       hop( svc, function( h ) {
 	 el.innerHTML = h.responseText;
 	 hop_js_eval( h );
       } );
-      el.style.display = "block";
-      img.src = open;
+      hop_fold_item_open( el, imgo, imgc, history );
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    Install the foldlist bookmark state handler                      */
+/*---------------------------------------------------------------------*/
+hop_bookmark_state_register_handler(
+   "fl", /* key argument */
+   "0",  /* reset value  */
+   function( id, arg ) {
+     var el = document.getElementById( id );
+     var imgo = document.getElementById( id + "-imgo" );
+     var imgc = document.getElementById( id + "-imgc" );
+/*      alert( "fl arg=" + arg );                                      */
+     if( arg == "0" ) {
+	hop_fold_item_close( el, imgo, imgc, false );
+     } else {
+	hop_fold_item_open( el, imgo, imgc, false );
+     }
+} );

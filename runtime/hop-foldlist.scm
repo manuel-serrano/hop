@@ -3,9 +3,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Wed Dec  6 09:58:48 2006 (serrano)                */
+;*    Last change :  Mon May 21 14:23:25 2007 (serrano)                */
 ;*    -------------------------------------------------------------    */
-;*    The HOP implementation of <FL>. 		                       */
+;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -26,7 +26,8 @@
 	       (stop::bool (default #t))
 	       (spacing (default 0))
 	       (icono (default #f))
-	       (iconc (default #f)))
+	       (iconc (default #f))
+	       (history read-only (default #t)))
 	    (class html-flitem::xml-element
 	       (cname::bstring read-only)
 	       (open (default #f)))
@@ -45,8 +46,9 @@
 			   (spacing 0)
 			   (icono #f)
 			   (iconc #f)
+			   (history #t)
 			   body)
-  (let ((res (instantiate::html-foldlist
+   (let ((res (instantiate::html-foldlist
 	         (markup 'fl)
 		 (cname (if (string? class)
 			    (string-append "hop-fl " class)
@@ -55,26 +57,26 @@
 		 (spacing spacing)
 		 (icono icono)
 		 (iconc iconc)
+		 (history history)
 		 (body body))))
-    ;; Verify that the body is a list of <FLITEM>s and fill their parent
-    (for-each (lambda (x)
-		(if (and (xml-element? x)
-			 (eq? (xml-element-markup x) 'flitem))
-		    (html-flitem-parent-set! x res)
-		    (error '<FL> "Component is not a <FLITEM>" x)))
-	      body)
-    res))
+      ;; Verify that the body is a list of <FLITEM>s and fill their parent
+      (for-each (lambda (x)
+		   (if (and (xml-element? x)
+			    (eq? (xml-element-markup x) 'flitem))
+		       (html-flitem-parent-set! x res)
+		       (error '<FL> "Component is not a <FLITEM>" x)))
+		body)
+      res))
 
-;;;
-;;;    xml-write ::html-foldlist ...
-;;;
+;*---------------------------------------------------------------------*/
+;*    xml-write ::html-foldlist ...                                    */
+;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-foldlist p encoding backend)
-  (fprintf p "<table class='~a' id='~a' cellpadding='0' cellspacing='~a'>"
-	   (html-foldlist-cname obj)
-	   (html-foldlist-id obj) (html-foldlist-spacing obj))
-  (xml-write (html-foldlist-body obj) p encoding backend)
-  (display "</table>" p))
-
+   (fprintf p "<table class='~a' id='~a' cellpadding='0' cellspacing='~a'>"
+	    (html-foldlist-cname obj)
+	    (html-foldlist-id obj) (html-foldlist-spacing obj))
+   (xml-write (html-foldlist-body obj) p encoding backend)
+   (display "</table>" p))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FLITEM> ...                                                     */
@@ -83,14 +85,14 @@
 			       (class #unspecified string)
 			       (open #f)
 			       body)
-  (instantiate::html-flitem
-     (markup 'flitem)
-     (cname (if (string? class)
-		(string-append "hop-fl-item " class)
-		"hop-fl-item"))
-     (id (xml-make-id id 'FLITEM))
-     (open open)
-     (body body)))
+   (instantiate::html-flitem
+      (markup 'flitem)
+      (cname (if (string? class)
+		 (string-append "hop-fl-item " class)
+		 "hop-fl-item"))
+      (id (xml-make-id id 'FLITEM))
+      (open open)
+      (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-flitem ...                                      */
@@ -103,18 +105,19 @@
 				       "triangle-down.png")))
 	    (iconc (or (html-foldlist-iconc parent)
 		       (make-file-name (hop-icons-directory)
-				       "triangle-right.png"))))
+				       "triangle-right.png")))
+	    (history (if (html-foldlist-history parent) "true" "false")))
 	 (cond
 	    ((not (pair? body))
-	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s) ~a'>"
-		      id icono iconc
+	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~a) ~a'>"
+		      id history
 		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" "")))
 	    ((and (pair? body)
 		  (xml-delay? (car body))
 		  (null? (cdr body)))
 	     (fprintf p
-		      "<tr onclick='hop_fold_item_toggle_service(~s,~s,~s,~s) ~a'>"
-		      id icono iconc
+		      "<tr onclick='hop_fold_item_toggle_service(~s,~a,~s) ~a'>"
+		      id history
 		      (hop-service-path
 		       (procedure->service
 			(xml-delay-thunk (car body))))
@@ -125,19 +128,23 @@
 		  (xml-delay? (cadr body))
 		  (null? (cddr body)))
 	     (fprintf p
-		      "<tr onclick='hop_fold_item_toggle_service(~s,~s,~s,~s) ~a'>"
-		      id icono iconc
+		      "<tr onclick='hop_fold_item_toggle_service(~s,~a,~s) ~a'>"
+		      id history
 		      (hop-service-path
 		       (procedure->service
 			(xml-delay-thunk (cadr body))))
 		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))
 	     (set-car! (cdr body) ""))
 	    (else
-	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~s,~s) ~a'>"
-		      id icono iconc
+	     (fprintf p "<tr onclick='hop_fold_item_toggle(~s,~a) ~a'>"
+		      id history
 		      (if (html-foldlist-stop parent) ";hop_stop_propagation( event, true )" ""))))
-	 (fprintf p "<td><img class='hop-fl-img' id=~s src=~s/></td><td width='100%' class='~a'>"
-		  (string-append id "-img") (if open icono iconc)
+	 (fprintf p "<td>
+                       <img class='hop-fl-img' id=~s src=~s style='display:~a'/>
+                       <img class='hop-fl-img' id=~s src=~s style='display:~a'/>
+                     </td><td width='100%' class='~a'>"
+		  (string-append id "-imgo") icono (if open "block" "none")
+		  (string-append id "-imgc") iconc (if open "none" "block")
 		  (html-flitem-cname obj))
 	 (when (and (pair? tmp)
 		    (xml-element? (car tmp))
@@ -155,19 +162,19 @@
 (define-xml-compound <FLHEAD> ((id #unspecified string)
 			       (class #unspecified string)
 			       body)
-  (instantiate::html-flhead
-     (markup 'flhead)
-     (cname (if (string? class)
-		(string-append "hop-fl-head " class)
-		"hop-fl-head"))
-     (id (xml-make-id id 'FLHEAD))
-     (body body)))
+   (instantiate::html-flhead
+      (markup 'flhead)
+      (cname (if (string? class)
+		 (string-append "hop-fl-head " class)
+		 "hop-fl-head"))
+      (id (xml-make-id id 'FLHEAD))
+      (body body)))
 
-;;;
-;;;    xml-write ::html-flhead ...
-;;;
+;*---------------------------------------------------------------------*/
+;*    xml-write ::html-flhead ...                                      */
+;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-flhead p encoding backend)
-  (display (format "<span class='~a'>" (html-flhead-cname obj)) p)
-  (xml-write (html-flhead-body obj) p encoding backend)
-  (display "</span>" p))
+   (display (format "<span class='~a'>" (html-flhead-cname obj)) p)
+   (xml-write (html-flhead-body obj) p encoding backend)
+   (display "</span>" p))
 
