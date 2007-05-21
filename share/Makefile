@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon May 21 09:17:18 2007 (serrano)                */
+#*    Last change :  Mon May 21 17:14:16 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -26,7 +26,7 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-notepad.css hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
-                  hop-iwindow.js hop-iwindow.css \
+                  hop-iwindow.js hop-iwindow.hss \
                   hop-editor.js hop-editor.css \
                   hop-fileselect.js hop-fileselect.css \
                   hop-tooltip.js \
