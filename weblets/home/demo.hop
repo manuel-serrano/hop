@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Wed Apr  4 16:04:36 2007 (serrano)                */
+;*    Last change :  Mon May 21 18:04:19 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -191,47 +191,66 @@ be used to access the whole source code of this playground.]))))
 	     w))))
 
 ;*---------------------------------------------------------------------*/
+;*    img->data ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (img->data src inline)
+   (if inline
+       (let ((file (make-file-name (home-dir) src)))
+	  (if (file-exists? file)
+	      (let ((p (open-input-file file)))
+		 (if (input-port? p)
+		     (unwind-protect
+			(format "data:~a;base64,~a"
+				(mime-type src (format "image/~a"
+						       (suffix src)))
+				(base64-encode (read-string p)))
+			(close-input-port p))
+		     src))
+	      src))
+       src))
+
+;*---------------------------------------------------------------------*/
 ;*    <ZIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<ZIMG> svc s1 s2 inl . r)
    (let ((id (xml-make-id))
-	 (p1 (format "etc/icons/~a" s1))
-	 (p2 (format "etc/icons/~a" s2))
+	 (p1 (img->data (format "etc/icons/~a" s1) inl))
+	 (p2 (img->data (format "etc/icons/~a" s2) inl))
 	 (w (if (pair? r) (car r) "200"))
 	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
 	 (t (string-capitalize (basename svc))))
       (<IMG> :id id
-	     :src p1
-	     :inline inl
-	     :title t
-	     :alt t
-	     :onmouseover ~(set! (document.getElementById $id).src $p2)
-	     :onmouseout ~(set! (document.getElementById $id).src $p1)
-	     :onclick ~(let ((frame (document.createElement "iframe"))
-			     (t (document.getElementById $id))
-			     (p (document.getElementById "demo-playground")))
-			  (set! frame.className "demos")
-			  (set! frame.src $svc)
-			  (node-style-set! frame :width "100%")
-			  (node-style-set! frame :height "100%")
-			  (node-style-set! frame :border-width 0)
-			  (let* ((w (iwindow-open $t
-						  frame
-						  false false
-						  $w $h
-						  (+ 60 (hop_element_x p))
-						  (+ 10 (hop_element_y p))
-						  p))
-				 (i (<SPAN> :class "icon" $t)))
-			     (set! i.onmousedown
-				   (lambda (e)
-				      (set! i.style.visibility "hidden")
-				      (set! w.style.display "block")))
-			     (set! w.iconify
-				   (lambda ()
-				      (set! i.style.top w.style.top)
-				      (set! i.style.left w.style.left)
-				      (set! i.style.visibility "visible")
-				      (set! w.style.display "none")))
-			     (dom-append-child! p i)
-			     w)))))
+	 :src p1
+	 :inline #f
+	 :title t
+	 :alt t
+	 :onmouseover ~(set! (document.getElementById $id).src $p2)
+	 :onmouseout ~(set! (document.getElementById $id).src $p1)
+	 :onclick ~(let ((frame (document.createElement "iframe"))
+			 (t (document.getElementById $id))
+			 (p (document.getElementById "demo-playground")))
+		      (set! frame.className "demos")
+		      (set! frame.src $svc)
+		      (node-style-set! frame :width "100%")
+		      (node-style-set! frame :height "100%")
+		      (node-style-set! frame :border-width 0)
+		      (let* ((w (iwindow-open $t
+					      frame
+					      false false
+					      $w $h
+					      (+ 60 (hop_element_x p))
+					      (+ 10 (hop_element_y p))
+					      p))
+			     (i (<SPAN> :class "icon" $t)))
+			 (set! i.onmousedown
+			       (lambda (e)
+				  (set! i.style.visibility "hidden")
+				  (set! w.style.display "block")))
+			 (set! w.iconify
+			       (lambda ()
+				  (set! i.style.top w.style.top)
+				  (set! i.style.left w.style.left)
+				  (set! i.style.visibility "visible")
+				  (set! w.style.display "none")))
+			 (dom-append-child! p i)
+			 w)))))

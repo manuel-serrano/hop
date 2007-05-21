@@ -1,13 +1,29 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-iwindow.css                   */
+/*    serrano/prgm/project/hop/share/hop-iwindow.hss                   */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr 19 15:17:45 2006                          */
-/*    Last change :  Mon May 21 17:07:56 2007 (serrano)                */
+/*    Last change :  Mon May 21 17:23:02 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW CSS                                                  */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    url ...                                                          */
+/*---------------------------------------------------------------------*/
+$(define (url file)
+    (let ((fname (make-file-name (hop-share-directory) file)))
+       (if (file-exists? fname)
+	   (let ((p (open-input-file fname)))
+	      (if (input-port? p)
+		  (unwind-protect
+		     (format "url( \"data:~a;base64,~a\" )"
+			     (mime-type file (format "image/~a" (suffix file)))
+			     (base64-encode (read-string p) 0))
+		     (close-input-port p))
+		  (format "url( ~s )" file)))
+	   (format "url( ~s )" file))))
 
 /*---------------------------------------------------------------------*/
 /*    main frame                                                       */
@@ -43,7 +59,7 @@ div.hop-iwindow table.hop-iwindow-handle {
 }
 
 div.hop-iwindow td.hop-iwindow-iconify {
-  background-image: url( "icons/iwindow-icon.png" );
+  background-image: $(url "icons/iwindow-icon.png");
   background-repeat: no-repeat;
   background-position: left;
   vertical-align: middle;
@@ -52,7 +68,7 @@ div.hop-iwindow td.hop-iwindow-iconify {
 }
 
 div.hop-iwindow td.hop-iwindow-maximize {
-  background-image: url( "icons/iwindow-maximize.png" );
+  background-image: $(url "icons/iwindow-maximize.png");
   background-repeat: no-repeat;
   background-position: left;
   vertical-align: middle;
@@ -61,7 +77,7 @@ div.hop-iwindow td.hop-iwindow-maximize {
 }
 
 div.hop-iwindow td.hop-iwindow-close {
-  background-image: url( "icons/iwindow-close.png" );
+  background-image: $(url "icons/iwindow-close.png");
   background-repeat: no-repeat;
   background-position: right;
   vertical-align: middle;
@@ -81,7 +97,7 @@ div.hop-iwindow td.hop-iwindow-up-title table {
 }
 
 div.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-left {
-  background-image: url( "icons/iwindow-title-left.png" );
+  background-image: $(url "icons/iwindow-title-left.png");
   background-repeat: no-repeat;
   background-position: left;
   vertical-align: middle;
@@ -90,7 +106,7 @@ div.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-left {
 }
 
 div.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-middle {
-  background-image: url( "icons/iwindow-title.png" );
+  background-image: $(url "icons/iwindow-title.png");
   background-repeat: repeat;
   background-position: center;
   vertical-align: middle;
@@ -98,7 +114,7 @@ div.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-middle {
 }
 
 div.hop-iwindow td.hop-iwindow-up-title td.hop-iwindow-title-right {
-  background-image: url( "icons/iwindow-title-right.png" );
+  background-image: $(url "icons/iwindow-title-right.png");
   background-repeat: no-repeat;
   background-position: right;
   vertical-align: middle;
@@ -139,18 +155,18 @@ div.hop-iwindow div.hop-iwindow-foot table {
 
 div.hop-iwindow td.hop-iwindow-bottom-left {
   width: 25px;
-  background-image: url( "icons/iwindow-bottom-left.png" );
+  background-image: $(url "icons/iwindow-bottom-left.png" );
   cursor: sw-resize;
 }
 
 div.hop-iwindow td.hop-iwindow-bottom-middle {
-  background-image: url( "icons/iwindow-bottom-middle.png" );
+  background-image: $(url "icons/iwindow-bottom-middle.png");
   cursor: s-resize;
 }
 
 div.hop-iwindow td.hop-iwindow-bottom-right {
   width: 25px;
-  background-image: url( "icons/iwindow-bottom-right.png" );
+  background-image: $(url "icons/iwindow-bottom-right.png");
   cursor: se-resize;
 }
 
@@ -168,14 +184,14 @@ table.hop-iwindow-shadow td.hop-shadow-ne {
   width: 8px;
   height: 8px;
   background: none;
-  background-image: url( "icons/iwindow-shadow-ne.png" );
+  background-image: $(url "icons/iwindow-shadow-ne.png");
 }
 
 table.hop-iwindow-shadow td.hop-shadow-e {
   font-size: 2pt;
   width: 8px;
   background: none;
-  background-image: url( "icons/iwindow-shadow-e.png" );
+  background-image: $(url "icons/iwindow-shadow-e.png");
 }
 
 table.hop-iwindow-shadow td.hop-shadow-sw {
@@ -183,21 +199,21 @@ table.hop-iwindow-shadow td.hop-shadow-sw {
   width: 8px;
   height: 8px;
   background: none;
-  background-image: url( "icons/iwindow-shadow-sw.png" );
+  background-image: $(url "icons/iwindow-shadow-sw.png");
 }
 
 table.hop-iwindow-shadow td.hop-shadow-s {
   font-size: 2pt;
   height: 8px;
   background: none;
-  background-image: url( "icons/iwindow-shadow-s.png" );
+  background-image: $(url "icons/iwindow-shadow-s.png");
 }
 
 table.hop-iwindow-shadow td.hop-shadow-se {
   font-size: 2pt;
   height: 8px;
   background: none;
-  background-image: url( "icons/iwindow-shadow-se.png" );
+  background-image: $(url "icons/iwindow-shadow-se.png");
 }
 
 div.hop-iwindow table.hop-iwindow-shadow  div.hop-iwindow-handle {

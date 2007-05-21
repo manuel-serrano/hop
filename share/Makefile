@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon May 21 17:14:16 2007 (serrano)                */
+#*    Last change :  Mon May 21 17:16:40 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -62,7 +62,7 @@ install:
 	install -m a+r $(BUILDSHAREDIR)/hop-foldlist.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-foldlist.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-iwindow.js $(HOPSHAREDIR) && \
-	install -m a+r $(BUILDSHAREDIR)/hop-iwindow.css $(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-iwindow.hss $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-editor.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-editor.css $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-fileselect.js $(HOPSHAREDIR) && \
@@ -114,7 +114,7 @@ uninstall:
 	/bin/rm -f $(HOPSHAREDIR)/hop-foldlist.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-foldlist.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-iwindow.js && \
-	/bin/rm -f $(HOPSHAREDIR)/hop-iwindow.css && \
+	/bin/rm -f $(HOPSHAREDIR)/hop-iwindow.hss && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-editor.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-editor.css && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-fileselect.js && \
