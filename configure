@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed May 23 11:13:48 2007 (serrano)                */
+#*    Last change :  Wed May 23 16:33:26 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -247,15 +247,6 @@ fi
 #*    Check the Bigloo libraries                                       */
 #*---------------------------------------------------------------------*/
 bgllibdir=`$bigloo -q -eval "(begin (print *ld-library-dir*) (exit 0))"`
-
-if [ ! -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
-  echo "*** ERROR:configure:bigloo pthread. Aborting"
-  echo ""
-  echo "This error is due to a bad Bigloo installation. It might be that"
-  echo "you have installed Bigloo without the PTHREAD support. Please"
-  echo "check your Bigloo installation."
-  exit 1;
-fi
 
 if [ ! -f $bgllibdir/bigloo/$bglversion/web.heap ]; then
   echo "*** ERROR:configure:bigloo web. Aborting"
