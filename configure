@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed May 23 16:33:26 2007 (serrano)                */
+#*    Last change :  Wed May 23 16:37:56 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -39,7 +39,7 @@ jsmimetype="text/javascript"
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="1.5.1"
+version="1.6.0"
 devel=rc
 
 url="http://hop.inria.fr/"
@@ -71,7 +71,7 @@ fi
 # User controlled optional features
 ssl="no"
 locevent="true"
-threads="yes"
+threads=""
 
 hoprts='"hop-autoconf.js" "hop.js" "runtime.js" "hop-dom.js" "runtime-interface.js" "hopscheme.js"'
 
@@ -293,6 +293,15 @@ if [ "$threads " = " " ]; then
 fi
 
 if [ "$threads" = "yes" ]; then
+  if [ ! -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
+    echo "*** ERROR:configure:bigloo pthread. Aborting"
+    echo ""
+    echo "You have request a multi-threading support but it appears that"
+    echo "the installed Bigloo compiler does not support multi-threading."
+    echo "You must either, configure Hop without multi-threading support"
+    echo "or re-configure and re-install your Bigloo compiler."
+    exit 1;
+  fi
   bcflags="$bcflags -srfi enable-threads"
 fi
 
