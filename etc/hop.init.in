@@ -28,7 +28,6 @@
     (set! *additional-bigloo-libraries*
 	  (cons* 'bigloomultimedia
 		 'biglooweb
-                 @BIGLOOPTH@
                  @BIGLOOSSL@
 		 *additional-bigloo-libraries*)))
    (bigloo-eval

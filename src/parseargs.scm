@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May 23 10:38:11 2007 (serrano)                */
+;*    Last change :  Wed May 23 15:13:08 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -17,7 +17,7 @@
    (library hop)
 
    (cond-expand
-      (enable-threads pthread))
+      (enable-threads (library pthread)))
    
    (import  hop_param)
    
