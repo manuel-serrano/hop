@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May 15 09:33:45 2007 (serrano)                */
+;*    Last change :  Wed May 23 07:51:17 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -14,12 +14,13 @@
 ;*---------------------------------------------------------------------*/
 (module main
 
-   (library pthread
-	    web
-	    hop)
+   (library web hop)
 
    (cond-expand
-      (ssl (library ssl)))
+      (enable-threads (library pthread)))
+
+   (cond-expand
+      (enable-ssl (library ssl)))
 
    (import  hop_parseargs
 	    hop_param)
@@ -96,14 +97,16 @@
 			    (hop-scheduling)))))
 	     (s (if (hop-enable-https)
 		    (cond-expand
-		       (ssl
+		       (enable-ssl
 			(let ((cert (read-certificate "/etc/ssl/certs/hop.pem"))
 			      (pkey (read-private-key "/etc/ssl/private/hop.pem")))
 			   (make-ssl-server-socket (hop-port)
 						   :protocol (hop-https-protocol)
 						   :cert cert :pkey pkey)))
 		       (else
-			(make-server-socket (hop-port))))
+			(error 'hop
+			       "SSL not supported by this version of Hop"
+			       #f)))
 		    (make-server-socket (hop-port)))))
 	 (hop-main-loop s ap rp))))
 
@@ -321,26 +324,4 @@
 		    (socket-close sock)))
 	       (else
 		(socket-close sock)))))))
-
-;*---------------------------------------------------------------------*/
-;*    can-connect? ...                                                 */
-;*    -------------------------------------------------------------    */
-;*    This predicate returns #t iff the current number of thread in    */
-;*    POOL connected to SITE is lesser than                            */
-;*    HOP-MAX-REPLY-PERSITE-THREAD.                                    */
-;*---------------------------------------------------------------------*/
-(define (can-connect? pool site)
-   (with-access::pool pool (use)
-      (let loop ((thread use)
-		 (n 0))
-	 (if (null? thread)
-	     #t
-	     (let ((t (car thread)))
-		(if (http-request? (thread-data t))
-		    (if (string=? (http-request-host (thread-data t)) site)
-			(let ((nn (+fx 1 n)))
-			   (if (>=fx nn (hop-max-reply-persite-thread))
-			       #f
-			       (loop (cdr thread) nn)))
-			(loop (cdr thread) n))))))))
    

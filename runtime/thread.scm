@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Nov 16 13:24:06 2004                          */
-;*    Last change :  Thu Dec  7 08:08:39 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Wed May 23 07:58:50 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hop_thread                                                       */
 ;*=====================================================================*/
@@ -18,6 +18,14 @@
    
    (import  __hop_param
 	    __hop_misc)
+
+   (export (abstract-class pool
+	      (id::symbol read-only)
+	      (size::int read-only)
+	      (mutex::mutex read-only)
+	      (condv::condvar read-only)
+	      (free::pair-nil (default '()))
+	      (use::pair-nil (default '()))))
    
    (static  (class pooled-thread::pthread
 	       (thunk::procedure (default (lambda () #f)))
@@ -29,14 +37,6 @@
 	    
 	    (class lazy-pool::pool
 	       nb-threads::int))
-
-   (export  (abstract-class pool
-	       (id::symbol read-only)
-	       (size::int read-only)
-	       (mutex::mutex read-only)
-	       (condv::condvar read-only)
-	       (free::pair-nil (default '()))
-	       (use::pair-nil (default '()))))
 
    (export  (hop-current-thread)
 	    (thread-data ::obj)

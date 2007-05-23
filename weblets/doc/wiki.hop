@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Mon Nov 20 08:15:21 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue May 22 17:02:07 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
 ;*=====================================================================*/
@@ -20,7 +20,7 @@
 	   hopdoc_api)
    
    (export (doc-wiki-syntax)
-	   (make-wiki-request-syntax initial-syntax)
+	   (make-wiki-request-syntax initial-syntax #!optional mktitle)
 	   (wiki-tt-parser proc)
 	   (doc-page page syntax)
 	   (doc-page->name path)
@@ -72,17 +72,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-wiki-request-syntax ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (make-wiki-request-syntax initial-syntax)
+(define (make-wiki-request-syntax initial-syntax #!optional mktitle)
    (let ((req (current-request)))
       (duplicate::wiki-syntax initial-syntax
 	 (plugins (lambda (id)
 		     (case id
 			((<doc>)
-			 (if (authorized-service? req 'admin)
-			     (if (http-request-localhostp req)
-				 <DOC/emacs>
-				 <DOC/edit>)
-			     <WIKI-DOC>))
+			 (lambda (port t expr)
+			    (let ((title (if mktitle (mktitle t) t)))
+			       (if (authorized-service? req 'admin)
+				   (if (http-request-localhostp req)
+				       (<DOC/emacs> port title expr)
+				       (<DOC/edit> port title expr))
+				   (<WIKI-DOC> port title expr)))))
 			(else
 			 ((wiki-syntax-plugins initial-syntax) id))))))))
 

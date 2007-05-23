@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Mon Apr 23 07:08:38 2007 (serrano)                */
+;*    Last change :  Tue May 22 12:36:54 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -21,76 +21,116 @@
 	   hopdoc_search)
    
    (export (<TUTORIALS> req)
-	   (<TUTORIALREF> lbl file)))
+	   (<TUTORIALREF> lbl file)
+	   doc/tutorial))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TUTORIALS> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (<TUTORIALS> req)
-   (let ((pagearea (<DIV> :class "pagearea"
-			  :id "pad-tutorials"
-			  "Please, select a tutorial."))
-	 (syntax (make-wiki-request-syntax *tutorial-syntax*)))
-      (<DIV>
-	 :class "tutorials"
-	 (<TUTORIALS-MAIN> "pad-tutorials" syntax)
+   (let ((pagearea (<DIV> :class "pagearea" :id "pad-tutorials"
+		      "Please, select a tutorial.")))
+      (initialize-tutorials!)
+      (<DIV> :class "tutorials"
+	 (<TUTORIALS-MAIN> "pad-tutorials")
 	 pagearea)))
 
+;*---------------------------------------------------------------------*/
+;*    Tutorial global variables                                        */
+;*---------------------------------------------------------------------*/
+(define *tutorial-syntax* #unspecified)
+(define *tutorial-table* #unspecified)
+(define *tutorial-files* '())
+
+;*---------------------------------------------------------------------*/
+;*    initialize-tutorials! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (initialize-tutorials!)
+   (when (eq? *tutorial-table* #unspecified)
+      (let* ((table '())
+	     (files (filter-map (lambda (x)
+				   (when (is-suffix? x "wiki")
+				      (let ((s (tutorial->name
+						(make-file-name
+						 (doc-tutorials-dir) x))))
+					 (set! table (cons (cons s x) table))
+					 s)))
+				(sort (directory->list (doc-tutorials-dir))
+				      string<?))))
+	 (set! *tutorial-files* files)
+	 (set! *tutorial-table* table)))
+   ;; wiki syntax
+   (set! *tutorial-syntax*
+	 (make-wiki-request-syntax
+	  (duplicate::wiki-syntax (doc-wiki-syntax)
+	     (plugins (lambda (id)
+			 (case id
+			    ((<doc>)
+			     (lambda (port title expr)
+				(<DIV> :class "doc" expr)))
+			    ((<example>)
+			     (lambda (port title expr)
+				(<DIV>
+				   :class "example"
+				   (<EXAMPLE> expr))))
+			    ((<code>)
+			     (lambda (port title expr)
+				(<DIV>
+				   :class "code"
+				   :align "center"
+				   (<PRE>
+				      :class "example"
+				      (decorate-api-wiki-code expr)))))
+			    (else
+			     ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))
+	     (keyword list)
+	     (pre list)
+	     (tt (wiki-tt-parser
+		  (lambda (k)
+		     (or (markup-parser k)
+			 (server-parser k)
+			 (client-parser k)))))
+	     (type (lambda x
+		      (if (and (null? (cdr x)) (string? (car x)))
+			  (let ((s (html-string-decode (car x))))
+			     (or (class-parser s)
+				 (<SPAN> :class "doc-type" x)))
+			  (<SPAN> :class "doc-type" x))))))))
+
+;*---------------------------------------------------------------------*/
+;*    doc/tutorial ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-service (doc/tutorial file-or-key)
+   (initialize-tutorials!)
+   (cond
+      ((or (eq? file-or-key #unspecified) (=fx (string-length file-or-key) 0))
+       "Please, select a tutorial.")
+      ((file-exists? file-or-key)
+       (doc-page file-or-key *tutorial-syntax*))
+      (else
+       (let ((cell (assoc file-or-key *tutorial-table*)))
+	  (if cell
+	      (let ((path (make-file-name (doc-tutorials-dir) (cdr cell))))
+		 (doc-page path *tutorial-syntax*))
+	      "")))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    <TUTORIALREF> ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (<TUTORIALREF> lbl file)
-   (<SPAN> 
-      :class "href tutorialref" 
-      :onclick ~(with-hop ($(service ()
-			       (doc-page (make-file-name (doc-tutorials-dir)
-							 file)
-					 (make-wiki-request-syntax
-					  *tutorial-syntax*))))
-		   (lambda (h)
-		      (let ((el (document.getElementById "pad-tutorials")))
-			 (set! el.innerHTML h)
-			 (notepad-select "doc-notepad" "doc-tutorials")
-			 (window.scrollTo 0 0))))
-      lbl))
-
-;*---------------------------------------------------------------------*/
-;*    *tutorial-syntax* ...                                            */
-;*---------------------------------------------------------------------*/
-(define *tutorial-syntax*
-   (duplicate::wiki-syntax (doc-wiki-syntax)
-      (plugins (lambda (id)
-		  (case id
-		     ((<doc>)
-		      (lambda (port title expr)
-			 (<DIV> :class "doc" expr)))
-		     ((<example>)
-		      (lambda (port title expr)
-			 (<DIV>
-			    :class "example"
-			    (<EXAMPLE> expr))))
-		     ((<code>)
-		      (lambda (port title expr)
-			 (<DIV>
-			    :class "code"
-			    :align "center"
-			    (<PRE>
-			       :class "example"
-			       (decorate-api-wiki-code expr)))))
-		     (else
-		      ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))
-      (keyword list)
-      (pre list)
-      (tt (wiki-tt-parser
-	   (lambda (k)
-	      (or (markup-parser k)
-		  (server-parser k)
-		  (client-parser k)))))
-      (type (lambda x
-	       (if (and (null? (cdr x)) (string? (car x)))
-		   (let ((s (html-string-decode (car x))))
-		      (or (class-parser s) (<SPAN> :class "doc-type" x)))
-		   (<SPAN> :class "doc-type" x))))))
+   (let ((path (make-file-name (doc-tutorials-dir) file))
+	 (id "pad-tutorials"))
+      (<SPAN> :class "href tutorialref" 
+	 :onclick ~(with-history
+		    (lambda ()
+		       (history-add! tutorial-history $id $path)
+		       (with-hop ($doc/tutorial $path)
+			  (lambda (h)
+			     (let ((el (dom-get-element-by-id document $id)))
+				(set! el.innerHTML h)
+				(notepad-select "doc-notepad" "doc-tutorials")
+				(window.scrollTo 0 0))))))
+	 lbl)))
 
 ;*---------------------------------------------------------------------*/
 ;*    tutorial->name ...                                               */
@@ -109,102 +149,68 @@
 ;*---------------------------------------------------------------------*/
 ;*    <TUTORIALS-MAIN> ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (<TUTORIALS-MAIN> id syntax)
-   (let* ((table '())
-	  (files (filter-map (lambda (x)
-				(when (is-suffix? x "wiki")
-				   (let ((s (tutorial->name
-					     (make-file-name
-					      (doc-tutorials-dir) x))))
-				      (set! table (cons (cons s x) table))
-				      s)))
-			     (sort (directory->list (doc-tutorials-dir))
-				   string<?)))
-	  (tutorial (service (key)
-		       (let* ((cell (assoc key table))
-			      (path (and cell
-					 (make-file-name
-					  (doc-tutorials-dir) (cdr cell)))))
-			  (if (and path (file-exists? path))
-			      (doc-page path syntax)
-			      ""))))
-	  (dummy "--select tutorial--"))
-      (<DIV>
-	 :class "tutorial-title"
-	 (<TABLE>
-	    :width "100%"
-	    :border 0
-	    (<TR>
-	       (<TH>
-		  :align "left"
-		  "HOP Tutorials")
-	       (<TD>
-		  :align "right"
-		  (<DIV>
-		     :class "selector"
-		     (<SELECT>
-			:class "tutorial-selector"
-			:onmouseup
-			~(with-hop ($tutorial this.value)
-			    (lambda (h)
-			       (let ((el (document.getElementById $id)))
-				  (set! el.innerHTML h))))
-			:onkeyup
-			~(if (= event.keyCode 13)
-			     (with-hop ($tutorial this.value)
-				(lambda (h)
-				   (let ((el (document.getElementById $id)))
-				      (set! el.innerHTML h)))))
-			(cons (<OPTION> :disabled #f :selected #t dummy)
-			      (map (lambda (f) (<OPTION> f :selected #f))
-				   files)))
-		     (<SPAN> :class "label" "search:")
-		     (<INPUT>
-			:type "text"
-			:size 20
-			:title "Hit [Return] to search"
-			:onkeyup ~(if (= event.keyCode 13)
-				      (iwindow-open
-				       "tutorial/search"
-				       ($(service (value)
-					    (tutorial-search id syntax value))
-					 this.value)
-				       false false
-				       400 200
-				       (- window.innerWidth 500) 10))))))))))
+(define (<TUTORIALS-MAIN> id)
+   (<DIV> :class "tutorial-title"
+      ~(define (tutorial val)
+	  (history-add! tutorial-history $id val)
+	  (with-hop ($doc/tutorial val)
+	     (lambda (h)
+		(let ((el (dom-get-element-by-id document $id)))
+		   (set! el.innerHTML h)))))
+      (<TABLE> :width "100%" :border 0
+	 (<TR>
+	    (<TH> :align "left"
+	       "HOP Tutorials")
+	    (<TD> :align "right"
+	       (<DIV> :class "selector"
+		  (<SELECT> :class "tutorial-selector"
+		     :onmouseup ~(tutorial this.value)
+		     :onkeyup ~(if (= event.keyCode 13) (tutorial this.value))
+		     (cons (<OPTION> :disabled #f :selected #t :value ""
+			      "--select tutorial--")
+			   (map (lambda (f) (<OPTION> f :selected #f))
+				*tutorial-files*)))
+		  (<SPAN> :class "label" "search:")
+		  (<INPUT> :type "text" :size 20
+		     :title "Hit [Return] to search"
+		     :onkeyup
+		     ~(if (= event.keyCode 13)
+			  (iwindow-open
+			   "tutorial/search"
+			   ($(service (value) (tutorial-search id value))
+			     this.value)
+			   false false
+			   400 200
+			   (- window.innerWidth 500) 10)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tutorial-search ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (tutorial-search id syntax value)
+(define (tutorial-search id value)
    (let* ((l (search-tutorials (doc-tutorials-dir) value))
 	  (l2 (sort (map (lambda (v) (cons (tutorial->name v) v)) l)
 		    (lambda (a b) (string<? (car a) (car b))))))
       (if (null? l)
-	  (<TABLE>
-	     :class "search-result"
+	  (<TABLE> :class "search-result"
 	     (<TR> 
 		(<TH>
 		   (format "\"~a\" does not match any entry" value))))
-	  (<TABLE>
-	     :class "search-result"
+	  (<TABLE> :class "search-result"
 	     (<TR> 
 		(<TH>
 		   (format "\"~a\" matches ~a entries" value (length l))))
 	     (map (lambda (v)
 		     (<TR>
-			(<TD>
-			   :class "entry"
-			   (<SPAN>
-			      :class "href"
+			(<TD> :class "entry"
+			   (<SPAN> :class "href"
 			      :onclick
-			      ~(with-hop ($(service () (doc-page (cdr v) syntax)))
-				  (lambda (h)
-				     (iwindow-close "tutorial/search")
-				     (let ((e (document.getElementById $id)))
-					(set! e.innerHTML h))))
+			      ~(begin
+				  (history-add! tutorial-history $id $(cdr v))
+				  (with-hop ($doc/tutorial $(cdr v))
+				     (lambda (h)
+					(iwindow-close "tutorial/search")
+					(let ((el (dom-get-element-by-id
+						   document $id)))
+					   (set! el.innerHTML h)))))
 			      (car v)))))
 		  l2)))))
-	 
-      
-		       

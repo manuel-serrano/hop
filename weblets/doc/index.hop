@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 30 06:04:20 2006                          */
-;*    Last change :  Sat Dec  9 09:01:30 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue May 22 12:33:54 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP doc global index.                                        */
 ;*=====================================================================*/
@@ -37,41 +37,21 @@
 ;*---------------------------------------------------------------------*/
 (define (<INDEX-TOC>)
    (setup-api-tables!)
-   (index doc/api "pad-api" (index-table) 4))
+   (index "pad-api" (index-table) 4))
 
 ;*---------------------------------------------------------------------*/
 ;*    index ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (index service id table columns)
+(define (index id table columns)
 
    (define (<ENTRY> k offset p)
       (<TD>
 	 :class "entry"
-	 :onclick ~(with-hop ($service $p)
-		      (lambda (r)
-			 (let ((el (document.getElementById $id)))
-			    (set! el.innerHTML r)
-			    (notepad-select "doc-notepad" "doc-api")
-			    (let ((eo (and $k (document.getElementById $k))))
-			       (if eo
-				   (let ((po eo.offsetTop))
-				      (if (> po 50)
-					  (window.scrollTo 0 (- po 50)))
-				      (let* ((p eo.parentNode)
-					     (ob p.style.border.background))
-					 (hop-fx-fade-background
-					  p
-					  500
-					  40
-					  (vector "#fffd6b"
-						  "#ffff6f"
-						  "#ffff8f"
-						  "#ffffaf"
-						  "#ffffdf"
-						  "#ffffdf"
-						  (if (eq? ob #unspecified)
-						      "transparent"
-						      ob))))))))))
+	 :onclick ~(let ((el (dom-get-element-by-id document $id)))
+		      (with-history
+		         (lambda ()
+			    (select-api-doc $doc/api $p el $k)
+			    (notepad-select "doc-notepad" "doc-api"))))
 	 (<SPAN> :class "descr" (html-string-encode k))))
    
    (define (char0 str offset)

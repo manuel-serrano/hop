@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May  8 06:21:47 2006                          */
-;*    Last change :  Sat Dec  9 09:01:47 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue May 22 12:47:16 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP weblets doc.                                             */
 ;*=====================================================================*/
@@ -29,10 +29,8 @@
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS> req)
    (let ((d (<DIV> :id "pad-weblet" (<WEBLETS-TOC>))))
-      (<DIV>
-	 :class "weblets"
-	 (<DIV>
-	    :class "weblets-title"
+      (<DIV> :class "weblets"
+	 (<DIV> :class "weblets-title"
 	    (<SPAN> :onclick ~(with-hop ($(service () (<WEBLETS-TOC>)))
 				 (lambda (h) (set! $d.innerHTML h)))
 	       "Weblets" ))
@@ -55,8 +53,7 @@
 	  (let ((l2 (list-split! l
 				 (inexact->exact (ceiling (/ (length l) 2)))
 				 "&#160;")))
-	     (<TABLE>
-		:class "api-index"
+	     (<TABLE> :class "api-index"
 		(<COLGROUP> :span 2 :width "50%")
 		(map (lambda (a b) (<TR> (<TD> a) (<TD> b)))
 		     (car l2) (cadr l2))))))))
@@ -65,33 +62,35 @@
 ;*    select-weblet-pad-on-load ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (select-weblet-pad-on-load weblet)
-   ~(window.addEventListener
-     "load"
+   ~(hop_window_onload_add 
      (lambda (e)
-	(with-hop ($doc/api $weblet)
-	   (lambda (r)
-	      (notepad-select "doc-notepad" "doc-weblets")
-	      (let ((el (document.getElementById
-			 "pad-weblet")))
-		 (set! el.innerHTML r))))
-	#f)
-     #f))
+	(with-history
+	   (lambda ()
+	      (history-add! api-history "pad-weblet" $weblet)
+	      (with-hop ($doc/api $weblet)
+		 (lambda (r)
+		    (notepad-select "doc-notepad" "doc-weblets")
+		    (let ((el (dom-get-element-by-id document "pad-weblet")))
+		       (set! el.innerHTML r))))))
+	#f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    select-weblet-pad ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (select-weblet-pad weblet)
-   ~(with-hop ($doc/api $weblet)
-       (lambda (r)
-	  (notepad-select "doc-notepad" "doc-weblets")
-	  (let ((el (document.getElementById "pad-weblet")))
-	     (set! el.innerHTML r)))))
+   ~(with-history
+       (lambda ()
+	  (history-add! api-history "pad-weblet" $weblet)
+	  (with-hop ($doc/api $weblet)
+	     (lambda (r)
+		(notepad-select "doc-notepad" "doc-weblets")
+		(let ((el (document.getElementById "pad-weblet")))
+		   (set! el.innerHTML r)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETREF> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETREF> key weblet)
-   (<SPAN> 
-      :class "href" 
+   (<SPAN> :class "href" 
       :onclick (select-weblet-pad weblet)
       key))

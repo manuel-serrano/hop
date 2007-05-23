@@ -25,7 +25,7 @@ client side programming. They are only supported on server side.])
 
 === Client ===
   
-  (notepad-select notepad pad)
+  (notepad-select notepad pad [history #t])
 
 === Requirements ===
 
@@ -110,7 +110,7 @@ Creates a tab header.
 == Client Definitions ==
 <client>
 
-=== ++(notepad-select notepad tab [history])++ ===
+=== ++(notepad-select notepad tab [history #t])++ ===
 <procedure> notepad-select
 
 <arguments>
@@ -176,6 +176,6 @@ It is defined as:
 </style>
 
 == See also ==
-<see-also><NOTEPAD>, notepad-select!</see-also>
+<see-also><NOTEPAD>, notepad-select</see-also>
 
 </doc>

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon May 21 13:53:33 2007 (serrano)                */
+/*    Last change :  Tue May 22 10:01:50 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -89,10 +89,10 @@ function hop_tree_populate( tree ) {
 /*---------------------------------------------------------------------*/
 function hop_toggle_tree( tree ) {
    if( tree.openp ) {
-      if( tree.history ) hop_state_bookmark_add( tree.id, "tr", "0" );
+      if( tree.history ) hop_state_history_add( tree.id, "tr", "0" );
       hop_tree_close( tree );
    } else {
-      if( tree.history ) hop_state_bookmark_add( tree.id, "tr", "1" );
+      if( tree.history ) hop_state_history_add( tree.id, "tr", "1" );
       hop_tree_open( tree );
    }
 }
@@ -292,7 +292,7 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
    tree.row = row;
    tree.level = level;
    tree.openp = false;
-   tree.history = history;
+   tree.history = (history != false);
    tree.cachedp = cachedp;
    tree.populated = false;
    tree.last = true;
@@ -450,9 +450,9 @@ function hop_tree_id_selection( id ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    Install the tree bookmark state handler                          */
+/*    Install the tree history state handler                           */
 /*---------------------------------------------------------------------*/
-hop_bookmark_state_register_handler(
+hop_state_history_register_handler(
    "tr", /* key argument */
    "0",  /* reset value  */
    function( id, arg ) {

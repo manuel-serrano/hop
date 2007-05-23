@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May 21 12:18:29 2007 (serrano)                */
+#*    Last change :  Wed May 23 07:26:31 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -68,8 +68,10 @@ else
   distribdir=.
 fi
 
+# User controlled optional features
 ssl=""
 locevent="true"
+threads="yes"
 
 hoprts='"hop-autoconf.js" "hop.js" "runtime.js" "hop-dom.js" "runtime-interface.js" "hopscheme.js"'
 
@@ -171,6 +173,12 @@ while : ; do
     --disable-locevent)
       locevent=false;;
 
+    --enable-threads)
+      threads=yes;;
+
+    --disable-threads)
+      threads=no;;
+
     -*)
       echo "*** Configure error, unknown option $1" >&2;
       echo >&2;
@@ -203,6 +211,8 @@ while : ; do
       echo "   --disable-ssl......... Disables SSL support" >&2;
       echo "   --enable-locevent..... Enables location event support" >&2;
       echo "   --disable-locevent.... Disables location event support" >&2;
+      echo "   --enable-threads...... Enables multi-threading support" >&2;
+      echo "   --disable-threads..... Disables multi-threading support" >&2;
       exit -1;
   esac
   shift
@@ -277,7 +287,22 @@ if [ "$ssl " = " " ]; then
 fi
 
 if [ "$ssl" = "yes" ]; then
-  bcflags="$bcflags -srfi ssl"
+  bcflags="$bcflags -srfi enable-ssl"
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Threads                                                          */
+#*---------------------------------------------------------------------*/
+if [ "$threads " = " " ]; then
+  if [ -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
+    threads=yes
+  else
+    threads=no
+  fi
+fi
+
+if [ "$threads" = "yes" ]; then
+  bcflags="$bcflags -srfi enable-threads"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -549,5 +574,5 @@ echo
 echo "Internals:"
 echo "  Mime types............................ $mimetypes"
 echo "  Default JavaScript mime type.......... $jsmimetype"
+echo "  Multi threading....................... $threads"
 echo "  HTTPS support......................... $ssl"
-

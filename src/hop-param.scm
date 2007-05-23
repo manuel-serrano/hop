@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue May 15 14:09:07 2007 (serrano)                */
+;*    Last change :  Wed May 23 07:29:09 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -85,7 +85,11 @@
 ;*    hop-preload-libraries ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-preload-libraries
-   '(hop web hopscheme scheme2js))
+   (cond-expand
+      (enable-threads
+       '(pthread hop web hopscheme scheme2js))
+      (else
+       '(hop web hopscheme scheme2js))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy-authentication ...                                     */
@@ -149,7 +153,7 @@
    #f
    (lambda (v)
       (cond-expand
-	 (ssl
+	 (enable-ssl
 	  v)
 	 (else
 	  (warning "SSL not supporting, disabling https support.")

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Sat Dec  9 09:01:42 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue May 22 15:27:03 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
 ;*=====================================================================*/
@@ -24,7 +24,7 @@
    (export (make-doc-tables offset . markups)
 	   (search-see-also name dir pattern)
 	   (search-examples port title expr*)
-	   (search-table value service id table offset columns)
+	   (search-table value id table offset columns)
 	   (search-docs dir)
 	   (search-libraries dir)
 	   (search-weblets)
@@ -212,35 +212,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    search-table ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (search-table value service id table offset columns)
+(define (search-table value id table offset columns)
 
    (define (<ENTRY> k p)
       (<TD>
 	 :class "entry"
-	 :onclick ~(with-hop ($service $p)
-		      (lambda (r)
-			 (let ((el (document.getElementById $id)))
-			    (set! el.innerHTML r)
-			    (let ((eo (and $k (document.getElementById $k))))
-			       (if eo
-				   (let ((po eo.offsetTop))
-				      (if (> po 50)
-					  (window.scrollTo 0 (- po 50)))
-				      (let* ((p eo.parentNode)
-					     (ob p.style.border.background))
-					 (hop-fx-fade-background
-					  p
-					  500
-					  40
-					  (vector "#fffd6b"
-						  "#ffff6f"
-						  "#ffff8f"
-						  "#ffffaf"
-						  "#ffffdf"
-						  "#ffffdf"
-						  (if (eq? ob #unspecified)
-						      "transparent"
-						      ob))))))))))
+	 :onclick ~(let ((el (document.getElementById $id)))
+		      (select-api-doc $doc/api $p el $k))
 	 (<SPAN> :class "descr" (html-string-encode k))))
    
    (define (char0 str)

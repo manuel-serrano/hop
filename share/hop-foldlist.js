@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Mon May 21 14:27:50 2007 (serrano)                */
+/*    Last change :  Tue May 22 10:01:35 2007 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implementation                                     */
 /*=====================================================================*/
@@ -15,7 +15,7 @@ function hop_fold_item_close( el, imgo, imgc, history ) {
    el.style.display = "none";
    imgo.style.display = "none";
    imgc.style.display = "block";
-   if( history ) hop_state_bookmark_add( el.id, "fl", "0" );
+   if( history != false ) hop_state_history_add( el.id, "fl", "0" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -25,7 +25,7 @@ function hop_fold_item_open(  el, imgo, imgc, history ) {
    el.style.display = "block";
    imgo.style.display = "block";
    imgc.style.display = "none";
-   if( history ) hop_state_bookmark_add( el.id, "fl", "1" );
+   if( history != false ) hop_state_history_add( el.id, "fl", "1" );
 }
    
 /*---------------------------------------------------------------------*/
@@ -63,9 +63,9 @@ function hop_fold_item_toggle_service( id, history, svc ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    Install the foldlist bookmark state handler                      */
+/*    Install the foldlist history state handler                       */
 /*---------------------------------------------------------------------*/
-hop_bookmark_state_register_handler(
+hop_state_history_register_handler(
    "fl", /* key argument */
    "0",  /* reset value  */
    function( id, arg ) {

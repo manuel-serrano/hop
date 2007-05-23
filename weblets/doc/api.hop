@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Wed May 16 09:46:26 2007 (serrano)                */
+;*    Last change :  Tue May 22 17:04:46 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -38,15 +38,15 @@
 (define (<API>)
    (let ((pagearea (<DIV> :class "pagearea" :id "pad-api" (<TOC>))))
       (<DIV>
-	 :class "api"
-	 (<SEARCH-BAR>
-	    "markup"
-	    (service (i) (get-markups i pagearea)) doc/api-search-markup
-	    "server"
-	    (service (i) (get-servers i pagearea)) doc/api-search-server
-	    "client"
-	    (service (i) (get-clients i pagearea)) doc/api-search-client)
-	 pagearea)))
+         :class "api"
+         (<SEARCH-BAR>
+            "markup"
+            (service (i) (get-markups i pagearea)) doc/api-search-markup
+            "server"
+            (service (i) (get-servers i pagearea)) doc/api-search-server
+            "client"
+            (service (i) (get-clients i pagearea)) doc/api-search-client)
+         pagearea)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TOC> ...                                                        */
@@ -57,8 +57,7 @@
 	  (let ((l2 (list-split! l
 				 (inexact->exact (ceiling (/ (length l) 2)))
 				 "&#160;")))
-	     (<TABLE>
-		:class "api-index"
+	     (<TABLE> :class "api-index"
 		(<COLGROUP> :span 2 :width "50%")
 		(map (lambda (a b) (<TR> (<TD> a) (<TD> b)))
 		     (car l2) (cadr l2))))
@@ -96,60 +95,53 @@
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api page)
    (setup-api-tables!)
-   (let ((s (make-wiki-request-syntax *server-syntax*)))
-      (doc-page page s)))
+   (let ((s (make-wiki-request-syntax *server-syntax* make-api-title)))
+      (if (or (eq? page #unspecified) (equal? page ""))
+	  (<TOC>)
+	  (doc-page page s))))
+
+;*---------------------------------------------------------------------*/
+;*    make-api-title ...                                               */
+;*---------------------------------------------------------------------*/
+(define (make-api-title t)
+   (list (<SPAN> :class "api-toc"
+	    :title "View APIs table of contents"
+	    :onclick ~(let ((el (dom-get-element-by-id document "pad-api")))
+			 (select-api-doc $doc/api "" el #f))
+	    "APIs")
+	 " - "
+	 t))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc/api-search-markup ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api-search-markup value)
    (setup-api-tables!)
-   (search-table value doc/api "pad-api" *markup-table* 1 6))
+   (search-table value "pad-api" *markup-table* 1 6))
    
 ;*---------------------------------------------------------------------*/
 ;*    doc/api-search-server ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api-search-server value)
    (setup-api-tables!)
-   (search-table value doc/api "pad-api" *server-table* 0 3))
+   (search-table value "pad-api" *server-table* 0 3))
    
 ;*---------------------------------------------------------------------*/
 ;*    doc/api-search-client ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/api-search-client value)
    (setup-api-tables!)
-   (search-table value doc/api "pad-api" *client-table* 0 3))
+   (search-table value "pad-api" *client-table* 0 3))
 
 ;*---------------------------------------------------------------------*/
 ;*    select-api-pad ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (select-api-pad api k #!key (pad "api"))
-   ~(begin
-       (with-hop ($doc/api $api)
-	  (lambda (r)
+   ~(let ((el (document.getElementById $(string-append "pad-" pad))))
+       (with-history
+	  (lambda ()
 	     (notepad-select "doc-notepad" $(string-append "doc-" pad))
-	     (let ((el (document.getElementById $(string-append "pad-" pad))))
-		(set! el.innerHTML r)
-		(let ((eo (and $k (document.getElementById $k))))
-		   (if (and eo (not (null? eo)))
-		       (let ((po eo.offsetTop))
-			  (if (> po 50)
-			      (window.scrollTo 0 (- po 50)))
-			  (let* ((p eo.parentNode)
-				 (ob p.style.border.background))
-			     (hop-fx-fade-background
-			      p
-			      500
-			      40
-			      (vector "#fffd6b"
-				      "#ffff6f"
-				      "#ffff8f"
-				      "#ffffaf"
-				      "#ffffdf"
-				      "#ffffdf"
-				      (if (eq? ob #unspecified)
-					  "transparent"
-					  ob))))))))))))
+	     (select-api-doc $doc/api $api el $k)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hash-parser ...                                                  */
@@ -158,9 +150,9 @@
    (let ((o (hashtable-get table k)))
       (when o
 	 (<SPAN> :class (string-append "href " class)
-		 :title "View online documentation"
-		 :onclick (select-api-pad o k)
-		 (html-string-encode k)))))
+	    :title "View online documentation"
+	    :onclick (select-api-pad o k)
+	    (html-string-encode k)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    markup-parser ...                                                */
@@ -376,21 +368,21 @@
 ;*---------------------------------------------------------------------*/
 (define (get-markups i pagearea)
    (setup-api-tables!)
-   (<SEARCH-POPUP-MENU> doc/api *markup-menu-table* pagearea i))
+   (<SEARCH-POPUP-MENU> *markup-menu-table* pagearea i))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-servers ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (get-servers i pagearea)
    (setup-api-tables!)
-   (<SEARCH-POPUP-MENU> doc/api *server-menu-table* pagearea i))
+   (<SEARCH-POPUP-MENU> *server-menu-table* pagearea i))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-clients ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (get-clients i pagearea)
    (setup-api-tables!)
-   (<SEARCH-POPUP-MENU> doc/api *client-menu-table* pagearea i))
+   (<SEARCH-POPUP-MENU> *client-menu-table* pagearea i))
 
 ;*---------------------------------------------------------------------*/
 ;*    <SEE-ALSO> ...                                                   */
@@ -414,14 +406,13 @@
 ;*    see-also ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (see-also name dir markup)
-   (<SEE-ALSO-LIST> doc/api "pad-api" (search-see-also name dir markup)))
+   (<SEE-ALSO-LIST> "pad-api" (search-see-also name dir markup)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <APIREF> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<APIREF> key api #!key (pad "api"))
-   (<SPAN> 
-      :class "href" 
+   (<SPAN> :class "href" 
       :onclick (select-api-pad (make-file-name (doc-api-dir) api) key :pad pad)
       key))
 

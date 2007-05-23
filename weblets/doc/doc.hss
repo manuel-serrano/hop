@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed May 16 09:28:54 2007 (serrano)                */
+/*    Last change :  Tue May 22 14:23:30 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -316,6 +316,11 @@ div.iwindow-menu {
 }
 
 /*--- api-index -------------------------------------------------------*/
+div.api span.api-toc:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+  
 table.api-index {
   font-size: x-small;
   width: 100%;
@@ -332,7 +337,6 @@ table.api-index span.href {
 
 table.api-index span.href:hover {
   text-decoration: underline;
-/*   color: $inner-href-color;                                         */
 }
 
 /*--- window ----------------------------------------------------------*/

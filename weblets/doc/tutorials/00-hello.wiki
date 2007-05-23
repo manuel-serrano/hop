@@ -40,14 +40,26 @@ in your browser.
 
 == Storing the service on a file ==
 
-There is two main ways for storing and loading services on files. The first
-one consists in loading the file defining the service on HOP startup. The
-second one, more efficient, consists in placing the definition in a file
-that is //autoloaded// by HOP.
+There is three main ways for storing and loading services on
+files. The two first ones consists in loading the file defining the
+service on HOP startup. The second one, more efficient, consists in
+placing the definition in a file that is //autoloaded// by HOP.
 
 === Load on startup ===
 
-On startup, HOP loads the ,(<TUTORIALREF> "RC file" "07-hoprc.wiki"):
+When invoked from the command line, HOP may be specified files to
+be loaded. These files may contain service definitions. Assuming that the
+definition of the service ++hello++ is store into a file named
+++/tmp/hello.hop++, running HOP as follows load the file and binds the
+service:
+
+<code>
+  hop /tmp/hello.hop
+</code>
+
+Alternatively, the service definitions can be stored in the
+,(<TUTORIALREF> "RC file" "07-hoprc.wiki") file is automatically loaded
+on startup:
 ,(let ((path (make-file-name (hop-rc-directory) (hop-rc-file))))
     (if (file-exists? path)
 	(<FL>

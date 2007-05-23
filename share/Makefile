@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon May 21 17:16:40 2007 (serrano)                */
+#*    Last change :  Wed May 23 07:30:03 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -33,14 +33,13 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
                   hopscheme.js \
                   hop-debug.js hop-debug.css \
 		  hop-sound.js hop-sound.scm \
-                  hop.scm icons buttons editor flash Makefile
+                  icons buttons editor flash Makefile
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
 	mkdir -p $(HOPSHAREDIR) && \
-	install -m a+r $(BUILDSHAREDIR)/hop.scm $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-autoconf.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.js $(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.css $(HOPSHAREDIR) && \
@@ -92,7 +91,6 @@ install:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -f $(HOPSHAREDIR)/hop.scm && \
 	/bin/rm -f $(HOPSHAREDIR)/hop-autoconf.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop.js && \
 	/bin/rm -f $(HOPSHAREDIR)/hop.css && \

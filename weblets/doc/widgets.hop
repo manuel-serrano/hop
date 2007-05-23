@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu Jan  4 09:16:19 2007 (serrano)                */
+;*    Last change :  Tue May 22 15:30:37 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -23,8 +23,8 @@
 	   (<POPUP> ::bstring)
 	   (<SEARCH-BAR> . obj)
 	   (char->offset c)
-	   (<SEARCH-POPUP-MENU> service table i)
-	   (<SEE-ALSO-LIST> service id lst)
+	   (<SEARCH-POPUP-MENU> table i)
+	   (<SEE-ALSO-LIST> id lst)
 	   (<EXAMPLE> . expr)))
 
 ;*---------------------------------------------------------------------*/
@@ -35,9 +35,10 @@
    (<HTML>
       (<HEAD>
 	 :title "Hop documentation center (APIs &amp; libraries)"
-	 :include "hop-notepad" "hop-tree" "hop-sorttable" "hop-foldlist" "hop-iwindow"
-	 :include "hop-fx"
+	 :include "hop-notepad" "hop-tree" "hop-sorttable" "hop-foldlist" 
+	 :include "hop-iwindow" "hop-fx"
 	 :css (string-append (doc-dir) "/doc.hss")
+	 :jscript (string-append (doc-dir) "/doc.scm")
 	 script)
       (<BODY>
 	 (<DIV>
@@ -81,9 +82,7 @@
 ;*    <POPUP> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (<POPUP> id)
-   (<DIV>
-      :class "popup-menu"
-      :id id
+   (<DIV> :class "popup-menu" :id id
       ""))
 
 ;*---------------------------------------------------------------------*/
@@ -120,23 +119,16 @@
 	  #f))
    
    (let ((size (-fx 22 (string-length lbl))))
-      (<TABLE>
-	 :class "search-menu"
+      (<TABLE> :class "search-menu"
 	 (<TR>
-	    (<TD>
-	       :width "100%"
-	       (<TABLE>
-		  :class "search-menu-input"
-		  :width "100%"
+	    (<TD> :width "100%"
+	       (<TABLE> :class "search-menu-input" :width "100%"
 		  (<TR>
-		     (<TD> 
-			:class "search-menu-label"
+		     (<TD> :class "search-menu-label"
 			:valign "middle"
 			lbl ": ")
-		     (<TD>
-			:valign "bottom"
-			(<INPUT>
-			   :style "width: 100%"
+		     (<TD> :valign "bottom"
+			(<INPUT> :style "width: 100%"
 			   :type "text"
 			   :onkeyup ~(if (= event.keyCode 13)
 					 (iwindow-open
@@ -152,13 +144,11 @@
 			   :title "Hit [return] to search"))))))
 	 (<TR>
 	    (<TD>
-	       (<TABLE>
-		  :class "search-menu-menu"
+	       (<TABLE> :class "search-menu-menu"
 		  (<COLGROUP> :span 27 :width "1em")
 		  (<TR>
 		     (map (lambda (i)
-			     (<TD>
-				:class "search-letter"
+			     (<TD> :class "search-letter"
 				:onmousedown popup-letter-menu
 				(string (integer->char i))))
 			  (cons (char->integer #\?)
@@ -197,7 +187,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    <SEARCH-POPUP-MENU> ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (<SEARCH-POPUP-MENU> service table pagearea i)
+(define (<SEARCH-POPUP-MENU> table pagearea i)
    (let ((es (vector-ref table (char->offset (string-ref i 0))))
 	 (id (xml-make-id)))
       (when (pair? es)
@@ -207,38 +197,14 @@
 	    :onmouseup ~(let* ((n (document.getElementById $id))
 			       (p n.parentNode))
 			   (set! p.style.display "none"))
-	    (map (lambda (el)
-		    (<TR>
-		       (<TD>
-			  (<TT>
-			     :onmouseup
-			     ~(with-hop ($service $(cdr el))
-				 (lambda (r)
-				    (let* ((n (document.getElementById $id))
-					   (p n.parentNode))
-				       (set! p.style.display "none")
-				       (set! $pagearea.innerHTML r)
-				       (let ((eo (document.getElementById $(car el))))
-					  (if eo
-					      (let ((po eo.offsetTop))
-						 (if (> po 50)
-						     (window.scrollTo 0 (- po 50)))
-						 (let* ((p eo.parentNode)
-							(ob p.style.border.background))
-						    (hop-fx-fade-background
-						     p
-						     500
-						     40
-						     (vector "#fffd6b"
-							     "#ffff6f"
-							     "#ffff8f"
-							     "#ffffaf"
-							     "#ffffdf"
-							     "#ffffdf"
-							     (if (eq? ob #unspecified)
-								 "transparent"
-								 ob))))))))))
-			     (html-string-encode (car el))))))
+	    (map (lambda (entry)
+		    (let ((api (cdr entry))
+			  (el (car entry)))
+		       (<TR>
+			  (<TD>
+			     (<TT> :onmouseup
+				~(select-api-doc $doc/api $api $pagearea $el)
+				(html-string-encode el))))))
 		 (sort es
 		       (lambda (a b)
 			  (string-ci<? (car a) (car b)))))))))
@@ -246,15 +212,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    <SEE-ALSO-LIST> ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (<SEE-ALSO-LIST> service id lst)
+(define (<SEE-ALSO-LIST> id lst)
    (define (link f)
       (<SPAN> :class "href"
-	      :title "View documentation"
-	      :onclick ~(with-hop ($service $f)
-			   (lambda (r)
-			      (let ((el (document.getElementById $id)))
-				 (set! el.innerHTML r))))
-	      (doc-page->name f)))
+	 :title "View documentation"
+	 :onclick ~(let ((el (dom-get-element-by-id document $id)))
+		      (select-api-doc $doc/api $f el #unspecified))
+	 (doc-page->name f)))
    (<DIV>
       :class "see-also" 
       (cond
@@ -292,8 +256,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<EDIT> id1 id2)
    (let ((id (xml-make-id 'edit)))
-      (<BUTTON>
-	 :id id
+      (<BUTTON> :id id
 	 :onclick ~(let ((e1 (document.getElementById $id1))
 			 (e2 (document.getElementById $id2))
 			 (b (document.getElementById $id)))
@@ -329,8 +292,7 @@
       (list
        (<RUN> id2)
        (<EDIT> id1 id2)
-       (<DIV>
-	  :align "center"
+       (<DIV> :align "center"
 	  (<TEXTAREA> :class "example" :id id2 code)
 	  (<DIV> :class "example"
-		 (<PRE> :class "example" :id id1 api-code "\n"))))))
+	     (<PRE> :class "example" :id id1 api-code "\n"))))))

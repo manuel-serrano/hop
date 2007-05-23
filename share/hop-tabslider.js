@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Mon May 21 13:48:18 2007 (serrano)                */
+/*    Last change :  Tue May 22 10:01:09 2007 (serrano)                */
 /*    Copyright   :  2006-07 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
@@ -15,9 +15,9 @@
 function hop_tabslider_select( item ) {
    var parent = item.parentNode;
 
-   /* generate a new bookmark entry */
+   /* generate a new history entry */
    if( parent.history && (parent.tab_select != item) ) {
-      hop_state_bookmark_add( parent.id, "ts", item.id );
+      hop_state_history_add( parent.id, "ts", item.id );
    }
 
    /* select the correct tab */
@@ -78,14 +78,14 @@ function hop_tabslider_update() {
 function hop_tabslider_init( id, ind, history ) {
    var ts = document.getElementById( id );
    ts.hop_update = hop_tabslider_update;
-   ts.history = history;
+   ts.history = (history != false);
    
    hop_window_onload_add( function( e ) {
       ts.tab_selected = ts.childNodes[ 2 * ind ];
       ts.hop_update();
    } );
 
-   hop_bookmark_state_register_handler(
+   hop_state_history_register_handler(
       "ts", /* key argument */
       "",  /* reset value  */
       function( id, arg ) {

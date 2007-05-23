@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Mon May 21 14:25:58 2007 (serrano)                */
+/*    Last change :  Tue May 22 11:04:48 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -85,8 +85,8 @@ function hop_notepad_select( id1, id2, history ) {
 
    for( i = 0; i < tabs.childNodes.length; i++ ) {
       if( tabs.childNodes[ i ] == tab ) {
-	 if( history ) hop_state_bookmark_add( np.id, "np", i );
-
+	 if( history != false ) hop_state_history_add( np.id, "np", i );
+	 
 	 return hop_notepad_inner_select( np, i );
       }
    }
@@ -97,9 +97,9 @@ function hop_notepad_select( id1, id2, history ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    Install the notepad bookmark state handler                       */
+/*    Install the notepad history state handler                        */
 /*---------------------------------------------------------------------*/
-hop_bookmark_state_register_handler(
+hop_state_history_register_handler(
    "np", /* key argument */
    "0",  /* reset value  */
    function( id, arg ) {

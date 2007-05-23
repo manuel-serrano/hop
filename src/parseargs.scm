@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Apr 25 11:46:27 2007 (serrano)                */
+;*    Last change :  Wed May 23 07:56:24 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -30,7 +30,6 @@
 (define (parse-args args)
    (let ((loadp #t)
 	 (mimep #t)
-	 (hopp #t)
 	 (replp #f)
 	 (autoloadp #t)
 	 (p (hop-port))
@@ -61,8 +60,6 @@
 	  (set! loadp #f))
 	 (("-qmime" (help "Do not load an mime file"))
 	  (set! mimep #f))
-	 (("--no-init" (help "Don't load default hop.scm file"))
-	  (set! hopp #f))
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
 	 (("--rc-dir" ?dir (help "Set rc directory"))
@@ -161,7 +158,6 @@
 			      (make-file-name (getenv "HOME") ".mime.types"))))
       (hop-autoload-directory-add!
        (make-file-name (hop-rc-directory) "weblets"))
-      (when hopp (load-hop))
       (if loadp
 	 (if (string? rc-file)
 	     (%hop-load-rc rc-file)
@@ -195,20 +191,9 @@
 ;*---------------------------------------------------------------------*/
 (define (usage args-parse-usage)
    (print "Hop v" (hop-version))
-   (print "usage: hop [options]")
+   (print "usage: hop [options] ...")
+   (print "       hop [options] file ...")
    (args-parse-usage #f))
-
-;*---------------------------------------------------------------------*/
-;*    load-hop ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (load-hop)
-   (let ((file (make-file-name (hop-share-directory) "hop.scm")))
-      (if (string? file)
-	  (if (file-exists? file)
-	      (begin
-		 (hop-verb 2 "Loading `" file "'...\n")
-		 (hop-load file))
-	      (error 'hop "Can't find hop init file, aborting..." file)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %hop-load-rc ...                                                 */

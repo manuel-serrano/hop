@@ -39,6 +39,7 @@ vectors.
 
 === server & client ===
 
+  (find-runtime-type obj)
   (dom-has-attributes? node)
   (dom-get-attributes node)
   (dom-has-attribute? node string)
@@ -55,7 +56,6 @@ vectors.
   (dom-previous-sibling node)
   (dom-node-name node)
   (dom-node-type node)
-  (dom-node-eval node)
   (dom-parent-node node)
   (dom-append-child! node new)
   (dom-remove-child! node old)
@@ -66,9 +66,17 @@ vectors.
   (dom-get-elements-by-tag-name node string)
   (dom-get-elements-by-class node string)
 
+
 === server only ===
 
   (dom-normalize! node)
+
+
+=== client only ===
+
+  (dom-node-eval node)
+  (node-style-get node prop)
+  (node-style-set! node prop value)
 
 
 == Examples ==
@@ -77,6 +85,18 @@ vectors.
 == Server & Client Definitions ==
 <server>
 <client>
+
+=== ++(find-runtime-type obj)++ ===
+<function> find-runtime-type
+<procedure> find-runtime-type
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| obj             |  any type     | any value.                       |
+</arguments>
+
+Returns a string of character denoting the type of ++obj++.
+</procedure>
+</function>
 
 === ++(dom-has-attributes? node)++ ===
 <function> dom-has-attributes?
@@ -503,13 +523,25 @@ Evaluates all the scripts children of ++node++. It returns the last
 evaluated value.
 </procedure>
 
-=== ++(node-style-set! node style value)++ ===
+=== ++(node-style-get node prop)++ ===
+<procedure> node-style-get
+
+<arguments>
+^  arguments       ^   type           ^  short description                      ^
+| node             |  element         | an element.                             |
+| prop             |  keyword/string  | the style field identifier.             |
+</arguments>
+
+Return the value associate with ++prop++ in the ++node++ style.
+</procedure>
+
+=== ++(node-style-set! node prop value)++ ===
 <procedure> node-style-set!
 
 <arguments>
 ^  arguments       ^   type           ^  short description                      ^
 | node             |  element         | an element.                             |
-| style            |  keyword/string  | the style field identifier.             |
+| prop             |  keyword/string  | the style field identifier.             |
 | value            |  value           | the style field value.                  |
 </arguments>
 

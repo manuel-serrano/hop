@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon May 21 13:36:44 2007 (serrano)                */
+/*    Last change :  Tue May 22 17:42:38 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -947,34 +947,57 @@ function hop_update( node ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_bookmark_state_handler ...                                   */
+/*    hop_typeof ...                                                   */
+/*    -------------------------------------------------------------    */
+/*    A wrapper for using typeof as a function in Hop.                 */
 /*---------------------------------------------------------------------*/
-var hop_current_state_bookmark = undefined;
-var hop_bookmark_state_handler = {};
-
-/*---------------------------------------------------------------------*/
-/*    hop_bookmark_state_register_handler ...                          */
-/*---------------------------------------------------------------------*/
-function hop_bookmark_state_register_handler( key, reset, proc ) {
-   hop_bookmark_state_handler[ key ] = { reset: reset, proc: proc };
+function hop_find_runtime_type( obj ) {
+   if( obj instanceof Object ) {
+      if( obj instanceof Date ) {
+	 return "date";
+      } else {
+	 if( obj instanceof RegExp ) {
+	    return "regexp";
+	 } else {
+	    return "object";
+	 }
+      }
+   } else {
+      return typeof obj;
+   }
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_state_entry ...                                              */
+/*    hop_state_history_handler ...                                    */
 /*---------------------------------------------------------------------*/
-function hop_state_entry( op, val ) {
+var hop_current_state_history = undefined;
+var hop_state_history_handler = {};
+
+/*---------------------------------------------------------------------*/
+/*    hop_state_history_register_handler ...                           */
+/*---------------------------------------------------------------------*/
+function hop_state_history_register_handler( key, reset, proc ) {
+   hop_state_history_handler[ key ] = { reset: reset, proc: proc };
+}
+
+/*---------------------------------------------------------------------*/
+/*    _hop_state_entry ...                                             */
+/*    -------------------------------------------------------------    */
+/*    Private class.                                                   */
+/*---------------------------------------------------------------------*/
+function _hop_state_entry( op, val ) {
    this.op = op;
    this.val = val;
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_state_bookmark_to_location ...                               */
+/*    hop_state_history_to_location ...                                */
 /*---------------------------------------------------------------------*/
-function hop_state_bookmark_to_location( state ) {
+function hop_state_history_to_location( state ) {
    var loc = undefined;
    
    for( p in state ) {
-      if( state[ p ] instanceof hop_state_entry ) {
+      if( state[ p ] instanceof _hop_state_entry ) {
 	 if( loc == undefined ) {
 	    loc = "#" + p + "=" + state[ p ].op + ":" + state[ p ].val;
 	 } else {
@@ -987,9 +1010,9 @@ function hop_state_bookmark_to_location( state ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_location_to_state_bookmark ...                               */
+/*    hop_location_to_state_history ...                                */
 /*---------------------------------------------------------------------*/
-function hop_location_to_state_bookmark( hash ) {
+function hop_location_to_state_history( hash ) {
    var state = {};
    var split = hash.split( "," );
    for( var i = 0; i < split.length; i++ ) {
@@ -999,7 +1022,7 @@ function hop_location_to_state_bookmark( hash ) {
 	 var op = el[ 2 ];
 	 var val = el [ 3 ];
 
-	 state[ id ] = new hop_state_entry( op, val );
+	 state[ id ] = new _hop_state_entry( op, val );
       }
    }
 
@@ -1007,65 +1030,97 @@ function hop_location_to_state_bookmark( hash ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_state_bookmark_add ...                                       */
+/*    hop_state_history_push ...                                       */
+/*    -------------------------------------------------------------    */
+/*    Store the new state but don't add a new location to the          */
+/*    browser URL bar.                                                 */
 /*---------------------------------------------------------------------*/
-function hop_state_bookmark_add( id, op, val ) {
-   /* store the new state as a location for bookmarking an history */
-   var hop_state_to_location = function () {
-      var loc = hop_state_bookmark_to_location( hop_current_state_bookmark );
-      var old = window.location.href;
-      var i = old.indexOf( "#" );
-      
-      if( i == -1 ) {
-	 hop_active_location_set( document, old + loc );
-      } else {
-	 hop_active_location_set( document, old.substring( 0, i ) + loc );
-      }
-   }
-   
-   if( hop_current_state_bookmark == undefined ) {
+function hop_state_history_push( id, op, val ) {
+   if( hop_current_state_history == undefined ) {
       /* create a new state */
-      hop_current_state_bookmark = {};
-      hop_current_state_bookmark[ id ] = new hop_state_entry( op, val );
-      
-      /* add a new bookmark entry */
-      hop_state_to_location();
+      hop_current_state_history = {};
+      hop_current_state_history[ id ] = new _hop_state_entry( op, val );
    } else {
       /* update the current state */
-      var olde = hop_current_state_bookmark[ id ];
+      var olde = hop_current_state_history[ id ];
 
       if( olde == undefined ) {
 	 /* add a new entry to the current state */
-	 hop_current_state_bookmark[ id ] = new hop_state_entry( op, val );
-	 
-	 /* add a new bookmark entry */
-	 hop_state_to_location();
+	 hop_current_state_history[ id ] = new _hop_state_entry( op, val );
       } else {
 	 if( (olde.op != op) || (olde.val != val) ) {
 	    /* update the current state */
 	    olde.op = op;
 	    olde.val = val;
-	    
-	    /* add a new bookmark entry */
-	    hop_state_to_location();
 	 }
       }
    }
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_state_bookmark_reset ...                                     */
+/*    hop_state_history_flush ...                                      */
+/*    -------------------------------------------------------------    */
+/*    Generates a new browser URL from the current history state.      */
+/*---------------------------------------------------------------------*/
+function hop_state_history_flush() {
+   /* store the new state as a location for bookmarking an history */
+   var loc = hop_state_history_to_location( hop_current_state_history );
+   var old = window.location.href;
+   var i = old.indexOf( "#" );
+
+   /* store the new browser URL */
+   if( i == -1 ) {
+      hop_active_location_set( document, old + loc );
+   } else {
+      hop_active_location_set( document, old.substring( 0, i ) + loc );
+   }
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_state_history_transaction ...                                */
+/*---------------------------------------------------------------------*/
+var hop_state_history_transaction = 0;
+
+/*---------------------------------------------------------------------*/
+/*    hop_state_history_add ...                                        */
+/*---------------------------------------------------------------------*/
+function hop_state_history_add( id, op, val ) {
+   /* prepare the new current state */
+   hop_state_history_push( id, op, val );
+
+   if( hop_state_history_transaction == 0 ) {
+      hop_state_history_flush();
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_with_history ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_with_history( proc ) {
+   var res;
+   hop_state_history_transaction++;
+   try {
+      res = proc();
+   } finally {
+      hop_state_history_transaction--;
+   }
+   hop_state_history_flush();
+   return res;
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_state_history_reset ...                                      */
 /*    -------------------------------------------------------------    */
 /*    When there is already an existing state, we have to reset all    */
 /*    its entries.                                                     */
 /*---------------------------------------------------------------------*/
-function hop_state_bookmark_reset() {
-   if( hop_current_state_bookmark != undefined ) {
+function hop_state_history_reset() {
+   if( hop_current_state_history != undefined ) {
       /* there is a state, we reset all the entries */
-      for( p in hop_current_state_bookmark ) {
-	 if( hop_current_state_bookmark[ p ] instanceof hop_state_entry ) {
-	    var op = hop_current_state_bookmark[ p ].op;
-	    var handler =  hop_bookmark_state_handler[ op ];
+      for( p in hop_current_state_history ) {
+	 if( hop_current_state_history[ p ] instanceof _hop_state_entry ) {
+	    var op = hop_current_state_history[ p ].op;
+	    var handler =  hop_state_history_handler[ op ];
 	    if( handler != undefined ) {
 	       handler.proc( p, handler.reset );
 	    }
@@ -1073,24 +1128,24 @@ function hop_state_bookmark_reset() {
       }
 
       /* and we erase the state itself */
-      hop_current_state_bookmark = undefined;
+      hop_current_state_history = undefined;
    }
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_state_bookmark_update ...                                    */
+/*    hop_state_history_update ...                                     */
 /*    -------------------------------------------------------------    */
 /*    Compare the two states, reset the entries of the old ones        */
 /*    that are no longer present in the new one. Execute the           */
 /*    entries that are novel in the new state.                         */
 /*---------------------------------------------------------------------*/
-function hop_state_bookmark_update( olds, news ) {
+function hop_state_history_update( olds, news ) {
    if( olds == undefined ) {
       /* set the new values */
       for( p in news ) {
-	 if( news[ p ] instanceof hop_state_entry ) {
+	 if( news[ p ] instanceof _hop_state_entry ) {
 	    var op = news[ p ].op;
-	    var handler =  hop_bookmark_state_handler[ op ];
+	    var handler =  hop_state_history_handler[ op ];
 	    
 	    if( handler != undefined ) {
 	       handler.proc( p, news[ p ].val );
@@ -1101,10 +1156,10 @@ function hop_state_bookmark_update( olds, news ) {
       /* reset all the entries that used to be in old */
       /* state that are not present in the new one    */
       for( p in olds ) {
-	 if( (olds[ p ] instanceof hop_state_entry) &&
-	     !(news[ p ] instanceof hop_state_entry) ) {
+	 if( (olds[ p ] instanceof _hop_state_entry) &&
+	     !(news[ p ] instanceof _hop_state_entry) ) {
 	    var op = olds[ p ].op;
-	    var handler =  hop_bookmark_state_handler[ op ];
+	    var handler =  hop_state_history_handler[ op ];
 
 	    if( handler != undefined ) {
 	       handler.proc( p, handler.reset );
@@ -1115,12 +1170,12 @@ function hop_state_bookmark_update( olds, news ) {
       /* update all the entries that are not */
       /* present and equal in old state      */
       for( p in news ) {
-	 if( news[ p ] instanceof hop_state_entry ) {
-	    if( !(olds[ p ] instanceof hop_state_entry) ||
+	 if( news[ p ] instanceof _hop_state_entry ) {
+	    if( !(olds[ p ] instanceof _hop_state_entry) ||
 		(news[ p ].op != olds[ p ].op) ||
 		(news[ p ].val != olds[ p ].val) ) {
 	       var op = news[ p ].op;
-	       var handler =  hop_bookmark_state_handler[ op ];
+	       var handler =  hop_state_history_handler[ op ];
 	       
 	       if( handler != undefined ) {
 		  handler.proc( p, news[ p ].val );
@@ -1132,22 +1187,22 @@ function hop_state_bookmark_update( olds, news ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_eval_bookmark_state ...                                      */
+/*    hop_eval_history_state ...                                       */
 /*    -------------------------------------------------------------    */
 /*    This function is invoked when the location has changed.          */
 /*---------------------------------------------------------------------*/
-function hop_eval_bookmark_state( location ) {
+function hop_eval_history_state( location ) {
    var hash = location.hash;
 
    if( hash.length == 0 ) {
-      hop_state_bookmark_reset();
+      hop_state_history_reset();
    } else {
-      var new_state = hop_location_to_state_bookmark( hash );
-      var old_state = hop_current_state_bookmark;
+      var new_state = hop_location_to_state_history( hash );
+      var old_state = hop_current_state_history;
 
-      hop_state_bookmark_update( old_state, new_state );
+      hop_state_history_update( old_state, new_state );
       
-      hop_current_state_bookmark = new_state;
+      hop_current_state_history = new_state;
    }
 }
 
@@ -1156,10 +1211,43 @@ function hop_eval_bookmark_state( location ) {
 /*---------------------------------------------------------------------*/
 if( hop_enable_location_event ) {
    hop_window_onload_add( function( e ) {
-      hop_add_event_listener( document, "location", hop_eval_bookmark_state );
+      hop_add_event_listener( document, "location", hop_eval_history_state );
    } );
 }
-      
+
+/*---------------------------------------------------------------------*/
+/*    _hop_history ...                                                 */
+/*    -------------------------------------------------------------    */
+/*    Private constructor.                                             */
+/*---------------------------------------------------------------------*/
+function _hop_history( key ) {
+   this.key = key;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_make_history ...                                             */
+/*    -------------------------------------------------------------    */
+/*    This is the high level constructor presented to the Hop          */
+/*    API.                                                             */
+/*---------------------------------------------------------------------*/
+function hop_make_history( key, handler, reset ) {
+   hop_state_history_register_handler( key, reset, handler );
+   return new _hop_history( key );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_history_add ...                                              */
+/*    -------------------------------------------------------------    */
+/*    This high level function for adding an entry into the history.   */
+/*---------------------------------------------------------------------*/
+function hop_history_add( history, id, val ) {
+   if( !history instanceof _hop_history ) {
+      alert( "*** ERROR: Illegal history object -- " + history );
+   } else {
+      return hop_state_history_add( id, history.key, val );
+   }
+}
+
 /* {*---------------------------------------------------------------------*} */
 /* {*    hopBehaviour class ...                                           *} */
 /* {*---------------------------------------------------------------------*} */
