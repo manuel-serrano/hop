@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed May 23 07:26:31 2007 (serrano)                */
+#*    Last change :  Wed May 23 11:13:48 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -69,7 +69,7 @@ else
 fi
 
 # User controlled optional features
-ssl=""
+ssl="no"
 locevent="true"
 threads="yes"
 
@@ -208,10 +208,10 @@ while : ; do
       echo "   --bmem................ Enables Bigloo bmem mode" >&2;
       echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
       echo "   --enable-ssl.......... Enables SSL support" >&2;
-      echo "   --disable-ssl......... Disables SSL support" >&2;
-      echo "   --enable-locevent..... Enables location event support" >&2;
+      echo "   --disable-ssl......... Disables SSL support (default)" >&2;
+      echo "   --enable-locevent..... Enables location event support (default)" >&2;
       echo "   --disable-locevent.... Disables location event support" >&2;
-      echo "   --enable-threads...... Enables multi-threading support" >&2;
+      echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
       echo "   --disable-threads..... Disables multi-threading support" >&2;
       exit -1;
   esac
@@ -397,6 +397,22 @@ jvminits="$bigloolibdir/pthread.init $jvminits";
 #*---------------------------------------------------------------------*/
 #*    Makefile.hopconfig                                               */
 #*---------------------------------------------------------------------*/
+if [ "$ssl " = "yes " ]; then
+  bigloossl="'bigloossl";
+  bigloossllib="-lbigloossl_s-$""(RELEASE)";
+else
+  bigloossl="";
+  bigloossllib="";
+fi
+
+if [ "$threads " = "yes " ]; then
+  bigloopth="'bigloopth";
+  bigloopthlib="-lbigloopth_s-$""(RELEASE)";
+else
+  bigloopth="";
+  bigloopthlib="";
+fi
+
 mkmf=etc/Makefile.hopconfig
 
 rm -f $mkmf 2> /dev/null
@@ -435,6 +451,8 @@ cat $mkmf.in \
           -e "s|@HOPSVN@|$svn|" \
           -e "s|@HOPREPOSITORY@|$repository|" \
           -e "s|@HOPDISTRIBDIR@|$distribdir|" \
+          -e "s|@BIGLOOSSLLIB@|$bigloossllib|" \
+          -e "s|@BIGLOOPTHLIB@|$bigloopthlib|" \
     >> $mkmf
 
 # src/configure.scm
@@ -477,15 +495,10 @@ mkdir -p lib
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
 
-if [ "$ssl " = "yes " ]; then
-  bigloossl="'bigloossl";
-else
-  bigloossl="";
-fi
-
 cat etc/hop.init.in \
     | sed -e "s|@VERSION@|$version|" \
-    | sed -e "s|@BIGLOOSSL@|$bigloossl|" \
+          -e "s|@BIGLOOSSL@|$bigloossl|" \
+          -e "s|@BIGLOOPTH@|$bigloopth|" \
     >> $init
 echo "" >> $init
 
@@ -501,6 +514,7 @@ echo "" >> $init
 cat runtime/expanders.sch >> $init
 echo "" >> $init
 echo "(hop-install-expanders!)) (else #unspecified))" >> $init
+chmod a-w $init
 
 # lib/scheme2js.init
 init=lib/scheme2js.init
@@ -512,6 +526,7 @@ cat etc/scheme2js.init.in \
     | sed -e "s|@VERSION@|$version|" \
     >> $init
 echo "" >> $init
+chmod a-w $init
 
 # lib/hopscheme.init
 init=lib/hopscheme.init
@@ -523,6 +538,7 @@ cat etc/hopscheme.init.in \
     | sed -e "s|@VERSION@|$version|" \
     >> $init
 echo "" >> $init
+chmod a-w $init
 
 # lib/hopwiki.init
 init=lib/hopwiki.init
@@ -534,6 +550,7 @@ cat etc/hopwiki.init.in \
     | sed -e "s|@VERSION@|$version|" \
     >> $init
 echo "" >> $init
+chmod a-w $init
 
 # share/hop-autoconf.js
 init=share/hop-autoconf.js
@@ -551,6 +568,7 @@ cat etc/hop-autoconf.js.in \
           -e "s|@LOCEVENT@|$locevent|" \
     >> $init
 echo "" >> $init
+chmod a-w $init
 
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */
@@ -558,10 +576,10 @@ echo "" >> $init
 echo "** Configuration summary **"
 echo 
 echo "Release:"
-echo "  Hop release number.................... $version"
-echo "  Bigloo................................ $bigloo ($bglversion)"
-echo "  Backend............................... $backend"
-echo "  Bigloo compilation flags.............. $bcflags"
+echo "  hop release number.................... $version"
+echo "  bigloo................................ $bigloo ($bglversion)"
+echo "  backend............................... $backend"
+echo "  bigloo compilation flags.............. $bcflags"
 echo
 echo "Directories where Hop will be installed:"
 echo "  etc directory......................... $etcdir"
@@ -572,7 +590,7 @@ echo "  weblets directory..................... $webletsdir"
 echo "  contribs directory.................... $contribsdir"
 echo 
 echo "Internals:"
-echo "  Mime types............................ $mimetypes"
-echo "  Default JavaScript mime type.......... $jsmimetype"
-echo "  Multi threading....................... $threads"
-echo "  HTTPS support......................... $ssl"
+echo "  mime types............................ $mimetypes"
+echo "  default JavaScript mime type.......... $jsmimetype"
+echo "  multi threading....................... $threads"
+echo "  https support......................... $ssl"

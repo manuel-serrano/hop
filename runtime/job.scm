@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Wed May 23 07:19:45 2007 (serrano)                */
+;*    Last change :  Wed May 23 11:33:22 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
@@ -15,7 +15,8 @@
 (module __hop_job
 
    (cond-expand
-      (enable-threads (library pthread)))
+      (enable-threads (library pthread))
+      (else (import __hop_thread)))
 
    (import  __hop_param
 	    __hop_read)
@@ -59,6 +60,14 @@
 ;*    job-start-scheduler! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (job-start-scheduler!)
+   (cond-expand
+      (enable-threads
+       (job-start-scheduler-inner!))))
+
+;*---------------------------------------------------------------------*/
+;*    job-start-scheduler-inner! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (job-start-scheduler-inner!)
    (with-lock *job-mutex*
       (lambda ()
 	 (thread-start!	(make-thread job-scheduler 'job-scheduler))

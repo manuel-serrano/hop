@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jan  3 13:34:25 2007 (serrano)                */
+;*    Last change :  Wed May 23 10:38:36 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -14,8 +14,10 @@
 ;*---------------------------------------------------------------------*/
 (module hopsh
 
-   (library hop
-	    pthread)
+   (library hop)
+
+   (cond-expand
+      (enable-threads (library pthread)))
    
    (import  hopsh_parseargs
 	    hopsh_param

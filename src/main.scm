@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 23 07:51:17 2007 (serrano)                */
+;*    Last change :  Wed May 23 11:24:07 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -67,6 +67,9 @@
    (parse-args args)
    (hop-verb 1 "Starting hop (v" (hop-version)
 	     ", " (hop-backend)
+	     (cond-expand
+		(enable-threads ", multi-threaded")
+		(else ", single-threaded"))
 	     ") "
 	     (if (hop-enable-https)
 		 (format "https (~a)" (hop-https-protocol)) "http")

@@ -3,42 +3,33 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Nov 16 13:24:06 2004                          */
-;*    Last change :  Wed May 23 07:58:50 2007 (serrano)                */
+;*    Last change :  Wed May 23 11:56:51 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hop_thread                                                       */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
-;*    hop_thread                                                       */
+;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_thread
-   
-   (library pthread)
-   
+
    (import  __hop_param
 	    __hop_misc)
 
-   (export (abstract-class pool
-	      (id::symbol read-only)
-	      (size::int read-only)
-	      (mutex::mutex read-only)
-	      (condv::condvar read-only)
-	      (free::pair-nil (default '()))
-	      (use::pair-nil (default '()))))
+   (cond-expand
+      (enable-threads (include "enable-thread.sch"))
+      (else (include "disable-thread.sch")))
    
-   (static  (class pooled-thread::pthread
-	       (thunk::procedure (default (lambda () #f)))
-	       (condv::condvar read-only)
+   (export  (abstract-class pool
+	       (id::symbol read-only)
+	       (size::int read-only)
 	       (mutex::mutex read-only)
-	       (data (default #unspecified)))
-	    
-	    (class eager-pool::pool)
-	    
-	    (class lazy-pool::pool
-	       nb-threads::int))
+	       (condv::condvar read-only)
+	       (free::pair-nil (default '()))
+	       (use::pair-nil (default '())))
 
-   (export  (hop-current-thread)
+	    (hop-current-thread)
 	    (thread-data ::obj)
 	    (make-threads-pool ::symbol ::int ::int)
 	    (pool-thread-execute ::pool ::procedure ::procedure ::obj #!optional pred)
@@ -138,48 +129,6 @@
       (condition-variable-signal! condv)
       (mutex-unlock! mutex)))
 
-;*---------------------------------------------------------------------*/
-;*    make-pool-thread ...                                             */
-;*---------------------------------------------------------------------*/
-(define (make-pool-thread pool)
-   (let ((mutex (make-mutex))
-	 (condv (make-condition-variable))
-	 (name (gensym (pool-id pool))))
-      (letrec ((t (instantiate::pooled-thread
-		     (name name)
-		     (mutex mutex)
-		     (condv condv)
-		     (body (lambda ()
-			      (with-handler
-				 (lambda (e)
-				    (fprint (current-error-port)
-					    "*** INTERNAL ERROR: "
-					    (current-thread) " -- "
-					    "uncaught exception: "
-					    (find-runtime-type e))
-				    (exception-notify e)
-				    (raise e))
-				 (begin
-				    (mutex-lock! mutex)
-				    (let loop ()
-				       (condition-variable-wait! condv mutex)
-				       ((pooled-thread-thunk t))
-				       (pool-add! pool t)
-				       (loop)))))))))
-	 (thread-start! t)
-	 t)))
-		   
-;*---------------------------------------------------------------------*/
-;*    execute! ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (execute! thread body msg)
-   (with-access::pooled-thread thread (thunk mutex condv data)
-      (set! data msg)
-      (pooled-thread-thunk-set! thread body)
-      (mutex-lock! mutex)
-      (condition-variable-signal! condv)
-      (mutex-unlock! mutex)))
-   
 ;*---------------------------------------------------------------------*/
 ;*    pool-thread-execute ...                                          */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Feb  1 22:23:43 2007 (serrano)                */
+#*    Last change :  Wed May 23 10:28:58 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -58,7 +58,8 @@ INCLUDES	= http-lib.sch \
                   xml.sch xml-expd.sch \
                   param.sch param-expd.sch \
                   service.sch service-expd.sch \
-                  prefs-expd.sch 
+                  prefs-expd.sch  \
+                  enable-thread.sch disable-thread.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -98,6 +99,11 @@ ude:
 
 getsources:
 	@ echo $(SOURCES)
+
+#*---------------------------------------------------------------------*/
+#*    Explicit dependencies                                            */
+#*---------------------------------------------------------------------*/
+o/thread.o thread.class: enable-thread.sch disable-thread.sch
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/

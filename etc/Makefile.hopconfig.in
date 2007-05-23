@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Fri Feb  2 06:46:23 2007 (serrano)                */
+#*    Last change :  Wed May 23 11:14:08 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -46,10 +46,14 @@ BLDOTNETFLAGS   = @BLFLAGS@
 BHFLAGS		= -q -mkaddheap -mkaddlib $(EFLAGS)
 CCFLAGS		= @CCFLAGS@
 
+BIGLOOPTHLLIB	= @BIGLOOPTHLIB@
+BIGLOOSSLLIB	= @BIGLOOSSLLIB@
+
 #*---------------------------------------------------------------------*/
 #*    Linking                                                          */
 #*---------------------------------------------------------------------*/
-BGLCLOSELIBS	= -lbigloopth_s-$(RELEASE) \
+BGLCLOSELIBS	= $(BIGLOOPTHLIB) \
+                  $(BIGLOOSSLLIB) \
                   -lbiglooweb_s-$(RELEASE) \
                   -lbigloomultimedia_s-$(RELEASE)
 
