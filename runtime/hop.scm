@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed May 23 11:52:40 2007 (serrano)                */
+;*    Last change :  Wed May 23 15:02:09 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -51,9 +51,6 @@
 ;*---------------------------------------------------------------------*/
 (define (current-request)
    (let ((d (thread-data (hop-current-thread))))
-      (tprint "current-request: thread="
-	      (find-runtime-type (hop-current-thread))
-	      " data=" (find-runtime-type d))
       (if (http-request? d)
 	  d
 	  #f)))

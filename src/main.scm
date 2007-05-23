@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 23 11:24:07 2007 (serrano)                */
+;*    Last change :  Wed May 23 14:58:38 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -131,6 +131,9 @@
 ;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (signal-init!)
+   (cond-expand
+      (enable-thread #unspecified)
+      (else (signal sigpipe (lambda (n) #unspecified))))
    (signal sigsegv
 	   (lambda (n)
 	      (fprint (current-error-port) "Segmentation violation")
