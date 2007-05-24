@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue May 22 17:42:38 2007 (serrano)                */
+/*    Last change :  Thu May 24 14:26:12 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -959,7 +959,10 @@ function hop_find_runtime_type( obj ) {
 	 if( obj instanceof RegExp ) {
 	    return "regexp";
 	 } else {
-	    return "object";
+	    if( typeof item.hop_find_runtime_type == "function" ) 
+	       return item.hop_find_runtime_type();
+	    else
+	       return "object";
 	 }
       }
    } else {

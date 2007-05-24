@@ -11,10 +11,16 @@
 
 /*---------------------------------------------------------------------*/
 /*    url ...                                                          */
+/*    -------------------------------------------------------------    */
+/*    Some browsers (IE in particular) does not support inlined        */
+/*    image inside a URL specification. Hence, iwindow icons cannot    */
+/*    be cached. Once these browsers are fixed, the inlining could     */
+/*    be enabled.                                                      */
 /*---------------------------------------------------------------------*/
 $(define (url file)
-    (let ((fname (make-file-name (hop-share-directory) file)))
-       (if (file-exists? fname)
+    (let ((fname (make-file-name (hop-share-directory) file))
+          (enable-image-inlining #f))
+       (if (and enable-image-inlining (file-exists? fname))
 	   (let ((p (open-input-file fname)))
 	      (if (input-port? p)
 		  (unwind-protect
