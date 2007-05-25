@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 23 10:29:32 2007                          */
-;*    Last change :  Fri May 25 08:10:21 2007 (serrano)                */
+;*    Last change :  Fri May 25 12:16:09 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The __hop_thread module directives when threads are              */
@@ -16,7 +16,7 @@
 ;*---------------------------------------------------------------------*/
 (directives
 
-   (extern  (macro fork::int))
+   (extern  (macro fork::int () "fork"))
    
    (static  (class pooled-thread::%thread
 	       (thunk::procedure (default (lambda () #f)))
