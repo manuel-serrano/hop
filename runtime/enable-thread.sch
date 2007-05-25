@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 23 10:29:32 2007                          */
-;*    Last change :  Wed May 23 11:56:10 2007 (serrano)                */
+;*    Last change :  Fri May 25 08:41:07 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The __hop_thread module directives when threads are              */
@@ -72,4 +72,11 @@
 	 (thread-start! t)
 	 t)))
 		   
-   
+;*---------------------------------------------------------------------*/
+;*    call-in-background ...                                           */
+;*    -------------------------------------------------------------    */
+;*    In a multi-threaded environment there is no need to spawn        */
+;*    a new process, we simply execute in the current thread.          */
+;*---------------------------------------------------------------------*/
+(define (call-in-background thunk)
+   (thunk))

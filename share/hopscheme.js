@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Thu May 24 14:35:16 2007 (serrano)                */
+/*    Last change :  Fri May 25 08:29:38 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -45,9 +45,9 @@ sc_Pair.prototype.hop_find_runtime_type = function() {
 }
 
 sc_String.prototype.hop_find_runtime_type = function() {
-   if( sc_isSymbol_immutable( s ) )
+   if( sc_isSymbol_immutable( s ) ) {
       return "symbol"
-   else
+   } else {
       return "bstring";
    }
 }
@@ -68,7 +68,11 @@ sc_OutputPort.prototype.hop_find_runtime_type = function() {
    return "output-port";
 }
 
-sc_StringOutputPort.prototype.hop_find_runtime_type = function() {
+sc_StringOutputPort_immutable.prototype.hop_find_runtime_type = function() {
+   return "output-port";
+}
+
+sc_StringOutputPort_mutable.prototype.hop_find_runtime_type = function() {
    return "output-port";
 }
 

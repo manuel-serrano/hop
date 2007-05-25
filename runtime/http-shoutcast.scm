@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Aug 22 14:14:24 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Fri May 25 08:10:57 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -22,7 +22,8 @@
 	    __hop_types
 	    __hop_http-lib
 	    __hop_http-response
-	    __hop_user))
+	    __hop_user
+	    __hop_thread))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-shoutcast ...                      */
@@ -78,16 +79,18 @@
 		;; the body
 		(with-trace 4 'http-response-shoutcast
 		   (unwind-protect
-		      (let ((pad (make-string (*fx l16 16) #a000)))
-			 (blit-string! title 0 pad 0 l)
-			 (send-chars pf p psize)
-			 (display (integer->char l16) p)
-			 (display pad p)
-			 (let loop ((offset psize))
-			    (when (<elong offset size)
-			       (send-chars pf p psize)
-			       (display #a000 p)
-			       (loop (+elong offset psize)))))
+		      (call-in-background
+		       (lambda ()
+			  (let ((pad (make-string (*fx l16 16) #a000)))
+			     (blit-string! title 0 pad 0 l)
+			     (send-chars pf p psize)
+			     (display (integer->char l16) p)
+			     (display pad p)
+			     (let loop ((offset psize))
+				(when (<elong offset size)
+				   (send-chars pf p psize)
+				   (display #a000 p)
+				   (loop (+elong offset psize)))))))
 		      (begin
 			 (close-input-port pf)
 			 (flush-output-port p))))

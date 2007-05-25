@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 23 10:29:32 2007                          */
-;*    Last change :  Wed May 23 11:58:35 2007 (serrano)                */
+;*    Last change :  Fri May 25 08:10:21 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The __hop_thread module directives when threads are              */
@@ -15,6 +15,8 @@
 ;*    The directives                                                   */
 ;*---------------------------------------------------------------------*/
 (directives
+
+   (extern  (macro fork::int))
    
    (static  (class pooled-thread::%thread
 	       (thunk::procedure (default (lambda () #f)))
@@ -166,3 +168,17 @@
 	 (pool pool)
 	 (body (lambda () #unspecified)))))
 		   
+;*---------------------------------------------------------------------*/
+;*    call-in-background ...                                           */
+;*    -------------------------------------------------------------    */
+;*    In a single-threaded environment it is required to spawn         */
+;*    a new process for executing in background.                       */
+;*---------------------------------------------------------------------*/
+(define (call-in-background thunk)
+   (cond-expand
+      (bigloo-c
+       (when (=fx (fork) 0)
+	  (thunk)
+	  (exit 0)))
+      (else
+       (thunk))))
