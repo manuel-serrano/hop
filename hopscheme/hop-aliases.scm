@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Tue May 22 14:38:04 2007 (serrano)                */
+;*    Last change :  Sat May 26 08:29:17 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -80,6 +80,10 @@
      (dom-get-elements-by-class dom_get_elements_by_class)
      (dom-node-eval hop_node_eval)
      (dom-set-child-node! dom_set_child_node)
+     (node-style-get node_style_get)
+     (node-style-set! node_style_set)
+     (node-absolute-x hop_element_x)
+     (node-absolute-y hop_element_y)
      (<A> dom_create_a)
      (<ABBR> dom_create_abbr)
      (<ACRONYM> dom_create_acronym)
@@ -189,8 +193,6 @@
      (request-set! hop_request_set)
      (debug hop_debug)
      (debug-reset! hop_debug_reset)
-     (node-style-get node_style_get)
-     (node-style-set! node_style_set)
      (hop-load hop_load)
      (add-event-listener! hop_add_event_listener)
      (remove-event-listener! hop_remove_event_listener)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Apr 23 07:03:36 2007 (serrano)                */
+;*    Last change :  Sun May 27 08:07:19 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -31,7 +31,7 @@
 	    (authorized-path?::bool ::http-request ::bstring)
 	    (user-authorized-service?::bool ::user ::symbol)
 	    (authorized-service?::bool ::http-request ::symbol)
-	    (user-access-denied ::http-request)
+	    (user-access-denied ::http-request #!optional message)
 	    (user-service-denied ::http-request ::user ::symbol)))
 
 ;*---------------------------------------------------------------------*/
@@ -296,16 +296,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    user-access-denied ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (user-access-denied req)
+(define (user-access-denied req #!optional message)
    (instantiate::http-response-authentication
       (header '((WWW-Authenticate: . "Basic realm=\"Hop authentication\"")))
       (request req)
-      (body (if (http-request? req)
+      (body (cond
+	       (message
+		message)
+	       ((http-request? req)
 		(format "Protected Area! Authentication required.~a:~a:/~a"
 			(http-request-host req)
 			(http-request-port req)
-			(http-request-path req))
-		"Protected Area! Authentication required."))))
+			(http-request-path req)))
+	       (else
+		"Protected Area! Authentication required.")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-service-denied ...                                          */

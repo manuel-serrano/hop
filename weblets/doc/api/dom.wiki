@@ -77,6 +77,8 @@ vectors.
   (dom-node-eval node)
   (node-style-get node prop)
   (node-style-set! node prop value)
+  (node-absolute-x node)
+  (node-absolute-y node)
 
 
 == Examples ==
@@ -555,6 +557,29 @@ or its identifier (a keyword). Example:
 
 
 </procedure>
+
+=== ++(node-absolute-x node)++ ===
+<procedure> node-absolute-x
+
+<arguments>
+^  arguments       ^   type           ^  short description                      ^
+| node             |  element         | an element.                             |
+</arguments>
+
+Returns the absolute horizontal position of an HTML element.
+</procedure>
+
+=== ++(node-absolute-y node)++ ===
+<procedure> node-absolute-y
+
+<arguments>
+^  arguments       ^   type           ^  short description                      ^
+| node             |  element         | an element.                             |
+</arguments>
+
+Returns the absolute vertical position of an HTML element.
+</procedure>
+
 </client>
 
 

@@ -5,7 +5,7 @@
 This tutorial shows how accesses can be controlled in HOP. It teaches
 how to protect local resources and how to request authentication from
 clients. This tutorial mainly shows how to use the facilities
-described in the ,(<APIREF> (<I> "Access Control") "authentication.wiki")
+described in the ,(<APIREF> (<I> "Access Control") "access.wiki")
 API page.
 
 == Users ==

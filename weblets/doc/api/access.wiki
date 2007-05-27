@@ -38,7 +38,7 @@ declarations.
   (user-authorized-service? obj symbol)
   (authorized-service? request symbol)
   (find-hopaccess string)
-  (user-access-denied request)
+  (user-access-denied request [message])
 
 
 == Server Definitions ==
@@ -361,11 +361,12 @@ This function scans the file system in order to find a file named
 containing the file ++path++.
 
 </function>
-=== ++(user-access-denied request)++ ===
+=== ++(user-access-denied request [message])++ ===
 <function> user-access-denied
 <arguments>
 ^  argument     ^   type           ^   short description                    ^
 | request       |  ::http-request  | the request.                           |
+| message       |  string          | an optional error message.             |
 </arguments>
 
 This function builds an answer of type ::http-response-authentication in order

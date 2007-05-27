@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Tue May 22 11:04:48 2007 (serrano)                */
+/*    Last change :  Sun May 27 07:43:42 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -104,6 +104,6 @@ hop_state_history_register_handler(
    "0",  /* reset value  */
    function( id, arg ) {
      var np = document.getElementById( id );
-/*       alert( "np arg=" + arg );                                     */
-     hop_notepad_inner_select( np, parseInt( arg ) );
+     if( np != undefined )
+	hop_notepad_inner_select( np, parseInt( arg ) );
 } );

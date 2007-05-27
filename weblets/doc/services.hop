@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Tue Jan 30 20:32:00 2007 (serrano)                */
+;*    Last change :  Sun May 27 08:15:18 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -63,7 +63,9 @@
 			      (if (eof-object? e)
 				  v
 				  (loop (eval e))))))))))
-       (user-access-denied (current-request))))
+       (user-access-denied
+	(current-request)
+	"Executing user code source is prohibited on this server")))
    
 ;*---------------------------------------------------------------------*/
 ;*    doc/example-file ...                                             */
@@ -84,5 +86,7 @@
 			      (if (eof-object? e)
 				  v
 				  (loop (eval e))))))))))
-       (user-access-denied (current-request))))
+       (user-access-denied
+	(current-request)
+	"Executing user code source is prohibited on this server")))
    
