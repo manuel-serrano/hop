@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Sun May 27 07:43:57 2007 (serrano)                */
+/*    Last change :  Mon May 28 09:40:47 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -219,7 +219,9 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
 
    /* safety check */
    if( parent == null ) {
-      alert( "***INTERNAL ERROR: Illegal empty tree parent -- " + id );
+      alert( "***INTERNAL ERROR: Illegal empty tree parent -- " + id + "\n" +
+	 "This may happen because the whole document is lacking a BODY node." );
+      return;
    }
    
    /* the tree first line */
@@ -230,9 +232,22 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
    table.setAttribute( "border", 0 );
    table.className = "hop-tree";
    
+   /* the colgroup for the left padding and icons */
+   var colgroup = document.createElement( "colgroup" );
+   
+   for( var i = level + 2; i > 0; i-- ) {
+      var col = document.createElement( "col" );
+   
+      col.setAttribute( "width", "0*" );
+      colgroup.appendChild( col );
+   }
+   table.appendChild( colgroup );
+
+   /* the body of the table */
    var tb = document.createElement( "tbody" );
    var row = document.createElement( "tr" );
    row.className = "hop-tree-row-unselected";
+   row.setAttribute( "align", "left" );
    
    /* build the left vertical lines */
    if( level > 0 ) {
@@ -255,7 +270,7 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
    /* add the folder icon */
    var td2 = document.createElement( "td" );
    var folder = document.createElement( "img" );
-   
+
    folder.src = fc;
    folder.className = "hop-tree";
 
@@ -265,12 +280,13 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp, icondir, 
    td2.appendChild( folder );
    
    /* the title */
-   var e = document.createElement( "span" );
-   e.className = "hop-tree-head";  
-   e.innerHTML= title;
-   td2.appendChild( e );
-
+   var td3 = document.createElement( "td" );
+   td3.className = "hop-tree";
+   td3.setAttribute( "nowrap", "nowrap" );
+   td3.innerHTML = title;
+   
    row.appendChild( td2 );
+   row.appendChild( td3 );
    row.value = value;
 
    tb.appendChild( row );
@@ -340,9 +356,22 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
    leaf.setAttribute( "border", 0 );
    leaf.className = "hop-tree-leaf";
 
+   /* the colgroup for the left padding and icons */
+   var colgroup = document.createElement( "colgroup" );
+   
+   for( var i = level + 2; i > 0; i-- ) {
+      var col = document.createElement( "col" );
+   
+      col.setAttribute( "width", "0*" );
+      colgroup.appendChild( col );
+   }
+   leaf.appendChild( colgroup );
+
+   /* the body of the table */
    var tb = document.createElement( "tbody" );
    var row = document.createElement( "tr" ); 
    row.className = "hop-tree-row-unselected";
+   row.setAttribute( "align", "left" );
 
    /* build the left vertical lines */
    hop_push_vlines( tree.icondir, tree, row, level );
@@ -373,11 +402,12 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
    row.value = value;
 
    /* the content */
-   var e = document.createElement( "span" );
-   e.classname = "hop-tree";
-   e.innerHTML= content;
-   td2.appendChild( e );
+   var td3 = document.createElement( "td" );
+   td3.classname = "hop-tree";
+   td3.innerHTML= content;
+   
    row.appendChild( td2 );
+   row.appendChild( td3 );
 
    tb.appendChild( row );
    leaf.appendChild( tb );

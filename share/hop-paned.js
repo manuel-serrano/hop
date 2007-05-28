@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Wed Nov 15 06:20:41 2006 (serrano)                */
-/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    Last change :  Mon May 28 10:11:21 2007 (serrano)                */
+/*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
 /*=====================================================================*/
@@ -216,7 +216,7 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
    var document = parent.ownerDocument || parent.document;
    var td1, td2, pcursor, cursor;
    var tr1, tr2, tr3;
-   
+
    // the paned
    var paned = document.createElement( "div" );
    paned.className = klass,

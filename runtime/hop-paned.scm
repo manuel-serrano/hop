@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Dec  6 09:59:11 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Mon May 28 10:35:40 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
 ;*=====================================================================*/
@@ -85,7 +85,10 @@
 (define-method (xml-write obj::html-paned p encoding backend)
    (let ((gid (symbol->string (gensym))))
       (with-access::html-paned obj (id klass fraction onresize body orientation style)
-	 (fprintf p "<div class='hop-paned' id='~a'" gid)
+	 (let ((cl (if (string? klass)
+		       (string-append "hop-paned " klass)
+		       "hop-paned")))
+	    (fprintf p "<div class='~a' id='~a'" cl gid))
 	 (when style (fprintf p " style='~a'" style))
 	 (display ">" p)
 	 (xml-write (car body) p encoding backend)
@@ -100,13 +103,7 @@
 		     "hop_make_hpaned( ")
 		 "document.getElementById( '" gid "' ),"
 		 "'" id "', '"
-		 (if (string? klass)
-		     (if (eq? orientation 'vertical)
-			 (string-append "hop-vpaned " klass)
-			 (string-append "hop-hpaned " klass))
-		     (if (eq? orientation 'vertical)
-			 "hop-vpaned"
-			 "hop-hpaned"))
+		 (if (eq? orientation 'vertical) "hop-vpaned" "hop-hpaned")
 		 "', ")
 	 (if (string? fraction)
 	     (fprint p "\"" fraction "\"")
