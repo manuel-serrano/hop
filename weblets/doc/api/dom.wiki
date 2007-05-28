@@ -62,9 +62,9 @@ vectors.
   (dom-clone-node node bool)
   (dom-insert-before! node new ref)
   (dom-replace-child! node new old)
-  (dom-get-element-by-id node string)
-  (dom-get-elements-by-tag-name node string)
-  (dom-get-elements-by-class node string)
+  (dom-get-element-by-id [node] string)
+  (dom-get-elements-by-tag-name [node] string)
+  (dom-get-elements-by-class [node] string)
 
 
 === server only ===
@@ -423,14 +423,14 @@ If the element ++old++ is not the children list, nothing happens.
 </procedure>
 </function>
 
-=== ++(dom-get-element-by-id document id)++ ===
+=== ++(dom-get-element-by-id [node] id)++ ===
 <function> dom-get-element-by-id
 <procedure> dom-get-element-by-id
 <procedure> getElementById
 
 <arguments>
 ^  arguments       ^   type       ^  short description                      ^
-| document         |  element     | an element.                             |
+| node             |  element     | an optional element for the search.     |
 | id               |  string      | the seeked element's identifier.        |
 </arguments>
 
@@ -447,18 +447,18 @@ two or more elements with the same identifier.
 </procedure>
 </function>
 
-=== ++(dom-get-elements-by-tag-name document name)++ ===
+=== ++(dom-get-elements-by-tag-name node name)++ ===
 <function> dom-get-elements-by-tag-name
 <procedure> dom-get-elements-by-tag-name
 <procedure> getElementsByTagName
 
 <arguments>
 ^  arguments       ^   type       ^  short description                      ^
-| document         |  element     | an element.                             |
+| node             |  element     | an optional element for the search.     |
 | name             |  string      | the seeked elements tag name.           |
 </arguments>
 
-Search all the elements in ++document++ whose tag name is ++id++. The
+Search all the elements in ++node++ whose tag name is ++id++. The
 tag name is the name of the markup that has been used to build the
 elements. The function ++string=?++ that compare characters by
 characters is used to compare identifiers.  
@@ -582,6 +582,17 @@ Returns the absolute vertical position of an HTML element.
 
 </client>
 
+=== ++(innerHTML-set! nid html)++ ===
+<procedure>innerHTML-set!
+<arguments>
+^  arguments   ^   type              ^  short description                    ^
+| nid          |  element or string  | an element or an element identifier.  |
+| html         |  string             | a string denoting a HTML tree.        |
+</arguments>
+
+Parses the ++html++ tree and replaces the body of the element ++nid++ 
+(or the element whose identifier is ++nid++) with that new value.
+</procedure>
 
 == See also ==
 <see-also>dom-, get-element-by-id</see-also>

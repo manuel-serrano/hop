@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 28 08:10:32 2007 (serrano)                */
+;*    Last change :  Mon May 28 11:35:22 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -122,7 +122,7 @@
       (display "'>" p)
       (html-write-tree 0 obj parent p backend)
       (display " </script>" p)
-      (display "</span>" p)))
+      (display "</div>" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->js-thunk ...                                                */

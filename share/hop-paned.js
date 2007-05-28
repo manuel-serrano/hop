@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Mon May 28 10:11:21 2007 (serrano)                */
+/*    Last change :  Mon May 28 15:02:12 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -48,31 +48,36 @@ function hop_vpaned_fraction_set( paned, fraction ) {
 /*    hop_hpaned_mousemove ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_hpaned_mousemove( e, paned ) {
-   var val = hop_event_mouse_y( e ) - hop_element_y( paned );
+   var val1 = hop_event_mouse_y( e ) - hop_element_y( paned );
+   var height = parseInt( node_style_get( paned, "height" ) );
+   var cursor_height = 10;
 
-   node_style_set( paned.pan1, "height", val + "px" );
+   node_style_set( paned.pan1, "height", val1 + "px" );
+   node_style_set( paned.pan2, "height", (height - val1 - cursor_height) + "px" );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_hpaned_fraction_set ...                                      */
 /*---------------------------------------------------------------------*/
 function hop_hpaned_fraction_set( paned, fraction ) {
+   var frac;
+   
    if( (fraction instanceof String) || (typeof fraction == "string") ) {
-      node_style_set( paned.pan1, "height", fraction );
+       frac = parseInt( fraction );
    } else {
-      if( (fraction < 0) || (fraction > 100) ) {
-	 return;
-      }
-
-      node_style_set( paned.pan1, "height", fraction + "%" );
+      frac = fraction;
    }
 
-   if( paned.fraction != fraction ) {
-      paned.fraction = fraction;
-      
-      if( paned.onresize != undefined ) {
-	 paned.onresize();
-      }
+   if( (frac < 0) || (frac > 100) ) {
+      return;
+   } else {
+      var height = parseInt( node_style_get( paned, "height" ) );
+      var val1 = height * (frac / 100);
+      var cursor_height = 10;
+
+      node_style_set( paned.pan1, "height", val1 + "px" );
+      node_style_set( paned.pan2, "height", (height - val1 - cursor_height) + "px" );
+      return;
    }
 }
 
@@ -219,7 +224,8 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
 
    // the paned
    var paned = document.createElement( "div" );
-   paned.className = klass,
+   paned.className = klass;
+   paned.id = id;
    node_style_set( paned, "height", "inherit" );
 
    // the cursor
@@ -227,8 +233,8 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
    pcursor.className = "hop-paned-cursor";
    
    // re-parent the two pans
-   parent.removeChild( pan1 );
    parent.removeChild( pan2 );
+   parent.removeChild( pan1 );
 
    paned.appendChild( pan1 );
    paned.appendChild( pcursor );
@@ -268,15 +274,16 @@ function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
    hop_add_event_listener( cursor, "mousedown", mousedown );
    
    var mouseover = function( e ) {
-      cursor.className = "hop-paned-cursoron";
+      cursor.className = "hop-paned-cursor hop-paned-cursoron";
    };
    var mouseout = function( e ) {
-      cursor.className = "hop-paned-cursoroff";
+      cursor.className = "hop-paned-cursor hop-paned-cursoroff";
    };
 
    hop_add_event_listener( cursor, "mouseover", mouseover, true );
    hop_add_event_listener( cursor, "mouseout", mouseout, true );
    
+   hop_hpaned_fraction_set( paned, fraction );
+      
    return paned;
 }
-

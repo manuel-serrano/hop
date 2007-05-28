@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Wed May 23 10:19:24 2007 (serrano)                */
+;*    Last change :  Mon May 28 15:01:53 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -134,29 +134,30 @@
 ;*    search-examples ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (search-examples port title* _)
-   (let ((res (append-map (lambda (key)
-			     (let ((len (string-length key)))
-				(let loop ((i 0))
-				   (cond
-				      ((=fx i len)
-				       (search-example port key _))
-				      ((char=? (string-ref key i) #\space)
-				       (loop (+fx i 1)))
-				      (else
-				       (search-example port
-						       (substring key i len)
-						       _))))))
-			  (string-split title* ","))))
+   (let* ((table (make-hashtable 128))
+	  (res (append-map (lambda (key)
+			      (let ((len (string-length key)))
+				 (let loop ((i 0))
+				    (cond
+				       ((=fx i len)
+					(search-example table port key _))
+				       ((char=? (string-ref key i) #\space)
+					(loop (+fx i 1)))
+				       (else
+					(search-example table
+							port
+							(substring key i len)
+							_))))))
+			   (string-split title* ","))))
       (when (pair? res)
 	 (apply <FL> res))))
 
 ;*---------------------------------------------------------------------*/
 ;*    search-example ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (search-example port title _)
+(define (search-example t port title _)
    (let ((kmpt (kmp-table title))
-	 (dir (make-file-path (doc-dir) "examples"))
-	 (t (make-hashtable 128)))
+	 (dir (make-file-path (doc-dir) "examples")))
       (filter-map (lambda (f)
 		     (when (and (is-suffix? f "hop")
 				(not (hashtable-get t f)))

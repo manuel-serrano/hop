@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu May 24 14:26:12 2007 (serrano)                */
+/*    Last change :  Mon May 28 14:25:41 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -438,7 +438,6 @@ function WithHopError( service ) {
 /*---------------------------------------------------------------------*/
 function with_hop( service, success, failure ) {
    if( !success ) success = function( h ) { return h };
-/*    if( !failure ) failure = function( h ) { throw new WithHopError(service); }; */
    
    return hop( service,
 	       function( http ) {
@@ -507,6 +506,22 @@ function with_hop_callcc( service ) {
       });
    }
    return undefined; // for FF2.0
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_innerHTML_set ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_innerHTML_set( nid, html ) {
+   if( (nid instanceof String) || (typeof nid == "string") ) {
+      var el document.getElementById( nid ).innerHTML;
+
+      if( el == undefined ) {
+	 alert("*** ERROR:innerHTML-set! -- cannot find element \"" nid "\"");
+      }
+      el.innerHTML = html;
+   } else {
+      nid.innerHTML = html;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -921,6 +936,22 @@ function hop_window_onload_add( proc ) {
    } else {
       window.onload = function( e ) {
 	 oldonload( e );
+	 proc( e );
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_window_onunload_add ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_window_onunload_add( proc ) {
+   var oldonload = window.onunload;
+
+   if( typeof oldonunload != 'function' ) {
+      window.onunload = proc;
+   } else {
+      window.onunload = function( e ) {
+	 oldonunload( e );
 	 proc( e );
       }
    }

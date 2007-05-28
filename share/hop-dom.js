@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue May 15 05:43:15 2007 (serrano)                */
+/*    Last change :  Mon May 28 10:47:58 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -469,22 +469,37 @@ function dom_insert_before( node, n, r ) {
 function dom_replace_child( node, n, r ) {
    return node.replaceChild( n, r );
 }
-function dom_get_element_by_id( document, id ) {
-   return document.getElementById( id );
+function dom_get_element_by_id( doc, id ) {
+   if( (doc instanceof String) || (typeof doc == "string") ) {
+      return document.getElementById( doc );
+   } else {
+      return doc.getElementById( id );
+   }
 }
-function dom_get_elements_by_tag_name( document, name ) {
-   return sci_vector2list( document.getElementsByTagName( name ) );
+function dom_get_elements_by_tag_name( doc, name ) {
+   if( (doc instanceof String) || (typeof doc == "string") ) {
+      return sci_vector2list( document.getElementsByTagName( doc ) );
+   } else {
+      return sci_vector2list( doc.getElementsByTagName( name ) );
+   }
 }
 
 /*---------------------------------------------------------------------*/
 /*    dom_get_element_by_class ...                                     */
 /*---------------------------------------------------------------------*/
-function dom_get_elements_by_class( document, name ) {
-   var all = document.getElementsByTagName( "*" );
+function dom_get_elements_by_class( doc, name ) {
    var res = new Array();
    var n = 0;
-   var re = new RegExp( name + " |" + name + "$", "g" );
-    
+   var all, re;
+   
+   if( (doc instanceof String) || (typeof doc == "string") ) {
+      all = document.getElementsByTagName( "*" );
+      re = new RegExp( doc + " |" + doc + "$", "g" );
+   } else {
+      all = doc.getElementsByTagName( "*" );
+      re = new RegExp( name + " |" + name + "$", "g" );
+   }
+
    for( var i = 0; i < all.length; i++ ) {
       if( re.exec( all[ i ].className ) ) {
 	 res[ n++ ] = all[ i ];
