@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Dec  6 10:00:12 2006 (serrano)                */
-;*    Copyright   :  2004-06 Manuel Serrano                            */
+;*    Last change :  Thu May 31 07:48:42 2007 (serrano)                */
+;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -108,6 +108,8 @@
 	    (tilde-compose::xml-tilde ::xml-tilde ::xml-tilde)
 	    (tilde-make-thunk::xml-tilde ::xml-tilde)
 
+	    (img-base64-inline::bstring ::bstring)
+	    
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
 	    (<ACRONYM> . ::obj)
@@ -846,6 +848,22 @@
        (error '<DELAY> "Illegal delay's thunk" (car body))))
 
 ;*---------------------------------------------------------------------*/
+;*    img-base64-inline ...                                            */
+;*---------------------------------------------------------------------*/
+(define (img-base64-inline src)
+   (if (file-exists? src)
+       (let ((p (open-input-file src)))
+	  (if (input-port? p)
+	      (unwind-protect
+		 (format "data:~a;base64,~a"
+			 (mime-type src (format "image/~a"
+						(suffix src)))
+			 (base64-encode (read-string p)))
+		 (close-input-port p))
+	      src))
+       src))
+
+;*---------------------------------------------------------------------*/
 ;*    IMG ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <IMG> ((id #unspecified string)
@@ -856,17 +874,7 @@
 			    body)
    (if (not (string? src))
        (error '<IMG> "Illegal image src" src)
-       (let ((src (if (and inline (file-exists? src))
-		      (let ((p (open-input-file src)))
-			 (if (input-port? p)
-			     (unwind-protect
-				(format "data:~a;base64,~a"
-					(mime-type src (format "image/~a"
-							       (suffix src)))
-					(base64-encode (read-string p)))
-				(close-input-port p))
-			     src))
-		      src)))
+       (let ((src (if inline (img-base64-inline src) src)))
 	  (instantiate::xml-empty-element
 	     (markup 'img)
 	     (id (xml-make-id id 'img))

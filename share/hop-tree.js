@@ -3,11 +3,23 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon May 28 13:46:20 2007 (serrano)                */
+/*    Last change :  Thu May 31 07:56:06 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    hop tree default connection icons                                */
+/*---------------------------------------------------------------------*/
+var hop_tree_plus_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABZSURBVCjPpZFBDoBACAMH4r91X14vbiKIhqwQODSlkIKIeSgjQpjohGdglHNNte1dZbeCFuE89ritvsJphUcl0+xz8VXZVlTZvLIUQFbRboaMD6dXf/qLdgLZWTv35WFeagAAAABJRU5ErkJggg==";
+var hop_tree_plusbottom_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABYSURBVCjPxZFBDoBACAMH4r91X14vbiLIGuJFCBwaaElBxDyUESFMdMIzMMq9Jtu2ZtmtGItwXnvcVl/htMIjk2n2KXxVthVVNn8RBZBVYzdDxovTv/z0BFmcPnXuAkthAAAAAElFTkSuQmCC";
+var hop_tree_minus_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABPSURBVCjPY/jPgAob/qOL/Gf4z8D4n4EYwIQu0IhVH5GmseA2pZ4RizJUYXRtGG4j0gtEKGP8D4MIi6EYV7Ci8qnrNqQAacQT0uTGKUXKANpKOvds6MpSAAAAAElFTkSuQmCC";
+var hop_tree_minusbottom_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABNSURBVCjPY/jPgAob/qOL/Gf4z8D4n4EYwIQu0IhVH5GmseA2pZ4RizJUYXRtGG4j0gtEKGP8D4MIi6EYV7Ci8qnrNqQAacQT0gMSpwBajT11pflliQAAAABJRU5ErkJggg==";
+var hop_tree_join_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAqSURBVCjPY/jPgAob/qOL/Gf4z8D4n4EYwIQu0IhV33A1DROTa9qwVQYASJ4mAj+uy7cAAAAASUVORK5CYII=";
+var hop_tree_joinbottom_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAqSURBVCjPY/jPgAob/qOL/Gf4z8D4n4EYwIQu0IhV33A1DRMPHrcNEtMAEKItfKjCO18AAAAASUVORK5CYII=";
+var hop_tree_vline_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAlSURBVCjPY/jPgAob/qOL/Gf4z8D4n4EYwIQu0IhV36hpI9Y0AMqWJfzsxwvxAAAAAElFTkSuQmCC";
+var hop_tree_empty_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAWSURBVCjPY/zPQAxgIkrVqLJRZQQAAJYfAR/lOWwPAAAAAElFTkSuQmCC";
 
 /*---------------------------------------------------------------------*/
 /*    hop_tree_close ...                                               */
@@ -392,8 +404,13 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
    /* add the folder icon */
    var td2 = document.createElement( "td" );
    var fimg = document.createElement( "img" );
+
+   if( icon ) {
+      fimg.src = icon;
+   } else {
+      fimg.src = "";
+   }
    
-   fimg.src = icon;
    fimg.className = "hop-tree";
 
    td2.className = "hop-tree";
