@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Wed Mar 14 10:32:11 2007 (serrano)                */
+;*    Last change :  Thu May 31 18:58:50 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -221,7 +221,12 @@
       (let ((now (current-seconds)))
 	 (hashtable-filter! *connection-table*
 			    (lambda (k c)
-			       (not (connection-timeout? c now))))))
+			       (cond
+				  ((connection-timeout? c now)
+				   (socket-close (connection-socket c))
+				   #f)
+				  (else
+				   #t))))))
    
    (define (purge-table-by-lock!)
       ;; filter out all the none locked connections
@@ -249,7 +254,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    remote-get-socket ...                                            */
 ;*    -------------------------------------------------------------    */
-;*    This function is in charge of keeping alive remote connection.   */
+;*    This function is in charge of keeping alive remote connections.  */
 ;*    When a new connection with a remote host is up to be opened,     */
 ;*    it first checks if it happens to still have an old connection    */
 ;*    with that host.                                                  */
@@ -268,7 +273,7 @@
 				 (register? register)
 				 (date (current-seconds)))))
 	       (when register
-		  ;; the whole stuff connection table
+		  ;; clean the whole connection table
 		  (mutex-lock! *remote-lock*)
 		  (when (> (hashtable-size *connection-table*)
 			   (hop-max-remote-keep-alive-connection))
