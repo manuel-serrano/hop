@@ -1,0 +1,34 @@
+Hop is a new programming language designed for the Web 2.0. It is a
+higher-order language for programming interactive web applications
+such as web agendas, web galleries, music players, etc. Hop can be
+viewed as a replacement for traditional graphical toolkits. HOP is
+implemented as a Web broker, i.e., a Web server that may act
+indifferently as a regular Web server or Web proxy.
+
+HOP features:
+
+    * an extensive set of widgets for programming fancy GUIs.
+    * an extensive set of libraries for:
+          o handling database accesses.
+          o dealing with network connections.
+          o parsing wiki documents.
+          o supporting various protocols such as IMAP, ICALENDAR, ...
+          o supporting various formats such as EXIF, ID3, ...
+          o parsing and generating XML documents.
+          o ... 
+
+HOP is available at:
+
+  http://hop.inria.fr
+
+
+To install Hop, see the INSTALL file.
+
+Once, Hop installed, it can be tested by simply running it on a port, for
+instance 8800, and then browsing the URL:
+
+  http://localhost:8800
+
+with any modern Web browser. We recommend Firefox 2.0 and higher but
+Konqueror, Opera 9, Safari, and Internet Explorer 7 can also be used.
+

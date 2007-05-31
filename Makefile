@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Feb  5 13:48:19 2007 (serrano)                */
+#*    Last change :  Thu May 31 19:19:06 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -21,7 +21,8 @@ include $(BIGLOOLIBDIR)/Makefile.config
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile LICENSE INSTALL INSTALL.jvm configure .hoprelease
+POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
+                  configure .hoprelease
 POPDIRS		= runtime hopscheme scheme2js src hopsh \
                   etc share \
                   weblets # contribs
