@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Jun  1 18:24:49 2007 (serrano)                */
+#*    Last change :  Fri Jun  1 18:27:22 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -152,7 +152,7 @@ distrib:
           echo "*** ERROR: $(HOPTMPDIR)/hop exists!"; \
           exit 1; \
         elif [ -f $(HOPTMPDIR)/hop$(HOPRELEASE) ]; then \
-          echo "*** ERROR: $(HOPTMPDIR)/hop$(HOPRELEASE) exists!"; \
+          echo "*** ERROR: $(HOPTMPDIR)/hop-$(HOPRELEASE) exists!"; \
           exit 1; \
         else \
           version=$(HOPRELEASE); \
@@ -207,7 +207,7 @@ distrib-sans-version:
 	if [ -f $(HOPTMPDIR)/hop ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop exists!"; \
           exit 1; \
-        elif [ -f $(HOPTMPDIR)/hop$(HOPRELEASE) ]; then \
+        elif [ -f $(HOPTMPDIR)/hop-$(HOPRELEASE) ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop$(HOPRELEASE) exists!"; \
           exit 1; \
         else \
@@ -234,7 +234,6 @@ distrib-sans-version:
               mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
             fi \
           fi; \
-          exit 0; \
 	  echo "Building hop-$(HOPRELEASE).jar..."; \
           $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
           mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
