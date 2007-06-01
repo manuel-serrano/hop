@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Fri Jun  1 11:45:14 2007 (serrano)                */
+/*    Last change :  Fri Jun  1 13:27:49 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -27,7 +27,6 @@ var hop_tree_empty_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAA
 var hop_tree_default_file_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQBAMAAAAG6llRAAAAMFBMVEUAAAD////n59b///f39/fv7+/Ozs6cnJyEhIRzc3NSUlIxMTH///8AAAAAAAAAAAAlS/PmAAAADXRSTlP///////////////8APegihgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABaSURBVAjXYzgDAwcYOoCgB8JsFBQUrIIyjY2NC9fAmat3g5nNQGb6LBjTOawKyjQxCcqCME2Mg2BMY1NTJRgzGC5qaqoKFW0MVQqCMtvSgADC7FoFAmAmwpEAK+5bgL+cQWoAAAAASUVORK5CYII=";
 
 var hop_tree_default_open_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQBAMAAAAG6llRAAAAGFBMVEUAAAD///+cnADOzmP//5z/zpz///8AAAAHOMQHAAAAB3RSTlP///////8AGksDRgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABiSURBVAjXY0iDgQSGtCQlJRhTUVBQDcJMEnFxEVJSUoMyXQQFDWBMFxcQUwkMTEBMRaBQSDAzlBni6swMUxsSqqAAZrq6uoYaKICtCAkJDTViADEhRoCZCQxgAGIiuQzOBAA3liwhABnN2QAAAABJRU5ErkJggg==";
-
 var hop_tree_default_close_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQBAMAAAAG6llRAAAAMFBMVEUAAAD///+cnADOzmP//5z//87/zpz39/f///8AAAAAAAAAAAAAAAAAAAAAAAAAAABwA2sJAAAACXRSTlP//////////wBTT3gSAAAAAWJLR0QAiAUdSAAAAAlwSFlzAAAASAAAAEgARslrPgAAAFRJREFUCNdj6ICBBoYOJSUFKLOpNMSJA8JUNjY2VlJSAjFVQ0HAmQPEdAGBZBjTzQ0hmgITdUMSTYGJAgXdIMwUIEgDM0FWAAGI2cAABiAmssvgTAAi3zcy8laStgAAAABJRU5ErkJggg==";
 var hop_tree_default_device_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQBAMAAAAG6llRAAAAMFBMVEUAAAD///8AzgAAhADe3t7W1tbGxsa1tbWcnJyUlJRzc3P///8AAAAAAAAAAAAAAADp0SUnAAAADHRSTlP//////////////wAS387OAAAAAWJLR0QAiAUdSAAAAAlwSFlzAAAASAAAAEgARslrPgAAAEdJREFUCNdj2A0DGxhIYq4Cg9VA5q5yMFgAZC4UBAEJEHNpWlpaunIliLmkLC2tvBzCBOsCM5eC1YKZELNWcQOZGxjAAKfFAJqsX3JLxaIiAAAAAElFTkSuQmCC";
 
@@ -76,7 +75,7 @@ function hop_tree_open( tree ) {
       tree.img_join.src = tree.iconminusbottom;
    }
    
-   if( tree.iconclose ) tree.img_folder.src = tree.iconclose;
+   if( tree.iconopen ) tree.img_folder.src = tree.iconopen;
       
    node_style_set( tree.body, "display", "block" );
 }
@@ -153,8 +152,8 @@ function hop_push_vlines( par, row, level ) {
 
       td.className = "hop-tree";
       td.setAttribute( "nowrap", "nowrap" );
-      
-      img.src = (( par && !par.last ) ? par.iconvline : par.iconempty);
+
+      img.src = ((par && !par.last) ? par.iconvline : (par.visible ? par.iconempty : ""));
       img.className = "hop-tree";
       
       td.appendChild( img );
@@ -219,7 +218,8 @@ function hop_tree_row_toggle_selected( tree, row ) {
 /*---------------------------------------------------------------------*/
 /*    hop_make_tree ...                                                */
 /*---------------------------------------------------------------------*/
-function hop_make_tree( parent, id, level, proc, title, openp, cachedp,
+function hop_make_tree( parent, id, visible, level, proc, title,
+			openp, cachedp,
 			mu, ons, onus, value, history,
 			iconopen, iconclose, icondir ) {
    var tree = document.createElement( "div" );
@@ -318,10 +318,12 @@ function hop_make_tree( parent, id, level, proc, title, openp, cachedp,
    row.appendChild( td3 );
    row.value = value;
 
-   tb.appendChild( row );
+   if( visible ) {
+      tb.appendChild( row );
+   }
    table.appendChild( tb );
    tree.appendChild( table );
-   
+
    /* the (empty) body */
    var body = document.createElement( "div" );
    node_style_set( body, "display", "none" );
@@ -344,6 +346,7 @@ function hop_make_tree( parent, id, level, proc, title, openp, cachedp,
    tree.proc = proc;
    tree.img_join = join;
    tree.img_folder = folder;
+   tree.visible = visible;
    tree.iconopen = iconopen;
    tree.iconclose = iconclose;
    if( icondir ) {
@@ -384,9 +387,7 @@ function hop_make_tree( parent, id, level, proc, title, openp, cachedp,
    }
 
    /* open the tree if required */
-   if( openp ) {
-      hop_tree_open( tree );
-   }
+   if( openp ) hop_tree_open( tree );
    
    return tree;
 }

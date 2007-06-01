@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jun  1 11:44:02 2007 (serrano)                */
+;*    Last change :  Fri Jun  1 12:11:23 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -36,6 +36,7 @@
 	       (value read-only)
 	       (history::bool read-only)
 	       (inline::bool (default #f))
+	       (visible::bool (default #t))
 	       (iconopen read-only)
 	       (iconclose read-only)
 	       (icondir read-only (default #f)))
@@ -56,6 +57,7 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <TREE> ((id #unspecified string)
 			     (class #f)
+			     (visible #t)
 			     (open #f)
 			     (multiselect #f)
 			     (onselect #f)
@@ -81,6 +83,7 @@
 		    (string-append "hop-tree " class)
 		    "hop-tree"))
 	 (id (xml-make-id id 'TREE))
+	 (visible visible)
 	 (open open)
 	 (history history)
 	 (head head)
@@ -159,22 +162,23 @@
 			 parent::bstring
 			 p::output-port
 			 be::xml-backend)
-   (with-access::html-tree obj (id open head body
+   (with-access::html-tree obj (id visible
+				   open head body
 				   multiselect onselect onunselect cached
 				   value history
 				   inline iconopen iconclose icondir)
-      (let ((title (let ((ps (open-output-string)))
-		      (xml-write-body (xml-element-body head) ps be)
-		      (close-output-port ps)))
-	    (proc (if (null? body)
-		      "false"
-		      (with-output-to-string
-			 (lambda ()
-			    (display "function() {")
-			    (html-write-tree-body (+ 1 level) (car body) id
-						  (current-output-port)
-						  be)
-			    (display "}"))))))
+      (let* ((title (let ((ps (open-output-string)))
+		       (xml-write-body (xml-element-body head) ps be)
+		       (close-output-port ps)))
+	     (proc (if (null? body)
+		       "false"
+		       (with-output-to-string
+			  (lambda ()
+			     (display "function() {")
+			     (html-write-tree-body (+ 1 level) (car body) id
+						   (current-output-port)
+						   be)
+			     (display "}"))))))
 	 ;; set the parent relationship with the body
 	 (when (and (pair? body) (html-trbody? (car body)))
 	    (html-trbody-parent-set! (car body) obj))
@@ -188,6 +192,8 @@
 	 (display "'" p)
 	 (display id p)
 	 (display "', " p)
+	 ;; the visibility
+	 (display (if visible "true," "false,") p)
 	 ;; the nesting level of the tree
 	 (display level p)
 	 (display ", " p)

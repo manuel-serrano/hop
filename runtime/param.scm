@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed May 23 07:23:19 2007 (serrano)                */
+;*    Last change :  Fri Jun  1 14:57:13 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -678,7 +678,7 @@
 
 (define-parameter hop-remote-keep-alive-timeout
    ;; the number of milli-seconds to keep alive remote connections
-   10000)
+   2000)
 
 (define-parameter hop-max-remote-keep-alive-connection
    ;; the max number of keep-alive remote (proxing) connections

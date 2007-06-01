@@ -57,6 +57,7 @@ using //Trees// must include in their header, the following statement:
 | :onunselect   |  function  |     _        | a function to invoke on unselection.       |
 | :value        |  string    |    ++""++    | a string denoting the value of the tree.   |
 | :history      |  boolean   |  //#t//      | enables history recording.                 |
+| :visible      |  boolean   |  //#t//      | is the tree node visible?                  |
 | :inline       |  boolean   |   ++#f++     | enable/disable image icon inlining.        |
 | :iconopen     |  obj       |     _        | the image representing the open folder.    |
 | :iconclose    |  obj       |     _        | the image representing the close folder.   |
