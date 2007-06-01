@@ -51,23 +51,37 @@ using //Trees// must include in their header, the following statement:
 <arguments>
 ^  attributes   ^   type     ^   default    ^  short description                         ^
 | :id           |  string    |  //random//  | element identifier.                        |
-| :foldero      |  string    |   ++#f++     | an image for open folders.                 |
-| :folderc      |  string    |   ++#f++     | an image for closed folders.               |
 | :open         |  boolean   |   ++#f++     | is the tree starts open?                   |
 | :multiselect  |  boolean   |   ++#f++     | does the tree supports multi-selection?    |
 | :onselect     |  function  |     _        | a function to invoke on selection.         |
 | :onunselect   |  function  |     _        | a function to invoke on unselection.       |
 | :value        |  string    |    ++""++    | a string denoting the value of the tree.   |
 | :history      |  boolean   |  //#t//      | enables history recording.                 |
+| :inline       |  boolean   |   ++#f++     | enable/disable image icon inlining.        |
+| :iconopen     |  obj       |     _        | the image representing the open folder.    |
+| :iconclose    |  obj       |     _        | the image representing the close folder.   |
+| :icondir      |  string    |     _        | an alternate directory for misc. icons.    |
 | body          |  element   |  empty       | the body.                                  |
 </arguments>
 
 This function creates a //tree//. Its first child has to be a
 ++<TRHEAD>++ and its second child a ++<TRBODY>++.
 
+The ++:iconopen++ and ++:iconclose++ arguments can either be:
+
+  * ++#t++ (the boolean true value). In such a case the default icon is used.
+  * a file name holding the image content.
+  * a client side expression denoting the image content.
+
+
+The ++:icondir++ argument, when provided, is the name of a directory
+containing images for representing tree connection lines. Unless you know what you
+are doing, you should not provide a value for this argument!
+
 The argument ++:history++ controls whether an history event is associated
 with selected a tab. When history is enabled, the //back button// of the
 browser restores previously selected tabs.
+
 </markup>
 
 === ++<TRHEAD>++ ===
@@ -103,9 +117,17 @@ Delayed tree bodies are evaluated each time the tree is open.
 ^  attributes  ^   type    ^   default    ^  short description                        ^
 | :id          |  string   |  //random//  | element identifier.                       |
 | :value       |  string   |    ++""++    | a string denoting the value of the leaf.  |
-| :file        |  string   |     _        | the image representing the leaf.          |
+| :inline      |  boolean  |   ++#f++     | enable/disable image icon inlining.       |
+| :icon        |  obj      |     _        | the image representing the leaf.          |
 | body         |  element  |  empty       | the body.                                 |
 </arguments>
+
+The ++:icon++ argument can either be:
+
+  * ++#t++ (the boolean true value). In such a case the default icon is used.
+  * a file name holding the image content.
+  * a client side expression denoting the image content.
+
 
 </markup>
 </server>

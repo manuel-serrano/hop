@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu May 31 07:48:42 2007 (serrano)                */
+;*    Last change :  Fri Jun  1 09:23:30 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -107,6 +107,7 @@
 	    (tilde->string::bstring ::xml-tilde)
 	    (tilde-compose::xml-tilde ::xml-tilde ::xml-tilde)
 	    (tilde-make-thunk::xml-tilde ::xml-tilde)
+	    (xml-write-tilde-as-expression ::xml-tilde ::output-port)
 
 	    (img-base64-inline::bstring ::bstring)
 	    
@@ -858,7 +859,7 @@
 		 (format "data:~a;base64,~a"
 			 (mime-type src (format "image/~a"
 						(suffix src)))
-			 (base64-encode (read-string p)))
+			 (base64-encode (read-string p) -1))
 		 (close-input-port p))
 	      src))
        src))
@@ -910,6 +911,35 @@
    (instantiate::xml-tilde
       (body (string-append "function() { return " (xml-tilde-body t) "}"))))
 
+;*---------------------------------------------------------------------*/
+;*    xml-write-tilde-as-expression ...                                */
+;*---------------------------------------------------------------------*/
+(define (xml-write-tilde-as-expression t::xml-tilde p::output-port)
+   (let* ((t (tilde->string t))
+	  (l (string-length t)))
+      (let loop ((i (-fx l 1)))
+	 (if (<fx i 0)
+	     ;; the tilde expression is empty!
+	     #unspecified
+	     (let ((c (string-ref t i)))
+		(case c
+		   ((#\Newline #\Return #\Space #\Tab)
+		    ;; skip the trailing space and newline
+		    (loop (-fx i 1)))
+		   ((#\;)
+		    ;; a statement
+		    (display "(function(){ return " p)
+		    (display t p)
+		    (display "})()" p))
+		   ((#\})
+		    ;; a block
+		    (display "(function()" p)
+		    (display t p)
+		    (display ")()" p))
+		   (else
+		    ;; a regular expression
+		    (display t p))))))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializer ...                                        */
 ;*---------------------------------------------------------------------*/

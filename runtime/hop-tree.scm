@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 28 11:35:22 2007 (serrano)                */
+;*    Last change :  Fri Jun  1 09:25:50 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -27,8 +27,6 @@
 
    (static  (class html-tree::xml-element
 	       (klass read-only)
-	       (foldero read-only)
-	       (folderc read-only)
 	       (head read-only)
 	       (open::bool read-only)
 	       (multiselect::bool read-only)
@@ -36,13 +34,17 @@
 	       (onunselect read-only)
 	       (cached::bool read-only)
 	       (value read-only)
-	       (history::bool read-only))
+	       (history::bool read-only)
+	       (inline::bool (default #f))
+	       (iconopen read-only)
+	       (iconclose read-only)
+	       (icondir read-only (default #f)))
 	    
 	    (class html-trbody::xml-element)
 	    
 	    (class html-tree-leaf::xml-element
-	       (file read-only)
-	       (value read-only)))
+	       (value read-only)
+	       (icon read-only)))
 
    (export  (<TREE> . ::obj)
 	    (<TRHEAD> . ::obj)
@@ -54,8 +56,6 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <TREE> ((id #unspecified string)
 			     (class #f)
-			     (foldero #f)
-			     (folderc #f)
 			     (open #f)
 			     (multiselect #f)
 			     (onselect #f)
@@ -63,6 +63,9 @@
 			     (cached #f)
 			     (value #unspecified)
 			     (history #t)
+			     (inline #t boolean)
+			     (iconopen #t)
+			     (iconclose #t)
 			     body)
    (let ((head ""))
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
@@ -78,8 +81,6 @@
 		    (string-append "hop-tree " class)
 		    "hop-tree"))
 	 (id (xml-make-id id 'TREE))
-	 (foldero foldero)
-	 (folderc folderc)
 	 (open open)
 	 (history history)
 	 (head head)
@@ -88,6 +89,9 @@
 	 (onunselect onunselect)
 	 (cached cached)
 	 (value value)
+	 (inline inline)
+	 (iconopen iconopen)
+	 (iconclose iconclose)
 	 (body body))))
 
 ;*---------------------------------------------------------------------*/
@@ -101,14 +105,25 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <TRLEAF> ((id #unspecified string)
 			       (value #unspecified)
-			       (file #f)
+			       (inline #t boolean)
+			       (icon #t)
 			       body)
    (instantiate::html-tree-leaf
       (markup 'tree-leaf)
       (id (xml-make-id id 'TRLEAF))
-      (file file)
       (value value)
+      (icon (tree-icon icon inline "file.png"))
       (body body)))
+
+;*---------------------------------------------------------------------*/
+;*    tree-icon ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (tree-icon icon inline default)
+   (if (and (eq? icon #t) (not inline))
+       ;; non inline icon
+       (make-file-name (hop-icons-directory) default)
+       ;; user specified icon
+       icon))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tree ...                                        */
@@ -144,26 +159,13 @@
 			 parent::bstring
 			 p::output-port
 			 be::xml-backend)
-   (with-access::html-tree obj (id foldero folderc open head body
+   (with-access::html-tree obj (id open head body
 				   multiselect onselect onunselect cached
-				   value history)
+				   value history
+				   inline iconopen iconclose icondir)
       (let ((title (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body head) ps be)
 		      (close-output-port ps)))
-	    (fo (cond
-		   (foldero
-		    foldero)
-		   ((>fx level 0)
-		    (make-file-name (hop-icons-directory) "folder-open.png"))
-		   (else
-		    (make-file-name (hop-icons-directory) "base.png"))))
-	    (fc (cond
-		   (folderc
-		    folderc)
-		   ((>fx level 0)
-		    (make-file-name (hop-icons-directory) "folder-close.png"))
-		   (else
-		    (make-file-name (hop-icons-directory) "base.png"))))
 	    (svc (if (null? body)
 		     "false"
 		     (hop->json
@@ -173,37 +175,77 @@
 	 ;; set the parent relationship with the body
 	 (when (and (pair? body) (html-trbody? (car body)))
 	    (html-trbody-parent-set! (car body) obj))
-	 (fprint p
-		 "hop_make_tree( "
-		 ;; parent 
-		 "document.getElementById('" parent "'), "
-		 ;; the ident of the tree
-		 "'" id "', "
-		 ;; the nesting level of the tree
-		 level ", "
-		 ;; service to get the body of the tree
-		 svc ", "
-		 ;; the title
-		 "\"" (string-for-read title) "\", "
-		 ;; is the tree open
-		 (if open "true, " "false, ")
-		 ;; is the tree cached
-		 (if cached "true, " "false, ")
-		 ;; the icons
-		 "'" (string-escape (hop-icons-directory) #\') "', "
-		 "'" (string-escape fo #\') "', " 
-		 "'" (string-escape fc #\') "', " 
-		 ;; multi-selection
-		 (if multiselect "true, " "false, ")
-		 ;; onselect/onunselect event handlers
-		 (obj->js-thunk onselect) ", "
-		 (obj->js-thunk onunselect) ", "
-		 ;; the value associated with the tree
-		 "'"
-		 (if (string? value) (string-escape value #\') "")
-		 "', "
-		 (if history "true" "false")
- 		 " )"))))
+	 ;; the constructor call
+	 (display "hop_make_tree(" p)
+	 ;; parent 
+	 (display "document.getElementById('" p)
+	 (display parent p)
+	 (display "'), " p)
+	 ;; the ident of the tree
+	 (display "'" p)
+	 (display id p)
+	 (display "', " p)
+	 ;; the nesting level of the tree
+	 (display level p)
+	 (display ", " p)
+	 ;; service to get the body of the tree
+	 (display svc p)
+	 (display ", " p)
+	 ;; the title
+	 (display "\"" p)
+	 (display (string-for-read title) p)
+	 (display "\", " p)
+	 ;; is the tree open
+	 (display (if open "true, " "false, ") p)
+	 ;; is the tree cached
+	 (display (if cached "true, " "false, ") p)
+	 ;; multi-selection
+	 (display (if multiselect "true, " "false, ") p)
+	 ;; onselect/onunselect event handlers
+	 (display (obj->js-thunk onselect) p)
+	 (display ", " p)
+	 (display (obj->js-thunk onunselect) p)
+	 (display ", " p)
+	 ;; the value associated with the tree
+	 (if (string? value)
+	     (begin
+		(display "'" p)
+		(display (string-escape value #\') p)
+		(display "', " p))
+	     (display "''," p))
+	 ;; history
+	 (display (if history "true," "false,") p)
+	 ;; the icons
+	 (let ((iconopen (cond
+			    ((>fx level 0)
+			     (tree-icon iconopen inline "folder-open.png"))
+			    (inline
+			     0)
+			    (else
+			     (make-file-name (hop-icons-directory)
+					     "device.png"))))
+	       (iconclose (cond
+			     ((>fx level 0)
+			      (tree-icon iconclose inline "folder-close.png"))
+			     (inline
+			      0)
+			     (else
+			      (make-file-name (hop-icons-directory)
+					      "device.png")))))
+	    (html-write-tree-icon iconopen p)
+	    (display "," p)
+	    (html-write-tree-icon iconclose p))
+	 ;; icon dir
+	 (cond
+	    ((string? icondir)
+	     (display ",'" p)
+	     (display (string-escape icondir #\') p)
+	     (display "' " p))
+	    ((not inline)
+	     (display ",'" p)
+	     (display (string-escape (hop-icons-directory) #\') p)
+	     (display "' " p)))
+	 (display ")" p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-body ...                                               */
@@ -227,9 +269,11 @@
 				     ((xml-delay? b)
 				      (loop ((xml-delay-thunk b))))
 				     ((html-tree? b)
-				      (html-write-tree level b parent p be))
+				      (html-write-tree level b parent p be)
+				      (display ";\n" p))
 				     ((html-tree-leaf? b)
-				      (html-write-tree-leaf b parent p be))
+				      (html-write-tree-leaf b parent p be)
+				      (display ";\n" p))
 				     ((null? b)
 				      #unspecified)
 				     (else
@@ -240,23 +284,42 @@
 ;*    html-write-tree-leaf ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (html-write-tree-leaf obj::html-tree-leaf parent p be)
-   (with-access::html-tree-leaf obj (file body value)
+   (with-access::html-tree-leaf obj (icon body value)
+      (display "hop_make_tree_leaf(" p)
+      ;; parent
+      (display "document.getElementById('" p)
+      (display parent p)
+      (display "'), " p)
+      ;; the body
+      (display #\" p)
       (let ((sbody (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body obj) ps be)
-		      (close-output-port ps)))
-	    (icon (or file
-		      (make-file-name (hop-icons-directory) "file.png"))))
-	 (fprint p
-		 "hop_make_tree_leaf( "
-		 ;; parent
-		 "document.getElementById('" parent "'), "
-		 ;; the body
-		 "\"" (string-for-read sbody) "\", "
-		 ;; the value
-		 "'"
-		 (if (string? value) (string-escape value #\') "")
-		 "', "
-		 ;; the icon
-		 "'" (string-escape icon #\') "' "
-		 " )"))))
-	    
+		      (close-output-port ps))))
+	 (display (string-for-read sbody) p))
+      (display "\", " p)
+      ;; the value
+      (if (string? value)
+	  (begin
+	     (display #\' p)
+	     (display (string-escape value #\') p)
+	     (display "', " p))
+	  (display "''," p))
+      ;; the icon
+      (html-write-tree-icon icon p)
+      (display ")" p)))
+
+;*---------------------------------------------------------------------*/
+;*    html-write-tree-icon ...                                         */
+;*---------------------------------------------------------------------*/
+(define (html-write-tree-icon icon p)
+   (cond
+      ((eq? icon #t)
+       (display "true " p))
+      ((fixnum? icon)
+       (display icon p))
+      ((string? icon)
+       (display "'" p)
+       (display (string-escape icon #\') p)
+       (display "'" p))
+      ((xml-tilde? icon)
+       (xml-write-tilde-as-expression icon p))))

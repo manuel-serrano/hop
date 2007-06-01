@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed May 30 16:21:30 2007 (serrano)                */
+;*    Last change :  Fri Jun  1 07:33:40 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-response
 
+   (library web)
+   
    (include "http-lib.sch")
    
    (import  __hop_param
@@ -481,53 +483,78 @@
 (define (http-send-request req::http-request proc::procedure)
    (with-trace 3 'http-send-request
       (with-access::http-request req (scheme method path http host port header socket userinfo authorization timeout)
-	 (let* ((ssl (eq? scheme 'https))
-		(remote (make-client-socket/timeout host port timeout req ssl))
-		(rp (socket-output remote))
-		(ip (socket-input remote)))
-	    (when (> timeout 0)
-	       (output-port-timeout-set! rp timeout)
-	       (input-port-timeout-set! ip timeout))
-	    (trace-item "remote=" remote)
-	    (unwind-protect
-	       (begin
-		  ;; the header
-		  (http-write-line rp method " " path " " http)
-		  (when host (http-write-line rp "Host: " host))
-		  (http-write-header rp header)
-		  (cond
-		     (userinfo
-		      (http-write-line rp "Authorization: Basic "
-				       (base64-encode userinfo)))
-		     (authorization
-		      (http-write-line rp "Authorization: " authorization)))
-		  (http-write-line rp)
-		  ;; the content of the request
-		  (cond
-		     ((string? socket)
-		      (display socket rp))
-		     ((input-port? socket)
-		      (send-chars socket rp)))
-		  (flush-output-port rp)
-		  (multiple-value-bind (_1 status-code _2)
-		     (http-parse-status-line ip)
-		     (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
-			(http-read-header ip rp)
-			(case status-code
-			   ((204 304)
-			    ;; no message body
-			    (proc status-code cl #f))
-			   (else
-			    (if (not (eq? te 'chunked))
-				(proc status-code cl ip)
-				(let ((ip2 (open-input-procedure
-					    (make-unchunks ip))))
-				   (unwind-protect
-				      (proc status-code cl ip2)
-				      (begin
-					 (close-input-port ip2)
-					 (close-input-port ip))))))))))
-	       (socket-close remote))))))
+	 (let ((ssl (eq? scheme 'https)))
+	    (let loop ((host host)
+		       (port port)
+		       (userinfo userinfo)
+		       (path path))
+	       (let* ((sock (make-client-socket/timeout host port
+							timeout req ssl))
+		      (rp (socket-output sock))
+		      (ip (socket-input sock)))
+		  (when (> timeout 0)
+		     (output-port-timeout-set! rp timeout)
+		     (input-port-timeout-set! ip timeout))
+		  (trace-item "sock=" sock)
+		  (unwind-protect
+		     (begin
+			;; the header
+			(http-write-line rp method " " path " " http)
+			(when host (http-write-line rp "Host: " host))
+			(http-write-header rp header)
+			(cond
+			   (userinfo
+			    (http-write-line rp "Authorization: Basic "
+					     (base64-encode userinfo)))
+			   (authorization
+			    (http-write-line rp "Authorization: "
+					     authorization)))
+			(http-write-line rp)
+			;; the content of the request
+			(cond
+			   ((string? socket)
+			    (display socket rp))
+			   ((input-port? socket)
+			    (send-chars socket rp)))
+			(flush-output-port rp)
+			(multiple-value-bind (_1 status-code _2)
+			   (http-parse-status-line ip)
+			   (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
+			      (http-read-header ip rp)
+			      (case status-code
+				 ((204 304)
+				  ;; no message body
+				  (proc status-code cl #f))
+				 ((301 307)
+				  ;; redirection
+				  (let ((loc (assq location: header)))
+				     (if (not (pair? loc))
+					 (raise
+					  (instantiate::&io-malformed-url-error
+					     (proc 'http-sedn-request)
+					     (msg "No URL for redirection!")
+					     (obj ip)))
+					 (multiple-value-bind (_
+							       redirect-uinfo
+							       redirect-host
+							       redirect-port
+							       redirect-path)
+					    (url-parse (cdr loc))
+					    (loop redirect-host
+						  redirect-port
+						  redirect-uinfo
+						  redirect-path)))))
+				 (else
+				  (if (not (eq? te 'chunked))
+				      (proc status-code cl ip)
+				      (let ((ip2 (open-input-procedure
+						  (make-unchunks ip))))
+					 (unwind-protect
+					    (proc status-code cl ip2)
+					    (begin
+					       (close-input-port ip2)
+					       (close-input-port ip))))))))))
+		     (socket-close sock))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *chunk-size-grammar* ...                                         */

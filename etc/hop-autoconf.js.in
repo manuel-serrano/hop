@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon May 21 09:36:09 2007 (serrano)                */
+/*    Last change :  Fri Jun  1 09:27:05 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -234,6 +234,8 @@ function hop_add_active_location_listener( obj, proc ) {
 	       obj.hop_active_location_proc( window.location );
 	    }
 	    return true;
+	 } else {
+	    return false;
 	 }
       }
       obj.hop_active_location_interval =

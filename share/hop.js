@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed May 30 16:23:28 2007 (serrano)                */
+/*    Last change :  Fri Jun  1 09:27:28 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -1279,6 +1279,7 @@ function hop_make_history( key, handler, reset ) {
 function hop_history_add( history, id, val ) {
    if( !history instanceof _hop_history ) {
       alert( "*** ERROR: Illegal history object -- " + history );
+      return false;
    } else {
       return hop_state_history_add( id, history.key, val );
    }
