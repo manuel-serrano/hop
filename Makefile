@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu May 31 19:19:06 2007 (serrano)                */
+#*    Last change :  Fri Jun  1 18:24:49 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -234,6 +234,7 @@ distrib-sans-version:
               mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
             fi \
           fi; \
+          exit 0; \
 	  echo "Building hop-$(HOPRELEASE).jar..."; \
           $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
           mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
