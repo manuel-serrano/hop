@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Fri Jun  1 09:43:15 2007 (serrano)                */
+/*    Last change :  Fri Jun  1 11:45:14 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -85,32 +85,7 @@ function hop_tree_open( tree ) {
 /*    hop_tree_populate ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_tree_populate( tree ) {
-   var success = function( http ) {
-      tree.populated = true;
-      
-      if( http.responseText != null ) {
-	 /* cleanup the existing tree */
-	 var children = tree.body.childNodes;
-	 while( children.length > 0 ) {
-	    tree.body.removeChild( children[ 0 ] );
-	 }
-
-	 try {
-	    eval( http.responseText );
-	 } catch( e ) {
-	    alert( "*** Hop Tree Error: " + e + "\n" + http.responseText );
-	    throw( e );
-	 }
-      }
-   }
-   
-   var failure = function( http ) {
-      alert( "*** Hop Tree Error: `" + http.responseText + "'" );
-   }
-
-   if( tree.service ) {
-      hop( tree.service( tree.level + 1 ), success, failure );
-   }
+   if( tree.proc ) tree.proc();
 }
 
 /*---------------------------------------------------------------------*/
@@ -244,7 +219,7 @@ function hop_tree_row_toggle_selected( tree, row ) {
 /*---------------------------------------------------------------------*/
 /*    hop_make_tree ...                                                */
 /*---------------------------------------------------------------------*/
-function hop_make_tree( parent, id, level, svc, title, openp, cachedp,
+function hop_make_tree( parent, id, level, proc, title, openp, cachedp,
 			mu, ons, onus, value, history,
 			iconopen, iconclose, icondir ) {
    var tree = document.createElement( "div" );
@@ -366,7 +341,7 @@ function hop_make_tree( parent, id, level, svc, title, openp, cachedp,
    tree.cachedp = cachedp;
    tree.populated = false;
    tree.last = true;
-   tree.service = svc;
+   tree.proc = proc;
    tree.img_join = join;
    tree.img_folder = folder;
    tree.iconopen = iconopen;

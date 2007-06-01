@@ -19,7 +19,7 @@
 				(<TRLEAF> "Hop")
 				(<TRLEAF> "Lisp")
 				(<TRLEAF> "ML")))
-			  (<TREE> :foldero img :folderc img
+			  (<TREE> :iconopen img :iconclose img
 				  (<TRHEAD> "Imperative")
 				  (<TRBODY>
 				     (<TRLEAF> "Ada")

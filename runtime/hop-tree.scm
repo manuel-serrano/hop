@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jun  1 09:25:50 2007 (serrano)                */
+;*    Last change :  Fri Jun  1 11:44:02 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -166,12 +166,15 @@
       (let ((title (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body head) ps be)
 		      (close-output-port ps)))
-	    (svc (if (null? body)
-		     "false"
-		     (hop->json
-		      (procedure->service
-		       (lambda (level)
-			  (html-write-tree-body level (car body) id p be)))))))
+	    (proc (if (null? body)
+		      "false"
+		      (with-output-to-string
+			 (lambda ()
+			    (display "function() {")
+			    (html-write-tree-body (+ 1 level) (car body) id
+						  (current-output-port)
+						  be)
+			    (display "}"))))))
 	 ;; set the parent relationship with the body
 	 (when (and (pair? body) (html-trbody? (car body)))
 	    (html-trbody-parent-set! (car body) obj))
@@ -189,7 +192,7 @@
 	 (display level p)
 	 (display ", " p)
 	 ;; service to get the body of the tree
-	 (display svc p)
+	 (display proc p)
 	 (display ", " p)
 	 ;; the title
 	 (display "\"" p)
@@ -257,28 +260,25 @@
 ;*    html-write-tree-body ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (html-write-tree-body level obj parent p be)
-   (instantiate::http-response-procedure
-      (request (instantiate::http-request))
-      (proc (lambda (p)
-	       (with-access::xml-element obj (body)
-		  (for-each (lambda (b)
-			       (let loop ((b b))
-				  (cond
-				     ((pair? b)
-				      (map loop b))
-				     ((xml-delay? b)
-				      (loop ((xml-delay-thunk b))))
-				     ((html-tree? b)
-				      (html-write-tree level b parent p be)
-				      (display ";\n" p))
-				     ((html-tree-leaf? b)
-				      (html-write-tree-leaf b parent p be)
-				      (display ";\n" p))
-				     ((null? b)
-				      #unspecified)
-				     (else
-				      (error '<TREE> "Illegal tree body" b)))))
-			    body))))))
+   (with-access::xml-element obj (body)
+      (for-each (lambda (b)
+		   (let loop ((b b))
+		      (cond
+			 ((pair? b)
+			  (map loop b))
+			 ((xml-delay? b)
+			  (loop ((xml-delay-thunk b))))
+			 ((html-tree? b)
+			  (html-write-tree level b parent p be)
+			  (display ";\n" p))
+			 ((html-tree-leaf? b)
+			  (html-write-tree-leaf b parent p be)
+			  (display ";\n" p))
+			 ((null? b)
+			  #unspecified)
+			 (else
+			  (error '<TREE> "Illegal tree body" b)))))
+		body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-write-tree-leaf ...                                         */
