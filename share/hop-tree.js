@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Fri Jun  1 13:27:49 2007 (serrano)                */
+/*    Last change :  Sat Jun  2 18:32:28 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -63,9 +63,7 @@ function hop_tree_close( tree ) {
 /*    hop_tree_open ...                                                */
 /*---------------------------------------------------------------------*/
 function hop_tree_open( tree ) {
-   if( !tree.populated || !tree.cachedp ) {
-      hop_tree_populate( tree );
-   }
+   if( tree.proc ) hop_tree_populate( tree );
    
    tree.openp = true;
    
@@ -84,7 +82,25 @@ function hop_tree_open( tree ) {
 /*    hop_tree_populate ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_tree_populate( tree ) {
-   if( tree.proc ) tree.proc();
+   var success = function( http ) {
+      tree.populated = true;
+      
+      if( http.responseText != null ) {
+         /* cleanup the existing tree */
+         var children = tree.body.childNodes;
+         while( children.length > 0 ) {
+            tree.body.removeChild( children[ 0 ] );
+         }
+
+         eval( http.responseText );
+      }
+   }
+   
+   var failure = function( http ) {
+      alert( "*** Hop Tree Error: `" + http.responseText + "'" );
+   }
+
+   return hop( tree.proc(), success, failure );
 }
 
 /*---------------------------------------------------------------------*/
@@ -198,7 +214,7 @@ function hop_tree_row_unselect( root, row ) {
 function hop_tree_row_toggle_selected( tree, row ) {
    // find the root tree
    var aux = tree;
-   var root = aux;
+   var root = tree;
 
    while( aux.className == "hop-tree" ) {
       root = aux;
@@ -219,11 +235,11 @@ function hop_tree_row_toggle_selected( tree, row ) {
 /*    hop_make_tree ...                                                */
 /*---------------------------------------------------------------------*/
 function hop_make_tree( parent, id, visible, level, proc, title,
-			openp, cachedp,
+			openp, delayedp,
 			mu, ons, onus, value, history,
 			iconopen, iconclose, icondir ) {
    var tree = document.createElement( "div" );
-   
+
    /* fixup icons */
    if( iconopen == true ) {
       iconopen = hop_tree_default_open_icon;
@@ -340,10 +356,7 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    tree.level = level;
    tree.openp = false;
    tree.history = (history != false);
-   tree.cachedp = cachedp;
-   tree.populated = false;
    tree.last = true;
-   tree.proc = proc;
    tree.img_join = join;
    tree.img_folder = folder;
    tree.visible = visible;
@@ -386,6 +399,22 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       tree.onunselect = onus;
    }
 
+   /* populate the tree is not delayed */
+   if( delayedp ) {
+      /* store the populate procedure and not populate yet */
+      tree.proc = proc;
+   } else {
+      /* non delayed trees have a static body, hence, it is computed */
+      /* at creation time and not updated when the tree is unfolded  */
+      if( proc ) {
+	 tree.proc = proc;
+	 tree.proc();
+      }
+      /* cancel the tree populate procedure because that tree */
+      /* is never updated (it is not delayed)                 */
+      tree.proc = false;
+   } 
+   
    /* open the tree if required */
    if( openp ) hop_tree_open( tree );
    

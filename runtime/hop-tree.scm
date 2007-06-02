@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jun  1 12:11:23 2007 (serrano)                */
+;*    Last change :  Sat Jun  2 18:31:52 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -32,7 +32,6 @@
 	       (multiselect::bool read-only)
 	       (onselect read-only)
 	       (onunselect read-only)
-	       (cached::bool read-only)
 	       (value read-only)
 	       (history::bool read-only)
 	       (inline::bool (default #f))
@@ -62,7 +61,6 @@
 			     (multiselect #f)
 			     (onselect #f)
 			     (onunselect #f)
-			     (cached #f)
 			     (value #unspecified)
 			     (history #t)
 			     (inline #t boolean)
@@ -80,8 +78,8 @@
       (instantiate::html-tree
 	 (markup 'tree)
 	 (klass (if (string? class)
-		    (string-append "hop-tree " class)
-		    "hop-tree"))
+		    (string-append "hop-tree-container " class)
+		    "hop-tree-container"))
 	 (id (xml-make-id id 'TREE))
 	 (visible visible)
 	 (open open)
@@ -90,7 +88,6 @@
 	 (multiselect multiselect)
 	 (onselect onselect)
 	 (onunselect onunselect)
-	 (cached cached)
 	 (value value)
 	 (inline inline)
 	 (iconopen iconopen)
@@ -164,21 +161,34 @@
 			 be::xml-backend)
    (with-access::html-tree obj (id visible
 				   open head body
-				   multiselect onselect onunselect cached
+				   multiselect onselect onunselect
 				   value history
 				   inline iconopen iconclose icondir)
       (let* ((title (let ((ps (open-output-string)))
 		       (xml-write-body (xml-element-body head) ps be)
 		       (close-output-port ps)))
-	     (proc (if (null? body)
-		       "false"
+	     (proc (cond
+		      ((null? body)
+		       "false")
+		      ((delayed-tree-body? body)
+		       (hop->json
+			(procedure->service
+			 (lambda ()
+			    (with-output-to-string
+			       (lambda ()
+				  (html-write-tree-body (+ 1 level) (car body)
+							id (current-output-port)
+							be)))))))
+		      (else
 		       (with-output-to-string
 			  (lambda ()
 			     (display "function() {")
-			     (html-write-tree-body (+ 1 level) (car body) id
-						   (current-output-port)
-						   be)
-			     (display "}"))))))
+			     (if 
+			      "nop"
+			      (html-write-tree-body (+ 1 level) (car body)
+						    id (current-output-port)
+						    be))
+			     (display "}")))))))
 	 ;; set the parent relationship with the body
 	 (when (and (pair? body) (html-trbody? (car body)))
 	    (html-trbody-parent-set! (car body) obj))
@@ -207,7 +217,7 @@
 	 ;; is the tree open
 	 (display (if open "true, " "false, ") p)
 	 ;; is the tree cached
-	 (display (if cached "true, " "false, ") p)
+	 (display (if (delayed-tree-body? body) "true, " "false, ") p)
 	 ;; multi-selection
 	 (display (if multiselect "true, " "false, ") p)
 	 ;; onselect/onunselect event handlers
@@ -256,6 +266,14 @@
 	     (display "' " p)))
 	 (display ")" p))))
 
+;*---------------------------------------------------------------------*/
+;*    delayed-tree-body? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (delayed-tree-body? body)
+   (when (and (pair? body) (html-trbody? (car body)))
+      (with-access::xml-element (car body) (body)
+	 (and (pair? body) (xml-delay? (car body))))))
+	   
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-body ...                                               */
 ;*---------------------------------------------------------------------*/
