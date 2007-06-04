@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Jun  2 09:28:55 2007 (serrano)                */
+;*    Last change :  Sun Jun  3 05:52:29 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -156,9 +156,6 @@
 
 	    (hop-max-remote-keep-alive-connection::int)
 	    (hop-max-remote-keep-alive-connection-set! ::int)
-
-	    (hop-max-remote-keep-alive-per-host-connection::int)
-	    (hop-max-remote-keep-alive-per-host-connection-set! ::int)
 
 	    (hop-weblets::pair-nil)
 	    (hop-weblets-set! ::pair-nil)
@@ -686,10 +683,6 @@
 (define-parameter hop-max-remote-keep-alive-connection
    ;; the max number of keep-alive remote (proxing) connections
    50)
-
-(define-parameter hop-max-remote-keep-alive-per-host-connection
-   ;; the max number of keep-alive connection per host
-   10)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-weblets ...                                                  */

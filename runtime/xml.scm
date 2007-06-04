@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jun  1 09:23:30 2007 (serrano)                */
+;*    Last change :  Sun Jun  3 08:51:26 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -857,8 +857,7 @@
 	  (if (input-port? p)
 	      (unwind-protect
 		 (format "data:~a;base64,~a"
-			 (mime-type src (format "image/~a"
-						(suffix src)))
+			 (mime-type src (format "image/~a" (suffix src)))
 			 (base64-encode (read-string p) -1))
 		 (close-input-port p))
 	      src))

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Feb  2 15:31:05 2007 (serrano)                */
+#*    Last change :  Mon Jun  4 19:34:22 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wizard weblet                                */
@@ -19,7 +19,8 @@ include ../../etc/Makefile.version
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile wizard.hss wizard.hop \
-		  etc/weblet.info etc/logo.png etc/wizard.wiki
+		  etc/weblet.info etc/wizard.wiki \
+                  etc/admin.png etc/guest.png etc/logo.png etc/user.png
 
 build:
 

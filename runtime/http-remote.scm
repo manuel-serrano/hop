@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Jun  2 16:48:36 2007 (serrano)                */
+;*    Last change :  Sun Jun  3 05:47:59 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -32,6 +32,7 @@
 	       (keep-alive?::bool (default #f))
 	       (intable?::bool (default #f))
 	       (locked?::bool (default #f))
+	       (closed?::bool (default #f))
 	       date::elong))
    
    (export  (response-remote-start-line ::http-response-remote)))
@@ -82,6 +83,7 @@
 			     " " host ":" port "\n"))
 	       (when (>fx remote-timeout 0)
 		  (output-timeout-set! rp remote-timeout))
+	       (unwind-protect
 	       (with-handler
 		  (lambda (e)
 		     (connection-close! remote)
@@ -110,7 +112,12 @@
 			       (trace-item "content-length=" content-length)
 			       (send-chars sp rp content-length))
 			    (flush-output-port rp)
-			    (remote-body r socket remote))))))))))
+			    (remote-body r socket remote)))))
+	       (unless (or (connection-intable? remote)
+			   (connection-closed? remote))
+		  (tprint "**** ERROR, connection not closed nor in table")
+		  (read)))
+	       )))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-body ...                                                  */
@@ -132,7 +139,9 @@
 		     (wstart
 		      ;; If we have already send characters to the client
 		      ;; it is no longer possible to answer resource
-		      ;; unavailable so we raise the error
+		      ;; unavailable so we raise the error.
+		      ;; There is no need to close the connection because
+		      ;; the next handler closes it.
 		      (raise e))
 		     ((connection-keep-alive? remote)
 		      ;; This is a keep-alive connection that is likely
@@ -147,6 +156,8 @@
 		      (http-response r socket))
 		     (else
 		      ;; This is an unrecoverable error
+		      (exception-notify e)
+		      (connection-close! remote)
 		      (http-response (http-remote-error host e) socket))))
 	       (multiple-value-bind (http-version status-code phrase)
 		  (http-parse-status-line ip)
@@ -201,6 +212,9 @@
 ;*---------------------------------------------------------------------*/
 (define *connection-table* (make-hashtable))
 (define *connection-number* 0)
+(define *connection-open* 0)
+(define *connection-close* 0)
+(define *connection-pending* '())
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-table-get ...                                         */
@@ -274,6 +288,13 @@
 	       (port port)
 	       (request-id (http-request-id request))
 	       (date (current-seconds))))))
+
+   (define (register! connection)
+      (mutex-lock! *remote-lock*)
+      (set! *connection-open* (+fx 1 *connection-open*))
+      (set! *connection-pending* (cons connection *connection-pending*))
+      (mutex-unlock! *remote-lock*)
+      connection)
    
    (define (get-connection)
       (with-trace 4 'get-connection
@@ -295,14 +316,14 @@
 			       (not (=fx (connection-port old) port)))
 			   ;; the connection is locked or used on another port
 			   (mutex-unlock! *remote-lock*)
-			   (get-new-connection!))
+			   (register! (get-new-connection!)))
 			  ((connection-timeout? old (current-seconds))
 			   ;; the connection is too old, closed it
 			   (connection-close-sans-lock! old)
 			   ;; release the lock only when the old connection
 			   ;; has been closed and properly removed
 			   (mutex-unlock! *remote-lock*)
-			   (get-new-connection!))
+			   (register! (get-new-connection!)))
 			  (else
 			   ;; re-use the connection
 			   (connection-keep-alive?-set! old #t)
@@ -315,64 +336,91 @@
 		       ;; create a new connection and registers it
 		       (begin
 			  (mutex-unlock! *remote-lock*)
-			  (get-new-connection!))))))))
+			  (register! (get-new-connection!)))))))))
    
    (get-connection))
    
 ;*---------------------------------------------------------------------*/
 ;*    connection-keep-alive! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    We keep alive connections iff:                                   */
+;*      - the number of current connections does not exceed the user   */
+;*        parameter HOP-MAX-REMOTE-KEEP-ALIVE-CONNECTION               */
+;*      - the number of alive connections does not exceed the user     */
+;*        parameter HOP-MAX-REMOTE-KEEP-ALIVE-CONNECTION               */
+;*      - the number of alive connections to the host does not exceed  */
+;*        the user parameter HOP-MAX-REMOTE-KEEP-ALIVE-CONNECTION      */
+;*        divided by an arbitrary threshold.                           */
 ;*---------------------------------------------------------------------*/
 (define (connection-keep-alive! connection)
    (mutex-lock! *remote-lock*)
-   (tprint "+++ keep-alive conn-number=" *connection-number*)
-   (hashtable-for-each *connection-table*
-		       (lambda (k l)
-			  (tprint "   host=" k " l=" (length l))))
-   (if (>=fx *connection-number* (hop-max-remote-keep-alive-connection))
+   (cond
+      ((>=fx *connection-number* (hop-max-remote-keep-alive-connection))
        ;; no room available, cleanup the table
-       (cleanup-connection-table!)
+       (cleanup-connection-table!))
+      ((>= (-fx *connection-open* (+fx *connection-close* *connection-number*))
+	   (hop-max-remote-keep-alive-connection))
+       ;; too many uncompleted connections
+       (set! *connection-pending*
+	     (filter! (lambda (c)
+			 (if (connection-down? connection-down?)
+			     (begin
+				(connection-close-sans-lock! c)
+				#f)
+			     #t))
+		      *connection-pending*))
+       #unspecified)
+      ((>=fx *connection-number* (hop-max-remote-keep-alive-connection))
+       ;; no room available, cleanup the table
+       (cleanup-connection-table!))
+      (else
        ;; store the connection only if room is available on the table
        (with-access::connection connection (host locked? intable?)
-	  (let ((lst (hashtable-get *connection-table* host)))
+	  (let ((l (hashtable-get *connection-table* host)))
 	     (cond
-		((not (pair? lst))
+		((not (pair? l))
 		 (hashtable-put! *connection-table* host (list connection))
 		 (set! *connection-number* (+fx 1 *connection-number*))
 		 (set! locked? #f)
 		 (set! intable? #t))
-		((memq connection lst)
+		((memq connection l)
 		 (set! locked? #f))
-		((<fx (length lst)
-		      (hop-max-remote-keep-alive-per-host-connection))
-		 (append! (last-pair lst) (list connection))
+		((<fx (length l) (/ (hop-max-remote-keep-alive-connection) 10))
+		 (append! (last-pair l) (list connection))
 		 (set! *connection-number* (+fx 1 *connection-number*))
 		 (set! locked? #f)
 		 (set! intable? #t))
 		(else
-		 (when intable? (connection-close-sans-lock! connection)))))))
-   (let ((n 0))
-      (hashtable-for-each *connection-table*
-			  (lambda (k l)
-			     (set! n (+fx n (length l)))))
-      (if (=fx n *connection-number*)
-	  (tprint "******* CONNECTION TABLE OK")
-	  (tprint "******* CONNECTION TABLE NOT OK "
-		  *connection-number* " / " n)))
+		 (connection-close-sans-lock! connection)))))))
+   (tprint "+++ keep-alive "
+	   " pending=" (-fx *connection-open*
+			    (+fx *connection-close* *connection-number*))
+	   " live=" (-fx *connection-open* *connection-close*)
+	   " open=" *connection-open*
+	   " close=" *connection-close*
+	   " intable=" *connection-number*)
+   (hashtable-for-each *connection-table*
+		       (lambda (k l)
+			  (tprint "   host=" k " l=" (length l))))
    (mutex-unlock! *remote-lock*))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-close-sans-lock! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (connection-close-sans-lock! connection)
-   (with-access::connection connection (host socket intable?)
-      (socket-close socket)
-      (when intable?
-	 (set! intable? #f)
-	 (let ((l (remq! connection (hashtable-get *connection-table* host))))
-	    (set! *connection-number* (-fx *connection-number* 1))
-	    (if (null? l)
-		(hashtable-remove! *connection-table* host)
-		(hashtable-put! *connection-table* host l))))))
+   (set! *connection-close* (+fx 1 *connection-close*))
+   (set! *connection-pending* (remq! connection *connection-pending*))
+   (with-access::connection connection (host socket intable? closed?)
+      (unless closed?
+	 (set! closed? #t)
+	 (socket-close socket)
+	 (when intable?
+	    (set! intable? #f)
+	    (let ((l (remq! connection (hashtable-get *connection-table* host))))
+	       (set! *connection-number* (-fx *connection-number* 1))
+	       (if (null? l)
+		   (hashtable-remove! *connection-table* host)
+		   (hashtable-put! *connection-table* host l)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    connection-close! ...                                            */
