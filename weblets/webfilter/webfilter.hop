@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Dec  9 09:03:10 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Mon Jun  4 19:38:43 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
 ;*=====================================================================*/
@@ -199,7 +199,7 @@
       :class "webfilter-config"
       (<TR>
 	 (<TH>
-	    (<P> [This filter bans domains registerd in black lists.])))
+	    (<P> [This filter bans domains registered in black lists.])))
       (let ((txt (<SPAN>
 		    :class (if (webfilter-blacklist) "enable" "disable")
 		    "Black listing")))
@@ -225,7 +225,7 @@
       :class "webfilter-config"
       (<TR>
 	 (<TH>
-	    (<P> [This filter bans domains registerd in black lists.])))
+	    (<P> [This filter bans domains registered in black lists.])))
       (let ((txt (<SPAN>
 		    :class (if (webfilter-blacklist) "enable" "disable")
 		    "Black listing")))

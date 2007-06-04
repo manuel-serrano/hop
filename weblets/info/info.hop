@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Feb  5 07:25:21 2007 (serrano)                */
+;*    Last change :  Mon Jun  4 19:49:26 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -105,7 +105,7 @@
 						  (<NPTABHEAD> "Caches")
 						  (<DELAY>
 						     (lambda ()
-							(<CACHES>))))
+							(<CACHES> req))))
 					       (<NPTAB>
 						  (<NPTABHEAD> "Traffic")
 						  (<DELAY>
@@ -191,20 +191,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    <CACHES> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (<CACHES>)
+(define (<CACHES> req)
    (set! traffic-hookingp #f)
    (define (info-cache c)
       (let* ((l (cache->list c))
-	     (d (<DIV>
-		   :class "cache-files"
-		   (<TABLE>
-		      :class "cache-files"
+	     (d (<DIV> :class "cache-files"
+		   (<TABLE> :class "cache-files"
 		      (map (lambda (ce)
 			      (<TR>
 				 (<TD>
-				    (<A>
-				       :href (format "http://hop/~a"
-						     (cache-entry-path ce))
+				    (<A> :href (format "http://~a:~a~a"
+						       (http-request-host req)
+						       (http-request-port req)
+						       (cache-entry-path ce))
 				       (cache-entry-upath ce))
 				    " " (round
 					 (/ (file-size (cache-entry-path ce))
@@ -213,8 +212,7 @@
 				    (seconds->date (cache-entry-mtime ce))
 				    ")")))
 			   l)))))
-	 (<TABLE>
-	    :class "info-cache"
+	 (<TABLE> :class "info-cache"
 	    (<TR>
 	       (<TH> (cache-path c)))
 	    (<TR>
@@ -228,30 +226,23 @@
 				 1024)))))
 	    (<TR> (<TD> "&#160;"))
 	    (<TR>
-	       (<TD> (<BUTTON>
-			:onclick ~(with-hop ($(service ()
-						 (cache-clear c)
-						 ""))
-				     (lambda (h)
-					(set! $d.innerHTML h)))
+	       (<TD> (<BUTTON> :onclick ~(with-hop ($(service ()
+							(cache-clear c)
+							""))
+					    (lambda (h)
+					       (set! $d.innerHTML h)))
 			"clear cache")))
 	    (<TR> (<TD> "&#160;"))
 	    (<TR>
 	       (<TD> d)))))
-   (let ((d (<DIV>
-	       :class "cache-info"
+   (let ((d (<DIV> :class "cache-info"
 	       "")))
-      (<TABLE>
-	 :class "hop-caches"
+      (<TABLE> :class "hop-caches"
 	 (<TR>
-	    (<TD>
-	       :width "20%"
-	       :valign 'top
-	       (<DIV>
-		  :class "caches"
+	    (<TD> :width "20%" :valign 'top
+	       (<DIV> :class "caches"
 		  (map (lambda (c)
-			  (<DIV>
-			     :class "cache-link"
+			  (<DIV> :class "cache-link"
 			     :width "100%"
 			     :onclick ~(with-hop ($(service () (info-cache c)))
 					  (lambda (h)
@@ -260,9 +251,7 @@
 			      (basename (dirname (cache-path c)))
 			      (basename (cache-path c)))))
 		       (registered-caches))))
-	    (<TD>
-	       :width "80%"
-	       :valign 'top
+	    (<TD> :width "80%" :valign 'top
 	       d)))))
 
 ;*---------------------------------------------------------------------*/
@@ -289,8 +278,7 @@
 		       e.removeChild( ch[ i ] );
 	            }
 		  } "clear"))
-       (<DIV>
-	  :class "traffic"
+       (<DIV> :class "traffic"
 	  (<HOP-EVENT>
 	     :handler { hop_append( $traffic )( event ) }
 	     :event info-event)
