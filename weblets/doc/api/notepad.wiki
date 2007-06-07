@@ -50,7 +50,7 @@ using //Notepads// must include in their header, the following statement:
 <arguments>
 ^  attributes  ^   type    ^   default    ^  short description          ^
 | :id          |  string   |  //random//  | element identifier.         |
-| :history     |  boolean  |  //#t//      | enables history recording.  |
+| :history     |  obj      |  _           | enables history recording.  |
 | body         |  element  |  empty       | the body.                   |
 </arguments>
 
@@ -59,7 +59,10 @@ This function creates a //notepad//. Its first child can be
 
 The argument ++:history++ controls whether an history event is associated
 with selected a tab. When history is enabled, the //back button// of the
-browser restores previously selected tabs.
+browser restores previously selected tabs. The history is disabled if 
+++:history++ is ++#f++. It is enabled if ++:history++ is ++#t++ or 
+if it is not ++#f++ and an ++:id++ value is provided.
+
 </markup>
 
 === ++<NPHEAD>++ ===

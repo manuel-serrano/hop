@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 21 13:51:05 2007 (serrano)                */
+;*    Last change :  Thu Jun  7 06:48:12 2007 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -41,7 +41,7 @@
 				  (width #f)
 				  (height #f)
 				  (index 0)
-				  (history #t)
+				  (history #unspecified)
 				  body)
    ;; Verify that the body is a list of <TSPAN>
    (for-each (lambda (x)
@@ -56,7 +56,7 @@
       (width width)
       (height height)
       (index index)
-      (history history)
+      (history (if (boolean? history) history (not (eq? id #unspecified))))
       (body body)))
 
 ;*---------------------------------------------------------------------*/

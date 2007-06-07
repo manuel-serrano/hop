@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jun  1 09:27:28 2007 (serrano)                */
+/*    Last change :  Wed Jun  6 13:31:34 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -449,6 +449,12 @@ function with_hop( service, success, failure ) {
 			  success( eval( http.responseText ) );
 		       } else {
 			  success( http.responseText );
+			  // MS: 6 Jun 2007, the previous version were
+			  // not correctly evaluating JS scripts!
+			  // The scripts have to be evaluated after the
+			  // success callback has been called because this
+			  // might create new nodes referenced in the scripts.
+			  hop_js_eval( http );
 		       }
 		       return;
 		    case 202:

@@ -13,6 +13,7 @@ inside the HTML tree itself.
 === server ===
 
   (<IMG> ...)
+  (img-base64-inline path)
 
 == Examples ==
 
@@ -53,6 +54,19 @@ to the server in order to get the actual bytes composing the image.
 
 </markup>
 </server>
+
+=== (img-base64-inline path) ===
+<procedure>
+<function> img-base64-inline
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | An image server path name.                      |
+</arguments>
+
+The function ++img-base64-inline++ construct an inlined image URI that
+is suitable for the ++<IMG>++'s ++:src++ attribute.
+</procedure>
 
 == See also ==
 <see-also><IMG></see-also>

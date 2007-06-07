@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jun  2 18:31:52 2007 (serrano)                */
+;*    Last change :  Thu Jun  7 06:46:25 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -34,7 +34,7 @@
 	       (onunselect read-only)
 	       (value read-only)
 	       (history::bool read-only)
-	       (inline::bool (default #f))
+	       (inline::bool (default #t))
 	       (visible::bool (default #t))
 	       (iconopen read-only)
 	       (iconclose read-only)
@@ -62,7 +62,7 @@
 			     (onselect #f)
 			     (onunselect #f)
 			     (value #unspecified)
-			     (history #t)
+			     (history #unspecified)
 			     (inline #t boolean)
 			     (iconopen #t)
 			     (iconclose #t)
@@ -83,7 +83,7 @@
 	 (id (xml-make-id id 'TREE))
 	 (visible visible)
 	 (open open)
-	 (history history)
+	 (history (if (boolean? history) history (not (eq? id #unspecified))))
 	 (head head)
 	 (multiselect multiselect)
 	 (onselect onselect)
@@ -239,18 +239,26 @@
 			    ((>fx level 0)
 			     (tree-icon iconopen inline "folder-open.png"))
 			    (inline
-			     0)
+			     (if (string? iconopen)
+				 (img-base64-inline iconopen)
+				 0))
 			    (else
-			     (make-file-name (hop-icons-directory)
-					     "device.png"))))
+			     (tree-icon iconopen
+					inline
+					(make-file-name (hop-icons-directory)
+							"device.png")))))
 	       (iconclose (cond
 			     ((>fx level 0)
 			      (tree-icon iconclose inline "folder-close.png"))
 			     (inline
-			      0)
+			      (if (string? iconclose)
+				  (img-base64-inline iconclose)
+				  0))
 			     (else
-			      (make-file-name (hop-icons-directory)
-					      "device.png")))))
+			      (tree-icon iconclose
+					 inline
+					 (make-file-name (hop-icons-directory)
+							 "device.png"))))))
 	    (html-write-tree-icon iconopen p)
 	    (display "," p)
 	    (html-write-tree-icon iconclose p))

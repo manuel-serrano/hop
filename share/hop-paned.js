@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Mon May 28 15:02:12 2007 (serrano)                */
+/*    Last change :  Wed Jun  6 08:22:11 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -152,13 +152,9 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
    cursor.height = "100%";
    td2.height = "100%";
    
-   td1.className = "hop-vpaned-pan";
-   td2.className = "hop-vpaned-pan";
+   td1.className = "hop-vpaned-pan hop-vpaned-pan-left";
+   td2.className = "hop-vpaned-pan hop-vpaned-pan-right";
    cursor.className = "hop-paned-cursor hop-paned-cursoroff";
-   
-/*    div = document.createElement( "div" );                           */
-/*    div.className = "hop-paned-cursoroff";                           */
-/*    cursor.appendChild( div );                                       */
    
    // cursor event handling
    var mousemove = function( e ) {
@@ -219,8 +215,7 @@ function hop_make_vpaned( parent, id, klass, fraction, pan1, pan2 ) {
 /*---------------------------------------------------------------------*/
 function hop_make_hpaned( parent, id, klass, fraction, pan1, pan2 ) {
    var document = parent.ownerDocument || parent.document;
-   var td1, td2, pcursor, cursor;
-   var tr1, tr2, tr3;
+   var pcursor, cursor;
 
    // the paned
    var paned = document.createElement( "div" );

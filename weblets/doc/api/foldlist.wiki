@@ -43,12 +43,18 @@ using //foldlists// must include in their header, the following statement:
 ^  attributes  ^   type              ^   default    ^  short description          ^
 | :id          |  string             |  //random//  | element identifier.         |
 | :class       |  string             |  //hop-fl//  | element class name.         |
-| :spacing     |  integer            |      0       |                             |
+| :spacing     |  integer            |    ++0++     |                             |
 | :icono       |  string             |  //false//   | the open image.             |
 | :iconc       |  string             |  //false//   | the close image.            |
-| :history     |  boolean            |  //#t//      | enables history recording.  |
+| :history     |  obj                |      _       | enables history recording.  |
 | body         |  ++<FLITEM>++ list  |              | the list of items.          |
 </arguments>
+
+The argument ++:history++ controls whether an history event is associated
+with selected a item. When history is enabled, the //back button// of the
+browser restores previously unfolded item.  The history is disabled if 
+++:history++ is ++#f++. It is enabled if ++:history++ is ++#t++ or 
+if it is not ++#f++ and an ++:id++ value is provided.
 
 </markup>
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Mon May 21 14:23:25 2007 (serrano)                */
+;*    Last change :  Thu Jun  7 06:47:06 2007 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -46,7 +46,7 @@
 			   (spacing 0)
 			   (icono #f)
 			   (iconc #f)
-			   (history #t)
+			   (history #unspecified)
 			   body)
    (let ((res (instantiate::html-foldlist
 	         (markup 'fl)
@@ -57,7 +57,9 @@
 		 (spacing spacing)
 		 (icono icono)
 		 (iconc iconc)
-		 (history history)
+		 (history (if (boolean? history)
+			      history
+			      (not (eq? id #unspecified))))
 		 (body body))))
       ;; Verify that the body is a list of <FLITEM>s and fill their parent
       (for-each (lambda (x)

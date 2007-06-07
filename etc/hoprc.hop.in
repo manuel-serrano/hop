@@ -53,7 +53,7 @@
 ;; It is required to define the "anonymous" user. An error will be raised
 ;; if this user is not declared when the first request is intercepted.
 (add-user! "anonymous" 
-           :services '(home doc password wizard hz/list)
+           :services '(home doc epassword wizard hz/list)
 	   :directories (hop-path))
 
 (when (file-exists? (make-file-name (hop-etc-directory) "passwd.hop"))
@@ -117,7 +117,7 @@ the Hop
 ,(<A> :href (format "http://~a:~a/hop/doc" (hostname) (hop-port))
    "documentation")
 application, and the Hop passwords
-,(<A> :href (format "http://~a:~a/hop/password" (hostname) (hop-port))
+,(<A> :href (format "http://~a:~a/hop/epassword" (hostname) (hop-port))
    "encryption")
 weblet.
 

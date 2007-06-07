@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Sun May 27 08:09:48 2007 (serrano)                */
+#*    Last change :  Thu Jun  7 06:58:47 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -47,7 +47,7 @@ WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   tables.wiki tt.wiki
 TUTORIAL_POP	= 00-hello.wiki 01-ajax.wiki 02-hss.wiki 03-proxy.wiki \
 		  04-authentication.wiki 05-rss.wiki 06-hz.wiki \
-                  07-hoprc.wiki 08-history.wiki
+                  07-hoprc.wiki 08-history.wiki 09-resource.wiki
 POPULATION	= Makefile .afile doc.hss doc.scm \
                   examples api core wiki tutorials etc/weblet.info \
                   etc/logo.png etc/doc.wiki \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 21 13:42:39 2007 (serrano)                */
+;*    Last change :  Thu Jun  7 06:47:41 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -92,10 +92,11 @@
 ;*    <NOTEPAD> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <NOTEPAD> ((id #unspecified string)
-				(history #t)
+				(history #unspecified)
 				(attrs)
 				body)
    (let ((id (xml-make-id id 'NOTEPAD))
+	 (history (if (boolean? history) history (not (eq? id #unspecified))))
 	 head)
       (if (and (pair? body) (xml-nphead-element? (car body)))
 	  (begin

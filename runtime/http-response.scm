@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Jun  1 07:33:40 2007 (serrano)                */
+;*    Last change :  Tue Jun  5 14:10:25 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -478,6 +478,32 @@
       (start-line "HTTP/1.0 204 No Content")))
 
 ;*---------------------------------------------------------------------*/
+;*    redirect ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (redirect host port path user header ip)
+   (let ((loc (assq location: header)))
+      (if (not (pair? loc))
+	  (raise
+	   (instantiate::&io-malformed-url-error
+	      (proc 'http-send-request)
+	      (msg "No URL for redirection!")
+	      (obj ip)))
+	  (multiple-value-bind (rproto ruser rhost rport rpath)
+	     (url-parse (cdr loc))
+	     (cond
+		((not rproto)
+		 (let ((abspath (make-file-name (dirname path) rpath)))
+		    (values host port user abspath)))
+		((not (string? rhost))
+		 (raise
+		  (instantiate::&io-malformed-url-error
+		     (proc 'http-send-request)
+		     (msg "Illegal host")
+		     (obj (cdr loc)))))
+		(else
+		 (values rhost rport ruser rpath)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    http-send-request ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure)
@@ -486,7 +512,7 @@
 	 (let ((ssl (eq? scheme 'https)))
 	    (let loop ((host host)
 		       (port port)
-		       (userinfo userinfo)
+		       (user userinfo)
 		       (path path))
 	       (let* ((sock (make-client-socket/timeout host port
 							timeout req ssl))
@@ -503,9 +529,9 @@
 			(when host (http-write-line rp "Host: " host))
 			(http-write-header rp header)
 			(cond
-			   (userinfo
+			   (user
 			    (http-write-line rp "Authorization: Basic "
-					     (base64-encode userinfo)))
+					     (base64-encode user)))
 			   (authorization
 			    (http-write-line rp "Authorization: "
 					     authorization)))
@@ -525,26 +551,13 @@
 				 ((204 304)
 				  ;; no message body
 				  (proc status-code cl #f))
-				 ((301 307)
+				 ((301 302 307)
 				  ;; redirection
-				  (let ((loc (assq location: header)))
-				     (if (not (pair? loc))
-					 (raise
-					  (instantiate::&io-malformed-url-error
-					     (proc 'http-sedn-request)
-					     (msg "No URL for redirection!")
-					     (obj ip)))
-					 (multiple-value-bind (_
-							       redirect-uinfo
-							       redirect-host
-							       redirect-port
-							       redirect-path)
-					    (url-parse (cdr loc))
-					    (loop redirect-host
-						  redirect-port
-						  redirect-uinfo
-						  redirect-path)))))
+				  (multiple-value-bind (rhost rport ru rpath)
+				     (redirect host port path user header ip)
+				     (loop rhost rport ru rpath)))
 				 (else
+				  ;; plain message
 				  (if (not (eq? te 'chunked))
 				      (proc status-code cl ip)
 				      (let ((ip2 (open-input-procedure

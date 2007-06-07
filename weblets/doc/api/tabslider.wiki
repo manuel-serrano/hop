@@ -41,14 +41,17 @@ using //tabsliders// must include in their header, the following statement:
 | :id          |  string            |  //random//  | element identifier.     |
 | :width       |  dimension         |              | the width.              |
 | :height      |  dimension         |              | the height.             |
-| :index       |  integer           |      0       | the selected tab.       |
-| history      |  a boolean         |  //#t//      | enables history.        |
+| :index       |  integer           |    ++0++     | the selected tab.       |
+| history      |  obj               |     _        | enables history.        |
 | body         |  ++<TSPAN>++ list  |              | the list of items.      |
 </arguments>
 
 The argument ++:history++ controls whether an history event is associated
 with selected a tab. When history is enabled, the //back button// of the
-browser restores previously selected tabs.
+browser restores previously selected tabs.  The history is disabled if 
+++:history++ is ++#f++. It is enabled if ++:history++ is ++#t++ or 
+if it is not ++#f++ and an ++:id++ value is provided.
+
 </markup>
 
 === ++<TSPAN>++ ===

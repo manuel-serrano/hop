@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Fri Feb  2 15:34:48 2007 (serrano)                */
+;*    Last change :  Thu Jun  7 07:40:40 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop configuration                                                */
@@ -28,7 +28,7 @@
 ;*    hop-builtin-weblets ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-builtin-weblets
-   '("wizard" "password" "hz" "doc" "info" "webfilter" "hopsh"))
+   '("wizard" "epassword" "hz" "doc" "info" "webfilter" "hopsh"))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-dir                                                          */
