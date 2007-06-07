@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Jun  7 10:33:40 2007 (serrano)                */
+;*    Last change :  Thu Jun  7 19:11:09 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -65,7 +65,7 @@
 			     (history #unspecified)
 			     (inline #t boolean)
 			     (iconopen #t)
-			     (iconclose #t)
+ 			     (iconclose #t)
 			     body)
    (let ((head ""))
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
@@ -236,6 +236,8 @@
 	 (display (if history "true," "false,") p)
 	 ;; the icons
 	 (let ((iconopen (cond
+			    ((not iconopen)
+			     #f)
 			    ((>fx level 0)
 			     (tree-icon iconopen inline "folder-open.png"))
 			    (inline
@@ -248,6 +250,8 @@
 					(make-file-name (hop-icons-directory)
 							"device.png")))))
 	       (iconclose (cond
+			     ((not iconclose)
+			      #f)
 			     ((>fx level 0)
 			      (tree-icon iconclose inline "folder-close.png"))
 			     (inline
@@ -348,7 +352,7 @@
       ((eq? icon #t)
        (display "true " p))
       ((eq? icon #f)
-       (display "false " p))
+       (display "-1 " p))
       ((fixnum? icon)
        (display icon p))
       ((string? icon)
