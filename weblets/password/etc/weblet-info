@@ -1,5 +1,0 @@
-((name "password")
- (author "M. Serrano")
- (version "1.0.0")
- (sdescr "A MD5 password encoder.")
- (about-service "about"))
