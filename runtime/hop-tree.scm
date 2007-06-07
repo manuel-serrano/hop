@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Jun  7 06:46:25 2007 (serrano)                */
+;*    Last change :  Thu Jun  7 10:33:40 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -240,7 +240,7 @@
 			     (tree-icon iconopen inline "folder-open.png"))
 			    (inline
 			     (if (string? iconopen)
-				 (img-base64-inline iconopen)
+				 (img-base64-encode iconopen)
 				 0))
 			    (else
 			     (tree-icon iconopen
@@ -252,7 +252,7 @@
 			      (tree-icon iconclose inline "folder-close.png"))
 			     (inline
 			      (if (string? iconclose)
-				  (img-base64-inline iconclose)
+				  (img-base64-encode iconclose)
 				  0))
 			     (else
 			      (tree-icon iconclose
@@ -347,6 +347,8 @@
    (cond
       ((eq? icon #t)
        (display "true " p))
+      ((eq? icon #f)
+       (display "false " p))
       ((fixnum? icon)
        (display icon p))
       ((string? icon)

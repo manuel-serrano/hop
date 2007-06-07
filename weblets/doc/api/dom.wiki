@@ -79,6 +79,8 @@ vectors.
   (node-style-set! node prop value)
   (node-absolute-x node)
   (node-absolute-y node)
+  (iframe-scroll-height iframe)
+  (innerHTML-set! node-or-id html)
 
 
 == Examples ==
@@ -581,6 +583,26 @@ Returns the absolute vertical position of an HTML element.
 </procedure>
 
 </client>
+
+=== ++(iframe-scroll-height iframe)++ ==
+<procedure> iframe-scroll-height 
+<arguments>
+^  arguments       ^   type           ^  short description                      ^
+| iframe           |  element         | an element.                             |
+</arguments>
+
+Returns the actual height (the //scroll height//) of an ++<IFRAME>++.
+This can be used to automatically adjust the size of an ++<IFRAME>++ to 
+fit its content height. Example:
+
+  (<IFRAME> 
+     :src (format "data:text/html;base64,~a" (base64-encode body))
+     :onload ~(let ((e this)) (set! e.height (iframe-scroll-height e)))
+     :width "100%" :height "400px"
+     :style "border: 0")
+
+
+</procedure>
 
 === ++(innerHTML-set! nid html)++ ===
 <procedure>innerHTML-set!

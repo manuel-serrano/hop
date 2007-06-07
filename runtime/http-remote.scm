@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun Jun  3 05:47:59 2007 (serrano)                */
+;*    Last change :  Thu Jun  7 15:00:47 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -83,41 +83,45 @@
 			     " " host ":" port "\n"))
 	       (when (>fx remote-timeout 0)
 		  (output-timeout-set! rp remote-timeout))
+	       ;; this unwind-protect is just here for debugging
+	       ;; when the keep-alive remote connection is complete,
+	       ;; remove the unwind-protected block.
 	       (unwind-protect
-	       (with-handler
-		  (lambda (e)
-		     (connection-close! remote)
-		     (raise e))
-		  ;; the header and the request
-		  (with-trace 4 'http-response-header
-		     (trace-item "start-line: " (response-remote-start-line r))
-		     (http-write-line rp (response-remote-start-line r))
-		     ;; if a char is ready and is eof, it means that the
-		     ;; connection is closed
-		     (if (connection-down? remote)
-			 (begin
-			    (connection-close! remote)
-			    (loop))
-			 (begin
-			    (http-write-header
-			     rp (http-filter-proxy-header header))
-			    (when (hop-enable-remote-keep-alive)
-			       (let ((h (if (hop-proxy-host)
-					    "proxy-connection: keep-alive"
-					    "connection: keep-alive")))
-				  (http-write-line rp h)))
-			    (http-write-line rp)
-			    ;; the content of the request
-			    (when (>elong content-length #e0)
-			       (trace-item "content-length=" content-length)
-			       (send-chars sp rp content-length))
-			    (flush-output-port rp)
-			    (remote-body r socket remote)))))
-	       (unless (or (connection-intable? remote)
-			   (connection-closed? remote))
-		  (tprint "**** ERROR, connection not closed nor in table")
-		  (read)))
-	       )))))
+		  (with-handler
+		     (lambda (e)
+			(connection-close! remote)
+			(raise e))
+		     ;; the header and the request
+		     (with-trace 4 'http-response-header
+			(trace-item "start-line: " (response-remote-start-line r))
+			(http-write-line rp (response-remote-start-line r))
+			;; if a char is ready and is eof, it means that the
+			;; connection is closed
+			(if (connection-down? remote)
+			    (begin
+			       (connection-close! remote)
+			       (loop))
+			    (begin
+			       (http-write-header
+				rp (http-filter-proxy-header header))
+			       (when (hop-enable-remote-keep-alive)
+				  (let ((h (if (hop-proxy-host)
+					       "proxy-connection: keep-alive"
+					       "connection: keep-alive")))
+				     (http-write-line rp h)))
+			       (http-write-line rp)
+			       ;; the content of the request
+			       (when (>elong content-length #e0)
+				  (trace-item "content-length=" content-length)
+				  (send-chars sp rp content-length))
+			       (flush-output-port rp)
+			       (remote-body r socket remote)))))
+		  ;; debug
+		  (unless (or (connection-intable? remote)
+			      (connection-closed? remote))
+		     (error 'http-response
+			    "(http-response.scm) connection not closed nor in table"
+			    remote))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-body ...                                                  */
@@ -265,7 +269,6 @@
 			    (when (pair? nrow)
 			       (hashtable-put! *connection-table* host nrow)))))
 		   orows nrows)
-	 (tprint "*** PURGE: " *connection-number* " -> " num)
 	 (trace-item " table-length: " *connection-number* " -> " num)
 	 (set! *connection-number* num))))
    
@@ -392,16 +395,16 @@
 		 (set! intable? #t))
 		(else
 		 (connection-close-sans-lock! connection)))))))
-   (tprint "+++ keep-alive "
-	   " pending=" (-fx *connection-open*
-			    (+fx *connection-close* *connection-number*))
-	   " live=" (-fx *connection-open* *connection-close*)
-	   " open=" *connection-open*
-	   " close=" *connection-close*
-	   " intable=" *connection-number*)
-   (hashtable-for-each *connection-table*
-		       (lambda (k l)
-			  (tprint "   host=" k " l=" (length l))))
+;*    (tprint "+++ keep-alive "                                        */
+;* 	   " pending=" (-fx *connection-open*                          */
+;* 			    (+fx *connection-close* *connection-number*)) */
+;* 	   " live=" (-fx *connection-open* *connection-close*)         */
+;* 	   " open=" *connection-open*                                  */
+;* 	   " close=" *connection-close*                                */
+;* 	   " intable=" *connection-number*)                            */
+;*    (hashtable-for-each *connection-table*                           */
+;* 		       (lambda (k l)                                   */
+;* 			  (tprint "   host=" k " l=" (length l))))     */
    (mutex-unlock! *remote-lock*))
 
 ;*---------------------------------------------------------------------*/

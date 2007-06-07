@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Jun  3 08:51:26 2007 (serrano)                */
+;*    Last change :  Thu Jun  7 10:13:03 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -109,7 +109,7 @@
 	    (tilde-make-thunk::xml-tilde ::xml-tilde)
 	    (xml-write-tilde-as-expression ::xml-tilde ::output-port)
 
-	    (img-base64-inline::bstring ::bstring)
+	    (img-base64-encode::bstring ::bstring)
 	    
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -849,9 +849,9 @@
        (error '<DELAY> "Illegal delay's thunk" (car body))))
 
 ;*---------------------------------------------------------------------*/
-;*    img-base64-inline ...                                            */
+;*    img-base64-encode ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (img-base64-inline src)
+(define (img-base64-encode src)
    (if (file-exists? src)
        (let ((p (open-input-file src)))
 	  (if (input-port? p)
@@ -874,7 +874,7 @@
 			    body)
    (if (not (string? src))
        (error '<IMG> "Illegal image src" src)
-       (let ((src (if inline (img-base64-inline src) src)))
+       (let ((src (if inline (img-base64-encode src) src)))
 	  (instantiate::xml-empty-element
 	     (markup 'img)
 	     (id (xml-make-id id 'img))
