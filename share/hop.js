@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Jun  6 13:31:34 2007 (serrano)                */
+/*    Last change :  Fri Jun  8 05:50:15 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -1052,13 +1052,18 @@ function hop_state_history_to_location( state ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_hash_history_regexp ...                                      */
+/*---------------------------------------------------------------------*/
+var hop_hash_history_regexp = /#?([^=]+)=([^:]+):([^,]+)+/;
+
+/*---------------------------------------------------------------------*/
 /*    hop_location_to_state_history ...                                */
 /*---------------------------------------------------------------------*/
 function hop_location_to_state_history( hash ) {
    var state = {};
    var split = hash.split( "," );
    for( var i = 0; i < split.length; i++ ) {
-      var el = split[ i ].match( /#?([^=]+)=([^:]+):([^,]+)+/ );
+      var el = split[ i ].match( hop_hash_history_regexp );
       if( el ) {
 	 var id = el[ 1 ];
 	 var op = el[ 2 ];
@@ -1229,6 +1234,20 @@ function hop_state_history_update( olds, news ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_hash_history_check_regexp ...                                */
+/*---------------------------------------------------------------------*/
+var hop_hash_history_check_regexp = /^#(?:[^=]+=[^:]+:[^,]+,?)+$/;
+
+/*---------------------------------------------------------------------*/
+/*    hop_hash_historyp ...                                            */
+/*    -------------------------------------------------------------    */
+/*    Is a hash value a legal Hop history?                             */
+/*---------------------------------------------------------------------*/
+function hop_hash_historyp( hash ) {
+   return hop_hash_history_check_regexp( hash );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_eval_history_state ...                                       */
 /*    -------------------------------------------------------------    */
 /*    This function is invoked when the location has changed.          */
@@ -1239,12 +1258,14 @@ function hop_eval_history_state( location ) {
    if( hash.length == 0 ) {
       hop_state_history_reset();
    } else {
-      var new_state = hop_location_to_state_history( hash );
-      var old_state = hop_current_state_history;
+      if( hop_hash_historyp( hash ) ) {
+	 var new_state = hop_location_to_state_history( hash );
+	 var old_state = hop_current_state_history;
 
-      hop_state_history_update( old_state, new_state );
+	 hop_state_history_update( old_state, new_state );
       
-      hop_current_state_history = new_state;
+	 hop_current_state_history = new_state;
+      }
    }
 }
 

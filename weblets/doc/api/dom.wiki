@@ -585,7 +585,7 @@ Returns the absolute vertical position of an HTML element.
 </client>
 
 === ++(iframe-scroll-height iframe)++ ==
-<procedure> iframe-scroll-height 
+<procedure> iframe-scroll-height
 <arguments>
 ^  arguments       ^   type           ^  short description                      ^
 | iframe           |  element         | an element.                             |
