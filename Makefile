@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Jun 11 11:42:22 2007 (serrano)                */
+#*    Last change :  Mon Jun 11 11:51:47 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -151,7 +151,7 @@ distrib:
 	if [ -d $(HOPTMPDIR)/hop ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop exists!"; \
           exit 1; \
-        elif [ -d $(HOPTMPDIR)/hop$(HOPRELEASE) ]; then \
+        elif [ -d $(HOPTMPDIR)/hop-$(HOPRELEASE) ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop-$(HOPRELEASE) exists!"; \
           exit 1; \
         else \
