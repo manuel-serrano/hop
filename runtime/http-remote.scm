@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Jun  7 15:00:47 2007 (serrano)                */
+;*    Last change :  Mon Jun 11 11:46:36 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -310,7 +310,7 @@
 		   (when (connection? old)
 		      (trace-item "old-connection=yes")
 		      (trace-item "old-connection locked="
-				  (connection-locked old))
+				  (connection-locked? old))
 		      (trace-item "old-connection port="
 				  (connection-port old)))
 		   (if (connection? old)
