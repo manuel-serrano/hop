@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Wed Jun  6 08:22:11 2007 (serrano)                */
+/*    Last change :  Sat Jun  9 07:46:43 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -45,15 +45,29 @@ function hop_vpaned_fraction_set( paned, fraction ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_hpaned_dimension_set ...                                     */
+/*---------------------------------------------------------------------*/
+function hop_hpaned_dimension_set( paned, val1, height ) {
+   var cursor_height = 10;
+
+   node_style_set( paned.pan1, "height", val1 + "px" );
+   node_style_set( paned.pan2, "height", (height-val1-cursor_height) + "px" );
+
+   if( paned.onresize != undefined ) {
+      paned.onresize();
+   }
+
+   return;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_hpaned_mousemove ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_hpaned_mousemove( e, paned ) {
    var val1 = hop_event_mouse_y( e ) - hop_element_y( paned );
    var height = parseInt( node_style_get( paned, "height" ) );
-   var cursor_height = 10;
 
-   node_style_set( paned.pan1, "height", val1 + "px" );
-   node_style_set( paned.pan2, "height", (height - val1 - cursor_height) + "px" );
+   return hop_hpaned_dimension_set( paned, val1, height );
 }
 
 /*---------------------------------------------------------------------*/
@@ -73,10 +87,8 @@ function hop_hpaned_fraction_set( paned, fraction ) {
    } else {
       var height = parseInt( node_style_get( paned, "height" ) );
       var val1 = height * (frac / 100);
-      var cursor_height = 10;
 
-      node_style_set( paned.pan1, "height", val1 + "px" );
-      node_style_set( paned.pan2, "height", (height - val1 - cursor_height) + "px" );
+      hop_hpaned_dimension_set( paned, val1, height );
       return;
    }
 }

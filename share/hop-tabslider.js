@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Tue May 22 10:01:09 2007 (serrano)                */
+/*    Last change :  Sat Jun  9 06:30:43 2007 (serrano)                */
 /*    Copyright   :  2006-07 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
@@ -94,5 +94,7 @@ function hop_tabslider_init( id, ind, history ) {
 	} else {
 	   hop_tabslider_select_inner( ts, ts.childNodes[ 2 * ind ] );
 	}
+
+	return true;
    } );
 }

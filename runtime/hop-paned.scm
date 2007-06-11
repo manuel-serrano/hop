@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jun  8 07:50:35 2007 (serrano)                */
+;*    Last change :  Fri Jun  8 08:04:10 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -108,7 +108,6 @@
 	 (if (string? fraction)
 	     (fprint p "\"" fraction "\"")
 	     (display fraction p))
-	 (tprint "onresize=" onresize)
 	 (fprint p 
 		 ", "
 		 "document.getElementById( '" (html-pan-id (car body)) "' ),"

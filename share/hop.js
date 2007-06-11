@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jun  8 05:50:15 2007 (serrano)                */
+/*    Last change :  Sat Jun  9 18:21:12 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -173,23 +173,27 @@ function hop_node_eval( node, text ) {
    var res;
    var scripts = node.getElementsByTagName( "script" );
 
-   if( scripts.length > 0 ) {
-      for ( var j = 0; j < scripts.length; j++ ) {
-	 if( scripts[ j ].childNodes.length > 0 ) {
-	    res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+   try {
+      if( scripts.length > 0 ) {
+	 for ( var j = 0; j < scripts.length; j++ ) {
+	    if( scripts[ j ].childNodes.length > 0 ) {
+	       res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+	    }
+	 }
+      } else {
+	 var script = text.match( /<script[^>]*>/i );
+	 if( script != null ) {
+	    /* I don't understand why yet, IE 7 does not include */
+	    /* SCRIPT nodes in the resulting node!               */
+	    var start = script.index + script[ 0 ].length;
+	    var end = text.search( /<\/script>/i );
+	    if( (end != null) && (end > start) ) {
+	       res = eval( text.substr( start, end - start ) );
+	    }
 	 }
       }
-   } else {
-      var script = text.match( /<script[^>]*>/i );
-      if( script != null ) {
-	 /* I don't why yet, IE 7 does not include SCRIPT nodes */
-	 /* in the resulting node!                              */
-	 var start = script.index + script[ 0 ].length;
-	 var end = text.search( /<\/script>/i );
-	 if( (end != null) && (end > start) ) {
-	    res = eval( text.substr( start, end - start ) );
-	 }
-      }
+   } catch( e ) {
+      alert( e );
    }
 
    return res;
@@ -1030,6 +1034,7 @@ function hop_state_history_register_handler( key, reset, proc ) {
 function _hop_state_entry( op, val ) {
    this.op = op;
    this.val = val;
+   this.close = false;
 }
 
 /*---------------------------------------------------------------------*/
@@ -1185,28 +1190,38 @@ function hop_state_history_reset() {
 /*    Compare the two states, reset the entries of the old ones        */
 /*    that are no longer present in the new one. Execute the           */
 /*    entries that are novel in the new state.                         */
+/*    -------------------------------------------------------------    */
+/*    This function returns the number of entries that have not        */
+/*    been correctly updated.                                          */
 /*---------------------------------------------------------------------*/
 function hop_state_history_update( olds, news ) {
+   var res = 0;
+   
    if( olds == undefined ) {
       /* set the new values */
       for( p in news ) {
-	 if( news[ p ] instanceof _hop_state_entry ) {
-	    var op = news[ p ].op;
-	    var handler =  hop_state_history_handler[ op ];
+	 var state = news[ p ];
+	 if( state instanceof _hop_state_entry ) {
+	    var op = state.op;
+	    var handler = hop_state_history_handler[ op ];
 	    
-	    if( handler != undefined ) {
-	       handler.proc( p, news[ p ].val );
+	    if( (handler != undefined) && !state.close ) {
+	       if( handler.proc( p, state.val ) ) {
+		  state.close = true;
+	       } else {
+		  res++;
+	       }
 	    }
 	 }
       }
    } else {
-      /* reset all the entries that used to be in old */
-      /* state that are not present in the new one    */
+      /* reset all the entries that used to be in old    */
+      /* state that are no longer present in the new one */
       for( p in olds ) {
 	 if( (olds[ p ] instanceof _hop_state_entry) &&
 	     !(news[ p ] instanceof _hop_state_entry) ) {
 	    var op = olds[ p ].op;
-	    var handler =  hop_state_history_handler[ op ];
+	    var handler = hop_state_history_handler[ op ];
 
 	    if( handler != undefined ) {
 	       handler.proc( p, handler.reset );
@@ -1217,20 +1232,27 @@ function hop_state_history_update( olds, news ) {
       /* update all the entries that are not */
       /* present and equal in old state      */
       for( p in news ) {
-	 if( news[ p ] instanceof _hop_state_entry ) {
+	 var state = news[ p ];
+	 if( state instanceof _hop_state_entry ) {
 	    if( !(olds[ p ] instanceof _hop_state_entry) ||
-		(news[ p ].op != olds[ p ].op) ||
-		(news[ p ].val != olds[ p ].val) ) {
-	       var op = news[ p ].op;
+		(state.op != olds[ p ].op) ||
+		(state.val != olds[ p ].val) ) {
+	       var op = state.op;
 	       var handler =  hop_state_history_handler[ op ];
 	       
-	       if( handler != undefined ) {
-		  handler.proc( p, news[ p ].val );
+	       if( (handler != undefined) && !state.close ) {
+		  if( handler.proc( p, state.val ) ) {
+		     state.close = true;
+		  } else {
+		     res++;
+		  }
 	       }
 	    }
 	 }
       }
    }
+
+   return res;
 }
 
 /*---------------------------------------------------------------------*/
@@ -1248,6 +1270,40 @@ function hop_hash_historyp( hash ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_eval_history_counter ...                                     */
+/*---------------------------------------------------------------------*/
+var hop_eval_history_interval = false;
+
+/*---------------------------------------------------------------------*/
+/*    function                                                         */
+/*    hop_retry_eval_history_state ...                                 */
+/*---------------------------------------------------------------------*/
+function hop_retry_eval_history_state( count, old_state, new_state ) {
+   var init = false;
+   var fun = function() {
+      if( !init ) {
+	 /* skip the first call, we are not ready yet */
+	 init = true;
+	 return;
+      }
+      var c = hop_state_history_update( old_state, new_state );
+
+      /* the interval is cancelled if any of the following holds: */
+      /*   * c == 0: the update complete                          */
+      /*   * c == count: no progress has been made                */
+      /*   * hop_eval_history_interval.invalid == false: the      */
+      /*     has changed again.                                   */
+      if( (c == 0) || (c == count) || hop_eval_history_interval.invalid ) {
+	 /* no progress as been made, or the update */
+	 /* complete, we cancel the interval        */
+	 clearInterval( hop_eval_history_interval );
+      }
+   }
+   hop_eval_history_interval = setInterval( fun, 100 );
+   hop_eval_history_interval.invalid = false;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_eval_history_state ...                                       */
 /*    -------------------------------------------------------------    */
 /*    This function is invoked when the location has changed.          */
@@ -1255,16 +1311,24 @@ function hop_hash_historyp( hash ) {
 function hop_eval_history_state( location ) {
    var hash = location.hash;
 
+   if( hop_eval_history_interval )
+      hop_eval_history_interval.invalid = true;
+   
    if( hash.length == 0 ) {
       hop_state_history_reset();
    } else {
       if( hop_hash_historyp( hash ) ) {
 	 var new_state = hop_location_to_state_history( hash );
 	 var old_state = hop_current_state_history;
+	 var count = hop_state_history_update( old_state, new_state );
 
-	 hop_state_history_update( old_state, new_state );
-      
-	 hop_current_state_history = new_state;
+	 if( count == 0 ) {
+	    /* the update is complete, we state the new state and exit */
+	    hop_current_state_history = new_state;
+	 } else {
+	    /* periodically retry to update */
+	    hop_retry_eval_history_state( count, old_state, new_state );
+	 }
       }
    }
 }

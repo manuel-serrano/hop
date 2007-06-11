@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Sun May 27 07:40:35 2007 (serrano)                */
+/*    Last change :  Sat Jun  9 06:30:31 2007 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implementation                                     */
 /*=====================================================================*/
@@ -80,5 +80,9 @@ hop_state_history_register_handler(
 	} else {
 	   hop_fold_item_open( el, imgo, imgc, false );
 	}
+
+	return true;
+     } else {
+	return false;
      }
 } );

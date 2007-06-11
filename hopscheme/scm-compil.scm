@@ -1,11 +1,13 @@
 (module scm-compil
+   
+   (option (set! *dlopen-init* "bgl_dload_init_s_hopscheme"))
+   
    (library hop
 	    scheme2js)
+   
    (import hopscheme-config
-	   hopscheme_aliases)
-   (export (<HOP-SCHEME-HEAD> . obj))
-   (eval (export-all)))
-
+	   hopscheme_aliases))
+   
 (define *sscript-mutex* (make-mutex 'sscript))
 
 (define sscript-cache
@@ -34,70 +36,6 @@
 
 
 ;*---------------------------------------------------------------------*/
-(define (hop-sscript file dir)
-   (if (= (string-length file) 0)
-       (error '<HOP-SCHEME-HEAD> "Illegal sscript" file)
-       (with-lock *sscript-mutex*
-	  (lambda ()
-	     (let* ((path (if (char=? (string-ref file 0) (file-separator))
-			      file
-			      (hop-file dir file)))
-		    (cached-name (string-append path ".compiled.js"))
-		    (cached (cache-get sscript-cache cached-name)))
-		(if cached
-		    cached
-		    (let* ((compiled (compile-scheme-file path))
-			   (cached (cache-put! sscript-cache cached-name compiled)))
-		       cached)))))))
-
-;*---------------------------------------------------------------------*/
-;; deprecated now.
-(define (<HOP-SCHEME-HEAD> . obj)
-   (let* ((req (current-request))
-	  (dir (if (http-request? req)
-		   (list (dirname (http-request-path req)))
-		   '()))
-	  (mode #f))
-      (let loop ((a obj)
-		 (filtered '()))
-	 (cond
-	    ((null? a)
-	     (apply <HEAD> (reverse! filtered)))
-	    ((pair? (car a))
-	     (loop (append (car a) (cdr a))
-		   filtered))
-	    ((null? (car a))
-	     (loop (cdr a)
-		   filtered))
-	    ((keyword? (car a))
-	     (if (null? (cdr a))
-		 (error '<HOP-SCHEME-HEAD> (format "Missing ~a value" (car a)) a)
-		 (case (car a)
-		    ((:sscript)
-		     (set! mode :sscript)
-		     (loop (cddr a)
-			   (cons* (hop-sscript (cadr a) dir)
-				 :jscript
-				 filtered)))
-		    (else
-		     (set! mode #f)
-		     (loop (cddr a)
-			   (cons* (cadr a)
-				  (car a)
-				  filtered))))))
-	    ((string? (car a))
-	     (case mode
-		((:sscript)
-		 (loop (cdr a)
-		       (cons* (hop-sscript (cadr a) dir)
-			     :jscript
-			     filtered)))
-		(else
-		 (loop (cdr a)
-		       (cons (car a) filtered)))))
-	    (else
-	     (error '<HOP-SCHEME-HEAD> (format "Illegal ~a argument" (car a)) a))))))
-
 (define (sscript-response req)
    (with-access::http-request req (path method header)
       (with-lock *sscript-mutex*
