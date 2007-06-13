@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Jun  7 10:13:03 2007 (serrano)                */
+;*    Last change :  Tue Jun 12 09:37:47 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -100,6 +100,8 @@
 	    (generic xml-write-initializer ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port)
 
+	    (xml->string ::obj ::symbol ::xml-backend)
+	    
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
 
@@ -690,6 +692,14 @@
    (display "='" p)
    (display (hop-service-path attr) p)
    (display "'" p))
+
+;*---------------------------------------------------------------------*/
+;*    xml->string ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (xml->string obj encoding backend)
+   (with-output-to-string
+      (lambda ()
+	 (xml-write obj (current-output-port) encoding backend))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->html ...                                                 */

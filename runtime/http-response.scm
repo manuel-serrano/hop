@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Jun  5 14:10:25 2007 (serrano)                */
+;*    Last change :  Tue Jun 12 09:32:39 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -421,8 +421,9 @@
       ((xml? (car p))
        #t)
       ((pair? (car p))
-       (or (response-is-xml? (car p))
-	   (response-is-xml? (cdr p))))
+       (and (list? p)
+	    (or (response-is-xml? (car p))
+		(response-is-xml? (cdr p)))))
       (else
        #f)))
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Tue Mar 27 13:29:36 2007 (serrano)                */
+/*    Last change :  Tue Jun 12 17:58:37 2007 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -446,5 +446,3 @@ function hop_window_open( url, title, klass, width, height, x, y ) {
 
    return res;
 }
-   
-

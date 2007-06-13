@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Feb 16 07:51:32 2007 (serrano)                */
+;*    Last change :  Tue Jun 12 06:36:58 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -523,7 +523,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
-						 "icons/erro2.png"
+						 "icons/error2.png"
 						 "icons/error.png")))
 			     (<ETD>
 				(<TABLE> :width "100%"
