@@ -81,6 +81,7 @@ vectors.
   (node-absolute-y node)
   (iframe-scroll-height iframe)
   (innerHTML-set! node-or-id html)
+  (outerHTML-set! node-or-id html)
 
 
 == Examples ==
@@ -614,6 +615,19 @@ fit its content height. Example:
 
 Parses the ++html++ tree and replaces the body of the element ++nid++ 
 (or the element whose identifier is ++nid++) with that new value.
+</procedure>
+
+=== ++(outerHTML-set! nid html)++ ===
+<procedure>outerHTML-set!
+<arguments>
+^  arguments   ^   type              ^  short description                    ^
+| nid          |  element or string  | an element or an element identifier.  |
+| html         |  string             | a string denoting a HTML tree.        |
+</arguments>
+
+Parses the ++html++ tree and replaces the body of the **parent** of 
+element ++nid++  (or parent of the element whose identifier is ++nid++) with 
+that new value.
 </procedure>
 
 == See also ==

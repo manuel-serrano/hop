@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Mon Jun 11 07:32:32 2007 (serrano)                */
+;*    Last change :  Wed Jun 13 17:20:32 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -85,6 +85,7 @@
      (node-absolute-x hop_element_x)
      (node-absolute-y hop_element_y)
      (innerHTML-set! hop_innerHTML_set)
+     (outerHTML-set! hop_outerHTML_set)
      (<A> dom_create_a)
      (<ABBR> dom_create_abbr)
      (<ACRONYM> dom_create_acronym)

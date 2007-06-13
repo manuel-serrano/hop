@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Jun 13 09:58:05 2007 (serrano)                */
+/*    Last change :  Wed Jun 13 17:47:02 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -334,7 +334,7 @@ function hop_anim_128_128( title ) {
    node_style_set( vis, "background", "#eeeeee" );
    node_style_set( vis, "border-color", "black" );
    node_style_set( vis, "border-style", "outset" );
-   node_style_set( vis, "-moz-border-radius", "0.5em" );
+   node_style_set( vis, "-moz-border-radius", "0.3em" );
    node_style_set( vis, "border-width", "1px" );
    node_style_set( vis, "padding", "2px" );
    node_style_set( vis, "-moz-opacity", "0.85" );
@@ -587,6 +587,25 @@ function hop_innerHTML_set( nid, html ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_outerHTML_set ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_outerHTML_set( nid, html ) {
+   if( (nid instanceof String) || (typeof nid == "string") ) {
+      var el = document.getElementById( nid );
+      var p;
+      
+      if( el == undefined ) {
+	 alert("*** ERROR:innerHTML-set! -- cannot find element \""
+	       + nid + "\"");
+      }
+      
+      el.parentNode.innerHTML = html;
+   } else {
+      nid.parentNode.innerHTML = html;
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_event_hander_set ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_event_handler_set( svc, evt, success, failure ) {
@@ -682,23 +701,24 @@ function hop_cookie_set_value( name, val, path, domain, expires ) {
 /*---------------------------------------------------------------------*/
 var hop_request_env = [];
 var hop_request_env_string = "";
+var hop_request_env_invalid = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_request_env ...                                    */
 /*---------------------------------------------------------------------*/
 function hop_serialize_request_env() {
-   if( (hop_request_env_string == null) ||
-       (hop_request_env_string.length == 0) ) {
+   if( hop_request_env_invalid ) {
       var tmp = null;
 
       for( var p in hop_request_env ) {
 	 if( typeof hop_request_env[ p ] != "function" ) {
-	    tmp = sc_cons( sc_cons( p, hop_request_env[ p ] ) );
+	    tmp = sc_cons( sc_cons( p, hop_request_env[ p ] ), tmp );
 	 }
       }
-      
+
       hop_request_env_string = hop_serialize( tmp );
    }
+      
    return hop_request_env_string;
 }
 
@@ -711,8 +731,8 @@ function hop_serialize_request_env() {
 /*       this function is not bound in the Hop syntax (hop-alias.scm). */
 /*---------------------------------------------------------------------*/
 function hop_request_reset() {
-   hop_request_env = [];
    hop_request_env_string = "";
+   hop_request_env_set = false;
    return null;
 }
 
@@ -720,7 +740,7 @@ function hop_request_reset() {
 /*    hop_request_set ...                                              */
 /*---------------------------------------------------------------------*/
 function hop_request_set( key, val ) {
-   hop_request_env_string = null;
+   hop_request_env_invalid = true;
    hop_request_env[ key ] = val;
    return val;
 }
