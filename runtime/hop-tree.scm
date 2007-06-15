@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Jun  7 19:11:09 2007 (serrano)                */
+;*    Last change :  Fri Jun 15 07:53:11 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -140,16 +140,16 @@
       (display "</div>" p)))
 
 ;*---------------------------------------------------------------------*/
-;*    obj->js-thunk ...                                                */
+;*    obj->js-tree-thunk ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (obj->js-thunk obj)
+(define (obj->js-tree-thunk obj)
    (cond
       ((xml-tilde? obj)
-       (tilde-make-thunk obj))
+       (tilde->string (tilde-make-thunk obj)))
       ((string? obj)
-       (format "function() { ~a }" obj))
+       (format "function( val ) { ~a }" obj))
       (else
-       "function() { return false; }")))
+       "false")))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-write-tree ...                                              */
@@ -221,9 +221,9 @@
 	 ;; multi-selection
 	 (display (if multiselect "true, " "false, ") p)
 	 ;; onselect/onunselect event handlers
-	 (display (obj->js-thunk onselect) p)
+	 (display (obj->js-tree-thunk onselect) p)
 	 (display ", " p)
-	 (display (obj->js-thunk onunselect) p)
+	 (display (obj->js-tree-thunk onunselect) p)
 	 (display ", " p)
 	 ;; the value associated with the tree
 	 (if (string? value)

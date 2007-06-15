@@ -85,6 +85,12 @@ browser restores previously selected tabs. The history is disabled if
 ++:history++ is ++#f++. It is enabled if ++:history++ is ++#t++ or 
 if it is not ++#f++ and an ++:id++ value is provided.
 
+
+The event handlers ++:onselect++ and ++:onunselect++ are expression that
+are evaluated the a tree node is selected (respec. unselected). The ++this++
+object points to the tree. The ++value++ field of that object denotes
+the currently selected node value.
+
 </markup>
 
 === ++<TRHEAD>++ ===
@@ -191,6 +197,26 @@ Resets the ++tree++ selection.
 </arguments>
 
 Returns representing the selection.
+</procedure>
+
+=== ++(tree-select-next! tree)++ ===
+<procedure> tree-select-next!
+<arguments>
+^  arguments  ^   type   ^  short description  ^
+| tree        |   tree   | the tree.        |
+</arguments>
+
+Select the next element of the tree.
+</procedure>
+
+=== ++(tree-select-previous! tree)++ ===
+<procedure> tree-select-previous!
+<arguments>
+^  arguments  ^   type   ^  short description  ^
+| tree        |   tree   | the tree.        |
+</arguments>
+
+Select the previous element of the tree.
 </procedure>
 
 

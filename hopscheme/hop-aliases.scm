@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Wed Jun 13 17:20:32 2007 (serrano)                */
+;*    Last change :  Fri Jun 15 12:02:55 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -52,6 +52,8 @@
      (tree-toggle hop_tree_toggle)
      (tree-reset! hop_tree_reset)
      (tree-selection hop_tree_selection)
+     (tree-select-next! hop_tree_row_select_next)
+     (tree-select-previous! hop_tree_row_select_previous)
      (hop-fx-repeat hop_fx_repeat)
      (hop-fx-fade-background hop_fx_fade_background)
      (dom-has-attributes? dom_has_attributes)
