@@ -3,11 +3,18 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jun 15 05:13:29 2007 (serrano)                */
+/*    Last change :  Sat Jun 16 08:13:02 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    hop_anim_latency ...                                             */
+/*    -------------------------------------------------------------    */
+/*    The latency before starting a with_hop animation.                */
+/*---------------------------------------------------------------------*/
+var hop_anim_latency = 400;
 
 /*---------------------------------------------------------------------*/
 /*    hop_busy_anim ...                                                */
@@ -357,33 +364,38 @@ function hop_anim_128_128( title ) {
 /*    hop_anim_vis ...                                                 */
 /*---------------------------------------------------------------------*/
 var hop_anim_vis = false;
+var hop_anim_service = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_anim ...                                                     */
 /*---------------------------------------------------------------------*/
-function hop_anim( title ) {
-   if( hop_anim_vis ) {
-      hop_anim_vis.title = title;
-      node_style_set( hop_anim_vis, "visibility", "visible" );
-      return hop_anim_vis;
-   } else {
-      hop_anim_vis = hop_anim_128_128( title );
-      document.body.appendChild( hop_anim_vis );
-      return hop_anim_vis;
+function hop_anim( service ) {
+   hop_clear_timeout( "hop_anim_timeout" );
+   if( hop_anim_service == service ) {
+      if( hop_anim_vis ) {
+	 hop_anim_vis.title = service;
+	 node_style_set( hop_anim_vis, "visibility", "visible" );
+	 return hop_anim_vis;
+      } else {
+	 hop_anim_vis = hop_anim_128_128( service );
+	 document.body.appendChild( hop_anim_vis );
+	 return hop_anim_vis;
+      }
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_inner ...                                                    */
 /*---------------------------------------------------------------------*/
-function hop_inner( http, success, failure, vis ) {
+function hop_inner( http, success, failure, service ) {
    http.onreadystatechange = function() {
       if( http.readyState == 4 ) {
 	 var status;
 
-	 if( vis != false ) {
-	    node_style_set( vis, "visibility", "hidden" );
+	 if( hop_anim_vis != false ) {
+	    node_style_set( hop_anim_vis, "visibility", "hidden" );
 	 }
+	 hop_anim_service = false;
 
 	 try {
 	    status = http.status;
@@ -442,6 +454,12 @@ function hop_inner( http, success, failure, vis ) {
 
    try {
       http.send( null );
+      hop_anim_service = service;
+      hop_clear_timeout( "hop_anim_timeout" );
+      hop_timeout( "hop_anim_timeout",
+		   hop_anim_latency,
+		   function() { hop_anim( service ); },
+		   false );
    } catch( e ) {
       alert( "*** HOP send error: " + e );
    }
@@ -475,7 +493,7 @@ function hop( service, success, failure, sync ) {
    http.setRequestHeader( 'Connection', 'close' );
    http.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
 
-   return hop_inner( http, success, failure, hop_anim( service ) );
+   return hop_inner( http, success, failure, service );
 }
 
 /*---------------------------------------------------------------------*/
