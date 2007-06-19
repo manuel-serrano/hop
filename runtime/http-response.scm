@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Jun 12 09:32:39 2007 (serrano)                */
+;*    Last change :  Mon Jun 18 13:34:46 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -117,6 +117,10 @@
 	    (http-write-line p "hop-json: true")
 	    (http-write-line p)
 	    ;; the body
+	    (with-output-to-file "/tmp/BAR"
+	       (lambda ()
+		  (write (hop->json value))
+		  (newline)))
 	    (with-trace 4 'http-response-js
 	       (when bodyp (display (hop->json value) p)))
 	    (flush-output-port p)

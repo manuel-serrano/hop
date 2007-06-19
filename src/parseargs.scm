@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May 23 15:13:08 2007 (serrano)                */
+;*    Last change :  Tue Jun 19 11:14:38 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -55,7 +55,7 @@
          (("--version" (help "Print the version and exit"))
           (print (hop-name) (hop-version))
           (exit 0))
-
+	 
 	 ;; RC
 	 (section "RC & Autoload")
 	 (("-q" (help "Do not load an init file"))
@@ -77,7 +77,7 @@
 	  (hop-autoload-directories-set! (list dir)))
 	 (("--mime-type" ?file (help "Load aternate user mime-type file"))
 	  (set! mime-file file))
-
+	 
 	 ;; Verbosity and logs
 	 (section "Verbosity & Logging")
          (("-v?level" (help "Increase/set verbosity level (-v0 crystal silence)"))
@@ -121,7 +121,7 @@
 				  (help (format "Set XML backend [~s]"
 						(xml-backend-id (hop-xml-backend)))))
 	  (set! be ident))
-
+	 
 	 ;; Paths
 	 (section "Paths")
 	 ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
@@ -147,7 +147,7 @@
 	  (exit 1))
 	 (else
 	  (set! files (cons else files))))
-
+      
       (when log-file
 	 (let ((p (append-output-file log-file)))
 	    (unless p
@@ -161,13 +161,13 @@
       (hop-autoload-directory-add!
        (make-file-name (hop-rc-directory) "weblets"))
       (if loadp
-	 (if (string? rc-file)
-	     (%hop-load-rc rc-file)
-	     (let ((path (make-file-name (hop-rc-directory) (hop-rc-file))))
-		(if (file-exists? path)
-		    (%hop-load-rc path)
-		    (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file))))))
-	 (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file))))
+	  (if (string? rc-file)
+	      (%hop-load-rc rc-file)
+	      (let ((path (make-file-name (hop-rc-directory) (hop-rc-file))))
+		 (if (file-exists? path)
+		     (%hop-load-rc path)
+		     (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file))))))
+	  (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file))))
       (when replp (hop-repl))
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
       (hop-port-set! p)
@@ -186,7 +186,19 @@
 		exprs)
       (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
       (for-each (lambda (l) (eval `(library-load ',l))) libraries)
-      (for-each hop-load (reverse! files))))
+      (for-each (lambda (f)
+		   (let ((path (cond
+				  ((string-index f ":")
+				   f)
+				  ((and (>fx (string-length f) 0)
+					(char=? (string-ref f 0)
+						(file-separator)))
+				   f)
+				  (else
+				   (file-name-canonicalize!
+				    (make-file-name (pwd) f))))))
+		      (hop-load path)))
+		(reverse! files))))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */

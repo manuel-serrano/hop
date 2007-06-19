@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Jun 12 06:36:58 2007 (serrano)                */
+;*    Last change :  Sun Jun 17 10:03:28 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -184,15 +184,15 @@
 			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title" "Unknown Host"))
 				(<TR> (<ETD> :class "msg"
-					    (<SPAN> :class "filenotfound"
-						    host)))))))))))))
+					 (<SPAN> :class "filenotfound"
+					    host)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-file-not-found ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-file-not-found file)
    (instantiate::http-response-hop
-      (request (current-request))
+      (request (or (current-request) (instantiate::http-request)))
       (start-line "HTTP/1.0 404 Not Found")
       (xml (<HTML>
 	      (<EHEAD> (current-request))
@@ -206,8 +206,8 @@
 			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title" "File not found"))
 				(<TR> (<ETD> :class "msg"
-					    (<SPAN> :class "filenotfound"
-						    file)))))))))))))
+					 (<SPAN> :class "filenotfound"
+					    file)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-service-not-found ...                                       */
@@ -215,7 +215,7 @@
 (define (http-service-not-found file)
    (define (illegal-service key msg)
       (instantiate::http-response-hop
-	 (request (current-request))
+	 (request (or (current-request) (instantiate::http-request)))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
@@ -301,7 +301,7 @@ a timeout which has now expired. The service is then no longer available."))
 (define (http-internal-error e msg)
    (let ((s (with-error-to-string (lambda () (error-notify e)))))
       (instantiate::http-response-hop
-	 (request (current-request))
+	 (request (or (current-request) (instantiate::http-request)))
 	 (start-line "HTTP/1.0 501 Internal Server Error")
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
@@ -465,7 +465,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-service-unavailable e)
    (instantiate::http-response-hop
-      (request (current-request))
+      (request (or (current-request) (instantiate::http-request)))
       (start-line "HTTP/1.0 503 Service Unavailable")
       (xml (<HTML>
 	      (<EHEAD> (current-request))

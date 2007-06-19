@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Jun 16 08:13:02 2007 (serrano)                */
+/*    Last change :  Mon Jun 18 13:41:11 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -377,7 +377,7 @@ function hop_anim( service ) {
 	 node_style_set( hop_anim_vis, "visibility", "visible" );
 	 return hop_anim_vis;
       } else {
-	 hop_anim_vis = hop_anim_128_128( service );
+	 hop_anim_vis = hop_anim_16_16( service );
 	 document.body.appendChild( hop_anim_vis );
 	 return hop_anim_vis;
       }
@@ -519,7 +519,11 @@ function with_hop( service, success, failure ) {
                  switch( http.status ) {
 		    case 200:
 		       if( hop_is_http_json( http ) ) {
-			  success( eval( http.responseText ) );
+			  try {
+			     success( eval( http.responseText ) );
+			  } catch( e ) {
+			     alert( e );
+			  }
 		       } else {
 			  success( http.responseText );
 			  // MS: 6 Jun 2007, the previous version were
@@ -531,6 +535,7 @@ function with_hop( service, success, failure ) {
 		       }
 		       return;
 		    case 202:
+		       alert( "http.responseText: " + http.responseText );
 		       success( hop_unserialize( http.responseText ) );
 		       return;
 		    default:
@@ -591,37 +596,47 @@ function with_hop_callcc( service ) {
 /*    hop_innerHTML_set ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_innerHTML_set( nid, html ) {
+   var el;
+   
    if( (nid instanceof String) || (typeof nid == "string") ) {
-      var el = document.getElementById( nid );
+      el = document.getElementById( nid );
 
       if( el == undefined ) {
 	 alert("*** ERROR:innerHTML-set! -- cannot find element \""
 	       + nid + "\"");
+	 return;
       }
-
-      el.innerHTML = html;
    } else {
-      nid.innerHTML = html;
+      el = nid;
    }
+   
+   el.innerHTML = html;
+   hop_node_eval( el, html );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_outerHTML_set ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_outerHTML_set( nid, html ) {
+   var p;
+
    if( (nid instanceof String) || (typeof nid == "string") ) {
-      var el = document.getElementById( nid );
-      var p;
+      var el;
+      el = document.getElementById( nid );
       
       if( el == undefined ) {
 	 alert("*** ERROR:innerHTML-set! -- cannot find element \""
 	       + nid + "\"");
+	 return;
       }
-      
-      el.parentNode.innerHTML = html;
+      p = el.parentNode;
    } else {
-      nid.parentNode.innerHTML = html;
+      p = nid.parentNode;
    }
+   
+
+   p.innerHTML = html;
+   hop_node_eval( p, html );
 }
 
 /*---------------------------------------------------------------------*/
@@ -798,8 +813,10 @@ function hop_timeout_reset( id, timeout, proc ) {
 /*    hop_clear_timeout ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_clear_timeout( id ) {
-   clearInterval( window[ id ] );
-   window[ id ] = false;
+   if( window[ id ] ) {
+      clearInterval( window[ id ] );
+      window[ id ] = false;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -1348,7 +1365,7 @@ function hop_state_history_update( olds, news ) {
 /*---------------------------------------------------------------------*/
 /*    hop_hash_history_check_regexp ...                                */
 /*---------------------------------------------------------------------*/
-var hop_hash_history_check_regexp = /^#(?:[^=]+=[^:]+:[^,]+,?)+$/;
+var hop_hash_history_check_regexp = new RegExp( "^#(?:[^=]+=[^:]+:[^,]+,?)+$" );
 
 /*---------------------------------------------------------------------*/
 /*    hop_hash_historyp ...                                            */
@@ -1356,7 +1373,7 @@ var hop_hash_history_check_regexp = /^#(?:[^=]+=[^:]+:[^,]+,?)+$/;
 /*    Is a hash value a legal Hop history?                             */
 /*---------------------------------------------------------------------*/
 function hop_hash_historyp( hash ) {
-   return hop_hash_history_check_regexp( hash );
+   return hop_hash_history_check_regexp.exec( hash );
 }
 
 /*---------------------------------------------------------------------*/
@@ -1369,13 +1386,13 @@ var hop_eval_history_interval = false;
 /*    hop_retry_eval_history_state ...                                 */
 /*---------------------------------------------------------------------*/
 function hop_retry_eval_history_state( count, old_state, new_state ) {
-   var init = false;
+/*    var init = false;                                                */
    var fun = function() {
-      if( !init ) {
-	 /* skip the first call, we are not ready yet */
-	 init = true;
-	 return;
-      }
+/*       if( !init ) {                                                 */
+/* 	 {* skip the first call, we are not ready yet *}               */
+/* 	 init = true;                                                  */
+/* 	 return;                                                       */
+/*       }                                                             */
       var c = hop_state_history_update( old_state, new_state );
 
       /* the interval is cancelled if any of the following holds: */
@@ -1389,7 +1406,7 @@ function hop_retry_eval_history_state( count, old_state, new_state ) {
 	 clearInterval( hop_eval_history_interval );
       }
    }
-   hop_eval_history_interval = setInterval( fun, 100 );
+   hop_eval_history_interval = setInterval( fun, 200 );
    hop_eval_history_interval.invalid = false;
 }
 

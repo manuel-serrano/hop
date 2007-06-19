@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Mon Apr 23 07:08:59 2007 (serrano)                */
+;*    Last change :  Mon Jun 18 14:48:00 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -134,7 +134,6 @@
 	(<INPUT> :size 40 :name "url")
 	(<BR>)
         (<BUTTON> :onclick ~(submit) "Install"))))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-main ...                                                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Mon Jun 11 11:46:36 2007 (serrano)                */
+;*    Last change :  Sun Jun 17 12:21:24 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -33,6 +33,7 @@
 	       (intable?::bool (default #f))
 	       (locked?::bool (default #f))
 	       (closed?::bool (default #f))
+	       (wstart?::bool (default #f))
 	       date::elong))
    
    (export  (response-remote-start-line ::http-response-remote)))
@@ -82,18 +83,44 @@
 			     (hop-color request request " REMOTE")
 			     " " host ":" port "\n"))
 	       (when (>fx remote-timeout 0)
-		  (output-timeout-set! rp remote-timeout))
+		  (output-timeout-set! rp remote-timeout)
+		  (input-timeout-set! (connection-input remote) remote-timeout))
 	       ;; this unwind-protect is just here for debugging
 	       ;; when the keep-alive remote connection is complete,
 	       ;; remove the unwind-protected block.
 	       (unwind-protect
 		  (with-handler
 		     (lambda (e)
+			(error-notify e)
 			(connection-close! remote)
-			(raise e))
+			(cond
+			   ((connection-wstart? remote)
+			    (tprint "wstart...")
+			    ;; If we have already send characters to the client
+			    ;; it is no longer possible to answer resource
+			    ;; unavailable so we raise the error.
+			    ;; There is no need to close the connection because
+			    ;; the next handler closes it.
+			    (raise e))
+			   ((connection-keep-alive? remote)
+			    (tprint "keep-alive...")
+			    ;; This is a keep-alive connection that is likely
+			    ;; to have been closed by the remote server, we
+			    ;; retry with a fresh connection
+			    (hop-verb 2
+				      (hop-color request request " RESET.ka")
+				      " (alive since "
+				      (connection-request-id remote)
+				      ") " host ":" port "\n")
+			    (http-response r socket))
+			   (else
+			    (tprint "else...")
+			    ;; This is an unrecoverable error
+			    (http-response (http-remote-error host e) socket))))
 		     ;; the header and the request
 		     (with-trace 4 'http-response-header
-			(trace-item "start-line: " (response-remote-start-line r))
+			(trace-item "start-line: "
+				    (response-remote-start-line r))
 			(http-write-line rp (response-remote-start-line r))
 			;; if a char is ready and is eof, it means that the
 			;; connection is closed
@@ -119,9 +146,9 @@
 		  ;; debug
 		  (unless (or (connection-intable? remote)
 			      (connection-closed? remote))
-		     (error 'http-response
-			    "(http-response.scm) connection not closed nor in table"
-			    remote))))))))
+		     (tprint "connection not either closed or in table (http-response.scm)"
+			     remote)
+		     (connection-close! remote))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-body ...                                                  */
@@ -133,78 +160,50 @@
 	 (let ((op (socket-output socket))
 	       (ip (connection-input remote))
 	       (wstart #f))
-	    (when (>fx remote-timeout 0)
-	       (input-timeout-set! ip remote-timeout))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! op timeout))
-	    (with-handler
-	       (lambda (e)
-		  (cond
-		     (wstart
-		      ;; If we have already send characters to the client
-		      ;; it is no longer possible to answer resource
-		      ;; unavailable so we raise the error.
-		      ;; There is no need to close the connection because
-		      ;; the next handler closes it.
-		      (raise e))
-		     ((connection-keep-alive? remote)
-		      ;; This is a keep-alive connection that is likely
-		      ;; to have been closed by the remote server, we retry
-		      ;; with a fresh connection
-		      (connection-close! remote)
-		      (hop-verb 2
-				(hop-color request request " RESET.ka")
-				" (alive since "
-				(connection-request-id remote)
-				") " host ":" port "\n")
-		      (http-response r socket))
+	    (multiple-value-bind (http-version status-code phrase)
+	       (http-parse-status-line ip)
+	       (multiple-value-bind (header _1 _2 cl te _3 _4 connection)
+		  (http-read-header ip (connection-output remote))
+		  ;; WARNING: phrase contains its terminal \r\n hence
+		  ;; it must be displayed with regular scheme writer,
+		  ;; not HTTP-WRITE-LINE!
+		  (trace-item "# " http-version " " status-code " "
+			      (string-for-read phrase))
+		  (display http-version op)
+		  (display " " op)
+		  (display status-code op)
+		  (display " " op)
+		  (display phrase op)
+		  (http-write-header op header)
+		  (http-write-line op)
+		  (case status-code
+		     ((204 304)
+		      ;; no message body
+		      #unspecified)
 		     (else
-		      ;; This is an unrecoverable error
-		      (exception-notify e)
+		      (if (not (eq? te 'chunked))
+			  (unless (=elong cl #e0)
+			     (send-chars ip op cl))
+			  (response-chunks ip op))))
+		  ;; what to do with the remote connection. if the
+		  ;; status code is not 200, we always close the connection
+		  ;; in order to avoid, in particular, re-direct problems.
+		  (if (or (not (=fx status-code 200))
+			  (eq? connection 'close)
+			  (not (hop-enable-remote-keep-alive)))
 		      (connection-close! remote)
-		      (http-response (http-remote-error host e) socket))))
-	       (multiple-value-bind (http-version status-code phrase)
-		  (http-parse-status-line ip)
-		  (multiple-value-bind (header _1 _2 cl te _3 _4 connection)
-		     (http-read-header ip (connection-output remote))
-		     ;; WARNING: phrase contains its terminal \r\n hence
-		     ;; it must be displayed with regular scheme writer,
-		     ;; not HTTP-WRITE-LINE!
-		     (trace-item "# " http-version " " status-code " "
-				 (string-for-read phrase))
-		     (display http-version op)
-		     (display " " op)
-		     (display status-code op)
-		     (display " " op)
-		     (display phrase op)
-		     (http-write-header op header)
-		     (http-write-line op)
-		     (case status-code
-			((204 304)
-			 ;; no message body
-			 #unspecified)
+		      (connection-keep-alive! remote))
+		  ;; return to the main hop loop
+		  (let ((s (http-header-field
+			    (http-request-header request)
+			    proxy-connection:)))
+		     (cond
+			((string? s)
+			 (string->symbol s))
 			(else
-			 (if (not (eq? te 'chunked))
-			     (unless (=elong cl #e0)
-				(send-chars ip op cl))
-			     (response-chunks ip op))))
-		     ;; what to do with the remote connection. if the
-		     ;; status code is not 200, we always close the connection
-		     ;; in order to avoid, in particular, re-direct problems.
-		     (if (or (not (=fx status-code 200))
-			     (eq? connection 'close)
-			     (not (hop-enable-remote-keep-alive)))
-			 (connection-close! remote)
-			 (connection-keep-alive! remote))
-		     ;; return to the main hop loop
-		     (let ((s (http-header-field
-			       (http-request-header request)
-			       proxy-connection:)))
-			(cond
-			   ((string? s)
-			    (string->symbol s))
-			   (else
-			    'close))))))))))
+			 'close)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *remote-lock* ...                                                */
@@ -249,13 +248,15 @@
 	     (nrows (map (lambda (row)
 			    (filter (lambda (c)
 				       (with-access::connection c
-					     (socket locked?)
+					     (socket locked? intable? closed?)
 					  (cond
 					     (locked?
 					      (set! num (+fx 1 num))
 					      #t)
 					     ((connection-timeout? c now)
 					      (socket-close socket)
+					      (set! intable? #f)
+					      (set! closed? #t)
 					      #f)
 					     (else
 					      (set! num (+fx 1 num))
@@ -334,6 +335,7 @@
 			   ;; for the connection
 			   (connection-date-set! old (current-seconds))
 			   (connection-locked?-set! old #t)
+			   (connection-wstart?-set! old #f)
 			   (mutex-unlock! *remote-lock*)
 			   old))
 		       ;; create a new connection and registers it
@@ -360,13 +362,16 @@
    (cond
       ((>=fx *connection-number* (hop-max-remote-keep-alive-connection))
        ;; no room available, cleanup the table
+       (connection-close-sans-lock! connection)
        (cleanup-connection-table!))
       ((>= (-fx *connection-open* (+fx *connection-close* *connection-number*))
 	   (hop-max-remote-keep-alive-connection))
        ;; too many uncompleted connections
+       (connection-close-sans-lock! connection)
        (set! *connection-pending*
 	     (filter! (lambda (c)
-			 (if (connection-down? connection-down?)
+			 (if (and (connection-down? c)
+				  (not (connection-closed? c)))
 			     (begin
 				(connection-close-sans-lock! c)
 				#f)
@@ -375,6 +380,7 @@
        #unspecified)
       ((>=fx *connection-number* (hop-max-remote-keep-alive-connection))
        ;; no room available, cleanup the table
+       (connection-close-sans-lock! connection)
        (cleanup-connection-table!))
       (else
        ;; store the connection only if room is available on the table
@@ -395,6 +401,7 @@
 		 (set! intable? #t))
 		(else
 		 (connection-close-sans-lock! connection)))))))
+   (mutex-unlock! *remote-lock*))
 ;*    (tprint "+++ keep-alive "                                        */
 ;* 	   " pending=" (-fx *connection-open*                          */
 ;* 			    (+fx *connection-close* *connection-number*)) */
@@ -405,21 +412,23 @@
 ;*    (hashtable-for-each *connection-table*                           */
 ;* 		       (lambda (k l)                                   */
 ;* 			  (tprint "   host=" k " l=" (length l))))     */
-   (mutex-unlock! *remote-lock*))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-close-sans-lock! ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (connection-close-sans-lock! connection)
-   (set! *connection-close* (+fx 1 *connection-close*))
-   (set! *connection-pending* (remq! connection *connection-pending*))
+(define (connection-close-sans-lock! connection::connection)
    (with-access::connection connection (host socket intable? closed?)
+      (when closed?
+	 (tprint "*** ERROR: connection-close-sans-lock!: Closing a connection twice: "
+		connection))
       (unless closed?
-	 (set! closed? #t)
+	 (set! *connection-close* (+fx 1 *connection-close*))
+	 (set! *connection-pending* (remq! connection *connection-pending*))
 	 (socket-close socket)
+	 (set! closed? #t)
 	 (when intable?
-	    (set! intable? #f)
 	    (let ((l (remq! connection (hashtable-get *connection-table* host))))
+	       (set! intable? #f)
 	       (set! *connection-number* (-fx *connection-number* 1))
 	       (if (null? l)
 		   (hashtable-remove! *connection-table* host)
@@ -428,7 +437,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    connection-close! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (connection-close! connection)
+(define (connection-close! connection::connection)
    (mutex-lock! *remote-lock*)
    (connection-close-sans-lock! connection)
    (mutex-unlock! *remote-lock*))
@@ -436,29 +445,30 @@
 ;*---------------------------------------------------------------------*/
 ;*    connection-down? ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (connection-down? connection)
+(define (connection-down? connection::connection)
    (let ((ip (connection-input connection)))
-      (when (char-ready? ip)
-	 (with-handler
-	    (lambda (e) #t)
-	    (let ((c (read-char ip)))
-	       (if (eof-object? c)
-		   #t
-		   (let ((msg (http-parse-error-message c ip)))
-		      (raise
-		       (instantiate::&io-parse-error
-			  (obj ip)
-			  (proc 'http-response)
-			  (msg (format "Illegal character: ~a" msg)))))))))))
+      (or (not (input-port? ip))
+	  (when (char-ready? ip)
+	     (with-handler
+		(lambda (e) #t)
+		(let ((c (read-char ip)))
+		   (if (eof-object? c)
+		       #t
+		       (let ((m (http-parse-error-message c ip)))
+			  (raise
+			   (instantiate::&io-parse-error
+			      (obj ip)
+			      (proc 'http-response)
+			      (msg (format "Illegal character: ~a" m))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-output ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (connection-output connection)
+(define (connection-output connection::connection)
    (socket-output (connection-socket connection)))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-input ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (connection-input connection)
+(define (connection-input connection::connection)
    (socket-input (connection-socket connection)))

@@ -3,32 +3,37 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Fri Jun 15 12:08:42 2007 (serrano)                */
+/*    Last change :  Mon Jun 18 17:13:51 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    Autoconfiguration                                                */
+/*---------------------------------------------------------------------*/
+var hop_tree_correct_browserp = hop_mozillap();
+
+/*---------------------------------------------------------------------*/
 /*    hop tree default connection icons                                */
 /*---------------------------------------------------------------------*/
-var hop_tree_plus_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABZSURBVCjPpZFBDoBACAMH4r91X14vbiKIhqwQODSlkIKIeSgjQpjohGdglHNNte1dZbeCFuE89ritvsJphUcl0+xz8VXZVlTZvLIUQFbRboaMD6dXf/qLdgLZWTv35WFeagAAAABJRU5ErkJggg==";
-var hop_tree_plusbottom_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABYSURBVCjPxZFBDoBACAMH4r91X14vbiLIGuJFCBwaaElBxDyUESFMdMIzMMq9Jtu2ZtmtGItwXnvcVl/htMIjk2n2KXxVthVVNn8RBZBVYzdDxovTv/z0BFmcPnXuAkthAAAAAElFTkSuQmCC";
+var hop_tree_plus_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAAmJLR0QA/4ePzL8AAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfXBhIGBSz9nQiXAAAAQUlEQVQoz2NggIOG/wwUAjJNYMSms4ERr9GofCYkNlY3MBFyAxNc9384CbUGhhF2/ifkBgZCbmDEpoCFOrFAEQAAUAAXAZHu4U4AAAAASUVORK5CYII=";
+var hop_tree_plusbottom_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAAmJLR0QA/4ePzL8AAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfXBhIGBiTYa9NmAAAAQklEQVQoz2NggIOG/wwUAjJNYMSms4ERr9GofCYkNlY3MBFyAxNc9384CbUGhhF2/ifkBgZCbmDEpoCFOrFAUVwAAKFKGIBRBwqlAAAAAElFTkSuQmCC";
 
-var hop_tree_minus_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABPSURBVCjPY/jPgAob/qOL/Gf4z8D4n4EYwIQu0IhVH5GmseA2pZ4RizJUYXRtGG4j0gtEKGP8D4MIi6EYV7Ci8qnrNqQAacQT0uTGKUXKANpKOvds6MpSAAAAAElFTkSuQmCC";
-var hop_tree_minusbottom_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABNSURBVCjPY/jPgAob/qOL/Gf4z8D4n4EYwIQu0IhVH5GmseA2pZ4RizJUYXRtGG4j0gtEKGP8D4MIi6EYV7Ci8qnrNqQAacQT0gMSpwBajT11pflliQAAAABJRU5ErkJggg==";
+var hop_tree_minus_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAAmJLR0QA/4ePzL8AAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfXBhIGBx2edWovAAAAMUlEQVQoz2NggIOG/wwUAjJNYMSms4ERr9GofCZCVhCt4D8cwq2BYZq7gYU6sUARAAAzdRYBgZWhFwAAAABJRU5ErkJggg==";
+var hop_tree_minusbottom_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAAmJLR0QA/4ePzL8AAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfXBhIGCAqaPvMnAAAAMklEQVQoz2NggIOG/wwUAjJNYMSms4ERr9GofCZCVhCt4D8cwq2BYZq7gYU6sUBRXAAAhL8XgGNqXUkAAAAASUVORK5CYII=";
 
-var hop_tree_join_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAqSURBVCjPY/jPgAob/qOL/Gf4z8D4n4EYwIQu0IhV33A1DROTa9qwVQYASJ4mAj+uy7cAAAAASUVORK5CYII=";
-var hop_tree_joinbottom_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAqSURBVCjPY/jPgAob/qOL/Gf4z8D4n4EYwIQu0IhV33A1DRMPHrcNEtMAEKItfKjCO18AAAAASUVORK5CYII=";
+var hop_tree_join_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAAmJLR0QA/4ePzL8AAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfXBhIGCSvPTNI4AAAAF0lEQVQoz2NggIOG/wwUguFjAjY8IgAAQ+4O99IvLs4AAAAASUVORK5CYII=";
+var hop_tree_joinbottom_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAAmJLR0QA/4ePzL8AAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfXBhIGCiBzs1hzAAAAGElEQVQoz2NggIOG/wwUguFjAjY8IsIBAGAkE3R0p9F5AAAAAElFTkSuQmCC";
 
-var hop_tree_vline_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAlSURBVCjPY/jPgAob/qOL/Gf4z8D4n4EYwIQu0IhV36hpI9Y0AMqWJfzsxwvxAAAAAElFTkSuQmCC";
-var hop_tree_empty_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQCAQAAABezYzpAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAWSURBVCjPY/zPQAxgIkrVqLJRZQQAAJYfAR/lOWwPAAAAAElFTkSuQmCC";
+var hop_tree_vline_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAAmJLR0QA/4ePzL8AAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfXBhIGEBzs8d4vAAAAF0lEQVQoz2NggIIGhob/DBSBUROGgQkA2icP+TmjJRoAAAAASUVORK5CYII=";
+var hop_tree_empty_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAAmJLR0QA/4ePzL8AAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfXBhIGDCVVgwt6AAAADklEQVQoz2NgGAWjAAEAAhAAARTCwJIAAAAASUVORK5CYII=";
 
-var hop_tree_default_file_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQBAMAAAAG6llRAAAAMFBMVEUAAAD////n59b///f39/fv7+/Ozs6cnJyEhIRzc3NSUlIxMTH///8AAAAAAAAAAAAlS/PmAAAADXRSTlP///////////////8APegihgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABaSURBVAjXYzgDAwcYOoCgB8JsFBQUrIIyjY2NC9fAmat3g5nNQGb6LBjTOawKyjQxCcqCME2Mg2BMY1NTJRgzGC5qaqoKFW0MVQqCMtvSgADC7FoFAmAmwpEAK+5bgL+cQWoAAAAASUVORK5CYII=";
+var hop_tree_default_file_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSwKaZCs2AAAANFJREFUOMvFkz2SgzAMhb9kUqhMS8kR8FE4D6WPwRVoOQaUlCqTUqU6tljnb4nXzKTIm/HYY/s96VkWfIhDjHEtXeq67pA9jDGu/6Hv+7Vt22yQ42PpmQHDMJATOZbSH8eREAKqStM0G5HTI3rWP9M0sSwLqso8z+8EtnAHEajr+r6nqvss3MieEqsqIYRA8Q1uBBEwc8y0+A9eBER+ZzPnfBZEKtwv+wWeyWaO+wWRar/AO3Ipg1QFwcwAuF412SmT7wJ/a5uKtquZTqkf+Bp+ADzifcCAdekSAAAAAElFTkSuQmCC";
 
-var hop_tree_default_open_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQBAMAAAAG6llRAAAAGFBMVEUAAAD///+cnADOzmP//5z/zpz///8AAAAHOMQHAAAAB3RSTlP///////8AGksDRgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAAAEgAAABIAEbJaz4AAABiSURBVAjXY0iDgQSGtCQlJRhTUVBQDcJMEnFxEVJSUoMyXQQFDWBMFxcQUwkMTEBMRaBQSDAzlBni6swMUxsSqqAAZrq6uoYaKICtCAkJDTViADEhRoCZCQxgAGIiuQzOBAA3liwhABnN2QAAAABJRU5ErkJggg==";
-var hop_tree_default_close_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQBAMAAAAG6llRAAAAMFBMVEUAAAD///+cnADOzmP//5z//87/zpz39/f///8AAAAAAAAAAAAAAAAAAAAAAAAAAABwA2sJAAAACXRSTlP//////////wBTT3gSAAAAAWJLR0QAiAUdSAAAAAlwSFlzAAAASAAAAEgARslrPgAAAFRJREFUCNdj6ICBBoYOJSUFKLOpNMSJA8JUNjY2VlJSAjFVQ0HAmQPEdAGBZBjTzQ0hmgITdUMSTYGJAgXdIMwUIEgDM0FWAAGI2cAABiAmssvgTAAi3zcy8laStgAAAABJRU5ErkJggg==";
-var hop_tree_default_device_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQBAMAAAAG6llRAAAAMFBMVEUAAAD///8AzgAAhADe3t7W1tbGxsa1tbWcnJyUlJRzc3P///8AAAAAAAAAAAAAAADp0SUnAAAADHRSTlP//////////////wAS387OAAAAAWJLR0QAiAUdSAAAAAlwSFlzAAAASAAAAEgARslrPgAAAEdJREFUCNdj2A0DGxhIYq4Cg9VA5q5yMFgAZC4UBAEJEHNpWlpaunIliLmkLC2tvBzCBOsCM5eC1YKZELNWcQOZGxjAAKfFAJqsX3JLxaIiAAAAAElFTkSuQmCC";
+var hop_tree_default_open_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSkWAOYE0gAAALNJREFUOMvNk0ESgyAMRR+OF4Jdz0OOlZynOzkSXSAWFK2dbvo3DJjElx+AH+XajSp5HyDSx5xKlTzSqGiruSbHmAE7BJRzNywigps/sxkxKhC705QEsDzft8vGLdQeze55FULE+0fvwVn/hRXwZU08CcFYlvfn6fRXaV19U2SgSQRX8HuTtoSGwPNAlZXCLgjSMbn1oCOo89wo0g47DS8dIo2J26DqJKpJy5dvAa6v7X/qBRKAUS3mXATrAAAAAElFTkSuQmCC";
+var hop_tree_default_close_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSoOOKfPRwAAAJRJREFUOMvFUzkShDAMEwwfMl8i3b5nO/Meuvg5KUUBuwMkZpKlWM1kcliSVcTAQ3Sfgyp4LYZw5rhQBVNKJOO+lKRyN+VtAlVwHCeXEONcfA9hSzYAgMjLNchrEWYLgJkAuuFYqIKdr32TyADILwZyEDcluHZuTiAFcVUCr7Pl1L5K5Ii//8DsnZuU9ptZ4NNZ+h9WRsVBhT94M5oAAAAASUVORK5CYII=";
+var hop_tree_default_device_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSsEwWkXGAAAAJRJREFUOMvtkrENwyAURB8SBS1lxvAKtB6HNWAExoCSNTxCSijpSEWU2IkclCpSrrrmnfTvH/wlhrHW9lnYey/kgI0xU3DOGaBLa213zk3BIYS7lwDbtlFrfQuUUlgvKySIS6S19hyglKKUgtb6JQwQrxGWY7jc3XSqfVcSoLXGpz2klI4Bj6VMvBBAjB30bzb047oBYBc056hSeS0AAAAASUVORK5CYII=";
 
 /*---------------------------------------------------------------------*/
 /*    hop_tree_root ...                                                */
@@ -178,15 +183,18 @@ function hop_push_vlines( par, row, level ) {
    if( level > 0 ) {
       hop_push_vlines( par.parent, row, level - 1 );
       var td = document.createElement( "td" );
-      var img = document.createElement( "img" );
 
-      td.className = "hop-tree";
-      td.setAttribute( "nowrap", "nowrap" );
+      if( par && par.visible ) {
+	 var img = document.createElement( "img" );
 
-      img.src = ((par && !par.last) ? par.iconvline : (par.visible ? par.iconempty : ""));
-      img.className = "hop-tree";
+	 td.className = "hop-tree";
+	 td.setAttribute( "nowrap", "nowrap" );
+
+	 img.src = ((par && !par.last) ? par.iconvline : (par.visible ? par.iconempty : ""));
+	 img.className = "hop-tree";
       
-      td.appendChild( img );
+	 td.appendChild( img );
+      }
       row.appendChild( td );
    }
 }
@@ -337,6 +345,37 @@ function hop_tree_row_select_previous( tree ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_tree_make_colgroup ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_tree_make_colgroup( level ) {
+   var colgroup = document.createElement( "colgroup" );
+
+   if( hop_tree_correct_browserp ) {
+      for( var i = level + 2; i > 0; i-- ) {
+	 var col = document.createElement( "col" );
+   
+	 col.setAttribute( "width", "0*" );
+	 colgroup.appendChild( col );
+      }
+   } else {
+      /* most browsers are unable to correctly the 0* attribute */
+      /* so we fix a width of 16 pixels for icons columns       */
+      var col = document.createElement( "col" );
+   
+      col.setAttribute( "width", "0*" );
+      colgroup.appendChild( col );
+      for( var i = level + 1; i > 0; i-- ) {
+	 var col = document.createElement( "col" );
+   
+	 col.setAttribute( "width", "16px" );
+	 colgroup.appendChild( col );
+      }
+   }
+
+   return colgroup;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_make_tree ...                                                */
 /*---------------------------------------------------------------------*/
 function hop_make_tree( parent, id, visible, level, proc, title,
@@ -382,15 +421,7 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    table.className = "hop-tree";
    
    /* the colgroup for the left padding and icons */
-   var colgroup = document.createElement( "colgroup" );
-   
-   for( var i = level + 2; i > 0; i-- ) {
-      var col = document.createElement( "col" );
-   
-      col.setAttribute( "width", "0*" );
-      colgroup.appendChild( col );
-   }
-   table.appendChild( colgroup );
+   table.appendChild( hop_tree_make_colgroup( level ) );
 
    /* the body of the table */
    var tb = document.createElement( "tbody" );
@@ -423,7 +454,7 @@ function hop_make_tree( parent, id, visible, level, proc, title,
 
    if( iconclose ) folder.src = iconclose;
    folder.className = "hop-tree";
-
+   
    td2.className = "hop-tree";
    td2.setAttribute( "nowrap", "nowrap" );
    td2.onclick = function() {hop_tree_row_toggle_selected( tree, row );}
@@ -542,15 +573,7 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
    leaf.className = "hop-tree-leaf";
 
    /* the colgroup for the left padding and icons */
-   var colgroup = document.createElement( "colgroup" );
-   
-   for( var i = level + 2; i > 0; i-- ) {
-      var col = document.createElement( "col" );
-   
-      col.setAttribute( "width", "0*" );
-      colgroup.appendChild( col );
-   }
-   leaf.appendChild( colgroup );
+   leaf.appendChild( hop_tree_make_colgroup( level ) );
 
    /* the body of the table */
    var tb = document.createElement( "tbody" );

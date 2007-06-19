@@ -615,6 +615,9 @@ fit its content height. Example:
 
 Parses the ++html++ tree and replaces the body of the element ++nid++ 
 (or the element whose identifier is ++nid++) with that new value.
+
+In addition to set the element inner HTML content, this function also
+**evaluates the scripts** of the ++html++ tree.
 </procedure>
 
 === ++(outerHTML-set! nid html)++ ===
@@ -628,6 +631,9 @@ Parses the ++html++ tree and replaces the body of the element ++nid++
 Parses the ++html++ tree and replaces the body of the **parent** of 
 element ++nid++  (or parent of the element whose identifier is ++nid++) with 
 that new value.
+
+In addition to set the element inner HTML content, this function also
+**evaluates the scripts** of the ++html++ tree.
 </procedure>
 
 == See also ==
