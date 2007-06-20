@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Jun 20 10:53:31 2007 (serrano)                */
+/*    Last change :  Wed Jun 20 14:59:25 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -1390,13 +1390,7 @@ var hop_eval_history_interval = false;
 /*    hop_retry_eval_history_state ...                                 */
 /*---------------------------------------------------------------------*/
 function hop_retry_eval_history_state( count, old_state, new_state ) {
-/*    var init = false;                                                */
    var fun = function() {
-/*       if( !init ) {                                                 */
-/* 	 {* skip the first call, we are not ready yet *}               */
-/* 	 init = true;                                                  */
-/* 	 return;                                                       */
-/*       }                                                             */
       var c = hop_state_history_update( old_state, new_state );
 
       /* the interval is cancelled if any of the following holds: */
@@ -1444,6 +1438,32 @@ function hop_eval_history_state( location ) {
    }
 }
 
+/*---------------------------------------------------------------------*/
+/*    hop_current_history ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_current_history() {
+   var hash = location.hash;
+   
+   if( hash.length == 0 ) {
+      return false;
+   }
+
+   if( hop_hash_historyp( hash ) ) {
+      return hop_location_to_state_history( hash );
+   }
+
+   return false;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_replay_history ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_replay_history( hist ) {
+   hop_current_state_history = undefined;
+   var loc = function( v ) { this.hash = v; }
+   hop_eval_history_state( new loc( hop_state_history_to_location( hist ) ) );
+}
+   
 /*---------------------------------------------------------------------*/
 /*    Install the location event listener                              */
 /*---------------------------------------------------------------------*/

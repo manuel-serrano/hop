@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Wed Jun 20 08:45:57 2007 (serrano)                */
+;*    Last change :  Wed Jun 20 14:44:00 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -212,5 +212,7 @@
      (make-history hop_make_history)
      (history-add! hop_history_add)
      (with-history hop_with_history)
+     (current-history hop_current_history)
+     (replay-history hop_replay_history)
      (find-runtime-type hop_find_runtime_type)
      (get-selection hop_get_selection)))
