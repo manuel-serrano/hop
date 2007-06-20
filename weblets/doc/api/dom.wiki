@@ -82,6 +82,7 @@ vectors.
   (iframe-scroll-height iframe)
   (innerHTML-set! node-or-id html)
   (outerHTML-set! node-or-id html)
+  (get-selection)
 
 
 == Examples ==
@@ -606,7 +607,7 @@ fit its content height. Example:
 </procedure>
 
 === ++(innerHTML-set! nid html)++ ===
-<procedure>innerHTML-set!
+<procedure> innerHTML-set!
 <arguments>
 ^  arguments   ^   type              ^  short description                    ^
 | nid          |  element or string  | an element or an element identifier.  |
@@ -621,7 +622,7 @@ In addition to set the element inner HTML content, this function also
 </procedure>
 
 === ++(outerHTML-set! nid html)++ ===
-<procedure>outerHTML-set!
+<procedure> outerHTML-set!
 <arguments>
 ^  arguments   ^   type              ^  short description                    ^
 | nid          |  element or string  | an element or an element identifier.  |
@@ -634,6 +635,13 @@ that new value.
 
 In addition to set the element inner HTML content, this function also
 **evaluates the scripts** of the ++html++ tree.
+</procedure>
+
+=== ++(get-selection)++ ===
+<procedure> get-selection
+
+Returns the current text selection as a string. Returns an empty string
+is no text is currently selected.
 </procedure>
 
 == See also ==

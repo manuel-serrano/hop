@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Jun 18 13:41:11 2007 (serrano)                */
+/*    Last change :  Tue Jun 19 12:17:41 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -382,6 +382,7 @@ function hop_anim( service ) {
 	 return hop_anim_vis;
       }
    }
+   return false;
 }
 
 /*---------------------------------------------------------------------*/

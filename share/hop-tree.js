@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon Jun 18 17:13:51 2007 (serrano)                */
+/*    Last change :  Wed Jun 20 09:09:18 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -202,10 +202,12 @@ function hop_push_vlines( par, row, level ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_tree_row_select( root, row ) {
-   if( !root.multiselect && root.selection ) {
+function hop_tree_row_select( root, row, forcemulti ) {
+   if( !forcemulti && !root.multiselect && root.selection ) {
       hop_tree_row_unselect( root, root.selection );
    }
+
+   if( forcemulti ) root.allselect = true;
    
    row.className = "hop-tree-row-selected";
    root.value = row.value;
@@ -225,7 +227,6 @@ function hop_tree_row_unselect( root, row ) {
 
    if( root.onunselect ) root.onunselect();
       
-
    for( i = 0; i < root.selections.length; i++ ) {
       if( root.selections[ i ] == row ) {
 	 root.selections.splice( i, 1 );
@@ -235,25 +236,68 @@ function hop_tree_row_unselect( root, row ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_tree_row_select_all ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_tree_row_set_select_all( tree, select ) {
+   var root = hop_tree_root( tree );
+   
+   var traverse_lr = function( tree ) {
+      if( tree.className == "hop-tree-leaf" ) {
+	 if( select ) {
+	    hop_tree_row_select( root, tree.row, true );
+	 } else {
+	    hop_tree_row_unselect( root, tree.row );
+	 }
+      } else {
+	 var body = tree.body.childNodes;
+
+	 if( tree.visible ) {
+	    if( select ) {
+	       hop_tree_row_select( root, tree.row, true );
+	    } else {
+	       hop_tree_row_unselect( root, tree.row );
+	    }
+	 }
+
+	 for( var i = 0; i < body.length; i++ ) {
+	    traverse_lr( body[ i ] );
+	 }
+      }
+   }
+   
+   traverse_lr( root );
+   root.allselect = select;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_tree_row_unselect_all ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_tree_row_unselect_all( tree ) {
+   hop_tree_row_set_select_all( tree, false );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_tree_row_select_all ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_tree_row_select_all( tree ) {
+   hop_tree_row_set_select_all( tree, true );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_tree_row_toggle_selected ...                                 */
 /*---------------------------------------------------------------------*/
-function hop_tree_row_toggle_selected( tree, row ) {
+function hop_tree_row_toggle_selected( event, tree, row ) {
    var root = hop_tree_root( tree );
+
+   if( root.allselect == true ) {
+      hop_tree_row_unselect_all( tree );
+   }
 
    if( row.className == "hop-tree-row-selected" ) {
       hop_tree_row_unselect( root, row );
    } else {
-      hop_tree_row_select( root, row );
+      hop_tree_row_select( root, row, event.shiftKey );
    }
-}
-
-function show_list( tab ) {
-   res = "";
-
-   for( var i = 0; i < tab.length; i++ ) {
-      res += tab[ i ] + " ";
-   }
-   return res;
 }
 
 /*---------------------------------------------------------------------*/
@@ -264,7 +308,7 @@ function hop_tree_row_select_next( tree ) {
 
    if( !root.selection && root.visible ) {
       /* nothing is selected, select the first row and exit */
-      hop_tree_row_select( root, root.row );
+      hop_tree_row_select( root, root.row, false );
       return;
    } else {
       var row = root.selection ? root.selection : root.row;
@@ -272,7 +316,7 @@ function hop_tree_row_select_next( tree ) {
       var traverse_lr = function( tree, stop ) {
 	 if( tree.className == "hop-tree-leaf" ) {
 	    if( stop == 1 ) {
-	       hop_tree_row_select( root, tree.row );
+	       hop_tree_row_select( root, tree.row, false );
 	       return -1;
 	    } else 
 	       return (tree.row == row) ? 1 : 0;
@@ -280,7 +324,7 @@ function hop_tree_row_select_next( tree ) {
 	    var body = tree.body.childNodes;
 
 	    if( stop == 1 ) {
-	       hop_tree_row_select( root, tree.row );
+	       if( tree.visible ) hop_tree_row_select( root, tree.row, false );
 	       return -1;
 	    }
 
@@ -308,7 +352,7 @@ function hop_tree_row_select_previous( tree ) {
 
    if( !root.selection && root.visible ) {
       /* nothing is selected, select the first row and exit */
-      hop_tree_row_select( root, root.row );
+      hop_tree_row_select( root, root.row, false );
       return;
    } else {
       var row = root.selection ? root.selection : root.row;
@@ -316,7 +360,7 @@ function hop_tree_row_select_previous( tree ) {
       var traverse_rl = function( tree, stop ) {
 	 if( tree.className == "hop-tree-leaf" ) {
 	    if( stop == 1 ) {
-	       hop_tree_row_select( root, tree.row );
+	       hop_tree_row_select( root, tree.row, false );
 	       return -1;
 	    } else 
 	       return (tree.row == row) ? 1 : 0;
@@ -329,7 +373,7 @@ function hop_tree_row_select_previous( tree ) {
 	    }
 
 	    if( stop == 1 ) {
-	       hop_tree_row_select( root, tree.row );
+	       if( tree.visible ) hop_tree_row_select( root, tree.row, false );
 	       return -1;
 	    }
 
@@ -457,14 +501,14 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    
    td2.className = "hop-tree";
    td2.setAttribute( "nowrap", "nowrap" );
-   td2.onclick = function() {hop_tree_row_toggle_selected( tree, row );}
+   td2.onclick = function( e ) { hop_tree_row_toggle_selected( e, tree, row ); }
    td2.appendChild( folder );
    
    /* the title */
    var td3 = document.createElement( "td" );
    td3.className = "hop-tree";
    td3.setAttribute( "nowrap", "nowrap" );
-   td3.onclick = function() {hop_tree_row_toggle_selected( tree, row );}
+   td3.onclick = function( e ) { hop_tree_row_toggle_selected( e, tree, row ); }
    td3.innerHTML = title;
    
    row.appendChild( td2 );
@@ -530,12 +574,13 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       tree.onunselect = false;
    } else {
       parent.appendChild( tree );
-   
+
       tree.selections = [];
       tree.selection = false;
       tree.multiselect = mu;
       tree.onselect = ons;
       tree.onunselect = onus;
+      tree.allselect = false;
    }
 
    /* populate the tree is not delayed */
@@ -614,7 +659,7 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
    }
 
    td2.className = "hop-tree";
-   td2.onclick = function() {hop_tree_row_toggle_selected( tree, row );}
+   td2.onclick = function( e ) { hop_tree_row_toggle_selected( e, tree, row ); }
 
    row.appendChild( td2 );
    row.value = value;
@@ -622,7 +667,7 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
    /* the content */
    var td3 = document.createElement( "td" );
    td3.classname = "hop-tree";
-   td3.onclick = function() {hop_tree_row_toggle_selected( tree, row );}
+   td3.onclick = function( e ) { hop_tree_row_toggle_selected( e, tree, row ); }
    td3.innerHTML= content;
    
    row.appendChild( td2 );
@@ -675,6 +720,7 @@ function hop_tree_id_reset( id ) {
       return new Array( 0 );
    }
 }
+
 /*---------------------------------------------------------------------*/
 /*    hop_tree_selection ...                                           */
 /*---------------------------------------------------------------------*/

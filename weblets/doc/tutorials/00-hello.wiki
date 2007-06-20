@@ -7,6 +7,27 @@ involves only //server// programming. It teaches how to program a HOP
 ,(<APIREF> (<I> "weblet") "service.wiki") that displays the string
 ++Hello World!++ in web browser.
 
+== Preliminary considerations ==
+
+When developing a Web application it is highly recommended to **disable
+the caching mechanisms** of the browser used for testing. Caching improve
+the overall performance of the browser but it also introduces effects that
+make debugging harder.
+
+
+~~ Some browsers propose settings for augmenting the number of reported
+errors in HTML document, CSS style sheet, and JavaScript code. We recommend 
+to use the maximum verbosity. On [[http://www.mozilla.org|Firefox]] this
+can be accomplished using the fake URL ++about:config++. On this configuration
+panel, select the following options:
+
+<code>
+  javascript.options.strict: true
+  javascript.options.showInConsole: true
+  browser.dom.window.dump.enabled: true
+</code>
+
+
 == Defining the service ==
 
 In this example, we define a ,(<APIREF> "service" "service.wiki") named
