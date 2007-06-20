@@ -24,7 +24,6 @@ panel, select the following options:
 <code>
   javascript.options.strict: true
   javascript.options.showInConsole: true
-  browser.dom.window.dump.enabled: true
 </code>
 
 

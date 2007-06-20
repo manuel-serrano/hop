@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jun 19 12:17:41 2007 (serrano)                */
+/*    Last change :  Wed Jun 20 10:53:31 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -648,6 +648,9 @@ function hop_event_handler_set( svc, evt, success, failure ) {
    
    var handler = function ( http ) {
       http.eventName = evt;
+      if( (http.status == 200) && hop_is_http_json( http ) ) {
+	 http.eventValue = eval( http.responseText );
+      }
       var res = success( http );
 
       if( res ) {
