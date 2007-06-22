@@ -26,6 +26,7 @@ client side programming. They are only supported on server side.])
   (tree-toggle tree)
   (tree-reset! tree)
   (tree-selection tree)
+  (tree-select-all! tree)
 
 
 === Requirements ===
@@ -219,6 +220,15 @@ Select the next element of the tree.
 Select the previous element of the tree.
 </procedure>
 
+=== ++(tree-select-all! tree)++ ===
+<procedure> tree-select-all!
+<arguments>
+^  arguments  ^   type   ^  short description  ^
+| tree        |   tree   | the tree.        |
+</arguments>
+
+Select all the rows of a tree.
+</procedure>
 
 </client>
 

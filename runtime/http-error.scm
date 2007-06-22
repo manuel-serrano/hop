@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Jun 17 10:03:28 2007 (serrano)                */
+;*    Last change :  Fri Jun 22 11:30:00 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -157,6 +157,7 @@
    (apply <TABLE>
 	  :class "error"
 	  :style "width: 50em; border: 1px solid #bbb; background: #fff; -moz-border-radius: 0.5em"
+	  (<COLGROUP> (<COL> :width "0*"))
 	  args))
 
 ;*---------------------------------------------------------------------*/

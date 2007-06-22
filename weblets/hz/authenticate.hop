@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 11:31:17 2006                          */
-;*    Last change :  Sat Dec  9 09:02:20 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Fri Jun 22 11:40:48 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ authentication                                                */
 ;*=====================================================================*/
@@ -66,7 +66,7 @@
       (display cookie p)
       (let ((s (close-output-port p)))
 	 (instantiate::http-response-string
-	    (body (base64-encode s))))))
+	    (body (base64-encode s -1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    login ...                                                        */

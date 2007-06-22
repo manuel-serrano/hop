@@ -143,7 +143,9 @@
 				 ((memq 'callcc attributes)
 				  'call/cc)
 				 (else
-				  (error #f "should not happen " attributes)))
+				  (error 'extract-mapping!
+					 "Illegal attributes "
+					 attributes)))
 			      (lambda (old-mappings)
 				 (append! new-mappings old-mappings))
 			      new-mappings)))

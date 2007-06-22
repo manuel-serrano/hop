@@ -1359,6 +1359,55 @@ function sc_forEach_callcc(proc, l1) { /// export-higher
     sc_map_callcc.apply(this, arguments);
 }
 
+function sc_filter(proc, l1) { /// export-higher
+    var revres = null;
+    while (l1 !== null) {
+        if (proc(l1.car)) revres = sc_cons(l1.car, revres);
+        l1 = l1.cdr;
+    }
+    return sc_destReverseAppend(revres, null);
+}
+
+function sc_filterMap1(proc, l1) {
+    var revres = null;
+    while (l1 !== null) {
+        var tmp = proc(l1.car)
+        if (tmp) revres = sc_cons(tmp, revres);
+        l1 = l1.cdr;
+    }
+    return sc_destReverseAppend(revres, null);
+}
+function sc_filterMap2(proc, l1, l2) {
+    var revres = null;
+    while (l1 !== null) {
+        var tmp = proc(l1.car, l2.car);
+        if(tmp) revres = sc_cons(tmp, revres);
+	l1 = l1.cdr;
+	l2 = l2.cdr
+    }
+    return sc_destReverseAppend(revres, null);
+}
+function sc_filterMap(proc, l1, l2, l3) { /// export-higher
+    if (l2 === undefined)
+	return sc_filterMap1(proc, l1);
+    else if (l3 === undefined)
+	return sc_filterMap2(proc, l1, l2);
+    // else
+    var nbApplyArgs = arguments.length - 1;
+    var applyArgs = new Array(nbApplyArgs);
+    var revres = null;
+    while (l1 !== null) {
+	for (var i = 0; i < nbApplyArgs; i++) {
+	    applyArgs[i] = arguments[i + 1].car;
+	    arguments[i + 1] = arguments[i + 1].cdr;
+	}
+	var tmp = proc.apply(null, applyArgs);
+	if(tmp) revres = sc_cons(tmp, revres);
+    }
+    return sc_destReverseAppend(revres, null);
+}
+
+
 function sc_force(o) { /// export-higher
     return o();
 }
@@ -1649,7 +1698,16 @@ function sc_string2keyword_immutable(o) { /// export
     return new sc_Keyword(o);
 }
 
+// ======================== RegExp ====================
+function sc_pregexpMatch(re, s) { /// export
+   var reg = new RegExp(re);
+   var tmp = s.match(reg);
 
+   if (tmp == null) return false;
+
+   return sc_vector2list(tmp);
+}
+   
 // ======================== I/O =======================
 
 /*------------------------------------------------------------------*/

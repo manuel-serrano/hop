@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Jun 20 09:09:18 2007 (serrano)                */
+/*    Last change :  Fri Jun 22 11:28:27 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -42,7 +42,7 @@ function hop_tree_root( tree ) {
    var aux = tree;
    var root = tree;
 
-   while( aux.className == "hop-tree" ) {
+   while( aux && aux.className == "hop-tree" ) {
       root = aux;
       aux = root.parent;
    }
@@ -116,7 +116,7 @@ function hop_tree_populate( tree ) {
    }
    
    var failure = function( http ) {
-      alert( "*** Hop Tree Error: `" + http.responseText + "'" );
+      hop_default_failure( http );
    }
 
    return hop( tree.proc(), success, failure );
@@ -207,7 +207,7 @@ function hop_tree_row_select( root, row, forcemulti ) {
       hop_tree_row_unselect( root, root.selection );
    }
 
-   if( forcemulti ) root.allselect = true;
+   if( forcemulti ) root.forcemulti = true;
    
    row.className = "hop-tree-row-selected";
    root.value = row.value;
@@ -266,14 +266,7 @@ function hop_tree_row_set_select_all( tree, select ) {
    }
    
    traverse_lr( root );
-   root.allselect = select;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_tree_row_unselect_all ...                                    */
-/*---------------------------------------------------------------------*/
-function hop_tree_row_unselect_all( tree ) {
-   hop_tree_row_set_select_all( tree, false );
+   root.forcemulti = select;
 }
 
 /*---------------------------------------------------------------------*/
@@ -289,8 +282,8 @@ function hop_tree_row_select_all( tree ) {
 function hop_tree_row_toggle_selected( event, tree, row ) {
    var root = hop_tree_root( tree );
 
-   if( root.allselect == true ) {
-      hop_tree_row_unselect_all( tree );
+   if( (root.forcemulti == true) && !event.shiftKey ) {
+      hop_tree_reset( tree );
    }
 
    if( row.className == "hop-tree-row-selected" ) {
@@ -306,6 +299,8 @@ function hop_tree_row_toggle_selected( event, tree, row ) {
 function hop_tree_row_select_next( tree ) {
    var root = hop_tree_root( tree );
 
+   if( !root ) return;
+   
    if( !root.selection && root.visible ) {
       /* nothing is selected, select the first row and exit */
       hop_tree_row_select( root, root.row, false );
@@ -350,6 +345,8 @@ function hop_tree_row_select_next( tree ) {
 function hop_tree_row_select_previous( tree ) {
    var root = hop_tree_root( tree );
 
+   if( !root ) return;
+   
    if( !root.selection && root.visible ) {
       /* nothing is selected, select the first row and exit */
       hop_tree_row_select( root, root.row, false );
@@ -580,7 +577,7 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       tree.multiselect = mu;
       tree.onselect = ons;
       tree.onunselect = onus;
-      tree.allselect = false;
+      tree.forcemulti = false;
    }
 
    /* populate the tree is not delayed */
@@ -692,20 +689,24 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
 /*    hop_tree_reset ...                                               */
 /*---------------------------------------------------------------------*/
 function hop_tree_reset( tree ) {
-   var sel = tree.selections;
-   var len = sel.length;
-   var i;
-   res = new Array( len );
+   if( !tree ) {
+      return false;
+   } else {
+      var sel = tree.selections;
+      var len = sel.length;
+      var i;
+      res = new Array( len );
 
-   for( i = 0; i < len; i++ ) {
-      res[ i ] = sel[ i ].value;
-   }
+      for( i = 0; i < len; i++ ) {
+	 res[ i ] = sel[ i ].value;
+      }
    
-   for( i = 0; i < len; i++ ) {
-      hop_tree_row_unselect( tree, sel[ 0 ] );
-   }
+      for( i = 0; i < len; i++ ) {
+	 hop_tree_row_unselect( tree, sel[ 0 ] );
+      }
    
-   return res;
+      return res;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -727,8 +728,8 @@ function hop_tree_id_reset( id ) {
 function hop_tree_selection( tree ) {
    var sel = tree.selections;
    var len = sel.length;
+   var res = new Array( len );
    var i;
-   res = new Array( len );
 
    for( i = 0; i < len; i++ ) {
       res[ i ] = sel[ i ].value;

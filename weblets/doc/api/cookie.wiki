@@ -9,13 +9,13 @@ modifying, and removing cookies.
 
 === Server ===
 
-  (http-cookie-get string)
+  (http-cookie-get request name [path] [domain])
 
 === Client ===
 
-  (cookie-get string)
-  (cookie-set! string val)
-  (cookie-remove! string)
+  (cookie-get name)
+  (cookie-set! name val [path] [domain] [expires])
+  (cookie-remove! name)
 
 == Examples ==
 <example>cookie</example>
@@ -50,7 +50,7 @@ This function retrieves the cookie information for ++name++ in the current
 document.
 </procedure>
 
-=== ++(cookie-set! name value path domain expires)++ ===
+=== ++(cookie-set! name value [path] [domain] [expires])++ ===
 <procedure> cookie-set!
 <arguments>
 ^  arguments       ^   type           ^  short description              ^
