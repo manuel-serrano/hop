@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Jun 21 14:39:28 2007 (serrano)                */
+/*    Last change :  Fri Jun 22 16:15:45 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -616,7 +616,8 @@ function hop_innerHTML_set( nid, html ) {
    }
    
    el.innerHTML = html;
-   hop_node_eval( el, html );
+   if( (html instanceof String) || (typeof html == "string") )
+      hop_node_eval( el, html );
 }
 
 /*---------------------------------------------------------------------*/
@@ -643,9 +644,9 @@ function hop_outerHTML_set( nid, html ) {
       p = nid.parentNode;
    }
    
-
    p.innerHTML = html;
-   hop_node_eval( p, html );
+   if( (html instanceof String) || (typeof html == "string") )
+      hop_node_eval( p, html );
 }
 
 /*---------------------------------------------------------------------*/

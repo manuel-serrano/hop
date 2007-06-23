@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Sat Oct 14 17:14:10 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Fri Jun 22 15:14:20 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
 ;*=====================================================================*/
@@ -162,12 +162,9 @@
 				       i))))
 			  (c (cond
 				((assq 'category i) => cadr)
-				(else (error
-				       'hz/install-ondemand
-				       "Illegal info file, missing category"
-				       i))))
+				(else "misc")))
 			  (n (hz-info->dbhz-args i
-						 #f
+						 c
 						 (number->string
 						  (date->seconds
 						   (current-date)))
@@ -179,6 +176,9 @@
 			    (hz-db-remove-weblet db o)))
 		      (apply hz-db-add-entry db n)
 		      (hz-db-close db)
+		      (let ((f (make-file-name hzdir (string-append name ".hop"))))
+			 (when (file-exists? f)
+			    (hop-load f)))
 		      #t)))))
       :header (if (http-request? req) (http-request-header req) '()))
    #t)

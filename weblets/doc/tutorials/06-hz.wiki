@@ -166,6 +166,7 @@ the definition of the modules ++roman++ and ++roman-convert++.
     (name "roman")
     (author "M. Serrano")
     (version "0.0.1")
+    (category "game")
     (sdescr "HOP weblet for translating roman to arabic numbers")
   )
 </code>

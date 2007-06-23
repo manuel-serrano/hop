@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Mon Jun 18 14:48:00 2007 (serrano)                */
+;*    Last change :  Fri Jun 22 15:10:31 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -118,10 +118,15 @@
 ;*    hz-direct-install-tab ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (hz-direct-install-tab)
+   
   (define (find-weblet-name url)
     (let* ((guess (prefix (basename url)))
-	   (index (string-index guess "-")))
-      (if (and (fixnum? index) (>fx index 0))
+	   (index (string-index-right guess "-"))
+	   (len (string-length guess)))
+      (if (and (fixnum? index)
+	       (>fx index 0)
+	       (<fx index (-fx len 1))
+	       (char-numeric? (string-ref guess (+fx index 1))))
 	  (substring guess 0 index)
 	  guess)))
   
@@ -131,7 +136,7 @@
 					  (find-weblet-name url)
 					  url))
 	(<B> "Weblet URL: ")
-	(<INPUT> :size 40 :name "url")
+	(<INPUT> :size 60 :name "url")
 	(<BR>)
         (<BUTTON> :onclick ~(submit) "Install"))))
 
@@ -272,7 +277,7 @@
 								    icon)))
 					 (map (lambda (e)
 						 (<TRLEAF>
-						    :file ifile
+						    :icon ifile
 						    (<SPAN>
 						       :class "weblet"
 						       (dbhz-name e)

@@ -1699,9 +1699,52 @@ function sc_string2keyword_immutable(o) { /// export
 }
 
 // ======================== RegExp ====================
+function sc_pregexp(re) { /// export
+   return new RegExp(re);
+}
+
 function sc_pregexpMatch(re, s) { /// export
-   var reg = new RegExp(re);
-   var tmp = s.match(reg);
+   var reg = ((re instanceof RegExp) ? re : new RegExp(re));
+   var tmp = re.exec(s);
+
+   if (tmp == null) return false;
+
+   return sc_vector2list(tmp);
+}
+   
+function sc_pregexpReplace(re, s1, s2) { /// export
+   var reg;
+
+   if (re instanceof RegExp) {
+      if (re.global)
+	 reg = re;
+      else
+	 reg = new RegExp(re);
+   } else {
+	 reg = new RegExp(re.source);
+   }
+
+   return s1.replace(reg, s2);
+}
+   
+function sc_pregexpReplaceAll(re, s1, s2) { /// export pregexp-replace*
+   var reg;
+
+   if (re instanceof RegExp) {
+      if (re.global)
+	 reg = re;
+      else
+	 reg = new RegExp(re.source, "g");
+   } else {
+      reg = new RegExp(re, "g");
+   }
+
+   return s1.replace(reg, s2);
+}
+
+function sc_pregexpSplit(re,s) { /// export
+   var reg = ((re instanceof RegExp) ? re : new RegExp(re));
+   var tmp = s.split(reg);
 
    if (tmp == null) return false;
 
