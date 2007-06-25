@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun Jun 17 12:21:24 2007 (serrano)                */
+;*    Last change :  Mon Jun 25 15:37:55 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -114,7 +114,6 @@
 				      ") " host ":" port "\n")
 			    (http-response r socket))
 			   (else
-			    (tprint "else...")
 			    ;; This is an unrecoverable error
 			    (http-response (http-remote-error host e) socket))))
 		     ;; the header and the request

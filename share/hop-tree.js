@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Fri Jun 22 11:28:27 2007 (serrano)                */
+/*    Last change :  Sun Jun 24 14:05:08 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -695,7 +695,7 @@ function hop_tree_reset( tree ) {
       var sel = tree.selections;
       var len = sel.length;
       var i;
-      res = new Array( len );
+      var res = new Array( len );
 
       for( i = 0; i < len; i++ ) {
 	 res[ i ] = sel[ i ].value;

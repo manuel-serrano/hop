@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jun 22 16:15:45 2007 (serrano)                */
+/*    Last change :  Sun Jun 24 18:33:25 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -631,7 +631,7 @@ function hop_outerHTML_set( nid, html ) {
       el = document.getElementById( nid );
       
       if( el == undefined ) {
-	 alert("*** ERROR:innerHTML-set! -- cannot find element \""
+	 alert("*** ERROR:outerHTML-set! -- cannot find element \""
 	       + nid + "\"");
 	 return;
       }

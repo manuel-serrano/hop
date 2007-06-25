@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jun 22 11:30:00 2007 (serrano)                */
+;*    Last change :  Sun Jun 24 15:01:23 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -125,7 +125,7 @@
 			    (style "" string)
 			    (valign 'middle)
 			    body)
-   (let* ((default (format "vertical-align: ~a; text-align: left; font-weight: bold"
+   (let* ((default (format "vertical-align: ~a; text-align: left;"
 			   valign))
 	  (add (cond
 		  ((not class)
@@ -205,7 +205,7 @@
 			     (<EIMG> :src "icons/error2.png"))
 			  (<ETD>
 			     (<TABLE> :width "100%"
-				(<TR> (<ETD> :class "title" "File not found"))
+				(<TR> (<ETD> :class "title" "File not found!"))
 				(<TR> (<ETD> :class "msg"
 					 (<SPAN> :class "filenotfound"
 					    file)))))))))))))
