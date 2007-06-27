@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Wed Dec  6 09:59:53 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue Jun 26 10:14:39 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
 ;*=====================================================================*/
@@ -54,7 +54,7 @@
    (<INPUT>
       :class "pref_saved"
       :type "text"
-      :size "90%"
+      :size "100%"
       :value (get)
       :title (string-append title " (hit [return] to validate)")
       :onkeyup (format "{ if ( event.keyCode == 13 ) {
@@ -87,7 +87,8 @@
    (let ((checked (get))
 	 (name (symbol->string (gensym))))
       (<TABLE>
-	 (<COLGROUP> :span 2 :width "0*")
+	 (<COLGROUP>
+	    (<COL> :span 2 :width "0*"))
 	 (<TR>
 	    (<TD>
 	       (<INPUT>

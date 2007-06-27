@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Mon Apr 23 07:03:51 2007 (serrano)                */
+;*    Last change :  Wed Jun 27 05:49:45 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -104,9 +104,11 @@
 ;*    install-autoload-weblets! ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (install-autoload-weblets! dirs)
+   
    (define (install-autoload-prefix path url)
       (hop-verb 2 "Setting autoload " path " on " url "\n")
       (autoload path (autoload-prefix url)))
+   
    (define (is-service-base? req)
       (with-access::http-request req (path)
 	 (let ((base (hop-service-base)))
@@ -117,6 +119,7 @@
 			(and (=fx lp (+fx lb 1))
 			     (char=? (string-ref path (-fx lp 1))
 				     #\/))))))))
+   
    (define (warn name opath npath)
       (when (> (bigloo-warning) 1)
 	 (warning name
@@ -124,6 +127,7 @@
 		   "autoload already installed on:\n  ~a\nignoring:\n  ~a"
 		   opath
 		   npath))))
+   
    (define (maybe-autoload x)
       (let ((cname (assq 'name x)))
 	 (if (pair? cname)
@@ -149,14 +153,14 @@
 	     (warning 'autoload-weblets
 		      "Illegal weblet etc/weblet.info file"
 		      x))))
+   
    ;; since autoload are likely to be installed before the scheduler
    ;; starts, the lock above is unlikely to be useful.
    (with-lock *weblet-lock*
       (lambda ()
 	 (set! *weblet-autoload-dirs* dirs)
 	 (for-each (lambda (dir)
-		      (for-each maybe-autoload
-				(find-weblets-in-directory dir)))
+		      (for-each maybe-autoload (find-weblets-in-directory dir)))
 		   dirs))))
 
 ;*---------------------------------------------------------------------*/
@@ -225,7 +229,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    autoload-filter ...                                              */
 ;*    -------------------------------------------------------------    */
-;*    This filter has to be loaded before the service in charge        */
+;*    This filter has to be loaded before the filtre in charge         */
 ;*    of the services. Otherwise, the autoload mechanism is            */
 ;*    broken because concurrent accesses to the AUTOLOAD table         */
 ;*    and the service table.                                           */
@@ -245,6 +249,9 @@
 		    ;; parallel requests to the autoloaded service will raise
 		    ;; a service not found error
 		    (autoload-load! req (car al))
+		    ;; add all the file associated with the autoload in
+		    ;; the service path table (see __hop_service).
+		    (service-etc-path-table-fill! (%autoload-path (car al)))
 		    ;; remove the autoaload (once loaded)
 		    (mutex-lock! *autoload-mutex*)
 		    (set! *autoloads* (remq! (car al) *autoloads*))

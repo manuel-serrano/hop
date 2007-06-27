@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun May 27 08:07:19 2007 (serrano)                */
+;*    Last change :  Wed Jun 27 05:44:17 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -17,7 +17,8 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_http-lib
-	    __hop_misc)
+	    __hop_misc
+	    __hop_service)
    
    (export  (users-close!)
 	    (add-user! ::bstring . opt)
@@ -248,10 +249,13 @@
 (define (user-authorized-path? user path)
    (define (path-member path dirs)
       (any? (lambda (d) (substring-at? path d 0)) dirs))
-   (and (with-access::user user (directories)
-	   (or (eq? directories '*)
-	       (path-member (file-name-unix-canonicalize path)
-			    directories)))
+   (and (with-access::user user (directories services)
+	   (let ((cpath (file-name-unix-canonicalize path)))
+	      (or (eq? directories '*)
+		  (path-member cpath directories)
+		  (let ((service-path (etc-path->service cpath)))
+		     (and (symbol? service-path)
+			  (user-authorized-service? user service-path))))))
 	(let ((hopaccess (find-hopaccess path)))
 	   (or (not hopaccess)
 	       (let ((access (with-input-from-file hopaccess read)))

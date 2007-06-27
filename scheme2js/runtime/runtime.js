@@ -1705,11 +1705,19 @@ function sc_pregexp(re) { /// export
 
 function sc_pregexpMatch(re, s) { /// export
    var reg = ((re instanceof RegExp) ? re : new RegExp(re));
-   var tmp = re.exec(s);
+   var tmp = reg.exec(s);
 
    if (tmp == null) return false;
 
-   return sc_vector2list(tmp);
+    var res = null;
+    for (var i = tmp.length-1; i >= 0; i--) {
+       if (tmp[i] != null) {
+	  res = sc_cons(tmp[i], res);
+       } else {
+	  res = sc_cons(false, res);
+       }
+    }
+    return res;
 }
    
 function sc_pregexpReplace(re, s1, s2) { /// export

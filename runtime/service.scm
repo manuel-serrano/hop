@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Jun  7 10:07:30 2007 (serrano)                */
+;*    Last change :  Wed Jun 27 06:43:26 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -42,12 +42,17 @@
 	    (register-service!::hop-service ::hop-service)
 	    (expired-service-path?::bool ::bstring)
 	    (service-resource::bstring ::hop-service #!optional file)
-	    (service-base-url::bstring ::hop-service ::http-request)))
+	    (service-base-url::bstring ::hop-service ::http-request)
+	    (service-etc-path-table-fill! ::bstring)
+	    (etc-path->service ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
 ;*---------------------------------------------------------------------*/
+(define *service-mutex* (make-mutex))
+(define *expiration-mutex* (make-mutex))
 (define *service-table-mutex* (make-mutex "hop-service-table"))
+(define *service-etc-table-mutex* (make-mutex "hop-service-etc-table"))
 (define *service-serialize-mutex* (make-mutex "hop-service-serialize"))
 
 ;*---------------------------------------------------------------------*/
@@ -215,11 +220,6 @@
 			       (exp-list->eval-string exp)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    *service-mutex* ...                                              */
-;*---------------------------------------------------------------------*/
-(define *service-mutex* (make-mutex))
-
-;*---------------------------------------------------------------------*/
 ;*    *service-table*                                                  */
 ;*---------------------------------------------------------------------*/
 (define *service-table*
@@ -376,11 +376,6 @@
    (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
-;*    *expiration-mutex* ...                                           */
-;*---------------------------------------------------------------------*/
-(define *expiration-mutex* (make-mutex))
-
-;*---------------------------------------------------------------------*/
 ;*    expired-service-path? ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (expired-service-path? path)
@@ -415,3 +410,31 @@
       (format "~a://~a:~a~a/"
 	      (if (eq? scheme '*) "http" scheme) host port
 	      (service-resource svc))))
+
+;*---------------------------------------------------------------------*/
+;*    *etc-table*                                                      */
+;*---------------------------------------------------------------------*/
+(define *etc-table*
+   (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    service-etc-path-table-fill! ...                                 */
+;*---------------------------------------------------------------------*/
+(define (service-etc-path-table-fill! file)
+   (with-lock *service-etc-table-mutex*
+      (lambda ()
+	 (let ((etc (make-file-name (dirname file) "etc"))
+	       (svc (string->symbol (prefix (basename file)))))
+	    (when (directory? etc)
+	       (let loop ((dir (file-name-unix-canonicalize etc)))
+		  (for-each (lambda (f)
+			       (let ((path (make-file-name dir f)))
+				  (hashtable-put! *etc-table* path svc)
+				  (when (directory? path) (loop path))))
+			    (directory->list dir))))))))
+
+;*---------------------------------------------------------------------*/
+;*    etc-path->service ...                                            */
+;*---------------------------------------------------------------------*/
+(define (etc-path->service path)
+   (hashtable-get *etc-table* path))

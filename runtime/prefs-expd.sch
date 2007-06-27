@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/prefs.sch                       */
+;*    serrano/prgm/project/hop/runtime/prefs-expd.sch                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Wed Dec  6 18:12:39 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue Jun 26 10:12:48 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
 ;*=====================================================================*/
@@ -87,14 +87,12 @@
    
    (define (make-edit id clauses)
       `(define (,id #!key onclick)
-	  (<TABLE>
-	     :class "preferences"
+	  (<TABLE> :class "preferences"
 	     (<COLGROUP>
-		(<COL> :width "30%" :class "col1")
-		(<COL> :class "col2"))
+		(<COL> :width "0*" :class "col1")
+		(<COL> :width "0*" :class "col2"))
 	     (when onclick
-		(<TR> (<TD>
-			 :class "save"
+		(<TR> (<TD> :class "save"
 			 :colspan 2
 			 :title "Save current preferences"
 			 (<BUTTON>
