@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jun 29 12:51:50 2007 (serrano)                */
+;*    Last change :  Fri Jun 29 12:58:57 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -112,7 +112,6 @@
 			(let ((gw (make-file-path (hop-share-directory)
 						  "flash"
 						  "JavaScriptFlashGateway.js")))
-			   (tprint "gw=" gw)
 			   (set! res (cons (jscript gw inl) res))))))
 	     (js (let ((p (make-file-name (hop-share-directory)
 					  (string-append f ".js"))))
@@ -122,7 +121,7 @@
 					   (string-append f ".scm"))))
 		     (when (file-exists? p)
 			(set! res (cons (jscript p inl) res)))))
-	     (css (let ((p (make-file-name (hop-share-directory)
+	     (ss (let ((p (make-file-name (hop-share-directory)
 					   (string-append f ".css"))))
 		     (when (file-exists? p)
 			(set! res (cons (css p inl) res)))))

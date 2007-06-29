@@ -7,7 +7,8 @@
       ~(begin
 	  (define snd1 #f)
 	  (define snd2 #f)
-	  (define sound-dir (service-resource doc "etc/")))
+	  (define sound-dir (string-append (hop_weblets_directory)
+					   "/doc/etc/")))
       (<H2> "Multiple sounds")
       (<TABLE>
 	 (<TR>

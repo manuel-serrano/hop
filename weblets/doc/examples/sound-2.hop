@@ -8,7 +8,8 @@
 	 :title "Testing Sound"
 	 :include "hop-sound" "hop-slider")
       (<BODY>
-	 ~(define snd (make-sound (service-resource doc "etc/sound2.mp3")
+	 ~(define snd (make-sound (string-append (hop_weblets_directory)
+						 "/doc/etc/sound2.mp3")
 				  :stream #f
 				  :onload (lambda (_)
 					     (slider-value-set! $vol 100)

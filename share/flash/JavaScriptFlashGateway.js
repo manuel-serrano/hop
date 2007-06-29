@@ -155,6 +155,16 @@ FlashProxy.callJS = function()
 }
 
 /**
+ * This is the function that proxies function calls from Flash to JavaScript.
+ * It is called implicitly.
+ */
+FlashProxy.callComplete = function()
+{
+    return;	// [MS] To avoid an error (anyway, we don't utilize AS->JS)
+}
+
+   
+/**
  * The FlashSerializer serializes JavaScript variables of types object, array, string,
  * number, date, boolean, null or undefined into XML. 
  */
