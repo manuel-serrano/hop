@@ -417,6 +417,8 @@ FlashTag.prototype.toString = function()
         flashTag += 'bgcolor="#'+this.bgcolor+'" ';
         flashTag += 'width="'+this.width+'" ';
         flashTag += 'height="'+this.height+'" ';
+        flashTag += 'left="0" top="0" ';
+	flashTag += 'style="visibility:hidden; position: absolute" ';
         flashTag += 'type="application/x-shockwave-flash" ';
         if (this.flashVars != null)
         {
