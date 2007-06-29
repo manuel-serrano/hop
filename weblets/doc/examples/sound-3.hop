@@ -7,8 +7,7 @@
       ~(begin
 	  (define snd1 #f)
 	  (define snd2 #f)
-	  (define sound-dir
-	     (string-append (hop_weblets_directory) "/doc/etc/")))
+	  (define sound-dir (service-resource doc "etc/")))
       (<H2> "Multiple sounds")
       (<TABLE>
 	 (<TR>
@@ -17,27 +16,27 @@
 	       (<BUTTON>
 		  :onclick
 		  ~(begin
-		      (set! snd1 (hop-make-sound
+		      (set! snd1 (make-sound
 				  (string-append sound-dir "sound1.mp3")
 				  :onload (lambda (_)
-					     (hop-sound-play snd1 3))
+					     (sound-play snd1 3))
 				  :onplayed (lambda ()
 					       (alert "Sound 1 has been played")))))
 		  "Load & Play (x3)"))
 	    (<TD>
-	       (<BUTTON> "Stop" :onclick ~(hop-sound-stop snd1))))
+	       (<BUTTON> "Stop" :onclick ~(sound-stop snd1))))
 	 (<TR>
 	    (<TH> "Sound 2")
 	    (<TD>
 	       (<BUTTON> 
 		  :onclick
-		  ~(set! snd2 (hop-make-sound
+		  ~(set! snd2 (make-sound
 			       (string-append sound-dir "sound2.mp3")
 			       :stream #f
 			       :onload (lambda(_)
 					  (alert "Sound 2 has been loaded"))))
 		  "Load"))
 	    (<TD>
-	       (<BUTTON> "Play"  :onclick ~(hop-sound-play snd2))
-	       (<BUTTON> "Pause" :onclick ~(hop-sound-pause snd2))
-	       (<BUTTON> "Stop"  :onclick ~(hop-sound-stop snd2)))))))
+	       (<BUTTON> "Play"  :onclick ~(sound-play snd2))
+	       (<BUTTON> "Pause" :onclick ~(sound-pause snd2))
+	       (<BUTTON> "Stop"  :onclick ~(sound-stop snd2)))))))

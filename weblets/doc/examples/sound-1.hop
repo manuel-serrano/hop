@@ -6,6 +6,5 @@
   (<H2> "Play a sound")
   (<BUTTON> "Play"
 	    :onclick
-	    ~(hop-make-sound (string-append (hop_weblets_directory)
-					    "/doc/etc/sound1.mp3")
-			     :stream #t))))
+	    ~(make-sound (service-resource doc "etc/sound1.mp3")
+			 :stream #t))))

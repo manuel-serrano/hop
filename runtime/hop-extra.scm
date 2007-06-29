@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu May 10 14:53:18 2007 (serrano)                */
+;*    Last change :  Fri Jun 29 12:51:50 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -104,30 +104,35 @@
       (<LINK> :rel "stylesheet" :type "text/css" :inline inl :href p))
    
    (define (incl f inl)
-      (let ((js (let ((p (make-file-name (hop-share-directory)
-					 (string-append f ".js"))))
-		   (if (file-exists? p)
-		       (jscript p inl)
-		       (let ((p (make-file-name (hop-share-directory)
-						(string-append f ".scm"))))
-			  (when (file-exists? p)
-			     (jscript p inl))))))
-	    (css (let ((p (make-file-name (hop-share-directory)
-					  (string-append f ".hss"))))
-		    (if (file-exists? p)
-			(css p inl)
-			(let ((p (make-file-name (hop-share-directory)
-						 (string-append f ".css"))))
-			   (when (file-exists? p)
-			      (css p inl)))))))
-	 
-	 (if js
-	     (if css
-		 (list js css)
-		 (list js))
-	     (if css
-		 (list css)
-		 (error '<HEAD> "Can't find include file" f)))))
+      (let* ((res '())
+	     (gwf (let ((p (make-file-path (hop-share-directory)
+					   "flash"
+					   (string-append f ".swf"))))
+		     (when (file-exists? p)
+			(let ((gw (make-file-path (hop-share-directory)
+						  "flash"
+						  "JavaScriptFlashGateway.js")))
+			   (tprint "gw=" gw)
+			   (set! res (cons (jscript gw inl) res))))))
+	     (js (let ((p (make-file-name (hop-share-directory)
+					  (string-append f ".js"))))
+		    (when (file-exists? p)
+		       (set! res (cons (jscript p inl) res)))))
+	     (scm (let ((p (make-file-name (hop-share-directory)
+					   (string-append f ".scm"))))
+		     (when (file-exists? p)
+			(set! res (cons (jscript p inl) res)))))
+	     (css (let ((p (make-file-name (hop-share-directory)
+					   (string-append f ".css"))))
+		     (when (file-exists? p)
+			(set! res (cons (css p inl) res)))))
+	     (hss (let ((p (make-file-name (hop-share-directory)
+					   (string-append f ".hss"))))
+		     (when (file-exists? p)
+			(set! res (cons (css p inl) res))))))
+	 (if (null? res)
+	     (error '<HEAD> "Can't find include file" f)
+	     res)))
    
    (let loop ((a args)
 	      (mode #f)

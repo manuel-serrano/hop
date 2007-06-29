@@ -75,7 +75,7 @@ function dom_create( tag, args ) {
 /*    dom_add_head_script ...                                          */
 /*---------------------------------------------------------------------*/
 function dom_add_head_script( pathname, id ) {
-   var head = document.getElementsByTagName( "head" )[0];
+   var head = document.getElementsByTagName( "head" )[ 0 ];
    var script = document.createElement( 'script' );
 
    script.type = 'text/javascript';

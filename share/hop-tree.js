@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Sun Jun 24 14:05:08 2007 (serrano)                */
+/*    Last change :  Wed Jun 27 10:16:32 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -642,7 +642,7 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
    var td2 = document.createElement( "td" );
    
    /* the icon assiocated with the node */
-   if( icon ) {
+   if( icon && (icon != -1) ) {
       var fimg = document.createElement( "img" );
       
       if( (icon instanceof String) || (typeof icon == "string") ) {
