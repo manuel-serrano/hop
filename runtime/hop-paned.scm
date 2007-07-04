@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jun  8 08:04:10 2007 (serrano)                */
+;*    Last change :  Tue Jul  3 17:48:59 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -121,8 +121,7 @@
 		    (else
 		     ""))
 		 " } )"))
-      (display " </script>" p)
-      (display "</span>" p)))
+      (display " </script></div>" p)))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-pan ...                                         */
@@ -135,6 +134,6 @@
       (when (string? klass)
 	 (display " " p)
 	 (display klass p))
-      (display "' style='visibility: hidden'>" p)
+      (display "'>" p)
       (xml-write body p encoding backend)
       (display "</div>" p)))

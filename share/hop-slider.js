@@ -3,24 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Tue Nov 14 13:19:47 2006 (serrano)                */
-/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    Last change :  Wed Jul  4 09:27:22 2007 (serrano)                */
+/*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
-
-/*---------------------------------------------------------------------*/
-/*    hop_slider_mousemove ...                                         */
-/*---------------------------------------------------------------------*/
-function hop_slider_mousemove( e, slider ) {
-   var val;
-
-/*    val = ((e.clientX - hop_element_x( slider )) / slider.offsetWidth) */
-/*       * (slider.max - slider.min);                                  */
-   val = ((hop_event_mouse_x( e ) - hop_element_x( slider )) / slider.offsetWidth)
-      * (slider.max - slider.min);
-   hop_slider_value_set( slider, Math.round( val ) + slider.min );
-}
 
 /*---------------------------------------------------------------------*/
 /*    hop_slider_value_set ...                                         */
@@ -33,21 +20,29 @@ function hop_slider_value_set( slider, value ) {
    }
 
    if( slider.value != value ) {
-      var curw = slider.cursor.width;
-      var val = Math.round( ((value-slider.min)/(slider.max-slider.min))*(100-curw) );
-      
+      var v = (value - slider.min) / (slider.max - slider.min);
+      var w = slider.clientWidth - slider.cursor.clientWidth;
+
       slider.value = value;
 
-      slider.line1.style.width = val + "%";
-      slider.line2.style.width = (100 - curw - val) + "%";
+      node_style_set( slider.line1, "width", Math.round(v * w) + "px" );
+      node_style_set( slider.line2, "width", Math.round((1-v) * w) + "px");
 
       if( slider.cap )
 	 slider.cap.innerHTML = value;
 	 
-      if( slider.onchange != undefined ) {
+      if( slider.onchange != undefined )
 	 slider.onchange();
-      }
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_slider_mousemove ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_slider_mousemove( e, slider ) {
+   var val = ((hop_event_mouse_x( e ) - hop_element_x( slider ))
+	      / slider.offsetWidth) * (slider.max - slider.min);
+   hop_slider_value_set( slider, Math.round( val ) + slider.min );
 }
 
 /*---------------------------------------------------------------------*/
@@ -202,11 +197,7 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    
    // line event handling
    var onlineclick = function( e ) {
-      var val;
-
-/*       val = ((e.clientX - hop_element_x( slider )) / slider.offsetWidth) * 100; */
-      val = ((hop_event_mouse_x( e ) - hop_element_x( slider )) / slider.offsetWidth) * 100;
-      hop_slider_value_set( slider, val );
+      hop_slider_mousemove( e, slider );
    }
 
    hop_add_event_listener( line1, "click", onlineclick );

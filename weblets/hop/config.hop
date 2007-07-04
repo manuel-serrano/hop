@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Thu Jun  7 07:40:40 2007 (serrano)                */
+;*    Last change :  Mon Jul  2 11:44:14 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop configuration                                                */
@@ -16,6 +16,7 @@
    (export (hop-date)
 	   (hop-author)
 	   (hop-builtin-weblets)
+	   (hop-view-by-category?)
 	   (hop-dir)))
 
 ;*---------------------------------------------------------------------*/
@@ -28,8 +29,14 @@
 ;*    hop-builtin-weblets ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-builtin-weblets
-   '("wizard" "epassword" "hz" "doc" "info" "webfilter" "hopsh"))
-   
+   '("wizard" "epassword" "hz" "doc" "info" "webfilter" "hopsh" "test"))
+
+;*---------------------------------------------------------------------*/
+;*    hop-view-by-category? ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-view-by-category?
+   #f)
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-dir                                                          */
 ;*---------------------------------------------------------------------*/

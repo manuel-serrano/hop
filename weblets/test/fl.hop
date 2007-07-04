@@ -1,0 +1,49 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/fl.hop                     */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
+;*    Last change :  Mon Jul  2 14:20:42 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Fold lists                                                       */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-fl
+   (import weblet_test)
+   (export test/fl))
+
+;*---------------------------------------------------------------------*/
+;*    test/fl ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-service (test/fl)
+   (<TEST-HTML> :include "hop-foldlist"
+      (<DIV> :class "comment"
+	 "This test checks fold lists. If the test succeeds you should
+be able to fold/unfold the nodes of the following lists.")
+      (<H3> "A static list with standard icons")
+      (<FL>
+	 (<FLITEM>
+	    (<FLHEAD> "One") [This is the content of the first list item])
+	 (<FLITEM>
+	    (<FLHEAD> "Two") :open #t [This one is open by default])
+	 (<FLITEM>
+	    (<FLHEAD> "Three")
+	    [This is the content of the third list item]
+	    (<TABLE>
+	       (map (lambda (x)
+		       (<TR> (<TD> x) (<TD> (* x x))))
+		    (iota 10)))))
+      (<H3> "A dynamic list with standard icons")
+      (<FL>
+	 (<FLITEM>
+	    (<FLHEAD> "Click me")
+	    (let ((c 0))
+	       (<DELAY>
+		  (lambda ()
+		     (set! c (+ c 1))
+		     (format "this item has been opened ~a times" c))))))))
+      

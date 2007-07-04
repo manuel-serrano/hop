@@ -1,0 +1,81 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/event.hop                  */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
+;*    Last change :  Tue Jul  3 08:27:55 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Testing events                                                   */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-event
+   (import weblet_test)
+   (export test/events))
+
+;*---------------------------------------------------------------------*/
+;*    test/events ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (test/events)
+   (<TEST-HTML>
+      (<DIV> :class "comment"
+	 "This test checks events. If the test succeeds you should see
+notification when the mouse enters and leaves the area above. You should
+also see a notification for mouse moves and clicks.")
+      (let* ((b (<DIV> :align "center"
+		   :style "border: 1px solid black; width 64px; height: 64px"
+		   "I'm a sensitive region"))
+	     (b2
+	      (<DIV> :style "padding-top: 3ex"
+		 ~(add-event-listener! $b
+				       "mouseover"
+				       (lambda (e)
+					  (mouse-pos "mouse entered" e)
+					  (add-event-listener!
+					   document
+					   "mousemove"
+					   mouse-move
+					   #f))
+				       #f)
+		 ~(add-event-listener! $b
+				       "mouseout"
+				       (lambda (e)
+					  (mouse-pos "mouse leaved" e)
+					  (remove-event-listener!
+					   document
+					   "mousemove"
+					   mouse-move
+					   #f))
+				       #f)
+		 ~(add-event-listener! $b
+				       "mousedown"
+				       (lambda (e)
+					  (mouse-click "mouse down" e))
+				       #f)
+		 ~(add-event-listener! $b
+				       "mouseup"
+				       (lambda (e)
+					  (mouse-click "mouse up" e))
+				       #f)
+		 "&nbsp;")))
+	 (<DIV>
+	    ~(define (mouse-move e)
+		(mouse-pos "mouve move" e))
+	    ~(define (mouse-pos msg e)
+		(innerHTML-set!
+		 $b2
+		 (string-append msg " "
+				(number->string (event-mouse-x e))
+				" x "
+				(number->string (event-mouse-y e)))))
+	    ~(define (mouse-click msg e)
+		(innerHTML-set!
+		 $b2
+		 (string-append msg " "
+				(number->string (event-mouse-button e)))))
+	    b
+	    b2))))
+      

@@ -15,6 +15,6 @@
 	    (apply map (lambda (v1 v2 v3)
 			  (<TR> (<TD> v1) (<TD> v2) (<TD> v3)))
 		   (map cdr vals)))
-	 (<P> [Click the header of the table above. Note that the language
+	 (<P> [Click the headers of the table above. Note that the language
 		     column is not sortted lexicographically. The order is
 		     ,(<TT> "hop > lisp > dylan").]))))

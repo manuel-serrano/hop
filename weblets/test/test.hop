@@ -1,0 +1,87 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/test.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Wed Jul  4 05:44:03 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP client side testing                                          */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test
+   (import weblet_test-image
+	   weblet_test-event
+	   weblet_test-fl
+	   weblet_test-tree
+	   weblet_test-notepad
+	   weblet_test-paned
+	   weblet_test-busy
+	   weblet_test-sorttable
+	   weblet_test-slider)
+   (export (<TEST-HTML> . args)))
+
+;*---------------------------------------------------------------------*/
+;*    hoprc-dir ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hoprc-dir
+   (make-file-path (getenv "HOME") ".config" "hop"))
+   
+;*---------------------------------------------------------------------*/
+;*    test ...                                                         */
+;*---------------------------------------------------------------------*/
+(define-service (test)
+   (<TEST-HTML>
+      (<DIV> :style "-moz-column-count: 2; column-count: 2; margin-top: 2ex;"
+	 (<H4> "Simple tests")
+	 (<UL>
+	    (<LI> (<A> :href test/images :target "_blank" "Images"))
+	    (<LI> (<A> :href test/events :target "_blank" "Events")))
+	 (<H4> "Hop Widget tests")
+	 (<UL>
+	    (<LI> (<A> :href test/fl :target "_blank" "Fold lists"))
+	    (<LI> (<A> :href test/notepad :target "_blank" "Notepads"))
+	    (<LI> (<A> :href test/paned :target "_blank" "Pans"))
+	    (<LI> (<A> :href test/slider :target "_blank" "Sliders"))
+	    (<LI> (<A> :href test/sorttable :target "_blank" "Sorttables"))
+	    (<LI> (<A> :href test/tree :target "_blank" "Trees")))
+	 (<H4> "Miscellaneous tests")
+	 (<UL>
+	    (<LI> (<A> :href test/busy :target "_blank" "Busy anim"))))))
+
+;*---------------------------------------------------------------------*/
+;*    <TEST-HTML> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <TEST-HTML> ((include #f)
+				  body)
+   (<HTML>
+      (cond
+	 ((string? include)
+	  (<HEAD> :title "Hop client-side testing"
+	     :base (service-base-url test (current-request))
+	     :css "test.hss" :include include))
+	 ((pair? include)
+	  (apply <HEAD> :title "Hop client-side testing"
+		 :base (service-base-url test (current-request))
+		 :css "test.hss" :include include))
+	 (else
+	  (<HEAD> :title "Hop client-side testing"
+	     :base (service-base-url test (current-request))
+	     :css "test.hss")))
+      (<BODY>
+	 (<DIV> :align "center"
+	    (<TABLE> :class "test"
+	       (<COLGROUP> (<COL> :width "0*"))
+	       (<TR>
+		  (<TD> :id "logo" (<IMG> :id "logo" :src "etc/logo.png"))
+		  (<TD> (<TABLE> :width "100%"
+			   (<TR>
+			      (<TD> :id "title" "Hop client-side testing"))
+			   (<TR>
+			      (<TD> 
+				 body)))))))
+	 (<FOOT>))))
+   

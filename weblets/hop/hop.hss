@@ -3,16 +3,21 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Nov 14 08:51:10 2006 (serrano)                */
-/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    Last change :  Tue Jul  3 07:33:50 2007 (serrano)                */
+/*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module hop_hss)
+
+/*---------------------------------------------------------------------*/
 /*    User configuration                                               */
 /*---------------------------------------------------------------------*/
-$(define font-family "Lucida Grande, Verdana, Lucida, Helvetica, Arial")
+$(define font-family "Arial, Lucida Grande, Verdana, Lucida, Helvetica")
 $(define typewriter "Bitstream Vera Sans Mono, Andale Mono, monospace")
 $(define border-color "#bbb")
 $(define home-color "#f9f9f9")
@@ -29,6 +34,8 @@ $(define deep-green "#0a0")
 $(define deep-magenta "#7a459e")
 $(define deep-magenta2 "#4a346c")
 $(define deep-orange "#ffae2b")
+
+$(define hop-width "85%")
 
 /*---------------------------------------------------------------------*/
 /*    Common CSS rules                                                 */
@@ -47,9 +54,56 @@ img.logo {
   padding: 15px;
 }
 
-/*--- table -----------------------------------------------------------*/
+/*--- directory -------------------------------------------------------*/
+div.directory {
+  width: 100%;
+}
+
+/*--- weblets ---------------------------------------------------------*/
+div.weblets {
+  width: 100%;
+  float: left;
+}
+
+/*--- title -----------------------------------------------------------*/
+div.title {
+  text-align: left;
+  font-weight: bold;
+  font-size: 100%;
+  color: #00a;
+  float: left;
+  width: 100%;
+  margin-top: 2ex;
+  border-top: 1px solid $border-color;
+}
+
+/*--- weblet ----------------------------------------------------------*/
+table.weblet {
+  float: left;
+}
+
+table.weblet td.logo {
+  border: 1px outset transparent;
+  -moz-border-radius: 0.2em;
+}
+
+table.weblet td.logo:hover {
+  border: 1px outset #777;
+  background-color: #fbffe1;
+  -moz-border-radius: 0.2em;
+}
+
+table.weblet td.legend {
+  font-size: small;
+  font-weight: bold;
+  font-family: $font-family;
+  cursor: default;
+  text-align: center;
+}  
+
+/*--- <HOP> -----------------------------------------------------------*/
 table.hop {
-  width: 45em;
+  width: $hop-width;
   margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
@@ -58,48 +112,21 @@ table.hop {
 }
 
 div#title {
-  width: 35em;
+  width: 100%;
   font-size: x-large;
   font-weight: bold;
-  border-bottom: 1px solid $border-color;
-  margin-bottom: 20px;
   padding-bottom: 1px;
   text-align: left;
 }
 
-div#result {
-  text-align: center;
-  width: 30em;
-  font-weight: bold;
-  font-size: large;
-  color: red;
-  border-top: 1px solid $border-color;
-  margin-top: 10px;
-  padding-top: 10px;
-}  
-
-td.logo {
-  border: 1px outset transparent;
-}
-  
-td.logo:hover {
-  border: 1px outset #777;
-  background-color: #fbffe1;
-  -moz-border-radius: 0.5em;
-}
-
+/*--- weblet ----------------------------------------------------------*/
 td.legend span {
-  font-size: small;
-  font-weight: bold;
-  font-family: $font-family;
-  cursor: default;
 }
 
 table.directory th.title {
   text-align: left;
   font-weight: bold;
   font-size: large;
-  border-bottom: 1px solid $border-color;
   color: #00a;
 }
   

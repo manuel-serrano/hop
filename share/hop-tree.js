@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Jun 27 10:16:32 2007 (serrano)                */
+/*    Last change :  Tue Jul  3 14:01:52 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -12,7 +12,8 @@
 /*---------------------------------------------------------------------*/
 /*    Autoconfiguration                                                */
 /*---------------------------------------------------------------------*/
-var hop_tree_correct_browserp = hop_mozillap();
+var hop_tree_correct_browserp =
+   hop_mozillap() && !hop_msiep() && !hop_khtmlp() && !hop_operap();
 
 /*---------------------------------------------------------------------*/
 /*    hop tree default connection icons                                */
@@ -34,6 +35,23 @@ var hop_tree_default_file_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA
 var hop_tree_default_open_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSkWAOYE0gAAALNJREFUOMvNk0ESgyAMRR+OF4Jdz0OOlZynOzkSXSAWFK2dbvo3DJjElx+AH+XajSp5HyDSx5xKlTzSqGiruSbHmAE7BJRzNywigps/sxkxKhC705QEsDzft8vGLdQeze55FULE+0fvwVn/hRXwZU08CcFYlvfn6fRXaV19U2SgSQRX8HuTtoSGwPNAlZXCLgjSMbn1oCOo89wo0g47DS8dIo2J26DqJKpJy5dvAa6v7X/qBRKAUS3mXATrAAAAAElFTkSuQmCC";
 var hop_tree_default_close_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSoOOKfPRwAAAJRJREFUOMvFUzkShDAMEwwfMl8i3b5nO/Meuvg5KUUBuwMkZpKlWM1kcliSVcTAQ3Sfgyp4LYZw5rhQBVNKJOO+lKRyN+VtAlVwHCeXEONcfA9hSzYAgMjLNchrEWYLgJkAuuFYqIKdr32TyADILwZyEDcluHZuTiAFcVUCr7Pl1L5K5Ii//8DsnZuU9ptZ4NNZ+h9WRsVBhT94M5oAAAAASUVORK5CYII=";
 var hop_tree_default_device_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSsEwWkXGAAAAJRJREFUOMvtkrENwyAURB8SBS1lxvAKtB6HNWAExoCSNTxCSijpSEWU2IkclCpSrrrmnfTvH/wlhrHW9lnYey/kgI0xU3DOGaBLa213zk3BIYS7lwDbtlFrfQuUUlgvKySIS6S19hyglKKUgtb6JQwQrxGWY7jc3XSqfVcSoLXGpz2klI4Bj6VMvBBAjB30bzb047oBYBc056hSeS0AAAAASUVORK5CYII=";
+
+if( hop_msiep() ) {
+   /* IE does not support inline images! */
+   var icon_dir = hop_share_directory() + "/icons/";
+   hop_tree_plus_icon = icon_dir + "plus.png";
+   hop_tree_plusbottom_icon = icon_dir + "plusbottom.png";
+   hop_tree_minus_icon = icon_dir + "minus.png";
+   hop_tree_minusbottom_icon = icon_dir + "minusbottom.png";
+   hop_tree_join_icon = icon_dir + "join.png";
+   hop_tree_joinbottom_icon = icon_dir + "joinbottom.png";
+   hop_tree_vline_icon = icon_dir + "vline.png";
+   hop_tree_empty_icon = icon_dir + "empty.png";
+   hop_tree_default_file_icon = icon_dir + "file.png";
+   hop_tree_default_open_icon = icon_dir + "folder-open.png";
+   hop_tree_default_close_icon = icon_dir + "folder-close.png";
+   hop_tree_default_device_icon = icon_dir + "device.png";
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_tree_root ...                                                */
@@ -146,6 +164,7 @@ function hop_tree_children_update( node, level, isrc ) {
       var row = c.row;
       var td = row.childNodes[ level ];
       var img = td.childNodes[ 0 ];
+
       img.src = isrc;
       
       if( c.className == "hop-tree" ) {
@@ -181,19 +200,22 @@ function hop_tree_add( tree, child ) {
 /*---------------------------------------------------------------------*/
 function hop_push_vlines( par, row, level ) {
    if( level > 0 ) {
-      hop_push_vlines( par.parent, row, level - 1 );
       var td = document.createElement( "td" );
+      td.className = "hop-tree";
+      
+      hop_push_vlines( par.parent, row, level - 1 );
 
       if( par && par.visible ) {
 	 var img = document.createElement( "img" );
 
-	 td.className = "hop-tree";
 	 td.setAttribute( "nowrap", "nowrap" );
 
-	 img.src = ((par && !par.last) ? par.iconvline : (par.visible ? par.iconempty : ""));
+	 img.src = ((par && !par.last) ? par.iconvline : par.iconempty);
 	 img.className = "hop-tree";
       
 	 td.appendChild( img );
+      } else {
+	 node_style_set( td, "display", "none" );
       }
       row.appendChild( td );
    }
@@ -386,37 +408,6 @@ function hop_tree_row_select_previous( tree ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_tree_make_colgroup ...                                       */
-/*---------------------------------------------------------------------*/
-function hop_tree_make_colgroup( level ) {
-   var colgroup = document.createElement( "colgroup" );
-
-   if( hop_tree_correct_browserp ) {
-      for( var i = level + 2; i > 0; i-- ) {
-	 var col = document.createElement( "col" );
-   
-	 col.setAttribute( "width", "0*" );
-	 colgroup.appendChild( col );
-      }
-   } else {
-      /* most browsers are unable to correctly the 0* attribute */
-      /* so we fix a width of 16 pixels for icons columns       */
-      var col = document.createElement( "col" );
-   
-      col.setAttribute( "width", "0*" );
-      colgroup.appendChild( col );
-      for( var i = level + 1; i > 0; i-- ) {
-	 var col = document.createElement( "col" );
-   
-	 col.setAttribute( "width", "16px" );
-	 colgroup.appendChild( col );
-      }
-   }
-
-   return colgroup;
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_make_tree ...                                                */
 /*---------------------------------------------------------------------*/
 function hop_make_tree( parent, id, visible, level, proc, title,
@@ -425,24 +416,32 @@ function hop_make_tree( parent, id, visible, level, proc, title,
 			iconopen, iconclose, icondir ) {
    var tree = document.createElement( "div" );
 
-   /* fixup icons */
+   /* fixup icons, we enforce that when one icon is missing, none added */
    if( iconopen == true ) {
       iconopen = hop_tree_default_open_icon;
    } else {
       if( iconopen == 0 ) {
 	 iconopen = hop_tree_default_device_icon;
       } else {
-	 if( iconopen == -1 ) iconopen = '';
+	 if( iconopen == -1 ) {
+	    iconopen = false;
+	    iconclose = false;
+	 }
       }
    }
-   
-   if( iconclose == true ) {
-      iconclose = hop_tree_default_close_icon;
-   } else {
-      if( iconclose == 0 ) {
-	 iconclose = hop_tree_default_device_icon;
+
+   if( iconopen ) {
+      if( iconclose == true ) {
+	 iconclose = hop_tree_default_close_icon;
       } else {
-	 if( iconclose == -1 ) iconclose = '';
+	 if( iconclose == 0 ) {
+	    iconclose = hop_tree_default_device_icon;
+	 } else {
+	    if( iconclose == -1 ) {
+	       iconopen = false;
+	       iconclose = false;
+	    }
+	 }
       }
    }
 
@@ -461,9 +460,6 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    table.setAttribute( "border", 0 );
    table.className = "hop-tree";
    
-   /* the colgroup for the left padding and icons */
-   table.appendChild( hop_tree_make_colgroup( level ) );
-
    /* the body of the table */
    var tb = document.createElement( "tbody" );
    var row = document.createElement( "tr" );
@@ -472,9 +468,7 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    row.setAttribute( "align", "left" );
    
    /* build the left vertical lines */
-   if( level > 0 ) {
-      hop_push_vlines( parent, row, level );
-   }
+   hop_push_vlines( parent, row, level );
 
    /* the plus/minus icon */
    var td1 = document.createElement( "td" );
@@ -490,25 +484,29 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    row.appendChild( td1 );
 
    /* add the folder icon */
-   var td2 = document.createElement( "td" );
-   var folder = document.createElement( "img" );
+   if( iconopen ) {
+      var td2 = document.createElement( "td" );
+      var folder = document.createElement( "img" );
 
-   if( iconclose ) folder.src = iconclose;
-   folder.className = "hop-tree";
+      folder.src = iconclose;
+      folder.className = "hop-tree";
    
-   td2.className = "hop-tree";
-   td2.setAttribute( "nowrap", "nowrap" );
-   td2.onclick = function( e ) { hop_tree_row_toggle_selected( e, tree, row ); }
-   td2.appendChild( folder );
+      td2.className = "hop-tree";
+      td2.setAttribute( "nowrap", "nowrap" );
+      td2.onclick = function( e ) {
+	 hop_tree_row_toggle_selected( e, tree, row );
+      }
+      td2.appendChild( folder );
+      row.appendChild( td2 );
+   }
    
    /* the title */
    var td3 = document.createElement( "td" );
-   td3.className = "hop-tree";
+   td3.className = "hop-tree-title";
    td3.setAttribute( "nowrap", "nowrap" );
    td3.onclick = function( e ) { hop_tree_row_toggle_selected( e, tree, row ); }
    td3.innerHTML = title;
    
-   row.appendChild( td2 );
    row.appendChild( td3 );
    row.value = value;
 
@@ -614,9 +612,6 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
    leaf.setAttribute( "border", 0 );
    leaf.className = "hop-tree-leaf";
 
-   /* the colgroup for the left padding and icons */
-   leaf.appendChild( hop_tree_make_colgroup( level ) );
-
    /* the body of the table */
    var tb = document.createElement( "tbody" );
    var row = document.createElement( "tr" ); 
@@ -638,11 +633,9 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
    td1.appendChild( join );
    row.appendChild( td1 );
 
-   /* add the folder icon */
-   var td2 = document.createElement( "td" );
-   
-   /* the icon assiocated with the node */
+   /* add the icon assiocated with the node, if any */
    if( icon && (icon != -1) ) {
+      var td2 = document.createElement( "td" );
       var fimg = document.createElement( "img" );
       
       if( (icon instanceof String) || (typeof icon == "string") ) {
@@ -653,21 +646,22 @@ function hop_make_tree_leaf( tree, content, value, icon ) {
       fimg.className = "hop-tree";
       
       td2.appendChild( fimg );
+      td2.className = "hop-tree";
+      td2.onclick = function( e ) {
+	 hop_tree_row_toggle_selected( e, tree, row );
+      }
+
+      row.appendChild( td2 );
    }
 
-   td2.className = "hop-tree";
-   td2.onclick = function( e ) { hop_tree_row_toggle_selected( e, tree, row ); }
-
-   row.appendChild( td2 );
    row.value = value;
 
    /* the content */
    var td3 = document.createElement( "td" );
-   td3.classname = "hop-tree";
+   td3.className = "hop-tree-title";
    td3.onclick = function( e ) { hop_tree_row_toggle_selected( e, tree, row ); }
    td3.innerHTML= content;
    
-   row.appendChild( td2 );
    row.appendChild( td3 );
 
    tb.appendChild( row );

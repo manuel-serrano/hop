@@ -1,0 +1,61 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/slider.hop                 */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
+;*    Last change :  Wed Jul  4 09:36:35 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Sliders                                                          */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-slider
+   (import weblet_test)
+   (export test/slider))
+
+;*---------------------------------------------------------------------*/
+;*    test/slider ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (test/slider)
+   (let* ((colbox (<DIV> :style "border: 1px solid black; width: 60px; height: 60px"))
+	  (slider-red (<SLIDER> :caption "top"
+			 :min 0 :max 255 :value ~(+ red 0)
+			 :onchange ~(begin
+				       (set! red this.value)
+				       (showcolor!))))
+	  (slider-green (<SLIDER> :caption "top"
+			   :min 0 :max 255 :value ~(+ green 0)
+			   :onchange ~(begin
+					 (set! green this.value)
+					 (showcolor!))))
+	  (slider-blue (<SLIDER> :caption "top"
+			  :min 0 :max 255 :value ~(+ blue 0)
+			  :onchange ~(begin
+					(set! blue this.value)
+					(showcolor!)))))
+      (<TEST-HTML> :include "hop-slider"
+	 (<DIV> :class "comment" [This test checks Sliders.])
+	 ~(define red 60)
+	 ~(define green 40)
+	 ~(define blue 80)
+	 ~(define (showcolor!)
+	     (node-style-set! $colbox
+			      :background
+			      (format "rgb(~a,~a,~a)" red green blue)))
+	 (<BODY>
+	    (<H3> "An example of slider")
+	    (<TABLE>
+	       (<TR>
+		  (<TD> :width "200px"
+		     (<TABLE> :width "100%"
+			(<TR> (<TD> slider-red))
+			(<TR> (<TD> slider-green))
+			(<TR> (<TD> slider-blue))))
+		  (<TD> colbox)))
+	    ~(showcolor!)))))
+
+	    
+

@@ -1,0 +1,85 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/tree.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
+;*    Last change :  Mon Jul  2 14:26:17 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Trees                                                            */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-tree
+   (import weblet_test)
+   (export test/tree))
+
+;*---------------------------------------------------------------------*/
+;*    test/tree ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-service (test/tree)
+   (<TEST-HTML> :include "hop-tree"
+      (<DIV> :class "comment"
+	 "This test checks trees. If the test succeeds you should
+be able to fold/unfold all the trees above")
+      (<H3> "A static tree")
+      (<TREE> :id "computer-science"
+	 :open #t
+	 (<TRHEAD> "Computer Science")
+	 (<TRBODY>
+	    (<TRLEAF> (<A> :href "http://www.acm.org" "ACM") :value "acm")
+	    (<TRLEAF> (<A> :href "http://www.inria.fr" "INRIA") :value "inria")
+	    (<TREE>
+	       (<TRHEAD> "Programming languages")
+	       (<TRBODY>
+		  (<TREE>
+		     (<TRHEAD> "Functional")
+		     (<TRBODY>
+			(<TRLEAF> "Haskell")
+			(<TRLEAF> "Hop")
+			(<TRLEAF> "Lisp")
+			(<TRLEAF> "ML")))
+		  (<TREE> 
+		     (<TRHEAD> "Imperative")
+		     (<TRBODY>
+			(<TRLEAF> "Ada")
+			(<TRLEAF> "C")
+			(<TREE>
+			   (<TRHEAD> "Object oriented")
+			   (<TRBODY>
+			      (<TRLEAF> "C++")
+			      (<TRLEAF> "Java")))
+			(<TRLEAF> "Pascal")))
+		  (<TRLEAF> "APL")))))
+      (<H3> "A dynamic tree")
+   (let ((d (hop-share-directory)))
+      (define (directory->tree id dir shape)
+	 (<TREE> :id id :multiselect #t
+	    (<TRHEAD> :value dir shape)
+	    (<TRBODY>
+	       (<DELAY>
+		  (lambda ()
+		     (map (lambda (f)
+			     (let ((qf (make-file-name dir f)))
+				(if (directory? qf)
+				    (directory->tree (xml-make-id)
+						     qf
+						     (make-file-name shape f))
+				    (<TRLEAF> :value qf f))))
+			  (directory->list dir)))))))
+      (let ((tree (directory->tree "t" d (basename d))))
+	 (list
+	  (<BUTTON> :onclick ~(tree-open $tree)
+	     "Open tree")
+	  (<BUTTON> :onclick ~(tree-close $tree)
+	     "Close tree")
+	  (<BUTTON> :onclick ~(alert "selection=" (tree-selection $tree))
+	     "Show current selection")
+	  (<BUTTON> :onclick ~(tree-reset! $tree)
+	     "Reset selection")
+	  (<BR>)
+	  (<BR>)
+	  tree)))))
+   

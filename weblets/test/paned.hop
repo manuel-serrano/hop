@@ -1,0 +1,65 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/paned.hop                  */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
+;*    Last change :  Tue Jul  3 15:43:57 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Paneds                                                           */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-paned
+   (import weblet_test)
+   (export test/paned))
+
+;*---------------------------------------------------------------------*/
+;*    test/paned ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-service (test/paned)
+   (<TEST-HTML> :include "hop-paned"
+      (<DIV> :class "comment"
+	 "This test checks Pans. Some browsers (e.g., Opera on PDAs)
+do emit mouse move events. Hence, on these browsers, the pan cannot
+be resized with the mouse.")
+      (<H3> "A simple horizontal Paned")
+      (let ((pan (<PANED> :fraction 30
+		    (<PAN>
+		       (let ((enum (iota 9 1)))
+			  (<DIV> :style { overflow: auto }
+			     (<TABLE> :border 1
+				(<TR> (<TD>) (map <TH> enum))
+				(map (lambda (v1)
+					(<TR>
+					   (cons (<TH> v1)
+						 (map (lambda (v2)
+							 (<TD> (* v1 v2)))
+						      enum))))
+				     enum)))))
+		    (<PAN>
+		       (let ((enum (iota 9 1)))
+			  (<DIV> :style { overflow: auto }
+			     (<TABLE> :border 1
+				(<TR> (<TD>) (map <TH> enum))
+				(map (lambda (v1)
+					(<TR>
+					   (cons (<TH> v1)
+						 (map (lambda (v2)
+							 (<TD> (+ v1 v2)))
+						      enum))))
+				     enum))))))))
+	 (<DIV>
+	    (<BUTTON> :onclick ~(let ((v (paned-fraction $pan)))
+				   (when (> v 5)
+				      (paned-fraction-set! $pan (- v 5))))
+	       "<")
+	    (<BUTTON> :onclick ~(let ((v (paned-fraction $pan)))
+				   (when (< v 95)
+				      (paned-fraction-set! $pan (+ v 5))))
+	       ">")
+	    pan))))
+	    
+

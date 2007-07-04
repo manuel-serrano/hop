@@ -1,0 +1,34 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/image.hop                  */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
+;*    Last change :  Mon Jul  2 20:21:59 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Testing images                                                   */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-image
+   (import weblet_test)
+   (export test/images))
+
+;*---------------------------------------------------------------------*/
+;*    test/images ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (test/images)
+   (<TEST-HTML>
+      (<DIV> :class "comment"
+	 "This test checks images. If the test succeeds you should see
+twice the same image.")
+      (<H3> "A regular image")
+      (<IMG> :src (service-resource test/images
+				    (make-file-name "etc" "logo.png")))
+      (<H3> "An inlined image")
+      (<IMG> :src (service-resource test/images
+				    (make-file-name "etc" "logo.png"))
+	 :inline #t)))
+      

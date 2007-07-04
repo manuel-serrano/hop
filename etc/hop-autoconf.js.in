@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Jun 19 12:17:15 2007 (serrano)                */
+/*    Last change :  Mon Jul  2 17:58:03 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -339,10 +339,44 @@ function hop_msiep() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_khtmlp ...                                                   */
+/*---------------------------------------------------------------------*/
+function hop_khtmlp() {
+   return navigator.userAgent.indexOf( "KHTML" ) >= 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_safarip ...                                                  */
+/*---------------------------------------------------------------------*/
+function hop_safarip() {
+   return navigator.userAgent.indexOf( "Safari" ) >= 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_operap ...                                                   */
+/*---------------------------------------------------------------------*/
+function hop_operap() {
+   return navigator.userAgent.indexOf( "Opera" ) >= 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_deinline_image ...                                           */
+/*    -------------------------------------------------------------    */
+/*    This function is invoked on inline images. It gives the          */
+/*    browser a chance to load the inlined image. This is particularly */
+/*    important for browsers such as IE that cannot handle inline      */
+/*    images.                                                          */
+/*---------------------------------------------------------------------*/
+function hop_deinline_image( el, src ) {
+   el.src = src;
+}
+
+/*---------------------------------------------------------------------*/
 /*    mouse coords ...                                                 */
 /*---------------------------------------------------------------------*/
 var hop_event_mouse_x = undefined;
 var hop_event_mouse_y = undefined;
+var hop_event_mouse_button = undefined;
 var hop_event_key_code = undefined;
 
 if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
@@ -374,6 +408,16 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
    }
    hop_event_key_code = function hop_event_key_code( event ) {
       return event.keyCode;
+   }
+}
+
+if( hop_msiep() || (hop_khtmlp() && !hop_safarip()) ) {
+   hop_event_mouse_button = function hop_event_mouse_button( e ) {
+      return e.button;
+   }
+} else {
+   hop_event_mouse_button = function hop_event_mouse_button( e ) {
+      return 1 + e.button;
    }
 }
 

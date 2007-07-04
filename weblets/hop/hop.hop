@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu May 10 13:57:59 2007 (serrano)                */
+;*    Last change :  Tue Jul  3 08:17:40 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -19,30 +19,38 @@
 ;*    hop ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (hop)
-   (let ((t (make-hashtable 20)))
+   (let ((t (make-hashtable 20))
+	 (ct (make-hashtable 20)))
       (hashtable-put! t "hop" #t)
       (hashtable-put! t "home" #t)
       (for-each (lambda (w) (hashtable-put! t w #t)) (hop-builtin-weblets))
-      (set! *weblets-table* t))
-   (let* ((len 8) (width (format "~a%" (/ 100. len))))
+      (set! *weblets-table* t)
+      (for-each (lambda (a)
+		   (let ((n (cadr (assq 'name a))))
+		      (unless (hashtable-get t n)
+			 (let* ((cp (assq 'category a))
+				(c (if (pair? cp)
+				       (string-capitalize (cadr cp))
+				       "Misc")))
+			    (hashtable-update! ct
+					       c
+					       (lambda (o)
+						  (if (assoc n o)
+						      o
+						      (cons (cons n a) o)))
+					       (list (cons n a)))))))
+		(append-map find-weblets-in-directory
+			    (hop-autoload-directories)))
       (<HOP>
-	 (<TABLE> 
-	    :class "directory"
-	    (<COLGROUP>
-	       (<COL> :span len :width width))
-	    (<TR> (<TH> :class "title" "Builtin Weblets"))
-	    (<TR> (<TD> :align "left"
-		     (<TABLE> :class "weblets"
-			(<COLGROUP>
-			   (<COL> :span len :width width))
-			(hop-builtin-rows len))))
-	    (<TR> (<TD> "&#160;"))
-	    (<TR> (<TH> :class "title" "Additional Weblets"))
-	    (<TR> (<TH> :align "left"
-		     (<TABLE> :class "weblets"
-			(<COLGROUP>
-			   (<COL> :span len :width width))
-			(hop-additional-rows len))))))))
+	 (<WEBLETS> "Builtin Weblets" (hop-builtin-row))
+	 (if (hop-view-by-category?)
+	     (map! (lambda (k)
+		      (let ((ws (map cdr (hashtable-get ct k))))
+			 (<WEBLETS> k (hop-additional-row ws))))
+		   (sort (hashtable-key-list ct) string<?))
+	     (let ((ws (map cdr (apply append (hashtable->list ct)))))
+		(<WEBLETS> "Additional Weblets"
+			   (hop-additional-row ws)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop/documentation ...                                            */
@@ -55,97 +63,39 @@
 	 (header (list (cons 'location: url))))))
 
 ;*---------------------------------------------------------------------*/
+;*    <WEBLETS> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<WEBLETS> title tds)
+   (list (<DIV> :class "title" title)
+	 (<DIV> :class "weblets" tds)))
+
+;*---------------------------------------------------------------------*/
 ;*    *weblets-table* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *weblets-table* #unspecified)
 
 ;*---------------------------------------------------------------------*/
-;*    hop-builtin-rows ...                                             */
+;*    <WEBLET> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-builtin-rows len)
-   (let ((w (cons (<HOME> (hop-weblets-directory))
-		  (map (lambda (x)
-			  (<HTD> (hop-weblets-directory) x))
-		       (hop-builtin-weblets)))))
-      (map <TR> (list-split! w len (<TD> "")))))
+(define (<WEBLET> base #!key url hz title)
+   (let ((url (or url (format "/hop/~a" hz)))
+	 (logo (if hz
+		   (format "~a/~a/etc/logo.png" base hz)
+		   (format "~a/etc/logo.png" base))))
+      (<TABLE> :class "weblet" 
+	 (<TR>
+	    (<TD> :class "logo"
+	       :onclick ~(set! document.location $url)
+	       (<IMG> :class "logo"
+		  :inline #t
+		  :title title
+		  :src (if (file-exists? logo)
+			   logo
+			   (string-append (hop-dir) "/etc/default.png")))))
+	 (<TR>
+	    (<TD> :class "legend"
+	       (<SPAN> (or hz "home")))))))
 
-;*---------------------------------------------------------------------*/
-;*    hop-additional-rows ...                                          */
-;*---------------------------------------------------------------------*/
-(define (hop-additional-rows len)
-   (let* ((w (append-map find-weblets-in-directory (hop-autoload-directories)))
-	  (fw (filter-map (lambda (a)
-			     (let ((n (cadr (assq 'name a)))
-				   (w (cadr (assq 'weblet a))))
-				(unless (hashtable-get *weblets-table* n)
-				   (hashtable-put! *weblets-table* n #t)
-				   (<HTD> (dirname (dirname w)) n))))
-			  (sort w (lambda (a b)
-				     (let ((namea (cadr (assq 'name a)))
-					   (nameb (cadr (assq 'name b))))
-					(string<? namea nameb)))))))
-      (map <TR> (list-split! fw len (<TD> "")))))
-
-;*---------------------------------------------------------------------*/
-;*    <HOME> ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (<HOME> base)
-   (let ((url (hop-url))
-	 (logo (format "~a/home/etc/logo.png" base)))
-      (<TD>
-	 :valign "top"
-	 (<TABLE>
-	    :width "100%"
-	    :onclick ~(set! document.location $url)
-	    :title url
-	    (<TR>
-	       (<TD>
-		  :valign "top"
-		  :align "center"
-		  :class "logo"
-		  (<IMG> :class "logo"
-		     :inline #t
-		     :src (if (file-exists? logo)
-			      logo
-			      (string-append (hop-dir)
-					     "/etc/default.png")))))
-	    (<TR>
-	       (<TD>
-		  :valign "top"
-		  :align "center"
-		  :class "legend"
-		  (<SPAN> "home")))))))
-
-;*---------------------------------------------------------------------*/
-;*    <HTD> ...                                                        */
-;*---------------------------------------------------------------------*/
-(define (<HTD> base hz)
-   (let ((url (format "/hop/~a" hz))
-	 (logo (format "~a/~a/etc/logo.png" base hz)))
-      (<TD>
-	 :valign "top"
-	 (<TABLE>
-	    :width "100%"
-	    :onclick ~(set! document.location $url)
-	    :title url
-	    (<TR>
-	       (<TD>
-		  :valign "top"
-		  :align "center"
-		  :class "logo"
-		  (<IMG> :class "logo"
-		     :inline #t
-		     :src (if (file-exists? logo)
-			      logo
-			      (string-append (hop-dir)
-					     "/etc/default.png")))))
-	    (<TR>
-	       (<TD>
-		  :valign "top"
-		  :align "center"
-		  :class "legend"
-		  (<SPAN> hz)))))))
-	    
 ;*---------------------------------------------------------------------*/
 ;*    <HOP> ...                                                        */
 ;*---------------------------------------------------------------------*/
@@ -153,19 +103,16 @@
    (<HTML>
       (<HEAD> :css (format "~a/hop.hss" (hop-dir)))
       (<BODY>
-	 (<DIV>
-	    :align "center"
-	    (<TABLE>
-	       :class "hop"
+	 (<DIV> :align "center"
+	    (<TABLE> :class "hop"
+	       (<COLGROUP>
+		  (<COL> :width "0*"))
 	       (<TR>
-		  (<TD>
-		     :valign "top"
-		     (<IMG> :class "logo"
-			:inline #t
+		  (<TD> :valign "top"
+		     (<IMG> :class "logo" :inline #t
 			:src (format "~a/etc/logo.png" (hop-dir))))
-		  (<TD>
-		     :valign "top"
-		     (<TABLE>
+		  (<TD> :valign "top"
+		     (<TABLE> :width "100%"
 			(<TR>
 			   (<TD>
 			      (<DIV> :id "title" "Hop v" (hop-version))))
@@ -173,9 +120,30 @@
 			   (<TD> :align 'left
 			      obj)))))))
 	 (<FOOT>
-	    (<FOOT-BUTTON>
-	       :href "http://www.gnu.org/licenses/gpl.html"
+	    (<FOOT-BUTTON> :href "http://www.gnu.org/licenses/gpl.html"
 	       :title "Gnu GPL"
 	       :src "gpl.png")))))
 				     
-	     
+;*---------------------------------------------------------------------*/
+;*    hop-builtin-row ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-builtin-row)
+   (cons (<WEBLET> (hop-weblets-directory) :url (hop-url))
+	 (map (lambda (x)
+		 (<WEBLET> (hop-weblets-directory) :hz x))
+	      (hop-builtin-weblets))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-additional-rows ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hop-additional-row ws)
+   (map! (lambda (a)
+	    (let ((n (cadr (assq 'name a)))
+		  (w (cadr (assq 'weblet a)))
+		  (d (let ((c (assq 'sdescr a)))
+			(when (pair? c) (cadr c)))))
+	       (<WEBLET> (dirname (dirname w)) :hz n :title d)))
+	 (sort ws (lambda (a b)
+		     (let ((namea (cadr (assq 'name a)))
+			   (nameb (cadr (assq 'name b))))
+			(string<? namea nameb))))))

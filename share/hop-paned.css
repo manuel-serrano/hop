@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:51 2005                          */
-/*    Last change :  Tue Jun 12 13:32:22 2007 (serrano)                */
+/*    Last change :  Tue Jul  3 16:47:52 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned CSS                                                    */
@@ -51,7 +51,7 @@ td.hop-vpaned-pan {
   vertical-align: top;
 }
 
-table.hop-vpaned > div.hop-pan {
+td.hop-vpaned-pan div.hop-pan {
   border-width: 0;
   height: 100%;
 }

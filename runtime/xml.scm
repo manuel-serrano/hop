@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jun 27 16:03:54 2007 (serrano)                */
+;*    Last change :  Wed Jul  4 08:53:35 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -874,6 +874,28 @@
        src))
 
 ;*---------------------------------------------------------------------*/
+;*    onerror-img ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (onerror-img attributes src)
+   (let* ((val (format "hop_deinline_image(this, ~s)" src))
+	  (onerror (when (pair? attributes)
+		      (assq 'onerror attributes)))
+	  (oval (when (pair? onerror)
+		   (cdr onerror))))
+      (cond
+	 ((string? oval)
+	  (set-cdr! onerror
+		    (string-append oval "; " val))
+	  attributes)
+	 ((xml-tilde? oval)
+	  (let ((tilde (string->tilde val)))
+	     (set-cdr! onerror
+		       (tilde-compose oval tilde)))
+	  attributes)
+	 (else
+	  (cons `(onerror . ,val) attributes)))))
+
+;*---------------------------------------------------------------------*/
 ;*    IMG ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <IMG> ((id #unspecified string)
@@ -882,15 +904,20 @@
 			    (src #unspecified string)
 			    (attributes)
 			    body)
+   
    (if (not (string? src))
        (error '<IMG> "Illegal image src" src)
-       (let ((src (if inline (img-base64-encode src) src)))
+       (let ((src (if inline (img-base64-encode src) src))
+	     (attrs (if (eq? inline #t)
+			(onerror-img attributes src)
+			attributes)))
 	  (instantiate::xml-empty-element
 	     (markup 'img)
 	     (id (xml-make-id id 'img))
-	     (attributes (cons* `(src . ,src) `(alt . ,(or alt src)) attributes))
+	     (attributes (cons* `(src . ,src)
+				`(alt . ,(or alt src))
+				attrs))
 	     (body '())))))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    string->tilde ...                                                */
