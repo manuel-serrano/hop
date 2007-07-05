@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Jul  2 16:53:39 2007 (serrano)                */
+;*    Last change :  Thu Jul  5 15:05:37 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -114,7 +114,11 @@
 	       (http-write-line p "Content-Type: " content-type))
 	    (when server
 	       (http-write-line p "Server: " server))
-	    (http-write-line p "hop-json: true")
+	    ;; The case of the header names depends on the browse
+	    ;; by doubling the initial h, we eliminate the need for
+	    ;; testing twice the header in the client (see hop_is_http_json,
+	    ;; defined in hop-autoconf.js.in).
+	    (http-write-line p "Hhopjson: true")
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js

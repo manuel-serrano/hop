@@ -17,13 +17,7 @@
 	 ~(define (showcolor!)
 	     (node-style-set! $colbox
 			      :background
-			      (string-append "rgb("
-					     (number->string red)
-					     ","
-					     (number->string green)
-					     ","
-					     (number->string blue)
-					     ")"))))
+			      (format "rgb(~a,~a,~a)" red green blue))))
       (<BODY> :onload ~(showcolor!)
 	 (<H3> "An example of slider")
 	 (<TABLE>

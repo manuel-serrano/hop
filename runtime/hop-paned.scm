@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Jul  3 17:48:59 2007 (serrano)                */
+;*    Last change :  Thu Jul  5 14:19:15 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -23,13 +23,15 @@
 	    __hop_js-lib
 	    __hop_service)
 
-   (static  (class html-paned::xml-element
+   (static  (abstract-class html-paned::xml-element
 	       (klass read-only)
 	       (fraction read-only)
 	       (style read-only (default #f))
 	       (height read-only (default #f))
-	       (orientation read-only (default 'vertical))
 	       (onresize read-only))
+
+	    (class html-vpaned::html-paned)
+	    (class html-hpaned::html-paned)
 
 	    (class html-pan::xml-element
 	       (klass read-only)))
@@ -46,24 +48,37 @@
 			      (onresize "")
 			      (orientation 'vertical)
 			      (style #f)
+			      (height #f)
 			      body)
    (cond
       ((null? body)
        (error '<PANED> "Illegal body, missing two pans" body))
       ((null? (cdr body))
        (error '<PANED> "Illegal body, missing one pan" body))
-      ((not (memq orientation '(horizontal vertical)))
-       (error '<PANED> "Illegal orientation" orientation))
       ((null? (cddr body))
-       (instantiate::html-paned
-	  (markup 'paned)
-	  (id (xml-make-id id 'PANED))
-	  (klass class)
-	  (fraction fraction)
-	  (orientation orientation)
-	  (onresize onresize)
-	  (style style)
-	  (body body)))))
+       (case orientation
+	  ((horizontal)
+	   (instantiate::html-hpaned
+	      (markup 'paned)
+	      (id (xml-make-id id 'PANED))
+	      (klass class)
+	      (fraction fraction)
+	      (onresize onresize)
+	      (style style)
+	      (height height)
+	      (body body)))
+	  ((vertical)
+	   (instantiate::html-vpaned
+	      (markup 'paned)
+	      (id (xml-make-id id 'PANED))
+	      (klass class)
+	      (fraction fraction)
+	      (onresize onresize)
+	      (style style)
+	      (height height)
+	      (body body)))
+	  (else
+	   (error '<PANED> "Illegal orientation" orientation))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PAN> ...                                                        */
@@ -80,48 +95,74 @@
       (body body)))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write ::html-paned ...                                       */
+;*    xml-write ::html-hpaned ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-paned p encoding backend)
-   (let ((gid (symbol->string (gensym))))
-      (with-access::html-paned obj (id klass fraction onresize body orientation style)
-	 (let ((cl (if (string? klass)
-		       (string-append "hop-paned " klass)
-		       "hop-paned")))
-	    (fprintf p "<div class='~a' id='~a'" cl gid))
-	 (when style (fprintf p " style='~a'" style))
-	 (display ">" p)
-	 (xml-write (car body) p encoding backend)
-	 (xml-write (cadr body) p encoding backend)
-	 (display " <script type='" p)
-	 (display (hop-javascript-mime-type) p)
-	 (display "'>" p)
-	 (fprint p
-		 "hop_paned_onresize_set( "
-		 (if (eq? orientation 'vertical)
-		     "hop_make_vpaned( "
-		     "hop_make_hpaned( ")
-		 "document.getElementById( '" gid "' ),"
-		 "'" id "', '"
-		 (if (eq? orientation 'vertical) "hop-vpaned" "hop-hpaned")
-		 "', ")
-	 (if (string? fraction)
-	     (fprint p "\"" fraction "\"")
-	     (display fraction p))
-	 (fprint p 
-		 ", "
-		 "document.getElementById( '" (html-pan-id (car body)) "' ),"
-		 "document.getElementById( '" (html-pan-id (cadr body)) "' ) )"
-		 ", function() { "
-		 (cond
-		    ((xml-tilde? onresize)
-		     (tilde->string onresize))
-		    ((string? onresize)
-		     onresize)
-		    (else
-		     ""))
-		 " } )"))
+   (with-access::html-hpaned obj (id klass fraction onresize body style height)
+      (let ((cl (if (string? klass)
+		    (string-append "hop-paned hop-hpaned " klass)
+		    "hop-paned hop-hpaned")))
+	 (fprintf p "<div class='~a' id='~a'" cl id))
+      (when style (fprintf p " style='~a'" style))
+      (when height (fprintf p " height='~a'" height))
+      (display ">" p)
+      (xml-write (car body) p encoding backend)
+      (fprintf p "<div class='hop-hpaned-cursor' id='~a-hpaned-cursor'></div>" id)
+      (xml-write (cadr body) p encoding backend)
+      (display " <script type='" p)
+      (display (hop-javascript-mime-type) p)
+      (display "'>" p)
+      (fprintf p
+	       "hop_init_hpaned( ~s, ~s, ~s, ~a, function(event) { ~a } )"
+	       id (html-pan-id (car body)) (html-pan-id (cadr body))
+	       fraction
+	       (cond
+		  ((xml-tilde? onresize)
+		   (tilde->string onresize))
+		  ((string? onresize)
+		   onresize)
+		  (else
+		   "")))
       (display " </script></div>" p)))
+   
+;*---------------------------------------------------------------------*/
+;*    xml-write ::html-vpaned ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::html-vpaned p encoding backend)
+   (with-access::html-paned obj (id klass fraction onresize body style height)
+      (let ((cl (if (string? klass)
+		    (string-append "hop-paned " klass)
+		    "hop-paned")))
+	 (fprintf p "<div class='~a' id='~a'" cl (symbol->string (gensym))))
+      (when style (fprintf p " style='~a'" style))
+      (when height (fprintf p " height='~a'" height))
+      (display ">" p)
+      (fprintf p "<table class='hop-vpaned' id='~a' width='100%'>" id)
+      (fprint p "<tr>")
+      (fprintf p "<td class='hop-vpaned-pan hop-vpaned-pan-left' id='~a-vpaned-td1'>"
+	      id)
+      (xml-write (car body) p encoding backend)
+      (fprint p "</td>")
+      (fprintf p "<td class='hop-vpaned-cursor' id='~a-vpaned-cursor'>" id)
+      (fprint p "</td>")
+      (fprintf p "<td class='hop-vpaned-pan hop-vpaned-pan-right' id='~a-vpaned-td2'>"
+	      id)
+      (xml-write (cadr body) p encoding backend)
+      (fprint p "</td>")
+      (fprint p "</tr>")
+      (fprint p "</table>")
+      (fprintf p "<script type='~a'>" (hop-javascript-mime-type))
+      (fprintf p "hop_init_vpaned( ~s, ~s, ~s, ~a, function(event) {~a} )"
+	       id (html-pan-id (car body)) (html-pan-id (cadr body))
+	       fraction
+	       (cond
+		  ((xml-tilde? onresize)
+		   (tilde->string onresize))
+		  ((string? onresize)
+		   onresize)
+		  (else
+		   "")))
+      (fprint p "</script></div>")))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-pan ...                                         */

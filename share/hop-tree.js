@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Tue Jul  3 14:01:52 2007 (serrano)                */
+/*    Last change :  Thu Jul  5 14:42:17 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -504,7 +504,9 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    var td3 = document.createElement( "td" );
    td3.className = "hop-tree-title";
    td3.setAttribute( "nowrap", "nowrap" );
-   td3.onclick = function( e ) { hop_tree_row_toggle_selected( e, tree, row ); }
+   td3.onclick = function( e ) {
+      hop_tree_row_toggle_selected( e, tree, row );
+   }
    td3.innerHTML = title;
    
    row.appendChild( td3 );

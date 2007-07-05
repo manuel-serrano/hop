@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Jul  4 19:08:43 2007 (serrano)                */
+/*    Last change :  Thu Jul  5 15:49:55 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -179,25 +179,40 @@ function hop_eval( proc ) {
 function hop_node_eval( node, text ) {
    var res;
    var scripts = node.getElementsByTagName( "script" );
+   
+   function hop_node_eval_from_text( text ) {
+      var res;
+      var start_re = /<script[^>]*>/ig;
+      var end_re = /<\/script>/i;
+      var script;
+
+      while( (script=start_re.exec( text )) != null ) {
+	 /* I don't understand why yet, IE 7 does not include */
+	 /* SCRIPT nodes in the resulting node!               */
+	 var start = script.index + script[0].length;
+	 var end = text.indexOf( "</script>", start );
+	 if( end == -1 ) end = text.indexOf( "</SCRIPT>", start );
+	 if( (end > start) ) {
+	    res = eval( text.substr( start, end - start ) );
+	 }
+      }
+
+      return res;
+   }
 
    try {
       if( scripts.length > 0 ) {
 	 for ( var j = 0; j < scripts.length; j++ ) {
 	    if( scripts[ j ].childNodes.length > 0 ) {
 	       res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+	    } else {
+	       /* this is a buggy browser (Opera 8?) that does not */
+	       /* correctly implement script nodes                 */
+	       res = hop_node_eval_from_text( text );
 	    }
 	 }
       } else {
-	 var script = text.match( /<script[^>]*>/i );
-	 if( script != null ) {
-	    /* I don't understand why yet, IE 7 does not include */
-	    /* SCRIPT nodes in the resulting node!               */
-	    var start = script.index + script[ 0 ].length;
-	    var end = text.search( /<\/script>/i );
-	    if( (end != null) && (end > start) ) {
-	       res = eval( text.substr( start, end - start ) );
-	    }
-	 }
+	 return hop_node_eval_from_text( text );
       }
    } catch( e ) {
       alert( e );
@@ -344,7 +359,8 @@ function hop_anim( service ) {
    if( hop_anim_service == service ) {
       if( hop_anim_vis ) {
 	 hop_anim_vis.title = service;
-	 node_style_set( hop_anim_vis, "visibility", "visible" );
+	 // node_style_set( hop_anim_vis, "visibility", "visible" );
+	 node_style_set( hop_anim_vis, "display", "block" );
 	 return hop_anim_vis;
       } else {
 	 hop_anim_vis = hop_anim_16_16( service );
@@ -364,7 +380,8 @@ function hop_inner( http, success, failure, service ) {
 	 var status;
 
 	 if( hop_anim_vis != false ) {
-	    node_style_set( hop_anim_vis, "visibility", "hidden" );
+	    // node_style_set( hop_anim_vis, "visibility", "hidden" );
+	    node_style_set( hop_anim_vis, "display", "none" );
 	 }
 	 hop_anim_service = false;
 
@@ -591,8 +608,9 @@ function hop_innerHTML_set( nid, html ) {
    }
    
    el.innerHTML = html;
-   if( (html instanceof String) || (typeof html == "string") )
+   if( (html instanceof String) || (typeof html == "string") ) {
       hop_node_eval( el, html );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -620,8 +638,9 @@ function hop_outerHTML_set( nid, html ) {
    }
    
    p.innerHTML = html;
-   if( (html instanceof String) || (typeof html == "string") )
+   if( (html instanceof String) || (typeof html == "string") ) {
       hop_node_eval( p, html );
+   }
 }
 
 /*---------------------------------------------------------------------*/
