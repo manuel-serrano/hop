@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Jul  5 15:49:55 2007 (serrano)                */
+/*    Last change :  Fri Jul  6 06:43:55 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -179,7 +179,7 @@ function hop_eval( proc ) {
 function hop_node_eval( node, text ) {
    var res;
    var scripts = node.getElementsByTagName( "script" );
-   
+
    function hop_node_eval_from_text( text ) {
       var res;
       var start_re = /<script[^>]*>/ig;
@@ -203,12 +203,12 @@ function hop_node_eval( node, text ) {
    try {
       if( scripts.length > 0 ) {
 	 for ( var j = 0; j < scripts.length; j++ ) {
-	    if( scripts[ j ].childNodes.length > 0 ) {
+	    if( false && scripts[ j ].childNodes.length > 0 ) {
 	       res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
 	    } else {
 	       /* this is a buggy browser (Opera 8?) that does not */
 	       /* correctly implement script nodes                 */
-	       res = hop_node_eval_from_text( text );
+	       return hop_node_eval_from_text( text );
 	    }
 	 }
       } else {
@@ -218,6 +218,7 @@ function hop_node_eval( node, text ) {
       alert( e );
    }
 
+   alert( "hop_node_eval<<<" );
    return res;
 }
    
@@ -377,65 +378,61 @@ function hop_anim( service ) {
 function hop_inner( http, success, failure, service ) {
    http.onreadystatechange = function() {
       if( http.readyState == 4 ) {
-	 var status;
-
-	 if( hop_anim_vis != false ) {
-	    // node_style_set( hop_anim_vis, "visibility", "hidden" );
-	    node_style_set( hop_anim_vis, "display", "none" );
-	 }
-	 hop_anim_service = false;
-
 	 try {
-	    status = http.status;
+	    var status = http.status;
+	    switch( status ) {
+	       case 200:
+		  if( success ) {
+		     success( http );
+		  } else {
+		     hop_js_eval( http );
+		  }
+		  break;
+
+	       case 204:
+		  break;
+
+	       case 257:
+		  hop_js_eval( http );
+		  break;
+
+	       case 258:
+		  if( http.responseText != null ) eval( http.responseText );
+		  break;
+
+	       case 259:
+		  hop_set_cookie( http );
+		  break;
+
+	       case 407:
+		  alert( "*** Hop Authentication Error " + status + ": `"
+			 + http.responseText + "'" );
+		  break;
+
+	       default:
+		  if( (status > 200) && (status < 300) ) {
+		     if( success ) {
+			success( http );
+		     }
+		  } else {
+		     if( failure ) {
+			failure( http );
+		     } else {
+			hop_default_failure( http );
+		     }
+		  }
+	    }
 	 } catch( e ) {
 	    if( failure ) {
 	       failure( http );
 	    } else {
 	       throw( e );
 	    }
-	 }
-
-	 switch( status ) {
-	    case 200:
-	    if( success ) {
-	       success( http );
-	    } else {
-	       hop_js_eval( http );
+	 } finally {
+	    if( hop_anim_vis != false ) {
+	       node_style_set( hop_anim_vis, "display", "none" );
 	    }
-	    break;
-
-	    case 204:
-	    break;
-
-	    case 257:
-	    hop_js_eval( http );
-	    break;
-
-	    case 258:
-	    if( http.responseText != null ) eval( http.responseText );
-	    break;
-
-	    case 259:
-	    hop_set_cookie( http );
-	    break;
-
-	    case 407:
-	    alert( "*** Hop Authentication Error " + http.status + ": `"
-		   + http.responseText + "'" );
-	    break;
-
-	    default:
-	    if( (status > 200) && (status < 300) ) {
-	       if( success ) {
-		  success( http );
-	       }
-	    } else {
-	       if( failure ) {
-		  failure( http );
-	       } else {
-		  hop_default_failure( http );
-	       }
-	    }
+	    hop_anim_service = false;
 	 }
       }
    }

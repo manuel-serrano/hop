@@ -74,11 +74,14 @@ vectors.
 
 === client only ===
 
+  (window-height window)
+  (window-width window)
   (dom-node-eval node)
   (node-style-get node prop)
   (node-style-set! node prop value)
   (node-absolute-x node)
   (node-absolute-y node)
+  (css-add-style! document texta)
   (iframe-scroll-height iframe)
   (innerHTML-set! node-or-id html)
   (outerHTML-set! node-or-id html)
@@ -517,6 +520,31 @@ the tree. In general, it should not be directly called by user source code.
 == Client only Definitions ==
 <client>
 
+=== ++(window-height window)++ ===
+<procedure> window-height
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| window          |  window       | a window.                        |
+</arguments>
+
+Returns the height of a window. We **strongly** recommend to use this
+function instead of fetching information from ++window++ data structure
+since only this function ensures portability between Web browsers.
+</procedure>
+
+=== ++(window-width window)++ ===
+<procedure> window-width
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| window          |  window       | a window.                        |
+</arguments>
+
+Returns the width of a window. We **strongly** recommend to use this
+function instead of fetching information from ++window++ data structure
+since only this function ensures portability between Web browsers.
+</procedure>
+
+
 === ++(dom-node-eval node)++ ===
 <procedure> dom-node-eval
 
@@ -584,7 +612,21 @@ Returns the absolute horizontal position of an HTML element.
 Returns the absolute vertical position of an HTML element.
 </procedure>
 
-</client>
+=== ++(css-add-style! document text)++ ===
+<procedure> css-add-style!
+
+<arguments>
+^  arguments       ^   type           ^  short description                    ^
+| document         |  document        | an entire document.                   |
+| text             |  string          | the definition of the CCS rules.      |
+</arguments>
+
+Adds the rules described in ++text++ in the document style sheet. 
+
+~~ This function is not supported by all browsers (i.e., it has no effect
+on IE7).
+
+</procedure>
 
 === ++(iframe-scroll-height iframe)++ ==
 <procedure> iframe-scroll-height
@@ -643,6 +685,9 @@ In addition to set the element inner HTML content, this function also
 Returns the current text selection as a string. Returns an empty string
 is no text is currently selected.
 </procedure>
+
+</client>
+
 
 == See also ==
 <see-also>dom-, get-element-by-id</see-also>
