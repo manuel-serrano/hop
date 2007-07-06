@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jul  4 08:53:35 2007 (serrano)                */
+;*    Last change :  Fri Jul  6 14:04:38 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -878,19 +878,15 @@
 ;*---------------------------------------------------------------------*/
 (define (onerror-img attributes src)
    (let* ((val (format "hop_deinline_image(this, ~s)" src))
-	  (onerror (when (pair? attributes)
-		      (assq 'onerror attributes)))
-	  (oval (when (pair? onerror)
-		   (cdr onerror))))
+	  (onerror (when (pair? attributes) (assq 'onerror attributes)))
+	  (oval (when (pair? onerror) (cdr onerror))))
       (cond
 	 ((string? oval)
-	  (set-cdr! onerror
-		    (string-append oval "; " val))
+	  (set-cdr! onerror (string-append oval "; " val))
 	  attributes)
 	 ((xml-tilde? oval)
 	  (let ((tilde (string->tilde val)))
-	     (set-cdr! onerror
-		       (tilde-compose oval tilde)))
+	     (set-cdr! onerror (tilde-compose oval tilde)))
 	  attributes)
 	 (else
 	  (cons `(onerror . ,val) attributes)))))

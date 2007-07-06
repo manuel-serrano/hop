@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jun 22 11:18:01 2007 (serrano)                */
+;*    Last change :  Fri Jul  6 14:18:15 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -44,7 +44,8 @@
 	    
 	    (class html-tree-leaf::xml-element
 	       (value read-only)
-	       (icon read-only)))
+	       (icon read-only)
+	       (iconerr read-only)))
 
    (export  (<TREE> . ::obj)
 	    (<TRHEAD> . ::obj)
@@ -113,17 +114,23 @@
       (id (xml-make-id id 'TRLEAF))
       (value value)
       (icon (tree-icon icon inline "file.png"))
+      (iconerr icon)
       (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    tree-icon ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (tree-icon icon inline default)
-   (if (and (eq? icon #t) (not inline))
-       ;; non inline icon
-       (make-file-name (hop-icons-directory) default)
+   (cond
+      ((and (eq? icon #t) (not inline))
+       ;; default non-inlined icon
+       (make-file-name (hop-icons-directory) default))
+      ((and inline (string? icon) (file-exists? icon))
+       ;; an inlined image
+       (img-base64-encode icon))
+      (else
        ;; user specified icon
-       icon))
+       icon)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tree ...                                        */
@@ -235,35 +242,39 @@
 	 ;; history
 	 (display (if history "true," "false,") p)
 	 ;; the icons
-	 (let ((iconopen (cond
-			    ((not iconopen)
-			     #f)
-			    ((>fx level 0)
-			     (tree-icon iconopen inline "folder-open.png"))
-			    (inline
-			     (if (string? iconopen)
-				 (img-base64-encode iconopen)
-				 0))
-			    (else
-			     (tree-icon iconopen
-					inline
-					(make-file-name (hop-icons-directory)
-							"device.png")))))
-	       (iconclose (cond
-			     ((not iconclose)
-			      #f)
-			     ((>fx level 0)
-			      (tree-icon iconclose inline "folder-close.png"))
-			     (inline
-			      (if (string? iconclose)
-				  (img-base64-encode iconclose)
-				  0))
-			     (else
-			      (tree-icon iconclose
-					 inline
-					 (make-file-name (hop-icons-directory)
-							 "device.png"))))))
+	 (let ((iopen (cond
+			 ((not iconopen)
+			  #f)
+			 ((>fx level 0)
+			  (tree-icon iconopen inline "folder-open.png"))
+			 (inline
+			  (if (string? iconopen)
+			      (img-base64-encode iconopen)
+			      0))
+			 (else
+			  (tree-icon iconopen
+				     inline
+				     (make-file-name (hop-icons-directory)
+						     "device.png")))))
+	       (iclose (cond
+			  ((not iconclose)
+			   #f)
+			  ((>fx level 0)
+			   (tree-icon iconclose inline "folder-close.png"))
+			  (inline
+			   (if (string? iconclose)
+			       (img-base64-encode iconclose)
+			       0))
+			  (else
+			   (tree-icon iconclose
+				      inline
+				      (make-file-name (hop-icons-directory)
+						      "device.png"))))))
+	    (html-write-tree-icon iopen p)
+	    (display "," p)
 	    (html-write-tree-icon iconopen p)
+	    (display "," p)
+	    (html-write-tree-icon iclose p)
 	    (display "," p)
 	    (html-write-tree-icon iconclose p))
 	 ;; icon dir
@@ -320,7 +331,7 @@
 ;*    html-write-tree-leaf ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (html-write-tree-leaf obj::html-tree-leaf parent p be)
-   (with-access::html-tree-leaf obj (icon body value)
+   (with-access::html-tree-leaf obj (icon iconerr body value)
       (display "hop_make_tree_leaf(" p)
       ;; parent
       (display "document.getElementById('" p)
@@ -342,6 +353,9 @@
 	  (display "''," p))
       ;; the icon
       (html-write-tree-icon icon p)
+      ;; the icon error
+      (display ", " p)
+      (html-write-tree-icon iconerr p)
       (display ")" p)))
 
 ;*---------------------------------------------------------------------*/
