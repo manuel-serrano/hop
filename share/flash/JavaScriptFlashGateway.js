@@ -112,7 +112,6 @@ function FlashProxy(uid, proxySwfName)
  */
 FlashProxy.prototype.call = function()
 {
-
     if (arguments.length == 0)
     {
         throw new Exception("Flash Proxy Exception",

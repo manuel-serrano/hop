@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jun 29 12:58:57 2007 (serrano)                */
+;*    Last change :  Mon Jul  9 08:08:52 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -27,7 +27,8 @@
 	    __hop_js-lib
 	    __hop_hop)
 
-   (export  (<HEAD> . ::obj)
+   (export  (<HTML> . ::obj)
+	    (<HEAD> . ::obj)
 	    (head-parse args)
 	    (<FOOT> . ::obj)
 	    (<FOOT-BUTTON> . ::obj)
@@ -47,6 +48,26 @@
 ;*    head-runtime-system-inline ...                                   */
 ;*---------------------------------------------------------------------*/
 (define head-runtime-system-inline #f)
+
+;*---------------------------------------------------------------------*/
+;*    <HTML> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-xml xml-html #f <HTML>
+   ;; the macro define-xml binds attr, init, and body
+   (let* ((body (reverse! body))
+	  (nbody (cond
+		    ((null? body)
+		     body)
+		    ((not (xml-markup-is? (car body) 'head))
+		     (tprint "adding head: " (find-runtime-type (car body)))
+		     (cons (<HEAD>) body))
+		    (else
+		     body))))
+      (instantiate::xml-html
+	 (markup 'html)
+	 (attributes attr)
+	 (initializations init)
+	 (body nbody))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-extra! ...                                                  */
@@ -115,7 +136,9 @@
 			   (set! res (cons (jscript gw inl) res))))))
 	     (js (let ((p (make-file-name (hop-share-directory)
 					  (string-append f ".js"))))
-		    (when (file-exists? p)
+		    (when (and (file-exists? p)
+			       (or (not (string=? f "dashboard"))
+				   (hop-enable-dashboard)))
 		       (set! res (cons (jscript p inl) res)))))
 	     (scm (let ((p (make-file-name (hop-share-directory)
 					   (string-append f ".scm"))))

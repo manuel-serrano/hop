@@ -1,12 +1,12 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/test/test.hss                   */
+/*    serrano/prgm/project/hop/weblets/dashboard/dashboard.hss         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Jul  7 08:17:56 2007 (serrano)                */
+/*    Last change :  Mon Jul  9 07:00:17 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
-/*    CSS for the TEST weblet                                          */
+/*    CSS for the DASHBOARD weblet                                     */
 /*=====================================================================*/
 
 $(define border-color "#bbb")
@@ -28,7 +28,7 @@ ul {
   font-size: 90%;
 }
 
-table.test {
+table.dashboard {
   width: 45em;
   margin-top: 20px;
   padding: 10px;
@@ -37,11 +37,11 @@ table.test {
   -moz-border-radius: 0.5em;
 }
 
-table.test img#logo {
+table.dashboard img#logo {
   padding: 20px;
 }
 
-table.test td {
+table.dashboard td {
   text-align: left;
 }
 
@@ -54,7 +54,7 @@ td#title {
   width: 100%;
 }
 
-table.test td#logo {
+table.dashboard td#logo {
   vertical-align: top;
   text-align: center;
   width: 48px;

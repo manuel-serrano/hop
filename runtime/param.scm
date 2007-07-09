@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Jun  3 05:52:29 2007 (serrano)                */
+;*    Last change :  Mon Jul  9 07:03:09 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -180,6 +180,9 @@
 	    
 	    (hop-service-flush-pace::long)
 	    (hop-service-flush-pace-set! ::long)
+
+	    (hop-enable-dashboard::bool)
+	    (hop-enable-dashboard-set! ::bool)
 
 	    (hop-rc-loaded!)))
 
@@ -797,6 +800,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-flush-pace
    100)
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-dashboard ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-dashboard
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

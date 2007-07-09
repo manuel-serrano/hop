@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Tue May 22 13:59:58 2007 (serrano)                */
+;*    Last change :  Sun Jul  8 18:44:22 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -45,8 +45,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (doc/weblet weblet)
    (setup-api-tables!)
-   (doc-main (<SCRIPT>
-		:type "text/javascript"
+   (doc-main (<SCRIPT> :type "text/javascript"
 		(select-weblet-pad-on-load weblet))))
 
 ;*---------------------------------------------------------------------*/

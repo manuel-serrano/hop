@@ -1,5 +1,4 @@
 ((name "test")
  (author "M. Serrano")
  (version "1.0.0")
- (sdescr "A test suite for client-side execution")
- (about-service "about"))
+ (sdescr "A test suite for client-side execution"))

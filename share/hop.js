@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jul  6 14:29:36 2007 (serrano)                */
+/*    Last change :  Sun Jul  8 17:12:45 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -331,7 +331,7 @@ function hop_anim_16_16( title ) {
    vis.align = "center";
 
    var img = document.createElement( "img" );
-   img.classname = "hop-busy-anim";
+   img.className = "hop-busy-anim";
 
    if( hop_msiep() ) {
       img.src = hop_share_directory() + "/icons/busy-anim-16.gif";

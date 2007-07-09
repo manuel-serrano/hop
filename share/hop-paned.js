@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Fri Jul  6 06:01:09 2007 (serrano)                */
+/*    Last change :  Mon Jul  9 05:22:03 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -31,7 +31,7 @@ function hop_vpaned_fraction_set( paned, fraction ) {
       frac = parseInt( fraction );
    } else {
       if( (fraction < 0) || (fraction > 100) ) {
-	 return;
+	 return false;
       }
 
       frac = fraction;
@@ -47,6 +47,8 @@ function hop_vpaned_fraction_set( paned, fraction ) {
 	 paned.onresize();
       }
    }
+
+   return fraction;
 }
 
 /*---------------------------------------------------------------------*/
@@ -89,7 +91,7 @@ function hop_hpaned_fraction_set( paned, fraction ) {
    }
 
    if( (frac < 0) || (frac > 100) ) {
-      return;
+      return false;
    } else {
       var height = paned.clientHeight;
 
@@ -100,7 +102,7 @@ function hop_hpaned_fraction_set( paned, fraction ) {
 	 paned.fraction = fraction;
       }
 	 
-      return;
+      return fraction;
    }
 }
 

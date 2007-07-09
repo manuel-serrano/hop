@@ -1,0 +1,18 @@
+<doc> DASHBOARD -- The Hop Dashboard
+
+== Description ==
+
+todo
+
+== Services ==
+
+DASHBOARD defines two services:
+
+  - ++[[dashboard]]++: This is the configuration entry point of 
+ the DASHBOARD weblet.
+  - ++[[dashboard/populate]]++: Returns the list of registered Dashboard
+ services.
+
+
+</doc>
+

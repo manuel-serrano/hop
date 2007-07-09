@@ -78,7 +78,7 @@
 		      (match-case x
 			 ((?- ?test . ?body)
 			  (e
-			   `(if ,test (begin ,@body))
+			   `(if ,test (begin ,@body) #f)
 			   e macros-ht))
 			 (else
 			  (error "when-expand" "Invalid when form: " x)))))
@@ -88,7 +88,7 @@
 		      (match-case x
 			 ((?- ?test . ?body)
 			  (e
-			   `(if (not ,test) (begin ,@body))
+			   `(if ,test #f (begin ,@body))
 			   e macros-ht))
 			 (else
 			  (error "unless-expand" "Invalid unless form: " x)))))

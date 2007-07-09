@@ -1,0 +1,74 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/canvas.hop                 */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Jul  6 17:51:16 2007                          */
+;*    Last change :  Sat Jul  7 08:06:20 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Testing canvas                                                   */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-canvas
+   (import weblet_test)
+   (export test/canvas))
+
+;*---------------------------------------------------------------------*/
+;*    test/canvas ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (test/canvas)
+   (let ((canvas (<CANVAS> :style "border: 5px solid black; width: 640px;"
+		    :width 640 :height 480
+		    (<DIV> :style "margin-top: 2ex; margin-bottom: 2ex; text-align: center")
+		    "Unfortunately, your browser does not support canvas!"))
+	 (src (service-resource test/canvas "canvas-test.jpg")))
+      
+      (<TEST-HTML>
+	 :include "hop-slider"
+	 :source (service-resource test/canvas "canvas.hop")
+	 :onload ~(begin
+		     (unless (eq? $canvas.getContext #unspecified)
+			(set! ctx ($canvas.getContext "2d"))
+			(set! ctx.fillStyle "#fff")
+			(draw 0)))
+	 
+	 ~(define ctx #f)
+	 ~(define img (let ((i (new Image)))
+			 (set! i.src $src)
+			 i))
+	 ~(define zoom 1)
+	 ~(define angle 0)
+	 ~(define pi (* 4 (atan 1)))
+	 
+	 ~(define (draw)
+	     (when ctx
+		(ctx.fillRect 0 0 $canvas.width $canvas.height)
+		(ctx.save)
+		(ctx.translate (/ $canvas.width 2) (/ $canvas.height 2))
+		(ctx.rotate angle)
+		(ctx.scale zoom zoom)
+		(ctx.drawImage img (- (/ img.width 2)) (- (/ img.height 2)))
+		(ctx.restore)))
+	 
+	 ~(define (draw/angle a)
+	     (set! angle a)
+	     (draw))
+	 
+	 (<DIV> :class "comment"
+	    "This test checks the browser canvas. When operational, this
+test presents a picture that you can resize and rotate.")
+	 
+	 (<BR>)
+	 (<DIV>
+	    (<BUTTON> :onclick ~(draw/angle 0) "landscape")
+	    (<BUTTON> :onclick ~(draw/angle (/ pi 2)) "portrait")
+	    (<BUTTON> :onclick ~(draw/angle pi) "seascape")
+	    (<BUTTON> :onclick ~(draw/angle (/ (* 3 pi) 2)) "upsidedown")
+	    (<DIV> :style "width: 400px; margin-top: 1ex; margin-bottom: 2ex"
+	       (<SLIDER> :caption "top"
+		  :min 1 :max 20 :value ~(* 10 zoom)
+		  :onchange ~(begin (set! zoom (/ this.value 10)) (draw))))
+	    canvas))))

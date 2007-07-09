@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jul  4 05:13:53 2007                          */
-;*    Last change :  Wed Jul  4 05:18:41 2007 (serrano)                */
+;*    Last change :  Sat Jul  7 08:24:44 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Busy Animation test                                              */
@@ -21,6 +21,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (test/busy)
    (<TEST-HTML> :include "hop-foldlist"
+      :source (service-resource test/busy "busy.hop")
       (<DIV> :class "comment"
 	 "This test checks busy animation. When click the buttton
 below, you should see a small animation of the right hand-side of the

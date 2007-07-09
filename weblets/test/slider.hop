@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Wed Jul  4 09:36:35 2007 (serrano)                */
+;*    Last change :  Sat Jul  7 08:24:26 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Sliders                                                          */
@@ -37,6 +37,7 @@
 					(set! blue this.value)
 					(showcolor!)))))
       (<TEST-HTML> :include "hop-slider"
+	 :source (service-resource test/slider "slider.hop")
 	 (<DIV> :class "comment" [This test checks Sliders.])
 	 ~(define red 60)
 	 ~(define green 40)

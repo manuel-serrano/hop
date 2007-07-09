@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Wed Dec  6 18:45:04 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Mon Jul  9 07:10:22 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -22,7 +22,7 @@
 	     ((null? args)
 	      ,(if (null? exp)
 		   `(,(symbol-append 'instantiate:: type)
-		     (markup ',(string->symbol (symbol->string el)))
+		     (markup ',el)
 		     (attributes attr)
 		     (initializations init)
 		     (body (reverse! body)))
@@ -68,7 +68,7 @@
 	     ((null? args)
 	      ,(if (null? exp)
 		   `(,(symbol-append 'instantiate:: type)
-		     (markup ',(string->symbol (symbol->string el)))
+		     (markup ',el)
 		     (id (xml-make-id id ',el))
 		     (attributes attr)
 		     (initializations init)

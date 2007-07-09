@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Wed Jul  4 05:45:00 2007 (serrano)                */
+;*    Last change :  Sat Jul  7 08:25:27 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Sorttables                                                       */
@@ -30,6 +30,7 @@
 	 (<TR> (<TD> (<TT> (format "&#~a;" c))) (<TD> (format "&#~a;" c))))
       
       (<TEST-HTML> :include "hop-sorttable"
+	 :source (service-resource test/sorttable "sorttable.hop")
 	 (<DIV> :class "comment"
 	    [This test checks Sorttable. Click the headers of the table
 		  above. Note that the language column is not sortted

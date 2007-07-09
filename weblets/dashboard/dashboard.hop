@@ -1,0 +1,64 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/dashboard/dashboard.hop         */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Mon Jul  9 06:59:51 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP dashboard                                                    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_dashboard
+   (export dashboard
+	   dashboard/documentation
+	   dashboard/populate))
+
+;*---------------------------------------------------------------------*/
+;*    dashboard ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-service (dashboard)
+   (<HTML>
+      (<HEAD> :title "Hop dashboard"
+	 :base (service-base-url dashboard (current-request))
+	 :css "dashboard.hss")
+      (<BODY>
+	 (<DIV> :align "center"
+	    (<TABLE> :class "dashboard"
+	       (<COLGROUP> (<COL> :width "0*"))
+	       (<TR>
+		  (<TD> :id "logo" (<IMG> :id "logo" :src "etc/logo.png"))
+		  (<TD> (<TABLE> :width "100%"
+			   (<TR> (<TD> :id "title" "Hop Dashboard"))
+			   (<TR> (<TD> "")))))))
+	 (<FOOT>))))
+   
+;*---------------------------------------------------------------------*/
+;*    dashboard/documentation ...                                      */
+;*---------------------------------------------------------------------*/
+(define-service (dashboard/documentation)
+   (let* ((file (service-resource dashboard/documentation "etc/dashboard.wiki"))
+	  (url (format "/hop/dashboard/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
+
+;*---------------------------------------------------------------------*/
+;*    dashboard/populate ...                                           */
+;*---------------------------------------------------------------------*/
+(define-service (dashboard/populate)
+   (list (cons (service-resource dashboard/documentation "etc/logo.png")
+	       "dashboard")
+	 (cons (service-resource dashboard/documentation "../home/etc/logo.png")
+	       "home")
+	 (cons (service-resource dashboard/documentation "../hz/etc/logo.png")
+	       "hz")
+	 (cons (service-resource dashboard/documentation "../doc/etc/logo.png")
+	       "doc")
+	 (cons (service-resource dashboard/documentation "../test/etc/logo.png")
+	       "test")
+	 (cons (service-resource dashboard/documentation "../hopsh/etc/logo.png")
+	       "hopsh")))

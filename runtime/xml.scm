@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jul  6 14:04:38 2007 (serrano)                */
+;*    Last change :  Mon Jul  9 08:05:13 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -143,6 +143,7 @@
 	    (<DL> . ::obj)
 	    (<DT> . ::obj)
 	    (<EM> . ::obj)
+	    (<EMBED> . ::obj)
 	    (<FIELDSET> . ::obj)
 	    (<FONT> . ::obj)
 	    (<FORM> . ::obj)
@@ -155,7 +156,6 @@
 	    (<H5> . ::obj)
 	    (<H6> . ::obj)
 	    (<HR> . ::obj)
-	    (<HTML> . ::obj)
 	    (<I> . ::obj)
 	    (<IFRAME> . ::obj)
 	    (<IMG> . ::obj)
@@ -500,7 +500,7 @@
       (display markup p)
       (xml-write-attributes attributes p)
       (cond
-	 ((or (pair? body) (memq markup '(script)))
+	 ((or (pair? body) (eq? markup 'script))
 	  (display ">" p)
 	  (for-each (lambda (b) (xml-write b p encoding backend)) body)
 	  (display "</" p)
@@ -778,6 +778,7 @@
 (define-xml-element <DL>)
 (define-xml-element <DT>)
 (define-xml-element <EM>)
+(define-xml-element <EMBED>)
 (define-xml-element <FIELDSET>)
 (define-xml-element <FONT>)
 (define-xml-element <FORM>)
@@ -790,7 +791,6 @@
 (define-xml-element <H5>)
 (define-xml-element <H6>)
 (define-xml xml-empty-element #t <HR>)
-(define-xml xml-html #f <HTML>)
 (define-xml-element <I>)
 (define-xml-element <IFRAME>)
 (define-xml xml-empty-element #t <INPUT>)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  12-Oct-2006 10:05                                 */
-/*    Last change :                                                    */
+/*    Last change :  Sun Jul  8 11:54:09 2007 (serrano)                */
 /*    Copyright   :  2007 GPL                                          */
 /*    -------------------------------------------------------------    */
 /*    Sound Support for HOP                                            */
@@ -20,13 +20,14 @@ var soundPool = new Array();
 /*    hop_sound_init ...                                               */
 /*---------------------------------------------------------------------*/
 function hop_sound_init() {
-    var uid = new Date().getTime();
-    var flashdir = hop_share_directory() + "/flash/";
-    var tag = new FlashTag( flashdir + 'hop-sound.swf', 1, 1 ); 
+   var uid = new Date().getTime();
+   var uid = 23;
+   var flashdir = hop_share_directory() + "/flash/";
+   var tag = new FlashTag( flashdir + 'hop-sound.swf', 1, 1 ); 
 
-    flashProxy = new FlashProxy( uid, flashdir + 'JavaScriptFlashGateway.swf' );
-    tag.setFlashvars( 'lcId=' + uid );
-    tag.write( document );
+   flashProxy = new FlashProxy( uid, flashdir + 'JavaScriptFlashGateway.swf' );
+   tag.setFlashvars( 'lcId=' + uid );
+   tag.write( document );
 }
 
 /*---------------------------------------------------------------------*/
@@ -34,12 +35,13 @@ function hop_sound_init() {
 /*---------------------------------------------------------------------*/
 function hop_make_sound( url ) {
     var snd = new Object();
-    
+
     snd.id = soundCounter++;
     snd.url = url;
     snd.volume = 100;
     snd.pan = 0;
     soundPool[ snd.id ] = snd;
+    
     return snd;
 }
 
@@ -47,9 +49,8 @@ function hop_make_sound( url ) {
 /*    hop_sound_load ...                                               */
 /*---------------------------------------------------------------------*/
 function hop_sound_load( snd, streaming ) {
-    var str = (streaming == undefined) ?  true : streaming;
-    // Problem when deserializing booleans ==> Use an int.
-    flashProxy.call( 'new_sound', snd.id, snd.url, str? 1 : 0 );
+   var str = ((streaming == undefined) || (streaming)) ?  1 : 0;
+   flashProxy.call( 'new_sound', snd.id, snd.url, str );
 }
 
 
