@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jul  9 07:03:09 2007 (serrano)                */
+;*    Last change :  Mon Jul  9 08:18:38 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -183,6 +183,9 @@
 
 	    (hop-enable-dashboard::bool)
 	    (hop-enable-dashboard-set! ::bool)
+
+	    (hop-dashboard-weblet-applets::pair-nil)
+	    (hop-dashboard-weblet-applets-set! ::pair-nil)
 
 	    (hop-rc-loaded!)))
 
@@ -806,6 +809,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-dashboard
    #t)
+
+;*---------------------------------------------------------------------*/
+;*    hop-dashboard-weblet-applets ...                                 */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-dashboard-weblet-applets
+   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Jul  8 17:12:45 2007 (serrano)                */
+/*    Last change :  Tue Jul 10 08:42:39 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -855,13 +855,11 @@ function hop_load( src, timeout ) {
 	 var it;
 	 var p = function() {
 	    if( loaded == true ) {
-	       alert( "timeout=" + loaded );
 	       clearInterval( it );
 	    } else {
 	       if( timeout > 0 ) {
 		  timeout -= hop_load_frequency;
 		  if( timeout <= 0 ) {
-		     alert( "timeout <=0 " + loaded );
 		     clearInterval( it );
 		     throw( new HopLoadError( src ) );
 		  }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Mon Jun 25 15:37:55 2007 (serrano)                */
+;*    Last change :  Thu Jul 12 02:42:40 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -95,7 +95,7 @@
 			(connection-close! remote)
 			(cond
 			   ((connection-wstart? remote)
-			    (tprint "wstart...")
+			    #;(tprint "wstart...")
 			    ;; If we have already send characters to the client
 			    ;; it is no longer possible to answer resource
 			    ;; unavailable so we raise the error.
@@ -103,7 +103,7 @@
 			    ;; the next handler closes it.
 			    (raise e))
 			   ((connection-keep-alive? remote)
-			    (tprint "keep-alive...")
+			    #;(tprint "keep-alive...")
 			    ;; This is a keep-alive connection that is likely
 			    ;; to have been closed by the remote server, we
 			    ;; retry with a fresh connection

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Wed Jun 20 10:40:26 2007 (serrano)                */
+/*    Last change :  Tue Jul 10 09:33:01 2007 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -28,14 +28,6 @@ function hop_iwindow_close( id ) {
 
    /* user event */
    if( win.onclose ) win.onclose();
-}
-
-/*---------------------------------------------------------------------*/
-/*    function                                                         */
-/*    hop_window_close ...                                             */
-/*---------------------------------------------------------------------*/
-function hop_window_close( win ) {
-   return win.close( win );
 }
 
 /*---------------------------------------------------------------------*/
@@ -214,13 +206,27 @@ function hop_iwindow_drag( event, win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_resize ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_iwindow_resize( event, win, widthp, heightp ) {
+function
+hop_iwindow_resize( win, w, h ) {
+   node_style_set( win.el_win, "width",
+		   ((typeof w)=="number") ? (w + 1 + "px") : w);
+   node_style_set( win.el_win, "height",
+		   ((typeof h)=="number") ? (h + 25 + 1 + "px") : h);
+   return win;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_iwindow_evresize_inner ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
    var x0 = hop_event_mouse_x( event );
    var y0 = hop_event_mouse_y( event );
    var w0 = win.el_win.offsetWidth;
    var h0 = win.el_win.offsetHeight;
    var mousemove;
 
+   node_style_set( win.el_content, "background", "white" );
+   node_style_set( win.el_content, "border", "0" );
    node_style_set( win.el_content, "display", "none" );
    node_style_set( win.el_win, "background", "white" );
    
@@ -268,6 +274,16 @@ function hop_iwindow_resize( event, win, widthp, heightp ) {
    hop_add_event_listener( document, "mouseup", mouseup );
    
    hop_stop_propagation( event );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_iwindow_evresize ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_iwindow_evresize( event, win, widthp, heightp ) {
+   if( win.resizable )
+      return hop_iwindow_evresize_inner( event, win, widthp, heightp );
+   else
+      return false;
 }
 
 /*---------------------------------------------------------------------*/
@@ -335,6 +351,7 @@ function make_hop_iwindow( id, klass, parent ) {
 
    win.el_shadow = win.childNodes[ 0 ];
    win.el_shadow_box = document.getElementById( id + "-shadow-box" );
+   win.resizable = true;
 
    hop_add_event_listener(
       win.el_handle,
@@ -344,17 +361,17 @@ function make_hop_iwindow( id, klass, parent ) {
    hop_add_event_listener(
       win.el_resize_middle,
       "mousedown",
-      function( event ) { hop_iwindow_resize( event, win, false, true ) } );
+      function( event ) { hop_iwindow_evresize( event, win, false, true ) } );
 
    hop_add_event_listener(
       win.el_resize_right,
       "mousedown",
-      function( event ) { hop_iwindow_resize( event, win, true, true ) } );
+      function( event ) { hop_iwindow_evresize( event, win, true, true ) } );
 
    hop_add_event_listener(
       win.el_resize_left,
       "mousedown",
-      function( event ) { hop_iwindow_resize( event, win, false, false ) } );
+      function( event ) { hop_iwindow_evresize( event, win, false, false ) } );
    
    return win;
 }
@@ -388,11 +405,23 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
       win.el_content.appendChild( obj );
    } else {
       var cb = function( http ) {
-     	         if( http.responseText != null ) {
-	           win.el_content.innerHTML = http.responseText;
-	           hop_js_eval( http );
-	         }
-               };
+	 if( http.responseText != null ) {
+	    win.el_content.innerHTML = http.responseText;
+	    hop_js_eval( http );
+		   
+	    if( !width && !height ) {
+	       var c = win.el_content.childNodes[ 0 ];
+
+	       if( hop_is_html_element( c ) ) {
+		  var w = node_style_get( c, "width" );
+		  var h = node_style_get( c, "height" );
+
+		  if( w ) node_style_set( win.el_win, "width", w );
+		  if( h ) node_style_set( win.el_win, "height", h );
+	       }
+	    }
+	 }
+      };
 
       if( typeof obj == "function" ) {
 	 hop( obj(), cb );
@@ -401,7 +430,7 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
 	    hop( obj, cb );
 	 } else {
 	    alert( "*** Hop Error, Illegal `iwindow' content -- " + obj
-	       + " (" + typeof obj + ")" );
+		   + " (" + typeof obj + ")" );
 	 }
       }
    }
@@ -409,24 +438,31 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
    win.el_title.innerHTML = title ? title : id;
 
    if( isnew ) {
-      if( x ) node_style_set( win, "left", ((typeof x) == "number") ? (x + "px") : x );
-      if( y ) node_style_set( win, "top", ((typeof y) == "number") ? (y + "px") : y );
+      if( x ) node_style_set( win, "left",
+			      ((typeof x)=="number") ? (x + "px") : x );
+      if( y ) node_style_set( win, "top",
+			      ((typeof y) =="number") ? (y + "px") : y );
 
       if( width ) {
-	 node_style_set( win.el_win, "width", ((typeof width) == "number") ? (width + "px") : width );
+	 node_style_set( win.el_win, "width",
+			 ((typeof width) == "number") ? (width + "px") : width );
       } else {
-	 node_style_set( win.el_win, "width", "200px" );
+	 node_style_set( win.el_win, "width",
+			 "200px" );
       }
       if( height ) {
-	 node_style_set( win.el_win, "height", ((typeof height) == "number") ? (height + "px") : height );
+	 node_style_set( win.el_win, "height",
+			 ((typeof height) == "number") ? (height + "px") : height );
       } else {
-	 node_style_set( win.el_win, "height", "200px" );
+	 node_style_set( win.el_win, "height",
+			 "200px" );
       }
       
       if( win.onresize ) win.onresize();
    }
 
    node_style_set( win.el_content, "display", "block" );
+
    hop_iwindow_raise( win );
 
    return win;
@@ -446,3 +482,11 @@ function hop_window_open( url, title, klass, width, height, x, y ) {
 
    return res;
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_window_close ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_window_close( win ) {
+   return win.close( win );
+}
+

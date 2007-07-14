@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Jul  9 08:08:52 2007 (serrano)                */
+;*    Last change :  Mon Jul  9 09:09:33 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -59,7 +59,6 @@
 		    ((null? body)
 		     body)
 		    ((not (xml-markup-is? (car body) 'head))
-		     (tprint "adding head: " (find-runtime-type (car body)))
 		     (cons (<HEAD>) body))
 		    (else
 		     body))))

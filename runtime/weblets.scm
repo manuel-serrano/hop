@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Jun 27 05:49:45 2007 (serrano)                */
+;*    Last change :  Mon Jul  9 15:37:43 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -45,21 +45,21 @@
    (define (get-weblet-details dir name)
       (let* ((infos (get-weblet-info dir name))
 	     (main (assoc 'main-file infos))
-	     (weblet (make-file-path dir
-				     name
+	     (prefix (make-file-name dir name))
+	     (weblet (make-file-name prefix 
 				     (if main
 					 (cadr main)
 					 (string-append name ".hop")))))
 	 (when (file-exists? weblet)
-	    `((name ,name) (weblet ,weblet) ,@infos))))
-   (let Loop ((files (directory->list dir))
+	    `((name ,name) (weblet ,weblet) (prefix ,prefix) ,@infos))))
+   (let loop ((files (directory->list dir))
 	      (res '()))
       (if (null? files)
 	  res
 	  (let ((web (get-weblet-details dir (car files))))
 	     (if web
-		 (Loop (cdr files) (cons web res))
-		 (Loop (cdr files) res))))))
+		 (loop (cdr files) (cons web res))
+		 (loop (cdr files) res))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-weblet-info ...                                              */
@@ -127,16 +127,42 @@
 		   "autoload already installed on:\n  ~a\nignoring:\n  ~a"
 		   opath
 		   npath))))
+
+   (define (add-dashboard-applet! name icon svc)
+      (hop-dashboard-weblet-applets-set!
+       (cons (list name icon svc) (hop-dashboard-weblet-applets))))
    
    (define (maybe-autoload x)
       (let ((cname (assq 'name x)))
 	 (if (pair? cname)
 	     (let* ((name (cadr cname))
+		    (prefix (cadr (assq 'prefix x)))
 		    (url (make-url-name (hop-service-base) name))
 		    (path (cadr (assq 'weblet x)))
 		    (autopred (assq 'autoload x))
 		    (rc (assq 'rc x))
+		    (dashboard (assq 'dashboard x))
 		    (opath (hashtable-get *weblet-table* name)))
+		(if (pair? dashboard)
+		    (for-each (lambda (d)
+				 (match-case d
+				    ((?i ?svc)
+				     (let ((p (make-file-path prefix "etc" i)))
+					(add-dashboard-applet! name p svc)))
+				    ((and ?i (? string?))
+				     (let ((p (make-file-path prefix "etc" i)))
+					(add-dashboard-applet! name i "svc")))
+				    (else
+				     (warning 'autoload-weblets
+					      "bad dashboard declaration"
+					      d))))
+			      (cdr dashboard))
+		    (let ((icon (make-file-path prefix "etc" "dashboard.png")))
+		       (when (file-exists? icon)
+			  (add-dashboard-applet!
+			   name
+			   icon
+			   (string-append url "/dashboard")))))
 		(when (pair? rc) (eval (cadr rc)))
 		(cond
 		   ((string? opath)

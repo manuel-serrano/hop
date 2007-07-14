@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Jul  9 08:05:13 2007 (serrano)                */
+;*    Last change :  Wed Jul 11 06:10:03 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -206,6 +206,27 @@
 
 	    (<TILDE> ::obj)
 	    (<DELAY> . ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    object-print ::xml-element ...                                   */
+;*    -------------------------------------------------------------    */
+;*    Because of their parent slot xml-element are cyclic and cannot   */
+;*    thus be display as is.                                           */
+;*---------------------------------------------------------------------*/
+(define-method (object-print o::xml-element p print-slot)
+   (with-access::xml-element o (markup attributes initializations body id)
+      (display "#|xml-element markup=" p)
+      (print-slot markup p)
+      (display " id=" p)
+      (print-slot id p)
+      (display " parent=..." p)
+      (display " attributes=" p)
+      (print-slot attributes p)
+      (display " initializations=" p)
+      (print-slot initializations p)
+      (display " body=" p)
+      (print-slot body p)
+      (display "|" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-javascript-mime-type ...                                     */

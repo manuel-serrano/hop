@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Jul  9 06:59:51 2007 (serrano)                */
+;*    Last change :  Tue Jul 10 08:26:49 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP dashboard                                                    */
@@ -47,18 +47,57 @@
 	 (header (list (cons 'location: url))))))
 
 ;*---------------------------------------------------------------------*/
+;*    dashboard-icon ...                                               */
+;*---------------------------------------------------------------------*/
+(define (dashboard-icon icon)
+   (service-resource dashboard (make-file-name "etc" icon)))
+
+;*---------------------------------------------------------------------*/
+;*    dashboard/rfc ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (dashboard/rfc)
+   (let ((rfc (<INPUT> :type 'text :size 40))
+	 (repo (<INPUT> :type 'text :size 40
+		  :value "http://tools.ietf.org/html")))
+      (<DASHBOARD> :style "width: 35em; height: 14ex"
+	 (<TABLE>
+	    (<TR>
+	       (<TD> :rowspan 4 :valign 'top
+		  (<IMG> :src (dashboard-icon "dashboard-rfc.png"))))
+	    (<TR>
+	       (<TH> :class "kind" "Rfc")
+	       (<TD> rfc))
+	    (<TR>
+	       (<TH> :class "kind" "Repository")
+	       (<TD> repo))
+	    (<TR>
+	       (<TD> :style "padding-top: 1ex" :colspan 2 :align 'right
+		  (<A> :href "http://tools.ietf.org/html"
+		     :class "button"
+		     :target "_blank"
+		     :onclick ~(set! this.href
+				     (format "~a/rfc~a" $repo.value $rfc.value))
+		     "Go")))))))
+
+;*---------------------------------------------------------------------*/
+;*    <DASHBOARD> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <DASHBOARD> ((style #f)
+				  (class #f)
+				  body)
+   (<HTML>
+      (<HEAD> :css (service-resource dashboard "dashboard-applet.hss"))
+      (<BODY> :class (if (string? class)
+			 (string-append "hop-dashboard-applet " class)
+			 "hop-dashboard-applet")
+	      :style style
+	      body)))
+
+;*---------------------------------------------------------------------*/
 ;*    dashboard/populate ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-service (dashboard/populate)
-   (list (cons (service-resource dashboard/documentation "etc/logo.png")
-	       "dashboard")
-	 (cons (service-resource dashboard/documentation "../home/etc/logo.png")
-	       "home")
-	 (cons (service-resource dashboard/documentation "../hz/etc/logo.png")
-	       "hz")
-	 (cons (service-resource dashboard/documentation "../doc/etc/logo.png")
-	       "doc")
-	 (cons (service-resource dashboard/documentation "../test/etc/logo.png")
-	       "test")
-	 (cons (service-resource dashboard/documentation "../hopsh/etc/logo.png")
-	       "hopsh")))
+   (append (hop-dashboard-weblet-applets)
+	   (list (list "rfc"
+		       (dashboard-icon "dashboard-rfc.png")
+		       (make-service-url dashboard/rfc)))))

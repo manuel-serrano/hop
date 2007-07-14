@@ -480,7 +480,6 @@ function hop_element_y( obj ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    hop_iframe_scroll_height ...                                     */
 /*---------------------------------------------------------------------*/
 function hop_iframe_scroll_height( e ) {
@@ -491,6 +490,21 @@ function hop_iframe_scroll_height( e ) {
 	 return e.document.body.scrollHeight;
       } else {
 	 return iframe.height;
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_iframe_scroll_width ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_iframe_scroll_width( e ) {
+   if( e.contentDocument != undefined ) {
+      return e.contentDocument.body.scrollWidth;
+   } else {
+      if( e.document != undefined ) {
+	 return e.document.body.scrollWidth;
+      } else {
+	 return iframe.width;
       }
    }
 }

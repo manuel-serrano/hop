@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Mon Jul  9 06:57:58 2007 (serrano)                */
+/*    Last change :  Tue Jul 10 08:44:56 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -19,11 +19,37 @@ var hop_dashboard = false;
 var hop_dashboard_icon_size = 32;
 
 /*---------------------------------------------------------------------*/
+/*    hop_dashboard_start_applet ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_dashboard_start_applet( name, svc ) {
+   var id = "hop_dashboard_" + name;
+   var ifr = document.createElement( "iframe" );
+   ifr.src = svc;
+   ifr.onload = function () {
+      var win = document.getElementById( id );
+      var w = hop_iframe_scroll_width( ifr );
+      var h = hop_iframe_scroll_height( ifr );
+      
+      node_style_set( ifr, "width", w + "px" );
+      node_style_set( ifr, "height", h + "px" );
+      node_style_set( ifr, "border", "0" );
+      
+      hop_iwindow_resize( win, w, h );
+   }
+   
+   node_style_set( ifr, "background", "white" );
+   node_style_set( ifr, "overflow", "hidden" );
+   
+   hop_iwindow_open( id, ifr, name, "hop_dashboard_applet", false, false, 10, 10 );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_dashboard_populate ...                                       */
 /*---------------------------------------------------------------------*/
 function hop_dashboard_populate( div, proc ) {
    var populate = function( h ) {
       var width = 0;
+      var app_size = hop_dashboard_icon_size + 2;
 
       div.innerHTML = "";
       
@@ -32,11 +58,11 @@ function hop_dashboard_populate( div, proc ) {
 	 var app = document.createElement( "app" );
 	 var img = document.createElement( "img" );
 		   
-	 img.src = p.car;
-	 img.title = p.cdr;
+	 img.src = p.cdr.car
+	 img.title = p.car;
 
-	 node_style_set( app, "width", "50px");
-	 node_style_set( app, "height", "50px");
+	 node_style_set( app, "width", app_size + "px");
+	 node_style_set( app, "height", app_size + "px");
 	 node_style_set( app, "padding", "2px");
 	 node_style_set( app, "margin", "2px");
 	 node_style_set( app, "border", "1px solid transparent" );
@@ -50,15 +76,20 @@ function hop_dashboard_populate( div, proc ) {
 	    node_style_set( this, "background", "#eee" );
 	    node_style_set( this, "border", "1px solid transparent" );
 	 }
-
+	 app.name = p.car
+	 app.svc = p.cdr.cdr.car;
+	 app.onclick = function( e ) {
+	    hop_dashboard_start_applet( this.name, this.svc );
+	 }
+	 
 	 app.appendChild( img );
 	 div.appendChild( app );
 
 	 h = h.cdr;
-	 width += 60;
+	 width += (app_size + 10);
       }
 
-      node_style_set( div, "bottom", "-56px" );
+      node_style_set( div, "bottom", "-" + app_size + 8 + "px" );
       node_style_set( div, "left", ((hop_window_width()-width)/2) + "px" );
       node_style_set( div, "width", width + "px" );
 
@@ -73,7 +104,7 @@ function hop_dashboard_populate( div, proc ) {
 /*---------------------------------------------------------------------*/
 function hop_dashboard_activate() {
    var activate = function( div ) {
-      var count = -57;
+      var count = -56;
       
       div.activep = true;
       
@@ -84,7 +115,7 @@ function hop_dashboard_activate() {
       hop_timeout( "hop_dashboard_timeout",
 		   hop_dashboard_anim_speed,
 		   function() {
-		      if( count < -1 ) {
+		      if( count < 0 ) {
 			 count += 4;
 			 node_style_set( div, "bottom", count + "px" );
 		      } else {
@@ -111,7 +142,7 @@ function hop_dashboard_deactivate() {
       hop_timeout( "hop_dashboard_timeout",
 		   hop_dashboard_anim_speed,
 		   function() {
-		      if( count > -57 ) {
+		      if( count > -56 ) {
 			 count -= 4;
 			 node_style_set( hop_dashboard, "bottom", count+"px" );
 		      } else {
@@ -193,16 +224,22 @@ function hop_dashboard_control_panel_init() {
    node_style_set( div, "display", "none" );
    node_style_set( div, "z-index", "10000" );
    node_style_set( div, "background", "#eeeeee" );
-   node_style_set( div, "border-color", "#542d73" );
-   node_style_set( div, "border-style", "outset" );
-   node_style_set( div, "border-width", "1px" );
+   node_style_set( div, "border-left-width", "1px" );
+   node_style_set( div, "border-left-style", "solid" );
+   node_style_set( div, "border-left-color", "#ccc" );
+   node_style_set( div, "border-top-width", "1px" );
+   node_style_set( div, "border-top-style", "solid" );
+   node_style_set( div, "border-top-color", "#ccc" );
+   node_style_set( div, "border-right-width", "1px" );
+   node_style_set( div, "border-right-style", "solid" );
+   node_style_set( div, "border-right-color", "#333" );
+   node_style_set( div, "border-bottom-width", "0" );
    node_style_set( div, "-moz-opacity", "0.9" );
    node_style_set( div, "opacity", "0.9" );
 
    hop_dashboard_populate( div, function( div ) { hop_dashboard = div } );
    
    document.body.appendChild( div );
-
 }
 
 /*---------------------------------------------------------------------*/
@@ -211,6 +248,7 @@ function hop_dashboard_control_panel_init() {
 function hop_dashboard_init() {
    hop_dashboard_control_panel_init();
    hop_dashboard_button_init();
+   hop_load( "hop_iwindow.js" );
 }
 
 /*---------------------------------------------------------------------*/
