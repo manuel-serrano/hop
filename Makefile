@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Jun 11 11:51:47 2007 (serrano)                */
+#*    Last change :  Sat Jul 14 08:02:09 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -14,9 +14,9 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Standard Bigloo configuration                                    */
 #*---------------------------------------------------------------------*/
-include etc/Makefile.hopconfig
-include etc/Makefile.version
-include $(BIGLOOLIBDIR)/Makefile.config
+-include etc/Makefile.hopconfig
+-include etc/Makefile.version
+-include $(BIGLOOLIBDIR)/Makefile.config
 
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
