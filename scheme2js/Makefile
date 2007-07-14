@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Tue Mar 13 15:16:03 2007 (serrano)                */
+#*    Last change :  Sat Jul 14 17:03:31 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -105,13 +105,15 @@ runtime-clean:
 	/bin/rm -f $(SCHEME2JS_RUNTIME)/*.o
 
 runtime-install:
-	mkdir -p $(HOPSHAREDIR) && \
-	install -m a+r $(SCHEME2JS_RUNTIME)/runtime.js $(HOPSHAREDIR) && \
-	install -m a+r $(SCHEME2JS_RUNTIME)/runtime-interface.js $(HOPSHAREDIR)
+	mkdir -p $(DESTDIR)$(HOPSHAREDIR) && \
+	install -m a+r $(SCHEME2JS_RUNTIME)/runtime.js \
+                $(DESTDIR)$(HOPSHAREDIR) && \
+	install -m a+r $(SCHEME2JS_RUNTIME)/runtime-interface.js \
+                $(DESTDIR)$(HOPSHAREDIR)
 
 runtime-uninstall:
-	/bin/rm -f $(HOPSHAREDIR)/runtime.js && \
-	/bin/rm -f $(HOPSHAREDIR)/runtime-interface.js
+	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/runtime.js && \
+	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/runtime-interface.js
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Jul  8 18:33:31 2007 (serrano)                */
+#*    Last change :  Sat Jul 14 17:06:58 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -55,25 +55,27 @@ install:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -f $(SHAREDIR)/popdirs
+	/bin/rm -f $(DESTDIR)$(SHAREDIR)/popdirs
 
 #*---------------------------------------------------------------------*/
 #*    install-weblet                                                   */
 #*---------------------------------------------------------------------*/
 install-weblet:
-	mkdir -p $(HOPWEBLETSDIR)/$(DIR) && \
-        chmod a+rx,u+rwx $(HOPWEBLETSDIR)/$(DIR) && \
+	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) && \
+        chmod a+rx,u+rwx $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) && \
 	for f in $(DIR)/*; do \
           if [ -d $$f ]; then \
             install -m a+rx,u+rwx -d $$f || exit 1 && \
             make install-weblet DIR=$$f || exit 1; \
           else \
             if [ -f $$f ]; then \
-	      install -m a+r,u+r $$f $(HOPWEBLETSDIR)/$(DIR) || exit 1; \
+	      install -m a+r,u+r $$f $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) \
+                      || exit 1; \
             fi; \
           fi; \
         done; \
         if [ -f $(DIR)/.afile ]; then \
-          install -m a+r,u+r $(DIR)/.afile $(HOPWEBLETSDIR)/$(DIR) || exit 1; \
+          install -m a+r,u+r $(DIR)/.afile $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) \
+                  || exit 1; \
         fi; \
 

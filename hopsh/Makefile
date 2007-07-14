@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Oct 10 09:42:40 2006 (serrano)                */
+#*    Last change :  Sat Jul 14 17:04:34 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds HopSh                                   */
 #*=====================================================================*/
@@ -161,18 +161,18 @@ dep:
 install: install-$(BACKEND)
 
 install-native:
-	mkdir -p $(HOPBINDIR)
-	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC) $(HOPBINDIR)
+	mkdir -p $(DESTDIR)$(HOPBINDIR)
+	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
 
 install-jvm:
-	mkdir -p $(HOPBINDIR)
-	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC).jar $(HOPBINDIR)
+	mkdir -p $(DESTDIR)$(HOPBINDIR)
+	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -f $(HOPBINDIR)/$(EXEC)
+	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
