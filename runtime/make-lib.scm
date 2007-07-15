@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Mon Jun 11 07:31:26 2007 (serrano)                */
+;*    Last change :  Sun Jul 15 16:02:37 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -39,6 +39,7 @@
 	   __hop_http-response
 	   __hop_http-remote
 	   __hop_http-shoutcast
+	   __hop_http-webdav
 	   __hop_http-error
 	   __hop_hop-extra
 	   __hop_hop-inline
@@ -78,6 +79,7 @@
 	   (class http-response-procedure)
 	   (class http-response-file)
 	   (class http-response-shoutcast)
+	   (class http-response-webdav)
 	   (class http-response-string)
 	   (class http-response-js)
 	   (class http-response-authentication)

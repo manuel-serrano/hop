@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed May 23 11:22:09 2007 (serrano)                */
+;*    Last change :  Sun Jul 15 13:59:05 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -56,7 +56,10 @@
 	    (hop-enable-https-set! ::bool)
 	    
 	    (hop-https-protocol::symbol)
-	    (hop-https-protocol-set! ::symbol))
+	    (hop-https-protocol-set! ::symbol)
+
+	    (hop-enable-webdav::bool)
+	    (hop-enable-webdav-set! ::bool))
 
    (eval    (export-exports)))
 
@@ -161,3 +164,9 @@
 
 (define-parameter hop-https-protocol
    'tlsv1)
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-webdav ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-webdav
+   #f)

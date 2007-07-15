@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Jul 15 11:09:01 2007 (serrano)                */
+;*    Last change :  Sun Jul 15 15:21:21 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -88,6 +88,8 @@
        (http-parse-method-request 'TRACE (the-port) out id))
       ((: "OPTIONS" SP)
        (http-parse-method-request 'OPTIONS (the-port) out id))
+      ((: "PROPFIND" SP)
+       (http-parse-method-request 'PROPFIND (the-port) out id))
       ((: (+ (in ("AZaz"))) SP)
        (raise (instantiate::&hop-method-error
 		 (proc 'request-line-grammar)

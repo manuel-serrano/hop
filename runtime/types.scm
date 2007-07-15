@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Jun 11 07:31:52 2007 (serrano)                */
+;*    Last change :  Sun Jul 15 16:14:57 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -119,6 +119,9 @@
 	   
 	   (class http-response-put::%http-response-local
 	      (uri::bstring read-only))
+
+	   (class http-response-webdav::%http-response-local
+	      (xml read-only))
 
 	   (class hop-service
 	      ;; the service identifier (e.g., doc/example)

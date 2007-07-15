@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon Apr 23 07:05:53 2007 (serrano)                */
+;*    Last change :  Sun Jul 15 15:52:59 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -133,6 +133,15 @@
 		     (content-type (mime-type path "text/plain"))
 		     (bodyp (eq? method 'GET))
 		     (file path)))))
+	     ((OPTIONS)
+	      (instantiate::http-response-string
+		 (request req)
+		 (header (if (hop-enable-webdav) `((dav: . 1)) '()))
+		 (bodyp #f)))
+	     ((PROPFIND)
+	      (if (hop-enable-webdav)
+		  (webdav-propfind req)
+		  (http-bad-request 'propfind)))
 	     (else
 	      req))))))
 
