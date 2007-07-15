@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Jul 15 07:37:25 2007 (serrano)                */
+#*    Last change :  Sun Jul 15 07:41:04 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -88,17 +88,17 @@ install-quick: hop-dirs install-init
 	(cd etc && $(MAKE) install)
 
 install-init: hop-dirs
-	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPFILDIR)/hop.init && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hop.init;
-	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPFILDIR)/scheme2js.init && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/scheme2js.init;
-	cp $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPFILDIR)/hopscheme.init && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/hopscheme.init;
+	cp $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \
+        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init;
+	cp $(BUILDLIBDIR)/scheme2js.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init && \
+        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init;
+	cp $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init && \
+        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init;
 
 hop-dirs:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	mkdir -p $(DESTDIR)$(HOPLIBDIR)
-	mkdir -p $(DESTDIR)$(HOPLIBDIR)$(HOPFILDIR)
+	mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)
 	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)
 	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR)
@@ -114,7 +114,7 @@ uninstall:
 	(cd runtime; $(MAKE) uninstall)
 	(cd scheme2js; $(MAKE) uninstall)
 	(cd hopscheme; $(MAKE) uninstall)
-	/bin/rm -rf $(HOPFILDIR)
+	/bin/rm -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */

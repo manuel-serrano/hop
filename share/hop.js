@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jul 10 08:42:39 2007 (serrano)                */
+/*    Last change :  Sun Jul 15 09:53:46 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -374,7 +374,7 @@ function hop_anim( service ) {
 /*---------------------------------------------------------------------*/
 /*    hop_inner ...                                                    */
 /*---------------------------------------------------------------------*/
-function hop_inner( http, success, failure, service ) {
+function hop_inner( http, success, failure, service, anim ) {
    http.onreadystatechange = function() {
       if( http.readyState == 4 ) {
 	 try {
@@ -437,13 +437,17 @@ function hop_inner( http, success, failure, service ) {
    }
 
    try {
-      hop_anim_service = service;
+      if( anim ) hop_anim_service = service;
+      
       http.send( null );
       hop_clear_timeout( "hop_anim_timeout" );
-      hop_timeout( "hop_anim_timeout",
-		   hop_anim_latency,
-		   function() { hop_anim( service ); },
-		   false );
+      
+      if( anim ) {
+	 hop_timeout( "hop_anim_timeout",
+		      hop_anim_latency,
+		      function() { hop_anim( service ); },
+		      false );
+      }
    } catch( e ) {
       alert( "*** HOP send error: " + e );
    }
@@ -482,7 +486,7 @@ function hop( service, success, failure, sync ) {
       http.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
    }
 
-   return hop_inner( http, success, failure, service );
+   return hop_inner( http, success, failure, service, true );
 }
 
 /*---------------------------------------------------------------------*/
@@ -664,7 +668,7 @@ function hop_event_handler_set( svc, evt, success, failure ) {
    req.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    req.setRequestHeader( 'Connection', 'close' );
 
-   return hop_inner( req, handler, failure, false );
+   return hop_inner( req, handler, failure, false, false );
 }
 
 /*---------------------------------------------------------------------*/
