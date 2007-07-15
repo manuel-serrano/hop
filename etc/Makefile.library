@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Sat Jul 14 18:54:12 2007 (serrano)                */
+#*    Last change :  Sun Jul 15 05:57:59 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -254,8 +254,8 @@ include $(BIGLOOLIBDIR)/Makefile.misc
 install: install-$(BACKEND)
 
 install-native:
-	cp $(BUILDLIBDIR)/$(TARGETNAME).heap $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).heap && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).heap && \
+	cp $(BUILDLIBDIR)/$(TARGETNAME).heap $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
+        chmod $(BMASK) $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
         $(MAKE) install-lib \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR)\
@@ -276,27 +276,27 @@ install-native:
 install-jvm:
 
 install-dotnet:
-	cp $(BUILDLIBDIR)/$(TARGETNAME).jheap $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        cp $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
-        cp $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
-        cp $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll && \
-        chmod $(BMASK) $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll 
+	cp $(BUILDLIBDIR)/$(TARGETNAME).jheap $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap && \
+        chmod $(BMASK) $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap && \
+        cp $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
+        chmod $(BMASK) $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
+        cp $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
+        chmod $(BMASK) $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
+        cp $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll && \
+        chmod $(BMASK) $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll 
 
 uninstall:
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).heap
+	-$(RM) -f $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
 	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s-$(HOPRELEASE)
 	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(HOPRELEASE)
 	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_e-$(HOPRELEASE)
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME).jheap
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
-	-$(RM) -f $(DESTDIR)$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll
+	-$(RM) -f $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap
+	-$(RM) -f $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
+	-$(RM) -f $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
+	-$(RM) -f $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip
+	-$(RM) -f $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
+	-$(RM) -f $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
+	-$(RM) -f $(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */

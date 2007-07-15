@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Wed May 23 11:14:08 2007 (serrano)                */
+#*    Last change :  Sun Jul 15 05:57:02 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -76,7 +76,7 @@ HOPSHAREDIR	= @SHAREDIR@
 HOPWEBLETSDIR	= @WEBLETSDIR@
 HOPCONTRIBSDIR	= @CONTRIBSDIR@
 
-HOPFILDIR	= $(HOPLIBDIR)/hop/$(HOPRELEASE)
+HOPFILDIR	= hop/$(HOPRELEASE)
 HOPDEMOSDIR	= $(HOPSHAREDIR)/demos
 
 #*---------------------------------------------------------------------*/
