@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat Jul 14 08:02:09 2007 (serrano)                */
+#*    Last change :  Sun Jul 15 07:37:25 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -98,8 +98,8 @@ install-init: hop-dirs
 hop-dirs:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	mkdir -p $(DESTDIR)$(HOPLIBDIR)
+	mkdir -p $(DESTDIR)$(HOPLIBDIR)$(HOPFILDIR)
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)
-	mkdir -p $(DESTDIR)$(HOPFILDIR)
 	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)
 	mkdir -p $(DESTDIR)$(HOPCONTRIBSDIR)
 	mkdir -p $(DESTDIR)$(HOPETCDIR)
