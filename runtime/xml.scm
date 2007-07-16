@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jul 11 06:10:03 2007 (serrano)                */
+;*    Last change :  Mon Jul 16 05:28:23 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -35,7 +35,8 @@
 	      (no-end-tags-elements::pair-nil read-only (default '()))
 	      (script-start (default #f))
 	      (script-stop (default #f))
-	      (meta-format::bstring read-only))
+	      (meta-format::bstring read-only)
+	      (abbrev-emptyp::bool (default #f)))
 
 	    (class xml
 	       (%xml-constructor))
@@ -566,10 +567,13 @@
 	  (display id p)
 	  (display "\"" p)
 	  (xml-write-attributes attributes p)
-	  (display ">" p)
-	  (display "</" p)
-	  (display markup p)
-	  (display ">" p))
+	  (if (xml-backend-abbrev-emptyp backend)
+	      (display "/>" p)
+	      (begin
+		 (display ">" p)
+		 (display "</" p)
+		 (display markup p)
+		 (display ">" p))))
 	 (else
 	  (display "<" p)
 	  (display markup p)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Mon Jul  9 07:10:22 2007 (serrano)                */
+;*    Last change :  Sun Jul 15 18:00:55 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -12,10 +12,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-constructor ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (define-xml-constructor type name el exp)
+(define (define-xml-constructor type name attr el exp)
    `(define (,name . args)
        (let loop ((args args)
-		  (attr '())
+		  (attr ',attr)
 		  (init '())
 		  (body '()))
 	  (cond
@@ -57,10 +57,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-constructor-with-id ...                               */
 ;*---------------------------------------------------------------------*/
-(define (define-xml-constructor-with-id type name el exp)
+(define (define-xml-constructor-with-id type name attr el exp)
    `(define (,name . args)
        (let loop ((args args)
-		  (attr '())
+		  (attr ',attr)
 		  (init '())
 		  (body '())
 		  (id   #unspecified))
@@ -123,11 +123,17 @@
 		     (string-downcase!
 		      (substring s 1 (-fx (string-length s) 1)))))
 		(css (memq :hss-type exp))
-		(markup (memq :markup exp)))
+		(markup (memq :markup exp))
+		(at (memq :attributes exp))
+		(attr '()))
 	     (when (and (pair? markup) (pair? (cdr markup)))
 		(set! el (cadr markup))
 		(set-cdr! markup (cddr markup))
 		(set! exp (remq! (car markup) exp)))
+	     (when (and (pair? at) (pair? (cdr at)))
+		(set! attr (cadr at))
+		(set-cdr! at (cddr at))
+		(set! exp (remq! (car at) exp)))
 	     (if (and (pair? css) (pair? (cdr css)))
 		 (let ((new (cadr css)))
 		    (set-cdr! css (cddr css))
@@ -135,11 +141,11 @@
 		    `(begin
 			(hop-hss-type! ,(symbol->string el) ,new)
 			,(if with-id
-			     (define-xml-constructor-with-id type name el exp)
-			     (define-xml-constructor type name el exp))))
+			     (define-xml-constructor-with-id type name attr el exp)
+			     (define-xml-constructor type name attr el exp))))
 		 (if with-id
-		     (define-xml-constructor-with-id type name el exp)
-		     (define-xml-constructor type name el exp)))))
+		     (define-xml-constructor-with-id type name attr el exp)
+		     (define-xml-constructor type name attr el exp)))))
 	 (else
 	  (error 'define-xml "Illegal identifier" name)))))
 
