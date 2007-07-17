@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Jul 16 05:28:23 2007 (serrano)                */
+;*    Last change :  Mon Jul 16 10:08:29 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -556,10 +556,13 @@
 	  (display markup p)
 	  (display " id=\"" p)
 	  (display id p)
-	  (display "\">" p)
-	  (display "</" p)
-	  (display markup p)
-	  (display ">" p))
+	  (display "\"" p)
+	  (if (xml-backend-abbrev-emptyp backend)
+	      (display "/>" p)
+	      (begin
+		 (display "></" p)
+		 (display markup p)
+		 (display ">" p))))
 	 ((null? body)
 	  (display "<" p)
 	  (display markup p)

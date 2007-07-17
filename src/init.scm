@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon Jul 16 08:58:20 2007 (serrano)                */
+;*    Last change :  Tue Jul 17 10:16:37 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -149,6 +149,10 @@
 	     ((DELETE)
 	      (if (hop-enable-webdav)
 		  (webdav-delete req)
+		  (http-bad-request 'delete)))
+	     ((COPY)
+	      (if (hop-enable-webdav)
+		  (webdav-copy req)
 		  (http-bad-request 'delete)))
 	     (else
 	      req))))))
