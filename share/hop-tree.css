@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul 19 10:48:00 2005                          */
-/*    Last change :  Tue Jul  3 08:15:03 2007 (serrano)                */
+/*    Last change :  Fri Jul 20 11:35:07 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Tree CSS                                                     */
@@ -59,6 +59,7 @@ td.hop-tree-title {
   margin: 0;
   font-size: inherit;
   height: 16px;
+  padding-left: 2px;
 }
 
 td.hop-tree img.hop-tree {

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Mar  1 14:09:36 2006                          */
-/*    Last change :  Tue Jul 10 09:33:01 2007 (serrano)                */
+/*    Last change :  Fri Jul 20 12:16:03 2007 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP IWINDOW implementation                                       */
 /*=====================================================================*/
@@ -404,10 +404,9 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, parent ) 
       }
       win.el_content.appendChild( obj );
    } else {
-      var cb = function( http ) {
-	 if( http.responseText != null ) {
-	    win.el_content.innerHTML = http.responseText;
-	    hop_js_eval( http );
+      var cb = function( html ) {
+	 if( html ) {
+	    hop_innerHTML_set( win.el_content, html );
 		   
 	    if( !width && !height ) {
 	       var c = win.el_content.childNodes[ 0 ];

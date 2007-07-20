@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Jul 15 09:53:46 2007 (serrano)                */
+/*    Last change :  Fri Jul 20 13:24:05 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -98,82 +98,6 @@ function hop_replace_document( http ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_replace_inner ...                                            */
-/*---------------------------------------------------------------------*/
-function hop_replace_inner( el ) {
-   if( el != undefined ) {
-      return function( http ) {
-	 if( http.responseText != null ) {
-	    el.innerHTML = http.responseText;
-	    hop_js_eval( http );
-	 }
-      }
-   } else {
-      alert( "*** Hop Error, Can't find element" );
-      return function( http ) { };
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_replace_inner_id ...                                         */
-/*---------------------------------------------------------------------*/
-function hop_replace_inner_id( id ) {
-   return hop_replace_inner( document.getElementById( id ) );
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_append ...                                                   */
-/*---------------------------------------------------------------------*/
-function hop_append( el ) {
-   if( el != undefined ) {
-      return function( http ) {
-	 if( http.responseText != null ) {
-	    el.innerHTML += http.responseText;
-	    hop_js_eval( http );
-	 }
-      }
-   } else {
-      alert( "*** Hop Error, Can't find element" );
-      return function( http ) { };
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_remove ...                                                   */
-/*---------------------------------------------------------------------*/
-function hop_remove( el ) {
-   if( el != undefined ) {
-      var p = el.parentNode;
-      
-      return function( http ) {
-	 p.removeChild( el );
-	 if( http.responseText != null ) {
-	    hop_js_eval( http );
-	 }
-      }
-   } else {
-      alert( "*** Hop Error, Can't find element" );
-      return function( http ) { };
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_remove_id ...                                                */
-/*---------------------------------------------------------------------*/
-function hop_remove_id( id ) {
-   return hop_remove( document.getElementById( id ) );
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_eval ...                                                     */
-/*---------------------------------------------------------------------*/
-function hop_eval( proc ) {
-   return function( http ) {
-      return proc( hop_js_eval( http ) );
-   }
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_node_eval ...                                                */
 /*---------------------------------------------------------------------*/
 function hop_node_eval( node, text ) {
@@ -221,21 +145,6 @@ function hop_node_eval( node, text ) {
    return res;
 }
    
-/*---------------------------------------------------------------------*/
-/*    hop_js_eval ...                                                  */
-/*---------------------------------------------------------------------*/
-function hop_js_eval( http ) {
-   if( http.responseText != null ) {
-      var node = document.createElement( "div" );
-
-      node.innerHTML = http.responseText;
-
-      return hop_node_eval( node, http.responseText );
-   }
-
-   return false;
-}
-
 /*---------------------------------------------------------------------*/
 /*    hop_default_failure ...                                          */
 /*---------------------------------------------------------------------*/
@@ -372,27 +281,51 @@ function hop_anim( service ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_inner ...                                                    */
+/*    hop_send_request ...                                             */
+/*    -------------------------------------------------------------    */
+/*    In this function SUCCESS and FAILURE are *always* bound to       */
+/*    functions.                                                       */
+/*    -------------------------------------------------------------    */
+/*    This function DOES NOT evaluates its result.                     */
 /*---------------------------------------------------------------------*/
-function hop_inner( http, success, failure, service, anim ) {
+function hop_send_request( svc, sync, success, failure, anim ) {
+   var http = hop_make_xml_http_request();
+   var henv = hop_serialize_request_env();
+
+   http.open( "GET", svc, (sync != true) );
+
+   http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+   http.setRequestHeader( 'Connection', 'close' );
+
+   if( henv.length > 0 ) {
+      http.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
+   }
+   
    http.onreadystatechange = function() {
       if( http.readyState == 4 ) {
 	 try {
 	    var status = http.status;
 	    switch( status ) {
 	       case 200:
-		  if( success ) {
-		     success( http );
+		  if( hop_is_http_json( http ) ) {
+		     try {
+			return success( eval( http.responseText ) );
+		     } catch( e ) {
+			alert( "*** Hop JSON error: " + e );
+		     }
 		  } else {
-		     hop_js_eval( http );
+		     return success( http.responseText );
 		  }
 		  break;
+
+	       case 202:
+		  return success( hop_unserialize( http.responseText ) );
 
 	       case 204:
 		  break;
 
 	       case 257:
-		  hop_js_eval( http );
+		  return hop_js_eval( http );
 		  break;
 
 	       case 258:
@@ -437,7 +370,7 @@ function hop_inner( http, success, failure, service, anim ) {
    }
 
    try {
-      if( anim ) hop_anim_service = service;
+      if( anim ) hop_anim_service = svc;
       
       http.send( null );
       hop_clear_timeout( "hop_anim_timeout" );
@@ -445,7 +378,7 @@ function hop_inner( http, success, failure, service, anim ) {
       if( anim ) {
 	 hop_timeout( "hop_anim_timeout",
 		      hop_anim_latency,
-		      function() { hop_anim( service ); },
+		      function() { hop_anim( svc ); },
 		      false );
       }
    } catch( e ) {
@@ -456,134 +389,77 @@ function hop_inner( http, success, failure, service, anim ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    resume_XXX ...                                                   */
+/*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
-var resume_success = hop_replace_document;
-var resume_failure = false;
+function with_hop( svc, success, failure, sync ) {
+   if( !success ) success = function( h ) { return h };
+   if( !failure ) failure = hop_default_failure;
+   
+   return hop_send_request( svc, sync, success, failure, true );
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop ...                                                          */
+/*    -------------------------------------------------------------    */
+/*    This is an old deprecated form that is only used in conjunction  */
+/*    with JavaScript client codes.  This function is not used by      */
+/*    WITH-HOP and it should be used from Hop client-side code.        */
 /*---------------------------------------------------------------------*/
-function hop( service, success, failure, sync ) {
+function hop( svc, success, failure, sync ) {
    if( success == true ) {
-      location.href = service;
+      location.href = svc;
       return true;
-   } else {
-      resume_success = success;
-      resume_failure = failure;
    }
 
-   var http = hop_make_xml_http_request();
+   if( !success ) success = function( h ) { return h; }
+   if( !failure ) failure = hop_default_failure;
 
-   http.open( "GET", service, (sync != true) );
-
-   http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
-   http.setRequestHeader( 'Connection', 'close' );
-
-   var henv = hop_serialize_request_env();
-
-   if( henv.length > 0 ) {
-      http.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
-   }
-
-   return hop_inner( http, success, failure, service, true );
-}
-
-/*---------------------------------------------------------------------*/
-/*    WithHopError ...                                                 */
-/*---------------------------------------------------------------------*/
-function WithHopError( service ) {
-   var e = new Error( "with-hop error" );
-   e.service = service;
-
-   return e;
-}
-
-/*---------------------------------------------------------------------*/
-/*    with_hop ...                                                     */
-/*---------------------------------------------------------------------*/
-function with_hop( service, success, failure ) {
-   if( !success ) success = function( h ) { return h };
-   
-   return hop( service,
-	       function( http ) {
-                 var json;
-
-                 switch( http.status ) {
-		    case 200:
-		       if( hop_is_http_json( http ) ) {
-			  try {
-			     success( eval( http.responseText ) );
-			  } catch( e ) {
-			     alert( e );
-			  }
-		       } else {
-			  success( http.responseText );
-			  // MS: 6 Jun 2007, the previous version were
-			  // not correctly evaluating JS scripts!
-			  // The scripts have to be evaluated after the
-			  // success callback has been called because this
-			  // might create new nodes referenced in the scripts.
-			  hop_js_eval( http );
-		       }
-		       return;
-		    case 202:
-		       alert( "http.responseText: " + http.responseText );
-		       success( hop_unserialize( http.responseText ) );
-		       return;
-		    default:
-		       success( http );
-		       return;
-		    }
-		 }, 
-	       failure );
+   return hop_send_request( svc, sync, success, failure, true );
 }
 
 /*---------------------------------------------------------------------*/
 /*    with_hop_callcc ...                                              */
 /*---------------------------------------------------------------------*/
-function with_hop_callcc( service ) {
-   var sc_storage = sc_CALLCC_STORAGE;
-   if (sc_storage.doRestore) {
-      var res = sc_callcc();
-      if (res.failure)
-	 throw res.value; // TODO
-      else
-	 return res.value;
-   } else {
-      sc_callcc(function(k) {
-	 function success(val) {
-	    k({value: val});
-	 };
-	 function failure(val) {
-	    k({failure: true, value: val});
-	 };
-	 hop( service,
-	      function( http ) {
-		 var json;
-
-		 switch( http.status ) {
-		 case 200:
-		    if( hop_is_http_json( http ) ) {
-		       success( eval( http.responseText ) );
-		    } else {
-		       success( http.responseText );
-		    }
-		    return;
-		 case 202:
-		    success( hop_unserialize( http.responseText ) );
-		    return;
-		 default:
-		    success( http );
-		    return;
-		 }
-	      }, 
-	      failure );
-	 sc_EMPTY_CALLCC(); // abort execution here.
-      });
-   }
-   return undefined; // for FF2.0
-}
+/* function with_hop_callcc( service ) {                               */
+/*    var sc_storage = sc_CALLCC_STORAGE;                              */
+/*    if (sc_storage.doRestore) {                                      */
+/*       var res = sc_callcc();                                        */
+/*       if (res.failure)                                              */
+/* 	 throw res.value; // TODO                                      */
+/*       else                                                          */
+/* 	 return res.value;                                             */
+/*    } else {                                                         */
+/*       sc_callcc(function(k) {                                       */
+/* 	 function success(val) {                                       */
+/* 	    k({value: val});                                           */
+/* 	 };                                                            */
+/* 	 function failure(val) {                                       */
+/* 	    k({failure: true, value: val});                            */
+/* 	 };                                                            */
+/* 	 hop( service,                                                 */
+/* 	      function( http ) {                                       */
+/* 		 switch( http.status ) {                               */
+/* 		 case 200:                                             */
+/* 		    if( hop_is_http_json( http ) ) {                   */
+/* 		       success( eval( http.responseText ) );           */
+/* 		    } else {                                           */
+/* 		       success( http.responseText );                   */
+/* 		    }                                                  */
+/* 		    return;                                            */
+/* 		 case 202:                                             */
+/* 		    success( hop_unserialize( http.responseText ) );   */
+/* 		    return;                                            */
+/* 		 default:                                              */
+/* 		    success( http );                                   */
+/* 		    return;                                            */
+/* 		 }                                                     */
+/* 	      },                                                       */
+/* 	      failure );                                               */
+/* 	 sc_EMPTY_CALLCC(); // abort execution here.                   */
+/*       });                                                           */
+/*    }                                                                */
+/*    return undefined; // for FF2.0                                   */
+/* }                                                                   */
 
 /*---------------------------------------------------------------------*/
 /*    hop_innerHTML_set ...                                            */
@@ -641,6 +517,29 @@ function hop_outerHTML_set( nid, html ) {
    if( (html instanceof String) || (typeof html == "string") ) {
       hop_node_eval( p, html );
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_replace_inner ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_replace_inner( el ) {
+   if( el != undefined ) {
+      return function( html ) {
+	 if( html ) {
+	    hop_innerHTML_set( el, html );
+	 }
+      }
+   } else {
+      alert( "*** Hop Error, Can't find element" );
+      return function( http ) { };
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_replace_inner_id ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_replace_inner_id( id ) {
+   return hop_replace_inner( document.getElementById( id ) );
 }
 
 /*---------------------------------------------------------------------*/

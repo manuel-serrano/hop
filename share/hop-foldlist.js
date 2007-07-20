@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Sat Jun  9 06:30:31 2007 (serrano)                */
+/*    Last change :  Fri Jul 20 11:28:22 2007 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item implementation                                     */
 /*=====================================================================*/
@@ -54,10 +54,7 @@ function hop_fold_item_toggle_service( id, history, svc ) {
    if( el.style.display == "block" ) {
       hop_fold_item_close( el, imgo, imgc, history );
    } else {
-      hop( svc, function( h ) {
-	 el.innerHTML = h.responseText;
-	 hop_js_eval( h );
-      } );
+      hop( svc, function( h ) { hop_innerHTML_set( id, h ); } );
       hop_fold_item_open( el, imgo, imgc, history );
    }
 }

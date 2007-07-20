@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Fri Jul  6 14:21:49 2007 (serrano)                */
+/*    Last change :  Fri Jul 20 11:36:31 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -125,25 +125,21 @@ function hop_tree_open( tree ) {
 /*    hop_tree_populate ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_tree_populate( tree ) {
-   var success = function( http ) {
+   var success = function( html ) {
       tree.populated = true;
       
-      if( http.responseText != null ) {
+      if( html ) {
          /* cleanup the existing tree */
          var children = tree.body.childNodes;
          while( children.length > 0 ) {
             tree.body.removeChild( children[ 0 ] );
          }
 
-         eval( http.responseText );
+         eval( html );
       }
    }
    
-   var failure = function( http ) {
-      hop_default_failure( http );
-   }
-
-   return hop( tree.proc(), success, failure );
+   return hop( tree.proc(), success );
 }
 
 /*---------------------------------------------------------------------*/

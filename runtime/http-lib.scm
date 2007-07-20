@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Wed Mar 14 16:21:35 2007 (serrano)                */
+;*    Last change :  Wed Jul 18 14:09:02 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -191,14 +191,14 @@
 		 (ignore))
 		((expect:)
 		 (let ((e (read/rp value-grammar (the-port))))
-		    (tprint "GOT ONE: " e)
+		    (trace-item "##7 " k " [" e "]")
 		    (if (string=? e "100-continue")
 			(begin
-			   (fprint po "HTTP/1.1 100 Continue\r\n")
+			   (fprint po "HTTP/1.1 100 Continue\r\n\r\n")
 			   (flush-output-port po)
 			   (ignore))
 			(begin
-			   (fprint po "HTTP/1.1 417 Expectation Failed\r\n")
+			   (fprint po "HTTP/1.1 417 Expectation Failed\r\n\r\n")
 			   (flush-output-port po)
 			   (raise
 			    (instantiate::&io-parse-error
@@ -207,7 +207,7 @@
 			       (msg (format "Expectation failed (~a)" e))))))))
 		(else
 		 (let ((v (read/rp value-grammar (the-port))))
-		    (trace-item "##7 " k " [" v "]")
+		    (trace-item "##8 " k " [" v "]")
 		    (set! header (cons (cons k v) header))
 		    (ignore))))))
 	 ((: (* (in #\space #\tab)) (? #\Return) #\Newline)

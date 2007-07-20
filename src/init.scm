@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue Jul 17 10:16:37 2007 (serrano)                */
+;*    Last change :  Fri Jul 20 09:58:53 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -134,10 +134,16 @@
 		     (bodyp (eq? method 'GET))
 		     (file path)))))
 	     ((OPTIONS)
-	      (instantiate::http-response-string
-		 (request req)
-		 (header (if (hop-enable-webdav) `((dav: . 1)) '()))
-		 (bodyp #f)))
+	      (if (hop-enable-webdav)
+		  (instantiate::http-response-string
+		     (request req)
+		     (header `((dav: . 1)
+			       (allow: . "GET, HEAD, COPY, MOVE, POST, PUT, PROPFIND, PROPPATCH, OPTIONS, MKCOL, DELETE")))
+		     (bodyp #f))
+		  (instantiate::http-response-string
+		     (request req)
+		     (header `((allow: . "GET, HEAD, POST, OPTIONS")))
+		     (bodyp #f))))
 	     ((PROPFIND)
 	      (if (hop-enable-webdav)
 		  (webdav-propfind req)
@@ -153,9 +159,17 @@
 	     ((COPY)
 	      (if (hop-enable-webdav)
 		  (webdav-copy req)
-		  (http-bad-request 'delete)))
+		  (http-bad-request 'copy)))
+	     ((MOVE)
+	      (if (hop-enable-webdav)
+		  (webdav-move req)
+		  (http-bad-request 'move)))
+	     ((PUT)
+	      (if (hop-enable-webdav)
+		  (webdav-put req)
+		  (http-bad-request 'put)))
 	     (else
-	      req))))))
+	      (http-method-error req)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    log-response ...                                                 */

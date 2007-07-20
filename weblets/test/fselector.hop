@@ -1,0 +1,43 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/fselector.hop              */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Jul 20 11:49:41 2007                          */
+;*    Last change :  Fri Jul 20 12:14:39 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    File Selector testing                                            */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-fselector
+   (import weblet_test)
+   (export test/fselector))
+
+;*---------------------------------------------------------------------*/
+;*    test/fselector ...                                               */
+;*---------------------------------------------------------------------*/
+(define-service (test/fselector)
+   (<TEST-HTML> :include '("hop-fileselect" "hop-iwindow" "hop-tree")
+      :source (service-resource test/fselector "fselector.hop")
+      (<TABLE>
+	 (<TR>
+	    (<TH>
+	       "File: ")
+	    (<TD>
+	       (<FILESELECT>
+		  :id "file"
+		  :value (hop-share-directory)
+		  :onchange ~(alert this.value)
+		  :size 60))
+	    (<TD>
+	       (<FILEBROWSE>
+		  :title "Hop File browser"
+		  :value "/"
+		  :path (hop-share-directory)
+		  :onmousedown ~(set! this.value "/")
+		  :onselect ~(alert this.value)))))))
+      
+   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Jul 16 10:08:29 2007 (serrano)                */
+;*    Last change :  Thu Jul 19 07:31:05 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -905,7 +905,7 @@
 ;*    onerror-img ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (onerror-img attributes src)
-   (let* ((val (format "hop_deinline_image(this, ~s)" src))
+   (let* ((val (format "if( !this.onhoperror ) { this.onhoperror = true; hop_deinline_image(this, ~s) }" src))
 	  (onerror (when (pair? attributes) (assq 'onerror attributes)))
 	  (oval (when (pair? onerror) (cdr onerror))))
       (cond
