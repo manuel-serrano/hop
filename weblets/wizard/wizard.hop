@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Feb  4 18:04:37 2007 (serrano)                */
+;*    Last change :  Sat Jul 21 06:48:34 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -64,7 +64,8 @@
 		    (proxyr (dom-get-element-by-id document "rproxy").checked)
 		    (proxym (map (lambda (i)
 				    (dom-get-element-by-id document i).value)
-				 '("mip1" "mip2" "mip3" "mip4"))))
+				 '("mip1" "mip2" "mip3" "mip4")))
+		    (webdav (dom-get-element-by-id document "webdav").checked))
 		(cond
 		   ((string=? apasswd "")
 		    (alert "Missing password for `admin' user!"))
@@ -74,7 +75,8 @@
 		    (alert "Missing password for `regular' user!"))
 		   (else
 		    (with-hop ($wizard/save #f cadmin uname cuser gname cguest
-					    proxy proxyu proxya proxyr proxym)
+					    proxy proxyu proxya proxyr proxym
+					    webdav)
 		       (lambda (h)
 			  (case (string->symbol (car h))
 			     ((query)
@@ -85,7 +87,8 @@
 				     (with-hop ($wizard/save #t cadmin uname cuser gname cguest
 							     proxy
 							     proxyu proxya
-							     proxyr proxym)
+							     proxyr proxym
+							     webdav)
 					(lambda (h)
 					   (set! status.innerHTML (cadr h))
 					   (set! message.innerHTML
@@ -134,6 +137,12 @@
 			(<TR>
 			   (<TD> :colspan 2
 			      (<PROXY>)))
+			(<TR>
+			   (<TD> :colspan 2
+			      (<SPAN> :class "head" "WebDAV:")))
+			(<TR>
+			   (<TD> :colspan 2
+			      (<WEBDAV>)))
 			(<TR> 
 			   (<TD> :colspan 2
 			      (<BUTTON>
@@ -282,6 +291,20 @@ that is the computer running this Hop, can use it as proxy.])))
 of computers that are allowed to use this Hop as proxy.])))))
 
 ;*---------------------------------------------------------------------*/
+;*    <WEBDAV> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<WEBDAV>)
+   (let* ((file "webdav.wiki")
+	  (url (format "/hop/doc/feature?feature=~a" file)))
+      (<TABLE> :class "wizard-user wizard-misc"
+	 (<COLGROUP> (<COL> :width "0*"))
+	 (<TR> (<TD> 
+		  (<INPUT> :type 'checkbox :id "webdav" :checked #f))
+	       (<TD> (<SPAN> "Enable "
+			     (<A> :href url "WebDAV")
+			     " services"))))))
+
+;*---------------------------------------------------------------------*/
 ;*    wizard/documentation ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-service (wizard/documentation)
@@ -298,7 +321,8 @@ of computers that are allowed to use this Hop as proxy.])))))
 			     apasswd uname upasswd gname gpasswd
 			     proxy
 			     user-proxy anonymous-proxy
-			     remote-proxy proxy-mask)
+			     remote-proxy proxy-mask
+			     webdav)
    (let* ((home (getenv "HOME"))
 	  (rc (make-file-name (hoprc-dir) (hop-rc-file)))
 	  (wd (make-file-name (hoprc-dir) "wizard.hop")))
@@ -314,14 +338,16 @@ of computers that are allowed to use this Hop as proxy.])))))
 	  (list 'query (format "File exists ~a" wd)))
 	 (else
 	  (save (hoprc-dir) rc wd apasswd uname upasswd gname gpasswd
-		proxy user-proxy anonymous-proxy remote-proxy proxy-mask)))))
+		proxy user-proxy anonymous-proxy remote-proxy proxy-mask
+		webdav)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    save ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (save rcdir rcfile passwdfile
 	      apasswd uname upasswd gname gpasswd
-	      proxy uproxy anonymous-proxy remote-proxy proxy-mask)
+	      proxy uproxy anonymous-proxy remote-proxy proxy-mask
+	      webdav)
    (unless (and (file-exists? rcdir) (directory? rcdir))
       (make-directories rcdir))
    (with-output-to-file rcfile
@@ -329,7 +355,7 @@ of computers that are allowed to use this Hop as proxy.])))))
 	 (print ";; generated file, Hop Wizard " (current-date))
 	 (print ";; default rc file")
 	 (write '(let ((path (make-file-name (hop-etc-directory) "hoprc.hop")))
-		    (when (file-exists? path) (hop-load path))))
+		  (when (file-exists? path) (hop-load path))))
 	 (newline)
 	 (newline)
 	 (print ";; wizard file")
@@ -364,7 +390,10 @@ of computers that are allowed to use this Hop as proxy.])))))
 	       (write `(hop-proxy-ip-mask-set!
 			,(apply format "~a.~a.~a.~a" proxy-mask)))
 	       (newline)
-	       (newline)))))
+	       (newline)))
+	 (print ";; WebDAV")
+	 (write `(hop-enable-webdav-set! ,webdav))
+	 (newline)))
    (let ((accounts "admin"))
       (with-output-to-file passwdfile
 	 (lambda ()

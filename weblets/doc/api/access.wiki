@@ -102,7 +102,7 @@ HOP as proxy.
 
 <arguments>
 ^  access  ^   type    ^    short description                       ^
-|   r/w    |  bool     |  A procedure that returns ++#t++ for allowed paths. |
+|   r/w    |  procedure  |  A procedure that returns ++#t++ for allowed paths. |
 </arguments>
 
 ~~ Note: this parameter can only be changed while the HOP runtime command
@@ -132,7 +132,7 @@ is granted the permission to read that file.
 
 <arguments>
 ^  access  ^   type   ^    short description                       ^
-|   r/w    |  bool    |  A procedure that returns ++#t++ for allowed services. |
+|   r/w    |  procedure  |  A procedure that returns ++#t++ for allowed services. |
 </arguments>
 
 ~~ Note: this parameter can only be changed while the HOP runtime command

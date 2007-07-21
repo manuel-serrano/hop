@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Wed Jul 18 14:09:11 2007 (serrano)                */
+;*    Last change :  Sat Jul 21 06:47:14 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -32,6 +32,7 @@
 	    __hop_http-error)
 
    (export  (webdav-propfind ::http-request)
+	    (webdav-proppatch ::http-request)
 	    (webdav-mkcol ::http-request)
 	    (webdav-delete ::http-request)
 	    (webdav-copy ::http-request)
@@ -93,8 +94,6 @@
 					    request timeout
 					    content-type char-encoding
 					    header xml)
-	 (tprint "header=" (http-request-header request) " clen="
-		 (http-request-content-length request))
 	 (let* ((p (socket-output socket))
 		(ce (or char-encoding (hop-char-encoding)))
 		(sbody (let ((op (open-output-string)))
@@ -317,6 +316,16 @@
 		(xml (<DAV>
 			(<DAV:MULTISTATUS>
 			   (directory->dav path depth props))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    webdav-proppatch ...                                             */
+;*---------------------------------------------------------------------*/
+(define (webdav-proppatch req::http-request)
+   (with-access::http-request req (char-encoding)
+      (instantiate::http-response-string
+	 (request req)
+	 (char-encoding (or char-encoding (hop-char-encoding)))
+	 (start-line "HTTP/1.1 403 Forbidden"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <GETCONTENTLENGTH> ...                                           */

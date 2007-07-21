@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Mon May 21 18:04:19 2007 (serrano)                */
+;*    Last change :  Sat Jul 21 14:40:36 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -22,7 +22,8 @@
 	   hophome_demos-source
 	   hophome_demos-wiki
 	   hophome_demos-rewrite
-	   hophome_demos-set)
+	   hophome_demos-set
+	   hophome_demos-music)
    (export (<DEMO> request)))
 
 ;*---------------------------------------------------------------------*/
@@ -57,6 +58,18 @@
 		     (<ZIMG> (make-service-url home/demos/minesweeper)
 			     "mines-32x32.png" "mines-48x48.png" inl
 			     320 320)))
+	       (<TR>
+		  (<TD>
+		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/set)
+			     "set-32x32.png" "set-48x48.png" inl
+			     500 400)))
+	       (<TR>
+		  (<TD>
+		     :align "left"
+		     (<ZIMG> (make-service-url home/demos/music)
+			     "music-32x32.png" "music-48x48.png" inl
+			     320 320)))
 ;* 	    (<TR>                                                      */
 ;* 	       (<TD>                                                   */
 ;* 		  :align "left"                                        */
@@ -73,7 +86,7 @@
 		     :align "left"
 		     (<ZIMG> (make-service-url home/demos/repl)
 			     "term-32x32.png" "term-48x48.png" inl
-			     540 370)))
+			     640 500)))
 	       (<TR>
 		  (<TD>
 		     :align "left"
@@ -89,12 +102,6 @@
 	       (<TR>
 		  (<TD>
 		     :align "left"
-		     (<ZIMG> (make-service-url home/demos/set)
-			     "set-32x32.png" "set-48x48.png" inl
-			     500 400)))
-	       (<TR>
-		  (<TD>
-		     :align "left"
 		     (<ZIMG> (make-service-url home/demos/source)
 			     "computer-32x32.png" "computer-48x48.png" inl
 			     700 500))))))))
@@ -104,8 +111,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (home/demos/tips)
    (<HTML>
-      (<HEAD>
-	 :title "Home Tips"
+      (<HEAD> :title "Home Tips"
 	 :base (service-base-url home/demos/tips (current-request))
 	 :css "tips.hss")
       (<BODY>
@@ -169,7 +175,7 @@ be used to access the whole source code of this playground.]))))
 	  (set! frame.src $(make-service-url home/demos/tips))
 	  (set! frame.style.border "0")
 	  (set! frame.style.width "100%")
-	  (set! frame.style.height "100%")
+	  (set! frame.style.height "99%")
 	  (let* ((w (iwindow-open $t
 				  frame
 				  false false
@@ -232,7 +238,7 @@ be used to access the whole source code of this playground.]))))
 		      (set! frame.className "demos")
 		      (set! frame.src $svc)
 		      (node-style-set! frame :width "100%")
-		      (node-style-set! frame :height "100%")
+		      (node-style-set! frame :height "99%")
 		      (node-style-set! frame :border-width 0)
 		      (let* ((w (iwindow-open $t
 					      frame

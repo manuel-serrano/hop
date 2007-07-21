@@ -9,16 +9,35 @@ indifferently as a regular Web server or Web proxy.
 
 ~~ HOP features:
 
-  * an extensive set of widgets for programming fancy GUIs.
+  * an extensive set of 
+ ,(<SPAN> :style "color: darkorange" "widgets") 
+ for programming fancy GUIs,
+  * fast ,(<SPAN> :style "color: darkorange" "WebDAV")
+ level 1 support,
   * an extensive set of libraries for:
-    * handling //database// accesses.
-    * dealing with //network// connections.
-    * parsing //wiki// documents.
-    * supporting various protocols such as IMAP, ICALENDAR, ...
-    * supporting various formats such as EXIF, ID3, ...
-    * parsing and generating //XML// documents.
+    * handling 
+ ,(<SPAN> :style "color: darkorange" "database")
+ accesses,
+    * dealing with 
+ ,(<SPAN> :style "color: darkorange" "network")
+ connections,
+    * parsing 
+ ,(<SPAN> :style "color: darkorange" "wiki")
+ document,
+    * supporting various protocols such as 
+ ,(<SPAN> :style "color: darkorange" "IMAP"),
+ ,(<SPAN> :style "color: darkorange" "ICALENDAR"),
+ ...
+    * supporting various formats such as 
+ ,(<SPAN> :style "color: darkorange" "EXIF"),
+ ,(<SPAN> :style "color: darkorange" "ID3"),
+ ...
+    * parsing and generating 
+ ,(<SPAN> :style "color: darkorange" "XML")
+ documents,
+    * dealing with 
+ ,(<SPAN> :style "color: darkorange" "mails"),
     * ...
-
 
 
 ~~ This whole Web page is implemented in HOP so in addition
@@ -46,6 +65,6 @@ are operational with [[http://www.mozilla.com/|Firefox]],
 == Requirement ==
 
 The [[http://www.inria.fr/mimosa/fp/Bigloo|Bigloo]] compiler is the only
-strict requirement to install HOP. However, most weblets (Hop applications)
+strict requirement to install HOP. However, some weblets (Hop applications)
 use [[http://www.sqlite.org|SQLite]] for managing databases. Hence, it
-is recommended to install it prior to Bigloo.
+might be a good choice to install it prior to Bigloo.

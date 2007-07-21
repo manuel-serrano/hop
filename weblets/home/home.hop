@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed May 16 17:09:31 2007 (serrano)                */
+;*    Last change :  Sat Jul 21 10:50:18 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -98,7 +98,9 @@
 	 :id "home-notepad"
 	 (<NPHEAD> "")
 	 (<NPTAB> :id "Presentation"
-		  (<NPTABHEAD> "Main")
+		  (<NPTABHEAD>
+		     (<IMG> :src (service-resource home "etc/gohome.png"))
+		     "Main")
 		  (<DELAY>
 		     (lambda ()
 			(download-versions-set!)
@@ -106,14 +108,18 @@
 			   :class "hop-tab"
 			   (wiki->hop "presentation.wiki")))))
 	 (<NPTAB> :id "demo-tab"
-		  (<NPTABHEAD> "Demos")
+		  (<NPTABHEAD>
+		     (<IMG> :src (service-resource home "etc/demos.png"))
+		     "Demos")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV>
 			   :align "hop-tab"
 			   (<DEMO> req)))))
 	 (<NPTAB> :id "download"
-		  (<NPTABHEAD> "Download")
+		  (<NPTABHEAD> 
+		     (<IMG> :src (service-resource home "etc/download.png"))
+		     "Download")
 		  (<DELAY>
 		     (lambda ()
 			(download-versions-set!)
@@ -121,28 +127,36 @@
 			   :class "hop-tab"
 			   (wiki->hop-no-cache "download.wiki")))))
 	 (<NPTAB> :id "weblets"
-		  (<NPTABHEAD> "Weblets")
+		  (<NPTABHEAD>
+		     (<IMG> :src (service-resource home "etc/package.png"))
+		     "Weblets")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV>
 			   :class "hop-tab"
 			   (wiki->hop "weblets.wiki")))))
 	 (<NPTAB> :id "documentation"
-		  (<NPTABHEAD> "Docs")
+		  (<NPTABHEAD>
+		     (<IMG> :src (service-resource home "etc/doc.png"))
+		     "Docs")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV>
 			   :class "hop-tab"
 			   (wiki->hop "docs.wiki")))))
 	 (<NPTAB> :id "faq"
-		  (<NPTABHEAD> "Faq")
+		  (<NPTABHEAD>
+		     (<IMG> :src (service-resource home "etc/faq.png"))
+		     "Faq&nbsp;&nbsp;&nbsp;")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV>
 			   :class "hop-tab"
 			   (wiki->hop "faq.wiki")))))
 	 (<NPTAB> :id "Forum"
-		  (<NPTABHEAD> "Forum")
+		  (<NPTABHEAD> 
+		     (<IMG> :src (service-resource home "etc/people.png"))
+		     "Community")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV>
@@ -159,7 +173,9 @@ implemented you can send comments and remarks to "
 			      "Manuel Serrano")
 			   "."))))
 	 (<NPTAB> :id "stats"
-		  (<NPTABHEAD> "Statistics")
+		  (<NPTABHEAD>
+		     (<IMG> :src (service-resource home "etc/statistics.png"))
+		     "Statistics")
 		  (<DELAY>
 		     (lambda ()
 			(<DIV>

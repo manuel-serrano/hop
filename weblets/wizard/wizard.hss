@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sun Feb  4 10:03:23 2007 (serrano)                */
+/*    Last change :  Sat Jul 21 06:27:42 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    history simple CSS                                               */
@@ -31,10 +31,6 @@ table.wizard img {
 table.wizard td#user-name {
   font-weight: bold;
 }
-
-/* table.wizard td {                                                   */
-/*   font-weight: bold;                                                */
-/* }                                                                   */
 
 div#title {
   font-size: x-large;
@@ -84,7 +80,6 @@ table.wizard-user th {
 table.wizard-user td.comment {
   color: #558;
   font-size: 95%;
-
 }
 
 table.wizard-user img {
@@ -99,6 +94,7 @@ input[type=password], input[type=text] {
   border: 0;
   border-bottom: 1px dotted $border-color;
   color: blue;
+  background: white;
 }
 
 table.wizard-proxy input[type=checkbox] {
@@ -135,6 +131,11 @@ table.wizard-internet {
 }
 
 table.wizard-proxy {
+  width: 100%;
+  font-size: 90%;
+}
+
+table.wizard-misc {
   width: 100%;
   font-size: 90%;
 }

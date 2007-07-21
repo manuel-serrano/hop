@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sun Jul  8 18:29:32 2007 (serrano)                */
+;*    Last change :  Sat Jul 21 07:17:18 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -101,7 +101,8 @@
 ;*---------------------------------------------------------------------*/
 (define (<HOP> . obj)
    (<HTML>
-      (<HEAD> :css (format "~a/hop.hss" (hop-dir)))
+      (<HEAD> :css (format "~a/hop.hss" (hop-dir))
+	 :favicon (format "~a/icons/hop-16x16.png" (hop-share-directory)))
       (<BODY>
 	 (<DIV> :align "center"
 	    (<TABLE> :class "hop"

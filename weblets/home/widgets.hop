@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu May 10 14:53:39 2007 (serrano)                */
+;*    Last change :  Sat Jul 21 10:42:42 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -27,32 +27,26 @@
 	 :title "Hop Home page"
 	 :include "hop-notepad" "hop-iwindow" "hop-foldlist"
 	 :base base
+	 :favicon "etc/gohome.png"
 	 :css "home.hss")
       (<BODY>
-	 (<DIV>
-	    :align "center"
-	    (<TABLE>
-	       :class "home"
+	 (<DIV> :align "center"
+	    (<TABLE> :class "home"
 	       (<TR>
-		  (<TD>
-		     :valign "top"
+		  (<TD> :valign "top"
 		     (<IMG> :class "logo"
 			:inline #t
 			:alt "Home page logo" 
 			:src "etc/logo.png"))
-		  (<TD>
-		     :valign "top"
+		  (<TD> :valign "top"
 		     (<TABLE>
 			(<TR>
 			   (<TD>
-			      (<DIV> :id "title"
-				     "Hop Home Page")))
+			      (<DIV> :id "title" "Hop Home Page")))
 			(<TR>
 			   (<TD>
 			      obj)))))))
-	 (<DIV>
-	    :align "center"
-	    :class "foot"
+	 (<DIV> :align "center" :class "foot"
 	    (<FOOT-BUTTON>
 	       :href "http://www.inria.fr/mimosa"
 	       :title "INRIA"

@@ -1,11 +1,12 @@
 ;; automatically generated, don't edit
 ;; /users/serrano/prgm/project/hop/weblets/home
-;; Fri Jun 15 07:22:58 2007
+;; Sat Jul 21 14:06:50 2007
 
 (
   (hophome_config "config.hop")
   (hophome_demo "demo.hop")
   (hophome_demos-minesweeper "demos/minesweeper/minesweeper.hop")
+  (hophome_demos-music "demos/music/music.hop")
   (hophome_demos-repl "demos/repl/repl.hop")
   (hophome_demos-rewrite "demos/rewrite/rewrite.hop")
   (hophome_demos-rss "demos/rss/rss.hop")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Jul 17 13:48:26 2007 (serrano)                */
+;*    Last change :  Sat Jul 21 05:10:49 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -100,6 +100,10 @@
        (http-parse-method-request 'COPY (the-port) out id))
       ((: "MOVE" SP)
        (http-parse-method-request 'MOVE (the-port) out id))
+      ((: "LOCK" SP)
+       (http-parse-method-request 'LOCK (the-port) out id))
+      ((: "UNLOCK" SP)
+       (http-parse-method-request 'UNLOCK (the-port) out id))
       ((: (+ (in ("AZaz"))) SP)
        (raise (instantiate::&hop-method-error
 		 (proc 'request-line-grammar)

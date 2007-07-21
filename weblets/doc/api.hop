@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Tue May 22 17:04:46 2007 (serrano)                */
+;*    Last change :  Sat Jul 21 06:21:26 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -30,7 +30,8 @@
 	   (markup-parser k)
 	   (server-parser k)
 	   (client-parser k)
-	   (class-parser k)))
+	   (class-parser k)
+	   (select-api-pad-on-load weblet)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <API> ...                                                        */
@@ -421,3 +422,19 @@
 ;*---------------------------------------------------------------------*/
 (define (<OBJ->STRING> expr)
    (with-output-to-string (lambda () (write expr))))
+
+;*---------------------------------------------------------------------*/
+;*    select-api-pad-on-load ...                                       */
+;*---------------------------------------------------------------------*/
+(define (select-api-pad-on-load weblet)
+   ~(hop_window_onload_add 
+     (lambda (e)
+	(with-history
+	   (lambda ()
+	      (history-add! api-history "pad-weblet" $weblet)
+	      (with-hop ($doc/api $weblet)
+		 (lambda (r)
+		    (notepad-select "doc-notepad" "doc-api")
+		    (let ((el (dom-get-element-by-id document "pad-api")))
+		       (set! el.innerHTML r))))))
+	#f)))

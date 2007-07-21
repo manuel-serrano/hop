@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Feb  5 13:47:06 2007 (serrano)                */
+/*    Last change :  Sat Jul 21 14:08:54 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -117,15 +117,15 @@ input[type=radio]#share {
 }
 
 table.home {
-  width: 45em;
-  margin-top: 40px;
+  width: 48em;
+  margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
   background-color: white;
 }
 
 div#title {
-  width: 35em;
+  width: 40em;
   font-size: x-large;
   font-weight: bold;
   border-bottom: 1px solid $border-color;
@@ -135,7 +135,7 @@ div#title {
 
 div#result {
   text-align: center;
-  width: 30em;
+  width: 40em;
   font-weight: bold;
   font-size: large;
   color: red;
@@ -164,6 +164,10 @@ div.hop-notepad-tabs span.hop-nptab {
   font-size: small;
   border-color: $border-color;
   margin: 0 4px 0 0;
+}
+
+div.hop-notepad-tabs span.hop-nptab img {
+  vertical-align: bottom;
 }
 
 div.hop-notepad-tabs span.hop-nptab-active {
@@ -324,7 +328,7 @@ table.toolbar {
 
 table.toolbar td {
   width: 48px;
-  height: 48px;
+  height: 52px;
   border: 0;
   padding: 0;
   margin: 0;

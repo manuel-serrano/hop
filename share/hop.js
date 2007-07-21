@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jul 20 13:24:05 2007 (serrano)                */
+/*    Last change :  Sat Jul 21 14:58:47 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -288,9 +288,8 @@ function hop_anim( service ) {
 /*    -------------------------------------------------------------    */
 /*    This function DOES NOT evaluates its result.                     */
 /*---------------------------------------------------------------------*/
-function hop_send_request( svc, sync, success, failure, anim ) {
+function hop_send_request( svc, sync, success, failure, anim, henv ) {
    var http = hop_make_xml_http_request();
-   var henv = hop_serialize_request_env();
 
    http.open( "GET", svc, (sync != true) );
 
@@ -309,48 +308,48 @@ function hop_send_request( svc, sync, success, failure, anim ) {
 	       case 200:
 		  if( hop_is_http_json( http ) ) {
 		     try {
-			return success( eval( http.responseText ) );
+			return success( eval( http.responseText ), http );
 		     } catch( e ) {
 			alert( "*** Hop JSON error: " + e );
 		     }
 		  } else {
-		     return success( http.responseText );
+		     return success( http.responseText, http );
 		  }
-		  break;
 
 	       case 202:
-		  return success( hop_unserialize( http.responseText ) );
+		  return success( hop_unserialize( http.responseText ), http );
 
 	       case 204:
-		  break;
+		  return false;
 
 	       case 257:
 		  return hop_js_eval( http );
-		  break;
 
 	       case 258:
-		  if( http.responseText != null ) eval( http.responseText );
-		  break;
+		  if( http.responseText != null )
+		     return eval( http.responseText );
+		  else
+		     return false;
 
 	       case 259:
 		  hop_set_cookie( http );
-		  break;
+		  return false;
 
 	       case 407:
 		  alert( "*** Hop Authentication Error " + status + ": `"
 			 + http.responseText + "'" );
-		  break;
+		  return false;
 
 	       default:
 		  if( (status > 200) && (status < 300) ) {
 		     if( success ) {
-			success( http );
+			return success( http.responseText, http );
 		     }
 		  } else {
 		     if( failure ) {
-			failure( http );
+			return failure( http );
 		     } else {
-			hop_default_failure( http );
+			return hop_default_failure( http );
 		     }
 		  }
 	    }
@@ -367,11 +366,13 @@ function hop_send_request( svc, sync, success, failure, anim ) {
 	    hop_anim_service = false;
 	 }
       }
+
+      return false;
    }
 
    try {
       if( anim ) hop_anim_service = svc;
-      
+
       http.send( null );
       hop_clear_timeout( "hop_anim_timeout" );
       
@@ -395,7 +396,9 @@ function with_hop( svc, success, failure, sync ) {
    if( !success ) success = function( h ) { return h };
    if( !failure ) failure = hop_default_failure;
    
-   return hop_send_request( svc, sync, success, failure, true );
+   return hop_send_request( svc, sync,
+			    success, failure,
+			    true, hop_serialize_request_env() );
 }
 
 /*---------------------------------------------------------------------*/
@@ -414,7 +417,34 @@ function hop( svc, success, failure, sync ) {
    if( !success ) success = function( h ) { return h; }
    if( !failure ) failure = hop_default_failure;
 
-   return hop_send_request( svc, sync, success, failure, true );
+   return hop_send_request( svc, sync,
+			    success, failure,
+			    true, hop_serialize_request_env() );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_event_hander_set ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_event_handler_set( svc, evt, success, failure ) {
+   var req = hop_make_xml_http_request();
+   
+   var handler = function ( html, http ) {
+      http.eventName = evt;
+      if( (http.status == 200) && hop_is_http_json( http ) ) {
+	 http.eventValue = eval( http.responseText );
+      }
+      var res = success( http );
+
+      if( res ) {
+	 hop_event_handler_set( svc, evt, success, failure );
+      }
+			
+      return res;
+   }
+
+   return hop_send_request( svc( evt ), false,
+			    handler, failure,
+			    false, [] );
 }
 
 /*---------------------------------------------------------------------*/
@@ -540,34 +570,6 @@ function hop_replace_inner( el ) {
 /*---------------------------------------------------------------------*/
 function hop_replace_inner_id( id ) {
    return hop_replace_inner( document.getElementById( id ) );
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_event_hander_set ...                                         */
-/*---------------------------------------------------------------------*/
-function hop_event_handler_set( svc, evt, success, failure ) {
-   var req = hop_make_xml_http_request();
-   
-   var handler = function ( http ) {
-      http.eventName = evt;
-      if( (http.status == 200) && hop_is_http_json( http ) ) {
-	 http.eventValue = eval( http.responseText );
-      }
-      var res = success( http );
-
-      if( res ) {
-	 hop_event_handler_set( svc, evt, success, failure );
-      }
-			
-      return res;
-   }
-
-   req.open( "GET", svc( evt ) );
-
-   req.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
-   req.setRequestHeader( 'Connection', 'close' );
-
-   return hop_inner( req, handler, failure, false, false );
 }
 
 /*---------------------------------------------------------------------*/
