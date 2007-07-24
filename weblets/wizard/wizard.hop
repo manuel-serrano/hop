@@ -71,7 +71,7 @@
 		   ((and (not (string=? uname "")) (string=? upasswd ""))
 		    (alert "Missing password for `regular' user!"))
 		   ((and (not (string=? gname "")) (string=? gpasswd ""))
-		    (alert "Missing password for `regular' user!"))
+		    (alert "Missing password for `guest' user!"))
 		   (else
 		    (with-hop ($wizard/save #f cadmin uname cuser gname cguest
 					    proxy proxyu proxya proxyr proxym)
