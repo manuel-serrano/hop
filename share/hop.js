@@ -814,10 +814,10 @@ function hop_bigloo_serialize( item ) {
    if( item instanceof Array )
       return hop_serialize_array( item );
    
-   if( item == undefined )
+   if( item === undefined )
       return ";";
    
-   if( item == null )
+   if( item === null )
       return ".";
 
    if( item instanceof Date )
