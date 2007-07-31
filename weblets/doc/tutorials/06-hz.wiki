@@ -83,10 +83,10 @@ all the files are created in a directory named
      (<HTML>
         (<BODY>
            "This service compute roman -> arabic number representation.
+</code>
 
 The service roman accepts one roman number. It displays a table to
 two colums with the roman and the arabic representation.")))
-</code>
 
 ~~ The use of the markup ++<FOOT>++ insert the HOP button at the end of the
 page. Inserting the HOP button advertise that the Web page is actually served

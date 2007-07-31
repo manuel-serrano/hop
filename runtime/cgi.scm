@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Mon Apr 23 07:02:58 2007 (serrano)                */
+;*    Last change :  Tue Jul 31 14:30:05 2007 (serrano)                */
 ;*    Copyright   :  2003-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -49,6 +49,7 @@
 ;*    http-request-cgi-args ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (http-request-cgi-args req::http-request)
+   
    (define (cgi-args req)
       (with-access::http-request req (socket method path encoded-path
 					     header content-length)
@@ -78,6 +79,7 @@
 	     (http-request-url-cgi-args encoded-path))
 	    (else
 	     (error 'http-request-cgi-args "Not a cgi request" method)))))
+   
    (define (normalize l)
       (let loop ((l l)
 		 (res '()))

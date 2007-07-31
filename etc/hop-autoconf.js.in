@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Jul  6 12:06:26 2007 (serrano)                */
+/*    Last change :  Thu Jul 26 09:10:30 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -210,9 +210,11 @@ node_style_set = function( obj, property, value ) {
 /*---------------------------------------------------------------------*/
 /*    hop_active_location_timeout ...                                  */
 /*    -------------------------------------------------------------    */
-/*    The frequency, new locations are checked.                        */
+/*    The frequency, new locations are checked. On slow CPU (e.g.,     */
+/*    ARM processors), use a reduced frequency.                        */
 /*---------------------------------------------------------------------*/
-var hop_active_location_timeout = 100;
+var hop_active_location_timeout =
+   (navigator.oscpu.indexOf( "armv6" ) >= 0 ) ? 250 : 100;
 
 /*---------------------------------------------------------------------*/
 /*    hop_add_active_location_listener ...                             */
@@ -236,6 +238,7 @@ function hop_add_active_location_listener( obj, proc ) {
 	 }
 	 return true;
       }
+
       obj.hop_active_location_interval =
 	 setInterval( check, hop_active_location_timeout );
    }

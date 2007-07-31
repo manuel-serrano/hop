@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Jun 27 06:43:26 2007 (serrano)                */
+;*    Last change :  Tue Jul 31 14:50:34 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -108,7 +108,9 @@
 		     path
 		     "?hop-encoding=hop"
 		     (map (lambda (f v)
-			     (format "&~a=~a" f (url-encode (obj->string v))))
+			     (format "&~a=~a" f
+				     (url-encode
+				      (iso-latin->utf8! (obj->string v)))))
 			  args vals))))))
 
 ;*---------------------------------------------------------------------*/

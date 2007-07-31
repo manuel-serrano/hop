@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Jul 21 05:10:49 2007 (serrano)                */
+;*    Last change :  Tue Jul 31 14:42:52 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -116,7 +116,7 @@
 ;*    http-parse-method-request ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-method-request method pi::input-port po::output-port id)
-   (with-trace 3 'http-parse-request
+   (with-trace 3 'http-parse-method-request
       (let (scheme hostname port abspath http-version userinfo)
 	 (let ((pi2 (if (or #t (>=fx (bigloo-debug) 3))
 			(let ((line (http-read-line pi)))
@@ -144,6 +144,7 @@
 				  (if (string<? http-version "HTTP/1.1")
 				      'close
 				      'keep-alive))))
+	       (trace-item "cabspath=" cabspath " connection=" connection)
 	       (instantiate::http-request
 		  (id id)
 		  (method method)
