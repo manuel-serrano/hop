@@ -7,7 +7,9 @@ Compute the MD5 checksum of a string.
 
 === Server & Client ===
 
-  (md5sum string)
+  (md5sum obj)
+  (md5sum-string string)
+  (hmac-md5sum-string key string)
 
 
 === Requirements ===
@@ -21,16 +23,52 @@ header, the following statement:
 
 == Server & Client Definitions ==
 
-=== ++(md5sum string)++ ===
+=== ++(md5sum obj)++ ===
 <procedure> md5sum
 <function> md5sum
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| obj         |    _     | The object for which the chesum is computed.    |
+</arguments>
+
+The function ++md5sum++ dispatches over its argument and invokes the
+ad-hoc function. On the client-side this function can only be passed
+//strings// arguments. On the server-side, it can be passed
+//string//, //input ports//, or //mmap// (memory mapped area).
+</function>
+</procedure>
+
+=== ++(md5sum-string string)++ ===
+<procedure> md5sum-string
+<function> md5sum-string
 
 <arguments>
 ^  arguments  ^   type   ^   description                                   ^
 | string      |  string  | The string for which the chesum is computed.    |
 </arguments>
 
-This procedure returns a string denoting an hexadecimal integer.
+Compute the MD5 checksum of the //string//.
+</function>
+</procedure>
+
+=== ++(hmac-md5sum-string key data)++ ===
+<procedure> hmac-md5sum-string
+<function> hmac-md5sum-string
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| key         |  string  | The key.                                        |
+| data        |  string  | The user data.                                  |
+</arguments>
+
+Computes the Hmac MD5 authentication. Example
+
+
+  (hmac-md5sum-string (make-string 16 #a011) "Hi There") 
+,(begin "&#8658;") "9294727a3638bb1c13f48ef8158bfc9d"
+
+
 </function>
 </procedure>
 

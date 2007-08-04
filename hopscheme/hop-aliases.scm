@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Fri Jul  6 12:06:51 2007 (serrano)                */
+;*    Last change :  Wed Aug  1 08:00:00 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -219,4 +219,6 @@
      (current-history hop_current_history)
      (replay-history hop_replay_history)
      (find-runtime-type hop_find_runtime_type)
+     (md5sum-string md5sum)
+     (hmac-md5sum-string hex_hmac_md5)
      (get-selection hop_get_selection)))
