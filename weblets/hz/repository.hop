@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Sat Dec  9 09:02:26 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Mon Aug  6 19:14:56 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
 ;*=====================================================================*/
@@ -129,8 +129,8 @@
 			      (apply hz-db-add-entry db n)
 			      (list view "" ""))
 			   (list "" "" view))))
-		   ((>=second (date->seconds (dbhz-date old))
-			      (file-modification-time path))
+		   ((>=elong (date->seconds (dbhz-date old))
+			     (file-modification-time path))
 		    'ok)
 		   (else
 		    (let ((n (hz->dbhz path dir name stamp)))

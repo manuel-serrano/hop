@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Jul 21 14:58:47 2007 (serrano)                */
+/*    Last change :  Tue Aug  7 18:01:22 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -880,9 +880,19 @@ function hop_serialize_word( word ) {
 
       s--;
       while( s >= 0 ) {
-	 var c = ((word >> (s * 8)) & 0xff);
+	 var c = ((word >> (s << 3)) & 0xff);
 
-	 rw += String.fromCharCode( c );
+	 if( c <= 127 ) {
+	    rw += String.fromCharCode( c );
+	 } else {
+	    var i1 = (c >> 4);
+	    var i2 = (c & 0xf);
+	    var c1 = i1 + ((i1 < 10) ? 48 : 55);
+	    var c2 = i2 + ((i2 < 10) ? 48 : 55);
+	    
+	    rw += String.fromCharCode( 37, c1, c2 );
+	 }
+	 
 	 s--;
       }
 
@@ -891,10 +901,66 @@ function hop_serialize_word( word ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    ucs2_to_utf8 ...                                                 */
+/*---------------------------------------------------------------------*/
+function ucs2_to_utf8( s ) {
+   var len = s.length;
+
+   for( var i = 0; i < len; i++ ) {
+      var c = s.charCodeAt( i );
+      if( c >= 128 ) {
+	 /* we got one non-ascii, we have to convert */
+	 var utf = s.substring( 0, i );
+
+	 for( ; i< len; i++, c = s.charCodeAt( i ) ) {
+	    if( c < 128 ) {
+	       utf += String.fromCharCode( c );
+	    } else {
+	       if( (c > 127) && (c < 2048) ) {
+		  utf += String.fromCharCode((c >> 6) | 192);
+		  utf += String.fromCharCode((c & 63) | 128);
+	       } else {
+		  utf += String.fromCharCode((c >> 12) | 224);
+		  utf += String.fromCharCode(((c >> 6) & 63) | 128);
+		  utf += String.fromCharCode((c & 63) | 128);
+	       }
+	    }
+	 }
+
+	 return utf;
+      }
+   }
+
+   return s;
+}
+
+/*---------------------------------------------------------------------*/
+/*    utf_length ...                                                   */
+/*---------------------------------------------------------------------*/
+function utf_length( s ) {
+   var len = s.length;
+   var res = len;
+
+   for( var i = 0; i < len; i++ ) {
+      var c = s.charCodeAt( i );
+      
+      if( c >= 128 ) {
+	 if( (c > 127) && (c < 2048) ) {
+	    res++;
+	 } else {
+	    res += 2;
+	 }
+      }
+   }
+
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_serialize_string ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_serialize_string( mark, item ) {
-   return mark + hop_serialize_word( item.length ) + item;
+   return mark + hop_serialize_word( utf_length( item ) ) + item;
 }
 
 /*---------------------------------------------------------------------*/
@@ -906,7 +972,7 @@ function hop_serialize_number( item ) {
    if( sitem.indexOf( "." ) == -1 ) {
       if( item < 0 )
 	 return '-' + (-item);
-      else 
+      else
 	 return hop_serialize_word( item );
    } else {
       return 'f' + hop_serialize_word( sitem.length ) + sitem;

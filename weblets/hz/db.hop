@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Thu Jun  8 11:51:29 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Mon Aug  6 19:02:23 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
 ;*=====================================================================*/
@@ -118,10 +118,14 @@
    (with-lock *db-mutex*
       (lambda ()
 	 (if (file-exists? path)
-	     (hz-reconfigure-db! (instantiate::sqlite (path path)))
+	     (hz-reconfigure-db! (instantiate::sqltiny
+				    (path path)
+				    (sync 'automatic)))
 	     (begin
 		(make-directory (dirname path))
-		(let ((db (instantiate::sqlite (path path))))
+		(let ((db (instantiate::sqltiny
+			     (path path)
+			     (sync 'automatic))))
 		   (sqlite-exec db
 		      "CREATE TABLE info (name STRING, date STRING, stamp INTEGER, version STRING)")
 		   (sqlite-exec db
@@ -175,7 +179,8 @@
 		 (eror 'hz "Illegal date" date)))))
       (with-lock *db-mutex*
 	 (lambda ()
-	    (sqlite-exec db "UPDATE info SET date = ~q WHERE (name = 'info')" nd)))))
+	    (sqlite-exec db "UPDATE info SET date = ~q WHERE (name = 'info')"
+			 nd)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    db-sync-stamp ...                                                */

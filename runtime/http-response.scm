@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Jul  5 15:05:37 2007 (serrano)                */
+;*    Last change :  Tue Aug  7 18:04:27 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -75,9 +75,7 @@
       (with-access::http-response-string r (start-line header content-type server content-length bodyp body char-encoding timeout request)
 	 (let* ((p (socket-output socket))
 		(ce (or char-encoding (hop-char-encoding)))
-		(s (if (eq? ce 'UTF-8)
-		       (iso-latin->utf8! body)
-		       body))
+		(s body)
 		(connection (http-request-connection request)))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! p timeout))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Tue Jul 31 14:30:05 2007 (serrano)                */
+;*    Last change :  Tue Aug  7 17:32:14 2007 (serrano)                */
 ;*    Copyright   :  2003-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -27,21 +27,39 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-url-cgi-args ...                                    */
+;*    -------------------------------------------------------------    */
+;*    The former version of this function used to decode UTF8          */
+;*    argument before deserialization. This was required because       */
+;*    the former definition of the JS function hop_serialize_work      */
+;*    was using String.fromCharCode that produces UTF8 sequences.      */
+;*    This is no longer needed since the new version of this           */
+;*    function uses the %XX encoding.                                  */
 ;*---------------------------------------------------------------------*/
 (define (http-request-url-cgi-args path)
    (let ((i (string-index path #\?)))
       (if (or (not i) (=fx i -1))
 	  (list path)
-	  ;; CARE: Je ne sais pas s'il faut toujours faire la conversion
-	  ;; utf8->iso-latin!
-	  (let ((cmd (utf8->iso-latin!
-		      (xml-string-decode!
-		       (substring path 0 i))))
+	  (let ((cmd (xml-string-decode! (substring path 0 i)))
 		(args (substring path (+fx i 1) (string-length path))))
 	     (cons cmd
 		   (map! (lambda (p)
-			    (set-cdr! p (utf8->iso-latin!
-					 (xml-string-decode! (cdr p))))
+			    (set-cdr! p (xml-string-decode! (cdr p)))
+			    p)
+			 (cgi-args->list args)))))))
+
+;; old version prior to 7 Aug 07
+(define (http-request-url-cgi-args.old path)
+   (let ((i (string-index path #\?)))
+      (if (or (not i) (=fx i -1))
+	  (list path)
+	  (let ((cmd (utf8->iso-latin!
+		      (xml-string-decode! (substring path 0 i))))
+		(args (substring path (+fx i 1) (string-length path))))
+	     (cons cmd
+		   (map! (lambda (p)
+			    (set-cdr! p
+				      (utf8->iso-latin!
+				       (xml-string-decode! (cdr p))))
 			    p)
 			 (cgi-args->list args)))))))
 
@@ -87,18 +105,30 @@
 	     res
 	     (let ((a (assoc (caar l) res)))
 		(if (pair? a)
-		    ;; Already present in res. Add the current item in list
+		    ;; Already present in res. Add the current item in list.
 		    (begin
 		       (if (pair? (cdr a))
 			   (append! (cdr a) (list (cdar l)))
 			   (set-cdr! a (list (cdr a) (cdar l))))
 		       (loop (cdr l) res))
 		    ;; Not yet added.
-		    (loop (cdr l)
-			  (cons (car l) res)))))))
+		    (loop (cdr l) (cons (car l) res)))))))
 
-   (let ((args (cgi-args req)))
-      (cons (car args) (normalize (cdr args)))))
+   (with-trace 2 'http-request-cgi-args
+      (trace-item "encoded path=" (http-request-encoded-path req))
+      (trace-item "decoded path=" (string-for-read (http-request-path req)))
+      (let ((args (cgi-args req)))
+	 (trace-item "args=" (map (lambda (a)
+				     (cond
+					((string? a)
+					 (string-for-read a))
+					((pair? a)
+					 (cons (car a)
+					       (string-for-read (cdr a))))
+					(else
+					 a)))
+				  args))
+	 (cons (car args) (normalize (cdr args))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cgi-arg ...                                                      */

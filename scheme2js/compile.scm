@@ -185,8 +185,10 @@
     this p
     ;; don't generate useless statement (like "x;")
     ;; this only happens when "this" is a Decl.
-    (unless (statement-form? this)
-       (p-display p this.var.compiled))))
+    ;; PATCH: 7aug07
+    ;; (unless (statement-form? this)
+    ;;   (p-display p this.var.compiled))
+    (p-display p this.var.compiled)))
 
 (define-pmethod (Program-compile p)
    (this.body.compile p))

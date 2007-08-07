@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Sat Dec  9 09:02:32 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Mon Aug  6 11:06:55 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
 ;*=====================================================================*/
@@ -38,7 +38,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-get-sync ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (hz-get-sync host)
+(define (hz-get-sync host escape)
    (multiple-value-bind (_ uinfo host port path)
       (url-parse host)
       (let ((req (instantiate::http-request
@@ -52,7 +52,7 @@
 				  ((200)
 				   (read p))
 				  ((401 407)
-				   (user-access-denied req))
+				   (escape (user-access-denied req)))
 				  (else
 				   (error 'hz-get-sync
 					  (format "Illegal status `~a'" s)
@@ -75,8 +75,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    sync/host ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (sync/host host db)
-   (let* ((tables (hz-get-sync host))
+(define (sync/host host db escape)
+   (let* ((tables (hz-get-sync host escape))
 	  (info (assoc "info" tables))
 	  (weblets (assoc "weblets" tables))
 	  (stamp (hz-db-sync-stamp db)))
@@ -122,17 +122,19 @@
    (let ((out (<DIV> (show-updates (hz-db-query-update db)
 				   (hz-db-query-new db))))
 	 (sync (service ()
-		  (let ((news (append-map (lambda (h) (sync/host h db))
-					  (hz-sync-hops)))
-			(odate (hz-db-sync-date db)))
-		     ;; fetch the new entries
-		     (let ((res (show-updates (hz-db-query-update db)
-					      (hz-db-query-new db))))
-			;; update the sync date
-			(hz-db-sync-date-update! db (current-date))
-			;; increment the stamp after the news are collected
-			(hz-db-sync-stamp-inc! db)
-			(<DIV> res (<SPAN> (hz-db-sync-date db)))))))
+		  (bind-exit (escape)
+		     (let ((news (append-map (lambda (h)
+						(sync/host h db escape))
+					     (hz-sync-hops)))
+			   (odate (hz-db-sync-date db)))
+			;; fetch the new entries
+			(let ((res (show-updates (hz-db-query-update db)
+						 (hz-db-query-new db))))
+			   ;; update the sync date
+			   (hz-db-sync-date-update! db (current-date))
+			   ;; increment the stamp after the news are collected
+			   (hz-db-sync-stamp-inc! db)
+			   (<DIV> res (<SPAN> (hz-db-sync-date db))))))))
 	 (syncd (<SPAN> (hz-db-sync-date db))))
       (<VBOX>
 	 (<VBOX-BLOCK>

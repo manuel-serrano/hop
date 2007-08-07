@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Mon Jul  9 05:22:03 2007 (serrano)                */
+/*    Last change :  Mon Aug  6 10:49:56 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
@@ -13,11 +13,9 @@
 /*    hop_vpaned_mousemove ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_vpaned_mousemove( e, paned ) {
-   var val;
-
-   val = ((hop_event_mouse_x( e ) - hop_element_x( paned ) - 2)
-	  / paned.offsetWidth) * 100;
-   hop_vpaned_fraction_set( paned, Math.round( val ));
+   var val = ((hop_event_mouse_x( e ) - hop_element_x( paned ) - 2)
+	      / paned.offsetWidth) * 100;
+   hop_vpaned_fraction_set( paned, Math.round( val ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -30,15 +28,19 @@ function hop_vpaned_fraction_set( paned, fraction ) {
       node_style_set( paned.td1, "width", fraction );
       frac = parseInt( fraction );
    } else {
+      var w = paned.clientWidth;
+
       if( (fraction < 0) || (fraction > 100) ) {
 	 return false;
       }
 
       frac = fraction;
-
-      node_style_set( paned.td1,
-		      "width",
-		      (paned.clientWidth * (fraction/100)) + "px" );
+      
+      if( w > 0 ) {
+	 node_style_set( paned.td1, "width", Math.round(w*(frac/100)) + "px" );
+      } else {
+	 paned.td1.width = frac + "%";
+      }
    }
 
    if( paned.fraction != frac ) {
@@ -148,7 +150,7 @@ function hop_init_vpaned( id, pan1id, pan2id, fraction, onresize ) {
    var pan2 = document.getElementById( pan2id );
    var td1 = document.getElementById( id + "-vpaned-td1" );
    var td2 = document.getElementById( id + "-vpaned-td2" );
-   
+
    // cursor event handling
    var mousemove = function( e ) {
       hop_vpaned_mousemove( e, paned );
