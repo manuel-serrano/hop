@@ -1,0 +1,68 @@
+body {
+  background: #ddf;
+}
+
+body.view {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+h1 {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+a {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+div.main {
+  background: #ddf;
+}
+
+textarea.playground {
+  font-size: x-small;
+  font-family: Bitstream Vera Sans Mono, Andale Mono, monospace;
+  width: 95%;
+  color: blue;
+  border: 1px solid #ccc;
+  background-color: #eff;
+}
+
+div.view {
+  font-size: small;
+  width: 350px;
+  height: 150px;
+  overflow: auto;
+  border: 1px solid #ccc;
+  background-color: #ffe;
+  padding: 0;
+  margin: 0;
+}
+
+iframe.view {
+  font-size: small;
+  width: 95%;
+  height: 170px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+span.click {
+  text-decoration: underline;
+  cursor: default;
+  font-size: small;
+}
+
+img {
+  border: 1px solid transparent;
+}
+
+img:hover {
+  border: 1px solid black;
+}
+  
+  

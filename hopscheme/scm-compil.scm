@@ -2,8 +2,7 @@
    
    (option (set! *dlopen-init* "bgl_dload_init_s_hopscheme"))
    
-   (library pthread
-	    hop
+   (library hop
 	    scheme2js)
    
    (import hopscheme-config
