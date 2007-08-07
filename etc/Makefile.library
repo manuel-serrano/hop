@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Sun Jul 15 17:07:08 2007 (serrano)                */
+#*    Last change :  Tue Aug  7 20:22:29 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -61,7 +61,7 @@ $(HEAP_FILE): make-lib.scm .afile
 
 $(HEAPJVM_FILE): .jfile .afile make-lib.scm
 	@ $(RM) -f $(HEAPJVM_FILE)
-	@ $(BIGLOO) -jvm $(EFLAGS) $(BHFLAGS) make-lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
+	@ $(BIGLOO) -jvm $(EFLAGS) $(BJVMFLAGS) $(BHFLAGS) make-lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 #*---------------------------------------------------------------------*/
