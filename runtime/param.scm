@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Jul 21 06:47:25 2007 (serrano)                */
+;*    Last change :  Wed Aug  8 15:11:28 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -620,7 +620,7 @@
 ;*    hop-char-encoding ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-char-encoding
-   'ISO-8859-1
+   'UTF-8
    (lambda (v)
       (case v
 	 ((UTF-8) 'UTF-8)

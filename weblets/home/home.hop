@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sat Jul 21 10:50:18 2007 (serrano)                */
+;*    Last change :  Wed Aug  8 15:57:01 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -153,7 +153,7 @@
 			(<DIV>
 			   :class "hop-tab"
 			   (wiki->hop "faq.wiki")))))
-	 (<NPTAB> :id "Forum"
+	 (<NPTAB> :id "community"
 		  (<NPTABHEAD> 
 		     (<IMG> :src (service-resource home "etc/people.png"))
 		     "Community")
@@ -161,17 +161,7 @@
 		     (lambda ()
 			(<DIV>
 			   :class "hop-tab"
-			   "This is not implemented yet. Until it is
-implemented you can send comments and remarks to "
-			   (<SPAN>
-			      :style "text-decoration: underline"
-			      :onmouseover
-			      { title =
-			   (this.innerHTML.replace( " ", "." )
-						  + String.fromCharCode( 0x41 - 1 )
-						  + "Inria.fr") }
-			      "Manuel Serrano")
-			   "."))))
+			   (wiki->hop "community.wiki")))))
 	 (<NPTAB> :id "stats"
 		  (<NPTABHEAD>
 		     (<IMG> :src (service-resource home "etc/statistics.png"))

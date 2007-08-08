@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Jul  9 09:09:33 2007 (serrano)                */
+;*    Last change :  Wed Aug  8 10:33:02 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -213,6 +213,8 @@
 		      (error '<HEAD> "Illegal :favicon" (cadr a))))
 		 ((:include)
 		  (cond
+		     ((not (cadr a))
+		      (loop (cddr a) :include rts dir inl els))
 		     ((string? (cadr a))
 		      (loop (cddr a) :include rts dir inl
 			    (append (incl (cadr a) inl) els)))

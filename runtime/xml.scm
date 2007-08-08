@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Jul 19 07:31:05 2007 (serrano)                */
+;*    Last change :  Wed Aug  8 15:12:38 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -356,13 +356,13 @@
 ;*    %make-xml-element ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (%make-xml-element el args)
-   (let loop ((args args)
+   (let loop ((a args)
 	      (attr '())
 	      (init '())
 	      (body '())
 	      (id #unspecified))
       (cond
-	 ((null? args)
+	 ((null? a)
 	  (instantiate::xml-element
 	     (markup (string->symbol
 		      (string-downcase
@@ -371,37 +371,41 @@
 	     (initializations (reverse! init))
 	     (id (xml-make-id id el))
 	     (body (reverse! body))))
-	 ((keyword? (car args))
+	 ((keyword? (car a))
 	  (cond
-	     ((null? (cdr args))
+	     ((not (pair? (cdr a)))
 	      (error (symbol-append '< el '>)
-		     "attribute value missing"
-		     (car args)))
-	     ((eq? (car args) :id)
-	      (if (string? (cadr args))
-		  (loop (cddr args) attr init body (cadr args))
-		  (bigloo-type-error el "string" (cadr args))))
-	     ((and (xml-tilde? (cadr args))
-		   (not (xml-event-handler-attribute? (car args))))
-	      (loop (cddr args)
+		     "Illegal attribute"
+		     (car a)))
+	     ((eq? (car a) :id)
+	      (if (string? (cadr a))
+		  (loop (cddr a) attr init body (cadr a))
+		  (bigloo-type-error el "string" (cadr a))))
+	     ((and (xml-tilde? (cadr a))
+		   (not (xml-event-handler-attribute? (car a))))
+	      (loop (cddr a)
 		    attr
-		    (cons (cons (keyword->symbol (car args)) (cadr args))
+		    (cons (cons (keyword->symbol (car a)) (cadr a))
 			  init)
 		    body
 		    id))
 	     (else
-	      (loop (cddr args)
-		    (cons (cons (keyword->string (car args)) (cadr args))
+	      (loop (cddr a)
+		    (cons (cons (keyword->string (car a)) (cadr a))
 			  attr)
 		    init
 		    body
 		    id))))
-	 ((null? (car args))
-	  (loop (cdr args) attr init body id))
-	 ((pair? (car args))
-	  (loop (append (car args) (cdr args)) attr init body id))
+	 ((null? (car a))
+	  (loop (cdr a) attr init body id))
+	 ((pair? (car a))
+	  (if (not (and (or (null? (cdr a)) (pair? (cdr a))) (list? (car a))))
+	      (error (symbol-append '< el '>)
+		     "Illegal arguments"
+		     `(,(symbol-append '< el '>) ,@args))
+	      (loop (append (car a) (cdr a)) attr init body id)))
 	 (else
-	  (loop (cdr args) attr init (cons (car args) body) id)))))
+	  (loop (cdr a) attr init (cons (car a) body) id)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-markup-is? ...                                               */
@@ -440,9 +444,7 @@
 (define-generic (xml-write obj p encoding backend)
    (cond
       ((string? obj)
-       (if (eq? encoding 'UTF-8)
-	   (display (iso-latin->utf8! obj) p)
-	   (display obj p)))
+       (display obj p))
       ((or (number? obj) (symbol? obj))
        (display obj p))
       ((pair? obj)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Jul 21 14:08:54 2007 (serrano)                */
+/*    Last change :  Wed Aug  8 16:31:20 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -74,6 +74,10 @@ tt {
 
 h1 {
   font-size: 100%;
+}
+
+h2 {
+  font-size: 97%;
 }
 
 table td {

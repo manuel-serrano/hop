@@ -1,0 +1,48 @@
+== HOP mailing List ==
+
+The HOP mailing list is now hosted by 
+[[http://www-sop.inria.fr|INRIA Sophia Antipolis]]. Its email address is 
+,(<TT> (<A> :href "mailto:hop@lists-sop.inria.fr" "hop@lists-sop.inria.fr")).
+
+
+=== Registration ===
+
+Information requests, subcription/unsubscription to the mailing list must be 
+sent to ,(<TT> (<A> :href "mailto:sympa@lists-sop.inria.fr?subject=HELP" 
+"sympa@lists-sop.inria.fr")).
+
+  * To **subscribe** to the mailing list, simply send a message with the 
+ words ,(<SPAN> :style "color: red" "\"subscribe hop\"") 
+ in the ++Subject:++ field to the address above.
+ Alternatively you can click the following link: 
+ ,(<A> :href "mailto:sympa@lists-sop.inria.fr?subject=subscribe%20hop" 
+"subscribe now").
+
+
+  * To **unsubscribe** to the mailing list, simply send a message with 
+ the words ,(<TT> (<SPAN> :style "color: red" "unsubscribe \"hop\"")) in the 
+ ++Subject:++ field to the address above. 
+ Alternatively you can click the following link:
+ ,(<A> :href "mailto:sympa@lists-sop.inria.fr?subject=unsubscribe%20hop" 
+"unsubscribe now").
+
+
+  * To get some help with the mailing list, simply send a message with the 
+ word ,(<SPAN> :style "color: red" "\"HELP\"") in the ++Subject:++
+ field to ,(<TT> (<A> :href "mailto:sympa@lists-sop.inria.fr"
+ "sympa@lists-sop.inria.fr")). 
+ Alternatively you can click the following link:
+ ,(<A> :href "mailto:sympa@lists-sop.inria.fr?subject=HELP" "help me").
+
+=== Archives ===
+
+Two archives of this mailing list are available. 
+
+  - The first one uses the 
+ ,(<A> :target "_blank" 
+    :href "/hop/hopmail/archive?mbox=maildir://maildir"
+ "Hopmail") HOP weblet.
+  - The second one uses a more traditional 
+ [[https://lists-sop.inria.fr/wws/arc/hop|Web GUI]].
+
+
