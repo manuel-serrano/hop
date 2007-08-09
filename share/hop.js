@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Aug  7 18:01:22 2007 (serrano)                */
+/*    Last change :  Thu Aug  9 17:17:19 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -822,10 +822,10 @@ function hop_bigloo_serialize( item ) {
    if( item instanceof Array )
       return hop_serialize_array( item );
    
-   if( item == undefined )
+   if( item === undefined )
       return ";";
    
-   if( item == null )
+   if( item === null )
       return ".";
 
    if( item instanceof Date )
