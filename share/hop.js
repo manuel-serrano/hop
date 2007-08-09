@@ -353,12 +353,6 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 		     }
 		  }
 	    }
-	 } catch( e ) {
-	    if( failure ) {
-	       failure( http );
-	    } else {
-	       throw( e );
-	    }
 	 } finally {
 	    if( hop_anim_vis != false ) {
 	       node_style_set( hop_anim_vis, "display", "none" );
