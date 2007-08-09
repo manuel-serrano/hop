@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Jul 12 02:42:40 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 16:36:32 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -15,6 +15,8 @@
 (module __hop_http-remote
 
    (include "http-lib.sch")
+
+   (library web)
    
    (import  __hop_param
 	    __hop_types
@@ -164,7 +166,7 @@
 	    (multiple-value-bind (http-version status-code phrase)
 	       (http-parse-status-line ip)
 	       (multiple-value-bind (header _1 _2 cl te _3 _4 connection)
-		  (http-read-header ip (connection-output remote))
+		  (http-parse-header ip (connection-output remote))
 		  ;; WARNING: phrase contains its terminal \r\n hence
 		  ;; it must be displayed with regular scheme writer,
 		  ;; not HTTP-WRITE-LINE!

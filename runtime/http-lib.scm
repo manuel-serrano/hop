@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Wed Jul 18 14:09:02 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 16:46:42 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -14,22 +14,20 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-lib
 
+   (library web)
+   
    (include "http-lib.sch")
    
    (import  __hop_param
 	    __hop_types)
    
    (export  (http-parse-error-message ::obj ::input-port)
-	    (http-read-crlf ::input-port)
-	    (http-read-line ::input-port)
-	    (http-read-header::pair-nil ::input-port ::output-port)
 	    (http-header-field ::pair-nil ::keyword)
 	    (http-header-field-values::pair-nil ::bstring)
 	    (http-cookie-get ::http-request ::bstring #!optional path domain)
 	    (http-basic-authentication? ::http-request ::bstring ::bstring)
 	    (http-basic-base64-authentication? ::http-request ::pair-nil)
 	    (http-htaccess-authentication? ::http-request ::bstring)
-	    (http-parse-status-line ::input-port)
 	    (http-decode-authentication::bstring ::bstring)
 	    (http-write-header ::output-port ::pair-nil)
 	    (http-filter-proxy-header::pair-nil ::pair-nil)))
@@ -53,201 +51,6 @@
 	   (string-append "{" (string c) "}" (if (string? line) line ""))))
        c))
 
-;*---------------------------------------------------------------------*/
-;*    http-read-crlf ...                                               */
-;*---------------------------------------------------------------------*/
-(define (http-read-crlf p)
-   (define http-crlf-grammar
-      (regular-grammar ((CRLF "\r\n"))
-	 (CRLF
-	  "\r\n")
-	 (else
-	  (parse-error 'crlf-grammar
-		       "Illegal character"
-		       (http-parse-error-message (the-failure) (the-port))))))
-   (read/rp http-crlf-grammar p))
-
-;*---------------------------------------------------------------------*/
-;*    http-read-line ...                                               */
-;*---------------------------------------------------------------------*/
-(define (http-read-line p)
-   (read/rp (regular-grammar ()
-	       ((or (: (+ all) "\r\n") (: (+ all) "\n") (+ all))
-		(the-string))
-	       (else
-		(let ((c (the-failure)))
-		   (if (eof-object? c)
-		       c
-		       (the-string)))))
-	    p))
-
-;*---------------------------------------------------------------------*/
-;*    http-read-header ...                                             */
-;*---------------------------------------------------------------------*/
-(define (http-read-header p po)
-   (define value-grammar
-      (regular-grammar ()
-	 ((+ (in " \t"))
-	  (ignore))
-	 ((: (out " \t\r\n") (* (or (out "\r\n") (: "\r" (out "\n")))) "\r\n")
-	  (the-substring 0 (-fx (the-length) 2)))
-	 ((: (out " \t\r\n") (* (or (out "\r\n") (: "\r" (out "\n")))) "\n")
-	  (the-substring 0 (-fx (the-length) 1)))
-	 ((: (? #\Return) #\Newline)
-	  "")
-	 (else
-	  (let ((c (the-failure)))
-	     (if (eof-object? c)
-		 '()
-		 c)))))
-   (define blank-grammar
-      (regular-grammar ()
-	 ((+ (in " \t")) (ignore))))
-   (define hostname-grammar
-      (regular-grammar ()
-	 ((: (+ (out ":\n\r\t ")) #\:)
-	  (let* ((h (the-substring 0 -1))
-		 (p (read/rp fixnum-grammar (the-port))))
-	     (values h p)))
-	 ((+ (out ":\n\r\t "))
-	  (values (the-string) #f))
-	 ((+ (in " \t"))
-	  (ignore))))
-   (define name-grammar
-      (regular-grammar ()
-	 ((+ (out "\n\r\t ")) (the-string))
-	 ((+ (in " \t")) (ignore))))
-   (define fixnum-grammar
-      (regular-grammar ((DIGIT (in ("09"))))
-	 ((+ DIGIT) (the-fixnum))
-	 ((+ (in " \t")) (ignore))))
-   (define elong-grammar
-      (regular-grammar ((DIGIT (in ("09"))))
-	 ((+ DIGIT) (fixnum->elong (the-fixnum)))
-	 ((+ (in " \t")) (ignore))))
-   (define symbol-grammar
-      (regular-grammar ()
-	 ((+ (or alpha #\-)) (the-downcase-symbol))
-	 ((+ (in " \t")) (ignore))))
-   (define auth-grammar
-      (regular-grammar ()
-	 ((: (+ (in #\Space #\Tab)))
-	  (ignore))
-	 ((: (out #\Space #\Tab) (* (out "\n\r")))
-	  (the-string))
-	 (else
-	  #f)))
-   (define crlf-grammar
-      (regular-grammar ()
-	 ((: (* (in #\space #\tab)) (? #\Return) #\Newline)
-	  #unspecified)
-	 (else
-	  #f)))
-   (define header-grammar
-      (regular-grammar (header
-			hostname port content-length transfer-encoding
-			authorization proxy-authorization connection)
-	 ((: (+ (or (out " :\r\n\t") (: #\space (out #\:)))) #\:)
-	  (let* ((k (the-downcase-keyword)))
-	     (case k
-		((host:)
-		 (multiple-value-bind (h p)
-		    (read/rp hostname-grammar (the-port))
-		    (set! hostname h)
-		    (set! port p)
-		    (trace-item "##1 " k " [" hostname ":" port "]")
-		    (read/rp crlf-grammar (the-port))
-		    (set! header (cons (cons k hostname) header))
-		    (ignore)))
-		((content-length:)
-		 (set! content-length (read/rp elong-grammar (the-port)))
-		 (trace-item "##2 " k " [" content-length "]")
-		 (read/rp crlf-grammar (the-port))
-		 (set! header (cons (cons k content-length) header))
-		 (ignore))
-		((transfer-encoding:)
-		 (set! transfer-encoding (read/rp symbol-grammar (the-port)))
-		 (trace-item "##3 " k " [" transfer-encoding "]")
-		 (read/rp crlf-grammar (the-port))
-		 (set! header (cons (cons k transfer-encoding) header))
-		 (ignore))
-		((authorization:)
-		 (set! authorization (read/rp auth-grammar (the-port)))
-		 (trace-item "##4 " k " [" authorization "]")
-		 (read/rp crlf-grammar (the-port))
-		 (set! header (cons (cons k authorization) header))
-		 (ignore))
-		((connection:)
-		 (set! connection (read/rp symbol-grammar (the-port)))
-		 (trace-item "##5 " k " [" connection "]")
-		 (http-read-line (the-port))
-		 (set! header (cons (cons k connection) header))
-		 (ignore))
-		((proxy-authorization:)
-		 (set! proxy-authorization (read/rp auth-grammar (the-port)))
-		 (trace-item "##6 " k " [" proxy-authorization "]")
-		 (read/rp crlf-grammar (the-port))
-		 ;; don't store the proxy-authorization in the header
-		 (ignore))
-		((expect:)
-		 (let ((e (read/rp value-grammar (the-port))))
-		    (trace-item "##7 " k " [" e "]")
-		    (if (string=? e "100-continue")
-			(begin
-			   (fprint po "HTTP/1.1 100 Continue\r\n\r\n")
-			   (flush-output-port po)
-			   (ignore))
-			(begin
-			   (fprint po "HTTP/1.1 417 Expectation Failed\r\n\r\n")
-			   (flush-output-port po)
-			   (raise
-			    (instantiate::&io-parse-error
-			       (obj (the-port))
-			       (proc 'expect-heaer)
-			       (msg (format "Expectation failed (~a)" e))))))))
-		(else
-		 (let ((v (read/rp value-grammar (the-port))))
-		    (trace-item "##8 " k " [" v "]")
-		    (set! header (cons (cons k v) header))
-		    (ignore))))))
-	 ((: (* (in #\space #\tab)) (? #\Return) #\Newline)
-	  (values (reverse! header)
-		  hostname
-		  port
-		  content-length
-		  transfer-encoding
-		  authorization
-		  proxy-authorization
-		  connection))
-	 (else
-	  (let ((c (the-failure)))
-	     (if (eof-object? c)
-		 ;; some (bugous?) HTTP server don't send the appropriate
-		 ;; CRLF when the body is empty
-		 (values (reverse! header)
-			 hostname
-			 port
-			 content-length
-			 transfer-encoding
-			 authorization
-			 proxy-authorization
-			 connection)
-		 (parse-error 'http-read-header
-			      "Illegal characters"
-			      (http-parse-error-message
-			       (the-failure)
-			       (the-port))))))))
-   (with-trace 5 'http-read-header
-      (read/rp header-grammar p
-	       '()   ;; header
-	       #f    ;; hostname
-	       #f    ;; port
-	       #e-1  ;; content-length
-	       #f    ;; transfer-encoding
-	       #f    ;; authorization
-	       #f    ;; proxy-authorization
-	       #f))) ;; connection
-	       
 ;*---------------------------------------------------------------------*/
 ;*    http-header-field ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -414,70 +217,6 @@
 		       c
 		       (the-string)))))
 	    p))
-
-;*---------------------------------------------------------------------*/
-;*    http-parse-status-line ...                                       */
-;*    -------------------------------------------------------------    */
-;*    The syntax of the status (section 6.1 of http/1.1) is defined    */
-;*    as follows:                                                      */
-;*    Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF  */
-;*---------------------------------------------------------------------*/
-(define (http-parse-status-line ip)
-   (if (>=fx (bigloo-debug) 3)
-       (let ((line (http-read-line ip)))
-	  (if (string? line)
-	      (with-trace 5 'http-parse-status-line
-		 (trace-item "status-line: " (string-for-read line))
-		 (let* ((ip (open-input-string line)))
-		    (unwind-protect
-		       (read/rp status-line-grammar ip)
-		       (close-input-port ip))))
-	      (with-trace 5 'http-parse-status-line
-		 (trace-item "error in status-line: " line)
-		 (let* ((ip (open-input-string "")))
-		    (unwind-protect
-		       (read/rp status-line-grammar ip)
-		       (close-input-port ip))))))
-       (read/rp status-line-grammar ip)))
-
-;*---------------------------------------------------------------------*/
-;*    status-line-grammar ...                                          */
-;*---------------------------------------------------------------------*/
-(define status-line-grammar
-   (regular-grammar ((SP #\Space)
-		     (HTTP (: (+ (in "httpsHTTPS"))
-			      #\/ (+ digit) #\. (+ digit)))
-		     (CRLF "\r\n"))
-      ((: HTTP SP)
-       (let* ((http (the-substring 0 (-fx (the-length) 1)))
-	      (code (read/rp status-code-grammar (the-port)))
-	      (phrase (http-read-line (the-port))))
-	  (values http code phrase)))
-      (else
-       (let ((c (the-failure)))
-	  (raise 
-	   (if (eof-object? c)
-	       (instantiate::&io-parse-error
-		  (obj (the-port))
-		  (proc 'status-line)
-		  (msg "Illegal status line, premature end of input"))
-	       (instantiate::&io-parse-error
-		  (obj (http-parse-error-message c (the-port)))
-		  (proc 'status-line)
-		  (msg "Illegal status line"))))))))
-
-;*---------------------------------------------------------------------*/
-;*    status-code-grammar ...                                          */
-;*---------------------------------------------------------------------*/
-(define status-code-grammar
-   (regular-grammar ((CODE (+ (in digit))))
-      ((: CODE)
-       (the-fixnum))
-      (else
-       (raise (instantiate::&io-parse-error
-		 (obj (http-parse-error-message (the-failure) (the-port)))
-		 (proc 'status-line)
-		 (msg "Illegal Status-code"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-write-header ...                                            */

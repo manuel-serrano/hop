@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Aug  9 09:21:30 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 16:36:50 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -326,8 +326,8 @@
 		      (fprint (process-input-port proc) body "\r\n")
 		      (close-output-port (process-input-port proc))
 		      ;; parse the cgi acknowledge
-		      (http-read-header (process-output-port proc)
-					(process-input-port proc))
+		      (http-parse-header (process-output-port proc)
+					 (process-input-port proc))
 		      ;; send the result of the request
 		      (when bodyp
 			 (send-chars (process-output-port proc) p)
@@ -376,8 +376,8 @@
 			    (fprint (process-input-port proc) args "\r\n")
 			    (close-output-port (process-input-port proc))
 			    ;; parse the cgi acknowledge
-			    (http-read-header (process-output-port proc)
-					      (process-input-port proc))
+			    (http-parse-header (process-output-port proc)
+					       (process-input-port proc))
 			    ;; send the result of the request
 			    (when bodyp
 			       (send-chars (process-output-port proc) p)
@@ -550,7 +550,7 @@
 			(multiple-value-bind (_1 status-code _2)
 			   (http-parse-status-line ip)
 			   (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
-			      (http-read-header ip rp)
+			      (http-parse-header ip rp)
 			      (case status-code
 				 ((204 304)
 				  ;; no message body

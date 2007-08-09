@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Wed Mar 14 10:32:31 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 16:36:21 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -15,6 +15,8 @@
 (module __hop_http-filter
 
    (include "http-lib.sch")
+
+   (library web)
    
    (import  __hop_param
 	    __hop_configure
@@ -80,7 +82,7 @@
 					   phrase))))
 			   (display fs op)
 			   (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
-			      (http-read-header ip op)
+			      (http-parse-header ip op)
 			      (when (eq? te 'chunked)
 				 (let ((c (assq transfer-encoding: header)))
 				    (set! header (remq! c header))))

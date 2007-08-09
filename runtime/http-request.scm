@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Jul 31 14:42:52 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 16:41:06 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -138,7 +138,7 @@
 	       (if (input-string-port? pi2)
 		   (close-input-port pi2))))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
-	    (http-read-header pi po)
+	    (http-parse-header pi po)
 	    (let ((cabspath (http-file-name-canonicalize! abspath))
 		  (connection (or co
 				  (if (string<? http-version "HTTP/1.1")
