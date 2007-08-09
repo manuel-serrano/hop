@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Tue Jul 10 08:44:56 2007 (serrano)                */
+/*    Last change :  Thu Aug  9 13:42:11 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -255,6 +255,3 @@ function hop_dashboard_init() {
 /*    runtime initialization                                           */
 /*---------------------------------------------------------------------*/
 hop_window_onload_add( hop_dashboard_init );
-
-   
-   
