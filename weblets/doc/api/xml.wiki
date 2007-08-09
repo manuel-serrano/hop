@@ -28,26 +28,27 @@ HTML.
 == Server Definitions ==
 <server>
 
-=== ++(xml-parse port [length] [proc] [specials] [strict])++ ===
+=== ++(xml-parse port [content-length] [procedure list] [specials ()] [strict #t] [encoding UTF-8])++ ===
 <function> xml-parse
 
 <arguments>
-^  arguments  ^   type          ^  default   ^  short description             ^
-| port        |  input-port     |            | the input port to be parsed.   |
-| length      |  integer        |    -1      | the length of the input.       |
-| proc        |  procedure      |  ++list++  | a constructor.                 |
-| specials    |  list           |  ++'()++   | special markups.               |
-| strict      |  boolean        |  //true//  | strict XML conformance.        |
+^  arguments  ^   type          ^  default    ^  short description             ^
+| port        |  input-port     |             | the input port to be parsed.   |
+| content-length |  integer     |    -1       | the length of the input.       |
+| procedure   |  procedure      |  ++list++   | a constructor.                 |
+| specials    |  list           |  ++'()++    | special markups.               |
+| strict      |  boolean        |  //true//   | strict XML conformance.        |
+| encoding    |  symbol         |  ++UTF-8++  | result encoding.               |
 </arguments>
 
 This function parses a input stream in order to build an XML tree representing
 the document. The meaning of the arguments is:
 
   * ++port++, the input port from which the characters are read.
-  * ++length++, a maximum number of characters to be parsed. This is useful
- when reading HTTP characters stream that don't end with //end of file//
- markers.
-  * ++proc++, a procedure of three arguments that is applied to build the
+  * ++content-length++, a maximum number of characters to be parsed. This 
+ is useful when reading HTTP characters stream that don't end with 
+ //end of file// markers.
+  * ++procedure++, a procedure of three arguments that is applied to build the
  nodes of the built XML tree. The three arguments are:
     - the name of the markup.
     - the list of attributes.
@@ -56,6 +57,12 @@ the document. The meaning of the arguments is:
  of markups that don't accept closing markups (for instance HTML ++<BR>++).
   * ++strict++, if true enforce strict XML parsing. Otherwise tries to recover
  from simple syntactic errors.
+  * ++encoding++, this parameter specifies the encoding used in the result
+ data structure. The supported values are:
+    * ++UTF-8++,
+    * ++ISO-8859-1++,
+    * ++ISO-8859-2++,
+    * ++UCS-2++.
 </function>
 
 === ++(xml-string-encode string)++ ===
@@ -106,14 +113,15 @@ Decodes the XML ++string++ is place. That is, the parameter ++string++
 is modified by this function.
 </function>
 
-=== ++(html-parse port [length] [proc])++ ===
+=== ++(html-parse port [content-length] [procedure list] [encoding UTF-8])++ ===
 <function> html-parse
 
 <arguments>
-^  arguments  ^   type          ^  default   ^  short description             ^
-| port        |  input-port     |            | the input port to be parsed.   |
-| length      |  integer        |    -1      | the length of the input.       |
-| proc        |  procedure      |  ++list++  | a constructor.                 |
+^  arguments  ^   type          ^  default    ^  short description             ^
+| port        |  input-port     |             | the input port to be parsed.   |
+| content-length |  integer     |    -1       | the length of the input.       |
+| procedure   |  procedure      |  ++list++   | a constructor.                 |
+| encoding    |  symbol         |  ++UTF-8++  | result encoding.               |
 </arguments>
 
 This function parses a input stream and builds a tree for representing
@@ -121,14 +129,20 @@ the parsed HTML document. It is a wrapper of ++xml-parse++. The meaning of
 its arguments is:
 
   * ++port++, the input port from which the characters are read.
-  * ++length++, a maximum number of characters to be parsed. This is useful
- when reading HTTP characters stream that don't end with //end of file//
- markers.
-  * ++proc++, a procedure of three arguments that is applied to build the
+  * ++content-length++, a maximum number of characters to be parsed. This 
+ is useful when reading HTTP characters stream that don't end with 
+ //end of file// markers.
+  * ++procedure++, a procedure of three arguments that is applied to build the
  nodes of the built HTML tree. The three arguments are:
     - the name of the markup.
     - the list of attributes.
     - the children of the node.
+  * ++encoding++, this parameter specifies the encoding used in the result
+ data structure. The supported values are:
+    * ++UTF-8++,
+    * ++ISO-8859-1++,
+    * ++ISO-8859-2++,
+    * ++UCS-2++.
 </function>
 
 === ++(html-string-encode string)++ ===
@@ -149,16 +163,17 @@ its arguments is:
 </arguments>
 </function>
 
-=== ++(rss-parse port length rss channel item)++ ===
+=== ++(rss-parse port rss channel item [content-length] [encoding UTF-8])++ ===
 <function> rss-parse
 
 <arguments>
-^  arguments  ^   type          ^  short description             ^
-| port        |  input-port     | the input port to be parsed.   |
-| length      |  integer        | the length of the input.       |
-| rss         |  procedure      | a constructor.                 |
-| channel     |  procedure      | a constructor.                 |
-| item        |  procedure      | a constructor.                 |
+^  arguments  ^   type          ^  default    ^  short description             ^
+| port        |  input-port     |             | the input port to be parsed.   |
+| rss         |  procedure      |             | a constructor.                 |
+| channel     |  procedure      |             | a constructor.                 |
+| item        |  procedure      |             | a constructor.                 |
+| content-length |  integer     |  ++-1++     | the length of the input.       |
+| encoding    |  symbol         |  ++UTF-8++  | result encoding.               |
 </arguments>
 
 This function parses a input stream and builds a tree for representing
@@ -166,9 +181,6 @@ the parsed RSS document. It is a wrapper of ++xml-parse++. The meaning
 of its arguments is:
 
   * ++port++, the input port from which the characters are read.
-  * ++length++, a maximum number of characters to be parsed. This is useful
- when reading HTTP characters stream that don't end with //end of file//
- markers.
   * ++rss++, a procedure of two arguments that is applied to build the
  nodes representing the RSS. The two arguments are:
     - the channel.
@@ -182,6 +194,15 @@ of its arguments is:
     - a date.
     - a subject.
     - a description.
+  * ++content-length++, a maximum number of characters to be parsed. This 
+ is useful when reading HTTP characters stream that don't end with 
+ //end of file// markers.
+  * ++encoding++, this parameter specifies the encoding used in the result
+ data structure. The supported values are:
+    * ++UTF-8++,
+    * ++ISO-8859-1++,
+    * ++ISO-8859-2++,
+    * ++UCS-2++.
 </function>
 
 </server>

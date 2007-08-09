@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Aug  8 14:27:51 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 09:21:30 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -524,6 +524,8 @@
 		     (output-port-timeout-set! rp timeout)
 		     (input-port-timeout-set! ip timeout))
 		  (trace-item "sock=" sock)
+		  (trace-item "path=" path)
+		  (trace-item "host=" host)
 		  (unwind-protect
 		     (begin
 			;; the header
@@ -561,11 +563,11 @@
 				 (else
 				  ;; plain message
 				  (if (not (eq? te 'chunked))
-				      (proc status-code cl ip)
+				      (proc status-code cl ip te)
 				      (let ((ip2 (open-input-procedure
 						  (make-unchunks ip))))
 					 (unwind-protect
-					    (proc status-code cl ip2)
+					    (proc status-code cl ip2 te)
 					    (begin
 					       (close-input-port ip2)
 					       (close-input-port ip))))))))))

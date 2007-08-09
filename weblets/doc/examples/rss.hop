@@ -27,4 +27,4 @@
 	    (lambda (h)
 	       (with-input-from-string h
 		  (lambda ()
-		     (rss-parse (current-input-port) -1 make-rss make-channel make-item))))))))
+		     (rss-parse (current-input-port) make-rss make-channel make-item))))))))

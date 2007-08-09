@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Sat Jul 21 06:47:14 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 09:29:10 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -262,7 +262,9 @@
 (define (parse-propfind-body clen port)
    (bind-exit (return)
       (xml-parse port
+		 :content-length
 		 (elong->fixnum clen)
+		 :procedure
 		 (lambda (m attrs children)
 		    (case m
 		       ((prop)

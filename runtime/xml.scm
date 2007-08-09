@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Aug  8 15:12:38 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 09:33:28 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -761,7 +761,9 @@
       (lambda ()
 	 (car (xml-parse
 	       (current-input-port)
+	       :content-length
 	       0
+	       :procedure
 	       (lambda (markup attributes body)
 		  (let* ((m (string->symbol
 			     (string-append

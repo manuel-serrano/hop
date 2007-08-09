@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Aug  8 15:11:28 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 09:27:26 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -623,9 +623,9 @@
    'UTF-8
    (lambda (v)
       (case v
-	 ((UTF-8) 'UTF-8)
-	 ((ISO-8859-1) 'ISO-8859-1)
-	 ((ISO-8859-2) 'ISO-8859-2)
+	 ((UTF-8 utf-8) 'UTF-8)
+	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
+	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
 	 (else (error 'hop-char-encoding-set! "Illegal char encoding" v)))))
 
 ;*---------------------------------------------------------------------*/

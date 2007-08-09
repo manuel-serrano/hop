@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Mon Aug  6 18:09:23 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 09:53:02 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -44,7 +44,7 @@
 			(path (make-hop-service-url hz/get hzpath)))))
 	    (http-send-request
 	     req
-	     (lambda (status clength p)
+	     (lambda (status clength p enc)
 		(case status
 		   ((200)
 		    (let ((base (make-file-name (hop-rc-directory) "weblets")))

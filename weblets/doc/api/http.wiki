@@ -61,11 +61,12 @@ code of the HTTP response in order to build the value sent to ++success++:
 This low level function is used to handle primitive HTTP requests. 
 It opens a connection to a remote HTTP server as referenced to by the
 ++request++. When such a connection is established, it calls the
-++callback++ procedure with three parameters:
+++callback++ procedure with four parameters:
 
   - an integer denoting the status code.
   - an integer denoting the length of the body of the response.
   - an input stream containing the characters of the response.
+  - the transfer encoding.
 </function>
 
 </server>

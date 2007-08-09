@@ -46,7 +46,7 @@ read character. A simple implementation can be:
          (lambda (h)
             (with-input-from-string h
                (lambda ()
-                  (rss-parse (current-input-port) -1 make-rss make-channel make-item))))))
+                  (rss-parse (current-input-port) make-rss make-channel make-item))))))
 </example>
 
 This compact implementation suffers one problem. The internal machinery for
@@ -70,9 +70,9 @@ for dealing with HTTP request, namely the function ++http-send-request++.
             (host host)
             (port port)
             (path path))
-         (lambda (status clength p)
+         (lambda (status len p tenc)
 	    (if (=fx status 200)
-		(rss-parse p clength make-rss make-channel make-item)
+		(rss-parse p make-rss make-channel make-item :content-length len)
 		"Error")))))
 </example>
 

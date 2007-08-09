@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Jun  8 12:19:47 2007 (serrano)                */
+;*    Last change :  Thu Aug  9 09:18:03 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -157,7 +157,7 @@
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (make-http-callback proc::symbol req success fail)
-   (lambda (status clength p)
+   (lambda (status clength p tenc)
       (when (>elong clength #e0)
 	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
       (case status
@@ -354,7 +354,7 @@
 		    (port port)
 		    (path path))))
 	 (http-send-request req
-			    (lambda (status clength p)
+			    (lambda (status clength p tenc)
 			       (case status
 				  ((200)
 				   (success (read-string p)))
