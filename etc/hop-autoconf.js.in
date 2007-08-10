@@ -43,23 +43,23 @@ var hop_enable_location_event = @LOCEVENT@;
 /*---------------------------------------------------------------------*/
 var undefined;
 
-if( window.HTMLFormElement == undefined ) {
+if( window.HTMLFormElement === undefined ) {
    window.HTMLFormElement = window.HTMLForm;
 }
 
-if( window.HTMLCollection == undefined ) {
+if( window.HTMLCollection === undefined ) {
    window.HTMLCollection = function() { return false; };
 }
 
-if( window.HTMLInputElement == undefined ) {
+if( window.HTMLInputElement === undefined ) {
    window.HTMLInputElement = function() { return false; };
 }
 
-if( window.HTMLTextAreaElement == undefined ) {
+if( window.HTMLTextAreaElement === undefined ) {
    window.HTMLTextAreaElement = function() { return false; };
 }
 
-if( window.HTMLSelectElement == undefined ) {
+if( window.HTMLSelectElement === undefined ) {
    window.HTMLSelectElement = function() { return false; };
 }
 
@@ -70,7 +70,7 @@ function hop_properties_to_string( obj ) {
    var res = "";
    var i = 0;
    for( var p in obj ) {
-      if( i == 10 ) {
+      if( i === 10 ) {
 	 res += p + "\n";
 	 i = 0;
       } else {
@@ -86,7 +86,7 @@ function hop_properties_to_string( obj ) {
 /*---------------------------------------------------------------------*/
 var hop_is_html_element;
 
-if( window.HTMLElement == undefined ) {
+if( window.HTMLElement === undefined ) {
    hop_is_html_element = function hop_is_html_element( obj ) {
       return (((obj instanceof Object) || (typeof obj == "object"))
 	      && (typeof obj.innerHTML == "string"));
@@ -214,7 +214,7 @@ node_style_set = function( obj, property, value ) {
 /*    ARM processors), use a reduced frequency.                        */
 /*---------------------------------------------------------------------*/
 var hop_active_location_timeout =
-   (navigator.oscpu.indexOf( "armv6" ) >= 0 ) ? 250 : 100;
+   (navigator.platform.indexOf( "armv6" ) >= 0 ) ? 250 : 100;
 
 /*---------------------------------------------------------------------*/
 /*    hop_add_active_location_listener ...                             */
@@ -222,13 +222,13 @@ var hop_active_location_timeout =
 function hop_add_active_location_listener( obj, proc ) {
    obj.hop_active_location_proc = proc;
    var i = window.location.href.indexOf( "#" );
-   if( i == -1 ) {
+   if( i === -1 ) {
       obj.hop_active_location_href = window.location.href;
    } else {
       obj.hop_active_location_href = window.location.href.substring( 0, i-1 );
    }
    
-   if( obj.hop_active_location_interval == undefined ) {
+   if( obj.hop_active_location_interval === undefined ) {
       var check = function() {
 	 if( obj.hop_active_location_href !== window.location.href ) {
 	    if( obj.hop_active_location_href != window.location.href ) {
@@ -299,7 +299,7 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
 	 var p = function(_) { return proc( window.event ) };
 	 var i = "on" + event + "hdl";
 
-	 if( obj[ i ] == undefined ) obj[ i ] = [];
+	 if( obj[ i ] === undefined ) obj[ i ] = [];
 	 obj[ i ][ proc ] = p;
 
 	 return obj.attachEvent( "on" + event, p );
@@ -310,12 +310,16 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
 	 return hop_remove_active_location_listener( obj, proc );
       } else {
 	 var i = "on" + event + "hdl";
-	 var p = obj[ i ][ proc ];
+         var h = obj[ i ];
 
-	 if( p != undefined ) {
-	    obj[ i ][ p ] = undefined;
-	    return obj.detachEvent( "on" + event, p );
-	 }
+         if( h !== undefined ) {
+	   var p = obj[ i ][ proc ];
+
+	   if( p !== undefined ) {
+	      h[ p ] = undefined;
+	      return obj.detachEvent( "on" + event, p );
+	   }
+         }
 
 	 return false;
       }

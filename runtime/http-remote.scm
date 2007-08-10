@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Aug  9 16:36:32 2007 (serrano)                */
+;*    Last change :  Fri Aug 10 08:38:57 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -172,6 +172,8 @@
 		  ;; not HTTP-WRITE-LINE!
 		  (trace-item "# " http-version " " status-code " "
 			      (string-for-read phrase))
+		  (trace-item "content-length=" cl)
+		  (trace-item "transfer-encoding=" te)
 		  (display http-version op)
 		  (display " " op)
 		  (display status-code op)
@@ -403,25 +405,12 @@
 		(else
 		 (connection-close-sans-lock! connection)))))))
    (mutex-unlock! *remote-lock*))
-;*    (tprint "+++ keep-alive "                                        */
-;* 	   " pending=" (-fx *connection-open*                          */
-;* 			    (+fx *connection-close* *connection-number*)) */
-;* 	   " live=" (-fx *connection-open* *connection-close*)         */
-;* 	   " open=" *connection-open*                                  */
-;* 	   " close=" *connection-close*                                */
-;* 	   " intable=" *connection-number*)                            */
-;*    (hashtable-for-each *connection-table*                           */
-;* 		       (lambda (k l)                                   */
-;* 			  (tprint "   host=" k " l=" (length l))))     */
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-close-sans-lock! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (connection-close-sans-lock! connection::connection)
    (with-access::connection connection (host socket intable? closed?)
-      (when closed?
-	 (tprint "*** ERROR: connection-close-sans-lock!: Closing a connection twice: "
-		connection))
       (unless closed?
 	 (set! *connection-close* (+fx 1 *connection-close*))
 	 (set! *connection-pending* (remq! connection *connection-pending*))
