@@ -1,0 +1,15 @@
+<doc> WIKI -- The Hop Wiki Viewer
+
+== Description ==
+
+This simple weblet displays ,(<WIKIREF> "Wiki documents").
+
+== Services ==
+
+WIKI defines one service:
+
+  - ++[[wiki]]++: This is the only entry point of the view.
+
+
+</doc>
+

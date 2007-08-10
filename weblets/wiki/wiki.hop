@@ -1,0 +1,152 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/wiki/wiki.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Fri Aug 10 15:34:45 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP wiki                                                         */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_wiki
+   (export wiki
+	   wiki/documentation
+	   wiki/preferences))
+
+;*---------------------------------------------------------------------*/
+;*    wiki ...                                                         */
+;*---------------------------------------------------------------------*/
+(define-service (wiki file)
+   (let ((req (current-request)))
+      (if (string? file)
+	  (if (authorized-path? req file)
+	      (wiki-view req file)
+	      (user-access-denied))
+	  (wiki-query req))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-filter ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (wiki-filter p)
+   (let* ((b (basename p))
+	  (l (string-length b)))
+      (if (directory? p)
+	  (not (or (string=? b ".")
+		   (string=? b "..")
+		   (string=? b "lost+found")))
+	  (and (>fx l 0)
+	       (not (char=? (string-ref b 0) #\.))
+	       (or (not (request-get 'browser-filter))
+		   (is-suffix? p "wiki"))))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-query ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (wiki-query req)
+   (<HTML>
+      (<HEAD>
+	 :title "Wiki selection page"
+	 :include "hop-fileselect" "hop-iwindow" "hop-tree"
+	 :base (service-base-url wiki req)
+	 :css "wiki.hss")
+      (<BODY> :class "wiki"
+	 (<DIV> :align 'center
+	    (<TABLE> :class "wiki"
+	       (<TR>
+		  (<TD> :valign "top"
+		     (<IMG> :id "logo"
+			:inline #t
+			:src (service-resource wiki "etc/logo.png")))
+		  (<TD>
+		     (<DIV> :id "wiki-title" "Hop Wiki Pre-Viewer")
+		     (<FORM>
+			:action wiki
+			(let ((hide (<INPUT> :type 'checkbox
+				       :value "sld"
+				       :checked #t)))
+			   (<TABLE>
+			      (<TR>
+				 (<TH>
+				    "File: ")
+				 (<TD>
+				    (<FILESELECT>
+				       :id "file"
+				       :value (getenv "HOME")
+				       :onchange ~(set! document.location ($wiki this.value))
+				       :size 60))
+				 (<TD>
+				    (<FILEBROWSE>
+				       :title "Wiki File Selector"
+				       :value "/"
+				       :path (getenv "HOME")
+				       :onmousedown ~(set! this.value "/")
+				       :filter wiki-filter
+				       :onclick ~(request-set! 'browser-filter $hide.checked)
+				       :onselect ~(set! document.location ($wiki this.value)))))
+			      (<TR>
+				 (<TD> :colspan 3 :class "comment"
+				    :style "border-bottom: 1px solid #bbb"
+				    [Only show ,(<TT> ".wiki") files]
+				    ~(request-set! 'browser-filter #t)
+				    hide))
+			      (<TR>
+				 (<TD> :colspan 3 :class "separator"
+				    "&#160;"))
+			      (<TR>
+				 (<TD> :align 'left :colspan 3
+				    (<BUTTON>
+				       :onclick
+				       ~(let ((v (dom-get-element-by-id document "file")))
+					   (stop-event-propagation event)
+					   (set! document.location ($wiki v.value)))
+				       "Go..."))))))))))
+	 (<FOOT>))))
+
+
+;*---------------------------------------------------------------------*/
+;*    wiki-view ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (wiki-view req file)
+   (if (file-exists? file)
+       (<HTML>
+	  (<HEAD> :title "Hop wiki"
+	     :base (service-base-url wiki req)
+	     :css "wiki.hss")
+	  (<BODY> :class "wiki"
+	     (<DIV> :align "center"
+		(<TABLE> :class "wiki"
+		   (<COLGROUP> (<COL> :width "0*"))
+		   (<TR>
+		      (<TD> :valign "top"
+			 (<IMG> :id "logo"
+			    :inline #t
+			    :src (service-resource wiki "etc/logo.png")))
+		      (<TD> (<DIV> :id "wiki-title" "Hop Wiki Pre-Viewer")
+			    (<TABLE> :width "100%"
+			       (<TR> (<TD> :class "document"
+					(if (file-exists? file)
+					    (wiki-file->hop file)))))))))
+	     (<FOOT>)))
+       (http-file-not-found file)))
+
+;*---------------------------------------------------------------------*/
+;*    wiki/documentation ...                                           */
+;*---------------------------------------------------------------------*/
+(define-service (wiki/documentation)
+   (let* ((file (service-resource wiki/documentation "etc/wiki.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (tprint "URL=" url)
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki/preferences ...                                             */
+;*---------------------------------------------------------------------*/
+(define-service (wiki/preferences)
+   (<HTML>
+      "No preferences defined for wiki"))
