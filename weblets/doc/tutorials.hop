@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Tue May 22 12:36:54 2007 (serrano)                */
+;*    Last change :  Fri Aug 10 11:52:43 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -164,11 +164,14 @@
 	    (<TD> :align "right"
 	       (<DIV> :class "selector"
 		  (<SELECT> :class "tutorial-selector"
-		     :onmouseup ~(tutorial this.value)
-		     :onkeyup ~(if (= event.keyCode 13) (tutorial this.value))
+		     :onchange ~(tutorial this.value)
+		     :onkeyup ~(if (= event.keyCode 13)
+				   (tutorial this.value))
 		     (cons (<OPTION> :disabled #f :selected #t :value ""
 			      "--select tutorial--")
-			   (map (lambda (f) (<OPTION> f :selected #f))
+			   (map (lambda (f) (<OPTION> :selected #f
+					       :value f
+					       f))
 				*tutorial-files*)))
 		  (<SPAN> :class "label" "search:")
 		  (<INPUT> :type "text" :size 20

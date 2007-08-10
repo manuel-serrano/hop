@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Jul 26 09:10:30 2007 (serrano)                */
+/*    Last change :  Fri Aug 10 13:18:36 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -222,12 +222,13 @@ var hop_active_location_timeout =
 function hop_add_active_location_listener( obj, proc ) {
    obj.hop_active_location_proc = proc;
    var i = window.location.href.indexOf( "#" );
+   
    if( i === -1 ) {
       obj.hop_active_location_href = window.location.href;
    } else {
       obj.hop_active_location_href = window.location.href.substring( 0, i-1 );
    }
-   
+
    if( obj.hop_active_location_interval === undefined ) {
       var check = function() {
 	 if( obj.hop_active_location_href !== window.location.href ) {

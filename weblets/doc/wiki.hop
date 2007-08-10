@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Tue May 22 17:02:07 2007 (serrano)                */
+;*    Last change :  Fri Aug 10 15:01:28 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -13,18 +13,30 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hopdoc_wiki
-
+   
    (import hopdoc_services
 	   hopdoc_config
 	   hopdoc_search
 	   hopdoc_api)
    
-   (export (doc-wiki-syntax)
+   (export (<WIKIREF> lbl)
+	   (doc-wiki-syntax)
 	   (make-wiki-request-syntax initial-syntax #!optional mktitle)
 	   (wiki-tt-parser proc)
 	   (doc-page page syntax)
 	   (doc-page->name path)
 	   (meta-wiki-example name)))
+
+;*---------------------------------------------------------------------*/
+;*    <WIKIREF> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<WIKIREF> lbl)
+   (<SPAN> :class "href wikiref" 
+      :onclick ~(with-history
+		 (lambda ()
+		    (notepad-select "doc-notepad" "doc-wiki")
+		    (window.scrollTo 0 0)))
+      lbl))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-wiki-syntax ...                                              */
