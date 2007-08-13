@@ -70,7 +70,7 @@ for dealing with HTTP request, namely the function ++http-send-request++.
             (host host)
             (port port)
             (path path))
-         (lambda (status len p tenc)
+         (lambda (p status header len tenc)
 	    (if (=fx status 200)
 		(rss-parse p make-rss make-channel make-item :content-length len)
 		"Error")))))

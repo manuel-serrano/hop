@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Aug  9 16:36:50 2007 (serrano)                */
+;*    Last change :  Sun Aug 12 10:59:04 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -34,8 +34,6 @@
 	    (generic scheme->response ::obj ::http-request)
 	    (http-response-void)
 	    (http-send-request ::http-request ::procedure)
-	    (make-unchunks ::input-port)
-	    (response-chunks ::input-port ::output-port)
 	    (response-is-xml?::bool ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -480,213 +478,76 @@
       (start-line "HTTP/1.0 204 No Content")))
 
 ;*---------------------------------------------------------------------*/
-;*    redirect ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (redirect host port path user header ip)
-   (let ((loc (assq location: header)))
-      (if (not (pair? loc))
-	  (raise
-	   (instantiate::&io-malformed-url-error
-	      (proc 'http-send-request)
-	      (msg "No URL for redirection!")
-	      (obj ip)))
-	  (multiple-value-bind (rproto ruser rhost rport rpath)
-	     (url-parse (cdr loc))
-	     (cond
-		((not rproto)
-		 (let ((abspath (make-file-name (dirname path) rpath)))
-		    (values host port user abspath)))
-		((not (string? rhost))
-		 (raise
-		  (instantiate::&io-malformed-url-error
-		     (proc 'http-send-request)
-		     (msg "Illegal host")
-		     (obj (cdr loc)))))
-		(else
-		 (values rhost rport ruser rpath)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    http-send-request ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure)
-   (with-trace 3 'http-send-request
-      (with-access::http-request req (scheme method path http host port header socket userinfo authorization timeout)
-	 (let ((ssl (eq? scheme 'https)))
-	    (let loop ((host host)
-		       (port port)
-		       (user userinfo)
-		       (path path))
-	       (let* ((sock (make-client-socket/timeout host port
-							timeout req ssl))
-		      (rp (socket-output sock))
-		      (ip (socket-input sock)))
-		  (when (> timeout 0)
-		     (output-port-timeout-set! rp timeout)
-		     (input-port-timeout-set! ip timeout))
-		  (trace-item "sock=" sock)
-		  (trace-item "path=" path)
-		  (trace-item "host=" host)
+   (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo authorization timeout)
+      (let ((ssl (eq? scheme 'https)))
+	 (let loop ((host host)
+		    (port port)
+		    (user userinfo)
+		    (path path))
+	    (let* ((sock (if (and (not ssl) (hop-proxy))
+			     (make-proxy-socket (hop-proxy) timeout)
+			     (make-client-socket/timeout host port
+							 timeout req ssl)))
+		   (out (socket-output sock))
+		   (in (socket-input sock)))
+	       (when (> timeout 0)
+		  (output-port-timeout-set! out timeout)
+		  (input-port-timeout-set! in timeout))
+	       (tprint "send-request: " host " " port " " path)
+	       (http :in in :out out
+		  :protocol scheme :method method
+		  :path path :http-version httpv
+		  :authorization authorization
+		  :login user
+		  :body socket
+		  :proxy (hop-proxy))
+	       (with-handler
+		  (lambda (e)
+		     (if (&http-redirection? e)
+			 (multiple-value-bind (rhost rport ruser rpath)
+			    (redirect e)
+			    (loop (or rhost host)
+				  (or rport port)
+				  (or ruser user)
+				  (if rhost
+				      (make-file-name (dirname path) rpath)
+				      rpath)))
+			 (raise e)))
 		  (unwind-protect
-		     (begin
-			;; the header
-			(http-write-line rp method " " path " " http)
-			(when host (http-write-line rp "Host: " host))
-			(http-write-header rp header)
-			(cond
-			   (user
-			    (http-write-line rp "Authorization: Basic "
-					     (base64-encode user)))
-			   (authorization
-			    (http-write-line rp "Authorization: "
-					     authorization)))
-			(http-write-line rp)
-			;; the content of the request
-			(cond
-			   ((string? socket)
-			    (display socket rp))
-			   ((input-port? socket)
-			    (send-chars socket rp)))
-			(flush-output-port rp)
-			(multiple-value-bind (_1 status-code _2)
-			   (http-parse-status-line ip)
-			   (multiple-value-bind (header _1 _2 cl te _3 _4 _5)
-			      (http-parse-header ip rp)
-			      (case status-code
-				 ((204 304)
-				  ;; no message body
-				  (proc status-code cl #f))
-				 ((301 302 307)
-				  ;; redirection
-				  (multiple-value-bind (rhost rport ru rpath)
-				     (redirect host port path user header ip)
-				     (loop rhost rport ru rpath)))
-				 (else
-				  ;; plain message
-				  (if (not (eq? te 'chunked))
-				      (proc status-code cl ip te)
-				      (let ((ip2 (open-input-procedure
-						  (make-unchunks ip))))
-					 (unwind-protect
-					    (proc status-code cl ip2 te)
-					    (begin
-					       (close-input-port ip2)
-					       (close-input-port ip))))))))))
+		     (http-parse-response in out proc)
 		     (socket-close sock))))))))
+   
+;*---------------------------------------------------------------------*/
+;*    redirect ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (redirect e)
+   (let* ((url (&http-redirection-url e))
+	  (ip (&http-redirection-port e)))
+      (multiple-value-bind (rproto ruser rhost rport rpath)
+	 (url-parse url)
+	 (cond
+	    ((not rproto)
+	     (values #f #f #f rpath))
+	    ((not (string? rhost))
+	     (raise
+	      (instantiate::&io-malformed-url-error
+		 (proc 'http-send-request)
+		 (msg "Illegal host")
+		 (obj url))))
+	    (else
+	     (values rhost rport ruser rpath))))))
 
 ;*---------------------------------------------------------------------*/
-;*    *chunk-size-grammar* ...                                         */
+;*    make-proxy-socket ...                                            */
 ;*---------------------------------------------------------------------*/
-(define *chunk-size-grammar*
-   (regular-grammar ((SZ (+ xdigit))
-		     (BLANK (in " \t"))
-		     (CRLF "\r\n")
-		     op)
-      ((: SZ (* BLANK) #\;)
-       (when op (display (the-string) op))
-       (let ((sz (string->integer
-		  (the-substring 0 (-fx (the-length) 1))
-		  16)))
-	  (read/rp (regular-grammar ((CRLF "\r\n"))
-		      ((: (+ (or (+ (out "\r")) (+ (: "\r" (out "\n"))))) CRLF)
-		       (trace-item "chunk-extension: " (the-string))
-		       (when op (display (the-string) op)))
-		      (else
-		       (raise (instantiate::&io-parse-error
-				 (proc 'chunks)
-				 (msg "Illegal character")
-				 (obj (http-parse-error-message
-				       (the-failure)
-				       (the-port)))))))
-		   (the-port))
-	  sz))
-      ((: SZ (* BLANK) CRLF)
-       (when op (display (the-string) op))
-       (let ((l (the-length)))
-	  (string->integer (the-substring 0 (-fx l 2)) 16)))
-      (else
-       (let* ((c1 (the-failure))
-	      (c2 (read-char (the-port)))
-	      (c3 (read-char (the-port)))
-	      (c4 (read-char (the-port)))
-	      (c5 (read-char (the-port))))
-	  (raise (instantiate::&io-parse-error
-		    (proc 'chunks)
-		    (msg "Illegal chunk size")
-		    (obj (string-for-read (string c1 c2 c3 c4 c5)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    response-chunks ...                                              */
-;*---------------------------------------------------------------------*/
-(define (response-chunks ip::input-port op::output-port)
-   (with-trace 4 'response-chunks
-      (let loop ()
-	 (let ((sz (read/rp *chunk-size-grammar* ip op)))
-	    (trace-item "chunk-size: " sz " " ip " " op)
-	    (if (>fx sz 0)
-		;; a regular chunk
-		(begin
-		   (let loop ((sz sz))
-		      (when (>fx sz 0)
-			 (let ((s (send-chars ip op sz)))
-			    (when (>fx s 0)
-			       (loop (-fx sz s))))))
-		   (let ((s (http-read-crlf ip)))
-		      (trace-item "# " (string-for-read s))
-		      (display s op)
-		      (loop)))
-		;; the last chunk starting with an optional trailer
-		(let loop ()
-		   (let ((l (http-read-line ip)))
-		      (trace-item "# " (string-for-read l))
-		      (display l op)
-		      (if (>fx (string-length l) 2)
-			  (begin
-			     (trace-item "trailer: " (string-for-read l))
-			     (loop))
-			  (flush-output-port op)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    make-unchunks ...                                                */
-;*---------------------------------------------------------------------*/
-(define (make-unchunks ip::input-port)
-   (let* ((state 'size)
-	  (sz 0)
-	  (bufsz 512)
-	  (buffer (make-string bufsz #a000)))
-      (lambda ()
-	 (let loop ()
-	    (case state
-	       ((eof)
-		#f)
-	       ((trailer)
-		(let ((l (http-read-line ip)))
-		   (when (<=fx (string-length l) 2)
-		      (set! state 'eof))
-		   l))
-	       ((chunk)
-		(cond
-		   ((=fx sz 0)
-		    (http-read-crlf ip)
-		    (set! state 'size)
-		    (loop))
-		   ((<fx sz bufsz)
-		    (let ((s (read-chars sz ip)))
-		       (set! sz (-fx sz (string-length s)))
-		       s))
-		   (else
-		    (let ((s (read-chars! buffer bufsz ip)))
-		       (set! sz (-fx sz s))
-		       (if (=fx s bufsz)
-			   buffer
-			   (substring buffer 0 s))))))
-	       (else
-		(set! sz (read/rp *chunk-size-grammar* ip #f))
-		(if (>fx sz 0)
-		    ;; a regular chunk
-		    (begin
-		       (set! state 'chunk)
-		       (loop))
-		    ;; the last chunk starting with an optional trailer
-		    (begin
-		       (set! state 'trailer)
-		       (loop)))))))))
+(define (make-proxy-socket proxy timeout)
+   (let ((i (string-index proxy #\:)))
+      (if (and (fixnum? i) (>fx i 0))
+	  (let* ((proxy (substring proxy 0 i))
+		 (len (string-length proxy))
+		 (port (string->integer (substring proxy (+fx i 1) len))))
+	     (make-client-socket proxy port :timeout timeout))
+	  (make-client-socket proxy 80 :timeout timeout))))

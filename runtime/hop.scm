@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Aug  9 09:18:03 2007 (serrano)                */
+;*    Last change :  Sun Aug 12 10:54:45 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -157,7 +157,7 @@
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (make-http-callback proc::symbol req success fail)
-   (lambda (status clength p tenc)
+   (lambda (p status header clength tenc)
       (when (>elong clength #e0)
 	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
       (case status
@@ -203,18 +203,18 @@
 	 (else
 	  (multiple-value-bind (scheme userinfo host port path)
 	     (url-parse url)
-	     (let ((r (instantiate::http-request
-			 (scheme (string->symbol scheme))
-			 (id hop-to-hop-id)
-			 (userinfo userinfo)
-			 (host host)
-			 (port port)
-			 (header header)
-			 (path path)))
-		   (suc (if (procedure? success) success (lambda (x) x))))
+	     (let* ((r (instantiate::http-request
+			  (scheme (string->symbol scheme))
+			  (id hop-to-hop-id)
+			  (userinfo userinfo)
+			  (host host)
+			  (port port)
+			  (header header)
+			  (path path)))
+		    (suc (if (procedure? success) success (lambda (x) x)))
+		    (hdl (make-http-callback 'with-url r suc fail)))
 		(trace-item "remote path=" path)
-		(http-send-request
-		 r (make-http-callback 'with-url r suc fail))))))))
+		(http-send-request r hdl)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    with-remote-host ...                                             */
@@ -243,10 +243,10 @@
 				 (userinfo userinfo)
 				 (host host)
 				 (port port)
-				 (path path))))
+				 (path path)))
+			   (hdl (make-http-callback 'with-hop r suc fail)))
 		       (trace-item "remote path=" path)
-		       (http-send-request
-			r (make-http-callback 'with-hop r suc fail))))))))))
+		       (http-send-request r hdl)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-response ...                                            */
@@ -354,7 +354,7 @@
 		    (port port)
 		    (path path))))
 	 (http-send-request req
-			    (lambda (status clength p tenc)
+			    (lambda (p status header clength tenc)
 			       (case status
 				  ((200)
 				   (success (read-string p)))

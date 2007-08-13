@@ -63,9 +63,11 @@ It opens a connection to a remote HTTP server as referenced to by the
 ++request++. When such a connection is established, it calls the
 ++callback++ procedure with four parameters:
 
+  - an input stream containing the characters of the response. If the response
+ has no body, the input stream is the boolean ++#f++.
   - an integer denoting the status code.
+  - an list denoting the whole HTTP response header.
   - an integer denoting the length of the body of the response.
-  - an input stream containing the characters of the response.
   - the transfer encoding.
 </function>
 

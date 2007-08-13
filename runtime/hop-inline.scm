@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Thu Aug  9 09:16:55 2007 (serrano)                */
+;*    Last change :  Sun Aug 12 10:57:02 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -86,7 +86,7 @@
        (path path)
        (userinfo userinfo)
        (authorization authorization))
-    (lambda (status clength p tenc)
+    (lambda (p status header clength tenc)
        (let ((cl (cond
 		    ((elong? clength)
 		     (elong->fixnum clength))
@@ -100,7 +100,10 @@
 		    (markup 'document)
 		    (id (xml-make-id #unspecified 'DOCUMENT))
 		    (body (html-parse
-			   p cl
+			   p
+			   :content-length
+			   cl
+			   :procedure
 			   (lambda (markup attr body)
 			      (let* ((ia (assq 'id attr))
 				     (i (if (pair? ia)

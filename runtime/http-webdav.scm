@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Thu Aug  9 16:23:10 2007 (serrano)                */
+;*    Last change :  Mon Aug 13 12:09:48 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -202,42 +202,6 @@
        (date/timezone date (date-timezone date))))
 
 ;*---------------------------------------------------------------------*/
-;*    date->rfc2822-date ...                                           */
-;*---------------------------------------------------------------------*/
-(define (date->rfc2822-date date)
-   (define (2digits num)
-      (if (<fx num 10)
-          (string #\0 (integer->char (+fx (char->integer #\0) num)))
-          (integer->string num)))
-   (define (date/timezone date timezone)
-      (let* ((tz (/fx timezone 60))
-	     (h (/fx tz 60))
-	     (m (remainder tz 60)))
-	 (format "~a, ~a ~a ~a ~a:~a:~a ~a~a~a"
-		 (day-aname (date-wday date))
-		 (date-day date)
-		 (month-aname (date-month date))
-		 (date-year date)
-		 (2digits (date-hour date))
-		 (2digits (date-minute date))
-		 (2digits (date-second date))
-		 (if (<fx tz 0) "+" "-")
-		 (2digits (absfx h))
-		 (2digits m))))
-   (if (>fx (date-is-dst date) 0)
-       (let* ((dateu (make-date :sec (date-second date)
-			:min (date-minute date)
-			:hour (date-hour date)
-			:day (date-day date)
-			:month (date-month date)
-			:year (date-year date)
-			:timezone 0))
-	      (secu (date->seconds dateu))
-	      (sec (date->seconds date)))
-	  (date/timezone date (elong->fixnum (-elong secu sec))))
-       (date/timezone date (date-timezone date))))
-
-;*---------------------------------------------------------------------*/
 ;*    get-header ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (get-header header key default)
@@ -389,7 +353,7 @@
 			(<DAV:STATUS> "HTTP/1.1 200 OK"))
 		     (<DAV:PROPSTAT>
 			(<DAV:PROP> (reverse! errp))
-			(<DAV:STATUS> "HTTP/1.1 404 Not Found"))))
+			(<DAV:STATUS> "HTTP/1.1 404 Not.1 Found"))))
 		   ((pair? okp)
 		    (<DAV:PROPSTAT>
 		       (<DAV:PROP> (reverse! okp))
@@ -397,7 +361,7 @@
 		   ((pair? errp)
 		    (<DAV:PROPSTAT>
 		       (<DAV:PROP> (reverse! errp))
-		       (<DAV:STATUS> "HTTP/1.1 404 Not Found")))
+		       (<DAV:STATUS> "HTTP/1.1 404 Not.2 Found")))
 		   (else
 		    (<DAV:PROPSTAT>
 		       (<DAV:STATUS> "HTTP/1.1 200 OK"))))
@@ -411,11 +375,13 @@
 
    (cond
       ((directory? path)
-       (let* ((paths (directory->path-list path))
-	      (files (if (string=? depth "infinity")
-			 paths
-			 (cons path paths))))
-	  (map <RESPONSE> files)))
+       (if (string=? depth "0")
+	   (<RESPONSE> path)
+	   (let* ((paths (directory->path-list path))
+		  (files (if (string=? depth "infinity")
+			     paths
+			     (cons path paths))))
+	      (map <RESPONSE> files))))
       ((file-exists? path)
        (<RESPONSE> path))
       (else
@@ -531,7 +497,6 @@
 		    (resp ce "HTTP/1.1 507 Insufficient Storage")))))))
 
    (define (cp-dir-response ce cp-res)
-      (tprint "cp-res=" cp-res)
       (if (null? cp-res)
 	  (resp ce "HTTP/1.1 201 Created")
 	  (instantiate::http-response-webdav
@@ -591,18 +556,20 @@
    (with-access::http-request req (header
 				   path
 				   char-encoding content-length
-				   scheme host port)
+				   scheme host port user)
       (let* ((destination (get-header header destination: #f))
 	     (overwrite (get-header header overwrite: "T"))
 	     (ce (or char-encoding (hop-char-encoding)))
-	     (pref (format "://~a:~a" host port))
 	     (i (string-index destination #\:))
 	     (dest (when destination
-		      (if (and i (substring-at? destination pref i))
-			  (substring destination
-				     (+ i (string-length pref))
-				     (string-length destination))
-			  destination))))
+		      (multiple-value-bind (_ _ dhost dport dabspath)
+			 (url-parse destination)
+			 (if (and (string? dhost)
+				  (integer? dport)
+				  (string=? dhost host)
+				  (=fx dport port))
+			     dabspath
+			     destination)))))
 	 (cond
 	    ((not dest)
 	     (http-bad-request "Missing destination"))
@@ -610,6 +577,9 @@
 	     (resp ce "HTTP/1.1 404 File Not Found"))
 	    ((string=? path destination)
 	     (resp ce "HTTP/1.1 403 Forbidden"))
+	    ((or (not (user-authorized-path? user (dirname dest)))
+		 (not (user-authorized-path? user path)))
+	     (user-access-denied req))
 	    ((directory? path)
 	     (let ((depth (get-header header depth: "infinity")))
 		(cp-dir ce overwrite depth path dest)))
@@ -664,18 +634,20 @@
    (with-access::http-request req (header
 				   path
 				   char-encoding content-length
-				   scheme host port)
+				   scheme host port user)
       (let* ((destination (get-header header destination: #f))
 	     (overwrite (get-header header overwrite: "T"))
 	     (ce (or char-encoding (hop-char-encoding)))
-	     (pref (format "://~a:~a" host port))
 	     (i (string-index destination #\:))
 	     (dest (when destination
-		      (if (and i (substring-at? destination pref i))
-			  (substring destination
-				     (+ i (string-length pref))
-				     (string-length destination))
-			  destination))))
+		      (multiple-value-bind (_ _ dhost dport dabspath)
+			 (url-parse destination)
+			 (if (and (string? dhost)
+				  (integer? dport)
+				  (string=? dhost host)
+				  (=fx dport port))
+			     dabspath
+			     destination)))))
 	 (cond
 	    ((not dest)
 	     (http-bad-request "Missing destination"))
@@ -683,6 +655,9 @@
 	     (resp ce "HTTP/1.1 404 File Not Found"))
 	    ((string=? path destination)
 	     (resp ce "HTTP/1.1 403 Forbidden"))
+	    ((or (not (user-authorized-path? user dest))
+		 (not (user-authorized-path? user path)))
+	     (user-access-denied req))
 	    ((directory? path)
 	     (let ((depth (get-header header depth: "infinity")))
 		(if (and (string? depth) (string=? depth "infinity"))
@@ -709,8 +684,7 @@
 		(start-line (if (directory? (dirname path))
 				"HTTP/1.1 507 Insufficient Storage"
 				"HTTP/1.1 409 Conflict"))))
-	    ((=fx len (send-chars (socket-input socket) p len))
-	     (close-output-port p)
+	    ((<=fx len (send-chars (socket-input socket) p len))
 	     (instantiate::http-response-string
 		(request req)
 		(char-encoding (or char-encoding (hop-char-encoding)))

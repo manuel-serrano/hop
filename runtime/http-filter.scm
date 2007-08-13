@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Thu Aug  9 16:36:21 2007 (serrano)                */
+;*    Last change :  Sat Aug 11 06:46:44 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -96,8 +96,7 @@
 				     #unspecified)
 				    (else
 				     (if (eq? te 'chunked)
-					 (let ((ip2 (open-input-procedure
-						     (make-unchunks ip))))
+					 (let ((ip2 (http-chunks->port ip)))
 					    (unwind-protect
 					       (bodyf ip2 op sl header cl)
 					       (close-input-port ip2)))

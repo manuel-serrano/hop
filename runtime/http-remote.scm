@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri Aug 10 08:38:57 2007 (serrano)                */
+;*    Last change :  Sat Aug 11 06:36:41 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -189,7 +189,7 @@
 		      (if (not (eq? te 'chunked))
 			  (unless (=elong cl #e0)
 			     (send-chars ip op cl))
-			  (response-chunks ip op))))
+			  (http-send-chunks ip op))))
 		  ;; what to do with the remote connection. if the
 		  ;; status code is not 200, we always close the connection
 		  ;; in order to avoid, in particular, re-direct problems.

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Thu Aug  9 16:46:42 2007 (serrano)                */
+;*    Last change :  Sat Aug 11 06:39:43 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
@@ -231,9 +231,7 @@
 			      (begin
 				 (trace-item (keyword->string! k) ": " v)
 				 (http-write-line p (keyword->string! k) ": " v))
-			      (error 'http-write-header
-				     "Illegal header"
-				     h)))
+			      (error 'http-write-header "Illegal header" h)))
 		       (http-write-line p h)))
 		header)
       (flush-output-port p)))
