@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Aug 11 06:36:41 2007 (serrano)                */
+;*    Last change :  Mon Aug 13 16:50:11 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -141,6 +141,7 @@
 			       ;; the content of the request
 			       (when (>elong content-length #e0)
 				  (trace-item "content-length=" content-length)
+				  (tprint "content-length=" content-length)
 				  (send-chars sp rp content-length))
 			       (flush-output-port rp)
 			       (remote-body r socket remote)))))

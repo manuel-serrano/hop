@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Aug 12 10:59:04 2007 (serrano)                */
+;*    Last change :  Mon Aug 13 15:50:26 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -496,10 +496,9 @@
 	       (when (> timeout 0)
 		  (output-port-timeout-set! out timeout)
 		  (input-port-timeout-set! in timeout))
-	       (tprint "send-request: " host " " port " " path)
 	       (http :in in :out out
-		  :protocol scheme :method method
-		  :path path :http-version httpv
+		  :protocol scheme :method method :http-version httpv
+		  :host host :port port :path path
 		  :authorization authorization
 		  :login user
 		  :body socket
