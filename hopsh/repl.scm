@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Thu Oct 12 11:40:49 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue Aug 14 08:17:27 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
 ;*=====================================================================*/
@@ -133,7 +133,9 @@
 ;*    login->header ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (login->header login)
-   (list (cons :authorization login)))
+   (if login
+       `((:authorization ,login))
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    command-options ...                                              */

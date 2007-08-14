@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Aug 13 15:50:26 2007 (serrano)                */
+;*    Last change :  Tue Aug 14 08:17:47 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -498,7 +498,7 @@
 		  (input-port-timeout-set! in timeout))
 	       (http :in in :out out
 		  :protocol scheme :method method :http-version httpv
-		  :host host :port port :path path
+		  :host host :port port :path path :header header
 		  :authorization authorization
 		  :login user
 		  :body socket
