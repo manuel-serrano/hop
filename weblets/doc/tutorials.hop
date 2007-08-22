@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Fri Aug 10 11:52:43 2007 (serrano)                */
+;*    Last change :  Thu Aug 16 10:13:41 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -28,12 +28,11 @@
 ;*    <TUTORIALS> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (<TUTORIALS> req)
-   (let ((pagearea (<DIV> :class "pagearea" :id "pad-tutorials"
-		      "Please, select a tutorial.")))
-      (initialize-tutorials!)
-      (<DIV> :class "tutorials"
-	 (<TUTORIALS-MAIN> "pad-tutorials")
-	 pagearea)))
+   (initialize-tutorials!)
+   (<DIV> :class "tutorials"
+      (<TUTORIALS-MAIN> "pad-tutorials")
+      (<DIV> :class "pagearea" :id "pad-tutorials"
+	 "Please, select a tutorial.")))
 
 ;*---------------------------------------------------------------------*/
 ;*    Tutorial global variables                                        */

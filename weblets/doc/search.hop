@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Mon May 28 15:01:53 2007 (serrano)                */
+;*    Last change :  Thu Aug 16 12:02:16 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -21,7 +21,8 @@
 	   hopdoc_api
 	   hopdoc_weblets)
 
-   (export (make-doc-tables offset . markups)
+   (export (<SEARCH>)
+	   (make-doc-tables offset . markups)
 	   (search-see-also name dir pattern)
 	   (search-examples port title expr*)
 	   (search-table value id table offset columns)
@@ -29,6 +30,89 @@
 	   (search-libraries dir)
 	   (search-weblets)
 	   (search-tutorials dir value)))
+
+;*---------------------------------------------------------------------*/
+;*    <SEARCH> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<SEARCH>)
+   (<DIV> :class "search"
+      (<DIV> :class "search-title"
+	 (<TABLE> :width "100%" :border 0
+	    (<TR>
+	       (<TH> :align "left"
+		  "HOP Global Search")
+	       (<TD> :align "center"
+		  (<DIV> :class "selector"
+		     (<SPAN> :class "label" "search:")
+		     (<INPUT> :type "text" :size 50
+			:title "Hit [Return] to search"
+			:onkeyup
+			~(if (= event.keyCode 13)
+			     (with-hop ($global-search value)
+				(lambda (h)
+				   (let ((el (dom-get-element-by-id "pad-search")))
+				      (innerHTML-set! el h)))))))))))
+      (<DIV> :class "pagearea" :id "pad-search" "")))
+
+;*---------------------------------------------------------------------*/
+;*    global-search ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (global-search value)
+   (let ((table (kmp-table value)))
+      (<TABLE> :class "global-search"
+	 (apply append
+		(grep table (doc-api-dir)
+		      (lambda (file line)
+			 (<TR>
+			    (<TH> (basename file))
+			    (<TD> (<APIREF> (wiki-string->hop line)
+					    (basename file))))))
+		(grep table (doc-weblets-dir)
+		      (lambda (file line)
+			 (<TR>
+			    (<TH> (basename file))
+			    (<TD> (<WEBLETREF> (wiki-string->hop line)
+					       (basename file))))))
+		(grep table (doc-wiki-dir)
+		      (lambda (file line)
+			 (<TR>
+			    (<TH> (basename file))
+			    (<TD> (<WIKIREF> (wiki-string->hop line))))))
+		(grep table (doc-core-dir)
+		      (lambda (file line)
+			 (<TR>
+			    (<TH> (basename file))
+			    (<TD> :onclick
+			       ~(notepad-select "doc-notepad" "doc-core")
+			       (wiki-string->hop line)))))
+		(grep table (doc-wiki-dir)
+		      (lambda (file line)
+			 (<TR>
+			    (<TH> (basename file))
+			    (<TD> (<TUTORIALREF> (wiki-string->hop line)
+						 (basename file))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    grep ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (grep table dir proc)
+   (filter-map (lambda (f)
+		  (unless (directory? f)
+		     (let* ((mm (open-mmap f read: #t))
+			    (ls (mmap-length mm)))
+			(let loop ((o #e0)
+				   (r '()))
+			   (if (>=elong o ls)
+			       (begin
+				  (close-mmap mm)
+				  (reverse! r))
+			       (let ((n (kmp-mmap table mm o)))
+				  (if (>=elong n o)
+				      (loop (+elong n #e1)
+					    (cons (proc f (mmap-whole-line mm n))
+						  r))
+				      (loop ls r))))))))
+	       (directory->path-list dir)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-doc-tables ...                                              */
@@ -374,6 +458,24 @@
 	 (when (<elong e ls)
 	    (if (char=? (mmap-ref mm e) #\Newline)
 		(mmap-substring mm n e)
+		(loop (+elong e #e1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    mmap-whole-line ...                                              */
+;*---------------------------------------------------------------------*/
+(define (mmap-whole-line mm n)
+   (let ((ls (mmap-length mm)))
+      (let loop ((e n))
+	 (when (<elong e ls)
+	    (if (char=? (mmap-ref mm e) #\Newline)
+		(let loop ((b (-elong n #e1)))
+		   (cond
+		      ((=elong b #e-1)
+		       (mmap-substring mm #e0 e))
+		      ((char=? (mmap-ref mm b) #\Newline)
+		       (mmap-substring mm (+elong b #e1) e))
+		      (else
+		       (loop (-elong b #e1)))))
 		(loop (+elong e #e1)))))))
 
 ;*---------------------------------------------------------------------*/

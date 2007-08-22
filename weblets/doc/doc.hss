@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue May 22 14:23:30 2007 (serrano)                */
+/*    Last change :  Thu Aug 16 11:56:47 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -916,3 +916,66 @@ index table.api-index {
 index table.search-result span.descr {
   color: $deep-blue;
 }
+
+/*---------------------------------------------------------------------*/
+/*    search                                                           */
+/*---------------------------------------------------------------------*/
+$(hop-hss-type! "search" "div.search")
+
+search div.search-title {
+  border: 1px solid $border-color;
+  padding: 2px;
+  margin-bottom: 10px;
+}
+
+search div.search-title th {
+  color: $deep-orange;
+  font-weight: bold;
+  font-size: large;
+  margin-bottom: 10px;
+  padding-left: 5px;
+}
+
+search select.search-selector {
+  margin-right: 1em;
+  border: 1px solid $border-color;
+  font-size: small;
+}
+
+search div.search-title span.label {
+  font-size: small;
+}
+
+search div.search-title input {
+  font-size: small;
+}
+
+search div.doc-title th {
+  color: $deep-orange;
+}
+
+table.global-search {
+  font-size: 90%;
+}
+
+table.global-search tr {
+  cursor: pointer;
+}
+
+table.global-search th {
+  vertical-align: top;
+  color: darkblue;
+}
+
+table.global-search th:hover {
+  text-decoration: underline;
+}
+
+table.global-search th:after {
+  content: ":";
+}
+
+table.global-search td:hover {
+  text-decoration: underline;
+}
+

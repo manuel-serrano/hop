@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Sat Jul 21 06:22:52 2007 (serrano)                */
+;*    Last change :  Thu Aug 16 09:59:59 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -76,33 +76,44 @@
 	       (<NPTABHEAD> "API")
 	       (<DIV> :class "doc-tab"
 		  (<API>)))
+	    
 	    (<NPTAB> :id "doc-core"
 	       (<NPTABHEAD> "Core language")
 	       (<DIV> :class "core doc-tab"
 		  (doc-page
 		   (make-file-name (doc-core-dir) "core.wiki")
 		   (make-wiki-request-syntax (doc-wiki-syntax)))))
+	    
 	    (<NPTAB> :id "doc-libraries"
 	       (<NPTABHEAD> "Libraries")
 	       (<DIV> :class "doc-tab"
 		  (<LIBRARIES>)))
+	    
 	    (<NPTAB> :id "doc-wiki"
 	       (<NPTABHEAD> "Wiki syntax")
 	       (<DIV> :class "wiki doc-tab"
 		  (doc-page
 		   (make-file-name (doc-wiki-dir) "syntax.wiki")
 		   (make-wiki-request-syntax (doc-wiki-syntax)))))
+	    
 	    (<NPTAB> :id "doc-weblets"
 	       (<NPTABHEAD> "Weblets")
 	       (<DIV> :class "doc-tab"
 		  (<WEBLETS> req)))
+	    
 	    (<NPTAB> :id "doc-tutorials"
 	       (<NPTABHEAD> "Tutorials")
 	       (<DIV> :class "doc-tab"
 		  (<TUTORIALS> req)))
+	    
 	    (<NPTAB> :id "doc-index"
 	       (<NPTABHEAD> "Index")
 	       (<DIV> :class "doc-tab"
-		  (<INDEX>)))))))
+		  (<INDEX>)))
+	    
+	    (<NPTAB> :id "doc-search"
+	       (<NPTABHEAD> "Search")
+	       (<DIV> :class "doc-tab"
+		  (<SEARCH>)))))))
 
 
