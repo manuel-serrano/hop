@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Aug 10 13:18:36 2007 (serrano)                */
+/*    Last change :  Wed Aug 22 06:24:37 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -278,14 +278,22 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
       if( event == "location" ) {
 	 return hop_add_active_location_listener( obj, proc );
       } else {
-	 return obj.addEventListener( event, proc, capture );
+	 if( obj.hop_add_event_listener != undefined ) {
+	    obj.hop_add_event_listener( event, proc, capture );
+	 } else {
+	    return obj.addEventListener( event, proc, capture );
+	 }
       }
    }
    hop_remove_event_listener = function( obj, event, proc, capture ) {
       if( event == "location" ) {
 	 return hop_remove_active_location_listener( obj, proc );
       } else {
-	 return obj.removeEventListener( event, proc, capture );
+	 if( obj.hop_remove_event_listener != undefined ) {
+	    obj.hop_remove_event_listener( event, proc, capture );
+	 } else {
+	    return obj.removeEventListener( event, proc, capture );
+	 }
       }
    }
    hop_stop_propagation = function( event, def ) {
@@ -297,32 +305,40 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
       if( event == "location" ) {
 	 return hop_add_active_location_listener( obj, proc );
       } else {
-	 var p = function(_) { return proc( window.event ) };
-	 var i = "on" + event + "hdl";
+	 if( obj.hop_add_event_listener != undefined ) {
+	    obj.hop_add_event_listener( event, proc, capture );
+	 } else {
+	    var p = function(_) { return proc( window.event ) };
+	    var i = "on" + event + "hdl";
 
-	 if( obj[ i ] === undefined ) obj[ i ] = [];
-	 obj[ i ][ proc ] = p;
+	    if( obj[ i ] === undefined ) obj[ i ] = [];
+	    obj[ i ][ proc ] = p;
 
-	 return obj.attachEvent( "on" + event, p );
+	    return obj.attachEvent( "on" + event, p );
+	 }
       }
    }
    hop_remove_event_listener = function( obj, event, proc, capture ) {
       if( event == "location" ) {
 	 return hop_remove_active_location_listener( obj, proc );
       } else {
-	 var i = "on" + event + "hdl";
-         var h = obj[ i ];
+	 if( obj.hop_remove_event_listener != undefined ) {
+	    obj.hop_remove_event_listener( event, proc, capture );
+	 } else {
+	    var i = "on" + event + "hdl";
+	    var h = obj[ i ];
 
-         if( h !== undefined ) {
-	   var p = obj[ i ][ proc ];
+	    if( h !== undefined ) {
+	       var p = obj[ i ][ proc ];
 
-	   if( p !== undefined ) {
-	      h[ p ] = undefined;
-	      return obj.detachEvent( "on" + event, p );
-	   }
-         }
+	       if( p !== undefined ) {
+		  h[ p ] = undefined;
+		  return obj.detachEvent( "on" + event, p );
+	       }
+	    }
 
-	 return false;
+	    return false;
+	 }
       }
    }
    hop_stop_propagation = function( event, def ) {

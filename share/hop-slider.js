@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Wed Aug 22 05:43:58 2007 (serrano)                */
+/*    Last change :  Sat Aug 25 14:36:58 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */

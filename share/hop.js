@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Aug 10 11:58:23 2007 (serrano)                */
+/*    Last change :  Tue Aug 28 07:00:56 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -965,7 +965,7 @@ function hop_serialize_number( item ) {
 
    if( sitem.indexOf( "." ) == -1 ) {
       if( item < 0 )
-	 return '-' + (-item);
+	 return '-' + hop_serialize_word( -item );
       else
 	 return hop_serialize_word( item );
    } else {
