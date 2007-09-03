@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Thu Oct 12 16:37:06 2006 (serrano)                */
-/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    Last change :  Fri Aug 31 07:33:32 2007 (serrano)                */
+/*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
 /*=====================================================================*/
@@ -22,39 +22,53 @@ table.hop-slider {
 table.hop-slider div.lineleft {
   height: 3px;
   border-right: 0;
-  border-left: 1px inset black;
-  border-top: 1px inset black;
-  border-bottom: 1px inset black;
-  background: rgb(204,204,204);
+  border-left: 1px solid #555;
+  border-top: 1px solid #555;
+  border-bottom: 1px solid #555;
+  background: #68f;
 }
   
 table.hop-slider div.lineright {
   height: 3px;
   border-left: 0;
   margin: 0;
-  border-top: 1px inset black;
-  border-right: 1px inset black;
-  border-bottom: 1px inset black;
-  background: white;
+  border-top: 1px solid #aaa;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+  background: #ccc;
 }
 
 /*---------------------------------------------------------------------*/
 /*    Cursor configuration                                             */
 /*---------------------------------------------------------------------*/
-table.hop-slider div.cursoron {
-  border: 1px outset black;
-  background-color: rgb(150,150,150);
+table.hop-slider td.cursor {
+  margin: 0;
+  padding: 0;
+  width: 14px;
+  border-left: 1px outset #aaa;
+  border-top: 1px outset #aaa;
+  border-right: 1px outset #555;
+  border-bottom: 1px outset #555;
+}
+
+table.hop-slider div.cursor {
+  width: 100%;
+  height: 7px;
   background-image: url( "icons/slider-cursor.png" );
+  background-position: center center;
+  background-repeat: repeat-y;
+  background-color: rgb(150,150,150);
+}
+   
+table.hop-slider div.cursoron {
 }
    
 table.hop-slider div.cursoroff {
-  border: 1px outset black;
   background-color: rgb(204,204,204);
-  background-image: url( "icons/slider-cursor.png" );
 }
 
 table.hop-slider td.caption {
   font-family: Arial, Helvetica, sans-serif;
   font-weight: bold; 
-  font-size: 11px;
+  font-size: 8px;
 }

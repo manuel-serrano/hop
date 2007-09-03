@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Tue Aug  7 09:48:53 2007 (serrano)                */
+;*    Last change :  Mon Sep  3 11:42:46 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -222,4 +222,23 @@
      (md5sum-string md5sum)
      (hmac-md5sum-string hex_hmac_md5)
      (integer->string sc_number2string_mutable)
-     (get-selection hop_get_selection)))
+     (get-selection hop_get_selection)
+     (audio-load hop_audio_load)
+     (audio-playlist-set! hop_audio_playlist_set)
+     (audio-playlist hop_audio_playlist_get)
+     (audio-playlist-play hop_audio_playlist_play)
+     (audio-playlist-index hop_audio_playlist_index)
+     (audio-playlist-next hop_audio_playlist_next)
+     (audio-playlist-prev hop_audio_playlist_prev)
+     (audio-start hop_audio_start)
+     (audio-stop hop_audio_stop)
+     (audio-pause hop_audio_pause)
+     (audio-mute hop_audio_mute)
+     (audio-seek hop_audio_seek)
+     (audio-duration hop_audio_duration)
+     (audio-pan hop_audio_pan_get)
+     (audio-pan-set! hop_audio_pan_set)
+     (audio-volume hop_audio_volume_get)
+     (audio-volume-set! hop_audio_volume_set)
+     (audio-metadata hop_audio_metadata)
+     (audio-metadata-set! hop_audio_metadata_set)))

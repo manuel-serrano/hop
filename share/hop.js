@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Aug 28 07:00:56 2007 (serrano)                */
+/*    Last change :  Mon Sep  3 11:39:44 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -308,6 +308,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 	       case 200:
 		  if( hop_is_http_json( http ) ) {
 		     try {
+			var e = eval( http.responseText );
 			return success( eval( http.responseText ), http );
 		     } catch( e ) {
 			alert( "*** Hop JSON error: " + e );

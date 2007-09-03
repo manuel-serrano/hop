@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Sat Aug 25 14:36:58 2007 (serrano)                */
+/*    Last change :  Fri Aug 31 08:52:18 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -29,8 +29,9 @@ function hop_slider_value_set( slider, value ) {
 	 node_style_set( slider.line1, "width", Math.round(v * w) + "px" );
 	 node_style_set( slider.line2, "width", Math.round((1-v) * w) + "px");
       } else {
-	 slider.line1.width = Math.round(v * 100) + "%";
-	 slider.line2.width = Math.round((100-v) * 100) + "%";
+	 // a rough approximation when the actual size is not known
+	 slider.line1.width = Math.round(v * 98) + "%";
+	 slider.line2.width = Math.round((100-v) * 98) + "%";
       }
 
       if( slider.cap )
@@ -60,7 +61,7 @@ function hop_slider_value_get( slider ) {
 /*---------------------------------------------------------------------*/
 /*    hop_make_slider ...                                              */
 /*---------------------------------------------------------------------*/
-function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
+function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    var doc = (parent == undefined ? document : parent.ownerDocument || parent.document);
    var slider, tbody, tr, tr2;
    var line1, line2, cursor;
@@ -68,14 +69,9 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    var div;
    var caption;
 
-   if( curw == undefined )
-      curw = 4;
-   if( curh == undefined )
-      curh = "10px";
-
    // the slider
    slider = doc.createElement( "table" );
-   slider.className = "hop-slider";
+   slider.className = klass;
    slider.id = id;
    
    slider.onchange = undefined;
@@ -127,13 +123,6 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    line2.style.margin = 0;
    line2.style.padding = 0;
 
-   cursor.width = (Math.round( curw / 2 ) * 2);
-   cursor.style.width = cursor.width + "%";
-   cursor.style.height = curh;
-   cursor.style.border = 0;
-   cursor.style.margin = 0;
-   cursor.style.padding = 0;
-
    tr.appendChild( line1 );
    tr.appendChild( cursor );
    tr.appendChild( line2 );
@@ -143,7 +132,7 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
       caption = doc.createElement( "td" );
       caption.className = "caption";
       caption.align = "center";
-      caption.style.width = cursor.width + "%";
+/*       caption.style.width = cursor.width + "%";                     */
       td3 = doc.createElement( "td" );
 
       caption.innerHTML = "";
@@ -165,8 +154,7 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    line2.appendChild(div);
 
    div = doc.createElement( "div" );
-   div.className = "cursoroff";
-   div.style.height = curh;
+   div.className = "cursor cursoroff";
    cursor.appendChild( div );
 
    slider.min = min;
@@ -183,11 +171,11 @@ function hop_make_slider( parent, id, min, max, step, value, cap, curw, curh ) {
    };
    
    var onmouseover = function( e ) {
-      div.className = "cursoron";
+      div.className = "cursor cursoron";
    };
 
    var onmouseout = function( e ) {
-      div.className = "cursoroff";
+      div.className = "cursor cursoroff";
    };
 
    var onmousedown = function( e ) {

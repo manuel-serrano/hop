@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Jun  1 08:25:13 2007 (serrano)                */
+;*    Last change :  Wed Aug 29 14:48:59 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -156,7 +156,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-up-to ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-inline (collect-up-to ignore kind port)
+(define (collect-up-to ignore kind port)
    ;; move one character backward for the open-parenthesis
    (let* ((name (input-port-name port))
 	  (po (-fx (input-port-position port) 1))
@@ -340,7 +340,7 @@
 	      (read-error/location
 	       "Illegal ascii character"
 	       string
-	       (input-port-name     (the-port))
+	       (input-port-name (the-port))
 	       (input-port-position (the-port)))
 	      (integer->char (string->integer (the-substring 2 5))))))
       ((: "#\\" (>= 3 digit))
@@ -366,7 +366,7 @@
 	      (read-error/location
 	       "Illegal character"
 	       (the-string)
-	       (input-port-name     (the-port))
+	       (input-port-name (the-port))
 	       (input-port-position (the-port)))))))
       
       ;; strings with newline in them in addition to compute
@@ -394,7 +394,7 @@
 	   (read-error/location 
 	    "Illegal token"
 	    #\.
-	    (input-port-name     (the-port))
+	    (input-port-name (the-port))
 	    (input-port-position (the-port)))
 	   *dotted-mark*))
       

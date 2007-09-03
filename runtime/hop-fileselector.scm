@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Tue Jan 30 20:22:45 2007 (serrano)                */
+;*    Last change :  Mon Sep  3 14:28:25 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-fileselector
 
+   (library web)
+   
    (include "xml.sch"
 	    "service.sch")
 
@@ -32,7 +34,7 @@
 
    (export  (<FILESELECT> . ::obj)
 	    (<FILEBROWSE> . ::obj)
-	    hop-filebrowse))
+	    filebrowse))
    
 ;*---------------------------------------------------------------------*/
 ;*    *fileselect-service* ...                                         */
@@ -127,9 +129,9 @@
 		  (<TRBODY> 
 		     (<DELAY>
 			(lambda ()
-			   (let ((files (map! (lambda (f)
-						 (make-file-name dir f))
-					      (directory->list dir))))
+			   (let ((files (if (substring-at? dir "http://" 0)
+					    (webdav-directory->path-list dir)
+					    (directory->path-list dir))))
 			      (map! (lambda (p)
 				       (if (directory? p)
 					   (loop p #f)
@@ -241,34 +243,34 @@
 	 text)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-filebrowse ...                                               */
+;*    filebrowse ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (hop-filebrowse #!key
-			handler
-			title
-			value
-			path
-			(filter default-filebrowser-filter-predicate)
-			(multiselect #f)
-			(width 500)
-			(height 400))
+(define (filebrowse #!key
+		    select
+		    title
+		    value
+		    path
+		    (filter default-filebrowser-filter-predicate)
+		    (multiselect #f)
+		    (width 500)
+		    (height 400))
    (cond
       ((not (integer? width))
-       (bigloo-type-error 'hop-filebrowse "integer" width))
+       (bigloo-type-error 'filebrowse "integer" width))
       ((not (integer? height))
-       (bigloo-type-error 'hop-filebrowse "integer" height))
-      ((not (xml-tilde? handler))
-       (bigloo-type-error 'hop-filebrowse "client code" handler))
+       (bigloo-type-error 'filebrowse "integer" height))
+      ((not (xml-tilde? select))
+       (bigloo-type-error 'filebrowse "client code" select))
       ((not (string? value))
-       (bigloo-type-error 'hop-filebrowse "string" value))
+       (bigloo-type-error 'filebrowse "string" value))
       ((not (string? path))
-       (bigloo-type-error 'hop-filebrowse "string" path))
+       (bigloo-type-error 'filebrowse "string" path))
       ((not (boolean? multiselect))
-       (bigloo-type-error 'hop-filebrowse "boolean" multiselect))
+       (bigloo-type-error 'filebrowse "boolean" multiselect))
       ((not (procedure? filter))
-       (bigloo-type-error 'hop-filebrowse "procedure" filter)))
+       (bigloo-type-error 'filebrowse "procedure" filter)))
    (if (not (string? title)) (set! title value))
-   (let* ((body (xml-tilde-body handler))
+   (let* ((body (xml-tilde-body select))
 	  (len (string-length body))
 	  (hdl (if (substring-at? body ";\n" (-fx len 2))
 		   (substring body 0 (-fx len 2))
@@ -277,7 +279,7 @@
 		  (let ((onselect (format "~a( this.value )" hdl)))
 		     (browse (current-request) wident value path
 			     filter multiselect onselect)))))
-      (format "hop_stop_propagation( event, false ); hop_filebrowse( ~a, '~a', '~a', '~a', '~a', ~a, 0, 0, ~a, ~a )"
+      (format "hop_filebrowse( ~a, '~a', '~a', '~a', '~a', ~a, 0, 0, ~a, ~a )"
 	      ;; service
 	      (hop-service-javascript svc)
 	      ;; title

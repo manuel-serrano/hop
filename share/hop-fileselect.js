@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 14 09:43:45 2006                          */
-/*    Last change :  Wed Nov 29 09:41:45 2006 (serrano)                */
-/*    Copyright   :  2006 Manuel Serrano                               */
+/*    Last change :  Wed Aug 29 14:22:16 2007 (serrano)                */
+/*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    <FILESELECT> runtime library.                                    */
 /*=====================================================================*/

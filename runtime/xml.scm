@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Aug 12 10:57:34 2007 (serrano)                */
+;*    Last change :  Mon Sep  3 11:18:41 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -516,7 +516,7 @@
       (xml-write (thunk) p encoding backend)))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write ...                                                    */
+;*    xml-write ::xml-markup ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-markup p encoding backend)
    (with-access::xml-markup obj (markup attributes body)
@@ -1013,6 +1013,10 @@
    (cond
       ((string? obj)
        (write obj p))
+      ((eq? obj #t)
+       (display "true" p))
+      ((eq? obj #f)
+       (display "false" p))
       (else
        (display obj p))))
 

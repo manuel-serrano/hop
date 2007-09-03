@@ -3,13 +3,13 @@
 == Description ==
 
 These markups implement //File selectors// in HOP documents. The first
-markup, ++<FILESELECT>++ is composed of a small selection text. By contrast
+markup, ++<FILESELECT>++ is made of a small input text entry. By contrast
 with a regular ++<INPUT>++ element, it provides automatic file completion.
 Each time the charcter ++tab++ is typed-in, the server proposes to the
 client a list of possible file completions.
 
 The markup ++<FILEBROWSE>++ pops up a new window containing a file browser
-showing the file of the server.
+presenting the server files.
 
 == Synopsis ==
 
@@ -18,7 +18,7 @@ showing the file of the server.
   (<FILESELECT> arg ...)
   (<FILEBROWSE> arg ...)
 
-  (hop-filebrowse arg ...)
+  (filebrowse arg ...)
 
 === Requirements ===
 
@@ -43,7 +43,7 @@ browsers// must include in their header, the following statement:
 
 == Examples ==
 
-<example><FILESELECT>, <FILEBROWSE></example>
+<example><FILESELECT>, <FILEBROWSE>, filebrowse</example>
 
 == Server Definitions ==
 <server>
@@ -108,21 +108,21 @@ is, it does expose directories for which the access is not granted.
 
 </markup>
 
-=== ++(hop-filebrowse :handler :value :path ...)++ ===
-<procedure> hop-filebrowse
+=== ++(filebrowse :select :value :path ...)++ ===
+<function> filebrowse
 <arguments>
 <arguments>
-^  attributes  ^   type    ^   default    ^  short description                ^
-| :handler   |  client procedure  |       | the client action.                |
-| :value     |  string     |              | the root directory.               |
-| :path      |  string     |              | the directory to be opened.       |
-| :filter    |  procedure  |              | filter filtering.                 |
-| :title     |  string     |  //value//   | the title of the browser window.  |
-| :width     |  integer    |  ++500++     | the pixel width.                  |
-| :height    |  integer    |  ++400++     | the pixel height.                 |
-| :multiselect  |  boolean  |   ++#f++  | enable/disable multiple selections. |
+^  attributes  ^   type    ^   default    ^  short description                 ^
+| :select    |  client procedure  |       | the client action.                 |
+| :value     |  string     |              | the root directory.                |
+| :path      |  string     |              | the directory to be opened.        |
+| :filter    |  procedure  |              | filter filtering.                  |
+| :title     |  string     |  //value//   | the title of the browser window.   |
+| :width     |  integer    |  ++500++     | the pixel width.                   |
+| :height    |  integer    |  ++400++     | the pixel height.                  |
+| :multiselect  |  boolean  |   ++#f++  | enable/disable multiple selections.  |
 </arguments>
-</procedure>
+</function>
 
 == Style ==
 <style>

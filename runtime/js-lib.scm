@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Jun 18 14:12:11 2007 (serrano)                */
+;*    Last change :  Mon Sep  3 11:40:11 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -116,7 +116,7 @@
 	 (if (null? lst)
 	     (apply string-append (reverse! res))
 	     (loop (cdr lst)
-		   (cons* (if (pair? (cdr lst)) "," ")")
+		   (cons* (if (pair? (cdr lst)) "," "")
 			  (if (symbol? (car lst))
 			      (symbol->string (car lst))
 			      (car lst))
@@ -127,7 +127,7 @@
 		    (bigloo-mangle kname)
 		    kname))
 	  (fields (class-all-fields klass)))
-      (format "function ~a( ~a { ~a }; new ~a( ~a"
+      (format "(function() {var ~a=function(~a) {~a}; return new ~a(~a;})()"
 	      name
 	      (list->block (map class-field-name fields))
 	      (apply string-append

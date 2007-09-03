@@ -2271,6 +2271,25 @@ function sc_openOutputFile(s) { /// export
 }
 
 /* ----------------------------------------------------------------------------*/
+function sc_basename(p) { /// export
+   var i = p.lastIndexOf('/');
+
+   if(i >= 0)
+      return p.substring(i + 1, p.length);
+   else
+      return '';
+}
+
+function sc_dirname(p) { /// export
+   var i = p.lastIndexOf('/');
+
+   if(i >= 0)
+      return p.substring(0, p.length);
+   else
+      return '';
+}
+
+/* ----------------------------------------------------------------------------*/
 
 function sc_withInputFromPort(p, thunk) { /// export-higher
     try {

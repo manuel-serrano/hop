@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Jul  4 08:57:29 2007 (serrano)                */
+;*    Last change :  Fri Aug 31 08:53:09 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -26,6 +26,7 @@
 	    __hop_service)
 
    (static  (class html-slider::xml-element
+	       (klass read-only)
 	       (value read-only)
 	       (min read-only)
 	       (max read-only)
@@ -39,6 +40,7 @@
 ;*    <SLIDER> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SLIDER> ((id #unspecified string)
+			       (class #unspecified string)
 			       (value 0)
 			       (min 0)
 			       (max 100)
@@ -47,6 +49,9 @@
 			       (caption "top"))
    (instantiate::html-slider
       (markup 'slider)
+      (klass (if (string? class)
+		 (string-append "hop-slider " class)
+		 "hop-slider"))
       (id (xml-make-id id 'SLIDER))
       (value value)
       (min min)
@@ -73,7 +78,7 @@
 ;*    xml-write ::html-slider ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-slider p encoding backend)
-   (with-access::html-slider obj (id value min max step onchange caption)
+   (with-access::html-slider obj (id klass value min max step onchange caption)
       (let ((gid (gensym))
 	    (oc (cond
 		   ((xml-tilde? onchange)
@@ -90,6 +95,7 @@
 		 "hop_slider_onchange_set( "
 		 "hop_make_slider( "
 		 "document.getElementById( '" gid "' ), "
+		 "'" klass "', "
 		 "'" id "', ")
 	 (xml-write-initializer min p)
 	 (display "," p)

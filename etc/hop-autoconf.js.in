@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Wed Aug 22 06:24:37 2007 (serrano)                */
+/*    Last change :  Thu Aug 30 08:20:10 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -273,15 +273,21 @@ var hop_add_event_listener = undefined;
 var hop_remove_event_listener = undefined;
 var hop_stop_propagation = undefined;
 
-if( document.implementation.hasFeature( "Events" , "2.0") ) {
+if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
    hop_add_event_listener = function( obj, event, proc, capture ) {
       if( event == "location" ) {
 	 return hop_add_active_location_listener( obj, proc );
       } else {
-	 if( obj.hop_add_event_listener != undefined ) {
+	 if( !(obj instanceof Window) &&
+             (obj.hop_add_event_listener != undefined) ) {
 	    obj.hop_add_event_listener( event, proc, capture );
 	 } else {
-	    return obj.addEventListener( event, proc, capture );
+	    if( obj.addEventListener != undefined ) {
+   	       return obj.addEventListener( event, proc, capture );
+            } else {
+               alert( "Cannot add `" + event + "' listener for object: " 
+                      + obj );
+            }
 	 }
       }
    }
@@ -289,16 +295,23 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
       if( event == "location" ) {
 	 return hop_remove_active_location_listener( obj, proc );
       } else {
-	 if( obj.hop_remove_event_listener != undefined ) {
+	 if( !(obj instanceof Window) &&
+             (obj.hop_remove_event_listener != undefined) ) {
 	    obj.hop_remove_event_listener( event, proc, capture );
 	 } else {
-	    return obj.removeEventListener( event, proc, capture );
+            if( obj.removeEventListener != undefined ) {
+	       return obj.removeEventListener( event, proc, capture );
+            } else {
+               alert( "Cannot remove `" + event + "' listener for object: " 
+                      + obj );
+            }
 	 }
       }
    }
    hop_stop_propagation = function( event, def ) {
       if( !def ) event.preventDefault();
       event.stopPropagation();
+      event.isStopped = true;
    }
 } else {
    hop_add_event_listener = function( obj, event, proc, capture ) {
@@ -344,6 +357,7 @@ if( document.implementation.hasFeature( "Events" , "2.0") ) {
    hop_stop_propagation = function( event, def ) {
       if( !def ) event.cancelBubble = true;
       event.returnValue = false;
+      event.isStopped = true;
    }
 }
 
@@ -391,7 +405,10 @@ function hop_operap() {
 /*    images.                                                          */
 /*---------------------------------------------------------------------*/
 function hop_deinline_image( el, src ) {
-   el.src = src;
+   if( !el.deinlined ) {
+      el.deinlined = true;
+      el.src = src;
+   }
 }
 
 /*---------------------------------------------------------------------*/
