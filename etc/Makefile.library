@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Tue Aug  7 20:22:29 2007 (serrano)                */
+#*    Last change :  Mon Sep  3 15:33:53 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -249,7 +249,7 @@ distclean: cleanall
 #*---------------------------------------------------------------------*/
 .PHONY: install install-c install-jvm uninstall
 
-include $(BIGLOOLIBDIR)/Makefile.misc
+-include $(BIGLOOLIBDIR)/Makefile.misc
 
 install: install-$(BACKEND)
 

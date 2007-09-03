@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Jul 15 14:32:09 2007 (serrano)                */
+#*    Last change :  Mon Sep  3 15:33:24 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -14,9 +14,9 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */
 #*---------------------------------------------------------------------*/
-include ../etc/Makefile.hopconfig
-include ../etc/Makefile.version
-include $(BIGLOOLIBDIR)/Makefile.config
+-include ../etc/Makefile.hopconfig
+-include ../etc/Makefile.version
+-include $(BIGLOOLIBDIR)/Makefile.config
 
 #*---------------------------------------------------------------------*/
 #*    Compilers, Tools and Destinations                                */

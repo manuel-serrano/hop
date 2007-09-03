@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sat Jul 14 17:04:34 2007 (serrano)                */
+#*    Last change :  Mon Sep  3 15:35:15 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds HopSh                                   */
 #*=====================================================================*/
@@ -13,8 +13,8 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../etc/Makefile.hopconfig
-include ../etc/Makefile.version
+-include ../etc/Makefile.hopconfig
+-include ../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Target and Project                                               */

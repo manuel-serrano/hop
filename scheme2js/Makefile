@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sat Jul 14 17:03:31 2007 (serrano)                */
+#*    Last change :  Mon Sep  3 15:34:17 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -15,9 +15,9 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Standard Bigloo configuration                                    */
 #*---------------------------------------------------------------------*/
-include ../etc/Makefile.hopconfig
-include ../etc/Makefile.version
-include $(BIGLOOLIBDIR)/Makefile.config
+-include ../etc/Makefile.hopconfig
+-include ../etc/Makefile.version
+-include $(BIGLOOLIBDIR)/Makefile.config
 
 #*---------------------------------------------------------------------*/
 #*    Compilers, Tools and Destinations                                */
