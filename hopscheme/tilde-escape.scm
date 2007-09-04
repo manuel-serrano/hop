@@ -11,6 +11,8 @@
 
 (define *rev-scheme-exprs* (make-hashtable))
 
+(define *tilde-mutex* (make-mutex))
+
 (define (js->hop js-expr)
    (list (hop-read-javascript (open-input-string (string-append js-expr "}")))))
 
@@ -25,11 +27,13 @@
 				(set-cdr! proxy
 					  (js->hop js-expr))
 				(display ";" p))))))))
+      (mutex-lock! *tilde-mutex*)
       (hashtable-update! *rev-scheme-exprs*
 			 p
 			 (lambda (old-l)
 			    (cons module old-l))
 			 (list module))
+      (mutex-unlock! *tilde-mutex*)
       proxy))
 
 (hop-make-escape-set! new-scheme-expr)
@@ -52,7 +56,9 @@
 ;   (print "post-compile")
    (let ((rev-scheme-exprs (hashtable-get *rev-scheme-exprs* p)))
       (when rev-scheme-exprs
+	 (mutex-lock! *tilde-mutex*)
 	 (hashtable-remove! *rev-scheme-exprs* p)
+	 (mutex-unlock! *tilde-mutex*)
 	 (for-each compile-hop-client (reverse! rev-scheme-exprs)))))
 
 (hop-read-post-hook-set! post-compile)

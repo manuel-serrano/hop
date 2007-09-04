@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Sep  3 11:18:41 2007 (serrano)                */
+;*    Last change :  Tue Sep  4 05:49:29 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -533,7 +533,7 @@
 	 ((memq markup (xml-backend-no-end-tags-elements backend))
 	  (display ">\n" p))
 	 (else
-	  (display "/>\n" p)))))
+	  (display "/>" p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-meta ...                                         */
@@ -604,7 +604,7 @@
       (display id p)
       (display "\"" p)
       (xml-write-attributes attributes p)
-      (display "/>\n" p)))
+      (display "/>" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-html ...                                         */

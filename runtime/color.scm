@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Feb  2 15:42:45 2006                          */
-;*    Last change :  Fri Feb  3 08:25:48 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue Sep  4 05:37:30 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple color tools                                               */
 ;*=====================================================================*/
@@ -51,11 +51,11 @@
    (define (char->int c)
       (cond
 	 ((and (char>=? c #\0) (char<=? c #\9))
-	  (-fx (char->integer c) (char->integer #\0)))
+	  (*fx 16 (-fx (char->integer c) (char->integer #\0))))
 	 ((and (char>=? c #\a) (char<=? c #\f))
-	  (+fx 10 (-fx (char->integer c) (char->integer #\a))))
+	  (*fx 16 (+fx 10 (-fx (char->integer c) (char->integer #\a)))))
 	 ((and (char>=? c #\A) (char<=? c #\F))
-	  (+fx 10 (-fx (char->integer c) (char->integer #\A))))
+	  (*fx 16 (+fx 10 (-fx (char->integer c) (char->integer #\A)))))
 	 (else
 	  0)))
    (cond

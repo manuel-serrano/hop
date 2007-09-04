@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 14 09:43:45 2006                          */
-/*    Last change :  Wed Aug 29 14:22:16 2007 (serrano)                */
+/*    Last change :  Tue Sep  4 08:45:55 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    <FILESELECT> runtime library.                                    */
@@ -68,7 +68,7 @@ function hop_fileselect_complete( obj, l ) {
 /*---------------------------------------------------------------------*/
 /*    hop_filebrowse ...                                               */
 /*---------------------------------------------------------------------*/
-function hop_filebrowse( service, title, ident, value, path, multiselect,
+function hop_filebrowse( service, title, ident, label, value, path, multiselect,
 			 clientX, clientY, width, height ) {
    var x = window.innerWidth/2 - width/2;
    var y = clientY + 20;
@@ -77,7 +77,7 @@ function hop_filebrowse( service, title, ident, value, path, multiselect,
    if( (y + height) > window.innerHeight ) y = window.innerHeight - height;
 
    hop_iwindow_open( wident, 
-		     service( ident, wident, value, path, multiselect ),
+		     service( ident, wident, label, value, path, multiselect ),
 		     title,
 		     "hop-file-browse",
 		     width, height, x, y );

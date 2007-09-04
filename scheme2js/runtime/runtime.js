@@ -2284,7 +2284,7 @@ function sc_dirname(p) { /// export
    var i = p.lastIndexOf('/');
 
    if(i >= 0)
-      return p.substring(0, p.length);
+      return p.substring(0, i);
    else
       return '';
 }

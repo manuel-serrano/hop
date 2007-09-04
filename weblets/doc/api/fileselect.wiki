@@ -75,6 +75,7 @@ complete inside directories for which the access is not granted.
 ^  attributes  ^   type    ^   default    ^  short description                ^
 | :id        |  string     |  //random//  | element identifier.               |
 | :title     |  string     |  //value//   | the title of the browser window.  |
+| :label     |  string     |              | the selector tree root label.     |
 | :value     |  string     |              | the root directory.               |
 | :path      |  string     |              | the directory to be opened.       |
 | :text      |  string     |  ++Browse++  | the button text.                  |
@@ -114,6 +115,7 @@ is, it does expose directories for which the access is not granted.
 <arguments>
 ^  attributes  ^   type    ^   default    ^  short description                 ^
 | :select    |  client procedure  |       | the client action.                 |
+| :label     |  string     |              | the selector tree root label.      |
 | :value     |  string     |              | the root directory.                |
 | :path      |  string     |              | the directory to be opened.        |
 | :filter    |  procedure  |              | filter filtering.                  |

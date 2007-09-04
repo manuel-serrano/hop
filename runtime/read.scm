@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Aug 29 14:48:59 2007 (serrano)                */
+;*    Last change :  Tue Sep  4 15:58:51 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -710,8 +710,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-afile ...                                               */
 ;*    -------------------------------------------------------------    */
-;*    Load the .afile if it exists and complement the module           */
-;*    accesses.                                                        */
+;*    Load the .afile if it exists and complements the module          */
+;*    access table.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-afile dir)
    (define (add-dir f)

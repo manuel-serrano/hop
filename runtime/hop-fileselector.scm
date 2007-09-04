@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Mon Sep  3 14:28:25 2007 (serrano)                */
+;*    Last change :  Tue Sep  4 08:51:06 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -100,15 +100,30 @@
 		  attributes))))
 
 ;*---------------------------------------------------------------------*/
+;*    webdav? ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (webdav? path)
+   (substring-at? path "http://" 0))
+
+;*---------------------------------------------------------------------*/
+;*    is-directory? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (is-directory? p)
+   (if (webdav? p)
+       (webdav-directory? p)
+       (directory? p)))
+
+;*---------------------------------------------------------------------*/
 ;*    browse ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (browse req window-id base path predicate multiselect onselect)
+(define (browse req window-id label base path predicate multiselect onselect)
    (let ((tree-id (xml-make-id 'TREE))
 	 (filt (lambda (p)
 		  (and (authorized-path? req p) (predicate p)))))
       (<DIV> :class "hop-filebrowse"
 	 (<DIV> :class "hop-filebrowse-tree"
 	    (let loop ((dir base)
+		       (label label)
 		       (root #t))
 	       (<TREE>
 		  :id (if root tree-id (xml-make-id 'SUBTREE))
@@ -125,16 +140,16 @@
 					"")))
 		  :multiselect multiselect
 		  (<TRHEAD>
-		     (if root dir (basename dir)))
+		     (if label label (if root dir (basename dir))))
 		  (<TRBODY> 
 		     (<DELAY>
 			(lambda ()
-			   (let ((files (if (substring-at? dir "http://" 0)
+			   (let ((files (if (webdav? dir)
 					    (webdav-directory->path-list dir)
 					    (directory->path-list dir))))
 			      (map! (lambda (p)
-				       (if (directory? p)
-					   (loop p #f)
+				       (if (is-directory? p)
+					   (loop p (basename p) #f)
 					   (<TRLEAF> :value p (basename p))))
 				    (sort (filter! filt files)
 					  string<?)))))))))
@@ -166,7 +181,7 @@
 (define (make-filebrowser-service predicate)
    (service (ident wident value path multi)
       (let ((onselect (format "var o=document.getElementById( '~a' ); o.value = this.selection.value; o.onselect();" ident)))
-	 (browse (current-request) wident value path predicate multi onselect))))
+	 (browse (current-request) wident #f value path predicate multi onselect))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-default-filebrowser-service ...                              */
@@ -187,6 +202,7 @@
 (define-xml-compound <FILEBROWSE> ((id #unspecified string)
 				   (class #unspecified string)
 				   (title #unspecified string)
+				   (label #unspecified string)
 				   (value "" string)
 				   (path "" string)
 				   (text "Browse" string)
@@ -210,7 +226,7 @@
 		    "hop-filebrowse")
 	 :value value
 	 :onmousedown (or onmousedown "")
-	 :onclick (format "~a; hop_stop_propagation( event, false ); this.onselect = ~a; hop_filebrowse( ~a, '~a', '~a', this.value, '~a', ~a, hop_event_mouse_x( event ), hop_event_mouse_y( event ), ~a, ~a )"
+	 :onclick (format "~a; hop_stop_propagation( event, false ); this.onselect = ~a; hop_filebrowse( ~a, '~a', '~a', ~a, this.value, '~a', ~a, hop_event_mouse_x( event ), hop_event_mouse_y( event ), ~a, ~a )"
 			  ;; user onclick
 			  (cond
 			     ((xml-tilde? onclick)
@@ -234,6 +250,10 @@
 			  (if (string? title) title value)
 			  ;; button ident
 			  id
+			  ;; label
+			  (if (string? label)
+			      (string-append "\"" (string-for-read label) "\"")
+			      "false")
 			  ;; path
 			  path
 			  ;; multiselect
@@ -247,8 +267,10 @@
 ;*---------------------------------------------------------------------*/
 (define (filebrowse #!key
 		    select
+		    label
 		    title
 		    value
+		    label
 		    path
 		    (filter default-filebrowser-filter-predicate)
 		    (multiselect #f)
@@ -275,17 +297,21 @@
 	  (hdl (if (substring-at? body ";\n" (-fx len 2))
 		   (substring body 0 (-fx len 2))
 		   body))
-	  (svc (service (ident wident value path multi)
+	  (svc (service (ident wident label value path multi)
 		  (let ((onselect (format "~a( this.value )" hdl)))
-		     (browse (current-request) wident value path
+		     (browse (current-request) wident label value path
 			     filter multiselect onselect)))))
-      (format "hop_filebrowse( ~a, '~a', '~a', '~a', '~a', ~a, 0, 0, ~a, ~a )"
+      (format "hop_filebrowse( ~a, '~a', '~a', ~a, '~a', '~a', ~a, 0, 0, ~a, ~a )"
 	      ;; service
 	      (hop-service-javascript svc)
 	      ;; title
 	      title
 	      ;; ident
 	      (xml-make-id 'FILEBROWSE)
+	      ;; label
+	      (if (string? label)
+		  (string-append "\"" (string-for-read label) "\"")
+		  "false")
 	      ;; value
 	      value
 	      ;; path
