@@ -8,7 +8,7 @@ This simple weblet displays ,(<WIKIREF> "Wiki documents").
 
 WIKI defines one service:
 
-  - ++[[wiki]]++: This is the only entry point of the view.
+  - ++[[wiki]]++: This is the only entry point of the viewer.
 
 
 </doc>

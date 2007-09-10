@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Fri Jul 20 11:36:31 2007 (serrano)                */
+/*    Last change :  Thu Sep  6 07:45:12 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -238,7 +238,7 @@ function hop_tree_row_select( root, row, forcemulti ) {
    root.selection = row;
    root.selections.push( row );
    
-   if( root.onselect ) root.onselect();
+   if( root.onselect && (!root.multiselect || forcemulti) ) root.onselect();
 }
    
 /*---------------------------------------------------------------------*/

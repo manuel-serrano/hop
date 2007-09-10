@@ -56,7 +56,7 @@ to the server in order to get the actual bytes composing the image.
 </server>
 
 === (img-base64-encode path) ===
-<procedure>
+<procedure> img-base64-encode
 <function> img-base64-encode
 
 <arguments>

@@ -1,0 +1,61 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/trace/trace.hop                 */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Thu Sep  6 13:32:16 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP server trace facility                                        */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_trace
+   (export trace
+	   trace/documentation
+	   trace/preferences))
+
+;*---------------------------------------------------------------------*/
+;*    The user configuration                                           */
+;*---------------------------------------------------------------------*/
+(hop-load-rc "tracerc.hop")
+
+;*---------------------------------------------------------------------*/
+;*    Global parameters                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter trace-print
+   (lambda (req args)
+      (hop-verb 1 (hop-color req req " TRACE: "))
+      (for-each (lambda (x) (hop-verb 1 x)) args)
+      (hop-verb 1 "\n")))
+
+;*---------------------------------------------------------------------*/
+;*    trace ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-service (trace args)
+   (let ((req (current-request)))
+      ((trace-print) req args)
+      (http-warning "The Trace produces not documents. It merely prints a message on the server console.")))
+
+(define-preferences trace-preferences
+   ("printer" expr trace-print))
+ 
+;*---------------------------------------------------------------------*/
+;*    trace/documentation ...                                          */
+;*---------------------------------------------------------------------*/
+(define-service (trace/documentation)
+   (let* ((file (service-resource trace/documentation "etc/trace.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
+
+;*---------------------------------------------------------------------*/
+;*    trace/preferences ...                                            */
+;*---------------------------------------------------------------------*/
+(define-service (trace/preferences)
+   (trace-preferences-edit
+    :onclick ~(with-hop ($(service ()
+			     (trace-preferences-save trace-prefs))))))

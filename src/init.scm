@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sat Jul 21 05:20:41 2007 (serrano)                */
+;*    Last change :  Thu Sep  6 17:20:28 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -279,14 +279,7 @@
 	(with-access::http-request req (user host port path header)
 	   (if (user-authorized-service? user 'proxy)
 	       resp
-	       (instantiate::http-response-string
-		  (request req)
-		  (start-line "HTTP/1.0 407 Proxy Authentication Required")
-		  (header `((Proxy-Authenticate:
-			     .
-			     ,(format "Basic realm=\"Hop proxy (~a) authentication\""
-				      host))))
-		  (body "Protected Area! Authentication required."))))))))
+	       (proxy-denied req user host)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    server logging ...                                               */

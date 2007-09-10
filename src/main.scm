@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jul 20 09:59:01 2007 (serrano)                */
+;*    Last change :  Mon Sep 10 16:46:55 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -72,14 +72,19 @@
 		(else ", single-threaded"))
 	     ") "
 	     (if (hop-enable-https)
-		 (format "https (~a)" (hop-https-protocol)) "http")
-	     " on port " (hop-port)
-	     ":\n")
+		 (format "https (~a):" (hop-https-protocol)) "http:")
+	     (hop-port)
+	     (if (hop-enable-server-event)
+		 (format ", server-events: ~a" (hop-server-event-port))
+		 "")
+	     "\n")
    ;; install the builtin filters
    (hop-filter-add! service-filter)
    (hop-filter-add-always-first! autoload-filter)
    ;; start the job scheduler
    (job-start-scheduler!)
+   ;; hop server->client events initialization
+   (hop-event-init! (when (hop-enable-server-event) (hop-server-event-port)))
    ;; close filters and users registration before starting
    (hop-filters-close!)
    (users-close!)
@@ -226,7 +231,8 @@
 	    (hop-verb 1
 		      ": "
 		      (socket-hostname sock) " [" (current-date) "]\n"))
-	 (with-access::http-request req (method scheme host port path proxyp)
+	 (with-access::http-request req (method scheme host port path proxyp
+						user)
 	    (hop-verb 2
 		      (if proxyp
 			  (hop-color req req " EXEC.prox")
@@ -240,7 +246,10 @@
 			  "")
 		      "/" (hop-max-reply-thread) "): "
 		      method " "
-		      scheme "://" host ":" port (string-for-read path)
+		      scheme "://"
+		      (user-name user)
+		      "@"
+		      host ":" port (string-for-read path)
 		      "\n"))
 	 (if reply-pool
 	     (pool-thread-execute
@@ -286,8 +295,7 @@
 		      ((&warning? e)
 		       (warning-notify (evmeaning-annotate-exception! e))))
 		   (unless (&io-sigpipe-error? e)
-		      (let ((resp ((or (hop-http-response-error)
- 				       http-response-error)
+		      (let ((resp ((or (hop-http-response-error) http-error)
 				   e req)))
 			 (http-response resp sock))))))
 	 (socket-close sock)

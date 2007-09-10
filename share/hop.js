@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Sep  3 11:39:44 2007 (serrano)                */
+/*    Last change :  Mon Sep 10 20:13:57 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -140,6 +140,7 @@ function hop_node_eval( node, text ) {
       }
    } catch( e ) {
       alert( e );
+      throw e;
    }
 
    return res;
@@ -308,10 +309,9 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 	       case 200:
 		  if( hop_is_http_json( http ) ) {
 		     try {
-			var e = eval( http.responseText );
 			return success( eval( http.responseText ), http );
 		     } catch( e ) {
-			alert( "*** Hop JSON error: " + e );
+			alert( "*** Hop JSON error: " + http.responseText );
 		     }
 		  } else {
 		     return success( http.responseText, http );
@@ -354,6 +354,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 		     }
 		  }
 	    }
+	 } catch( e ) {
+	    failure( http );
 	 } finally {
 	    if( hop_anim_vis != false ) {
 	       node_style_set( hop_anim_vis, "display", "none" );
@@ -378,7 +380,12 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 		      false );
       }
    } catch( e ) {
-      alert( "*** HOP send error: " + e );
+      if( hop_anim_vis != false ) {
+	 node_style_set( hop_anim_vis, "display", "none" );
+      }
+      hop_anim_service = false;
+      
+      throw e;
    }
 
    return http;
@@ -418,28 +425,13 @@ function hop( svc, success, failure, sync ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_event_hander_set ...                                         */
+/*    trace ...                                                        */
 /*---------------------------------------------------------------------*/
-function hop_event_handler_set( svc, evt, success, failure ) {
-   var req = hop_make_xml_http_request();
-   
-   var handler = function ( html, http ) {
-      http.eventName = evt;
-      if( (http.status == 200) && hop_is_http_json( http ) ) {
-	 http.eventValue = eval( http.responseText );
-      }
-      var res = success( http );
-
-      if( res ) {
-	 hop_event_handler_set( svc, evt, success, failure );
-      }
-			
-      return res;
-   }
-
-   return hop_send_request( svc( evt ), false,
-			    handler, failure,
-			    false, [] );
+function trace() {
+   var svc = hop_service_url( "/hop/trace",
+			      [ "args" ],
+			      new Array( sc_vector2list( arguments ) ) );
+   hop_send_request( svc, true, function() {}, function() {}, false, [] );
 }
 
 /*---------------------------------------------------------------------*/
@@ -798,7 +790,7 @@ function hop_serialize( item ) {
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize( item ) {
    var tname = typeof item;
-   
+
    if( (item instanceof String) || (tname == "string") ) {
       if( sc_isSymbol_immutable( item ) ) {
 	 return "'"
@@ -842,10 +834,10 @@ function hop_bigloo_serialize( item ) {
    if( (HTMLSelectElement != undefined) && (item instanceof HTMLSelectElement) )
       return hop_bigloo_serialize( item.value );
 
-   alert( "*** Hop Error, Can't serialize element: `" + item +
-	  "' (" + tname + "). Ignoring value." );
-   
-   return hop_bigloo_serialize( false );
+   if( (item.callee != undefined) && (item.length > -1) )
+      return hop_serialize_array( item );
+
+   return hop_bigloo_serialize( "#<" + tname + ">" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -1470,41 +1462,281 @@ function hop_history_add( history, id, val ) {
    }
 }
 
-/* {*---------------------------------------------------------------------*} */
-/* {*    hopBehaviour class ...                                           *} */
-/* {*---------------------------------------------------------------------*} */
-/* var hopBehaviour = {                                                */
-/*     behaviours: {},                                                 */
-/*                                                                     */
-/*     register: function( className, func ) {                         */
-/* 	hopBehaviour.behaviours[ className ] = func;                   */
-/*     },                                                              */
-/*                                                                     */
-/*     plug: function() {                                              */
-/* 	var all = hopBehaviour.behaviours;                             */
-/*                                                                     */
-/* 	for( var name in all ) {                                       */
-/* 	    var list = document.getElementsByClass( name );            */
-/* 	                                                               */
-/* 	    for( var i in list ) {                                     */
-/* 		all[ name ]( list[ i ] );                              */
-/* 	    }                                                          */
-/* 	}                                                              */
-/*     },                                                              */
-/*                                                                     */
-/*     start: function() {                                             */
-/* 	var oldonload = window.onload;                                 */
-/*                                                                     */
-/* 	if( typeof window.onload != 'function' ) {                     */
-/* 	    window.onload = hopBehaviour.plug;                         */
-/* 	} else {                                                       */
-/* 	    window.onload = function() {                               */
-/* 		oldonload();                                           */
-/* 		hopBehaviour.plug();                                   */
-/* 	    }                                                          */
-/* 	}                                                              */
-/*     }                                                               */
-/* };                                                                  */
-/*                                                                     */
-/* hopBehaviour.start();                                               */
-/*                                                                     */
+/*---------------------------------------------------------------------*/
+/*    hop_servevt_id ...                                               */
+/*---------------------------------------------------------------------*/
+var hop_servevt_id = "__hop_serevt_proxy";
+
+/*---------------------------------------------------------------------*/
+/*    HopServerEvent ...                                               */
+/*---------------------------------------------------------------------*/
+function HopServerEvent( name, text, value ) {
+   var o = new Object();
+   o.isStopped = false;
+   o.name = name;
+   o.value = value;
+   o.responseText = text;
+   
+   return o;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_servevt_proxy ...                                            */
+/*---------------------------------------------------------------------*/
+var hop_servevt_proxy = false;
+
+/*---------------------------------------------------------------------*/
+/*    hop_servevt_table ...                                            */
+/*---------------------------------------------------------------------*/
+var hop_servevt_table = {};
+
+/*---------------------------------------------------------------------*/
+/*    start_servevt_ajax_proxy ...                                     */
+/*---------------------------------------------------------------------*/
+function start_servevt_ajax_proxy( key, obj ) {
+   if( !hop_servevt_proxy.httpreq ) {
+      var register = function( id ) {
+	 var svc = "/hop/server-event-register?event=" + id
+	    + "&key=" + key "&flash=false";
+
+	 var success = function( val, http ) {
+	    // re-register the event as soon as possible
+	    register( id );
+	    // invoke the user handler
+	    hop_servevt_onevent( id,
+				 http.responseText,
+				 val,
+				 hop_is_http_json( http ) );
+	 }
+
+	 var failure = function( http ) {
+	    hop_servevt_onclose();
+	 }
+	    
+	 hop_servevt_proxy.httpreq = hop_send_request( svc,
+						       // synchronous call
+						       false,
+						       // success callback
+						       success,
+						       // failure callback
+						       failure,
+						       // no anim
+						       false,
+						       // no environment
+						       [] );
+      }
+
+      hop_servevt_proxy.register = register;
+      hop_servevt_proxy.close = function() { hop_servevt_proxy.http.abort() };
+
+      // scan all the previously registered events an register on the server
+      for( var p in hop_servevt_table ) {
+	 if( hop_servevt_table[ p ].hop_servevt ) {
+	    hop_servevt_proxy.register( p );
+	 }
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    start_servevt_flash_proxy ...                                    */
+/*---------------------------------------------------------------------*/
+function start_servevt_flash_proxy( key, port ) {
+   var object_proxy = function() {
+      return "<object id='" + hop_servevt_id + "' class='hop-servevt-proxy'" +
+      " style='visibility: hidden; position: fixed; top: 0; right: 0'" +
+      " width='1px' height='1px' title='hop-servevt' classId='HopServevt.swf'>" +
+      "<param name='movie' value='" + hop_share_directory() + "/flash/HopServevt.swf'/>" +
+      "<param name='allowScriptAccess' value='sameDomain'/>" +
+      "<param name='FlashVars' value='init=hop_servevt_proxy_flash_init&port=" +
+      port + "&key=" + key +
+      "&onevent=hop_servevt_onevent&onclose=hop_servevt_onclose'/>" +
+      "</object>";
+   }
+   
+   var embed_proxy = function() {
+      return "<embed id='" + hop_servevt_id + "' class='hop-servevt-proxy'" +
+      " width='1px' height='1px'" +
+      " src='" + hop_share_directory() + "/flash/HopServevt.swf'" +
+      " type='application/x-shockwave-flash'" +
+      " name='__hop_servevt_proxy'" +
+      " swliveconnect='true'" +
+      " allowScriptAccess='sameDomain'" +
+      " FlashVars='init=hop_servevt_proxy_flash_init&port=" +
+      port + "&key=" + key +
+      "&onevent=hop_servevt_onevent&onclose=hop_servevt_onclose'/>"
+   }
+
+   var proxy = document.createElement( "div" );
+   node_style_set( proxy, "visibility", "hidden" );
+   node_style_set( proxy, "position", "fixed" );
+   node_style_set( proxy, "top", "0" );
+   node_style_set( proxy, "right", "0" );
+   proxy.innerHTML = hop_msiep() ? object_proxy() : embed_proxy();
+   
+   document.body.appendChild( proxy );
+   document.getElementById( hop_servevt_id ).key = key;
+
+   return proxy;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_servevt_proxy_flash_init ...                                 */
+/*    -------------------------------------------------------------    */
+/*    This function is called by Flash when the ActionScript           */
+/*    installation completes.                                          */
+/*    -------------------------------------------------------------    */
+/*    When the flash init completes, we ask the Hop server its         */
+/*    current server-event port number. When we get this number,       */
+/*    we open the flash socket. Then, events are ready to be           */
+/*    received.                                                        */
+/*---------------------------------------------------------------------*/
+function hop_servevt_proxy_flash_init() {
+   // we are done, we get the proxy now
+   hop_servevt_proxy = document.getElementById( hop_servevt_id );
+
+   var register = function( id ) {
+      var svc = "/hop/server-event-register?event=" + id
+         + "&key=" + hop_servevt_proxy.key + "&flash=true";
+      
+      var failure = function( e ) {
+	 hop_servevt_onclose();
+      }
+
+      hop_servevt_proxy.httpreq = hop_send_request( svc,
+						    // synchronous call
+						    false,
+						    // success callback
+						    function() { },
+						    // failure callback
+						    failure,
+						    // no anim
+						    false,
+						    // no environment
+						    [] );
+   }
+
+   hop_servevt_proxy.register = register;
+   
+   // scan all the previously registered events an register on the server
+   for( var p in hop_servevt_table ) {
+      if( hop_servevt_table[ p ].hop_servevt ) {
+	 register( p );
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    start_servevt_proxy ...                                          */
+/*---------------------------------------------------------------------*/
+function start_servevt_proxy( obj ) {
+   hop_servevt_proxy = new Object();
+   hop_servevt_proxy.register = function( x ) {};
+
+   hop_send_request( "/hop/server-event-info",
+		     // synchronous call
+		     false,
+		     // success callback
+		     function( v ) {
+			var port = v.car;
+			var key = v.cdr;
+
+			if( port ) {
+			   start_servevt_flash_proxy( key, port );
+			} else {
+			   start_servevt_ajax_proxy( key, obj );
+			}
+		     },
+		     // failure callback
+		     function( v ) {
+			throw new Error( "Cannot get server event port number" );
+		     },
+		     // run the anim during the call
+		     true,
+		     // no environment
+		     [] );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_add_server_listener ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_add_server_listener( obj, proc ) {
+   if( typeof proc != "function" ) {
+      throw new Error( "Illegal procedure: " + proc );
+   }
+   
+   hop_servevt_table[ obj ] = sc_cons( proc, hop_servevt_table[ obj ] );
+   hop_servevt_table[ obj ].hop_servevt = true;
+
+   if( !hop_servevt_proxy ) {
+      start_servevt_proxy( obj );
+   } else {
+      hop_servevt_proxy.register( obj );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_servevt_onevent ...                                          */
+/*    -------------------------------------------------------------    */
+/*    This function is invoked by Flash on reception of an event.      */
+/*---------------------------------------------------------------------*/
+function hop_servevt_onevent( id, text, value, json ) {
+   var evt = new HopServerEvent( id, text, json ? eval( value ) : value );
+   var p = hop_servevt_table[ id ];
+
+   while( sc_isPair( p ) ) {
+      p.car( evt );
+      if( evt.isStopped ) break;
+      p = p.cdr;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_servevt_onclose ...                                          */
+/*    -------------------------------------------------------------    */
+/*    This function is invoked by Flash on connection close.           */
+/*---------------------------------------------------------------------*/
+function hop_servevt_onclose() {
+   for( id in hop_servevt_table ) {
+      // allocate a new event in order to hide handler side effects
+      var evt = new HopServerEvent( id, false, false );
+      var p = hop_servevt_table[ id ];
+
+      while( sc_isPair( p ) ) {
+	 p.car( evt );
+	 if( evt.isStopped ) break;
+	 p = p.cdr;
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_remove_server_listener ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_remove_server_listener( obj, proc ) {
+   var p = hop_servevt_table[ id ];
+
+   if( sc_isPair( p ) ) {
+      if( p.car === proc ) {
+	 hop_servevt_table[ id ] = p.cdr;
+      } else {
+	 while( sc_isPair( p.cdr ) ) {
+	    if( p.cdr.car === proc ) {
+	       p.cdr = p.cdr.cdr;
+	       break;
+	    } else {
+	       p = p.cdr;
+	    }
+	 }
+      }
+   }
+
+   // try to close the socket
+   for( id in hop_servevt_table ) {
+      if( sc_isPair( hop_servevt_table[ id ] ) )
+	 return;
+   }
+
+   // no event is still expected, close the connection
+   hop_servevt_proxy.close();
+}

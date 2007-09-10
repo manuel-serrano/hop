@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jul  3 20:42:18 2007 (serrano)                */
+#*    Last change :  Mon Sep 10 20:24:24 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -21,13 +21,16 @@ jfile=bgljfile
 btags=bgltags
 bdepend=bgldepend
 cc=
+flashcc=mtasc
+fflags="-main -version 9 -cp std8 -swf"
 backend=native
 unzip=unzip
 jar="jar cfm"
 
 bcflags="-fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
-bcflagsdbg="-g -O2 -cg"
+bcflagsdbg="-copt -g"
+bcflagsdbg2="-g -O2 -cg"
 bcflagsbmem="-g2 -O2"
 bcflagsopt="-unsafe -O3"
 
@@ -153,7 +156,12 @@ while : ; do
       ccflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
     --debug)
+      debug=yes;
       bcflags="$bcflags $bcflagsdbg";;
+
+    --debug2)
+      debug=yes;
+      bcflags="$bcflags $bcflagsdbg2";;
 
     --bmem)
       bcflags="$bcflags $bcflagsbmem";;
@@ -360,6 +368,9 @@ fi
 bigloolibdir=`$bigloo -q -eval "(begin (print *default-lib-dir*) (exit 0))"`
 if [ "$ccflags " = " " ]; then
   ccflags=`grep '^CFLAGS=' $bigloolibdir/Makefile.config | sed 's/^[A-Z]*=//'`
+  if [ "$debug " = "yes " ]; then
+    ccflags=`echo $ccflags | sed 's/[-]O[0-9]//'`
+  fi
   ccflags="$ccflags -I $bigloolibdir"
 fi
 
@@ -430,10 +441,12 @@ cat $mkmf.in \
           -e "s|@BTAGS@|$btags|" \
           -e "s|@BDEPEND@|$bdepend|" \
           -e "s|@CC@|$cc|" \
+          -e "s|@FLASHCC@|$flashcc|" \
           -e "s|@UNZIP@|$unzip|" \
           -e "s|@JAR@|$jar|" \
           -e "s|@BCFLAGS@|$bcflags|" \
           -e "s|@BLFLAGS@|$blflags|" \
+          -e "s|@FFLAGS@|$fflags|" \
           -e "s|@JVMZIPLIBS@|$jvmziplibs|" \
           -e "s|@JVMINITS@|$jvminits|" \
           -e "s|@CCFLAGS@|$ccflags|" \

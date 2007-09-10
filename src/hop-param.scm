@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Jul 15 13:59:05 2007 (serrano)                */
+;*    Last change :  Sat Sep  8 06:57:34 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -54,6 +54,12 @@
 	    
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
+
+	    (hop-server-event-port::int)
+	    (hop-server-event-port-set! ::int)
+	    
+	    (hop-enable-server-event::bool)
+	    (hop-enable-server-event-set! ::bool)
 	    
 	    (hop-https-protocol::symbol)
 	    (hop-https-protocol-set! ::symbol)
@@ -164,6 +170,21 @@
 
 (define-parameter hop-https-protocol
    'tlsv1)
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-event-port ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-event-port
+   (hop-port)
+   (lambda (v)
+      (if (<fx v 1024)
+	  (error 'hop-server-event-port-set!
+		 "Server event ports must be greater than 1023"
+		 v)
+	  v)))
+
+(define-parameter hop-enable-server-event
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-webdav ...                                            */

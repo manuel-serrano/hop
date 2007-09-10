@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Tue Sep  4 08:51:06 2007 (serrano)                */
+;*    Last change :  Thu Sep  6 07:56:52 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -117,6 +117,14 @@
 ;*    browse ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (browse req window-id label base path predicate multiselect onselect)
+   (define (proc->string proc)
+      (cond
+	 ((string? proc)
+	  proc)
+	 ((xml-tilde? proc)
+	  (xml-tilde-body proc))
+	 (else
+	  "")))
    (let ((tree-id (xml-make-id 'TREE))
 	 (filt (lambda (p)
 		  (and (authorized-path? req p) (predicate p)))))
@@ -131,13 +139,7 @@
 		  :open (substring-at? path dir 0)
 		  :onselect (format "hop_iwindow_close( '~a' ); ~a"
 				    window-id
-				    (cond
-				       ((string? onselect)
-					onselect)
-				       ((xml-tilde? onselect)
-					(xml-tilde-body onselect))
-				       (else
-					"")))
+				    (proc->string onselect))
 		  :multiselect multiselect
 		  (<TRHEAD>
 		     (if label label (if root dir (basename dir))))
@@ -159,7 +161,8 @@
 				       window-id)
 	       "Cancel")
 	    (<BUTTON> :onclick
-	       (format "document.getElementById( '~a' ).onselect()" tree-id)
+	       (format "document.getElementById( '~a' ).onselect()"
+		       tree-id)
 	       "Select")))))
    
 ;*---------------------------------------------------------------------*/
@@ -180,8 +183,9 @@
 ;*---------------------------------------------------------------------*/
 (define (make-filebrowser-service predicate)
    (service (ident wident value path multi)
-      (let ((onselect (format "var o=document.getElementById( '~a' ); o.value = this.selection.value; o.onselect();" ident)))
-	 (browse (current-request) wident #f value path predicate multi onselect))))
+      (let ((onselect (format "var o=document.getElementById( '~a' ); o.value=hop_tree_selection(o); o.onselect();" ident)))
+	 (browse (current-request)
+		 wident #f value path predicate multi onselect))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-default-filebrowser-service ...                              */
@@ -298,7 +302,7 @@
 		   (substring body 0 (-fx len 2))
 		   body))
 	  (svc (service (ident wident label value path multi)
-		  (let ((onselect (format "~a( this.value )" hdl)))
+		  (let ((onselect (format "~a(hop_tree_selection(this))" hdl)))
 		     (browse (current-request) wident label value path
 			     filter multiselect onselect)))))
       (format "hop_filebrowse( ~a, '~a', '~a', ~a, '~a', '~a', ~a, 0, 0, ~a, ~a )"

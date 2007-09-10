@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Jul 15 16:14:57 2007 (serrano)                */
+;*    Last change :  Thu Sep  6 17:30:16 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -85,13 +85,12 @@
 	      (headerf::procedure (default (lambda (x) x)))
 	      bodyf::procedure)
 
-	   (class http-response-authentication::%http-response
-	      (server::bstring (default (hop-server-name)))
-	      (body read-only (default #f)))
-
 	   (abstract-class %http-response-local::%http-response
 	      (server::bstring (default (hop-server-name)))
  	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
+
+	   (class http-response-authentication::%http-response-local
+	      (body read-only (default #f)))
 
 	   (class http-response-hop::%http-response-local
 	      (backend read-only (default (hop-xml-backend)))
@@ -111,6 +110,8 @@
 	   
 	   (class http-response-string::%http-response-local
 	      (body::bstring read-only (default "")))
+
+	   (class http-response-error::http-response-string)
 
 	   (class http-response-cgi::%http-response-local
 	      (cgibin::bstring read-only))

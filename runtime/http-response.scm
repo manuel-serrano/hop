@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Aug 14 08:17:47 2007 (serrano)                */
+;*    Last change :  Thu Sep  6 18:02:34 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -46,12 +46,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-authentication socket)
    (with-trace 3 'http-response::http-response-authentication
-      (with-access::http-response-authentication r (header content-type body server timeout request)
+      (with-access::http-response-authentication r (header content-type body server timeout request start-line)
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! p timeout))
-	    (http-write-line p "HTTP/1.0 401 Unauthorized")
+	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: " connection)
 	    (when content-type

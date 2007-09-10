@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun Aug 12 10:54:45 2007 (serrano)                */
+;*    Last change :  Thu Sep  6 17:18:53 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -94,7 +94,7 @@
    (let loop ((m req)
 	      (filters (hop-filters)))
       (if (null? filters)
-	  (with-access::http-request m (content-length method path)
+	  (with-access::http-request m (content-length method path host user)
 	     (let* ((n (if (hop-enable-proxing)
 			   (instantiate::http-response-remote
 			      (scheme (http-request-scheme m))

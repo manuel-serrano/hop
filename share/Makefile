@@ -3,17 +3,25 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Jul 14 17:06:11 2007 (serrano)                */
+#*    Last change :  Mon Sep 10 20:31:07 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
+.PHONY: do 
+
+do: build
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../etc/Makefile.hopconfig
-include ../etc/Makefile.version
+-include ../etc/Makefile.hopconfig
+-include ../etc/Makefile.version
+
+#*---------------------------------------------------------------------*/
+#*    FLASHOBJS                                                        */
+#*---------------------------------------------------------------------*/
+FLASHOBJS	= flash/HopServevt.swf
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
@@ -33,7 +41,13 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
                   hopscheme.js \
                   hop-debug.js hop-debug.css \
 		  hop-sound.js hop-sound.scm \
-                  icons buttons editor flash Makefile
+                  icons buttons editor flash Makefile \
+		  $(FLASHOBJS) $(FLASHOBJS:%.swf=%.as) 
+
+#*---------------------------------------------------------------------*/
+#*    build                                                            */
+#*---------------------------------------------------------------------*/
+build: $(FLASHOBJS)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -169,3 +183,5 @@ uninstall:
 	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/editor && \
 	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/flash
 
+flash/%.swf: flash/%.as
+	$(FLASHCC) $(FFLAGS) $@ $<

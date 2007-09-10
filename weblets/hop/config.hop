@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Fri Aug 10 15:15:26 2007 (serrano)                */
+;*    Last change :  Thu Sep  6 11:59:33 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop configuration                                                */
@@ -30,7 +30,7 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-builtin-weblets
    '("wizard" "epassword" "hz" "doc" "info" "webfilter"
-     "hopsh" "test" "dashboard" "wiki"))
+     "hopsh" "test" "dashboard" "wiki" "trace"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-view-by-category? ...                                        */

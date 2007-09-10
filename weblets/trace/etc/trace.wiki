@@ -1,0 +1,41 @@
+<doc> TRACE -- The simple Hop server-side tracing facility
+
+== Description ==
+
+This simple weblet displays client messages on the server console. It may
+be used for simplistic debugging tasks.
+
+== Synopsis ==
+
+=== Services ===
+
+TRACE defines one service:
+
+  - ++[[trace]]++: This is the only entry point. This function displays on
+ the server console the arguments it receives from the client.
+
+=== Client ===
+
+  (trace args ...)
+
+== Client Definitions ==
+
+=== ++(trace args ...)++ ===
+<procedure> trace
+
+<arguments>
+^  arguments  ^   type   ^   description           ^
+| args        |    _     | Optionals arguments.    |
+</arguments>
+
+The function ++trace++ invokes the ++trace++ service which display its
+arguments on the server console.
+</function>
+
+== See also ==
+
+<see-also>trace</see-also>
+
+
+</doc>
+

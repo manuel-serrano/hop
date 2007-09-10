@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Fri May 25 08:29:38 2007 (serrano)                */
+/*    Last change :  Thu Sep  6 13:23:43 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -15,7 +15,7 @@
 function hop_bigloo_serialize_pair( l ) {
    var res = "";
    var len = 0;
-   
+
    while (sc_isPair( l ) ) {
       res += hop_bigloo_serialize( l.car );
       l = l.cdr;

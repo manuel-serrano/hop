@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Wed Jun 27 05:44:17 2007 (serrano)                */
+;*    Last change :  Thu Sep  6 17:27:34 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -33,7 +33,8 @@
 	    (user-authorized-service?::bool ::user ::symbol)
 	    (authorized-service?::bool ::http-request ::symbol)
 	    (user-access-denied ::http-request #!optional message)
-	    (user-service-denied ::http-request ::user ::symbol)))
+	    (user-service-denied ::http-request ::user ::symbol)
+	    (proxy-denied ::http-request ::user ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *user-mutex* ...                                                 */
@@ -303,6 +304,7 @@
 (define (user-access-denied req #!optional message)
    (instantiate::http-response-authentication
       (header '((WWW-Authenticate: . "Basic realm=\"Hop authentication\"")))
+      (start-line "HTTP/1.0 401 Unauthorized")
       (request req)
       (body (cond
 	       (message
@@ -321,6 +323,21 @@
 (define (user-service-denied req user svc)
    (instantiate::http-response-authentication
       (header '((WWW-Authenticate: . "Basic realm=\"Hop authentication\"")))
+      (start-line "HTTP/1.0 401 Unauthorized")
       (request req)
       (body (format "User `~a' is not allowed to execute service `~a'."
 		    (user-name user) svc))))
+
+;*---------------------------------------------------------------------*/
+;*    proxy-denied ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (proxy-denied req user host)
+   (instantiate::http-response-authentication
+      (request req)
+      (start-line "HTTP/1.0 407 Proxy Authentication Required")
+      (header `((Proxy-Authenticate:
+		 .
+		 ,(format "Basic realm=\"Hop proxy (~a) authentication\""
+			  host))))
+      (body (format "Protected Area! Authentication required for user `~a'."
+		    (user-name user)))))
