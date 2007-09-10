@@ -443,6 +443,8 @@ var hop_event_mouse_x = undefined;
 var hop_event_mouse_y = undefined;
 var hop_event_mouse_button = undefined;
 var hop_event_key_code = undefined;
+function hop_event_value = function( evt ) { return evt.value; }
+function hop_event_reponse_text = function( evt ) { return evt.responseText; }
 
 if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
    hop_event_mouse_x = function hop_event_mouse_x( event ) {
