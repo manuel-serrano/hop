@@ -1,0 +1,268 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-audio.hss                     */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Tue Aug 28 06:23:39 2007                          */
+/*    Last change :  Wed Sep 12 08:29:40 2007 (serrano)                */
+/*    Copyright   :  2007 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Hop Audio's cascade style sheet.                                 */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module hopaudio_hss)
+
+/*---------------------------------------------------------------------*/
+/*    hopaudio-gui-radius                                              */
+/*---------------------------------------------------------------------*/
+$(define hopaudio-background "#f7f3f0")
+$(define hopaudio-gui-radius "-moz-border-radius: 0.2em")
+$(define hopaudio-border-color "#999")
+$(define hopaudio-button-border "border: 1px solid #777; border-top: 1px solid #aaa; border-left: 1px solid #aaa; margin-left: 2px")
+$(define hopaudio-button-background "#eee")
+$(define hopaudio-button-radius hopaudio-gui-radius)
+/* $(define hopaudio-button-radius "margin: 0")                        */
+/* $(define hopaudio-button-border "border-left: 1px solid white;      */
+/*   border-top: 1px solid white;                                      */
+/*   border-right: 1px solid #333;                                     */
+/*   border-bottom: 1px solid #333")                                   */
+/* $(define hopaudio-button-background "#ccc")                         */
+$(define hopaudio-font "Bitstream Vera Sans")
+$(define hopaudio-monospace "Bitstream Vera Sans Mono, Andale Mono, monospace")
+$(define hopaudio-monospace "Bitstream Vera Sans Mono, Andale Mono, monospace")
+$(define hopaudio-width 23)
+$(define hopaudio-height 90)
+
+/*---------------------------------------------------------------------*/
+/*    hop-audio                                                        */
+/*---------------------------------------------------------------------*/
+object.hop-audio {
+  visibility: hidden;
+  position: fixed;
+  top: 0;
+  right: 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    <AUDIO>                                                          */
+/*---------------------------------------------------------------------*/
+$(hop-hss-type! "audio" "div.hop-audio")
+
+audio {
+  font-family: $hopaudio-font;
+  font-size: 11pt;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop-audio-controls                                               */
+/*---------------------------------------------------------------------*/
+audio div.hop-audio-controls {
+  background: $hopaudio-background;
+  padding: 4px;
+  width: 100%;
+  width: $(format "~aem" hopaudio-width);
+  height: $(format "~apx" hopaudio-height);
+  border: 1px solid $hopaudio-border-color;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop-audio-panel                                                  */
+/*---------------------------------------------------------------------*/
+audio table.hop-audio-panel {
+  color: #13b;
+  padding: 0;
+  margin: 0;
+  border-collapse: collapse;
+}
+
+audio table.hop-audio-panel td.hop-audio-panel {
+  vertical-align: top;
+}
+
+audio div.hop-audio-panel2 {
+  padding-left: 4px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop-audio-button                                                 */
+/*---------------------------------------------------------------------*/
+audio div.hop-audio-buttons {
+  clear: both;
+  padding-top: 1ex;
+  width: 100%;
+}
+
+audio img.hop-audio-button {
+  background: $hopaudio-button-background;
+  width: 14px;
+  height: 14px;
+  padding: 1px 4px 1px 4px;
+  cursor: default;
+  $hopaudio-button-border;
+  $hopaudio-button-radius;
+}
+
+audio img.hop-audio-button:hover {
+  background: $(color-lighter hopaudio-button-background);
+}
+
+audio img.hop-audio-button-playlist {
+  margin-left: 15px;
+}
+
+audio img.hop-audio-button-mute {
+  margin-left: 20px;
+}
+
+audio img.hop-audio-button-prefs {
+  margin-left: 50px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop-audio-separator ...                                          */
+/*---------------------------------------------------------------------*/
+audio div.hop-audio-separator {
+  border-top: 1px solid $hopaudio-border-color;
+  border-bottom: 1px solid white;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop-audio-info-status                                            */
+/*---------------------------------------------------------------------*/
+audio div.hop-audio-info-status {
+  background: #fff;
+  width: 6em;
+  height: 6ex;
+  float: left;
+  border: 1px solid $hopaudio-border-color;
+  margin-bottom: 1ex;
+  $hopaudio-gui-radius;
+}
+
+audio img.hop-audio-info-status-img {
+  padding-left: 8px;
+  padding-right: 4px;
+}
+
+audio span.hop-audio-info-status-position {
+  color: #ddd;
+  font-family: $hopaudio-monospace;
+}
+
+audio span.hop-audio-info-status-position-on-play {
+  color: #000;
+  font-family: $hopaudio-monospace;
+}
+
+audio div.hop-audio-info-status-track {
+  font-size: 80%;
+  overflow: hidden;
+  font-family: $hopaudio-monospace;
+}
+
+audio span.hop-audio-info-status-track-label {
+  font-size: 80%;
+  margin-right: 1em;
+  margin-left: 2px;
+}
+
+audio span.hop-audio-info-status-track {
+  color: #ddd;
+}
+
+audio span.hop-audio-info-status-track-on-play {
+  color: #000;
+}
+
+audio div.hop-audio-info-status-length {
+  font-size: 80%;
+  font-family: $hopaudio-monospace;
+}
+
+audio span.hop-audio-info-status-length {
+  font-size: 80%;
+  color: #000;
+  margin-left: 2px;
+}
+
+audio span.hop-audio-info-status-length-label {
+  font-size: 80%;
+  margin-right: 0.5em;
+  margin-left: 2px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop-audio-panel-metadata                                         */
+/*---------------------------------------------------------------------*/
+audio div.hop-audio-panel-metadata {
+  background: #fff;
+  width: 16em;
+  height: 4ex;
+  float: left;
+  border: 1px solid $hopaudio-border-color;
+  overflow: hidden;
+  color: black;
+  $hopaudio-gui-radius;
+}
+
+div.hop-audio-panel-metadata-song {
+  font-size: 80%;
+  margin-left: 4px;
+  margin-right: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+table.hop-audio-panel-metadata {
+  font-size: 60%;
+  width: 100%;
+}
+
+table.hop-audio-panel-metadata td div {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+td.hop-audio-panel-metadata-artist {
+  text-align: left;
+}
+
+td.hop-audio-panel-metadata-album {
+  text-align: center;
+}
+
+td.hop-audio-panel-metadata-year {
+  text-align: right;
+  width: 3em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop-audio-panel-sound ...                                        */
+/*---------------------------------------------------------------------*/
+audio div.hop-audio-panel-sound {
+  float: left;
+}
+
+audio div.hop-audio-panel-sound th {
+  font-size: 65%;
+  vertical-align: top;
+  font-weight: 100;
+  color: black;
+}
+
+audio table.hop-audio-panel-volume {
+  width: 8em;
+}
+
+audio table.hop-audio-panel-pan {
+  width: 4em;
+}
+
+table.hop-audio-panel-pan div.lineleft {
+  background: #ccc;
+  border-left: 1px solid #aaa;
+  border-top: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+}

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep 10 16:46:55 2007 (serrano)                */
+;*    Last change :  Wed Sep 12 05:25:24 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -74,8 +74,8 @@
 	     (if (hop-enable-https)
 		 (format "https (~a):" (hop-https-protocol)) "http:")
 	     (hop-port)
-	     (if (hop-enable-server-event)
-		 (format ", server-events: ~a" (hop-server-event-port))
+	     (if (hop-enable-fast-server-event)
+		 (format ", server-events:~a" (hop-fast-server-event-port))
 		 "")
 	     "\n")
    ;; install the builtin filters
@@ -83,8 +83,6 @@
    (hop-filter-add-always-first! autoload-filter)
    ;; start the job scheduler
    (job-start-scheduler!)
-   ;; hop server->client events initialization
-   (hop-event-init! (when (hop-enable-server-event) (hop-server-event-port)))
    ;; close filters and users registration before starting
    (hop-filters-close!)
    (users-close!)
@@ -103,20 +101,53 @@
 		     (error 'hop
 			    "Illegal scheduling policy"
 			    (hop-scheduling)))))
-	     (s (if (hop-enable-https)
-		    (cond-expand
-		       (enable-ssl
-			(let ((cert (read-certificate "/etc/ssl/certs/hop.pem"))
-			      (pkey (read-private-key "/etc/ssl/private/hop.pem")))
-			   (make-ssl-server-socket (hop-port)
-						   :protocol (hop-https-protocol)
-						   :cert cert :pkey pkey)))
-		       (else
-			(error 'hop
-			       "SSL not supported by this version of Hop"
-			       #f)))
-		    (make-server-socket (hop-port)))))
-	 (hop-main-loop s ap rp))))
+	     (serv (hop-server-socket)))
+	 ;; when needed, start a loop for server events
+	 (hop-server-event-loop ap rp)
+	 ;; start the main loop
+	 (hop-main-loop serv ap rp))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-socket ...                                            */
+;*    -------------------------------------------------------------    */
+;*    Create the Hop server socket according to user options.          */
+;*---------------------------------------------------------------------*/
+(define (hop-server-socket)
+   (if (hop-enable-https)
+       (cond-expand
+	  (enable-ssl
+	   (let ((cert (read-certificate "/etc/ssl/certs/hop.pem"))
+		 (pkey (read-private-key "/etc/ssl/private/hop.pem")))
+	      (make-ssl-server-socket (hop-port)
+				      :protocol (hop-https-protocol)
+				      :cert cert :pkey pkey)))
+	  (else
+	   (error 'hop "SSL not supported by this version of Hop" #f)))
+       (make-server-socket (hop-port))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-event-loop ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hop-server-event-loop ap rp)
+   (when (hop-enable-fast-server-event)
+      (cond
+	 ((=fx (hop-fast-server-event-port) (hop-port))
+	  ;; will use the regular HOP port
+	  (hop-event-init! (hop-port)))
+	 ((=fx (pool-thread-available ap) 1)
+	  ;; disable fast event because no thread is available
+	  ;; and extra port is needed
+	  (hop-event-init! #f))
+	 (else
+	  ;; run in a separate thread
+	  (hop-event-init! (hop-fast-server-event-port))
+	  (let ((sv (make-server-socket (hop-fast-server-event-port))))
+	     (pool-thread-execute ap
+				  (lambda ()
+				     (hop-main-loop sv ap rp))
+				  (lambda (m)
+				     'persistent)
+				  0))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-main-loop ...                                                */
@@ -162,8 +193,7 @@
 		   "/" (hop-max-reply-thread)
 		   ")")
 	 (hop-verb 1
-		   ": "
-		   (socket-hostname sock) " [" (current-date) "]\n")
+		   ": " (socket-hostname sock) " [" (current-date) "]\n")
 	 (handle-connection
 	  sock accept-pool reply-pool (hop-read-timeout) n 'connect))))
 

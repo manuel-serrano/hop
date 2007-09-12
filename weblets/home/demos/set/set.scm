@@ -114,7 +114,7 @@
    (set! *game-state* 'ready))
 
 (define (event-handler event)
-   (let ((response (with-input-from-string event.responseText
+   (let ((response (with-input-from-string (event-response-text event)
 		      (lambda () (read)))))
       ;(alert response)
       (if (pair? response)

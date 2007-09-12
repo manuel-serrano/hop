@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Sep  8 06:58:00 2007 (serrano)                */
+;*    Last change :  Wed Sep 12 05:26:44 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -106,16 +106,16 @@
 	 (section "Run")
 	 ((("-p" "--http-port") ?port (help (format "Port number [~s]" p)))
 	  (set! p (string->integer port)))
-	 ((("-e" "--server-event-port") ?port (help (format "Server event Port number [~s]" p)))
+	 (("--fast-server-event-port" ?port (help (format "Fast Server event Port number [~s]" p)))
 	  (set! ep (string->integer port)))
 	 ((("-s" "--enable-https") (help (format "Enable HTTPS")))
 	  (hop-enable-https-set! #t))
 	 (("--disable-https" (help (format "Disable HTTPS")))
 	  (hop-enable-https-set! #f))
-	 (("--enable-server-event" (help (format "Enable Server events")))
-	  (hop-enable-server-event-set! #t))
-	 (("--disable-server-event" (help (format "Disable Server events")))
-	  (hop-enable-server-event-set! #f))
+	 (("--enable-fast-server-event" (help (format "Enable fast Server events")))
+	  (hop-enable-fast-server-event-set! #t))
+	 (("--disable-fast-server-event" (help (format "Disable fast server events")))
+	  (hop-enable-fast-server-event-set! #f))
 	 ((("-i" "--session-id") ?session (help "Set session identifier"))
 	  (hop-session-set! (string->integer session)))
 	 (("--no-job-restore" (help "Don't restore jobs"))
@@ -183,10 +183,10 @@
 	 (set! ep p))
       ;; server event port
       (if (<fx ep 1024)
-	  (error 'server-event-port
-		 "Server event port must be greater than 1023. (See `-e' or `--disbale-server-event' options.)"
+	  (error 'fast-server-event-port
+		 "Server event port must be greater than 1023. (See `--fast-server-event-port' or `--disable-fast-server-event' options.)"
 		 ep)
-	  (hop-server-event-port-set! ep))
+	  (hop-fast-server-event-port-set! ep))
       (for-each (lambda (expr)
 		   (with-input-from-string expr
 		      (lambda ()

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Sep 10 20:31:07 2007 (serrano)                */
+#*    Last change :  Tue Sep 11 10:18:56 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -21,7 +21,7 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    FLASHOBJS                                                        */
 #*---------------------------------------------------------------------*/
-FLASHOBJS	= flash/HopServevt.swf
+FLASHOBJS	= flash/HopServevt.swf flash/HopAudio.swf
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
@@ -41,6 +41,7 @@ POPULATION	= hop-paned.css hop-sorttable.js hop-tree.js \
                   hopscheme.js \
                   hop-debug.js hop-debug.css \
 		  hop-sound.js hop-sound.scm \
+                  hop-audio.js hop-audio.hss \
                   icons buttons editor flash Makefile \
 		  $(FLASHOBJS) $(FLASHOBJS:%.swf=%.as) 
 
@@ -114,6 +115,10 @@ install:
                        $(DESTDIR)$(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop-sound.scm \
                        $(DESTDIR)$(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-audio.js \
+                       $(DESTDIR)$(HOPSHAREDIR) && \
+	install -m a+r $(BUILDSHAREDIR)/hop-audio.hss \
+                       $(DESTDIR)$(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/md5.js \
                        $(DESTDIR)$(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hopscheme.js \
@@ -126,8 +131,14 @@ install:
                        $(DESTDIR)$(HOPSHAREDIR) && \
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/icons && \
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/icons && \
-	install -m a+r $(BUILDSHAREDIR)/icons/* \
+	install -m a+r $(BUILDSHAREDIR)/icons/*.png \
                        $(DESTDIR)$(HOPSHAREDIR)/icons && \
+	install -m a+r $(BUILDSHAREDIR)/icons/*.gif \
+                       $(DESTDIR)$(HOPSHAREDIR)/icons && \
+	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/icons/hop-audio && \
+	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/icons/hop-audio && \
+	install -m a+r $(BUILDSHAREDIR)/icons/hop-audio/* \
+                       $(DESTDIR)$(HOPSHAREDIR)/icons/hop-audio && \
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/buttons && \
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/buttons && \
 	install -m a+r $(BUILDSHAREDIR)/buttons/* \
@@ -173,6 +184,10 @@ uninstall:
 	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/hop-fileselect.css && \
 	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/hop-debug.js && \
 	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/hop-debug.css && \
+	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/hop-sound.js && \
+	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/hop-sound.hss && \
+	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/hop-audio.js && \
+	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/hop-audio.hss && \
 	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/base64.js && \
 	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/hop-dashboard.js && \
 	/bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/hop-tooltip.js && \

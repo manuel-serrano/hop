@@ -17,7 +17,7 @@
 	 (bind-exit (return)
 	    (let ((p (open-input-string p)))
 	       (xml-parse p
-			  -1
+			  :procedure
 			  (lambda (markup attributes body)
 			     (when (eq? markup 'enclosure)
 				(return (cdr (assq 'url attributes))))))

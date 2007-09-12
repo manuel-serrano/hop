@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun Jul 15 16:02:37 2007 (serrano)                */
+;*    Last change :  Tue Sep 11 10:22:18 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -53,6 +53,7 @@
 	   __hop_hop-fileselector
 	   __hop_hop-sym
 	   __hop_hop-rss
+	   __hop_hop-audio
 	   __hop_event
 	   __hop_color
 	   __hop_prefs
@@ -65,7 +66,6 @@
    (eval   (export-all)
 	   
 	   (class xml-document)
-	   (class hop-event)
 	   (class job)
 
 	   (class user)

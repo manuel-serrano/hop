@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Sep  4 15:58:51 2007 (serrano)                */
+;*    Last change :  Wed Sep 12 08:21:44 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -23,7 +23,8 @@
 	    __hop_read-js
 	    __hop_css)
    
-   (export  (the-loading-file)
+   (export  (loading-file-set! ::obj)
+	    (the-loading-file)
 	    (the-loading-dir)
 	    
 	    (hop-load-afile ::bstring)
@@ -683,7 +684,6 @@
 ;*    *the-loading-file* ...                                           */
 ;*---------------------------------------------------------------------*/
 (define *the-loading-file* #f)
-(define *the-loading-dir* #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    the-loading-file ...                                             */
@@ -693,6 +693,15 @@
       (if (thread? t)
 	  (thread-specific t)
 	  *the-loading-file*)))
+
+;*---------------------------------------------------------------------*/
+;*    loading-file-set! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (loading-file-set! file-name)
+   (let ((t (current-thread)))
+      (if (thread? t)
+	  (thread-specific-set! t file-name)
+	  (set! *the-loading-file* file-name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    the-loading-dir ...                                              */
@@ -748,15 +757,12 @@
 		    (obj file-name)))
 	  (let ((port (open-input-file path)))
 	     (if (input-port? port)
-		 (let ((t (current-thread))
-		       (m (eval-module))
+		 (let ((m (eval-module))
 		       (f (the-loading-file)))
 		    (unwind-protect
 		       (begin
 			  (hop-load-afile (dirname path))
-			  (if (thread? t)
-			      (thread-specific-set! t file-name)
-			      (set! *the-loading-file* file-name))
+			  (loading-file-set! file-name)
 			  (case mode
 			     ((load)
 			      (let loop ((last #unspecified))
@@ -775,9 +781,7 @@
 		       (begin
 			  (close-input-port port)
 			  (eval-module-set! m)
-			  (if (thread? t)
-			      (thread-specific-set! t f)
-			      (set! *the-loading-file* f)))))
+			  (loading-file-set! f))))
 		 (raise (instantiate::&io-port-error
 			   (proc 'hop-load)
 			   (msg "Can't open file")

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Sep 10 21:31:09 2007 (serrano)                */
+/*    Last change :  Wed Sep 12 05:42:02 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -1068,8 +1068,8 @@ function hop_find_runtime_type( obj ) {
 	 if( obj instanceof RegExp ) {
 	    return "regexp";
 	 } else {
-	    if( typeof item.hop_find_runtime_type == "function" ) 
-	       return item.hop_find_runtime_type();
+	    if( typeof obj.hop_find_runtime_type == "function" ) 
+	       return obj.hop_find_runtime_type();
 	    else
 	       return "object";
 	 }
@@ -1541,16 +1541,17 @@ function start_servevt_ajax_proxy( key, obj ) {
 /*---------------------------------------------------------------------*/
 /*    start_servevt_flash_proxy ...                                    */
 /*---------------------------------------------------------------------*/
-function start_servevt_flash_proxy( key, port ) {
+function start_servevt_flash_proxy( key, host, port ) {
    var object_proxy = function() {
       return "<object id='" + hop_servevt_id + "' class='hop-servevt-proxy'" +
       " style='visibility: hidden; position: fixed; top: 0; right: 0'" +
       " width='1px' height='1px' title='hop-servevt' classId='HopServevt.swf'>" +
       "<param name='movie' value='" + hop_share_directory() + "/flash/HopServevt.swf'/>" +
-      "<param name='allowScriptAccess' value='sameDomain'/>" +
-      "<param name='FlashVars' value='init=hop_servevt_proxy_flash_init&port=" +
-      port + "&key=" + key +
-      "&onevent=hop_servevt_onevent&onclose=hop_servevt_onclose'/>" +
+      "<param name='allowScriptAccess' value='always'/>" +
+      "<param name='FlashVars' value='init=hop_servevt_proxy_flash_init" +
+      "&host=" + host + "&port=" + port + "&key=" + key +
+      "&onevent=hop_servevt_onevent&onclose=hop_servevt_onclose" +
+      "&onerror=hop_servevt_onerror'/>" +
       "</object>";
    }
    
@@ -1561,10 +1562,11 @@ function start_servevt_flash_proxy( key, port ) {
       " type='application/x-shockwave-flash'" +
       " name='__hop_servevt_proxy'" +
       " swliveconnect='true'" +
-      " allowScriptAccess='sameDomain'" +
-      " FlashVars='init=hop_servevt_proxy_flash_init&port=" +
-      port + "&key=" + key +
-      "&onevent=hop_servevt_onevent&onclose=hop_servevt_onclose'/>"
+      " allowScriptAccess='always'" +
+      " FlashVars='init=hop_servevt_proxy_flash_init" +
+      "&host=" + host + "&port=" + port + "&key=" + key +
+      "&onevent=hop_servevt_onevent&onclose=hop_servevt_onclose" +
+      "&onerror=hop_servevt_onerror'/>"
    }
 
    var proxy = document.createElement( "div" );
@@ -1572,12 +1574,21 @@ function start_servevt_flash_proxy( key, port ) {
    node_style_set( proxy, "position", "fixed" );
    node_style_set( proxy, "top", "0" );
    node_style_set( proxy, "right", "0" );
+
    proxy.innerHTML = hop_msiep() ? object_proxy() : embed_proxy();
-   
+
    document.body.appendChild( proxy );
    document.getElementById( hop_servevt_id ).key = key;
 
    return proxy;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_servevt_onerror ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_servevt_onerror( msg ) {
+   alert( msg );
+   throw new Error( msg );
 }
 
 /*---------------------------------------------------------------------*/
@@ -1638,11 +1649,12 @@ function start_servevt_proxy( obj ) {
 		     false,
 		     // success callback
 		     function( v ) {
-			var port = v.car;
-			var key = v.cdr;
+			var host = v[ 0 ];
+			var port = v[ 1 ];
+			var key = v[ 2 ];
 
 			if( port ) {
-			   start_servevt_flash_proxy( key, port );
+			   start_servevt_flash_proxy( key, host, port );
 			} else {
 			   start_servevt_ajax_proxy( key, obj );
 			}
@@ -1739,4 +1751,52 @@ function hop_remove_server_listener( obj, proc ) {
 
    // no event is still expected, close the connection
    hop_servevt_proxy.close();
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_add_timeout_listener ...                                     */
+/*---------------------------------------------------------------------*/
+function hop_add_timeout_listener( obj, proc ) {
+   hop_timeout = sc_cons( sc_cons( proc, setInterval( proc, obj ) ),
+			  hop_timeout );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_remove_timeout_listener ...                                  */
+/*---------------------------------------------------------------------*/
+function hop_remove_timeout_listener( proc ) {
+   var p = hop_timeout;
+   
+   if( sc_isPair( p ) ) {
+      if( p.car.car === proc ) {
+	 clearInterval( p.car.cdr );
+	 hop_timeout = p.cdr;
+      } else {
+	 while( sc_isPair( p.cdr ) ) {
+	    if( p.cdr.car === proc ) {
+	       clearInterval( p.cdr.cdr );
+	       p.cdr = p.cdr.cdr;
+	       break;
+	    } else {
+	       p = p.cdr;
+	    }
+	 }
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    after ...                                                        */
+/*---------------------------------------------------------------------*/
+function after( timeout, proc ) {
+   var tm = sc_isNumber( timeout ) ? timeout : 1;
+   var i = setInterval( function() { clearInterval( i ); proc() }, tm );
+   return true;
+}
+
+/*---------------------------------------------------------------------*/
+/*    timeout ...                                                      */
+/*---------------------------------------------------------------------*/
+function timeout( tm, proc ) {
+   var i = setInterval( function() { if( !proc() ) clearInterval( i )}, tm );
 }

@@ -1,0 +1,575 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/share/hop-audio.js                      */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Tue Aug 21 13:48:47 2007                          */
+/*    Last change :  Wed Sep 12 09:19:23 2007 (serrano)                */
+/*    Copyright   :  2007 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    HOP client-side audio support.                                   */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    HopAudioEvent ...                                                */
+/*---------------------------------------------------------------------*/
+function HopAudioEvent( name, audio ) {
+   var o = new Object();
+   o.isStopped = false;
+   o.name = name;
+   o.audio = audio;
+   
+   return o;
+}
+
+/*---------------------------------------------------------------------*/
+/*    HopAudioProxy ...                                                */
+/*---------------------------------------------------------------------*/
+function HopAudioProxy() {
+   var o = new Object();
+
+   o.play = function( start ) { return true; };
+   o.stop = function() { return true; };
+   o.load = function() { return true; };
+   o.position_get = function() { return true; };
+   o.position_set = function() { return true; };
+   o.pan_get = function() { return true; };
+   o.pan_set = function() { return true; };
+   o.volume_get = function() { return true; };
+   o.volume_set = function() { return true; };
+   o.duration_get = function() { return true; };
+   o.metadata_get = function() { return true; };
+}
+
+/*---------------------------------------------------------------------*/
+/*    HopAudioServerProxy ...                                          */
+/*---------------------------------------------------------------------*/
+function HopAudioServerProxy( builtin ) {
+   var o = new HopAudioProxy();
+   
+   o.play = function( start ) {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+   o.stop = function() {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+   o.load = function() {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+   o.position_get = function() {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+   o.position_set = function() {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+   o.pan_get = function() {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+   o.pan_set = function() {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+   o.volume_get = function() {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+   o.volume_set = function() {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+   o.duration_get = function() {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+   o.metadata = function() {
+      with_hop( el.play_server_url,
+		function( h ) { return "NOT IMPLEMENTED YET"; } );
+   };
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_add_event_listener ...                                 */
+/*---------------------------------------------------------------------*/
+function hop_audio_add_event_listener( event, proc, capture ) {
+   audio[ "on" + event ] = proc;
+   return false;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_init ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_audio_init( id, start,
+			 onplay, onstop, onpause, onload, onended, onbuffer ) {
+   var el = document.getElementById( id );
+
+   el.obj = document.getElementById( (hop_msiep() ? "object-":"embed-") + id );
+   el.controls = document.getElementById( "controls-" + id );
+   el.proxy = new HopAudioProxy();
+   el.playlist = null;
+   el.start = start;
+   
+   el.onplay = onplay;
+   el.onstop = onstop;
+   el.onpause = onpause;
+   el.onload = onload;
+   el.onended = onended;
+   el.onbuffer = onbuffer;
+   
+   el.hop_add_event_listener = hop_audio_add_event_listener;
+   el.toString = function() { return "[object Audio]"; };
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_flash_init ...                                         */
+/*    -------------------------------------------------------------    */
+/*    This function is automatically invoked by the Flash script when  */
+/*    the builtin initialization completes.                            */
+/*---------------------------------------------------------------------*/
+function hop_audio_flash_init( id ) {
+   var audio = document.getElementById( id );
+
+   audio.proxy = audio.obj;
+   audio.proxy.onload_set( "hop_audio_onload_callback", id );
+   audio.proxy.onended_set( "hop_audio_onended_callback", id );
+   audio.proxy.metadata_get = function() {
+      return eval( audio.proxy.id3_get() );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_run_hooks ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_audio_run_hooks( audio, evname ) {
+   var evt = new HopAudioEvent( evname, audio );
+   var handler = "on" + evname;
+
+   if( audio[ handler ] )
+      audio[ handler ]( evt );
+   if( !evt.isStopped && audio.controls && audio.controls[ handler ] )
+      audio.controls[ handler ]( evt );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_audio_onload_callback ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_audio_onload_callback( id, play ) {
+   var audio = document.getElementById( id );
+   var evt = new HopAudioEvent( "load", audio );
+
+   if( audio.onload )
+      audio.onload( evt );
+   if( !evt.isStopped && play && audio.onplay )
+      audio.onplay( evt );
+   if( !evt.isStopped && audio.controls && audio.controls.onload )
+      audio.controls.onload( evt );
+   if( !evt.isStopped && play && audio.controls && audio.controls.onplay )
+      audio.controls.onplay( evt );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_onended_callback ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_audio_onended_callback( id ) {
+   var audio = document.getElementById( id );
+   var evt = new HopAudioEvent( "ended", audio );
+
+   if( audio.onended )
+      audio.onended( evt );
+   if( !evt.isStopped && audio.controls && audio.controls.onended)
+      audio.controls.onended( evt );
+   if( !evt.isStopped &&
+       (hop_audio_playlist_index( audio ) ||
+	(hop_audio_playlist_index( audio ) == 0)) )
+      hop_audio_playlist_play( audio, hop_audio_playlist_index( audio ) + 1 );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_onerror_callback ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_audio_onerror_callback( id ) {
+   var el = document.getElementById( id );
+
+   if( el.onerror ) { el.onerror(); }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_load ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_audio_load( audio, src, stream ) {
+   audio.src = src;
+   audio.playlist_index = false;
+   hop_audio_run_hooks( audio, "buffer" );
+   return audio.proxy.load( src, stream );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_playlist_set ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_audio_playlist_set( audio, playlist ) {
+   audio.playlist = playlist;
+   return;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_playlist_get ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_audio_playlist_get( audio ) {
+   return audio.playlist;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_playlist_index ...                                     */
+/*---------------------------------------------------------------------*/
+function hop_audio_playlist_index( audio ) {
+   return audio.playlist_index;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_playlist_play ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_audio_playlist_play( audio, i ) {
+   var pl = hop_audio_playlist_get( audio );
+
+   if( (i >= 0) && (i < sc_length( pl )) ) {
+      hop_audio_load( audio, sc_listRef( pl, i ), true );
+      audio.playlist_index = i;
+      return i;
+   } else {
+      audio.playlist_index = false;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_playlist_prev ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_audio_playlist_prev( audio ) {
+   var pl = hop_audio_playlist_get( audio );
+   var i = hop_audio_playlist_index( audio );
+
+   if( i > 0 ) {
+      if( hop_audio_current_time( audio ) <= 3 ) {
+	 return hop_audio_playlist_play( audio, i - 1 );
+      } else {
+	 return hop_audio_seek( audio, 0 );
+      }
+   }
+   if( i == 0 ) {
+      return hop_audio_seek( audio, 0 );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_playlist_next ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_audio_playlist_next( audio ) {
+   var pl = hop_audio_playlist_get( audio );
+   var i = hop_audio_playlist_index( audio );
+
+   if( i < (sc_length( pl ) - 1)) {
+      return hop_audio_playlist_play( audio, i + 1 );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_play ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_audio_play( audio, start ) {
+   if( audio.proxy.play( start ? start : audio.start ) ) {
+      audio.playlist_index = false;
+      hop_audio_run_hooks( audio, "play" );
+      return true;
+   } else {
+      return false;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_stop ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_audio_stop( audio ) {
+   audio.proxy.stop();
+   hop_audio_run_hooks( audio, "stop" );
+   return true;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_pause ...                                              */
+/*---------------------------------------------------------------------*/
+function hop_audio_pause( audio ) {
+   if( audio.proxy.pause() ) {
+      hop_audio_pause_hooks( audio, "pause" );
+      return true;
+   } else {
+      return false;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_volume ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_audio_volume( audio ) {
+   return audio.proxy.volume_get();
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_volume_set ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_audio_volume_set( audio, vol ) {
+   return audio.proxy.volume_set( vol );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_mute ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_audio_mute( audio ) {
+   var img = document.getElementById( "hop-audio-button-mute-" + audio.id );
+   
+   if( audio.mute_volume ) {
+      var vol = audio.mute_volume;
+      img.src = hop_share_directory() + "/icons/hop-audio/mute.png";
+      audio.mute_volume = false;
+      return hop_audio_volume_set( audio, vol );
+   } else {
+      img.src = hop_share_directory() + "/icons/hop-audio/unmute.png";
+      audio.mute_volume = hop_audio_volume( audio );
+      return hop_audio_volume_set( audio, 0 );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_pan ...                                                */
+/*---------------------------------------------------------------------*/
+function hop_audio_pan( audio ) {
+   return audio.proxy.pan_get();
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_pan_set ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_audio_pan_set( audio, pan ) {
+   return audio.proxy.pan_set( pan );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_duration ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_audio_duration( audio ) {
+   return audio.proxy.duration_get();
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_audio_current_time ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_audio_current_time( audio ) {
+   return audio.proxy.position_get();
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_audio_seek ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_audio_seek( audio, pos ) {
+   audio.min = Math.floor( pos / 60 );
+   audio.sec = pos % 60;
+   
+   return audio.proxy.position_set( pos );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_audio_metadata ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_audio_metadata( audio ) {
+   return audio.proxy.metadata_get();
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_metadata_set ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_audio_metadata_set( audio, metadata ) {
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_controls_onload ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_audio_controls_onload( evt ) {
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_controls_onbuffer ...                                  */
+/*---------------------------------------------------------------------*/
+function hop_audio_controls_onbuffer( evt ) {
+   var audio = evt.audio;
+   var tl = document.getElementById( "controls-metadata-song-" + audio.id );
+
+   hop_audio_controls_metadata( audio, true );
+   tl.innerHTML = "Buffering...";
+   audio.min = 0;
+   audio.sec = 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    int2 ...                                                         */
+/*---------------------------------------------------------------------*/
+function int2( i ) {
+   if( i < 10 )
+      return "0" + i;
+   else
+      return i;
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_audio_time_interval_set ...                                  */
+/*---------------------------------------------------------------------*/
+function hop_audio_time_interval_set( audio ) {
+   var id = audio.id;
+   var pos = document.getElementById( "controls-status-position-" + id );
+   var ctime = hop_audio_current_time( audio );
+
+   audio.min = Math.floor( ctime / 60 );
+   audio.sec = ctime % 60;
+
+   hop_audio_time_interval_clear( audio );
+   pos.innerHTML = "00:00";
+   
+   audio.interval = setInterval( function() {
+	 audio.sec++;
+	 if( audio.sec == 60 ) { audio.min++; audio.sec = 0 };
+	 pos.innerHTML = int2( audio.min ) + ":" + int2( audio.sec );
+      }, 1000 );
+   
+   pos.className = "hop-audio-info-status-position-on-play";
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_time_interval_clear ...                                */
+/*---------------------------------------------------------------------*/
+function hop_audio_time_interval_clear( audio ) {
+   var id = audio.id;
+   var pos = document.getElementById( "controls-status-position-" + id );
+   pos.className = "hop-audio-info-status-position";
+   pos.innerHTML = "88:88";
+   
+   if( audio.interval ) {
+      clearInterval( audio.interval );
+      audio.interval = false;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_controls_metadata ...                                  */
+/*---------------------------------------------------------------------*/
+function hop_audio_controls_metadata( audio, reset ) {
+   var tl = document.getElementById( "controls-metadata-song-" + audio.id );
+   var ab = document.getElementById( "controls-metadata-album-" + audio.id );
+   var at = document.getElementById( "controls-metadata-artist-" + audio.id );
+   var ye = document.getElementById( "controls-metadata-year-" + audio.id );
+
+   if( reset ) {
+      tl.innerHTML = "";
+      ab.innerHTML = "";
+      at.innerHTML = "";
+      ye.innerHTML = "";
+   } else {
+      var md = audio.proxy.metadata_get();
+
+      if( md ) {
+	 tl.innerHTML = md.title;
+	 at.innerHTML = md.artist;
+	 ab.innerHTML = md.album;
+	 if( md.year && md.year > 0 )
+	    ye.innerHTML = md.year;
+	 else
+	    ye.innerHTML = "";
+      } else {
+	 tl.innerHTML = sc_basename( audio.src );
+	 at.innerHTML = sc_basename( sc_dirname( sc_dirname( audio.src ) ) );
+	 ab.innerHTML = sc_basename( sc_dirname( audio.src ) );
+	 if( md.year && md.year > 0 )
+	    ye.innerHTML = md.year;
+	 else
+	    ye.innerHTML = "";
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_controls_onplay ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_audio_controls_onplay( evt ) {
+   var audio = evt.audio;
+   var id = audio.id;
+   var status = document.getElementById( "controls-status-img-" + id );
+   var playbut = document.getElementById( "hop-audio-button-play-" + id );
+   var track = document.getElementById( "controls-status-track-" + id );
+   var min = document.getElementById( "controls-status-length-min-" + id );
+   var sec = document.getElementById( "controls-status-length-sec-" + id );
+   var alen = hop_audio_duration( audio );
+   var plen = sc_length( hop_audio_playlist_get( audio ) );
+
+   status.src = playbut.src;
+   
+   track.className = "hop-audio-info-status-track-on-play";
+   if( plen > 0 ) {
+      track.innerHTML = int2( 1 + hop_audio_playlist_index( audio ) )
+	 + "/" + int2( plen );
+   } else {
+      track.innerHTML = "01/01";
+   }
+
+   min.innerHTML = int2( Math.floor( alen / 60 ) );
+   sec.innerHTML = int2( alen % 60 );
+
+   hop_audio_controls_metadata( audio, false );
+   hop_audio_time_interval_set( audio );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_controls_onstop ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_audio_controls_onstop( evt ) {
+   var audio = evt.audio;
+   var id = audio.id;
+   var status = document.getElementById( "controls-status-img-" + id );
+   var play = document.getElementById( "hop-audio-button-stop-" + id );
+   var track = document.getElementById( "controls-status-track-" + id );
+   var min = document.getElementById( "controls-status-length-min-" + id );
+   var sec = document.getElementById( "controls-status-length-sec-" + id );
+
+   track.className = "hop-audio-info-status-track";
+   track.innerHTML = "88888";
+
+   min.innerHTML = "&nbsp;&nbsp;";
+   sec.innerHTML = "&nbsp;&nbsp;";
+
+   hop_audio_time_interval_clear( audio );
+   hop_audio_controls_metadata( audio, true );
+   status.src = play.src;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_controls_onended ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_audio_controls_onended( evt ) {
+   var audio = evt.audio;
+   var id = audio.id;
+   var status = document.getElementById( "controls-status-" + id );
+   var track = document.getElementById( "controls-status-track-" + id );
+   var min = document.getElementById( "controls-status-length-min-" + id );
+   var sec = document.getElementById( "controls-status-length-sec-" + id );
+
+   min.innerHTML = "&nbsp;&nbsp;";
+   sec.innerHTML = "&nbsp;&nbsp;";
+
+   hop_audio_time_interval_clear( audio );
+   hop_audio_controls_metadata( audio, true );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_gui_playlist ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_audio_gui_playlist( id ) {
+}

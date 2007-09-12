@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Sep  3 15:33:24 2007 (serrano)                */
+#*    Last change :  Tue Sep 11 10:20:10 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -39,7 +39,7 @@ _OBJECTS	= param misc types thread \
                   http-error http-filter \
                   hop-extra hop-notepad hop-tree hop-slider \
                   hop-paned hop-tabslider hop-inline hop-foldlist \
-                  hop-editor hop-fileselector hop-rss hop-sym \
+                  hop-editor hop-fileselector hop-rss hop-sym hop-audio \
                   event color weblets prefs expanders  \
                   hop-wiki wiki-syntax wiki-toc
 

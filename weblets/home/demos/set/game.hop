@@ -247,9 +247,9 @@
 					  (hop ($(service ()
 						    (start-game game)))))
 			     "Start Game")))
-	    (<HOP-EVENT> :event event
-			 :handler ~(event-handler event))
+	    
 	    ~(begin
+		(add-event-listener $event "server" event-handler)
 		(define (rel-path path) (string-append $*home-directory* path))
 		(define (submit-set! set) (hop ($(service (set)
 						    (set-submit player game set))

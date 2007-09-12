@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Sep 10 06:58:10 2007 (serrano)                */
+/*    Last change :  Tue Sep 11 14:00:11 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -281,6 +281,9 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
       if( event == "server" ) {
 	 return hop_add_server_listener( obj, proc );
       }
+      if( event == "timeout" ) {
+	 return hop_add_timeout_listener( obj, proc );
+      }
       if( !(obj instanceof Window) &&
 	  (obj.hop_add_event_listener != undefined) ) {
 	 obj.hop_add_event_listener( event, proc, capture );
@@ -288,8 +291,9 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
 	 if( obj.addEventListener != undefined ) {
 	    return obj.addEventListener( event, proc, capture );
 	 } else {
-	    alert( "Cannot add `" + event + "' listener for object: " 
-		   + obj );
+	    throw new Error( "Cannot add `" +
+			     event + "' listener for object: "
+			     + obj );
 	 }
       }
    }
@@ -300,6 +304,9 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
       if( event == "server" ) {
 	 return hop_remove_server_listener( obj, proc );
       } 
+      if( event == "timeout" ) {
+	 return hop_remove_timeout_listener( proc );
+      }
       if( !(obj instanceof Window) &&
 	  (obj.hop_remove_event_listener != undefined) ) {
 	 obj.hop_remove_event_listener( event, proc, capture );
@@ -307,8 +314,9 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
 	 if( obj.removeEventListener != undefined ) {
 	    return obj.removeEventListener( event, proc, capture );
 	 } else {
-	    alert( "Cannot remove `" + event + "' listener for object: " 
-		   + obj );
+	    throw new Error( "Cannot remove `" +
+			     event + "' listener for object: "
+			     + obj );
 	 }
       }
    }
@@ -323,7 +331,10 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
 	 return hop_add_active_location_listener( obj, proc );
       }
       if( event == "server" ) {
-	 return hop_add_server_listerner( obj, proc );
+	 return hop_add_server_listener( obj, proc );
+      }
+      if( event == "timeout" ) {
+	 return hop_add_timeout_listener( obj, proc );
       }
       if( obj.hop_add_event_listener != undefined ) {
 	 obj.hop_add_event_listener( event, proc, capture );
@@ -343,6 +354,9 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
       }
       if( event == "server" ) {
 	 return hop_remove_server_listener( obj, proc );
+      }
+      if( event == "timeout" ) {
+	 return hop_remove_timeout_listener( proc );
       }
       if( obj.hop_remove_event_listener != undefined ) {
 	 obj.hop_remove_event_listener( event, proc, capture );
@@ -443,8 +457,8 @@ var hop_event_mouse_x = undefined;
 var hop_event_mouse_y = undefined;
 var hop_event_mouse_button = undefined;
 var hop_event_key_code = undefined;
-function hop_event_value = function( evt ) { return evt.value; }
-function hop_event_reponse_text = function( evt ) { return evt.responseText; }
+function hop_event_value( evt ) { return evt.value; }
+function hop_event_response_text( evt ) { return evt.responseText; }
 
 if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
    hop_event_mouse_x = function hop_event_mouse_x( event ) {

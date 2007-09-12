@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Sep 10 20:24:24 2007 (serrano)                */
+#*    Last change :  Tue Sep 11 09:57:31 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -30,7 +30,7 @@ jar="jar cfm"
 bcflags="-fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
 bcflagsdbg="-copt -g"
-bcflagsdbg2="-g -O2 -cg"
+bcflagsdbg2="-g -O2 -copt -g"
 bcflagsbmem="-g2 -O2"
 bcflagsopt="-unsafe -O3"
 
@@ -212,7 +212,7 @@ while : ; do
       echo "   --bhflags=args........ The heap options" >&2;
       echo "   --brflags=args........ The heap options" >&2;
       echo "   --ccflags=args........ The heap options" >&2;
-      echo "   --debug............... Enables Bigloo debug mode" >&2;
+      echo "   --debug[2]............ Enables Bigloo debug mode" >&2;
       echo "   --bmem................ Enables Bigloo bmem mode" >&2;
       echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
       echo "   --enable-ssl.......... Enables SSL support" >&2;

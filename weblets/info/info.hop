@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jul 20 10:24:25 2007 (serrano)                */
+;*    Last change :  Tue Sep 11 09:01:49 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -18,7 +18,7 @@
 ;*    info-event ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define info-event
-   (instantiate::hop-event (name "connect")))
+   (symbol->string (gensym "info")))
 
 ;*---------------------------------------------------------------------*/
 ;*    traffic-hookingp ...                                             */
@@ -32,16 +32,16 @@
    (lambda (req rep)
       (when traffic-hookingp
 	 (with-access::http-request req (http host port path user date)
-	    (signal-hop-event! info-event
-			       (<TR> :class "remote"
-				  (<TD> :nowrap #t
-				     host ":" port)
-				  (<TD> :nowrap #t
-				     path)
-				  (<TD> :nowrap #t
-				     (if (user? user) (user-name user) ""))
-				  (<TD> :nowrap #t
-				     date)))))
+	    (hop-event-broadcast! info-event
+				  (<TR> :class "remote"
+				     (<TD> :nowrap #t
+					host ":" port)
+				     (<TD> :nowrap #t
+					path)
+				     (<TD> :nowrap #t
+					(if (user? user) (user-name user) ""))
+				     (<TD> :nowrap #t
+					date)))))
       rep))
 
 ;*---------------------------------------------------------------------*/
@@ -279,9 +279,10 @@
 	            }
 		  } "clear"))
        (<DIV> :class "traffic"
-	  (<HOP-EVENT>
-	     :handler ~(let ((t event.responseText))
-			  (set! $traffic.innerHTML
-				(string-append $traffic.innerHTML t)))
-	     :event info-event)
+	  ~(add-event-listener! $info-event "server"
+				(lambda (e)
+				   (let ((t (event-response-text e)))
+				      (innerHTML-set! $traffic
+						      (string-append
+						       $traffic.innerHTML t)))))
 	  (<SORTTABLE> traffic)))))

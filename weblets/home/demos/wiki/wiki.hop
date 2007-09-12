@@ -2,11 +2,10 @@
    (export (home/demos/wiki)))
 
 (define wikiedit-event
-   (instantiate::hop-event
-      (name "wikiedit")))
+   (symbol->string (gensym)))
 
 (define-service (wikiedit/update src)
-   (broadcast-hop-event! wikiedit-event (wikiedit-compile src)))
+   (hop-event-broadcast! wikiedit-event (wikiedit-compile src)))
 
 (define-service (wikiedit/view)
    (let ((d (<DIV> :class "view" "")))
@@ -17,10 +16,10 @@
 	    :css "wiki.hss")
 	 (<BODY>
 	    :class "view"
-	    d
-	    (<HOP-EVENT>
-	       :event wikiedit-event
-	       :handler ~(set! $d.innerHTML event.responseText))))))
+	    ~(add-event-listener! $wikiedit-event "server"
+				  (lambda (e)
+				     (innerHTML-set! $d (event-response-text e))))
+	    d))))
 
 (define (wikiedit-compile src)
    (let ((o (with-handler

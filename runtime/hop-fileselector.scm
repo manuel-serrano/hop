@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Thu Sep  6 07:56:52 2007 (serrano)                */
+;*    Last change :  Tue Sep 11 11:59:50 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -116,7 +116,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    browse ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (browse req window-id label base path predicate multiselect onselect)
+(define (browse req::http-request
+		window-id::bstring label::obj
+		base::obj path::bstring
+		predicate::procedure multiselect::bool onselect::bstring)
    (define (proc->string proc)
       (cond
 	 ((string? proc)
@@ -125,16 +128,15 @@
 	  (xml-tilde-body proc))
 	 (else
 	  "")))
-   (let ((tree-id (xml-make-id 'TREE))
-	 (filt (lambda (p)
-		  (and (authorized-path? req p) (predicate p)))))
+   (let ((filt (lambda (p) (and (authorized-path? req p) (predicate p))))
+	 (tident (xml-make-id 'FILEBROWSER-TREE)))
       (<DIV> :class "hop-filebrowse"
 	 (<DIV> :class "hop-filebrowse-tree"
-	    (let loop ((dir base)
+	    (let loop ((dir (if (string? base) base path))
 		       (label label)
 		       (root #t))
 	       (<TREE>
-		  :id (if root tree-id (xml-make-id 'SUBTREE))
+		  :id (if root tident (xml-make-id 'SUBTREE))
 		  :value dir
 		  :open (substring-at? path dir 0)
 		  :onselect (format "hop_iwindow_close( '~a' ); ~a"
@@ -162,7 +164,7 @@
 	       "Cancel")
 	    (<BUTTON> :onclick
 	       (format "document.getElementById( '~a' ).onselect()"
-		       tree-id)
+		       tident)
 	       "Select")))))
    
 ;*---------------------------------------------------------------------*/
@@ -182,10 +184,10 @@
 ;*    make-filebrowser-service ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (make-filebrowser-service predicate)
-   (service (ident wident value path multi)
-      (let ((onselect (format "var o=document.getElementById( '~a' ); o.value=hop_tree_selection(o); o.onselect();" ident)))
+   (service (ident wident label base path multi)
+      (let ((onselect (format "var t=this; var o=document.getElementById( '~a' ); o.selection=hop_tree_selection(t); o.value=o.selection[0]; o.onselect();" ident)))
 	 (browse (current-request)
-		 wident #f value path predicate multi onselect))))
+		 wident #f base path predicate multi onselect))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-default-filebrowser-service ...                              */
@@ -230,7 +232,7 @@
 		    "hop-filebrowse")
 	 :value value
 	 :onmousedown (or onmousedown "")
-	 :onclick (format "~a; hop_stop_propagation( event, false ); this.onselect = ~a; hop_filebrowse( ~a, '~a', '~a', ~a, this.value, '~a', ~a, hop_event_mouse_x( event ), hop_event_mouse_y( event ), ~a, ~a )"
+	 :onclick (format "~a; hop_stop_propagation( event, false ); this.onselect=~a; hop_filebrowse( ~a, '~a', '~a', ~a, this.value, '~a', ~a, hop_event_mouse_x( event ), hop_event_mouse_y( event ), ~a, ~a )"
 			  ;; user onclick
 			  (cond
 			     ((xml-tilde? onclick)
@@ -239,7 +241,7 @@
 			      onclick)
 			     (else
 			      "false"))
-			  ;; service
+			  ;; onselect
 			  (cond
 			     ((xml-tilde? onselect)
 			      (format "function() { ~a }"

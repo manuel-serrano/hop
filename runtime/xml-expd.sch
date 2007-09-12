@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Sun Jul 15 18:00:55 2007 (serrano)                */
+;*    Last change :  Tue Sep 11 10:26:39 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -289,7 +289,7 @@
 				   (else
 				    #unspecified)))
 			     bindings)
-		      ,@body)
+		      (let () ,@body))
 		     ,@(map (lambda (b)
 			       (match-case b
 				  (((and (? symbol?) ?id) ?init . ?-)
@@ -355,4 +355,4 @@
    (match-case x
       ((?- ?id ?bindings . ?body)
        (e (evepairify (expand-define-xml-compound id bindings body) x) e))
-      (error 'define-xml-coumound "Illegal form" x)))
+      (error 'define-xml-compound "Illegal form" x)))
