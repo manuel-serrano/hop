@@ -4,7 +4,7 @@
    (export
     (class Player
        (login::bstring read-only)
-       (event::hop-event read-only)
+       (event read-only)
        score::int)
     (class Game
        lock
@@ -138,7 +138,7 @@
 
 (define (upload-board player board)
    (with-access::Player player (event)
-      (signal-hop-event! event (with-output-to-string
+      (hop-event-signal! event (with-output-to-string
 				  (lambda ()
 				     (write `(board ,board)))))))
 
@@ -162,7 +162,7 @@
 			    (lambda ()
 			       (write `(score ,scores))))))
 	 (for-each (lambda (player)
-		      (signal-hop-event!
+		      (hop-event-signal!
 		       (Player-event player)
 		       scores-str))
 		   players))))
@@ -171,7 +171,7 @@
    (for-each
     (lambda (player)
        (with-access::Player player (event)
-	  (signal-hop-event! event (with-output-to-string
+	  (hop-event-signal! event (with-output-to-string
 				      (lambda ()
 					 (write `(winner ,login)))))))
     (Game-players game)))
@@ -205,8 +205,7 @@
 				   "z-index: 0;")
 	     :src (rel-path "pics/border.png")))
 
-   (let* ((event (instantiate::hop-event
-		    (name (string-append login "-event"))))
+   (let* ((event (string-append login "-event"))
 	  (player (instantiate::Player
 		     (login login)
 		     (event event)
@@ -249,7 +248,7 @@
 			     "Start Game")))
 	    
 	    ~(begin
-		(add-event-listener $event "server" event-handler)
+		(add-event-listener! $event "server" event-handler)
 		(define (rel-path path) (string-append $*home-directory* path))
 		(define (submit-set! set) (hop ($(service (set)
 						    (set-submit player game set))

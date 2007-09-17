@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Sep 12 05:42:02 2007 (serrano)                */
+/*    Last change :  Mon Sep 17 13:47:38 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP JavaScript library                                  */
@@ -290,72 +290,83 @@ function hop_anim( service ) {
 /*    This function DOES NOT evaluates its result.                     */
 /*---------------------------------------------------------------------*/
 function hop_send_request( svc, sync, success, failure, anim, henv ) {
-   var http = hop_make_xml_http_request();
+   var xhr = hop_make_xml_http_request();
 
-   http.open( "GET", svc, (sync != true) );
+   xhr.open( "GET", svc, (sync != true) );
 
-   http.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
-   http.setRequestHeader( 'Connection', 'close' );
-
+   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+   xhr.setRequestHeader( 'Connection', 'close' );
+   // to force the response to be interpreted as latin-1:
+   // xhr.overrideMimeType( 'text/html; charset=ISO-8859-1' );
+   
    if( henv.length > 0 ) {
-      http.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
+      xhr.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
    }
    
-   http.onreadystatechange = function() {
-      if( http.readyState == 4 ) {
+   xhr.onreadystatechange = function() {
+      if( xhr.readyState == 4 ) {
 	 try {
-	    var status = http.status;
+	    var status = xhr.status;
 	    switch( status ) {
 	       case 200:
-		  if( hop_is_http_json( http ) ) {
-		     try {
-			return success( eval( http.responseText ), http );
-		     } catch( e ) {
-			alert( "*** Hop JSON error: " + http.responseText );
+		  try {
+		     if( hop_is_http_json( xhr ) ) {
+			var expr;
+			try {
+			   expr = eval( xhr.responseText );
+			} catch( e ) {
+			   alert( "*** Hop JSON error: " + e + " -- " +
+				  xhr.responseText );
+			   expr = false;
+			}
+			return success( expr, xhr );
+		     } else {
+			return success( xhr.responseText, xhr );
 		     }
-		  } else {
-		     return success( http.responseText, http );
+		  } catch( e ) {
+		     alert( "*** WITH-HOP error: " + e + " -- " +
+			    xhr.responseText );
 		  }
 
 	       case 202:
-		  return success( hop_unserialize( http.responseText ), http );
+		  return success( hop_unserialize( xhr.responseText ), xhr );
 
 	       case 204:
 		  return false;
 
 	       case 257:
-		  return hop_js_eval( http );
+		  return hop_js_eval( xhr );
 
 	       case 258:
-		  if( http.responseText != null )
-		     return eval( http.responseText );
+		  if( xhr.responseText != null )
+		     return eval( xhr.responseText );
 		  else
 		     return false;
 
 	       case 259:
-		  hop_set_cookie( http );
+		  hop_set_cookie( xhr );
 		  return false;
 
 	       case 407:
 		  alert( "*** Hop Authentication Error " + status + ": `"
-			 + http.responseText + "'" );
+			 + xhr.responseText + "'" );
 		  return false;
 
 	       default:
 		  if( (status > 200) && (status < 300) ) {
 		     if( success ) {
-			return success( http.responseText, http );
+			return success( xhr.responseText, xhr );
 		     }
 		  } else {
 		     if( failure ) {
-			return failure( http );
+			return failure( xhr );
 		     } else {
-			return hop_default_failure( http );
+			return hop_default_failure( xhr );
 		     }
 		  }
 	    }
 	 } catch( e ) {
-	    failure( http );
+	    failure( xhr );
 	 } finally {
 	    if( hop_anim_vis != false ) {
 	       node_style_set( hop_anim_vis, "display", "none" );
@@ -370,7 +381,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
    try {
       if( anim ) hop_anim_service = svc;
 
-      http.send( null );
+      xhr.send( null );
       hop_clear_timeout( "hop_anim_timeout" );
       
       if( anim ) {
@@ -388,7 +399,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
       throw e;
    }
 
-   return http;
+   return xhr;
 }
 
 /*---------------------------------------------------------------------*/
@@ -1497,7 +1508,7 @@ function start_servevt_ajax_proxy( key, obj ) {
    if( !hop_servevt_proxy.httpreq ) {
       var register = function( id ) {
 	 var svc = "/hop/server-event-register?event=" + id
-	    + "&key=" + key "&flash=false";
+	    + "&key=" + key + "&flash=false";
 
 	 var success = function( val, http ) {
 	    // re-register the event as soon as possible
@@ -1556,26 +1567,40 @@ function start_servevt_flash_proxy( key, host, port ) {
    }
    
    var embed_proxy = function() {
-      return "<embed id='" + hop_servevt_id + "' class='hop-servevt-proxy'" +
-      " width='1px' height='1px'" +
-      " src='" + hop_share_directory() + "/flash/HopServevt.swf'" +
-      " type='application/x-shockwave-flash'" +
-      " name='__hop_servevt_proxy'" +
-      " swliveconnect='true'" +
-      " allowScriptAccess='always'" +
-      " FlashVars='init=hop_servevt_proxy_flash_init" +
-      "&host=" + host + "&port=" + port + "&key=" + key +
-      "&onevent=hop_servevt_onevent&onclose=hop_servevt_onclose" +
-      "&onerror=hop_servevt_onerror'/>"
+      /* EMBED is not a legal XHTML markup, hence we cannot add the */
+      /* using a "innerHTML = xxx" expression. As a workaround we   */
+      /* use DOM constructor and methods.                           */
+      var embed = document.createElement( "embed" );
+      
+      embed.id = hop_servevt_id;
+      embed.className = "hop-servevt-proxy";
+      embed.setAttribute( "width", "1px" );
+      embed.setAttribute( "height", "1px" );
+      embed.setAttribute( "src", hop_share_directory() + "/flash/HopServevt.swf" );
+      embed.setAttribute( "type", "application/x-shockwave-flash" );
+      embed.setAttribute( "name", "__hop_servevt_proxy" );
+      embed.setAttribute( "swliveconnect", "true" );
+      embed.setAttribute( "allowScriptAccess", "always" );
+      embed.setAttribute( "FlashVars", "init=hop_servevt_proxy_flash_init" +
+			  "&host=" + host + "&port=" + port + "&key=" + key +
+			  "&onevent=hop_servevt_onevent" +
+			  "&onclose=hop_servevt_onclose" +
+			  "&onerror=hop_servevt_onerror" );
+      
+      return embed;
    }
-
+   
    var proxy = document.createElement( "div" );
    node_style_set( proxy, "visibility", "hidden" );
    node_style_set( proxy, "position", "fixed" );
    node_style_set( proxy, "top", "0" );
    node_style_set( proxy, "right", "0" );
 
-   proxy.innerHTML = hop_msiep() ? object_proxy() : embed_proxy();
+   if( hop_msiep() ) {
+      proxy.innerHTML = object_proxy();
+   } else {
+      proxy.appendChild( embed_proxy() );
+   }
 
    document.body.appendChild( proxy );
    document.getElementById( hop_servevt_id ).key = key;
@@ -1654,7 +1679,13 @@ function start_servevt_proxy( obj ) {
 			var key = v[ 2 ];
 
 			if( port ) {
+			   try {
 			   start_servevt_flash_proxy( key, host, port );
+			   } catch( e ) {
+			      alert( "Cannot start serevt flash proxy: " + e );
+			      throw new Error( "Cannot start flash proxy: " +
+					       e );
+			   }
 			} else {
 			   start_servevt_ajax_proxy( key, obj );
 			}

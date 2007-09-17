@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Sep 12 09:19:23 2007 (serrano)                */
+/*    Last change :  Thu Sep 13 13:59:54 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -101,27 +101,47 @@ function hop_audio_add_event_listener( event, proc, capture ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_audio_init_obj ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_audio_init_obj( audio ) {
+   if( !audio.obj ) {
+      audio.obj = document.getElementById( (hop_msiep() ? "object-":"embed-")
+					   + audio.id );
+   }
+
+   return audio.obj;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_audio_init ...                                               */
 /*---------------------------------------------------------------------*/
-function hop_audio_init( id, start,
+function hop_audio_init( id, start, src, stream,
 			 onplay, onstop, onpause, onload, onended, onbuffer ) {
-   var el = document.getElementById( id );
+   var audio = document.getElementById( id );
 
-   el.obj = document.getElementById( (hop_msiep() ? "object-":"embed-") + id );
-   el.controls = document.getElementById( "controls-" + id );
-   el.proxy = new HopAudioProxy();
-   el.playlist = null;
-   el.start = start;
+   hop_audio_init_obj( audio );
    
-   el.onplay = onplay;
-   el.onstop = onstop;
-   el.onpause = onpause;
-   el.onload = onload;
-   el.onended = onended;
-   el.onbuffer = onbuffer;
+   audio.controls = document.getElementById( "controls-" + id );
+
+   audio.playlist = null;
+   audio.start = start;
    
-   el.hop_add_event_listener = hop_audio_add_event_listener;
-   el.toString = function() { return "[object Audio]"; };
+   audio.onplay = onplay;
+   audio.onstop = onstop;
+   audio.onpause = onpause;
+   audio.onload = onload;
+   audio.onended = onended;
+   audio.onbuffer = onbuffer;
+   audio.initialized = true;
+   
+   audio.hop_add_event_listener = hop_audio_add_event_listener;
+   audio.toString = function() { return "[object Audio]"; };
+   if( !audio.proxy ) {
+      // create a proxy only if flash initialization has not occured yet
+      audio.proxy = new HopAudioProxy();
+   } else {
+      if( src ) hop_audio_load( audio, src, stream );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -130,14 +150,21 @@ function hop_audio_init( id, start,
 /*    This function is automatically invoked by the Flash script when  */
 /*    the builtin initialization completes.                            */
 /*---------------------------------------------------------------------*/
-function hop_audio_flash_init( id ) {
+function hop_audio_flash_init( id, src, stream ) {
    var audio = document.getElementById( id );
 
-   audio.proxy = audio.obj;
+   audio.proxy = hop_audio_init_obj( audio );
    audio.proxy.onload_set( "hop_audio_onload_callback", id );
    audio.proxy.onended_set( "hop_audio_onended_callback", id );
    audio.proxy.metadata_get = function() {
-      return eval( audio.proxy.id3_get() );
+      try {
+	 return eval( audio.proxy.id3_get() );
+      } catch( _ ) {
+	 return false;
+      }
+   }
+   if( src && audio.initialized ) {
+      hop_audio_load( audio, src, stream );
    }
 }
 
@@ -203,7 +230,9 @@ function hop_audio_onerror_callback( id ) {
 function hop_audio_load( audio, src, stream ) {
    audio.src = src;
    audio.playlist_index = false;
+   audio.paused = !stream;
    hop_audio_run_hooks( audio, "buffer" );
+
    return audio.proxy.load( src, stream );
 }
 
@@ -281,6 +310,7 @@ function hop_audio_playlist_next( audio ) {
 function hop_audio_play( audio, start ) {
    if( audio.proxy.play( start ? start : audio.start ) ) {
       audio.playlist_index = false;
+      audio.paused = false;
       hop_audio_run_hooks( audio, "play" );
       return true;
    } else {
@@ -301,12 +331,10 @@ function hop_audio_stop( audio ) {
 /*    hop_audio_pause ...                                              */
 /*---------------------------------------------------------------------*/
 function hop_audio_pause( audio ) {
-   if( audio.proxy.pause() ) {
-      hop_audio_pause_hooks( audio, "pause" );
-      return true;
-   } else {
-      return false;
-   }
+   audio.proxy.pause();
+   audio.paused = !audio.paused;
+   hop_audio_run_hooks( audio, "pause" );
+   return true;
 }
 
 /*---------------------------------------------------------------------*/
@@ -396,6 +424,11 @@ function hop_audio_metadata_set( audio, metadata ) {
 /*    hop_audio_controls_onload ...                                    */
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onload( evt ) {
+   var audio = evt.audio;
+   var tl = document.getElementById( "controls-metadata-song-" + audio.id );
+
+   hop_audio_controls_metadata( audio, true );
+   tl.innerHTML = "Ready...";
 }
 
 /*---------------------------------------------------------------------*/
@@ -436,9 +469,11 @@ function hop_audio_time_interval_set( audio ) {
    pos.innerHTML = "00:00";
    
    audio.interval = setInterval( function() {
-	 audio.sec++;
-	 if( audio.sec == 60 ) { audio.min++; audio.sec = 0 };
-	 pos.innerHTML = int2( audio.min ) + ":" + int2( audio.sec );
+	 if( !audio.paused ) {
+	    audio.sec++;
+	    if( audio.sec == 60 ) { audio.min++; audio.sec = 0 };
+	    pos.innerHTML = int2( audio.min ) + ":" + int2( audio.sec );
+	 }
       }, 1000 );
    
    pos.className = "hop-audio-info-status-position-on-play";
@@ -511,7 +546,7 @@ function hop_audio_controls_onplay( evt ) {
    var plen = sc_length( hop_audio_playlist_get( audio ) );
 
    status.src = playbut.src;
-   
+
    track.className = "hop-audio-info-status-track-on-play";
    if( plen > 0 ) {
       track.innerHTML = int2( 1 + hop_audio_playlist_index( audio ) )
@@ -528,13 +563,30 @@ function hop_audio_controls_onplay( evt ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_audio_controls_onpause ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_audio_controls_onpause( evt ) {
+   var audio = evt.audio;
+   var id = audio.id;
+   var status = document.getElementById( "controls-status-img-" + id );
+   var pausebut = document.getElementById( "hop-audio-button-pause-" + id );
+
+   if( audio.paused ) {
+      audio.status_old_src = status.src;
+      status.src = pausebut.src;
+   } else {
+      status.src = audio.status_old_src;
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_audio_controls_onstop ...                                    */
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onstop( evt ) {
    var audio = evt.audio;
    var id = audio.id;
    var status = document.getElementById( "controls-status-img-" + id );
-   var play = document.getElementById( "hop-audio-button-stop-" + id );
+   var stopbut = document.getElementById( "hop-audio-button-stop-" + id );
    var track = document.getElementById( "controls-status-track-" + id );
    var min = document.getElementById( "controls-status-length-min-" + id );
    var sec = document.getElementById( "controls-status-length-sec-" + id );
@@ -542,12 +594,12 @@ function hop_audio_controls_onstop( evt ) {
    track.className = "hop-audio-info-status-track";
    track.innerHTML = "88888";
 
-   min.innerHTML = "&nbsp;&nbsp;";
-   sec.innerHTML = "&nbsp;&nbsp;";
+   min.innerHTML = "  ";
+   sec.innerHTML = "  ";
 
    hop_audio_time_interval_clear( audio );
    hop_audio_controls_metadata( audio, true );
-   status.src = play.src;
+   status.src = stopbut.src;
 }
 
 /*---------------------------------------------------------------------*/
@@ -561,8 +613,8 @@ function hop_audio_controls_onended( evt ) {
    var min = document.getElementById( "controls-status-length-min-" + id );
    var sec = document.getElementById( "controls-status-length-sec-" + id );
 
-   min.innerHTML = "&nbsp;&nbsp;";
-   sec.innerHTML = "&nbsp;&nbsp;";
+   min.innerHTML = "  ";
+   sec.innerHTML = "  ";
 
    hop_audio_time_interval_clear( audio );
    hop_audio_controls_metadata( audio, true );

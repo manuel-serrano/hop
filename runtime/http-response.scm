@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Sep  6 18:02:34 2007 (serrano)                */
+;*    Last change :  Mon Sep 17 10:18:59 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -70,9 +70,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-string socket)
    (with-trace 3 'http-response::http-response-string
-      (with-access::http-response-string r (start-line header content-type server content-length bodyp body char-encoding timeout request)
+      (with-access::http-response-string r (start-line
+					    header
+					    content-type char-encoding
+					    server content-length
+					    bodyp body char-encoding
+					    timeout request)
 	 (let* ((p (socket-output socket))
-		(ce (or char-encoding (hop-char-encoding)))
 		(s body)
 		(connection (http-request-connection request)))
 	    (when (>fx timeout 0)
@@ -81,8 +85,10 @@
 	    (http-write-header p header)
 	    (http-write-line p "Content-Length: " (string-length s))
 	    (http-write-line p "Connection: " connection)
-	    (when content-type
-	       (http-write-line p "Content-Type: " content-type))
+	    (http-write-line p "Content-type: "
+			     (if content-type content-type "text/plain")
+			     "; charset="
+			     (or char-encoding (hop-char-encoding)))
 	    (when server
 	       (http-write-line p "Server: " server))
 	    (http-write-line p)
@@ -95,7 +101,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-js socket)
    (with-trace 3 'http-response::http-response-js
-      (with-access::http-response-js r (start-line header content-type server content-length value bodyp timeout request)
+      (with-access::http-response-js r (start-line
+					header
+					content-type char-encoding
+					server content-length value
+					bodyp timeout request)
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
@@ -107,7 +117,9 @@
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (when content-type
-	       (http-write-line p "Content-Type: " content-type))
+	       (http-write-line p "Content-Type: " content-type
+				"; charset="
+				(or char-encoding (hop-char-encoding))))
 	    (when server
 	       (http-write-line p "Server: " server))
 	    ;; The case of the header names depends on the browse
@@ -139,7 +151,10 @@
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (when content-type
-	       (http-write-line p "Content-Type: " content-type))
+	       (when content-type
+		  (http-write-line p "Content-Type: " content-type
+				   "; charset="
+				   (or char-encoding (hop-char-encoding)))))
 	    (when server
 	       (http-write-line p "Server: " server))
 	    (http-write-line p)
@@ -448,6 +463,7 @@
       (else
        (instantiate::http-response-js
 	  (backend (hop-xml-backend))
+	  (content-type (xml-backend-mime-type (hop-xml-backend)))
 	  (request req)
 	  (value obj)))))
 

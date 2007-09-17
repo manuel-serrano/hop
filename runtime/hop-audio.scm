@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Sep 12 09:19:50 2007 (serrano)                */
+;*    Last change :  Thu Sep 13 13:53:49 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -107,7 +107,7 @@
 			    :onprefsclick onprefsclick
 			    :onpodcastclick onpodcastclick
 			    :onmuteclick onmuteclick)))
-	  (init (<AUDIO-INIT> :id id :pid pid
+	  (init (<AUDIO-INIT> :id id :pid pid :src src :autoplay autoplay
 		   :start start
 		   :onplay (expr->function onplay)
 		   :onstop (expr->function onstop)
@@ -147,20 +147,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO-INIT> ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO-INIT> #!key id pid start
+(define (<AUDIO-INIT> #!key id pid src autoplay start
 		      onplay onstop onpause onload onended onbuffer)
    (<SCRIPT>
-      (format "hop_audio_init( ~s, ~a, ~a, ~a, ~a, ~a, ~a );"
+      (format "function hop_audio_flash_init_~a() {hop_audio_flash_init( ~s, ~a, ~a );};"
+	      pid id
+	      (if (string? src) (string-append "'" src "'") "false")
+	      (if autoplay "true" "false"))
+      (format "hop_window_onload_add(
+                function() {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a );} );"
 	      id
 	      start
+	      (if (string? src) (string-append "'" src "'") "false")
+	      (if autoplay "true" "false")
 	      onplay
 	      onstop
 	      onpause
 	      onload
 	      onended
-	      onbuffer)
-      (format "function hop_audio_flash_init_~a() {hop_audio_flash_init( ~s )};"
-	      pid id)))
+	      onbuffer)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO-CONTROLS> ...                                             */
@@ -192,13 +197,15 @@
    (<DIV> :id (string-append "controls-" id) :class "hop-audio-controls"
       ;; the controls callbacks
       (<SCRIPT>
-	 (format "var el=document.getElementById(~s);"
+	 (format "hop_window_onload_add(
+                   function() {var el=document.getElementById(~s);"
 		 (string-append "controls-" id))
 	 "el.onload=hop_audio_controls_onload;"
 	 "el.onplay=hop_audio_controls_onplay;"
+	 "el.onpause=hop_audio_controls_onpause;"
 	 "el.onstop=hop_audio_controls_onstop;"
 	 "el.onended=hop_audio_controls_onended;"
-         "el.onbuffer=hop_audio_controls_onbuffer;")
+         "el.onbuffer=hop_audio_controls_onbuffer;})")
       ;; the info line
       (<TABLE> :class "hop-audio-panel"
 	 (<TR>

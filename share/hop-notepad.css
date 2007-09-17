@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Mon Jan  8 08:33:49 2007 (serrano)                */
+/*    Last change :  Mon Sep 17 13:51:05 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad                                                      */
@@ -53,9 +53,9 @@ div.hop-notepad-body-tab {
 /*    Tabs line                                                        */
 /*---------------------------------------------------------------------*/
 div.hop-notepad-tabs {
-  background-color: transparent;
+  background-color: inherit;
   clear: left;
-  border: 1px solid transparent;
+  border: 1px solid inherit;
   text-align: left;
   padding: 0;
   margin: 0;

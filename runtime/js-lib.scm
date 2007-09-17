@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Sep  3 11:40:11 2007 (serrano)                */
+;*    Last change :  Mon Sep 17 11:31:47 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -18,7 +18,8 @@
 	    __hop_types
 	    __hop_xml)
 
-   (export  (generic hop->json ::obj)
+   (export  (json-string-encode::bstring ::bstring)
+	    (generic hop->json ::obj)
 	    (json->hop ::input-port)))
 
 ;*---------------------------------------------------------------------*/
@@ -58,6 +59,53 @@
 		 (apply string-append "[" strs)
 		 (loop (-fx i 1)
 		       (cons* (hop->json (vector-ref vec i)) ", " strs))))))))
+
+;*---------------------------------------------------------------------*/
+;*    json-string-encode ...                                           */
+;*---------------------------------------------------------------------*/
+(define (json-string-encode str)
+   (define (count str ol)
+      (let loop ((i 0)
+		 (n 0))
+	 (if (=fx i ol)
+	     n
+	     (let ((c (string-ref str i)))
+		(case c
+		   ((#\" #\\ #\Newline #\Return)
+		    (loop (+fx i 1) (+fx n 2)))
+		   (else
+		    (loop (+fx i 1) (+fx n 1))))))))
+   (define (encode str ol nl)
+      (if (=fx nl ol)
+	  str
+	  (let ((res (make-string nl)))
+	     (let loop ((i 0)
+			(j 0))
+		(if (=fx j nl)
+		    res
+		    (let ((c (string-ref str i)))
+		       (case c
+			  ((#\")
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) c)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\\)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) c)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\Newline)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\n)
+			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\Return)
+			   (string-set! res j #\\)
+			   (string-set! res (+fx j 1) #\r)
+			   (loop (+fx i 1) (+fx j 2)))
+			  (else
+			   (string-set! res j c)
+			   (loop (+fx i 1) (+fx j 1))))))))))
+   (let ((ol (string-length str)))
+      (encode str ol (count str ol))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */
@@ -65,7 +113,7 @@
 (define-generic (hop->json obj)
    (cond
       ((string? obj)
-       (string-append "\"" (string-for-read obj) "\""))
+       (string-append "\"" (json-string-encode obj) "\"\n"))
       ((number? obj)
        (number->string obj))
       ((symbol? obj)
