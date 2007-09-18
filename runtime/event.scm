@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Sep 12 14:23:03 2007 (serrano)                */
+;*    Last change :  Tue Sep 18 04:49:42 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -38,6 +38,20 @@
 	    (hop-event-broadcast! ::bstring ::obj)))
 
 ;*---------------------------------------------------------------------*/
+;*    *event-mutex* ...                                                */
+;*---------------------------------------------------------------------*/
+(define *event-mutex* (make-mutex "hop-event"))
+
+;*---------------------------------------------------------------------*/
+;*    event services ...                                               */
+;*---------------------------------------------------------------------*/
+(define *port-service* #f)
+(define *register-service* #f)
+(define *init-service* #f)
+(define *client-key* 0)
+(define *default-request* (instantiate::http-request))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-init! port)
@@ -45,6 +59,9 @@
    (define (ajax-register-event! req name key)
       
       (define (ajax-register-active!)
+	 ;; set an output timeout on the socket
+	 (output-timeout-set! (socket-output (http-request-socket req))
+			      (hop-connection-timeout))
 	 (hashtable-update! *ajax-active-table*
 			    name
 			    (lambda (l)
@@ -65,48 +82,45 @@
 	     (ajax-register-active!))))
    
    (define (flash-register-event! req name key)
+      ;; set an output timeout on the socket
+      (output-timeout-set! (socket-output (http-request-socket req))
+			   (hop-connection-timeout))
       ;; update the event table
       (hashtable-update! *flash-socket-table*
 			 name
 			 (lambda (x) (cons req (filter-requests x)))
 			 (list req))
       (instantiate::http-response-string))
-   
-   (set! *client-key* (elong->fixnum (current-seconds)))
-   
-   (set! *port-service*
-	 (service :url "server-event-info" ()
-	    (vector (hostname) port (get-ajax-key port))))
-   
-   (set! *init-service*
-	 (service :url "server-event-init" (key)
-	    (let ((req (current-request)))
-	       ;; read the Flash's ending zero byte
-	       (read-byte (socket-input (http-request-socket req)))
-	       (set! *flash-request-list*
-		     (cons (cons (string->symbol key) req)
-			   *flash-request-list*))
-	       (instantiate::http-response-event
-		  (request req)
-		  (name key)))))
-   
-   (set! *register-service*
-	 (service :url "server-event-register" (event key flash)
-	    (let ((req (current-request))
-		  (key (string->symbol key)))
-	       (if flash
-		   (let ((req (cdr (assq key *flash-request-list*))))
-		      (flash-register-event! req event key))
-		   (ajax-register-event! req event key))))))
 
-;*---------------------------------------------------------------------*/
-;*    event services ...                                               */
-;*---------------------------------------------------------------------*/
-(define *port-service* #f)
-(define *register-service* #f)
-(define *init-service* #f)
-(define *client-key* 0)
-(define *default-request* (instantiate::http-request))
+   (with-lock *event-mutex*
+      (lambda ()
+	 (when (=fx *client-key* 0)
+	    (set! *client-key* (elong->fixnum (current-seconds)))
+	    
+	    (set! *port-service*
+		  (service :url "server-event-info" ()
+		     (vector (hostname) port (get-ajax-key port))))
+	    
+	    (set! *init-service*
+		  (service :url "server-event-init" (key)
+		     (let ((req (current-request)))
+			;; read the Flash's ending zero byte
+			(read-byte (socket-input (http-request-socket req)))
+			(set! *flash-request-list*
+			      (cons (cons (string->symbol key) req)
+				    *flash-request-list*))
+			(instantiate::http-response-event
+			   (request req)
+			   (name key)))))
+	    
+	    (set! *register-service*
+		  (service :url "server-event-register" (event key flash)
+		     (let ((req (current-request))
+			   (key (string->symbol key)))
+			(if flash
+			    (let ((req (cdr (assq key *flash-request-list*))))
+			       (flash-register-event! req event key))
+			    (ajax-register-event! req event key)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *flash-socket-table* ...                                         */
@@ -143,9 +157,11 @@
 			;; close the socket
 			(socket-close s)
 			;; remove the connection from the *flash* table
+			(mutex-lock! *event-mutex*)
 			(set! *flash-request-list*
 			      (filter! (lambda (x) (not (eq? (cdr x) r)))
 				       *flash-request-list*))
+			(mutex-unlock! *event-mutex*)
 			#f)
 		     s)))
 	   l))
@@ -154,16 +170,24 @@
 ;*    get-ajax-key ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (get-ajax-key port)
+   (mutex-lock! *event-mutex*)
    (set! *client-key* (+fx 1 *client-key*))
-   (format "~a:~a://~a" (hostname) port *client-key*))
+   (let ((r (format "~a:~a://~a" (hostname) port *client-key*)))
+      (mutex-unlock! *event-mutex*)
+      r))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-signal-value ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (ajax-signal-value req resp)
    (let ((s (http-request-socket req)))
-      (http-response resp s)
-      (socket-close s)))
+      (with-handler
+	 (lambda (e)
+	    (unless (&io-timeout-error e)
+	       (raise e)))
+	 (begin
+	    (http-response resp s)
+	    (socket-close s)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-make-signal-value ...                                       */
@@ -175,12 +199,19 @@
 ;*    flash-signal-value ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (flash-signal-value req name value)
-   (let ((p (socket-output (http-request-socket req))))
-      (fprintf p "<event name='~a'>" name)
-      (display value p)
-      (display "</event>\n" p)
-      (display #a000 p)
-      (flush-output-port p)))
+   (let* ((s (http-request-socket req))
+	  (p (socket-output s)))
+      (with-handler
+	 (lambda (e)
+	    (if (&io-timeout-error e)
+		(socket-close s)
+		(raise e)))
+	 (begin
+	    (fprintf p "<event name='~a'>" name)
+	    (display value p)
+	    (display "</event>\n" p)
+	    (display #a000 p)
+	    (flush-output-port p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    flash-make-signal-value ...                                      */
@@ -199,6 +230,7 @@
 ;*---------------------------------------------------------------------*/
 (define (for-each-socket table name proc)
    (let ((r #f))
+      (mutex-lock! *event-mutex*)
       (hashtable-update! table
 			 name
 			 (lambda (l)
@@ -206,6 +238,7 @@
 			       (set! r (proc l2))
 			       l2))
 			 '())
+      (mutex-unlock! *event-mutex*)
       r))
    
 ;*---------------------------------------------------------------------*/
@@ -251,9 +284,10 @@
 		(flash-signal-value (car l) name val)
 		#t)))))
 
+   (mutex-lock! *event-mutex*)
    (unless (flash-event-signal! name value)
-      (ajax-event-signal! name value)))
-
+      (ajax-event-signal! name value))
+   (mutex-unlock! *event-mutex*))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-broadcast! ...                                         */
@@ -299,7 +333,9 @@
 		(for-each (lambda (req)
 			     (flash-signal-value req name val))
 			  l))))))
-   
+
+   (mutex-lock! *event-mutex*)
    (ajax-event-broadcast! name value)
    (flash-event-broadcast! name value)
+   (mutex-unlock! *event-mutex*)
    #unspecified)

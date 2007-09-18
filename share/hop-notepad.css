@@ -55,7 +55,7 @@ div.hop-notepad-body-tab {
 div.hop-notepad-tabs {
   background-color: inherit;
   clear: left;
-  border: 1px solid inherit;
+  border: 1px solid transparent;
   text-align: left;
   padding: 0;
   margin: 0;
