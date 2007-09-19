@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Sep 18 04:49:42 2007 (serrano)                */
+;*    Last change :  Tue Sep 18 17:41:55 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -230,7 +230,6 @@
 ;*---------------------------------------------------------------------*/
 (define (for-each-socket table name proc)
    (let ((r #f))
-      (mutex-lock! *event-mutex*)
       (hashtable-update! table
 			 name
 			 (lambda (l)
@@ -238,7 +237,6 @@
 			       (set! r (proc l2))
 			       l2))
 			 '())
-      (mutex-unlock! *event-mutex*)
       r))
    
 ;*---------------------------------------------------------------------*/

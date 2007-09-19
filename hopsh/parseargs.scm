@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jun 17 11:27:17 2007 (serrano)                */
+;*    Last change :  Tue Sep 18 08:57:03 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -49,7 +49,7 @@
           (exit 0))
 	 (("-q" (help "Do not load an init file"))
 	  (set! loadp #f))
-	 (("-c" ?string (help "Read commands from the command STRING"))
+	 (("-c" ?string (help "Execute command STRING"))
 	  (set! command-string string))
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))

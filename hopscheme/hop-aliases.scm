@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Mon Sep 10 21:42:52 2007 (serrano)                */
+;*    Last change :  Tue Sep 18 18:03:36 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -211,6 +211,7 @@
      (event-mouse-y hop_event_mouse_y)
      (event-mouse-button hop_event_mouse_button)
      (iframe-scroll-height hop_iframe_scroll_height)
+     (iframe-scroll-width hop_iframe_scroll_width)
      (event-key-code hop_event_key_code)
      (event-value hop_event_value)
      (event-response-text hop_event_response_text)
