@@ -1,6 +1,6 @@
  (<HTML>
     (<HEAD>
-       :include "hop-fileselect" "hop-iwindow" "hop-tree")
+       :include "hop-fileselect" "hop-window" "hop-tree")
     (<BODY>
        (<FILEBROWSE>
 	  :value "/" :path "/tmp" :text "/tmp"

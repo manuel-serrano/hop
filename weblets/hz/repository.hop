@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Mon Aug  6 19:14:56 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 13:45:18 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -191,7 +191,7 @@
    (<HTML>
       (<HEAD>
 	 :title "Hz Repository"
-	 :include "hop-iwindow"
+	 :include "hop-window"
 	 :base (service-base-url hz/repository req)
 	 :css "hz.hss")
       (let ((author (<INPUT> :type 'text :size 30))
@@ -229,12 +229,12 @@
 		  (<VBOX-BLOCK> "&#160;")
 		  (<VBOX-BLOCK> (<BUTTON>
 				   :title "Build the db by files inspection"
-				   :onclick ~(iwindow-open
-					      "Repository"
-					      ($hz/build-repository)
-					      false false
-					      640 400
-					      (/ (- window.innerWidth 640) 2) 50)
+				   :onclick ~(window-open :id "Repository"
+						:src ($hz/build-repository)
+						:width 640 :height 400
+						:left (/ (- window.innerWidth 640) 2)
+						:top 50
+						:parent document.body)
 				   "Build/Update Repository DB"))
 		  (<VBOX-BLOCK> "&#160;")
 		  (<VBOX-BLOCK>

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Tue Sep 11 11:59:50 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 13:49:29 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -139,7 +139,7 @@
 		  :id (if root tident (xml-make-id 'SUBTREE))
 		  :value dir
 		  :open (substring-at? path dir 0)
-		  :onselect (format "hop_iwindow_close( '~a' ); ~a"
+		  :onselect (format "hop_window_close( '~a' ); ~a"
 				    window-id
 				    (proc->string onselect))
 		  :multiselect multiselect
@@ -158,7 +158,7 @@
 				    (sort (filter! filt files)
 					  string<?)))))))))
 	 (<DIV> :class "hop-filebrowse-buttons"
-	    (<BUTTON> :onclick (format "hop_iwindow_close( '~a' )"
+	    (<BUTTON> :onclick (format "hop_window_close( '~a' )"
 				       window-id
 				       window-id)
 	       "Cancel")

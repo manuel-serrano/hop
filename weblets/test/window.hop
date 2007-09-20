@@ -1,0 +1,50 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/window.hop                 */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Sat Jul  7 08:33:34 2007                          */
+;*    Last change :  Wed Sep 19 19:49:59 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Testing window                                                   */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-window
+   (import weblet_test)
+   (export test/window))
+
+;*---------------------------------------------------------------------*/
+;*    test/window ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (test/window)
+   (<TEST-HTML>
+      :include "hop-window"
+      :source (service-resource test/window "window.hop")
+      (<DIV> :class "comment"
+	 "This test checks various Hop windows.")
+      (<H2> "Native windows")
+      (<H3> "Plain native window")
+      (<BUTTON> "open" :onclick ~(window-open :src $test/window
+				    :title "native window 1"))
+      (<H3> "A fixed-size native window")
+      (<BUTTON> "open" :onclick ~(window-open :src $test/window
+				    :title "native window 2"
+				    :width 200 :height 200))
+      (<H3> "A native window with the full decoration")
+      (<BUTTON> "open" :onclick ~(window-open :src "http://hop.inria.fr"
+				    :title "native window 3"
+				    :width 640 :height 480
+				    :toolbar #t :location #t
+				    :directories #t :status #t
+				    :menubar #t :scrollbars #t
+				    :resizable #t :titlebar #t))
+      (<H2> "Inner windows")
+      (<H3> "Plain inner window")
+      (<BUTTON> "open" :onclick ~(window-open :src $test/window
+				    :parent document.body
+				    :background "#ccc"
+				    :title "inner window 1"))
+      ))

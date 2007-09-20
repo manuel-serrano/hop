@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jul 20 11:48:20 2007 (serrano)                */
+;*    Last change :  Wed Sep 19 19:48:40 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
@@ -23,8 +23,10 @@
 	   weblet_test-sorttable
 	   weblet_test-slider
 	   weblet_test-canvas
+	   weblet_test-window
 	   weblet_test-fselector
-	   weblet_test-sound)
+	   weblet_test-sound
+	   weblet_test-audio)
    (export (<TEST-HTML> . args)))
 
 ;*---------------------------------------------------------------------*/
@@ -62,11 +64,13 @@
 	    (<LI> (<A> :href test/sorttable :target "_blank" "Sorttables"))
 	    (<LI> (<A> :href test/tree :target "_blank" "Trees"))
 	    (<LI> (<A> :href test/canvas :target "_blank" "Canvas"))
+	    (<LI> (<A> :href test/window :target "_blank" "Windows"))
 	    (<LI> (<A> :href test/fselector :target "_blank" "File Selector")))
 	 (<H4> "Miscellaneous tests")
 	 (<UL>
 	    (<LI> (<A> :href test/busy :target "_blank" "Busy anim"))
-	    (<LI> (<A> :href test/sound :target "_blank" "Sounds"))))))
+	    (<LI> (<A> :href test/sound :target "_blank" "Sounds"))
+	    (<LI> (<A> :href test/audio :target "_blank" "Audio"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TEST-HTML> ...                                                  */

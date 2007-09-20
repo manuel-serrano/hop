@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Sep 10 20:19:52 2007 (serrano)                */
+#*    Last change :  Thu Sep 20 08:09:42 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -37,6 +37,7 @@ BMASK		= 755
 #*---------------------------------------------------------------------*/
 #*    Compilation flags                                                */
 #*---------------------------------------------------------------------*/
+DEBUG		= @DEBUG@
 BCFLAGS		= @BCFLAGS@ -copt "$(CCFLAGS)" $(EFLAGS)
 FFLAGS		= @FFLAGS@
 BLFLAGS         = @BLFLAGS@

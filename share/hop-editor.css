@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Mon Apr 10 11:43:00 2006                          */
-/*    Last change :  Fri Jun  9 18:47:41 2006 (eg)                     */
+/*    Last change :  Thu Sep 20 14:59:05 2007 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    EDITOR CSS                                                       */
 /*=====================================================================*/
@@ -44,7 +44,7 @@
     padding:4px;
     background:#eee;
     cursor:pointer;
-    width:100;
+    width:100ps;
 }
 
 .hop-edit-palette-item {

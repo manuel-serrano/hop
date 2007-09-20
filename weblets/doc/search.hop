@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Thu Aug 16 12:02:16 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 14:01:04 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -356,7 +356,7 @@
 	  ;; only one element matches, jump to it
 	  (<SCRIPT> 
 	     ~(let ((el (dom-get-element-by-id document $id)))
-		 (iwindow-close "doc/search")
+		 (window-close "doc/search")
 		 (select-api-doc $doc/api $(cadr (car l1)) el #unspecified))))
 	 (else
 	  (let ((l2 (sort l1 (lambda (a b) (string-ci<? (car a) (car b))))))

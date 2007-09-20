@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Sep 11 07:07:11 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 14:02:52 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -254,7 +254,7 @@ div.motd {
 /*---------------------------------------------------------------------*/
 
 /*--- window ----------------------------------------------------------*/
-iwindow {
+window {
   font-size: small;
   background-color: white;
   z-index: 11;

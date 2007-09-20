@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Mon Aug  6 18:04:38 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 13:48:40 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -65,26 +65,29 @@
 			:title "Hit [Return] to search"
 			:size 20
 			:onkeyup ~(if (= event.keyCode 13)
-				      (iwindow-open
-				       "Hop Weblets Hz Query"
-				       ($search this.value)
-				       false false
-				       430 300
-				       (- window.innerWidth 450) 100))))
-	       (<TD> (<BUTTON> :onclick ~(iwindow-open
-					  "Hop Weblets Hz Query"
-					  ($searcho)
-					  false false
-					  430 300
-					  (- window.innerWidth 450) 100)
+				      (window-open :id "Hop Weblets Hz Query"
+					 :title "Hop Weblets Hz Query"
+					 :src ($search this.value)
+					 :width 430 :height 300
+					 :left (- window.innerWidth 450)
+					 :top 100
+					 :parent document.body))))
+	       (<TD> (<BUTTON> :onclick ~(window-open :id "Hop Weblets Hz Query"
+					    :title  "Hop Weblets Hz Query"
+					    :src ($searcho)
+					    :width 430  :height 300
+					    :left (- window.innerWidth 450)
+					    :top 100
+					    :parent document.body)
 			       :title "Show weblets update"
 			       "Update"))
-	       (<TD> (<BUTTON> :onclick ~(iwindow-open
-					  "Hop Weblets Hz Query"
-					  ($searchn)
-					  false false
-					  430 300
-					  (- window.innerWidth 450) 100)
+	       (<TD> (<BUTTON> :onclick ~(window-open :id "Hop Weblets Hz Query"
+					    :title "Hop Weblets Hz Query"
+					    :src ($searchn)
+					    :width 430 :height 300
+					    :left (- window.innerWidth 450)
+					    :top 100
+					    :parent document.body)
 			       :title "Show new available weblets"
 			       "New"))))
 	 (<PANED> :fraction 25
@@ -208,9 +211,8 @@
 	     :class "action"
 	     (<SPAN>
 		:title "Run the weblet in a new window"
-		:onclick ~(window.open
-			   $(format "~a/~a" (hop-service-base) name)
-			   $name)
+		:onclick ~(window_open :title $name
+			     :src $(format "~a/~a" (hop-service-base) name))
 		"Run"))))
 
       (define (<PREF> id)
@@ -222,9 +224,8 @@
 	     :class "action"
 	     (<SPAN>
 		:title "Run the weblet in a new window"
-		:onclick ~(window.open
-			   $(format "~a/~a/preferences" (hop-service-base) name)
-			   $name)
+		:onclick ~(window-open :title $name
+			     :src $(format "~a/~a/preferences" (hop-service-base) name))
 		"Preferences"))))
 
       (define (<DOC> id)
@@ -236,9 +237,8 @@
 	     :class "action"
 	     (<SPAN>
 		:title "Run the weblet in a new window"
-		:onclick ~(window.open
-			   $(format "~a/~a/documentation" (hop-service-base) name)
-			   $name)
+		:onclick ~(window-open :title $name
+			     :src $(format "~a/~a/documentation" (hop-service-base) name))
 		"Documentation"))))
 
       (define (<REMOVE> id)

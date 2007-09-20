@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:51 2005                          */
-/*    Last change :  Fri Jul  6 06:02:08 2007 (serrano)                */
+/*    Last change :  Wed Sep 19 17:13:00 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned CSS                                                    */
@@ -55,7 +55,7 @@ td.hop-vpaned-cursor {
   background-color: rgb(204,204,204);
   background-repeat: no-repeat;
   background-position: center;
-  background-image: url( "icons/paned-vcursor.png" );
+  background-image: url( "icons/hop-paned/vcursor.png" );
   height: 100%;
 }
 
@@ -80,7 +80,7 @@ div.hop-hpaned-cursor {
   cursor: move;
   background-repeat: no-repeat;
   background-position: center;
-  background-image: url( "icons/paned-hcursor.png" );
+  background-image: url( "icons/hop-paned/hcursor.png" );
 }
 
 div.hop-hpaned-cursor:hover {

@@ -6,7 +6,7 @@
    (<HTML>
       (<HEAD>
 	 :title "Home Repl demo"
-	 :include "hop-iwindow" "hop-notepad" "hop-tree"
+	 :include "hop-window" "hop-notepad" "hop-tree"
 	 :include "hop-tabslider" "hop-foldlist" "hop-paned"
 	 :include "hop-sorttable" "hop-fx" "base64"
 	 :css "repl.hss")
@@ -46,7 +46,7 @@
 ;;      (el.style.setProperty \"color\" \"red\" \"\"))
 ;; you can also try:
 ;;   (dom-append-child! document.body (<TABLE> :border 1 (<TR> (<TD> \"foo\"))))
-;;   (iwindow-open 'home \"/hop/home\" \"home\")
+;;   (window-open :id 'home :src \"/hop/home\" :title \"home\")
 :=> ")))))
 
 (define-service (home/demos/repl/compile s)

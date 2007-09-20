@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Thu Jun  7 06:47:06 2007 (serrano)                */
+;*    Last change :  Wed Sep 19 16:43:25 2007 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -103,10 +103,12 @@
    (with-access::html-flitem obj (body id parent open)
       (let ((tmp   body)
 	    (icono (or (html-foldlist-icono parent)
-		       (make-file-name (hop-icons-directory)
+		       (make-file-path (hop-icons-directory)
+				       "hop-foldlist"
 				       "triangle-down.png")))
 	    (iconc (or (html-foldlist-iconc parent)
-		       (make-file-name (hop-icons-directory)
+		       (make-file-path (hop-icons-directory)
+				       "hop-foldlist"
 				       "triangle-right.png")))
 	    (history (if (html-foldlist-history parent) "true" "false")))
 	 (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue May 22 15:30:37 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 13:41:58 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -36,7 +36,7 @@
       (<HEAD>
 	 :title "Hop documentation center (APIs &amp; libraries)"
 	 :include "hop-notepad" "hop-tree" "hop-sorttable" "hop-foldlist" 
-	 :include "hop-iwindow" "hop-fx"
+	 :include "hop-window" "hop-fx"
 	 :css (string-append (doc-dir) "/doc.hss")
 	 :jscript (string-append (doc-dir) "/doc.scm")
 	 script)
@@ -131,16 +131,17 @@
 			(<INPUT> :style "width: 100%"
 			   :type "text"
 			   :onkeyup ~(if (= event.keyCode 13)
-					 (iwindow-open
-					  "doc/search"
-					  ($keypress this.value)
-					  false "iwindow-menu"
-					  640 480
-					  (let ((w (if (number? window.innerWidth)
-						       window.innerWidth
-						       document.documentElement.clientWidth)))
-					     (- w 700))
-					  10))
+					 (window-open :id "doc/search"
+					    :parent document.body
+					    :src ($keypress this.value)
+					    :class "iwindow-menu"
+					    :width 640 :height 480
+					    :left 
+					    (let ((w (if (number? window.innerWidth)
+							 window.innerWidth
+							 document.documentElement.clientWidth)))
+					       (- w 700))
+					    :top 10))
 			   :title "Hit [return] to search"))))))
 	 (<TR>
 	    (<TD>
@@ -243,12 +244,12 @@
 		   (node-style-set! frame "width" "100%")
 		   (node-style-set! frame "height" "100%")
 		   (node-style-set! frame "border-width" "0")
-		   (iwindow-open "doc/example"
-				 frame
-				 false false
-				 640 480
-				 (+ (event-mouse-x event) 100)
-				 (- (event-mouse-y event) 100)))
+		   (window-open :id "doc/example"
+		      :src frame
+		      :parent document.body
+		      :width 640 :height 480
+		      :left (+ (event-mouse-x event) 100)
+		      :top (- (event-mouse-y event) 100)))
       "Run"))
 
 ;*---------------------------------------------------------------------*/

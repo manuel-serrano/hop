@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May  4 16:34:59 2006                          */
-/*    Last change :  Sat Dec  9 08:39:36 2006 (serrano)                */
-/*    Copyright   :  2006 Manuel Serrano                               */
+/*    Last change :  Thu Sep 20 13:59:36 2007 (serrano)                */
+/*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP graphical effects library                                    */
 /*=====================================================================*/
@@ -45,7 +45,7 @@ function hop_fx_make_shadow( cla, obj ) {
    return "\n\
 <table class='" + cla + "' cellspacing='0' cellpadding='0' border='0'>\n\
   <tr>\n\
-    <td class='hop-iwindow-shadow-nw' rowspan='2' colspan='2'>\n" +
+    <td class='hop-window-shadow-nw' rowspan='2' colspan='2'>\n" +
    (((obj instanceof String) || (typeof obj == "string")) ? obj : obj.innerHTML) +
    "</td>\n\
     <td class='hop-shadow-ne'>&#160;</td>\n\

@@ -581,12 +581,76 @@ function sc_makeList(nbEls, fill) { /// export
 }
 
 function sc_length(l) { /// export
-    res = 0;
+    var res = 0;
     while (l != null) {
 	res++;
 	l = l.cdr;
     }
     return res;
+}
+
+function sc_remq(o, l) { /// export
+   if (sc_isPair(l)) {
+      if (l.car === o) {
+	 return sc_remq(o, l.cdr);
+      } else {
+	 return sc_cons(l.car, sc_remq(o, l.cdr));
+      }
+   } else {
+      return null;
+   }
+}
+
+function sc_remqbang(o, l) { /// export remq!
+   if (sc_isPair(l)) {
+      if (l.car === o) {
+	 return sc_remqbang(o, l.cdr);
+      } else {
+	 var l2 = l;
+	 while (sc_isPair(l2.cdr)) {
+	    if (l2.cdr.car === o) {
+	       l2.cdr = l2.cdr.cdr;
+	    } else {
+	       l2 = l2.cdr;
+	    }
+	 }
+	 return l;
+      }
+   } else {
+      return l;
+   }
+}
+
+function sc_delete(o, l) { /// export
+   if (sc_isPair(l)) {
+      if (sc_equal(l.car, o)) {
+	 return sc_delete(o, l.cdr);
+      } else {
+	 return sc_cons(l.car, sc_delete(o, l.cdr));
+      }
+   } else {
+      return null;
+   }
+}
+
+function sc_deletebang(o, l) { /// export delete!
+   if (sc_isPair(l)) {
+      if (sc_equal(l.car, o)) {
+	 return sc_deletebang(o, l.cdr);
+      } else {
+	 var l2 = l;
+	 while (sc_isPair(l2.cdr)) {
+	    if (sc_equal(l2.cdr.car, o)) {
+	       l2.cdr = l2.cdr.cdr;
+	    } else {
+	       l2 = l2.cdr;
+	    }
+	 }
+	 return l;
+      }
+   } else {
+      return l;
+   }
 }
 
 function sc_destReverseAppend(l1, l2) {

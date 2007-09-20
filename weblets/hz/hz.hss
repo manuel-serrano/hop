@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Mon Aug  6 10:51:08 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 14:03:00 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -241,7 +241,7 @@ img.hop-tree {
 }
 
 /*--- window ----------------------------------------------------------*/
-iwindow {
+window {
   opacity: 0.95;
   background: white;
   font-size: small;

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Sep  6 12:01:33 2007 (serrano)                */
+#*    Last change :  Thu Sep 20 07:44:14 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -30,9 +30,9 @@ POPDIRS		= runtime hopscheme scheme2js src hopsh \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-.PHONY: bindir libdir bin lib weblets
+.PHONY: bindir libdir bin lib share weblets
 
-build: showflags bindir libdir bin lib weblets
+build: showflags bindir libdir bin lib share weblets
 
 bindir:
 	mkdir -p bin
@@ -48,6 +48,9 @@ lib:
 	(cd runtime && $(MAKE) build)
 	(cd scheme2js && $(MAKE) build)
 	(cd hopscheme && $(MAKE) build)
+
+share:
+	(cd share && $(MAKE) build)
 
 weblets:
 	(cd weblets && $(MAKE) build)

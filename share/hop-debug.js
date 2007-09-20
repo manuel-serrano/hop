@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug  3 14:17:43 2006                          */
-/*    Last change :  Sat Dec  9 08:40:43 2006 (serrano)                */
-/*    Copyright   :  2006 Manuel Serrano                               */
+/*    Last change :  Thu Sep 20 13:58:05 2007 (serrano)                */
+/*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Simple HOP debug console                                         */
 /*=====================================================================*/
@@ -37,7 +37,14 @@ function hop_debug_get_container() {
 
       div.innerHTML = "<DIV class='hop_debug_reset'><BUTTON onclick='hop_debug_reset()'>Reset</BUTTON></DIV>";
       div.appendChild( pre );
-      win = hop_iwindow_open( "hop_debug", div, "hop_debug", false, 640, 480, 10, 10 );
+      win = hop_window_open( new sc_Keyword( "id" ), "hop_debug",
+			     new sc_Keyword( "src" ), div,
+			     new sc_Keyword( "class" ), "hop_debug",
+			     new sc_keyword( "width" ), 640,
+			     new sc_keyword( "height" ), 480,
+			     new sc_keyword( "left" ), 10,
+			     new sc_keyword( "top" ), 10,
+			     new sc_keyword( "parent" ), document.body );
    } else {
       win.style.display = "block";
    }

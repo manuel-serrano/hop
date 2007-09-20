@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Sep 11 14:00:11 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 14:23:02 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -149,7 +149,6 @@ if( window.XMLHttpRequest != undefined ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    hop_is_http_json ...                                             */
 /*---------------------------------------------------------------------*/
 var hop_is_http_json;
@@ -165,13 +164,6 @@ if( (hop_is_http_json_autoconf.propertyIsEnumerable != undefined)
    hop_is_http_json = function hop_is_http_json( http ) {
       return (http.getAllResponseHeaders().indexOf( "hopjson" ) >= 0);
    }
-}
-
-/*---------------------------------------------------------------------*/
-/*    node_style_get ...                                               */
-/*---------------------------------------------------------------------*/
-function node_style_get( obj, prop ) {
-   return obj.style[ prop ];
 }
 
 /*---------------------------------------------------------------------*/
@@ -217,165 +209,65 @@ var hop_active_location_timeout =
    (navigator.platform.indexOf( "armv6" ) >= 0 ) ? 250 : 100;
 
 /*---------------------------------------------------------------------*/
-/*    hop_add_active_location_listener ...                             */
-/*---------------------------------------------------------------------*/
-function hop_add_active_location_listener( obj, proc ) {
-   obj.hop_active_location_proc = proc;
-   var i = window.location.href.indexOf( "#" );
-   
-   if( i === -1 ) {
-      obj.hop_active_location_href = window.location.href;
-   } else {
-      obj.hop_active_location_href = window.location.href.substring( 0, i-1 );
-   }
-
-   if( obj.hop_active_location_interval === undefined ) {
-      var check = function() {
-	 if( obj.hop_active_location_href !== window.location.href ) {
-	    if( obj.hop_active_location_href != window.location.href ) {
-	       obj.hop_active_location_href = window.location.href;
-	       obj.hop_active_location_proc( window.location );
-	    }
-	 }
-	 return true;
-      }
-
-      obj.hop_active_location_interval =
-	 setInterval( check, hop_active_location_timeout );
-   }
-   return false;
-}
-
-/*---------------------------------------------------------------------*/
-/*    function                                                         */
-/*    hop_remove_active_location_listener ...                          */
-/*---------------------------------------------------------------------*/
-function
-hop_remove_active_location_listener( obj, proc ) {
-   if( obj.hop_active_location_interval != undefined ) {
-      clearInterval( obj.hop_active_location_interval );
-      obj.hop_active_location_interval = undefined;
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_active_location_set ...                                      */
-/*---------------------------------------------------------------------*/
-function hop_active_location_set( obj, href ) {
-   window.location.href = href;
-   obj.hop_active_location_href = window.location.href;
-}
-
-/*---------------------------------------------------------------------*/
 /*    Event handlers                                                   */
 /*---------------------------------------------------------------------*/
-var hop_add_event_listener = undefined;
-var hop_remove_event_listener = undefined;
+var hop_add_native_event_listener = undefined;
+var hop_remove_native_event_listener = undefined;
 var hop_stop_propagation = undefined;
 
 if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
-   hop_add_event_listener = function( obj, event, proc, capture ) {
-      if( event == "location" ) {
-	 return hop_add_active_location_listener( obj, proc );
-      }
-      if( event == "server" ) {
-	 return hop_add_server_listener( obj, proc );
-      }
-      if( event == "timeout" ) {
-	 return hop_add_timeout_listener( obj, proc );
-      }
-      if( !(obj instanceof Window) &&
-	  (obj.hop_add_event_listener != undefined) ) {
-	 obj.hop_add_event_listener( event, proc, capture );
+   hop_add_native_event_listener = function( obj, event, proc, capture ) {
+      if( obj.addEventListener != undefined ) {
+	 return obj.addEventListener( event, proc, capture );
       } else {
-	 if( obj.addEventListener != undefined ) {
-	    return obj.addEventListener( event, proc, capture );
-	 } else {
-	    throw new Error( "Cannot add `" +
-			     event + "' listener for object: "
-			     + obj );
-	 }
+	 throw new Error( "add-event-listener!: cannot add `" 
+			  + event + "' listener for object: "
+			  + obj );
       }
    }
-   hop_remove_event_listener = function( obj, event, proc, capture ) {
-      if( event == "location" ) {
-	 return hop_remove_active_location_listener( obj, proc );
-      } 
-      if( event == "server" ) {
-	 return hop_remove_server_listener( obj, proc );
-      } 
-      if( event == "timeout" ) {
-	 return hop_remove_timeout_listener( proc );
-      }
-      if( !(obj instanceof Window) &&
-	  (obj.hop_remove_event_listener != undefined) ) {
-	 obj.hop_remove_event_listener( event, proc, capture );
+
+   hop_remove_native_event_listener = function( obj, event, proc, capture ) {
+      if( obj.removeEventListener != undefined ) {
+	 return obj.removeEventListener( event, proc, capture );
       } else {
-	 if( obj.removeEventListener != undefined ) {
-	    return obj.removeEventListener( event, proc, capture );
-	 } else {
-	    throw new Error( "Cannot remove `" +
-			     event + "' listener for object: "
-			     + obj );
-	 }
+	 throw new Error( "remove-event-listener!: cannot remove `"
+			  + event + "' listener for object: "
+			  + obj );
       }
    }
+
    hop_stop_propagation = function( event, def ) {
       if( !def ) event.preventDefault();
       event.stopPropagation();
       event.isStopped = true;
    }
 } else {
-   hop_add_event_listener = function( obj, event, proc, capture ) {
-      if( event == "location" ) {
-	 return hop_add_active_location_listener( obj, proc );
-      }
-      if( event == "server" ) {
-	 return hop_add_server_listener( obj, proc );
-      }
-      if( event == "timeout" ) {
-	 return hop_add_timeout_listener( obj, proc );
-      }
-      if( obj.hop_add_event_listener != undefined ) {
-	 obj.hop_add_event_listener( event, proc, capture );
-      } else {
-	 var p = function(_) { return proc( window.event ) };
-	 var i = "on" + event + "hdl";
+   hop_add_native_event_listener = function( obj, event, proc, capture ) {
+      var p = function(_) { return proc( window.event ) };
+      var i = "on" + event + "hdl";
 
-	 if( obj[ i ] === undefined ) obj[ i ] = [];
-	 obj[ i ][ proc ] = p;
+      if( obj[ i ] === undefined ) obj[ i ] = [];
+      obj[ i ][ proc ] = p;
 
-	 return obj.attachEvent( "on" + event, p );
-      }
+      return obj.attachEvent( "on" + event, p );
    }
-   hop_remove_event_listener = function( obj, event, proc, capture ) {
-      if( event == "location" ) {
-	 return hop_remove_active_location_listener( obj, proc );
-      }
-      if( event == "server" ) {
-	 return hop_remove_server_listener( obj, proc );
-      }
-      if( event == "timeout" ) {
-	 return hop_remove_timeout_listener( proc );
-      }
-      if( obj.hop_remove_event_listener != undefined ) {
-	 obj.hop_remove_event_listener( event, proc, capture );
-      } else {
-	 var i = "on" + event + "hdl";
-	 var h = obj[ i ];
 
-	 if( h !== undefined ) {
-	    var p = obj[ i ][ proc ];
+   hop_remove_native_event_listener = function( obj, event, proc, capture ) {
+      var i = "on" + event + "hdl";
+      var h = obj[ i ];
 
-	    if( p !== undefined ) {
-	       h[ p ] = undefined;
-	       return obj.detachEvent( "on" + event, p );
-	    }
+      if( h !== undefined ) {
+	 var p = obj[ i ][ proc ];
+
+	 if( p !== undefined ) {
+	    h[ p ] = undefined;
+	    return obj.detachEvent( "on" + event, p );
 	 }
-
-	 return false;
       }
+
+      return false;
    }
+
    hop_stop_propagation = function( event, def ) {
       if( !def ) event.cancelBubble = true;
       event.returnValue = false;
@@ -503,24 +395,6 @@ if( hop_msiep() || (hop_khtmlp() && !hop_safarip()) ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_element_x ...                                                */
-/*---------------------------------------------------------------------*/
-function hop_element_x( obj ) {
-   var res = 0;
-
-   while( obj != null ) {
-      if( typeof obj.offsetLeft == "number" ) 
-	 res += obj.offsetLeft;
-      else {
-	 break;
-      }
-      obj = obj.offsetParent;
-   }
-
-   return res;
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_window_width/height ...                                      */
 /*---------------------------------------------------------------------*/
 var hop_window_width = undefined;
@@ -540,24 +414,6 @@ if( isNaN( window.innerWidth ) ) {
    hop_window_height = function hop_window_height( win ) {
       return window.innerHeight;
    }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_element_y ...                                                */
-/*---------------------------------------------------------------------*/
-function hop_element_y( obj ) {
-   var res = 0;
-
-   while( obj != null ) {
-      if( typeof obj.offsetTop == "number" ) 
-	 res += obj.offsetTop;
-      else {
-	 break;
-      }
-      obj = obj.offsetParent;
-   }
-
-   return res;
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Sat Dec  9 09:00:17 2006 (serrano)                */
+;*    Last change :  Thu Sep 20 14:56:38 2007 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -178,19 +178,29 @@
 			       (submit 'hop_edit_submit)
 			       (cancel 'hop_edit_cancel)
 			       body)
-  (let ((id (xml-make-id id 'EDITOR)))
-    (<DIV> :style (format "width: ~a" width)
-	   :class "hop-editor"
-       ;; Create the toolbar
-       (make-toolbar id width)
-       ;; Create the (invisible) text area which can be used for forms
-       (<TEXTAREA> :style (format "display:none; width: ~a; height: ~a; border:0;"
-				  width height)
-		   :id id :name name body)
-       ;; Create an iframe for rich text editing
-       (<IFRAME> :id (string-append "hop-edit" id) :frameborder 0
-		 :onmouseover "hop_edit_in_iframe = true"
-		 :onmouseout  "hop_edit_in_iframe = false"
-		 :width width :height height)
-       (<SCRIPT> (format "hop_edit_init(~s, ~s, ~s, ~s)" id *popups-dir*
-			 submit cancel)))))
+   (define (expr->function expr)
+      (cond
+	 ((xml-tilde? expr)
+	  (format "function( event ) { ~a }" (tilde->string expr)))
+	 ((string? expr)
+	  (format "function( event ) { ~a }" expr))
+	 (else
+	  "false")))
+   
+   (let ((id (xml-make-id id 'EDITOR)))
+      (<DIV> :style (format "width: ~a" width)
+	 :class "hop-editor"
+	 ;; Create the toolbar
+	 (make-toolbar id width)
+	 ;; Create the (invisible) text area which can be used for forms
+	 (<TEXTAREA> :style (format "display:none; width: ~a; height: ~a; border:0;"
+				    width height)
+	    :id id :name name body)
+	 ;; Create an iframe for rich text editing
+	 (<IFRAME> :id (string-append "hop-edit" id) :frameborder 0
+	    :onmouseover "hop_edit_in_iframe = true"
+	    :onmouseout  "hop_edit_in_iframe = false"
+	    :width width :height height)
+	 (<SCRIPT> (format "hop_edit_init(~s, ~s, ~s, ~s)" id *popups-dir*
+			   (expr->function submit)
+			   (expr->function cancel))))))

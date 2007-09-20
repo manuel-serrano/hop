@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Tue Sep 11 11:04:29 2007 (serrano)                */
+/*    Last change :  Wed Sep 19 16:44:34 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -38,7 +38,7 @@ var hop_tree_default_device_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg
 
 if( hop_msiep() ) {
    /* IE does not support inline images! */
-   var icon_dir = hop_share_directory() + "/icons/";
+   var icon_dir = hop_share_directory() + "/icons/hop-tree";
    hop_tree_plus_icon = icon_dir + "plus.png";
    hop_tree_plusbottom_icon = icon_dir + "plusbottom.png";
    hop_tree_minus_icon = icon_dir + "minus.png";

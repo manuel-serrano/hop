@@ -3,10 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Aug 23 17:23:20 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 07:20:07 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
+/*    -------------------------------------------------------------    */
+/*    This assumes that hop-autoconf is already loaded.                */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
@@ -511,7 +513,6 @@ function hop_css_add_style_sheet( document, rules ) {
       ;
    }
 }
-      
 
 /*---------------------------------------------------------------------*/
 /*    dom_get_element_by_class ...                                     */
@@ -550,5 +551,168 @@ document.getElementsByClass = function( className ) {
       }
    }
    
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_node_eval ...                                                */
+/*---------------------------------------------------------------------*/
+function hop_node_eval( node, text ) {
+   var res;
+   var scripts = node.getElementsByTagName( "script" );
+
+   function hop_node_eval_from_text( text ) {
+      var res;
+      var start_re = /<script[^>]*>/ig;
+      var end_re = /<\/script>/i;
+      var script;
+
+      while( (script=start_re.exec( text )) != null ) {
+	 /* I don't understand why yet, IE 7 does not include */
+	 /* SCRIPT nodes in the resulting node!               */
+	 var start = script.index + script[0].length;
+	 var end = text.indexOf( "</script>", start );
+	 if( end == -1 ) end = text.indexOf( "</SCRIPT>", start );
+	 if( (end > start) ) {
+	    res = eval( text.substr( start, end - start ) );
+	 }
+      }
+
+      return res;
+   }
+
+   try {
+      if( scripts.length > 0 ) {
+	 for ( var j = 0; j < scripts.length; j++ ) {
+	    if( false && scripts[ j ].childNodes.length > 0 ) {
+	       res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+	    } else {
+	       /* this is a buggy browser (Opera 8?) that does not */
+	       /* correctly implement script nodes                 */
+	       return hop_node_eval_from_text( text );
+	    }
+	 }
+      } else {
+	 return hop_node_eval_from_text( text );
+      }
+   } catch( e ) {
+      alert( e );
+      throw e;
+   }
+
+   return res;
+}
+   
+/*---------------------------------------------------------------------*/
+/*    node_style_get ...                                               */
+/*---------------------------------------------------------------------*/
+function node_style_get( obj, prop ) {
+   return obj.style[ prop ];
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_outerHTML_set ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_outerHTML_set( nid, html ) {
+   var p;
+
+   if( (nid instanceof String) || (typeof nid == "string") ) {
+      var el;
+      el = document.getElementById( nid );
+      
+      if( el == undefined ) {
+	 alert("*** ERROR:outerHTML-set! -- cannot find element \""
+	       + nid + "\"");
+	 return;
+      }
+      p = el.parentNode;
+   } else {
+      if( !nid ) {
+	 alert( "*** ERROR:outerHTML-set! -- illegal element \"" + nid + "\"");
+	 return;
+      }
+      p = nid.parentNode;
+   }
+   
+   p.innerHTML = html;
+   if( (html instanceof String) || (typeof html == "string") ) {
+      hop_node_eval( p, html );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_innerHTML_set ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_innerHTML_set( nid, html ) {
+   var el;
+   
+   if( (nid instanceof String) || (typeof nid == "string") ) {
+      el = document.getElementById( nid );
+
+      if( el == undefined ) {
+	 alert( "*** ERROR:innerHTML-set! -- cannot find element \""
+		+ nid + "\"");
+	 return;
+      }
+   } else {
+      if( !nid ) {
+	 alert( "*** ERROR:innerHTML-set! -- illegal element \"" + nid + "\"");
+	 return;
+      }
+      el = nid;
+   }
+   
+   el.innerHTML = html;
+   if( (html instanceof String) || (typeof html == "string") ) {
+      hop_node_eval( el, html );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_style_attribute_set ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_style_attribute_set( obj, val ) {
+   var expr;
+   if( (val instanceof String) || (typeof val == "string") )
+      expr = eval( val );
+   
+   for( var p in expr ) {
+      node_style_set( obj, p, expr[ p ] );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_element_x ...                                                */
+/*---------------------------------------------------------------------*/
+function hop_element_x( obj ) {
+   var res = 0;
+
+   while( obj != null ) {
+      if( typeof obj.offsetLeft == "number" ) 
+	 res += obj.offsetLeft;
+      else {
+	 break;
+      }
+      obj = obj.offsetParent;
+   }
+
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_element_y ...                                                */
+/*---------------------------------------------------------------------*/
+function hop_element_y( obj ) {
+   var res = 0;
+
+   while( obj != null ) {
+      if( typeof obj.offsetTop == "number" ) 
+	 res += obj.offsetTop;
+      else {
+	 break;
+      }
+      obj = obj.offsetParent;
+   }
+
    return res;
 }

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Thu Aug  9 13:42:11 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 13:57:12 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -34,13 +34,19 @@ function hop_dashboard_start_applet( name, svc ) {
       node_style_set( ifr, "height", h + "px" );
       node_style_set( ifr, "border", "0" );
       
-      hop_iwindow_resize( win, w, h );
+      hop_window_resize( win, w, h );
    }
    
    node_style_set( ifr, "background", "white" );
    node_style_set( ifr, "overflow", "hidden" );
    
-   hop_iwindow_open( id, ifr, name, "hop_dashboard_applet", false, false, 10, 10 );
+   hop_window_open( new sc_Keyword( "id" ), id,
+		    new sc_Keyword( "src" ), ifr,
+		    new sc_Keyword( "title" ), name,
+		    new sc_Keyword( "class" ), "hop_dashboard_applet",
+		    new sc_keyword( "left" ), 10,
+		    new sc_keyword( "top" ), 10,
+		    new sc_keyword( "parent" ), document.body );
 }
 
 /*---------------------------------------------------------------------*/
@@ -248,7 +254,7 @@ function hop_dashboard_control_panel_init() {
 function hop_dashboard_init() {
    hop_dashboard_control_panel_init();
    hop_dashboard_button_init();
-   hop_load( "hop_iwindow.js" );
+   hop_load( "hop_window.js" );
 }
 
 /*---------------------------------------------------------------------*/

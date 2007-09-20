@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 20 11:49:41 2007                          */
-;*    Last change :  Fri Jul 20 12:14:39 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 13:45:33 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File Selector testing                                            */
@@ -20,7 +20,7 @@
 ;*    test/fselector ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-service (test/fselector)
-   (<TEST-HTML> :include '("hop-fileselect" "hop-iwindow" "hop-tree")
+   (<TEST-HTML> :include '("hop-fileselect" "hop-window" "hop-tree")
       :source (service-resource test/fselector "fselector.hop")
       (<TABLE>
 	 (<TR>

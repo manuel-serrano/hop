@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Sep 11 09:57:31 2007 (serrano)                */
+#*    Last change :  Thu Sep 20 08:10:19 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -26,6 +26,8 @@ fflags="-main -version 9 -cp std8 -swf"
 backend=native
 unzip=unzip
 jar="jar cfm"
+
+debug=no
 
 bcflags="-fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
@@ -76,7 +78,7 @@ ssl="no"
 locevent="true"
 threads=""
 
-hoprts='"hop-autoconf.js" "hop.js" "runtime.js" "hop-dom.js" "runtime-interface.js" "hopscheme.js"'
+hopjs='"HOP.js"'
 
 # Argument parsing
 while : ; do
@@ -432,6 +434,7 @@ echo "#* Automatically generated file (don't edit) */" > $mkmf
 cat $mkmf.in \
     | sed -e "s|@RELEASE@|$version|" \
           -e "s|@DEVEL@|$devel|" \
+          -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@BIGLOOLIBDIR@|$bigloolibdir|" \
@@ -485,7 +488,7 @@ cat etc/configure.scm.in \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
           -e "s|@JSMIMETYPE@|$jsmimetype|" \
-          -e "s|@HOPRTS@|$hoprts|" \
+          -e "s|@HOPJS@|$hopjs|" \
     >> $configure
 
 # etc/hoprc.hop

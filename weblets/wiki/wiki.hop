@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Sep  6 11:56:45 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 13:45:46 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -50,7 +50,7 @@
    (<HTML>
       (<HEAD>
 	 :title "Wiki selection page"
-	 :include "hop-fileselect" "hop-iwindow" "hop-tree"
+	 :include "hop-fileselect" "hop-window" "hop-tree"
 	 :base (service-base-url wiki req)
 	 :css "wiki.hss")
       (<BODY> :class "wiki"

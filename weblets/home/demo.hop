@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Sat Jul 21 14:40:36 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 13:44:02 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -176,12 +176,11 @@ be used to access the whole source code of this playground.]))))
 	  (set! frame.style.border "0")
 	  (set! frame.style.width "100%")
 	  (set! frame.style.height "99%")
-	  (let* ((w (iwindow-open $t
-				  frame
-				  false false
-				  $w $h
-				  (/ (- window.innerWidth $w) 2) 200
-				  p))
+	  (let* ((w (window-open :id $t
+		       :src frame
+		       :width $w :height $h
+		       :left (/ (- window.innerWidth $w) 2) :top 200
+		       :parent p))
 		 (i (<SPAN> :class "icon" $t)))
 	     (set! i.onmousedown
 		   (lambda (e)
@@ -240,13 +239,12 @@ be used to access the whole source code of this playground.]))))
 		      (node-style-set! frame :width "100%")
 		      (node-style-set! frame :height "99%")
 		      (node-style-set! frame :border-width 0)
-		      (let* ((w (iwindow-open $t
-					      frame
-					      false false
-					      $w $h
-					      (+ 60 (hop_element_x p))
-					      (+ 10 (hop_element_y p))
-					      p))
+		      (let* ((w (window-open :id $t
+				   :src frame
+				   :width $w :height $h
+				   :left (+ 60 (hop_element_x p))
+				   :top (+ 10 (hop_element_y p))
+				   :parent p))
 			     (i (<SPAN> :class "icon" $t)))
 			 (set! i.onmousedown
 			       (lambda (e)

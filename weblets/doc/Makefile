@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Aug 13 15:04:51 2007 (serrano)                */
+#*    Last change :  Thu Sep 20 15:02:43 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -23,7 +23,7 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   fileselect.wiki filters.wiki foldlist.wiki head.wiki \
                   hooks.wiki hss.wiki html.wiki http-message.wiki \
                   http-request.wiki http-response.wiki http.wiki \
-                  img.wiki inline.wiki iwindow.wiki md5.wiki notepad.wiki \
+                  img.wiki inline.wiki md5.wiki notepad.wiki \
                   pan.wiki param-misc.wiki param-rc.wiki parameter.wiki \
                   read.wiki service.wiki slider.wiki sorttable.wiki \
                   sound.wiki sqlite.wiki tabslider.wiki timeout.wiki \
@@ -48,7 +48,9 @@ WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   tables.wiki tt.wiki
 TUTORIAL_POP	= 00-hello.wiki 01-ajax.wiki 02-hss.wiki 03-proxy.wiki \
 		  04-authentication.wiki 05-rss.wiki 06-hz.wiki \
-                  07-hoprc.wiki 08-history.wiki 09-resource.wiki
+                  07-hoprc.wiki 08-history.wiki 09-resource.wiki \
+                  10-javascript.wiki
+
 POPULATION	= Makefile .afile doc.hss doc.scm \
                   examples api core wiki tutorials etc/weblet.info \
                   etc/logo.png etc/doc.wiki \

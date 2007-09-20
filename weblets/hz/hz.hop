@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue Jul 31 06:26:01 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 13:44:51 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -151,7 +151,7 @@
 	 (<HEAD>
 	    :title "Hop Hz"
 	    :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
-	    :include "hop-iwindow"
+	    :include "hop-window"
 	    :base (service-base-url hz req)
 	    :css "hz.hss")
 	 (<ABODY>
@@ -199,7 +199,7 @@
 	     (<HEAD>
 		:title "Hop Hz"
 		:include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
-		:include "hop-iwindow"
+		:include "hop-window"
 		:base (service-base-url hz/preferences req)
 		:css "hz.hss")
 	     (<ABODY>
@@ -249,7 +249,7 @@
 	 (<HEAD>
 	    :title "Hop Hz"
 	    :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
-	    :include "hop-iwindow")
+	    :include "hop-window")
 	 (<BODY>
 	    :class "hz-list"
 	    (<TREE>

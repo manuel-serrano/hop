@@ -5,8 +5,10 @@
 	   (iota 10))))
 
 (<HTML>
-   (<HEAD> :include "hop-iwindow")
+   (<HEAD> :include "hop-window")
    (<BODY>
       (<BUTTON>
-	 :onclick ~(iwindow-open "iota" $iwindow/iota)
+	 :onclick ~(window-open :id "iota"
+		      :src $iwindow/iota
+		      :parent document.body)
 	 "clickme")))
