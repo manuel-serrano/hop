@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Sep 20 08:31:34 2007 (serrano)                */
+#*    Last change :  Thu Sep 20 18:46:15 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -149,7 +149,6 @@ HOP.js: hop-autoconf.js \
         $(RTSSRC)
 	if [ "$(DEBUG) " != "yes " ]; then \
 	  cat $^ | sed -e "s%/[*]\([^*]\|[*][^/]\)*[*]/%%g" \
-                       -e "s|//[^\n]*$$||g" \
                        -e "s|^[ \t]+$$||g" \
                  > $@; \
         else \
