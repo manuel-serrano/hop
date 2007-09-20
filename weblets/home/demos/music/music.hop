@@ -24,42 +24,30 @@
 	       #f)))))
 
 (define-service (home/demos/music)
-   (<HTML>
-      (<HEAD>
-	 :title "Podcast demo"
-	 :base (service-base-url home/demos/music (current-request))
-	 :include "hop-sound"
-	 :css "music.hss")
-      (<BODY>
-	 ~(define snd #f)
-	 ~(define (play-url url)
-	     (if (string=? url "")
-		 (set! snd #f)
-		 (set! snd (make-sound url :stream #t))))
-	 (<H3> "Podcast demonstration")
-	 (<TABLE>
-	    (<TR>
-	       (<TD>
-		  (<IMG>
-		     :onclick ~(when snd (sound-play snd))
-		     :src (service-resource home/demos/music "music-play.png")))
-	       (<TD>
-		  (<IMG>
-		     :onclick ~(when snd (sound-pause snd))
-		     :src (service-resource home/demos/music "music-pause.png")))
-	       (<TD>
-		  (<IMG>
-		     :onclick ~(when snd (sound-stop snd))
-		     :src (service-resource home/demos/music "music-stop.png")))))
-	 (<BR>)
-	 (<SELECT> :name "podcast" :id "podcast" :size 1
-	    :onchange ~(play-url this.value)
-	    (<OPTION> :value "" "Select a podcast")
-	    (filter-map (lambda (podcast)
-			   (let* ((rss (car podcast))
-				  (name (cadr podcast))
-				  (url (rss->podcast-mp3 (car podcast))))
-			      (when url
-				 (<OPTION> :value url name))))
-			podcast-list)))))
+   (let ((audio (<AUDIO> :controls #t)))
+      (<HTML>
+	 (<HEAD>
+	    :title "Podcast demo"
+	    :base (service-base-url home/demos/music (current-request))
+	    :include "hop-audio" "hop-slider"
+	    :css "music.hss")
+	 (<BODY>
+	    ~(define snd #f)
+	    ~(define (play-url url)
+		(if (string=? url "")
+		    (set! snd #f)
+		    (set! snd (make-sound url :stream #t))))
+	    (<H3> "Podcast demonstration")
+	    audio
+	    (<BR>)
+	    (<SELECT> :name "podcast" :id "podcast" :size 1
+	       :onchange ~(audio-load $audio this.value #t)
+	       (<OPTION> :value "" "Select a podcast")
+	       (filter-map (lambda (podcast)
+			      (let* ((rss (car podcast))
+				     (name (cadr podcast))
+				     (url (rss->podcast-mp3 (car podcast))))
+				 (when url
+				    (<OPTION> :value url name))))
+			   podcast-list))))))
 	       

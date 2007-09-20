@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Wed Aug  8 15:57:01 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 15:17:38 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -99,7 +99,8 @@
 	 (<NPHEAD> "")
 	 (<NPTAB> :id "Presentation"
 		  (<NPTABHEAD>
-		     (<IMG> :src (service-resource home "etc/gohome.png"))
+		     (<IMG> :inline #t
+			:src (service-resource home "etc/gohome.png"))
 		     "Main")
 		  (<DELAY>
 		     (lambda ()
@@ -109,7 +110,8 @@
 			   (wiki->hop "presentation.wiki")))))
 	 (<NPTAB> :id "demo-tab"
 		  (<NPTABHEAD>
-		     (<IMG> :src (service-resource home "etc/demos.png"))
+		     (<IMG> :inline #t
+			:src (service-resource home "etc/demos.png"))
 		     "Demos")
 		  (<DELAY>
 		     (lambda ()
@@ -118,7 +120,8 @@
 			   (<DEMO> req)))))
 	 (<NPTAB> :id "download"
 		  (<NPTABHEAD> 
-		     (<IMG> :src (service-resource home "etc/download.png"))
+		     (<IMG> :inline #t
+			:src (service-resource home "etc/download.png"))
 		     "Download")
 		  (<DELAY>
 		     (lambda ()
@@ -128,7 +131,8 @@
 			   (wiki->hop-no-cache "download.wiki")))))
 	 (<NPTAB> :id "weblets"
 		  (<NPTABHEAD>
-		     (<IMG> :src (service-resource home "etc/package.png"))
+		     (<IMG> :inline #t
+			:src (service-resource home "etc/package.png"))
 		     "Weblets")
 		  (<DELAY>
 		     (lambda ()
@@ -137,7 +141,8 @@
 			   (wiki->hop "weblets.wiki")))))
 	 (<NPTAB> :id "documentation"
 		  (<NPTABHEAD>
-		     (<IMG> :src (service-resource home "etc/doc.png"))
+		     (<IMG> :inline #t
+			:src (service-resource home "etc/doc.png"))
 		     "Docs")
 		  (<DELAY>
 		     (lambda ()
@@ -146,7 +151,8 @@
 			   (wiki->hop "docs.wiki")))))
 	 (<NPTAB> :id "faq"
 		  (<NPTABHEAD>
-		     (<IMG> :src (service-resource home "etc/faq.png"))
+		     (<IMG> :inline #t
+			:src (service-resource home "etc/faq.png"))
 		     "Faq&nbsp;&nbsp;&nbsp;")
 		  (<DELAY>
 		     (lambda ()
@@ -155,7 +161,8 @@
 			   (wiki->hop "faq.wiki")))))
 	 (<NPTAB> :id "community"
 		  (<NPTABHEAD> 
-		     (<IMG> :src (service-resource home "etc/people.png"))
+		     (<IMG> :inline #t
+			:src (service-resource home "etc/people.png"))
 		     "Community")
 		  (<DELAY>
 		     (lambda ()
@@ -164,7 +171,8 @@
 			   (wiki->hop "community.wiki")))))
 	 (<NPTAB> :id "stats"
 		  (<NPTABHEAD>
-		     (<IMG> :src (service-resource home "etc/statistics.png"))
+		     (<IMG> :inline #t
+			:src (service-resource home "etc/statistics.png"))
 		     "Statistics")
 		  (<DELAY>
 		     (lambda ()

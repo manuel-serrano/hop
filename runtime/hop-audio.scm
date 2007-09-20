@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Sep 13 13:53:49 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 15:36:42 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -113,6 +113,7 @@
 		   :onstop (expr->function onstop)
 		   :onpause (expr->function onpause)
 		   :onload (expr->function onload)
+		   :onerror (expr->function onerror)
 		   :onended (expr->function onended)
 		   :onbuffer (expr->function onbuffer))))
       (<AUDIO-OBJECT> id pid init controller)))
@@ -148,7 +149,7 @@
 ;*    <AUDIO-INIT> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (<AUDIO-INIT> #!key id pid src autoplay start
-		      onplay onstop onpause onload onended onbuffer)
+		      onplay onstop onpause onload onerror onended onbuffer)
    (<SCRIPT>
       (format "function hop_audio_flash_init_~a() {hop_audio_flash_init( ~s, ~a, ~a );};"
 	      pid id
@@ -164,6 +165,7 @@
 	      onstop
 	      onpause
 	      onload
+	      onerror
 	      onended
 	      onbuffer)))
 
@@ -201,6 +203,7 @@
                    function() {var el=document.getElementById(~s);"
 		 (string-append "controls-" id))
 	 "el.onload=hop_audio_controls_onload;"
+	 "el.onerror=hop_audio_controls_onerror;"
 	 "el.onplay=hop_audio_controls_onplay;"
 	 "el.onpause=hop_audio_controls_onpause;"
 	 "el.onstop=hop_audio_controls_onstop;"

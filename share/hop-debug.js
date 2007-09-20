@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug  3 14:17:43 2006                          */
-/*    Last change :  Thu Sep 20 13:58:05 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 16:04:33 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Simple HOP debug console                                         */
@@ -40,10 +40,10 @@ function hop_debug_get_container() {
       win = hop_window_open( new sc_Keyword( "id" ), "hop_debug",
 			     new sc_Keyword( "src" ), div,
 			     new sc_Keyword( "class" ), "hop_debug",
-			     new sc_keyword( "width" ), 640,
-			     new sc_keyword( "height" ), 480,
-			     new sc_keyword( "left" ), 10,
-			     new sc_keyword( "top" ), 10,
+			     new sc_Keyword( "width" ), 640,
+			     new sc_Keyword( "height" ), 480,
+			     new sc_Keyword( "left" ), 10,
+			     new sc_Keyword( "top" ), 10,
 			     new sc_keyword( "parent" ), document.body );
    } else {
       win.style.display = "block";

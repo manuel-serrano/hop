@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Thu Sep 20 14:51:04 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 16:23:07 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -460,15 +460,13 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, bg, resiz
 	 node_style_set( win.el_win, "width",
 			 ((typeof width) == "number") ? (width + "px") : width );
       } else {
-	 node_style_set( win.el_win, "width",
-			 "200px" );
+	 node_style_set( win.el_win, "width", "200px" );
       }
       if( height ) {
 	 node_style_set( win.el_win, "height",
 			 ((typeof height) == "number") ? (height + "px") : height );
       } else {
-	 node_style_set( win.el_win, "height",
-			 "200px" );
+	 node_style_set( win.el_win, "height", "200px" );
       }
       
       if( win.onresize ) win.onresize();
@@ -536,7 +534,7 @@ function hop_window_open() {
 
    function inner_window_open() {
       if( !id ) id = "hop-window" + hop_iwindow_count++;
-
+      
       var win = hop_iwindow_open( id, src, title, klass, width, height, left, top, background, resizable, parent );
       win.close = function() { return hop_iwindow_close( win ); };
       win.iconify = function() { return hop_iwindow_iconify( win ); };
@@ -647,6 +645,6 @@ function hop_window_raise( o ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_resize ...                                            */
 /*---------------------------------------------------------------------*/
-function hop_window_resize( o ) {
-   return hop_get_window( o ).resize();
+function hop_window_resize( o, w, h ) {
+   return hop_get_window( o ).resize( w, h );
 }

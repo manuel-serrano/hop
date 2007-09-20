@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Thu Sep 20 13:57:12 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 16:41:57 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -17,6 +17,7 @@ var hop_dashboard_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQ
 var hop_dashboard_anim_speed = 10;
 var hop_dashboard = false;
 var hop_dashboard_icon_size = 32;
+var hop_dashboard_interval = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_dashboard_start_applet ...                                   */
@@ -29,11 +30,11 @@ function hop_dashboard_start_applet( name, svc ) {
       var win = document.getElementById( id );
       var w = hop_iframe_scroll_width( ifr );
       var h = hop_iframe_scroll_height( ifr );
-      
+
       node_style_set( ifr, "width", w + "px" );
       node_style_set( ifr, "height", h + "px" );
       node_style_set( ifr, "border", "0" );
-      
+
       hop_window_resize( win, w, h );
    }
    
@@ -42,11 +43,12 @@ function hop_dashboard_start_applet( name, svc ) {
    
    hop_window_open( new sc_Keyword( "id" ), id,
 		    new sc_Keyword( "src" ), ifr,
+		    new sc_Keyword( "background" ), "white",
 		    new sc_Keyword( "title" ), name,
 		    new sc_Keyword( "class" ), "hop_dashboard_applet",
-		    new sc_keyword( "left" ), 10,
-		    new sc_keyword( "top" ), 10,
-		    new sc_keyword( "parent" ), document.body );
+		    new sc_Keyword( "left" ), 10,
+		    new sc_Keyword( "top" ), 10,
+		    new sc_Keyword( "parent" ), document.body );
 }
 
 /*---------------------------------------------------------------------*/
@@ -56,7 +58,6 @@ function hop_dashboard_populate( div, proc ) {
    var populate = function( h ) {
       var width = 0;
       var app_size = hop_dashboard_icon_size + 2;
-
       div.innerHTML = "";
       
       while( h !== null ) {
@@ -116,18 +117,23 @@ function hop_dashboard_activate() {
       
       node_style_set( div, "bottom", "-56px" );
       node_style_set( div, "display", "block" );
-   
-      hop_clear_timeout( "hop_dashboard_timeout" );
-      hop_timeout( "hop_dashboard_timeout",
-		   hop_dashboard_anim_speed,
-		   function() {
-		      if( count < 0 ) {
-			 count += 4;
-			 node_style_set( div, "bottom", count + "px" );
-		      } else {
-			 hop_clear_timeout( "hop_dashboard_timeout" );
-		      }
-		   } );
+
+      if( hop_dashboard_interval ) {
+	 clearInterval( hop_dashboard_interval );
+	 hop_dashboard_interval = false;
+      }
+
+      hop_dashboard_interval =
+      setInterval( function() {
+	    if( count < 0 ) {
+	       count += 4;
+	       node_style_set( div, "bottom", count + "px" );
+	    } else {
+	       clearInterval( hop_dashboard_interval );
+	       hop_dashboard_interval = false;
+	    }
+	 },
+	 hop_dashboard_anim_speed );
    }
       
    if( !hop_dashboard.activep ) {
@@ -144,18 +150,23 @@ function hop_dashboard_deactivate() {
    
       hop_dashboard.activep = false;
       
-      hop_clear_timeout( "hop_dashboard_timeout" );
-      hop_timeout( "hop_dashboard_timeout",
-		   hop_dashboard_anim_speed,
-		   function() {
-		      if( count > -56 ) {
-			 count -= 4;
-			 node_style_set( hop_dashboard, "bottom", count+"px" );
-		      } else {
-			 node_style_set( hop_dashboard, "display", "none" );
-			 hop_clear_timeout( "hop_dashboard_timeout" );
-		      }
-		   } );
+      if( hop_dashboard_interval ) {
+	 clearInterval( hop_dashboard_interval );
+	 hop_dashboard_interval = false;
+      }
+
+      hop_dashboard_interval =
+	 setInterval( function() {
+	       if( count > -56 ) {
+		  count -= 4;
+		  node_style_set( hop_dashboard, "bottom", count+"px" );
+	       } else {
+		  node_style_set( hop_dashboard, "display", "none" );
+		  clearInterval( hop_dashboard_interval );
+		  hop_dashboard_interval = false;
+	       }
+	    },
+	    hop_dashboard_anim_speed );
    }
 }
 

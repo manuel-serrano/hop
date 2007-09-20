@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jul  7 08:33:34 2007                          */
-;*    Last change :  Wed Sep 19 19:46:02 2007 (serrano)                */
+;*    Last change :  Thu Sep 20 15:34:23 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Testing audio                                                    */
@@ -20,11 +20,15 @@
 ;*    test/audio ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-service (test/audio)
-   (let ((snd (service-resource test/audio "sound-test.mp3")))
+   (let* ((snd (service-resource test/audio "sound-test.mp3"))
+	  (audio (<AUDIO> :controls #t :src snd :stream #f)))
       (<TEST-HTML>
 	 :include '("hop-audio" "hop-slider")
 	 :source (service-resource test/audio "audio.hop")
 	 (<DIV> :class "comment"
 	    "This test uses the Flash plugin for playing audios. This requires
 Flash 8 or 9.")
- 	 (<AUDIO> :controls #t :src snd :stream #f))))
+ 	 audio
+	 (<BR>)
+	 (<BUTTON> :onclick ~(audio-load $audio "foo" #t)
+	    "Raises a load error"))))

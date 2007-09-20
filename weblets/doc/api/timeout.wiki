@@ -7,51 +7,36 @@ The functions described in this page implement client //timeouts//.
 
 === Client ===
 
-   (timeout-start arg ...)
-   (timeout-clear! arg ...)
-   (timeout-reset! arg ...)
+   (timeout duration thunk)
+   (after duration thunk)
 
 == Server Definitions ==
 <client>
 
-=== ++(timeout-start name int proc eager)++ ===
-<procedure> timeout-start
+=== ++(timeout int proc)++ ===
+<procedure> timeout
 <arguments>
 ^  arguments  ^   type      ^   description                                   ^
-| name        |  string     | The identifier of the timeout.                  |
-| int         |  integer    | A interval in milli-seconds.                    |
-| proc        |  procedure  | The function to executed when interval expires.  |
-| eager       |  boolean    | Eager execution if true.                        |
-</arguments>
-
-This procedure starts a timeout. Timeouts are identified by their name.
-In addition to executing it when //int// expires, //eager// timeouts 
-also execute their procedure at creation time.
-</procedure>
-
-=== ++(timeout-reset! name int proc)++ ===
-<procedure> timeout-reset!
-<arguments>
-^  arguments  ^   type      ^   description                                   ^
-| name        |  string     | The identifier of the timeout.                  |
 | int         |  integer    | A interval in milli-seconds.                    |
 | proc        |  procedure  | The function to executed when interval expires.  |
 </arguments>
 
-Changes the interval and the procedure of the timeout //name//.
+Invokes periodically ++proc++, wait ++int++ milli-seconds between each call.
+Keep calling ++proc++ until it returns ++#f++.
 </procedure>
 
-=== ++(timeout-clear! name)++ ===
-<procedure> timeout-clear!
+=== ++(after int proc)++ ===
+<procedure> after
 <arguments>
 ^  arguments  ^   type      ^   description                                   ^
-| name        |  string     | The identifier of the timeout.                  |
+| int         |  integer    | A interval in milli-seconds.                    |
+| proc        |  procedure  | The function to executed when interval expires.  |
 </arguments>
 
-Clears (stops and destroys) the timeout //name//.
+Invokes **once** ++proc++ after ++int++ milli-seconds.
 </procedure>
 
 == See also ==
-<see-also>timeout<see-also>
+<see-also>timeout, after<see-also>
 </client>
 </doc>

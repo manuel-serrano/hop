@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Sep 19 19:37:10 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 15:40:11 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -116,7 +116,8 @@ function hop_audio_init_obj( audio ) {
 /*    hop_audio_init ...                                               */
 /*---------------------------------------------------------------------*/
 function hop_audio_init( id, start, src, stream,
-			 onplay, onstop, onpause, onload, onended, onbuffer ) {
+			 onplay, onstop, onpause, onload, onerror,
+			 onended, onbuffer ) {
    var audio = document.getElementById( id );
 
    hop_audio_init_obj( audio );
@@ -130,6 +131,7 @@ function hop_audio_init( id, start, src, stream,
    audio.onstop = onstop;
    audio.onpause = onpause;
    audio.onload = onload;
+   audio.onerror = onerror;
    audio.onended = onended;
    audio.onbuffer = onbuffer;
    audio.initialized = true;
@@ -155,6 +157,7 @@ function hop_audio_flash_init( id, src, stream ) {
 
    audio.proxy = hop_audio_init_obj( audio );
    audio.proxy.onload_set( "hop_audio_onload_callback", id );
+   audio.proxy.onerror_set( "hop_audio_onerror_callback", id );
    audio.proxy.onended_set( "hop_audio_onended_callback", id );
    audio.proxy.metadata_get = function() {
       try {
@@ -199,6 +202,19 @@ function hop_audio_onload_callback( id, play ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_audio_onerror_callback ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_audio_onerror_callback( id, play ) {
+   var audio = document.getElementById( id );
+   var evt = new HopAudioEvent( "error", audio );
+
+   if( audio.onerror )
+      audio.onerror( evt );
+   if( !evt.isStopped && audio.controls && audio.controls.onerror )
+      audio.controls.onerror( evt );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_audio_onended_callback ...                                   */
 /*---------------------------------------------------------------------*/
 function hop_audio_onended_callback( id ) {
@@ -213,15 +229,6 @@ function hop_audio_onended_callback( id ) {
        (hop_audio_playlist_index( audio ) ||
 	(hop_audio_playlist_index( audio ) == 0)) )
       hop_audio_playlist_play( audio, hop_audio_playlist_index( audio ) + 1 );
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_audio_onerror_callback ...                                   */
-/*---------------------------------------------------------------------*/
-function hop_audio_onerror_callback( id ) {
-   var el = document.getElementById( id );
-
-   if( el.onerror ) { el.onerror(); }
 }
 
 /*---------------------------------------------------------------------*/
@@ -439,6 +446,16 @@ function hop_audio_controls_onload( evt ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_audio_controls_onerror ...                                    */
+/*---------------------------------------------------------------------*/
+function hop_audio_controls_onerror( evt ) {
+   var audio = evt.audio;
+   var tl = document.getElementById( "controls-metadata-song-" + audio.id );
+
+   tl.innerHTML = "Error";
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_audio_controls_onbuffer ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onbuffer( evt ) {
@@ -552,21 +569,23 @@ function hop_audio_controls_onplay( evt ) {
    var alen = hop_audio_duration( audio );
    var plen = sc_length( hop_audio_playlist_get( audio ) );
 
-   status.src = playbut.src;
+   if( alen > 0 ) {
+      status.src = playbut.src;
 
-   track.className = "hop-audio-info-status-track-on-play";
-   if( plen > 0 ) {
-      track.innerHTML = int2( 1 + hop_audio_playlist_index( audio ) )
-	 + "/" + int2( plen );
-   } else {
-      track.innerHTML = "01/01";
+      track.className = "hop-audio-info-status-track-on-play";
+      if( plen > 0 ) {
+	 track.innerHTML = int2( 1 + hop_audio_playlist_index( audio ) )
+	    + "/" + int2( plen );
+      } else {
+	 track.innerHTML = "01/01";
+      }
+
+      min.innerHTML = int2( Math.floor( alen / 60 ) );
+      sec.innerHTML = int2( alen % 60 );
+
+      hop_audio_controls_metadata( audio, false );
+      hop_audio_time_interval_set( audio );
    }
-
-   min.innerHTML = int2( Math.floor( alen / 60 ) );
-   sec.innerHTML = int2( alen % 60 );
-
-   hop_audio_controls_metadata( audio, false );
-   hop_audio_time_interval_set( audio );
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Sep 20 08:06:25 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 16:47:37 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -106,38 +106,6 @@ function hop_cookie_set_value( name, val, path, domain, expires ) {
    }
    
    document.cookie = cookie;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_timeout ...                                                  */
-/*---------------------------------------------------------------------*/
-function hop_timeout( id, timeout, proc, eager ) {
-   window[ id ] = setInterval( proc, timeout );
-   window[ id ].proc = proc;
-   window[ id ].timeout = timeout;
-   
-   if( eager == true ) proc();
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_timeout_reset ...                                            */
-/*---------------------------------------------------------------------*/
-function hop_timeout_reset( id, timeout, proc ) {
-   var p = proc ? proc : window[ id ].proc;
-   var t = timeout ? timeout : window[ id ].timeout;
-   clearInterval( window[ id ] );
-
-   window[ id ] = setInterval( p, t );
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_clear_timeout ...                                            */
-/*---------------------------------------------------------------------*/
-function hop_clear_timeout( id ) {
-   if( window[ id ] ) {
-      clearInterval( window[ id ] );
-      window[ id ] = false;
-   }
 }
 
 /*---------------------------------------------------------------------*/

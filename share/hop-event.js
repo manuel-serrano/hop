@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Sep 20 14:23:06 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 16:38:27 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -509,18 +509,23 @@ function hop_remove_serverready_listener( obj, proc ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_timeout_listeners ...                                        */
+/*---------------------------------------------------------------------*/
+var hop_timeout_listeners = null;
+
+/*---------------------------------------------------------------------*/
 /*    hop_add_timeout_listener ...                                     */
 /*---------------------------------------------------------------------*/
 function hop_add_timeout_listener( obj, proc ) {
-   hop_timeout = sc_cons( sc_cons( proc, setInterval( proc, obj ) ),
-			  hop_timeout );
+   hop_timeout_listeners = sc_cons( sc_cons( proc, setInterval( proc, obj ) ),
+				    hop_timeout_listeners );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_remove_timeout_listener ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_remove_timeout_listener( proc ) {
-   var p = hop_timeout;
+   var p = hop_timeout_listeners;
    
    if( sc_isPair( p ) ) {
       if( p.car.car === proc ) {

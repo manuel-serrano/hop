@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Sep 20 08:08:51 2007 (serrano)                */
+/*    Last change :  Thu Sep 20 16:36:02 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -206,12 +206,23 @@ function hop_anim_16_16( title ) {
 /*---------------------------------------------------------------------*/
 var hop_anim_vis = false;
 var hop_anim_service = false;
+var hop_anim_interval;
 
+/*---------------------------------------------------------------------*/
+/*    hop_stop_anim ...                                                */
+/*---------------------------------------------------------------------*/
+function hop_stop_anim() {
+   if( hop_anim_interval ) {
+      clearInterval( hop_anim_interval );
+      hop_anim_interval = false;
+   }
+}
+   
 /*---------------------------------------------------------------------*/
 /*    hop_anim ...                                                     */
 /*---------------------------------------------------------------------*/
 function hop_anim( service ) {
-   hop_clear_timeout( "hop_anim_timeout" );
+   hop_stop_anim();
 
    if( hop_anim_service == service ) {
       if( hop_anim_vis ) {
@@ -331,13 +342,12 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
       if( anim ) hop_anim_service = svc;
 
       xhr.send( null );
-      hop_clear_timeout( "hop_anim_timeout" );
+
+      hop_stop_anim();
       
       if( anim ) {
-	 hop_timeout( "hop_anim_timeout",
-		      hop_anim_latency,
-		      function() { hop_anim( svc ); },
-		      false );
+	 hop_anim_interval =
+	    setInterval( function() { hop_anim( svc ) }, hop_anim_latency );
       }
 
       if( sync ) {
