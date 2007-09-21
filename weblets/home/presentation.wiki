@@ -1,8 +1,17 @@
+== News ==
+
+,(<TABLE>
+  (<TR>
+   (<TD> :align 'center :rowspan 2
+    (<IMG> :inline #t :style "padding: 1ex" :src "etc/icons/acm-awards.png"))
+   (<TD> :valign 'bottom [HOP is the winner of the ,(<A> :href "http://mmc36.informatik.uni-augsburg.de/acmmm2007/" "ACM MULTIMEDIA'07")]))
+  (<TR> (<TD> :valign 'top [Open Source Software Competition.])))
+
 == Presentation ==
 
-Hop is a new programming language designed for the Web 2.0.  It is a
+HOP is a new programming language designed for the Web 2.0.  It is a
 higher-order language for programming interactive web applications
-such as web agendas, web galleries, music players, etc. Hop can be
+such as web agendas, web galleries, music players, etc. HOP can be
 viewed as a replacement for traditional graphical toolkits. HOP is
 implemented as a **Web broker**, //i.e.//, a Web server that may act
 indifferently as a regular Web server or Web proxy.
@@ -66,3 +75,7 @@ are operational with [[http://www.mozilla.com/|Firefox]],
 
 The [[http://www.inria.fr/mimosa/fp/Bigloo|Bigloo]] compiler is the only
 strict requirement to install HOP.
+
+,(<DIV> :class "app"
+   (<A> :class "iddn" :href "http://app.legalis.net/"
+     "IDDN.FR.001.260002.000.S.P.2006.000.10400"))

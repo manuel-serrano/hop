@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu Sep 20 14:02:52 2007 (serrano)                */
+/*    Last change :  Fri Sep 21 11:10:33 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -435,4 +435,27 @@ div.submit table.submit {
 
 div.submit table.submit input {
   font-size: inherit;
+}
+
+/*---------------------------------------------------------------------*/
+/*    app                                                              */
+/*---------------------------------------------------------------------*/
+div.app {
+  margin-top: 5ex;
+  text-align: center;
+  font-size: 70%;
+  color: #777;
+}
+
+div.app a.iddn {
+  font-family: $typewriter;
+  color: #777;
+  border-top: 1px solid #ccc;
+  padding-left: 5em;
+  padding-right: 5em;
+  text-decoration: none;
+}
+
+div.app a.iddn:hover {
+  text-decoration: underline;
 }

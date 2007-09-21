@@ -64,5 +64,8 @@ img {
 img:hover {
   border: 1px solid black;
 }
-  
-  
+    
+div.hop-audio div.hop-audio-controls {
+  background: transparent;
+  background-image: url( "../../etc/icons/metal.png" );
+}

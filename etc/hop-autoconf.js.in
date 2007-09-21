@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Sep 20 16:07:15 2007 (serrano)                */
+/*    Last change :  Fri Sep 21 11:04:48 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -175,9 +175,9 @@ function node_style_set_native( obj, prop, value ) {
    if( sc_isKeyword( prop ) )
       prop = sc_keyword2string_mutable( prop );
    if( !(value instanceof String) && (typeof value != "string") ) {
-      if( !value ) {
+      if( !value && (value != 0) ) {
 	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
-			  + value );
+			  + value + " obj: " + obj );
       } else {
 	 value = value.toString();
       }
@@ -190,9 +190,9 @@ function node_style_set_array( obj, prop, value ) {
    if( sc_isKeyword( prop ) )
       prop = sc_keyword2string_mutable( prop );
    if( !(value instanceof String) && (typeof value != "string") ) {
-      if( !value ) {
+      if( !value && (value != 0) ) {
 	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
-			  + value );
+			  + value + " obj: " + obj );
       } else {
 	 value = value.toString();
       }
