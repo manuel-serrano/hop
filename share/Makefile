@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Sep 20 18:46:15 2007 (serrano)                */
+#*    Last change :  Sat Sep 22 07:28:17 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -28,7 +28,7 @@ FLASHSRC	= HopServevt.as HopAudio.as
 FLASH		= $(FLASHOBJS) $(FLASHSRC)
 
 RTSSRC		= hopscheme.js hop-dom.js hop-event.js hop-serialize.js \
-                  hop.js hop-history.js hop-lib.js
+                  hop-request.js hop-history.js hop-lib.js
 
 RTS		= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-error.hss hop-paned.js hop-table.js hop.css \
@@ -96,14 +96,14 @@ POPULATION	= $(RTSSRC) $(RTS) \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: HOP.js $(FLASHSRC:%.as=flash/%.swf)
+build: hop.js $(FLASHSRC:%.as=flash/%.swf)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR) && \
-	install -m a+r $(BUILDSHAREDIR)/HOP.js $(DESTDIR)$(HOPSHAREDIR)/HOP.js; \
+	install -m a+r $(BUILDSHAREDIR)/hop.js $(DESTDIR)$(HOPSHAREDIR)/hop.js; \
         for p in $(RTS); do \
 	  install -m a+r $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
@@ -141,9 +141,9 @@ uninstall:
         done
 
 #*---------------------------------------------------------------------*/
-#*    HOP.js ...                                                       */
+#*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-HOP.js: hop-autoconf.js \
+hop.js: hop-autoconf.js \
         ../scheme2js/runtime/runtime.js \
         ../scheme2js/runtime/runtime-interface.js \
         $(RTSSRC)
