@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Sep 17 11:32:04 2007 (serrano)                */
+;*    Last change :  Mon Sep 24 12:34:25 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -206,11 +206,11 @@
 	 (display "hop_make_tree(" p)
 	 ;; parent 
 	 (display "document.getElementById('" p)
-	 (display parent p)
+	 (display (string-escape parent #\') p)
 	 (display "'), " p)
 	 ;; the ident of the tree
 	 (display "'" p)
-	 (display id p)
+	 (display (string-escape id #\') p)
 	 (display "', " p)
 	 ;; the visibility
 	 (display (if visible "true," "false,") p)
