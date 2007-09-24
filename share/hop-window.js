@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Thu Sep 20 16:23:07 2007 (serrano)                */
+/*    Last change :  Mon Sep 24 07:37:38 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -580,7 +580,7 @@ function hop_window_open() {
 				    if( k === Kresizable ) {
 				       resizable = arguments[ i++ ];
 				       prop += ",resizable=" + 
-					  prop_to_string( arguments[ i++ ] );
+					  prop_to_string( resizable );
 				    } else {
 				       if( k === Kbackground || k === Kbg ) {
 					  background = arguments[ i++ ];
@@ -599,10 +599,21 @@ function hop_window_open() {
 	    }
 	 }
       } else {
-	 throw new Error( "window-open: illegal argument -- "
-			  + k
-			  + " (" + hop_find_runtime_type( k )
-			  + ")" );
+	 if( i < l ) {
+	    throw new Error( "window-open: illegal argument -- "
+			     + ">" + k + "<"
+			     + ", " + arguments[ i ] + " ...");
+	 } else {
+	    if( i > 0 ) {
+	    throw new Error( "window-open: illegal argument -- "
+			     + "... " + arguments[ i - 2 ] + ","
+			     + ">" + k + "<" );
+			     
+	    } else {
+	       throw new Error( "window-open: illegal argument -- "
+				+ k );
+	    }
+	 }
       }
    }
 
