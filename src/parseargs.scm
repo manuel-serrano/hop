@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Sep 12 05:26:44 2007 (serrano)                */
+;*    Last change :  Mon Sep 24 09:51:19 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -182,11 +182,12 @@
       (when (eq? ep #unspecified)
 	 (set! ep p))
       ;; server event port
-      (if (<fx ep 1024)
-	  (error 'fast-server-event-port
-		 "Server event port must be greater than 1023. (See `--fast-server-event-port' or `--disable-fast-server-event' options.)"
-		 ep)
-	  (hop-fast-server-event-port-set! ep))
+      (when (hop-enable-fast-server-event)
+	 (if (<fx ep 1024)
+	     (error 'fast-server-event-port
+		    "Server event port must be greater than 1023. (See `--fast-server-event-port' or `--disable-fast-server-event' options.)"
+		    ep)
+	     (hop-fast-server-event-port-set! ep)))
       (for-each (lambda (expr)
 		   (with-input-from-string expr
 		      (lambda ()
