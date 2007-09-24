@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu Sep 20 13:42:48 2007 (serrano)                */
+;*    Last change :  Mon Sep 24 22:00:07 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module hophome_widgets
 
-   (import hophome_config)
+   (import hophome_config
+	   hophome)
    
    (export (<HOME> base . obj)))
 
@@ -26,9 +27,8 @@
       (<HEAD>
 	 :title "Hop Home page"
 	 :include "hop-notepad" "hop-window" "hop-foldlist"
-	 :base base
-	 :favicon "etc/gohome.png"
-	 :css "home.hss")
+	 :favicon (service-resource home "etc/gohome.png")
+	 :css (service-resource home "home.hss"))
       (<BODY>
 	 (<DIV> :align "center"
 	    (<TABLE> :class "home"
@@ -37,7 +37,7 @@
 		     (<IMG> :class "logo"
 			:inline #t
 			:alt "Home page logo" 
-			:src "etc/logo.png"))
+			:src (service-resource home "etc/logo.png")))
 		  (<TD> :valign "top"
 		     (<TABLE>
 			(<TR>

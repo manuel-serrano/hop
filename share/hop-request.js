@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop.js                            */
+/*    serrano/prgm/project/hop/share/hop-request.js                    */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Sep 20 16:36:02 2007 (serrano)                */
+/*    Last change :  Mon Sep 24 22:00:37 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -325,7 +325,9 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
       return false;
    }
 
-   if( !sync ) xhr.onreadystatechange = onreadystatechange;
+   if( !sync ) {
+      xhr.onreadystatechange = onreadystatechange;
+   }
 
    xhr.open( "GET", svc, (sync != true) );
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Sep 24 16:03:46 2007 (serrano)                */
+;*    Last change :  Mon Sep 24 21:59:29 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -16,7 +16,8 @@
    (import  hophome_config
 	    hophome_widgets
 	    hophome_demo
-	    hophome_wiki))
+	    hophome_wiki)
+   (export  home))
 
 ;*---------------------------------------------------------------------*/
 ;*    logs ...                                                         */

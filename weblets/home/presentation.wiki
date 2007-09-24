@@ -3,7 +3,7 @@
 ,(<TABLE>
   (<TR>
    (<TD> :align 'center :rowspan 2
-    (<IMG> :inline #t :style "padding: 1ex" :src "etc/icons/acm-awards.png"))
+    (<IMG> :inline #t :style "padding: 1ex" :src (service-resource home "etc/icons/acm-awards.png")))
    (<TD> :valign 'bottom [HOP is the winner of the ,(<A> :href "http://mmc36.informatik.uni-augsburg.de/acmmm2007/" "ACM MULTIMEDIA'07")]))
   (<TR> (<TD> :valign 'top [Open Source Software Competition.])))
 

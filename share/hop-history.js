@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:59:42 2007                          */
-/*    Last change :  Thu Sep 20 08:00:01 2007 (serrano)                */
+/*    Last change :  Mon Sep 24 17:55:24 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP history manager.                                             */
@@ -390,4 +390,3 @@ if( hop_enable_location_event ) {
       hop_add_event_listener( document, "location", hop_eval_history_state );
    } );
 }
-
