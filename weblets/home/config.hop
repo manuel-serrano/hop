@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Fri Sep 21 13:45:11 2007 (serrano)                */
+;*    Last change :  Mon Sep 24 09:59:28 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
@@ -56,7 +56,9 @@
 ;*    home-hop-devel-version ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-hop-devel-version
-   #f)
+   (let ((fname (make-file-name (hop-rc-directory) "DEVEL.version")))
+      (when (file-exists? fname)
+	 (with-input-from-file fname read-string))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home-articles-url-base ...                                       */
