@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Sep 20 16:38:27 2007 (serrano)                */
+/*    Last change :  Mon Sep 24 15:43:27 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -25,7 +25,8 @@ function hop_add_event_listener( obj, event, proc, capture ) {
    if( event == "timeout" )
       return hop_add_timeout_listener( obj, proc );
 
-   if( !(obj instanceof Window) && obj.hop_add_event_listener != undefined )
+   if( (obj.hop_add_event_listener != undefined) &&
+      (obj.hop_add_event_listener != hop_add_event_listener) )
       return obj.hop_add_event_listener( event, proc, capture );
 
    return hop_add_native_event_listener( obj, event, proc, capture );
@@ -47,7 +48,8 @@ function hop_remove_event_listener( obj, event, proc, capture ) {
    if( event == "timeout" )
       return hop_remove_timeout_listener( proc );
 
-   if( !(obj instanceof Window) && obj.hop_remove_event_listener!=undefined )
+   if( (obj.hop_remove_event_listener != undefined) &&
+      (obj.hop_remove_event_listener != hop_remove_event_listener) )
       obj.hop_remove_event_listener( event, proc, capture );
 
    return hop_remove_native_event_listener( obj, event, proc, capture );
