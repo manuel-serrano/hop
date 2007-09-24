@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Sep 21 11:04:48 2007 (serrano)                */
+/*    Last change :  Mon Sep 24 16:36:00 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -326,13 +326,16 @@ function hop_operap() {
 /*    hop_flash_version ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_flash_version() {
-   var p = navigator.mimeTypes[ "application/x-shockwave-flash" ].enabledPlugin;
+   if( navigator.mimeTypes
+       && navigator.mimeTypes[ "application/x-shockwave-flash" ] ) {
+      var p = navigator.mimeTypes[ "application/x-shockwave-flash" ].enabledPlugin;
+   
+      if( p && p.description ) {
+	 var d = p.description;
 
-   if( p && p.description ) {
-      var d = p.description;
-
-      if( (typeof d == "string") && (d.indexOf( "Shockwave Flash " ) == 0) ) {
-	 return parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
+	 if( (typeof d == "string") && (d.indexOf( "Shockwave Flash " ) == 0) ) {
+	    return parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
+	 }
       }
    }
 

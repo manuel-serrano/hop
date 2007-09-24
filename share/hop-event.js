@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Sep 24 15:43:27 2007 (serrano)                */
+/*    Last change :  Mon Sep 24 16:55:54 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -141,15 +141,9 @@ function start_servevt_ajax_proxy( key, obj ) {
       var readystate = 0;
       
       var register = function( id ) {
-	 var svc = "/hop/server-event-register?event=" + id
-	    + "&key=" + key + "&flash=false";
+	 var svc = "/hop/server-event-register?event=" + id + "&key=" + key;
 
 	 var success = function( val, http ) {
-	    // serverready event
-	    if( readystate === 1 ) {
-	       readystate = 2;
-	       hop_trigger_serverready_event( new HopServerReadyEvent() );
-	    }
 	    // re-register the event as soon as possible
 	    register( id );
 	    // invoke the user handler
@@ -182,15 +176,11 @@ function start_servevt_ajax_proxy( key, obj ) {
       // scan all the previously registered events an register on the server
       for( var p in hop_servevt_table ) {
 	 if( hop_servevt_table[ p ].hop_servevt ) {
-	    if( readystate === 0 ) readystate = 1;
 	    hop_servevt_proxy.register( p );
 	 }
       }
-
-      if( readystate === 0 ) {
-	 readystate = 2;
-	 hop_trigger_serverready_event( new HopServerReadyEvent() );
-      }
+      
+      hop_trigger_serverready_event( new HopServerReadyEvent() );
    }
 }
 
@@ -336,7 +326,9 @@ function start_servevt_proxy( obj ) {
 			var port = v[ 1 ];
 			var key = v[ 2 ];
 
-			if( port ) {
+			if( port &&
+			    (hop_flash_version() >= 8) &&
+			    !(hop_operap()) ) {
 			   try {
 			      start_servevt_flash_proxy( key, host, port );
 			   } catch( e ) {
