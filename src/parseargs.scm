@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Sep 24 09:51:19 2007 (serrano)                */
+;*    Last change :  Wed Sep 26 13:29:21 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -16,9 +16,6 @@
 
    (library hop)
 
-   (cond-expand
-      (enable-threads (library pthread)))
-   
    (import  hop_param)
    
    (eval    (export hop-load-rc))
@@ -32,7 +29,6 @@
 (define (parse-args args)
    (let ((loadp #t)
 	 (mimep #t)
-	 (replp #f)
 	 (autoloadp #t)
 	 (p (hop-port))
 	 (ep #unspecified)
@@ -123,7 +119,7 @@
 	 (("--eval" ?string (help "Evaluate STRING"))
 	  (set! exprs (cons string exprs)))
 	 (("--repl" (help "Start a repl"))
-	  (set! replp #t))
+	  (hop-enable-repl-set! #t))
 	 ((("-x" "--xml-backend") ?ident
 				  (help (format "Set XML backend [~s]"
 						(xml-backend-id (hop-xml-backend)))))
@@ -175,7 +171,6 @@
 		     (%hop-load-rc path)
 		     (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file))))))
 	  (%hop-load-rc (make-file-name (hop-etc-directory) (hop-rc-file))))
-      (when replp (hop-repl))
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
       ;; http port
       (hop-port-set! p)
@@ -243,11 +238,3 @@
    (let ((path (make-file-name (hop-rc-directory) file)))
       (when (file-exists? path)
 	 (%hop-load-rc path))))
-      
-;*---------------------------------------------------------------------*/
-;*    hop-repl ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (hop-repl)
-   (hop-verb 1 "Entering repl...\n")
-   (thread-start! (make-thread (lambda () (begin (repl) (exit 0))))))
-

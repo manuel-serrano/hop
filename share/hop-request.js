@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Sep 24 22:00:37 2007 (serrano)                */
+/*    Last change :  Wed Sep 26 14:57:14 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -77,7 +77,7 @@ function hop_service_url( service, formals, args ) {
 /*    hop_service_url_varargs ...                                      */
 /*---------------------------------------------------------------------*/
 function hop_service_url_varargs( service, args ) {
-   var len = args.length;
+   var len = (arguments.length - 1);
    
    if( len == 0 ) {
       return service;
@@ -85,8 +85,8 @@ function hop_service_url_varargs( service, args ) {
       var url = service + "?hop-encoding=hop";
       var i;
 
-      for( i = 0; 0 < len; i++ ) {
-	 url += "&a" + i + "=" + hop_serialize( args[ i ] );
+      for( i = 0; i < len; i++ ) {
+	 url += "&a" + i + "=" + hop_serialize( arguments[ i + 1 ] );
       }
 
       return url;

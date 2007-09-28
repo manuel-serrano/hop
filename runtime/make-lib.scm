@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Sep 11 10:22:18 2007 (serrano)                */
+;*    Last change :  Wed Sep 26 14:22:46 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -98,4 +98,6 @@
 	   (class cache-entry)
 	   (class cache)
 
-	   (class wiki-syntax)))
+	   (class wiki-syntax)
+
+	   (class hop-audio-player)))

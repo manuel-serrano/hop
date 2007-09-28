@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Sep 24 16:55:54 2007 (serrano)                */
+/*    Last change :  Fri Sep 28 09:36:35 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -107,6 +107,7 @@ function hop_active_location_set( obj, href ) {
 /*    hop_servevt_id ...                                               */
 /*---------------------------------------------------------------------*/
 var hop_servevt_id = "__hop_serevt_proxy";
+var hop_server_event_count = 0;
 
 /*---------------------------------------------------------------------*/
 /*    HopServerEvent ...                                               */
@@ -117,6 +118,7 @@ function HopServerEvent( name, text, value ) {
    o.name = name;
    o.value = value;
    o.responseText = text;
+   o.id = hop_server_event_count++;
    
    return o;
 }
@@ -452,6 +454,7 @@ function hop_remove_server_listener( obj, proc ) {
 /*    hop_serverready_list ...                                         */
 /*---------------------------------------------------------------------*/
 var hop_serverready_list = null;
+var hop_serverready_tiggered = false;
 
 /*---------------------------------------------------------------------*/
 /*    HopServerReadyEvent ...                                          */
@@ -467,13 +470,13 @@ function HopServerReadyEvent() {
 /*    hop_trigger_serverready_event ...                                */
 /*---------------------------------------------------------------------*/
 function hop_trigger_serverready_event( evt ) {
-   var p = hop_serverready_list;
-   
-   while( sc_isPair( p ) ) {
-      p.car( evt );
+   while( sc_isPair( hop_serverready_list ) ) {
+      hop_serverready_list.car( evt );
       if( evt.isStopped ) break;
-      p = p.cdr;
+      hop_serverready_list = hop_serverready_list.cdr;
    }
+
+   hop_serverready_tiggered = true;
 }
 
 /*---------------------------------------------------------------------*/
@@ -481,7 +484,13 @@ function hop_trigger_serverready_event( evt ) {
 /*---------------------------------------------------------------------*/
 function hop_add_serverready_listener( obj, proc ) {
    if( obj === document ) {
-      hop_serverready_list = sc_cons( proc, hop_serverready_list );
+      if( hop_serverready_tiggered ) {
+	 // the server is ready
+	 proc();
+      } else {
+	 // the server is not ready yet, we register the callback
+	 hop_serverready_list = sc_cons( proc, hop_serverready_list );
+      }
    } else {
       throw new Error( "add-event-listener!: Illegal `serverready' recipient"
 		       + obj );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Sep 11 11:52:48 2007 (serrano)                */
+;*    Last change :  Wed Sep 26 14:31:55 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -101,15 +101,22 @@
 (define (make-hop-service-url svc . vals)
    (if (not (hop-service? svc))
        (bigloo-type-error 'make-hop-service-url 'service svc)
-       (with-access::hop-service svc (path args)
-	  (if (and (null? args) (null? vals))
-	      path
+       (with-access::hop-service svc (id path args)
+	  (cond
+	     ((and (null? args) (null? vals))
+	      path)
+	     ((=fx (length args) (length vals))
 	      (apply string-append
 		     path
 		     "?hop-encoding=hop"
 		     (map (lambda (f v)
 			     (format "&~a=~a" f (url-encode (obj->string v))))
-			  args vals))))))
+			  args vals)))
+	     (else
+	      (error 'make-hop-service-url
+		     (format "arity mismatch, expecting ~a values, getting ~a"
+			     (length args) (length vals))
+		     id))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-service-url ...                                             */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Mon Sep 24 07:37:38 2007 (serrano)                */
+/*    Last change :  Fri Sep 28 14:09:35 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -483,18 +483,19 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, bg, resiz
 /*---------------------------------------------------------------------*/
 /*    pre-allocated keywords                                           */
 /*---------------------------------------------------------------------*/
-var Ktitle = new sc_Keyword( "title" );
-var Kid = new sc_Keyword( "id" );
-var Kparent = new sc_Keyword( "parent" );
-var Ksrc = new sc_Keyword( "src" );
-var Kclass = new sc_Keyword( "class" );
-var Kwidth = new sc_Keyword( "width" );
-var Kheight = new sc_Keyword( "height" );
-var Kleft = new sc_Keyword( "left" );
-var Ktop = new sc_Keyword( "top" );
-var Kbackground = new sc_Keyword( "background" );
-var Kbg = new sc_Keyword( "bg" );
-var Kresizable = new sc_Keyword( "resizable" );
+var Ktitle = sc_string2keyword_immutable( "title" );
+var Kid = sc_string2keyword_immutable( "id" );
+var Kparent = sc_string2keyword_immutable( "parent" );
+var Ksrc = sc_string2keyword_immutable( "src" );
+var Kclass = sc_string2keyword_immutable( "class" );
+var Kwidth = sc_string2keyword_immutable( "width" );
+var Kheight = sc_string2keyword_immutable( "height" );
+var Kleft = sc_string2keyword_immutable( "left" );
+var Ktop = sc_string2keyword_immutable( "top" );
+var Kbackground = sc_string2keyword_immutable( "background" );
+var Kbg = sc_string2keyword_immutable( "bg" );
+var Kresizable = sc_string2keyword_immutable( "resizable" );
+var Kprop = sc_string2keyword_immutable( "prop" );
 
 /*---------------------------------------------------------------------*/
 /*    hop_window_open ...                                              */
@@ -504,6 +505,7 @@ function hop_window_open() {
       background, resizable = true;
    var prop = "";
    var i = 0, l = arguments.length;
+   var body = false;
 
    function prop_to_string( val ) {
       if( (val instanceof Boolean) || (typeof val == "boolean") )
@@ -515,16 +517,22 @@ function hop_window_open() {
       if( typeof src == "function" ) src = src();
 
       if( (src instanceof String) || (typeof src == "string" ) ) {
-	 if( width ) prop += ", width=" + width;
-	 if( height ) prop += ", height=" + height;
-	 if( left ) prop += ", screenX=" + left + ", left=" + left;
-	 if( top ) prop += ", screenY=" + top + ", top=" + top;
-	 
+	 if( width ) prop += ",width=" + width;
+	 if( height ) prop += ",height=" + height;
+	 if( left != undefined ) prop += ",screenX=" + left + ",left=" + left;
+	 if( top != undefined  ) prop += ",screenY=" + top + ",top=" + top;
+
+	 if( prop.charAt( 0 ) == ',' ) {
+	    prop = prop.substring( 1, prop.length );
+	 }
+
 	 var win = window.open( src, title, prop );
 	 win.iconify = function( w ) { ; };
 	 win.maximize = function( w ) { ; };
 	 win.raise = function( w ) { ; };
-	 win.resize = function( w ) { ; };
+	 win.resize = function( w, h ) { win.resizeTo( w, h ); };
+
+	 if( width && height ) win.resizeTo( width, height );
 	 
 	 return win;
       } else {
@@ -535,7 +543,7 @@ function hop_window_open() {
    function inner_window_open() {
       if( !id ) id = "hop-window" + hop_iwindow_count++;
       
-      var win = hop_iwindow_open( id, src, title, klass, width, height, left, top, background, resizable, parent );
+      var win = hop_iwindow_open( id, src ? src : body, title, klass, width, height, left, top, background, resizable, parent );
       win.close = function() { return hop_iwindow_close( win ); };
       win.iconify = function() { return hop_iwindow_iconify( win ); };
       win.maximize = function() { return hop_iwindow_maximize( win ); };
@@ -560,7 +568,11 @@ function hop_window_open() {
 		  parent = arguments[ i++ ];
 	       } else {
 		  if( k === Ksrc ) {
-		     src = arguments[ i++ ];
+		     if( body ) {
+			throw new Error( "window-open: both :src and body specified: " + arguments[ i++ ] );
+		     } else {
+			src = arguments[ i++ ];
+		     }
 		  } else {
 		     if( k === Kclass ) {
 			klass = arguments[ i++ ];
@@ -585,8 +597,13 @@ function hop_window_open() {
 				       if( k === Kbackground || k === Kbg ) {
 					  background = arguments[ i++ ];
 				       } else {
-					  prop += "," + k.toJSString() + "=" + 
-					     prop_to_string( arguments[ i++ ] );
+					  if( k === Kprop ) {
+					     prop += arguments[ i++ ];
+					  } else {
+					     prop +=
+						"," + k.toJSString() + "=" + 
+						prop_to_string(arguments[i++]);
+					  }
 				       }
 				    }
 				 }
@@ -599,20 +616,24 @@ function hop_window_open() {
 	    }
 	 }
       } else {
-	 if( i < l ) {
+	 if( !src && parent ) {
+	    if( body ) {
+	       dom_append_child( div, k );
+	    } else {
+	       body = dom_create_div( k );
+	    }
+	 } else if( i < l ) {
 	    throw new Error( "window-open: illegal argument -- "
 			     + ">" + k + "<"
 			     + ", " + arguments[ i ] + " ...");
-	 } else {
-	    if( i > 0 ) {
+	 } else if( i > 0 ) {
 	    throw new Error( "window-open: illegal argument -- "
 			     + "... " + arguments[ i - 2 ] + ","
 			     + ">" + k + "<" );
 			     
-	    } else {
-	       throw new Error( "window-open: illegal argument -- "
-				+ k );
-	    }
+	 } else {
+	    throw new Error( "window-open: illegal argument -- "
+			     + k );
 	 }
       }
    }

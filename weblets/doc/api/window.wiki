@@ -58,6 +58,7 @@ must include in their header, the following statement:
 | :resizable  |  bool     | enables resize.                                 |
 | :titlebar   |  bool     | shows a title bar.                              |
 | :location   |  bool     | shows location information.                     |
+| :prop       |  string   | a window property.                              |
 </arguments>
 
 If the optional argument ++:parent++ is present then an //inner// window
@@ -88,12 +89,15 @@ behaviors:
 
 
 ==== Native Windows ====
- Native windows are independent from the main browser window. The content of
- the window, given by the ++:src++ argument, can either be a
-  ,(<APIREF> "service" "service.wiki") or a URL. The optional argument
- ++:background++ is ineffective. The arguments ++:toolbar++, ++:status++,
- ++:menubar++, ++:resizable++, ++:titlebar++, and ++:location++ are effective.
-  
+
+Native windows are independent from the main browser window. The content of
+the window, given by the ++:src++ argument, can either be a
+ ,(<APIREF> "service" "service.wiki") or a URL. The optional argument
+++:background++ is ineffective. The arguments ++:toolbar++, ++:status++,
+++:menubar++, ++:resizable++, ++:titlebar++, and ++:location++ are effective.
+In addition the ++:prop++ arguments is used to specified verbatim properties,
+that is the string value argument following the ++:prop++ keyword is append,
+//as is//, to the property string of the built window.
 
 </procedure>
 

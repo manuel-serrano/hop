@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Wed Sep 12 10:30:32 2007 (serrano)                */
+/*    Last change :  Thu Sep 27 08:06:59 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
@@ -167,9 +167,9 @@ class HopAudio {
 	       
       // External interface binding
       ExternalInterface.addCallback( 'load', this, loadSound );
-      ExternalInterface.addCallback( 'play', this, playSound );
-      ExternalInterface.addCallback( 'stop', this, stopSound );
-      ExternalInterface.addCallback( 'pause', this, pauseSound );
+      ExternalInterface.addCallback( 'flash_play', this, playSound );
+      ExternalInterface.addCallback( 'flash_stop', this, stopSound );
+      ExternalInterface.addCallback( 'flash_pause', this, pauseSound );
       ExternalInterface.addCallback( 'volume_set', this, setVolume );
       ExternalInterface.addCallback( 'volume_get', this, getVolume );
       ExternalInterface.addCallback( 'pan_set', this, setPan );

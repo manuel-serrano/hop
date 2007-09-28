@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Sep 20 15:36:42 2007 (serrano)                */
+;*    Last change :  Fri Sep 28 11:01:15 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -14,8 +14,11 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-audio
    
-   (include "xml.sch")
-
+   (library multimedia)
+   
+   (include "xml.sch"
+	    "service.sch")
+   
    (import  __hop_param
 	    __hop_configure
 	    __hop_types
@@ -24,27 +27,23 @@
 	    __hop_js-lib
 	    __hop_service
 	    __hop_hop-slider
-	    __hop_hop-extra)
-
-;*    (library multimedia)                                             */
-;*                                                                     */
-;*    (export  (class flash-sound::music                               */
-;* 	       (%event read-only (default #unspecified))))             */
-;*                                                                     */
-   (export  (<AUDIO> . args)))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    music-close ::flash-sound ...                                    *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (music-close m::flash-sound)                         */
-;*    #unspecified)                                                    */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    music-play ::flash-sound ...                                     *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (music-play m::flash-sound . song)                   */
-;*    (with-access::flash-sound m (%event)                             */
-;*       (hop-event-signal! m (cons 'play song))))                     */
+	    __hop_hop-extra
+	    __hop_thread
+	    __hop_cgi
+	    __hop_read
+	    __hop_event)
+   
+   (export  (<AUDIO> . args)
+	    
+	    (class hop-audio-player
+	       (hop-audio-player-init)
+	       (%thread (default #f))
+	       (%service (default #unspecified))
+	       (%event (default #unspecified))
+	       (engine read-only))
+	    
+	    (generic hop-audio-player-init ::hop-audio-player)
+	    (generic hop-audio-player-close ::hop-audio-player)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO> ...                                                      */
@@ -208,7 +207,9 @@
 	 "el.onpause=hop_audio_controls_onpause;"
 	 "el.onstop=hop_audio_controls_onstop;"
 	 "el.onended=hop_audio_controls_onended;"
-         "el.onbuffer=hop_audio_controls_onbuffer;})")
+         "el.onbuffer=hop_audio_controls_onbuffer;"
+         "el.onvolume=hop_audio_controls_onvolume;"
+         "el.onplayer=hop_audio_controls_onplayer;})")
       ;; the info line
       (<TABLE> :class "hop-audio-panel"
 	 (<TR>
@@ -348,3 +349,118 @@
 		     :min -100 :max 100 :step 1 :value 0 :caption #f
 		     :onchange (on "pan_set")))
 	    (<TH> "R")))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-audio-player-init ...                                        */
+;*---------------------------------------------------------------------*/
+(define-generic (hop-audio-player-init player::hop-audio-player)
+
+   (define (signal-state! %event state len pos)
+      (hop-event-signal! %event (list state len pos)))
+
+   (define (signal-volume! %event vol)
+      (hop-event-signal! %event (list 'volume vol)))
+   
+   (define (signal-meta! %event engine)
+      (let* ((s (music-song engine))
+	     (c (when (pair? s) (assq :file s)))
+	     (file (if (pair? c) (cdr c) #f))
+	     (pl (music-playlist-get engine)))
+	 (multiple-value-bind (_ _ song _ _ _ _ _ _)
+	    (music-info engine)
+	    (if (string? file)
+		(with-handler
+		   (lambda (e)
+		      (when (string? file)
+			 (hop-event-signal! %event (list 'meta file pl song))))
+		   (hop-event-signal! %event (list 'meta (mp3-id3 file) pl song)))
+		(hop-event-signal! %event (list 'meta #f pl song))))))
+   
+   (define (signal-info %event engine)
+      (multiple-value-bind (state playlist song pos len vol err bitrate khz)
+	 (music-info engine)
+	 (signal-meta! %event engine)
+	 (signal-volume! %event vol)
+	 (signal-state! %event state len pos)))
+
+   (define (make-audio-player-control engine)
+      (with-access::hop-audio-player player (%event engine)
+	 (lambda ()
+	    (let loop ((oldstate #f)
+		       (oldvol -1)
+		       (oldsong -1)
+		       (oldplaylist -1))
+	       (lambda (e)
+		  (if (&io-error? e)
+		      (begin
+			 (music-abort engine)
+			 #t)
+		      (raise e)))
+	       (multiple-value-bind (state playlist song pos len vol err bitrate khz)
+		  (music-info engine)
+		  (cond
+		     ((not (eq? oldstate state))
+		      ;; the state has changed, notify
+		      (signal-state! %event state len pos))
+		     ((not (eq? state 'play))
+		      #unspecified)
+		     ((or (not (=fx oldsong song))
+			  (not (=fx oldplaylist playlist)))
+		      ;; the song has changed, notify the new song metadata
+		      (signal-meta! %event engine)
+		      (set! state 'song-changed))
+		     ((=fx len 0)
+		      ;; the engine has not gathered yet the music length
+		      (set! state 'length-unknown)))
+		  (unless (=fx vol oldvol)
+		     ;; the volume has changed
+		     (signal-volume! %event vol))
+		  ;; loop
+		  (sleep 1000347)
+		  (loop state vol song playlist))))))
+
+   (cond-expand
+      (enable-threads
+       (with-access::hop-audio-player player (%thread %service %event engine)
+	  (set! %service (service (a0 a1)
+			    (case a0
+			       ((info)
+				(signal-info %event engine))
+			       ((load)
+				(music-playlist-clear! engine)
+				(music-playlist-add! engine a1))
+			       ((pause)
+				(music-pause engine))
+			       ((play)
+				(music-play engine a1))
+			       ((stop)
+				(music-stop engine))
+			       ((position)
+				(music-seek engine a1))
+			       ((volume)
+				(music-volume-set! engine a1)))
+			    #f))
+	  (set! %event (hop-service-path %service))
+	  (set! %thread (make-hop-thread (make-audio-player-control player)))
+	  player))
+      (else
+       (error 'hop-audio-player
+	      "Player cannot be started in single-thread setting"
+	      "Re-configure HOP with multi-threading enabled"))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-audio-player-close ...                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (hop-audio-player-close audio::hop-audio-player)
+   (with-access::hop-audio-player audio (%thread engine)
+      (music-close engine)
+      (when (hop-thread? %thread)
+	 (hop-thread-terminate! %thread)
+	 (set! %thread #f))))
+
+;*---------------------------------------------------------------------*/
+;*    hop->json ::hop-audio-player ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (hop->json player::hop-audio-player)
+   (with-access::hop-audio-player player (%event)
+      (format "\"~a\"" %event)))

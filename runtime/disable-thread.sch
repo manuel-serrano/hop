@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 23 10:29:32 2007                          */
-;*    Last change :  Fri May 25 12:16:09 2007 (serrano)                */
+;*    Last change :  Wed Sep 26 13:52:11 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The __hop_thread module directives when threads are              */
@@ -182,3 +182,21 @@
 	  (exit 0)))
       (else
        (thunk))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-thread? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-thread? obj)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    make-hop-thread ...                                              */
+;*---------------------------------------------------------------------*/
+(define (make-hop-thread thunk)
+   (error 'make-hop-thread "multi-threading disabled" "(see --configure)"))
+
+;*---------------------------------------------------------------------*/
+;*    hop-thread-terminate! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hop-thread-terminate! thread)
+   (error 'make-hop-thread "multi-threading disabled" "(see --configure)"))

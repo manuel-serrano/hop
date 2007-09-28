@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Sep 11 05:39:41 2007 (serrano)                */
+;*    Last change :  Wed Sep 26 13:29:04 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -60,6 +60,9 @@
 	    
 	    (hop-enable-fast-server-event::bool)
 	    (hop-enable-fast-server-event-set! ::bool)
+
+	    (hop-enable-repl::bool)
+	    (hop-enable-repl-set! ::bool)
 	    
 	    (hop-https-protocol::symbol)
 	    (hop-https-protocol-set! ::symbol)
@@ -96,9 +99,9 @@
 (define-parameter hop-preload-libraries
    (cond-expand
       (enable-threads
-       '(pthread hop web hopscheme scheme2js))
+       '(pthread hop web hopscheme scheme2js multimedia))
       (else
-       '(hop web hopscheme scheme2js))))
+       '(hop web hopscheme scheme2js multimedia))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy-authentication ...                                     */
@@ -185,6 +188,12 @@
 
 (define-parameter hop-enable-fast-server-event
    #t)
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-repl ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-repl
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-webdav ...                                            */

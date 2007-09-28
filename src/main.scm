@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Sep 12 05:25:24 2007 (serrano)                */
+;*    Last change :  Wed Sep 26 13:31:38 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module main
 
-   (library web hop)
+   (library multimedia web hop)
 
    (cond-expand
       (enable-threads (library pthread)))
@@ -102,6 +102,8 @@
 			    "Illegal scheduling policy"
 			    (hop-scheduling)))))
 	     (serv (hop-server-socket)))
+	 ;; when needed, start the HOP repl
+	 (hop-repl rp)
 	 ;; when needed, start a loop for server events
 	 (hop-server-event-loop ap rp)
 	 ;; start the main loop
@@ -369,3 +371,27 @@
 	       (else
 		(socket-close sock)))))))
    
+;*---------------------------------------------------------------------*/
+;*    hop-repl ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hop-repl pool)
+   (when (hop-enable-repl)
+      (cond-expand
+	 (enable-threads
+	  (cond
+	     ((> (pool-thread-available pool) 2)
+	      (hop-verb 1 "Entering repl...\n")
+	      (pool-thread-execute pool
+				   (lambda ()
+				      (begin (repl) (exit 0)))
+				   (lambda (m)
+				      (error 'hop-repl "Illegal value" m))
+				   0))
+	     (else
+	      (error 'hop-repl
+		     "HOP REPL cannot be started because not enought accept threads avaiable"
+		     (pool-thread-available pool)))))
+	 (else
+	  (error 'hop-repl
+		 "HOP REPL cannot be spawned when threads support disabled"
+		 #unspecified)))))

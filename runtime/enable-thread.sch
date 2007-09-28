@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 23 10:29:32 2007                          */
-;*    Last change :  Fri May 25 08:41:07 2007 (serrano)                */
+;*    Last change :  Wed Sep 26 13:52:20 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The __hop_thread module directives when threads are              */
@@ -80,3 +80,23 @@
 ;*---------------------------------------------------------------------*/
 (define (call-in-background thunk)
    (thunk))
+
+;*---------------------------------------------------------------------*/
+;*    hop-thread? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-thread? obj)
+   (thread? obj))
+
+;*---------------------------------------------------------------------*/
+;*    make-hop-thread ...                                              */
+;*---------------------------------------------------------------------*/
+(define (make-hop-thread thunk)
+   (let ((thread (make-thread thunk)))
+      (thread-start! thread)
+      thread))
+
+;*---------------------------------------------------------------------*/
+;*    hop-thread-terminate! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hop-thread-terminate! thread)
+   (thread-terminate! thread))
