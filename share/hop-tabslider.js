@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Sat Jun  9 06:30:43 2007 (serrano)                */
+/*    Last change :  Sat Sep 29 08:43:02 2007 (serrano)                */
 /*    Copyright   :  2006-07 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
@@ -45,10 +45,10 @@ function hop_tabslider_select_inner( parent, item ) {
 	 title.className = "hop-tabslider-head hop-tabslider-head-active";
 	 if( content.lang == "delay" ) {
 	    hop( selected.onkeyup()(),
-		 function( http ) {
-	       selected.innerHTML = http.responseText;
-	       selected.style.display = "block";
-	    } );
+		 function( html ) {
+		    hop_innerHTML_set( selected, html );
+		    selected.style.display = "block";
+		 } );
 	 } else {
 	    selected.style.display = "block";
 	    /* update the layout of the children of the new tab */
@@ -77,13 +77,18 @@ function hop_tabslider_update() {
 /*---------------------------------------------------------------------*/
 function hop_tabslider_init( id, ind, history ) {
    var ts = document.getElementById( id );
+   var update = function( e ) {
+      ts.tab_selected = ts.childNodes[ 2 * ind ];
+      ts.hop_update();
+   };
+   
    ts.hop_update = hop_tabslider_update;
    ts.history = (history != false);
    
-   hop_window_onload_add( function( e ) {
-      ts.tab_selected = ts.childNodes[ 2 * ind ];
-      ts.hop_update();
-   } );
+   hop_window_onload_add( update );
+   // force an update if the window is already loaded (e.g., if the tabslider
+   // is sent via a with-hop call).
+   update();
 
    hop_state_history_register_handler(
       "ts", /* key argument */

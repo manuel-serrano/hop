@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Fri Sep 28 14:09:35 2007 (serrano)                */
+/*    Last change :  Sat Sep 29 08:19:37 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -389,7 +389,7 @@ function make_hop_iwindow( id, klass, parent ) {
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_open ...                                             */
 /*---------------------------------------------------------------------*/
-function hop_iwindow_open( id, obj, title, klass, width, height, x, y, bg, resizable, parent ) {
+function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resizable, parent ) {
    var win = document.getElementById( id );
    var isnew = false;
 
@@ -408,7 +408,7 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, bg, resiz
    }
    node_style_set( win.el_content, "display", "none" );
 
-   if( hop_is_html_element( obj ) ) {
+   if( hop_is_html_element( src ) ) {
       var c = win.el_content.childNodes;
       var i = c.length;
 
@@ -416,7 +416,7 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, bg, resiz
 	 i--;
 	 win.el_content.removeChild( c[ i ] );
       }
-      win.el_content.appendChild( obj );
+      win.el_content.appendChild( src );
    } else {
       var cb = function( html ) {
 	 if( html ) {
@@ -436,14 +436,14 @@ function hop_iwindow_open( id, obj, title, klass, width, height, x, y, bg, resiz
 	 }
       };
 
-      if( typeof obj == "function" ) {
-	 hop( obj(), cb );
+      if( typeof src == "function" ) {
+	 hop( src(), cb );
       } else {
-	 if( (obj instanceof String) || (typeof obj == "string") ) {
-	    hop( obj, cb );
+	 if( (src instanceof String) || (typeof src == "string") ) {
+	    hop( src, cb );
 	 } else {
-	    alert( "*** Hop Error, Illegal `iwindow' content -- " + obj
-		   + " (" + typeof obj + ")" );
+	    alert( "*** Hop Error, Illegal `iwindow' content -- " + src
+		   + " (" + typeof src + ")" );
 	 }
       }
    }
