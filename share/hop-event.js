@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Sep 28 09:36:35 2007 (serrano)                */
+/*    Last change :  Sat Sep 29 19:33:13 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -436,12 +436,12 @@ function hop_remove_server_listener( obj, proc ) {
       hop_servevt_dlist = sc_remqbang( proc, hop_servevt_dlist );
    } else {
       // unregister the event listener
-      hop_servevt_table[ id ] = sc_remqbang( proc, hop_servevt_table[ id ] );
-      hop_servevt_ctable[ id ] = sc_remqbang( proc, hop_servevt_ctable[ id ] );
+      hop_servevt_table[ obj ] = sc_remqbang( proc, hop_servevt_table[ obj ] );
+      hop_servevt_ctable[ obj ] = sc_remqbang( proc,hop_servevt_ctable[ obj ] );
 
       // try to close the socket
       for( id in hop_servevt_table ) {
-	 if( sc_isPair( hop_servevt_table[ id ] ) )
+	 if( sc_isPair( hop_servevt_table[ obj ] ) )
 	    return;
       }
 

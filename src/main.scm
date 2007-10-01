@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Sep 26 13:31:38 2007 (serrano)                */
+;*    Last change :  Sat Sep 29 18:36:26 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -103,7 +103,7 @@
 			    (hop-scheduling)))))
 	     (serv (hop-server-socket)))
 	 ;; when needed, start the HOP repl
-	 (hop-repl rp)
+	 (hop-repl ap)
 	 ;; when needed, start a loop for server events
 	 (hop-server-event-loop ap rp)
 	 ;; start the main loop
@@ -380,9 +380,9 @@
 	 (enable-threads
 	  (cond
 	     ((> (pool-thread-available pool) 2)
-	      (hop-verb 1 "Entering repl...\n")
 	      (pool-thread-execute pool
 				   (lambda ()
+				      (hop-verb 1 "Entering repl...\n")
 				      (begin (repl) (exit 0)))
 				   (lambda (m)
 				      (error 'hop-repl "Illegal value" m))

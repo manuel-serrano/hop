@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Mon Sep  3 14:30:53 2007 (serrano)                */
+;*    Last change :  Mon Oct  1 05:17:16 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -273,8 +273,7 @@
 		(props (if (<=elong content-length 0)
 			   (webdav-propfind-all-properties)
 			   (parse-propfind-body
-			    content-length
-			    (socket-input socket)))))
+			    content-length (socket-input socket)))))
 	     (instantiate::http-response-webdav
 		(request req)
 		(start-line "HTTP/1.1 207 Multi-Status")
@@ -340,7 +339,7 @@
    
    (define (<RESPONSE> p)
       (<DAV:RESPONSE>
-	 (<DAV:HREF> p)
+	 (<DAV:HREF> (url-encode p))
 	 (let loop ((okp '())
 		    (errp '())
 		    (props properties))
@@ -386,7 +385,7 @@
        (<RESPONSE> path))
       (else
        (<DAV:RESPONSE>
-	  (<DAV:HREF> path)
+	  (<DAV:HREF> (url-encode path))
 	  (<DAV:PROPSTAT>
 	     (<DAV:STATUS> "HTTP/1.1 404 Not Found"))))))
 		       
@@ -507,7 +506,7 @@
 		     (<DAV:MULTISTATUS>
 			(map (lambda (p)
 				(<DAV:RESPONSE>
-				   (<DAV:HREF> p)
+				   (<DAV:HREF> (url-encode p))
 				   (<DAV:STATUS> "HTTP/1.1 507 Insufficient Storage")))
 			     cp-res)))))))
 

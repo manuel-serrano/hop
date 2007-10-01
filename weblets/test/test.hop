@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Sep 19 19:48:40 2007 (serrano)                */
+;*    Last change :  Sat Sep 29 08:43:59 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
@@ -17,6 +17,7 @@
 	   weblet_test-event
 	   weblet_test-fl
 	   weblet_test-tree
+	   weblet_test-tabslider
 	   weblet_test-notepad
 	   weblet_test-paned
 	   weblet_test-busy
@@ -63,6 +64,7 @@
 	    (<LI> (<A> :href test/slider :target "_blank" "Sliders"))
 	    (<LI> (<A> :href test/sorttable :target "_blank" "Sorttables"))
 	    (<LI> (<A> :href test/tree :target "_blank" "Trees"))
+	    (<LI> (<A> :href test/tabslider :target "_blank" "Tabsliders"))
 	    (<LI> (<A> :href test/canvas :target "_blank" "Canvas"))
 	    (<LI> (<A> :href test/window :target "_blank" "Windows"))
 	    (<LI> (<A> :href test/fselector :target "_blank" "File Selector")))

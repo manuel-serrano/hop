@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Sep 28 11:01:15 2007 (serrano)                */
+;*    Last change :  Sun Sep 30 18:50:47 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -437,6 +437,11 @@
 				(music-stop engine))
 			       ((position)
 				(music-seek engine a1))
+			       ((playlist)
+				(music-playlist-clear! engine)
+				(for-each (lambda (s)
+					     (music-playlist-add! engine s))
+					  a1))
 			       ((volume)
 				(music-volume-set! engine a1)))
 			    #f))
