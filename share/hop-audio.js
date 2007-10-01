@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sun Sep 30 19:01:34 2007 (serrano)                */
+/*    Last change :  Mon Oct  1 13:31:11 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -30,6 +30,8 @@ function HopAudioProxy() {
    o.load = function( src, stream ) { return true; };
    o.play = function( start ) { return true; };
    o.playlist_play = function( index ) { return true; };
+   o.playlist_set = function( pl, autorun ) { return true; };
+   o.playlist_get = function() { return NULL; };
    o.stop = function() { return true; };
    o.pause = function() { return true; };
    o.position_get = function() { return true; };
@@ -51,6 +53,7 @@ var Sstop = sc_string2symbol_immutable( "stop" );
 var Svolume = sc_string2symbol_immutable( "volume" );
 var Sload = sc_string2symbol_immutable( "load" );
 var Sinfo = sc_string2symbol_immutable( "info" );
+var Sready = sc_string2symbol_immutable( "ready" );
 var Sposition = sc_string2symbol_immutable( "position" );
 var Span = sc_string2symbol_immutable( "pan" );
 var Smeta = sc_string2symbol_immutable( "meta" );
@@ -113,8 +116,9 @@ function HopAudioServerProxy( audio, url ) {
    o.playlist_get = function() {
       return playlist;
    }
-   o.playlist_set = function( playlist ) {
-      with_hop( hop_service_url_varargs( url, Splaylist, playlist ) );
+   o.playlist_set = function( playlist, autorun ) {
+      with_hop( hop_service_url_varargs( url, Splaylist, playlist ),
+		autorun ? function( h ) { o.playlist_play( 0 ) } : false );
    }
    o.playlist_index_get = function() {
       return playlist_index;
@@ -171,9 +175,9 @@ function HopAudioServerProxy( audio, url ) {
    // install the server listener...
    hop_add_event_listener( o.event, "server", o.event_listener );
 
-   // ... and request the current state of the player
+   // ... and starts the server event notification
    hop_add_event_listener( document, "serverready", function() {
-	 with_hop( hop_service_url_varargs( url, Sinfo ) );
+	 with_hop( hop_service_url_varargs( url, Sready ) );
       } );
    
    return o;
@@ -266,8 +270,9 @@ function hop_audio_flash_init( id, src, stream ) {
       proxy.playlist_index = index;
       hop_audio_load( audio, sc_listRef( proxy.playlist, index ), true );
    }
-   proxy.playlist_set = function( playlist ) {
+   proxy.playlist_set = function( playlist, autorun ) {
       proxy.playlist = playlist;
+      if( autorun ) proxy.playlist_play( 0 );
    }
    proxy.playlist_get = function() {
       return proxy.playlist;
@@ -294,9 +299,10 @@ function hop_audio_flash_init( id, src, stream ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_run_hooks ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_audio_run_hooks( audio, evname ) {
+function hop_audio_run_hooks( audio, evname, value ) {
    var evt = new HopAudioEvent( evname, audio );
    var handler = "on" + evname;
+   evt.value = value;
 
    if( audio[ handler ] )
       audio[ handler ]( evt );
@@ -307,7 +313,7 @@ function hop_audio_run_hooks( audio, evname ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_player_set ...                                         */
 /*---------------------------------------------------------------------*/
-function hop_audio_player_set( audio, player ) {
+function hop_audio_player_set( audio, player, name ) {
    if( !player ) {
       if( audio.server_proxy ) {
 	 hop_remove_event_listener( audio.server_proxy.event,
@@ -320,7 +326,7 @@ function hop_audio_player_set( audio, player ) {
       audio.proxy = proxy;
       audio.server_proxy = proxy;
 
-      hop_audio_run_hooks( audio, "player" );
+      hop_audio_run_hooks( audio, "player", name );
    }
 }
    
@@ -386,8 +392,8 @@ function hop_audio_load( audio, src, stream ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_playlist_set ...                                       */
 /*---------------------------------------------------------------------*/
-function hop_audio_playlist_set( audio, playlist ) {
-   audio.proxy.playlist_set( playlist );
+function hop_audio_playlist_set( audio, playlist, autorun ) {
+   audio.proxy.playlist_set( playlist, autorun );
    return;
 }
 
@@ -708,8 +714,6 @@ function hop_audio_controls_onplay( evt ) {
    var alen = hop_audio_duration( audio );
    var plen = sc_length( hop_audio_playlist_get( audio ) );
 
-   alert( "PLAYLIST=" + hop_audio_playlist_get(audio ) );
-   alert( "index=" + hop_audio_playlist_index( audio ) );
    if( alen > 0 ) {
       status.src = playbut.src;
 
@@ -790,7 +794,10 @@ function hop_audio_controls_onplayer( evt ) {
 
    hop_audio_time_interval_clear( audio );
    hop_audio_controls_metadata( audio, true );
-   tl.innerHTML = "Player initialized...";
+
+   tl.innerHTML = evt.value ?
+      evt.value + " initialized..." :
+      "Player initialized...";
    
    status.src = stopbut.src;
 }

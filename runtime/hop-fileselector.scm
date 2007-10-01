@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Sat Sep 29 19:26:37 2007 (serrano)                */
+;*    Last change :  Mon Oct  1 14:48:22 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -269,6 +269,7 @@
 ;*    filebrowse ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (filebrowse #!key
+		    id
 		    select
 		    label
 		    title
@@ -286,10 +287,10 @@
        (bigloo-type-error 'filebrowse "integer" height))
       ((not (xml-tilde? select))
        (bigloo-type-error 'filebrowse "client code" select))
-      ((not (string? value))
-       (bigloo-type-error 'filebrowse "string" value))
-      ((not (string? path))
-       (bigloo-type-error 'filebrowse "string" path))
+      ((and (not (string? value)) (not (xml-tilde? value)))
+       (error 'filebrowse "~ and string expected" value))
+      ((and (not (string? path)) (not (xml-tilde? value)))
+       (error 'filebrowse "~ and string expected" value))
       ((not (boolean? multiselect))
        (bigloo-type-error 'filebrowse "boolean" multiselect))
       ((not (procedure? filter))
@@ -304,21 +305,29 @@
 		  (let ((onselect (format "~a(hop_tree_selection(this))" hdl)))
 		     (browse (current-request) wident label value path
 			     filter multiselect onselect)))))
-      (format "hop_filebrowse( ~a, '~a', '~a', ~a, '~a', '~a', ~a, 0, 0, ~a, ~a )"
+      (format "hop_filebrowse( ~a, '~a', '~a', ~a, ~a, ~a, ~a, 0, 0, ~a, ~a )"
 	      ;; service
 	      (hop-service-javascript svc)
 	      ;; title
 	      title
 	      ;; ident
-	      (xml-make-id 'FILEBROWSE)
+	      (xml-make-id id 'FILEBROWSE)
 	      ;; label
-	      (if (string? label)
-		  (string-append "\"" (string-for-read label) "\"")
-		  "false")
+	      (cond
+		 ((string? label)
+		  (format "function() { return ~s }" (string-for-read label)))
+		 ((xml-tilde? label)
+		  (format "function() { return ~a }" (tilde->string label)))
+		 (else
+		  "function() { return false }"))
 	      ;; value
-	      value
+	      (if (string? value)
+		  (format "function() { return ~s }" (string-for-read value))
+		  (format "function() { return ~a }" (tilde->string value)))
 	      ;; path
-	      path
+	      (if (string? path)
+		  (format "function() { return ~s }" (string-for-read path))
+		  (format "function() { return ~a }" (tilde->string path)))
 	      ;; multiselect
 	      (if multiselect "true" "false")
 	      ;; width, height

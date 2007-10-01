@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sun Sep 30 18:50:47 2007 (serrano)                */
+;*    Last change :  Mon Oct  1 13:31:15 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -381,12 +381,12 @@
 	 (music-info engine)
 	 (signal-meta! %event engine)
 	 (signal-volume! %event vol)
-	 (signal-state! %event state len pos)))
+	 (unless (eq? state 'stop) (signal-state! %event state len pos))))
 
    (define (make-audio-player-control engine)
       (with-access::hop-audio-player player (%event engine)
 	 (lambda ()
-	    (let loop ((oldstate #f)
+	    (let loop ((oldstate 'stop)
 		       (oldvol -1)
 		       (oldsong -1)
 		       (oldplaylist -1))
@@ -396,34 +396,50 @@
 			 (music-abort engine)
 			 #t)
 		      (raise e)))
-	       (multiple-value-bind (state playlist song pos len vol err bitrate khz)
-		  (music-info engine)
-		  (cond
-		     ((not (eq? oldstate state))
-		      ;; the state has changed, notify
-		      (signal-state! %event state len pos))
-		     ((not (eq? state 'play))
-		      #unspecified)
-		     ((or (not (=fx oldsong song))
-			  (not (=fx oldplaylist playlist)))
-		      ;; the song has changed, notify the new song metadata
-		      (signal-meta! %event engine)
-		      (set! state 'song-changed))
-		     ((=fx len 0)
-		      ;; the engine has not gathered yet the music length
-		      (set! state 'length-unknown)))
-		  (unless (=fx vol oldvol)
-		     ;; the volume has changed
-		     (signal-volume! %event vol))
-		  ;; loop
-		  (sleep 1000347)
-		  (loop state vol song playlist))))))
+	       
+	       (with-handler
+		  (lambda (e)
+		     (if (&io-error? e)
+			 (begin
+			    (tprint "e=" e)
+			    (sleep 1000521)
+			    (loop oldstate oldvol oldsong oldplaylist))
+			 (raise e)))
+		  
+		  (multiple-value-bind (state playlist song pos len vol err bitrate khz)
+		     (music-info engine)
+		     
+		     ;; volume notification
+		     (unless (=fx vol oldvol)
+			(signal-volume! %event vol))
+		     
+		     ;; playlist (meta) notification
+		     (when (or (not (=fx oldsong song))
+			       (not (=fx oldplaylist playlist)))
+			(signal-meta! %event engine))
+		     
+		     ;; state notification
+		     (cond
+			((=fx len 0)
+			 ;; the engine has not gathered yet the music length
+			 (set! state 'length-unknown))
+			((not (eq? oldstate state))
+			 ;; the state has changed, notify
+			 (signal-state! %event state len pos)))
+		     
+		     ;; loop
+		     (sleep 1000347)
+		     (loop state vol song playlist)))))))
 
    (cond-expand
       (enable-threads
        (with-access::hop-audio-player player (%thread %service %event engine)
 	  (set! %service (service (a0 a1)
 			    (case a0
+			       ((ready)
+				(set! %thread
+				      (make-hop-thread
+				       (make-audio-player-control player))))
 			       ((info)
 				(signal-info %event engine))
 			       ((load)
@@ -446,7 +462,6 @@
 				(music-volume-set! engine a1)))
 			    #f))
 	  (set! %event (hop-service-path %service))
-	  (set! %thread (make-hop-thread (make-audio-player-control player)))
 	  player))
       (else
        (error 'hop-audio-player

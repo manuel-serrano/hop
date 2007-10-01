@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Sat Sep 29 08:19:37 2007 (serrano)                */
+/*    Last change :  Mon Oct  1 14:14:20 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -385,29 +385,11 @@ function make_hop_iwindow( id, klass, parent ) {
    
    return win;
 }
-   
+
 /*---------------------------------------------------------------------*/
-/*    hop_iwindow_open ...                                             */
+/*    hop_iwindow_src_set ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resizable, parent ) {
-   var win = document.getElementById( id );
-   var isnew = false;
-
-   klass = klass ? ("hop-window " + klass) : "hop-window";
-   if( win == null ) {
-      win = make_hop_iwindow( id, klass, parent );
-      isnew = true;
-   } else {
-      node_style_set( win, "display", "block" );
-   }
-
-   /* start hidden otherwise we loose the border on drag! */
-   if( bg ) {
-      win.el_content.bg = bg;
-      node_style_set( win.el_content, "background", bg );
-   }
-   node_style_set( win.el_content, "display", "none" );
-
+function hop_iwindow_src_set( win, src, width, height ) {
    if( hop_is_html_element( src ) ) {
       var c = win.el_content.childNodes;
       var i = c.length;
@@ -448,6 +430,32 @@ function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resiz
       }
    }
 
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_iwindow_open ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resizable, parent ) {
+   var win = document.getElementById( id );
+   var isnew = false;
+
+   klass = klass ? ("hop-window " + klass) : "hop-window";
+   if( win == null ) {
+      win = make_hop_iwindow( id, klass, parent );
+      isnew = true;
+   } else {
+      node_style_set( win, "display", "block" );
+   }
+
+   /* start hidden otherwise we loose the border on drag! */
+   if( bg ) {
+      win.el_content.bg = bg;
+      node_style_set( win.el_content, "background", bg );
+   }
+   node_style_set( win.el_content, "display", "none" );
+
+   hop_iwindow_src_set( win, src, width, height );
+   
    win.el_title.innerHTML = title ? title : id;
 
    if( isnew ) {

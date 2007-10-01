@@ -38,12 +38,12 @@ also need to load the ++hop-fileselect.css++, ++hop-tree.css++, and
 browsers// must include in their header, the following statement:
 
 
-  (<HEAD> :include "hop-fileselect" "hop-tree" "hop-iwindow")
+  (<HEAD> :include "hop-fileselect" "hop-tree" "hop-window")
 
 
 == Examples ==
 
-<example><FILESELECT>, <FILEBROWSE>, filebrowse</example>
+<example><FILEBROWSE>, <FILESELECT>, filebrowse</example>
 
 == Server Definitions ==
 <server>
@@ -72,17 +72,17 @@ complete inside directories for which the access is not granted.
 === ++<FILEBROWSE>++ ===
 <markup> <FILEBROWSE>
 <arguments>
-^  attributes  ^   type    ^   default    ^  short description                ^
-| :id        |  string     |  //random//  | element identifier.               |
-| :title     |  string     |  //value//   | the title of the browser window.  |
-| :label     |  string     |              | the selector tree root label.     |
-| :value     |  string     |              | the root directory.               |
-| :path      |  string     |              | the directory to be opened.       |
-| :text      |  string     |  ++Browse++  | the button text.                  |
-| :width     |  integer    |  ++500++     | the pixel width.                  |
-| :height    |  integer    |  ++400++     | the pixel height.                 |
-| :filter    |  procedure  |              | filter filtering.                 |
-| :multiselect  |  boolean  |   ++#f++  | enable/disable multiple selections. |
+^  attributes  ^   type            ^   default    ^  short description                   ^
+| :id        |  string             |  //random//  | element identifier.                  |
+| :label     |  string             |              | the selector tree root label.        |
+| :value     |  string             |              | the root directory.                  |
+| :path      |  string             |              | the directory to be opened.          |
+| :title     |  string             |  //value//   | the title of the browser window.     |
+| :text      |  string             |  ++Browse++  | the button text.                     |
+| :width     |  integer            |  ++500++     | the pixel width.                     |
+| :height    |  integer            |  ++400++     | the pixel height.                    |
+| :filter    |  procedure          |              | filter filtering.                    |
+| :multiselect  |  boolean         |   ++#f++     | enable/disable multiple selections.  |
 </arguments>
 
 The argument :value specifies the root directory of the browser. Files located
@@ -112,18 +112,29 @@ is, it does expose directories for which the access is not granted.
 === ++(filebrowse :select :value :path ...)++ ===
 <function> filebrowse
 <arguments>
-<arguments>
-^  attributes  ^   type    ^   default    ^  short description                 ^
-| :select    |  client procedure  |       | the client action.                 |
-| :label     |  string     |              | the selector tree root label.      |
-| :value     |  string     |              | the root directory.                |
-| :path      |  string     |              | the directory to be opened.        |
-| :filter    |  procedure  |              | filter filtering.                  |
-| :title     |  string     |  //value//   | the title of the browser window.   |
-| :width     |  integer    |  ++500++     | the pixel width.                   |
-| :height    |  integer    |  ++400++     | the pixel height.                  |
-| :multiselect  |  boolean  |   ++#f++  | enable/disable multiple selections.  |
+^  attributes  ^   type            ^   default    ^  short description                 ^
+| :select    |  client procedure   |              | the client action.                 |
+| :label     |  client expression  |              | the selector tree root label.      |
+| :value     |  client expression  |              | the root directory.                |
+| :path      |  client expression  |              | the directory to be opened.        |
+| :filter    |  procedure          |              | filter filtering.                  |
+| :title     |  string             |  //value//   | the title of the browser window.   |
+| :width     |  integer            |  ++500++     | the pixel width.                   |
+| :height    |  integer            |  ++400++     | the pixel height.                  |
+| :multiselect  |  boolean         |   ++#f++  | enable/disable multiple selections.   |
 </arguments>
+
+The **server** function ++filebrowse++ elaborates a **client expression** that,
+when executed, pops up a file browser. A typical usage of ++filebrowse++
+is used in client actions such as:
+
+<code>
+  (<BUTTON> :onclick (filebrowse ...) "Browse me")
+</code>
+
+~~ Note: since ++filebrowse++ is a server function it call **must not** be 
+prefixed with a ++~++ sign.
+
 </function>
 
 == Style ==

@@ -1,4 +1,5 @@
- (<HTML>
+;; an example of FILEBROWSE markup
+(<HTML>
     (<HEAD>
        :include "hop-fileselect" "hop-window" "hop-tree")
     (<BODY>
