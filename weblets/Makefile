@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Sep  6 11:47:26 2007 (serrano)                */
+#*    Last change :  Tue Oct  2 10:09:16 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -46,8 +46,6 @@ clean:
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
-	mkdir -p $(HOPWEBLETSDIR) && \
-	chmod a+rx $(HOPWEBLETSDIR) && \
 	for p in $(POPDIRS); do \
            $(MAKE) install-weblet DIR=$$p || exit 1; \
         done
