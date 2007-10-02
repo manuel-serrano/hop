@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Oct  2 17:16:53 2007 (serrano)                */
+;*    Last change :  Tue Oct  2 18:21:01 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -412,7 +412,13 @@
 			 (multiple-value-bind (state playlist song pos
 						     len vol err _ _)
 			    (music-info engine)
-			    
+
+			    (when (string? err)
+			       (raise (instantiate::&io-error
+					 (proc 'music)
+					 (msg err)
+					 (obj engine))))
+
 			    ;; volume notification
 			    (unless (=fx vol oldvol)
 			       (signal-volume! %event vol))

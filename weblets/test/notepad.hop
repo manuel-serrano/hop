@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Sat Jul  7 08:24:20 2007 (serrano)                */
+;*    Last change :  Tue Oct  2 18:26:02 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Notepads                                                         */
@@ -35,7 +35,7 @@
       (<H3> "A dynamic Notepad"
 	    (<NOTEPAD>
 	       (<NPHEAD>
-		  (<CENTER> (<B> "An inline of Notepad")))
+		  (<CENTER> (<B> "An inlined Notepad")))
 	       (<NPTAB>
 		  (<NPTABHEAD> "Readme")
 		  [In this notepad, the server date is still.])
@@ -44,7 +44,7 @@
 		  (current-date)))
 	    (<NOTEPAD>
 	       (<NPHEAD>
-		  (<CENTER> (<B> "A remote of Notepad")))
+		  (<CENTER> (<B> "A remote Notepad")))
 	       (<NPTAB>
 		  (<NPTABHEAD> "Creation date")
 		  (date))

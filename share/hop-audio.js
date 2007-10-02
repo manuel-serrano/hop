@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Oct  2 15:01:23 2007 (serrano)                */
+/*    Last change :  Tue Oct  2 18:14:43 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -160,6 +160,8 @@ function HopAudioServerProxy( audio, url ) {
 	    var plist = rest.cdr.car;
 	    var plindex = rest.cdr.cdr.car;
 
+	    hop_audio_run_hooks( audio, "ended" );
+	    
 	    playlist = plist;
 	    playlist_index = plindex;
 	    
@@ -173,6 +175,7 @@ function HopAudioServerProxy( audio, url ) {
 	       current_metadata = val;
 	    }
 
+	    hop_audio_run_hooks( audio, "play" );
 	 }
 	 
 	 hop_audio_run_hooks( audio, sc_symbol2string_immutable( k ) );
