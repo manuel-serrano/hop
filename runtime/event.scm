@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Sep 24 16:41:22 2007 (serrano)                */
+;*    Last change :  Tue Oct  2 08:10:30 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -35,7 +35,8 @@
 	    
    (export  (hop-event-init! ::obj)
 	    (hop-event-signal! ::bstring ::obj)
-	    (hop-event-broadcast! ::bstring ::obj)))
+	    (hop-event-broadcast! ::bstring ::obj)
+	    (hop-event-client-ready? ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
@@ -337,3 +338,9 @@
    (flash-event-broadcast! name value)
    (mutex-unlock! *event-mutex*)
    #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-client-ready? ...                                      */
+;*---------------------------------------------------------------------*/
+(define (hop-event-client-ready? name)
+   #t)

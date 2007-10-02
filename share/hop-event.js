@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sat Sep 29 19:33:13 2007 (serrano)                */
+/*    Last change :  Tue Oct  2 08:26:55 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -410,9 +410,9 @@ function hop_add_server_listener( obj, proc, capture ) {
    if( obj === document ) {
       hop_servevt_dlist = sc_cons( proc, hop_servevt_dlist );
    } else {
-      var o = hop_servevt_table[ obj ]; 
+      var o = hop_servevt_table[ obj ];
+      
       hop_servevt_table[ obj ] = sc_cons( proc, sc_isPair( o ) ? o : null );
-	 
       hop_servevt_table[ obj ].hop_servevt = true;
 
       if( capture ) {

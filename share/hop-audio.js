@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Mon Oct  1 13:31:11 2007 (serrano)                */
+/*    Last change :  Tue Oct  2 08:20:54 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -314,12 +314,14 @@ function hop_audio_run_hooks( audio, evname, value ) {
 /*    hop_audio_player_set ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_audio_player_set( audio, player, name ) {
+   /* cleanup the current proxy */
+   if( audio.server_proxy ) {
+      hop_remove_event_listener( audio.server_proxy.event,
+				 "server",
+				 audio.server_proxy.event_listener );
+   }
+   /* install the new proxy */
    if( !player ) {
-      if( audio.server_proxy ) {
-	 hop_remove_event_listener( audio.server_proxy.event,
-				    "server",
-				    audio.server_proxy.event_listener );
-      }
       audio.proxy = audio.client_proxy;
    } else {
       var proxy = new HopAudioServerProxy( audio, player );
