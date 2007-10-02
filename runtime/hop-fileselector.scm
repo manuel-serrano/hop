@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Mon Oct  1 14:48:22 2007 (serrano)                */
+;*    Last change :  Tue Oct  2 16:28:24 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -144,7 +144,11 @@
 				    (proc->string onselect))
 		  :multiselect multiselect
 		  (<TRHEAD>
-		     (if label label (if root dir (basename dir))))
+		     (if label
+			 (url-decode label)
+			 (if root
+			     (url-decode dir)
+			     (url-decode (basename dir)))))
 		  (<TRBODY> 
 		     (<DELAY>
 			(lambda ()
@@ -154,7 +158,8 @@
 			      (map! (lambda (p)
 				       (if (is-directory? p)
 					   (loop p (basename p) #f)
-					   (<TRLEAF> :value p (basename p))))
+					   (<TRLEAF> :value p
+					      (url-decode (basename p)))))
 				    (sort (filter! filt files)
 					  string<?)))))))))
 	 (<DIV> :class "hop-filebrowse-buttons"

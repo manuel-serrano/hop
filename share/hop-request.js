@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Sep 26 14:57:14 2007 (serrano)                */
+/*    Last change :  Tue Oct  2 16:28:34 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -50,14 +50,14 @@ function hop_service_url( service, formals, args ) {
 	    if( els[ i ].type == "checkbox" ) {
 	       var val = els[ i ].checked ? els[ i ].value : false;
 
-	       url += "&" + els[ i ].name + "=" + hop_serialize( val );
+	       url += "&" + els[ i ].name + "=" + hop_bigloo_serialize( val );
 	    } else {
 	       if( els[ i ].type == "radio" ) {
 		  if( els[ i ].checked ) {
-		     url += "&" + els[ i ].name + "=" + hop_serialize( els[ i ].value );
+		     url += "&" + els[ i ].name + "=" + hop_bigloo_serialize( els[ i ].value );
 		  }
 	       } else {
-		  url += "&" + els[ i ].name + "=" + hop_serialize( els[ i ].value );
+		  url += "&" + els[ i ].name + "=" + hop_bigloo_serialize( els[ i ].value );
 	       }
 	    }
 	 }
@@ -65,7 +65,7 @@ function hop_service_url( service, formals, args ) {
 	 return url;
       } else {
 	 for( i = 0; i < len; i++ ) {
-	    url += "&" + formals[ i ] + "=" + hop_serialize( args[ i ] );
+	    url += "&" + formals[ i ] + "=" + hop_bigloo_serialize( args[ i ] );
 	 }
 
 	 return url;
@@ -86,7 +86,7 @@ function hop_service_url_varargs( service, args ) {
       var i;
 
       for( i = 0; i < len; i++ ) {
-	 url += "&a" + i + "=" + hop_serialize( arguments[ i + 1 ] );
+	 url += "&a" + i + "=" + hop_bigloo_serialize( arguments[ i + 1 ] );
       }
 
       return url;
@@ -469,7 +469,7 @@ function hop_serialize_request_env() {
 	 }
       }
 
-      hop_request_env_string = hop_serialize( tmp );
+      hop_request_env_string = hop_bigloo_serialize( tmp );
    }
       
    return hop_request_env_string;

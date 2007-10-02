@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Oct  2 08:20:54 2007 (serrano)                */
+/*    Last change :  Tue Oct  2 15:01:23 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -72,40 +72,48 @@ function HopAudioServerProxy( audio, url ) {
    var playlist = null;
    var playlist_index = -1;
 
+   var err = function( h ) { if( !h ) hop_audio_run_hooks( audio, "error" ) };
+   
    o.playlist_play = function( index ) {
-      with_hop( hop_service_url_varargs( url, Splay, index ) );
+      with_hop( hop_service_url_varargs( url, Splay, index ), err );
    }
    
    o.play = function( start ) {
-      with_hop( hop_service_url_varargs( url, Splay, 0 ) );
+      with_hop( hop_service_url_varargs( url, Splay, 0 ), err );
    };
    o.stop = function() {
-      with_hop( hop_service_url_varargs( url, Sstop ) );
+      with_hop( hop_service_url_varargs( url, Sstop ), err );
    };
    o.pause = function() {
-      with_hop( hop_service_url_varargs( url, Spause ) );
+      with_hop( hop_service_url_varargs( url, Spause ), err );
    };
    o.load = function( l ) {
       with_hop( hop_service_url_varargs( url, Sload, l ),
-		function() { hop_audio_run_hooks( audio, "load" ); } );
+		function( h ) {
+		   if( !h ) {
+		      err( h );
+		   } else {
+		      hop_audio_run_hooks( audio, "load" );
+		   }
+		} );
    };
    o.position_get = function() {
       return current_position;
    };
    o.position_set = function( p ) {
-      with_hop( hop_service_url_varargs( url, Sposition, p ) );
+      with_hop( hop_service_url_varargs( url, Sposition, p ), err );
    };
    o.pan_get = function() {
       return current_pan;
    };
    o.pan_set = function() {
-      with_hop( hop_service_url_varargs( url, Span, s ) );
+      with_hop( hop_service_url_varargs( url, Span, s ), err );
    };
    o.volume_get = function() {
       return current_volume;
    };
    o.volume_set = function( val ) {
-      with_hop( hop_service_url_varargs( url, Svolume, val ) );
+      with_hop( hop_service_url_varargs( url, Svolume, val ), err );
    };
    o.duration_get = function() {
       return current_duration;

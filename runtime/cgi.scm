@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Sat Aug 18 09:31:36 2007 (serrano)                */
+;*    Last change :  Tue Oct  2 16:28:26 2007 (serrano)                */
 ;*    Copyright   :  2003-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -41,11 +41,7 @@
 	  (list path)
 	  (let ((cmd (xml-string-decode! (substring path 0 i)))
 		(args (substring path (+fx i 1) (string-length path))))
-	     (cons cmd
-		   (map! (lambda (p)
-			    (set-cdr! p (xml-string-decode! (cdr p)))
-			    p)
-			 (cgi-args->list args)))))))
+	     (cons cmd (cgi-args->list args))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-cgi-args ...                                        */

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Sep 24 11:42:35 2007 (serrano)                */
+#*    Last change :  Tue Oct  2 11:19:31 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -40,19 +40,23 @@ bindir:
 libdir:
 	mkdir -p lib
 
-bin: lib
+bin: bindir src-bin hopsh-bin
+
+src-bin: lib
 	(cd src && $(MAKE) build)
+
+hopsh-bin: lib
 	(cd hopsh && $(MAKE) build)
 
-lib:
+lib: libdir
 	(cd runtime && $(MAKE) build)
 	(cd scheme2js && $(MAKE) build)
 	(cd hopscheme && $(MAKE) build)
 
-share:
+share: lib
 	(cd share && $(MAKE) build)
 
-weblets:
+weblets: lib
 	(cd weblets && $(MAKE) build)
 
 #*---------------------------------------------------------------------*/

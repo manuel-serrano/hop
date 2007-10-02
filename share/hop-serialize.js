@@ -3,19 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Thu Sep 20 07:56:21 2007 (serrano)                */
+/*    Last change :  Tue Oct  2 16:24:27 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP serialized (Bigloo compatible).                              */
 /*                                                                     */
 /*=====================================================================*/
-
-/*---------------------------------------------------------------------*/
-/*    hop_serialize ...                                                */
-/*---------------------------------------------------------------------*/
-function hop_serialize( item ) {
-   return encodeURIComponent( hop_bigloo_serialize( item ) );
-}
 
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize ...                                         */
@@ -25,10 +18,10 @@ function hop_bigloo_serialize( item ) {
 
    if( (item instanceof String) || (tname == "string") ) {
       if( sc_isSymbol_immutable( item ) ) {
-	 return "'"
-	    + hop_serialize_string( '"', sc_symbol2string_immutable( item ) );
+	 return "%27"
+	    + hop_serialize_string( '%22', sc_symbol2string_immutable( item ) );
       } else {
-	 return hop_serialize_string( '"', item );
+	 return hop_serialize_string( '%22', item );
       }
    }
 
@@ -95,24 +88,28 @@ function hop_serialize_word( word ) {
    if( s == 0 ) {
       return String.fromCharCode( s ).valueOf();
    } else {
-      var rw = String.fromCharCode( s ) + '';
+      var i1 = (s >> 4);
+      var i2 = (s & 0xf);
+      var c1 = i1 + ((i1 < 10) ? 48 : 55);
+      var c2 = i2 + ((i2 < 10) ? 48 : 55);
+      var rw = String.fromCharCode( 37, c1, c2 );
 
       s--;
       while( s >= 0 ) {
-	 var c = ((word >> (s << 3)) & 0xff);
+         var c = ((word >> (s << 3)) & 0xff);
 
-	 if( c <= 127 ) {
+         if( (c < 127) && (c >= 46) ) {
 	    rw += String.fromCharCode( c );
-	 } else {
-	    var i1 = (c >> 4);
-	    var i2 = (c & 0xf);
-	    var c1 = i1 + ((i1 < 10) ? 48 : 55);
-	    var c2 = i2 + ((i2 < 10) ? 48 : 55);
-	    
-	    rw += String.fromCharCode( 37, c1, c2 );
-	 }
-	 
-	 s--;
+         } else {
+            var i1 = (c >> 4);
+            var i2 = (c & 0xf);
+            var c1 = i1 + ((i1 < 10) ? 48 : 55);
+            var c2 = i2 + ((i2 < 10) ? 48 : 55);
+            
+            rw += String.fromCharCode( 37, c1, c2 );
+         }
+         
+         s--;
       }
 
       return rw;
@@ -179,7 +176,9 @@ function utf_length( s ) {
 /*    hop_serialize_string ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_serialize_string( mark, item ) {
-   return mark + hop_serialize_word( utf_length( item ) ) + item;
+   return mark +
+      hop_serialize_word( utf_length( item ) ) +
+      encodeURIComponent(  item );
 }
 
 /*---------------------------------------------------------------------*/
@@ -232,5 +231,5 @@ function hop_serialize_date( item ) {
 		       item.getUTCSeconds() ) + "";
    var ms = utc.substring( 0, utc.length - 3 );
 
-   return 'd' + hop_serialize_word( ms.length ) + ms;
+   return 'd' + hop_serialize_word( ms.length ) + encodeURIComponent( ms );
 }

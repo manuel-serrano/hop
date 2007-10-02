@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Oct  2 08:10:30 2007 (serrano)                */
+;*    Last change :  Tue Oct  2 17:19:26 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -319,7 +319,7 @@
 				(cons (cons key val) l))
 			     (list (cons key val)))))
 		      al)
-	    ;; we the active connection have been thrown out
+	    ;; the active connection have been thrown out
 	    (hashtable-put! *ajax-active-table* name '()))))
    
    (define (flash-event-broadcast! name value)
@@ -343,4 +343,23 @@
 ;*    hop-event-client-ready? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-client-ready? name)
-   #t)
+   
+   (define (ajax-event-client-ready? name)
+      (let ((wl (hashtable-get *ajax-wait-table* name)))
+	 (and (pair? wl)
+	      (any? (lambda (a)
+		       (let* ((req (cdr a))
+			      (s (http-request-socket req)))
+			  (not (socket-down? s))))
+		    wl))))
+
+   (define (flash-event-client-ready? name)
+      (let ((l (hashtable-get *flash-socket-table* name)))
+	 (and (pair? l)
+	      (any? (lambda (req)
+		       (let ((s (http-request-socket req)))
+			  (not (socket-down? s))))
+		    l))))
+
+   (or (ajax-event-client-ready? name)
+       (flash-event-client-ready? name)))
