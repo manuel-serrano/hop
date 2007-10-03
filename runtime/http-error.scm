@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Sep  6 17:31:51 2007 (serrano)                */
+;*    Last change :  Wed Oct  3 08:02:57 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -173,6 +173,7 @@
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 404 Not Found")
       (request (or (current-request) (instantiate::http-request)))
+      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (xml (<HTML>
 	      (<EHEAD> (current-request))
 	      (<BODY>
@@ -195,6 +196,7 @@
    (instantiate::http-response-hop
       (request (or (current-request) (instantiate::http-request)))
       (start-line "HTTP/1.0 404 Not Found")
+      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (xml (<HTML>
 	      (<EHEAD> (current-request))
 	      (<BODY>
@@ -218,6 +220,7 @@
       (instantiate::http-response-hop
 	 (request (or (current-request) (instantiate::http-request)))
 	 (start-line "HTTP/1.0 404 Not Found")
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
 		 (<BODY>
@@ -304,6 +307,7 @@ a timeout which has now expired. The service is then no longer available."))
       (instantiate::http-response-hop
 	 (request (or (current-request) (instantiate::http-request)))
 	 (start-line "HTTP/1.0 501 Internal Server Error")
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
 		 (<BODY>
@@ -380,6 +384,7 @@ a timeout which has now expired. The service is then no longer available."))
    (instantiate::http-response-hop
       (request req)
       (start-line "HTTP/1.0 404 Not Found")
+      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (xml (<HTML>
 	      (<EHEAD> req)
 	      (<BODY>
@@ -411,6 +416,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
    (instantiate::http-response-hop
       (request req)
       (start-line "HTTP/1.0 404 Not Found")
+      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (xml (<HTML>
 	      (<EHEAD> req)
 	      (<BODY>
@@ -447,6 +453,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
    (instantiate::http-response-hop
       (request (current-request))
       (start-line "HTTP/1.0 200 ok")
+      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (xml (<HTML>
 	      (<EHEAD> (current-request))
 	      (<BODY>
@@ -468,6 +475,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
    (instantiate::http-response-hop
       (request (or (current-request) (instantiate::http-request)))
       (start-line "HTTP/1.0 503 Service Unavailable")
+      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (xml (<HTML>
 	      (<EHEAD> (current-request))
 	      (<BODY>
@@ -491,6 +499,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (instantiate::http-response-hop
 	 (request (current-request))
 	 (start-line "HTTP/1.0 503 Service Unavailable")
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
 		 (<BODY>
@@ -516,6 +525,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (instantiate::http-response-hop
 	 (request (current-request))
 	 (start-line "HTTP/1.0 404 Not Found")
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
 		 (<BODY>

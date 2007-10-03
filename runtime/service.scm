@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Sep 26 14:31:55 2007 (serrano)                */
+;*    Last change :  Wed Oct  3 08:03:08 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -218,6 +218,7 @@
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (request req)
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (xml (<HTML>
 		 (<HEAD>)
 		 (<BODY>

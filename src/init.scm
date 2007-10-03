@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Sep 13 17:04:33 2007 (serrano)                */
+;*    Last change :  Tue Oct  2 20:13:06 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -114,6 +114,7 @@
 			    (request req)
 			    (content-type (mime-type path "text/html"))
 			    (bodyp (eq? method 'GET))
+			    (header '((Cache-Control: . "no-cache")))
 			    (xml rep)))
 			(else
 			 (http-warning

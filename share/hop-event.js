@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Oct  2 08:26:55 2007 (serrano)                */
+/*    Last change :  Wed Oct  3 06:56:41 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -306,6 +306,10 @@ function hop_servevt_proxy_flash_init() {
       }
    }
 
+   // register the event event deregistration
+   hop_window_onunload_add( failure );
+
+   // in any case, we the server is now ready to get event registration
    if( readystate === 0 ) {
       readystate = 2;
       hop_trigger_serverready_event( new HopServerReadyEvent() );

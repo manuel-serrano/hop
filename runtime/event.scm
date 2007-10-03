@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Oct  2 17:19:26 2007 (serrano)                */
+;*    Last change :  Wed Oct  3 05:50:13 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -204,7 +204,7 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
-	    (if (&io-timeout-error e)
+	    (if (&io-timeout-error? e)
 		(socket-close s)
 		(raise e)))
 	 (begin

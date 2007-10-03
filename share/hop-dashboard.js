@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Thu Sep 20 16:41:57 2007 (serrano)                */
+/*    Last change :  Wed Oct  3 07:52:07 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -67,6 +67,7 @@ function hop_dashboard_populate( div, proc ) {
 		   
 	 img.src = p.cdr.car
 	 img.title = p.car;
+	 app.title = p.car;
 
 	 node_style_set( app, "width", app_size + "px");
 	 node_style_set( app, "height", app_size + "px");

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Oct  2 18:21:01 2007 (serrano)                */
+;*    Last change :  Wed Oct  3 06:49:46 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -395,59 +395,69 @@
 	 (make-hop-thread
 	  (lambda ()
 	     (let liip ()
-		(bind-exit (exit)
-		   (with-handler
-		      (lambda (e)
-			 (if (&io-error? e)
-			     (begin
-				(error-notify e)
-				(sleep 3000562)
-				(exit #f))
-			     (raise e)))
-		      (let loop ((oldstate 'stop)
-				 (oldvol -1)
-				 (oldsong -1)
-				 (oldplaylist -1))
-			 
-			 (multiple-value-bind (state playlist song pos
-						     len vol err _ _)
-			    (music-info engine)
-
-			    (when (string? err)
-			       (raise (instantiate::&io-error
-					 (proc 'music)
-					 (msg err)
-					 (obj engine))))
-
-			    ;; volume notification
-			    (unless (=fx vol oldvol)
-			       (signal-volume! %event vol))
-			    
-			    ;; playlist (meta) notification
-			    (when (or (not (=fx oldsong song))
-				      (not (=fx oldplaylist playlist)))
-			       (signal-meta! %event engine))
-			    
-			    ;; state notification
-			    (cond
-			       ((=fx len 0)
-				;; the engine has not gathered yet
-				;; the music length
-				(set! state 'length-unknown))
-			       ((not (eq? oldstate state))
-				;; the state has changed, notify
-				(signal-state! %event state len pos)))
-			    
-			    ;; wait a little bit
-			    (sleep 1000347)
-			    
-			    (if (hop-event-client-ready? %event)
-				;; the client is still connected, loop
-				(loop state vol song playlist)
-				;; the client has lost the connection,
-				;; we cleanup
-				(music-close engine))))))
-		(liip))))))
+		(when (bind-exit (skip)
+			 (with-handler
+			    (lambda (e)
+			       (if (&io-error? e)
+				   (begin
+				      (error-notify e)
+				      (signal-state! %event
+						     'error
+						     (&io-error-msg e)
+						     #f)
+				      (sleep 3000562)
+				      (skip #t))
+				   (raise e)))
+			    (let loop ((oldstate 'stop)
+				       (oldvol -1)
+				       (oldsong -1)
+				       (oldplaylist -1))
+			       
+			       (multiple-value-bind (state playlist song pos
+							   len vol err _ _)
+				  (music-info engine)
+				  
+				  (when (and (string? err)
+					     (unless (eq? oldstate 'error)))
+				     (set! state 'error)
+				     (signal-state! %event 'error err #f)
+				     (raise (instantiate::&io-error
+					       (proc 'music)
+					       (msg err)
+					       (obj engine))))
+				  
+				  ;; volume notification
+				  (unless (=fx vol oldvol)
+				     (signal-volume! %event vol))
+				  
+				  ;; playlist (meta) notification
+				  (when (or (not (=fx oldsong song))
+					    (not (=fx oldplaylist playlist)))
+				     (signal-meta! %event engine))
+				  
+				  ;; state notification
+				  (cond
+				     ((=fx len 0)
+				      ;; the engine has not gathered yet
+				      ;; the music length
+				      (set! state 'length-unknown))
+				     ((not (eq? oldstate state))
+				      ;; the state has changed, notify
+				      (signal-state! %event state len pos)))
+				  
+				  ;; wait a little bit
+				  (sleep 1000347)
+				  
+				  (if (hop-event-client-ready? %event)
+				      ;; the client is still connected, loop
+				      (loop state vol song playlist)
+				      ;; the client has lost the connection,
+				      ;; we cleanup
+				      (begin
+					 (tprint "closing...")
+					 (music-close engine)
+					 #f))))))
+		   (liip)))))))
 
    (cond-expand
       (enable-threads

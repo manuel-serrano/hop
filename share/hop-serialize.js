@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Tue Oct  2 16:24:27 2007 (serrano)                */
+/*    Last change :  Wed Oct  3 05:34:59 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP serialized (Bigloo compatible).                              */
@@ -86,7 +86,7 @@ function hop_serialize_word( word ) {
    var s = hop_size_of_word( word );
 
    if( s == 0 ) {
-      return String.fromCharCode( s ).valueOf();
+      return "%00";
    } else {
       var i1 = (s >> 4);
       var i2 = (s & 0xf);

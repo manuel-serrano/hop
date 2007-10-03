@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Oct  2 18:14:43 2007 (serrano)                */
+/*    Last change :  Wed Oct  3 06:46:48 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -58,6 +58,7 @@ var Sposition = sc_string2symbol_immutable( "position" );
 var Span = sc_string2symbol_immutable( "pan" );
 var Smeta = sc_string2symbol_immutable( "meta" );
 var Splaylist = sc_string2symbol_immutable( "playlist" );
+var Serror = sc_string2symbol_immutable( "error" );
 
 /*---------------------------------------------------------------------*/
 /*    HopAudioServerProxy ...                                          */
