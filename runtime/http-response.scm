@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Oct  3 08:14:55 2007 (serrano)                */
+;*    Last change :  Wed Oct  3 08:17:35 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -464,7 +464,6 @@
 	  (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	  (xml obj)))
       (else
-       (tprint "SCHEME->RESPONSE: " obj)
        (instantiate::http-response-js
 	  (backend (hop-xml-backend))
 	  (content-type (xml-backend-mime-type (hop-xml-backend)))

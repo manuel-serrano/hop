@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon Sep 24 21:59:29 2007 (serrano)                */
+;*    Last change :  Wed Oct  3 08:55:42 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
@@ -119,7 +119,7 @@
 			   :align "hop-tab"
 			   (<DEMO> req)))))
 	 (<NPTAB> :id "download"
-		  (<NPTABHEAD> 
+		  (<NPTABHEAD>
 		     (<IMG> :inline #t
 			:src (service-resource home "etc/download.png"))
 		     "Download")
@@ -160,7 +160,7 @@
 			   :class "hop-tab"
 			   (wiki->hop "faq.wiki")))))
 	 (<NPTAB> :id "community"
-		  (<NPTABHEAD> 
+		  (<NPTABHEAD>
 		     (<IMG> :inline #t
 			:src (service-resource home "etc/people.png"))
 		     "Community")

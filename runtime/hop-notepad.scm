@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Oct  3 08:15:31 2007 (serrano)                */
+;*    Last change :  Wed Oct  3 08:50:58 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -130,7 +130,7 @@
    (instantiate::xml-nptabhead-element
       (markup 'span)
       (id (xml-make-id id 'NPTABHEAD))
-      (attributes attr)
+      (attributes (append! attr '(("class" . "hop-nptab-head"))))
       (body body)))
    
 ;*---------------------------------------------------------------------*/
