@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Oct  3 15:02:31 2007 (serrano)                */
+/*    Last change :  Sat Oct  6 11:43:19 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -50,7 +50,7 @@ function hop_remove_event_listener( obj, event, proc, capture ) {
 
    if( (obj.hop_remove_event_listener != undefined) &&
       (obj.hop_remove_event_listener != hop_remove_event_listener) )
-      obj.hop_remove_event_listener( event, proc, capture );
+      return obj.hop_remove_event_listener( event, proc, capture );
 
    return hop_remove_native_event_listener( obj, event, proc, capture );
 } 
@@ -173,7 +173,9 @@ function start_servevt_ajax_proxy( key, obj ) {
       }
 
       hop_servevt_proxy.register = register;
-      hop_servevt_proxy.close = function() { hop_servevt_proxy.http.abort() };
+      hop_servevt_proxy.close = function() {
+	 hop_servevt_proxy.httpreq.abort()
+      };
 
       // scan all the previously registered events an register on the server
       for( var p in hop_servevt_table ) {
@@ -265,6 +267,9 @@ function hop_servevt_onerror( msg ) {
 /*    received.                                                        */
 /*---------------------------------------------------------------------*/
 function hop_servevt_proxy_flash_init() {
+   /* we are now sure that at least version 8 of flash is running */
+   hop_flash_minversion_set( 8 );
+   
    var readystate = 0;
    hop_servevt_proxy = document.getElementById( hop_servevt_id );
 

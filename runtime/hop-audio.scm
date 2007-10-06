@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Oct  5 19:33:19 2007 (serrano)                */
+;*    Last change :  Sat Oct  6 09:37:51 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -361,10 +361,10 @@
 
    (define (signal-state! %event state len pos)
       (tprint "signal-state! state=" state " pos=" pos " len=" len)
-      (hop-event-signal! %event (list state len pos)))
+      (hop-event-broadcast! %event (list state len pos)))
 
    (define (signal-volume! %event vol)
-      (hop-event-signal! %event (list 'volume vol)))
+      (hop-event-broadcast! %event (list 'volume vol)))
    
    (define (signal-meta! %event engine state pos)
       (let* ((s (music-song engine))
@@ -378,11 +378,11 @@
 		(with-handler
 		   (lambda (e)
 		      (when (string? file)
-			 (hop-event-signal!
+			 (hop-event-broadcast!
 			  %event (list 'meta state len pos (url-decode file) pl song))))
-		   (hop-event-signal!
+		   (hop-event-broadcast!
 		    %event (list 'meta state len pos (mp3-id3 file) pl song)))
-		(hop-event-signal!
+		(hop-event-broadcast!
 		 %event (list 'meta state len pos #f pl song))))))
    
    (define (signal-info %event engine)
@@ -467,7 +467,7 @@
 				      ;; the client has lost the connection,
 				      ;; we cleanup
 				      (begin
-					 (tprint "closing...")
+					 (tprint "========= CLOSING..." %event)
 					 (music-close engine)
 					 #f))))))
 		   (liip)))))))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Oct  3 15:01:36 2007 (serrano)                */
+/*    Last change :  Sat Oct  6 10:56:08 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -262,7 +262,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 			try {
 			   expr = eval( xhr.responseText );
 			} catch( e ) {
-			   hop_error( "*** Hop JSON error: " + e + " -- " +
+			   hop_error( "*** WITH-HOP JSON error: " + svc +
+				      ": " + e + " -- " +
 				      xhr.responseText );
 			   expr = false;
 			}
@@ -271,7 +272,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 			return success( xhr.responseText, xhr );
 		     }
 		  } catch( e ) {
-		     hop_error( "*** WITH-HOP error: " + e + " -- " +
+		     hop_error( "*** WITH-HOP error:" + svc +
+				": " + e + " -- " +
 				xhr.responseText );
 		  }
 
@@ -295,7 +297,6 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 		  return false;
 
 	       case 407:
-		  alert( "e.3=" + e + " callee=" + arguments.callee );
 		  hop_error( "*** Hop Authentication Error " + status + ": `"
 			     + xhr.responseText + "'" );
 		  return false;
