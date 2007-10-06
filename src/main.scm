@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Sep 29 18:36:26 2007 (serrano)                */
+;*    Last change :  Sat Oct  6 07:54:35 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -80,7 +80,7 @@
 	     "\n")
    ;; install the builtin filters
    (hop-filter-add! service-filter)
-   (hop-filter-add-always-first! autoload-filter)
+;*    (hop-filter-add-always-first! autoload-filter)                   */
    ;; start the job scheduler
    (job-start-scheduler!)
    ;; close filters and users registration before starting

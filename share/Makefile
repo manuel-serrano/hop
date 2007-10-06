@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sat Sep 22 07:28:17 2007 (serrano)                */
+#*    Last change :  Wed Oct  3 14:21:48 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Mon Jul  9 15:37:43 2007 (serrano)                */
+;*    Last change :  Sat Oct  6 07:55:13 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -257,8 +257,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    This filter has to be loaded before the filtre in charge         */
 ;*    of the services. Otherwise, the autoload mechanism is            */
-;*    broken because concurrent accesses to the AUTOLOAD table         */
-;*    and the service table.                                           */
+;*    broken because of possible concurrent accesses to the AUTOLOAD   */
+;*    table and the service table.                                     */
 ;*---------------------------------------------------------------------*/
 (define (autoload-filter req)
    (mutex-lock! *autoload-mutex*)
@@ -266,7 +266,7 @@
       (if (null? al)
 	  (begin
 	     (mutex-unlock! *autoload-mutex*)
-	     req)
+	     #f)
 	  (with-access::%autoload (car al) (pred)
 	     (if (pred req)
 		 (begin
@@ -281,5 +281,6 @@
 		    ;; remove the autoaload (once loaded)
 		    (mutex-lock! *autoload-mutex*)
 		    (set! *autoloads* (remq! (car al) *autoloads*))
-		    (mutex-unlock! *autoload-mutex*))
+		    (mutex-unlock! *autoload-mutex*)
+		    #t)
 		 (loop (cdr al)))))))

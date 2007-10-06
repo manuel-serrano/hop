@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Oct  3 05:50:13 2007 (serrano)                */
+;*    Last change :  Fri Oct  5 19:36:48 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -48,6 +48,7 @@
 ;*---------------------------------------------------------------------*/
 (define *port-service* #f)
 (define *register-service* #f)
+(define *unregister-service* #f)
 (define *init-service* #f)
 (define *client-key* 0)
 (define *default-request* (instantiate::http-request))
@@ -70,7 +71,7 @@
 			    (list (cons key req)))
 	 (instantiate::http-response-persistent
 	    (request req)))
-      
+
       (let ((waiting (hashtable-get *ajax-wait-table* name)))
 	 (if (pair? waiting)
 	     (let ((bucket (assq key waiting)))
@@ -78,7 +79,7 @@
 		    (let ((val (cadr bucket)))
 		       ;; remove the entry from the waiting table and send it
 		       (set-cdr! (cdr bucket) (cddr bucket))
-		       (ajax-signal-value req val))
+		       val)
 		    (ajax-register-active!)))
 	     (ajax-register-active!))))
    
@@ -104,24 +105,38 @@
 	    
 	    (set! *init-service*
 		  (service :url "server-event-init" (key)
-		     (let ((req (current-request)))
-			;; read the Flash's ending zero byte
-			(read-byte (socket-input (http-request-socket req)))
-			(set! *flash-request-list*
-			      (cons (cons (string->symbol key) req)
-				    *flash-request-list*))
-			(instantiate::http-response-event
-			   (request req)
-			   (name key)))))
+		     (with-lock *event-mutex*
+			(lambda ()
+			   (let ((req (current-request)))
+			      ;; read the Flash's ending zero byte
+			      (read-byte (socket-input (http-request-socket req)))
+			      (set! *flash-request-list*
+				    (cons (cons (string->symbol key) req)
+					  *flash-request-list*))
+			      (instantiate::http-response-event
+				 (request req)
+				 (name key)))))))
+
+	    (set! *unregister-service*
+		  (service :url "server-event-unregister" (event key)
+		     (with-lock *event-mutex*
+			(lambda ()
+			   (let ((c (assq (string->symbol key)
+					  *flash-request-list*)))
+			      (when (pair? c)
+				 (socket-close (http-request-socket (cdr c)))))
+			   #f))))
 	    
 	    (set! *register-service*
 		  (service :url "server-event-register" (event key flash)
-		     (let ((req (current-request))
-			   (key (string->symbol key)))
-			(if flash
-			    (let ((req (cdr (assq key *flash-request-list*))))
-			       (flash-register-event! req event key))
-			    (ajax-register-event! req event key)))))))))
+		     (with-lock *event-mutex*
+			(lambda ()
+			   (let ((req (current-request))
+				 (key (string->symbol key)))
+			      (if flash
+				  (let ((req (cdr (assq key *flash-request-list*))))
+				     (flash-register-event! req event key))
+				  (ajax-register-event! req event key)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *flash-socket-table* ...                                         */

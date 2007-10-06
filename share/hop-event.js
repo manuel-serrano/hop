@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Oct  3 06:56:41 2007 (serrano)                */
+/*    Last change :  Wed Oct  3 15:02:31 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -268,14 +268,28 @@ function hop_servevt_proxy_flash_init() {
    var readystate = 0;
    hop_servevt_proxy = document.getElementById( hop_servevt_id );
 
+   var unregister = function( id ) {
+      var svc = "/hop/server-event-unregister?event=" + id
+      + "&key=" + hop_servevt_proxy.key;
+      hop_servevt_proxy.httpreq = hop_send_request( svc, false,
+						    false, false,
+						    false, [] );
+   }
+      
+   var failure = function( e ) {
+      hop_servevt_onclose();
+      
+      for( var p in hop_servevt_table ) {
+	 if( hop_servevt_table[ p ].hop_servevt ) {
+	    unregister( p );
+	 }
+      }
+   }
+
    var register = function( id ) {
       var svc = "/hop/server-event-register?event=" + id
          + "&key=" + hop_servevt_proxy.key + "&flash=true";
       
-      var failure = function( e ) {
-	 hop_servevt_onclose();
-      }
-
       var success = function( e ) {
 	 if( readystate === 1 ) {
 	    hop_trigger_serverready_event( new HopServerReadyEvent() );

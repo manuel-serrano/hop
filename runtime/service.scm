@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Oct  3 08:03:08 2007 (serrano)                */
+;*    Last change :  Sat Oct  6 07:56:57 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -29,7 +29,8 @@
 	    __hop_xml
 	    __hop_hop-extra
 	    __hop_js-lib
-	    __hop_user)
+	    __hop_user
+	    __hop_weblets)
    
    (export  (get-service-url::bstring)
 	    (hop-service-path? ::bstring)
@@ -280,7 +281,8 @@
       (with-access::http-request req (path user service)
 	 (when (hop-service-path? path)
 	    (mutex-lock! *service-mutex*)
-	    (let ((svc (hashtable-get *service-table* path)))
+	    (let loop ((svc (hashtable-get *service-table* path))
+		       (armed #f))
 	       (mutex-unlock! *service-mutex*)
 	       (cond
 		  ((hop-service? svc)
@@ -301,22 +303,24 @@
 			 (else
 			  (user-service-denied req user id)))))
 		  (else
-		   (let ((init (hop-initial-weblet)))
+		   (let ((ini (hop-initial-weblet)))
 		      (cond
-			 ((and (string? init)
+			 ((and (string? ini)
 			       (substring-at? path (hop-service-base) 0)
 			       (let ((l1 (string-length path))
-				     (l2 (string-length
-					  (hop-service-base))))
+				     (l2 (string-length (hop-service-base))))
 				  (or (=fx l1 l2)
 				      (and (=fx l1 (+fx l2 1))
-					   (char=? (string-ref path l2)
-						   #\/)))))
-			  (set! path
-				(string-append (hop-service-base) "/" init))
+					   (char=? (string-ref path l2) #\/)))))
+			  (set! path (string-append (hop-service-base) "/" ini))
 			  ;; resume the hop loop in order to autoload
 			  ;; the initial weblet
 			  'hop-resume)
+			 (armed
+			  #f)
+			 ((autoload-filter req)
+			  (mutex-lock! *service-mutex*)
+			  (loop (hashtable-get *service-table* path) #t))
 			 (else
 			  #f))))))))))
 

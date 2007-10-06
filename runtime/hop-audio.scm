@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Oct  3 06:49:46 2007 (serrano)                */
+;*    Last change :  Fri Oct  5 19:33:19 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -360,33 +360,35 @@
 (define-generic (hop-audio-player-init player::hop-audio-player)
 
    (define (signal-state! %event state len pos)
+      (tprint "signal-state! state=" state " pos=" pos " len=" len)
       (hop-event-signal! %event (list state len pos)))
 
    (define (signal-volume! %event vol)
       (hop-event-signal! %event (list 'volume vol)))
    
-   (define (signal-meta! %event engine)
+   (define (signal-meta! %event engine state pos)
       (let* ((s (music-song engine))
 	     (c (when (pair? s) (assq :file s)))
 	     (file (if (pair? c) (cdr c) #f))
 	     (pl (music-playlist-get engine)))
-	 (multiple-value-bind (_ _ song _ _ _ _ _ _)
+	 (multiple-value-bind (_ _ song _ len _ _ _ _)
 	    (music-info engine)
+	    (tprint "signal-meta: " state " song=" song " len=" len " pos=" pos)
 	    (if (string? file)
 		(with-handler
 		   (lambda (e)
 		      (when (string? file)
 			 (hop-event-signal!
-			  %event (list 'meta (url-decode file) pl song))))
+			  %event (list 'meta state len pos (url-decode file) pl song))))
 		   (hop-event-signal!
-		    %event (list 'meta (mp3-id3 file) pl song)))
+		    %event (list 'meta state len pos (mp3-id3 file) pl song)))
 		(hop-event-signal!
-		 %event (list 'meta #f pl song))))))
+		 %event (list 'meta state len pos #f pl song))))))
    
    (define (signal-info %event engine)
       (multiple-value-bind (state playlist song pos len vol err bitrate khz)
 	 (music-info engine)
-	 (signal-meta! %event engine)
+	 (signal-meta! %event engine state pos)
 	 (signal-volume! %event vol)
 	 (unless (eq? state 'stop) (signal-state! %event state len pos))))
 
@@ -411,15 +413,17 @@
 			    (let loop ((oldstate 'stop)
 				       (oldvol -1)
 				       (oldsong -1)
-				       (oldplaylist -1))
+				       (oldplaylist -1)
+				       (ttl 60))
 			       
 			       (multiple-value-bind (state playlist song pos
 							   len vol err _ _)
 				  (music-info engine)
-				  
+
 				  (when (and (string? err)
 					     (unless (eq? oldstate 'error)))
 				     (set! state 'error)
+				     (set! ttl 60)
 				     (signal-state! %event 'error err #f)
 				     (raise (instantiate::&io-error
 					       (proc 'music)
@@ -428,12 +432,14 @@
 				  
 				  ;; volume notification
 				  (unless (=fx vol oldvol)
+				     (set! ttl 60)
 				     (signal-volume! %event vol))
 				  
 				  ;; playlist (meta) notification
 				  (when (or (not (=fx oldsong song))
 					    (not (=fx oldplaylist playlist)))
-				     (signal-meta! %event engine))
+				     (set! ttl 60)
+				     (signal-meta! %event engine state pos))
 				  
 				  ;; state notification
 				  (cond
@@ -443,14 +449,21 @@
 				      (set! state 'length-unknown))
 				     ((not (eq? oldstate state))
 				      ;; the state has changed, notify
-				      (signal-state! %event state len pos)))
-				  
+				      (set! ttl 60)
+				      (signal-state! %event state len pos))
+				     ((=fx ttl 0)
+				      ;; the ttl state is used to discover
+				      ;; that the connection with the client
+				      ;; is down
+				      (set! state 'ttl)
+				      (set! ttl 60)))
+
 				  ;; wait a little bit
 				  (sleep 1000347)
 				  
 				  (if (hop-event-client-ready? %event)
 				      ;; the client is still connected, loop
-				      (loop state vol song playlist)
+				      (loop state vol song playlist ttl)
 				      ;; the client has lost the connection,
 				      ;; we cleanup
 				      (begin

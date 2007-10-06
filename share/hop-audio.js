@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Oct  3 06:46:48 2007 (serrano)                */
+/*    Last change :  Thu Oct  4 10:13:00 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -144,19 +144,29 @@ function HopAudioServerProxy( audio, url ) {
 	    audio.paused = false;
 	    current_duration = rest.car;
 	    current_position = rest.cdr.car;
+	    hop_audio_run_hooks( audio, "play" );
 	 } else if( k == Spause ) {
 	    // pause
 	    audio.paused = true;
 	    current_duration = rest.car;
+	    hop_audio_run_hooks( audio, "pause" );
 	 } if( k == Sstop ) {
 	    // stop
 	    audio.paused = false;
 	    current_duration = rest.car;
+	    hop_audio_run_hooks( audio, "stop" );
 	 } else if( k == Svolume ) {
 	    // volume
 	    current_volume = rest.car;
+	    hop_audio_run_hooks( audio, "volume" );
 	 } else if( k == Smeta ) {
 	    // meta (and playlist)
+	    var state  = rest.car;
+	    current_duration = rest.cdr.car;
+	    current_position = rest.cdr.cdr.car;
+	    
+	    rest = rest.cdr.cdr.cdr;
+	    
 	    var val = rest.car;
 	    var plist = rest.cdr.car;
 	    var plindex = rest.cdr.cdr.car;
@@ -176,10 +186,8 @@ function HopAudioServerProxy( audio, url ) {
 	       current_metadata = val;
 	    }
 
-	    hop_audio_run_hooks( audio, "play" );
+	    hop_audio_run_hooks( audio, sc_symbol2string_immutable( state ) );
 	 }
-	 
-	 hop_audio_run_hooks( audio, sc_symbol2string_immutable( k ) );
       }
       return;
    }
