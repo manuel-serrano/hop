@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Oct  9 19:04:47 2007 (serrano)                */
+;*    Last change :  Tue Oct  9 19:11:06 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -73,6 +73,14 @@
 	     (proc 'read)
 	     (msg msg)
 	     (obj obj))))
+
+;*---------------------------------------------------------------------*/
+;*    charset-string! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (charset-string! str)
+   (if (eq? (hop-char-encoding) 'UTF-8)
+       (iso-latin->utf8! str)
+       str))
 
 ;*---------------------------------------------------------------------*/
 ;*    unreference! ...                                                 */
@@ -375,7 +383,7 @@
       ;; in order to increment the line-num variable strings
       ((: (? #\#) "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (the-substring 0 (-fx (the-length) 1))))
-	  (iso-latin->utf8! (escape-C-string str))))
+	  (charset-string! (escape-C-string str))))
       
       ;; fixnums
       ((: (? "+") (+ digit))
@@ -600,21 +608,21 @@
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (iso-latin->utf8! (the-substring 0 (-fx (the-length) 1)))))
+	      (item (charset-string! (the-substring 0 (-fx (the-length) 1)))))
 	  (econs item '() loc)))
       ((: (* (out ",[\\")) ",]")
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (iso-latin->utf8! (the-substring 0 (-fx (the-length) 1)))))
+	      (item (charset-string! (the-substring 0 (-fx (the-length) 1)))))
 	  (econs item '() loc)))
       ((: (* (out ",[]\\")) #\, (out #\( #\] #\,))
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (iso-latin->utf8! (the-string)))
+	      (item (charset-string! (the-string)))
 	      (rest (ignore)))
 	  (econs item rest loc)))
       ((: (* (out ",[]\\")) #\,)
@@ -622,7 +630,7 @@
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (iso-latin->utf8! (the-substring 0 (-fx (the-length) 1))))
+	      (item (charset-string! (the-substring 0 (-fx (the-length) 1))))
 	      (sexp (read/rp *hop-grammar* (the-port)
 			     cycles par-open bra-open
 			     par-poses bra-poses))
@@ -637,7 +645,7 @@
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (iso-latin->utf8! (the-string)))
+	      (item (charset-string! (the-string)))
 	      (rest (ignore)))
 	  (econs item rest loc)))
       ("\\\\"
