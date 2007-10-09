@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Aug  9 09:27:26 2007 (serrano)                */
+;*    Last change :  Sun Oct  7 07:06:02 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -187,6 +187,9 @@
 	    (hop-dashboard-weblet-applets::pair-nil)
 	    (hop-dashboard-weblet-applets-set! ::pair-nil)
 
+	    (hop-event-buffer-size::int)
+	    (hop-event-buffer-size-set! ::int)
+	    
 	    (hop-rc-loaded!)))
 
 ;*---------------------------------------------------------------------*/
@@ -815,6 +818,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-dashboard-weblet-applets
    '())
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-buffer-size ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-event-buffer-size
+   5)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

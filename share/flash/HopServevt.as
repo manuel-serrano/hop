@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Sep  7 15:31:58 2007                          */
-/*    Last change :  Thu Sep 20 09:51:28 2007 (serrano)                */
+/*    Last change :  Mon Oct  8 12:08:06 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    ActionScript server events runtime system.                       */
@@ -55,7 +55,7 @@ class HopServevt {
 
       socket.onData = function( evt ) {
 	 var e = (new XML( evt )).firstChild;
-
+	 
 	 if( e.nodeName == "event" ) {
 	    var c = e.firstChild;
 	    var n = e.attributes.name;

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sat Oct  6 11:43:19 2007 (serrano)                */
+/*    Last change :  Tue Oct  9 10:14:25 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -138,14 +138,15 @@ var hop_servevt_dlist = null;
 /*---------------------------------------------------------------------*/
 /*    start_servevt_ajax_proxy ...                                     */
 /*---------------------------------------------------------------------*/
-function start_servevt_ajax_proxy( key, obj ) {
+function start_servevt_ajax_proxy( key ) {
    if( !hop_servevt_proxy.httpreq ) {
-      var readystate = 0;
+      var xhr_error = false;
       
       var register = function( id ) {
 	 var svc = "/hop/server-event-register?event=" + id + "&key=" + key;
-
 	 var success = function( val, http ) {
+	    // erase previous errors
+	    xhr_error = false;
 	    // re-register the event as soon as possible
 	    register( id );
 	    // invoke the user handler
@@ -155,8 +156,21 @@ function start_servevt_ajax_proxy( key, obj ) {
 				 hop_is_http_json( http ) );
 	 }
 
-	 var failure = function( http ) {
-	    hop_servevt_onclose();
+	 var failure = function( xhr ) {
+	    if( !xhr.status ) {
+	       alert( "PAS STATUS xhr_error=" + xhr_error
+		      + " headers=" + xhr.getAllResponseHeaders() );
+	       if( !xhr_error && !xhr.getAllResponseHeaders() ) {
+		  // mark the connection timeout error in order to avoid
+		  // falling into an infinit loop when the server has crashed.
+		  xhr_error = true;
+		  // we have reached a timeout, we just re-register
+		  register( id );
+	       }
+	    } else {
+	       hop_servevt_onclose();
+	       hop_trigger_servevt( id, "Ajax Server Event error", false, false );
+	    }
 	 }
 	    
 	 hop_servevt_proxy.httpreq = hop_send_request( svc,
@@ -172,15 +186,25 @@ function start_servevt_ajax_proxy( key, obj ) {
 						       [] );
       }
 
-      hop_servevt_proxy.register = register;
-      hop_servevt_proxy.close = function() {
-	 hop_servevt_proxy.httpreq.abort()
+      var unregister = function( id ) {
+	 hop_servevt_proxy.httpreq.abort();
+	 
+	 var svc = "/hop/server-event-unregister?event=" + id
+	 + "&key=" + hop_servevt_proxy.key;
+	 
+	 hop_servevt_proxy.httpreq = hop_send_request( svc, false,
+						       function() { ; }, false,
+						       false, [] );
       };
+
+      // complete the proxy definition
+      hop_servevt_proxy.register = register;
+      hop_servevt_proxy.unregister = unregister;
 
       // scan all the previously registered events an register on the server
       for( var p in hop_servevt_table ) {
 	 if( hop_servevt_table[ p ].hop_servevt ) {
-	    hop_servevt_proxy.register( p );
+	    register( p );
 	 }
       }
       
@@ -267,17 +291,17 @@ function hop_servevt_onerror( msg ) {
 /*    received.                                                        */
 /*---------------------------------------------------------------------*/
 function hop_servevt_proxy_flash_init() {
-   /* we are now sure that at least version 8 of flash is running */
+   /* if we are here, we are sure that Flash v8 or better is running */
    hop_flash_minversion_set( 8 );
    
    var readystate = 0;
    hop_servevt_proxy = document.getElementById( hop_servevt_id );
 
-   var unregister = function( id ) {
+   var abort = function( id ) {
       var svc = "/hop/server-event-unregister?event=" + id
       + "&key=" + hop_servevt_proxy.key;
       hop_servevt_proxy.httpreq = hop_send_request( svc, false,
-						    false, false,
+						    function() {;}, false,
 						    false, [] );
    }
       
@@ -286,7 +310,7 @@ function hop_servevt_proxy_flash_init() {
       
       for( var p in hop_servevt_table ) {
 	 if( hop_servevt_table[ p ].hop_servevt ) {
-	    unregister( p );
+	    abort( p );
 	 }
       }
    }
@@ -316,6 +340,11 @@ function hop_servevt_proxy_flash_init() {
    }
 
    hop_servevt_proxy.register = register;
+   hop_servevt_proxy.unregister = function( id ) {
+      // This function does not close the socket, otherwise, no event
+      // could take place because they all share the same socket.
+      abort( id );
+   }
 
    // scan all the previously registered events an register on the server
    for( var p in hop_servevt_table ) {
@@ -336,9 +365,16 @@ function hop_servevt_proxy_flash_init() {
 }
 
 /*---------------------------------------------------------------------*/
-/*    start_servevt_proxy ...                                          */
+/*    servevt_flashp ...                                               */
 /*---------------------------------------------------------------------*/
-function start_servevt_proxy( obj ) {
+function servevt_flashp( port ) {
+   return port && (hop_flash_version() >= 8) && !(hop_operap());
+}
+      
+/*---------------------------------------------------------------------*/
+/*    hop_start_servevt_proxy ...                                      */
+/*---------------------------------------------------------------------*/
+function hop_start_servevt_proxy() {
    hop_servevt_proxy = new Object();
    hop_servevt_proxy.register = function( x ) {};
 
@@ -351,17 +387,15 @@ function start_servevt_proxy( obj ) {
 			var port = v[ 1 ];
 			var key = v[ 2 ];
 
-			if( port &&
-			    (hop_flash_version() >= 8) &&
-			    !(hop_operap()) ) {
+			if( servevt_flashp( port ) ) {
 			   try {
 			      start_servevt_flash_proxy( key, host, port );
 			   } catch( e ) {
-			      hop_servevt_onerror( "Cannot start flash proxy: " +
-						   e );
+			      hop_servevt_onerror( "Cannot start flash proxy: "
+						   + e );
 			   }
 			} else {
-			   start_servevt_ajax_proxy( key, obj );
+			   start_servevt_ajax_proxy( key );
 			}
 		     },
 		     // failure callback
@@ -377,7 +411,7 @@ function start_servevt_proxy( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_trigger_servevt ...                                          */
 /*    -------------------------------------------------------------    */
-/*    This function is invoked by Flash on reception of an event.      */
+/*    This function is invoked by Flash and Ajax on event reception.   */
 /*---------------------------------------------------------------------*/
 function hop_trigger_servevt( id, text, value, json ) {
    var evt = new HopServerEvent( id, text, json ? eval( value ) : value );
@@ -406,7 +440,7 @@ function hop_trigger_servevt( id, text, value, json ) {
 /*---------------------------------------------------------------------*/
 /*    hop_servevt_onclose ...                                          */
 /*    -------------------------------------------------------------    */
-/*    This function is invoked by Flash on connection close.           */
+/*    This function is invoked by Flash and Ajax on connection close.  */
 /*---------------------------------------------------------------------*/
 function hop_servevt_onclose() {
    for( id in hop_servevt_table ) {
@@ -444,7 +478,7 @@ function hop_add_server_listener( obj, proc, capture ) {
       }
 
       if( !hop_servevt_proxy ) {
-	 start_servevt_proxy( obj );
+	 hop_start_servevt_proxy();
       } else {
 	 hop_servevt_proxy.register( obj );
       }
@@ -469,7 +503,7 @@ function hop_remove_server_listener( obj, proc ) {
       }
 
       // no event is still expected, close the connection
-      hop_servevt_proxy.close();
+      hop_servevt_proxy.unregister( obj );
    }
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Tue Oct  2 16:28:24 2007 (serrano)                */
+;*    Last change :  Sun Oct  7 08:46:16 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -128,7 +128,9 @@
 	  (xml-tilde-body proc))
 	 (else
 	  "")))
-   (let ((filt (lambda (p) (and (authorized-path? req p) (predicate p))))
+   (let ((filt (lambda (p)
+		  (and (or (webdav? p) (authorized-path? req p))
+		       (predicate p))))
 	 (tident (xml-make-id 'FILEBROWSER-TREE)))
       (<DIV> :class "hop-filebrowse"
 	 (<DIV> :class "hop-filebrowse-tree"

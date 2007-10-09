@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sat Oct  6 09:37:51 2007 (serrano)                */
+;*    Last change :  Tue Oct  9 12:14:21 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -44,6 +44,8 @@
 	       (%thread (default #f))
 	       (%service (default #unspecified))
 	       (%event (default #unspecified))
+	       (%mutex (default (make-mutex 'hop-audio-player)))
+	       (%refresh (default #t))
 	       (engine read-only))
 	    
 	    (generic hop-audio-player-init ::hop-audio-player)
@@ -62,7 +64,7 @@
 			      (loopcount 0)
 			      (controls #f)
 			      (onload #f)
-			      (onbuffer #f)
+			      (onprogress #f)
 			      (onerror #f)
 			      (onended #f)
 			      (onvolumechange #f)
@@ -72,6 +74,8 @@
 			      (onpause #f)
 			      (onnext #f)
 			      (onprev #f)
+			      ;; the player
+			      (player #f)
 			      ;; controls click events
 			      (onprevclick #unspecified)
 			      (onplayclick #unspecified)
@@ -110,7 +114,8 @@
 			    :onprefsclick onprefsclick
 			    :onpodcastclick onpodcastclick
 			    :onmuteclick onmuteclick)))
-	  (init (<AUDIO-INIT> :id id :pid pid :src src :autoplay autoplay
+	  (init (<AUDIO-INIT> :id id :pid pid :player player
+		   :src src :autoplay autoplay
 		   :start start
 		   :onplay (expr->function onplay)
 		   :onstop (expr->function onstop)
@@ -118,7 +123,7 @@
 		   :onload (expr->function onload)
 		   :onerror (expr->function onerror)
 		   :onended (expr->function onended)
-		   :onbuffer (expr->function onbuffer))))
+		   :onprogress (expr->function onprogress))))
       (<AUDIO-OBJECT> id pid init controller)))
 
 ;*---------------------------------------------------------------------*/
@@ -151,13 +156,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO-INIT> ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (<AUDIO-INIT> #!key id pid src autoplay start
-		      onplay onstop onpause onload onerror onended onbuffer)
+(define (<AUDIO-INIT> #!key id pid player src autoplay start
+		      onplay onstop onpause onload onerror onended onprogress)
    (<SCRIPT>
-      (format "function hop_audio_flash_init_~a() {hop_audio_flash_init( ~s, ~a, ~a );};"
+      (format "function hop_audio_flash_init_~a() {hop_audio_flash_init( ~s, ~a, ~a, ~a );};"
 	      pid id
 	      (if (string? src) (string-append "'" src "'") "false")
-	      (if autoplay "true" "false"))
+	      (if autoplay "true" "false")
+	      (if player (hop->json player) "false"))
       (format "hop_window_onload_add(
                 function() {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a );} );"
 	      id
@@ -170,7 +176,7 @@
 	      onload
 	      onerror
 	      onended
-	      onbuffer)))
+	      onprogress)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO-CONTROLS> ...                                             */
@@ -211,7 +217,7 @@
 	 "el.onpause=hop_audio_controls_onpause;"
 	 "el.onstop=hop_audio_controls_onstop;"
 	 "el.onended=hop_audio_controls_onended;"
-         "el.onbuffer=hop_audio_controls_onbuffer;"
+         "el.onprogress=hop_audio_controls_onprogress;"
          "el.onvolume=hop_audio_controls_onvolume;"
          "el.onplayer=hop_audio_controls_onplayer;})")
       ;; the info line
@@ -355,126 +361,162 @@
 	    (<TH> "R")))))
 
 ;*---------------------------------------------------------------------*/
+;*    signal-meta! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (signal-meta! %event engine state pos)
+   (let* ((s (music-song engine))
+	  (c (when (pair? s) (assq :file s)))
+	  (file (if (pair? c) (cdr c) #f))
+	  (pl (music-playlist-get engine)))
+      (multiple-value-bind (_ _ song _ len vol _ _ _)
+	 (music-info engine)
+	 (tprint "signal-meta: " state " song=" song " len=" len " pos=" pos)
+	 (if (string? file)
+	     (with-handler
+		(lambda (e)
+		   (when (string? file)
+		      (hop-event-broadcast!
+		       %event (list 'meta state len pos (url-decode file) pl song vol))))
+		(hop-event-broadcast!
+		 %event (list 'meta state len pos (mp3-id3 file) pl song vol)))
+	     (hop-event-broadcast!
+	      %event (list 'meta state len pos #f pl song vol))))))
+
+;*---------------------------------------------------------------------*/
+;*    signal-volume! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (signal-volume! %event vol)
+   (hop-event-broadcast! %event (list 'volume vol)))
+
+;*---------------------------------------------------------------------*/
+;*    signal-state! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (signal-state! %event state len pos)
+   (tprint "signal-state! state=" state " pos=" pos " len=" len)
+   (hop-event-broadcast! %event (list state len pos)))
+
+;*---------------------------------------------------------------------*/
+;*    refresh-forced? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (refresh-forced? player)
+   (with-access::hop-audio-player player (%mutex %refresh)
+      (mutex-lock! %mutex)
+      (if %refresh
+	  (begin
+	     (set! %refresh #f)
+	     (mutex-unlock! %mutex)
+	     #t)
+	  (begin
+	     (mutex-unlock! %mutex)
+	     #f))))
+
+;*---------------------------------------------------------------------*/
+;*    audio-loop ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (audio-loop player)
+   (tprint "======== AUDIO-LOOP STARTED...")
+   (with-access::hop-audio-player player (%event engine)
+      (let loop ((oldstate 'stop)
+		 (oldvol -1)
+		 (oldsong -1)
+		 (oldplaylist -1)
+		 (ttl 60))
+	 (multiple-value-bind (state playlist song pos len vol err _ _)
+	    (music-info engine)
+	    (cond
+	       ((string? err)
+		(unless (eq? oldstate 'error)
+		   (signal-state! %event 'error err #f))
+		;; an new error has been spotted
+		(sleep 1000347)
+		(loop 'error oldvol oldsong oldplaylist 60))
+	       ((not (=fx vol oldvol))
+		;; volume notification
+		(signal-volume! %event vol)
+		(loop oldstate vol oldsong oldplaylist 60))
+	       ((refresh-forced? player)
+		;; a refresh has been forced
+		(signal-meta! %event engine state pos)
+		(loop state vol song playlist 60))
+	       ((or (not (=fx oldsong song))
+		    (not (=fx oldplaylist playlist)))
+		;; playlist (meta) notification
+		(signal-meta! %event engine state pos)
+		(loop state vol song playlist 60))
+	       ((=fx len 0)
+		;; the engine has not gathered yet the music length
+		(sleep 1000347)
+		(loop 'length-unknown vol song playlist ttl))
+	       ((or (not (eq? oldstate state)) (=fx ttl 0))
+		;; notity a state change (or a ttl reaches)
+		(signal-state! %event state len pos)
+		(loop state vol song playlist 60))
+	       ((hop-event-client-ready? %event)
+		;; nothing has changed but clients are still connected
+		(sleep 1000347)
+		(loop state vol song playlist 60)))))
+      (tprint "========= CLOSING..." %event)
+      (music-close engine)
+      #f))
+
+;*---------------------------------------------------------------------*/
+;*    make-audio-thread ...                                            */
+;*---------------------------------------------------------------------*/
+(define (make-audio-thread player)
+   
+   (define (wait-first-client player)
+      (with-access::hop-audio-player player (%event)
+	 (let loop ((count 120))
+	    (cond
+	       ((=fx count 0)
+		#f)
+	       ((hop-event-client-ready? %event)
+		#t)
+	       (else
+		(sleep 1000347)
+		(loop (-fx count 1)))))))
+      
+   (make-hop-thread
+    (lambda ()
+       (with-access::hop-audio-player player (%event)
+	  (when (wait-first-client player)
+	     (let liip ()
+		(with-handler
+		   (lambda (e)
+		      (if (&io-error? e)
+			  (begin
+			     (error-notify e)
+			     (signal-state! %event 'error (&io-error-msg e) #f))
+			  (raise e)))
+		   (audio-loop player))
+		(sleep 3000562)
+		(liip)))))))
+
+;*---------------------------------------------------------------------*/
+;*    music-playlist-set! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (music-playlist-set! engine a1)
+   (music-playlist-clear! engine)
+   (for-each (lambda (s)
+		(music-playlist-add! engine s))
+	     a1))
+   
+;*---------------------------------------------------------------------*/
 ;*    hop-audio-player-init ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (hop-audio-player-init player::hop-audio-player)
 
-   (define (signal-state! %event state len pos)
-      (tprint "signal-state! state=" state " pos=" pos " len=" len)
-      (hop-event-broadcast! %event (list state len pos)))
-
-   (define (signal-volume! %event vol)
-      (hop-event-broadcast! %event (list 'volume vol)))
+   (define (hop-audio-player-event-loop-start player)
+      (with-access::hop-audio-player player (%thread %mutex %event %refresh)
+	 (with-lock (hop-audio-player-%mutex player)
+	    (lambda ()
+	       (set! %refresh #t)
+	       (unless (hop-thread? %thread)
+		  (set! %thread (make-audio-thread player)))))))
    
-   (define (signal-meta! %event engine state pos)
-      (let* ((s (music-song engine))
-	     (c (when (pair? s) (assq :file s)))
-	     (file (if (pair? c) (cdr c) #f))
-	     (pl (music-playlist-get engine)))
-	 (multiple-value-bind (_ _ song _ len _ _ _ _)
-	    (music-info engine)
-	    (tprint "signal-meta: " state " song=" song " len=" len " pos=" pos)
-	    (if (string? file)
-		(with-handler
-		   (lambda (e)
-		      (when (string? file)
-			 (hop-event-broadcast!
-			  %event (list 'meta state len pos (url-decode file) pl song))))
-		   (hop-event-broadcast!
-		    %event (list 'meta state len pos (mp3-id3 file) pl song)))
-		(hop-event-broadcast!
-		 %event (list 'meta state len pos #f pl song))))))
-   
-   (define (signal-info %event engine)
-      (multiple-value-bind (state playlist song pos len vol err bitrate khz)
-	 (music-info engine)
-	 (signal-meta! %event engine state pos)
-	 (signal-volume! %event vol)
-	 (unless (eq? state 'stop) (signal-state! %event state len pos))))
-
-   (define (make-audio-thread engine)
-      (with-access::hop-audio-player player (%event %thread engine)
-	 (make-hop-thread
-	  (lambda ()
-	     (let liip ()
-		(when (bind-exit (skip)
-			 (with-handler
-			    (lambda (e)
-			       (if (&io-error? e)
-				   (begin
-				      (error-notify e)
-				      (signal-state! %event
-						     'error
-						     (&io-error-msg e)
-						     #f)
-				      (sleep 3000562)
-				      (skip #t))
-				   (raise e)))
-			    (let loop ((oldstate 'stop)
-				       (oldvol -1)
-				       (oldsong -1)
-				       (oldplaylist -1)
-				       (ttl 60))
-			       
-			       (multiple-value-bind (state playlist song pos
-							   len vol err _ _)
-				  (music-info engine)
-
-				  (when (and (string? err)
-					     (unless (eq? oldstate 'error)))
-				     (set! state 'error)
-				     (set! ttl 60)
-				     (signal-state! %event 'error err #f)
-				     (raise (instantiate::&io-error
-					       (proc 'music)
-					       (msg err)
-					       (obj engine))))
-				  
-				  ;; volume notification
-				  (unless (=fx vol oldvol)
-				     (set! ttl 60)
-				     (signal-volume! %event vol))
-				  
-				  ;; playlist (meta) notification
-				  (when (or (not (=fx oldsong song))
-					    (not (=fx oldplaylist playlist)))
-				     (set! ttl 60)
-				     (signal-meta! %event engine state pos))
-				  
-				  ;; state notification
-				  (cond
-				     ((=fx len 0)
-				      ;; the engine has not gathered yet
-				      ;; the music length
-				      (set! state 'length-unknown))
-				     ((not (eq? oldstate state))
-				      ;; the state has changed, notify
-				      (set! ttl 60)
-				      (signal-state! %event state len pos))
-				     ((=fx ttl 0)
-				      ;; the ttl state is used to discover
-				      ;; that the connection with the client
-				      ;; is down
-				      (set! state 'ttl)
-				      (set! ttl 60)))
-
-				  ;; wait a little bit
-				  (sleep 1000347)
-				  
-				  (if (hop-event-client-ready? %event)
-				      ;; the client is still connected, loop
-				      (loop state vol song playlist ttl)
-				      ;; the client has lost the connection,
-				      ;; we cleanup
-				      (begin
-					 (tprint "========= CLOSING..." %event)
-					 (music-close engine)
-					 #f))))))
-		   (liip)))))))
-
    (cond-expand
       (enable-threads
-       (with-access::hop-audio-player player (%thread %service %event engine)
+       (with-access::hop-audio-player player (%service %event engine)
 	  (set! %service (service (a0 a1)
 			    (with-handler
 			       (lambda (e)
@@ -482,9 +524,8 @@
 				  #f)
 			       (case a0
 				  ((ready)
-				   (set! %thread (make-audio-thread player)))
-				  ((info)
-				   (signal-info %event engine))
+				   (hop-audio-player-event-loop-start player)
+				   #unspecified)
 				  ((load)
 				   (music-playlist-clear! engine)
 				   (music-playlist-add! engine a1))
@@ -497,10 +538,7 @@
 				  ((position)
 				   (music-seek engine a1))
 				  ((playlist)
-				   (music-playlist-clear! engine)
-				   (for-each (lambda (s)
-						(music-playlist-add! engine s))
-					     a1))
+				   (music-playlist-set! engine a1))
 				  ((volume)
 				   (music-volume-set! engine a1)))
 			       #t)))
@@ -515,11 +553,13 @@
 ;*    hop-audio-player-close ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (hop-audio-player-close audio::hop-audio-player)
-   (with-access::hop-audio-player audio (%thread engine)
-      (music-close engine)
-      (when (hop-thread? %thread)
-	 (hop-thread-terminate! %thread)
-	 (set! %thread #f))))
+   (with-access::hop-audio-player audio (%mutex %thread engine)
+      (with-lock %mutex
+	 (lambda ()
+	    (music-close engine)
+	    (when (hop-thread? %thread)
+	       (hop-thread-terminate! %thread)
+	       (set! %thread #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::hop-audio-player ...                                 */

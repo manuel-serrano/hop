@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Oct  6 11:27:39 2007 (serrano)                */
+;*    Last change :  Tue Oct  9 09:02:25 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -31,7 +31,16 @@
 	    __hop_http-response)
 
    (static  (class http-response-event::%http-response
-	       (name::bstring read-only)))
+	       (name::bstring read-only))
+
+	    (class ajax-connection
+	       (%initialize-ajax-connection)
+	       (req (default #f))
+	       key::symbol
+	       (buffer read-only (default (make-list (hop-event-buffer-size))))
+	       (count::int (default 0))
+	       (first::pair-nil (default '()))
+	       (last::pair-nil (default '()))))
 	    
    (export  (hop-event-init! ::obj)
 	    (hop-event-signal! ::bstring ::obj)
@@ -53,6 +62,79 @@
 (define *client-key* 0)
 (define *default-request* (instantiate::http-request))
 
+;*---------------------------------------------------------------------*/
+;*    *ajax-connection-table* ...                                      */
+;*---------------------------------------------------------------------*/
+(define *ajax-connection-table* (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    %initialize-ajax-connection ...                                  */
+;*---------------------------------------------------------------------*/
+(define (%initialize-ajax-connection conn)
+   (with-access::ajax-connection conn (buffer first last)
+      (set-cdr! (last-pair buffer) buffer)
+      (set! first buffer)
+      (set! last buffer)
+      conn))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-find-connection ...                                         */
+;*---------------------------------------------------------------------*/
+(define (ajax-find-connection name key)
+   (let ((bucket (hashtable-get *ajax-connection-table* name)))
+      (let loop ((bucket bucket))
+	 (when (pair? bucket)
+	    (if (eq? key (ajax-connection-key (car bucket)))
+		(car bucket)
+		(loop (cdr bucket)))))))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-store-connection! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (ajax-store-connection! name conn)
+   (hashtable-update! *ajax-connection-table*
+		      name
+		      (lambda (l) (cons conn l))
+		      (list conn)))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-connection-get! ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Get from a non empty buffer.                                     */
+;*---------------------------------------------------------------------*/
+(define (ajax-connection-get! conn)
+   (with-access::ajax-connection conn (first last count)
+      (let ((res (car first)))
+	 (set! count (-fx count 1))
+	 (set! first (cdr first))
+	 res)))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-connection-put! ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Put into a non-full buffer.                                      */
+;*---------------------------------------------------------------------*/
+(define (ajax-connection-put! conn val)
+   (with-access::ajax-connection conn (first last count)
+      (set! count (+fx count 1))
+      (set-car! last val)
+      (set! last (cdr last))
+      val))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-connection-empty? ...                                       */
+;*---------------------------------------------------------------------*/
+(define (ajax-connection-empty? conn)
+   (with-access::ajax-connection conn (first last count)
+      (and (=fx count 0) (eq? first last))))
+
+;*---------------------------------------------------------------------*/
+;*    ajax-connection-available? ...                                   */
+;*---------------------------------------------------------------------*/
+(define (ajax-connection-available? conn)
+   (with-access::ajax-connection conn (first last count req)
+      (or (=fx count 0) (not (eq? first last)) (http-request? req))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -90,87 +172,36 @@
 		     (server-event-register event key flash)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    server-event-unregister ...                                      */
-;*---------------------------------------------------------------------*/
-(define (server-event-unregister event key)
-   
-   (define (unregister-ajax-event! event key)
-      
-      (define (unregister-ajax-active-event!)
-	 (hashtable-update! *ajax-active-table*
-			    event
-			    (lambda (l)
-			       (let ((p (assq key l)))
-				  (when (http-request? (cdr p))
-				     (socket-close
-				      (http-request-socket (cdr p))))
-				  (delete! p l)))
-			    '()))
-      
-      (define (unregister-ajax-waiting-event!)
-	 (hashtable-update! *ajax-wait-table*
-			    event
-			    (lambda (l)
-			       (let ((p (assq key l)))
-				  (delete! p l)))
-			    '()))
-      
-      (unregister-ajax-active-event!)
-      (unregister-ajax-waiting-event!))
-   
-   (define (unregister-flash-event! event key)
-      (let ((c (assq (string->symbol key) *flash-request-list*)))
-	 (when (pair? c)
-	    (socket-close (http-request-socket (cdr c))))))
-   
-   (with-lock *event-mutex*
-      (lambda ()
-	 (unregister-ajax-event! event key)
-	 (unregister-flash-event! event key)
-	 #f)))
-
-;*---------------------------------------------------------------------*/
 ;*    server-event-register ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (server-event-register event key flash)
    
    (define (ajax-register-event! req name key)
-
-      (define (ajax-register-active!)
-	 ;; set an output timeout on the socket
-	 (output-timeout-set! (socket-output (http-request-socket req))
-			      (hop-connection-timeout))
-	 (hashtable-update! *ajax-active-table*
-			    name
-			    (lambda (l)
-			       ;; create a new entry only if key is unbound
-			       ;; in the active table
-			       (let ((p (assq key l)))
-				  (if (pair? p)
-				      (begin
-					 (set-cdr! p req)
-					 l)
-				      (cons (cons key req) l))))
-			    (list (cons key req)))
-	 (instantiate::http-response-persistent
-	    (request req)))
-
-      (let ((waiting (hashtable-get *ajax-wait-table* name)))
-	 (if (pair? waiting)
-	     (let ((sigs (assq key waiting)))
-		(if (and (pair? sigs) (pair? (cdr sigs)))
-		    (let ((val (cadr sigs)))
-		       ;; remove the entry from the waiting table and send it
-		       (set-cdr! sigs (cddr sigs))
-		       val)
-		    (ajax-register-active!)))
-	     (ajax-register-active!))))
+      (let ((conn (ajax-find-connection name key)))
+	 (if conn
+	     ;; we already have a connection
+	     (if (ajax-connection-empty? conn)
+		 ;; no value is waiting in the buffer
+		 (with-access::ajax-connection conn ((r req))
+		    (when (http-request? r)
+		       ;; we already have a connection but this connection
+		       ;; has probably timeouted, so we close it before
+		       ;; using the new one
+		       (socket-close (http-request-socket r)))
+		    (set! r req)
+		    (instantiate::http-response-persistent
+		       (request req)))
+		 ;; we already have a value
+		 (ajax-connection-get! conn))
+	     ;; we don't have connection yet
+	     (let ((conn (instantiate::ajax-connection
+			    (req req)
+			    (key key))))
+		(ajax-store-connection! name conn)
+		(instantiate::http-response-persistent
+		   (request req))))))
    
-   (define (flash-register-event! req name key)
-      ;; set an output timeout on the socket
-      (output-timeout-set! (socket-output (http-request-socket req))
-			   (hop-connection-timeout))
-      ;; update the event table
+   (define (flash-register-event! req name)
       (hashtable-update! *flash-socket-table*
 			 name
 			 (lambda (l)
@@ -183,10 +214,48 @@
       (lambda ()
 	 (let ((req (current-request))
 	       (key (string->symbol key)))
+	    ;; set an output timeout on the socket
+	    (output-timeout-set! (socket-output (http-request-socket req))
+				 (hop-connection-timeout))
+	    ;; register the client
 	    (if flash
 		(let ((req (cdr (assq key *flash-request-list*))))
-		   (flash-register-event! req event key))
+		   (flash-register-event! req event))
 		(ajax-register-event! req event key))))))
+
+;*---------------------------------------------------------------------*/
+;*    server-event-unregister ...                                      */
+;*---------------------------------------------------------------------*/
+(define (server-event-unregister event key)
+   
+   (define (unregister-ajax-event! event key)
+      (let ((conn (ajax-find-connection event key)))
+	 (when (ajax-connection? conn)
+	    (with-access::ajax-connection conn (req)
+	       (when (http-request? req)
+		  (socket-close (http-request-socket req)))
+	       (hashtable-update! *ajax-connection-table*
+				  event
+				  (lambda (l) (delete! conn l))
+				  '())))))
+   
+   (define (unregister-flash-event! event key)
+      (let ((c (assq (string->symbol key) *flash-request-list*)))
+	 (when (pair? c)
+	    (let ((req (cdr c)))
+	       (hashtable-update! *flash-socket-table*
+				  event
+				  (lambda (l)
+				     (let ((nl (filter-requests l)))
+					(delete! req nl)))
+				  '())))))
+   
+   (tprint "server-event-unregister: " event " key=" key)
+   (with-lock *event-mutex*
+      (lambda ()
+	 (unregister-ajax-event! event key)
+	 (unregister-flash-event! event key)
+	 #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-client-ready? ...                                      */
@@ -194,29 +263,7 @@
 (define (hop-event-client-ready? name)
    
    (define (ajax-event-client-ready? name)
-      
-      (define (ajax-event-active-ready? name)
-	 (let ((wl (hashtable-get *ajax-active-table* name)))
-	    (and (pair? wl)
-		 (any? (lambda (a)
-			  (let ((req (cdr a)))
-			     (when (http-request? req)
-				(let ((sock (http-request-socket req)))
-				   (not (socket-down? sock))))))
-		       wl))))
-      
-      (define (ajax-event-waiting-ready? name)
-	 ;; waiting events are ready if it exists a key for which a value
-	 ;; is waiting
-	 (let ((wl (hashtable-get *ajax-wait-table* name)))
-	    (and (pair? wl)
-		 (any? (lambda (a)
-			  (pair? (cdr a)))
-		       wl))))
-      
-      (or (ajax-event-active-ready? name)
-	  (ajax-event-waiting-ready? name)))
-	     
+      (pair? (hashtable-get *ajax-connection-table* name)))
 
    (define (flash-event-client-ready? name)
       (let ((l (hashtable-get *flash-socket-table* name)))
@@ -234,18 +281,6 @@
 ;*---------------------------------------------------------------------*/
 (define *flash-socket-table* (make-hashtable))
 (define *flash-request-list* '())
-
-;*---------------------------------------------------------------------*/
-;*    *ajax-wait-table* ...                                            */
-;*    -------------------------------------------------------------    */
-;*    The *ajax-wait-table* and *ajax-active-table* hashtables are     */
-;*    indexed by event names. The values in the tables are pairs       */
-;*    <key x (val0, val1, ...)>. Unless is event is unregistered, once */
-;*    the pair is the table it is never removed (in order to avoid     */
-;*    consing).                                                        */
-;*---------------------------------------------------------------------*/
-(define *ajax-wait-table* (make-hashtable))
-(define *ajax-active-table* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-event ...                          */
@@ -296,7 +331,7 @@
    (let ((s (http-request-socket req)))
       (with-handler
 	 (lambda (e)
-	    (unless (&io-timeout-error e)
+	    (unless (&io-timeout-error? e)
 	       (raise e)))
 	 (begin
 	    (http-response resp s)
@@ -357,46 +392,24 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-event-signal! name value)
 
-   (define (find-active al)
-      (when (pair? al)
-	 (let* ((a (car al))
-		(key (car a))
-		(req (cdr a)))
-	    (if (http-request? req)
-		a
-		(find-active (cdr al))))))
-
    (define (ajax-event-signal! name value)
-      (let* ((a (find-active (hashtable-get *ajax-active-table* name)))
-	     (req (if (pair? a) (cdr a) *default-request*))
-	     (val (ajax-make-signal-value value req)))
-	 (if (pair? a)
-	     ;; we have active connections
-	     (let ((key (car a))
-		   (req (cdr a)))
-		;; we close the active connection
-		(set-cdr! a #f)
-		;; we have to create an entry in the waitlist for that
-		;; client in order to not loose the event that might be
-		;; emitted before the client has re-registered.
-		(hashtable-update! *ajax-wait-table*
-				   name
-				   (lambda (l)
-				      (let ((p (assq key l)))
-					 (if (pair? p)
-					     l
-					     (cons (cons key '()) l))))
-				   (list (cons key '())))
-		;; we signal the value
-		(ajax-signal-value req val))
-	     ;; we don't have active connections
-	     (let ((wl (hashtable-get *ajax-wait-table* name)))
-		;; update the wait list
-		(when (pair? wl)
-		   (let ((p (car wl)))
-		      (if (pair? (cdr p))
-			  (set-cdr! p (append! (cdr p) (list val)))
-			  (set-cdr! p (list val)))))))))
+      (let ((conns (hashtable-get *ajax-connection-table* name)))
+	 (when (pair? conns)
+	    (let loop ((l conns))
+	       (if (pair? l)
+		   (with-access::ajax-connection (car l) (req)
+		      (if (http-request? req)
+			  (let ((val (ajax-make-signal-value value req)))
+			     (ajax-signal-value req val)
+			     (set! req #f))
+			  (loop (cdr l))))
+		   ;; there is no active ajax connection, fill the first
+		   ;; non full one
+		   (let ((l (filter ajax-connection-available? conns)))
+		      (when (pair? l)
+			 (let ((val (ajax-make-signal-value value *default-request*)))
+			    (ajax-connection-put! (car l) val)))
+		      (hashtable-put! *ajax-connection-table* name l)))))))
    
    (define (flash-event-signal! name value)
       (for-each-socket
@@ -419,60 +432,37 @@
 (define (hop-event-broadcast! name value)
    
    (define (ajax-event-broadcast! name value)
-      (let* ((al (hashtable-get *ajax-active-table* name))
-	     (wl (hashtable-get *ajax-wait-table* name))
-	     (req *default-request*)
-	     (val (ajax-make-signal-value value req)))
-	 ;; we update the wait list in two stages and we signal
-	 ;;  1- we add entry entries for the currently active connections
-	 ;;  2- we register values for waiting connections that are not
-	 ;;     currently active.
-         ;;  3- we signal the active connections
-	 (when (pair? al)
-	    (for-each (lambda (a)
-			 (let ((key (car a))
-			       (req (cdr a)))
-			    (hashtable-update! *ajax-wait-table*
-					       name
-					       (lambda (l)
-						  (let ((p (assq key l)))
-						     (if (pair? p)
-							 l
-							 (cons (cons key '())
-							       l))))
-					       (list (cons key '())))))
-		      al))
-	 ;; update the wait list
-	 (when (pair? wl)
-	    (for-each (lambda (w)
-			 (let ((k (car w)))
-			    (let ((c (assq k al)))
-			       (unless (and (pair? c) (http-request? (cdr c)))
-				  (if (pair? (cdr w))
-				      (set-cdr! w (append! (cdr w) (list val)))
-				      (set-cdr! w (list val)))))))
-		      wl))
-	 ;; signal and close the active connections the active connections
-	 (when (pair? al)
-	    (for-each (lambda (a)
-			 (let ((key (car a))
-			       (req (cdr a)))
-			    (when (http-request? req)
-			       (set-cdr! a #f)
-			       ;; signal the value
-			       (tprint "ajax signal (for broadd): " name)
-			       (ajax-signal-value req val))))
-		      al))))
+      (let ((conns (hashtable-get *ajax-connection-table* name)))
+	 (when (pair? conns)
+	    (let ((val (ajax-make-signal-value value *default-request*)))
+	       (for-each (lambda (conn)
+			    (with-access::ajax-connection conn (req)
+			       (when (http-request? req)
+				  (tprint "ajax broadcast: " name)
+				  (ajax-signal-value req val))))
+			 conns)
+	       (let ((l (filter! ajax-connection-available? conns)))
+		  (when (pair? l)
+		     (for-each (lambda (conn)
+				  (with-access::ajax-connection conn (req)
+				     (if (http-request? req)
+					 (set! req #f)
+					 (begin
+					    (tprint "ajax store: " name)
+					    (ajax-connection-put! conn val)))))
+			       l))
+		  (hashtable-put! *ajax-connection-table* name l))))))
    
    (define (flash-event-broadcast! name value)
       (for-each-socket
        *flash-socket-table*
        name
        (lambda (l)
-	  (tprint "flash signal (for broadc): " name " l=" l)
 	  (when (pair? l)
 	     (let ((val (flash-make-signal-value value)))
 		(for-each (lambda (req)
+			     (tprint "flash broadcast: " name " "
+				     (http-request-socket req))
 			     (flash-signal-value req name val))
 			  l))))))
 

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Sep 26 13:01:18 2007 (serrano)                */
+#*    Last change :  Mon Oct  8 20:34:47 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -32,7 +32,7 @@ debug=no
 bcflags="-fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
 bcflagsdbg="-copt -g"
-bcflagsdbg2="-g -O2 -copt -g"
+bcflagsdbg2="-g -O2 -cg"
 bcflagsbmem="-g2 -O2"
 bcflagsopt="-unsafe -O3"
 

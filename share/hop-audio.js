@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sat Oct  6 11:14:43 2007 (serrano)                */
+/*    Last change :  Tue Oct  9 12:14:35 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -159,19 +159,25 @@ function HopAudioServerProxy( audio, url ) {
 	    // volume
 	    current_volume = rest.car;
 	    hop_audio_run_hooks( audio, "volume" );
+	 } else if( k == Serror ) {
+	    // error
+	    hop_audio_run_hooks( audio, "error", rest.car );
 	 } else if( k == Smeta ) {
 	    // meta (and playlist)
 	    var state  = rest.car;
 	    current_duration = rest.cdr.car;
 	    current_position = rest.cdr.cdr.car;
-	    
+
 	    rest = rest.cdr.cdr.cdr;
 	    
 	    var val = rest.car;
 	    var plist = rest.cdr.car;
 	    var plindex = rest.cdr.cdr.car;
 
-	    hop_audio_run_hooks( audio, "ended" );
+	    current_volume = rest.cdr.cdr.cdr.car;
+	    hop_audio_run_hooks( audio, "volume" );
+	    
+	    audio.paused = ( state == Spause );
 	    
 	    playlist = plist;
 	    playlist_index = plindex;
@@ -228,7 +234,7 @@ function hop_audio_init_obj( audio ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_init( id, start, src, stream,
 			 onplay, onstop, onpause, onload, onerror,
-			 onended, onbuffer ) {
+			 onended, onprogress ) {
    var audio = document.getElementById( id );
 
    hop_audio_init_obj( audio );
@@ -244,7 +250,7 @@ function hop_audio_init( id, start, src, stream,
    audio.onload = onload;
    audio.onerror = onerror;
    audio.onended = onended;
-   audio.onbuffer = onbuffer;
+   audio.onprogress = onprogress;
    audio.initialized = true;
    
    audio.hop_add_event_listener = hop_audio_add_event_listener;
@@ -263,7 +269,7 @@ function hop_audio_init( id, start, src, stream,
 /*    This function is automatically invoked by the Flash script when  */
 /*    the builtin initialization completes.                            */
 /*---------------------------------------------------------------------*/
-function hop_audio_flash_init( id, src, stream ) {
+function hop_audio_flash_init( id, src, stream, player ) {
    /* we are now sure that at least version 8 of flash is running */
    hop_flash_minversion_set( 8 );
    
@@ -316,6 +322,10 @@ function hop_audio_flash_init( id, src, stream ) {
    }
    if( src && audio.initialized ) {
       hop_audio_load( audio, src, stream );
+   }
+
+   if( player ) {
+      hop_audio_player_set( audio, player, "server" );
    }
 }
 
@@ -409,7 +419,7 @@ function hop_audio_load( audio, src, stream ) {
    audio.src = src;
    audio.playlist_index = false;
    audio.paused = false;
-   hop_audio_run_hooks( audio, "buffer" );
+   hop_audio_run_hooks( audio, "progress" );
 
    return audio.proxy.load( src, stream );
 }
@@ -612,13 +622,13 @@ function hop_audio_controls_onerror( evt ) {
    var audio = evt.audio;
    var tl = document.getElementById( "controls-metadata-song-" + audio.id );
 
-   tl.innerHTML = "Error";
+   tl.innerHTML = evt.value ? evt.value : "Error";
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_audio_controls_onbuffer ...                                  */
+/*    hop_audio_controls_onprogress ...                                */
 /*---------------------------------------------------------------------*/
-function hop_audio_controls_onbuffer( evt ) {
+function hop_audio_controls_onprogress( evt ) {
    var audio = evt.audio;
    var tl = document.getElementById( "controls-metadata-song-" + audio.id );
 
@@ -652,7 +662,7 @@ function hop_audio_controls_time( audio ) {
 function hop_audio_time_interval_set( audio ) {
    var id = audio.id;
    var pos = document.getElementById( "controls-status-position-" + id );
-   ctime = hop_audio_current_time( audio );
+   var ctime = hop_audio_current_time( audio );
    
    audio.ctime = ctime;
    audio.min = Math.floor( ctime / 60 );

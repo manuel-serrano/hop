@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Sep 19 16:44:34 2007 (serrano)                */
+/*    Last change :  Sun Oct  7 08:40:59 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -127,7 +127,7 @@ function hop_tree_open( tree ) {
 function hop_tree_populate( tree ) {
    var success = function( html ) {
       tree.populated = true;
-      
+
       if( html ) {
          /* cleanup the existing tree */
          var children = tree.body.childNodes;
