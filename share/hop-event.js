@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Oct 10 09:14:25 2007 (serrano)                */
+/*    Last change :  Wed Oct 10 15:45:19 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -140,28 +140,30 @@ var hop_servevt_dlist = null;
 /*---------------------------------------------------------------------*/
 function start_servevt_ajax_proxy( key ) {
    if( !hop_servevt_proxy.httpreq ) {
-      var xhr_error = false;
+      var xhr_error_ttl = 6 * 3;
       
       var register = function( id ) {
 	 var svc = "/hop/server-event-register?event=" + id + "&key=" + key;
 	 var success = function( val, http ) {
 	    // erase previous errors
-	    xhr_error = false;
+	    xhr_error_ttl = 6 * 3;
 	    // re-register the event as soon as possible
 	    register( id );
-	    // invoke the user handler
-	    hop_trigger_servevt( id,
-				 http.responseText,
-				 val,
-				 hop_is_http_json( http ) );
+	    // invoke all the user handlers (we have received a list of values
+	    // corresponding to server buffer).
+	    while( val != null ) {
+	       hop_trigger_servevt( id, http.responseText, val.car, false );
+	       val = val.cdr;
+	       
+	    }
 	 }
 
 	 var failure = function( xhr ) {
 	    if( !xhr.status ) {
-	       if( !xhr_error && !xhr.getAllResponseHeaders() ) {
+	       if( (xhr_error_ttl > 0) && !xhr.getAllResponseHeaders() ) {
 		  // mark the connection timeout error in order to avoid
 		  // falling into an infinit loop when the server has crashed.
-		  xhr_error = true;
+		  xhr_error_ttl--;
 		  // we have reached a timeout, we just re-register
 		  register( id );
 	       }

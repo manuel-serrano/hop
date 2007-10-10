@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Oct 10 05:44:56 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 16:06:46 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -34,13 +34,11 @@
 	       (name::bstring read-only))
 
 	    (class ajax-connection
-	       (%initialize-ajax-connection)
 	       (req (default #f))
 	       key::symbol
-	       (buffer read-only (default (make-list (hop-event-buffer-size))))
-	       (count::int (default 0))
-	       (first::pair-nil (default '()))
-	       (last::pair-nil (default '()))))
+	       (buffer::pair-nil (default '()))
+	       (lastpair::pair-nil (default '()))
+	       (count::int (default 0))))
 	    
    (export  (hop-event-init! ::obj)
 	    (hop-event-signal! ::bstring ::obj)
@@ -68,16 +66,6 @@
 (define *ajax-connection-table* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
-;*    %initialize-ajax-connection ...                                  */
-;*---------------------------------------------------------------------*/
-(define (%initialize-ajax-connection conn)
-   (with-access::ajax-connection conn (buffer first last)
-      (set-cdr! (last-pair buffer) buffer)
-      (set! first buffer)
-      (set! last buffer)
-      conn))
-
-;*---------------------------------------------------------------------*/
 ;*    ajax-find-connection ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (ajax-find-connection name key)
@@ -100,13 +88,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    ajax-connection-get! ...                                         */
 ;*    -------------------------------------------------------------    */
-;*    Get from a non empty buffer.                                     */
+;*    Get values from a non empty buffer.                              */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-get! conn)
-   (with-access::ajax-connection conn (first last count)
-      (let ((res (car first)))
-	 (set! count (-fx count 1))
-	 (set! first (cdr first))
+   (with-access::ajax-connection conn (buffer lastpair count)
+      (let ((res buffer))
+	 (set! count 0)
+	 (set! buffer '())
+	 (set! lastpair '())
 	 res)))
 
 ;*---------------------------------------------------------------------*/
@@ -115,25 +104,28 @@
 ;*    Put into a non-full buffer.                                      */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-put! conn val)
-   (with-access::ajax-connection conn (first last count)
+   (with-access::ajax-connection conn (buffer lastpair count)
       (set! count (+fx count 1))
-      (set-car! last val)
-      (set! last (cdr last))
+      (if (pair? lastpair)
+	  (set-cdr! lastpair (cons val '()))
+	  (begin
+	     (set! buffer (cons val '()))
+	     (set! lastpair buffer)))
       val))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-connection-empty? ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-empty? conn)
-   (with-access::ajax-connection conn (first last count)
-      (and (=fx count 0) (eq? first last))))
+   (with-access::ajax-connection conn (count)
+      (=fx count 0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-connection-available? ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-available? conn)
-   (with-access::ajax-connection conn (first last count req)
-      (or (=fx count 0) (not (eq? first last)) (http-request? req))))
+   (with-access::ajax-connection conn (count req)
+      (or (<fx count (hop-event-buffer-size)) (http-request? req))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
@@ -192,12 +184,16 @@
 		    (instantiate::http-response-persistent
 		       (request req)))
 		 ;; we already have a value
-		 (ajax-connection-get! conn))
+		 (scheme->response (ajax-connection-get! conn) req))
 	     ;; we don't have connection yet
 	     (let ((conn (instantiate::ajax-connection
 			    (req req)
 			    (key key))))
 		(ajax-store-connection! name conn)
+		;; adapt dynamically the buffer size
+		(let ((sz (hashtable-size *ajax-connection-table*)))
+		   (when (>fx sz (hop-event-buffer-size))
+		      (hop-event-buffer-size-set! (*fx 2 sz))))
 		(instantiate::http-response-persistent
 		   (request req))))))
    
@@ -338,12 +334,6 @@
 	    (socket-close s)))))
 
 ;*---------------------------------------------------------------------*/
-;*    ajax-make-signal-value ...                                       */
-;*---------------------------------------------------------------------*/
-(define (ajax-make-signal-value val req)
-   (scheme->response val req))
-
-;*---------------------------------------------------------------------*/
 ;*    flash-signal-value ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (flash-signal-value req name value)
@@ -399,16 +389,15 @@
 	       (if (pair? l)
 		   (with-access::ajax-connection (car l) (req)
 		      (if (http-request? req)
-			  (let ((val (ajax-make-signal-value value req)))
+			  (let ((val (scheme->response (list value) req)))
 			     (ajax-signal-value req val)
 			     (set! req #f))
 			  (loop (cdr l))))
 		   ;; there is no active ajax connection, fill the first
 		   ;; non full one
-		   (let ((l (filter ajax-connection-available? conns)))
+		   (let ((l (filter! ajax-connection-available? conns)))
 		      (when (pair? l)
-			 (let ((val (ajax-make-signal-value value *default-request*)))
-			    (ajax-connection-put! (car l) val)))
+			 (ajax-connection-put! (car l) value))
 		      (hashtable-put! *ajax-connection-table* name l)))))))
    
    (define (flash-event-signal! name value)
@@ -434,7 +423,7 @@
    (define (ajax-event-broadcast! name value)
       (let ((conns (hashtable-get *ajax-connection-table* name)))
 	 (when (pair? conns)
-	    (let ((val (ajax-make-signal-value value *default-request*)))
+	    (let ((val (scheme->response (list value) *default-request*)))
 	       (for-each (lambda (conn)
 			    (with-access::ajax-connection conn (req)
 			       (when (http-request? req)
@@ -449,7 +438,7 @@
 					 (set! req #f)
 					 (begin
 					    (tprint "ajax store: " name)
-					    (ajax-connection-put! conn val)))))
+					    (ajax-connection-put! conn value)))))
 			       l))
 		  (hashtable-put! *ajax-connection-table* name l))))))
    
