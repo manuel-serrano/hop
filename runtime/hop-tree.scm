@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sun Oct  7 08:32:59 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:38:47 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -135,14 +135,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tree ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-tree p encoding backend)
+(define-method (xml-write obj::html-tree p backend)
    (let ((parent (symbol->string (gensym 'TREE-PARENT))))
       (with-access::html-tree obj (klass)
 	 (fprintf p "<div id='~a' class='~a'>" parent klass))
       (display " <script type='" p)
       (display (hop-javascript-mime-type) p)
       (display "'>" p)
-      (html-write-tree 0 obj parent p encoding backend)
+      (html-write-tree 0 obj parent p backend)
       (display " </script>" p)
       (display "</div>" p)))
 
@@ -165,7 +165,6 @@
 			 obj::html-tree
 			 parent::bstring
 			 p::output-port
-			 encoding::symbol
 			 be::xml-backend)
    (with-access::html-tree obj (id visible
 				   open head body
@@ -173,7 +172,7 @@
 				   value history
 				   inline iconopen iconclose icondir)
       (let* ((title (let ((ps (open-output-string)))
-		       (xml-write-body (xml-element-body head) ps encoding be)
+		       (xml-write-body (xml-element-body head) ps be)
 		       (close-output-port ps)))
 	     (proc (cond
 		      ((null? body)
@@ -186,7 +185,6 @@
 			       (lambda ()
 				  (html-write-tree-body (+ 1 level) (car body)
 							id (current-output-port)
-							encoding
 							be)))))))
 		      (else
 		       (with-output-to-string
@@ -196,7 +194,6 @@
 			      "nop"
 			      (html-write-tree-body (+ 1 level) (car body)
 						    id (current-output-port)
-						    encoding
 						    be))
 			     (display "}")))))))
 	 ;; set the parent relationship with the body
@@ -303,13 +300,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-body ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (xml-write-body body p encoding be)
-   (for-each (lambda (b) (xml-write b p encoding be)) body))
+(define (xml-write-body body p be)
+   (for-each (lambda (b) (xml-write b p be)) body))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-write-tree-body ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (html-write-tree-body level obj parent p encoding be)
+(define (html-write-tree-body level obj parent p be)
    (with-access::xml-element obj (body)
       (for-each (lambda (b)
 		   (let loop ((b b))
@@ -319,10 +316,10 @@
 			 ((xml-delay? b)
 			  (loop ((xml-delay-thunk b))))
 			 ((html-tree? b)
-			  (html-write-tree level b parent p encoding be)
+			  (html-write-tree level b parent p be)
 			  (display ";\n" p))
 			 ((html-tree-leaf? b)
-			  (html-write-tree-leaf b parent p encoding be)
+			  (html-write-tree-leaf b parent p be)
 			  (display ";\n" p))
 			 ((null? b)
 			  #unspecified)
@@ -333,7 +330,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    html-write-tree-leaf ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (html-write-tree-leaf obj::html-tree-leaf parent p encoding be)
+(define (html-write-tree-leaf obj::html-tree-leaf parent p be)
    (with-access::html-tree-leaf obj (icon iconerr body value)
       (display "hop_make_tree_leaf(" p)
       ;; parent
@@ -343,7 +340,7 @@
       ;; the body
       (display #\" p)
       (let ((sbody (let ((ps (open-output-string)))
-		      (xml-write-body (xml-element-body obj) ps encoding be)
+		      (xml-write-body (xml-element-body obj) ps be)
 		      (close-output-port ps))))
 	 (display (json-string-encode sbody) p))
       (display "\", " p)

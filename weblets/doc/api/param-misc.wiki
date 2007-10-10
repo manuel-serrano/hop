@@ -13,8 +13,10 @@ These server parameters give global information on the running HOP.
   (hop-verbose-set! arg)
   (hop-session)
   (hop-session-set! arg)
-  (hop-char-encoding)
-  (hop-char-encoding-set! arg)
+  (hop-charset)
+  (hop-charset-set! arg)
+  (hop-locale)
+  (hop-locale-set! arg)
   (hop-xml-backend)
   (hop-xml-backend-set! arg)
 
@@ -53,18 +55,37 @@ These server parameters give global information on the running HOP.
 </parameter>
 </parameter>
 
-=== ++hop-char-encoding++ ===
-<parameter> hop-char-encoding
-<parameter> hop-char-encoding-set!
+=== ++hop-charset++ ===
+<parameter> hop-charset
+<parameter> hop-charset-set!
 
 <arguments>
 ^  access  ^   type    ^  current value             ^  short description                    ^
-|   r/w    |  symbol   |  ++,(hop-char-encoding)++  | The default character encoding.       |
+|   r/w    |  symbol   |  ++,(hop-charset)++  | The default character encoding.       |
 </arguments>
 
-This parameter controls the default character encoding used in client
-responses. The currently supported value for the character encoding
+This parameter controls the default character encoding used by XML 
+server responses. The currently supported value for the character encoding
 are:
+
+  * ++ISO-8859-1++
+  * ++ISO-8859-2++
+  * ++UTF-8++
+
+</parameter>
+</parameter>
+
+=== ++hop-locale++ ===
+<parameter> hop-locale
+<parameter> hop-locale-set!
+
+<arguments>
+^  access  ^   type    ^  current value             ^  short description                    ^
+|   r/w    |  symbol   |  ++,(hop-locale)++  | The default character encoding.       |
+</arguments>
+
+This parameter controls the default character encoding used by server locale
+resources (files on the disc and internal character strings).
 
   * ++ISO-8859-1++
   * ++ISO-8859-2++

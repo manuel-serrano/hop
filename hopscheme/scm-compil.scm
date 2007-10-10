@@ -45,6 +45,7 @@
 	       (if (string? cache)
 		   (instantiate::http-response-file
 		      (request req)
+		      (charset (hop-locale))
 		      (content-type mime)
 		      (bodyp (eq? method 'GET))
 		      (file cache))
@@ -52,6 +53,7 @@
 			  (cache (cache-put! sscript-cache path jscript)))
 		      (instantiate::http-response-file
 			 (request req)
+			 (charset (hop-locale))
 			 (content-type mime)
 			 (bodyp (eq? method 'GET))
 			 (file cache)))))))))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Oct  9 10:14:25 2007 (serrano)                */
+/*    Last change :  Wed Oct 10 09:14:25 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -158,8 +158,6 @@ function start_servevt_ajax_proxy( key ) {
 
 	 var failure = function( xhr ) {
 	    if( !xhr.status ) {
-	       alert( "PAS STATUS xhr_error=" + xhr_error
-		      + " headers=" + xhr.getAllResponseHeaders() );
 	       if( !xhr_error && !xhr.getAllResponseHeaders() ) {
 		  // mark the connection timeout error in order to avoid
 		  // falling into an infinit loop when the server has crashed.

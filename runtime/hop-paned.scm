@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Jul  5 14:19:15 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:37:02 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -97,7 +97,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-hpaned ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-paned p encoding backend)
+(define-method (xml-write obj::html-paned p backend)
    (with-access::html-hpaned obj (id klass fraction onresize body style height)
       (let ((cl (if (string? klass)
 		    (string-append "hop-paned hop-hpaned " klass)
@@ -106,9 +106,9 @@
       (when style (fprintf p " style='~a'" style))
       (when height (fprintf p " height='~a'" height))
       (display ">" p)
-      (xml-write (car body) p encoding backend)
+      (xml-write (car body) p backend)
       (fprintf p "<div class='hop-hpaned-cursor' id='~a-hpaned-cursor'></div>" id)
-      (xml-write (cadr body) p encoding backend)
+      (xml-write (cadr body) p backend)
       (display " <script type='" p)
       (display (hop-javascript-mime-type) p)
       (display "'>" p)
@@ -128,7 +128,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-vpaned ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-vpaned p encoding backend)
+(define-method (xml-write obj::html-vpaned p backend)
    (with-access::html-paned obj (id klass fraction onresize body style height)
       (let ((cl (if (string? klass)
 		    (string-append "hop-paned " klass)
@@ -141,13 +141,13 @@
       (fprint p "<tr>")
       (fprintf p "<td class='hop-vpaned-pan hop-vpaned-pan-left' id='~a-vpaned-td1'>"
 	      id)
-      (xml-write (car body) p encoding backend)
+      (xml-write (car body) p backend)
       (fprint p "</td>")
       (fprintf p "<td class='hop-vpaned-cursor' id='~a-vpaned-cursor'>" id)
       (fprint p "</td>")
       (fprintf p "<td class='hop-vpaned-pan hop-vpaned-pan-right' id='~a-vpaned-td2'>"
 	      id)
-      (xml-write (cadr body) p encoding backend)
+      (xml-write (cadr body) p backend)
       (fprint p "</td>")
       (fprint p "</tr>")
       (fprint p "</table>")
@@ -167,7 +167,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-pan ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-pan p encoding backend)
+(define-method (xml-write obj::html-pan p backend)
    (with-access::html-pan obj (id klass body)
       (display "<div id='" p)
       (display id p)
@@ -176,5 +176,5 @@
 	 (display " " p)
 	 (display klass p))
       (display "'>" p)
-      (xml-write body p encoding backend)
+      (xml-write body p backend)
       (display "</div>" p)))

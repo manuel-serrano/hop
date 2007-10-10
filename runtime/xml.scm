@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Oct  9 19:02:23 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:52:27 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -96,12 +96,12 @@
 	    (hop-xml-backend::xml-backend)
 	    (hop-xml-backend-set! ::obj)
 
- 	    (generic xml-write ::obj ::output-port ::symbol ::xml-backend)
+ 	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port)
 	    (generic xml-write-initializer ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port)
 
-	    (xml->string ::obj ::symbol ::xml-backend)
+	    (xml->string ::obj ::xml-backend)
 	    
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
@@ -441,14 +441,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (xml-write obj p encoding backend)
+(define-generic (xml-write obj p backend)
    (cond
       ((string? obj)
        (display obj p))
       ((or (number? obj) (symbol? obj))
        (display obj p))
       ((pair? obj)
-       (for-each (lambda (o) (xml-write o p encoding backend)) obj))
+       (for-each (lambda (o) (xml-write o p backend)) obj))
       ((date? obj)
        (display obj p))
       ((null? obj)
@@ -465,16 +465,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-if ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-if p encoding backend)
+(define-method (xml-write obj::xml-if p backend)
    (with-access::xml-if obj (test then otherwise)
       (if (test)
-	  (xml-write then p encoding backend)
-	  (xml-write otherwise p encoding backend))))
+	  (xml-write then p backend)
+	  (xml-write otherwise p backend))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-script ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-script p encoding backend)
+(define-method (xml-write obj::xml-script p backend)
    (with-access::xml-script obj (body attributes)
       (with-access::xml-backend backend (script-start script-stop)
 	 (if (pair? attributes)
@@ -488,37 +488,37 @@
 		(display "'>" p)))
 	 (when (pair? body)
 	    (when script-start (display script-start p))
-	    (xml-write body p encoding backend)
+	    (xml-write body p backend)
 	    (when script-stop (display script-stop p)))
 	 (display "</script>\n" p))))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-tilde ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-tilde p encoding backend)
+(define-method (xml-write obj::xml-tilde p backend)
    (with-access::xml-tilde obj (body parent)
       (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
-	  (xml-write body p encoding backend)
+	  (xml-write body p backend)
 	  (with-access::xml-backend backend (script-start script-stop)
 	     (display "<script type='" p)
 	     (display (hop-javascript-mime-type) p)
 	     (display "'>" p)
 	     (when script-start (display script-start p))
-	     (xml-write body p encoding backend)
+	     (xml-write body p backend)
 	     (when script-stop (display script-stop p))
 	     (display "</script>\n" p)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-delay ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-delay p encoding backend)
+(define-method (xml-write obj::xml-delay p backend)
    (with-access::xml-delay obj (thunk)
-      (xml-write (thunk) p encoding backend)))
+      (xml-write (thunk) p backend)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-markup ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-markup p encoding backend)
+(define-method (xml-write obj::xml-markup p backend)
    (with-access::xml-markup obj (markup attributes body)
       (display "<" p)
       (display markup p)
@@ -526,7 +526,7 @@
       (cond
 	 ((or (pair? body) (eq? markup 'script))
 	  (display ">" p)
-	  (for-each (lambda (b) (xml-write b p encoding backend)) body)
+	  (for-each (lambda (b) (xml-write b p backend)) body)
 	  (display "</" p)
 	  (display markup p)
 	  (display ">\n" p))
@@ -538,19 +538,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-meta ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-meta p encoding backend)
+(define-method (xml-write obj::xml-meta p backend)
    (with-access::xml-meta obj (markup attributes body)
       (display "<" p)
       (display markup p)
       (xml-write-attributes attributes p)
       (with-access::xml-backend backend (meta-format mime-type)
-	 (fprintf p meta-format mime-type encoding))
+	 (fprintf p meta-format mime-type (hop-charset)))
       (newline p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-element ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-element p encoding backend)
+(define-method (xml-write obj::xml-element p backend)
    (with-access::xml-element obj (markup id attributes body)
       (cond
 	 ((and (null? body) (null? attributes))
@@ -587,16 +587,16 @@
 	  (display "\"" p)
 	  (xml-write-attributes attributes p)
 	  (display ">" p)
-	  (for-each (lambda (b) (xml-write b p encoding backend)) body)
+	  (for-each (lambda (b) (xml-write b p backend)) body)
 	  (display "</" p)
 	  (display markup p)
 	  (display ">" p)))
-      (xml-write-initializations obj p encoding backend)))
+      (xml-write-initializations obj p backend)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-empty-element ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-empty-element p encoding backend)
+(define-method (xml-write obj::xml-empty-element p backend)
    (with-access::xml-empty-element obj (markup id attributes)
       (display "<" p)
       (display markup p)
@@ -609,9 +609,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-html ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-html p encoding backend)
+(define-method (xml-write obj::xml-html p backend)
    (with-access::xml-backend backend (header-format doctype html-attributes)
-      (fprintf p header-format encoding)
+      (fprintf p header-format (hop-charset))
       (newline p)
       (display doctype p)
       (newline p)
@@ -624,7 +624,7 @@
 			       p)
 	 (xml-write-attributes attributes p)
 	 (display ">\n" p)
-	 (for-each (lambda (b) (xml-write b p encoding backend)) body)
+	 (for-each (lambda (b) (xml-write b p backend)) body)
 	 (display "</" p)
 	 (display markup p)
 	 (display ">\n" p))))
@@ -659,7 +659,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (xml-write-initializations obj p encoding backend)
+(define (xml-write-initializations obj p backend)
    (with-access::xml-element obj (id initializations)
       (when (pair? initializations)
 	 (with-access::xml-backend backend (script-start script-stop)
@@ -726,10 +726,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml->string ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (xml->string obj encoding backend)
+(define (xml->string obj backend)
    (with-output-to-string
       (lambda ()
-	 (xml-write obj (current-output-port) encoding backend))))
+	 (xml-write obj (current-output-port) backend))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->html ...                                                 */

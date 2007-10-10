@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar  1 11:23:29 2006                          */
-;*    Last change :  Wed Sep 19 16:43:25 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:35:51 2007 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <FL> markup.                           */
 ;*=====================================================================*/
@@ -73,11 +73,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-foldlist ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-foldlist p encoding backend)
+(define-method (xml-write obj::html-foldlist p backend)
    (fprintf p "<table class='~a' id='~a' cellpadding='0' cellspacing='~a'>"
 	    (html-foldlist-cname obj)
 	    (html-foldlist-id obj) (html-foldlist-spacing obj))
-   (xml-write (html-foldlist-body obj) p encoding backend)
+   (xml-write (html-foldlist-body obj) p backend)
    (display "</table>" p))
 
 ;*---------------------------------------------------------------------*/
@@ -99,7 +99,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-flitem ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-flitem p encoding backend)
+(define-method (xml-write obj::html-flitem p backend)
    (with-access::html-flitem obj (body id parent open)
       (let ((tmp   body)
 	    (icono (or (html-foldlist-icono parent)
@@ -153,11 +153,11 @@
 	 (when (and (pair? tmp)
 		    (xml-element? (car tmp))
 		    (eq? (xml-element-markup (car tmp)) 'flhead))
-	    (xml-write (car tmp) p encoding backend)
+	    (xml-write (car tmp) p backend)
 	    (set! tmp (cdr tmp)))
 	 (fprintf p "</td></tr><tr><td></td><td class='hop-fl-item-body'><div class='~a' id='~a' style='display:~a'>"
 		  (html-flitem-cname obj) id (if open "block" "none"))
-	 (xml-write tmp p encoding backend)
+	 (xml-write tmp p backend)
 	 (display "</div></td></tr>" p))))
   
 ;*---------------------------------------------------------------------*/
@@ -177,8 +177,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-flhead ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-flhead p encoding backend)
+(define-method (xml-write obj::html-flhead p backend)
    (display (format "<span class='~a'>" (html-flhead-cname obj)) p)
-   (xml-write (html-flhead-body obj) p encoding backend)
+   (xml-write (html-flhead-body obj) p backend)
    (display "</span>" p))
 

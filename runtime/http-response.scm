@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Oct  7 08:40:55 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 09:09:59 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -23,6 +23,7 @@
 	    __hop_types
 	    __hop_misc
 	    __hop_xml
+	    __hop_charset
 	    __hop_hop-extra
 	    __hop_http-lib
 	    __hop_http-error
@@ -42,6 +43,20 @@
 (define-generic (http-response::symbol r::%http-response socket))
 
 ;*---------------------------------------------------------------------*/
+;*    http-write-content-type ...                                      */
+;*---------------------------------------------------------------------*/
+(define (http-write-content-type p content-type charset)
+   (when content-type
+      (if charset
+	  (http-write-line p
+			   "Content-type: "
+			   (if content-type content-type "text/plain")
+			   "; charset=" charset)
+	  (http-write-line p
+			   "Content-type: "
+			   (if content-type content-type "text/plain")))))
+
+;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-authentication ...                 */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-authentication socket)
@@ -54,8 +69,7 @@
 	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: " connection)
-	    (when content-type
-	       (http-write-line p "Content-Type: " content-type))
+	    (http-write-content-type p content-type #f)
 	    (when server
 	       (http-write-line p "Server: " server))
 	    (when (string? body)
@@ -72,9 +86,9 @@
    (with-trace 3 'http-response::http-response-string
       (with-access::http-response-string r (start-line
 					    header
-					    content-type char-encoding
+					    content-type charset
 					    server content-length
-					    bodyp body char-encoding
+					    bodyp body
 					    timeout request)
 	 (let* ((p (socket-output socket))
 		(s body)
@@ -85,10 +99,7 @@
 	    (http-write-header p header)
 	    (http-write-line p "Content-Length: " (string-length s))
 	    (http-write-line p "Connection: " connection)
-	    (http-write-line p "Content-type: "
-			     (if content-type content-type "text/plain")
-			     "; charset="
-			     (or char-encoding (hop-char-encoding)))
+	    (http-write-content-type p content-type charset)
 	    (when server
 	       (http-write-line p "Server: " server))
 	    (http-write-line p)
@@ -103,7 +114,7 @@
    (with-trace 3 'http-response::http-response-js
       (with-access::http-response-js r (start-line
 					header
-					content-type char-encoding
+					content-type charset
 					server content-length value
 					bodyp timeout request)
 	 (let ((p (socket-output socket))
@@ -116,10 +127,7 @@
 		(http-write-line p "Content-Length: " content-length)
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
-	    (when content-type
-	       (http-write-line p "Content-Type: " content-type
-				"; charset="
-				(or char-encoding (hop-char-encoding))))
+	    (http-write-content-type p content-type charset)
 	    (when server
 	       (http-write-line p "Server: " server))
 	    ;; The case of the header names depends on the browse
@@ -139,32 +147,40 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop socket)
    (with-trace 3 'http-response::http-response-hop
-      (with-access::http-response-hop r (start-line header content-type server content-length xml char-encoding bodyp timeout request backend)
+      (with-access::http-response-hop r (request
+					 start-line header
+					 content-type charset server backend
+					 force-content-length content-length
+					 xml bodyp timeout)
 	 (let ((p (socket-output socket))
-	       (connection (http-request-connection request)))
+	       (connection (http-request-connection request))
+	       (sbody #f)
+	       (clen content-length))
+	    (when (and force-content-length (<=elong clen #e0))
+	       (let ((op (open-output-string)))
+		  (xml-write xml op backend)
+		  (set! sbody (close-output-port op))
+		  (set! clen (fixnum->elong (string-length sbody)))))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
-	    (if (>elong content-length #e0)
-		(http-write-line p "Content-Length: " content-length)
+	    (if (>elong clen #e0)
+		(http-write-line p "Content-Length: " clen)
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
-	    (when content-type
-	       (when content-type
-		  (http-write-line p "Content-Type: " content-type
-				   "; charset="
-				   (or char-encoding (hop-char-encoding)))))
+	    (http-write-content-type p (xml-backend-mime-type backend) charset)
 	    (when server
 	       (http-write-line p "Server: " server))
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-hop
 	       (when bodyp
-		  (xml-write xml
-			     p
-			     (or char-encoding (hop-char-encoding))
-			     backend)))
+		  (if sbody
+		      (begin
+			 (display sbody p)
+			 (newline p))
+		      (xml-write xml p backend))))
 	    (flush-output-port p)
 	    connection))))
 
@@ -173,7 +189,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-procedure socket)
    (with-trace 3 'http-response::http-response-procedure
-      (with-access::http-response-procedure r (start-line header content-type server content-length proc bodyp timeout request)
+      (with-access::http-response-procedure r (start-line header content-type charset server content-length proc bodyp timeout request)
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
@@ -184,8 +200,7 @@
 		(http-write-line p "Content-Length: " content-length)
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
-	    (when content-type
-	       (http-write-line p "Content-Type: " content-type))
+	    (http-write-content-type p content-type charset)
 	    (when server
 	       (http-write-line p "Server: " server))
 	    (http-write-line p)
@@ -200,7 +215,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-file socket)
    (with-trace 3 'http-response::http-response-file
-      (with-access::http-response-file r (start-line header content-type server file bodyp request timeout)
+      (with-access::http-response-file r (start-line header content-type charset server file bodyp request timeout)
 	 (if (authorized-path? request file)
 	     ;; In C the file is never read with RGC so it can
 	     ;; be open with a tiny buffer
@@ -224,8 +239,7 @@
 		    (http-write-line p start-line)
 		    (http-write-header p header)
 		    (http-write-line p "Connection: " connection)
-		    (when content-type
-		       (http-write-line p "Content-Type: " content-type))
+		    (http-write-content-type p content-type charset)
 		    (when server
 		       (http-write-line p "Server: " server))
 		    (http-write-line p "Content-Length: " (file-size file))
@@ -247,7 +261,7 @@
    (instantiate::http-response-hop
       (backend (hop-xml-backend))
       (content-type (xml-backend-mime-type (hop-xml-backend)))
-      (char-encoding (request-encoding (%http-response-request rep)))
+      (charset (hop-charset))
       (request (%http-response-request rep))
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (xml (if (%http-response-bodyp rep)
@@ -255,13 +269,15 @@
 		  (<HEAD> (<TITLE> dir))
 		  (<BODY>
 		     (<H1> dir)
-		     (<PRE> (map (lambda (f)
-				    (let ((path (make-file-name dir f)))
-				       (<A> :href path
-					 (if (directory? path)
-					     (string-append f "/\n")
-					     (string-append f "\n")))))
-				 (sort (directory->list dir) string<?)))))
+		     (let ((cvt (charset-converter (hop-locale) (hop-charset))))
+			(<PRE> (map (lambda (f)
+				       (let* ((fe (cvt f))
+					      (path (make-file-name dir fe)))
+					  (<A> :href path
+					     (if (directory? path)
+						 (string-append f "/\n")
+						 (string-append f "\n")))))
+				    (sort (directory->list dir) string<?))))))
 	       '()))))
 
 ;*---------------------------------------------------------------------*/
@@ -317,7 +333,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-cgi socket)
    (with-trace 3 'http-response::http-response-cgi
-      (with-access::http-response-cgi r (start-line header content-type server cgibin bodyp request timeout)
+      (with-access::http-response-cgi r (start-line header content-type charset server cgibin bodyp request timeout)
 	 (if (authorized-path? request cgibin)
 	     (let ((p (socket-output socket)))
 		(when (>fx timeout 0)
@@ -325,8 +341,7 @@
 		(http-write-line p start-line)
 		(http-write-header p header)
 		(http-write-line p "Connection: close")
-		(when content-type
-		   (http-write-line p "Content-Type: " content-type))
+		(http-write-content-type p content-type charset)
 		(when server
 		   (http-write-line p "Server: " server))
 		(http-write-line p)
@@ -355,7 +370,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-put socket)
    (with-trace 3 'http-response::http-response-put
-      (with-access::http-response-put r (start-line header content-type server uri bodyp timeout request)
+      (with-access::http-response-put r (start-line header content-type charset server uri bodyp timeout request)
 	 (let ((l (string-length uri)))
 	    (let loop ((i 0))
 	       (cond
@@ -364,6 +379,7 @@
 		    (instantiate::http-response-string
 		       (request request)
 		       (start-line "HTTP/1.0 400 Bad Request")
+		       (charset (hop-locale))
 		       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request ~a</body></html>" uri))
 		       (timeout timeout))
 		    socket))
@@ -376,8 +392,7 @@
 		      (http-write-line p start-line)
 		      (http-write-header p header)
 		      (http-write-line p "Connection: close")
-		      (when content-type
-			 (http-write-line p "Content-Type: " content-type))
+		      (http-write-content-type p content-type charset)
 		      (when server
 			 (http-write-line p "Server: " server))
 		      (http-write-line p)
@@ -422,12 +437,6 @@
    'persistent)
 
 ;*---------------------------------------------------------------------*/
-;*    request-encoding ...                                             */
-;*---------------------------------------------------------------------*/
-(define (request-encoding req)
-   (or (http-request-char-encoding req) (hop-char-encoding)))
-
-;*---------------------------------------------------------------------*/
 ;*    response-is-xml? ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (response-is-xml? p)
@@ -449,7 +458,7 @@
    (cond
       ((string? obj)
        (instantiate::http-response-string
-	  (char-encoding (request-encoding req))
+	  (charset (hop-locale))
 	  (request req)
 	  (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
@@ -458,7 +467,7 @@
        (instantiate::http-response-hop
 	  (backend (hop-xml-backend))
 	  (content-type (xml-backend-mime-type (hop-xml-backend)))
-	  (char-encoding (request-encoding req))
+	  (charset (hop-charset))
 	  (request req)
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
 	  (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -467,6 +476,7 @@
        (instantiate::http-response-js
 	  (backend (hop-xml-backend))
 	  (content-type (xml-backend-mime-type (hop-xml-backend)))
+	  (charset (hop-charset))
 	  (request req)
 	  (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	  (value obj)))))
@@ -485,7 +495,7 @@
       (request req)
       (backend (hop-xml-backend))
       (content-type (xml-backend-mime-type (hop-xml-backend)))
-      (char-encoding (request-encoding req))
+      (charset (hop-charset))
       (bodyp (not (eq? (http-request-method req) 'HEAD)))
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (xml obj)))
@@ -496,6 +506,7 @@
 (define (http-response-void)
    (instantiate::http-response-string
       (request (instantiate::http-request))
+      (charset (hop-locale))
       (start-line "HTTP/1.0 204 No Content")))
 
 ;*---------------------------------------------------------------------*/

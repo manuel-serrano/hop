@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Oct  3 08:50:58 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:36:27 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -156,13 +156,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-nptab-element p encoding backend)
+(define-method (xml-write obj::xml-nptab-element p backend)
    (with-access::xml-nptab-element obj (id head attributes)
       (display "<span id=\"" p)
       (display id p)
       (display "\"" p)
       (xml-write-attributes attributes p)
       (display ">" p)
-      (xml-write head p encoding backend)
+      (xml-write head p backend)
       (display "</span>" p)))
 

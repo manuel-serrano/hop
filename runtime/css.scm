@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Thu Sep 20 11:28:36 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 08:03:46 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -16,7 +16,8 @@
 
    (library web)
    
-   (import  __hop_read)
+   (import  __hop_read
+	    __hop_param)
 
    (use     __hop_types)
 

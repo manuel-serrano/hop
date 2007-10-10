@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Oct  2 08:23:40 2007 (serrano)                */
+#*    Last change :  Wed Oct 10 06:47:53 2007 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -30,7 +30,7 @@ HOPCLOSELIBS_E	= -lhop_s-$(HOPRELEASE)
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _OBJECTS	= param misc types thread \
-                  xml dom read \
+                  xml charset dom read \
                   read-js css js-lib cgi \
                   hop service \
                   job mime user cache \

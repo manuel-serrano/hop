@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Oct  9 09:02:25 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:44:56 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -367,7 +367,7 @@
 (define (flash-make-signal-value value)
    (cond
       ((xml? value)
-       (xml->string value (hop-char-encoding) (hop-xml-backend)))
+       (xml->string value (hop-xml-backend)))
       ((or (string? value) (number? value))
        value)
       (else

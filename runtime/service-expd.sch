@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Tue Oct  2 14:41:24 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 08:09:06 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -56,7 +56,7 @@
 			      (enc (cgi-arg "hop-encoding" ca)))
 			  (if (and (string? enc) (string=? enc "hop"))
 			      (begin
-				 (http-request-char-encoding-set! req 'UTF-8)
+				 (http-request-charset-set! req 'UTF-8)
 				 (,proc ,@(map (lambda (a)
 						  `(serialized-cgi-arg
 						    ,(symbol->string a) ca))

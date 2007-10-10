@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue Oct  2 20:13:06 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 08:23:23 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -55,6 +55,7 @@
 	       (if (string? cache)
 		   (instantiate::http-response-file
 		      (request req)
+		      (charset (hop-locale))
 		      (content-type mime)
 		      (bodyp (eq? method 'GET))
 		      (file cache))
@@ -63,11 +64,13 @@
 		      (if (string? cache)
 			  (instantiate::http-response-file
 			     (request req)
+			     (charset (hop-locale))
 			     (content-type mime)
 			     (bodyp (eq? method 'GET))
 			     (file cache))
 			  (instantiate::http-response-procedure
 			     (request req)
+			     (charset (hop-locale))
 			     (content-type mime)
 			     (bodyp (eq? method 'GET))
 			     (proc (lambda (p) (hss-write hss p))))))))))))
@@ -93,6 +96,7 @@
 			       ((file-exists? p)
 				(instantiate::http-response-file
 				   (request req)
+				   (charset (hop-locale))
 				   (content-type (mime-type p "text/plain"))
 				   (bodyp (eq? method 'GET))
 				   (file p)))
@@ -113,6 +117,7 @@
 			 (instantiate::http-response-hop
 			    (request req)
 			    (content-type (mime-type path "text/html"))
+			    (charset (hop-charset))
 			    (bodyp (eq? method 'GET))
 			    (header '((Cache-Control: . "no-cache")))
 			    (xml rep)))
@@ -132,17 +137,20 @@
 		  (instantiate::http-response-file
 		     (request req)
 		     (content-type (mime-type path "text/plain"))
+		     (charset (hop-locale))
 		     (bodyp (eq? method 'GET))
 		     (file path)))))
 	     ((OPTIONS)
 	      (if (hop-enable-webdav)
 		  (instantiate::http-response-string
 		     (request req)
+		     (charset (hop-locale))
 		     (header `((dav: . 1)
 			       (allow: . "GET, HEAD, POST, OPTIONS, COPY, MOVE, PUT, PROPFIND, PROPPATCH, MKCOL, DELETE")))
 		     (bodyp #f))
 		  (instantiate::http-response-string
 		     (request req)
+		     (charset (hop-locale))
 		     (header `((allow: . "GET, HEAD, POST, OPTIONS")))
 		     (bodyp #f))))
 	     ((PROPFIND)

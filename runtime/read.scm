@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Oct  9 19:11:06 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 09:08:00 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -21,7 +21,8 @@
 
    (import  __hop_param
 	    __hop_read-js
-	    __hop_css)
+	    __hop_css
+	    __hop_charset)
    
    (export  (loading-file-set! ::obj)
 	    (the-loading-file)
@@ -29,11 +30,22 @@
 	    
 	    (hop-load-afile ::bstring)
 	    
-	    (hop-read #!optional (iport::input-port (current-input-port)))
-	    (hop-load ::bstring #!key (env (interaction-environment)) (mode 'load))
+	    (hop-read #!optional
+		      (iport::input-port (current-input-port))
+		      (charset (hop-locale)))
+	    (hop-load ::bstring #!key
+		      (env (interaction-environment))
+		      (mode 'load)
+		      (charset (hop-locale)))
 
-	    (hop-load-once ::bstring #!key (env (interaction-environment)))
-	    (hop-load-modified ::bstring #!key (env (interaction-environment)))
+	    (hop-load-once ::bstring
+			   #!key
+			   (env (interaction-environment))
+			   (charset (hop-locale)))
+	    (hop-load-modified ::bstring
+			       #!key
+			       (env (interaction-environment))
+			       (charset (hop-locale)))
 	    (hop-load-once-unmark! ::bstring)
 	    
 	    (read-error msg obj port)
@@ -73,14 +85,6 @@
 	     (proc 'read)
 	     (msg msg)
 	     (obj obj))))
-
-;*---------------------------------------------------------------------*/
-;*    charset-string! ...                                              */
-;*---------------------------------------------------------------------*/
-(define (charset-string! str)
-   (if (eq? (hop-char-encoding) 'UTF-8)
-       (iso-latin->utf8! str)
-       str))
 
 ;*---------------------------------------------------------------------*/
 ;*    unreference! ...                                                 */
@@ -300,7 +304,7 @@
 		     (kid      (or digit letter kspecial))
 		     (blank    (in #\Space #\Tab #a012 #a013))
 		     
-		     cycles par-open bra-open par-poses bra-poses)
+		     cycles par-open bra-open par-poses bra-poses charset)
       
       ;; newlines
       ((+ #\Newline)
@@ -383,7 +387,7 @@
       ;; in order to increment the line-num variable strings
       ((: (? #\#) "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (the-substring 0 (-fx (the-length) 1))))
-	  (charset-string! (escape-C-string str))))
+	  (charset (escape-C-string str))))
       
       ;; fixnums
       ((: (? "+") (+ digit))
@@ -462,7 +466,8 @@
       ;; list of strings
       (#\[
        (let ((exp (read/rp *text-grammar* (the-port)
-			   cycles par-open bra-open par-poses bra-poses)))
+			   cycles par-open bra-open par-poses bra-poses
+			   charset)))
 	  (list 'quasiquote exp)))
       
       ;; vectors
@@ -601,28 +606,28 @@
 ;*    The grammar that parses texts (the [...] forms).                 */
 ;*---------------------------------------------------------------------*/
 (define *text-grammar*
-   (regular-grammar (cycles par-open bra-open par-poses bra-poses)
+   (regular-grammar (cycles par-open bra-open par-poses bra-poses charset)
 
       ((: (* (out ",[]\\")) #\])
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (charset-string! (the-substring 0 (-fx (the-length) 1)))))
+	      (item (charset (the-substring 0 (-fx (the-length) 1)))))
 	  (econs item '() loc)))
       ((: (* (out ",[\\")) ",]")
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (charset-string! (the-substring 0 (-fx (the-length) 1)))))
+	      (item (charset (the-substring 0 (-fx (the-length) 1)))))
 	  (econs item '() loc)))
       ((: (* (out ",[]\\")) #\, (out #\( #\] #\,))
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (charset-string! (the-string)))
+	      (item (charset (the-string)))
 	      (rest (ignore)))
 	  (econs item rest loc)))
       ((: (* (out ",[]\\")) #\,)
@@ -630,10 +635,10 @@
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (charset-string! (the-substring 0 (-fx (the-length) 1))))
+	      (item (charset (the-substring 0 (-fx (the-length) 1))))
 	      (sexp (read/rp *hop-grammar* (the-port)
 			     cycles par-open bra-open
-			     par-poses bra-poses))
+			     par-poses bra-poses charset))
 	      (rest (ignore)))
 	  (if (string=? item "")
 	      (cons (list 'unquote sexp) rest)
@@ -645,7 +650,7 @@
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (charset-string! (the-string)))
+	      (item (charset (the-string)))
 	      (rest (ignore)))
 	  (econs item rest loc)))
       ("\\\\"
@@ -679,12 +684,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-read ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-read #!optional (iport::input-port (current-input-port)))
+(define (hop-read #!optional
+		  (iport::input-port (current-input-port))
+		  (charset (hop-locale)))
    (if (closed-input-port? iport)
        (error 'hop-read "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
-	  (let ((e (read/rp *hop-grammar* iport '() 0 0 '() '())))
+	  (let* ((cvt (charset-converter! (hop-locale) (hop-charset)))
+		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cvt)))
 	     ((hop-read-post-hook) iport)
 	     e))))
 
@@ -756,7 +764,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-load file-name #!key (env (interaction-environment)) (mode 'load))
+(define (hop-load file-name
+		  #!key
+		  (env (interaction-environment))
+		  (mode 'load)
+		  (charset (hop-locale)))
    (let ((path (find-file/path file-name (hop-path))))
       (if (not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
@@ -774,13 +786,13 @@
 			  (case mode
 			     ((load)
 			      (let loop ((last #unspecified))
-				 (let ((sexp (hop-read port)))
+				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
 					last
 					(loop (eval sexp env))))))
 			     ((include)
 			      (let loop ((res '()))
-				 (let ((sexp (hop-read port)))
+				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
 					(reverse! res)
 					(loop (cons (eval sexp env) res))))))
@@ -812,7 +824,7 @@
 ;*    is #t and if the file has changed since the last load, it is     */
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load-once file env modifiedp)
+(define (%hop-load-once file env charset modifiedp)
    (with-trace 1 '%hop-load-once
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
@@ -856,7 +868,7 @@
 			    (condition-variable-signal! cv)
 			    (mutex-unlock! *load-once-mutex*)
 			    (raise e))
-			 (hop-load f :mode 'load :env env))
+			 (hop-load f :mode 'load :env env :charset charset))
 		      (mutex-lock! *load-once-mutex*)
 		      (hashtable-put! *load-once-table* f (cons 'loaded t))
 		      (condition-variable-signal! cv)
@@ -865,14 +877,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-once file #!key (env (interaction-environment)))
-   (%hop-load-once file env #f))
+(define (hop-load-once file
+		       #!key
+		       (env (interaction-environment))
+		       (charset (hop-locale)))
+   (%hop-load-once file env charset #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-modified ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-modified file #!key (env (interaction-environment)))
-   (%hop-load-once file env #t))
+(define (hop-load-modified file
+			   #!key
+			   (env (interaction-environment))
+			   (charset (hop-locale)))
+   (%hop-load-once file env charset #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once-unmark! ...                                        */

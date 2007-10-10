@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Oct  7 07:06:02 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 08:20:50 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -112,8 +112,11 @@
 	    (hop-hopaccess::bstring)
 	    (hop-hopaccess-set! ::bstring)
 	    
-	    (hop-char-encoding::symbol)
-	    (hop-char-encoding-set! ::symbol)
+	    (hop-charset::symbol)
+	    (hop-charset-set! ::symbol)
+	    
+	    (hop-locale::symbol)
+	    (hop-locale-set! ::symbol)
 
 	    (hop-default-mime-type::bstring)
 	    (hop-default-mime-type-set! ::bstring)
@@ -620,16 +623,41 @@
    "text/html")
 
 ;*---------------------------------------------------------------------*/
-;*    hop-char-encoding ...                                            */
+;*    hop-charset ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    This parameter specifies the charset used by HOP for             */
+;*    representing texts inside XML trees (i.e., http-response-hop)    */
+;*    If one wish to change the value of this parameter, he should     */
+;*    make the change before any HOP tree has been produced, i.e., at  */
+;*    the very beginning of the HOP session.                           */
+;*    It should be noted that other responses (e.g.,                   */
+;*    http-response-string) can use a different charset.               */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-char-encoding
+(define-parameter hop-charset
    'UTF-8
    (lambda (v)
       (case v
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
 	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
-	 (else (error 'hop-char-encoding-set! "Illegal char encoding" v)))))
+	 (else (error 'hop-charset-set! "Illegal charset" v)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-locale ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    This parameter specifies the default charset of files hosted on  */
+;*    the server disc and the default charset of string responses.     */
+;*    HOP-LOCALE is mainly used to convert the files read from the     */
+;*    disc into the charset specified by HOP-CHARSET.                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-locale
+   'ISO-8859-1
+   (lambda (v)
+      (case v
+	 ((UTF-8 utf-8) 'UTF-8)
+	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
+	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
+	 (else (error 'hop-locale-set! "Illegal charset" v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-upload-directory ...                                         */

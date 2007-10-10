@@ -58,7 +58,7 @@ A cache can be created such as:
                             (string-append "demo-"
                                            (integer->string (hop-port)))))
       (out (lambda (o p)
-              (xml-write o p (hop-char-encoding) (hop-xml-backend))))))
+              (xml-write o p (hop-xml-backend))))))
 
 </markup>
 

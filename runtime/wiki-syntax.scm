@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon May  7 11:15:12 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 08:05:27 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -17,6 +17,7 @@
    (library web)
 
    (import  __hop_xml
+	    __hop_param
 	    __hop_read)
 
    (static  (class state

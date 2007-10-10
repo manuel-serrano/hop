@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Tue Oct  2 08:26:06 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 07:49:57 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -22,6 +22,7 @@
 	    __hop_types
 	    __hop_xml
 	    __hop_misc
+	    __hop_charset
 	    __hop_js-lib
 	    __hop_service)
 
@@ -51,7 +52,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-svg ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-svg p encoding backend)
+(define-method (xml-write obj::xml-svg p backend)
    (with-access::xml-svg obj (body)
       (let loop ((body body))
 	 (cond
@@ -271,7 +272,7 @@
       (lambda ()
 	 (let ((tree (xml-parse (current-input-port)
 				:content-length 0
-				:encoding 'UTF-8
+				:encoding (hop-charset)
 				:procedure create-svg-img-markup)))
 
 	    ;; patch the svg element
@@ -331,9 +332,8 @@
 	    (read-attribute p)
 	    (case key
 	       ((>)
-		(let ((body (if (string-ci=? encoding "\"ISO-8859-1\"")
-				(iso-latin->utf8! (read-string p))
-				(read-string p))))
+		(let* ((str (read-string p))
+		       (body (charset-convert str encoding (hop-charset))))
 		   (cond
 		      (viewbox
 		       ;; the image has already a viewbox
@@ -395,14 +395,14 @@
 ;*    read-svg-img-encoding ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (read-svg-img-encoding ip)
-   (let loop ((encoding #f))
+   (let loop ((encoding 'UTF-8))
       (multiple-value-bind (key val)
 	 (read-attribute ip)
 	 (case key
 	    ((>)
 	     encoding)
 	    ((encoding)
-	     val)
+	     (string->symbol (string-upcase! val)))
 	    (else
 	     (loop encoding))))))
 
@@ -414,7 +414,7 @@
 ;*      2- it inject the user required identity id='...'               */
 ;*      3- it set height and width to "100%"                           */
 ;*      4- it introduces a viewBox from older height and width         */
-;*      5- it translates the iso-latin encoding into utf-8             */
+;*      5- it translates the iso-latin encoding into HOP-CHARSET       */
 ;*      6- it rebinds svg identifiers                                  */   
 ;*---------------------------------------------------------------------*/
 (define (read-svg-img id prefix attributes p)

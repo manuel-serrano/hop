@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Oct  3 08:02:57 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 08:32:06 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -174,6 +174,9 @@
       (start-line "HTTP/1.0 404 Not Found")
       (request (or (current-request) (instantiate::http-request)))
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+      (backend (hop-xml-backend))
+      (content-type (xml-backend-mime-type (hop-xml-backend)))
+      (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> (current-request))
 	      (<BODY>
@@ -197,6 +200,9 @@
       (request (or (current-request) (instantiate::http-request)))
       (start-line "HTTP/1.0 404 Not Found")
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+      (backend (hop-xml-backend))
+      (content-type (xml-backend-mime-type (hop-xml-backend)))
+      (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> (current-request))
 	      (<BODY>
@@ -221,6 +227,9 @@
 	 (request (or (current-request) (instantiate::http-request)))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
 		 (<BODY>
@@ -268,6 +277,7 @@ a timeout which has now expired. The service is then no longer available."))
    (instantiate::http-response-error
       (request (instantiate::http-request))
       (start-line "HTTP/1.0 403 Forbidden")
+      (charset (hop-locale))
       (body (format "Permission denied: ~s" file))))
 
 ;*---------------------------------------------------------------------*/
@@ -277,6 +287,7 @@ a timeout which has now expired. The service is then no longer available."))
    (instantiate::http-response-error
       (request (instantiate::http-request))
       (start-line "HTTP/1.0 501 Not Implemented")
+      (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Method not implemented ~a</body></html>"
 		    obj))))
 
@@ -287,6 +298,7 @@ a timeout which has now expired. The service is then no longer available."))
    (instantiate::http-response-error
       (request (instantiate::http-request))
       (start-line "HTTP/1.0 400 Bad Request")
+      (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Parse error in HTTP request on token <tt>~a</tt>/body></html>"
 		    obj))))
 
@@ -297,6 +309,7 @@ a timeout which has now expired. The service is then no longer available."))
    (instantiate::http-response-error
       (request (instantiate::http-request))
       (start-line "HTTP/1.0 400 Bad Request")
+      (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request <tt><pre>~a</pre></tt></body></html>" obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -308,6 +321,9 @@ a timeout which has now expired. The service is then no longer available."))
 	 (request (or (current-request) (instantiate::http-request)))
 	 (start-line "HTTP/1.0 501 Internal Server Error")
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
 		 (<BODY>
@@ -356,6 +372,9 @@ a timeout which has now expired. The service is then no longer available."))
       (instantiate::http-response-hop
 	 (request req)
 	 (start-line "HTTP/1.0 400 Bad Request")
+	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> req)
 		 (<BODY>
@@ -385,6 +404,9 @@ a timeout which has now expired. The service is then no longer available."))
       (request req)
       (start-line "HTTP/1.0 404 Not Found")
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+      (backend (hop-xml-backend))
+      (content-type (xml-backend-mime-type (hop-xml-backend)))
+      (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> req)
 	      (<BODY>
@@ -417,6 +439,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (request req)
       (start-line "HTTP/1.0 404 Not Found")
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+      (backend (hop-xml-backend))
+      (content-type (xml-backend-mime-type (hop-xml-backend)))
+      (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> req)
 	      (<BODY>
@@ -444,6 +469,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (instantiate::http-response-error
 	 (request (instantiate::http-request))
 	 (start-line "HTTP/1.0 400 Bad Request")
+	 (charset (hop-locale))
 	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>" s)))))
    
 ;*---------------------------------------------------------------------*/
@@ -454,6 +480,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (request (current-request))
       (start-line "HTTP/1.0 200 ok")
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+      (backend (hop-xml-backend))
+      (content-type (xml-backend-mime-type (hop-xml-backend)))
+      (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> (current-request))
 	      (<BODY>
@@ -476,6 +505,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (request (or (current-request) (instantiate::http-request)))
       (start-line "HTTP/1.0 503 Service Unavailable")
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+      (backend (hop-xml-backend))
+      (content-type (xml-backend-mime-type (hop-xml-backend)))
+      (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> (current-request))
 	      (<BODY>
@@ -500,6 +532,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (request (current-request))
 	 (start-line "HTTP/1.0 503 Service Unavailable")
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
 		 (<BODY>
@@ -526,6 +561,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 	 (request (current-request))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
 		 (<BODY>
@@ -553,6 +591,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
    (instantiate::http-response-error
       (request (instantiate::http-request))
       (start-line "HTTP/1.0 502 Bad Gateway")
+      (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Gateway Timeout ~a</body></html>" e))))
 
 

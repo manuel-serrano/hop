@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Aug 31 08:53:09 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:37:30 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -77,7 +77,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-slider ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-slider p encoding backend)
+(define-method (xml-write obj::html-slider p backend)
    (with-access::html-slider obj (id klass value min max step onchange caption)
       (let ((gid (gensym))
 	    (oc (cond

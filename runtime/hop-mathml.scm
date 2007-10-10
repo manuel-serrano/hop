@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Tue Oct  2 08:25:42 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:36:14 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
@@ -46,7 +46,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-math ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-math p encoding backend)
+(define-method (xml-write obj::xml-math p backend)
    (with-access::xml-math obj (markup id attributes body)
       (display (car body) p)))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan  8 08:36:26 2007                          */
-;*    Last change :  Mon Jan  8 18:18:56 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:57:11 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP RSS bindings                                                 */
@@ -60,7 +60,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-rss ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-rss p encoding backend)
+(define-method (xml-write obj::xml-rss p backend)
    (with-access::xml-rss obj (header markup attributes body)
       (display header p)
       (newline p)
@@ -78,7 +78,7 @@
    (let ((hd (or header
 		 (format "<?xml version=\"1.0\" encoding=\"~a\"?>"
 			 (string-downcase
-			  (symbol->string (hop-char-encoding)))))))
+			  (symbol->string (hop-charset)))))))
       (instantiate::xml-rss
 	 (markup 'rss)
 	 (header hd)

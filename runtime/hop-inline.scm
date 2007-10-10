@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Sun Aug 12 10:57:02 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:36:05 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -68,10 +68,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-inline-element ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-inline-element p encoding backend)
+(define-method (xml-write obj::xml-inline-element p backend)
    (with-access::xml-inline-element obj (host port path userinfo authorization eid)
       (xml-write (xml-inline host port path userinfo authorization eid)
-		 p encoding backend)))
+		 p backend)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-inline ...                                                   */

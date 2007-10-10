@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Jun  7 06:48:12 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:37:55 2007 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -62,7 +62,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tabslider ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-tabslider p encoding backend)
+(define-method (xml-write obj::html-tabslider p backend)
    (with-access::html-tabslider obj (id width height body index history)
       (fprintf p "<div class='hop-tabslider' id='~a'" id)
       (when (or width height)
@@ -70,7 +70,7 @@
 		  (if width  (format "width: ~a;" width) "")
 		  (if height (format "height: ~a;" height) "")))
       (display ">" p)
-      (xml-write body p encoding backend)
+      (xml-write body p backend)
       (display "</div>" p)
       (fprintf p
 	       "<script type='~a'>hop_tabslider_init('~a', ~a, ~a)</script>"
@@ -114,8 +114,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::html-tspan ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::html-tspage p encoding backend)
-   (xml-write (html-tspage-body obj) p encoding backend))
+(define-method (xml-write obj::html-tspage p backend)
+   (xml-write (html-tspage-body obj) p backend))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TSHEAD> ...                                                     */

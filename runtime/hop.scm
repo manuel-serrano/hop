@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Sep 18 09:15:21 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 05:39:40 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -253,19 +253,16 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (with-hop-response obj success fail)
    (if (response-is-xml? obj)
-       (with-hop-response-xml obj #f success (hop-xml-backend))
+       (with-hop-response-xml obj success (hop-xml-backend))
        (success obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-response-xml ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (with-hop-response-xml obj encoding success backend)
+(define (with-hop-response-xml obj success backend)
    (let ((s (with-output-to-string
 	       (lambda ()
-		  (xml-write obj
-			     (current-output-port)
-			     (or encoding (hop-char-encoding))
-			     backend)))))
+		  (xml-write obj (current-output-port) backend)))))
       (success s)))
 
 ;*---------------------------------------------------------------------*/
@@ -294,7 +291,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-response obj::http-response-hop success fail)
    (with-hop-response-xml (http-response-hop-xml obj)
-			  (http-response-hop-char-encoding obj)
 			  success
 			  (http-response-hop-backend obj)))
 

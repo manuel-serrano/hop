@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Sep  6 17:30:16 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 09:02:56 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -35,7 +35,7 @@
 	      (socket (default #f))
 	      (header::pair-nil (default '()))
 	      (content-length::elong read-only (default #e-1))
-	      (char-encoding (default #f))
+	      (charset (default #f))
 	      (timeout::int (default -1)))
 	   
 	   (class http-request::%http-message
@@ -94,6 +94,7 @@
 
 	   (class http-response-hop::%http-response-local
 	      (backend read-only (default (hop-xml-backend)))
+	      (force-content-length read-only (default #f))
 	      (xml read-only))
 	   
 	   (class http-response-js::%http-response-local
@@ -120,9 +121,6 @@
 	   
 	   (class http-response-put::%http-response-local
 	      (uri::bstring read-only))
-
-	   (class http-response-webdav::%http-response-local
-	      (xml read-only))
 
 	   (class hop-service
 	      ;; the service identifier (e.g., doc/example)

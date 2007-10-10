@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May 15 06:46:38 2006                          */
-;*    Last change :  Fri Oct  6 07:19:37 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Wed Oct 10 05:43:55 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME wiki manager                                            */
 ;*=====================================================================*/
@@ -30,7 +30,7 @@
 			    (string-append "home-"
 					   (integer->string (hop-port)))))
       (out (lambda (o p)
-	      (xml-write o p (hop-char-encoding) (hop-xml-backend))))))
+	      (xml-write o p (hop-xml-backend))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki->hop ...                                                    */

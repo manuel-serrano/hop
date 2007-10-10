@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Mon Oct  1 05:17:16 2007 (serrano)                */
+;*    Last change :  Wed Oct 10 09:02:38 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -86,50 +86,14 @@
 (define-xmldav <DAV:HREF> :markup D:href)
 
 ;*---------------------------------------------------------------------*/
-;*    http-response ::http-response-webdav ...                         */
-;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-webdav socket)
-   (with-trace 3 'http-response::http-response-webdav
-      (with-access::http-response-webdav r (start-line
-					    request timeout
-					    content-type char-encoding
-					    header xml)
-	 (let* ((p (socket-output socket))
-		(ce (or char-encoding (hop-char-encoding)))
-		(sbody (let ((op (open-output-string)))
-			  (xml-write xml op ce *webdav-backend*)
-			  (close-output-port op)))
-		(s (if (eq? ce 'UTF-8)
-		       (iso-latin->utf8! sbody)
-		       sbody))
-		(connection (if (eq? (http-request-connection request)
-				     'keep-alive)
-				(http-request-connection request)
-				'close)))
-	    (when (>fx timeout 0) (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
-	    (http-write-line p "Content-Type: text/xml"
-			     (if (eq? char-encoding 'UTF-8)
-				 "; charset=\"utf-8\""
-				 ""))
-	    (http-write-line p "Content-Length: " (string-length s))
-	    (http-write-line p "Connection: " connection)
-	    (http-write-header p header)
-	    (http-write-line p)
-	    (display s p)
-	    (newline p)
-	    (flush-output-port p)
-	    connection))))
-
-;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-webdav ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-webdav p encoding backend)
+(define-method (xml-write obj::xml-webdav p backend)
    (with-access::xml-backend backend (header-format doctype html-attributes)
-      (fprintf p header-format encoding)
+      (fprintf p header-format (hop-charset))
       (newline p)
       (for-each (lambda (b)
-		   (xml-write b p encoding backend))
+		   (xml-write b p backend))
 		(xml-webdav-body obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -259,10 +223,7 @@
 ;*    webdav-propfind ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (webdav-propfind req::http-request)
-   (with-access::http-request req (char-encoding
-				   content-length
-				   socket
-				   path user header)
+   (with-access::http-request req (content-length socket path user header)
       (cond
 	 ((not (authorized-service? req 'webdav))
 	  (user-service-denied req user 'webdav))
@@ -274,10 +235,13 @@
 			   (webdav-propfind-all-properties)
 			   (parse-propfind-body
 			    content-length (socket-input socket)))))
-	     (instantiate::http-response-webdav
+	     (instantiate::http-response-hop
 		(request req)
 		(start-line "HTTP/1.1 207 Multi-Status")
-		(char-encoding (or char-encoding (hop-char-encoding)))
+		(backend *webdav-backend*)
+		(content-type (xml-backend-mime-type *webdav-backend*))
+		(charset (hop-charset))
+		(force-content-length #t)
 		(xml (<DAV>
 			(<DAV:MULTISTATUS>
 			   (directory->dav path depth props))))))))))
@@ -286,11 +250,10 @@
 ;*    webdav-proppatch ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (webdav-proppatch req::http-request)
-   (with-access::http-request req (char-encoding)
-      (instantiate::http-response-string
-	 (request req)
-	 (char-encoding (or char-encoding (hop-char-encoding)))
-	 (start-line "HTTP/1.1 403 Forbidden"))))
+   (instantiate::http-response-string
+      (request req)
+      (charset (hop-locale))
+      (start-line "HTTP/1.1 403 Forbidden")))
 
 ;*---------------------------------------------------------------------*/
 ;*    <GETCONTENTLENGTH> ...                                           */
@@ -393,7 +356,7 @@
 ;*    webdav-mkcol ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (webdav-mkcol req::http-request)
-   (with-access::http-request req (char-encoding path content-length)
+   (with-access::http-request req (path content-length)
       (let* ((dir (dirname path))
 	     (parent (dirname dir)))
 	 (cond
@@ -406,40 +369,40 @@
 		((not (directory? parent))
 		 (instantiate::http-response-string
 		    (request req)
-		    (char-encoding (or char-encoding (hop-char-encoding)))
+		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 409 Conflict")))
 		((directory? dir)
 		 (instantiate::http-response-string
 		    (request req)
-		    (char-encoding (or char-encoding (hop-char-encoding)))
+		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 405 Not allowed")))
 		((not (make-directory dir))
 		 (instantiate::http-response-string
 		    (request req)
-		    (char-encoding (or char-encoding (hop-char-encoding)))
+		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 507 Insufficient Storage")))
 		((>=elong content-length #e0)
 		 (instantiate::http-response-string
 		    (request req)
-		    (char-encoding (or char-encoding (hop-char-encoding)))
+		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 415 Unsupported Media Type")))
 		(else
 		 (instantiate::http-response-string
 		    (request req)
-		    (char-encoding (or char-encoding (hop-char-encoding)))
+		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 201 Created")))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-delete ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (webdav-delete req::http-request)
-   (with-access::http-request req (char-encoding path content-length header)
+   (with-access::http-request req (path content-length header)
       (let ((depth (assq depth: header)))
 	 (cond
 	    ((not (file-exists? path))
 	     (instantiate::http-response-string
 		(request req)
-		(char-encoding (or char-encoding (hop-char-encoding)))
+		(charset (hop-locale))
 		(start-line "HTTP/1.1 404 File Not Found")))
 	    ((directory? path)
 	     (if (and (pair? depth) (not (string=? (cadr depth) "infinity")))
@@ -447,22 +410,22 @@
 		 (if (rm-rf path)
 		     (instantiate::http-response-string
 			(request req)
-			(char-encoding (or char-encoding (hop-char-encoding)))
+			(charset (hop-locale))
 			(start-line "HTTP/1.1 200 Ok"))
 		     (instantiate::http-response-string
 			(request req)
-			(char-encoding (or char-encoding (hop-char-encoding)))
+			(charset (hop-locale))
 			(start-line "HTTP/1.1 424 Failed Dependency")))))
 	    
 	    (else
 	     (if (delete-file path)
 		 (instantiate::http-response-string
 		    (request req)
-		    (char-encoding (or char-encoding (hop-char-encoding)))
+		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 200 Ok"))
 		 (instantiate::http-response-string
 		    (request req)
-		    (char-encoding (or char-encoding (hop-char-encoding)))
+		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 424 Failed Dependency"))))))))
    
 ;*---------------------------------------------------------------------*/
@@ -470,20 +433,20 @@
 ;*---------------------------------------------------------------------*/
 (define (webdav-copy req::http-request)
    
-   (define (resp ce status)
+   (define (resp status)
       (instantiate::http-response-string
 	 (request req)
-	 (char-encoding ce)
+	 (charset (hop-locale))
 	 (start-line status)))
    
-   (define (cp-file ce overwrite src dst)
+   (define (cp-file overwrite src dst)
       (let* ((dst (if (directory? dst) (make-file-name dst (basename src)) dst))
 	     (dir (dirname dst)))
 	 (cond
 	    ((not (directory? dir))
-	     (resp ce "HTTP/1.1 409 Conflict"))
+	     (resp "HTTP/1.1 409 Conflict"))
 	    ((and (file-exists? dst) (string=? overwrite "F"))
-	     (resp ce "HTTP/1.1 412 Precondition Failed"))
+	     (resp "HTTP/1.1 412 Precondition Failed"))
 	    (else
 	     (let ((status (if (file-exists? dst)
 			       "HTTP/1.1 204 No Content"
@@ -492,16 +455,19 @@
 		(if (copy-file src dst)
 		    (begin
 		       (chmod dst mod)
-		       (resp ce status))
-		    (resp ce "HTTP/1.1 507 Insufficient Storage")))))))
+		       (resp status))
+		    (resp "HTTP/1.1 507 Insufficient Storage")))))))
 
-   (define (cp-dir-response ce cp-res)
+   (define (cp-dir-response cp-res)
       (if (null? cp-res)
-	  (resp ce "HTTP/1.1 201 Created")
-	  (instantiate::http-response-webdav
+	  (resp "HTTP/1.1 201 Created")
+	  (instantiate::http-response-hop
 	     (request req)
 	     (start-line "HTTP/1.1 207 Multi-Status")
-	     (char-encoding ce)
+	     (backend *webdav-backend*)
+	     (content-type (xml-backend-mime-type *webdav-backend*))
+	     (charset (hop-locale))
+	     (force-content-length #t)
 	     (xml (<DAV>
 		     (<DAV:MULTISTATUS>
 			(map (lambda (p)
@@ -510,55 +476,53 @@
 				   (<DAV:STATUS> "HTTP/1.1 507 Insufficient Storage")))
 			     cp-res)))))))
 
-   (define (cp-r2 ce mod src dst)
+   (define (cp-r2 mod src dst)
       (if (make-directory dst)
 	  (begin
 	     (chmod dst mod)
 	     (let ((cp-res (append-map (lambda (p) (cp-r p dst))
 				       (directory->path-list src))))
-		(cp-dir-response ce cp-res)))
-	  (resp ce "HTTP/1.1 507 Insufficient Storage")))
+		(cp-dir-response cp-res)))
+	  (resp "HTTP/1.1 507 Insufficient Storage")))
    
-   (define (cp-dir ce overwrite depth src dst)
+   (define (cp-dir overwrite depth src dst)
       (let* ((mod (file-mode src))
 	     (dir (if (directory? dst) dst (dirname dst)))
 	     (dst (make-file-name dir (basename dst))))
 	 (cond
 	    ((not (directory? dir))
-	     (resp ce "HTTP/1.1 409 Conflict"))
+	     (resp "HTTP/1.1 409 Conflict"))
 	    ((and (file-exists? dst) (string=? overwrite "F"))
-	     (resp ce "HTTP/1.1 412 Precondition Failed"))
+	     (resp "HTTP/1.1 412 Precondition Failed"))
 	    ((string=? depth "0")
 	     ;; just create the directory
 	     (cond
 		((and (file-exists? dst) (directory? dst))
-		 (resp ce "HTTP/1.1 204 No Content"))
+		 (resp "HTTP/1.1 204 No Content"))
 		((make-directory dst)
 		 (chmod dst mod)
-		 (resp ce "HTTP/1.1 201 Created"))
+		 (resp "HTTP/1.1 201 Created"))
 		(else
-		 (resp ce "HTTP/1.1 507 Insufficient Storage"))))
+		 (resp "HTTP/1.1 507 Insufficient Storage"))))
 	    ((string=? depth "infinity")
 	     ;; copy recursively the directory
 	     (cond
 		((not (file-exists? dst))
-		 (cp-r2 ce mod src dst))
+		 (cp-r2 mod src dst))
 		((not (directory? dst))
 		 (if (delete-file dst)
-		     (cp-r2 ce mod src dst)
-		     (resp ce "HTTP/1.1 424 Failed Dependency")))
+		     (cp-r2 mod src dst)
+		     (resp "HTTP/1.1 424 Failed Dependency")))
 		(else
-		 (cp-dir-response ce (cp-r src dst)))))
+		 (cp-dir-response (cp-r src dst)))))
 	    (else
 	     (http-bad-request (format "Illegal depth: ~a" (cadr depth)))))))
    
    (with-access::http-request req (header
-				   path
-				   char-encoding content-length
+				   path content-length
 				   scheme host port user)
       (let* ((destination (get-header header destination: #f))
 	     (overwrite (get-header header overwrite: "T"))
-	     (ce (or char-encoding (hop-char-encoding)))
 	     (i (string-index destination #\:))
 	     (dest (when destination
 		      (multiple-value-bind (_ _ dhost dport dabspath)
@@ -573,70 +537,68 @@
 	    ((not dest)
 	     (http-bad-request "Missing destination"))
 	    ((not (file-exists? path))
-	     (resp ce "HTTP/1.1 404 File Not Found"))
+	     (resp "HTTP/1.1 404 File Not Found"))
 	    ((string=? path destination)
-	     (resp ce "HTTP/1.1 403 Forbidden"))
+	     (resp "HTTP/1.1 403 Forbidden"))
 	    ((or (not (user-authorized-path? user (dirname dest)))
 		 (not (user-authorized-path? user path)))
 	     (user-access-denied req))
 	    ((directory? path)
 	     (let ((depth (get-header header depth: "infinity")))
-		(cp-dir ce overwrite depth path dest)))
+		(cp-dir overwrite depth path dest)))
 	    (else
-	     (cp-file ce overwrite path dest))))))
+	     (cp-file overwrite path dest))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-move ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (webdav-move req::http-request)
    
-   (define (resp ce status)
+   (define (resp status)
       (instantiate::http-response-string
 	 (request req)
-	 (char-encoding ce)
+	 (charset (hop-locale))
 	 (start-line status)))
    
-   (define (mv-file ce overwrite src dst)
+   (define (mv-file overwrite src dst)
       (let* ((dst (if (directory? dst)
 		      (make-file-name dst (basename src))
 		      dst))
 	     (dir (dirname dst)))
 	 (cond
 	    ((not (directory? dir))
-	     (resp ce "HTTP/1.1 409 Conflict"))
+	     (resp "HTTP/1.1 409 Conflict"))
 	    ((and (file-exists? dst) (string=? overwrite "F"))
-	     (resp ce "HTTP/1.1 412 Precondition Failed"))
+	     (resp "HTTP/1.1 412 Precondition Failed"))
 	    (else
 	     (let ((status (if (file-exists? dst)
 			       "HTTP/1.1 204 No Content"
 			       "HTTP/1.1 201 Created")))
 		(when (file-exists? dst) (delete-file dst))
 		(if (rename-file src dst)
-		    (resp ce status)
-		    (resp ce "HTTP/1.1 507 Insufficient Storage")))))))
+		    (resp status)
+		    (resp "HTTP/1.1 507 Insufficient Storage")))))))
    
-   (define (mv-dir ce overwrite depth src dst)
+   (define (mv-dir overwrite depth src dst)
       (let* ((mod (file-mode src))
 	     (dir (if (directory? dst) dst (dirname dst)))
 	     (dst (make-file-name dir (basename dst))))
 	 (cond
 	    ((not (directory? dir))
-	     (resp ce "HTTP/1.1 409 Conflict"))
+	     (resp "HTTP/1.1 409 Conflict"))
 	    ((and (file-exists? dst) (string=? overwrite "F"))
-	     (resp ce "HTTP/1.1 412 Precondition Failed"))
+	     (resp "HTTP/1.1 412 Precondition Failed"))
 	    (else
 	     (when (file-exists? dst) (rm-rf dst))
 	     (if (or (file-exists? dst) (not (rename-file src dst)))
-		 (resp ce "HTTP/1.1 409 Conflict")
-		 (resp ce "HTTP/1.1 204 No Content"))))))
+		 (resp "HTTP/1.1 409 Conflict")
+		 (resp "HTTP/1.1 204 No Content"))))))
    
    (with-access::http-request req (header
 				   path
-				   char-encoding content-length
-				   scheme host port user)
+				   content-length scheme host port user)
       (let* ((destination (get-header header destination: #f))
 	     (overwrite (get-header header overwrite: "T"))
-	     (ce (or char-encoding (hop-char-encoding)))
 	     (i (string-index destination #\:))
 	     (dest (when destination
 		      (multiple-value-bind (_ _ dhost dport dabspath)
@@ -651,25 +613,25 @@
 	    ((not dest)
 	     (http-bad-request "Missing destination"))
 	    ((not (file-exists? path))
-	     (resp ce "HTTP/1.1 404 File Not Found"))
+	     (resp "HTTP/1.1 404 File Not Found"))
 	    ((string=? path destination)
-	     (resp ce "HTTP/1.1 403 Forbidden"))
+	     (resp "HTTP/1.1 403 Forbidden"))
 	    ((or (not (user-authorized-path? user dest))
 		 (not (user-authorized-path? user path)))
 	     (user-access-denied req))
 	    ((directory? path)
 	     (let ((depth (get-header header depth: "infinity")))
 		(if (and (string? depth) (string=? depth "infinity"))
-		    (mv-dir ce overwrite depth path dest)
+		    (mv-dir overwrite depth path dest)
 		    (http-bad-request (format "Illegal depth: ~a" depth)))))
 	    (else
-	     (mv-file ce overwrite path dest))))))
+	     (mv-file overwrite path dest))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-put ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (webdav-put req::http-request)
-   (with-access::http-request req (path content-length socket char-encoding)
+   (with-access::http-request req (path content-length socket)
       (let ((status (if (file-exists? path)
 			"HTTP/1.1 204 No Content"
 			"HTTP/1.1 201 Created"))
@@ -679,21 +641,21 @@
 	    ((not (output-port? p))
 	     (instantiate::http-response-string
 		(request req)
-		(char-encoding (or char-encoding (hop-char-encoding)))
+		(charset (hop-locale))
 		(start-line (if (directory? (dirname path))
 				"HTTP/1.1 507 Insufficient Storage"
 				"HTTP/1.1 409 Conflict"))))
 	    ((<=fx len (send-chars (socket-input socket) p len))
 	     (instantiate::http-response-string
 		(request req)
-		(char-encoding (or char-encoding (hop-char-encoding)))
+		(charset (hop-locale))
 		(start-line status)))
 	    (else
 	     (close-output-port p)
 	     (delete-file path)
 	     (instantiate::http-response-string
 		(request req)
-		(char-encoding (or char-encoding (hop-char-encoding)))
+		(charset (hop-locale))
 		(start-line "HTTP/1.1 507 Insufficient Storage")))))))
    
 ;*---------------------------------------------------------------------*/
