@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Oct 10 16:06:46 2007 (serrano)                */
+;*    Last change :  Thu Oct 11 07:52:32 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -38,6 +38,7 @@
 	       key::symbol
 	       (buffer::pair-nil (default '()))
 	       (lastpair::pair-nil (default '()))
+	       (date::elong (default (current-seconds)))
 	       (count::int (default 0))))
 	    
    (export  (hop-event-init! ::obj)
@@ -91,8 +92,9 @@
 ;*    Get values from a non empty buffer.                              */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-get! conn)
-   (with-access::ajax-connection conn (buffer lastpair count)
+   (with-access::ajax-connection conn (buffer lastpair count date)
       (let ((res buffer))
+	 (set! date (current-seconds))
 	 (set! count 0)
 	 (set! buffer '())
 	 (set! lastpair '())
@@ -124,8 +126,10 @@
 ;*    ajax-connection-available? ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-available? conn)
-   (with-access::ajax-connection conn (count req)
-      (or (<fx count (hop-event-buffer-size)) (http-request? req))))
+   (with-access::ajax-connection conn (count date req)
+      (or (http-request? req)
+	  (and (<fx count (hop-event-buffer-size))
+	       (<elong (-elong (current-seconds) date) (hop-event-timeout))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
@@ -171,10 +175,11 @@
    (define (ajax-register-event! req name key)
       (let ((conn (ajax-find-connection name key)))
 	 (if conn
-	     ;; we already have a connection
+	     ;; we already have a connection...
 	     (if (ajax-connection-empty? conn)
-		 ;; no value is waiting in the buffer
-		 (with-access::ajax-connection conn ((r req))
+		 ;; with an empty buffer...
+		 (with-access::ajax-connection conn ((r req) date)
+		    (set! date (current-seconds))
 		    (when (http-request? r)
 		       ;; we already have a connection but this connection
 		       ;; has probably timeouted, so we close it before

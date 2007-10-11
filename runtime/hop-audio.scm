@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Oct  9 12:14:21 2007 (serrano)                */
+;*    Last change :  Thu Oct 11 17:56:55 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -35,7 +35,8 @@
 	    __hop_cgi
 	    __hop_read
 	    __hop_event
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_charset)
    
    (export  (<AUDIO> . args)
 	    
@@ -375,10 +376,16 @@
 	     (with-handler
 		(lambda (e)
 		   (when (string? file)
-		      (hop-event-broadcast!
-		       %event (list 'meta state len pos (url-decode file) pl song vol))))
-		(hop-event-broadcast!
-		 %event (list 'meta state len pos (mp3-id3 file) pl song vol)))
+		      (let ((s (charset-convert (url-decode file)
+						(hop-locale)
+						(hop-charset))))
+			 (hop-event-broadcast!
+			  %event (list 'meta state len pos s pl song vol)))))
+		(let ((s (charset-convert (mp3-id3 file)
+					  (hop-locale)
+					  (hop-charset))))
+		   (hop-event-broadcast!
+		    %event (list 'meta state len pos s pl song vol))))
 	     (hop-event-broadcast!
 	      %event (list 'meta state len pos #f pl song vol))))))
 
@@ -414,9 +421,8 @@
 ;*    audio-loop ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (audio-loop player)
-   (tprint "======== AUDIO-LOOP STARTED...")
    (with-access::hop-audio-player player (%event engine)
-      (let loop ((oldstate 'stop)
+      (let luup ((oldstate 'stop)
 		 (oldvol -1)
 		 (oldsong -1)
 		 (oldplaylist -1)
@@ -429,34 +435,32 @@
 		   (signal-state! %event 'error err #f))
 		;; an new error has been spotted
 		(sleep 1000347)
-		(loop 'error oldvol oldsong oldplaylist 60))
+		(luup 'error oldvol oldsong oldplaylist 60))
 	       ((not (=fx vol oldvol))
 		;; volume notification
 		(signal-volume! %event vol)
-		(loop oldstate vol oldsong oldplaylist 60))
+		(luup oldstate vol oldsong oldplaylist 60))
 	       ((refresh-forced? player)
 		;; a refresh has been forced
 		(signal-meta! %event engine state pos)
-		(loop state vol song playlist 60))
+		(luup state vol song playlist 60))
 	       ((or (not (=fx oldsong song))
 		    (not (=fx oldplaylist playlist)))
 		;; playlist (meta) notification
 		(signal-meta! %event engine state pos)
-		(loop state vol song playlist 60))
+		(luup state vol song playlist 60))
 	       ((=fx len 0)
 		;; the engine has not gathered yet the music length
 		(sleep 1000347)
-		(loop 'length-unknown vol song playlist ttl))
+		(luup 'length-unknown vol song playlist ttl))
 	       ((or (not (eq? oldstate state)) (=fx ttl 0))
 		;; notity a state change (or a ttl reaches)
 		(signal-state! %event state len pos)
-		(loop state vol song playlist 60))
+		(luup state vol song playlist 60))
 	       ((hop-event-client-ready? %event)
 		;; nothing has changed but clients are still connected
 		(sleep 1000347)
-		(loop state vol song playlist 60)))))
-      (tprint "========= CLOSING..." %event)
-      (music-close engine)
+		(luup state vol song playlist 60)))))
       #f))
 
 ;*---------------------------------------------------------------------*/
@@ -475,20 +479,27 @@
 	       (else
 		(sleep 1000347)
 		(loop (-fx count 1)))))))
-      
+   
    (make-hop-thread
     (lambda ()
-       (with-access::hop-audio-player player (%event)
+       (with-access::hop-audio-player player (%event engine)
 	  (when (wait-first-client player)
 	     (let liip ()
 		(with-handler
 		   (lambda (e)
+		      (tprint "***AUDIO-THREAD ERROR: " e)
 		      (if (&io-error? e)
 			  (begin
 			     (error-notify e)
 			     (signal-state! %event 'error (&io-error-msg e) #f))
 			  (raise e)))
-		   (audio-loop player))
+		   (unwind-protect
+		      (begin
+		         (tprint "======== AUDIO-LOOP STARTED...")
+			 (audio-loop player))
+		      (begin
+			 (tprint "========= CLOSING..." %event)
+			 (music-close engine))))
 		(sleep 3000562)
 		(liip)))))))
 

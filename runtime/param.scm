@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Oct 10 08:20:50 2007 (serrano)                */
+;*    Last change :  Thu Oct 11 07:51:20 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -192,6 +192,9 @@
 
 	    (hop-event-buffer-size::int)
 	    (hop-event-buffer-size-set! ::int)
+
+	    (hop-event-timeout::elong)
+	    (hop-event-timeout-set! ::elong)
 	    
 	    (hop-rc-loaded!)))
 
@@ -849,9 +852,19 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-buffer-size ...                                        */
+;*    -------------------------------------------------------------    */
+;*    The maximum number of entries an event server buffer may hold.   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-event-buffer-size
-   5)
+   100)
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-timeout ...                                            */
+;*    -------------------------------------------------------------    */
+;*    A number of seconds a server event buffer is kept alive          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-event-timeout
+   #e30)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */
