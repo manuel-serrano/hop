@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Thu Sep 20 15:22:17 2007 (serrano)                */
+;*    Last change :  Mon Oct 15 08:35:39 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -15,6 +15,7 @@
 (module hophome_demo
    (import hophome_config
 	   hophome_widgets
+	   hophome
 	   hophome_demos-minesweeper
 	   hophome_demos-sudoku
 	   hophome_demos-repl
@@ -218,19 +219,34 @@ be used to access the whole source code of this playground.]))))
 ;*    <ZIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (<ZIMG> svc s1 s2 inl . r)
-   (let ((id (xml-make-id))
-	 (p1 (img->data (format "etc/icons/~a" s1) inl))
-	 (p2 (img->data (format "etc/icons/~a" s2) inl))
-	 (w (if (pair? r) (car r) "200"))
-	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
-	 (t (string-capitalize (basename svc))))
+   (let* ((id (xml-make-id))
+	  (i1 (format "etc/icons/~a" s1))
+	  (i2 (format "etc/icons/~a" s2))
+	  (p1 (img->data i1 inl))
+	  (p2 (img->data i2 inl))
+	  (w (if (pair? r) (car r) "200"))
+	  (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
+	  (t (string-capitalize (basename svc))))
       (<IMG> :id id
 	 :src p1
 	 :inline #t
 	 :title t
 	 :alt t
-	 :onmouseover ~(set! (document.getElementById $id).src $p2)
-	 :onmouseout ~(set! (document.getElementById $id).src $p1)
+	 :onerror ~(let ((i (document.getElementById $id)))
+		      (set! i.onerror
+			    (lambda (x)
+			       (set! i.src $(service-resource home i1))))
+		      (set! i.src $p1))
+	 :onmouseover ~(let ((i (document.getElementById $id)))
+			  (set! i.onerror
+				(lambda (x)
+				   (set! i.src $(service-resource home i2))))
+			  (set! i.src $p2))
+	 :onmouseout ~(let ((i (document.getElementById $id)))
+			 (set! i.onerror
+			       (lambda (x)
+				  (set! i.src $(service-resource home i1))))
+			 (set! i.src $p1))
 	 :onclick ~(let ((frame (document.createElement "iframe"))
 			 (t (document.getElementById $id))
 			 (p (document.getElementById "demo-playground")))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Oct 11 17:56:55 2007 (serrano)                */
+;*    Last change :  Fri Oct 12 11:30:21 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -501,7 +501,8 @@
 			 (tprint "========= CLOSING..." %event)
 			 (music-close engine))))
 		(sleep 3000562)
-		(liip)))))))
+		(when (hop-event-client-ready? %event)
+		   (liip))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-set! ...                                          */
@@ -529,6 +530,7 @@
       (enable-threads
        (with-access::hop-audio-player player (%service %event engine)
 	  (set! %service (service (a0 a1)
+			    (tprint "player received: " a0)
 			    (with-handler
 			       (lambda (e)
 				  (error-notify e)
