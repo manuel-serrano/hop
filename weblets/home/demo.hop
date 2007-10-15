@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Mon Oct 15 08:35:39 2007 (serrano)                */
+;*    Last change :  Mon Oct 15 09:05:45 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -174,13 +174,13 @@ be used to access the whole source code of this playground.]))))
 	     (p (document.getElementById "demo-playground")))
 	  (set! frame.className "demos")
 	  (set! frame.src $(make-service-url home/demos/tips))
-	  (set! frame.style.border "0")
-	  (set! frame.style.width "100%")
-	  (set! frame.style.height "99%")
+	  (node-style-set! frame "border-width" "0")
+	  (node-style-set! frame "width" "100%")
+	  (node-style-set! frame "height" $(format "~apx" h))
 	  (let* ((w (window-open :id $t
 		       :src frame
 		       :width $w :height $h
-		       :left (/ (- window.innerWidth $w) 2) :top 200
+		       :left (/ (- (window-width) $w) 2) :top 200
 		       :parent p))
 		 (i (<SPAN> :class "icon" $t)))
 	     (set! i.onmousedown
@@ -252,9 +252,9 @@ be used to access the whole source code of this playground.]))))
 			 (p (document.getElementById "demo-playground")))
 		      (set! frame.className "demos")
 		      (set! frame.src $svc)
-		      (node-style-set! frame :width "100%")
-		      (node-style-set! frame :height "99%")
-		      (node-style-set! frame :border-width 0)
+		      (node-style-set! frame "border-width" "0")
+		      (node-style-set! frame "width" "100%")
+		      (node-style-set! frame "height" $(format "~apx" h))
 		      (let* ((w (window-open :id $t
 				   :src frame
 				   :width $w :height $h

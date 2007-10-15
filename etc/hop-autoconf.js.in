@@ -432,17 +432,17 @@ var hop_window_width = undefined;
 var hop_window_height = undefined;
 
 if( isNaN( window.innerWidth ) ) {
-   hop_window_width = function hop_window_width( win ) {
+   hop_window_width = function hop_window_width() {
       return document.documentElement.clientWidth;
    }
-   hop_window_height = function hop_window_height( win ) {
+   hop_window_height = function hop_window_height() {
       return document.documentElement.clientHeight;
    }
 } else {
-   hop_window_width = function hop_window_width( win ) {
+   hop_window_width = function hop_window_width() {
       return window.innerWidth;
    }
-   hop_window_height = function hop_window_height( win ) {
+   hop_window_height = function hop_window_height() {
       return window.innerHeight;
    }
 }
