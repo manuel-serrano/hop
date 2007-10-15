@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Sep 20 13:45:46 2007 (serrano)                */
+;*    Last change :  Mon Oct 15 15:23:35 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -128,8 +128,9 @@
 		      (<TD> (<DIV> :id "wiki-title" "Hop Wiki Pre-Viewer")
 			    (<TABLE> :width "100%"
 			       (<TR> (<TD> :class "document"
-					(if (file-exists? file)
-					    (wiki-file->hop file)))))))))
+					(when (and (file-exists? file)
+						   (not (directory? file)))
+					   (wiki-file->hop file)))))))))
 	     (<FOOT>)))
        (http-file-not-found file)))
 

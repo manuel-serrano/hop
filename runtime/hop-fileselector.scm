@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Sun Oct  7 08:46:16 2007 (serrano)                */
+;*    Last change :  Mon Oct 15 15:46:58 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
@@ -35,6 +35,18 @@
    (export  (<FILESELECT> . ::obj)
 	    (<FILEBROWSE> . ::obj)
 	    filebrowse))
+
+;*---------------------------------------------------------------------*/
+;*    val->fun ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (val->fun val)
+   (cond
+      ((string? val)
+       (format "function() { return ~s }" (string-for-read val)))
+      ((xml-tilde? val)
+       (format "function() { return ~a }" (tilde->string val)))
+      (else
+       "function() { return false }")))
    
 ;*---------------------------------------------------------------------*/
 ;*    *fileselect-service* ...                                         */
@@ -88,14 +100,7 @@
 	     :type "text" :size size :value value
 	     :onkeydown (format "hop_fileselect_keypress( ~a, this, event, ~a )"
 				(hop-service-javascript svc)
-				(cond
-				   ((string? onchange)
-				    (format "function() { ~a }" onchange))
-				   ((xml-tilde? onchange)
-				    (format "function() { ~a }"
-					    (xml-tilde-body onchange)))
-				   (else
-				    "function() { return false; }")))
+				(val->fun onchange))
 	     (map (lambda (e) (list (symbol->keyword (car e)) (cdr e)))
 		  attributes))))
 
@@ -236,7 +241,7 @@
 		    "hop-filebrowse")
 	 :value value
 	 :onmousedown (or onmousedown "")
-	 :onclick (format "~a; hop_stop_propagation( event, false ); this.onselect=~a; hop_filebrowse( ~a, '~a', '~a', ~a, this.value, '~a', ~a, hop_event_mouse_x( event ), hop_event_mouse_y( event ), ~a, ~a )"
+	 :onclick (format "~a; hop_stop_propagation( event, false ); this.onselect=~a; hop_filebrowse( ~a, '~a', '~a', ~a, function() { return document.getElementById( '~a' ).value;}, ~a, ~a, hop_event_mouse_x( event ), hop_event_mouse_y( event ), ~a, ~a )"
 			  ;; user onclick
 			  (cond
 			     ((xml-tilde? onclick)
@@ -246,14 +251,7 @@
 			     (else
 			      "false"))
 			  ;; onselect
-			  (cond
-			     ((xml-tilde? onselect)
-			      (format "function() { ~a }"
-				      (xml-tilde-body onselect)))
-			     ((string? onselect)
-			      (format "function() { ~a }" onselect))
-			     (else
-			      "function() { return false; }"))
+			  (val->fun onselect)
 			  ;; service
 			  (hop-service-javascript svc)
 			  ;; title
@@ -261,11 +259,11 @@
 			  ;; button ident
 			  id
 			  ;; label
-			  (if (string? label)
-			      (string-append "\"" (string-for-read label) "\"")
-			      "false")
+			  (val->fun label)
+			  ;; id
+			  id
 			  ;; path
-			  path
+			  (val->fun path)
 			  ;; multiselect
 			  (if multiselect "true" "false")
 			  ;; with and height
@@ -320,21 +318,11 @@
 	      ;; ident
 	      (xml-make-id id 'FILEBROWSE)
 	      ;; label
-	      (cond
-		 ((string? label)
-		  (format "function() { return ~s }" (string-for-read label)))
-		 ((xml-tilde? label)
-		  (format "function() { return ~a }" (tilde->string label)))
-		 (else
-		  "function() { return false }"))
+	      (val->fun label)
 	      ;; value
-	      (if (string? value)
-		  (format "function() { return ~s }" (string-for-read value))
-		  (format "function() { return ~a }" (tilde->string value)))
+	      (val->fun value)
 	      ;; path
-	      (if (string? path)
-		  (format "function() { return ~s }" (string-for-read path))
-		  (format "function() { return ~a }" (tilde->string path)))
+	      (val->fun path)
 	      ;; multiselect
 	      (if multiselect "true" "false")
 	      ;; width, height

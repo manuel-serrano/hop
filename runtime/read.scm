@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Oct 10 09:08:00 2007 (serrano)                */
+;*    Last change :  Mon Oct 15 15:30:12 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -691,7 +691,7 @@
        (error 'hop-read "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
-	  (let* ((cvt (charset-converter! (hop-locale) (hop-charset)))
+	  (let* ((cvt (charset-converter! charset (hop-charset)))
 		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cvt)))
 	     ((hop-read-post-hook) iport)
 	     e))))

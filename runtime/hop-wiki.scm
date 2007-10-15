@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Wed Dec  6 09:59:34 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Mon Oct 15 15:36:14 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
 ;*=====================================================================*/
@@ -43,13 +43,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki-cache->hop ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (wiki-cache->hop wiki-cache src syntax)
+(define (wiki-cache->hop wiki-cache src syntax charset)
    (let ((cache (cache-get wiki-cache src)))
       (if (string? cache)
 	  (with-input-from-file cache
 	     (lambda ()
 		(read-string)))
-	  (let* ((wiki (wiki-file->hop src syntax))
+	  (let* ((wiki (wiki-file->hop src :syntax syntax :charset charset))
 		 (cache (cache-put! wiki-cache src wiki)))
 	     (if (string? cache)
 		 (with-input-from-file cache
@@ -62,16 +62,17 @@
 (define-xml-compound <WIKI> ((src #unspecified string)
 			     (syntax #unspecified wiki-syntax)
 			     (cache #unspecified cache)
+			     (charset (hop-locale))
 			     body)
    (let ((syn (if (eq? syntax #unspecified)
 		  #f
 		  syntax)))
       (cond
 	 ((eq? src #unspecified)
-	  (wiki-string->hop (flatten body) syn))
+	  (wiki-string->hop (flatten body) :syntax syn :charset charset))
 	 ((not (string? src))
 	  (error '<WIKI> "Illegal wiki src" src))
 	 ((file-exists? src)
 	  (if (cache? cache)
-	      (wiki-cache->hop cache src syn)
-	      (wiki-file->hop src syn))))))
+	      (wiki-cache->hop cache src syn charset)
+	      (wiki-file->hop src :syntax syn :charset charset))))))

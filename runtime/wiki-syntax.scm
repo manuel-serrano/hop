@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Oct 10 08:05:27 2007 (serrano)                */
+;*    Last change :  Mon Oct 15 15:33:26 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -15,11 +15,12 @@
 (module __hop_wiki-syntax
    
    (library web)
-
+   
    (import  __hop_xml
 	    __hop_param
-	    __hop_read)
-
+	    __hop_read
+	    __hop_charset)
+   
    (static  (class state
 	       markup::symbol
 	       syntax::procedure
@@ -72,10 +73,17 @@
 	       (keyword::procedure (default (lambda (x) x)))
 	       (type::procedure (default (lambda (x) x)))
 	       (plugins::procedure (default (lambda (id) #f))))
-
-	    (wiki-string->hop ::bstring #!optional syntax)
-	    (wiki-file->hop ::bstring #!optional syntax)
-	    (wiki-input-port->hop ::input-port #!optional syntax)))
+	    
+	    (wiki-string->hop ::bstring #!key
+			      syntax
+			      (charset (hop-locale)))
+	    (wiki-file->hop ::bstring #!key
+			    syntax
+			    (charset (hop-locale)))
+	    (wiki-input-port->hop ::input-port
+				  #!key
+				  syntax
+				  (charset (hop-locale)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *default-syntax* ...                                             */
@@ -86,7 +94,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki-string->hop ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (wiki-string->hop string #!optional syntax)
+(define (wiki-string->hop string #!key syntax (charset (hop-locale)))
    (with-input-from-string string
       (lambda ()
 	 (read/rp *wiki-grammar*
@@ -94,26 +102,34 @@
 		  (or syntax *default-syntax*)
 		  '()
 		  '()
-		  0))))
+		  0
+		  (if (procedure? charset)
+		      charset
+		      (charset-converter! charset (hop-charset)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-file->hop ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (wiki-file->hop file #!optional syntax)
+(define (wiki-file->hop file #!key syntax (charset (hop-locale)))
    (with-input-from-file file
       (lambda ()
-	 (wiki-input-port->hop (current-input-port) syntax))))
+	 (wiki-input-port->hop (current-input-port)
+			       :syntax syntax
+			       :charset charset))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-input-port->hop ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (wiki-input-port->hop iport #!optional syntax)
+(define (wiki-input-port->hop iport #!key syntax (charset (hop-locale)))
    (read/rp *wiki-grammar*
 	    iport
 	    (or syntax *default-syntax*)
 	    '()
 	    '()
-	    0))
+	    0
+	    (if (procedure? charset)
+		charset
+		(charset-converter! charset (hop-charset)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-read-error ...                                              */
@@ -133,14 +149,14 @@
    (regular-grammar ((punct (in "+*=/_-$#%"))
 		     (blank (in "<>^|:~;,`'(){}[] \\\n"))
 		     (letter (out "<>+^|*=/_-$#%:~;,`'(){}[] \\\n"))
-		     syn state result trcount)
+		     syn state result trcount charset)
 
       ;; misc
       (define (the-html-string)
-	 (html-string-encode (the-string)))
+	 (html-string-encode (charset (the-string))))
       
       (define (the-html-substring start end)
-	 (html-string-encode (the-substring start end)))
+	 (html-string-encode (charset (the-substring start end))))
       
       ;; result and expression
       (define (add-expr! str)
@@ -612,7 +628,8 @@
 		     (href h
 			   (wiki-string->hop
 			    (substring s (+fx i 1) (string-length s))
-			    syn))))))
+			    :syntax syn
+			    :charset charset))))))
 	  (ignore)))
 
       ;; embedded hop
