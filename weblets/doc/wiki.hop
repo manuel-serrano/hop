@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Thu Aug 16 11:50:10 2007 (serrano)                */
+;*    Last change :  Wed Oct 17 11:12:27 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -281,7 +281,7 @@
 		    (unwind-protect
 		       (begin
 			  (eval-module-set! m1)
-			  (wiki-input-port->hop iport syntax))
+			  (wiki-input-port->hop iport :syntax syntax))
 		       (begin
 			  (eval-module-set! m2)
 			  (close-input-port iport)))))))))
@@ -331,6 +331,7 @@
 		       (err "???"))
 		    (unwind-protect
 		       (let ((doc (wiki-input-port->hop iport
+							:syntax
 							*meta-wiki-syntax*)))
 			  (close-input-port iport)
 			  (set! iport (open-input-file path))

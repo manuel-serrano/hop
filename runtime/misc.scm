@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Fri Jun  8 11:02:13 2007 (serrano)                */
+;*    Last change :  Tue Oct 16 17:02:56 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -279,7 +279,8 @@
       ((directory? path)
        (let ((lst (directory->list path)))
 	  (for-each (lambda (f) (delete-path (make-file-name path f))) lst)
-	  (delete-directory path)))
+	  (delete-directory path)
+	  #t))
       (else
        (delete-file path))))
 

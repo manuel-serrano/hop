@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Oct 10 05:39:40 2007 (serrano)                */
+;*    Last change :  Mon Oct 15 17:35:56 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -41,7 +41,7 @@
    (export  (current-request::obj)
 	    (request-get::obj ::symbol)
 	    (request->response::%http-response ::http-request)
-	    (with-url ::bstring ::obj #!key fail (header '()))
+	    (with-url ::bstring ::obj #!key fail (header '()) (timeout 0))
 	    (with-remote-host ::bstring ::hop-service ::pair-nil ::obj ::obj)
 	    (generic with-hop-response obj proc fail)
 	    (hop-get-file::obj ::bstring)))
@@ -188,7 +188,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-url  ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (with-url url success #!key fail (header '()))
+(define (with-url url success #!key fail (header '()) (timeout 0))
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
 	     ": " url "\n")
@@ -210,6 +210,7 @@
 			  (host host)
 			  (port port)
 			  (header header)
+			  (timeout timeout)
 			  (path path)))
 		    (suc (if (procedure? success) success (lambda (x) x)))
 		    (hdl (make-http-callback 'with-url r suc fail)))

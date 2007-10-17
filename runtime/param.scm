@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Oct 11 07:51:20 2007 (serrano)                */
+;*    Last change :  Tue Oct 16 08:32:19 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -643,6 +643,7 @@
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
 	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
+	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
 	 (else (error 'hop-charset-set! "Illegal charset" v)))))
 
 ;*---------------------------------------------------------------------*/
@@ -660,6 +661,7 @@
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((ISO-8859-1 iso-8859-1) 'ISO-8859-1)
 	 ((ISO-8859-2 iso-8859-2) 'ISO-8859-2)
+	 ((ISO-8859-15 iso-8859-15) 'ISO-8859-15)
 	 (else (error 'hop-locale-set! "Illegal charset" v)))))
 
 ;*---------------------------------------------------------------------*/

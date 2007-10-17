@@ -35,7 +35,7 @@
    (let ((o (with-handler
 	       (lambda (e)
 		  (<SPAN> :class "error" (html-string-encode src)))
-	       (wiki-string->hop src *wikiedit-syntax*))))
+	       (wiki-string->hop src :syntax *wikiedit-syntax*))))
       (with-output-to-string
 	 (lambda ()
 	    (xml-write o (current-output-port) (hop-char-encoding) (hop-xml-backend))))))

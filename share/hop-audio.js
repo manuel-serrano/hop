@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Oct  9 12:14:35 2007 (serrano)                */
+/*    Last change :  Mon Oct 15 17:17:59 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -88,12 +88,15 @@ function HopAudioServerProxy( audio, url ) {
    o.pause = function() {
       with_hop( hop_service_url_varargs( url, Spause ), err );
    };
-   o.load = function( l ) {
+   o.load = function( l, s ) {
       with_hop( hop_service_url_varargs( url, Sload, l ),
 		function( h ) {
 		   if( !h ) {
 		      err( h );
 		   } else {
+		      if( s ) {
+			 with_hop( hop_service_url_varargs( url, Splay, 0 ), err );
+		      }
 		      hop_audio_run_hooks( audio, "load" );
 		   }
 		} );

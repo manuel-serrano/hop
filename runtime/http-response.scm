@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Oct 10 09:09:59 2007 (serrano)                */
+;*    Last change :  Mon Oct 15 17:37:16 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -528,13 +528,6 @@
 	       (when (> timeout 0)
 		  (output-port-timeout-set! out timeout)
 		  (input-port-timeout-set! in timeout))
-	       (http :in in :out out
-		  :protocol scheme :method method :http-version httpv
-		  :host host :port port :path path :header header
-		  :authorization authorization
-		  :login user
-		  :body socket
-		  :proxy (hop-proxy))
 	       (with-handler
 		  (lambda (e)
 		     (if (&http-redirection? e)
@@ -547,6 +540,13 @@
 				      (make-file-name (dirname path) rpath)
 				      rpath)))
 			 (raise e)))
+		  (http :in in :out out
+		     :protocol scheme :method method :http-version httpv
+		     :host host :port port :path path :header header
+		     :authorization authorization :timeout timeout
+		     :login user
+		     :body socket
+		     :proxy (hop-proxy))
 		  (unwind-protect
 		     (http-parse-response in out proc)
 		     (socket-close sock))))))))

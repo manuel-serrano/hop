@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Wed Oct 10 16:18:05 2007 (serrano)                */
+;*    Last change :  Tue Oct 16 08:32:50 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
@@ -26,9 +26,9 @@
    (if (eq? charset1 charset2)
        str
        (case charset1
-	  ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	  ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	       str)
 	      ((UTF-8)
 	       (iso-latin->utf8 str))
@@ -38,7 +38,7 @@
 	       str)))
 	  ((UTF-8)
 	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	       (utf8->iso-latin str))
 	      ((UCS-2)
 	       (utf8-string->ucs2-string str))
@@ -46,7 +46,7 @@
 	       str)))
 	  ((UCS-2)
 	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	       (utf8->iso-latin! (ucs2-string->utf8-string str)))
 	      ((UTF-8)
 	       (ucs2-string->utf8-string str))
@@ -62,9 +62,9 @@
    (if (eq? charset1 charset2)
        (lambda (x) x)
        (case charset1
-	  ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	  ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	       (lambda (x) x))
 	      ((UTF-8)
 	       iso-latin->utf8)
@@ -75,7 +75,7 @@
 	       (lambda (x) x))))
 	  ((UTF-8)
 	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	       utf8->iso-latin)
 	      ((UCS-2)
 	       (lambda (str)
@@ -84,7 +84,7 @@
 	       (lambda (x) x))))
 	  ((UCS-2)
 	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	       (lambda (str)
 		  (utf8->iso-latin! (ucs2-string->utf8-string str))))
 	      ((UTF-8)
@@ -101,9 +101,9 @@
    (if (eq? charset1 charset2)
        (lambda (x) x)
        (case charset1
-	  ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	  ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	       (lambda (x) x))
 	      ((UTF-8)
 	       iso-latin->utf8!)
@@ -114,7 +114,7 @@
 	       (lambda (x) x))))
 	  ((UTF-8)
 	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	       utf8->iso-latin!)
 	      ((UCS-2)
 	       (lambda (str)
@@ -123,7 +123,7 @@
 	       (lambda (x) x))))
 	  ((UCS-2)
 	   (case charset2
-	      ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 WINDOWS-1252)
+	      ((ISO-8859-1 ISO-8859-2 ISO-8859-15 ISO-LATIN-1 WINDOWS-1252)
 	       (lambda (str)
 		  (utf8->iso-latin! (ucs2-string->utf8-string str))))
 	      ((UTF-8)

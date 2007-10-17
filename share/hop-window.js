@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Mon Oct 15 09:03:46 2007 (serrano)                */
+/*    Last change :  Mon Oct 15 17:10:37 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -544,7 +544,11 @@ function hop_window_open() {
 	 
 	 return win;
       } else {
-	 throw new Error( "window-open: no :src specified" );
+	 if( src ) {
+	    throw new Error( "window-open: illegal :src" + src );
+	 } else {
+	    throw new Error( "window-open: no :src specified" );
+	 }
       }
    }
 
@@ -564,7 +568,7 @@ function hop_window_open() {
    // arguments parsing
    while( i < l ) {
       var k = arguments[ i++ ];
-      
+
       if( sci_isKeyword( k ) ) {
 	 if( k === Ktitle ) {
 	    title = arguments[ i++ ];

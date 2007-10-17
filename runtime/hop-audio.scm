@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Oct 12 11:30:21 2007 (serrano)                */
+;*    Last change :  Tue Oct 16 08:08:51 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -368,7 +368,9 @@
    (let* ((s (music-song engine))
 	  (c (when (pair? s) (assq :file s)))
 	  (file (if (pair? c) (cdr c) #f))
+	  (_ (tprint "music-playlist-get.1.."))
 	  (pl (music-playlist-get engine)))
+      (tprint "music-playlist-get.2..:" pl)
       (multiple-value-bind (_ _ song _ len vol _ _ _)
 	 (music-info engine)
 	 (tprint "signal-meta: " state " song=" song " len=" len " pos=" pos)
@@ -545,7 +547,8 @@
 				  ((pause)
 				   (music-pause engine))
 				  ((play)
-				   (music-play engine a1))
+				   (music-play engine a1)
+				   #unspecified)
 				  ((stop)
 				   (music-stop engine))
 				  ((position)
