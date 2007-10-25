@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Oct 10 05:52:27 2007 (serrano)                */
+;*    Last change :  Tue Oct 23 23:05:35 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -254,7 +254,7 @@
    (instantiate::xml-backend
       (id 'html-4.01)
       (mime-type "text/html")
-      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Strict//EN\">\n")
+      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Strict//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
       (html-attributes '())
       (header-format "")
       (no-end-tags-elements '(link))
@@ -572,13 +572,16 @@
 	  (display id p)
 	  (display "\"" p)
 	  (xml-write-attributes attributes p)
-	  (if (xml-backend-abbrev-emptyp backend)
-	      (display "/>" p)
-	      (begin
-		 (display ">" p)
-		 (display "</" p)
-		 (display markup p)
-		 (display ">" p))))
+	  (cond
+	     ((xml-backend-abbrev-emptyp backend)
+	      (display "/>" p))
+	     ((memq markup (xml-backend-no-end-tags-elements backend))
+	      (display ">" p))
+	     (else
+	      (display ">" p)
+	      (display "</" p)
+	      (display markup p)
+	      (display ">" p))))
 	 (else
 	  (display "<" p)
 	  (display markup p)

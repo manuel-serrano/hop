@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Oct  3 05:34:59 2007 (serrano)                */
+/*    Last change :  Thu Oct 18 13:32:29 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP serialized (Bigloo compatible).                              */
@@ -119,7 +119,7 @@ function hop_serialize_word( word ) {
 /*---------------------------------------------------------------------*/
 /*    ucs2_to_utf8 ...                                                 */
 /*---------------------------------------------------------------------*/
-function ucs2_to_utf8( s ) {
+function ucs2_to_utf8( s ) { /// export ucs2-string->utf8-sring
    var len = s.length;
 
    for( var i = 0; i < len; i++ ) {

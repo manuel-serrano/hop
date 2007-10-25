@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu Sep 20 14:01:47 2007 (serrano)                */
+/*    Last change :  Sat Oct 20 15:32:12 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -979,3 +979,17 @@ table.global-search td:hover {
   text-decoration: underline;
 }
 
+/*---------------------------------------------------------------------*/
+/*    weblet facts                                                     */
+/*---------------------------------------------------------------------*/
+table.weblet-facts {
+  margin-left: 3ex;
+  padding: 2px;
+  font-size: 85%;
+  border: 1px solid $border-color;
+  background: #eeffdd;
+}
+
+table.weblet-facts th:after {
+  content: ": ";
+}

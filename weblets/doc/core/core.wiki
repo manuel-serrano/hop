@@ -298,6 +298,27 @@ is an expression creating an instance of the ++point3d++:
 Class fields that are provided with a default value are not required  by
 ++instantiate++.
 
-== Client Side core language ==
+== Character set ==
+
+The character set (charset) used for denoting strings of characters varies
+depending on the execution context and the configuration parameters.
+On the client-side, the charset used is the one of the hosting platform.
+Since HOP client-side expressions are designed to be strictly compatible
+with JavaScript, these expressions adopt the JavScript charset which is
+UCS-2. 
+
+~~ The communications between the client and the server can be changed but
+by default UTF-8 is used.
+
+~~ The charset of the server depends on two parameters: ++hop-locale++
+and ++hop-charset++. The first one specifies the charset of the native
+environment hosting the server (i.e., the charset of the operating that
+is running the server). The latter specifies how HOP internally represents
+character strings. Hence, if ++hop-locale++ differs from ++hop-charset++
+a translation mechanism is involved when expressions are read. Several
+functions (++charset-convert++, ++iso-latin->utf8++, or 
+++ucs2-string->utf8-string++) can be used for converting strings from
+one charset into another.
+
 
 </doc>

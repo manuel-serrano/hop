@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Thu Aug 16 09:59:59 2007 (serrano)                */
+;*    Last change :  Thu Oct 18 07:24:00 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -82,7 +82,7 @@
 	       (<DIV> :class "core doc-tab"
 		  (doc-page
 		   (make-file-name (doc-core-dir) "core.wiki")
-		   (make-wiki-request-syntax (doc-wiki-syntax)))))
+		   (make-wiki-request-syntax (doc-api-syntax)))))
 	    
 	    (<NPTAB> :id "doc-libraries"
 	       (<NPTABHEAD> "Libraries")

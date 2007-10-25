@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Oct  3 09:08:46 2007 (serrano)                */
+/*    Last change :  Tue Oct 23 23:30:34 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -418,6 +418,7 @@ table.download span.old {
 /*    Foot                                                             */
 /*---------------------------------------------------------------------*/
 div.foot {
+  text-align: center;
   margin-top: 5px;
 }
 

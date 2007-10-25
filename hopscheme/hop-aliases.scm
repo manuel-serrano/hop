@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 25 14:33:37 2006                          */
-;*    Last change :  Wed Sep 26 13:58:00 2007 (serrano)                */
+;*    Last change :  Thu Oct 25 17:19:49 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP aliases.                                                     */
@@ -83,8 +83,9 @@
      (node-style-set! node_style_set)
      (node-absolute-x hop_element_x)
      (node-absolute-y hop_element_y)
-     (window-width hop_window_width)
-     (window-height hop_window_height)
+     (node-bounding-box hop_bouding_box)
+     (current-window-width hop_window_width)
+     (current-window-height hop_window_height)
      (innerHTML-set! hop_innerHTML_set)
      (outerHTML-set! hop_outerHTML_set)
      (css-add-style-sheet! hop_css_add_style_sheet)

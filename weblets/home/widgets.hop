@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Mon Sep 24 22:00:07 2007 (serrano)                */
+;*    Last change :  Tue Oct 23 23:32:42 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -46,7 +46,7 @@
 			(<TR>
 			   (<TD>
 			      obj)))))))
-	 (<DIV> :align "center" :class "foot"
+	 (<DIV> :class "foot"
 	    (<FOOT-BUTTON>
 	       :href "http://www.inria.fr/mimosa"
 	       :title "INRIA"

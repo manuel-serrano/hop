@@ -74,8 +74,8 @@ vectors.
 
 === client only ===
 
-  (window-height window)
-  (window-width window)
+  (current-window-height)
+  (current-window-width)
   (dom-node-eval node)
   (node-style-get node prop)
   (node-style-set! node prop value)
@@ -520,28 +520,28 @@ the tree. In general, it should not be directly called by user source code.
 == Client only Definitions ==
 <client>
 
-=== ++(window-height window)++ ===
+=== ++(current-window-height)++ ===
 <procedure> window-height
 <arguments>
 ^  arguments       ^   type       ^  short description               ^
-| window          |  window       | a window.                        |
 </arguments>
 
-Returns the height of a window. We **strongly** recommend to use this
-function instead of fetching information from ++window++ data structure
-since only this function ensures portability between Web browsers.
+Returns the height of the current window. We **strongly** recommend to
+use this function instead of fetching information from the global
+++window++ data structure since only this function ensures portability
+between Web browsers. 
 </procedure>
 
-=== ++(window-width window)++ ===
-<procedure> window-width
+=== ++(current-window-width)++ ===
+<procedure> current-window-width
 <arguments>
 ^  arguments       ^   type       ^  short description               ^
-| window          |  window       | a window.                        |
 </arguments>
 
-Returns the width of a window. We **strongly** recommend to use this
-function instead of fetching information from ++window++ data structure
-since only this function ensures portability between Web browsers.
+Returns the width of the current window. We **strongly** recommend to use this
+function instead of fetching information from the global ++window++ 
+data structure since only this function ensures portability between 
+Web browsers.
 </procedure>
 
 

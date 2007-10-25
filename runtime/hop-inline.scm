@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Wed Oct 10 05:36:05 2007 (serrano)                */
+;*    Last change :  Sun Oct 21 23:42:32 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -96,31 +96,33 @@
 		     -1))))
 	  (if (=fx status 200)
 	      (bind-exit (return)
-		 (instantiate::xml-document
-		    (markup 'document)
-		    (id (xml-make-id #unspecified 'DOCUMENT))
-		    (body (html-parse
-			   p
-			   :content-length
-			   cl
-			   :procedure
-			   (lambda (markup attr body)
-			      (let* ((ia (assq 'id attr))
-				     (i (if (pair? ia)
-					    (cdr ia)
-					    (xml-make-id #unspecified markup)))
-				     (el (instantiate::xml-element
-					    (markup markup)
-					    (id i)
-					    (attributes (filter! filter-attr attr))
-					    (body body))))
-				 (for-each (lambda (b)
-					      (when (xml-element? b)
-						 (xml-element-parent-set! b el)))
-					   body)
-				 (if (and (string? eid) (string=? i eid))
-				     (return el)
-				     el)))))))
+		 (let ((res (instantiate::xml-document
+			       (markup 'document)
+			       (id (xml-make-id #unspecified 'DOCUMENT))
+			       (body (html-parse
+				      p
+				      :content-length
+				      cl
+				      :procedure
+				      (lambda (markup attr body)
+					 (let* ((ia (assq 'id attr))
+						(i (if (pair? ia)
+						       (cdr ia)
+						       (xml-make-id #unspecified markup)))
+						(el (instantiate::xml-element
+						       (markup markup)
+						       (id i)
+						       (attributes (filter! filter-attr attr))
+						       (body body))))
+					    (for-each (lambda (b)
+							 (when (xml-element? b)
+							    (xml-element-parent-set! b el)))
+						      body)
+					    (if (and (string? eid)
+						     (string=? i eid))
+						(return el)
+						el))))))))
+		    (and (not (string? eid)) res)))
 	      (<DIV> "error"
 		     (let ((po (open-output-string)))
 			(send-chars p po cl)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Sat Jul 21 06:21:26 2007 (serrano)                */
+;*    Last change :  Thu Oct 18 07:25:16 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -21,6 +21,7 @@
 
    (export (setup-api-tables!)
 	   (index-table)
+	   (doc-api-syntax)
 	   doc/api
 	   (<API>)
 	   (decorate-api-code code)
@@ -90,6 +91,13 @@
 ;*---------------------------------------------------------------------*/
 (define (index-table)
    *index-table*)
+
+;*---------------------------------------------------------------------*/
+;*    doc-api-syntax ...                                               */
+;*---------------------------------------------------------------------*/
+(define (doc-api-syntax)
+   (setup-api-tables!)
+   *server-syntax*)
 
 ;*---------------------------------------------------------------------*/
 ;*    doc/api ...                                                      */

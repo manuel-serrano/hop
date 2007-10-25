@@ -68,9 +68,13 @@ This parameter controls the default character encoding used by XML
 server responses. The currently supported value for the character encoding
 are:
 
+  * ISO-LATIN-1
   * ++ISO-8859-1++
   * ++ISO-8859-2++
+  * ++ISO-8859-15++
+  * WINDOWS-1252
   * ++UTF-8++
+  * ++UCS-2++
 
 </parameter>
 </parameter>
@@ -84,12 +88,21 @@ are:
 |   r/w    |  symbol   |  ++,(hop-locale)++  | The default character encoding.       |
 </arguments>
 
-This parameter controls the default character encoding used by server locale
-resources (files on the disc and internal character strings).
+This parameter controls the default character encoding used by server
+locale resources (files on the disc and internal character
+strings). That is, when a file is read from the server disc, character
+strings are converted from the character set specified by
+++hop-locale++ into the character set specified by ++hop-charset++.
+The currently supported value for the character encoding are:
 
+  * ISO-LATIN-1
   * ++ISO-8859-1++
   * ++ISO-8859-2++
+  * ++ISO-8859-15++
+  * WINDOWS-1252
   * ++UTF-8++
+  * ++UCS-2++
+
 
 </parameter>
 </parameter>
@@ -123,4 +136,10 @@ The base name for services URL (see ++define-service++).
 </parameter>
 
 </server>
+
+== See also ==
+
+<see-also>charset, ISO-LATIN, UTF-8, UCS-2</see-also>
+
 </doc>
+
