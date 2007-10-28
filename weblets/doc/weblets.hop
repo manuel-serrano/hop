@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May  8 06:21:47 2006                          */
-;*    Last change :  Tue May 22 12:47:16 2007 (serrano)                */
+;*    Last change :  Fri Oct 26 18:00:06 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP weblets doc.                                             */
@@ -67,7 +67,7 @@
 	(with-history
 	   (lambda ()
 	      (history-add! api-history "pad-weblet" $weblet)
-	      (with-hop ($doc/api $weblet)
+	      (with-hop ($doc/api-sans-title $weblet)
 		 (lambda (r)
 		    (notepad-select "doc-notepad" "doc-weblets")
 		    (let ((el (dom-get-element-by-id document "pad-weblet")))
@@ -81,7 +81,7 @@
    ~(with-history
        (lambda ()
 	  (history-add! api-history "pad-weblet" $weblet)
-	  (with-hop ($doc/api $weblet)
+	  (with-hop ($doc/api-sans-title $weblet)
 	     (lambda (r)
 		(notepad-select "doc-notepad" "doc-weblets")
 		(let ((el (document.getElementById "pad-weblet")))

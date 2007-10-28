@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Thu Oct 18 07:25:16 2007 (serrano)                */
+;*    Last change :  Fri Oct 26 17:59:59 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -23,6 +23,7 @@
 	   (index-table)
 	   (doc-api-syntax)
 	   doc/api
+	   doc/api-sans-title
 	   (<API>)
 	   (decorate-api-code code)
 	   (decorate-api-wiki-code code)
@@ -105,6 +106,16 @@
 (define-service (doc/api page)
    (setup-api-tables!)
    (let ((s (make-wiki-request-syntax *server-syntax* make-api-title)))
+      (if (or (eq? page #unspecified) (equal? page ""))
+	  (<TOC>)
+	  (doc-page page s))))
+
+;*---------------------------------------------------------------------*/
+;*    doc/api-sans-title ...                                           */
+;*---------------------------------------------------------------------*/
+(define-service (doc/api-sans-title page)
+   (setup-api-tables!)
+   (let ((s (make-wiki-request-syntax *server-syntax* (lambda (t) t))))
       (if (or (eq? page #unspecified) (equal? page ""))
 	  (<TOC>)
 	  (doc-page page s))))

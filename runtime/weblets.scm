@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sat Oct  6 07:59:31 2007 (serrano)                */
+;*    Last change :  Fri Oct 26 17:34:56 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -33,6 +33,7 @@
    (export  (find-weblets-in-directory ::string)
 	    (reset-autoload!)
 	    (get-autoload-directories::pair-nil)
+	    (get-autoload-weblet-directories::pair-nil)
 	    (install-autoload-weblets! ::pair-nil)
 	    (autoload-prefix::procedure ::bstring)
 	    (autoload ::bstring ::procedure . hooks)
@@ -220,6 +221,14 @@
 ;*    *autoloads* ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define *autoloads* '())
+
+;*---------------------------------------------------------------------*/
+;*    get-autoload-weblet-directories ...                              */
+;*---------------------------------------------------------------------*/
+(define (get-autoload-weblet-directories)
+   (map (lambda (o)
+	   (dirname (%autoload-path o)))
+	*autoloads*))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload ...                                                     */
