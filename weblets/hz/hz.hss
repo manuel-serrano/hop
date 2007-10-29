@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Thu Sep 20 14:03:00 2007 (serrano)                */
+/*    Last change :  Mon Oct 29 09:57:05 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -81,6 +81,10 @@ input {
 }
 
 input[type=text] {
+  color: blue;
+}
+
+input[type=file] {
   color: blue;
 }
 
@@ -349,6 +353,11 @@ authentication th, authentication td {
 
 authentication td.login {
   text-align : right;
+}
+
+/*--- upload ----------------------------------------------------------*/
+table.upload {
+  font-size: 80%;
 }
 
 /*--- add -------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 11:48:51 2006                          */
-;*    Last change :  Thu Sep 20 13:45:18 2007 (serrano)                */
+;*    Last change :  Mon Oct 29 10:05:37 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ add/update entry in repository.                               */
@@ -71,10 +71,35 @@
 	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
+;*    hz/upload ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-service (hz/upload file category)
+   (let ((req (current-request))
+	 (path (and (pair? file) (memq :file file)))
+	 (cat (and (pair? category) (memq :data category))))
+      (cond
+	 ((not (user-authorized-service? (http-request-user req) 'super-admin))
+	  (user-access-denied req))
+	 ((or (not path) (not (pair? (cdr path))) (not (string? (cadr path))))
+	  (http-bad-request "Path missing"))
+	 ((or (not cat) (not (pair? (cdr cat))) (not (string? (cadr cat))))
+	  (http-bad-request "Category missing"))
+	 ((not (directory? (make-file-name (hz-repository) (cadr cat))))
+	  (http-bad-request (format "Category does not exist: ~a" (cadr cat))))
+	 (else
+	  (let ((dest (make-file-path (hz-repository)
+				      (cadr cat)
+				      (basename (cadr path)))))
+	     (if (rename-file (cadr path) dest)
+		 (hz-update-repository req)
+		 (http-internal-error
+		  (format "Cannot create file ~a" dest))))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    hz->name ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hz->name s)
-   (let ((m (pregexp-match "(.*)-[0-9]+[.][0-9]+(?:[.][0-9]+)?(?:-r[0-9]+)?.hz" s)))
+   (let ((m (pregexp-match "(.*)-[0-9]+[.][0-9]+(?:[.][0-9]+)?(?:-(?:r|pre|rc)[0-9]+)?.hz" s)))
       (and (pair? m) (cadr m))))
 
 ;*---------------------------------------------------------------------*/
@@ -102,13 +127,14 @@
 ;*---------------------------------------------------------------------*/
 (define (hz->dbhz path category name stamp)
    (let ((info (hz->info path name)))
-      (when (pair? info)
-	 (hz-info->dbhz-args info
-			     category
-			     (number->string (file-modification-time path))
-			     stamp
-			     ""
-			     "hz"))))
+      (if (pair? info)
+	  (hz-info->dbhz-args info
+			      category
+			      (number->string (file-modification-time path))
+			      stamp
+			      ""
+			      "hz")
+	  (format "~a: cannot file info file" name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    build-repository-file ...                                        */
@@ -139,7 +165,7 @@
 			      (apply hz-db-update-entry db n)
 			      (list "" view ""))
 			   (list "" "" view))))))
-	     (list "" "" view)))))
+	     (list "" "" (format "~a: bad package file name" file))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    build-repository-dir ...                                         */
@@ -166,11 +192,9 @@
 			      (directory->list (hz-repository))))
 	     (len (length lst)))
 	 ;; build the visual result
-	 (<TABLE>
-	    :class "build-repository"
+	 (<TABLE> :class "build-repository"
 	    (<COLGROUP> :span 3 :width "30%")
-	    (<TR> (<TD>
-		     :colspan 3
+	    (<TR> (<TD> :colspan 3
 		     (<DIV> :class "title" len " weblets inspected...")))
 	    (<TR> (<TD> :colspan 3 "&#160;"))
 	    (<TR> (<TH> :class "new" "New")
@@ -188,6 +212,21 @@
 ;*    hz-update-repository ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hz-update-repository req)
+   
+   (define (<UPLOAD>)
+      (<FORM> :action hz/upload :method 'post
+	 :enctype "multipart/form-data"
+	 (<TABLE> :class "upload"
+	    (<TR>
+	       (<TH> "File: ")
+	       (<TD> (<INPUT> :type 'file :name "file" :size 40)))
+	    (<TR>
+	       (<TH> "Category:")
+	       (<TD> (<INPUT> :type 'text :name "category" :size 20)))
+	    (<TR>
+	       (<TD> :colspan 2
+		  (<INPUT> :type 'submit :value "Upload the Package"))))))
+   
    (<HTML>
       (<HEAD>
 	 :title "Hz Repository"
@@ -203,6 +242,103 @@
 	    (maxhop (<INPUT> :type 'text :size 10))
 	    (sdescr (<INPUT> :type 'text :size 50))
 	    (descr (<TEXTAREA> :cols "100%")))
+	 
+	 (define (<ENTRY>)
+	    (let* ((create (<BUTTON>
+			      :title "Create a new Weblet entry"
+			      :onclick
+			      ~(with-hop ($hz/create
+					  (document.getElementById "name")
+					  $author $category $hop
+					  $version $minhop $maxhop
+					  $sdescr $descr $home)
+				  (lambda (h) (reset!)))
+			      "create"))
+		   (update (<BUTTON>
+			      :title "Update a new Weblet entry"
+			      :disabled #t
+			      :onclick
+			      ~(with-hop ($hz/update
+					  (document.getElementById "name")
+					  $author $category $hop
+					  $version $minhop $maxhop
+					  $sdescr $descr $home))
+			      "update"))
+		   (remove (<BUTTON>
+			      :title "Remove a new Weblet entry"
+			      :disabled #t
+			      :onclick ~(let ((el (document.getElementById "name")))
+					   (if (and el (confirm (+ "Remove entry `" el.value "'")))
+					       (begin
+						  (with-hop ($hz/remove el.value $category))
+						  (reset!))))
+			      "remove"))
+		   (reset (<BUTTON>
+			     :title "Reset the current form"
+			     :onclick ~(reset!)
+			     "reset"))
+		   (weblet (<INPUT>
+			      :type 'text :id "name" :size 50
+			      :onkeyup
+			      ~(let ((e this)
+				     (k event.keyCode))
+				  (with-hop ($hz/query-entry e.value)
+				     (lambda (old)
+					(if old
+					    (begin
+					       (set! e.style.color "#ff2222")
+					       (set! $remove.disabled #f)
+					       (set! $update.disabled #f)
+					       (set! $create.disabled #t)
+					       (if (or (= k 13) (= $author.value.length 0))
+						   (set! $author.value old.author))
+					       (if (or (= k 13) (= $category.value.length 0))
+						   (set! $category.value old.category))
+					       (if (or (= k 13) (= $hop.value.length 0))
+						   (set! $hop.value old.hop))
+					       (if (or (= k 13) (= $version.value.length 0))
+						   (set! $version.value old.version))
+					       (if (or (= k 13) (= $minhop.value.length 0))
+						   (set! $minhop.value old.minhop))
+					       (if (or (= k 13) (= $maxhop.value.length 0))
+						   (set! $maxhop.value old.maxhop))
+					       (if (or (= k 13) (= $sdescr.value.length 0))
+						   (set! $sdescr.value old.sdescr))
+					       (if (or (= k 13) (= $descr.value.length 0))
+						   (set! $descr.value old.descr))
+					       (if (or (= k 13) (= $home.value.length 0))
+						   (set! $home.value old.home)))
+					    (begin
+					       (set! e.style.color "blue")
+					       (set! $remove.disabled #t)
+					       (set! $update.disabled #t)
+					       (set! $create.disabled #f)
+					       (if (= k 13)
+						   (reset!))))))))))
+	       (<VBOX-BLOCK>
+		  (<DIV> :class "weblets"
+		     (<TABLE> :class "weblets"
+			(<TR> (<TH> "weblet: ") (<TD> weblet))
+			(<TR> (<TH> "home: ") (<TD> home))
+			(<TR> (<TH> "author: ") (<TD> author))
+			(<TR> (<TH> "category: ") (<TD> category))
+			(<TR> (<TH> "hop: ") (<TD> hop))
+			(<TR> (<TH> "version: ") (<TD> version))
+			(<TR> (<TH> "min hop version: ") (<TD> minhop))
+			(<TR> (<TH> "max hop version: ") (<TD> maxhop))
+			(<TR> (<TH> "short descr: ") (<TD> sdescr))
+			(<TR> (<TH> :id "descr" "descr: ") (<TD> descr))
+			(<TR> (<TD> "&#160;"))
+			(<TR>
+			   (<TD>
+			      :colspan 2
+			      (<TABLE>
+				 :class "buttons"
+				 (<TR>
+				    (<TD> create)
+				    (<TD> update)
+				    (<TD> remove)
+				    (<TD> reset))))))))))
 	 (<ABODY>
 	    (<SCRIPT> ~(define reset!
 			  (lambda ()
@@ -215,17 +351,16 @@
 			     (set! $maxhop.value "")
 			     (set! $sdescr.value "")
 			     (set! $descr.value ""))))
-	    (<DIV>
-	       :id "add"
+	    (<DIV> :id "add"
 	       (<VBOX>
 		  (<VBOX-BLOCK>
 		     (<SPAN> :class "title" "DB management"))
 		  (<VBOX-SEPARATOR>)
 		  (<VBOX-BLOCK>
 		     (<A> :class "repository"
-			  :href (string-append (hz-db-inspector-url)
-					       (hz-db-path 'repository))
-			  (hz-db-path 'repository)))
+			:href (string-append (hz-db-inspector-url)
+					     (hz-db-path 'repository))
+			(hz-db-path 'repository)))
 		  (<VBOX-BLOCK> "&#160;")
 		  (<VBOX-BLOCK> (<BUTTON>
 				   :title "Build the db by files inspection"
@@ -238,103 +373,13 @@
 				   "Build/Update Repository DB"))
 		  (<VBOX-BLOCK> "&#160;")
 		  (<VBOX-BLOCK>
+		     (<SPAN> :class "title" "Upload a Weblet"))
+		  (<VBOX-SEPARATOR>)
+		  (<VBOX-BLOCK>
+		     (<UPLOAD>))
+		  (<VBOX-BLOCK> "&#160;")
+		  (<VBOX-BLOCK>
 		     (<SPAN> :class "title" "Add/Update/Remove Weblet entry"))
 		  (<VBOX-SEPARATOR>)
 		  (<VBOX-BLOCK> "&#160;")
-		  (let* ((create (<BUTTON>
-				    :title "Create a new Weblet entry"
-				    :onclick
-				    ~(with-hop ($hz/create
-						(document.getElementById "name")
-						$author $category $hop
-						$version $minhop $maxhop
-						$sdescr $descr $home)
-					(lambda (h) (reset!)))
-				    "create"))
-			 (update (<BUTTON>
-				    :title "Update a new Weblet entry"
-				    :disabled #t
-				    :onclick
-				    ~(with-hop ($hz/update
-						(document.getElementById "name")
-						$author $category $hop
-						$version $minhop $maxhop
-						$sdescr $descr $home))
-				    "update"))
-			 (remove (<BUTTON>
-				    :title "Remove a new Weblet entry"
-				    :disabled #t
-				    :onclick ~(let ((el (document.getElementById "name")))
-						 (if (and el (confirm (+ "Remove entry `" el.value "'")))
-						     (begin
-							(with-hop ($hz/remove el.value $category))
-							(reset!))))
-				    "remove"))
-			 (reset (<BUTTON>
-				   :title "Reset the current form"
-				   :onclick ~(reset!)
-				   "reset"))
-			 (weblet (<INPUT>
-				    :type 'text :id "name" :size 50
-				    :onkeyup
-				    ~(let ((e this)
-					   (k event.keyCode))
-					(with-hop ($hz/query-entry e.value)
-					   (lambda (old)
-					      (if old
-						  (begin
-						     (set! e.style.color "#ff2222")
-						     (set! $remove.disabled #f)
-						     (set! $update.disabled #f)
-						     (set! $create.disabled #t)
-						     (if (or (= k 13) (= $author.value.length 0))
-							 (set! $author.value old.author))
-						     (if (or (= k 13) (= $category.value.length 0))
-							 (set! $category.value old.category))
-						     (if (or (= k 13) (= $hop.value.length 0))
-							 (set! $hop.value old.hop))
-						     (if (or (= k 13) (= $version.value.length 0))
-							 (set! $version.value old.version))
-						     (if (or (= k 13) (= $minhop.value.length 0))
-							 (set! $minhop.value old.minhop))
-						     (if (or (= k 13) (= $maxhop.value.length 0))
-							 (set! $maxhop.value old.maxhop))
-						     (if (or (= k 13) (= $sdescr.value.length 0))
-							 (set! $sdescr.value old.sdescr))
-						     (if (or (= k 13) (= $descr.value.length 0))
-							 (set! $descr.value old.descr))
-						     (if (or (= k 13) (= $home.value.length 0))
-							 (set! $home.value old.home)))
-						  (begin
-						     (set! e.style.color "blue")
-						     (set! $remove.disabled #t)
-						     (set! $update.disabled #t)
-						     (set! $create.disabled #f)
-						     (if (= k 13)
-							 (reset!))))))))))
-		     (<VBOX-BLOCK>
-			(<DIV>
-			   :class "weblets"
-			   (<TABLE>
-			      :class "weblets"
-			      (<TR> (<TH> "weblet: ") (<TD> weblet))
-			      (<TR> (<TH> "home: ") (<TD> home))
-			      (<TR> (<TH> "author: ") (<TD> author))
-			      (<TR> (<TH> "category: ") (<TD> category))
-			      (<TR> (<TH> "hop: ") (<TD> hop))
-			      (<TR> (<TH> "version: ") (<TD> version))
-			      (<TR> (<TH> "min hop version: ") (<TD> minhop))
-			      (<TR> (<TH> "max hop version: ") (<TD> maxhop))
-			      (<TR> (<TH> "short descr: ") (<TD> sdescr))
-			      (<TR> (<TH> :id "descr" "descr: ") (<TD> descr))
-			      (<TR> (<TD> "&#160;"))
-			      (<TR>
-				 (<TD>
-				    :colspan 2
-				    (<TABLE>
-				       :class "buttons"
-				       (<TR>
-					  (<TD> create)
-					  (<TD> update)
-					  (<TD> remove)
-					  (<TD> reset)))))))))))))))
+		  (<ENTRY>)))))))
