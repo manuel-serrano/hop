@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Wed Oct 10 07:49:57 2007 (serrano)                */
+;*    Last change :  Mon Oct 29 17:37:17 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -456,5 +456,3 @@
 		(id 'dummy)
 		(attributes '())
 		(body (list img))))))))
-	  
-

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Oct 11 07:52:32 2007 (serrano)                */
+;*    Last change :  Mon Oct 29 16:10:05 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -460,7 +460,6 @@
 			     (flash-signal-value req name val))
 			  l))))))
 
-   (tprint "hop-event-broadcast!: " name " " value)
    (mutex-lock! *event-mutex*)
    (ajax-event-broadcast! name value)
    (flash-event-broadcast! name value)

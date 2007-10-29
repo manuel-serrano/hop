@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Mon Oct 15 17:17:59 2007 (serrano)                */
+/*    Last change :  Mon Oct 29 17:57:00 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -624,8 +624,14 @@ function hop_audio_controls_onload( evt ) {
 function hop_audio_controls_onerror( evt ) {
    var audio = evt.audio;
    var tl = document.getElementById( "controls-metadata-song-" + audio.id );
+   var min = document.getElementById( "controls-status-length-min-" + id );
+   var sec = document.getElementById( "controls-status-length-sec-" + id );
 
    tl.innerHTML = evt.value ? evt.value : "Error";
+   min.innerHTML = "  ";
+   sec.innerHTML = "  ";
+
+   hop_audio_time_interval_clear( audio );
 }
 
 /*---------------------------------------------------------------------*/

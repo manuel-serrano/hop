@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Oct 16 08:08:51 2007 (serrano)                */
+;*    Last change :  Mon Oct 29 17:49:05 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -494,14 +494,12 @@
 			  (begin
 			     (error-notify e)
 			     (signal-state! %event 'error (&io-error-msg e) #f))
-			  (raise e)))
-		   (unwind-protect
-		      (begin
-		         (tprint "======== AUDIO-LOOP STARTED...")
-			 (audio-loop player))
-		      (begin
-			 (tprint "========= CLOSING..." %event)
-			 (music-close engine))))
+			  (begin
+			     (tprint "========= CLOSING..." %event)
+			     (music-close engine)
+			     (raise e))))
+		   (tprint "======== AUDIO-LOOP STARTED...")
+		   (audio-loop player))
 		(sleep 3000562)
 		(when (hop-event-client-ready? %event)
 		   (liip))))))))
