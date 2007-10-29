@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Oct 20 15:32:12 2007 (serrano)                */
+/*    Last change :  Mon Oct 29 14:07:25 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -163,7 +163,6 @@ div.popup-menu {
   z-index: 10;
   background-color: $popup-menu-color;
   border: $popup-menu-border;
-  box-shadow: $popup-shadow;
   -moz-opacity: $doc-opacity;
 }
 

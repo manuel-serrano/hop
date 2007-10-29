@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 22 08:00:34 2007                          */
-;*    Last change :  Tue May 22 15:27:49 2007 (serrano)                */
+;*    Last change :  Mon Oct 29 14:51:49 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Doc weblet library                                               */
@@ -15,6 +15,16 @@
 (define (api-history-handler id entry)
    (notepad-select "doc-notepad" "doc-api" #f)
    (with-hop (api-history-service entry)
+      (lambda (r)
+	 (let ((el (dom-get-element-by-id document id)))
+	    (set! el.innerHTML r)))))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-history-handler ...                                       */
+;*---------------------------------------------------------------------*/
+(define (weblet-history-handler id entry)
+   (notepad-select "doc-notepad" "doc-weblets" #f)
+   (with-hop (weblet-history-service entry)
       (lambda (r)
 	 (let ((el (dom-get-element-by-id document id)))
 	    (set! el.innerHTML r)))))
@@ -35,6 +45,9 @@
 (define api-history
    (make-history "api" api-history-handler))
 
+(define weblet-history
+   (make-history "web" weblet-history-handler))
+
 (define tutorial-history
    (make-history "tut" tutorial-history-handler))
 
@@ -44,6 +57,7 @@
 ;*    These variables are initialized at loadtime by the document.     */
 ;*---------------------------------------------------------------------*/
 (define api-history-service #unspecified)
+(define weblet-history-service #unspecified)
 (define tutorial-history-service #unspecified)
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:59:42 2007                          */
-/*    Last change :  Tue Oct  2 20:42:52 2007 (serrano)                */
+/*    Last change :  Mon Oct 29 14:40:03 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP history manager.                                             */
@@ -192,7 +192,7 @@ function hop_state_history_reset() {
 /*---------------------------------------------------------------------*/
 function hop_state_history_update( olds, news ) {
    var res = 0;
-   
+
    if( olds == undefined ) {
       /* set the new values */
       for( p in news ) {
@@ -200,7 +200,7 @@ function hop_state_history_update( olds, news ) {
 	 if( state instanceof _hop_state_entry ) {
 	    var op = state.op;
 	    var handler = hop_state_history_handler[ op ];
-	    
+
 	    if( (handler != undefined) && !state.close ) {
 	       if( handler.proc( p, state.val ) ) {
 		  state.close = true;

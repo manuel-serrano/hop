@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Fri Oct 26 17:59:59 2007 (serrano)                */
+;*    Last change :  Mon Oct 29 14:26:05 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -40,8 +40,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<API>)
    (let ((pagearea (<DIV> :class "pagearea" :id "pad-api" (<TOC>))))
-      (<DIV>
-         :class "api"
+      (<DIV> :class "api"
          (<SEARCH-BAR>
             "markup"
             (service (i) (get-markups i pagearea)) doc/api-search-markup
