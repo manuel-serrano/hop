@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Mon Oct 29 17:57:00 2007 (serrano)                */
+/*    Last change :  Tue Oct 30 17:37:25 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -147,17 +147,23 @@ function HopAudioServerProxy( audio, url ) {
 	    audio.paused = false;
 	    current_duration = rest.car;
 	    current_position = rest.cdr.car;
+	    current_volume = rest.cdr.cdr.car;
 	    hop_audio_run_hooks( audio, "play" );
+	    hop_audio_run_hooks( audio, "volume" );
 	 } else if( k == Spause ) {
 	    // pause
 	    audio.paused = true;
 	    current_duration = rest.car;
+	    current_volume = rest.cdr.cdr.car;
 	    hop_audio_run_hooks( audio, "pause" );
+	    hop_audio_run_hooks( audio, "volume" );
 	 } if( k == Sstop ) {
 	    // stop
 	    audio.paused = false;
 	    current_duration = rest.car;
+	    current_volume = rest.cdr.cdr.car;
 	    hop_audio_run_hooks( audio, "stop" );
+	    hop_audio_run_hooks( audio, "volume" );
 	 } else if( k == Svolume ) {
 	    // volume
 	    current_volume = rest.car;

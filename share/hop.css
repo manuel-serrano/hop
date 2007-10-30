@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Mon May 29 17:44:18 2006 (serrano)                */
-/*    Copyright   :  2004-06 Manuel Serrano                            */
+/*    Last change :  Tue Oct 30 18:04:19 2007 (serrano)                */
+/*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP CSS                                                 */
 /*=====================================================================*/
@@ -59,4 +59,12 @@ a.foot-button img {
   background: transparent;
   padding-left: 5px;
   padding-right: 5px;
+}
+
+mi {
+  font-family: cmmi10;
+}
+
+mo {
+  font-family: cmr10;
 }

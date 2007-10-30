@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Sun May 27 08:15:18 2007 (serrano)                */
+;*    Last change :  Tue Oct 30 18:35:53 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
@@ -48,6 +48,7 @@
 ;*    doc/example ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/example expr)
+   (eval '(module doc/example (import hopdoc_config)))
    (if (authorized-service? (current-request) 'doc/example)
        (with-handler
 	  (lambda (e)
@@ -71,6 +72,7 @@
 ;*    doc/example-file ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/example-file file)
+   (eval '(module doc/example (import hopdoc_config)))
    (if (authorized-service? (current-request) 'doc/example)
        (with-handler
 	  (lambda (e)

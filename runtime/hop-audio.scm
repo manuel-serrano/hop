@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Oct 30 08:58:38 2007 (serrano)                */
+;*    Last change :  Tue Oct 30 17:36:49 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -367,9 +367,7 @@
    (let* ((s (music-song engine))
 	  (c (when (pair? s) (assq :file s)))
 	  (file (if (pair? c) (cdr c) #f))
-	  (_ (tprint "music-playlist-get.1.."))
 	  (pl (music-playlist-get engine)))
-      (tprint "music-playlist-get.2..:" pl)
       (multiple-value-bind (_ _ song _ len vol _ _ _)
 	 (music-info engine)
 	 (tprint "signal-meta: " state " song=" song " len=" len " pos=" pos)
@@ -399,9 +397,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    signal-state! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (signal-state! %event state len pos)
-   (tprint "signal-state! state=" state " pos=" pos " len=" len)
-   (hop-event-broadcast! %event (list state len pos)))
+(define (signal-state! %event state len pos vol)
+   (tprint "signal-state! state=" state " pos=" pos " len=" len " vol=" vol)
+   (hop-event-broadcast! %event (list state len pos vol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    refresh-forced? ...                                              */
@@ -423,7 +421,7 @@
 ;*---------------------------------------------------------------------*/
 (define (audio-loop player)
    (with-access::hop-audio-player player (%event engine)
-      (let luup ((oldstate 'stop)
+      (let luup ((oldstate 'init)
 		 (oldvol -1)
 		 (oldsong -1)
 		 (oldplaylist -1)
@@ -433,7 +431,7 @@
 	    (cond
 	       ((string? err)
 		(unless (eq? oldstate 'error)
-		   (signal-state! %event 'error err #f))
+		   (signal-state! %event 'error err #f vol))
 		;; an new error has been spotted
 		(sleep 1000347)
 		(luup 'error oldvol oldsong oldplaylist 60))
@@ -456,7 +454,7 @@
 		(luup 'length-unknown vol song playlist ttl))
 	       ((or (not (eq? oldstate state)) (=fx ttl 0))
 		;; notity a state change (or a ttl reaches)
-		(signal-state! %event state len pos)
+		(signal-state! %event state len pos vol)
 		(luup state vol song playlist 60))
 	       ((hop-event-client-ready? %event)
 		;; nothing has changed but clients are still connected
@@ -492,7 +490,7 @@
 		      (if (&io-error? e)
 			  (begin
 			     (error-notify e)
-			     (signal-state! %event 'error (&io-error-msg e) #f))
+			     (signal-state! %event 'error (&io-error-msg e) #f -01))
 			  (begin
 			     (tprint "========= CLOSING..." %event)
 			     (music-close engine)
