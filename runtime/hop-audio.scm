@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Oct 29 18:18:20 2007 (serrano)                */
+;*    Last change :  Tue Oct 30 08:58:38 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -68,7 +68,6 @@
 			      (onprogress #f)
 			      (onerror #f)
 			      (onended #f)
-			      (onvolumechange #f)
 			      (onloadedmetadata #f)
 			      (onplay #f)
 			      (onstop #f)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Fri Oct 26 16:56:32 2007 (serrano)                */
+;*    Last change :  Tue Oct 30 08:48:24 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -117,9 +117,9 @@
       ((number? obj)
        (number->string obj))
       ((symbol? obj)
-       (string-append "sc_string2symbol_immutable('" (symbol->string obj) "')"))
+       (string-append "sc_string2symbol_immutable(\"" (symbol->string obj) "\")"))
       ((keyword? obj)
-       (string-append "sc_string2keyword_immutable('" (keyword->string obj) "')"))
+       (string-append "sc_string2keyword_immutable(\"" (keyword->string obj) "\")"))
       ((eq? obj #t)
        "true")
       ((eq? obj #f)

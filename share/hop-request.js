@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Oct  9 09:00:42 2007 (serrano)                */
+/*    Last change :  Tue Oct 30 08:51:11 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -254,6 +254,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
       if( xhr.readyState == 4 ) {
 	 try {
 	    var status = xhr.status;
+
 	    switch( status ) {
 	       case 200:
 		  try {
