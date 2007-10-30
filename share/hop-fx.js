@@ -3,16 +3,26 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May  4 16:34:59 2006                          */
-/*    Last change :  Mon Sep 24 07:22:58 2007 (serrano)                */
+/*    Last change :  Tue Oct 30 06:47:28 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP graphical effects library                                    */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    hop_fx_repeat ...                                                */
+/*---------------------------------------------------------------------*/
+function hop_fx_repeat( proc, timeout ) {
+   var it = false;
+   var p = function() { if( !proc() && it ) clearInterval( it ) };
+   it = setInterval( p, timeout );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_fx_fade_background ...                                       */
 /*---------------------------------------------------------------------*/
 function hop_fx_fade_background( obj, delay, step, colors ) {
+   var it;
    var i = 0;
    var func = function() {
       obj.style.background = colors[ i ];
@@ -22,7 +32,10 @@ function hop_fx_fade_background( obj, delay, step, colors ) {
    }
 
    obj.style.background = colors[ i ];
-   after( delay, function() { clearInterval( it ); timeout( step, func ) } );
+   it = setInterval( function() {
+                       clearInterval( it );
+                       hop_fx_repeat( func, step )
+                     }, delay );
 }
 
 /*---------------------------------------------------------------------*/
