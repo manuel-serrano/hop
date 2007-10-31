@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Oct 30 17:36:49 2007 (serrano)                */
+;*    Last change :  Wed Oct 31 08:01:26 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -389,12 +389,6 @@
 	      %event (list 'meta state len pos #f pl song vol))))))
 
 ;*---------------------------------------------------------------------*/
-;*    signal-volume! ...                                               */
-;*---------------------------------------------------------------------*/
-(define (signal-volume! %event vol)
-   (hop-event-broadcast! %event (list 'volume vol)))
-
-;*---------------------------------------------------------------------*/
 ;*    signal-state! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (signal-state! %event state len pos vol)
@@ -437,8 +431,8 @@
 		(luup 'error oldvol oldsong oldplaylist 60))
 	       ((not (=fx vol oldvol))
 		;; volume notification
-		(signal-volume! %event vol)
-		(luup oldstate vol oldsong oldplaylist 60))
+		(signal-state! %event state len pos vol)
+		(luup state vol song playlist 60))
 	       ((refresh-forced? player)
 		;; a refresh has been forced
 		(signal-meta! %event engine state pos)
