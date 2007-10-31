@@ -1,0 +1,1209 @@
+<!-- 95% W3C COMPLIANT, 95% CSS FREE, RAW HTML -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1">
+<title>Programming Web Multimedia Applications with Hop</title>
+ <style type="text/css">
+  <!--
+  pre { font-family: monospace }
+  tt { font-family: monospace }
+  code { font-family: monospace }
+  p.flushright { text-align: right }
+  p.flushleft { text-align: left }
+  span.sc { font-variant: small-caps }
+  span.sf { font-family: sans-serif }
+  span.skribetitle { font-family: sans-serif; font-weight: bolder; font-size: x-large; }
+  span.refscreen { }
+  span.refprint { display: none; }
+/*=====================================================================*/
+/*    serrano/diffusion/article/hop-lang/css/article.css               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Fri Jun 10 09:15:18 2005                          */
+/*    Last change :  Thu Dec  1 14:31:27 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Mail Article CSS                                                 */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Default settings                                                 */
+/*---------------------------------------------------------------------*/
+body {
+  display: block;
+  width: 45em;
+  margin: auto;
+  font-family: PostAntiqua;
+}
+
+p {
+  text-align: justify;
+}
+
+ul {
+  text-align: justify;
+}
+
+ol {
+  text-align: justify;
+}
+
+div.section {
+  margin-bottom: 1em;
+}
+
+div.abstract {
+  margin: 1em;
+  padding: 1px 10px 1px 10px;
+  background: #eef;
+  font-size: medium;
+  font-family: Trebuchet ms;
+  font-style: italic;
+  border: 1px dotted black;
+}
+
+div.footnote {
+  font-size: small;
+}
+
+div.skribesectiontitle {
+  padding-top: 0;
+  padding-bottom: 0em;
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+div.section-atitle h3 {
+  border-top: thin solid black;
+  border-bottom: thin solid black;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+div.document-title {
+  font-family: PostAntiqua;
+}
+
+div.document-title-title {
+  text-align: right;
+  font-weight: bold;
+  font-size: 30pt;
+  border-top: thin solid black;
+  border-bottom: medium solid black;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-top: 10px;
+  padding-top: 10px;
+
+}
+
+div.document-title-authors {
+  margin-bottom: 2em;
+}
+
+span.document-author {
+  display: block;
+  text-align: right;
+  margin-bottom: 1em;
+}
+
+span.document-author span {
+  font-style: italic;
+}
+
+span.document-author span.document-author-name {
+  font-weight: bold;
+  font-size: large;
+  font-style: normal;
+  display: block;
+}
+
+span.document-author span.document-author-url {
+  font-style: normal;
+  display: block;
+}
+
+span.document-author span.document-author-email {
+  font-style: normal;
+  display: block;
+}
+
+div.prog-border {
+  border: 1px solid #aaa;
+}
+
+pre.scheme {
+  background-color: #ffffee;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.uscheme {
+  background-color: #eeffee;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.repl {
+  background-color: #eff;
+  border: thin dashed black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.c {
+  background-color: #eeffff;
+  border: thin solid black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+pre.display {
+  background-color: #ffeeee;
+  border: thin solid black;
+  padding: 2pt;
+  font-style: normal;
+}
+
+center.show {
+  background-color: #ffeeff;
+  border: thin solid black;
+  padding: 2pt;
+  margin: 0;
+  font-style: normal;
+  text-align: left;
+}
+
+center.show ul {
+  padding: 2pt;
+  padding-left: 14pt;
+  margin: 0;
+}
+
+div.references table {
+  font-size: small;
+}
+
+div.references table td {
+  font-size: small;
+}
+
+div.references table th {
+  font-size: small;
+}
+
+table.api-table {
+  border: none;
+  background-color: #ffe;
+}
+
+tr.api-table-prototype {
+   background-color: #ffc;
+}
+
+tr.api-table-header {
+   background-color: #fcf;
+}
+
+div.section#appendix p {
+   margin-left: 5%;
+}
+
+div.plan {
+  border: 1px dotted red;
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 5px;
+  color: #d00;
+  font-family: sans-serif;
+  font-style: italic;
+  font-size: small;
+  background: #eee;
+}
+
+/*---------------------------------------------------------------------*/
+/*    prgm ...                                                         */
+/*---------------------------------------------------------------------*/
+pre {
+  padding-left: 2px;
+  margin: 0;
+}
+
+pre.bigloo {
+  background-color: #dff;
+}
+
+pre.lhtml {
+  background-color: #fdf;
+}
+
+pre.hop {
+  background-color: #ffc;
+}
+
+pre.html {
+  background-color: #ccf;
+}
+
+pre.server {
+  background-color: #eee;
+  color: #007;
+}
+
+pre.client {
+  background-color: #eee;
+  color: #033;
+}
+
+pre.syntax {
+  background-color: #dfd;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Printing configuration                                           */
+/*---------------------------------------------------------------------*/
+@media print {
+/*--- Markup configuration --------------------------------------------*/
+pre {
+  font-size: 8pt;
+  font-family: courier;
+  line-height: 95%;
+}
+
+div.prog-border {
+  border: 0;
+}
+
+pre.prog {
+  font-size: 6pt;
+  line-height: 100%;
+}
+
+center.break-page-before {
+  page-break-before: always;
+}
+
+table.api-table {
+  border: 1px solid black;
+  padding: 10px;
+}
+
+table.api-table tr.api td {
+  padding-top: 5px;
+}
+
+table.api-table th {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+table.api-table td {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.api-table-prototype {
+  display: none;
+}
+
+.api-table-header {
+  display: none;
+}
+
+span.refscreen {
+  display: none;
+}
+
+span.refprint {
+  display: inline;
+}
+
+div.abstract {
+  border: none;
+  line-height: 100%;
+}
+
+div.section#Table-of-contents {
+  display: none;
+}
+
+div.section#Postscript-download {
+  display: none;
+}
+
+span.document-author span.document-author-name {
+  font-size: 13pt;
+  font-family: sans-serif;
+  font-weight: normal;
+}
+
+a {
+  text-decoration: none;
+}
+
+pre.scheme {
+  background-color: #ffffee;
+  border: none;
+}
+
+pre.uscheme {
+  background-color: #eeffee;
+  border: none;
+}
+
+pre.repl {
+  background-color: #eff;
+  border: none;
+}
+
+div.skribe-ending {
+  display: none;
+}
+
+div.print-plan {
+  display: none;
+}
+
+div.section-atitle h3 {
+  border-top: 0;
+  border-bottom: 0;
+}
+}
+/*=====================================================================*/
+/*    serrano/diffusion/article/hop-lang/css/sigplan.css               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Dec  1 11:00:10 2005                          */
+/*    Last change :  Wed Dec 14 13:46:49 2005 (serrano)                */
+/*    Copyright   :  2005 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    The SIGPLAN CSS                                                  */
+/*=====================================================================*/
+
+@media print {
+  div.document-title {
+    font-family: Palatino;
+/*     -moz-column-count: 1;                                           */
+    width: 100%;
+    text-align: center;
+  }
+
+  div.document-title-title {
+/*     width: 42pc;                                                    */
+    font-weight: bold;
+    font-size: 20pt;
+    text-align: center;
+    line-height: 120%;
+    border: 0;
+  }
+
+  div.document-title-authors {
+    display: table;
+/*     width: 42pc;                                                    */
+    text-align: center;
+    margin-bottom: 1.8cm;
+  }
+
+  div.document-authors {
+    width: 100%;
+    display: table-row;
+    text-align: center;
+  }
+
+  span.document-author {
+    text-align: center;
+    display: table-cell;
+    width: 50%;
+  }
+
+  span.document-author span.document-author-name {
+    font-size: large;
+    font-family: Palatino;
+    padding-bottom: 0.5em;
+  }
+
+  span.document-author span.document-author-affiliation {
+    font-style: normal;
+  }
+
+  span.document-author tt {
+    font-family: mono, sans-serif;
+    font-size: 8pt;
+  }
+
+  div.skribe-body {
+/*     -moz-column-count: 2;                                           */
+/*     -moz-column-rule: none;                                         */
+/*     -moz-column-gap: 2pc;                                           */
+/*     width: 42pc;                                                    */
+  }
+ 
+  body, div.abstract {
+    font-size: 9pt;
+    line-height: 110%;
+    font-family: Palatino;
+    font-style: normal;
+    padding: 0;
+    margin-top: 1in;
+    margin-left: .70in;
+    margin-right: .70in;
+    margin-bottom: 1in;
+  }
+
+  div.abstract {
+    font-size: 9pt;
+    line-height: 110%;
+    font-family: Palatino;
+    font-style: normal;
+    padding: 0;
+    margin-top: 1in;
+/*     margin-left: .70in;                                             */
+/*     margin-right: .70in;                                            */
+  }
+
+  div.abstract {
+    margin: 0;
+  }
+
+  div.section#References {
+/*     font-size: x-small;                                             */
+  }
+  
+  div.section#References table {
+    font-size: inherit;
+  }
+
+  @page { 
+    size: 8.5in 11in; 
+    margin-bottom: 5cm;
+  }
+}
+  -->
+ </style>
+</head>
+
+<body class="document">
+<div id="Programming-Web-Multimedia-Applications-with-Hop-title" class="document-title">
+<div id="Programming-Web-Multimedia-Applications-with-Hop-title" class="document-title-title">
+Programming Web Multimedia Applications with Hop</div>
+<div id="Programming-Web-Multimedia-Applications-with-Hop-title" class="document-title-authors">
+<div class="document-authors">
+<span id="author1236" class="document-author">
+<span class="document-author-name" id="author1236">Manuel Serrano</span>
+<span class="document-author-affiliation" id="author1236">Inria Sophia Antipolis</span>
+<span class="document-author-address" id="author1236">2004 route des Lucioles - BP 93 F-06902 Sophia Antipolis, Cedex, France
+</span>
+<span class="document-author-email" id="author1236"><a href="http://www.inria.fr/mimosa/Manuel.Serrano" class="http">http://www.inria.fr/mimosa/Manuel.Serrano</a></span>
+</span
+</div></div>
+</div>
+<div class="skribe-body">
+<div class="section" id="Abstract"><!-- Abstract -->
+<a name="Abstract"></a>
+<div class="abstract-atitle"><h3><font color="black">Abstract</font>
+</h3></div><div class="abstract">
+<p id='paragraph1241'
+>Hop is a new execution platform for running interactive and
+multimedia applications on the Web. It is aimed at executing
+applications such as Web agendas, Web galleries, Web music players,
+etc. Hop consists of: <em id='emph1237'
+>i)</em> a new programming language
+specially designed for addressing the distributed aspects of Web
+programming, <em id='emph1238'
+>ii)</em> a rich set of libraries for dealing with
+music files, sounds, pictures, photographs, etc., <em id='emph1239'
+>iii)</em> a
+full-fledged Web server for executing the <em id='emph1240'
+>server-side</em>
+components of the applications.</p><p id='paragraph1243'
+>In this paper we illustrate Hop's skills for programming
+multimedia applications in two examples. We show that, with 50 lines
+of code, an operational photograph gallery can be implemented and we
+show that with approximatively 30 lines of code an operational <em id='emph1242'
+>podcast</em> receiver can be built.</p></div><br>
+</div>
+<div class="section" id="Table-of-contents"><!-- Table of contents -->
+<a name="Table-of-contents"></a>
+<div class="section-atitle"><h3><font color="black">Table of contents</font>
+</h3></div><div class="section">
+<table cellspacing="1" cellpadding="1" width="100%" class="toc">
+<tbody>
+ <tr><td valign="top" align="left"></td><td colspan="4" width="100%"><a href="article.html#Download">Download</a></td></tr>
+ <tr><td valign="top" align="left">1</td><td colspan="4" width="100%"><a href="article.html#Introduction">Introduction</a></td></tr>
+ <tr><td valign="top" align="left">2</td><td colspan="4" width="100%"><a href="article.html#HOP-Architecture">HOP Architecture</a></td></tr>
+ <tr><td valign="top" align="left">3</td><td colspan="4" width="100%"><a href="article.html#A-Photograph-Gallery">A Photograph Gallery</a></td></tr>
+ <tr><td valign="top" align="left">4</td><td colspan="4" width="100%"><a href="article.html#A-Podcast-Receiver">A Podcast Receiver</a></td></tr>
+ <tr><td valign="top" align="left">5</td><td colspan="4" width="100%"><a href="article.html#Conclusion">Conclusion</a></td></tr>
+ <tr><td valign="top" align="left">6</td><td colspan="4" width="100%"><a href="article.html#References">References</a></td></tr>
+</tbody>
+</table>
+</div><br>
+</div>
+<div class="section" id="Download"><!-- Download -->
+<a name="Download"></a>
+<div class="section-atitle"><h3><font color="black">Download</font>
+</h3></div><div class="section">
+<p id='paragraph1245'
+>The Hop's Web site, which is 
+entirely implemented in Hop, contains the distribution of the
+system, its source code, the online documentation, and various
+demonstrations. Although Hop can be executed on the three
+main-stream platforms (namely, Linux, MacOS X, and Win32), it
+is recommended to install it on Linux, the system that suits it
+best.</p><table style="border-collapse: collapse;" frame="void" rules="none"><tbody>
+<tr><th id="tc1246" align="left" colspan="1">Version: </th><td id="tc1248" align="left" colspan="1"><tt id='tt1247'
+>1.6.0</tt></td></tr>
+<tr><th id="tc1250" align="left" colspan="1">License: </th><td id="tc1251" align="left" colspan="1">GPL</td></tr>
+<tr><th id="tc1253" align="left" colspan="1">Port: </th><td id="tc1254" align="left" colspan="1">Linux, MacOS X, win32</td></tr>
+<tr><th id="tc1256" align="left" colspan="1">Home: </th><td id="tc1258" align="left" colspan="1"><a href="http://hop.inria.fr" class="http"><tt id='tt1257'
+>http://hop.inria.fr</tt></a></td></tr>
+<tr><th id="tc1260" align="left" colspan="1">FTP: </th><td id="tc1262" align="left" colspan="1"><a href="ftp://ftp-sop.inria.fr/mimosa/fp/Hop" class="ftp"><tt id='tt1261'
+>ftp://ftp-sop.inria.fr/mimosa/fp/Hop</tt></a></td></tr>
+</tbody></table>
+</div><br>
+</div>
+<div class="section" id="Introduction"><!-- Introduction -->
+<a name="Introduction"></a>
+<div class="section-atitle"><h3><font color="black">1 Introduction</font>
+</h3></div><div class="section">
+<p id='paragraph1268'
+>Thanks to its last technical breakthroughs, the Web has become a
+vector of choice for deploying multimedia applications. First, during
+the last decade, the latency of the communication was drastically
+reduced. That is, the speed of communication has increased while, in
+the same time, effective compaction algorithms have emerged. Hence,
+nowadays, downloading a picture may take less than a second and a
+whole music record or a full movie only a couple of minutes. Secondly,
+Web browsers now can deal with all kind of multimedia resources such
+as texts, images, sounds, movies, and graphical animations. They
+support rich, responsive, and programmable graphical user
+interfaces. Together, these two improvements have given birth to the
+most famous popular modern Web applications such as <em id='emph1265'
+>Google
+Map</em>, <em id='emph1266'
+>YouTube</em>, <em id='emph1267'
+>Flickr</em>, etc. However, behind this
+terribly attractive face, the Web has a dark side: programming such
+multimedia applications on the Web is still generally awfully
+complex. This is the point addressed by Hop [<a href="article.html#serrano:sfp06" class="inbound">2</a>,<a href="article.html#sgl:dls06" class="inbound">3</a>] which aims to simplify the
+development of Web applications.</p><p id='paragraph1276'
+>Developing programs on the Web is complex for several reasons:
+<em id='emph1269'
+>i)</em> A Web application is <em id='emph1270'
+>de facto</em> distributed
+because it executes in parallel on several computers (at least two, a
+server and a client). <em id='emph1271'
+>ii)</em> Web applications have to deal with
+many different kinds of resources (images, sounds, texts, streams of
+data, etc.).  <em id='emph1272'
+>iii)</em> Idiosyncrasies of Web browsers are
+strong. Their scripting language (namely JavaScript) is not 100%
+compatible. They do not exactly implement the same set of
+features. They do not use the same APIs.  <em id='emph1273'
+>iv)</em> deploying
+applications is difficult because, usually, it involves several
+servers that need to be configured and tuned. <em id='emph1274'
+>v)</em> Most widely
+used programming languages have not been specially crafted for the
+Web. They are not well equipped for addressing the issues mentioned
+previously. <em id='emph1275'
+>vi)</em> Since the Web consists in opening resources
+to several users and networks, by nature, it is exposed to attacks and
+piracy. Hence, the Web demands strong security enforcement. Hop
+addresses all these issues but the last.</p><ul class="itemize" id='itemize1280'
+><li>The Hop programming language exposes a model based on two
+computation levels. The first level is in charge of executing the logic
+of an application while the second level is in charge of executing the
+graphical user interface. Hop separates the logic and the graphical
+user interface but it packages them together and it supports strong
+collaboration between the two engines. The two execution flows
+communicate through function calls and event loops. Both ends can
+initiate communications.</li>
+<li>In contrast to most other approaches, requiring a
+Tower of Babel of programming languages, Hop embraces all the
+aspects of a Web application (ranging from server configuration
+to finest graphical tuning of the client) in one single unified
+formalism and syntax.</li>
+<li>Hop provides a rich set of libraries for dealing with
+most of the standard formats used on the Internet. For instance, it
+implements the RFCs dedicated to network programming (mails, HTTP,
+mime, distributed calendars, ...). It can deal with EXIF
+meta-information of photographs. It can stream audio files and handle
+play lists. It embeds generic parser generators and parsers for XML,
+HTML and RSS. Etc.</li>
+</ul><p id='paragraph1282'
+>In this paper, in Section <a href="article.html#HOP-Architecture" class="inbound"><span class="refscreen">HOP Architecture</span><span class="refprint">2</span></a>,
+the overall architecture of Hop is presented and its implementation
+briefly sketched.  In Section <a href="article.html#A-Photograph-Gallery" class="inbound"><span class="refscreen">A Photograph Gallery</span><span class="refprint">3</span></a>,
+in order to give an intuition of the flavor of writing programs with
+Hop, a simple photograph gallery is presented. This section is
+used to present informally the main constructions of the Hop
+programming language. At last, in the Section 
+<a href="article.html#A-Podcast-Receiver" class="inbound"><span class="refscreen">A Podcast Receiver</span><span class="refprint">4</span></a>, in order to show another facet of 
+multimedia programming with Hop, the whole source code of an actual
+<em id='emph1281'
+>podcast</em> client is presented.</p></div><br>
+</div>
+<div class="section" id="HOP-Architecture"><!-- HOP Architecture -->
+<a name="HOP-Architecture"></a>
+<div class="section-atitle"><h3><font color="black">2 HOP Architecture</font>
+</h3></div><div class="section">
+<p id='paragraph1286'
+>The traditional Web architecture restricts the sets of
+operations clients (i.e., the programs contained in the Web pages that
+are executed by the Web browsers, denoted as <em id='emph1283'
+>Web pages</em> or
+even <em id='emph1284'
+>pages</em> when the context is unambiguous) are allowed to
+perform. For security matters, all browsers enforce the "<em id='emph1285'
+>same domain restriction</em>" preventing a downloaded Web page from
+initiating communications with other servers.  Also for security
+reasons, the only resources a Web page is allowed to access to are
+resources attached to the graphical user interface built by the Web
+browser. In particular, the page is not able to access to the file
+system of the computer running the Web browser. Since they constitute
+the minimal security protection against malicious Web sites, these
+elementary rules are unlikely to be once disabled. At first glance,
+they seem to prevent from using the resources obviously needed for
+implementing multimedia applications. For instance, how would it be
+possible to implement a photograph gallery if the photographs stored
+on the disk cannot be accessed! How is it possible to implement a
+mashup combining resources scattered all of over the network if the
+page is only allowed to communicate with one unique Web server!</p><p id='paragraph1290'
+>Augmenting the capacities of the browsers with <em id='emph1287'
+>plugins</em> that offer restricted services (such a reading a dedicated
+directory) is one way to address this problem. This solution has been
+adopted by Google Gears which provides a native plugin or by Flapjax
+which provides a portable plugin implemented in Flash. Hop has
+adopted a different solution. It does not modify the browsers, but it
+relies on a home brewed lightweight Web server. Since it has a small
+memory footprint several instances of such server can be run
+simultaneously on a single computer.  In particular, for each
+application, a new server can be started. Hence, one server may be
+implementing a photograph gallery, while another may be implementing a
+music media center, a third one, a web mail, etc. These servers can be
+considered as <em id='emph1288'
+>smart proxies</em>, however, since they are
+full-fledged Web servers we prefer the term <em id='emph1289'
+>Web broker</em>.</p><center id='center1292'
+><br class="figure" id='archi'
+><a name="archi"></a>
+<img src="archi.png" border="0" alt="" width="80%"><br>
+<center><small><strong>Fig. 1:</strong> The typical Hop advocated architecture.</small></center><br></center>
+<p id='paragraph1300'
+>Installing a broker is more complex than installing a plugin.
+However, this drawback is balanced by several advantages: <em id='emph1293'
+>i)</em>
+a Web broker can be accessed by different clients, then it can be used
+to implement multi-users applications such as an application opened to
+all the members of family not necessarily located on the same
+sub-network (an application for sharing photographs, for
+instance). <em id='emph1294'
+>ii)</em> The broker is a regular process managed by
+the operating system. As such, it is administrated as any regular
+process. In particular, it can be <em id='emph1295'
+>sandboxed</em> using mechanisms
+<em id='emph1296'
+>à la</em> <tt id='tt1297'
+>chroot</tt> or virtual machines. <em id='emph1298'
+>iii)</em> The
+broker can be used as a daemon for running background tasks such as
+nightly updates of a podcast database. Figure <a href="article.html#archi" class="inbound">1</a>
+shows the topology of a common Hop application, such as a
+<em id='emph1299'
+>mashup</em> involving three different content servers.</p><center id='center1302'
+><br class="figure" id='prog'
+><a name="prog"></a>
+<img src="programming2-hop.png" border="0" alt="" width="70%"><br>
+<center><small><strong>Fig. 2:</strong> A Hop program is composed of a single source code
+that addresses simultaneously the server and the client.</small></center><br></center>
+<p id='paragraph1306'
+>As illustrated in Figure <a href="article.html#prog" class="inbound">2</a>, a Hop
+program specifies <em id='emph1303'
+>in a single source code</em> the behavior of
+the broker <em id='emph1304'
+>and</em> and the client. The code source contains
+syntactic annotations that specify if an expression belongs to the
+client or to the broker. That is, if an expression has to be evaluated
+on the client or on the broker.  Expressions evaluated on the broker
+may refer to variables and functions of the client and <em id='emph1305'
+>vice-versa</em>.</p><p id='paragraph1307'
+>When a program is loaded on the broker, two compilers transform
+it into executable codes. A native compiler compiles the expressions
+belonging to the broker. This compilation is highly optimized so it
+delivers programs whose performance is approximatively two to three
+times slower than equivalent C hand-written programs. The client code
+is compiled by A Hop-to-JavaScript compiler. The generated code
+generated by this compiler is as fast as hand-written JavaScript code
+[<a href="article.html#ls:tfp07" class="inbound">1</a>].</p></div><br>
+</div>
+<div class="section" id="A-Photograph-Gallery"><!-- A Photograph Gallery -->
+<a name="A-Photograph-Gallery"></a>
+<div class="section-atitle"><h3><font color="black">3 A Photograph Gallery</font>
+</h3></div><div class="section">
+<p id='paragraph1308'
+>In this section a simple application for displaying photographs
+extracted from a digital camera is presented. The application
+collects all the photographs available on the repository located on
+the broker's disk, builds a thumbnail list, and let clients visualize
+photographs one by one. When a photograph is selected, it appears on
+screen with a rotation and zooming effect. Of course this application
+is executed from a Web browser. Figure <a href="article.html#screenshot" class="inbound">3</a> presents
+a screenshot of this application.</p><center id='center1310'
+><br class="figure" id='screenshot'
+><a name="screenshot"></a>
+<img src="grab2.png" border="0" alt="" width="80%"><br>
+<center><small><strong>Fig. 3:</strong> A screenshot of Firefox executing the photograph gallery.</small></center><br></center>
+<p id='paragraph1311'
+>At first glance, a Hop page looks like an HTML page where each
+markup is preceded with an open parenthesis, where closing markups
+are replaced with closing parenthesis, and where attributes name
+start with a colon.</p><DIV class='prog-border'><pre class="hop" id='prog1315'
+><em id='it1454'
+>1: </em><a name="1" class="mark"></a>(<font color="#6959cf"><strong id='bold1455'
+>define</strong></font> can
+<em id='it1457'
+>2: </em><a name="2" class="mark"></a>  (<font color="#1919af"><strong id='bold1458'
+>&lt;CANVAS&gt;</strong></font> <strong id='bold1460'
+>:width</strong> <font color="red"><strong id='bold1462'
+>~</strong></font>(- window.innerWidth 200<font color="#6959cf"><strong id='bold1464'
+>)</strong></font>
+<em id='it1466'
+>3: </em>            <strong id='bold1467'
+>:height</strong> ~window.innerHeight))
+</pre>
+</DIV><p id='paragraph1326'
+>In addition to providing markups, Hop also supports variable
+and function declarations. Line <em id='it1316'
+><i id='line-ref'
+><a href="article.html#1" class="inbound">1</a></i></em> contains the declaration
+of a variable name <font color="blue"><tt id='tt1317'
+>can</tt></font> whose value is an HTML tree denoting
+a canvas, <em id='it1319'
+>i.e.,</em> a drawing area. Another important departure from HTML,
+that can be seen on line <em id='it1320'
+><i id='line-ref'
+><a href="article.html#2" class="inbound">2</a></i></em>, rests in the value of attributes. In
+HTML these values are static strings of characters. In Hop, any
+legal expression of the language can be used to feed an attribute. In
+our example, we build a canvas slightly smaller than the browser's
+window in order to leave room for the photograph thumbnails that 
+will be introduced afterward. The <font color="blue"><tt id='tt1321'
+>~</tt></font> character, that is used in
+the attribute value, plays a fundamental role in Hop: it switches
+from broker-side code to client-side code. That is, in our example,
+the canvas is built on the broker, because the page is built on the
+broker and <em id='emph1323'
+>then</em> shipped to the client. However, the broker
+ignores the current width of the client window. Then, the actual width
+of the canvas is only known when the canvas is actually created on the
+client. The <font color="blue"><tt id='tt1324'
+>~</tt></font> character delays the evaluation of the
+expression until this occurs.</p><p id='paragraph1327'
+>We are now ready to present the main part of our application:</p><DIV class='prog-border'><pre class="hop" id='prog1346'
+><em id='it1469'
+> 5: </em>(<font color="#6959cf"><strong id='bold1470'
+>define-service</strong></font> (gallery<font color="#6959cf"><strong id='bold1472'
+>)</strong></font>
+<em id='it1474'
+> 6: </em>  (<font color="#1919af"><strong id='bold1475'
+>&lt;HTML&gt;</strong></font>
+<em id='it1477'
+> 7: </em>    (<font color="#1919af"><strong id='bold1478'
+>&lt;HEAD&gt;</strong></font> (<font color="#1919af"><strong id='bold1480'
+>&lt;TITLE&gt;</strong></font> <font color="red">&quot;A Web Photograph Gallery&quot;</font>))
+<em id='it1483'
+> 8: </em>    (<font color="#1919af"><strong id='bold1484'
+>&lt;BODY&gt;</strong></font> <strong id='bold1486'
+>:style</strong> <font color="red">&quot;background: black&quot;</font>
+<em id='it1489'
+> 9: </em>      <font color="red"><strong id='bold1490'
+>~</strong></font>(<font color="#6959cf"><strong id='bold1492'
+>define</strong></font> img (new Image<font color="#6959cf"><strong id='bold1494'
+>)</strong></font>)
+<em id='it1496'
+>10: </em>      <font color="red"><strong id='bold1497'
+>~</strong></font>(<font color="#6959cf"><strong id='bold1499'
+>define</strong></font> ctx #f<font color="#6959cf"><strong id='bold1501'
+>)</strong></font>
+<em id='it1503'
+>11: </em>      <font color="red"><strong id='bold1504'
+>~</strong></font>(<font color="#6959cf"><strong id='bold1506'
+>define</strong></font> angle 0<font color="#6959cf"><strong id='bold1508'
+>)</strong></font>
+<em id='it1510'
+>12: </em>      <font color="red"><strong id='bold1511'
+>~</strong></font>(<font color="#6959cf"><strong id='bold1513'
+>define</strong></font> zoom 0.1<font color="#6959cf"><strong id='bold1515'
+>)</strong></font>
+<em id='it1517'
+>13: </em>      <font color="red"><strong id='bold1518'
+>~</strong></font>(<font color="#6959cf"><strong id='bold1520'
+>define</strong></font> (draw-image<font color="#6959cf"><strong id='bold1522'
+>)</strong></font>
+<em id='it1524'
+>14: </em>          (<strong id='bold1525'
+>set!</strong> zoom (+ 0.1 zoom))
+<em id='it1526'
+>15: </em>          (<strong id='bold1527'
+>set!</strong> angle (+ 0.4 angle))
+<em id='it1528'
+>16: </em>          (ctx.fillRect 0 0 <font color="#00cf00"><strong id='bold1529'
+>$can.width</strong></font> <font color="#00cf00"><strong id='bold1531'
+>$can.height</strong></font>)
+<em id='it1533'
+>17: </em>          (ctx.save)
+<em id='it1534'
+>18: </em>          (ctx.translate 
+<em id='it1535'
+>19: </em>           (/ <font color="#00cf00"><strong id='bold1536'
+>$can.width</strong></font> 2) (/ <font color="#00cf00"><strong id='bold1538'
+>$can.height</strong></font> 2)))
+<em id='it1540'
+>20: </em>          (ctx.rotate angle)
+<em id='it1541'
+>21: </em>          (ctx.scale zoom zoom)
+<em id='it1542'
+>22: </em>          (ctx.drawImage img 
+<em id='it1543'
+>23: </em>           (- (/ img.width 2)) (- (/ img.height 2)))
+<em id='it1544'
+>24: </em>          (ctx.restore))
+<em id='it1545'
+>25: </em><a name="25" class="mark"></a>       <font color="red"><strong id='bold1546'
+>~</strong></font>(<font color="#6959cf"><strong id='bold1548'
+>define</strong></font> (reset-anim! src<font color="#6959cf"><strong id='bold1550'
+>)</strong></font>
+<em id='it1552'
+>26: </em>          (<strong id='bold1553'
+>set!</strong> img.src src)
+<em id='it1554'
+>27: </em>          (<strong id='bold1555'
+>set!</strong> ctx (<font color="#00cf00"><strong id='bold1556'
+>$can.getContext</strong></font> <font color="red">&quot;2d&quot;</font>))
+<em id='it1559'
+>28: </em>          (<strong id='bold1560'
+>set!</strong> angle 0)
+<em id='it1561'
+>29: </em>          (<strong id='bold1562'
+>set!</strong> zoom 0.1)
+<em id='it1563'
+>30: </em>          (timeout-start <font color="red">&quot;anim&quot;</font> 100 draw-image))
+<em id='it1565'
+>31: </em>       (thumbs repository))))
+</pre>
+</DIV><p id='paragraph1352'
+>The form <font color="blue"><tt id='tt1347'
+>define-service</tt></font> introduces a function that
+can be invoked from a browser following the REST convention. That is,
+our program is started by redirecting a Web browser to the URL <font color="blue"><tt id='tt1349'
+>http://&lt;your-server&gt;/hop/gallery</tt></font>. The drawing of the image being
+traditional it does not deserve many explanations. It is noteworthy
+that standard Web APIs can be reused <em id='emph1351'
+>as is</em> in Hop
+without any declaration or wrapping.</p><p id='paragraph1363'
+>This example shows another important construction of Hop,
+namely the <font color="blue"><tt id='tt1353'
+>$</tt></font> escape sign. This is the exact opposite of
+<font color="blue"><tt id='tt1355'
+>~</tt></font>. It switches from <em id='emph1357'
+>client mode</em> to <em id='emph1358'
+>broker
+mode</em>. In this example, the variable <font color="blue"><tt id='tt1359'
+>can</tt></font> which has been declared
+on the broker is unbound on the client.  So, in order to be used
+by client-code, it has to be marked with the <font color="blue"><tt id='tt1361'
+>$</tt></font> sign.</p><p id='paragraph1366'
+>The definition of the function <font color="blue"><tt id='tt1364'
+>thumbs</tt></font>, that extracts
+the photographs from the disk and presents them on the Web page, can be
+defined as follows:</p><DIV class='prog-border'><pre class="hop" id='prog1368'
+><em id='it1566'
+>32: </em>(<font color="#6959cf"><strong id='bold1567'
+>define</strong></font> (thumbs repo<font color="#6959cf"><strong id='bold1569'
+>)</strong></font>
+<em id='it1571'
+>33: </em> (<font color="#1919af"><strong id='bold1572'
+>&lt;TABLE&gt;</strong></font>
+<em id='it1574'
+>34: </em><a name="34" class="mark"></a>   (<font color="#1919af"><strong id='bold1575'
+>&lt;TR&gt;</strong></font> (<font color="#1919af"><strong id='bold1577'
+>&lt;TD&gt;</strong></font> (map <font color="#1919af"><strong id='bold1579'
+>&lt;THUMB&gt;</strong></font> (directory-&gt;list repo)))
+<em id='it1581'
+>35: </em>         (<font color="#1919af"><strong id='bold1582'
+>&lt;TD&gt;</strong></font> canv))))
+</pre>
+</DIV><p id='paragraph1373'
+>The function <font color="blue"><tt id='tt1369'
+>directory-&gt;list</tt></font> can only be used on
+broker code since it actually reads the disk of the broker and
+packages the file names inside a list.  The function <font color="blue"><tt id='tt1371'
+>map</tt></font>
+is an iterator that applies its first argument to the
+elements found in its second argument. This example shows that, in
+Hop, markups play a role similar to functions. They can be applied to
+arguments in order to build HTML trees but they can also be used as
+value, for instance passed as argument.</p><p id='paragraph1376'
+>In order to complete this first application, the implementation
+of the <font color="blue"><tt id='tt1374'
+>&lt;THUMB&gt;</tt></font> markup has to be presented.  Contrary to
+regular HTML markups, it is not predefined in Hop.</p><DIV class='prog-border'><pre class="hop" id='prog1383'
+><em id='it1584'
+>35: </em>(<font color="#6959cf"><strong id='bold1585'
+>define</strong></font> (<font color="#1919af"><strong id='bold1587'
+>&lt;THUMB&gt;</strong></font> path<font color="#6959cf"><strong id='bold1589'
+>)</strong></font>
+<em id='it1591'
+>36: </em> (<strong id='bold1592'
+>let</strong> ((exif (jpeg-exif path)))
+<em id='it1593'
+>37: </em>   (<font color="#1919af"><strong id='bold1594'
+>&lt;DIV&gt;</strong></font>
+<em id='it1596'
+>38: </em><a name="38" class="mark"></a>     (<font color="#1919af"><strong id='bold1597'
+>&lt;DIV&gt;</strong></font> (exif-date exif))
+<em id='it1599'
+>39: </em>     (<font color="#1919af"><strong id='bold1600'
+>&lt;IMG&gt;</strong></font> 
+<em id='it1602'
+>40: </em><a name="40" class="mark"></a>        <strong id='bold1603'
+>:src</strong> (img-base64 (exif-thumbnail exif))
+<em id='it1605'
+>41: </em>        <strong id='bold1606'
+>:onclick</strong> 
+<em id='it1608'
+>42: </em><a name="42" class="mark"></a>        <font color="red"><strong id='bold1609'
+>~</strong></font>(<font color="red"><strong id='bold1611'
+>with-hop</strong></font> (<font color="#00cf00"><strong id='bold1613'
+>$</strong></font>(<strong id='bold1615'
+>service</strong> () (img-base64 path)))
+<em id='it1616'
+>43: </em>            reset-anim!)))))
+</pre>
+</DIV><p id='paragraph1391'
+>The broker library function <font color="blue"><tt id='tt1384'
+>jpeg-exif</tt></font> reads a JPEG
+image from the disk and extracts the embedded EXIF information. It returns
+a data structure which is used on line <em id='it1386'
+><i id='line-ref'
+><a href="article.html#38" class="inbound">38</a></i></em> for getting the date
+of the photograph and on line <em id='it1387'
+><i id='line-ref'
+><a href="article.html#40" class="inbound">40</a></i></em> for extracting the thumbnail
+generated by the camera. The function <font color="blue"><tt id='tt1388'
+>img-base64</tt></font>, as suggested
+by its name, builds a <tt id='tt1390'
+>base64</tt> inline representation of an image.</p><p id='paragraph1400'
+>The form <font color="blue"><tt id='tt1392'
+>with-hop</tt></font> is central to Hop, it lets
+client code invoke functions defined on the broker. In the example on
+line <em id='it1394'
+><i id='line-ref'
+><a href="article.html#42" class="inbound">42</a></i></em> it is used to invoke an anonymous function
+returning the actual content of a photograph. When this function call
+completes, the result is sent to the function <font color="blue"><tt id='tt1395'
+>reset-anim!</tt></font>
+defined on line <em id='it1397'
+><i id='line-ref'
+><a href="article.html#25" class="inbound">25</a></i></em>. In this example, the <font color="blue"><tt id='tt1398'
+>with-hop</tt></font>
+function call has been used for minimizing the memory footprint
+of the client. Instead of shipping all the photographs with the main
+interface, the application only ships lightweight images
+thumbnails and, on demand, selected photographs.</p></div><br>
+</div>
+<div class="section" id="A-Podcast-Receiver"><!-- A Podcast Receiver -->
+<a name="A-Podcast-Receiver"></a>
+<div class="section-atitle"><h3><font color="black">4 A Podcast Receiver</font>
+</h3></div><div class="section">
+<p id='paragraph1401'
+>This second example, illustrates the Hop's ability to
+parse XML documents on the broker and play music on clients. These features
+are used for building a simple yet operational Podcast receiver. This receiver
+presents a set of predefined podcast streams to the user which can
+start and stop playing the streams.</p><DIV class='prog-border'><pre class="hop" id='prog1411'
+><em id='it1617'
+> 1: </em>(<font color="#6959cf"><strong id='bold1618'
+>define-service</strong></font> (podcast<font color="#6959cf"><strong id='bold1620'
+>)</strong></font>
+<em id='it1622'
+> 2: </em>  (<font color="#1919af"><strong id='bold1623'
+>&lt;HTML&gt;</strong></font>
+<em id='it1625'
+> 3: </em>    (<font color="#1919af"><strong id='bold1626'
+>&lt;HEAD&gt;</strong></font> <strong id='bold1628'
+>:include</strong> <font color="red">&quot;hop-sound&quot;</font>)
+<em id='it1631'
+> 4: </em>    (<font color="#1919af"><strong id='bold1632'
+>&lt;BODY&gt;</strong></font>
+<em id='it1634'
+> 5: </em>       <font color="red"><strong id='bold1635'
+>~</strong></font>(<font color="#6959cf"><strong id='bold1637'
+>define</strong></font> snd #f<font color="#6959cf"><strong id='bold1639'
+>)</strong></font>
+<em id='it1641'
+> 6: </em>       <font color="red"><strong id='bold1642'
+>~</strong></font>(<font color="#6959cf"><strong id='bold1644'
+>define</strong></font> (play-url url<font color="#6959cf"><strong id='bold1646'
+>)</strong></font> 
+<em id='it1648'
+> 7: </em><a name="7" class="mark"></a>           (<strong id='bold1649'
+>set!</strong> snd (make-sound url <strong id='bold1650'
+>:stream</strong> #t)))
+<em id='it1652'
+> 8: </em><a name="8" class="mark"></a>       (<font color="#1919af"><strong id='bold1653'
+>&lt;BUTTON&gt;</strong></font> <font color="red">&quot;Stop&quot;</font> <strong id='bold1656'
+>:onclick</strong> <font color="red"><strong id='bold1658'
+>~</strong></font>(sound-stop snd))
+<em id='it1660'
+> 9: </em>       (map <font color="#1919af"><strong id='bold1661'
+>&lt;PODCAST&gt;</strong></font> podcast-list))))
+</pre>
+</DIV><p id='paragraph1420'
+>The client-side function <font color="blue"><tt id='tt1412'
+>make-sound</tt></font> (line <em id='it1414'
+><i id='line-ref'
+><a href="article.html#7" class="inbound">7</a></i></em>) downloads and plays a sound. Once initiated, the sound
+can be interrupted by the means of the <font color="blue"><tt id='tt1415'
+>sound-stop</tt></font> function
+(line <em id='it1417'
+><i id='line-ref'
+><a href="article.html#8" class="inbound">8</a></i></em>). In our example, the user defined markup <font color="blue"><tt id='tt1418'
+>&lt;PODCAST&gt;</tt></font> associates, in the GUI, a button to each podcast
+stream.</p><DIV class='prog-border'><pre class="hop" id='prog1424'
+><em id='it1663'
+>10: </em>(<font color="#6959cf"><strong id='bold1664'
+>define</strong></font> (<font color="#1919af"><strong id='bold1666'
+>&lt;PODCAST&gt;</strong></font> podcast<font color="#6959cf"><strong id='bold1668'
+>)</strong></font>
+<em id='it1670'
+>11: </em>  (<strong id='bold1671'
+>let</strong> ((url (rss-&gt;podcast-mp3 (car podcast))))
+<em id='it1672'
+>12: </em>     (<font color="#1919af"><strong id='bold1673'
+>&lt;BUTTON&gt;</strong></font> <strong id='bold1675'
+>:onclick</strong> <font color="red"><strong id='bold1677'
+>~</strong></font>(play-url <font color="#00cf00"><strong id='bold1679'
+>$url</strong></font> )
+<em id='it1681'
+>13: </em>        (cadr podcast))))
+</pre>
+</DIV><p id='paragraph1428'
+>The function <font color="blue"><tt id='tt1425'
+>with-url</tt></font> (line <em id='it1427'
+><i id='line-ref'
+><a href="article.html#15" class="inbound">15</a></i></em>) opens,
+from the broker, an internet connection with the host referenced to in
+the URL it receives as first argument and it invokes the function it
+receives as second argument, providing it with a stream of characters
+obtained from the connection.</p><DIV class='prog-border'><pre class="hop" id='prog1435'
+><em id='it1682'
+>14: </em>(<font color="#6959cf"><strong id='bold1683'
+>define</strong></font> (rss-&gt;podcast-mp3 url<font color="#6959cf"><strong id='bold1685'
+>)</strong></font>
+<em id='it1687'
+>15: </em><a name="15" class="mark"></a> (<font color="red"><strong id='bold1688'
+>with-url</strong></font> url
+<em id='it1690'
+>16: </em>   (<strong id='bold1691'
+>lambda</strong> (p)
+<em id='it1692'
+>17: </em>     (<font color="red"><strong id='bold1693'
+>bind-exit</strong></font> (return)
+<em id='it1695'
+>18: </em><a name="18" class="mark"></a>       (xml-parse p
+<em id='it1696'
+>19: </em>         (<strong id='bold1697'
+>lambda</strong> (markup attrs body)
+<em id='it1698'
+>20: </em>           (<strong id='bold1699'
+>if</strong> (eq? markup 'enclosure)
+<em id='it1700'
+>21: </em>             (return (cdr (assq 'url attrs))))))))))
+</pre>
+</DIV><p id='paragraph1441'
+>The function <font color="blue"><tt id='tt1436'
+>xml-parse</tt></font> (line <em id='it1438'
+><i id='line-ref'
+><a href="article.html#18" class="inbound">18</a></i></em>) parses a
+stream of characters denoting an XML document and seeks for the <tt id='tt1439'
+>enclosure</tt> element denoting the actual MP3 document implementing the
+sound. When such a markup is found on the stream, its <tt id='tt1440'
+>url</tt>
+attribute is extracted and the parsing aborted.  The list of podcast
+rss streams can be simply defined as follows:</p><DIV class='prog-border'><pre class="hop" id='prog1449'
+><em id='it1701'
+>24: </em>(<font color="#6959cf"><strong id='bold1702'
+>define</strong></font> podcast-list
+<em id='it1704'
+>25: </em>  '<font color="#6959cf"><strong id='bold1705'
+>(</strong></font><font color="#6959cf"><strong id='bold1707'
+>(</strong></font><font color="red">&quot;http://rf.net/rss_10053.xml&quot;</font> <font color="red">&quot;France Musique&quot;</font><font color="#6959cf"><strong id='bold1711'
+>)</strong></font>
+<em id='it1713'
+>26: </em>    (<font color="red">&quot;http://rf.net/rss_20000.xml&quot;</font> <font color="red">&quot;FIP&quot;</font>) ...))
+</pre>
+</DIV></div><br>
+</div>
+<div class="section" id="Conclusion"><!-- Conclusion -->
+<a name="Conclusion"></a>
+<div class="section-atitle"><h3><font color="black">5 Conclusion</font>
+</h3></div><div class="section">
+<p id='paragraph1450'
+>This paper has presented the Hop platform, an execution
+environment for Web applications. Its programming language has been
+informally presented as well as its main components, the Hop Web
+broker, and its two compilers. Two operational multimedia applications
+have been presented: a photograph gallery and a podcast receiver. These
+examples show how compact Hop programs can be. The first example
+counts less than 50 lines of code while the second only 30!</p><p id='paragraph1451'
+>As of May 2007, the Hop Web broker can be installed on any
+regular PC running any main-stream operating system. In addition,
+successful experiments for installing it on NASes (Network Attached
+Storages) have been conducted. On these architectures, it has been
+used for implementing a cheap, convenient, and highly available,
+multimedia home server. We plan to port it to personal
+modem/routers. This is appealing because these equipments are cheap
+and highly available. This is also challenging because they have
+dramatically limited resources.</p><p id='paragraph1452'
+>In parallel, Hop is also ported to modern handheld
+computers. These small devices are port-friendly because, in spite of
+their reduced size, they propose resources comparable to that of low-end
+laptops. On these platforms, we will use Hop for running the same
+applications as mentioned above.</p></div><br>
+</div>
+<div class="section" id="References"><!-- References -->
+<a name="References"></a>
+<div class="section-atitle"><h3><font color="black">6 References</font>
+</h3></div><div class="section">
+
+
+<font size="-1"><table><tbody>
+<tr><td id="ls:tfp07" align="right" valign="top"><a name="ls:tfp07">[1]</a></td><td id="ls:tfp07" align="left" valign="top">Loitsch, F. and Serrano, M. -- <a href="http://cs.shu.edu/tfp2007/draftProcDocument.pdf" class="http"><strong id='bold1716'
+>Hop Client-Side Compilation</strong></a> -- Proceedings of the 8th Symposium on Trends on Functional Languages, New Yort, USA, Apr, 2007.</td></tr>
+<tr><td id="serrano:sfp06" align="right" valign="top"><a name="serrano:sfp06">[2]</a></td><td id="serrano:sfp06" align="left" valign="top">Serrano, M. -- <strong id='bold1717'
+>The HOP Development Kit</strong> -- Invited paper of the Seventh Acm sigplan Workshop on Scheme and Functional Programming, Portland, Oregon, USA, Sep, 2006.</td></tr>
+<tr><td id="sgl:dls06" align="right" valign="top"><a name="sgl:dls06">[3]</a></td><td id="sgl:dls06" align="left" valign="top">Serrano, M. and Gallesio, E. and Loitsch, F. -- <strong id='bold1718'
+>HOP, a language for programming the Web 2.0</strong> -- Proceedings of the First Dynamic Languages Symposium, Portland, Oregon, USA, Oct, 2006.</td></tr>
+</tbody></table>
+</font></div><br>
+</div>
+<div class="footnotes" id="Programming-Web-Multimedia-Applications-with-Hop-footnote"></div>
+</div>
+<div class="skribe-ending">
+<hr> 
+<p class="ending" id='paragraph1724'
+><font size="-1">
+This <span class="sc">Html</span> page has been produced by 
+<a href="http://www.inria.fr/mimosa/fp/Skribe" class="http">Skribe</a>.
+<br/>
+Last update <em id='it1722'
+>Tue Oct  2 09:04:27 2007</em>.</font></p></div>
+</body>
+</html>

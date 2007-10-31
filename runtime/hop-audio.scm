@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Oct 31 08:01:26 2007 (serrano)                */
+;*    Last change :  Wed Oct 31 10:52:36 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -47,6 +47,7 @@
 	       (%event (default #unspecified))
 	       (%mutex (default (make-mutex 'hop-audio-player)))
 	       (%refresh (default #t))
+	       (%errcount::int (default 0))
 	       (engine read-only))
 	    
 	    (generic hop-audio-player-init ::hop-audio-player)
@@ -414,12 +415,11 @@
 ;*    audio-loop ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (audio-loop player)
-   (with-access::hop-audio-player player (%event engine)
+   (with-access::hop-audio-player player (%event %errcount engine)
       (let luup ((oldstate 'init)
 		 (oldvol -1)
 		 (oldsong -1)
-		 (oldplaylist -1)
-		 (ttl 60))
+		 (oldplaylist -1))
 	 (multiple-value-bind (state playlist song pos len vol err _ _)
 	    (music-info engine)
 	    (cond
@@ -428,32 +428,33 @@
 		   (signal-state! %event 'error err #f vol))
 		;; an new error has been spotted
 		(sleep 1000347)
-		(luup 'error oldvol oldsong oldplaylist 60))
+		(luup 'error oldvol oldsong oldplaylist))
 	       ((not (=fx vol oldvol))
 		;; volume notification
 		(signal-state! %event state len pos vol)
-		(luup state vol song playlist 60))
+		(luup state vol song playlist))
 	       ((refresh-forced? player)
 		;; a refresh has been forced
 		(signal-meta! %event engine state pos)
-		(luup state vol song playlist 60))
+		(luup state vol song playlist))
 	       ((or (not (=fx oldsong song))
 		    (not (=fx oldplaylist playlist)))
 		;; playlist (meta) notification
 		(signal-meta! %event engine state pos)
-		(luup state vol song playlist 60))
+		(luup state vol song playlist))
 	       ((=fx len 0)
 		;; the engine has not gathered yet the music length
 		(sleep 1000347)
-		(luup 'length-unknown vol song playlist ttl))
-	       ((or (not (eq? oldstate state)) (=fx ttl 0))
-		;; notity a state change (or a ttl reaches)
+		(luup 'length-unknown vol song playlist))
+	       ((not (eq? oldstate state))
+		;; notity a state change
 		(signal-state! %event state len pos vol)
-		(luup state vol song playlist 60))
+		(luup state vol song playlist))
 	       ((hop-event-client-ready? %event)
 		;; nothing has changed but clients are still connected
 		(sleep 1000347)
-		(luup state vol song playlist 60)))))
+		(set! %errcount 0)
+		(luup state vol song playlist)))))
       #f))
 
 ;*---------------------------------------------------------------------*/
@@ -475,7 +476,7 @@
    
    (make-hop-thread
     (lambda ()
-       (with-access::hop-audio-player player (%event engine)
+       (with-access::hop-audio-player player (%event engine %errcount)
 	  (when (wait-first-client player)
 	     (let liip ()
 		(with-handler
@@ -483,6 +484,7 @@
 		      (tprint "***AUDIO-THREAD ERROR: " e)
 		      (if (&io-error? e)
 			  (begin
+			     (set! %errcount (+fx 1 %errcount))
 			     (error-notify e)
 			     (signal-state! %event 'error (&io-error-msg e) #f -01))
 			  (begin
@@ -494,8 +496,11 @@
 		(sleep 3000562)
 		(when (hop-event-client-ready? %event)
 		   (tprint "======== AUDIO-LOOP RESET...")
-		   (music-reset! engine)
-		   (liip))))))))
+		   (if (<fx %errcount 50)
+		       (begin
+			  (music-reset! engine)
+			  (liip))
+		       (music-close engine)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-set! ...                                          */
