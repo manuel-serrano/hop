@@ -1,4 +1,4 @@
-;; a canvas for rotating and scaling images
+;; canvas programming using the object interface
 (let ((canvas (<CANVAS> :style "border: 5px solid black"
 		 :width 200 :height 200))
       (src (make-file-path (hop-icons-directory) "hop.png")))

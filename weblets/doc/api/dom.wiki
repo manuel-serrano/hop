@@ -40,6 +40,12 @@ vectors.
 === server & client ===
 
   (find-runtime-type obj)
+  (dom-node-element? node)
+  (dom-node-text? node)
+  (dom-node-document? node)
+  (dom-node-comment? node)
+  (dom-node-document-fragment? node)
+  (dom-node-attr? node)
   (dom-has-attributes? node)
   (dom-get-attributes node)
   (dom-has-attribute? node string)
@@ -79,6 +85,7 @@ vectors.
   (dom-node-eval node)
   (node-style-get node prop)
   (node-style-set! node prop value)
+  (node-bounding-box node)
   (node-absolute-x node)
   (node-absolute-y node)
   (css-add-style! document texta)
@@ -89,7 +96,7 @@ vectors.
 
 
 == Examples ==
-<example>get-element-by-id, append-child, remove-child, parent-node</example>
+<example>get-element-by-id, append-child, remove-child, parent-node, node-</example>
 
 == Server & Client Definitions ==
 <server>
@@ -119,6 +126,84 @@ Returns a string of character denoting the type of ++obj++.
 
 Returns ++#t++ if ++node++ has //attributes//. Otherwise, returns ++#f++.
 </procedure>
+</procedure>
+</function>
+
+=== ++(dom-node-element? node)++ ===
+<function> dom-node-element?
+<procedure> dom-node-element?
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+</arguments>
+
+Returns ++#t++ if ++node++ is an XML //element//. Otherwise, returns ++#f++.
+</procedure>
+</function>
+
+=== ++(dom-node-text? node)++ ===
+<function> dom-node-text?
+<procedure> dom-node-text?
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element of a document.        |
+</arguments>
+
+Returns ++#t++ if ++node++ is an XML //text//. Otherwise, returns ++#f++.
+</procedure>
+</function>
+
+=== ++(dom-node-document? node)++ ===
+<function> dom-node-document?
+<procedure> dom-node-document?
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element of a document.        |
+</arguments>
+
+Returns ++#t++ if ++node++ is an XML //document//. Otherwise, returns ++#f++.
+</procedure>
+</function>
+
+=== ++(dom-node-comment? node)++ ===
+<function> dom-node-comment?
+<procedure> dom-node-comment?
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element of a document.        |
+</arguments>
+
+Returns ++#t++ if ++node++ is an XML //comment//. Otherwise, returns ++#f++.
+</procedure>
+</function>
+
+=== ++(dom-node-document-fragment? node)++ ===
+<function> dom-node-document-fragment?
+<procedure> dom-node-document-fragment?
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element of a document-fragment.        |
+</arguments>
+
+Returns ++#t++ if ++node++ is an XML //document-fragment//. Otherwise, returns ++#f++.
+</procedure>
+</function>
+
+=== ++(dom-node-attr? node)++ ===
+<function> dom-node-attr?
+<procedure> dom-node-attr?
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element of a attr.        |
+</arguments>
+
+Returns ++#t++ if ++node++ is an XML //attr//. Otherwise, returns ++#f++.
 </procedure>
 </function>
 
@@ -521,7 +606,7 @@ the tree. In general, it should not be directly called by user source code.
 <client>
 
 === ++(current-window-height)++ ===
-<procedure> window-height
+<procedure> current-window-height
 <arguments>
 ^  arguments       ^   type       ^  short description               ^
 </arguments>
@@ -588,6 +673,18 @@ or its identifier (a keyword). Example:
      (node-style-set! n :opacity 0.4))
 
 
+</procedure>
+
+=== ++(node-bounding-box node)++ ===
+<procedure> node-bounding-box
+<arguments>
+^  arguments       ^   type           ^  short description                      ^
+| node             |  element         | an element.                             |
+</arguments>
+
+Returns the bounding box of a element. The bounding box is represented by
+a vector of four element: the top-left coordinates, the width and the height
+of the box.
 </procedure>
 
 === ++(node-absolute-x node)++ ===

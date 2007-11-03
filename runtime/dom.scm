@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Tue Oct 17 10:37:56 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Fri Nov  2 10:12:22 2007 (serrano)                */
+;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -43,7 +43,12 @@
 	   (dom-get-attribute node ::bstring)
 	   (dom-has-attribute?::bool node ::bstring)
 	   (dom-remove-attribute! node name)
-	   (dom-set-attribute! node name value))
+	   (dom-set-attribute! node name value)
+	   (dom-node-element? node)
+	   (dom-node-text? node)
+	   (dom-node-document? node)
+	   (dom-node-document-fragment? node)
+	   (dom-node-attr? node))
    
    (export (class xml-document::xml-markup
 	      (%make-xml-document)
@@ -513,3 +518,34 @@
 	    (if (pair? c)
 		(set-cdr! c value)
 		(set! attributes (cons (cons name value) attributes)))))))
+
+;*---------------------------------------------------------------------*/
+;*    dom-node-element? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (dom-node-element? node)
+   (xml-element? node))
+
+;*---------------------------------------------------------------------*/
+;*    dom-node-text? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (dom-node-text? node)
+   (string? node))
+
+;*---------------------------------------------------------------------*/
+;*    dom-node-document? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (dom-node-document? node)
+   (xml-markup-is? node 'document))
+
+;*---------------------------------------------------------------------*/
+;*    dom-node-document-fragment? ...                                  */
+;*---------------------------------------------------------------------*/
+(define (dom-node-document-fragment? node)
+   (dom-node-document? node))
+
+;*---------------------------------------------------------------------*/
+;*    dom-node-attr? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (dom-node-attr? node)
+   #f)
+

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Oct 25 17:45:33 2007 (serrano)                */
+/*    Last change :  Fri Nov  2 10:28:43 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -39,7 +39,49 @@ function dom_set_child_node( parent, node ) {
    parent.appendChild( node );
    return node;
 }
-   
+
+/*---------------------------------------------------------------------*/
+/*    dom_node_elementp ...                                            */
+/*---------------------------------------------------------------------*/
+function dom_node_elementp( node ) { /// export
+   return node.nodeType == 1;
+}
+
+/*---------------------------------------------------------------------*/
+/*    dom_node_textp ...                                               */
+/*---------------------------------------------------------------------*/
+function dom_node_textp( node ) { /// export
+   return node.nodeType == 3;
+}
+
+/*---------------------------------------------------------------------*/
+/*    dom_node_documentp ...                                           */
+/*---------------------------------------------------------------------*/
+function dom_node_documentp( node ) { /// export
+   return node.nodeType == 9;
+}
+
+/*---------------------------------------------------------------------*/
+/*    dom_node_commentp ...                                            */
+/*---------------------------------------------------------------------*/
+function dom_node_commentp( node ) { /// export
+   return node.nodeType == 8;
+}
+
+/*---------------------------------------------------------------------*/
+/*    dom_node_document_fragmentp ...                                  */
+/*---------------------------------------------------------------------*/
+function dom_node_document_fragmentp( node ) { /// export
+   return node.nodeType == 11;
+}
+
+/*---------------------------------------------------------------------*/
+/*    dom_node_document_attrp ...                                      */
+/*---------------------------------------------------------------------*/
+function dom_node_document_attrp( node ) { /// export
+   return node.nodeType == 2;
+}
+
 /*---------------------------------------------------------------------*/
 /*    dom_create ...                                                   */
 /*---------------------------------------------------------------------*/
@@ -732,6 +774,8 @@ function hop_bounding_box( e ) { /// node-bounding-box
    var n;
    if( (e instanceof String) || (typeof e == "string") ) {
       n = document.getElementById( e );
+   } else {
+      n = e;
    }
 
    return [ hop_element_x( n ), hop_element_y( n ),

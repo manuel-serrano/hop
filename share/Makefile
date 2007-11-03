@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Oct 30 06:10:41 2007 (serrano)                */
+#*    Last change :  Sat Nov  3 08:23:16 2007 (serrano)                */
 #*    Copyright   :  2004-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -44,7 +44,8 @@ RTS		= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-tooltip.js hop-dashboard.js \
                   hop-debug.js hop-debug.css \
 		  hop-sound.js hop-sound.scm \
-                  hop-audio.js hop-audio.hss
+                  hop-audio.js hop-audio.hss \
+                  hop-canvas.scm
 
 ICONS_AUDIO	= mute.png pause.png playlist.png prefs.png stop.png \
 		  next.png play.png podcast.png prev.png unmute.png

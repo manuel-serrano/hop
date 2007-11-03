@@ -10,7 +10,7 @@ The functions described in this page implement client //timeouts//.
    (timeout duration thunk)
    (after duration thunk)
 
-== Server Definitions ==
+== Client Definitions ==
 <client>
 
 === ++(timeout int proc)++ ===
