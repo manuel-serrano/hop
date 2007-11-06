@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Sat Nov  3 17:46:45 2007 (serrano)                */
+;*    Last change :  Tue Nov  6 09:26:19 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
@@ -21,7 +21,7 @@
 (define (canvas-properties ctx)
    `(:fill-style ,ctx.fillStyle
 		 :global-alpha ,ctx.globalAlpha
-		 :global-composition-operation ,ctx.globalCompositionOperation
+		 :global-composite-operation ,ctx.globalCompositeOperation
 		 :line-cap ,ctx.lineCap
 		 :line-join ,ctx.lineJoin
 		 :line-width ,ctx.lineWidth
@@ -305,43 +305,115 @@
 		    (loop (cddr args)))
 		   (else
 		    (error 'canvas-arrow-to "Illegal arguments" args))))))
-      ;; the body of the arrow
-      (ctx.beginPath)
-      (ctx.moveTo x0 y0)
-      (ctx.lineTo x1 y1)
-      (ctx.closePath)
-      (ctx.stroke)
       (let* ((d (sqrt (+ (* (- x1 x0) (- x1 x0)) (* (- y1 y0) (- y1 y0)))))
-	     (a (let ((acos (Math.acos (/ (- x1 x0) d))))
-		   (if (> y1 y0)
-		       acos
-		       (- acos)))))
+	     (ah (let ((acos (Math.acos (/ (- x1 x0) d))))
+		    (if (> y1 y0)
+			acos
+			(- acos))))
+	     (at (+ ah Math.PI))
+	     (x1a (- x1 (* len (cos (+ ah an)))))
+	     (y1a (- y1 (* len (sin (+ ah an)))))
+	     (x1b (- x1 (* len (cos (- ah an)))))
+	     (y1b (- y1 (* len (sin (- ah an)))))
+	     (x0a (- x0 (* len (cos (+ at an)))))
+	     (y0a (- y0 (* len (sin (+ at an)))))
+	     (x0b (- x0 (* len (cos (- at an)))))
+	     (y0b (- y0 (* len (sin (- at an))))))
+	 ;; the line
+	 (let ((lx0 (if tail (+ x0a (/ (- x0b x0a) 2)) x0))
+	       (ly0 (if tail (+ y0a (/ (- y0b y0a) 2)) y0))
+	       (lx1 (if head (+ x1a (/ (- x1b x1a) 2)) x1))
+	       (ly1 (if head (+ y1a (/ (- y1b y1a) 2)) y1)))
+	    (ctx.beginPath)
+	    (ctx.moveTo lx0 ly0)
+	    (ctx.lineTo lx1 ly1)
+	    (ctx.stroke))
 	 ;; the head
 	 (when head
-	    (let ((x3 (- x1 (* len (cos (+ a an)))))
-		  (y3 (- y1 (* len (sin (+ a an)))))
-		  (x2 (- x1 (* len (cos (- a an)))))
-		  (y2 (- y1 (* len (sin (- a an)))))
-		  (x4 (+ x1 (* (* 2 ctx.lineWidth) (cos a))))
-		  (y4 (+ y1 (* (* 2 ctx.lineWidth) (sin a)))))
-	       (ctx.beginPath)
-	       (ctx.moveTo x4 y4)
-	       (ctx.lineTo x2 y2)
-	       (ctx.lineTo x3 y3)
-	       (ctx.lineTo x4 y4)
-	       (ctx.fill)))
+	    (ctx.beginPath)
+	    (ctx.moveTo x1 y1)
+	    (ctx.lineTo x1a y1a)
+	    (ctx.lineTo x1b y1b)
+	    (ctx.closePath)
+	    (ctx.fill))
 	 ;; the tail
 	 (when tail
-	    (let* ((a (+ a Math.PI))
-		   (x3 (- x0 (* len (cos (+ a an)))))
-		   (y3 (- y0 (* len (sin (+ a an)))))
-		   (x2 (- x0 (* len (cos (- a an)))))
-		   (y2 (- y0 (* len (sin (- a an)))))
-		   (x4 (+ x0 (* (* 2 ctx.lineWidth) (cos a))))
-		   (y4 (+ y0 (* (* 2 ctx.lineWidth) (sin a)))))
-	       (ctx.beginPath)
-	       (ctx.moveTo x4 y4)
-	       (ctx.lineTo x2 y2)
-	       (ctx.lineTo x3 y3)
-	       (ctx.lineTo x4 y4)
-	       (ctx.fill))))))
+	    (ctx.beginPath)
+	    (ctx.moveTo x0 y0)
+	    (ctx.lineTo x0a y0a)
+	    (ctx.lineTo x0b y0b)
+	    (ctx.closePath)
+	    (ctx.fill)))))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-quadratic-arrow-to ...                                    */
+;*---------------------------------------------------------------------*/
+(define (canvas-quadratic-arrow-to ctx x0 y0 cpx cpy x1 y1 . args)
+   (let* ((len (* 5 ctx.lineWidth))
+	  (an 0.4)
+	  (head #t)
+	  (tail #f))
+      ;; arguments parsing
+      (let loop ((args args))
+	 (when (pair? args)
+	    (if (null? (cdr args))
+		(error 'canvas-arrow-to "Illegal arguments" args)
+		(cond
+		   ((eq? (car args) :angle)
+		    (set! an (cadr args))
+		    (loop (cddr args)))
+		   ((eq? (car args) :length)
+		    (set! len (cadr args))
+		    (loop (cddr args)))
+		   ((eq? (car args) :to)
+		    (set! head (cadr args))
+		    (loop (cddr args)))
+		   ((eq? (car args) :from)
+		    (set! tail (cadr args))
+		    (loop (cddr args)))
+		   (else
+		    (error 'canvas-arrow-to "Illegal arguments" args))))))
+      (let* ((dh (sqrt (+ (* (- x1 cpx) (- x1 cpx)) (* (- y1 cpy) (- y1 cpy)))))
+	     (ah (let ((acos (Math.acos (/ (- x1 cpx) dh))))
+		    (if (> y1 cpy)
+			acos
+			(- acos))))
+	     (dt (sqrt (+ (* (- x0 cpx) (- x0 cpx)) (* (- y0 cpy) (- y0 cpy)))))
+	     (at (let ((acos (Math.acos (/ (- x0 cpx) dt))))
+		    (if (> y0 cpy)
+			acos
+			(- acos))))
+	     (x1a (- x1 (* len (cos (+ ah an)))))
+	     (y1a (- y1 (* len (sin (+ ah an)))))
+	     (x1b (- x1 (* len (cos (- ah an)))))
+	     (y1b (- y1 (* len (sin (- ah an)))))
+	     (x0a (- x0 (* len (cos (+ at an)))))
+	     (y0a (- y0 (* len (sin (+ at an)))))
+	     (x0b (- x0 (* len (cos (- at an)))))
+	     (y0b (- y0 (* len (sin (- at an))))))
+	 ;; the curve
+	 (let ((cx0 (if tail (+ x0a (/ (- x0b x0a) 2)) x0))
+	       (cy0 (if tail (+ y0a (/ (- y0b y0a) 2)) y0))
+	       (cx1 (if head (+ x1a (/ (- x1b x1a) 2)) x1))
+	       (cy1 (if head (+ y1a (/ (- y1b y1a) 2)) y1)))
+	    (ctx.beginPath)
+	    (ctx.moveTo cx0 cy0)
+	    (ctx.quadraticCurveTo cpx cpy cx1 cy1)
+	    (ctx.stroke))
+	 ;; the head
+	 (when head
+	    (ctx.beginPath)
+	    (ctx.moveTo x1 y1)
+	    (ctx.lineTo x1a y1a)
+	    (ctx.lineTo x1b y1b)
+	    (ctx.closePath)
+	    (ctx.fill))
+	 ;; the tail
+	 (when tail
+	    (ctx.beginPath)
+	    (ctx.moveTo x0 y0)
+	    (ctx.lineTo x0a y0a)
+	    (ctx.lineTo x0b y0b)
+	    (ctx.closePath)
+	    (ctx.fill)))))
+      

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed Oct 10 09:04:12 2007 (serrano)                */
+;*    Last change :  Tue Nov  6 08:12:54 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -91,6 +91,8 @@
 	   
 	   (class hop-service)
 
+	   (class xml-backend)
+	   
 	   (class xml)
 	   (class xml-markup)
 	   (class xml-element)

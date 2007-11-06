@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Nov  2 10:28:43 2007 (serrano)                */
+/*    Last change :  Tue Nov  6 08:36:38 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -770,14 +770,55 @@ function hop_element_y( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_bouding_box ...                                              */
 /*---------------------------------------------------------------------*/
-function hop_bounding_box( e ) { /// node-bounding-box
+function hop_bounding_box( e, m ) { /// export node-bounding-box
    var n;
+   
    if( (e instanceof String) || (typeof e == "string") ) {
       n = document.getElementById( e );
    } else {
       n = e;
    }
 
-   return [ hop_element_x( n ), hop_element_y( n ),
-	    n.offsetWidth, n.offsetHeight ];
+   if( !m ) m = 0;
+   
+   return [ hop_element_x( n ) - m, hop_element_y( n ) - m,
+	    n.offsetWidth + (2*m), n.offsetHeight + (2*m) ];
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_bounding_box_to_list ...                                     */
+/*---------------------------------------------------------------------*/
+function hop_bounding_box_to_list( bbox ) { /// export bounding-box->list
+   return sc_vector2list( bbox );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bounding_box_x ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_bounding_box_x( bbox, loc ) { /// export bounding-box-x
+   if( arguments.length == 1 )
+      return bbox[ 0 ];
+   if( (loc == "w") || (loc == "nw") || (loc == "sw") )
+      return bbox[ 0 ];
+   if( (loc == "n") || (loc == "s"))
+      return bbox[ 0 ] + (bbox[ 2 ]/2);
+   if( (loc == "ne") || (loc == "e") || (loc == "se") )
+      return bbox[ 0 ] + bbox[ 2 ];
+   return 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bounding_box_y ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_bounding_box_y( bbox, loc ) { /// export bounding-box-y
+   if( arguments.length == 1 )
+      return bbox[ 1 ];
+   if( (loc == "nw") || (loc == "n") || (loc == "ne") )
+      return bbox[ 1 ];
+   if( (loc == "e") || (loc == "w"))
+      return bbox[ 1 ] + (bbox[ 3 ]/2);
+   if( (loc == "se") || (loc == "s") || (loc == "sw") )
+      return bbox[ 1 ] + bbox[ 3 ];
+   return 0;
+}
+

@@ -18,3 +18,8 @@
   * ,(<A> :href (make-file-name (home-dir) "articles/hop-multimedia/article.html")
           "Programming Web Multimedia Applications with Hop development kit"), October 2007
 
+== Videos ==
+
+  * ,(<A> :href "http://video.google.ca/videoplay?docid=5987952110790706865"
+          "Programming multimedia applications with HOP"), presentation gave
+ at the Montreal Scheme and Lisp User Group, October 2007.

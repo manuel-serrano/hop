@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Oct 30 08:51:11 2007 (serrano)                */
+/*    Last change :  Mon Nov  5 20:05:40 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -27,6 +27,13 @@ var hop_busy_anim_16_16 = "data:image/gif;base64,R0lGODlhEAAQAOcAAAAAAAEBAQICAgM
 function hop_error( msg ) {
    alert( msg );
    throw new Error( msg );
+}
+
+/*---------------------------------------------------------------------*/
+/*    error ...                                                        */
+/*---------------------------------------------------------------------*/
+function error( msg ) {
+   hop_error( msg );
 }
 
 /*---------------------------------------------------------------------*/

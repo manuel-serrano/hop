@@ -85,9 +85,12 @@ vectors.
   (dom-node-eval node)
   (node-style-get node prop)
   (node-style-set! node prop value)
-  (node-bounding-box node)
   (node-absolute-x node)
   (node-absolute-y node)
+  (node-bounding-box node [margin])
+  (bounding-box->list bbox])
+  (bounding-box-x bbox [loc])
+  (bounding-box-y bbox [loc])
   (css-add-style! document texta)
   (iframe-scroll-height iframe)
   (innerHTML-set! node-or-id html)
@@ -675,18 +678,6 @@ or its identifier (a keyword). Example:
 
 </procedure>
 
-=== ++(node-bounding-box node)++ ===
-<procedure> node-bounding-box
-<arguments>
-^  arguments       ^   type           ^  short description                      ^
-| node             |  element         | an element.                             |
-</arguments>
-
-Returns the bounding box of a element. The bounding box is represented by
-a vector of four element: the top-left coordinates, the width and the height
-of the box.
-</procedure>
-
 === ++(node-absolute-x node)++ ===
 <procedure> node-absolute-x
 
@@ -707,6 +698,58 @@ Returns the absolute horizontal position of an HTML element.
 </arguments>
 
 Returns the absolute vertical position of an HTML element.
+</procedure>
+
+=== ++(node-bounding-box node [margin])++ ===
+<procedure> node-bounding-box
+<arguments>
+^  arguments  ^   type              ^  short description                    ^
+| node        |  element or string  | an element or an element identifier.  |
+| margin      |  integer            | an optional margin size.              |
+</arguments>
+
+Returns the bounding box of an element. The bounding box is represented by
+four elements: the top-left coordinates, the width and the height
+of the box.
+
+~~ The optional integer ++margin++ argument, when specified, adds a margin 
+(expressed in pixels) around the plain elements' bounding box.
+</procedure>
+
+=== ++(bounding-box->list bbox)++ ===
+<procedure> bounding-box->list
+<arguments>
+^  arguments       ^   type           ^  short description                    ^
+| bbox             |  bounding box    | a bounding box.                       |
+</arguments>
+
+Converts a bounding box into a list.
+</procedure>
+
+=== ++(bounding-box-x bbox [loc])++ ===
+<procedure> bounding-box->list
+<arguments>
+^  arguments       ^   type           ^  short description                    ^
+| bbox             |  bounding box    | a bounding box.                       |
+| loc              |  string          | ++"n"++, ++"ne"++, ++"e"++, ++"se"++, ++"s"++, ++"sw"++, ++"w"++, ++"nw"++. |
+</arguments>
+
+Returns the horizontal coordinate of a point specified by the optional
+argument ++loc++, of the bounding box. The optional ++loc++ argument
+defaults to ++"nw"++.
+</procedure>
+
+=== ++(bounding-box-y bbox [loc])++ ===
+<procedure> bounding-box->list
+<arguments>
+^  arguments       ^   type           ^  short description                    ^
+| bbox             |  bounding box    | a bounding box.                       |
+| loc              |  string          | ++"n"++, ++"ne"++, ++"e"++, ++"se"++, ++"s"++, ++"sw"++, ++"w"++, ++"nw"++. |
+</arguments>
+
+Returns the vertical coordinate of a point specified by the optional
+argument ++loc++, of the bounding box. The optional ++loc++ argument
+defaults to ++"nw"++.
 </procedure>
 
 === ++(css-add-style! document text)++ ===
