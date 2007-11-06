@@ -727,7 +727,7 @@ Converts a bounding box into a list.
 </procedure>
 
 === ++(bounding-box-x bbox [loc])++ ===
-<procedure> bounding-box->list
+<procedure> bounding-box-x
 <arguments>
 ^  arguments       ^   type           ^  short description                    ^
 | bbox             |  bounding box    | a bounding box.                       |
@@ -740,7 +740,7 @@ defaults to ++"nw"++.
 </procedure>
 
 === ++(bounding-box-y bbox [loc])++ ===
-<procedure> bounding-box->list
+<procedure> bounding-box-y
 <arguments>
 ^  arguments       ^   type           ^  short description                    ^
 | bbox             |  bounding box    | a bounding box.                       |
