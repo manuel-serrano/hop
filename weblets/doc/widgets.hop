@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu Sep 20 13:41:58 2007 (serrano)                */
+;*    Last change :  Tue Nov  6 15:18:02 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -37,6 +37,7 @@
 	 :title "Hop documentation center (APIs &amp; libraries)"
 	 :include "hop-notepad" "hop-tree" "hop-sorttable" "hop-foldlist" 
 	 :include "hop-window" "hop-fx"
+	 :favicon (string-append (doc-dir) "/etc/logo-16x16.png")
 	 :css (string-append (doc-dir) "/doc.hss")
 	 :jscript (string-append (doc-dir) "/doc.scm")
 	 script)

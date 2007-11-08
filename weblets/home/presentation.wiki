@@ -46,6 +46,9 @@ indifferently as a regular Web server or Web proxy.
  documents,
     * dealing with 
  ,(<SPAN> :style "color: darkorange" "mails"),
+    * ,(<SPAN> :style "color: darkorange" "SVG") and 
+ ,(<SPAN> :style "color: darkorange" "MatML") support,
+    * ,(<SPAN> :style "color: darkorange" "canvas") support,
     * ...
 
 
