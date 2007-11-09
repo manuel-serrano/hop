@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Fri Nov  9 15:22:45 2007 (serrano)                */
+;*    Last change :  Fri Nov  9 15:48:09 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
@@ -421,6 +421,8 @@
 ;*    Internet Explorer 7 Canvas support                               */
 ;*    -------------------------------------------------------------    */
 ;*    Copyright 2006 Google Inc.                                       */
+;*                                                                     */
+;*      http://sourceforge.net/projects/excanvas/                      */
 ;*                                                                     */
 ;*    Licensed under the Apache License, Version 2.0 (the "License");  */
 ;*    you may not use this file except in compliance with the License. */
