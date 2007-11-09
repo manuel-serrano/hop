@@ -32,7 +32,9 @@
 	 (scheme2js-compile-files! (list file)          ;; input-files
 				"-"                  ;; output-file
 				(hopscheme-aliases)   ;; js-interface
-				(hopscheme-config)))))  ;; config
+				(hopscheme-config)    ;; config
+				:reader (lambda (p v)
+					   (hop-read p))))))
 
 
 ;*---------------------------------------------------------------------*/

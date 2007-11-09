@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Sep  6 17:43:59 2007 (serrano)                */
+;*    Last change :  Fri Nov  9 08:09:26 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -186,10 +186,10 @@
 		      ;; no message body
 		      #unspecified)
 		     (else
-		      (if (not (eq? te 'chunked))
+		      (if (eq? te 'chunked)
+			  (http-send-chunks ip op)
 			  (unless (=elong cl #e0)
-			     (send-chars ip op cl))
-			  (http-send-chunks ip op))))
+			     (send-chars ip op cl)))))
 		  ;; what to do with the remote connection. if the
 		  ;; status code is not 200, we always close the connection
 		  ;; in order to avoid, in particular, re-direct problems.
@@ -397,7 +397,8 @@
 		 (set! intable? #t))
 		((memq connection l)
 		 (set! locked? #f))
-		((<fx (length l) (/ (hop-max-remote-keep-alive-connection) 10))
+		((<fx (length l)
+		      (/fx (hop-max-remote-keep-alive-connection) 10))
 		 (append! (last-pair l) (list connection))
 		 (set! *connection-number* (+fx 1 *connection-number*))
 		 (set! locked? #f)
@@ -435,21 +436,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    connection-down? ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (connection-down? connection::connection)
-   (let ((ip (connection-input connection)))
-      (or (not (input-port? ip))
-	  (when (char-ready? ip)
-	     (with-handler
-		(lambda (e) #t)
-		(let ((c (read-char ip)))
-		   (if (eof-object? c)
-		       #t
-		       (let ((m (http-parse-error-message c ip)))
-			  (raise
-			   (instantiate::&io-parse-error
-			      (obj ip)
-			      (proc 'http-response)
-			      (msg (format "Illegal character: ~a" m))))))))))))
+(define (connection-down? conn::connection)
+   (or (connection-closed? conn)
+       (let ((ip (connection-input conn)))
+	  (or (not (input-port? ip))
+	      (when (char-ready? ip)
+		 (with-handler
+		    (lambda (e) #t)
+		    (let ((c (read-char ip)))
+		       (if (eof-object? c)
+			   #t
+			   (let ((m (http-parse-error-message c ip)))
+			      (raise
+			       (instantiate::&io-parse-error
+				  (obj ip)
+				  (proc 'http-response)
+				  (msg (format "Illegal character: ~a" m)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-output ...                                            */

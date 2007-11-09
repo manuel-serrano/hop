@@ -35,7 +35,8 @@
 	   (scheme2js-compile-files! in-files::pair
 				     out-file::bstring
 				     js-interface::pair-nil
-				     config)
+				     config
+				     #!key (reader read))
 	   (default-scheme2js-config)))
 
 (define (default-scheme2js-config)
@@ -64,7 +65,7 @@
 		  (call/cc #f)))
       ht))
 
-(define (read-rev-port in-port)
+(define (read-rev-port in-port read)
    (with-input-from-port in-port
       (lambda ()
 	 (let loop ((sexp (read (current-input-port) #t))
@@ -74,7 +75,7 @@
 		(loop (read (current-input-port) #t) (cons sexp rev-res)))))))
    
 ;; just read all expressions we can get
-(define (read-files files)
+(define (read-files files read)
    (let loop ((files files)
 	      (rev-top-level '()))
       (if (null? files)
@@ -84,10 +85,10 @@
 				      "std-in"
 				      file))
 	     (let ((rev-sexps (if (string=? file "-")
-				  (read-rev-port (current-input-port))
+				  (read-rev-port (current-input-port) read)
 				  (let ((port (open-input-file file)))
 				     (if port
-					 (let ((res (read-rev-port port)))
+					 (let ((res (read-rev-port port read)))
 					    (close-input-port port)
 					    res)
 					 (error "read-files"
@@ -266,10 +267,11 @@
 	 (verbose "--- compiled")
 	 )))
 
-(define (scheme2js-compile-files! in-files out-file js-interface config-ht)
+(define (scheme2js-compile-files! in-files out-file js-interface config-ht
+				  #!key (reader read))
    ;; we need this for "verbose" outputs.
    (config-init! config-ht)
-   (let ((top-level (read-files (reverse! in-files)))
+   (let ((top-level (read-files (reverse! in-files) reader))
 	 (out-port (if (string=? "-" out-file)
 		       (current-output-port)
 		       (open-output-file out-file))))

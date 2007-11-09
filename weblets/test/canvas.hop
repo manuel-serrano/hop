@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul  6 17:51:16 2007                          */
-;*    Last change :  Sat Jul  7 08:06:20 2007 (serrano)                */
+;*    Last change :  Fri Nov  9 15:02:45 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Testing canvas                                                   */
@@ -27,7 +27,7 @@
 	 (src (service-resource test/canvas "canvas-test.jpg")))
       
       (<TEST-HTML>
-	 :include "hop-slider"
+	 :include '("hop-slider" "hop-canvas")
 	 :source (service-resource test/canvas "canvas.hop")
 	 :onload ~(begin
 		     (unless (eq? $canvas.getContext #unspecified)

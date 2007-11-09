@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Sat Oct  6 08:11:05 2007 (serrano)                */
+/*    Last change :  Fri Nov  9 14:21:05 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -204,11 +204,11 @@ function node_style_set_array( obj, prop, value ) {
 node_style_set = function( obj, property, value ) {
    if( obj.style.setProperty != undefined ) {
       node_style_set = node_style_set_native;
+      return node_style_set_native( obj, property, value );
    } else {
       node_style_set = node_style_set_array;
+      return node_style_set_array( obj, property, value );
    }
-
-   return node_style_set( obj, property, value );
 }
 
 /*---------------------------------------------------------------------*/

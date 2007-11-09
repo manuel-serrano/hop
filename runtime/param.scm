@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Oct 18 13:38:59 2007 (serrano)                */
+;*    Last change :  Thu Nov  8 17:42:21 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -730,7 +730,13 @@
 
 (define-parameter hop-max-remote-keep-alive-connection
    ;; the max number of keep-alive remote (proxing) connections
-   50)
+   50
+   (lambda (v)
+      (if (<fx v 10)
+	  (error 'hop-max-remote-keep-alive-connection-set!
+		 "value should be greater or equal to 10"
+		 v)
+	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-weblets ...                                                  */
