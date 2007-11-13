@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Oct 10 05:37:02 2007 (serrano)                */
+;*    Last change :  Tue Nov 13 09:35:17 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -154,7 +154,9 @@
       (fprintf p "<script type='~a'>" (hop-javascript-mime-type))
       (fprintf p "hop_init_vpaned( ~s, ~s, ~s, ~a, function(event) {~a} )"
 	       id (html-pan-id (car body)) (html-pan-id (cadr body))
-	       fraction
+	       (if (string? fraction)
+		   (string-append "\"" fraction "\"")
+		   fraction)
 	       (cond
 		  ((xml-tilde? onresize)
 		   (tilde->string onresize))

@@ -20,6 +20,6 @@
 
 == Videos ==
 
-  * ,(<A> :href "http://video.google.ca/videoplay?docid=5987952110790706865"
+  * ,(<A> :href "http://video.google.ca/videoplay?docid=6867885938648486821"
           "Programming multimedia applications with HOP"), presentation gave
  at the Montreal Scheme and Lisp User Group, October 2007.

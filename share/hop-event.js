@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Oct 30 06:29:38 2007 (serrano)                */
+/*    Last change :  Tue Nov 13 10:36:57 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -172,7 +172,7 @@ function start_servevt_ajax_proxy( key ) {
 	       hop_trigger_servevt( id, "Ajax Server Event error", false, false );
 	    }
 	 }
-	    
+
 	 hop_servevt_proxy.httpreq = hop_send_request( svc,
 						       // asynchronous call
 						       false,
@@ -207,7 +207,7 @@ function start_servevt_ajax_proxy( key ) {
 	    register( p );
 	 }
       }
-      
+
       hop_trigger_serverready_event( new HopServerReadyEvent() );
    }
 }
@@ -511,7 +511,7 @@ function hop_remove_server_listener( obj, proc ) {
 /*    hop_serverready_list ...                                         */
 /*---------------------------------------------------------------------*/
 var hop_serverready_list = null;
-var hop_serverready_tiggered = false;
+var hop_serverready_triggered = false;
 
 /*---------------------------------------------------------------------*/
 /*    HopServerReadyEvent ...                                          */
@@ -533,7 +533,7 @@ function hop_trigger_serverready_event( evt ) {
       hop_serverready_list = hop_serverready_list.cdr;
    }
 
-   hop_serverready_tiggered = true;
+   hop_serverready_triggered = true;
 }
 
 /*---------------------------------------------------------------------*/
@@ -541,7 +541,7 @@ function hop_trigger_serverready_event( evt ) {
 /*---------------------------------------------------------------------*/
 function hop_add_serverready_listener( obj, proc ) {
    if( obj === document ) {
-      if( hop_serverready_tiggered ) {
+      if( hop_serverready_triggered ) {
 	 // the server is ready
 	 proc();
       } else {
