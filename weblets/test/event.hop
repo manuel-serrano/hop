@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Wed Nov 14 10:19:18 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 16:07:53 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -89,7 +89,8 @@ events succeeded, you should see an acknowledge.")
 	       ~(add-event-listener! $evt1
 				     "server"
 				     (lambda (e)
-					(innerHTML-set! $b3 e.value))
+					(when e.value
+					   (innerHTML-set! $b3 e.value)))
 				     #t)
 	       ~(add-event-listener! $evt2 "server" add #t)
 	       ~(add-event-listener! $evt3 "server" add #t)
