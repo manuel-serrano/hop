@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul  6 17:51:16 2007                          */
-;*    Last change :  Fri Nov  9 15:02:45 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 07:10:57 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Testing canvas                                                   */
@@ -25,7 +25,6 @@
 		    (<DIV> :style "margin-top: 2ex; margin-bottom: 2ex; text-align: center")
 		    "Unfortunately, your browser does not support canvas!"))
 	 (src (service-resource test/canvas "canvas-test.jpg")))
-      
       (<TEST-HTML>
 	 :include '("hop-slider" "hop-canvas")
 	 :source (service-resource test/canvas "canvas.hop")

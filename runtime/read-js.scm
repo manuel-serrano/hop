@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Fri Nov  9 15:34:45 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 07:32:54 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
@@ -27,34 +27,39 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-read-javascript iport)
    (let* ((sp (input-port-position iport))
-	  (g (regular-grammar (bra-open)
+	  (g (regular-grammar (bra-open acc)
 		("{"
 		 (set! bra-open (+fx bra-open 1))
-		 (cons "{" (ignore)))
+		 (set! acc (cons "{" acc))
+		 (ignore))
 		("}"
 		 (set! bra-open (-fx bra-open 1))
 		 (if (>fx bra-open 0)
-		     (cons "}" (ignore))
-		     '()))
+		     (begin
+			(set! acc (cons "}" acc))
+			(ignore))
+		     (reverse! acc)))
 		((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
 		 (let ((s (the-substring 1 (-fx (the-length) 1))))
-		    (cons (string-append "\"" s "\"")
-			  (ignore))))
+		    (set! acc (cons (string-append "\"" s "\"") acc))
+		    (ignore)))
 		((: "\'" (* (or (out #a000 #\\ #\') (: #\\ all))) "\'")
 		 (let ((s (the-substring 1 (-fx (the-length) 1))))
-		    (cons (string-append "\'" s "\'")
-			  (ignore))))
+		    (set! acc (cons (string-append "\'" s "\'") acc))
+		    (ignore)))
 		((: "//" (* all))
 		 (ignore))
 		((: "/*" (* (or (out #\*) (: #\* (out "/")))) "*/")
 		 (ignore))
 		((+ (out "${}\"'/"))
-		 (let ((s (the-string)))
-		    (cons s (ignore))))
+		 (set! acc (cons (the-string) acc))
+		 (ignore))
 		("/"
-		 (cons "/" (ignore)))
+		 (set! acc (cons "/" acc))
+		 (ignore))
 		("$$"
-		 (cons "$" (ignore)))
+		 (set! acc (cons "$" acc))
+		 (ignore))
 		("$"
 		 (let ((exp (hop-read iport))
 		       (pos (input-port-position iport)))
@@ -63,7 +68,9 @@
 					     "Unclosed list"
 					     (input-port-name iport)
 				 	     pos)
-			(cons `(hop->json ,exp) (ignore)))))
+			(begin
+			   (set! acc (cons `(hop->json ,exp) acc))
+			   (ignore)))))
 		(else
 		 (let ((char (the-failure)))
 		    (if (eof-object? char)
@@ -75,7 +82,7 @@
 					     (illegal-char-rep char)
 					     (input-port-name iport)
 					     (input-port-position iport))))))))
-      (let ((exp (read/rp g iport 1)))
+      (let ((exp (read/rp g iport 1 '())))
 	 (cond
 	    ((null? exp)
 	     "")
