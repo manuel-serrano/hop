@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Nov 14 15:36:56 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 16:07:12 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -32,11 +32,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (parse-error proc msg obj)
-   (raise (instantiate::&io-parse-error
-	     (obj obj)
-	     (proc proc)
-	     (msg msg))))
+(define (parse-error proc msg obj port)
+   (let ((o (if (eof-object? obj)
+		obj
+		(format "{~a}~a" obj (read-line port)))))
+      (raise (instantiate::&io-parse-error
+		(obj o)
+		(proc proc)
+		(msg msg)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-request ...                                           */
@@ -111,7 +114,10 @@
 		 (msg "Method not implemented")
 		 (obj (the-string)))))
       (else
-       (parse-error 'request-line-grammar "Illegal character" (the-failure)))))
+       (parse-error 'request-line-grammar
+		    "Illegal character"
+		    (the-failure)
+		    (the-port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-method-request ...                                    */
@@ -198,7 +204,9 @@
       ((: "HTTP/" (+ DIGIT) "." (+ DIGIT))
        (the-string))
       (else
-       (parse-error 'http-version-grammar "Illegal character" (the-failure)))))
+       (parse-error 'http-version-grammar "Illegal character"
+		    (the-failure)
+		    (the-port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-sp-grammar ...                                              */
@@ -208,5 +216,8 @@
       (SP
        'sp)
       (else
-       (parse-error 'sp-grammar "Illegal character" (the-failure)))))
+       (parse-error 'sp-grammar
+		    "Illegal character"
+		    (the-failure)
+		    (the-port)))))
       
