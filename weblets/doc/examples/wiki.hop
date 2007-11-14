@@ -38,7 +38,7 @@
 	       (wiki-string->hop src :syntax *wikiedit-syntax*))))
       (with-output-to-string
 	 (lambda ()
-	    (xml-write o (current-output-port) (hop-char-encoding) (hop-xml-backend))))))
+	    (xml-write o (current-output-port) (hop-xml-backend))))))
 
 
 (<HTML>
