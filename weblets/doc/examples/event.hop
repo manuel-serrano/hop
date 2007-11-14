@@ -1,0 +1,31 @@
+;; An example of //event handling//
+(<HTML>
+   (<HEAD>)
+   (<BODY>
+      (let* ((span1 (<SPAN> "span1"))
+	     (span2 (<SPAN> "span2"))
+	     (divB (<DIV> span1 " " span2))
+	     (divA divB))
+	 (list
+	  divA
+	  ~(add-event-listener! $divA
+				"mouseover"
+				(lambda (e)
+				   (alert "mouseover divA"))
+				#t)
+	  ~(add-event-listener! $divB
+				"mouseover"
+				(lambda (e)
+				   (alert "mouseover divB"))
+				#f)
+	  ~(add-event-listener! $span1
+				"mouseover"
+				(lambda (e)
+				   (alert "mouseover span1"))
+				#f)
+	  ~(add-event-listener! $span2
+				"mouseover"
+				(lambda (e)
+				   (alert "mouseover span2")
+				   (stop-event-propagation e #f))
+				#f)))))

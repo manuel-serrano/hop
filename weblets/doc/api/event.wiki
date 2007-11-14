@@ -1,0 +1,265 @@
+<doc> Events
+
+== Description ==
+
+This pages described how to program events handling in client-side execution.
+The traditional 
+[[http://www.mozilla.org/docs/dom/domref/dom_shortTOC.html| JavaScript API]]
+is available to HOP, however, it is known to be un-portable. In particular,
+events are handled differently in IE and [[http://www.mozilla.org|Mozilla]] 
+browsers. HOP provides an event handler API that aims at being portable.
+That is you can use any of the functions described above on the main
+popular Web browsers ([[http://www.mozilla.org|Mozilla]], 
+[[http://www.mozilla.org|Firefox]], 
+[[http://www.apple.com/macosx/features/safari|Safari]],
+[[http://www.opera.com|Opera]], [[http://www.konqueror.org|Konqueror]],
+and IE7.
+
+== Synopsis ==
+
+=== server ===
+
+  (hop-event-signal! name value)
+  (hop-event-broadcast! name value)
+
+
+=== client ===
+
+  (add-event-listener! obj name handler capture)
+  (remove-event-listener! obj name handler capture)
+  (add-window-onload! handler)
+  (add-window-onunload! handler)
+  (stop-event-propagation evt default)
+  (event-mouse-x evt)
+  (event-mouse-y evt)
+  (event-mouse-button evt)
+  (event-key-code evt)
+  (event-value evt)
+  (event-response-text evt)
+
+
+== Examples ==
+<example>add-event-listener!, remove-event-listener!, window-onload, window-onunload, event-mouse-, event-key-code</example>
+
+== Event propagation ==
+
+When an event occurs on a DOM element (henceforth the //target//),
+the target's event handler is invoked. In addition, in order to
+give target's ancestors opportunities to invoke their own handler, event
+are //propagated//. The propagation uses three phases:
+
+  - The **capturing** phase: when an event occurs, the event traverses 
+ the DOM from the document to the target node. //Capturing// event handlers 
+ (see ++add-event-listener!++) of the nodes (but the target itself) are
+ invoked during that stage.
+
+  - The **target** phase: the event handler of the target of an event is
+ invoked.
+
+  - The **bubbling** phase: as much as possible (that is when they are
+ applicable) event are bubbled up to node ancestors. That is, after a
+ event handler is called, if the node's ancestor also support that event
+ handler, the event is bubble up to that handler. 
+ Bubbling can manually stopped by invoking ++stop-event-propagation++ 
+ from an event handler.
+
+== Server Events ==
+
+~~ Note: ,(<SPAN> :style { font-weight: bold } [
+A current ,(<SPAN> :style { font-weight: bold; color: red } [bug]) in Firefox's Flash plugin prevents server event values
+to contain ,(<SPAN> :style { font-weight: bold; color: red } [strings]) 
+containing ,(<SPAN> :style { font-weight: bold; color: red } ["])  characters.])
+
+~~ HOP implements //server events//. That is, contrary to the classical Web
+model, HOP servers may **push** information to clients. Clients that defined
+listeners for server events will get notified when such events are emitted.
+
+~~ Server events are represented by string of characters. The function
+++add-event-listener!++ is used to register to such events. The example
+below shows a client registering the server event named ++FOO++.
+
+  (add-event-listener! "FOO" "server" (lambda (evt) (alert "FOO received")))
+
+
+To emit such an event, server code has to invoke either the function
+++hop-event-signal!++ or ++hop-event-broadcast!++:
+
+  (hop-event-broadcast! "FOO" (cons 1 2))
+
+
+The value associated to a server event can be obtained using the
+++event-value++ getter. Several listeners can be added to a same server
+event. The **bubbling** phase describe in the previous section also
+applies to server events.
+
+~~ When the server closes the connection with a client, all server event
+listeners are executed and their associated value is  ++#f++.
+
+~~ The document can also receive server events. The expression:
+
+  (add-event-listener! document "server" (lambda (evt) (alert evt.name)))
+
+
+will force the document to get a notification for each server event that
+whose listener has set the ++capture++ flag to ++#t++.
+
+~~ When a client is ready to received server events, it triggers a
+++serverready++ event that can be intercepted by the root document.
+
+== Server ==
+<server>
+
+=== ++(hop-event-signal! name val)++ ===
+<function> hop-event-signal!
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| name             |  string      | the name of the event.           |
+| val              |  _           | any value.                       |
+</arguments>
+
+The function ++hop-event-signal!++ signals to **one** client that have
+added a listener to the server event named ++name++ the new value ++val++.
+</function>
+
+=== ++(hop-event-broadcast! name val)++ ===
+<function> hop-event-broadcast!
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| name             |  string      | the name of the event.           |
+| val              |  _           | any value.                       |
+</arguments>
+
+The function ++hop-event-signal!++ signals to **all** clients that have
+added a listener to the server event named ++name++ the new value ++val++.
+</function>
+
+</server>
+
+== Client ==
+<client>
+=== ++(add-event-listener! obj name handler capture) ===
+=== ++(remove-event-listener! obj name handler capture) ===
+<procedure> add-event-listener!
+<procedure> remove-event-listener!
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| obj              |  element     | an element of the DOM.           |
+| name             |  string      | the name of the event.           |
+| procedure        |  procedure   | a procedure of one argument.     |
+| capture          |  boolean     | block the event bubbling.        |
+</arguments>
+
+These functions respectively register and unregister event handlers.
+
+  * The first argument is the element that holds the event handler.
+
+  * The second argument is the name of the event. It can be one of regular
+ DOM events:
+
+    * ++abort++: image loading interrupted.
+    * ++blur++: element loses input focus.
+    * ++change++: selection in a ++<SELECT>++ changes.
+    * ++click++: mouse pressed and released.
+    * ++dblclick++:: mouse clicked twice.
+    * ++error++: error when loading image.
+    * ++focus++: element gains input focus.
+    * ++keydown++: key pressed down.
+    * ++keyup++: key released.
+    * ++load++: document load complete.
+    * ++mousedown++: mouse button pressed.
+    * ++mousemove++: mouse moved.
+    * ++mouseout++: mouse moves off element.
+    * ++mouseover++: mouse moves over element.
+    * ++mouseup++: mouse button released.
+    * ++reset++: ++<FORM>++ reset request.
+    * ++resize++: window size changes.
+    * ++select++: text selected.
+    * ++submit++: ++<FORM>++ submission requested.
+    * ++unload++: document unloaded.
+
+
+ In addition HOP also supports an extra event:
+ 
+    * ++location++: current location changes.
+    * ++server++: the client receives a server event.
+    * ++serverready++: the server is ready to send events.
+    * ++timeout++: an event raised at regular time interval.
+
+  * The third element is the event handler. It is a procedure of one argument.
+ When the event occurs on a node, the node's handler is called passing an 
+ object denoting the event. This handler being invoked as a method call of a
+ node method, thus the ++this++ keyword denotes the node itself.
+
+  * The fourth argument control whether the event should //capture// the event.
+ When set to ++#t++, the event handler capture the event (we call this handler
+ a //capturing// handler) if set to ++#f++, it does not capture it.
+
+
+</procedure>
+</procedure>
+
+=== ++(add-window-onload! handler)++ ===
+=== ++(add-window-onunload! handler)++ ===
+<procedure> add-window-onload!
+<procedure> add-window-onunload!
+<arguments>
+^  arguments       ^   type     ^  short description                         ^
+| handler          | procedure  | the function on to when load completes.    |
+</arguments>
+
+This function adds a new handler (a procedure of one argument) to be called
+when loading a document completes (respectively, when a document is 
+//unloaded//). 
+
+~~ It is recommended to use ++add-window-onload!++ instead of using the
+++onload++ attribute of windows because this function manages correctly
+multiple calls while setting the ++onload++ attribute erases the previous
+values it contained.
+</procedure>
+</procedure>
+
+=== ++(stop-event-propagation evt default)++ ===
+<procedure> stop-event-propagation
+<arguments>
+^  arguments       ^   type     ^  short description                         ^
+| evt              |  event     | the event.                                 |
+| default          |  boolean   | allows or disallows default event action.  |
+</arguments>
+
+The function ++stop-event-propagation++ prevents the event named ++name++
+to bubble up to ancestor of the node holding the event handler.
+
+The argument ++default++ when ++#t++ allows the default browers' event handler 
+to be executed.
+</procedure>
+
+=== ++(event-mouse-x evt)++ ===
+=== ++(event-mouse-y evt)++ ===
+=== ++(event-mouse-button evt)++ ===
+=== ++(event-key-code evt)++ ===
+=== ++(event-value evt)++ ===
+<procedure> event-mouse-x
+<procedure> event-mouse-y
+<procedure> event-mouse-button
+<procedure> event-key-code
+<procedure> event-value
+<procedure> event-response-text
+<arguments>
+^  arguments       ^   type     ^  short description             ^
+| evt              |  event     | the event.                     |
+</arguments>
+
+Return information about the event that occurred. It is **highly
+recommended** to use these functions instead of directly accessing
+events' fields. These functions ensure browser compatibility that
+simple fields access do not provide.
+
+~~ The function ++event-mouse-button++ return the pressed or released
+button number, the left-most mouse button being numbered ++1++.
+</procedure>
+</procedure>
+</procedure>
+
+</client>
+  
+</doc>

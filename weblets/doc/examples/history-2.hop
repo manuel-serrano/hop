@@ -1,0 +1,38 @@
+;; Collapsing //history// entries
+(<HTML>
+   (<HEAD>)
+   (<BODY>
+      ~(define hist
+	  (make-history "h1"
+			(lambda (id val)
+			   (let ((el (dom-get-element-by-id document id)))
+			      (set! el.innerHTML val)))
+			"zero"))
+      ~(define val 0)
+      (let ((box (<SPAN> "_")))
+	 (list
+	  (<DIV> "Increment the following counter as many times as you
+want and then hit the " (<TT> "back button") " of your browser or the
+buttons above.")
+	  (<BR>)
+	  (<BUTTON> :onclick ~(begin
+				 (set! val (+ 1 val))
+				 (set! $box.innerHTML val)
+				 (history-add! hist $box.id val))
+	     "+ 1")
+	  " "
+	  (<BUTTON> :onclick ~(with-history
+			         (lambda ()
+				    (set! val (+ 1 val))
+				    (history-add! hist $box.id val)
+				    (set! val (+ 1 val))
+				    (history-add! hist $box.id val)
+				    (set! $box.innerHTML val)))
+	     "+ 2")
+	  " "
+	  box
+	  (<BR>)
+	  (<BR>)
+	  (<BUTTON> :onclick ~(window.history.back) "back")
+	  " "
+	  (<BUTTON> :onclick ~(window.history.forward) "forward")))))

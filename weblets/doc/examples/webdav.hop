@@ -1,0 +1,11 @@
+;; an example of WebDAV requests
+(define-service (ls-l host)
+   (<HTML>
+      (<TABLE>
+	 (map (lambda (n)
+		 (<TR>
+		    (<TD> (if (webdav-directory? (format "~a~a" host n))
+			      (format "~a/" (basename n))
+			      (basename n)))
+		    (<TD> (webdav-file-size (format "~a~a" host n)))))
+	      (webdav->path-list (format "~a/tmp" host))))))

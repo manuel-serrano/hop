@@ -1,0 +1,81 @@
+<doc> Service Resources
+
+== Description ==
+
+This tutorial shows how to access resources (css, hss, script, images, etc.)
+associated with a service. This tutorial used server side functions
+described in the ,(<APIREF> "Service" "service.wiki") API page.
+
+== Accessing Resources ==
+
+Usually a weblet has to access //resources// associated with the
+implementation. These resources might either be a cascading style
+sheet (see the ,(<TUTORIALREF> "HSS tutorial" "02-hss.wiki")), a Hop
+library, an image, a text, etc. The weblet needs to //refer// to these
+files in order to build a complete HTML tree. The references might
+occur from the server, in which case //server file names//, are needed
+or from the client, in which case //URI// are needed. For the sake of
+the example, let us assume a simple weblet ++example.hop++ which
+provide the following service:
+
+<code>
+  (define-service (example) 
+     (<HTML>
+        (<IMG> :src "img.png")))
+</code>
+
+Let us assume that the image ++img.png++ is installed in the directory
+++<example-base>/etc/icon++ where ++<example-base>++ is the installation
+directory of ++example.hop++. Because the image is not //inlined//
+(see ,(<APIREF> "Img Markup" "img.wiki")) the value of the ++<IMG>++
+++:src++ attribute is a remote URI. There are four ways, in the implementation
+of ++example++, for expression this URI.
+
+  - Using an absolute path: 
+<code>
+  (define-service (example)
+     (<HTML>
+        (<IMG> :src "<example-base>/etc/icon/img.png")))
+</code>
+
+ This is the weakest solution because it requires the installation path fixed.
+ This solution should be **avoided** as much as possible.
+
+  - Relying on ++the-loading-file++: 
+<code>
+  (define-parameter example-dir
+     (dirname (the-loading-file)))
+
+  (define-service (example)
+     (<HTML>
+        (<IMG> :src (string-append (example-dir) "/etc/icon/img.png"))))
+</code>
+
+ This solution gets rid of the absolute path because the value 
+ ++example-dir++ is automatically computed when the implementation of 
+ ++example++ is loaded. The path is thus ensured to be correct.
+
+  - Using ++service-resource++:
+<code>
+  (define-service (example)
+     (<HTML>
+        (<IMG> :src (service-resource example "etc/icons/img.png"))))
+</code>
+
+ This solution prevents for explicitly storing the //loading directory//
+ into a variable. The ,(<APIREF> "services" "service.wiki") can be used
+ to compute relative paths.
+
+  - Using ++service-base-url++:
+<code>
+  (define-service (example)
+     (<HTML>
+        (<HEAD> :base (service-base-url example (current-request)))
+        (<IMG> :src "etc/icons/img.png")))
+</code>
+
+ This last solution uses the HTML ++:base++ argument that globally changes
+ the URL base of the whole document. With this solution all URI are expressed
+ relatively to this new base.
+
+</doc>

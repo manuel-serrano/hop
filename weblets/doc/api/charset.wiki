@@ -1,0 +1,157 @@
+<doc> Charset
+
+== Description ==
+
+Character sets encoding and decoding
+
+== Synopsis ==
+
+=== Server ===
+
+  (charset-convert obj symbol symbol)
+  (charset-converter symbol symbol)
+  (charset-converter! symbol symbol)
+  (iso-latin->utf8 string)
+  (iso-latin->utf8! string)
+  (utf8->iso-latin string)
+  (utf8->iso-latin! string)
+  (utf8-string->ucs2-string string)
+
+
+=== Server & Client  ===
+
+  (ucs2-string->utf8-string string)
+
+
+== Examples ==
+
+<example>charset, utf8, ucs2, iso-latin, hop-locale, hop-charset</example>
+
+== Introduction ==
+
+In this document, the term //charset// refers to a //character set//. A
+charset is used to specified how texts are encoded. A charset is referenced
+to by its name. Here is the list of  charsets supported by HOP:
+
+  * UTF-8
+  * ISO-LATIN-1
+  * ISO-8859-1
+  * ISO-8859-2
+  * ISO-8859-15
+  * WINDOWS-1252
+  * UCS-2
+
+The list of supported charsets is likely to grow with new HOP revisions.
+
+
+== Server ==
+
+=== ++(charset string charset1 charset2)++ ===
+<function> charset-convert string charset1 charset2
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string to be translated.                    |
+| charset1    |  symbol  | A charset identifier.                           |
+| charset2    |  symbol  | A charset identifier.                           |
+</arguments>
+
+The function ++charset-convert++ converts a //string// from a charset
+named //charset1// into an equivalent string but implemented in another
+charset.
+</function>
+
+=== ++(charset-converter charset1 charset2)++ ===
+=== ++(charset-converter! charset1 charset2)++ ===
+<function> charset-converter charset1 charset2
+<function> charset-converter! charset1 charset2
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| charset1    |  symbol  | A charset identifier.                           |
+| charset2    |  symbol  | A charset identifier.                           |
+</arguments>
+
+The function ++charset-converter++ returns a function that converts a
+//string// from a charset named //charset1// into an equivalent string
+but implemented in another charset. Hence
+
+  (charset-convert str c1 c2)
+
+
+is equivalent to:
+
+  ((charset-converter c1 c2) str)
+
+
+is equivalent to:
+
+  ((charset-converter! c1 c2) (string-copy str))
+
+
+</function>
+</function>
+
+=== ++(iso-latin->utf8 string)++ ===
+=== ++(iso-latin->utf8! string)++ ===
+<function> iso-latin->utf8
+<function> iso-latin->utf8!
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string to be translated.                    |
+<arguments>
+
+Converts a string encoding with the ++ISO-LATIN-1++ charset into the
+++UTF-8++ charset.
+</function>
+</function>
+
+=== ++(utf8->iso-latin string)++ ===
+=== ++(utf8->iso-latin! string)++ ===
+<function> utf8->iso-latin
+<function> utf8->iso-latin!
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string to be translated.                    |
+<arguments>
+
+Converts a string encoding with the ++UTF-8++ charset into the
+ ++ISO-LATIN-1++ charset.
+</function>
+</function>
+
+=== ++(utf8-string->ucs2-string string)++ ===
+<function> utf8-string->ucs2-string
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string to be translated.                    |
+<arguments>
+
+Converts a string encoding with the ++UTF-8++ charset into the
+ ++UCS-2++ charset.
+</function>
+
+
+== Server & Client Definitions ==
+
+=== ++(ucs2-string->utf8-string string)++ ===
+<function> ucs2-string->utf8-string
+<procedure> ucs2-string->utf8-string
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string to be translated.                    |
+<arguments>
+
+Converts a string encoding with the  ++UCS-2++ charset into the
+++UTF-8++ charset.
+</procedure>
+</function>
+
+
+== See also ==
+
+<see-also>charset, ISO-LATIN, UTF-8, UCS-2</see-also>
+
+</doc>

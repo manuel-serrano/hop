@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Sep 20 13:45:55 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 14:32:16 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -252,7 +252,7 @@ can only access the directory ,(<TT> "guest") of the Hop RC directory.])))))))
       (<TR> (<TD> 
 	       (<INPUT> :type 'checkbox :id "uproxy" :checked #t))
 	    (<TD> (<SPAN> "Enable proxy services")))
-      (<TR> (<TD>) (<TD> :class "comment" [This allows for using Hop as
+      (<TR> (<TD>) (<TD> :class "comment" [This allows browsers to use Hop as
 a web proxy.]))
       (<TR> (<TD> 
 	       (<INPUT> :type 'checkbox :id "aproxy" :checked #f))

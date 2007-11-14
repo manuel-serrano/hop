@@ -1,0 +1,35 @@
+<doc> Hop and JavaScript
+
+== Description ==
+
+This tutorial shows how HOP client side programs and JavaScript programs
+can interact. This tutorial shows that since Hop and JavaScript share
+  * the global variables,
+  * the global functions,
+  * the same data structures,
+
+
+they can be blended without restriction. In other words, the interoperability
+between HOP and JavaScript is total.
+
+== Blending Hop and JavaScript ==
+
+HOP and JavaScript can easily interact. HOP can call JavaScript functions 
+and use JavaScript variables and vice versa. Hence, a HOP program can
+simultaneously use HOP and JavaScript. 
+
+~~ HOP and JavaScript may exchange values (read and write) without restriction.
+Each language can also set the global variable of the other language.
+
+~~ HOP client-side expression are introduced by the ,(<CODE> "~") character.
+JavaScript expressions are enclosed in angle brackets (,(<CODE> "{...}")).
+
+<code>
+  (<DIV>
+    (<SCRIPT> { function js_foo( x ) { alert( "x=" + hop_bar( x ) ); } })
+    ~(define (hop_bar x) (+ 1 x))
+    (<BUTTON> :onclick ~(js_foo 1) "A HOP client expression")
+    (<BUTTON> :onclick {js_foo( 1 )} "A JavaScript client expression"))
+</code>
+
+</doc>

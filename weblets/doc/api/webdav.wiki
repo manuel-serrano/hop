@@ -1,0 +1,267 @@
+<doc> WebDAV
+
+== Description ==
+
+This page presents the configuration offered by HOP for configuring
+and customizing the [[http://tools.ietf.org/html/rfc2518|WebDAV]] server
+support.
+
+~~ Hop supports WebDAV server level 1. That is, the current version of the HOP
+server does not support the locking mechanisms. On request, HOP's maintainers 
+might be considering adding support for WebDAV level 2. Please, post a 
+message to the HOP mailing list for such a request.
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+Only users that are granted the permission to execute "webdav" services
+(see ,(<TUTORIALREF> "Access Control" "04-authentication.wiki"))
+are authorized to execute WebDAV requests.])
+
+== Synopsis ==
+
+=== server parameters ===
+
+  (hop-enable-webdav)
+  (hop-enable-webdav-set! arg)
+
+
+=== server functions ===
+
+  (webdav->list url [timeout:] [proxy:])
+  (webdav->path-list url [timeout:] [proxy:])
+  (webdav-file-exists? url [timeout:] [proxy:])
+  (webdav-directory? url [timeout:] [proxy:])
+  (webdav-file-modification-time url [timeout:] [proxy:])
+  (webdav-file-size url [timeout:] [proxy:])
+  (webdav-delete-file url [timeout:] [proxy:])
+  (webdav-delete-directory url [timeout:] [proxy:])
+  (webdav-make-directory url [timeout:] [proxy:])
+  (webdav-make-directories url [timeout:] [proxy:])
+  (webdav-rename-file url name [timeout:] [proxy:])
+  (webdav-copy-file url name [timeout:] [proxy:])
+  (webdav-put-file url content [timeout:] [proxy:])
+
+
+== Introduction ==
+
+Their are several ways of using a WebDAV server as implemented by HOP.
+One solution is to use the HOP's ++webdav->list++ function that
+returns the list of files available on the server. Various others
+client exists. For instance, on Linux, one might use the
+[[http://dav.sourceforge.net/|davfs2]] file system driver that allows
+you to mount a WebDAV server as a local file system, like a disk
+drive. This way applications can access resources on a Web server
+without knowing anything about HTTP or WebDAV. 
+
+~~ Assuming a HOP server running on the computer ++myhop.org++ listening
+on port ++8080++, a WebDAV file system can be mounted with:
+
+  mount -t davfs http://myhop.hop:8080 /mnt/misc
+
+
+== Examples ==
+
+<example>webdav</example>
+
+== Server Definitions ==
+<server>
+
+=== ++hop-enable-webdav++ ===
+<parameter> hop-enable-webdav
+<parameter> hop-enable-webdav-set!
+
+<arguments>
+^  access  ^   type   ^    short description                       ^
+|   r/w    |  bool    |  The value ++#t++ enable WebDAV support.   |
+</arguments>
+
+~~ The parameter ++hop-enable-webdav++ enables or disables Hop WebDAV 
+support. It defaults to ++#f++.
+</parameter>
+</parameter>
+
+=== ++webdav->list url [timeout:] [proxy:]++ ===
+<function> webdav->list
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+The function ++webdav->list++ opens a connection to a distance server
+and (optionally via the ++proxy++ passed as argument) and it emits a
+++PROPFIND++ request in order to get the list of files available at
+++url++. This files can be individually downloaded with regular HTTP
+++GET++ commands.  
+</function>
+
+=== ++webdav->path-list url [timeout:] [proxy:]++ ===
+<function> webdav->path-list
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+The function ++webdav->path-list++ opens a connection to a distance server
+and (optionally via the ++proxy++ passed as argument) and it emits a
+++PROPFIND++ request in order to get the list of files available at
+++url++. Contrary to ++webdav->list++ this function returns absolute
+file names. 
+</function>
+
+=== ++webdav-file-exists? url [timeout:] [proxy:]++ ===
+<function> webdav-file-exists?
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Returns ++#t++ if and only if the file refereed to by ++url++ exists on
+the distant server. Otherwise, returns ++#f++.
+</function>
+
+=== ++webdav-directory? url [timeout:] [proxy:]++ ===
+<function> webdav-directory?
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Returns ++#t++ if and only if the file refereed to by ++url++ exists on
+the distant server and denotes a collection. Otherwise, returns ++#f++.
+</function>
+
+=== ++webdav-file-modification-time url [timeout:] [proxy:]++ ===
+<function> webdav-file-modification-time
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Returns the date of the last modification of the file denoted by ++url++.
+</function>
+
+=== ++webdav-file-size url [timeout:] [proxy:]++ ===
+<function> webdav-file-size
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Returns the size of the file denoted by ++url++.
+</function>
+
+=== ++webdav-delete-file url [timeout:] [proxy:]++ ===
+<function> webdav-delete-file
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Deletes the file denoted by ++url++.
+</function>
+
+=== ++webdav-delete-directory url [timeout:] [proxy:]++ ===
+<function> webdav-delete-directory
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Deletes the directory denoted by ++url++.
+</function>
+
+=== ++webdav-make-directory url [timeout:] [proxy:]++ ===
+<function> webdav-make-directory
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Creates a new directory denoted by ++url++.
+</function>
+
+=== ++webdav-make-directories url [timeout:] [proxy:]++ ===
+<function> webdav-make-directories
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Creates the new directory denoted by ++url++ and all its missing parents.
+</function>
+
+=== ++webdav-rename-file url name [timeout:] [proxy:]++ ===
+<function> webdav-rename-file
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| name        |  bstring     |             | a file name.                  |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Renames the file denoted by ++url++ as ++name++.
+</function>
+
+=== ++webdav-copy-file url name [timeout:] [proxy:]++ ===
+<function> webdav-copy-file
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| name        |  bstring     |             | a file name.                  |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Copies the file denoted by ++url++ into ++name++.
+</function>
+
+=== ++webdav-put-file url content [timeout:] [proxy:]++ ===
+<function> webdav-put-file
+
+<arguments>
+^  arguments  ^   type       ^  default    ^  short description            ^
+| url         |  bstring     |             | the WebDAV URL.               |
+| content     |  bstring/input-port  |     | a content.                    |
+| timeout     |  integer     |    -1       | Optional connection timeout.  |
+| proxy       |  bstring     |    #f       | Optional proxy.               |
+</arguments>
+
+Creates a new file on the remote server. The content of the file is either
+given by a string of characters or by an input port.
+</function>
+
+</server>  
+
+</doc>

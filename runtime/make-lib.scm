@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Nov  6 08:12:54 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 13:30:22 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_makelib
 
-   (option  (set! *dlopen-init* "bgl_dload_init_e_hop"))
+   (option  (set! *dlopen-init* "hop_e"))
    
    (import __hop_configure
 	   __hop_param

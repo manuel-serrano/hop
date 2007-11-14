@@ -1,0 +1,116 @@
+<doc> MathML support
+
+== Description ==
+
+HOP supports a subset of the MathML presentation language markups as
+defined in the
+[[http://www.w3.org/TR/2003/REC-MathML2-20031021/chapter3.html|Mathematical Markup Language (MathML) Version 2.0 (Second Edition)]]
+Future versions of HOP are likely to extend the set of supported
+markups.
+
+~~ In addition to regular SVG markups, HOP supports the additional
+++<MATHML:TEX>++ markup that allows math TeX math formulas to be 
+embed inside HOP programs.
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+Embedding MatHML markups inside Web pages with Firefox is currently 
+operational only using XHTML. It does not work with HTML.])
+
+== Synopsis ==
+
+=== Server ===
+
+  (<MATH> arg ...)
+  (<MATH:MSTYLE> arg ...)
+  (<MATH:MI> arg ...)
+  (<MATH:MN> arg ...)
+  (<MATH:MO> arg ...)
+  (<MATH:MROW> arg ...)
+  (<MATH:MUNDER> arg ...)
+  (<MATH:MOVER> arg ...)
+  (<MATH:MUNDEROVER> arg ...)
+  (<MATH:MSUP> arg ...)
+  (<MATH:MSUB> arg ...)
+  (<MATH:MSUBSUP> arg ...)
+  (<MATH:MFRAC> arg ...)
+  (<MATH:MROOT> arg ...)
+  (<MATH:MSQRT> arg ...)
+  (<MATH:MTEXT> arg ...)
+  (<MATH:TEX> arg ...)
+
+
+== Examples ==
+
+<example><MATH</example>
+
+== Server Definitions ==
+<server>
+
+=== SVG regular markups ===
+<markup> <MATH>
+<markup> <MATH:MSTYLE>
+<markup> <MATH:MI>
+<markup> <MATH:MN>
+<markup> <MATH:MO>
+<markup> <MATH:MROW>
+<markup> <MATH:MUNDER>
+<markup> <MATH:MOVER>
+<markup> <MATH:MUNDEROVER>
+<markup> <MATH:MSUP>
+<markup> <MATH:MSUB>
+<markup> <MATH:MSUBSUP>
+<markup> <MATH:MFRAC>
+<markup> <MATH:MROOT>
+<markup> <MATH:MSQRT>
+<markup> <MATH:MTEXT>
+
+<arguments>
+^  attributes   ^   type    ^   default    ^  short description          ^
+| :id           |  string   |  //random//  | element identifier.         | 
+| ...           |  ...      |   ++_++      | ...                         |
+</arguments>
+
+These markups conform the W3C's
+[[http://www.w3.org/TR/2003/REC-MathML2-20031021/chapter3.html|Mathematical Markup Language (MathML) Version 2.0 (Second Edition)]]
+so they are not described here.
+
+
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+
+=== ++<MATH:TEX>++ ===
+<markup> <MATH:TEX>
+<arguments>
+^  attributes   ^   type    ^   default        ^  short description          ^
+| :id           |  string   |  //random//      | element identifier.         | 
+| body          |           |                  |                             |
+</arguments>
+
+The markup ++<MATH:TEX>++ allows an HTML page to embed, inside a 
+++<MATH>++ markup a mathematics formula expressed using the TeX syntax.
+
+~~ Example:
+
+  (<MATH> (<MATH:TEX> {\sqrt{\cos(x)}}))
+
+
+</markup>
+
+== See also ==
+<see-also><MATH</see-also>
+
+</doc>

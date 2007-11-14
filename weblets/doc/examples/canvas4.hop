@@ -1,0 +1,20 @@
+;; Using canvas gradients
+(let ((can (<CANVAS> :width 400 :height 400))
+      (src (make-file-path (hop-icons-directory) "hop.png")))
+   (<HTML>
+      (<HEAD> :include "hop-canvas")
+      (<DIV> :align 'center can)
+      ~(let ((img (new Image)))
+	  (set! img.onload
+		(lambda ()
+		   (let* ((ctx (canvas-get-context $can "2d"))
+			  (ptrn (canvas-create-pattern ctx img "repeat"))
+			  (gdn (canvas-create-radial-gradient ctx 50 50 10 200 200 90)))
+		      (canvas-properties-set! ctx :fill-style ptrn)
+		      (canvas-fill-rect ctx 0 0 400 400)
+		      (canvas-add-color-stop gdn 0 "#a7d30c")
+		      (canvas-add-color-stop gdn 0.9 "#019f62")
+		      (canvas-add-color-stop gdn 1 "rgba(1,200,100,0.9)")
+		      (canvas-properties-set! ctx :fill-style gdn)
+		      (canvas-fill-rect ctx 0 0 400 400))))
+	  (set! img.src $src))))

@@ -1,6 +1,6 @@
 (module scm-compil
    
-   (option (set! *dlopen-init* "bgl_dload_init_s_hopscheme"))
+   (option (set! *dlopen-init* "hopscheme_s"))
    
    (library hop
 	    scheme2js)

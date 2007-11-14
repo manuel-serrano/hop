@@ -1,0 +1,53 @@
+/*=====================================================================*/
+/*    .../prgm/project/hop/weblets/dashboard/dashboard-applet.hss      */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Mon Jul  9 14:32:52 2007                          */
+/*    Last change :  Tue Jul 10 08:29:27 2007 (serrano)                */
+/*    Copyright   :  2007 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Simple CSS for dashboard applets.                                */
+/*=====================================================================*/
+
+body.hop-dashboard-applet {
+  background: #eeeeee;
+  font-family: Tahoma, Verdana;
+  font-size: 11px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+input[type=text] {
+  font: inherit;
+  border: 1px inset black;
+  padding-left: 2px;
+}
+
+a.button {
+  border-left: 1px solid #fff;
+  border-top: 1px solid #fff;
+  border-right: 1px solid #555;
+  border-bottom: 1px solid #555;
+  padding-left: 2em;
+  padding-right: 2em;
+  background: #ddd;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+a.button:hover {
+  background: #eee;
+}
+
+table {
+  font: inherit;
+}
+
+th {
+  text-align: left;
+}
+
+th.kind:after {
+  content: ":"
+}

@@ -1,0 +1,16 @@
+;; Using canvas patterns
+(let ((can (<CANVAS> :width 400 :height 400))
+      (src (make-file-path (hop-icons-directory) "hop.png")))
+   (<HTML>
+      (<HEAD> :include "hop-canvas")
+      (<DIV> :align 'center can)
+      ~(let ((img (new Image)))
+	  (set! img.onload
+		(lambda ()
+		   (let* ((ctx (canvas-get-context $can "2d"))
+			  (ptrn (canvas-create-pattern ctx img "repeat")))
+		      (canvas-begin-path ctx)
+		      (canvas-arc ctx 200 200 180 0 (* 2 Math.PI) #t)
+		      (canvas-properties-set! ctx :fill-style ptrn)
+		      (canvas-fill ctx))))
+	  (set! img.src $src))))

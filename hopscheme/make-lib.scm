@@ -7,7 +7,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscheme_makelib
    
-   (option (set! *dlopen-init* "bgl_dload_init_e_hopscheme"))
+   (option (set! *dlopen-init* "hopscheme_e"))
    
    (import hopscheme
 	   tilde-escape)

@@ -1,0 +1,34 @@
+;; an example of login implemented with cookies
+(define (login req name pass local)
+   ~(let ((svc ($hz/setcookie $(begin name).value
+			      $(begin pass).value
+			      (if $(begin local).checked "local" "share")))
+	  (cback (lambda (http)
+		    (let ((date (current-date)))
+		       (date.setMinutes (+ (date.getMinutes) 60))
+		       (cookie-set! "hop_hz"
+				    http
+				    $(http-request-path req)
+				    #f
+				    date)
+		       (set! location $(http-request-path req))))))
+       (with-hop svc cback)))
+
+(define-service (hz/setcookie name passwd mode)
+   (let* ((pd (hz-encrypt-password
+	       (md5sum (string-append name " " passwd))))
+	  (cookie `(user: ,name passwd: ,pd mode: ,mode))
+	  (p (open-output-string)))
+      (display cookie p)
+      (let ((s (close-output-port p)))
+	 (instantiate::http-response-string
+	    (body (base64-encode s))))))
+
+(define (hz-get-access req)
+   (let ((cookie (http-cookie-get req "hop_hz")))
+      (if (string? cookie)
+	  (let ((exp (with-input-from-string (base64-decode cookie) read)))
+	     (if (pair? exp)
+		 (values (find-user-cookie exp) (cookie-mode exp))
+		 (values #f #f)))
+	  (values #f #f))))

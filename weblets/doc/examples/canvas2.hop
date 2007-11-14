@@ -1,0 +1,48 @@
+;; Using a canvas for highlighting DOM elements
+(let ((can (<CANVAS>
+	      :width ~(current-window-width)
+	      :height ~(current-window-height)
+	      :style "position: absolute; top: 0; bottom: 0; right: 0; bottom: 0")))
+   (<HTML>
+      (<HEAD> :include "hop-canvas")
+      (<DIV> :align 'center :style "padding: 5px; margin-top: 1ex"
+	 (<TABLE> :style "border: 1px solid black;"
+	    :id "table"
+	    :cellspacing "10px"
+	    (map (lambda (n)
+		    (<TR> :id (format "row~a" n)
+		       (map (lambda (x)
+			       (let ((id (format "~a~a" x n)))
+				  (<TD> :id id x (<SUP> n))))
+			    '("foo" "bar" "gee" "hux"))))
+		 (iota 4))))
+      can
+      ~(let* ((ctx (canvas-get-context $can "2d"))
+	      (foo (node-bounding-box "foo0"))
+	      (hux (node-bounding-box "hux3"))
+	      (style "rgba(0,255,0,0.8)"))
+	  (canvas-properties-set! ctx :line-width 5 :stroke-style style :fill-style style)
+	  (canvas-arrow-to ctx
+			   (bounding-box-x foo "se")
+			   (bounding-box-y foo "se")
+			   (bounding-box-x hux "nw")
+			   (bounding-box-y hux "nw"))
+	  (let* ((foo (node-bounding-box "foo3"))
+		 (hux (node-bounding-box "hux0"))
+		 (style "rgba(255,98,08,0.8)"))
+	     (canvas-properties-set! ctx :stroke-style style :fill-style style)
+	     (canvas-arrow-to ctx
+			      (bounding-box-x foo "ne")
+			      (bounding-box-y foo "ne")
+			      (bounding-box-x hux "sw")
+			      (bounding-box-y hux "sw"))
+	     (canvas-properties-set! ctx
+				     :line-width 3
+				     :line-cap "round"
+				     :stroke-style "rgba(255,0,0,0.7)"
+				     :shadow-offset-x 2
+				     :shadow-offset-y 2
+				     :shadow-blur 3
+				     :shadow-color "#00ff00")
+	     (apply canvas-stroke-rect ctx
+		    (bounding-box->list (node-bounding-box "row2")))))))

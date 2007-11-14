@@ -1,0 +1,29 @@
+;; An example of server events 
+(define *foo* 0)
+(define *bar* 0)
+
+(define-service (servevt/signal-foo)
+   (set! *foo* (+fx *foo* 1))
+   (hop-event-broadcast! "foo" (cons *foo* (symbol->string (gensym))))
+   "signal-foo")
+
+(define-service (servevt/signal-bar)
+   (set! *bar* (+fx *bar* 1))
+   (hop-event-broadcast! "bar" (cons *bar* (symbol->string (gensym))))
+   "signal-bar")
+
+(<HTML>
+   (<BODY>
+      ~(add-event-listener! "foo" "server"
+			    (lambda (e)
+			       (alert "FOO=" (event-value e)))
+			    #t)
+      ~(add-event-listener! "bar" "server"
+			    (lambda (e)
+			       (alert "BAR=" (event-value e)))
+			    #t)
+      ~(add-event-listener! document "server"
+			    (lambda (e)
+			       (alert (event-name) " " (event-value e))))
+      (<BUTTON> "signal foo" :onclick ~(with-hop ($servevt/signal-foo)))
+      (<BUTTON> "signal bar" :onclick ~(with-hop ($servevt/signal-bar)))))

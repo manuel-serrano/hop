@@ -1,0 +1,134 @@
+<doc> Handling the "back button"
+
+== Description ==
+
+This tutorial shows how to program history events in HOP. This is used
+to enable browser bookmarking of dynamic documents and to enable
+navigation inside dynamic documents. This tutorial mainly shows how to
+use the facilities described in the ,(<APIREF> (<I> "History")
+"history.wiki") API page.
+
+== Container widgets ==
+
+HOP container widgets (e.g., ++<NOTEPAD>++, ++<TREE>++, ++<TABSLIDER>++, or
+++<FL>++) by default support bookmarking. There is thus no need to use
+any additional function for enabling bookmarking. However, for history
+to work correctly on these object it is *required* to give them an identity.
+That is, these container widgets must be assigned an unique ++id++ value.
+On an individual basis history events can be disabled for containers.
+
+== Principle ==
+
+HOP history relies on the hash component of URLs. The basic idea is to
+encode in the //hash// part of the a URL the state of the page and to
+trigger an event each time this URL changes.
+
+~~ All the computations involved by history management take place on
+the client. The server side is totally unaware of history entries. In
+order to record history entries, a //history manager// has to be
+created first. This is the role of the function ++make-history++.
+
+  * Its first argument is a unique identifier string that will be used to 
+ retrieve, in the //hash// part of the URL, the state of the objects associated
+ with this manager.
+  * The second argument, an history handler, is a procedure of two arguments 
+ that will be automatically invoked when //hash// part of the URL changes. It 
+ will be invoked with two string arguments. It is up to the program to do 
+ something useful with these values.
+  * The last argument is a //reset// value that is used when a history entry
+ of the //hash// part disappear. In such a case the history handler is invoked
+ with the identity string and the //reset// value.
+
+== A Commented example ==
+
+In this section we present a small example that explicitly manages history
+entries. First let's consider the declaration of the //history manager//.
+
+<code>
+  (<HTML>
+     (<HEAD>) 
+     (<BODY>
+       ~(define hist-manager 
+           (make-history "myhist"
+                         (lambda (id val)
+                            (let ((el (dom-get-element-by-id document id)))
+		  	     (set! el.innerHTML val)))))
+        ..))
+</code>
+
+
+Event thought the head of the document is, in this example, empty, the
+markup ++<HEAD>++ is **required** because it forces the HOP client
+runtime system to be included inside the client part of the
+document. If the markup is omitted the client runtime system is lacking
+and none of the HOP client side function may be executed.
+
+~~ The function ++make-history++ creates a new //history manager// whose 
+entries will be distinguished in the URL //hash// part by the ++myhist++
+key. This manager is used to record history entries as shown above:
+
+<code>
+  (let ((box (<SPAN> "_" :id "box")))
+     (<BUTTON> :onclick ~(begin
+	  	           (set! val (+ 1 val))
+		           (set! $box.innerHTML val)
+			   (history-add! hist-manager $box.id val)))
+     box)
+</code>
+
+Each time the ++<BUTTON>++ is clicked, the value of the ++<SPAN>++ is
+incremented by one and a new history entry is recorded on the
+history manager ++hist-manager++.
+
+~~ Let us assume that the weblet above was associated with the initial
+URL:
+
+<code>
+  http://localhost:8080/hop/history-example
+</code>
+
+
+Then, after the first click, the it becomes:
+
+<code>
+  http://localhost:8080/hop/history-example#my-hist:box=1
+</code>
+
+After the second click, it is:
+
+<code>
+  http://localhost:8080/hop/history-example#my-hist:box=2
+</code>
+
+When the back button of the browser is clicked, the URL is restored to:
+
+<code>
+  http://localhost:8080/hop/history-example#my-hist:box=1
+</code>
+
+and the history handler associated with ++hist-manager++ is invoked
+with two arguments: the string ++"box"++ and the string ++"1"++. Since
+in our example, the event handler sets content of the HTML element denoted
+by the first argument with the second value, this restores the value ++1++
+in the element named ++box++.
+
+~~ An history manager can handle several objects. Several history managers
+can be used simultaneously.
+
+== Collapsing history entries ==
+
+The previous example shown how to record individually history entries. In
+some situation it might be necessary to collapse two or more entries into
+a single event. Let us Imagine for instance a GUI made of a ++<NOTEPAD>++
+whose tabs contain ++<TREE>++ widgets. If one client function, explicitly
+closes one of these trees and select one tab, two history entries will be
+generated, one for closing the tree, one for selecting a tab. It might
+happen that making apparent these two different events is undesirable
+(because it will take two //back// clicks to return to the previous state).
+This effect can be avoided using the ++with-history++ function. This function
+takes as unique parameter a thunk, i.e., a nullary procedure. It invokes
+its argument in a protected mode where all the history events are stored
+but uncommitted. When the function completes, all the events are collapsed
+into a single history entry and flushed atomically.
+
+</doc>

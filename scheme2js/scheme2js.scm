@@ -1,5 +1,5 @@
 (module scheme2js
-   (option (set! *dlopen-init* "bgl_dload_init_s_scheme2js"))
+   (option (set! *dlopen-init* "scheme2js_s"))
    (option (loadq "protobject-eval.sch"))
    (include "version.sch")
    (import config

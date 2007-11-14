@@ -1,0 +1,600 @@
+<doc> Canvas support
+
+== Description ==
+
+HOP supports //client-side canvases//. A Canvas is a drawing area that can
+be included in HTML pages. Canvas are supported on many Web browsers, in
+particular Safari and Firefox. 
+
+~~ Canvases are introduced by the ++<CANVAS>++ markup that is documented
+on the ,(<APIREF> "HTML markups" "html.wiki") page.
+
+~~ Although the native traditional //object-oriented// Canvas can be
+used in HOP programs, a //functional-oriented// is provided because in
+some situations it yields to more compact programs. This documentation
+focuses on the //functional// interface. The //object// interface
+documentation can be found in Firefox
+[[http://developer.mozilla.org/en/docs/Canvas_tutorial|tutorial]] or
+Safari
+[[http://developer.apple.com/documentation/AppleApplications/Reference/SafariJSRef/Classes/Canvas.html|documentation]].
+
+~~ As of November 2007, the canvas is known to work on **Firefox**, **Safari**,
+**Opera**, **Konqueror**, and **Webkit**.
+
+== Synopsis ==
+
+=== Client ===
+
+  (canvas-get-context canvas context-name)
+  (canvas-properties ctx)
+  (canvas-properties-set! ctx ...)
+  (canvas-restore ctx)
+  (canvas-save ctx)
+  (canvas-rotate ctx angle)
+  (canvas-scale ctx sx sy)
+  (canvas-translate ctx tx ty)
+  (canvas-arc ctx x y r sa ea clockwise)
+  (canvas-arc-to ctx x0 y0 x1 y1 r)
+  (canvas-arrow-to ctx x0 y0 x1 y1 ...)*
+  (canvas-begin-path ctx)
+  (canvas-close-path ctx)
+  (canvas-bezier-curve ctx x0 y0 ...)*
+  (canvas-bezier-curve-to ctx c1x c1y c2x c2y x y)
+  (canvas-quadratic-arrow-to x0 y0 ctx cx cy x1 y1)
+  (canvas-quadratic-curve ctx x y ...)*
+  (canvas-quadratic-curve-to ctx cx cy x y)
+  (canvas-clip ctx)
+  (canvas-line ctx x0 y0 x1 y1 ...)*
+  (canvas-line-to ctx x y)
+  (canvas-move-to ctx x y)
+  (canvas-stroke-rect ctx x y w height)
+  (canvas-fill-rect ctx x y w height)
+  (canvas-clear-rect ctx x y w height)
+  (canvas-fill ctx)
+  (canvas-stroke ctx)
+  (canvas-create-linear-gradient ctx x1 y1 x2 y2)
+  (canvas-create-radial-gradient ctx x1 y1 r1 x2 y2 r2)
+  (canvas-add-color-stop gradient position color)
+  (canvas-create-pattern gradient image type)
+  (canvas-draw-image ctx image x y ...)
+
+
+=== Requirements ===
+
+Client codes using the //canvas// functional API need to load the
+script ++hop-canvas.scm++. This can be achieved with:
+
+
+  (<HEAD> :include "hop-canvas")
+
+
+== Examples ==
+
+<example>canvas-, <CANVAS></example>
+
+
+<client>
+== Context and Global Properties ==
+
+
+=== ++(canvas-get-context canvas context)++ ===
+<procedure> canvas-get-context
+<arguments>
+^  arguments  ^   type      ^   description               ^
+| canvas      |  canvas     | A DOM node.                 |
+| context     |  string     | The name of the context.    |
+</arguments>
+
+The function ++canvas-get-context++ retrieves the graphical context associated
+with a //canvas//. Currently only the "2d" context is supported. Hence, the
+only meaningful calls to this function look like:
+
+  (canvas-get-context (dom-get-element-by-id "my-canvas") "2d")
+
+
+</procedure>
+
+
+=== ++(canvas-properties ctx)++ ===
+<procedure> canvas-properties
+<arguments>
+^  arguments  ^   type       ^   description               ^
+| ctx     |  context     | A canvas context.           |
+</arguments>
+
+Returns a list describing the current global properties assigned to
+the canvas context.
+</procedure>
+
+=== ++(canvas-properties-set! ctx ...)++ ===
+<procedure> canvas-properties-set!
+<arguments>
+^  arguments  ^   type       ^   description               ^
+| ctx     |  context     | A canvas context.           |
+</arguments>
+
+Sets global context properties. Here is a list of supported properties.
+
+  * ++:fillstyle++: a color used to fill shapes.
+  * ++:global-alpha++: a float value in the range ++[0..1]++ that specifies the
+ transparency of the drawing.
+  * ++:global-composite-operation++: a string. The supported composite
+ operations are:
+    * ++"copy"++
+    * ++"darker"++
+    * ++"destination-atop"++
+    * ++"destination-in"++
+    * ++"destination-out"++
+    * ++"destination-over"++
+    * ++"lighter"++
+    * ++"source-atop"++
+    * ++"source-in"++
+    * ++"source-out"++
+    * ++"source-over"++
+    * ++"xor"++
+  * ++:line-cap++: a string that specifies the end style when drawing lines.
+    * ++"butt"++
+    * ++"round"++
+    * ++"square"++
+  * ++:line-join++: a string that specifies the join style between lines.
+    * ++"round"++
+    * ++"bevel"++
+    * ++"miter"++
+  * ++:line-width++: a integer that specifies the line width (default to ++1++).
+  * ++:miter-limit++: A float value with the new miter limit. 
+  * ++:shadow-blur++: Specifies the width that a shadow should cover.
+  * ++:shadow-color++: the color of the shadow.
+  * ++:shadow-offset-x++, ++:shadow-offset-y++: the offset of the shadows.
+  * ++:stroke-style++: the color used to paint lines.
+
+
+~~ Example:
+
+  (apply canvas-properties-set! ctx (canvas-properties txt) 
+                                    :stroke-style "#ff0000"
+                                    :fill-style "rgba(255, 0, 0, 0.9)")
+
+
+</procedure>
+
+== State Methods ==
+
+=== ++(canvas-restore ctx)++ ===
+=== ++(canvas-save ctx)++ ===
+<procedure> canvas-restore
+<procedure> canvas-save
+<arguments>
+^  arguments  ^   type       ^   description               ^
+| ctx         |  context     | A canvas context.           |
+</arguments>
+
+Save and restore the current drawing state. The drawing state includes the
+//rotate//, //scale//, and //translate// attributes.
+</procedure>
+</procedure>
+
+=== ++(canvas-rotate ctx angle)++ ===
+<procedure> canvas-rotate
+<arguments>
+^  arguments  ^   type       ^   description               ^
+| ctx         |  context     | A canvas context.           |
+| angle       |  float       | The angle of the rotation.  |
+</arguments>
+</procedure>
+
+=== ++(canvas-scale ctx sx sy)++ ===
+<procedure> canvas-scale
+<arguments>
+^  arguments  ^   type       ^   description               ^
+| ctx         |  context     | A canvas context.           |
+| sx          |  float       | The horizontal scale.       |
+| sy          |  float       | The vertical scale.         |
+</arguments>
+</procedure>
+
+=== ++(canvas-translate ctx sx sy)++ ===
+<procedure> canvas-translate
+<arguments>
+^  arguments  ^   type       ^   description                   ^
+| ctx         |  context     | A canvas context.               |
+| sx          |  float       | The horizontal translate.       |
+| sy          |  float       | The vertical translate.         |
+</arguments>
+</procedure>
+
+
+== Paths ==
+
+=== ++(canvas-arc ctx x y r sa ea clockwise)++ ===
+<procedure> canvas-arc
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+| x           |  integer   | The horizontal coordinate of the center of the circle.  |
+| y           |  integer   | The vertical coordinate of the center of the circle.  |
+| r           |  integer   | The radius of the circle.     |
+| sa          |  float     | The start angle of the arc.   |
+| ea          |  float     | The end angle of the arc.     |
+| clockwise   |  bool      | The orientation of the arc.   |
+</arguments>
+</procedure>
+
+=== ++(canvas-arc-to ctx x0 y0 x1 y1 r)++ ===
+<procedure> canvas-arc-to
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+| x0          |  integer   | The horizontal coordinate of start point.        |
+| y0          |  integer   | The vertical coordinate of start point.          |
+| x1          |  integer   | The horizontal coordinate of end point.          |
+| y1          |  integer   | The vertical coordinate of end point.            |
+| radius      |  integer   | The radius of the circle.                        |
+</arguments>
+</procedure>
+
+=== ++(canvas-arrow-to ctx x0 y0 x1 y1 ...)<sup>*</sup>++ ===
+<procedure> canvas-arrow-to
+
+~~ <sup>*</sup>: This procedure does not exist in the traditional 
+//object// API.
+
+~~
+
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+| x0          |  integer   | The horizontal coordinate of the start point.    |
+| y0          |  integer   | The vertical coordinate of the start point.      |
+| x1          |  integer   | The horizontal coordinate of the end point.      |
+| y1          |  integer   | The vertical coordinate of the end point.        |
+| ...         |            |                                                  |
+</arguments>
+
+This procedure draws a arrow from the start point to the end point. It
+accepts the following keyword optional arguments:
+
+  * ++:angle++: a float. The angle of the arrow head (default to ++0.4++).
+  * ++:length++: an integer. The length of the arrow head (default to 5 times 
+ the current line width style).
+  * ++:to++: a bool. If true, draws an arrow head at the end of the line.
+ Defaults to ++#t++.
+  * ++:from++: a bool. If true, draws an arrow head at the start of the line.
+ Defaults to ++#f++.
+
+
+Example:
+
+
+  (let ((props (canvas-properties ctx)))
+     (canvas-properties-set! ctx :fill-style "#000000" :stroke-style "#ff0000")
+     (canvas-arrow-to ctx 10 10 20 20 :from #t :to #t)
+     (apply canvas-properties-set! ctx props))
+
+
+</procedure>
+
+
+=== ++(canvas-begin-path ctx)++ ===
+=== ++(canvas-close-path ctx)++ ===
+<procedure> canvas-begin-path
+<procedure> canvas-close-path
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+</arguments>
+
+~~ The procedure ++canvas-begin-path++ starts a new empty path. The notion of
+//current point// only exists within a path.
+
+~~ The procedure ++canvas-close-path++ closes the current path. This
+draws a line to the start point of the path.
+</procedure>
+</procedure>
+
+=== ++(canvas-bezier-curve ctx x0 y0 cx cy x y ...)<sup>*</sup>++ ===
+<procedure> canvas-bezier-curve
+
+~~ <sup>*</sup>: This procedure does not exist in the traditional 
+//object// API.
+
+~~
+
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+</arguments>
+
+Moves the current point to ++x0, y0++ and draws successive bezier curves.
+</procedure>
+
+=== ++(canvas-bezier-curve-to ctx c1x c1y c2x c2y x y)++ ===
+<procedure> canvas-bezier-curve-to
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+</arguments>
+</procedure>
+
+=== ++(canvas-quadtratic-arrow-to ctx x0 y0 cpx cpy x1 y1 ...)<sup>*</sup>++ ===
+<procedure> canvas-quadratic-arrow-to
+
+~~ <sup>*</sup>: This procedure does not exist in the traditional 
+//object// API.
+
+~~
+
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+| x0          |  integer   | The horizontal coordinate of the start point.    |
+| y0          |  integer   | The vertical coordinate of the start point.      |
+| cpx         |  integer   | The horizontal coordinate of the control point.  |
+| cpy         |  integer   | The vertical coordinate of the control point.    |
+| x1          |  integer   | The horizontal coordinate of the end point.      |
+| y1          |  integer   | The vertical coordinate of the end point.        |
+| ...         |            |                                                  |
+</arguments>
+
+This procedure draws a arrow from the start point to the end point. It
+accepts the following keyword optional arguments:
+
+  * ++:angle++: a float. The angle of the arrow head (default to ++0.4++).
+  * ++:length++: an integer. The length of the arrow head (default to 5 times 
+ the current line width style).
+  * ++:to++: a bool. If true, draws an arrow head at the end of the line.
+ Defaults to ++#t++.
+  * ++:from++: a bool. If true, draws an arrow head at the start of the line.
+ Defaults to ++#f++.
+
+
+Example:
+
+
+  (let ((props (canvas-properties ctx)))
+     (canvas-properties-set! ctx :fill-style "#000000" :stroke-style "#ff0000")
+     (canvas-quadratic-to ctx 10 10 15 15 20 20 :from #t :to #t)
+     (apply canvas-properties-set! ctx props))
+
+
+</procedure>
+
+=== ++(canvas-quadratic-curve ctx x0 y0 cx cy x y ...)<sup>*</sup>++ ===
+<procedure> canvas-quadratic-curve
+
+~~ <sup>*</sup>: This procedure does not exist in the traditional 
+//object// API.
+
+~~
+
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+</arguments>
+
+Moves the current point to ++x0, y0++ and draws successive quadratic curves.
+</procedure>
+
+=== ++(canvas-quadratic-curve-to ctx cx cy x y)++ ===
+<procedure> canvas-quadratic-curve-to
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+</arguments>
+</procedure>
+
+=== ++(canvas-clip ctx)++ ===
+<procedure> canvas-clip
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+</arguments>
+
+Sets the current clipping path.
+</procedure>
+
+=== ++(canvas-line ctx x0 y0 x1 y1 ...)<sup>*</sup>++ ===
+<procedure> canvas-line
+
+~~ <sup>*</sup>: This procedure does not exist in the traditional 
+//object// API.
+
+~~
+
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+| x0          |  integer   |                                                  |
+| y0          |  integer   |                                                  |
+| x1          |  integer   |                                                  |
+| y1          |  integer   |                                                  |
+| ...         |  ...       | ...                                              |
+</arguments>
+
+Moves the current point and draws lines.
+
+  (canvas-begin-path ctx)
+  (canvas-line ctx 10 10 20 10 20 20 10 20)
+  (canvas-close-path)
+
+
+</procedure>
+
+=== ++(canvas-line-to ctx x y)++ ===
+<procedure> canvas-line-to
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+| x           |  integer   |                                                  |
+| y           |  integer   |                                                  |
+</arguments>
+
+Draws a line from the current point to the pointer ++<x, y>++. Sets the
+coordinates of the current point.
+</procedure>
+
+=== ++(canvas-move-to ctx x y)++ ===
+<procedure> canvas-move-to
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx         |  context   | A canvas context.                                |
+| x           |  integer   |                                                  |
+| y           |  integer   |                                                  |
+</arguments>
+
+Sets the coordinates of the current point.
+</procedure>
+
+== Stroke and Fill ==
+
+=== ++(canvas-stroke-rect ctx x y w h)++ ===
+<procedure> canvas-stroke-rect
+<arguments>
+^  arguments  ^   type     ^   description                                      ^
+| ctx        |  context   | A canvas context.                                  |
+| x          |  integer   | The horizontal coordinate of the top-left corner.  |
+| y          |  integer   | The vertical coordinate of the top-left corner.    |
+| w          |  integer   | The width of the rectangle.     |
+| h          |  integer   | The height of the rectangle.    |
+</arguments>
+
+Strokes (i.e., draw the contour of) a rectangle.
+</procedure>
+
+=== ++(canvas-clear-rect ctx x y w h)++ ===
+<procedure> canvas-clear-rect
+<arguments>
+^  arguments  ^   type     ^   description                                      ^
+| ctx        |  context   | A canvas context.                                  |
+| x          |  integer   | The horizontal coordinate of the top-left corner.  |
+| y          |  integer   | The vertical coordinate of the top-left corner.    |
+| w          |  integer   | The width of the rectangle.     |
+| h          |  integer   | The height of the rectangle.    |
+</arguments>
+
+Clears the area defined by a rectangle.
+</procedure>
+
+=== ++(canvas-fill-rect ctx x y w h)++ ===
+<procedure> canvas-fill-rect
+<arguments>
+^  arguments  ^   type     ^   description                                      ^
+| ctx        |  context   | A canvas context.                                  |
+| x          |  integer   | The horizontal coordinate of the top-left corner.  |
+| y          |  integer   | The vertical coordinate of the top-left corner.    |
+| w          |  integer   | The width of the rectangle.     |
+| h          |  integer   | The height of the rectangle.    |
+</arguments>
+
+Fills a rectangle.
+</procedure>
+
+=== ++(canvas-fill ctx)++ ===
+<procedure> canvas-fill
+<arguments>
+^  arguments  ^   type     ^   description                                      ^
+| ctx        |  context   | A canvas context.                                  |
+</arguments>
+
+Fills inside a path.
+</procedure>
+
+=== ++(canvas-stroke ctx)++ ===
+<procedure> canvas-stroke
+<arguments>
+^  arguments  ^   type     ^   description                                      ^
+| ctx        |  context   | A canvas context.                                  |
+</arguments>
+
+Strokes along a path.
+</procedure>
+
+== Gradients and Patterns ==
+=== ++(canvas-create-linear-gradient ctx x1 y2 x2 y2)++ ===
+<procedure> canvas-create-linear-gradient
+<arguments>
+^  arguments  ^   type     ^   description                                      ^
+| ctx        |  context   | A canvas context.                                  |
+| x1         |  integer   |                                                    |
+| y1         |  integer   |                                                    |
+| x2         |  integer   |                                                    |
+| y2         |  integer   |                                                    |
+</arguments>
+
+Creates a linear gradient.
+</procedure>
+
+=== ++(canvas-create-radial-gradient ctx x1 y1 r1 x2 y2 r2)++ ===
+<procedure> canvas-create-radial-gradient
+<arguments>
+^  arguments  ^   type     ^   description                                      ^
+| ctx        |  context   | A canvas context.                                  |
+| x1         |  integer   |                                                    |
+| y1         |  integer   |                                                    |
+| r1         |  integer   |                                                    |
+| x2         |  integer   |                                                    |
+| y2         |  integer   |                                                    |
+| r2         |  integer   |                                                    |
+</arguments>
+
+Creates a linear gradient.
+</procedure>
+
+=== ++(canvas-add-color-stop gradient position color)++ ===
+<procedure> canvas-add-color-stop
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| gradient   |  gradient   | A gradient.                                      |
+| position   |  float      | a float in the range [0..1]                      |
+| color      |  color      |                                                  |
+</arguments>
+
+Add a color to a gradient defined by ++canvas-create-line-gradient++
+or ++canvas-create-radial-gradient++.
+</procedure>
+
+=== ++(canvas-create-pattern gradient image type)++ ===
+<procedure> canvas-create-pattern
+<arguments>
+^  arguments  ^   type     ^   description                ^
+| ctx        |  context   | A canvas context.             |
+| image      |   image    | The image used as a pattern.  |
+| type       |   string   | The pattern type.             |
+</arguments>
+
+The pattern type can be one of:
+
+  * ++"repeat"++, 
+  * ++"repeat-x"++, 
+  * ++"repeat-y"++.
+  * ++"no-repeat"++.
+
+The pattern created by ++canvas-create-pattern++ can be used to fill
+a area. That is, the value returned by ++canvas-create-pattern++ can
+be set to the ++:fill-style++ property.
+</procedure>
+
+== Images ==
+
+=== ++(canvas-draw-image ctx image x y ...)++ ===
+=== ++(canvas-draw-image ctx image x y w h)++ ===
+=== ++(canvas-draw-image ctx image sx sy sw sh dx dy dw dh)++ ===
+<procedure> canvas-draw-image
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx        |  context   | A canvas context.                                 |
+| image      |  image     | An image.                                         |
+| x          |  integer   |                                                   |
+| y          |  integer   |                                                   |
+</arguments>
+
+Draws an image at point ++<x,y>++. The second form clips the
+image on the canvas. The third form clips an image and draws it on canvas.
+
+</procedure>
+
+== See also ==
+<see-also><CANVAS, canvas-</see-also>
+
+
+</doc>

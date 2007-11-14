@@ -1,0 +1,68 @@
+<doc> Format
+
+== Description ==
+
+This page describes the ++format++ function that enables formatted
+I/Os such as the CommonLisp's ++format++ or C's ++sprintf++.
+
+~~ Note: Many thanks to Scott G. Miller who is the author of
+[[http://srfi.schemers.org/srfi-28|SRFI-28]]. Most of the
+documentation of this function is copied from the SRFI documentation.
+
+== Synopsis ==
+
+=== Server & Client ===
+
+  (format template arg ...)
+
+== Examples ==
+
+<example>format</example>
+
+== Server & Client Definitions ==
+
+=== ++(format template arg ...)++ ===
+<procedure> format
+<function> format
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| template    |  string  | A string denoting the //template//.             |
+| arg         |  obj     | optional arguments.                             |
+</arguments>
+</function>
+
+The function ++format++ constructs a string of characters built
+from its template and its optional arguments. The function ++format++
+accepts a message template (a Scheme String), and processes it,
+replacing any escape sequences in order with one or more characters,
+the characters themselves dependent on the semantics of the escape
+sequence encountered.
+
+~~ An escape sequence is a two character sequence in the string where the
+first character is a tilde ++~++. Each escape code's meaning is as
+follows:
+
+  * ++~a++ The corresponding value is inserted into the string 
+ as if printed with display.
+  * ++~s++ The corresponding value is inserted into the string 
+ as if printed with write.
+  * ++~%++ A newline is inserted.
+  * ++~~++ A tilde ++~++ is inserted.
+
+The sequences ++~a++ and ++~s++, when encountered, require a corresponding
+Scheme value to be present after the format string. The values
+provided as operands are used by the escape sequences in order. It is
+an error if fewer values are provided than escape sequences that
+require them.
+
+The sequences ++~%++ and ++~~++ require no corresponding value.
+
+Examples:
+
+  (format "Hello, ~a" "World!") &#8658; "Hello, World!"
+  (format "Error, list is too short: ~s~%" '(one "two" 3)) &#8658; "Error, list is too short: (one \"two\" 3)\n"
+
+</procedure>
+
+</doc>

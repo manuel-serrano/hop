@@ -1,0 +1,63 @@
+<doc> RSS 2.0 markups
+
+== Description ==
+
+Hop supports RSS 2.0 markups. Hop enforces a mere syntactic variation
+on the name of the official RSS markups as found
+[[http://en.wikipedia.org/wiki/RSS_%28file_format%29|here]].
+
+== Synopsis ==
+
+=== Server ===
+
+  (<RSS> arg ...)
+  (<RSS:CHANNEL> arg ...)
+  (<RSS:TITLE> arg ...)
+  (<RSS:LINK> arg ...)
+  (<RSS:DESCRIPTION> arg ...)
+  (<RSS:LANGUAGE> arg ...)
+  (<RSS:COPYRIGHT> arg ...)
+  (<RSS:MANAGING-EDITOR> arg ...)
+  (<RSS:WEB-MASTER> arg ...)
+  (<RSS:PUB-DATE> arg ...)
+  (<RSS:LAST-BUILD-DATE> arg ...)
+  (<RSS:CATEGORY> arg ...)
+  (<RSS:GENERATOR> arg ...)
+  (<RSS:DOCS> arg ...)
+  (<RSS:CLOUD> arg ...)
+  (<RSS:TTL> arg ...)
+  (<RSS:IMAGE> arg ...)
+  (<RSS:RATING> arg ...)
+  (<RSS:TEXT-INPUT> arg ...)
+  (<RSS:SKIP-HOURS> arg ...)
+  (<RSS:SKIP-DAYS> arg ...)
+  (<RSS:ITEM> arg ...)
+  (<RSS:AUTHOR> arg ...)
+  (<RSS:COMMENTS> arg ...)
+  (<RSS:ENCLOSURE> arg ...)	
+  (<RSS:GUID> arg ...)
+  (<RSS:SOURCE> arg ...)))
+
+== Examples ==
+
+<example><RSS></example>
+
+== Server Definitions ==
+<server>
+
+Only the ++<RSS>++ markup accepts attributes. They are described above.
+All other ++<RSS:xxx> markups accept not attributes.
+
+=== ++<RSS>++ ===
+<markup> <RSS>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| :version     |  string   |  //2.0//     | the RSS version.            |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+</markup>
+
+</doc>

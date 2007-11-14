@@ -1,0 +1,45 @@
+;; Mixing XHTML, MathML, and SVG
+(<HTML>
+   (<IFRAME> :style "border: 0"
+      :src (make-hop-service-url
+	    (service ()
+	       (instantiate::http-response-hop
+		  (backend (hop-get-xml-backend 'xhtml))
+		  (xml (<HTML>
+			  (<MATH>
+			     (<MATH:TEX> {\sqrt{\cos(x)}} ))))))))
+   (<IFRAME> :style "border: 0; width: 300px; height: 200px; overflow: hidden"
+      :src (make-hop-service-url
+	    (service ()
+	       (instantiate::http-response-hop
+		  (backend (hop-get-xml-backend 'xhtml))
+		  (xml (<HTML>
+			  ~(define (math-svg-draw path)
+			      (let ((min -4)
+				    (step 0.01)
+				    (max 4))
+				 (let loop ((x min)
+					    (r '()))
+				    (if (<= x max)
+					(let ((y (with-handler
+						    (lambda (e) 0)
+						    (sqrt (cos x)))))
+					   (if (and (>= y min) (<= y max))
+					       (let ((s (format " M ~a ~a l 1 0"
+								(* 100 x)
+								(- (* 100 y)))))
+						  (loop (+ x step) (cons s r)))
+					       (loop (+ x step) r)))
+					(path.setAttribute "d" (apply string-append (reverse r)))))))
+			  (let ((p (<SVG:PATH> :id "curve"
+				      :stroke "blue":stroke-width "2"
+				      :fill "none")))
+			     (<SVG> :onload ~(math-svg-draw $p)
+				:viewBox "-200 -200 400 400"
+				(<SVG:PATH> :stroke "black" :stroke-width "1"
+				   :d "M -200 0 L 200 0 M 0 -200 L 0 200 M -100 -5 L -100 5 M 100 -5 L 100 5 M -5 100 L 5 100 M -5 -100 L 5 -100")
+				(<SVG:TEXT> :x "8" :y "104" :font-size "15" "-1")
+				(<SVG:TEXT> :x "8" :y "-96" :font-size "15" "1")
+				(<SVG:TEXT> :x "-104" :y "20" :font-size "15" "-1")
+				(<SVG:TEXT> :x "96" :y "20" :font-size "15" "1")
+				p)))))))))

@@ -1,0 +1,14 @@
+;; An example of timeout event
+(let ((span (<SPAN> "")))
+   (<HTML>
+      (<BODY>
+	 ~(let ((c 1))
+	     (letrec ((proc (lambda ()
+			       (if (= c 6)
+				   (remove-event-listener! 1000 "timeout" proc)
+				   (begin
+				      (innerHTML-set! $span
+						      (format "tick ~a" c))
+				      (set! c (+ 1 c)))))))
+		(add-event-listener! 1000 "timeout" proc)))
+	 span)))

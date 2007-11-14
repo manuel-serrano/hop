@@ -1,0 +1,126 @@
+<doc> Regular Expressions
+
+== Descrition ==
+
+This page describes the server and client facilities for dealing with
+regular expressions.
+
+== Synopsis ==
+
+=== Server & Client ===
+
+  (pregexp string)
+  (pregexp-match regexp-or-string string)
+  (pregexp-split regexp-or-string string)
+  (pregexp-replace regexp-or-string string1 string2)
+  (pregexp-replace* regexp-or-string string1 string2)
+
+== Examples ==
+
+<example>regexp</example>
+
+== Server & Client Definitions ==
+
+=== ++(pregexp string)++ ===
+<procedure> pregexp
+<function> pregexp
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | A string denoting a regular expression.         |
+</arguments>
+</function>
+
+The function ++pregexp++ compiles the regular expression into a form suitable
+to ++pregexp-match++.
+</procedure>
+
+=== ++(pregexp-match re-or-str string)++ ===
+<procedure> pregexp-match
+<function> pregexp-match
+
+<arguments>
+^  arguments  ^   type             ^   description                             ^
+| re-or-str   |  string or regexp  | The regular expression, compiled or not.  |
+| string      |  string            | The string to be parsed.                  |
+</arguments>
+</function>
+
+This function parses the argument ++string++ according to the regular expression
+++re-or-str++. On success, this function returns a list whose head is the
+overall match and its tails the successive sub-matches. On failure, it
+returns ++#f++.
+
+Examples:
+
+  (pregexp-match "brain" "bird") &#8658; #f
+  (pregexp-match "needle" "hay needle stack") &#8658; ("needle")
+  (pregexp-match "([^:]+)://([^:]+)(?:[:]([0-9]+))?" "http://foo.bar") &#8658; ("http://foo.bar" "foo.bar" #f)
+  (pregexp-match "([^:]+)://([^:]+)(?:[:]([0-9]+))?" "http://foo.bar:8080") &#8658; ("http://foo.bar" "foo.bar" "8080")
+
+
+</procedure>
+
+=== ++(pregexp-split re-or-str string)++ ===
+<procedure> pregexp-split
+<function> pregexp-split
+
+<arguments>
+^  arguments  ^   type             ^   description                             ^
+| re-or-str   |  string or regexp  | The regular expression, compiled or not.  |
+| string      |  string            | The string to be parsed.                  |
+</arguments>
+</function>
+
+This function splits the argument ++string++ into a list of strings, breaking
+at delimiter regular expressions. Examples:
+
+  (pregexp-split ":" "/bin:/usr/bin:/usr/bin/X11:/usr/local/bin") &#8658; ("/bin" "/usr/bin" "/usr/bin/X11" "/usr/local/bin")
+  (pregexp-split " " "pea soup") &#8658; ("pea" "soup")
+
+
+</procedure>
+
+=== ++(pregexp-replace re-or-str string1 string2)++ ===
+<procedure> pregexp-replace
+<function> pregexp-replace
+
+<arguments>
+^  arguments  ^   type             ^   description                             ^
+| re-or-str   |  string or regexp  | The regular expression, compiled or not.  |
+| string      |  string            | The string to be parsed.                  |
+</arguments>
+</function>
+
+Replaces the first occurrence of ++re-or-str++ in ++string1++ by ++string2.++
+Examples:
+
+  (pregexp-replace "te" "liberte" "ty")  &#8658; "liberty"
+
+
+</procedure>
+
+=== ++(pregexp-replace* re-or-str string1 string2)++ ===
+<procedure> pregexp-replace*
+<function> pregexp-replace*
+
+<arguments>
+^  arguments  ^   type             ^   description                             ^
+| re-or-str   |  string or regexp  | The regular expression, compiled or not.  |
+| string      |  string            | The string to be parsed.                  |
+</arguments>
+</function>
+
+Replaces the all the occurrences of ++re-or-str++ in ++string1++ by ++string2.++
+Examples:
+
+  (pregexp-replace* "te" "liberte egalite fraternite" "ty") &#8658; "liberty egality fratyrnity"
+
+
+</procedure>
+
+== See also ==
+
+<see-also>regexp, xml-parse</see-also>
+
+</doc>

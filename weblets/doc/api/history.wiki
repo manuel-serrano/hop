@@ -1,0 +1,107 @@
+<doc> History (aka, "back button" support)
+
+== Description ==
+
+This page presents the facilities offered by HOP for managing
+//browser history//. These facilities are mainly intended for 
+supporting traditional browsers' //back button// in the context of
+dynamic documents.
+
+~~ The tutorial 
+,(<TUTORIALREF> "handling the \"back button\"" "08-history.wiki") shows how
+to use the functions described in the page for supporting the Web browsers 
+bookmarking and navigation buttons.
+
+~~ Container (e.g., ++<NOTEPAD>++, ++<TREE>++, ++<TABSLIDER>++, or
+++<FL>++) manage **automatically** browser history. As such, there is
+no need to use any of the functions described here for enabling history
+with these widgets.
+
+
+== Synopsis ==
+
+=== client functions ===
+
+  (current-history)
+  (make-history key handler [reset-value])
+  (history-add! history id value)
+  (with-history thunk)
+  (replay-history history) 
+
+
+== Examples ==
+
+<example>history</example>
+
+== Client Definitions ==
+<client>
+
+=== ++(current-history)++ ===
+<procedure> current-history
+Returns the current history object.
+</procedure>
+
+=== ++(make-history id handler [reset-value])++ ===
+<procedure> make-history
+<arguments>
+^  arguments   ^   type      ^   description                                  ^
+| id           |  string     | the history manager identifier.                |
+| handler      |  procedure  | a procedure of two arguments.                  |
+| reset-value  |  obj        | an optional value used to //reset// entries.   |
+</arguments>
+
+~~ The function ++make-history++ creates a new //history manager// that can
+be used to register new history entries that can be bookmarked by regular
+web browsers.
+
+  * ++id++: the name of the manager that must be unique. This name is used
+ to build a fresh URL.
+  * ++handler++: a procedure of two arguments (++id++, an identifier string
+ and ++value++, a user string) that is invoked each time browser URL changes
+ (for instance, when the //back button// is clicked).
+  * ++reset-value++: a value that is used as the second argument of the
+ ++handler++ when a history entry is removed from the browser URL.
+
+
+</procedure>
+
+=== ++(history-add! history id value)++ ===
+<procedure> history-add!
+<arguments>
+^  arguments   ^   type            ^   description                            ^
+| history      |  history manager  | a manager built by ++make-history++.     |
+| id           |  string           | the name of the history entry.           |
+| value        |  string           | the value of the history entry.          |
+</arguments>
+
+~~ The function ++history-add!++ is used to create new history entries.
+The Web browser will see these entries as regular URLs that it will be
+able to bookmark and navigate back and forth.
+</procedure>
+
+=== ++(with-history thunk)++ ===
+<procedure> with-history
+<arguments>
+^  arguments   ^   type      ^   description                            ^
+| thunk        |  procedure  | a thunk (i.e., a nullary procedure)      |
+</arguments>
+
+~~ The function ++with-history++ collapses together all the history
+entries that are created during the evaluation of ++thunk++. The value returned
+by ++with-history++ is the value returned by calling ++thunk++.
+</procedure>
+
+=== ++(replay-history history)++ ===
+<procedure> replay-history
+<arguments>
+^  arguments   ^   type      ^   description                            ^
+| location     |  history    | a history state.                         | 
+</arguments>
+
+//Replays// a history state.
+</procedure>
+
+== See also ==
+<see-also>history</see-also>
+
+</doc>

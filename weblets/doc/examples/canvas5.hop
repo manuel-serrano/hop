@@ -1,0 +1,30 @@
+;; Using canvas Bezier and Quadratic paths
+(let ((can (<CANVAS> :width 400 :height 400))
+      (src (make-file-path (hop-icons-directory) "hop.png")))
+   (<HTML>
+      (<BODY>
+	 :onload ~(let* ((ctx (canvas-get-context $can "2d")))
+		     (canvas-quadratic-curve ctx 75 25
+					     25 25 25 62.5
+					     25 100 50 100
+					     50 120 30 125
+					     60 120 65 100
+					     125 100 125 62.5
+					     125 25 75 25)
+		     (canvas-properties-set! ctx :line-width 3)
+		     (canvas-stroke ctx)
+		     (canvas-translate ctx 200 200)
+		     (canvas-begin-path ctx)
+		     (canvas-bezier-curve ctx 75 40
+					  75 37 70 25 50 25
+					  20 25 20 62.5 20 62.5
+					  20 80 40 102 75 120
+					  110 102 130 80 130 62.5
+					  130 62.5 130 25 100 25
+					  85 25 75 37 75 40)
+		     (canvas-stroke ctx))
+	 (<HEAD> :include "hop-canvas")
+	 [Examples extracted from the Firefox Canvas
+		   ,(<A> :href "http://developer.mozilla.org/en/docs/Canvas_tutorial"
+		       "tutorial").]
+	 (<DIV> :align 'center can))))

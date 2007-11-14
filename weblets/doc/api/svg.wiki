@@ -1,0 +1,105 @@
+<doc> SVG support
+
+== Description ==
+
+HOP supports a subset of the SVG markups as defined in the
+[[http://www.w3.org/TR/SVG11/|Scalable Vector Graphics (SVG) 1.1 Specification]].
+Future versions of HOP are likely to extend the set of supported
+markups.
+
+~~ In addition to regular SVG markups, HOP supports the additional
+++<SVG:IMG>++ markup that allows SVG images to be //inlined// inside
+Web pages.
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+Embedding SVG markups inside Web pages with Firefox is currently 
+operational only using XHTML. It does not work with HTML.])
+
+== Synopsis ==
+
+=== Server ===
+
+  (<SVG> arg ...)
+  (<SVG:G> arg ...)
+  (<SVG:DEFS> arg ...)
+  (<SVG:RECT> arg ...)
+  (<SVG:CIRCLE> arg ...)
+  (<SVG:ELLIPSE> arg ...)
+  (<SVG:LINE> arg ...)
+  (<SVG:POLYLINE> arg ...)
+  (<SVG:POLYGON> arg ...)
+  (<SVG:TEXT> arg ...)
+  (<SVG:TSPAN> arg ...)
+  (<SVG:TREF> arg ...)
+  (<SVG:TEXTPATH> arg ...)
+  (<SVG:IMG> arg ...)
+
+
+== Examples ==
+
+<example><SVG</example>
+
+== Server Definitions ==
+<server>
+
+=== SVG regular markups ===
+<markup> <SVG>
+<markup> <SVG:G>
+<markup> <SVG:DEFS>
+<markup> <SVG:RECT>
+<markup> <SVG:CIRCLE>
+<markup> <SVG:ELLIPSE>
+<markup> <SVG:LINE>
+<markup> <SVG:POLYLINE>
+<markup> <SVG:POLYGON>
+<markup> <SVG:TEXT>
+<markup> <SVG:TSPAN>
+<markup> <SVG:TREF>
+<markup> <SVG:TEXTPATH>
+
+<arguments>
+^  attributes   ^   type    ^   default    ^  short description          ^
+| :id           |  string   |  //random//  | element identifier.         | 
+| ...           |  ...      |   ++_++      | ...                         |
+</arguments>
+
+These markups conform the W3C's [[[http://www.w3.org/TR/SVG11/|Scalable Vector Graphics (SVG) 1.1 Specification]] so they are not described here.
+
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+</markup>
+
+=== ++<SVG:IMG>++ ===
+<markup> <SVG:IMG>
+
+<arguments>
+^  attributes   ^   type    ^   default        ^  short description          ^
+| :id           |  string   |  //random//      | element identifier.         | 
+| src           |  string         |            | the path of the SVG image.  |
+| width         |  number or bool |   ++#f++   | the image width.            |
+| height        |  number or bool |   ++#f++   | the image height.           |
+| style         |  string         |            | the XML image style.        |
+| prefix        |  bool           |            | prefix the SVG markup of the image.  |
+</arguments>
+
+The markup ++<SVG:IMG>++ reads and parses an SVG image found in a external
+document. The interned DOM tree representing that image is **inlined** inside
+the produced XML document. Hence, the ++<SVG:IMG>++ markup can be conveniently
+used to produce documents that contain no external references.
+
+<server>
+
+== See also ==
+<see-also><SVG</see-also>
+
+</doc>

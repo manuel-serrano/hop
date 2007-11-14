@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Aug 10 15:38:10 2007 (serrano)                */
+#*    Last change :  Wed Nov 14 14:58:38 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the dashboard weblet                             */
@@ -20,6 +20,7 @@ include ../../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile dashboard.hss dashboard.hop \
                   etc/weblet.info etc/dashboard.wiki \
+                  dashboard-applet.hss etc/dashboard-rfc.png \
                   etc/logo.png
 
 build: .afile
