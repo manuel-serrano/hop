@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Wed Oct 17 11:28:32 2007 (serrano)                */
+/*    Last change :  Wed Nov 14 17:40:41 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
@@ -74,6 +74,7 @@ class HopAudio {
 
 	 snd.stream = stream;
 	 if( snd.getPosition() > 0 ) stopSound();
+
 	 snd.loadSound( u, stream );
       }
 

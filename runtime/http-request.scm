@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Nov 14 16:07:12 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 16:47:52 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -35,7 +35,10 @@
 (define (parse-error proc msg obj port)
    (let ((o (if (eof-object? obj)
 		obj
-		(format "{~a}~a" obj (read-line port)))))
+		(let ((l (read-line port)))
+		   (if (eof-object? l)
+		       obj
+		       (format "{~a}~a" obj l))))))
       (raise (instantiate::&io-parse-error
 		(obj o)
 		(proc proc)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Wed Nov 14 16:07:53 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 17:56:10 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -83,9 +83,10 @@ events succeeded, you should see an acknowledge.")
 		    (string-append msg " "
 				   (number->string (event-mouse-button e)))))
 	       ~(define (add e)
-		   (let ((nval (string-append $b4.innerHTML e.value)))
-		      (innerHTML-set! $b4 nval)
-		      #t))
+		   (when e.value
+		      (let ((nval (string-append $b4.innerHTML e.value)))
+			 (innerHTML-set! $b4 nval)
+			 #t)))
 	       ~(add-event-listener! $evt1
 				     "server"
 				     (lambda (e)
@@ -108,7 +109,6 @@ events succeeded, you should see an acknowledge.")
 				     "serverready"
 				     (lambda (e)
 					(with-hop ($(service :ttl 1 ()
-						       (tprint "signal...")
 						       (hop-event-signal!
 							evt1 evt1)
 						       (hop-event-signal!

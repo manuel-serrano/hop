@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Nov 14 11:37:37 2007 (serrano)                */
+/*    Last change :  Wed Nov 14 17:39:38 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -283,7 +283,7 @@ function hop_audio_init( id, start, src, stream,
 function hop_audio_flash_init( id, src, stream, player ) {
    /* we are now sure that at least version 8 of flash is running */
    hop_flash_minversion_set( 8 );
-   
+
    var audio = document.getElementById( id );
    var proxy = hop_audio_init_obj( audio );
 
