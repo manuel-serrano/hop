@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Tue Nov 13 10:28:35 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 10:19:18 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
@@ -20,7 +20,9 @@
 ;*    test/events ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (test/events)
-   (let ((evt (symbol->string (gensym "event"))))
+   (let ((evt1 (symbol->string (gensym "event")))
+	 (evt2 (symbol->string (gensym "event")))
+	 (evt3 (symbol->string (gensym "event"))))
       (<TEST-HTML>
 	 :source (service-resource test/events "event.hop")
 	 (<DIV> :class "comment"
@@ -31,7 +33,8 @@ events succeeded, you should see an acknowledge.")
 	 (let* ((b (<DIV> :align "center"
 		      :style "border: 1px solid black; height: 64px"
 		      "I'm a sensitive region"))
-		(b3 (<SPAN> "...waiting"))
+		(b3 (<SPAN> :style "color: red" "...waiting"))
+		(b4 (<SPAN> :style "color: red" ""))
 		(b2 (<DIV> :style "padding-top: 3ex"
 		       ~(add-event-listener! $b
 					     "mouseover"
@@ -79,22 +82,40 @@ events succeeded, you should see an acknowledge.")
 		    $b2
 		    (string-append msg " "
 				   (number->string (event-mouse-button e)))))
-	       ~(add-event-listener! $evt
+	       ~(define (add e)
+		   (let ((nval (string-append $b4.innerHTML e.value)))
+		      (innerHTML-set! $b4 nval)
+		      #t))
+	       ~(add-event-listener! $evt1
 				     "server"
 				     (lambda (e)
 					(innerHTML-set! $b3 e.value))
 				     #t)
+	       ~(add-event-listener! $evt2 "server" add #t)
+	       ~(add-event-listener! $evt3 "server" add #t)
 	       ~(add-event-listener! document
 				     "server"
 				     (lambda (e)
-					(set! e.value "success")))
+					(cond
+					   ((equal? e.value $evt1)
+					    (set! e.value "ok"))
+					   ((equal? e.value $evt2)
+					    (set! e.value "A"))
+					   ((equal? e.value $evt3)
+					    (set! e.value "B")))))
 	       ~(add-event-listener! document
 				     "serverready"
 				     (lambda (e)
 					(with-hop ($(service :ttl 1 ()
+						       (tprint "signal...")
 						       (hop-event-signal!
-							evt "failure"))))))
+							evt1 evt1)
+						       (hop-event-signal!
+							evt2 evt2)
+						       (hop-event-signal!
+							evt3 evt3))))))
 	       b
 	       b2
-	       (<DIV> "Server event: " b3))))))
+	       (<DIV> "Server event: " b3
+		      ", Server event 2 (AB or BA when okay): " b4))))))
       

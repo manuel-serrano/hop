@@ -422,7 +422,7 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
    }
 }
 
-if( hop_msiep() || (hop_khtmlp() && !hop_safarip() && !hop_webkit()) ) {
+if( hop_msiep() || (hop_khtmlp() && !hop_safarip() && !hop_webkitp()) ) {
    hop_event_mouse_button = function hop_event_mouse_button( e ) {
       return e.button;
    }

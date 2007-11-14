@@ -1,0 +1,88 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/withhop.hop                */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
+;*    Last change :  Wed Nov 14 10:25:45 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Testing with-hop                                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-withhop
+   (import weblet_test)
+   (export test/withhop))
+
+;*---------------------------------------------------------------------*/
+;*    test/withhop ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-service (test/withhop)
+   (<TEST-HTML>
+      :source (service-resource test/withhop "withhop.hop")
+      (<DIV> :class "comment"
+	 "This test checks with-hop procedure calls. Executing each test
+should produce a \"ok\" result.")
+      (<H3> "Simple call")
+      (<DIV> :style "font-size: 90%"
+	 "This test executes a simple server service call.")
+      (let ((res (<SPAN> :style "color: red" "???")))
+	 (<DIV>
+	    (<BUTTON> :onclick ~(with-hop ($(service (x)
+					       (string-append "o" x))
+					    "k")
+				   (lambda (h)
+				      (innerHTML-set! $res h)))
+	       "execute")
+	    "  Result: " res))
+      (<H3> "2 Parallel calls")
+      (<DIV> :style "font-size: 90%"
+	 "This test spawns simulateously two server service calls. The test
+succeeds, if the first completes after the second.")
+      (let ((res (<SPAN> :style "color: red" "???")))
+	 (<DIV>
+	    (<BUTTON> :onclick ~(begin
+				   (with-hop ($(service (x) (sleep 2000000) x)
+					       "ok")
+				      (lambda (h)
+					 (innerHTML-set! $res h)))
+				   (with-hop ($(service (x) x)
+					       "waiting")
+				      (lambda (h)
+					 (innerHTML-set! $res h))))
+	       "execute")
+	    "  Result: " res))
+      (<H3> "4 Parallel calls")
+      (<DIV> :style "font-size: 90%"
+	 "This test spawns simulateously four server service calls. If this
+test succeeds, you should clearly see the following messages, in that order:")
+      (<OL>
+	 (<LI> (<TT> "waiting"))
+	 (<LI> (<TT> "still waiting"))
+	 (<LI> (<TT> "one last second..."))
+	 (<LI> (<TT> "ok")))
+      (<DIV> "If you notice a different sequence or cannot read all messages,
+then the test failed.")
+      (let ((res (<SPAN> :style "color: red" "???")))
+	 (<DIV>
+	    (<BUTTON> :onclick ~(begin
+				   (with-hop ($(service (x) (sleep 4000000) x)
+					       "ok")
+				      (lambda (h)
+					 (innerHTML-set! $res h)))
+				   (with-hop ($(service (x) (sleep 3000000) x)
+					       "one last second...")
+				      (lambda (h)
+					 (innerHTML-set! $res h)))
+				   (with-hop ($(service (x) (sleep 2000000) x)
+					       "still waiting...")
+				      (lambda (h)
+					 (innerHTML-set! $res h)))
+				   (with-hop ($(service (x) x)
+					       "waiting")
+				      (lambda (h)
+					 (innerHTML-set! $res h))))
+	       "execute")
+	    "  Result: " res))))

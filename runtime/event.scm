@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Oct 30 10:22:59 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 08:38:43 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -173,6 +173,7 @@
 (define (server-event-register event key flash)
    
    (define (ajax-register-event! req name key)
+      (tprint "ajax-register-event, name=" name " key=" key)
       (let ((conn (ajax-find-connection name key)))
 	 (if conn
 	     ;; we already have a connection...
@@ -203,6 +204,7 @@
 		   (request req))))))
    
    (define (flash-register-event! req name)
+      (tprint "flash-register-event, name=" name)
       (hashtable-update! *flash-socket-table*
 			 name
 			 (lambda (l)
@@ -210,7 +212,6 @@
 			 (list req))
       (instantiate::http-response-string))
 
-   (tprint "server-event-register: " event " key=" key " flash=" flash)
    (with-lock *event-mutex*
       (lambda ()
 	 (let ((req (current-request))
@@ -395,6 +396,7 @@
 		   (with-access::ajax-connection (car l) (req)
 		      (if (http-request? req)
 			  (let ((val (scheme->response (list value) req)))
+			     (tprint "ajax signal: " name)
 			     (ajax-signal-value req val)
 			     (set! req #f))
 			  (loop (cdr l))))
@@ -412,6 +414,7 @@
        (lambda (l)
 	  (when (pair? l)
 	     (let ((val (flash-make-signal-value value)))
+		(tprint "flash signal: " name)
 		(flash-signal-value (car l) name val)
 		#t)))))
 

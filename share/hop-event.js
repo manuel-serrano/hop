@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Nov 13 10:36:57 2007 (serrano)                */
+/*    Last change :  Wed Nov 14 10:41:58 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -141,9 +141,11 @@ var hop_servevt_dlist = null;
 function start_servevt_ajax_proxy( key ) {
    if( !hop_servevt_proxy.httpreq ) {
       var xhr_error_ttl = 6 * 3;
+      var pending_events = 0;
       
       var register = function( id ) {
 	 var svc = "/hop/server-event-register?event=" + id + "&key=" + key;
+
 	 var success = function( val, http ) {
 	    // erase previous errors
 	    xhr_error_ttl = 6 * 3;
@@ -184,6 +186,14 @@ function start_servevt_ajax_proxy( key ) {
 						       false,
 						       // no environment
 						       [] );
+
+	 // raises the ready state when it exists pending events
+	 if( pending_events > 0 ) {
+	    if( pending_events == 1 ) {
+	       hop_trigger_serverready_event( new HopServerReadyEvent() );
+	    }
+	    pending_events--;
+	 }
       }
 
       var unregister = function( id ) {
@@ -201,14 +211,22 @@ function start_servevt_ajax_proxy( key ) {
       hop_servevt_proxy.register = register;
       hop_servevt_proxy.unregister = unregister;
 
-      // scan all the previously registered events an register on the server
+      // count the number of pre-registered events
       for( var p in hop_servevt_table ) {
 	 if( hop_servevt_table[ p ].hop_servevt ) {
-	    register( p );
+	    pending_events++;
 	 }
       }
 
-      hop_trigger_serverready_event( new HopServerReadyEvent() );
+      if( pending_events > 0 ) {
+	 for( var p in hop_servevt_table ) {
+	    if( hop_servevt_table[ p ].hop_servevt ) {
+	       register( p );
+	    }
+	 }
+      } else {
+	 hop_trigger_serverready_event( new HopServerReadyEvent() );
+      }
    }
 }
 
@@ -293,8 +311,9 @@ function hop_servevt_onerror( msg ) {
 function hop_servevt_proxy_flash_init() {
    /* if we are here, we are sure that Flash v8 or better is running */
    hop_flash_minversion_set( 8 );
-   
-   var readystate = 0;
+
+   var pending_events = 0;
+
    hop_servevt_proxy = document.getElementById( hop_servevt_id );
 
    var abort = function( id ) {
@@ -320,9 +339,11 @@ function hop_servevt_proxy_flash_init() {
          + "&key=" + hop_servevt_proxy.key + "&flash=true";
       
       var success = function( e ) {
-	 if( readystate === 1 ) {
-	    hop_trigger_serverready_event( new HopServerReadyEvent() );
-	    readystate = 2;
+	 if( pending_events > 0 ) {
+	    if( pending_events == 1 ) {
+	       hop_trigger_serverready_event( new HopServerReadyEvent() );
+	    }
+	    pending_events--;
 	 }
       }
 
@@ -346,20 +367,24 @@ function hop_servevt_proxy_flash_init() {
       abort( id );
    }
 
-   // scan all the previously registered events an register on the server
-   for( var p in hop_servevt_table ) {
-      if( hop_servevt_table[ p ].hop_servevt ) {
-	 if( readystate === 0 ) readystate = 1;
-	 register( p );
-      }
-   }
-
    // register the event event deregistration
    hop_window_onunload_add( failure );
 
-   // in any case, we the server is now ready to get event registration
-   if( readystate === 0 ) {
-      readystate = 2;
+   // count the number of pre-registered events
+   for( var p in hop_servevt_table ) {
+      if( hop_servevt_table[ p ].hop_servevt ) {
+	 pending_events++;
+      }
+   }
+
+   if( pending_events > 0 ) {
+      // regsiter them
+      for( var p in hop_servevt_table ) {
+	 if( hop_servevt_table[ p ].hop_servevt ) {
+	    register( p );
+	 }
+      }
+   } else {
       hop_trigger_serverready_event( new HopServerReadyEvent() );
    }
 }

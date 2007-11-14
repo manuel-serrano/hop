@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Fri Nov  9 08:33:57 2007 (serrano)                */
+/*    Last change :  Wed Nov 14 11:37:37 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -632,8 +632,8 @@ function hop_audio_controls_onload( evt ) {
 function hop_audio_controls_onerror( evt ) {
    var audio = evt.audio;
    var tl = document.getElementById( "controls-metadata-song-" + audio.id );
-   var min = document.getElementById( "controls-status-length-min-" + id );
-   var sec = document.getElementById( "controls-status-length-sec-" + id );
+   var min = document.getElementById( "controls-status-length-min-" + audio.id );
+   var sec = document.getElementById( "controls-status-length-sec-" + audio.id );
 
    tl.innerHTML = evt.value ? evt.value : "Error";
    min.innerHTML = "  ";
@@ -741,13 +741,15 @@ function hop_audio_controls_metadata( audio, reset ) {
 	 else
 	    ye.innerHTML = "";
       } else {
-	 tl.innerHTML = sc_basename( audio.src );
-	 at.innerHTML = sc_basename( sc_dirname( sc_dirname( audio.src ) ) );
-	 ab.innerHTML = sc_basename( sc_dirname( audio.src ) );
-	 if( md.year && md.year > 0 )
-	    ye.innerHTML = md.year;
-	 else
-	    ye.innerHTML = "";
+	 if( audio.src ) {
+	    tl.innerHTML = sc_basename( audio.src );
+	    at.innerHTML = sc_basename( sc_dirname( sc_dirname( audio.src ) ) );
+	    ab.innerHTML = sc_basename( sc_dirname( audio.src ) );
+	    if( md.year && md.year > 0 )
+	       ye.innerHTML = md.year;
+	    else
+	       ye.innerHTML = "";
+	 }
       }
    }
 }

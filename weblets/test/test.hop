@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Oct  2 18:32:31 2007 (serrano)                */
+;*    Last change :  Wed Nov 14 08:56:22 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
@@ -14,6 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module weblet_test
    (import weblet_test-image
+	   weblet_test-withhop
 	   weblet_test-event
 	   weblet_test-fl
 	   weblet_test-tree
@@ -55,6 +56,7 @@
 	 (<H4> "Simple tests")
 	 (<UL>
 	    (<LI> (<A> :href test/images :target "_blank" "Images"))
+	    (<LI> (<A> :href test/withhop :target "_blank" "with-hop"))
 	    (<LI> (<A> :href test/events :target "_blank" "Events")))
 	 (<H4> "Hop Widget tests")
 	 (<UL>

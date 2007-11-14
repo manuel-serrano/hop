@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Nov 13 10:18:52 2007 (serrano)                */
+/*    Last change :  Wed Nov 14 10:51:09 2007 (serrano)                */
 /*    Copyright   :  2004-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -105,6 +105,9 @@ function hop_service_url_varargs( service, args ) {
 /*---------------------------------------------------------------------*/
 function hop_default_failure( http ) {
    var t = http.responseText;
+   
+   if( !t ) return;
+	       
    var div = document.getElementById( "hop_default_failure" );
    var div2 = document.getElementById( "hop_default_failure_background" );
 
@@ -117,7 +120,7 @@ function hop_default_failure( http ) {
    t = t.replace( /<body[^>]*>/g, "<div align='center' style='border: 3px dashed red; overflow: auto; width: 50em; background: white; padding: 4px; font-family: sans serif; text-align: center;'>" );
    t = t.replace( /<\/body>/g, "</div>" );
    t = t.replace( /&quot;/g, "\"" );
-
+   
    if( !div2 ) {
       div2 = document.createElement( "div" );
       div2.id = "hop_default_failure_background";
@@ -280,9 +283,15 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 			return success( xhr.responseText, xhr );
 		     }
 		  } catch( e ) {
-		     hop_error( "*** WITH-HOP error:" + svc +
-				": " + e + " -- " +
-				xhr.responseText );
+		     if( e.line ) {
+			hop_error( "*** WITH-HOP error: " + svc +
+				   ": " + e + "(line " + e.line + ") -- " +
+				   xhr.responseText );
+		     } else {
+			hop_error( "*** WITH-HOP error: " + svc +
+				   ": " + e + " -- " +
+				   xhr.responseText );
+		     }
 		  }
 
 	       case 202:
