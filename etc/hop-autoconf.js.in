@@ -316,6 +316,13 @@ function hop_safarip() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_webkitp ...                                                  */
+/*---------------------------------------------------------------------*/
+function hop_webkitp() {
+   return navigator.userAgent.indexOf( "WebKit" ) >= 0;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_operap ...                                                   */
 /*---------------------------------------------------------------------*/
 function hop_operap() {
@@ -415,7 +422,7 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
    }
 }
 
-if( hop_msiep() || (hop_khtmlp() && !hop_safarip()) ) {
+if( hop_msiep() || (hop_khtmlp() && !hop_safarip() && !hop_webkit()) ) {
    hop_event_mouse_button = function hop_event_mouse_button( e ) {
       return e.button;
    }
