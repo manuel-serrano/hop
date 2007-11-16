@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Nov 16 06:50:20 2007 (serrano)                */
+#*    Last change :  Fri Nov 16 10:16:23 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the shutdown weblet                              */
@@ -20,7 +20,7 @@ include ../../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile shutdown.hop shutdown.hss \
                   etc/weblet.info etc/shutdown.wiki \
-                  etc/logo.png etc/logo-bw.png
+                  etc/logo.png
 
 build: .afile
 

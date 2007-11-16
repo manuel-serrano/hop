@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Nov 16 07:13:41 2007 (serrano)                */
+;*    Last change :  Fri Nov 16 10:39:03 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -22,9 +22,6 @@
 ;*---------------------------------------------------------------------*/
 (define-service (shutdown)
    (let* ((req (current-request))
-	  (src-color "etc/logo.png")
-	  (src-bw "etc/logo-bw.png")
-	  (img (<IMG> :src "etc/logo.png"))
 	  (msg (<SPAN> "Shutdown the serving HOP broker...")))
       (if (authorized-service? req 'admin)
 	  (<HTML>
@@ -36,7 +33,7 @@
 		(<DIV> :align "center"
 		   (<TABLE> :class "shutdown"
 		      (<TR>
-			 (<TD> img)
+			 (<TD> (<IMG> :src "etc/logo.png"))
 			 (<TD>
 			    (<TABLE>
 			       (<TR>
@@ -56,7 +53,6 @@
 					     $msg
 					     (<SPAN> :class "warning"
 						"Shuting down in..."))
-					    (set! $img.src $src-bw)
 					    (let loop ((i 3))
 					       (if (>= i 1)
 						   (let ((m (format "~as" i)))

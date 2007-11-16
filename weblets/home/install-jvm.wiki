@@ -13,11 +13,8 @@ pre-compiled distribution. The JVM pre-compiled distribution is still
 experimental.
 
 ~~ The pre-compiled HOP version is slower that the native version (about 
-a factor of 4) and the database library (++sqlite++) is still missing. 
-In consequence, the pre-compiled JVM versions of HOP cannot use the
-Hz distribution system. This implies that HOP users of the pre-compiled
-versions have to manually manage the install/de-installation of the HOP's
-.hz packaged.
+a factor of 4) and the database library (++sqlite++) is only partially 
+implemented.
 
 == 2. Requirements ==
 
