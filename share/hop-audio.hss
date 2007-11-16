@@ -51,7 +51,7 @@ $(hop-hss-type! "audio" "div.hop-audio")
 
 audio {
   font-family: $hopaudio-font;
-  font-size: 10pt;
+  font-size: 11pt;
 }
 
 /*---------------------------------------------------------------------*/

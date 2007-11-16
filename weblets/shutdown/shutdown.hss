@@ -1,0 +1,76 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/shutdown/shutdown.hss           */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 24 13:57:44 2005                          */
+/*    Last change :  Fri Nov 16 07:12:51 2007 (serrano)                */
+/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    SHUTDOWN HOP CSS                                                 */
+/*=====================================================================*/
+
+$(define border-color "#bbb")
+$(define info-color "#f9f9f9")
+$(define title-color "#ddd")
+
+body {
+  background: #e0e0e0;
+  font-family: arial;
+}
+
+button {
+  border-width: 1px;
+  margin-left: 1em;
+  width: 7em;
+}
+
+button:hover {
+  background: #eee;
+}
+
+button#shutdown:hover {
+  color: red;
+}
+
+table.shutdown img {
+  padding: 20px;
+}
+
+table td {
+  text-align: left;
+}
+
+table.shutdown {
+  width: 20em;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  -moz-border-radius: 0.5em;
+}
+
+table.shutdown td {
+  font-weight: bold;
+}
+
+table.shutdown td#buttons {
+  text-align: right;
+}
+
+div#title {
+  width: 20em;
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+
+table td {
+  vertical-align: top;
+}
+
+span.class {
+  color: red;
+}
+  

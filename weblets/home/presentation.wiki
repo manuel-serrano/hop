@@ -9,8 +9,8 @@
 
 == Presentation ==
 
-HOP is a new programming language designed for the Web 2.0.  It is a
-higher-order language for programming interactive web applications
+HOP is a new Software Development Kit for the Web 2.0.  It relies a
+new higher-order language for programming interactive web applications
 such as web agendas, web galleries, music players, etc. HOP can be
 viewed as a replacement for traditional graphical toolkits. HOP is
 implemented as a **Web broker**, //i.e.//, a Web server that may act
