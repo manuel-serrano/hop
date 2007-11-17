@@ -57,5 +57,48 @@ Here is a list of example of correct HZ file names:
 It should be noted that hyphen can only used in HZ package for separating
 the base name of the package and its version number.
 
+== Making a weblet available to others ==
+
+The best way to make a weblet available to the HOP community is to 
+contact the authors of HOP for adding your weblet to the Hz database.
+
+~~ Another solution consists in distributing your weblet by yourself,
+via a Web page. You can distribute HOP weblets that can installed with
+one click even without explicitly using the ++[[hz]]++ weblet. If the
+Web page Web referring to the weblet is implemented in HOP, it should
+contain the following:
+
+  (<HTML>
+     (<HEAD> 
+        ... 
+        :jscript (string-append (hop-weblets-directory) "/hz/hz-install.js")
+        ...)
+     (<BODY> 
+        ...
+        ~(hop_install_weblet 
+             "http://mhost.mydomain.org/myweblet-1.0.0.hz"
+             (string-append (hop-weblets-directory) "/hz/etc/hz-install.png"))
+        ...))
+
+
+If the page is implemented in HTML, it should contain:
+
+   <html>
+     <head>
+       ...
+       <script src='/usr/local/share/hop/weblets/hz/hz-install.js'>
+       ...
+     </head>
+     <body>
+       ...
+       <script>hop_install_weblet( "http://mhost.mydomain.org/myweblet-1.0.0.hz" )</script>
+       ...
+     </body>
+   </body>
+
+
+In that case, don't forget to copy the image ++hz-install.png++ in the
+same directory as the directory containing the web page.
+       
 </doc>
 

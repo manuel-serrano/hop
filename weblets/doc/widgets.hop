@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Nov  6 15:18:02 2007 (serrano)                */
+;*    Last change :  Fri Nov 16 13:46:46 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC widgets.                                                 */
@@ -42,18 +42,14 @@
 	 :jscript (string-append (doc-dir) "/doc.scm")
 	 script)
       (<BODY>
-	 (<DIV>
-	    :align "center"
-	    (<TABLE>
-	       :class "doc"
+	 (<DIV> :align "center"
+	    (<TABLE> :class "doc"
 	       (<TR>
-		  (<TD>
-		     :valign "top"
+		  (<TD> :valign "top"
 		     (<IMG> :class "logo"
 			:alt "Hop Doc logo"
 			:src (string-append (doc-dir) "/etc/logo.png")))
-		  (<TD>
-		     :valign "top"
+		  (<TD> :valign "top"
 		     (<TABLE>
 			(<TR>
 			   (<TD>

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Thu Sep 20 13:44:51 2007 (serrano)                */
+;*    Last change :  Fri Nov 16 16:39:25 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -51,7 +51,9 @@
 ;*    hz/install-ondemand ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/install-ondemand name url)
-   (hz-install-from-url #t (current-request) name url))
+   (hz-direct-install (current-request) name url)
+   (<HTML>
+      ~(set! document.location (string-append "/hop/" $name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    logout ...                                                       */
@@ -102,17 +104,7 @@
       ((string=? url "")
        (error 'hz "URL is empty" url))
       (else
-       (let* ((prefix (format "http://~a:~a" (hostname) (hop-port)))
-	      (req (current-request))
-	      (url (cond
-		      ((substring=? "http://" url 7)
-		       url)
-		      ((substring=? "file://" url 7)
-		       (string-append prefix
-				      (substring url 7 (string-length url))))
-		      (else
-		       (string-append prefix url)))))
-	  (hz-install-from-url #f req name url)))))
+       (hz-install-from-url #f req name url))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-direct-install-tab ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Oct 17 11:31:16 2007 (serrano)                */
+;*    Last change :  Fri Nov 16 16:53:22 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -203,19 +203,31 @@
 	 (else
 	  (multiple-value-bind (scheme userinfo host port path)
 	     (url-parse url)
-	     (let* ((r (instantiate::http-request
-			  (scheme (string->symbol scheme))
-			  (id hop-to-hop-id)
-			  (userinfo userinfo)
-			  (host host)
-			  (port port)
-			  (header header)
-			  (timeout timeout)
-			  (path path)))
-		    (suc (if (procedure? success) success (lambda (x) x)))
-		    (hdl (make-http-callback 'with-url r suc fail)))
-		(trace-item "remote path=" path)
-		(http-send-request r hdl)))))))
+	     (cond
+		((string=? scheme "http")
+		 (let* ((r (instantiate::http-request
+			      (scheme (string->symbol scheme))
+			      (id hop-to-hop-id)
+			      (userinfo userinfo)
+			      (host host)
+			      (port port)
+			      (header header)
+			      (timeout timeout)
+			      (path path)))
+			(suc (if (procedure? success) success (lambda (x) x)))
+			(hdl (make-http-callback 'with-url r suc fail)))
+		    (trace-item "remote path=" path)
+		    (http-send-request r hdl)))
+		(else
+		 (let ((p (open-input-file url)))
+		    (if (input-port? p)
+			(let ((s (read-string p))
+			      (suc (if (procedure? success)
+				       success
+				       (lambda (x) x))))
+			   (close-input-port p)
+			   (suc s))
+			(fail url #f))))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    with-remote-host ...                                             */

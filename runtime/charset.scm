@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Tue Oct 16 08:32:50 2007 (serrano)                */
+;*    Last change :  Fri Nov 16 15:15:21 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
@@ -20,7 +20,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    charset-convert ...                                              */
 ;*    -------------------------------------------------------------    */
-;*    Convert a string from one charset to another.                    */
+;*    Convert a string from charset1 to charset2                       */
 ;*---------------------------------------------------------------------*/
 (define (charset-convert str charset1 charset2)
    (if (eq? charset1 charset2)

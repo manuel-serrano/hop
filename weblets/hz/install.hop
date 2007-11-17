@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Sun Aug 12 10:55:26 2007 (serrano)                */
+;*    Last change :  Fri Nov 16 17:07:26 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -175,7 +175,6 @@
 			 (when (dbhz? o)
 			    (hz-db-remove-weblet db o)))
 		      (apply hz-db-add-entry db n)
-		      (hz-db-close db)
 		      (let ((f (make-file-name hzdir (string-append name ".hop"))))
 			 (when (file-exists? f)
 			    (hop-load f)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Mon Oct 29 09:04:13 2007 (serrano)                */
+;*    Last change :  Fri Nov 16 17:07:54 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -246,21 +246,22 @@
 ;*    inst-dbhz ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (inst-dbhz s n a c h v mi ma sd d dt dr i hm)
-   (instantiate::dbhz
-      (stamp s)
-      (name n)
-      (author a)
-      (category c)
-      (hop h)
-      (version v)
-      (minhop mi)
-      (maxhop ma)
-      (sdescr sd)
-      (descr d)
-      (date (seconds->date (string->elong dt)))
-      (driver dr)
-      (install (if (string? i) i ""))
-      (home (if (string? hm) hm ""))))
+   (let ((cvt (charset-converter (hop-locale) (hop-charset))))
+      (instantiate::dbhz
+	 (stamp (cvt s))
+	 (name (cvt n))
+	 (author (cvt a))
+	 (category (cvt c))
+	 (hop h)
+	 (version v)
+	 (minhop mi)
+	 (maxhop ma)
+	 (sdescr (cvt sd))
+	 (descr (cvt d))
+	 (date (seconds->date (string->elong dt)))
+	 (driver dr)
+	 (install (if (string? i) (cvt i) ""))
+	 (home (if (string? hm) (cvt hm) "")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-get-entry-by-name ...                                      */
@@ -311,13 +312,27 @@
 	    "SELECT ~a FROM weblets WHERE (driver = 'unmanaged')" (hz-db-row)))))
 
 ;*---------------------------------------------------------------------*/
+;*    charset ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (charset arg)
+   (charset-convert arg (hop-charset) (hop-locale)))
+
+;*---------------------------------------------------------------------*/
+;*    charset-args ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (charset-args args)
+   (let ((cvt (charset-converter (hop-charset) (hop-locale))))
+      (map (lambda (x) (if (string? x) (cvt x) x)) args)))
+   
+;*---------------------------------------------------------------------*/
 ;*    hz-db-add-entry ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-add-entry db . args)
    (with-lock *db-mutex*
       (lambda ()
 	 (sqlite-exec db
-	    "INSERT INTO weblets (~a) VALUES( ~k )" (hz-db-row) args)
+	    "INSERT INTO weblets (~a) VALUES( ~k )" (hz-db-row)
+	    (charset-args args))
 	 args)))
 
 ;*---------------------------------------------------------------------*/
@@ -335,13 +350,13 @@
 (define (hz-db-update-entry db . args)
    (with-lock *db-mutex*
       (lambda ()
-	 (sqlite-exec db
-	    "UPDATE weblets SET ~l WHERE (name = ~q) AND (category = ~q)"
-	    (map (lambda (n v)
-		    (sqlite-format "~a = ~q" (car n) v))
-		 (hz-db-columns)
-		 args)
-	    (cadr args) (cadddr args))))
+         (sqlite-exec db
+            "UPDATE weblets SET ~l WHERE (name = ~q) AND (category = ~q)"
+            (map (lambda (n v)
+                    (sqlite-format "~a = ~q" (car n) v))
+                 (hz-db-columns)
+                 (charset-args args))
+            (charset (cadr args)) (charset (cadddr args)))))
    args)
 
 ;*---------------------------------------------------------------------*/

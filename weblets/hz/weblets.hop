@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 21 16:59:05 2006                          */
-;*    Last change :  Thu Sep 20 13:48:40 2007 (serrano)                */
+;*    Last change :  Fri Nov 16 17:06:21 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz weblets                                                   */
@@ -196,7 +196,7 @@
 	    (<TD>
 	       :class "action"
 	       (<SPAN>
-		  :title "Install the weblet now"
+		  :title "Install the weblet"
 		  :onclick ~(with-hop ($action "install" $id)
 			       (lambda (h)
 				  (set! (document.getElementById $id).innerHTML h)))
@@ -211,7 +211,7 @@
 	     :class "action"
 	     (<SPAN>
 		:title "Run the weblet in a new window"
-		:onclick ~(window_open :title $name
+		:onclick ~(window-open :title $name
 			     :src $(format "~a/~a" (hop-service-base) name))
 		"Run"))))
 
@@ -249,7 +249,7 @@
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
-		:title "Remove the weblet now"
+		:title "Uninstall and remove the weblet from the database"
 		:onclick ~(with-hop ($action "remove" $id)
 			     (lambda (h)
 				(set! (document.getElementById $id).innerHTML h)))
@@ -263,7 +263,7 @@
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
-		:title "Uninstall the weblet now"
+		:title "Uninstall the weblet"
 		:onclick ~(with-hop ($action "uninstall" $id)
 			     (lambda (h)
 				(set! (document.getElementById $id).innerHTML h)))
@@ -277,7 +277,7 @@
 	  (<TD>
 	     :class "action"
 	     (<SPAN>
-		:title "Update the weblet now"
+		:title "Update the weblet"
 		:onclick ~(with-hop ($action "update" $id)
 			     (lambda (h)
 				(set! (document.getElementById $id).innerHTML h)))

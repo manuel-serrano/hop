@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Mon Oct 29 14:48:45 2007 (serrano)                */
+;*    Last change :  Fri Nov 16 13:45:56 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
@@ -70,8 +70,7 @@
 	 ~(set! api-history-service $doc/api)
 	 ~(set! weblet-history-service $doc/api-sans-title)
 	 ~(set! tutorial-history-service $doc/tutorial)
-	 (<NOTEPAD>
-	    :id "doc-notepad"
+	 (<NOTEPAD> :id "doc-notepad"
 	    (<NPHEAD> "")
 	    (<NPTAB> :id "doc-api"
 	       (<NPTABHEAD> "API")
