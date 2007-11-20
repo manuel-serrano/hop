@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Sun Aug  5 06:26:17 2007 (serrano)                */
+;*    Last change :  Mon Nov 19 11:41:54 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -16,16 +16,21 @@
    (export (hz-version)
 	   (hz-date)
 	   (hz-author)
+	   (hz-dir::bstring)
 	   (hz-rc-directory::bstring)
-	   (hz-sync-hops)
-	   (hz-local-repository)
-	   (hz-dir)
-	   (hz-db)
-	   (hz-session-key::bstring)
-	   (hz-auto-logout-minute::int)
-	   (hz-repository::bstring)
+	   (hz-download-directory::bstring)
+	   (hz-weblets-directory::bstring)
+	   (hz-package-suffix::bstring)
+	   (hz-db::bstring)
+	   (hz-connection-timeout::int)
+	   (hz-connection-timeout-set!::int)
+	   (hz-publishers::pair-nil)
+	   (hz-publishers-set!::pair-nil)
+	   (hz-publisher-add! ::bstring #!optional (enable #t))
+	   (hz-publisher-enable! ::bstring ::bool)
 	   (hz-db-inspector-url::bstring)
 	   (hz-category-icons::pair-nil)
+	   (hz-prefs::bstring)
 	   (hz-preferences-load ::bstring)
 	   (hz-preferences-save ::bstring)
 	   (hz-preferences-edit)))
@@ -33,7 +38,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
 ;*---------------------------------------------------------------------*/
-(define (hz-version) "1.0.1")
+(define (hz-version) "1.0.2")
 (define (hz-date) "2007")
 (define (hz-author) "M. Serrano")
 
@@ -48,42 +53,80 @@
 (define-parameter hz-rc-directory (make-file-name (hop-rc-directory) "hz"))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-repository ...                                                */
+;*    hz-download-directory ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-repository
-   (make-file-name (hz-rc-directory) "repository"))
+(define-parameter hz-download-directory
+   (make-file-name (hz-rc-directory) "download")
+   (lambda (v)
+      (unless (directory? v)
+	 (unless (make-directories v)
+	    (error 'hz-download-directory "Cannot create directory" v)))
+      v))
+
+;*---------------------------------------------------------------------*/
+;*    hz-weblets-directory ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-weblets-directory
+   (make-file-name (hop-rc-directory) "weblets")
+   (lambda (v)
+      (unless (directory? v)
+	 (unless (make-directories v)
+	    (error 'hz-weblet-directory "Cannot create directory" v)))
+      v))
+
+;*---------------------------------------------------------------------*/
+;*    hz-package-suffix ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-package-suffix "hz")
+
+;*---------------------------------------------------------------------*/
+;*    hz-db                                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-db (make-file-name (hz-rc-directory) "hz.db"))
+
+;*---------------------------------------------------------------------*/
+;*    hz-connection-timeout ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-connection-timeout 300000)
+
+;*---------------------------------------------------------------------*/
+;*    hz-publishers ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-publishers '("http://hop.inria.fr/hop/weblets"))
+
+;*---------------------------------------------------------------------*/
+;*    hz-publisher-add! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hz-publisher-add! publisher #!optional (enable #t))
+   (unless (member publisher (hz-publishers))
+      (if enable 
+	  (hz-publishers-set! (cons publisher (hz-publishers)))
+	  (hz-publishers-set! (cons (list publisher #f) (hz-publishers))))
+      (hz-preferences-save (hz-prefs))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-publisher-enable! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hz-publisher-enable! publisher enable)
+   (hz-publishers-set! (map! (lambda (x)
+				(cond
+				   ((string? x)
+				    (if (and (not enable)
+					     (string=? x publisher))
+					(list x #f)
+					x))
+				   ((string=? (car x) publisher)
+				    (set-car! (cdr x) enable)
+				    x)
+				   (else
+				    x)))
+			     (hz-publishers)))
+   (hz-preferences-save (hz-prefs)))
    
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-inspector-url ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hz-db-inspector-url "/hop/websql/manage-base?base=")
-
-;*---------------------------------------------------------------------*/
-;*    hz-sync-hops                                                     */
-;*---------------------------------------------------------------------*/
-(define-parameter hz-sync-hops '("http://hop.inria.fr"))
-
-;*---------------------------------------------------------------------*/
-;*    hz-local-repository ...                                          */
-;*---------------------------------------------------------------------*/
-(define-parameter hz-local-repository #f)
-
-;*---------------------------------------------------------------------*/
-;*    hz-db                                                            */
-;*---------------------------------------------------------------------*/
-(define-parameter hz-db "hz.db")
-
-;*---------------------------------------------------------------------*/
-;*    hz-session-key ...                                               */
-;*---------------------------------------------------------------------*/
-(define (hz-session-key)
-   (integer->string (hop-login-cookie-crypt-key)))
-
-;*---------------------------------------------------------------------*/
-;*    hz-auto-logout-minute ...                                        */
-;*---------------------------------------------------------------------*/
-(define-parameter hz-auto-logout-minute
-   60)
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-category-icons ...                                            */
@@ -94,14 +137,19 @@
      ("multimedia" . "multimedia.png")))
 
 ;*---------------------------------------------------------------------*/
+;*    hz-prefs ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-prefs
+   (make-file-name (hz-rc-directory) "hz.prefs"))
+
+;*---------------------------------------------------------------------*/
 ;*    preferences ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-preferences hz-preferences
    
    "Setup"
-   ("Automatic log out" integer hz-auto-logout-minute)
-   ("Hops" expr hz-sync-hops)
-   ("Local repository" expr hz-local-repository)
+   ("Publishers" expr hz-publishers)
+   ("Timeout" integer hz-connection-timeout)
    
    "Master administration"
    ("Database inspector" string hz-db-inspector-url))

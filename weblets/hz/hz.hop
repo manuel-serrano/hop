@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Fri Nov 16 16:39:25 2007 (serrano)                */
+;*    Last change :  Mon Nov 19 11:26:54 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -13,29 +13,32 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hz
+   
    (import hz_config
-	   hz_authenticate
-	   hz_sync
-	   hz_widgets
-	   hz_db
-	   hz_weblets
-	   hz_repository
-	   hz_install))
+	   hz_markup
+	   hz_db)
+   
+   (export hz
+	   hz/documentation
+	   hz/preferences
+	   hz/publishers))
+
+;*---------------------------------------------------------------------*/
+;*    The user configuration                                           */
+;*---------------------------------------------------------------------*/
+(hop-load-rc "hzrc.hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hz ...                                                           */
 ;*---------------------------------------------------------------------*/
 (define-service (hz)
    (let ((req (current-request)))
-      (multiple-value-bind (user mode)
-	 (hz-get-access req)
-	 (cond
-	    ((and (user? user)
-		  (symbol? mode)
-		  (user-authorized-service? user 'hz))
-	     (hz-main req user mode))
-	    (else
-	     (hz-authenticate req))))))
+      (if (authorized-service? req 'admin)
+	  (begin
+	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
+	     (hz-db-init!)
+	     (<HZ> req))
+	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/documentation ...                                             */
@@ -48,6 +51,66 @@
 	 (header (list (cons 'location: url))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hz/preferences ...                                               */
+;*---------------------------------------------------------------------*/
+(define-service (hz/preferences)
+   (let ((req (current-request)))
+      (if (not (authorized-service? req 'admin))
+	  (user-access-denied req)
+	  (<HTML>
+	     (<HEAD>
+		:title "Hop Hz Preferences"
+		:base (service-base-url hz/preferences req)
+		:favicon "etc/logo-16x16.png"
+		:css "hz.hss")
+	     (<HZ:BODY>
+		(<DIV> :id "body"
+		   (<HZ:PREFERENCES>)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/publishers ...                                                */
+;*---------------------------------------------------------------------*/
+(define-service (hz/publishers url action)
+   (case action
+      ((add)
+       (hz-publisher-add! url)
+       (<HZ:PUBLISHERS>))
+      ((remove)
+       (hz-publishers-set! (filter! (lambda (x)
+				       (cond
+					  ((string? x)
+					   (not (string=? x url)))
+					  ((pair? x)
+					   (not (string=? (car x) url)))
+					  (else
+					   #t)))
+				    (hz-publishers)))
+       (hz-preferences-save (hz-prefs))
+       (<HZ:PUBLISHERS>))
+      ((enable)
+       (hz-publisher-enable! url #t)
+       #t)
+      ((disable)
+       (hz-publisher-enable! url #f)
+       #t)))
+
+
+
+
+
+
+
+
+
+
+
+
+#|
+
+
+
+
+;*---------------------------------------------------------------------*/
 ;*    hz/install-ondemand ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (hz/install-ondemand name url)
@@ -56,20 +119,11 @@
       ~(set! document.location (string-append "/hop/" $name))))
 
 ;*---------------------------------------------------------------------*/
-;*    logout ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (logout req)
-   (let ((path (http-request-path req)))
-      ~(let ((path $path))
-	  (cookie-remove! "hop_hz" path)
-	  (set! location path))))
-
-;*---------------------------------------------------------------------*/
 ;*    hz-ondemand ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (hz-ondemand req user mode name url)
    (let ((db (hz-get-db (hz-db-path mode)))
-	 (prefs (make-file-name (hz-rc-directory) "hz.prefs")))
+	 (prefs (make-file-name (hz-rc-directory) (hz-prefs))))
       (when (file-exists? prefs) (hz-preferences-load prefs))
       (if (hz-install-ondemand db req name url)
 	  (hz-main req user mode))))
@@ -105,112 +159,6 @@
        (error 'hz "URL is empty" url))
       (else
        (hz-install-from-url #f req name url))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-direct-install-tab ...                                        */
-;*---------------------------------------------------------------------*/
-(define (hz-direct-install-tab)
-   
-  (define (find-weblet-name url)
-    (let* ((guess (prefix (basename url)))
-	   (index (string-index-right guess "-"))
-	   (len (string-length guess)))
-      (if (and (fixnum? index)
-	       (>fx index 0)
-	       (<fx index (-fx len 1))
-	       (char-numeric? (string-ref guess (+fx index 1))))
-	  (substring guess 0 index)
-	  guess)))
-  
-  (<DIV> :class "hz-ondemand-install"
-    (<FORM> :action (service (url)
-		       (hz-direct-install (current-request)
-					  (find-weblet-name url)
-					  url))
-	(<B> "Weblet URL: ")
-	(<INPUT> :size 60 :name "url")
-	(<BR>)
-        (<BUTTON> "Install"))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-main ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (hz-main req user mode)
-   (let ((db (hz-get-db (hz-db-path mode)))
-	 (prefs (make-file-name (hz-rc-directory) "hz.prefs")))
-      (when (file-exists? prefs) (hz-preferences-load prefs))
-      (<HTML>
-	 (<HEAD>
-	    :title "Hop Hz"
-	    :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
-	    :include "hop-window"
-	    :base (service-base-url hz req)
-	    :css "hz.hss")
-	 (<ABODY>
-	    (<DIV>
-	       :id "body"
-	       (<VBOX>
-		  (<VBOX-BLOCK>
-		     (<TABLE>
-			:class "identity"
-			(<TR>
-			   (<TH> "User: ")
-			   (<TD> (if (user? user) (user-name user) ""))
-;* 			   (<TH> "Mode: ")                             */
-;* 			   (<TD> :class mode)                          */
-			   (<TD> (<BUTTON>
-				    :onclick (logout req)
-				    "logout")))))
-		  (<VBOX-SEPARATOR>)
-		  (<VBOX-BLOCK>
-		     (<NOTEPAD>
-			(<NPHEAD> "")
-			(<NPTAB>
-			   (<NPTABHEAD> "Sync")
-			   (<SYNC> db))
-			(<NPTAB>
-			   (<NPTABHEAD> "Weblets")
-			   (<DELAY>
-			      (lambda ()
-				 (<WEBLETS> db))))
-			(<NPTAB>
-			   (<NPTABHEAD> "Direct install")
-			   (hz-direct-install-tab))
-			(<NPTAB>
-			   (<NPTABHEAD> "Preferences")
-			   (<PREFERENCES> prefs))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    hz/preferences ...                                               */
-;*---------------------------------------------------------------------*/
-(define-service (hz/preferences)
-   (let ((req (current-request)))
-      (if (not (authorized-service? req 'admin))
-	  (user-access-denied req)
-	  (<HTML>
-	     (<HEAD>
-		:title "Hop Hz"
-		:include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
-		:include "hop-window"
-		:base (service-base-url hz/preferences req)
-		:css "hz.hss")
-	     (<ABODY>
-		(<DIV>
-		   :id "body"
-		   (<PREFERENCES>
-		      (make-file-name (hz-rc-directory) "hz.prefs"))))))))
-
-;*---------------------------------------------------------------------*/
-;*    <PREFERENCES> ...                                                */
-;*---------------------------------------------------------------------*/
-(define (<PREFERENCES> prefs)
-   (hz-preferences-edit
-    :onclick ~(with-hop ($(service ()
-			     (let ((d (hz-rc-directory)))
-				(unless (directory? d)
-				   (make-directory d)))
-			     (hz-preferences-save prefs)
-			     prefs)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/list ...                                                      */
@@ -277,3 +225,4 @@
 						       (<SPAN> :class "sdescr" (dbhz-sdescr e)))))
 					      (hz-db-get-entries-by-category db c))))))))
 		       (hz-db-get-categories db))))))))
+|#

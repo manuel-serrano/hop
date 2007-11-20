@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Sep 26 13:29:21 2007 (serrano)                */
+;*    Last change :  Tue Nov 20 07:32:53 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -209,7 +209,11 @@
 				  (else
 				   (file-name-canonicalize!
 				    (make-file-name (pwd) f))))))
-		      (hop-load path)))
+		      (if (string-suffix? ".hz" path)
+			  ;; this is a weblet
+			  (hop-load-weblet path)
+			  ;; this is a plain file
+			  (hop-load path))))
 		(reverse! files))))
 
 ;*---------------------------------------------------------------------*/
@@ -218,8 +222,27 @@
 (define (usage args-parse-usage)
    (print "Hop v" (hop-version))
    (print "usage: hop [options] ...")
-   (print "       hop [options] file ...")
+   (print "       hop [options] file.hop|file.hz ...")
    (args-parse-usage #f))
+
+;*---------------------------------------------------------------------*/
+;*    hop-load-weblet ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-load-weblet path)
+   (let ((p (open-input-gzip-file path)))
+      (unwind-protect
+	 (let* ((tmp (make-file-name (os-tmp) "hop"))
+		(file (car (untar p tmp)))
+		(base (substring file
+				 (+fx (string-length tmp) 1)
+				 (string-length file)))
+		(dir (dirname base))
+		(name (if (string=? dir ".") base dir))
+		(src (make-file-path tmp name (string-append name ".hop"))))
+	    (if (file-exists? src)
+		(hop-load src)
+		(error 'hop-load-weblet "Cannot find HOP source" path)))
+	 (close-input-port p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %hop-load-rc ...                                                 */

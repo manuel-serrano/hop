@@ -1,0 +1,75 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/hz/weblet.hop                   */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
+;*    Last change :  Mon Nov 19 05:52:58 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Functions for dealing with packages.                             */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_package
+
+   (import hz_config)
+   
+   (export (package-filename? ::bstring)
+	   (package-name-parse ::bstring)
+	   (package-url-parse ::bstring)))
+
+;*---------------------------------------------------------------------*/
+;*    package-filename? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (package-filename? name)
+   (string-suffix-ci? (hz-package-suffix) name))
+
+;*---------------------------------------------------------------------*/
+;*    package-sans-suffix ...                                          */
+;*---------------------------------------------------------------------*/
+(define (package-sans-suffix name)
+   (substring name
+              0
+              (-fx (string-length name)
+                   (+fx 1 (string-length (hz-package-suffix))))))
+
+;*---------------------------------------------------------------------*/
+;*    package-name-parse ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Parses a package file name and returns the base name, the        */
+;*    version number, and release number.                              */
+;*    The syntax of a package name is:                                 */
+;*       .*-[0-9]+.0-9]+.[0-9]+(-{pre,rc}?[0-9]+)?.hz                  */
+;*---------------------------------------------------------------------*/
+(define (package-name-parse name)
+   (unless (package-filename? name)
+      (error 'package-name-parse "Illegal package name" name))
+   (let* ((n (package-sans-suffix (basename name)))
+          (index (string-index-right n #\-))
+          (vdot (string-index-right n #\.)))
+      (cond
+         ((not index)
+          (error 'package-name-parse "Illegal package name" name))
+         ((and (fixnum? vdot) (>fx vdot index))
+          ;; a package without release
+          (let* ((version (substring n (+fx 1 index) (string-length n)))
+                 (base (substring n 0 index)))
+	     (values base version)))
+         (else
+          ;; a package with release
+          (let ((vindex (string-index-right n #\- (-fx index 1))))
+             (if (not vindex)
+                 (error 'package-name-parse "Illegal package name" name)
+                 (let* ((version (substring n (+fx 1 vindex) (string-length n)))
+                        (base (substring n 0 vindex)))
+		    (values base version))))))))
+
+;*---------------------------------------------------------------------*/
+;*    package-url-parse ...                                            */
+;*---------------------------------------------------------------------*/
+(define (package-url-parse url)
+   (multiple-value-bind (scheme userinfo host port path)
+      (url-parse url)
+      (package-name-parse (basename path))))

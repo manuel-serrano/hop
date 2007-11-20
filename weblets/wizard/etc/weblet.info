@@ -1,5 +1,5 @@
 ((name "wizard")
  (author "M. Serrano")
  (version "1.0.0")
- (sdescr "A simplistic Hop Wizard to get you started.")
+ (title "A simplistic Hop Wizard to get you started.")
  (about-service "about"))

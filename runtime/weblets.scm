@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Oct 26 17:34:56 2007 (serrano)                */
+;*    Last change :  Tue Nov 20 07:06:36 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -30,7 +30,7 @@
 	       (mutex::mutex (default (make-mutex)))
 	       (loaded::bool (default #f))))
    
-   (export  (find-weblets-in-directory ::string)
+   (export  (find-weblets-in-directory ::bstring)
 	    (reset-autoload!)
 	    (get-autoload-directories::pair-nil)
 	    (get-autoload-weblet-directories::pair-nil)

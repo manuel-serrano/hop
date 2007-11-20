@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Mon Oct 29 09:57:05 2007 (serrano)                */
+/*    Last change :  Mon Nov 19 18:26:54 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -33,7 +33,7 @@ $(hop-hss-type! "main" "table.main")
 $(hop-hss-type! "foot" "div.foot")
 $(hop-hss-type! "main-title" "div#title")
 $(hop-hss-type! "vbox" "table.vbox")
-$(hop-hss-type! "sync" ".block-sync")
+$(hop-hss-type! "sync" "table.sync")
 $(hop-hss-type! "authentication" "table.authentication")
 $(hop-hss-type! "identity" "table.identity")
 $(hop-hss-type! "add" "div#add")
@@ -82,6 +82,8 @@ input {
 
 input[type=text] {
   color: blue;
+  padding-left: 2px;
+  padding-right: 2px;
 }
 
 input[type=file] {
@@ -160,6 +162,11 @@ div.hop-notepad-tabs {
   background: transparent;
 }
 
+div.hop-notepad-body-tab {
+  background: transparent;
+  min-height: 60ex;
+}
+
 div.hop-notepad-tabs span.hop-nptab {
   font-size: small;
   border-color: $border-color;
@@ -181,7 +188,6 @@ div.hop-notepad-body {
 }
 
 div.hop-notepad-body-tab {
-  border-color: blue;
   background-color: $info-color;
 }  
 
@@ -273,10 +279,33 @@ vbox a span.title {
 }
 
 /*--- sync ------------------------------------------------------------*/
-sync button.sync {
+sync, table.hz-direct-install {
+  width: 100%;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 1ex;
+}
+
+table.hz-direct-install input[type='text'] {
+  font-size: 95%;
+}
+
+sync th, table.hz-direct-install th {
+  text-align: left;
+}
+
+sync th span.update {
+  font-weight: 100;
+}
+
+sync td.sync-button, table.hz-direct-install td.install-button {
+  text-align: right;
+}
+
+sync button.sync, table.hz-direct-install button.install {
   margin-left: 20px;
   margin-right: 20px;
   font-size: small;
+  width: 5em;
 }
 
 sync button.sync:hover {
@@ -302,7 +331,7 @@ table.sync-result th {
   border-bottom: 1px solid $border-color;
 }
 
-table.sync-result span.descr {
+table.sync-result span.comment {
   font-size: x-small;
   color: #333;
 }
@@ -312,47 +341,47 @@ table.sync-result span.name {
   font-weight: bold;
 }
 
-/*--- identity --------------------------------------------------------*/
-identity {
-  font-size: small;
+/*---------------------------------------------------------------------*/
+/*    update ...                                                       */
+/*---------------------------------------------------------------------*/
+table.update {
+  margin-top: 1ex;
+  width: 100%;
 }
 
-identity td {
-  margin-right: 20px;
-  padding-right: 20px;
-  color: blue;
+table.update th {
+  text-align: left;
+  border-bottom: 1px solid $border-color;
 }
 
-identity td.admin-share {
+table.update th.new {
+  color: #0c0;
+}
+
+table.update th.update {
+  color: #ffb514;
+}
+
+table.update th.error {
   color: red;
 }
 
-identity button {
-  font-size: small;
-}
-
-/*--- authentication --------------------------------------------------*/
-div.authentication {
-  border: 1px solid $border-color;
-  padding: 10px;
-  background: $info-color;
-  -moz-border-radius: 0.5em;
-}
-
-authentication {
-  font-size: small;
-}
-
-authentication button {
-  font-size: small;
-}
-
-authentication th, authentication td {
+table.update td {
   text-align: left;
+  vertical-align: top;
 }
 
-authentication td.login {
-  text-align : right;
+table.update td.error {
+  font-family: sans serif;
+  font-size: 80%;
+}
+
+table.update div.error tt {
+  font-size: 110%;
+}
+
+table.update div.error-msg {
+  padding-left: 1ex;
 }
 
 /*--- upload ----------------------------------------------------------*/
@@ -378,7 +407,7 @@ add th {
   vertical-align: middle;
 }
 
-add th#descr {
+add th#comment {
   padding-top: 2px;
   vertical-align: top;
 }
@@ -421,11 +450,19 @@ table.build-repository th.bad {
   color: #f00;
 }
 
-span.sdescr {
+span.title {
   color: #555;
 }
 
 /*--- weblets ---------------------------------------------------------*/
+weblets {
+  min-height: 60ex;
+}
+
+weblets div.hop-paned {
+  height: 100%;
+}
+  
 weblets div.weblet {
   font-size: small;
   padding: 2px;
@@ -466,11 +503,11 @@ weblets table.weblet td.update {
   font-size: x-small;
 }
 
-weblets table.weblet p.sdescr {
+weblets table.weblet p.title {
   font-weight: bold;
 }
 
-weblets table.weblet .sdescr {
+weblets table.weblet .title {
   font-style: italic;
   font-size: x-small;
 }
@@ -535,7 +572,7 @@ table.search-result th {
   border-bottom: 1px solid $border-color;
 }
 
-table.search-result span.descr {
+table.search-result span.comment {
   font-size: x-small;
 }
 
@@ -598,3 +635,44 @@ preferences input.pref_saved {
   color: blue;
 }
   
+/*--- publishers ------------------------------------------------------*/
+div.hz-publishers {
+  margin: 2px;
+  width: 90%;
+  border: 1px solid $border-color;
+}
+
+table.hz-publishers {
+  width: 100%;
+}
+
+table.hz-publishers th.label {
+  padding-top: 10px;
+  font-size: small;
+  border-bottom: 1px solid $border-color;
+  color: $deep-blue;
+}
+
+table.hz-publishers tr.odd {
+  background: #eee;
+}  
+
+table.hz-publishers tr.even {
+  background: transparent;
+}  
+
+table.hz-publishers input[type="checkbox"] {
+  border: 1px solid $border-color;
+}
+
+table.hz-publishers td.hz-publishers-enable {
+  text-align: center;
+  width: 2em;
+  color: red;
+}
+
+table.hz-publishers td.hz-publishers-button {
+  text-align: center;
+  width: 5em;
+}
+

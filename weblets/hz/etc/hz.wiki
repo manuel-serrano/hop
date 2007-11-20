@@ -5,6 +5,12 @@
 [[hz|HZ]] manages Hop weblets //installation//, //update//, and //removal//. 
 It operates installation across the web.
 
+== Making a weblet available to others ==
+
+The tutorial ,(<TUTORIALREF> "Releasing a HZ package" "06-hz.wiki")
+presents how to construct and release a package suitable for HZ.
+Please refer to this documentation page.
+
 == User Services ==
 
 HZ defines several services:
@@ -57,48 +63,17 @@ Here is a list of example of correct HZ file names:
 It should be noted that hyphen can only used in HZ package for separating
 the base name of the package and its version number.
 
-== Making a weblet available to others ==
+== Installing weblets ==
 
-The best way to make a weblet available to the HOP community is to 
-contact the authors of HOP for adding your weblet to the Hz database.
+Weblets most often should be installed using the GUI implemented by the
+++[[hz]]++ service. Using the tool ++hopsh++, weblets can also be installed
+using the URL of the package. For instance, 
 
-~~ Another solution consists in distributing your weblet by yourself,
-via a Web page. You can distribute HOP weblets that can installed with
-one click even without explicitly using the ++[[hz]]++ weblet. If the
-Web page Web referring to the weblet is implemented in HOP, it should
-contain the following:
-
-  (<HTML>
-     (<HEAD> 
-        ... 
-        :jscript (string-append (hop-weblets-directory) "/hz/hz-install.js")
-        ...)
-     (<BODY> 
-        ...
-        ~(hop_install_weblet 
-             "http://mhost.mydomain.org/myweblet-1.0.0.hz"
-             (string-append (hop-weblets-directory) "/hz/etc/hz-install.png"))
-        ...))
+  hopsh -c "hz/install-ondemand -name hoptris -url http://foo.nowehere.org/hoptris-1.0.hz"
 
 
-If the page is implemented in HTML, it should contain:
+installs the weblet hoptris-1.0.hz on the local host, provided that HOP 
+is running on port 8080.
 
-   <html>
-     <head>
-       ...
-       <script src='/usr/local/share/hop/weblets/hz/hz-install.js'>
-       ...
-     </head>
-     <body>
-       ...
-       <script>hop_install_weblet( "http://mhost.mydomain.org/myweblet-1.0.0.hz" )</script>
-       ...
-     </body>
-   </body>
-
-
-In that case, don't forget to copy the image ++hz-install.png++ in the
-same directory as the directory containing the web page.
-       
 </doc>
 

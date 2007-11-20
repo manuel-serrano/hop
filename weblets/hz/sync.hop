@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Sun Aug 12 10:55:31 2007 (serrano)                */
+;*    Last change :  Mon Nov 19 18:13:42 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -15,249 +15,73 @@
 (module hz_sync
    
    (import  hz_config
-	    hz_widgets
+	    hz_weblet
 	    hz_db)
-   
-   (export  (<SYNC> db)))
+
+   (export  (hz-sync!::pair-nil)
+	    (hz-sync-standard-weblets!)))
 
 ;*---------------------------------------------------------------------*/
-;*    hz/getsync ...                                                   */
+;*    hz-sync! ...                                                     */
 ;*    -------------------------------------------------------------    */
-;*    This is used by the remote HOP when it has to serve because      */
-;*    it is requested a sync.                                          */
+;*    This function modifies the database and returns a list of        */
+;*    bad weblets.                                                     */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/getsync)
-   (let* ((path (hz-db-path 'repository))
-	  (db (hz-get-db path)))
-      (unwind-protect
-	 (let ((l (hz-db->list db)))
-	    (instantiate::http-response-string
-	       (body (with-output-to-string (lambda () (write l))))))
-	 (hz-db-close db))))
+(define (hz-sync!::pair-nil)
+   (hz-db-sync-date-update! (current-date))
+   (hz-sync-standard-weblets!)
+   (append-map hz-sync-publisher! (hz-publishers)))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-get-sync ...                                                  */
+;*    hz-sync-publisher! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (hz-get-sync host escape)
-   (multiple-value-bind (_ uinfo host port path)
-      (url-parse host)
-      (let ((req (instantiate::http-request
-		    (userinfo uinfo)
-		    (host host)
-		    (port port)
-		    (path (make-hop-service-url hz/getsync)))))
-	 (http-send-request req
-			    (lambda (p s header clength enc)
-			       (case s
-				  ((200)
-				   (read p))
-				  ((401 407)
-				   (escape (user-access-denied req)))
-				  (else
-				   (error 'hz-get-sync
-					  (format "Illegal status `~a'" s)
-					  (read-string p)))))))))
+(define (hz-sync-publisher! pub)
+   (when (or (string? pub) (cadr pub))
+      (let ((url (if (pair? pub) (car pub) pub)))
+	 (with-handler
+	    (lambda (e)
+	       (cond
+		  ((&error? e)
+		   (list (cons url (&error-msg e))))
+		  ((http-response-authentication? e)
+		   (list (cons url "access denied")))
+		  (else
+		   (list (cons url e)))))
+	    (with-url url
+	       (lambda (s)
+		  (with-input-from-string s
+		     (lambda ()
+			(filter-map (lambda (i)
+				       (let ((w (info->weblet e)))
+					  (hz-db-add-or-update! e)
+					  #f))
+				    (read)))))
+	       :timeout (hz-connection-timeout))))))
 
 ;*---------------------------------------------------------------------*/
-;*    list-index ...                                                   */
+;*    hz-sync-standard-weblets! ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Sync all the standard weblets in the database.                   */
 ;*---------------------------------------------------------------------*/
-(define (list-index lst el)
-   (let loop ((i 0)
-	      (lst lst))
-      (cond
-	 ((null? lst)
-	  #f)
-	 ((string=? (car lst) el)
-	  i)
-	 (else
-	  (loop (+fx i 1) (cdr lst))))))
-
-;*---------------------------------------------------------------------*/
-;*    sync/host ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (sync/host host db escape)
-   (let* ((tables (hz-get-sync host escape))
-	  (info (assoc "info" tables))
-	  (weblets (assoc "weblets" tables))
-	  (stamp (hz-db-sync-stamp db)))
-      (if (not (and (pair? info) (pair? weblets)))
-	  (error 'hz-sync "Corrupted database" (hz-sync-host))
-	  (let* ((cols (cadr weblets))
-		 (ni (list-index cols "name"))
-		 (ci (list-index cols "category"))
-		 (vi (list-index cols "version"))
-		 (hi (list-index cols "hop"))
-		 (names (map car (hz-db-columns)))
-		 (indexes (map (lambda (n)
-				  (list-index cols (symbol->string n)))
-			       names)))
-	     
-	     (define (sync-weblet v)
-		(let ((vals (map (lambda (i)
-				    (if (integer? i)
-					(vector-ref v i)
-					""))
-				 indexes))
-		      (o (hz-db-get-entry-by-name-category
-			  db
-			  (vector-ref v ni) (vector-ref v ci))))
-		   (list-set! vals hi host)
-		   (if (dbhz? o)
-		       (with-access::dbhz o (version install hop)
-			  (when (string>? (vector-ref v vi) version)
-			     (set! hop host)
-			     (list-set! vals
-					(hz-db-install-column-index)
-					install)
-			     (apply hz-db-update-entry db vals)))
-		       (apply hz-db-add-entry db (cons stamp (cdr vals))))))
-	     
-	     (filter-map sync-weblet (cddr weblets))))))
-
-;*---------------------------------------------------------------------*/
-;*    <SYNC> ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (<SYNC> db)
-   (sync-unmanaged! db)
-   (let ((out (<DIV> (show-updates (hz-db-query-update db)
-				   (hz-db-query-new db))))
-	 (sync (service ()
-		  (bind-exit (escape)
-		     (let ((news (append-map (lambda (h)
-						(sync/host h db escape))
-					     (hz-sync-hops)))
-			   (odate (hz-db-sync-date db)))
-			;; fetch the new entries
-			(let ((res (show-updates (hz-db-query-update db)
-						 (hz-db-query-new db))))
-			   ;; update the sync date
-			   (hz-db-sync-date-update! db (current-date))
-			   ;; increment the stamp after the news are collected
-			   (hz-db-sync-stamp-inc! db)
-			   (<DIV> res (<SPAN> (hz-db-sync-date db))))))))
-	 (syncd (<SPAN> (hz-db-sync-date db))))
-      (<VBOX>
-	 (<VBOX-BLOCK>
-	    :class "block-sync"
-	    (<TABLE>
-	       :class "sync"
-	       (<TR>
-		  (<TD> :valign 'top
-			(<BUTTON>
-			   :class "sync"
-			   :title "Synchronize HOP Weblets data"
-			   :onclick
-			   ~(with-hop ($sync)
-			       (lambda (h)
-				  (let ((d (document.createElement "div")))
-				     (set! d.innerHTML h)
-				     (set! d (array-ref d.childNodes 0))
-				     ($out.replaceChild
-				      (array-ref d.childNodes 0)
-				      (array-ref $out.childNodes 0))
-				     ($syncd.replaceChild
-				      (array-ref d.childNodes 0)
-				      (array-ref $syncd.childNodes 0)))))
-			   "Sync"))
-		  (<TH> "last sync date:") (<TD> syncd))))
-	 (<VBOX-SEPARATOR>)
-	 (<VBOX-BLOCK> "&#160;")
-	 (<VBOX-BLOCK> out))))
-
-;*---------------------------------------------------------------------*/
-;*    show-updates ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (show-updates update new)
-   (define (<TDE> o)
-      (if (dbhz? o)
-	  (<TD>
-	     (<SPAN> :class "name"
-		     (dbhz-name o) "-" (dbhz-version o))
-	     " (" (dbhz-category o) ") -- "
-	     (<SPAN> :class "descr" (dbhz-sdescr o)))
-	  (<TD> "")))
+(define (hz-sync-standard-weblets!)
    
-   (let* ((lu (length update))
-	  (ln (length new))
-	  (m (max lu ln)))
-      (if (=fx m 0)
-	  (<SPAN> :class "title" "Everything is up to date...")
-	  (<TABLE>
-	     :class "sync-result"
-	     (<COLGROUP> :span 2 :width "50%")
-	     (<TR> (<TH> "Update") (<TH> "New"))
-	     (map (lambda (u n) (<TR> (<TDE> u) (<TDE> n)))
-		  (append update (make-list (-fx m lu) #f))
-		  (append new (make-list (-fx m ln) #f)))))))
-
-;*---------------------------------------------------------------------*/
-;*    sync-unmanaged! ...                                              */
-;*---------------------------------------------------------------------*/
-(define (sync-unmanaged! db)
-
-   (define (find val lst)
-      (cond
-	 ((assq val lst) => cadr)
-	 (else #f)))
-
-   (define (sync-info db name exit info)
-      (with-input-from-file info
-	 (lambda ()
-	    (let* ((i (read))
-		   (v (or (find 'version i) (exit #f)))
-		   (a (or (find 'author i) ""))
-		   (sd (or (find 'sdescr i) (exit #f)))
-		   (de (or (find 'descr i) ""))
-		   (cat (or (find 'category i) "hop"))
-		   (o (hz-db-get-unmanaged db name cat)))
-	       (if (dbhz? o)
-		   (with-access::dbhz o (version)
-		      (unless (string=? version v)
-			 (set! version v)
-			 (hz-db-update-weblet db o)))
-		   (apply hz-db-add-entry
-			  db
-			  (hz-info->dbhz-args
-			   i
-			   cat
-			   (number->string (date->seconds (current-date)))
-			   (hz-db-sync-stamp db)
-			   v
-			   "unmanaged")))))))
-
-   (define (try-sync-info name file)
-     (and (file-exists? file)
-	  (bind-exit (exit)
-	    (with-handler
-	       (lambda (e)
-		 (exception-notify e)
-		 (exit #f))
-	       (sync-info db name exit file)))
-	  #t))
+   (define (sync-weblet! dir ifile)
+      (when (file-exists? ifile)
+	 (with-handler
+	    (lambda (e)
+	       #f)
+	    (with-input-from-file ifile
+	       (lambda ()
+		  (let ((w (info->weblet (cons `(category "hop") (read))
+					 :name (basename dir)
+					 :url dir)))
+		     (weblet-driver-set! w "standard")
+		     (weblet-install-set! w (weblet-version w))
+		     (weblet-installstamp-set! w 0)
+		     (hz-db-add-or-update! w)))))))
    
-   (define (sync-dir name)
-      (let ((dir (make-file-name (hop-weblets-directory) name)))
-	 (when (directory? dir)
-	   (or (try-sync-info name (make-file-path dir
-						   "etc"
-						   "weblet.info"))
-	       (try-sync-info name (make-file-path dir
-						   "etc"
-						   (string-append name ".info")))))))
-   (define (sync-dbhz o)
-     (with-access::dbhz o (name)
-	(let* ((d (make-file-path (hop-weblets-directory)
-				  name
-				  "etc"))
-	       (i (make-file-path d "weblet.info"))
-	       (j (make-file-path d (string-append name ".info"))))
-	  (unless (or (file-exists? i)  (file-exists? j))
-	    (hz-db-remove-weblet db o)))))
-
+   (define (sync-dir! dir)
+      (when (directory? dir)
+	 (sync-weblet! dir (make-file-path dir "etc" "weblet.info"))))
    
-   ;; check the file systems
-   (for-each sync-dir (directory->list (hop-weblets-directory)))
-   
-   ;; check the db
-   (for-each sync-dbhz (hz-db-get-all-unmanaged db)))
-   
+   (for-each sync-dir! (directory->path-list (hop-weblets-directory))))

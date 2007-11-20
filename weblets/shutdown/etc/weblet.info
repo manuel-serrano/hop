@@ -1,4 +1,4 @@
 ((name "shutdown")
  (author "M. Serrano")
  (version "1.0.0")
- (sdescr "Shutdown the currently running broker"))
+ (title "Shutdown the currently running broker"))

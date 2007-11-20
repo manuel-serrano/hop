@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Fri Nov 16 17:07:26 2007 (serrano)                */
+;*    Last change :  Mon Nov 19 15:16:31 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -15,12 +15,59 @@
 (module hz_install
    
    (import hz_config
+	   hz_package
+	   hz_weblet
 	   hz_db)
    
-   (export (hz-install ::dbhz)
-	   (hz-uninstall ::dbhz)
-	   (hz-install-ondemand db req ::bstring ::bstring)))
+   (export (hz-install ::bstring)))
+;*     (hz-install ::dbhz)                                             */
+;* 	   (hz-uninstall ::dbhz)                                       */
+;* 	   (hz-install-ondemand db req ::bstring ::bstring)))          */
 
+
+;*---------------------------------------------------------------------*/
+;*    hz-install ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (hz-install url)
+   (multiple-value-bind (name version)
+      (package-url-parse url)
+      (with-url url
+	 (lambda (str) (hz-install-from-string str name version url))
+	 :timeout (hz-connection-timeout)))
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    hz-install-from-string ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hz-install-from-string content name version url)
+   ;; copy the .hz into the download directory
+   (let ((hzfile (format "~a-~a.hz" name version)))
+      (with-output-to-file (make-file-name (hz-download-directory) hzfile)
+	 (lambda ()
+	    (display content))))
+   ;; untar the .hz into the weblets directory
+   (let* ((p0 (open-input-string content))
+	  (p1 (open-input-gzip-port p0)))
+      (unwind-protect
+	 (untar p1 (hz-weblets-directory))
+	 (begin
+	    (close-input-port p1)
+	    (close-input-port p0))))
+   ;; add the weblet to the database
+   (let* ((p (make-file-path (hz-weblets-directory) name "etc" "weblet.info"))
+	  (i (if (file-exists? p)
+		 (with-input-from-file p read)
+		 `((name ,name) (version ,version))))
+	  (e (info->weblet i :name name :version version :url url)))
+      ;; add the publisher for other possible weblets
+      (unless (string=? (weblet-publisher e) "")
+	 (hz-publisher-add! (weblet-publisher e)))
+      ;; update the database
+      (weblet-installstamp-set! e (hz-db-sync-stamp))
+      (hz-db-add-or-update! e)))
+      
+	  
+#|
 ;*---------------------------------------------------------------------*/
 ;*    hz/get ...                                                       */
 ;*---------------------------------------------------------------------*/
@@ -118,17 +165,6 @@
 	 (close-input-port pz))))
 
 ;*---------------------------------------------------------------------*/
-;*    rm-rf ...                                                        */
-;*---------------------------------------------------------------------*/
-(define (rm-rf path)
-   (when (file-exists? path)
-      (if (directory? path)
-	  (let ((files (directory->list path)))
-	     (for-each (lambda (f) (rm-rf (make-file-name path f))) files)
-	     (delete-directory path))
-	  (delete-file path))))
-
-;*---------------------------------------------------------------------*/
 ;*    hz-install-ondemand ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hz-install-ondemand db req name url)
@@ -163,6 +199,9 @@
 			  (c (cond
 				((assq 'category i) => cadr)
 				(else "misc")))
+			  (publisher (cond
+					((assq 'publisher i) => cadr)
+					(else #f)))
 			  (n (hz-info->dbhz-args i
 						 c
 						 (number->string
@@ -178,6 +217,9 @@
 		      (let ((f (make-file-name hzdir (string-append name ".hop"))))
 			 (when (file-exists? f)
 			    (hop-load f)))
+		      (when (string? publisher)
+			 (hz-publisher-add! publisher))
 		      #t)))))
       :header (if (http-request? req) (http-request-header req) '()))
    #t)
+|#
