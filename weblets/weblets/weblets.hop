@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Wed Nov 21 07:33:57 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 08:35:36 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP slide weblet                                                 */
@@ -58,8 +58,9 @@
       
       (<DIV> :class "weblet"
 	 (<DIV> :class "package"
-	    (find 'name (basename path))
-	    "-" (find 'version "") " - " (find 'title ""))
+	    (<SPAN> :class "name"
+	       (find 'name (basename path)) "-" (find 'version ""))
+	    " - " (find 'title ""))
 	 (<DIV> :class "author" (find 'author ""))
 	 (<DIV> :class "comment" (find 'comment ""))
 	 ~(hop_install_weblet $path $srci $srcr))))

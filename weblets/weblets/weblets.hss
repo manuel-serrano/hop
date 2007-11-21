@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 12 13:49:57 2006                          */
-/*    Last change :  Wed Nov 21 07:39:08 2007 (serrano)                */
+/*    Last change :  Wed Nov 21 08:35:20 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP weblets cascade style sheet                                  */
@@ -99,6 +99,10 @@ div.weblet div.package {
   font-size: 110%;
   border-bottom: 1px solid $border-color;
   color: #008;
+}
+
+div.weblet div.package span.name {
+  text-transform: capitalize;
 }
 
 div.weblet div.author {

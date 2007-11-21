@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Wed Nov 21 08:26:49 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 08:41:31 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
@@ -418,7 +418,7 @@
 (define (<HZ:WEBLETS-CATEGORY> c)
    (let* ((icon (cond
 		   ((assoc c (hz-category-icons)) => cdr)
-		   (else "file.png")))
+		   (else "package.png")))
 	  (ifile (make-file-path "etc" "icons" icon)))
       (map (lambda (e)
 	      (with-access::weblet e (name category)
