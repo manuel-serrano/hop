@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 16 11:07:40 2007                          */
-/*    Last change :  Tue Nov 20 15:30:07 2007 (serrano)                */
+/*    Last change :  Wed Nov 21 12:03:39 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Create a click and install panel                                 */
@@ -12,7 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_install_weblet ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_install_weblet( url, srci, srcr ) {
+function hop_install_weblet( url, srci, srcr, parent ) {
    var srci = srci ? srci : 'hz-install.png';
    var srcr = srcr ? srcr : 'hz-run.png';
    var base = url;
@@ -37,7 +37,7 @@ function hop_install_weblet( url, srci, srcr ) {
       "<tr><th>host:</th><td><input id='hop_click_and_install_host' size='10 type='text' value='localhost' style='border: 1px solid #bbb; color: #555; font-size: inherit'/></td></tr>" +
       "<tr><th>port:</th><td><input id='hop_click_and_install_port' size='4 type='text' value='8080' style='border: 1px solid #bbb; color: #555; font-size: inherit'/></td></tr></table>";
    var panel = "<table class='hz-install' style='background: #daffbd; border: 1px solid #bbb; -moz-border-radius: 0.5em; font-family: arial; padding-left: 1em; padding-right: 1em'>" +
-      "<tr><th colspan='2' style='font-size: 110%' align='left'>" + namev + "</th></tr>" + 
+      "<tr><th colspan='3' style='font-size: 110%' align='left'>" + namev + ".hz</th></tr>" + 
       "<tr>" +
       "<td><table style='border-collapse: collapse'>" +
       "<tr><td style='text-align: center'>" +
@@ -60,5 +60,16 @@ function hop_install_weblet( url, srci, srcr ) {
 			 'img.hop_hz_click { border: 1px solid transparent; }' ) );
    head.appendChild( style );
 
-   document.write( panel );
+   if( parent ) {
+      if( (parent instanceof String) || (typeof parent == "string") ) {
+	 parent = document.getElementById( parent );
+      }
+
+      var div = document.createElement( "div" );
+      div.innerHTML = panel;
+      
+      parent.appendChild( div );
+   } else {
+      document.write( panel );
+   }
 }

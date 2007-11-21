@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Wed Nov 21 08:35:36 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 14:44:29 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP slide weblet                                                 */
@@ -17,7 +17,14 @@
    (import  weblets_config
 	    weblets_package)
 
-   (export  weblets))
+   (export  weblets
+	    weblets/list
+	    weblets/rss))
+
+;*---------------------------------------------------------------------*/
+;*    category-filter ...                                              */
+;*---------------------------------------------------------------------*/
+(define category-filter "all")
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets ...                                                      */
@@ -27,8 +34,11 @@
       (<HEAD> :favicon (service-resource weblets "etc/logo-16x16.png")
 	 :title "Hop Weblets"
 	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
+	 (<LINK> :rel "alternate" :type "application/rss+xml"
+	    :title "Latest HOP weblets"
+	    :href "weblets/rss")
 	 :css (service-resource weblets "weblets.hss"))
-      (<BODY>
+      (<BODY> :id "weblets"
 	 (<DIV> :align 'center
 	    (<TABLE> :class "weblets"
 	       (<COLGROUP> (<COL> :width "0*"))
@@ -39,8 +49,149 @@
 			:src (service-resource weblets "etc/logo.png")))
 		  (<TD> :class "content"
 		     (<DIV> :id "title" "Hop Weblets")
-		     (map <WEBLET> (directory->path-list (weblets-repository))))))
-	    (<FOOT>)))))
+		     (<WEBLETS-PUBLISHER>)
+		     (<WEBLETS>))))
+	    (<FOOT>
+	       (<FOOT-BUTTON>
+		  :inline #t
+		  :href "weblets/rss"
+		  :title "HOP weblets"
+		  :src (make-file-path (hop-share-directory)
+				       "buttons" "rss.png")))))))
+
+;*---------------------------------------------------------------------*/
+;*    weblets/documentation ...                                        */
+;*---------------------------------------------------------------------*/
+(define-service (weblets/documentation)
+   (let* ((file (service-resource weblets/documentation "etc/weblets.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
+
+;*---------------------------------------------------------------------*/
+;*    weblets/preferences ...                                          */
+;*---------------------------------------------------------------------*/
+(define-service (weblets/preferences)
+   "No preferences for this weblet.")
+
+;*---------------------------------------------------------------------*/
+;*    weblets/list ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-service (weblets/list)
+   (<HTML>
+      (<HEAD> :favicon (service-resource weblets "etc/logo-16x16.png")
+	 :title "Hop Weblets"
+	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
+	 :css (service-resource weblets "weblets.hss"))
+      (<BODY>
+	 (<WEBLETS>))))
+
+;*---------------------------------------------------------------------*/
+;*    weblets/rss ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (weblets/rss)
+   (<RSS>
+      (<RSS:CHANNEL>
+	 (<RSS:TITLE> "HOP")
+	 (<RSS:LINK> (format "http://~a~a"
+			     (hop-server-hostname)
+			     (hop-port)
+			     (hop-service-path weblets)))
+	 (<RSS:DESCRIPTION> "The latest weblets in the HOP repository")
+	 (<RSS:LAST-BUILD-DATE> (current-date))
+	 (<RSS:GENERATOR> "Hop")
+	 (<RSS:IMAGE>
+	    (<RSS:URL> (format "http://~a:~a~a"
+			       (hop-server-hostname)
+			       (hop-port)
+			       (service-resource weblets "etc/logo.png")))
+	    (<RSS:TITLE> "HOP")
+	    (<RSS:DESCRIPTION> "The latest weblets in the HOP repository"))
+	 (map (lambda (path)
+		 (let* ((info (with-input-from-string (package-info path) read))
+			(title (find-info info 'name ""))
+			(version (find-info info 'version ""))
+			(link (find-info info
+					 'url
+					 (find-info info 'publisher "")))
+			(description (find-info info 'title ""))
+			(author (find-info info 'author ""))
+			(date (find-info info 'date "")))
+		    (<RSS:ITEM>
+		       (<RSS:TITLE> (xml-string-encode title) " v" version)
+		       (<RSS:LINK> link)
+		       (<RSS:DESCRIPTION> description)
+		       (<RSS:AUTHOR> author)
+		       (<RSS:PUB-DATE> date))))
+	      (let ((l (sort (lambda (p1 p2)
+				(<elong (file-modification-time p1)
+					(file-modification-time p2)))
+			     (directory->path-list (weblets-repository)))))
+		 (if (> (length l) (weblets-rss-number-of-entries))
+		     (let ((le (list-ref l (weblets-rss-number-of-entries))))
+			(set-cdr! le '())
+			l)
+		     l))))))
+
+;*---------------------------------------------------------------------*/
+;*    weblets/filter ...                                               */
+;*---------------------------------------------------------------------*/
+(define-service (weblets/filter category)
+   (set! category-filter category)
+   (<WEBLETS-LIST>))
+       
+;*---------------------------------------------------------------------*/
+;*    <WEBLETS> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<WEBLETS>)
+   (list (<WEBLETS-CATEGORIES>)
+	 (<DIV> :id "weblets-list" (<WEBLETS-LIST>))))
+
+;*---------------------------------------------------------------------*/
+;*    <WEBLETS-LIST> ...                                               */
+;*---------------------------------------------------------------------*/
+(define (<WEBLETS-LIST>)
+   (<DIV>
+      (filter-map <WEBLET> (directory->path-list (weblets-repository)))))
+
+;*---------------------------------------------------------------------*/
+;*    <WEBLETS-PUBLISHER> ...                                          */
+;*---------------------------------------------------------------------*/
+(define (<WEBLETS-PUBLISHER>)
+   (<DIV> :class "publisher"
+      "Publisher URL: " (<SPAN> :id "publisher-url" (weblets-publisher))
+      (<DIV> :class "comment"
+	 [This URL will get automatically added to your
+	     ,(<A> :href "/hop/hz" "hz") publishers list
+	     when you install your first weblet.])))
+
+;*---------------------------------------------------------------------*/
+;*    <WEBLETS-CATEGORIES> ...                                         */
+;*---------------------------------------------------------------------*/
+(define (<WEBLETS-CATEGORIES>)
+   (<DIV> :class "weblets-category"
+      "Weblets category: "
+      (<SELECT> :class "weblets-category"
+	 :onchange ~(with-hop ($weblets/filter this.value)
+		       (lambda (h)
+			  (innerHTML-set! "weblets-list" h)))
+	 :onkeyup ~(with-hop ($weblets/filter this.value)
+		      (lambda (h)
+			 (innerHTML-set! "weblets-list" h)))
+	 (map (lambda (f)
+		 (<OPTION> :selected (string=? f category-filter)
+		    :value f
+		    (string-capitalize f)))
+	      (cons "all" (weblets-categories))))))
+
+;*---------------------------------------------------------------------*/
+;*    find-info ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (find-info info key default)
+   (cond
+      ((assq key info) => cadr)
+      (else default)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLET> ...                                                     */
@@ -50,20 +201,21 @@
 	  (dir (make-file-path (hop-weblets-directory) "hz" "etc"))
 	  (srci  (make-file-name dir "hz-install.png"))
 	  (srcr (make-file-name dir "hz-run.png")))
-      
-      (define (find key default)
-	 (cond
-	    ((assq key info) => cadr)
-	    (else default)))
-      
-      (<DIV> :class "weblet"
-	 (<DIV> :class "package"
-	    (<SPAN> :class "name"
-	       (find 'name (basename path)) "-" (find 'version ""))
-	    " - " (find 'title ""))
-	 (<DIV> :class "author" (find 'author ""))
-	 (<DIV> :class "comment" (find 'comment ""))
-	 ~(hop_install_weblet $path $srci $srcr))))
+
+      (when (or (string=? category-filter "all")
+		(string=? (find-info info 'category "other") category-filter))
+	 (<DIV> :class "weblet"
+	    (<DIV> :class "package"
+	       (<SPAN> :class "name"
+		  (find-info info 'name (basename path))
+		  "-"
+		  (find-info info 'version ""))
+	       " - " (find-info info 'title ""))
+	    (let ((id (symbol->string (gensym))))
+	       (<DIV> :class "install" :id id
+		  ~(hop_install_weblet $path $srci $srcr $id)))
+	    (<DIV> :class "author" (find-info info 'author ""))
+	    (<DIV> :class "comment" (find-info info 'comment ""))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */

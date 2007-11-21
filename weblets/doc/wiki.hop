@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Wed Oct 17 11:12:27 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 12:16:34 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -267,7 +267,7 @@
 (define (doc-page page syntax)
    (define (err src)
       (<SPAN> :class "parse-error" (html-string-encode src)))
-   (if (not (file-exists? page))
+   (if (or (not page) (not (file-exists? page)))
        (http-file-not-found page)
        (let ((iport (open-input-file page)))
 	  (if (not (input-port? iport))

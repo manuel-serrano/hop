@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Wed Nov 21 07:12:31 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 14:49:57 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets configuration                                            */
@@ -18,7 +18,12 @@
            (weblets-author::bstring)
 	   (weblets-dir::bstring)
 	   (weblets-repository::bstring)
-	   (weblets-repository-set! ::bstring)))
+	   (weblets-repository-set! ::bstring)
+	   (weblets-publisher::bstring)
+	   (weblets-publisher-set! ::bstring)
+	   (weblets-categories::pair)
+	   (weblets-rss-number-of-entries::int)
+	   (weblets-rss-number-of-entries-set! ::int)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
@@ -38,3 +43,22 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter weblets-repository
    (make-file-name (hop-share-directory) "repository"))
+
+;*---------------------------------------------------------------------*/
+;*    weblets-publisher ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter weblets-publisher
+   "http://hop.inria.fr/weblets")
+
+;*---------------------------------------------------------------------*/
+;*    weblets-categories ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter weblets-categories
+   '("desktop" "devel" "education" "games" "hop" "multimedia" "office"
+     "other" "scientific" "system"))
+
+;*---------------------------------------------------------------------*/
+;*    weblets-rss-number-of-entries ...                                */
+;*---------------------------------------------------------------------*/
+(define-parameter weblets-rss-number-of-entries
+   10)

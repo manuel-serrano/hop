@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Tue Oct 23 23:32:42 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 14:42:32 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
@@ -28,6 +28,9 @@
 	 :title "Hop Home page"
 	 :include "hop-notepad" "hop-window" "hop-foldlist"
 	 :favicon (service-resource home "etc/gohome.png")
+	 (<LINK> :rel "alternate" :type "application/rss+xml"
+	    :title "Latest HOP weblets"
+	    :href "home/rss")
 	 :css (service-resource home "home.hss"))
       (<BODY>
 	 (<DIV> :align "center"
@@ -91,6 +94,13 @@
 	       :href "http://jigsaw.w3.org/css-validator/check/referer"
 	       :title "Valid CSS"
 	       :inline #t
-	       :src "css.png")))))
+	       :src "css.png")
+	    (<FOOT-BUTTON>
+	       :inline #t
+	       :href "home/rss"
+	       :title "HOP rss"
+	       :src (make-file-path (hop-share-directory)
+				    "buttons" "rss.png"))))))
+      
 				     
 	     

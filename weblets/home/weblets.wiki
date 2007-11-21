@@ -34,4 +34,4 @@ available to the whole HOP community.
 == Available weblets (through ,(<A> :href "http://localhost:8080/hop/hz"
       (<SPAN> :style {font-variant: small-caps} "Hz"))) ==
 
-,(<IFRAME> :class "hz" :src "/hop/hz/list")
+,(<IFRAME> :class "weblets" :src "/hop/weblets/list")

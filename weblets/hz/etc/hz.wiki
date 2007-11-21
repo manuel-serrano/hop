@@ -7,7 +7,7 @@ It operates installation across the web.
 
 == Making a weblet available to others ==
 
-The tutorial ,(<TUTORIALREF> "Releasing a HZ package" "06-hz.wiki")
+The tutorial ,(<TUTORIALREF> "HZ packages" "06-hz.wiki")
 presents how to construct and release a package suitable for HZ.
 Please refer to this documentation page.
 
@@ -18,29 +18,20 @@ HZ defines several services:
   - ++[[hz]]++: This is the main entry point for HZ. It shows a
  graphical user interface that lets user update their system (i.e., make
  it in sync with the remote global Hop weblets server).
-  - ++[[hz/preferences]]++: Lets user customize HZ.
-  - ++hz/install-ondemand++: This lets users install weblet not registered
- in the global remote HZ repository. It service takes two arguments:
-   - ++name++, the name of the weblet
-   - ++url++, the url (that could use the ++file://++ syntax) specifying the
+  - ++[[hz/preferences]]++: Lets users customize HZ.
+  - ++hz/install++: This lets users install weblet not registered
+ in the global remote HZ repository. It service takes one argument:
+   * ++url++, the url (that could use the ++file://++ syntax) specifying the
  location of the weblet. 
-  - ++hz/list++: Produce a HTML page displaying all the available weblets.
-
-
-== Administration Services ==
-
-HZ can be administrated (packages managed) with the following services:
-
-  - ++[[hz/repository]]++. This service requires administration rights. This
- service update or create a HZ database. In particular, this system must be
- used to initialize the HZ database.
-  - ++[[hz/upload]]++. This service requires administration rights. It allows
- a contributor which is granted administration rights to upload a new package 
- onto the server disk. The service updates the HZ database automatically.
- Adding a package can be also be done //manually//. It only requires to 
- copy the ++.hz++ file in its dedicated directory on the disk of the server
- running ++[[hz]]++ and to proceed to an //update// via the 
- ++[[hz/repository]]++ service.
+  - ++hz/run++: This lets users run a weblet without installing it. This 
+ service takes one argument:
+   * ++url++, the url (that could use the ++file://++ syntax) specifying the
+ location of the weblet. 
+  - ++hz/synclist++: Produce a //publisher// list. That is a list that can
+ be used to feed provided to //synchronized// [[hz|HZ]].  This 
+ service takes one argument:
+   * ++url++, the url (that could use the ++file://++ syntax) specifying the
+ location of the weblets repository for which a list must be produced. 
 
 
 === Package file name ===
@@ -63,17 +54,107 @@ Here is a list of example of correct HZ file names:
 It should be noted that hyphen can only used in HZ package for separating
 the base name of the package and its version number.
 
-== Installing weblets ==
+== Configuring HZ ==
+
+At load time, ++[[hz|HZ]]++ reads its configuration files, namely the
+++hzrc.hop++ file which should be located in the directory given by
+the ++hop-rc-directory++ parameter 
+(which currently is ,(<TT> "\"" (hop-rc-directory) "\"")). This file may
+set to the read/write parameters.
+
+~~ When ++[[hz|HZ]]++ is ran for the first time, it reads the file
+whose name is given by the parameter ++hz-prefs++ parameters. 
+
+=== HZ parameters ===
+
+=== ++hz-categories++ ===
+<parameter> hz-categories
+
+<arguments>
+^  access  ^   type    ^  short description  ^
+|   r      |  list     | The list of authorized categories.  |
+</arguments>
+</parameter>
+
+=== ++hz-rc-directory++ ===
+<parameter> hz-rc-directory
+
+<arguments>
+^  access  ^   type      ^  short description  ^
+|   r      |  string     | The RC directory dedicated to HZ.  |
+</arguments>
+</parameter>
+
+=== ++hz-download-directory++ ===
+<parameter> hz-download-directory
+
+<arguments>
+^  access  ^   type     ^  short description   ^
+|   r      |  string    | The directory used to stored downloaded packages.  |
+</arguments>
+</parameter>
+
+=== ++hz-weblets-directory++ ===
+<parameter> hz-weblets-directory
+
+<arguments>
+^  access  ^   type     ^  short description   ^
+|   r      |  string    | The directory where to install weblets.  |
+</arguments>
+</parameter>
+
+=== ++hz-package-suffix++ ===
+<parameter> hz-package-suffix
+
+<arguments>
+^  access  ^   type     ^  short description   ^
+|   r      |  string    | The suffix of HZ packages.  |
+</arguments>
+</parameter>
+
+=== ++hz-connection-timeout++ ===
+<parameter> hz-connection-timeout
+<parameter> hz-connection-timeout-set!
+
+<arguments>
+^  access  ^   type  ^  short description   ^
+|   r/w    |  integer  | The number of second to wait before timeout.  |
+</arguments>
+</parameter>
+</parameter>
+
+=== ++hz-publishers++ ===
+<parameter> hz-publishers
+<parameter> hz-publishers-set!
+
+<arguments>
+^  access  ^   type  ^  short description   ^
+|   r/w    |  list  | The list of publishers used when synchronizing the database.  |
+</arguments>
+
+Each element of the publisher list must be either:
+
+  * a string, the URL of the publisher
+  * a list of two elements:
+    - a string, the URL of the publisher
+    - a boolean, enabling (++#t++) or disabling (++#f++) the publisher.
+
+
+</parameter>
+</parameter>
+
+== Installing weblets from the command line ==
 
 Weblets most often should be installed using the GUI implemented by the
 ++[[hz]]++ service. Using the tool ++hopsh++, weblets can also be installed
 using the URL of the package. For instance, 
 
-  hopsh -c "hz/install-ondemand -name hoptris -url http://foo.nowehere.org/hoptris-1.0.hz"
+  hopsh -c "hz/install -url http://foo.nowehere.org/hoptris-1.0.hz"
 
 
 installs the weblet hoptris-1.0.hz on the local host, provided that HOP 
 is running on port 8080.
+
 
 </doc>
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 12 13:49:57 2006                          */
-/*    Last change :  Wed Nov 21 08:35:20 2007 (serrano)                */
+/*    Last change :  Wed Nov 21 14:48:33 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP weblets cascade style sheet                                  */
@@ -24,7 +24,7 @@ $(define title-color "#ddd")
 /*---------------------------------------------------------------------*/
 /*    body                                                             */
 /*---------------------------------------------------------------------*/
-body {
+body#weblets {
   background: #e0e0e0;
   font-family: arial;
 }
@@ -49,6 +49,7 @@ table.weblets img.logo {
 
 table td {
   text-align: left;
+  vertical-align: top;
 }
 
 table.weblets {
@@ -78,10 +79,6 @@ div#title {
   padding-bottom: 1px;
 }
 
-table td {
-  vertical-align: top;
-}
-
 span.class {
   color: red;
 }
@@ -90,7 +87,7 @@ span.class {
 /*    weblet                                                           */
 /*---------------------------------------------------------------------*/
 div.weblet {
-  font-size: 90%;
+  font-size: 80%;
   margin-bottom: 4ex;
 }
 
@@ -108,15 +105,19 @@ div.weblet div.package span.name {
 div.weblet div.author {
   color: #333;
   margin-bottom: 1ex;
+  font-size: 95%;
 }
 
 div.weblet div.comment {
-  float: left;
-  width: 50%;
   font-weight: 100;
   font-size: 90%;
   text-align: justify;
-  padding-right: 1em;
+}
+
+div.weblet div.install {
+  float: right;
+  margin-top: 1ex;
+  margin-left: 1em;
 }
 
 /*---------------------------------------------------------------------*/
@@ -124,4 +125,37 @@ div.weblet div.comment {
 /*---------------------------------------------------------------------*/
 table.hz-install {
   width: 20em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    publisher                                                        */
+/*---------------------------------------------------------------------*/
+div.publisher {
+  font-size: 90%;
+  padding-bottom: 2ex;
+}
+
+div.publisher span#publisher-url {
+  color: #009;
+  font-family: monospace;
+  font-size: 115%;
+}
+
+div.publisher div.comment {
+  font-style: italic;
+  color: #333;
+  font-weight: 100;
+}
+
+/*---------------------------------------------------------------------*/
+/*    categories                                                       */
+/*---------------------------------------------------------------------*/
+div.weblets-category {
+  font-size: small;
+  text-align: right;
+  padding-bottom: 2ex;
+}
+
+select.weblets-category {
+  border: 1px solid $border-color;
 }
