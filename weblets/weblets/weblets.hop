@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Wed Nov 21 14:44:29 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 16:09:37 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP slide weblet                                                 */
@@ -117,13 +117,13 @@
 					 (find-info info 'publisher "")))
 			(description (find-info info 'title ""))
 			(author (find-info info 'author ""))
-			(date (find-info info 'date "")))
+			(date (seconds->date (file-modification-time path))))
 		    (<RSS:ITEM>
 		       (<RSS:TITLE> (xml-string-encode title) " v" version)
 		       (<RSS:LINK> link)
 		       (<RSS:DESCRIPTION> description)
 		       (<RSS:AUTHOR> author)
-		       (<RSS:PUB-DATE> date))))
+		       (<RSS:PUB-DATE> (date->rfc2822-date dt)))))
 	      (let ((l (sort (lambda (p1 p2)
 				(<elong (file-modification-time p1)
 					(file-modification-time p2)))
