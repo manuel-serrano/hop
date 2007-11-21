@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Mon Nov 19 18:18:46 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 07:57:44 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
@@ -34,7 +34,7 @@
 	      (title::bstring read-only)
 	      (comment::bstring read-only (info "BLOB"))
 	      (signature::bstring read-only (default "")))
-	   
+
 	   (weblet->list::pair ::weblet)
 	   (info->weblet::weblet ::pair #!key name version url)))
 
@@ -85,25 +85,41 @@
 	  (convert (lambda (x)
 		      (if (string? x)
 			  (cs-convert x)
-			  x))))
+			  x)))
+	  (name (let ((v (find 'name name)))
+		   (if (or (not (string? name)) (string=? v name))
+		       (convert v)
+		       (error 'info->weblet
+			      "weblet name mismatch"
+			      (format "~a vs ~a" name v)))))
+	  (version (let ((v (find 'version (or version "0.0.0"))))
+		      (if (or (not (string? version)) (string=? v version))
+			  (convert v)
+			  (error 'info->weblet
+				 (format "weblet ~a, version mismatch" name)
+				 (format "~a vs ~a" version v)))))
+	  (publisher (convert (find 'publisher #f)))
+	  (url (let ((u (convert (find 'url url))))
+		  (cond
+		     (u u)
+		     (publisher (format "~a/~a-~a.hz"
+					(dirname publisher)
+					name
+					version))
+		     (else (error 'info->weblet
+				  "Url or Publisher should be given"
+				  name))))))
       (instantiate::weblet
-	 (name (let ((v (find 'name name)))
-		  (if (or (not (string? name)) (string=? v name))
-		      (convert v)
-		      (error 'info->weblet
-			     "weblet name mismatch"
-			     (format "~a vs ~a" name v)))))
-	 (version (let ((v (find 'version (or version "0.0.0"))))
-		     (if (or (not (string? version)) (string=? v version))
-			 (convert v)
-			 (error 'info->weblet
-				(format "weblet ~a, version mismatch" name)
-				(format "~a vs ~a" version v)))))
-	 (url (convert (find 'url url)))
-	 (home (convert (find 'home url)))
-	 (publisher (convert (find 'publisher #f)))
+	 (name name)
+	 (version version)
+	 (url url)
+	 (publisher publisher)
+	 (home (find 'home #f))
 	 (author (convert (find 'author #f)))
-	 (category (convert (find 'category "Misc")))
+	 (category (let ((c (convert (find 'category "misc"))))
+		      (if (member c (hz-categories))
+			  c
+			  "other")))
 	 (minhop (find 'minhop "0"))
 	 (maxhop (find 'maxhop "z"))
 	 (title (convert (find 'title "")))

@@ -1,0 +1,18 @@
+<doc> WEBLETS -- A HOP weblet for releasing weblets. 
+
+== Description ==
+
+[[weblets]] is a Hop program meant for releasing weblets.
+
+
+
+== Services ==
+
+Here are the services defined by WEBLETS:
+
+  - ++[[weblets]]++: This is the main entry point of HopSlide. It takes one 
+ optional argument: the name of the file containing the presentation. 
+ If not provided, HopSlide lets users browse the server disk in order to 
+ select it.
+  
+</doc>

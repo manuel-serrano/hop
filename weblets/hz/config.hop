@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Mon Nov 19 11:41:54 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 07:29:26 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -16,6 +16,7 @@
    (export (hz-version)
 	   (hz-date)
 	   (hz-author)
+	   (hz-categories::pair)
 	   (hz-dir::bstring)
 	   (hz-rc-directory::bstring)
 	   (hz-download-directory::bstring)
@@ -28,7 +29,6 @@
 	   (hz-publishers-set!::pair-nil)
 	   (hz-publisher-add! ::bstring #!optional (enable #t))
 	   (hz-publisher-enable! ::bstring ::bool)
-	   (hz-db-inspector-url::bstring)
 	   (hz-category-icons::pair-nil)
 	   (hz-prefs::bstring)
 	   (hz-preferences-load ::bstring)
@@ -38,9 +38,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
 ;*---------------------------------------------------------------------*/
-(define (hz-version) "1.0.2")
+(define (hz-version) "1.1.0")
 (define (hz-date) "2007")
 (define (hz-author) "M. Serrano")
+
+;*---------------------------------------------------------------------*/
+;*    hz-categories ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hz-categories
+   '("hop" "devel" "games" "multimedia" "other" "system" "desktop" "education"
+     "office" "scientific"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-dir                                                           */
@@ -92,7 +99,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-publishers ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-publishers '("http://hop.inria.fr/hop/weblets"))
+(define-parameter hz-publishers '(("http://hop.inria.fr/hop/weblets" #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-publisher-add! ...                                            */
@@ -149,8 +156,5 @@
    
    "Setup"
    ("Publishers" expr hz-publishers)
-   ("Timeout" integer hz-connection-timeout)
-   
-   "Master administration"
-   ("Database inspector" string hz-db-inspector-url))
+   ("Connections timeout" integer hz-connection-timeout))
 

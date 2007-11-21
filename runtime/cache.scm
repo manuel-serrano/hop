@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Thu Jun 22 09:27:15 2006 (serrano)                */
-;*    Copyright   :  2006 Manuel Serrano                               */
+;*    Last change :  Tue Nov 20 10:49:39 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
 ;*=====================================================================*/
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_cache
+
+   (import __hop_misc)
    
    (export (class cache-entry
 	      (%prev (default #f))
@@ -48,17 +50,6 @@
 	   (cache-put! ::cache ::bstring ::obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    rm-rf ...                                                        */
-;*---------------------------------------------------------------------*/
-(define (rm-rf path)
-   (when (file-exists? path)
-      (if (directory? path)
-	  (let ((files (directory->list path)))
-	     (for-each (lambda (f) (rm-rf (make-file-name path f))) files)
-	     (delete-directory path))
-	  (delete-file path))))
-
-;*---------------------------------------------------------------------*/
 ;*    *all-caches* ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define *all-caches* '())
@@ -80,7 +71,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%cache-new c::%cache)
    (with-access::%cache c (path %table max-entries register)
-      (rm-rf path)
+      (delete-path path)
       (unless (make-directories path)
 	 (error 'instantiate::cache "Can't create directory" path))
       (set! %table (make-hashtable (*fx 4 max-entries)))

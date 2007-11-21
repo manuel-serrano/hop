@@ -1,0 +1,10 @@
+;; automatically generated, don't edit
+;; /users/serrano/prgm/project/hop/weblets/weblets
+;; Wed Nov 21 07:47:14 2007
+
+(
+  (weblets_config "config.hop")
+  (weblets_package "package.hop")
+  (weblets "weblets.hop")
+)
+

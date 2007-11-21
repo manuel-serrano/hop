@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Mon Nov 19 15:16:31 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 06:59:12 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -19,11 +19,9 @@
 	   hz_weblet
 	   hz_db)
    
-   (export (hz-install ::bstring)))
-;*     (hz-install ::dbhz)                                             */
-;* 	   (hz-uninstall ::dbhz)                                       */
-;* 	   (hz-install-ondemand db req ::bstring ::bstring)))          */
-
+   (export (hz-install ::bstring)
+	   (hz-load ::bstring)
+	   (hz-uninstall ::weblet)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-install ...                                                   */
@@ -31,28 +29,28 @@
 (define (hz-install url)
    (multiple-value-bind (name version)
       (package-url-parse url)
-      (with-url url
-	 (lambda (str) (hz-install-from-string str name version url))
-	 :timeout (hz-connection-timeout)))
+      (let* ((hzfile (format "~a-~a.hz" name version))
+	     (hzpath (make-file-name (hz-download-directory) hzfile)))
+	 (unless (file-exists? hzpath)
+	    (with-url url
+	       (lambda (str)
+		  (with-output-to-file hzpath
+		     (lambda ()
+			(display str))))
+	       :timeout (hz-connection-timeout)))
+	 (hz-install-from-file hzpath name version url)
+	 (reset-autoload!)))
    '())
 
 ;*---------------------------------------------------------------------*/
-;*    hz-install-from-string ...                                       */
+;*    hz-install-from-file ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (hz-install-from-string content name version url)
-   ;; copy the .hz into the download directory
-   (let ((hzfile (format "~a-~a.hz" name version)))
-      (with-output-to-file (make-file-name (hz-download-directory) hzfile)
-	 (lambda ()
-	    (display content))))
+(define (hz-install-from-file path name version url)
    ;; untar the .hz into the weblets directory
-   (let* ((p0 (open-input-string content))
-	  (p1 (open-input-gzip-port p0)))
+   (let* ((p (open-input-gzip-file path)))
       (unwind-protect
-	 (untar p1 (hz-weblets-directory))
-	 (begin
-	    (close-input-port p1)
-	    (close-input-port p0))))
+	 (untar p :directory (hz-weblets-directory))
+	 (close-input-port p)))
    ;; add the weblet to the database
    (let* ((p (make-file-path (hz-weblets-directory) name "etc" "weblet.info"))
 	  (i (if (file-exists? p)
@@ -64,162 +62,34 @@
 	 (hz-publisher-add! (weblet-publisher e)))
       ;; update the database
       (weblet-installstamp-set! e (hz-db-sync-stamp))
+      (weblet-install-set! e (weblet-version e))
       (hz-db-add-or-update! e)))
-      
-	  
-#|
-;*---------------------------------------------------------------------*/
-;*    hz/get ...                                                       */
-;*---------------------------------------------------------------------*/
-(define-service (hz/get hz)
-   (instantiate::http-response-file
-      (file (make-file-name (hz-repository) hz))))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-install ...                                                   */
+;*    hz-load ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (hz-install hz)
-   (with-access::dbhz hz (name category install version hop)
-      (multiple-value-bind (_ uinfo host port path)
-	 (url-parse hop)
-	 ;; get the tarball
-	 (let* ((hzpath (format "~a/~a-~a.hz" category name version))
-		(req (instantiate::http-request
-			(userinfo uinfo)
-			(host host)
-			(port port)
-			(path (make-hop-service-url hz/get hzpath)))))
-	    (http-send-request
-	     req
-	     (lambda (p status header clength enc)
-		(case status
-		   ((200)
-		    (let ((base (make-file-name (hop-rc-directory) "weblets")))
-		       (unless (and (file-exists? base) (directory? base))
-			  (make-directory base))
-		       (let ((lst (hz-untar (elong->fixnum clength) p base)))
-			  (if (pair? lst)
-			      (let ((path (make-file-path
-					   base
-					   name
-					   (string-append name ".hop")))
-				    (url (make-file-name
-					  (hop-service-base)
-					  name)))
-				 (for-each hop-load-once-unmark! lst)
-				 (autoload path (autoload-prefix url))
-				 (set! install version))
-			      (error 'hz-install
-				     "Installation failure"
-				     hzpath)))))
-		   ((401 407)
-		    (user-access-denied req))
-		   (else
-		    (error 'hz-install "Can't download hz" hzpath)))))))))
+(define (hz-load path)
+   (let ((p (open-input-gzip-file path)))
+      (unwind-protect
+	 (let* ((tmp (make-file-name (os-tmp) "hop"))
+		(file (car (untar p :directory tmp)))
+		(base (substring file
+				 (+fx (string-length tmp) 1)
+				 (string-length file)))
+		(dir (dirname base))
+		(name (if (string=? dir ".") base dir))
+		(src (make-file-path tmp name (string-append name ".hop"))))
+	    (if (file-exists? src)
+		(hop-load src)
+		(error 'hz/run "Cannot find HOP source" path)))
+	 (close-input-port p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-uninstall ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (hz-uninstall hz)
-   (with-access::dbhz hz (name install)
-      (let ((dir (make-file-path (hop-rc-directory) "weblets" name)))
-	 (rm-rf dir)
-	 (set! install ""))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-untar ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (hz-untar clen p base)
-   (unless (=fx clen -1) (input-port-fill-barrier-set! p clen))
-   (let ((pz (open-input-gzip-port p)))
-      (unwind-protect
-	 (let loop ((lst '()))
-	    (let ((h (tar-read-header pz)))
-	       (if (not h)
-		   lst
-		   (case (tar-header-type h)
-		      ((dir)
-		       (let ((path (make-file-name base (tar-header-name h))))
-			  (rm-rf path)
-			  (if (make-directory path)
-			      (loop lst)
-			      (error 'hz-install
-				     "Cannot create directory"
-				     path))))
-		      ((normal)
-		       (let* ((path (make-file-name base (tar-header-name h)))
-			      (dir (dirname path)))
-			  (when (and (file-exists? dir) (not (directory? dir)))
-			     (delete-file dir))
-			  (unless (file-exists? dir)
-			     (make-directory dir))
-			  (with-output-to-file path
-			     (lambda ()
-				(display (tar-read-block h pz))))
-			  (loop (cons path lst))))
-		      (else
-		       (error 'hz-install
-			      (format "Illegal file type `~a'"
-				      (tar-header-type h))
-			      (tar-header-name h)))))))
-	 (close-input-port pz))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-install-ondemand ...                                          */
-;*---------------------------------------------------------------------*/
-(define (hz-install-ondemand db req name url)
-   (with-url url
-      (lambda (h)
-	 (let ((p (open-input-string h))
-	       (base (make-file-name (hop-rc-directory) "weblets")))
-	    (unless (and (file-exists? base) (directory? base))
-	       (make-directory base))
-	    (unwind-protect
-	       (hz-untar -1 p base)
-	       (close-input-port p))
-	    (let* ((hzdir (make-file-name base name))
-		   (info (make-file-path hzdir "etc" "weblet.info"))
-		   (info2 (if (file-exists? info)
-			      info
-			      (make-file-path hzdir "etc"
-					      (string-append name ".info")))))
-	       (if (not (file-exists? info2))
-		   (begin
-		      (rm-rf hzdir)
-		      (error 'hz/install-ondemand
-			     "Can't find info file"
-			     info))
-		   (let* ((i (with-input-from-file info2 read))
-			  (v (cond
-				((assq 'version i) => cadr)
-				(else (error
-				       'hz/install-ondemand
-				       "Illegal info file, missing version"
-				       i))))
-			  (c (cond
-				((assq 'category i) => cadr)
-				(else "misc")))
-			  (publisher (cond
-					((assq 'publisher i) => cadr)
-					(else #f)))
-			  (n (hz-info->dbhz-args i
-						 c
-						 (number->string
-						  (date->seconds
-						   (current-date)))
-						 (hz-db-sync-stamp db)
-						 v
-						 url)))
-		      (let ((o (hz-db-get-entry-by-name-driver db name url)))
-			 (when (dbhz? o)
-			    (hz-db-remove-weblet db o)))
-		      (apply hz-db-add-entry db n)
-		      (let ((f (make-file-name hzdir (string-append name ".hop"))))
-			 (when (file-exists? f)
-			    (hop-load f)))
-		      (when (string? publisher)
-			 (hz-publisher-add! publisher))
-		      #t)))))
-      :header (if (http-request? req) (http-request-header req) '()))
-   #t)
-|#
+(define (hz-uninstall w)
+   (with-access::weblet w (name installstamp install)
+      (when (delete-path (make-file-path (hz-weblets-directory) name))
+	 (set! installstamp -1)
+	 (set! install "")
+	 (hz-db-add-or-update! w))))

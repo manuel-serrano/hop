@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Mon Nov 19 11:26:54 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 07:54:33 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -16,12 +16,16 @@
    
    (import hz_config
 	   hz_markup
-	   hz_db)
+	   hz_db
+	   hz_install
+	   hz_package)
    
    (export hz
 	   hz/documentation
 	   hz/preferences
-	   hz/publishers))
+	   hz/install
+	   hz/run
+	   hz/synclist))
 
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */
@@ -68,161 +72,43 @@
 		   (<HZ:PREFERENCES>)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hz/publishers ...                                                */
+;*    hz/install ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/publishers url action)
-   (case action
-      ((add)
-       (hz-publisher-add! url)
-       (<HZ:PUBLISHERS>))
-      ((remove)
-       (hz-publishers-set! (filter! (lambda (x)
-				       (cond
-					  ((string? x)
-					   (not (string=? x url)))
-					  ((pair? x)
-					   (not (string=? (car x) url)))
-					  (else
-					   #t)))
-				    (hz-publishers)))
-       (hz-preferences-save (hz-prefs))
-       (<HZ:PUBLISHERS>))
-      ((enable)
-       (hz-publisher-enable! url #t)
-       #t)
-      ((disable)
-       (hz-publisher-enable! url #f)
-       #t)))
-
-
-
-
-
-
-
-
-
-
-
-
-#|
-
-
-
-
-;*---------------------------------------------------------------------*/
-;*    hz/install-ondemand ...                                          */
-;*---------------------------------------------------------------------*/
-(define-service (hz/install-ondemand name url)
-   (hz-direct-install (current-request) name url)
-   (<HTML>
-      ~(set! document.location (string-append "/hop/" $name))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-ondemand ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (hz-ondemand req user mode name url)
-   (let ((db (hz-get-db (hz-db-path mode)))
-	 (prefs (make-file-name (hz-rc-directory) (hz-prefs))))
-      (when (file-exists? prefs) (hz-preferences-load prefs))
-      (if (hz-install-ondemand db req name url)
-	  (hz-main req user mode))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-install-from-url ...                                          */
-;*---------------------------------------------------------------------*/
-(define (hz-install-from-url require-authentication req name url)
-   (cond
-      (require-authentication
-       (multiple-value-bind (user mode)
-	  (hz-get-access req)
-	  (cond
-	     ((and (user? user)
-		   (symbol? mode)
-		   (user-authorized-service? user 'hz))
-	      (hz-ondemand req user mode name url))
-	     (else
-	      (user-access-denied req)))))
-      ((http-request-localhostp req)
-       (hz-ondemand req #f 'local name url))
-      (else
-       (user-access-denied req))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-direct-install ...                                            */
-;*---------------------------------------------------------------------*/
-(define (hz-direct-install req name url)
-   (cond
-      ((string=? name "")
-       (error 'hz "name is empty" name))
-      ((string=? url "")
-       (error 'hz "URL is empty" url))
-      (else
-       (hz-install-from-url #f req name url))))
-
-;*---------------------------------------------------------------------*/
-;*    hz/list ...                                                      */
-;*    -------------------------------------------------------------    */
-;*    Returns the list of available weblets. This does not needs       */
-;*    authentication when used on a local server.                      */
-;*---------------------------------------------------------------------*/
-(define-service (hz/list)
+(define-service (hz/install url)
    (let ((req (current-request)))
-      (if (or (http-request-localhostp req)
-	      (authorized-service? req 'hz)
-	      (authorized-service? req 'hz/list))
-	  (hz-list req)
-	  (multiple-value-bind (user mode)
-	     (hz-get-access req)
-	     (if (and (user? user)
-		      (symbol? mode)
-		      (user-authorized-service? user 'hz))
-		 (hz-list req user mode)
-		 (user-access-denied req))))))
+      (if (not (authorized-service? req 'admin))
+	  (user-access-denied req)
+	  (multiple-value-bind (name version)
+	     (package-url-parse url)
+	     (hz-install url)
+	     (<HTML>
+		~(set! document.location (string-append "/hop/" $name)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-list ...                                                      */
+;*    hz/run ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (hz-list req)
-   (let ((db (hz-get-repository-db)))
+(define-service (hz/run url)
+   (multiple-value-bind (name version)
+      (package-url-parse url)
+      (hz-load url)
       (<HTML>
-	 (<HEAD>
-	    :title "Hop Hz"
-	    :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
-	    :include "hop-window")
-	 (<BODY>
-	    :class "hz-list"
-	    (<TREE>
-	       :id "main-tree"
-	       :open #t
-	       (<TRHEAD>
-		  (let ((dt (hz-db-sync-date db)))
-		     (format "~a ~a ~a"
-			     (date-day dt)
-			     (month-aname (date-month dt))
-			     (date-year dt))))
-	       (<TRBODY>
-		  (map (lambda (c)
-			  (<TREE>
-			     (<TRHEAD> :value c c)
-			     (<TRBODY>
-				(<DELAY>
-				   (lambda ()
-				      (let* ((icon (cond
-						      ((assoc c (hz-category-icons)) => cdr)
-						      (else "file.png")))
-					     (ifile (make-file-path (hz-dir)
-								    "etc"
-								    "icons"
-								    icon)))
-					 (map (lambda (e)
-						 (<TRLEAF>
-						    :icon ifile
-						    (<SPAN>
-						       :class "weblet"
-						       (dbhz-name e)
-						       " -- "
-						       (<SPAN> :class "sdescr" (dbhz-sdescr e)))))
-					      (hz-db-get-entries-by-category db c))))))))
-		       (hz-db-get-categories db))))))))
-|#
+	 ~(set! document.location (string-append "/hop/" $name)))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/synclist ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (hz/synclist url)
+   (let ((req (current-request)))
+      (if (authorized-path? req url)
+	  (with-output-to-string
+	     (lambda ()
+		(print "(")
+		(for-each (lambda (p)
+			     (let ((l (with-input-from-string (package-info p)
+					 read)))
+				(when (pair? l)
+				   (write l)
+				   (newline))))
+			  (directory->path-list url))
+		(print ")")))
+	  (user-access-denied req))))

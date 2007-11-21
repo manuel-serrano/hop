@@ -1,0 +1,123 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/weblets/weblets/weblets.hss             */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Aug 12 13:49:57 2006                          */
+/*    Last change :  Wed Nov 21 07:39:08 2007 (serrano)                */
+/*    Copyright   :  2006-07 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HOP weblets cascade style sheet                                  */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module weblets-hss)
+
+/*---------------------------------------------------------------------*/
+/*    global parameters ...                                            */
+/*---------------------------------------------------------------------*/
+$(define border-color "#bbb")
+$(define info-color "#f9f9f9")
+$(define title-color "#ddd")
+
+/*---------------------------------------------------------------------*/
+/*    body                                                             */
+/*---------------------------------------------------------------------*/
+body {
+  background: #e0e0e0;
+  font-family: arial;
+}
+
+button {
+  border-width: 1px;
+  margin-left: 1em;
+  width: 7em;
+}
+
+button:hover {
+  background: #eee;
+}
+
+button#weblets:hover {
+  color: red;
+}
+
+table.weblets img.logo {
+  padding: 20px;
+}
+
+table td {
+  text-align: left;
+}
+
+table.weblets {
+  width: 55em;
+  min-height: 40ex;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  -moz-border-radius: 0.5em;
+}
+
+table.weblets td {
+  font-weight: bold;
+}
+
+table.weblets td#buttons {
+  text-align: right;
+}
+
+div#title {
+  width: 100%;
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+
+table td {
+  vertical-align: top;
+}
+
+span.class {
+  color: red;
+}
+  
+/*---------------------------------------------------------------------*/
+/*    weblet                                                           */
+/*---------------------------------------------------------------------*/
+div.weblet {
+  font-size: 90%;
+  margin-bottom: 4ex;
+}
+
+div.weblet div.package {
+  font-weight: bold;
+  font-size: 110%;
+  border-bottom: 1px solid $border-color;
+  color: #008;
+}
+
+div.weblet div.author {
+  color: #333;
+  margin-bottom: 1ex;
+}
+
+div.weblet div.comment {
+  float: left;
+  width: 50%;
+  font-weight: 100;
+  font-size: 90%;
+  text-align: justify;
+  padding-right: 1em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    install                                                          */
+/*---------------------------------------------------------------------*/
+table.hz-install {
+  width: 20em;
+}

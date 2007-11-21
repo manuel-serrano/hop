@@ -1,0 +1,70 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/weblets/weblets.hop             */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
+;*    Last change :  Wed Nov 21 07:33:57 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP slide weblet                                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblets
+   
+   (import  weblets_config
+	    weblets_package)
+
+   (export  weblets))
+
+;*---------------------------------------------------------------------*/
+;*    weblets ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-service (weblets)
+   (<HTML>
+      (<HEAD> :favicon (service-resource weblets "etc/logo-16x16.png")
+	 :title "Hop Weblets"
+	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
+	 :css (service-resource weblets "weblets.hss"))
+      (<BODY>
+	 (<DIV> :align 'center
+	    (<TABLE> :class "weblets"
+	       (<COLGROUP> (<COL> :width "0*"))
+	       (<TR>
+		  (<TD> :class "logo"
+		     (<IMG> :class "logo"
+			:inline #t
+			:src (service-resource weblets "etc/logo.png")))
+		  (<TD> :class "content"
+		     (<DIV> :id "title" "Hop Weblets")
+		     (map <WEBLET> (directory->path-list (weblets-repository))))))
+	    (<FOOT>)))))
+
+;*---------------------------------------------------------------------*/
+;*    <WEBLET> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<WEBLET> path)
+   (let* ((info (with-input-from-string (package-info path) read))
+	  (dir (make-file-path (hop-weblets-directory) "hz" "etc"))
+	  (srci  (make-file-name dir "hz-install.png"))
+	  (srcr (make-file-name dir "hz-run.png")))
+      
+      (define (find key default)
+	 (cond
+	    ((assq key info) => cadr)
+	    (else default)))
+      
+      (<DIV> :class "weblet"
+	 (<DIV> :class "package"
+	    (find 'name (basename path))
+	    "-" (find 'version "") " - " (find 'title ""))
+	 (<DIV> :class "author" (find 'author ""))
+	 (<DIV> :class "comment" (find 'comment ""))
+	 ~(hop_install_weblet $path $srci $srcr))))
+
+;*---------------------------------------------------------------------*/
+;*    The user configuration                                           */
+;*---------------------------------------------------------------------*/
+(hop-load-rc "webletsrc.hop")

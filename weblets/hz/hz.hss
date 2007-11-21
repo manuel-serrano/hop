@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Mon Nov 19 18:26:54 2007 (serrano)                */
+/*    Last change :  Wed Nov 21 08:24:32 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -80,7 +80,7 @@ input {
   border: 1px solid $border-color;
 }
 
-input[type=text] {
+input[type=text], input[type=password] {
   color: blue;
   padding-left: 2px;
   padding-right: 2px;
@@ -341,6 +341,20 @@ table.sync-result span.name {
   font-weight: bold;
 }
 
+table.update {
+  font-size: 90%;
+}
+
+table.update span.name {
+  color: $deep-blue;
+  font-weight: bold;
+  cursor: default;
+}
+
+table.update span.name:hover {
+  text-decoration: underline;
+}
+
 /*---------------------------------------------------------------------*/
 /*    update ...                                                       */
 /*---------------------------------------------------------------------*/
@@ -522,6 +536,15 @@ weblets span.title {
   text-transform: capitalize;
 }
 
+weblets td.homepage {
+  font-size: 80%;
+  color: #555;
+}
+
+weblets td.homepage tt {
+  font-size: 120%;
+}
+
 weblets div.action {
   background: #daffbd;
   border: 1px solid $border-color;
@@ -675,4 +698,114 @@ table.hz-publishers td.hz-publishers-button {
   text-align: center;
   width: 5em;
 }
+
+/*---------------------------------------------------------------------*/
+/*    login                                                            */
+/*---------------------------------------------------------------------*/
+div.login {
+  display: none;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: transparent;
+}
+
+div.login div.login-background {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #000;
+  -moz-opacity: 0.7;
+  z-index: 999;
+}
+
+div.login div.main {
+  margin-top: 0;
+}
+
+div.login div.body {
+  width: 100%;
+  max-width: 100%;
+}
+
+div.login div.main {
+  position: absolute;
+  top: 20ex;
+  left: 15em;
+  right: 15em;
+  background-color: #fff;
+  z-index: 1000;
+  margin: 10px;
+  -moz-opacity: 0.90;
+}
+
+div.login table.login {
+  border: 5px dashed blue;
+  width: 100%;
+  padding-left: 3em;
+  padding-right: 3em;
+  -moz-border-radius: 0;
+}
+
+div.login table.login input {
+  font-size: 85%;
+}
+
+div.login table.login th {
+  text-align: left;
+  font-size: 90%;
+}
+
+div.login table.login-button td {
+  text-align: center;
+}
+
+div.login table.login td#login-title {
+  padding-top: 1ex;
+  font-weight: bold;
+}
+
+div.login table.login td#login-url {
+  color: #009;
+  font-size: 90%;
+  overflow: hidden;
+  padding-bottom: 3ex;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Cache                                                            */
+/*---------------------------------------------------------------------*/
+table#hz-remove-all {
+  width: 100%;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 2ex;
+}
+
+span#hz-repo {
+  color: #009;
+  font-family: monospace;
+  font-size: 120%;
+}
+
+table.hz-cache td.button, table#hz-remove-all td.button {
+  text-align: right;
+}
+
+table.hz-cache {
+  width: 100%;
+}
+
+table.hz-cache tr.odd {
+  background: #eee;
+}  
+
+table.hz-cache tr.even {
+  background: transparent;
+}  
+
+
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Mon Nov 19 18:13:42 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 08:00:30 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -18,8 +18,28 @@
 	    hz_weblet
 	    hz_db)
 
-   (export  (hz-sync!::pair-nil)
+   (export  (hz-sync-authenticate! ::bstring ::bstring ::bstring)
+	    (hz-sync!::pair-nil)
 	    (hz-sync-standard-weblets!)))
+
+;*---------------------------------------------------------------------*/
+;*    *hz-mutex*                                                       */
+;*---------------------------------------------------------------------*/
+(define *hz-mutex* (make-mutex 'hz))
+
+;*---------------------------------------------------------------------*/
+;*    *url-authenticate-table*                                         */
+;*---------------------------------------------------------------------*/
+(define *url-authenticate-table* (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    hz-sync-authenticate! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hz-sync-authenticate! url user passwd)
+   (with-lock *hz-mutex*
+      (lambda ()
+	 (hashtable-put! *url-authenticate-table* url (cons user passwd))))
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-sync! ...                                                     */
@@ -30,33 +50,48 @@
 (define (hz-sync!::pair-nil)
    (hz-db-sync-date-update! (current-date))
    (hz-sync-standard-weblets!)
-   (append-map hz-sync-publisher! (hz-publishers)))
+   (bind-exit (escape)
+      (append-map (lambda (p) (hz-sync-publisher! p escape)) (hz-publishers))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-sync-publisher! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (hz-sync-publisher! pub)
-   (when (or (string? pub) (cadr pub))
-      (let ((url (if (pair? pub) (car pub) pub)))
-	 (with-handler
-	    (lambda (e)
-	       (cond
-		  ((&error? e)
-		   (list (cons url (&error-msg e))))
-		  ((http-response-authentication? e)
-		   (list (cons url "access denied")))
-		  (else
-		   (list (cons url e)))))
-	    (with-url url
-	       (lambda (s)
-		  (with-input-from-string s
-		     (lambda ()
-			(filter-map (lambda (i)
-				       (let ((w (info->weblet e)))
-					  (hz-db-add-or-update! e)
-					  #f))
-				    (read)))))
-	       :timeout (hz-connection-timeout))))))
+(define (hz-sync-publisher! pub escape)
+   (if (and pub (or (string? pub) (cadr pub)))
+       (let* ((url (if (pair? pub) (car pub) pub))
+	      (auth (with-lock *hz-mutex*
+		       (lambda ()
+			  (hashtable-get *url-authenticate-table* url))))
+	      (pub `((publisher ,pub))))
+	  (with-handler
+	     (lambda (e)
+		(cond
+		   ((&error? e)
+		    (list (cons url (&error-msg e))))
+		   ((http-response-authentication? e)
+		    (escape url))
+		   (else
+		    (list (cons url e)))))
+	     (with-url url
+		(lambda (s)
+		   (with-input-from-string s
+		      (lambda ()
+			 (filter-map (lambda (e)
+					(let ((w (info->weblet (append e pub))))
+					   (hz-db-add-or-update! w)
+					   #f))
+				     (read)))))
+		:timeout (hz-connection-timeout)
+		:header (if (pair? auth)
+			    (list (list authorization:
+					(string-append "Basic "
+						       (base64-encode
+							(string-append
+							 (car auth)
+							 ":"
+							 (cdr auth))))))
+			    '()))))
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-sync-standard-weblets! ...                                    */
@@ -69,10 +104,13 @@
       (when (file-exists? ifile)
 	 (with-handler
 	    (lambda (e)
+	       (when (&error? e) (error-notify e))
 	       #f)
 	    (with-input-from-file ifile
 	       (lambda ()
-		  (let ((w (info->weblet (cons `(category "hop") (read))
+		  (let ((w (info->weblet (cons* `(category "hop")
+						`(home "/hop")
+						(read))
 					 :name (basename dir)
 					 :url dir)))
 		     (weblet-driver-set! w "standard")

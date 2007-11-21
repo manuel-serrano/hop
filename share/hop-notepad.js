@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Fri Jul 20 11:30:48 2007 (serrano)                */
+/*    Last change :  Wed Nov 21 08:28:30 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -31,7 +31,7 @@ function hop_notepad_inner_toggle( np, to, tabs, bodies ) {
 /*---------------------------------------------------------------------*/
 /*    hop_notepad_inner_select ...                                     */
 /*---------------------------------------------------------------------*/
-function hop_notepad_inner_select( np, to ) {
+function hop_notepad_inner_select( np, to, callback ) {
    var tabs = undefined;
    var bodies = undefined;
    var i;
@@ -58,9 +58,11 @@ function hop_notepad_inner_select( np, to ) {
 	      function( html ) {
 		 hop_innerHTML_set( bodies.childNodes[ to ], html );
 		 hop_notepad_inner_toggle( np, to, tabs, bodies );
+		 if( callback ) callback();
 	      } );
       } else {
 	 hop_notepad_inner_toggle( np, to, tabs, bodies );
+	 if( callback ) callback();
       }
    }
 }
@@ -71,7 +73,7 @@ function hop_notepad_inner_select( np, to ) {
 /*    This is a user function that might be invoked with NOTEPAD       */
 /*    and PAN or IDENTs.                                               */
 /*---------------------------------------------------------------------*/
-function hop_notepad_select( id1, id2, history ) {
+function hop_notepad_select( id1, id2, history, callback ) {
    var np = hop_is_html_element( id1 ) ? id1 : document.getElementById( id1 );
    var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );
    var tabs;
@@ -87,7 +89,7 @@ function hop_notepad_select( id1, id2, history ) {
       if( tabs.childNodes[ i ] == tab ) {
 	 if( history != false ) hop_state_history_add( np.id, "np", i );
 	 
-	 return hop_notepad_inner_select( np, i );
+	 return hop_notepad_inner_select( np, i, callback );
       }
    }
 

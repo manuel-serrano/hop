@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/hz/package.hop                  */
+;*    serrano/prgm/project/hop/devel/weblets/package.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Nov 21 07:02:50 2007 (serrano)                */
+;*    Last change :  Tue Nov 20 15:00:58 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with packages.                             */
@@ -12,9 +12,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hz_package
+(module weblets_package
 
-   (import hz_config)
+   (import weblets_config)
    
    (export (package-filename? ::bstring)
 	   (package-name-parse ::bstring)
@@ -25,16 +25,13 @@
 ;*    package-filename? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (package-filename? name)
-   (string-suffix-ci? (hz-package-suffix) name))
+   (string-suffix-ci? ".hz" name))
 
 ;*---------------------------------------------------------------------*/
 ;*    package-sans-suffix ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (package-sans-suffix name)
-   (substring name
-              0
-              (-fx (string-length name)
-                   (+fx 1 (string-length (hz-package-suffix))))))
+   (substring name 0 (-fx (string-length name) 3)))
 
 ;*---------------------------------------------------------------------*/
 ;*    package-name-parse ...                                           */
@@ -79,10 +76,27 @@
 ;*    package-info ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (package-info url)
-   (multiple-value-bind (base version)
-      (package-url-parse url)
-      (let ((info (make-file-path base "etc" "weblet.info"))
-	    (ip (open-input-gzip-file url)))
-	 (unwind-protect
-	    (untar ip :file info)
-	    (close-input-port ip)))))
+   (let* ((ip (open-input-gzip-file url))
+	  (info (make-file-name "etc" "weblet.info"))
+	  (len (string-length info)))
+      (unwind-protect
+	 (let loop ()
+	    (let ((h (tar-read-header ip)))
+	       (when h
+		  (case (tar-header-type h)
+		     ((dir)
+		      (loop))
+		     ((normal)
+		      (let ((b (tar-read-block h ip))
+			    (n (tar-header-name h)))
+			 (if (substring-at? n info (-fx (string-length n) len))
+			     (charset-convert b (hop-locale) (hop-charset))
+			     (loop))))
+		     (else
+		      #f)))))
+	 (close-input-port ip))))
+
+
+
+
+

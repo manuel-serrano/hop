@@ -1,12 +1,12 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/hz/Makefile                     */
+#*    serrano/prgm/project/hop/weblets/weblets/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Nov 20 15:36:39 2007 (serrano)                */
+#*    Last change :  Wed Nov 21 07:08:40 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
-#*    The Makefile of the HZ weblet                                    */
+#*    Weblet Makefile                                                  */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
@@ -20,17 +20,14 @@ build: .afile
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
-SOURCES		= config.hop hz.hop \
-		  db.hop hz.hss install.hop sync.hop \
-                  markup.hop package.hop weblet.hop \
-                  authenticate.hop
+SOURCES		= weblets.hop package.hop config.hop
 
 POPULATION	= $(SOURCES) \
                   Makefile \
-                  etc/icons .afile etc/weblet.info \
+                  weblets.hss config.hop.in \
+                  LICENSE \
                   etc/logo.png etc/logo-16x16.png \
-                  etc/hz.wiki \
-                  hz-install.png hz-run.png hz-install.js
+                  etc/weblets.wiki .afile
 
 .afile: $(SOURCES)
 	$(AFILE) -suffix hop $(SOURCES) > .afile

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Mon Nov 19 18:02:24 2007 (serrano)                */
+;*    Last change :  Tue Nov 20 11:22:25 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -25,8 +25,10 @@
 	   (hz-db-sync-stamp::int)
 	   (hz-db-sync-date::date)
 	   (hz-db-sync-date-update! ::date)
+	   (hz-db-find ::bstring ::bstring)
 	   (hz-db-find-new::pair-nil)
 	   (hz-db-find-update::pair-nil)
+	   (hz-db-find-keyword::pair-nil ::bstring)
 	   (hz-db-get-categories::pair-nil)
 	   (hz-db-get-entries-by-categories::pair-nil ::bstring)
 	   (hz-db-get-entries-by-category ::bstring)
@@ -201,6 +203,16 @@
       "SELECT ~a FROM weblets WHERE (updatestamp>installstamp)" (hz-db-row)))
 
 ;*---------------------------------------------------------------------*/
+;*    hz-db-find-keyword ...                                           */
+;*---------------------------------------------------------------------*/
+(define (hz-db-find-keyword key)
+   (with-lock *db-mutex*
+      (lambda ()
+	 (sqlite-map *db* hz-make-weblet
+	    "SELECT * FROM weblets WHERE (name LIKE '%~a%') || (author LIKE '%~a%') || (title LIKE '%~a%') || (comment LIKE '%~a%') ORDER BY name ASC"
+	    key key key key))))
+
+;*---------------------------------------------------------------------*/
 ;*    hz-db-find-update ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-find-update)
@@ -261,324 +273,3 @@
 	 (sqlite-eval *db* hz-make-weblet
 	    "SELECT ~a FROM weblets WHERE (name=~q) AND (category=~q)"
 	    (hz-db-row) name category))))
-
-
-
-
-
-
-
-
-
-
-
-#|
-   
-   (export (class dbhz
-	      (stamp::int (info "INTEGER"))
-	      name::bstring
-	      author::bstring
-	      category::bstring
-	      hop::bstring
-	      version::bstring
-	      minhop::bstring
-	      maxhop::bstring
-	      sdescr::bstring
-	      (descr::bstring (info "BLOB"))
-	      date::date
-	      (driver::bstring (default "hz"))
-	      (install::bstring (default ""))
-	      (home::bstring (default "")))
-	   (hz-db-path mode)
-	   (hz-db-columns)
-	   (hz-db-install-column-index)
-	   (hz-get-db path)
-	   (hz-db-sync-date db)
-	   (hz-db-sync-date-update! db nd)
-	   (hz-db-sync-stamp db)
-	   (hz-db-sync-stamp-inc! db)
-	   (hz-db-close db)
-	   (hz-db->list db)
-	   (hz-get-repository-db)
-	   (hz-db-get-entry-by-name db name)
-	   (hz-db-get-entry-by-name-driver db name driver)
-	   
-	   (hz-db-get-unmanaged db name category)
-	   (hz-db-get-all-unmanaged db)
-	   (hz-db-add-entry db . args)
-	   (hz-db-add-weblet db o)
-	   (hz-db-update-entry db . args)
-	   (hz-db-update-weblet db o)
-	   (hz-db-remove-entry db name category)
-	   (hz-db-remove-weblet db o)
-	   
-	   (hz-db-get-entries-by-category db category)
-	   (hz-db-query db key)
-	   (hz-db-query-uninstalled db)
-	   (hz-db-query-update db)
-	   (hz-db-query-new db)
-	   (hz-info->dbhz-args info category mtime stamp install driver)))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-path ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (hz-db-path mode)
-   (case mode
-      ((local share)
-       (make-file-name (hz-rc-directory) (hz-db)))
-      ((share)
-       (make-file-path (hop-weblets-directory) (hz-db)))
-      (else
-       (make-file-name (hz-repository) (hz-db)))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-install-column-index ...                                   */
-;*---------------------------------------------------------------------*/
-(define-parameter hz-db-install-column-index
-   (let loop ((i 0)
-	      (f (class-all-fields dbhz)))
-      (cond
-	 ((null? f)
-	  (error 'hz "Can't find `install' field" (class-all-fields)))
-	 ((eq? (class-field-name (car f)) 'install)
-	  i)
-	 (else
-	  (loop (+fx i 1) (cdr f))))))
-
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-close ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (hz-db-close db)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-close db))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db->list ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (hz-db->list db)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (let ((tables (sqlite-name-of-tables db)))
-	    (map (lambda (t)
-		    `(,t
-		      ,(sqlite-table-name-of-columns db t)
-		      ,@(sqlite-map db vector "SELECT * FROM ~q" t)))
-		 tables)))))
-
-;*---------------------------------------------------------------------*/
-;*    *hz-db* ...                                                      */
-;*---------------------------------------------------------------------*/
-(define *hz-db* #f)
-(define *hz-mutex* (make-mutex 'hop-hz))
-
-;*---------------------------------------------------------------------*/
-;*    hz-get-repository-db ...                                         */
-;*---------------------------------------------------------------------*/
-(define (hz-get-repository-db)
-   (with-lock *hz-mutex*
-      (lambda ()
-	 (unless (sqlite? *hz-db*)
-	    (set! *hz-db* (hz-get-db (hz-db-path 'repository))))
-	 *hz-db*)))
-
-;*---------------------------------------------------------------------*/
-;*    inst-dbhz ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (inst-dbhz s n a c h v mi ma sd d dt dr i hm)
-   (let ((cvt (charset-converter (hop-locale) (hop-charset))))
-      (instantiate::dbhz
-	 (stamp (cvt s))
-	 (name (cvt n))
-	 (author (cvt a))
-	 (category (cvt c))
-	 (hop h)
-	 (version v)
-	 (minhop mi)
-	 (maxhop ma)
-	 (sdescr (cvt sd))
-	 (descr (cvt d))
-	 (date (seconds->date (string->elong dt)))
-	 (driver dr)
-	 (install (if (string? i) (cvt i) ""))
-	 (home (if (string? hm) (cvt hm) "")))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-get-entry-by-name ...                                      */
-;*---------------------------------------------------------------------*/
-(define (hz-db-get-entry-by-name db name)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-eval db inst-dbhz
-	    "SELECT ~a FROM weblets WHERE (name = ~q)" (hz-db-row) name))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-get-entry-by-name-driver ...                               */
-;*---------------------------------------------------------------------*/
-(define (hz-db-get-entry-by-name-driver db name driver)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-eval db inst-dbhz
-	    "SELECT ~a FROM weblets WHERE (name = ~q) AND (driver = ~q)"
-	    (hz-db-row) name driver))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-get-unmanaged ...                                          */
-;*---------------------------------------------------------------------*/
-(define (hz-db-get-unmanaged db name category)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-eval db inst-dbhz
-	    "SELECT ~a FROM weblets WHERE (name = ~q) AND (category = ~q) AND (driver = 'unmanaged')"
-	    (hz-db-row) name category))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-get-all-unmanaged ...                                      */
-;*---------------------------------------------------------------------*/
-(define (hz-db-get-all-unmanaged db)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-map db inst-dbhz
-	    "SELECT ~a FROM weblets WHERE (driver = 'unmanaged')" (hz-db-row)))))
-
-;*---------------------------------------------------------------------*/
-;*    charset ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (charset arg)
-   (charset-convert arg (hop-charset) (hop-locale)))
-
-;*---------------------------------------------------------------------*/
-;*    charset-args ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (charset-args args)
-   (let ((cvt (charset-converter (hop-charset) (hop-locale))))
-      (map (lambda (x) (if (string? x) (cvt x) x)) args)))
-   
-;*---------------------------------------------------------------------*/
-;*    hz-db-add-entry ...                                              */
-;*---------------------------------------------------------------------*/
-(define (hz-db-add-entry db . args)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-exec db
-	    "INSERT INTO weblets (~a) VALUES( ~k )" (hz-db-row)
-	    (charset-args args))
-	 args)))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-add-weblet ...                                             */
-;*---------------------------------------------------------------------*/
-(define (hz-db-add-weblet db o)
-   (apply hz-db-add-entry db 
-	  (map (lambda (f) ((class-field-accessor f) o))
-	       (class-all-fields (object-class o))))
-   o)
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-update-entry ...                                           */
-;*---------------------------------------------------------------------*/
-(define (hz-db-update-entry db . args)
-   (with-lock *db-mutex*
-      (lambda ()
-         (sqlite-exec db
-            "UPDATE weblets SET ~l WHERE (name = ~q) AND (category = ~q)"
-            (map (lambda (n v)
-                    (sqlite-format "~a = ~q" (car n) v))
-                 (hz-db-columns)
-                 (charset-args args))
-            (charset (cadr args)) (charset (cadddr args)))))
-   args)
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-update-weblet ...                                          */
-;*---------------------------------------------------------------------*/
-(define (hz-db-update-weblet db o)
-   (apply hz-db-update-entry db 
-	  (map (lambda (f) ((class-field-accessor f) o))
-	       (class-all-fields (object-class o))))
-   o)
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-remove-entry ...                                           */
-;*---------------------------------------------------------------------*/
-(define (hz-db-remove-entry db name category)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-exec db
-	    "DELETE FROM weblets WHERE (name = ~q) AND (category = ~q)"
-	    name category))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-remove-weblet ...                                          */
-;*---------------------------------------------------------------------*/
-(define (hz-db-remove-weblet db o)
-   (with-access::dbhz o (name category driver)
-      (with-lock *db-mutex*
-	 (lambda ()
-	    (sqlite-exec db
-	       "DELETE FROM weblets WHERE (name = ~q) AND (category = ~q) AND (driver = ~q)"
-	       name category driver)))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-query ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (hz-db-query db key)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-map db inst-dbhz
-	    "SELECT * FROM weblets WHERE (name LIKE '%~a%') || (author LIKE '%~a%') || (sdescr LIKE '%~a%') || (descr LIKE '%~a%') ORDER BY name ASC"
-	    key key key key))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-query-uninstalled ...                                      */
-;*---------------------------------------------------------------------*/
-(define (hz-db-query-uninstalled db)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-map db inst-dbhz
-	    "SELECT * FROM weblets WHERE (install = '') || (install ISNULL) ORDER BY name ASC"))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-query-update ...                                           */
-;*---------------------------------------------------------------------*/
-(define (hz-db-query-update db)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-map db inst-dbhz
-	    "SELECT * FROM weblets WHERE (install != '') AND (install < version) ORDER BY name ASC"))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-query-new ...                                              */
-;*---------------------------------------------------------------------*/
-(define (hz-db-query-new db)
-   (with-lock *db-mutex*
-      (lambda ()
-	 (sqlite-map db inst-dbhz
-	    "SELECT * FROM weblets WHERE (install = '') AND (stamp = ~a) ORDER BY name ASC"
-	    (db-sync-stamp db)))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-info->dbhz-args ...                                           */
-;*---------------------------------------------------------------------*/
-(define (hz-info->dbhz-args info category mtime stamp install driver)
-   (bind-exit (exit)
-      (define (find val lst)
-	 (cond
-	    ((assq val lst) => cadr)
-	    (else #f)))
-      (list stamp
-	    (or (find 'name info) (exit #f))
-	    (or (find 'author info) (exit #f))
-	    (or category (find 'category info) (exit #f))
-	    (or (find 'hop info) "unknown")
-	    (or (find 'version info) (exit #f))
-	    (or (find 'minhop info) "")
-	    (or (find 'maxhop info) "")
-	    (or (find 'sdescr info) (exit #f))
-	    (or (find 'descr info) "")
-	    mtime
-	    driver
-	    install
-	    (or (find 'home info) ""))))
-|#

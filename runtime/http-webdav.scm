@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Wed Oct 10 09:02:38 2007 (serrano)                */
+;*    Last change :  Tue Nov 20 10:47:35 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -95,17 +95,6 @@
       (for-each (lambda (b)
 		   (xml-write b p backend))
 		(xml-webdav-body obj))))
-
-;*---------------------------------------------------------------------*/
-;*    rm-rf ...                                                        */
-;*---------------------------------------------------------------------*/
-(define (rm-rf path)
-   (when (file-exists? path)
-      (if (directory? path)
-	  (let ((files (directory->list path)))
-	     (when (every? (lambda (f) (rm-rf (make-file-name path f))) files)
-		(delete-directory path)))
-	  (delete-file path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cp-r ...                                                         */
@@ -407,7 +396,7 @@
 	    ((directory? path)
 	     (if (and (pair? depth) (not (string=? (cadr depth) "infinity")))
 		 (http-bad-request (format "Illegal depth: ~a" (cadr depth)))
-		 (if (rm-rf path)
+		 (if (delete-path path)
 		     (instantiate::http-response-string
 			(request req)
 			(charset (hop-locale))
@@ -589,7 +578,7 @@
 	    ((and (file-exists? dst) (string=? overwrite "F"))
 	     (resp "HTTP/1.1 412 Precondition Failed"))
 	    (else
-	     (when (file-exists? dst) (rm-rf dst))
+	     (when (file-exists? dst) (delete-path dst))
 	     (if (or (file-exists? dst) (not (rename-file src dst)))
 		 (resp "HTTP/1.1 409 Conflict")
 		 (resp "HTTP/1.1 204 No Content"))))))

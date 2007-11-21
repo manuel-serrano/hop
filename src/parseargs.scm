@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Nov 20 07:32:53 2007 (serrano)                */
+;*    Last change :  Wed Nov 21 06:59:03 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -232,7 +232,7 @@
    (let ((p (open-input-gzip-file path)))
       (unwind-protect
 	 (let* ((tmp (make-file-name (os-tmp) "hop"))
-		(file (car (untar p tmp)))
+		(file (car (untar p :directory tmp)))
 		(base (substring file
 				 (+fx (string-length tmp) 1)
 				 (string-length file)))
