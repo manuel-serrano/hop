@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Wed Nov 21 14:49:57 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 16:44:26 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets configuration                                            */
@@ -48,7 +48,7 @@
 ;*    weblets-publisher ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter weblets-publisher
-   "http://hop.inria.fr/weblets")
+   "http://hop.inria.fr/weblets/synclist")
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets-categories ...                                           */
