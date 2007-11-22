@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Thu Nov 22 14:41:57 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 15:39:42 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP slide weblet                                                 */
@@ -221,10 +221,12 @@
 ;*    <WEBLET> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLET> path)
+   
    (let* ((info (with-input-from-string (package-info path) read))
 	  (dir (make-file-path (hop-weblets-directory) "hz" "etc"))
 	  (srci  (make-file-name dir "hz-install.png"))
-	  (srcr (make-file-name dir "hz-run.png")))
+	  (srcr (make-file-name dir "hz-run.png"))
+	  (url (format "http://~a:~a~a" (hostname) (hop-port) path)))
       
       (when (or (string=? category-filter "all")
 		(string=? (find-info info 'category "other") category-filter))
@@ -237,7 +239,7 @@
 	       " - " (find-info info 'title ""))
 	    (let ((id (symbol->string (gensym))))
 	       (<DIV> :class "install" :id id
-		  ~(hop_install_weblet $path $srci $srcr $id)))
+		  ~(hop_install_weblet $url $srci $srcr $id)))
 	    (<DIV> :class "author" (find-info info 'author ""))
 	    (let ((minhop (find-info info 'minhop ""))
 		  (maxhop (find-info info 'maxhop "")))
