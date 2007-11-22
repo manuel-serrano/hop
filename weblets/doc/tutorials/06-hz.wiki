@@ -266,7 +266,6 @@ keys are:
  this list might be extended in the future versions of HOP.   
   * ++minhop++, the minimal HOP version able to run the weblet.
   * ++maxhop++, the maximal HOP version able to run the weblet.
-  * ++signature++, currently ignored.
 
 == The ++/documentation++ service ==
 
@@ -399,8 +398,16 @@ your weblets.
 </code>
 
 
-The ,(<WEBLETREF> (<TT> "hz/synclist") 
-(make-file-path (hop-weblets-directory) "hz/etc/hz.wiki")) service
-can be used to automatically generate this list.
+The ,(<WEBLETREF> (<TT> "weblets/synclist") 
+(make-file-path (hop-weblets-directory) "weblets/etc/hz.wiki")) service
+can be used to automatically generate this list. For instance, the following
+command:
+
+<code>
+  hopsh -c "weblets/synclist -url /tmp/repository"
+</code>
+
+generates a sync list out of the weblets found in the directory 
+++/tmp/repository++ located in the server.
 
 </doc>

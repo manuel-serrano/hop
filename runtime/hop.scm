@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Nov 16 16:53:22 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 14:09:44 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -204,7 +204,27 @@
 	  (multiple-value-bind (scheme userinfo host port path)
 	     (url-parse url)
 	     (cond
-		((string=? scheme "http")
+		((or (string=? scheme "file")
+		     (string=? scheme "string")
+		     (string=? scheme "| ")
+		     (string=? scheme "pipe")
+		     (string=? scheme "gzip")
+		     (string=? scheme "/resource/"))
+		 (let ((p (open-input-file url)))
+		    (if (input-port? p)
+			(let ((s (read-string p))
+			      (suc (if (procedure? success)
+				       success
+				       (lambda (x) x))))
+			   (close-input-port p)
+			   (suc s))
+			(if (procedure? fail)
+			    (fail url #f)
+			    (raise (instantiate::&io-error
+				      (proc 'with-url)
+				      (msg "Cannot open url")
+				      (obj url)))))))
+		(else
 		 (let* ((r (instantiate::http-request
 			      (scheme (string->symbol scheme))
 			      (id hop-to-hop-id)
@@ -217,17 +237,7 @@
 			(suc (if (procedure? success) success (lambda (x) x)))
 			(hdl (make-http-callback 'with-url r suc fail)))
 		    (trace-item "remote path=" path)
-		    (http-send-request r hdl)))
-		(else
-		 (let ((p (open-input-file url)))
-		    (if (input-port? p)
-			(let ((s (read-string p))
-			      (suc (if (procedure? success)
-				       success
-				       (lambda (x) x))))
-			   (close-input-port p)
-			   (suc s))
-			(fail url #f))))))))))
+		    (http-send-request r hdl)))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    with-remote-host ...                                             */

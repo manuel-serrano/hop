@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Wed Nov 21 07:29:26 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 14:39:06 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -94,12 +94,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-connection-timeout ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-connection-timeout 300000)
+(define-parameter hz-connection-timeout 3000000)
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-publishers ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-publishers '(("http://hop.inria.fr/hop/weblets" #f)))
+(define-parameter hz-publishers
+   '(("http://hop.inria.fr/hop/weblets/synclist" #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-publisher-add! ...                                            */

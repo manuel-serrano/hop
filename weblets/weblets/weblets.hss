@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 12 13:49:57 2006                          */
-/*    Last change :  Wed Nov 21 14:48:33 2007 (serrano)                */
+/*    Last change :  Thu Nov 22 07:44:45 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP weblets cascade style sheet                                  */
@@ -87,8 +87,9 @@ span.class {
 /*    weblet                                                           */
 /*---------------------------------------------------------------------*/
 div.weblet {
-  font-size: 80%;
+  font-size: 85%;
   margin-bottom: 4ex;
+  width: 100%;
 }
 
 div.weblet div.package {
@@ -96,6 +97,7 @@ div.weblet div.package {
   font-size: 110%;
   border-bottom: 1px solid $border-color;
   color: #008;
+  clear: both;
 }
 
 div.weblet div.package span.name {
@@ -108,10 +110,32 @@ div.weblet div.author {
   font-size: 95%;
 }
 
+div.weblet div.hop {
+  font-size: 90%;
+  font-weight: 100;
+  margin-bottom: 1ex;
+}
+
+div.weblet div.hop span.min {
+  color: #0a0;
+  font-weight: bold;
+}
+
+div.weblet div.hop span.max {
+  color: red;
+  font-weight: bold;
+}
+
 div.weblet div.comment {
   font-weight: 100;
   font-size: 90%;
   text-align: justify;
+  margin-bottom: 1ex;
+}
+
+div.weblet span.signature {
+  color: #555;
+  font-family: monospace;
 }
 
 div.weblet div.install {
@@ -142,8 +166,8 @@ div.publisher span#publisher-url {
 }
 
 div.publisher div.comment {
-  font-style: italic;
-  color: #333;
+  font-size: 80%;
+  color: #222;
   font-weight: 100;
 }
 

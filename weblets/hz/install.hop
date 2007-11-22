@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Wed Nov 21 06:59:12 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 14:28:01 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -27,6 +27,7 @@
 ;*    hz-install ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (hz-install url)
+   (hz-db-init!)
    (multiple-value-bind (name version)
       (package-url-parse url)
       (let* ((hzfile (format "~a-~a.hz" name version))
@@ -88,6 +89,7 @@
 ;*    hz-uninstall ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (hz-uninstall w)
+   (hz-db-init!)
    (with-access::weblet w (name installstamp install)
       (when (delete-path (make-file-path (hz-weblets-directory) name))
 	 (set! installstamp -1)

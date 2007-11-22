@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Wed Nov 21 16:09:37 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 14:41:57 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP slide weblet                                                 */
@@ -19,6 +19,7 @@
 
    (export  weblets
 	    weblets/list
+	    weblets/synclist
 	    weblets/rss))
 
 ;*---------------------------------------------------------------------*/
@@ -88,51 +89,74 @@
 	 (<WEBLETS>))))
 
 ;*---------------------------------------------------------------------*/
+;*    weblets/synclist ...                                             */
+;*---------------------------------------------------------------------*/
+(define-service (weblets/synclist url)
+   (let ((req (current-request))
+	 (url (if (not (string? url)) (weblets-repository))))
+      (if (authorized-path? req url)
+	  (instantiate::http-response-string
+	     (body (with-output-to-string
+		      (lambda ()
+			 (print "(")
+			 (for-each (lambda (p)
+				      (let ((l (with-input-from-string
+						     (package-info p)
+						  read)))
+					 (when (pair? l)
+					    (write
+					     (append! l `((md5 ,(md5sum p)))))
+					    (newline))))
+				   (get-weblets url))
+			 (print ")")))))
+	  (user-access-denied req))))
+
+;*---------------------------------------------------------------------*/
 ;*    weblets/rss ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (weblets/rss)
-   (<RSS>
-      (<RSS:CHANNEL>
-	 (<RSS:TITLE> "HOP")
-	 (<RSS:LINK> (format "http://~a~a"
-			     (hop-server-hostname)
-			     (hop-port)
-			     (hop-service-path weblets)))
-	 (<RSS:DESCRIPTION> "The latest weblets in the HOP repository")
-	 (<RSS:LAST-BUILD-DATE> (current-date))
-	 (<RSS:GENERATOR> "Hop")
-	 (<RSS:IMAGE>
-	    (<RSS:URL> (format "http://~a:~a~a"
-			       (hop-server-hostname)
-			       (hop-port)
-			       (service-resource weblets "etc/logo.png")))
+   (let ((link (format "http://~a:~a"
+		       (hop-server-hostname)
+		       (hop-port)
+		       (hop-service-path weblets))))
+      (<RSS>
+	 (<RSS:CHANNEL>
 	    (<RSS:TITLE> "HOP")
-	    (<RSS:DESCRIPTION> "The latest weblets in the HOP repository"))
-	 (map (lambda (path)
-		 (let* ((info (with-input-from-string (package-info path) read))
-			(title (find-info info 'name ""))
-			(version (find-info info 'version ""))
-			(link (find-info info
-					 'url
-					 (find-info info 'publisher "")))
-			(description (find-info info 'title ""))
-			(author (find-info info 'author ""))
-			(date (seconds->date (file-modification-time path))))
-		    (<RSS:ITEM>
-		       (<RSS:TITLE> (xml-string-encode title) " v" version)
-		       (<RSS:LINK> link)
-		       (<RSS:DESCRIPTION> description)
-		       (<RSS:AUTHOR> author)
-		       (<RSS:PUB-DATE> (date->rfc2822-date dt)))))
-	      (let ((l (sort (lambda (p1 p2)
-				(<elong (file-modification-time p1)
-					(file-modification-time p2)))
-			     (directory->path-list (weblets-repository)))))
-		 (if (> (length l) (weblets-rss-number-of-entries))
-		     (let ((le (list-ref l (weblets-rss-number-of-entries))))
-			(set-cdr! le '())
-			l)
-		     l))))))
+	    (<RSS:LINK> link)
+	    (<RSS:DESCRIPTION> "The latest weblets in the HOP repository")
+	    (<RSS:LAST-BUILD-DATE> (current-date))
+	    (<RSS:GENERATOR> "Hop")
+	    (<RSS:IMAGE>
+	       (<RSS:URL> (format "http://~a:~a~a"
+				  (hop-server-hostname)
+				  (hop-port)
+				  (service-resource weblets "etc/logo.png")))
+	       (<RSS:TITLE> "HOP")
+	       (<RSS:DESCRIPTION> "The latest weblets in the HOP repository"))
+	    (map (lambda (path)
+		    (let* ((info (with-input-from-string (package-info path)
+				    read))
+			   (title (find-info info 'name ""))
+			   (version (find-info info 'version ""))
+			   (link (find-info info 'publisher link))
+			   (description (find-info info 'title ""))
+			   (author (find-info info 'author ""))
+			   (date (seconds->date (file-modification-time path))))
+		       (<RSS:ITEM>
+			  (<RSS:TITLE> (xml-string-encode title) " v" version)
+			  (<RSS:LINK> link)
+			  (<RSS:DESCRIPTION> description)
+			  (<RSS:AUTHOR> author)
+			  (<RSS:PUB-DATE> (date->rfc2822-date date)))))
+		 (let ((l (sort (lambda (p1 p2)
+				   (>=elong (file-modification-time p1)
+					    (file-modification-time p2)))
+				(get-weblets (weblets-repository)))))
+		    (if (> (length l) (weblets-rss-number-of-entries))
+			(let ((le (list-ref l (weblets-rss-number-of-entries))))
+			   (set-cdr! le '())
+			   l)
+			l)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets/filter ...                                               */
@@ -153,7 +177,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS-LIST>)
    (<DIV>
-      (filter-map <WEBLET> (directory->path-list (weblets-repository)))))
+      (filter-map <WEBLET> (sort string<? (get-weblets (weblets-repository))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETS-PUBLISHER> ...                                          */
@@ -201,7 +225,7 @@
 	  (dir (make-file-path (hop-weblets-directory) "hz" "etc"))
 	  (srci  (make-file-name dir "hz-install.png"))
 	  (srcr (make-file-name dir "hz-run.png")))
-
+      
       (when (or (string=? category-filter "all")
 		(string=? (find-info info 'category "other") category-filter))
 	 (<DIV> :class "weblet"
@@ -215,8 +239,43 @@
 	       (<DIV> :class "install" :id id
 		  ~(hop_install_weblet $path $srci $srcr $id)))
 	    (<DIV> :class "author" (find-info info 'author ""))
+	    (let ((minhop (find-info info 'minhop ""))
+		  (maxhop (find-info info 'maxhop "")))
+	       (<DIV> :class "hop"
+		  (when (> (string-length minhop) 0)
+		     (<DIV> "Min hop: " (<SPAN> :class "min" minhop)))
+		  (when (> (string-length maxhop) 0)
+		     (<DIV> "Max hop: " (<SPAN> :class "max" maxhop)))
+		  (<DIV> "md5: "
+			 (<SPAN> :class "signature" (md5sum path)))))
 	    (<DIV> :class "comment" (find-info info 'comment ""))))))
 
+;*---------------------------------------------------------------------*/
+;*    get-weblets ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (get-weblets dir)
+   ;; get the whole file list
+   (let ((table (make-hashtable)))
+      (for-each (lambda (file)
+		   (multiple-value-bind (name version)
+		      (package-name-parse file)
+		      (hashtable-update! table name
+					 (lambda (old)
+					    (cons (cons version file) old))
+					 (list (cons version file)))))
+		(directory->list dir))
+      ;; get the list
+      (map (lambda (f)
+	      (make-file-name dir f))
+	   (hashtable-map
+	    table
+	    (lambda (key elements)
+	       (cdar (sort (lambda (e1 e2)
+			      (let ((v1 (car e1))
+				    (v2 (car e2)))
+				 (>=fx (string-natural-compare3 v1 v2) 0)))
+			   elements)))))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */
 ;*---------------------------------------------------------------------*/

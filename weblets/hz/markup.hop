@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Wed Nov 21 08:41:31 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 14:36:53 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
@@ -253,12 +253,12 @@
 				(innerHTML-set! "update" h)))
 		"Install"))))
     (<DIV> :id "update"
-       (<HZ:SYNC-UPDATE> '()))))
+       (<HZ:SYNC-UPDATE> '() (hz-db-sync-stamp)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:SYNC-UPDATE> ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (<HZ:SYNC-UPDATE> errs)
+(define (<HZ:SYNC-UPDATE> errs stamp)
    (list
     (<TABLE> :class "sync"
        (<TR> (<TH> "Last sync: "
@@ -269,7 +269,7 @@
 		   :onclick ~(with-hop ($(service ()
 					    (let ((sync (hz-sync!)))
 					       (if (list? sync)
-						   (<HZ:SYNC-UPDATE> sync)
+						   (<HZ:SYNC-UPDATE> sync stamp)
 						   (cons 'login sync)))))
 				(lambda (h)
 				   (if (pair? h)
@@ -283,7 +283,7 @@
 	  (<TH> :class "update" "Updates:")
 	  (<TH> :class "error" "Errors:"))
        (<TR>
-	  (<TD> (map <HZ:GOTO-WEBLET> (hz-db-find-new)))
+	  (<TD> (map <HZ:GOTO-WEBLET> (hz-db-find-newer stamp)))
 	  (<TD> (map <HZ:GOTO-WEBLET> (hz-db-find-update)))
 	  (<TD> :class "error"
 	     (map (lambda (x)

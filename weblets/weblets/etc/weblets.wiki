@@ -16,6 +16,12 @@ Here are the services defined by WEBLETS:
  list. This service can be used by other weblets that have to expose a
  set of widgets (such as the [[home|HOME]] weblet).
   - ++[[weblets/rss]]++: Generates a RSS feeds describing the available widgets.
+  - ++[[weblets/synclist]]++: Produce a //publisher// list. That is a list 
+ that can be used to feed provided to //synchronized// [[hz|HZ]].  This 
+ service takes one argument:
+   * ++url++, the url (that could use the ++file://++ syntax) specifying the
+ location of the weblets repository for which a list must be produced. This
+ argument defaults to ++(weblets-repository)++.
 
 == Configuring WEBLETS ==
 

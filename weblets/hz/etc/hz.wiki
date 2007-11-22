@@ -27,11 +27,6 @@ HZ defines several services:
  service takes one argument:
    * ++url++, the url (that could use the ++file://++ syntax) specifying the
  location of the weblet. 
-  - ++hz/synclist++: Produce a //publisher// list. That is a list that can
- be used to feed provided to //synchronized// [[hz|HZ]].  This 
- service takes one argument:
-   * ++url++, the url (that could use the ++file://++ syntax) specifying the
- location of the weblets repository for which a list must be produced. 
 
 
 === Package file name ===

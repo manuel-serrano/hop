@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Wed Nov 21 07:54:33 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 06:38:45 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -24,8 +24,7 @@
 	   hz/documentation
 	   hz/preferences
 	   hz/install
-	   hz/run
-	   hz/synclist))
+	   hz/run))
 
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */
@@ -94,21 +93,3 @@
       (<HTML>
 	 ~(set! document.location (string-append "/hop/" $name)))))
 
-;*---------------------------------------------------------------------*/
-;*    hz/synclist ...                                                  */
-;*---------------------------------------------------------------------*/
-(define-service (hz/synclist url)
-   (let ((req (current-request)))
-      (if (authorized-path? req url)
-	  (with-output-to-string
-	     (lambda ()
-		(print "(")
-		(for-each (lambda (p)
-			     (let ((l (with-input-from-string (package-info p)
-					 read)))
-				(when (pair? l)
-				   (write l)
-				   (newline))))
-			  (directory->path-list url))
-		(print ")")))
-	  (user-access-denied req))))

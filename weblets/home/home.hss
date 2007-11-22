@@ -271,7 +271,7 @@ hr {
 /*--- iframe ----------------------------------------------------------*/
 iframe.weblets {
   width: 98%;
-  height: 370px;
+  height: 500px;
   overflow: auto;
   border: 1px solid $border-color;
   margin: 5px;

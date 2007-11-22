@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Tue Nov 20 11:22:25 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 14:37:18 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -26,7 +26,7 @@
 	   (hz-db-sync-date::date)
 	   (hz-db-sync-date-update! ::date)
 	   (hz-db-find ::bstring ::bstring)
-	   (hz-db-find-new::pair-nil)
+	   (hz-db-find-newer::pair-nil ::int)
 	   (hz-db-find-update::pair-nil)
 	   (hz-db-find-keyword::pair-nil ::bstring)
 	   (hz-db-get-categories::pair-nil)
@@ -73,27 +73,28 @@
 (define (hz-db-init!)
    (with-lock *db-mutex*
       (lambda ()
-	 (if (file-exists? (hz-db))
-	     (hz-db-reconfigure! (instantiate::sqltiny
-				    (path (hz-db))
-				    (sync 'automatic)))
-	     (begin
-		(make-directory (dirname (hz-db)))
-		(let ((db (instantiate::sqltiny
-			     (path (hz-db))
-			     (sync 'automatic))))
-		   (sqlite-exec db
-		      "CREATE TABLE info (name STRING, date STRING, stamp INTEGER, version STRING)")
-		   (sqlite-exec db
-		      "INSERT INTO info VALUES ('info', ~q, ~q, ~q)"
-		      (elong->string (date->seconds (make-date)))
-		      0
-		      (hz-version))
-		   (sqlite-exec db
-		      "CREATE TABLE weblets (~L)"
-		      (map (lambda (s) (format "~a ~a" (car s) (cdr s)))
-			   (hz-db-columns)))
-		   (set! *db* db))))))
+	 (when (eq? *db* #unspecified)
+	    (if (file-exists? (hz-db))
+		(hz-db-reconfigure! (instantiate::sqltiny
+				       (path (hz-db))
+				       (sync 'automatic)))
+		(begin
+		   (make-directory (dirname (hz-db)))
+		   (let ((db (instantiate::sqltiny
+				(path (hz-db))
+				(sync 'automatic))))
+		      (sqlite-exec db
+			 "CREATE TABLE info (name STRING, date STRING, stamp INTEGER, version STRING)")
+		      (sqlite-exec db
+			 "INSERT INTO info VALUES ('info', ~q, ~q, ~q)"
+			 (elong->string (date->seconds (make-date)))
+			 0
+			 (hz-version))
+		      (sqlite-exec db
+			 "CREATE TABLE weblets (~L)"
+			 (map (lambda (s) (format "~a ~a" (car s) (cdr s)))
+			      (hz-db-columns)))
+		      (set! *db* db)))))))
    (hz-sync-standard-weblets!))
 
 ;*---------------------------------------------------------------------*/
@@ -189,16 +190,16 @@
       (hz-db-row) name category))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-db-find-new ...                                               */
+;*    hz-db-find-newer ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hz-db-find-new)
+(define (hz-db-find-newer stamp)
    (sqlite-map *db* hz-make-weblet
-      "SELECT ~a FROM weblets WHERE (createstamp=~q)" (hz-db-sync-stamp)))
+      "SELECT ~a FROM weblets WHERE (createstamp>=~q)" (hz-db-row) stamp))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-find-update ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (hz-db-find-new)
+(define (hz-db-find-update)
    (sqlite-map *db* hz-make-weblet
       "SELECT ~a FROM weblets WHERE (updatestamp>installstamp)" (hz-db-row)))
 
@@ -211,12 +212,6 @@
 	 (sqlite-map *db* hz-make-weblet
 	    "SELECT * FROM weblets WHERE (name LIKE '%~a%') || (author LIKE '%~a%') || (title LIKE '%~a%') || (comment LIKE '%~a%') ORDER BY name ASC"
 	    key key key key))))
-
-;*---------------------------------------------------------------------*/
-;*    hz-db-find-update ...                                            */
-;*---------------------------------------------------------------------*/
-(define (hz-db-find-update)
-   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-add-or-update! ...                                         */
