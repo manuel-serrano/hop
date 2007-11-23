@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Oct  6 07:56:57 2007 (serrano)                */
+;*    Last change :  Fri Nov 23 15:09:00 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -419,9 +419,14 @@
 ;*---------------------------------------------------------------------*/
 (define (service-base-url svc req)
    (with-access::http-request req (scheme host port)
-      (format "~a://~a:~a~a/"
-	      (if (eq? scheme '*) "http" scheme) host port
-	      (service-resource svc))))
+      (let ((path (service-resource svc)))
+	 (format (if (and (>fx (string-length path) 0)
+			  (not (char=? (string-ref path 0) #\/)))
+		     "~a://~a:~a~a/"
+		     "~a://~a:~a/~a/")
+		 (if (eq? scheme '*) "http" scheme) host port
+		 path))))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    *etc-table*                                                      */
