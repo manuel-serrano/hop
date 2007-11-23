@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 12 13:49:57 2006                          */
-/*    Last change :  Fri Nov 23 10:47:42 2007 (serrano)                */
+/*    Last change :  Fri Nov 23 14:35:17 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP weblets cascade style sheet                                  */
@@ -182,4 +182,15 @@ div.weblets-category {
 
 select.weblets-category {
   border: 1px solid $border-color;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Installation                                                     */
+/*---------------------------------------------------------------------*/
+img.hop_hz_click:hover { 
+  border: 1px solid #bbb; background: #eaffcd; 
+}
+
+img.hop_hz_click { 
+  border: 1px solid transparent; 
 }

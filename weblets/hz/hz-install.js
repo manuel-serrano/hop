@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 16 11:07:40 2007                          */
-/*    Last change :  Wed Nov 21 12:03:39 2007 (serrano)                */
+/*    Last change :  Fri Nov 23 14:34:41 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Create a click and install panel                                 */
@@ -55,9 +55,16 @@ function hop_install_weblet( url, srci, srcr, parent ) {
    
    var head = document.getElementsByTagName( "head" )[ 0 ];
    var style = document.createElement( 'style' );
-   style.appendChild( document.createTextNode(
+   var css = document.createTextNode(
 			 'img.hop_hz_click:hover { border: 1px solid #bbb; background: #eaffcd; }' +
-			 'img.hop_hz_click { border: 1px solid transparent; }' ) );
+			 'img.hop_hz_click { border: 1px solid transparent; }' );
+   try {
+      style.appendChild( css );
+   } catch( e ) {
+      // IE 7 (always him), raises an exception when adding a child to
+      // the style element...
+   }
+
    head.appendChild( style );
 
    if( parent ) {
