@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 12 13:49:57 2006                          */
-/*    Last change :  Thu Nov 22 07:44:45 2007 (serrano)                */
+/*    Last change :  Fri Nov 23 10:47:42 2007 (serrano)                */
 /*    Copyright   :  2006-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP weblets cascade style sheet                                  */
@@ -26,7 +26,7 @@ $(define title-color "#ddd")
 /*---------------------------------------------------------------------*/
 body#weblets {
   background: #e0e0e0;
-  font-family: Lucida Grande, Verdana, Lucida, Helvetica, arial;
+  font-family: arial;
 }
 
 button {

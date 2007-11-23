@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Fri Nov 23 10:30:54 2007 (serrano)                */
+;*    Last change :  Fri Nov 23 12:19:36 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP slide weblet                                                 */
@@ -176,10 +176,10 @@
 ;*    <WEBLETS-LIST> ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS-LIST> req)
-   (let* ((user (http-request-user req))
-	  (auth (http-decode-authentication (http-request-authorization req))))
+   (let* ((autho (http-request-authorization req))
+	  (authe (if autho (http-decode-authentication autho) #f)))
       (<DIV>
-	 (filter-map (lambda (w) (<WEBLET> w auth))
+	 (filter-map (lambda (w) (<WEBLET> w authe))
 		     (sort string<? (get-weblets (weblets-repository)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -229,7 +229,7 @@
 	  (dir (make-file-path (hop-weblets-directory) "hz" "etc"))
 	  (srci  (make-file-name dir "hz-install.png"))
 	  (srcr (make-file-name dir "hz-run.png"))
-	  (url (if info
+	  (url (if (string? auth)
 		   (format "http://~a@~a:~a~a" auth (hostname) (hop-port) path)
 		   (format "http://~a:~a~a" (hostname) (hop-port) path))))
       
