@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Nov 23 15:09:00 2007 (serrano)                */
+;*    Last change :  Fri Nov 23 15:19:16 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -422,8 +422,8 @@
       (let ((path (service-resource svc)))
 	 (format (if (and (>fx (string-length path) 0)
 			  (not (char=? (string-ref path 0) #\/)))
-		     "~a://~a:~a~a/"
-		     "~a://~a:~a/~a/")
+		     "~a://~a:~a/~a/"
+		     "~a://~a:~a~a/")
 		 (if (eq? scheme '*) "http" scheme) host port
 		 path))))
 
