@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Nov 14 08:38:43 2007 (serrano)                */
+;*    Last change :  Fri Nov 23 06:56:00 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -42,6 +42,7 @@
 	       (count::int (default 0))))
 	    
    (export  (hop-event-init! ::obj)
+	    (hop-event-debug-dump-tables)
 	    (hop-event-signal! ::bstring ::obj)
 	    (hop-event-broadcast! ::bstring ::obj)
 	    (hop-event-client-ready? ::bstring)))
@@ -166,6 +167,18 @@
 	    (set! *register-service*
 		  (service :url "server-event-register" (event key flash)
 		     (server-event-register event key flash)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-debug-dump-tables ...                                  */
+;*    -------------------------------------------------------------    */
+;*    Dump the content of the event table for debug purposes.          */
+;*---------------------------------------------------------------------*/
+(define (hop-event-debug-dump-tables)
+   (with-lock *event-mutex*
+      (lambda ()
+	 `((*flash-request-list* ,*flash-request-list*)
+	   (*flash-socket-table* ,*flash-socket-table*)
+	   (*ajax-connection-table* ,*ajax-connection-table*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    server-event-register ...                                        */

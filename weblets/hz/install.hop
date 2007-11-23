@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Thu Nov 22 16:42:34 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 19:50:47 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -78,14 +78,14 @@
 	       (let* ((tmp (make-file-name (os-tmp) "hop"))
 		      (files (untar p :directory tmp)))
 		  (if (pair? files)
-		      (let ((file (car files))
-			    (base (substring file
-					     (+fx (string-length tmp) 1)
-					     (string-length file)))
-			    (dir (dirname base))
-			    (name (if (string=? dir ".") base dir))
-			    (src (make-file-path
-				  tmp name (string-append name ".hop"))))
+		      (let* ((file (car files))
+			     (base (substring file
+					      (+fx (string-length tmp) 1)
+					      (string-length file)))
+			     (dir (dirname base))
+			     (name (if (string=? dir ".") base dir))
+			     (src (make-file-path
+				   tmp name (string-append name ".hop"))))
 			 (if (file-exists? src)
 			     (hop-load src)
 			     (error 'hz-load "Cannot find HOP source" path)))

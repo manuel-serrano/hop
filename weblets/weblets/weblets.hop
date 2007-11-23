@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Thu Nov 22 15:39:42 2007 (serrano)                */
+;*    Last change :  Thu Nov 22 19:50:34 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP slide weblet                                                 */
@@ -51,7 +51,7 @@
 		  (<TD> :class "content"
 		     (<DIV> :id "title" "Hop Weblets")
 		     (<WEBLETS-PUBLISHER>)
-		     (<WEBLETS>))))
+		     (<WEBLETS> (current-request)))))
 	    (<FOOT>
 	       (<FOOT-BUTTON>
 		  :inline #t
@@ -86,7 +86,7 @@
 	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
 	 :css (service-resource weblets "weblets.hss"))
       (<BODY>
-	 (<WEBLETS>))))
+	 (<WEBLETS>) (current-request))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets/synclist ...                                             */
@@ -168,16 +168,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETS> ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (<WEBLETS>)
+(define (<WEBLETS> req)
    (list (<WEBLETS-CATEGORIES>)
-	 (<DIV> :id "weblets-list" (<WEBLETS-LIST>))))
+	 (<DIV> :id "weblets-list" (<WEBLETS-LIST> req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETS-LIST> ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (<WEBLETS-LIST>)
-   (<DIV>
-      (filter-map <WEBLET> (sort string<? (get-weblets (weblets-repository))))))
+(define (<WEBLETS-LIST> req)
+   (let* ((user (http-request-user req))
+	  (auth (http-decode-authentication (http-request-authorization req))))
+      (<DIV>
+	 (filter-map (lambda (w) (<WEBLET> w auth))
+		     (sort string<? (get-weblets (weblets-repository)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETS-PUBLISHER> ...                                          */
@@ -220,13 +223,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLET> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (<WEBLET> path)
+(define (<WEBLET> path auth)
    
    (let* ((info (with-input-from-string (package-info path) read))
 	  (dir (make-file-path (hop-weblets-directory) "hz" "etc"))
 	  (srci  (make-file-name dir "hz-install.png"))
 	  (srcr (make-file-name dir "hz-run.png"))
-	  (url (format "http://~a:~a~a" (hostname) (hop-port) path)))
+	  (url (if info
+		   (format "http://~a@~a:~a~a" auth (hostname) (hop-port) path)
+		   (format "http://~a:~a~a" (hostname) (hop-port) path))))
       
       (when (or (string=? category-filter "all")
 		(string=? (find-info info 'category "other") category-filter))
