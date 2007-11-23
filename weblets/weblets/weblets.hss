@@ -26,7 +26,7 @@ $(define title-color "#ddd")
 /*---------------------------------------------------------------------*/
 body#weblets {
   background: #e0e0e0;
-  font-family: arial;
+  font-family: Lucida Grande, Verdana, Lucida, Helvetica, arial;
 }
 
 button {

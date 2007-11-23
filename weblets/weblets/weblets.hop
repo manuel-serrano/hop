@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Thu Nov 22 19:50:34 2007 (serrano)                */
+;*    Last change :  Fri Nov 23 10:30:54 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP slide weblet                                                 */
@@ -86,7 +86,7 @@
 	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
 	 :css (service-resource weblets "weblets.hss"))
       (<BODY>
-	 (<WEBLETS>) (current-request))))
+	 (<WEBLETS> (current-request)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets/synclist ...                                             */
