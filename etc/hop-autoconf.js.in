@@ -88,7 +88,8 @@ var hop_is_html_element;
 
 if( window.HTMLElement === undefined ) {
    hop_is_html_element = function hop_is_html_element( obj ) {
-      return (((obj instanceof Object) || (typeof obj == "object"))
+      return (obj != null)
+              && (((obj instanceof Object) || (typeof obj == "object"))
 	      && (typeof obj.innerHTML == "string"));
    } 
 } else {
@@ -96,7 +97,7 @@ if( window.HTMLElement === undefined ) {
 
    if( ifr instanceof HTMLElement ) {
       hop_is_html_element = function hop_is_html_element( obj ) {
-	 return (obj instanceof HTMLElement);
+	 return (obj != null) && (obj instanceof HTMLElement);
       }
    } else {
       /* this is konqueror */
