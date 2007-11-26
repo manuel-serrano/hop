@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Oct 31 10:52:36 2007 (serrano)                */
+;*    Last change :  Sat Nov 24 20:56:29 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -494,13 +494,17 @@
 		   (tprint "======== AUDIO-LOOP STARTED...")
 		   (audio-loop player))
 		(sleep 3000562)
-		(when (hop-event-client-ready? %event)
-		   (tprint "======== AUDIO-LOOP RESET...")
-		   (if (<fx %errcount 50)
-		       (begin
-			  (music-reset! engine)
-			  (liip))
-		       (music-close engine)))))))))
+		(if (hop-event-client-ready? %event)
+		    (begin
+		       (tprint "======== AUDIO-LOOP RESET...")
+		       (if (<fx %errcount 50)
+			   (begin
+			      (music-reset! engine)
+			      (liip))
+			   (music-close engine)))
+		    (begin
+		       (music-close engine)
+		       (tprint "======== AUDIO-LOOP ENDED...")))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-set! ...                                          */
@@ -527,7 +531,7 @@
    (cond-expand
       (enable-threads
        (with-access::hop-audio-player player (%service %event engine)
-	  (set! %service (service (a0 a1)
+	  (set! %service (service :url (get-service-url "hopaudio") (a0 a1)
 			    (tprint "player received: " a0)
 			    (with-handler
 			       (lambda (e)

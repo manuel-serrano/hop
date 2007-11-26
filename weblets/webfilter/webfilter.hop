@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Aug 10 14:35:48 2007 (serrano)                */
+;*    Last change :  Sun Nov 25 06:40:41 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -333,15 +333,14 @@ Google, each containing a forward pointer to the actual URL.])))
       (if (authorized-service? req 'admin)
 	  (<HTML>
 	     (<HEAD>
+		:favicon (service-resource webfilter "etc/logo-16x16.png")
 		:title "Hop Webfilter"
 		:include "hop-notepad" "hop-sorttable"
 		:base (service-base-url webfilter req)
 		:css "webfilter.hss")
 	     (<BODY>
-		(<DIV>
-		   :align "center"
-		   (<TABLE>
-		      :class "webfilter"
+		(<DIV> :align "center"
+		   (<TABLE> :class "webfilter"
 		      (<TR>
 			 (<TD>
 			    (<IMG> :src "etc/logo.png"))
@@ -353,20 +352,20 @@ Google, each containing a forward pointer to the actual URL.])))
 			       (<TR>
 				  (<TD>
 				     (<DIV> :id "glop"
-					    (<NOTEPAD>
-					       (<NPHEAD> "")
-					       (<NPTAB>
-						  (<NPTABHEAD> "Headers")
-						  (<HTTP-HEADERS>))
-					       (<NPTAB>
-						  (<NPTABHEAD> "Blacklist")
-						  (<BLACKLIST>))
-					       (<NPTAB>
-						  (<NPTABHEAD> "Google")
-						  (<GOOGLE>))
-					       (<NPTAB>
-						  (<NPTABHEAD> "Flash")
-						  (<FLASH>)))))))))))
+					(<NOTEPAD>
+					   (<NPHEAD> "")
+					   (<NPTAB>
+					      (<NPTABHEAD> "Headers")
+					      (<HTTP-HEADERS>))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Blacklist")
+					      (<BLACKLIST>))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Google")
+					      (<GOOGLE>))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Flash")
+					      (<FLASH>)))))))))))
 		(<FOOT>)))
 	  (user-access-denied req))))
 
@@ -488,14 +487,14 @@ Google, each containing a forward pointer to the actual URL.])))
 	  (user-access-denied req)
 	  (<HTML>
 	     (<HEAD>
+		:favicon (service-resource webfilter "etc/logo-16x16.png")
 		:title "Hop Webfilter preferences"
 		:include "hop-notepad" "hop-sorttable"
 		:base (service-base-url webfilter/preferences req)
 		:css "webfilter.hss")
 	     (<BODY>
 		(<CENTER>
-		   (<TABLE>
-		      :class "webfilter"
+		   (<TABLE> :class "webfilter"
 		      (<TR>
 			 (<TD>
 			    (<IMG> :src (service-resource webfilter/preferences
@@ -505,7 +504,7 @@ Google, each containing a forward pointer to the actual URL.])))
 			       (<TR>
 				  (<TD>
 				     (<DIV> :id "title"
-					    "Hop Web Filtering Preferences")))
+					"Hop Web Filtering Preferences")))
 			       (<TR>
 				  (<TD>
 				     (<PREFERENCES>)))))))))))))

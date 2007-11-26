@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Jan 31 05:01:52 2007 (serrano)                */
+/*    Last change :  Sat Nov 24 07:36:46 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
@@ -225,3 +225,43 @@ table.info-autoload th {
   background: #ddd;
 }
   
+/*---------------------------------------------------------------------*/
+/*    Events                                                           */
+/*---------------------------------------------------------------------*/
+table.events {
+  font-size: 90%;
+  width: 100%;
+}
+
+table.events th.events {
+  border-bottom: 1px solid $border-color;
+}
+
+table.events h1 {
+  color: #009;
+  font-size: 105%;
+  border-bottom: 1px dotted $border-color;
+  font-weight: bold;
+}
+
+div.dump-events {
+  width: 100%;
+}
+
+div.dump-events table.dump-events {
+  font-size: inherit;
+}
+
+div.dump-events table.dump-events th {
+  color: #800;
+}
+
+div.dump-events table.dump-events th:after {
+  content: ": ";
+}
+
+div.dump-events table.dump-events td {
+  font-weight: 100;
+}
+
+

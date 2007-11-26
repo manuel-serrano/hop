@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Nov 14 15:12:36 2007 (serrano)                */
+;*    Last change :  Sat Nov 24 08:02:42 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -60,7 +60,7 @@
    (let ((req (current-request)))
       (if (authorized-service? req 'admin)
 	  (<HTML>
-	     (<HEAD>
+	     (<HEAD> :favicon (service-resource info "etc/logo-16x16.png")
 		:title "Hop Info weblet"
 		:base (service-base-url info req)
 		:include "hop-notepad" "hop-sorttable"
@@ -68,10 +68,8 @@
 	     (<BODY>
 		:onunload ~(with-hop ($(service ()
 					  (set! traffic-hookingp #f))))
-		(<DIV>
-		   :align "center"
-		   (<TABLE>
-		      :class "info"
+		(<DIV> :align "center"
+		   (<TABLE> :class "info"
 		      (<TR>
 			 (<TD>
 			    (<IMG> :src "etc/logo.png"))
@@ -80,37 +78,42 @@
 			       (<TR>
 				  (<TD>
 				     (<DIV> :id "title"
-					    "Hop Information Center")))
+					"Hop Information Center")))
 			       (<TR>
 				  (<TD>
 				     (<DIV> :id "glop"
-					    (<NOTEPAD>
-					       (<NPHEAD> "")
-					       (<NPTAB>
-						  (<NPTABHEAD> "Misc")
-						  (<DELAY>
-						     (lambda ()
-							(<MISC>))))
-					       (<NPTAB>
-						  (<NPTABHEAD> "Config")
-						  (<DELAY>
-						     (lambda ()
-							(<CONFIG>))))
-					       (<NPTAB>
-						  (<NPTABHEAD> "Weblets")
-						  (<DELAY>
-						     (lambda ()
-							(<WEBLETS>))))
-					       (<NPTAB>
-						  (<NPTABHEAD> "Caches")
-						  (<DELAY>
-						     (lambda ()
-							(<CACHES> req))))
-					       (<NPTAB>
-						  (<NPTABHEAD> "Traffic")
-						  (<DELAY>
-						     (lambda ()
-							(<TRAFFIC>)))))))))))))
+					(<NOTEPAD>
+					   (<NPHEAD> "")
+					   (<NPTAB>
+					      (<NPTABHEAD> "Uptime")
+					      (<DELAY>
+						 (lambda ()
+						    (<MISC>))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Config")
+					      (<DELAY>
+						 (lambda ()
+						    (<CONFIG>))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Weblets")
+					      (<DELAY>
+						 (lambda ()
+						    (<WEBLETS>))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Caches")
+					      (<DELAY>
+						 (lambda ()
+						    (<CACHES> req))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Events")
+					      (<DELAY>
+						 (lambda ()
+						    (<EVENTS>))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Traffic")
+					      (<DELAY>
+						 (lambda ()
+						    (<TRAFFIC>)))))))))))))
 		(<FOOT>)))
 	  (user-access-denied req))))
 
@@ -123,6 +126,12 @@
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")
 	 (header (list (cons 'location: url))))))
+
+;*---------------------------------------------------------------------*/
+;*    info/preferences ...                                             */
+;*---------------------------------------------------------------------*/
+(define-service (info/preferences)
+   "No preference for this weblet")
 
 ;*---------------------------------------------------------------------*/
 ;*    <MISC> ...                                                       */
@@ -289,3 +298,65 @@
 						      (string-append
 						       $traffic.innerHTML t)))))
 	  (<SORTTABLE> traffic)))))
+
+;*---------------------------------------------------------------------*/
+;*    <EVENTS> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<EVENTS>)
+   (<TABLE> :class "events"
+      (<COLGROUP> (<COL> :span 2 :width "50%"))
+      (<TR> (<TH> :class "events" "Flash") (<TH> :class "events" "Ajax"))
+      (<TR> (<TD> (<EVENT-FLASH>)) (<TD> (<EVENT-AJAX>)))))
+
+;*---------------------------------------------------------------------*/
+;*    <EVENT-FLASH> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<EVENT-FLASH>)
+   (let ((tables (hop-event-tables)))
+      (<DIV> :class "dump-events"
+	 (<H1> "Request list")
+	 (<TABLE> :class "dump-events"
+	    (map (lambda (e)
+		    (<TR>
+		       (<TH>
+			  (symbol->string (car e)))
+		       (<TD>
+			  (let ((sock (http-request-socket (cdr e))))
+			     (<SPAN> (socket-hostname sock)
+				     ":"
+				     (socket-port-number sock))))))
+		 (cadr (assq '*flash-request-list* tables))))
+	 (<H1> "Socket table")
+	 (<TABLE> :class "dump-events"
+	    (hashtable-map
+	     (cadr (assq '*flash-socket-table* tables))
+	     (lambda (k v)
+		(list
+		 (<TR> (<TH> k))
+		 (<TR> (<TD> (map (lambda (r)
+				     (let ((sock (http-request-socket r)))
+					(list (<SPAN>
+						 (socket-hostname sock)
+						 ":"
+						 (socket-port-number sock))
+					      " ")))
+				  v))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <EVENT-AJAX> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<EVENT-AJAX>)
+   (let ((tables (hop-event-tables)))
+      (<DIV> :class "dump-events"
+	 (<H1> "Connections table")
+	 (<TABLE> :class "dump-events"
+	    (hashtable-map
+	     (cadr (assq '*ajax-connection-table* tables))
+	     (lambda (k l)
+		(cons (<TR> (<TH> k))
+		      (map (lambda (c)
+			      (<TR> (<TD> :class "ajax-connection"
+				       (with-output-to-string
+					  (lambda () (display c))))))
+			   l))))))))
+   

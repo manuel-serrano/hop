@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri Nov  9 08:09:26 2007 (serrano)                */
+;*    Last change :  Mon Nov 26 11:49:54 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -158,9 +158,9 @@
    (with-access::http-response-remote r (host port remote-timeout timeout request)
       ;; the body
       (with-trace 4 'http-response-body
-	 (let ((op (socket-output socket))
-	       (ip (connection-input remote))
-	       (wstart #f))
+	 (let* ((wstart #f)
+		(ip (connection-input remote))
+		(op (socket-output socket)))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! op timeout))
 	    (multiple-value-bind (http-version status-code phrase)
@@ -186,10 +186,34 @@
 		      ;; no message body
 		      #unspecified)
 		     (else
-		      (if (eq? te 'chunked)
-			  (http-send-chunks ip op)
-			  (unless (=elong cl #e0)
-			     (send-chars ip op cl)))))
+		      (let ((snif (and (hop-enable-proxy-sniffer)
+				       ((hop-proxy-sniffer) request))))
+			 (if (output-port? snif)
+			     (let ((op2 (if (output-port? snif)
+					    (open-output-procedure
+					     (lambda (s)
+						(display s snif)
+						(display s op))
+					     (lambda ()
+						(flush-output-port snif)
+						(flush-output-port op)))
+					    op)))
+				(with-trace 4 'http-snif
+				   (trace-item "request=" request))
+				(unwind-protect
+				   (if (eq? te 'chunked)
+				       (http-send-chunks ip op2)
+				       (unless (=elong cl #e0)
+					  (send-chars ip op2 cl)))
+				   (begin
+				      (flush-output-port snif)
+				      (flush-output-port op2)
+				      (close-output-port snif)
+				      (close-output-port op2))))
+			     (if (eq? te 'chunked)
+				 (http-send-chunks ip op)
+				 (unless (=elong cl #e0)
+				    (send-chars ip op cl)))))))
 		  ;; what to do with the remote connection. if the
 		  ;; status code is not 200, we always close the connection
 		  ;; in order to avoid, in particular, re-direct problems.

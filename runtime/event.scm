@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Nov 23 06:56:00 2007 (serrano)                */
+;*    Last change :  Sun Nov 25 06:24:35 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -42,7 +42,7 @@
 	       (count::int (default 0))))
 	    
    (export  (hop-event-init! ::obj)
-	    (hop-event-debug-dump-tables)
+	    (hop-event-tables)
 	    (hop-event-signal! ::bstring ::obj)
 	    (hop-event-broadcast! ::bstring ::obj)
 	    (hop-event-client-ready? ::bstring)))
@@ -59,8 +59,10 @@
 (define *register-service* #f)
 (define *unregister-service* #f)
 (define *init-service* #f)
+(define *close-service* #f)
 (define *client-key* 0)
 (define *default-request* (instantiate::http-request))
+(define *ping* (symbol->string (gensym 'ping)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *ajax-connection-table* ...                                      */
@@ -77,6 +79,19 @@
 	    (if (eq? key (ajax-connection-key (car bucket)))
 		(car bucket)
 		(loop (cdr bucket)))))))
+
+;*---------------------------------------------------------------------*/
+;*    object-display ::ajax-connection ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (object-display obj::ajax-connection . port)
+   (let ((p (if (pair? port) (car port) (current-output-port))))
+      (with-access::ajax-connection obj (key req)
+	 (display key p)
+	 (display " " p)
+	 (let ((sock (http-request-socket req)))
+	    (display (socket-hostname sock) p)
+	    (display ":" p)
+	    (display (socket-port-number sock) p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-store-connection! ...                                       */
@@ -160,6 +175,16 @@
 				 (request req)
 				 (name key)))))))
 
+	    (set! *close-service*
+		  (service :url "server-event-close" (key)
+		     (with-lock *event-mutex*
+			(lambda ()
+			   (let ((key (string->symbol key)))
+			      (set! *flash-request-list*
+				    (filter! (lambda (e)
+						(not (eq? (car e) key)))
+					     *flash-request-list*)))))))
+
 	    (set! *unregister-service*
 		  (service :url "server-event-unregister" (event key)
 		     (server-event-unregister event key)))
@@ -169,11 +194,11 @@
 		     (server-event-register event key flash)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-event-debug-dump-tables ...                                  */
+;*    hop-event-tables ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the content of the event table for debug purposes.          */
 ;*---------------------------------------------------------------------*/
-(define (hop-event-debug-dump-tables)
+(define (hop-event-tables)
    (with-lock *event-mutex*
       (lambda ()
 	 `((*flash-request-list* ,*flash-request-list*)
@@ -220,8 +245,7 @@
       (tprint "flash-register-event, name=" name)
       (hashtable-update! *flash-socket-table*
 			 name
-			 (lambda (l)
-			    (cons req (filter-requests l)))
+			 (lambda (l) (cons req l))
 			 (list req))
       (instantiate::http-response-string))
 
@@ -249,10 +273,16 @@
 	    (with-access::ajax-connection conn (req)
 	       (when (http-request? req)
 		  (socket-close (http-request-socket req)))
-	       (hashtable-update! *ajax-connection-table*
-				  event
-				  (lambda (l) (delete! conn l))
-				  '())))))
+	       (let ((clean #f))
+		  (hashtable-update! *ajax-connection-table*
+				     event
+				     (lambda (l)
+					(let ((nl (delete! conn l)))
+					   (set! clean (null? nl))
+					   nl))
+				     '())
+		  (when clean
+		     (hashtable-remove! *ajax-connection-table* event)))))))
    
    (define (unregister-flash-event! event key)
       (let ((c (assq (string->symbol key) *flash-request-list*)))
@@ -260,10 +290,12 @@
 	    (let ((req (cdr c)))
 	       (hashtable-update! *flash-socket-table*
 				  event
-				  (lambda (l)
-				     (let ((nl (filter-requests l)))
-					(delete! req nl)))
-				  '())))))
+				  (lambda (l) (delete! req l))
+				  '())
+	       ;; Ping the client to check it still exists. If the client
+	       ;; no longer exists, an error will be raised and the client
+	       ;; will be removed from the tables.
+	       (flash-signal-value req *ping* #unspecified)))))
    
    (tprint "server-event-unregister: " event " key=" key)
    (with-lock *event-mutex*
@@ -272,6 +304,26 @@
 	 (unregister-flash-event! event key)
 	 #f)))
 
+;*---------------------------------------------------------------------*/
+;*    flash-close-request! ...                                         */
+;*    -------------------------------------------------------------    */
+;*    This assumes that the event-mutex has been acquired.             */
+;*---------------------------------------------------------------------*/
+(define (flash-close-request! req)
+   ;; close the socket
+   (socket-close (http-request-socket req))
+   ;; remove the request from the *flash-request-list*
+   (set! *flash-request-list*
+	 (filter! (lambda (e) (not (eq? (cdr e) req))) *flash-request-list*))
+   ;; remove the request from the *flash-socket-table*
+   (hashtable-for-each *flash-socket-table*
+		       (lambda (k l)
+			  (hashtable-update! *flash-socket-table*
+					     k
+					     (lambda (l) (delete! req l))
+					     '())))
+   (hashtable-filter! *flash-socket-table* (lambda (k l) (pair? l))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-client-ready? ...                                      */
 ;*---------------------------------------------------------------------*/
@@ -308,28 +360,6 @@
       'persistent))
 
 ;*---------------------------------------------------------------------*/
-;*    filter-requests ...                                              */
-;*    -------------------------------------------------------------    */
-;*    Filters out the requests whose socket is closed.                 */
-;*---------------------------------------------------------------------*/
-(define (filter-requests l)
-   (filter (lambda (r)
-	      (let ((s (http-request-socket r)))
-		 (if (socket-down? s)
-		     (begin
-			;; close the socket
-			(socket-close s)
-			;; remove the connection from the *flash* table
-			(mutex-lock! *event-mutex*)
-			(set! *flash-request-list*
-			      (filter! (lambda (x) (not (eq? (cdr x) r)))
-				       *flash-request-list*))
-			(mutex-unlock! *event-mutex*)
-			#f)
-		     s)))
-	   l))
-
-;*---------------------------------------------------------------------*/
 ;*    get-ajax-key ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (get-ajax-key port)
@@ -360,8 +390,11 @@
 	  (p (socket-output s)))
       (with-handler
 	 (lambda (e)
+	    (tprint "flash-signal-value: " (find-runtime-type e) " -> " e)
 	    (if (&io-timeout-error? e)
-		(socket-close s)
+		(with-lock *event-mutex*
+		   (lambda ()
+		      (flash-close-request! req)))
 		(raise e)))
 	 (begin
 	    (fprintf p "<event name='~a'>" name)
@@ -390,9 +423,8 @@
       (hashtable-update! table
 			 name
 			 (lambda (l)
-			    (let ((l2 (filter-requests l)))
-			       (set! r (proc l2))
-			       l2))
+			    (set! r (proc l))
+			    l)
 			 '())
       r))
    

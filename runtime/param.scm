@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Nov  8 17:42:21 2007 (serrano)                */
+;*    Last change :  Mon Nov 26 11:24:28 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -195,6 +195,13 @@
 
 	    (hop-event-timeout::elong)
 	    (hop-event-timeout-set! ::elong)
+
+	    (hop-enable-proxy-sniffer::bool)
+	    (hop-enable-proxy-sniffer-set! ::bool)
+	    
+	    (hop-proxy-sniffer::procedure)
+	    (hop-proxy-sniffer-set! ::procedure)
+	    (hop-proxy-sniffer-add! ::procedure)
 	    
 	    (hop-rc-loaded!)))
 
@@ -879,6 +886,42 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-event-timeout
    #e30)
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-proxy-sniffer ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-proxy-sniffer
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-proxy-sniffer ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-proxy-sniffer
+   (lambda (req) #f)
+   (lambda (v)
+      (if (not (and (procedure? v) (correct-arity? v 1)))
+	  (error 'hop-proxy-sniffer
+		 "arity one procedure expected"
+		 v)
+	  v)))
+
+(define (hop-proxy-sniffer-add! proc)
+   (let ((old (hop-proxy-sniffer)))
+      (hop-proxy-sniffer-set!
+       (lambda (req)
+	  (let ((old (old req))
+		(new (proc req)))
+	     (if (output-port? old)
+		 (let ((p (open-output-procedure
+			   (lambda (s)
+			      (display s old)
+			      (display s new)))))
+		    (output-port-close-hook-set!
+		     p
+		     (lambda (p)
+			(close-output-port old)
+			(close-output-port new))))
+		 new))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

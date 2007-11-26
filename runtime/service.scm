@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Nov 23 15:19:16 2007 (serrano)                */
+;*    Last change :  Sat Nov 24 07:24:06 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -32,7 +32,7 @@
 	    __hop_user
 	    __hop_weblets)
    
-   (export  (get-service-url::bstring)
+   (export  (get-service-url::bstring #!optional (prefix ""))
 	    (hop-service-path? ::bstring)
 	    (make-hop-service-url::bstring ::hop-service . o)
 	    (make-service-url::bstring ::hop-service . o)
@@ -64,11 +64,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    get-service-url ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (get-service-url)
+(define (get-service-url #!optional (prefix ""))
    (with-lock *service-table-mutex*
       (lambda ()
 	 (set! *service-table-count* (+fx 1 *service-table-count*))
-	 (format "~a/~a" (hop-service-weblet-name) *service-table-count*))))
+	 (format "~a/~a~a"
+		 (hop-service-weblet-name)
+		 prefix
+		 *service-table-count*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-path? ...                                            */
