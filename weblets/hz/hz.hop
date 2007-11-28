@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Thu Nov 22 16:42:50 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 09:30:37 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -21,6 +21,7 @@
 	   hz_package)
    
    (export hz
+	   hz/weblet
 	   hz/documentation
 	   hz/preferences
 	   hz/install
@@ -77,11 +78,9 @@
    (let ((req (current-request)))
       (if (not (authorized-service? req 'admin))
 	  (user-access-denied req)
-	  (multiple-value-bind (name version)
-	     (package-url-parse url)
-	     (hz-install url)
-	     (<HTML>
-		~(set! document.location (string-append "/hop/" $name)))))))
+	  (begin
+	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
+	     (<HZ> req :weblet (hz-install-url url))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/run ...                                                       */
@@ -93,3 +92,6 @@
       (<HTML>
 	 ~(set! document.location (string-append "/hop/" $name)))))
 
+
+   
+   

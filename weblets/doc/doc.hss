@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Nov 21 14:20:32 2007 (serrano)                */
+/*    Last change :  Wed Nov 28 08:23:39 2007 (serrano)                */
 /*    Copyright   :  2005-07 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -332,6 +332,10 @@ table.api-index td {
 table.api-index span.href {
   color: $deep-blue;
   cursor: default;
+}
+
+table.api-index span.href:hover {
+  text-decoration: underline;
 }
 
 /*--- window ----------------------------------------------------------*/
@@ -977,7 +981,8 @@ table.global-search td:hover {
 /*    weblet facts                                                     */
 /*---------------------------------------------------------------------*/
 table.weblet-facts {
-  margin-left: 3ex;
+  margin-top: 2ex;
+  margin-left: 2em;
   padding: 2px;
   font-size: 85%;
   border: 1px solid $border-color;

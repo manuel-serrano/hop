@@ -126,4 +126,57 @@ parameter ++q++. For that, it uses the function ++cgi-fetch-arg++ of
 the HOP standard api. In such a case, it redirect the client to
 the final destination.
 
+== Proxy sniffing ==
+
+In this example, we show how to use HOP //proxy sniffing// and multimedia
+facilities to dump on a local disk all the MP3 files loaded by a
+Web browser. For this example to work, it is assumed that HOP is used
+as the Web browser proxy.
+
+~~ HOP provides several facilities for dealing with MP3 files. The
+function ++mp3-info++ (defined in the ++multimedia++ library), parses
+the characters provided by the input port it receives as parameter.
+If the content corresponds to a MP3 files, it returns an instance
+of the ++mp3frame++ class that describes the content music
+(length, bit rate, sampling, ...). The function ++mp3-id3++ parses a
+MP3 file in order to extract ID3 tag information. If such information is
+present in the file, ++mp3-id3++ returns an instance of the ++id3++ class
+that contain this information. These two functions are used in the following
+example to detect if a served file correspond to a MP3 file and to
+select a decent file name for that file.
+
+
+<example>
+  (define (mp3-sniffer req)
+     (let* ((path (make-file-name (mp3proxy-tmp) (symbol->string (gensym))))
+            (op (open-output-file path)))
+        (when (output-port? op)
+           (output-port-close-hook-set!
+            op
+            (lambda (op)
+               (let ((ip (open-input-file path)))
+                  (unwind-protect
+                     (if (mp3frame? (mp3-info ip))
+                         (let* ((id3 (mp3-id3 path)))
+			    (when (id3? id3)
+			       (with-access::id3 id3 (artist title album)
+				  (let ((name (format "~a_~a-~a-~a.mp3" path artist album title)))
+				     (rename-file path name)))))
+                         (delete-file path))
+                     (close-input-port ip)))))
+           op)))
+
+  (hop-proxy-sniffer-add! mp3-sniffer)
+</example>
+
+The function ++mp3-sniffer++ is automatically invoked by HOP each time
+it serves a proxy request. This function stores on the local disk a
+copy of the served file. When the proxy request completes, HOP closes
+the output port returned by the sniffer. This automatically yields to
+invoking the //close hook// associated with that port (by the means of
+the function ++output-port-close-hook-set!++). That hook consists
+in checking if the file is a MP3 file or not. If not, the file is removed
+from the disk. If it is a MP3 file, then, ID3 tags are searched. If founded
+the file is renamed after the ID3 tags.
+
 </doc>

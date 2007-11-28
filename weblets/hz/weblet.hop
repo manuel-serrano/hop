@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Nov 21 07:57:44 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 11:11:42 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
@@ -17,9 +17,7 @@
    (import hz_config)
    
    (export (class weblet
-	      (createstamp::int (default -1))
-	      (updatestamp::int (default -1))
-	      (installstamp::int (default -1))
+	      (stamp::int (default -1))
 	      (driver::bstring (default "hz"))
 	      (name::bstring read-only)
 	      (version::bstring read-only)
@@ -114,8 +112,8 @@
 	 (version version)
 	 (url url)
 	 (publisher publisher)
-	 (home (find 'home #f))
-	 (author (convert (find 'author #f)))
+	 (home (find 'home #unspecified))
+	 (author (convert (find 'author #unspecified)))
 	 (category (let ((c (convert (find 'category "misc"))))
 		      (if (member c (hz-categories))
 			  c

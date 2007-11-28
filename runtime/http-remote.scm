@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Mon Nov 26 11:49:54 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 05:39:28 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -49,7 +49,7 @@
 		   (string-append userinfo "@" encoded-path)
 		   encoded-path)))
 	 (cond
-	    ((not (hop-proxy))
+	    ((not (hop-use-proxy))
 	     (format "~a ~a ~a" method p http))
 	    ((not hostname)
 	     (format "~a ~a://~a ~a" method scheme p http))
@@ -68,8 +68,8 @@
 	    (trace-item "remotehost=" host
 			" remoteport=" port
 			" connection-timeout=" connection-timeout)
-	    (let* ((host (or (hop-proxy-host) host))
-		   (port (or (hop-proxy-port) port))
+	    (let* ((host (or (hop-use-proxy-host) host))
+		   (port (or (hop-use-proxy-port) port))
 		   (ssl (eq? scheme 'https))
 		   (remote (remote-get-socket host port connection-timeout request ssl))
 		   (rp (connection-output remote))
@@ -133,7 +133,7 @@
 			       (http-write-header
 				rp (http-filter-proxy-header header))
 			       (when (hop-enable-remote-keep-alive)
-				  (let ((h (if (hop-proxy-host)
+				  (let ((h (if (hop-use-proxy-host)
 					       "proxy-connection: keep-alive"
 					       "connection: keep-alive")))
 				     (http-write-line rp h)))

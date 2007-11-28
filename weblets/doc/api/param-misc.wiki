@@ -1,4 +1,4 @@
-<doc> HOP server Miscellaneous parameters
+<doc> HOP server settings
 
 == Description ==
 
@@ -8,6 +8,8 @@ These server parameters give global information on the running HOP.
 
 === server ===
 
+  (hop-use-proxy)
+  (hop-use-proxy-set! arg)
   (hop-uptime)
   (hop-verbose)
   (hop-verbose-set! arg)
@@ -19,10 +21,25 @@ These server parameters give global information on the running HOP.
   (hop-locale-set! arg)
   (hop-xml-backend)
   (hop-xml-backend-set! arg)
-
+  (hop-service-base)
+  (hop-enable-proxy-sniffer)
+  (hop-enable-proxy-sniffer-set! arg)
+  (hop-proxy-sniffer)
+  (hop-proxy-sniffer-set! proc)
+  (hop-proxy-sniffer-add! proc)
 
 == Server Definitions ==
 <server>
+
+=== ++hop-use-proxy++ ===
+<parameter> hop-use-proxy
+<parameter> hop-use-proxy-set!
+This parameter specifies a remote proxy HOP should used for remote 
+connections. This proxy setting is useful for caching remote requests
+or when HOP is located behind a firewall that can only be traversed by
+some nodes of the local network.
+</parameter>
+</parameter>
 
 === ++hop-uptime++ ===
 <parameter> hop-uptime
@@ -68,11 +85,11 @@ This parameter controls the default character encoding used by XML
 server responses. The currently supported value for the character encoding
 are:
 
-  * ISO-LATIN-1
+  * ++ISO-LATIN-1++
   * ++ISO-8859-1++
   * ++ISO-8859-2++
   * ++ISO-8859-15++
-  * WINDOWS-1252
+  * ++WINDOWS-1252++
   * ++UTF-8++
   * ++UCS-2++
 
@@ -95,11 +112,11 @@ strings are converted from the character set specified by
 ++hop-locale++ into the character set specified by ++hop-charset++.
 The currently supported value for the character encoding are:
 
-  * ISO-LATIN-1
+  * ++ISO-LATIN-1++
   * ++ISO-8859-1++
   * ++ISO-8859-2++
   * ++ISO-8859-15++
-  * WINDOWS-1252
+  * ++WINDOWS-1252++
   * ++UTF-8++
   * ++UCS-2++
 
@@ -135,11 +152,71 @@ a symbol it should be one of:
 The base name for services URL (see ++define-service++).
 </parameter>
 
+=== ++hop-enable-proxy-sniffer++ ===
+<parameter> hop-enable-proxy-sniffer
+<parameter> hop-enable-proxy-sniffer-set!
+
+<arguments>
+^  access  ^   type  ^  current value  ^  short description  ^
+|  r/w  |  bool  |  ++,(hop-enable-proxy-sniffer)++  | Enables/disables proxy sniffing.   |
+</arguments>
+
+</parameter>
+</parameter>
+
+This parameter enables or disables //proxy sniffing//. Proxy sniffing consist
+it letting user action to be executed when proxy request are served. This,
+for instance, can be used to store on a local cache a copy of the material
+transmitted to clients.
+
+=== ++hop-proxy-sniffer++ ===
+<parameter> hop-proxy-sniffer
+<parameter> hop-proxy-sniffer-set!
+<parameter> hop-proxy-sniffer-add!
+
+<arguments>
+^  access  ^   type  ^  current value  ^  short description  ^
+|  r/w  |  procedure  |  _  | The current proxy sniffer.   |
+</arguments>
+
+</parameter>
+</parameter>
+
+When //proxy sniffing// is enabled (see ++hop-enable-proxy-sniffer++)
+each time a proxy request is handled, HOP invokes the function
+contained by ++hop-proxy-sniffer++, passing as parameter, a
+request descriptor (++http-request++). If this call returns an
+output port, then all the characters composing the content of the proxy
+request are also written to that port (note that the characters of
+the header are not transmitted). When the transfer completes, the sniffer
+output port is closed by HOP.
+
+~~ The function ++hop-proxy-sniffer-set!++ sets the new sniffing procedure
+(a procedure that is excepted to return an output port). The function
+++hop-proxy-sniffer-add!++ //composes// sniffers. That is, it takes as
+parameter a new sniffer procedure and it returns an output port that
+manages to send the characters of the proxy request body to **all** the
+ports returned by previous sniffers.
+
+  (hop-proxy-sniffer-add! 
+     (lambda (req)
+        (when (string=? (http-request-host req) "foo.org")
+           (open-output-file "/tmp/FOO"))))
+
+  (hop-proxy-sniffer-add!
+     (lambda (req)
+        (when (string-suffix? ".mp3" (http-request-path req))
+           (open-output-file (format "/tmp/MP3/~a" (basename (http-request-path req)))))))
+
+
+~~ See ,(<TUTORIALREF> "Proxy hacking" "03-proxy.wiki") for a full example
+of proxy sniffing.
+
 </server>
 
 == See also ==
 
-<see-also>charset, ISO-LATIN, UTF-8, UCS-2</see-also>
+<see-also>proxy, charset, ISO-LATIN, UTF-8, UCS-2</see-also>
 
 </doc>
 

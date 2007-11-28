@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Fri Nov 23 12:19:36 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 10:15:39 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP slide weblet                                                 */
@@ -95,20 +95,20 @@
    (let ((req (current-request))
 	 (url (if (not (string? url)) (weblets-repository))))
       (if (authorized-path? req url)
-	  (instantiate::http-response-string
-	     (body (with-output-to-string
-		      (lambda ()
-			 (print "(")
-			 (for-each (lambda (p)
-				      (let ((l (with-input-from-string
-						     (package-info p)
-						  read)))
-					 (when (pair? l)
-					    (write
-					     (append! l `((md5 ,(md5sum p)))))
-					    (newline))))
-				   (get-weblets url))
-			 (print ")")))))
+	  (instantiate::http-response-procedure
+	     (proc (lambda (op)
+		      (display "(\n" op)
+		      (for-each (lambda (p)
+				   (let ((l (with-input-from-string
+						  (package-info p)
+					       read)))
+				      (when (pair? l)
+					 (write
+					  (append! l `((md5 ,(md5sum p))))
+					  op)
+					 (newline op))))
+				(get-weblets url))
+		      (display ")\n" op))))
 	  (user-access-denied req))))
 
 ;*---------------------------------------------------------------------*/

@@ -13,12 +13,16 @@ declarations.
 
 === server parameters ===
 
+  (hop-enable-proxing)
+  (hop-enable-proxing-set! arg)
   (hop-proxy-authentication)
   (hop-proxy-authentication-set! arg)
-  (hop-proxy-allow-remote-client)
-  (hop-proxy-allow-remote-client-set! arg)
   (hop-proxy-remote-authentication)
   (hop-proxy-remote-authentication-set! arg)
+  (hop-proxy-allow-remote-client)
+  (hop-proxy-allow-remote-client-set! arg)
+  (hop-proxy-ip-mask)
+  (hop-proxy-ip-mask-set! mark)
   (hop-path-access-control)
   (hop-path-access-control-set! proc)
   (hop-service-access-control)
@@ -43,6 +47,24 @@ declarations.
 
 == Server Definitions ==
 <server>
+
+=== ++hop-enable-proxing++ ===
+<parameter> hop-enable-proxing
+<parameter> hop-enable-proxing-set!
+
+<arguments>
+^  access  ^   type    ^  current value                    ^  short description            ^
+|   r/w    |  bool     |  ++,(hop-enable-proxing)++  | Enables/disables proxy requests. |
+</arguments>
+
+This parameter controls whether HOP can be used as a Web proxy. When this
+parameter is set to ++#t++, HOP can be used as a proxy. Several other
+parameters can be used to control which clients are allowed to emit
+proxy requests (see, ++hop-proxy-authentication++, 
+++hop-proxy-remote-authentication++, 
+++hop-proxy-allow-remote-client++, ++hop-proxy-ip-mask++).
+</parameter>
+</parameter>
 
 === ++hop-proxy-authentication++ ===
 <parameter> hop-proxy-authentication
@@ -94,6 +116,21 @@ request.
 This parameter controls whenever remote clients can use the running
 HOP as proxy.
 </parameter>
+</parameter>
+
+=== ++hop-proxy-ip-mask++ ===
+<parameter> hop-proxy-ip-mask
+<parameter> hop-proxy-ip-mask-set!
+
+<arguments>
+^  access  ^   type    ^  current value                    ^  short description            ^
+|   r/w    |  bool     |  ++,(hop-proxy-ip-mask)++  | The IP mask of allowed proxy clients. |
+</arguments>
+
+This parameter restricts the set of clients that are allowed to use
+HOP as proxy to the set of clients whose IP address matches
+++hop-proxy-ip-mask++ (see ++hop-enable-proxing++).
+</parameter> 
 </parameter>
 
 === ++hop-path-access-control++ ===

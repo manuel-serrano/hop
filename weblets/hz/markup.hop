@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Thu Nov 22 14:36:53 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 11:17:46 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
@@ -22,7 +22,7 @@
 	   hz_sync
 	   hz_authenticate)
    
-   (export (<HZ> req prefs)
+   (export (<HZ> req #!key (weblet #f))
 	   (<HZ:BODY> . content)
 	   (<HZ:PREFERENCES> prefs)
 	   (<HZ:PUBLISHERS>)))
@@ -57,7 +57,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    <HZ> ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (<HZ> req)
+(define (<HZ> req #!key (weblet #f))
    (let ((db '(hz-get-db (hz-db-path mode))))
       (<HTML>
 	 (<HEAD> :title "Hop Hz"
@@ -80,7 +80,7 @@
 		  (<NPTABHEAD> "Weblets")
 		  (<DELAY>
 		     (lambda ()
-			(<HZ:WEBLETS>))))
+			(<HZ:WEBLETS> :weblet weblet))))
 	       (<NPTAB>
 		  (<NPTABHEAD> "Synchronize")
 		  (<HZ:SYNC>))
@@ -227,38 +227,40 @@
 ;*    <HZ:SYNC> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:SYNC>)
-   (list
-    (<TABLE> :class "hz-direct-install"
-       (<TR>
-	  (<TH> "Weblet URL: "
-		(<INPUT> :size 70
-		   :name "url" :class "direct-url" :id "install-url"
-		   :type "text"
-		   :onchange ~(with-hop ($(service (url)
-					     (<HZ:SYNC-UPDATE>
-						(hz-install url)))
-					  this.value)
-				 (lambda (h)
-				    (innerHTML-set! "update" h)))
-		   :value "/users/serrano/prgm/project/hop/devel/repository/programmez1-1.0.0.hz"))
-	  (<TD> :class "install-button"
-	     (<BUTTON> :class "install"
-		:title "Install weblet from ULR"
-		:onclick ~(with-hop ($(service (url)
-					 (<HZ:SYNC-UPDATE>
-					    (hz-install url)))
-				      (let ((e (dom-get-element-by-id "install-url")))
-					 e.value))
-			     (lambda (h)
-				(innerHTML-set! "update" h)))
-		"Install"))))
-    (<DIV> :id "update"
-       (<HZ:SYNC-UPDATE> '() (hz-db-sync-stamp)))))
+   (let ((install (service (url)
+		     (let ((errs (with-handler
+				    (lambda (e)
+				       (list (cons url (&error-msg e))))
+				    (begin
+				       (hz-install-url url)
+				       '()))))
+			(<HZ:SYNC-UPDATE> errs)))))
+      (list
+       (<TABLE> :class "hz-direct-install"
+	  (<TR>
+	     (<TH> "Weblet URL: "
+		   (<INPUT> :size 70
+		      :name "url" :class "direct-url" :id "install-url"
+		      :type "text"
+		      :onchange ~(with-hop ($install this.value)
+				    (lambda (h)
+				       (innerHTML-set! "update" h)))
+		      :value ""))
+	     (<TD> :class "install-button"
+		(<BUTTON> :class "install"
+		   :title "Install weblet from ULR"
+		   :onclick ~(let ((e (dom-get-element-by-id "install-url")))
+				(with-hop ($install e.value)
+				   (lambda (h)
+				      (innerHTML-set! "update" h))))
+		   "Install"))))
+       (<DIV> :id "update"
+	  (<HZ:SYNC-UPDATE> '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:SYNC-UPDATE> ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (<HZ:SYNC-UPDATE> errs stamp)
+(define (<HZ:SYNC-UPDATE> errs)
    (list
     (<TABLE> :class "sync"
        (<TR> (<TH> "Last sync: "
@@ -269,7 +271,7 @@
 		   :onclick ~(with-hop ($(service ()
 					    (let ((sync (hz-sync!)))
 					       (if (list? sync)
-						   (<HZ:SYNC-UPDATE> sync stamp)
+						   (<HZ:SYNC-UPDATE> sync)
 						   (cons 'login sync)))))
 				(lambda (h)
 				   (if (pair? h)
@@ -283,7 +285,7 @@
 	  (<TH> :class "update" "Updates:")
 	  (<TH> :class "error" "Errors:"))
        (<TR>
-	  (<TD> (map <HZ:GOTO-WEBLET> (hz-db-find-newer stamp)))
+	  (<TD> (map <HZ:GOTO-WEBLET> (hz-db-find-new)))
 	  (<TD> (map <HZ:GOTO-WEBLET> (hz-db-find-update)))
 	  (<TD> :class "error"
 	     (map (lambda (x)
@@ -317,10 +319,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLETS> ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (<HZ:WEBLETS>)
+(define (<HZ:WEBLETS> #!key weblet)
    (<DIV> :class "weblets"
       (<HZ:WEBLETS-SEARCH>)
-      (<HZ:WEBLETS-PAN>)))
+      (<HZ:WEBLETS-PAN> (if weblet (<HZ:WEBLET> weblet) ""))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLETS-SEARCH> ...                                          */
@@ -391,7 +393,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLETS-PAN> ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (<HZ:WEBLETS-PAN>)
+(define (<HZ:WEBLETS-PAN> weblet)
    (<PANED> :fraction 25
       (<PAN>
 	 (<TREE> :id "main-tree" :open #t
@@ -410,7 +412,7 @@
 				(lambda ()
 				   (<HZ:WEBLETS-CATEGORY> c))))))
 		    (hz-db-get-categories)))))
-      (<PAN> (<DIV> :class "weblet" :id "hz-weblet" ""))))
+      (<PAN> (<DIV> :class "weblet" :id "hz-weblet" weblet))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLETS-CATEGORY> ...                                        */
@@ -446,7 +448,7 @@
 	 (<VBOX-BLOCK>
 	    (<TABLE> :class "weblet"
 	       (<TR> (<TD> "By " author))
-	       (unless (string=? home "")
+	       (unless (or (not (string? home)) (string=? home ""))
 		  (<TR> (<TD> :class "homepage" 
 			   (<A> :href home :title home (<TT> home)))))
 	       (<TR> (<TD> (<P> :class "title" title)))
@@ -467,7 +469,7 @@
 ;*    <HZ:WEBLET-ACTION> ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:WEBLET-ACTION> id w)
-   (with-access::weblet w (minhop maxhop driver installstamp version install)
+   (with-access::weblet w (minhop maxhop driver version install)
       (cond
 	 ((and (not (string-null? minhop))
 	       (string<? (hop-version) minhop))
@@ -477,7 +479,7 @@
 	 ((and (not (string-null? maxhop))
 	       (string>? (hop-version) maxhop))
 	  (<HZ:WEBLET-ACTION-INCOMPATIBLE> id w (format "< ~a" maxhop)))
-	 ((=fx installstamp -1)
+	 ((=fx (string-length install) 0)
 	  (<HZ:WEBLET-ACTION-INSTALL> id w))
 	 ((string=? version install)
 	  (if (string=? driver "hz")
@@ -494,25 +496,27 @@
       (<TABLE>
 	 (let ((w (hz-db-find name cat)))
 	    (cond
+	       ((not (weblet? w))
+		(error 'hz "Cannot find weblet" (format "~a/~a" name cat)))
 	       ((string=? action "install")
-		(hz-install (weblet-url w))
+		(hz-install-weblet w)
 		(<HZ:WEBLET-ACTION-DONE> id name cat action))
 	       ((string=? action "uninstall")
 		;; uninstallation
-		(hz-uninstall w)
+		(hz-uninstall-weblet w)
 		;; db update
 		(hz-db-add-or-update! w)
 		(<HZ:WEBLET-ACTION-DONE> id name cat action))
 	       ((string=? action "remove")
-		(hz-uninstall w)
+		(hz-uninstall-weblet w)
 		(hz-db-remove-weblet db w)
 		(<HZ:WEBLET-ACTION-DONE> id name cat action))
 	       ((string=? action "refresh")
 		(<HZ:WEBLET-ACTION> id w))
 	       (else
 		;; update
-		(hz-uninstall w)
-		(hz-install w)
+		(hz-uninstall-weblet w)
+		(hz-install-weblet w)
 		(hz-db-add-or-update! w)
 		(<HZ:WEBLET-ACTION-DONE> id name cat action)))))))
 

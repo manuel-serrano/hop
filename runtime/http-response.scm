@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Nov 23 13:48:17 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 10:54:44 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -204,10 +204,12 @@
 	    (when server
 	       (http-write-line p "Server: " server))
 	    (http-write-line p)
+	    (flush-output-port p)
 	    ;; the body
 	    (with-trace 4 'http-response-procedure
-	       (when bodyp (proc p)))
-	    (flush-output-port p)
+	       (when bodyp
+		  (proc p)
+		  (flush-output-port p)))
 	    connection))))
 
 ;*---------------------------------------------------------------------*/
@@ -519,8 +521,8 @@
 		    (port port)
 		    (user userinfo)
 		    (path path))
-	    (let* ((sock (if (and (not ssl) (hop-proxy))
-			     (make-proxy-socket (hop-proxy) timeout)
+	    (let* ((sock (if (and (not ssl) (hop-use-proxy))
+			     (make-proxy-socket (hop-use-proxy) timeout)
 			     (make-client-socket/timeout host port
 							 timeout req ssl)))
 		   (out (socket-output sock))
@@ -546,7 +548,7 @@
 		     :authorization authorization :timeout timeout
 		     :login user
 		     :body socket
-		     :proxy (hop-proxy))
+		     :proxy (hop-use-proxy))
 		  (unwind-protect
 		     (http-parse-response in out proc)
 		     (socket-close sock))))))))

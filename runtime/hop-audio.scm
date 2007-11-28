@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sat Nov 24 20:56:29 2007 (serrano)                */
+;*    Last change :  Tue Nov 27 09:34:45 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -235,29 +235,34 @@
       ;; the button line
       (<DIV> :class "hop-audio-buttons"
 	 (<BUT> :title "Previous" :src "prev.png"
+	    :class "hop-audio-button-prev"
 	    :onclick (if (eq? onprevclick #unspecified)
 			 (format "hop_audio_playlist_prev(document.getElementById(~s))"
 				 id)
 			 onprevclick))
 	 (<BUT> :title "Play" :src "play.png"
 	    :id (string-append "hop-audio-button-play-" id)
+	    :class "hop-audio-button-play"
 	    :onclick (if (eq? onplayclick #unspecified)
 			 (format "hop_audio_play(document.getElementById(~s))"
 				 id)
 			 onplayclick))
 	 (<BUT> :title "Pause" :src "pause.png"
 	    :id (string-append "hop-audio-button-pause-" id)
+	    :class "hop-audio-button-pause"
 	    :onclick (if (eq? onpauseclick #unspecified)
 			 (format "hop_audio_pause(document.getElementById(~s))"
 				 id)
 			 onpauseclick))
 	 (<BUT> :title "Stop" :src "stop.png"
 	    :id (string-append "hop-audio-button-stop-" id)
+	    :class "hop-audio-button-stop"
 	    :onclick (if (eq? onstopclick #unspecified)
 			 (format "hop_audio_stop(document.getElementById(~s))"
 				 id)
 			 onstopclick))
 	 (<BUT> :title "Next" :src "next.png"
+	    :class "hop-audio-button-next"
 	    :onclick (if (eq? onnextclick #unspecified)
 			 (format "hop_audio_playlist_next(document.getElementById(~s))"
 				 id)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Thu Nov 22 14:39:06 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 11:01:05 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -94,7 +94,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-connection-timeout ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-connection-timeout 3000000)
+(define-parameter hz-connection-timeout 30000)
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-publishers ...                                                */
@@ -142,7 +142,10 @@
 (define-parameter hz-category-icons
    '(("hop" . "hop.png")
      ("game" . "game.png")
-     ("multimedia" . "multimedia.png")))
+     ("multimedia" . "multimedia.png")
+     ("scientific" . "scientific.png")
+     ("devel" . "devel.png")
+     ("office" . "office.png")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-prefs ...                                                     */

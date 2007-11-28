@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Thu Nov 22 19:50:47 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 11:11:57 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -19,14 +19,15 @@
 	   hz_weblet
 	   hz_db)
    
-   (export (hz-install ::bstring)
+   (export (hz-install-url ::bstring)
+	   (hz-install-weblet ::weblet)
 	   (hz-load ::bstring)
-	   (hz-uninstall ::weblet)))
+	   (hz-uninstall-weblet ::weblet)))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-install ...                                                   */
+;*    hz-install-url ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hz-install url)
+(define (hz-install-url url)
    (hz-db-init!)
    (multiple-value-bind (name version)
       (package-url-parse url)
@@ -39,14 +40,14 @@
 		     (lambda ()
 			(display str))))
 	       :timeout (hz-connection-timeout)))
-	 (hz-install-from-file hzpath name version url)
-	 (reset-autoload!)))
-   '())
+	 (let ((w (hz-install-file hzpath name version url)))
+	    (reset-autoload!)
+	    w))))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-install-from-file ...                                         */
+;*    hz-install-file ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (hz-install-from-file path name version url)
+(define (hz-install-file path name version url)
    ;; untar the .hz into the weblets directory
    (let* ((p (open-input-gzip-file path)))
       (unwind-protect
@@ -59,13 +60,20 @@
 		 `((name ,name) (version ,version))))
 	  (e (info->weblet i :name name :version version :url url)))
       ;; add the publisher for other possible weblets
-      (unless (string=? (weblet-publisher e) "")
-	 (hz-publisher-add! (weblet-publisher e)))
-      ;; update the database
-      (weblet-installstamp-set! e (hz-db-sync-stamp))
-      (weblet-install-set! e (weblet-version e))
-      (hz-db-add-or-update! e)))
+      (weblet-stamp-set! e (hz-db-sync-stamp))
+      (hz-install-weblet e)))
 
+;*---------------------------------------------------------------------*/
+;*    hz-install-weblet ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hz-install-weblet e)
+   (unless (string=? (weblet-publisher e) "")
+      (hz-publisher-add! (weblet-publisher e)))
+   ;; update the database
+   (weblet-install-set! e (weblet-version e))
+   (hz-db-add-or-update! e)
+   e)
+   
 ;*---------------------------------------------------------------------*/
 ;*    hz-load ...                                                      */
 ;*---------------------------------------------------------------------*/
@@ -96,12 +104,12 @@
       :timeout (hz-connection-timeout)))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-uninstall ...                                                 */
+;*    hz-uninstall-weblet ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hz-uninstall w)
+(define (hz-uninstall-weblet w)
    (hz-db-init!)
-   (with-access::weblet w (name installstamp install)
-      (when (delete-path (make-file-path (hz-weblets-directory) name))
-	 (set! installstamp -1)
-	 (set! install "")
-	 (hz-db-add-or-update! w))))
+   (when (weblet? w)
+      (with-access::weblet w (name install)
+	 (when (delete-path (make-file-path (hz-weblets-directory) name))
+	    (set! install "")
+	    (hz-db-add-or-update! w)))))

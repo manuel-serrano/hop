@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
-;*    Last change :  Thu Nov 22 14:37:18 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 11:22:28 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
@@ -23,10 +23,11 @@
    (export (hz-db-init!)
 	   (hz-db-add-or-update! ::weblet)
 	   (hz-db-sync-stamp::int)
+	   (hz-db-sync-stamp-inc!)
 	   (hz-db-sync-date::date)
 	   (hz-db-sync-date-update! ::date)
 	   (hz-db-find ::bstring ::bstring)
-	   (hz-db-find-newer::pair-nil ::int)
+	   (hz-db-find-new::pair-nil)
 	   (hz-db-find-update::pair-nil)
 	   (hz-db-find-keyword::pair-nil ::bstring)
 	   (hz-db-get-categories::pair-nil)
@@ -88,7 +89,7 @@
 		      (sqlite-exec db
 			 "INSERT INTO info VALUES ('info', ~q, ~q, ~q)"
 			 (elong->string (date->seconds (make-date)))
-			 0
+			 1
 			 (hz-version))
 		      (sqlite-exec db
 			 "CREATE TABLE weblets (~L)"
@@ -161,11 +162,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-make-weblet ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hz-make-weblet cs us is dr na ve in ur ho pu au ca mi ma ti co sig)
+(define (hz-make-weblet st dr na ve in ur ho pu au ca mi ma ti co sig)
    (instantiate::weblet
-      (createstamp (string->integer cs))
-      (updatestamp (string->integer us))
-      (installstamp (string->integer is))
+      (stamp (string->integer st))
       (driver dr)
       (name na)
       (version ve)
@@ -190,18 +189,21 @@
       (hz-db-row) name category))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-db-find-newer ...                                             */
+;*    hz-db-find-new ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hz-db-find-newer stamp)
-   (sqlite-map *db* hz-make-weblet
-      "SELECT ~a FROM weblets WHERE (createstamp>=~q)" (hz-db-row) stamp))
+(define (hz-db-find-new)
+   (let ((stamp (hz-db-sync-stamp)))
+      (sqlite-map *db* hz-make-weblet
+	 "SELECT ~a FROM weblets WHERE (stamp>=~q)" (hz-db-row) stamp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-find-update ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-find-update)
    (sqlite-map *db* hz-make-weblet
-      "SELECT ~a FROM weblets WHERE (updatestamp>installstamp)" (hz-db-row)))
+      "SELECT ~a
+         FROM weblets
+        WHERE (install != '') AND (version > install)" (hz-db-row)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-find-keyword ...                                           */
@@ -217,13 +219,12 @@
 ;*    hz-db-add-or-update! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hz-db-add-or-update! w)
-   (with-access::weblet w (name category url createstamp updatestamp)
+   (with-access::weblet w (name category url stamp)
       (with-lock *db-mutex*
 	 (lambda ()
 	    (let ((old (hz-db-find name category)))
 	       (if (weblet? old)
 		   (begin
-		      (set! updatestamp (db-sync-stamp))
 		      (sqlite-exec *db*
 			 "UPDATE weblets SET ~l
                            WHERE (name=~q) AND (category=~q)"
@@ -234,7 +235,7 @@
 			 name
 			 category))
 		   (begin
-		      (set! createstamp (db-sync-stamp))
+		      (set! stamp (db-sync-stamp))
 		      (sqlite-exec *db*
 			 "INSERT INTO weblets (~a) VALUES (~k)"
 			 (hz-db-row)

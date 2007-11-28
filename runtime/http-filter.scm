@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Sat Aug 11 06:46:44 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 05:39:15 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -45,8 +45,8 @@
 		  " remoteport=" port
 		  " timeout=" timeout)
       (let* ((ssl (eq? scheme 'https))
-	     (host (or (hop-proxy-host) host))
-	     (port (or (hop-proxy-port) port))
+	     (host (or (hop-use-proxy-host) host))
+	     (port (or (hop-use-proxy-port) port))
 	     (rsock (make-client-socket/timeout host port timeout request ssl))
 	     (rp (socket-output rsock))
 	     (sp (socket-input socket)))

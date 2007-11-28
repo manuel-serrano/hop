@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Nov 26 11:24:28 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 05:38:21 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -40,14 +40,14 @@
 	    (hop-port::int)
 	    (hop-port-set! ::int)
 	    
-	    (hop-proxy::obj)
-	    (hop-proxy-set! ::obj)
+	    (hop-use-proxy::obj)
+	    (hop-use-proxy-set! ::obj)
 	    
-	    (hop-proxy-port::obj)
-	    (hop-proxy-port-set! ::obj)
+	    (hop-use-proxy-port::obj)
+	    (hop-use-proxy-port-set! ::obj)
 	    
-	    (hop-proxy-host::obj)
-	    (hop-proxy-host-set! ::obj)
+	    (hop-use-proxy-host::obj)
+	    (hop-use-proxy-host-set! ::obj)
 
 	    (hop-log::int)
 	    (hop-log-set! ::int)
@@ -283,7 +283,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-proxy
+(define-parameter hop-use-proxy
    #f
    (lambda (v)
       (cond
@@ -291,23 +291,23 @@
 	  (let ((p (pregexp-match "([^:]+):([0-9]+)" v)))
 	     (if (pair? p)
 		 (begin
-		    (hop-proxy-host-set! (cadr p))
-		    (hop-proxy-port-set! (string->integer (caddr p))))
+		    (hop-use-proxy-host-set! (cadr p))
+		    (hop-use-proxy-port-set! (string->integer (caddr p))))
 		 (begin
-		    (hop-proxy-host-set! v)
-		    (hop-proxy-port-set! 80)))
+		    (hop-use-proxy-host-set! v)
+		    (hop-use-proxy-port-set! 80)))
 	     v))
 	 ((not v)
-	  (hop-proxy-host-set! #f)
-	  (hop-proxy-port-set! #f)
+	  (hop-use-proxy-host-set! #f)
+	  (hop-use-proxy-port-set! #f)
 	  v)
 	 (else
 	  (error 'hop-proxy-set! "Illegal proxy" v)))))
 	  
-(define-parameter hop-proxy-host
+(define-parameter hop-use-proxy-host
    #f)
 
-(define-parameter hop-proxy-port
+(define-parameter hop-use-proxy-port
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -891,7 +891,13 @@
 ;*    hop-enable-proxy-sniffer ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-proxy-sniffer
-   #f)
+   #f
+   (lambda (v)
+      (if (not *hop-filters-open*)
+	  (error 'hop-enable-proxy-sniffer-set!
+		 "Sniffer can only be enabled/disabled to HOP startup time"
+		 #f)
+	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy-sniffer ...                                            */
