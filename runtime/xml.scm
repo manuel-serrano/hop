@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Oct 30 08:25:28 2007 (serrano)                */
+;*    Last change :  Thu Nov 29 12:21:41 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -935,12 +935,18 @@
 (define-xml-compound <IMG> ((id #unspecified string)
 			    (inline #f boolean)
 			    (alt #f)
-			    (src #unspecified string)
+			    (src #unspecified)
 			    (attributes)
 			    body)
-   
-   (if (not (string? src))
-       (error '<IMG> "Illegal image src" src)
+   (cond
+      ((xml-tilde? src)
+       (instantiate::xml-empty-element
+	  (markup 'img)
+	  (id (xml-make-id id 'img))
+	  (attributes (cons* `(alt . ,alt) attributes))
+	  (initializations (list (cons 'src src)))
+	  (body '())))
+      ((string? src)
        (let ((src (if inline (img-base64-encode src) src))
 	     (attrs (if (eq? inline #t)
 			(onerror-img attributes src)
@@ -951,7 +957,9 @@
 	     (attributes (cons* `(src . ,src)
 				`(alt . ,(or alt src))
 				attrs))
-	     (body '())))))
+	     (body '()))))
+      (else
+       (error '<IMG> "Illegal image src" src))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->tilde ...                                                */
