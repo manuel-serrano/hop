@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Nov 25 06:40:41 2007 (serrano)                */
+;*    Last change :  Thu Nov 29 07:28:28 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -333,7 +333,7 @@ Google, each containing a forward pointer to the actual URL.])))
       (if (authorized-service? req 'admin)
 	  (<HTML>
 	     (<HEAD>
-		:favicon (service-resource webfilter "etc/logo-16x16.png")
+		:favicon (service-resource webfilter "etc/favicon.png")
 		:title "Hop Webfilter"
 		:include "hop-notepad" "hop-sorttable"
 		:base (service-base-url webfilter req)
@@ -487,7 +487,7 @@ Google, each containing a forward pointer to the actual URL.])))
 	  (user-access-denied req)
 	  (<HTML>
 	     (<HEAD>
-		:favicon (service-resource webfilter "etc/logo-16x16.png")
+		:favicon (service-resource webfilter "etc/favicon.png")
 		:title "Hop Webfilter preferences"
 		:include "hop-notepad" "hop-sorttable"
 		:base (service-base-url webfilter/preferences req)

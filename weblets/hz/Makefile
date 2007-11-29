@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Nov 23 10:46:11 2007 (serrano)                */
+#*    Last change :  Thu Nov 29 07:29:11 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -28,7 +28,7 @@ SOURCES		= config.hop hz.hop \
 POPULATION	= $(SOURCES) \
                   Makefile \
                   etc/icons .afile etc/weblet.info \
-                  etc/logo.png etc/logo-16x16.png \
+                  etc/logo.png etc/favicon.png \
                   etc/hz.wiki \
                   etc/hz-install.png etc/hz-run.png hz-install.js
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Wed Nov 28 11:17:46 2007 (serrano)                */
+;*    Last change :  Thu Nov 29 07:29:26 2007 (serrano)                */
 ;*    Copyright   :  2007 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
@@ -64,7 +64,7 @@
 	    :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
 	    :include "hop-window"
 	    :base (service-base-url hz req)
-	    :favicon "etc/logo-16x16.png"
+	    :favicon "etc/favicon.png"
 	    :css "hz.hss")
 	 (<HZ:BODY>
 	    

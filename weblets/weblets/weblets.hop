@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Wed Nov 28 10:15:39 2007 (serrano)                */
+;*    Last change :  Thu Nov 29 07:30:12 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP slide weblet                                                 */
@@ -32,7 +32,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (weblets)
    (<HTML>
-      (<HEAD> :favicon (service-resource weblets "etc/logo-16x16.png")
+      (<HEAD> :favicon (service-resource weblets "etc/favicon.png")
 	 :title "Hop Weblets"
 	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
 	 (<LINK> :rel "alternate" :type "application/rss+xml"
@@ -81,7 +81,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (weblets/list)
    (<HTML>
-      (<HEAD> :favicon (service-resource weblets "etc/logo-16x16.png")
+      (<HEAD> :favicon (service-resource weblets "etc/favicon.png")
 	 :title "Hop Weblets"
 	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
 	 :css (service-resource weblets "weblets.hss"))

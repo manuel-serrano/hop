@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Nov  6 15:15:33 2007 (serrano)                */
+#*    Last change :  Thu Nov 29 07:27:38 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -59,7 +59,7 @@ POPULATION	= Makefile .afile doc.hss doc.scm \
                   etc/logo.png etc/doc.wiki \
                   etc/sound1.mp3 etc/sound2.mp3 \
                   etc/kangaroo.svgz \
-                  etc/logo-16x16.png \
+                  etc/favicon.png \
                   $(HOP_POP) \
 		  $(API_POP:%=api/%) \
 		  $(CORE_POP:%=core/%) \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Nov 28 11:34:36 2007 (serrano)                */
+;*    Last change :  Thu Nov 29 07:29:43 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -52,7 +52,7 @@
 	 :title "Wiki selection page"
 	 :include "hop-fileselect" "hop-window" "hop-tree"
 	 :base (service-base-url wiki req)
-	 :favicon "etc/logo-16x16.png"
+	 :favicon "etc/favicon.png"
 	 :css "wiki.hss")
       (<BODY> :class "wiki"
 	 (<DIV> :align 'center
@@ -116,7 +116,7 @@
        (<HTML>
 	  (<HEAD> :title "Hop wiki"
 	     :base (service-base-url wiki req)
-	     :favicon "etc/logo-16x16.png"
+	     :favicon "etc/favicon.png"
 	     :css "wiki.hss")
 	  (<BODY> :class "wiki"
 	     (<DIV> :align "center"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Nov 24 08:02:42 2007 (serrano)                */
+;*    Last change :  Thu Nov 29 07:28:48 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -60,7 +60,7 @@
    (let ((req (current-request)))
       (if (authorized-service? req 'admin)
 	  (<HTML>
-	     (<HEAD> :favicon (service-resource info "etc/logo-16x16.png")
+	     (<HEAD> :favicon (service-resource info "etc/favicon.png")
 		:title "Hop Info weblet"
 		:base (service-base-url info req)
 		:include "hop-notepad" "hop-sorttable"
