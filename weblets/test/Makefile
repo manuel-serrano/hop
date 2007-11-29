@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Nov 14 08:56:34 2007 (serrano)                */
+#*    Last change :  Thu Nov 29 07:37:00 2007 (serrano)                */
 #*    Copyright   :  2006-07 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wizard weblet                                */
@@ -25,7 +25,7 @@ POPULATION	= Makefile test.hss test.hop \
                   busy.hop sound.hop audio.hop fselector.hop window.hop \
                   canvas-test.jpg sound-test.mp3 \
 		  etc/weblet.info etc/test.wiki \
-                  etc/logo.png
+                  etc/logo.png etc/favicon.png
 
 build: .afile
 
