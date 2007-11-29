@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Wed Nov 28 05:39:28 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 19:24:22 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -155,7 +155,7 @@
 ;*    remote-body ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (remote-body r::http-response-remote socket remote::connection)
-   (with-access::http-response-remote r (host port remote-timeout timeout request)
+   (with-access::http-response-remote r (host port timeout request)
       ;; the body
       (with-trace 4 'http-response-body
 	 (let* ((wstart #f)

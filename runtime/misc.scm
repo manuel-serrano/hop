@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Tue Nov 20 10:48:03 2007 (serrano)                */
+;*    Last change :  Wed Nov 28 18:59:39 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -66,7 +66,7 @@
    (let ((c (cond
 	       ((integer? col)
 		(+fx (modulo col 16) 1))
-	       ((http-request? req)
+	       ((http-request? col)
 		(+fx (modulo (http-request-id col) 16) 1))
 	       (else
 		1))))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sat Nov 24 20:32:30 2007 (serrano)                */
+/*    Last change :  Thu Nov 29 07:18:12 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -161,14 +161,14 @@ function start_servevt_ajax_proxy( key ) {
 	 }
 
 	 var failure = function( xhr ) {
-	    if( !xhr.status ) {
-	       if( (xhr_error_ttl > 0) && !xhr.getAllResponseHeaders() ) {
-		  // mark the connection timeout error in order to avoid
-		  // falling into an infinit loop when the server has crashed.
-		  xhr_error_ttl--;
-		  // we have reached a timeout, we just re-register
-		  register( id );
-	       }
+	    if( !xhr.status &&
+		(xhr_error_ttl > 0) &&
+		!xhr.getAllResponseHeaders() ) {
+	       // mark the connection timeout error in order to avoid
+	       // falling into an infinit loop when the server has crashed.
+	       xhr_error_ttl--;
+	       // we have reached a timeout, we just re-register
+	       register( id );
 	    } else {
 	       hop_servevt_onclose();
 	       hop_trigger_servevt( id, "Ajax Server Event error", false, false );
