@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Thu Nov 29 07:29:16 2007 (serrano)                */
+;*    Last change :  Fri Nov 30 16:01:52 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -91,7 +91,3 @@
       (hz-load url)
       (<HTML>
 	 ~(set! document.location (string-append "/hop/" $name)))))
-
-
-   
-   

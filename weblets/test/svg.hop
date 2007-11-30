@@ -1,0 +1,76 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/svg.hop                    */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
+;*    Last change :  Fri Nov 30 17:44:16 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    SVG                                                              */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-svg
+   (import weblet_test)
+   (export test/svg))
+
+;*---------------------------------------------------------------------*/
+;*    test/svg ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-service (test/svg)
+   (<TEST-HTML> 
+      :source (service-resource test/svg "svg.hop")
+      :backend (hop-get-xml-backend 'xhtml)
+      ~(define (math-svg-draw path)
+	  (let ((min -4)
+		(step 0.01)
+		(max 4))
+	     (let loop ((x min)
+			(r '()))
+		(if (<= x max)
+		    (let ((y (with-handler
+				(lambda (e) 0)
+				(sqrt (cos x)))))
+		       (if (and (>= y min) (<= y max))
+			   (let ((s (format " M ~a ~a l 1 0"
+					    (* 100 x)
+					    (- (* 100 y)))))
+			      (loop (+ x step) (cons s r)))
+			   (loop (+ x step) r)))
+		    (path.setAttribute "d" (apply string-append (reverse r)))))))
+      (<DIV> :class "comment"
+	 "This test checks whether your browser is able
+or not to use SVG inside XHTML documents. If this test succeeds, you should see
+three images an the drawing of a curve.")
+      (<H3> "Images")
+      (<TABLE>
+	 (<TR>
+	    (<TD> :style "text-align: center"
+	       (<SVG:IMG> :width "10em" :height "10ex"
+		  :src (service-resource test/svg
+					 (make-file-name "etc" "kangaroo.svgz"))))
+	    (<TD> :style "text-align: center"
+	       (<SVG:IMG> :width "8em" :height "8ex"
+		  :src (service-resource test/svg
+					 (make-file-name "etc" "kangaroo.svgz"))))
+	    (<TD> :style "text-align: center"
+	       (<SVG:IMG> :width "5em" :height "5ex"
+		  :src (service-resource test/svg
+					 (make-file-name "etc" "kangaroo.svgz"))))))
+      (<H3> "Curve")
+
+      (<DIV> :style "border: 1px solid green; background: white; width: 10em; height: 17ex; display: -moz-inline-box;  position: relative;"
+	 (let ((p (<SVG:PATH> :id "curve"
+		     :stroke "blue":stroke-width "2"
+		     :fill "none")))
+	    (<SVG> :onload ~(math-svg-draw $p)
+	       :viewBox "-200 -200 400 400"
+	       (<SVG:PATH> :stroke "black" :stroke-width "1"
+		  :d "M -200 0 L 200 0 M 0 -200 L 0 200 M -100 -5 L -100 5 M 100 -5 L 100 5 M -5 100 L 5 100 M -5 -100 L 5 -100")
+	       (<SVG:TEXT> :x "8" :y "104" :font-size "15" "-1")
+	       (<SVG:TEXT> :x "8" :y "-96" :font-size "15" "1")
+	       (<SVG:TEXT> :x "-104" :y "20" :font-size "15" "-1")
+	       (<SVG:TEXT> :x "96" :y "20" :font-size "15" "1")
+	       p)))))

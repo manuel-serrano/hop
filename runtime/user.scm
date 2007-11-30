@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Sep 17 17:01:21 2007 (serrano)                */
+;*    Last change :  Fri Nov 30 15:05:17 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -299,18 +299,26 @@
        ((hop-authorize-request-hook) user req)))
 
 ;*---------------------------------------------------------------------*/
+;*    realm ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (realm req)
+   (format "Basic realm=\"hop@~a:~a\""
+	   (http-request-host req)
+	   (http-request-port req)))
+
+;*---------------------------------------------------------------------*/
 ;*    user-access-denied ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (user-access-denied req #!optional message)
    (instantiate::http-response-authentication
-      (header '((WWW-Authenticate: . "Basic realm=\"Hop authentication\"")))
+      (header `((WWW-Authenticate: . ,(realm req))))
       (start-line "HTTP/1.0 401 Unauthorized")
       (request req)
       (body (cond
 	       (message
 		message)
 	       ((http-request? req)
-		(format "Protected Area! Authentication required.~a:~a:/~a"
+		(format "Protected Area! Authentication required: ~a:~a:/~a"
 			(http-request-host req)
 			(http-request-port req)
 			(http-request-path req)))
@@ -322,7 +330,7 @@
 ;*---------------------------------------------------------------------*/
 (define (user-service-denied req user svc)
    (instantiate::http-response-authentication
-      (header '((WWW-Authenticate: . "Basic realm=\"Hop authentication\"")))
+      (header `((WWW-Authenticate: . ,(realm req))))
       (start-line "HTTP/1.0 401 Unauthorized")
       (request req)
       (body (format "User `~a' is not allowed to execute service `~a'."

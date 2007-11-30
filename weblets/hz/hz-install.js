@@ -3,11 +3,16 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 16 11:07:40 2007                          */
-/*    Last change :  Fri Nov 23 14:34:41 2007 (serrano)                */
+/*    Last change :  Fri Nov 30 15:12:40 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Create a click and install panel                                 */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    hop_install_stamp ...                                            */
+/*---------------------------------------------------------------------*/
+var hop_install_stamp = 0;
 
 /*---------------------------------------------------------------------*/
 /*    hop_install_weblet ...                                           */
@@ -23,19 +28,21 @@ function hop_install_weblet( url, srci, srcr, parent ) {
    var namev = (m.length > 1) ? m[ 1 ] : base;
    var name = (m.length > 2) ? m[ 2 ] : namev;
 
-   var oninstall = 'var host = document.getElementById( "hop_click_and_install_host" );' +
-      'var port = document.getElementById( "hop_click_and_install_port" );' +
+   hop_install_stamp++;
+   
+   var oninstall = 'var host = document.getElementById( "hop_click_and_install_host_' + hop_install_stamp + '" );' +
+      'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' +
       'document.location = "http://" + host.value + ":" + port.value + ' +
-      '"/hop/hz/install?url=' + url + '";';
-   var onrun = 'var host = document.getElementById( "hop_click_and_install_host" );' +
-      'var port = document.getElementById( "hop_click_and_install_port" );' +
+      '"/hop/hz/install?url=' + encodeURIComponent( url ) + '";';
+   var onrun = 'var host = document.getElementById( "hop_click_and_install_host_' + hop_install_stamp + '" );' +
+      'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' + 
       'document.location = "http://" + host.value + ":" + port.value + ' +
-      '"/hop/hz/run?url=' + url + '";';
+      '"/hop/hz/run?url=' + encodeURIComponent( url ) + '";';
 
    var host = "<table style='font-size: 60%'>" +
       "<tr><td colspan='2' width='100%'><div style='width: 100%; border-bottom: 1px solid #777'>HOP</td></tr>" +
-      "<tr><th>host:</th><td><input id='hop_click_and_install_host' size='10 type='text' value='localhost' style='border: 1px solid #bbb; color: #555; font-size: inherit'/></td></tr>" +
-      "<tr><th>port:</th><td><input id='hop_click_and_install_port' size='4 type='text' value='8080' style='border: 1px solid #bbb; color: #555; font-size: inherit'/></td></tr></table>";
+      "<tr><th>host:</th><td><input id='hop_click_and_install_host_" + hop_install_stamp + "' size='10 type='text' value='localhost' style='border: 1px solid #bbb; color: #555; font-size: inherit'/></td></tr>" +
+      "<tr><th>port:</th><td><input id='hop_click_and_install_port_" + hop_install_stamp + "' size='4 type='text' value='8080' style='border: 1px solid #bbb; color: #555; font-size: inherit'/></td></tr></table>";
    var panel = "<table class='hz-install' style='background: #daffbd; border: 1px solid #bbb; -moz-border-radius: 0.5em; font-family: arial; padding-left: 1em; padding-right: 1em'>" +
       "<tr><th colspan='3' style='font-size: 110%' align='left'>" + namev + ".hz</th></tr>" + 
       "<tr>" +

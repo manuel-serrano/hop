@@ -1,0 +1,126 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/test/mathml.hop                 */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
+;*    Last change :  Fri Nov 30 17:47:38 2007 (serrano)                */
+;*    Copyright   :  2007 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    MATHML                                                           */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-mathml
+   (import weblet_test)
+   (export test/mathml))
+
+;*---------------------------------------------------------------------*/
+;*    test/mathml ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-service (test/mathml)
+   (define (<TEX> . exps)
+      (<DIV> :align "left"
+	 (map (lambda (e)
+		 (<DIV>
+		    (<MATH>
+		       (<MATH:MSTYLE> :displaystyle "true" 
+			  (<MATH:TEX> e)))))
+	      exps)))
+   (<TEST-HTML> 
+      :source (service-resource test/mathml "mathml.hop")
+      :backend (duplicate::xml-backend (hop-get-xml-backend 'xhtml)
+		  (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN\" \"http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd\">"))
+      (<DIV> :class "comment"
+	 "This test checks whether your browser is able
+or not to use MathML inside XHTML documents. If this test succeeds, you
+should see mathematics formulas.")
+      (<H2> [Math, TeX book chapter 16]
+	    (<DIV> :style "font-size: 80%; font-weight: 100"
+	       (<UL>
+		  (<LI> "TeXbook p. 130"
+			(<TEX> {
+\sqrt{x+2}\quad \underline 4\quad \overline{x+y}\quad
+x^{\underline n}\quad x^{\overline{m+n}}
+\quad \sqrt{x^2+\sqrt{\alpha}}}
+			       
+			       {
+\root 3 \of 2 \quad
+\root n \of {x^n+y^n}\quad
+\root n+1 \of k}))
+		  
+		  (<LI> "TeXbook p. 131, Excercise 16.7"
+			(<TEX> {
+10^{10}\quad 2^{n+1}\quad (n+1)^2\quad \sqrt{1-x^2}\quad
+\overline{w+\bar z}\quad p^{e_1}_1\quad a_{b_{c_{d_e}}}\quad
+\root 3 \of {h''_n(\alpha x)}}))
+		  
+		  (<LI> "TeXbook p. 133"
+			(<TEX> {
+x\times y\cdot z \quad
+x\circ y\bullet z \quad
+x\cup y\cap z \quad
+x\sqcup y \sqcap z \quad
+x\vee y\wedge z \quad
+x\pm y\mp z
+}
+			       {
+K_n^+, K_n^- \quad
+z^*_{ij} \quad
+g^\circ \mapsto g^\bullet \quad
+f^*(x)\cap f_*(y)}
+			       {
+x = y > z \quad
+x:= y \quad
+x \le y \ne z \quad
+x\sim y\simeq z \quad
+x\equiv y \not\equiv z \quad
+x\subset y\subseteq z}
+			       ))
+		  
+		  (<LI> "TeXbook p. 135"
+			(<TEX> {
+\hat a \quad \check a\quad \tilde a \quad \acute a \quad \grave a \quad
+\dot a \quad \ddot a \quad \breve a \quad \bar a \quad \vec a
+}))
+		  
+		  (<LI> "TeXbook p. 136"
+			(<TEX> {
+\widehat x, \widetilde x \quad
+\widehat{xy}, \widetilde{xy} \quad
+\widehat{xyz}, \widetilde{xyz}}))))
+	    (<DIV> :style "font-size: 80%; font-weight: 100"
+	       (<UL>
+		  (<LI> "TeXbook p. 162"
+			(<TEX>
+			   {
+\sin 2\theta = 2\sin\theta\cos\theta\quad
+O(n\log n\log\log n)\quad
+\Pr(X>x)=\exp(-x/\mu)\quad
+}
+			   {
+\max_{1\le n\le m} \log_2 P_n \quad
+\lim_{x\to 0} {\sin x\over x} = 1
+}))
+		  (<LI> "TeXbook 163, Exercise 18.2"
+			(<TEX>
+			   {
+p_1(n) = \lim_{m\to\infty} \sum_{\nu=0}^\infty
+\bigl(1-\cos^{2m}(\nu!^n\pi/n)\bigr)
+}))
+		  (<LI> "TeXbook 163"
+			(<TEX>
+			   {
+\sqrt{{\rm Var}(X)} \qquad
+{\textstyle x_{\rm max} - x_{\rm max}} \qquad
+{\rm LL}(k) \Rightarrow {\rm LR}(k)
+}
+			   {
+\exp(x+{\rm constant}) \qquad
+x^3 + \hbox{lower order terms}
+}
+			   {
+\lim_{n\to\infty} x_n {\rm\ exists} \iff
+\limsup_{n\to\infty} x_n = \liminf_{n\to\infty} x_n
+})))))))
