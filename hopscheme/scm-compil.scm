@@ -38,19 +38,24 @@
 
 
 ;*---------------------------------------------------------------------*/
-(define (sscript-response req)
-   (with-access::http-request req (path method header)
+(define (sscript-response req path)
+   (with-access::http-request req (method header)
       (with-lock *sscript-mutex*
 	 (lambda ()
 	    (let ((cache (cache-get sscript-cache path))
 		  (mime (mime-type path (hop-javascript-mime-type))))
 	       (if (string? cache)
-		   (instantiate::http-response-file
-		      (request req)
-		      (charset (hop-locale))
-		      (content-type mime)
-		      (bodyp (eq? method 'GET))
-		      (file cache))
+		   ;; since we are serving a cached answer, we also have
+		   ;; to check that the client is allowed to the requested
+		   ;; file, i.e., the non-compiled file.
+		   (if (authorized-path? req path)
+		       (instantiate::http-response-file
+			  (request req)
+			  (charset (hop-locale))
+			  (content-type mime)
+			  (bodyp (eq? method 'GET))
+			  (file cache))
+		       (user-access-denied req))
 		   (let* ((jscript (compile-scheme-file path))
 			  (cache (cache-put! sscript-cache path jscript)))
 		      (instantiate::http-response-file
@@ -64,9 +69,8 @@
  (lambda (req)
     (when (http-request-localhostp req)
        (with-access::http-request req (path method header)
-	  (case method
-	     ((GET HEAD)
-	      (if (and (file-exists? path)
-		       (is-suffix? (http-request-path req) "scm"))
-		  (sscript-response req)
-		  req)))))))
+	  (when (and (eq? method 'GET) (substring-at? path (hop-hopcc-base) 0))
+	     (let ((p (substring path 6 (string-length path))))
+		(if (file-exists? p)
+		    (sscript-response req p)
+		    (http-file-not-found p))))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Aug  8 10:33:02 2007 (serrano)                */
+;*    Last change :  Fri Nov 30 07:06:51 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -114,8 +114,21 @@
 	 (else
 	  (string-append dir "/" p))))
    
+   (define (hopscript p inl)
+      (tprint "hopscript: " p)
+      (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src
+	 (string-append (hop-hopcc-base) p)))
+   
    (define (jscript p inl)
+      (tprint "jscript: " p)
       (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src p))
+   
+   (define (script p inl)
+      (if (and (>fx (string-length p) 0)
+	       (file-exists? p)
+	       (or (string-suffix? ".scm" p) (string-suffix? ".hop" p)))
+	  (hopscript p inl)
+	  (jscript p inl)))
    
    (define (favicon p)
       (<LINK> :rel "shortcut icon" :href p))
@@ -142,7 +155,11 @@
 	     (scm (let ((p (make-file-name (hop-share-directory)
 					   (string-append f ".scm"))))
 		     (when (file-exists? p)
-			(set! res (cons (jscript p inl) res)))))
+			(set! res (cons (hopscript p inl) res)))))
+	     (hop (let ((p (make-file-name (hop-share-directory)
+					   (string-append f ".hop"))))
+		     (when (file-exists? p)
+			(set! res (cons (hopscript p inl) res)))))
 	     (ss (let ((p (make-file-name (hop-share-directory)
 					   (string-append f ".css"))))
 		     (when (file-exists? p)
@@ -195,12 +212,12 @@
 		  (cond
 		     ((string? (cadr a))
 		      (loop (cddr a) :jscript rts dir inl
-			    (cons (jscript (absolute-path (cadr a) dir) inl)
+			    (cons (script (absolute-path (cadr a) dir) inl)
 				  els)))
 		     ((pair? (cadr a))
 		      (let ((js-files (map (lambda (f)
-					      (jscript (absolute-path f dir)
-						       inl))
+					      (script (absolute-path f dir)
+						      inl))
 					   (cadr a))))
 			 (loop (cddr a) :jscript rts dir inl
 			       (append! (reverse! js-files) els))))
@@ -260,7 +277,7 @@
 		    (cons (css (absolute-path (car a) dir) inl) els)))
 	     ((:jscript)
 	      (loop (cdr a) mode rts dir inl
-		    (cons (jscript (absolute-path (car a) dir) inl) els)))
+		    (cons (script (absolute-path (car a) dir) inl) els)))
 	     ((:include)
 	      (loop (cdr a) mode rts dir inl
 		    (append (incl (car a) inl) els)))
