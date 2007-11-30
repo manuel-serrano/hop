@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Nov 30 06:58:05 2007 (serrano)                */
+;*    Last change :  Fri Nov 30 07:34:48 2007 (serrano)                */
 ;*    Copyright   :  2004-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -86,7 +86,7 @@
 	    (hop-server-hostip::bstring)
 
 	    (hop-service-base::bstring)
-	    (hop-hopcc-base::bstring)
+	    (hop-client-script-suffix::bstring)
 	    
 	    (hop-service-weblet-name::bstring)
 	    (hop-service-weblet-wid::symbol)
@@ -526,12 +526,12 @@
    "/hop")
    
 ;*---------------------------------------------------------------------*/
-;*    hop-hopcc-base ...                                               */
+;*    hop-client-script-suffix ...                                     */
 ;*    -------------------------------------------------------------    */
-;*    The prefix of the client compilation urls                        */
+;*    The suffix of the client compilation urls                        */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-hopcc-base
-   "/hopcc/")
+(define-parameter hop-client-script-suffix
+   "?hop")
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-initial-weblet ...                                           */

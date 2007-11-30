@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Nov 30 07:06:51 2007 (serrano)                */
+;*    Last change :  Fri Nov 30 07:34:57 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -115,17 +115,14 @@
 	  (string-append dir "/" p))))
    
    (define (hopscript p inl)
-      (tprint "hopscript: " p)
       (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src
-	 (string-append (hop-hopcc-base) p)))
+	 (string-append p (hop-client-script-suffix))))
    
    (define (jscript p inl)
-      (tprint "jscript: " p)
       (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src p))
    
    (define (script p inl)
       (if (and (>fx (string-length p) 0)
-	       (file-exists? p)
 	       (or (string-suffix? ".scm" p) (string-suffix? ".hop" p)))
 	  (hopscript p inl)
 	  (jscript p inl)))
