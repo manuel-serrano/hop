@@ -1,0 +1,23 @@
+;; //Dynamic// notepads
+(<HTML>
+   (<HEAD> :include "hop-notepad")
+   (<BODY>
+      (<DIV>
+	 (<BUTTON> :onclick ~(notepad-select "notepad3" "notepad3.1")
+	    "Select pad1")
+	 (<BUTTON> :onclick ~(notepad-select "notepad3" "notepad3.2")
+	    "Select pad2"))
+      (<NOTEPAD> :id "notepad3"
+	 :onchange ~(alert "Notepad changed: " this)
+	 (<NPHEAD>
+	    (<CENTER> (<B> "A dynamic Notepad with event handlers")))
+	 (<NPTAB> :id "notepad3.1"
+	    :onselect ~(alert "pad1 selected")
+	    (<NPTABHEAD> "Creation date")
+	    (date))
+	 (<NPTAB> :id "notepad3.2"
+	    :onselect ~(alert "pad2 selected")
+	    (<NPTABHEAD> "Server date")
+	    (<DELAY>
+	       (lambda ()
+		  (date)))))))

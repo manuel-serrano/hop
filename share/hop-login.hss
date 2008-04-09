@@ -1,0 +1,127 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/1.9.x/share/hop-login.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sun Mar  9 16:52:54 2008                          */
+/*    Last change :  Thu Apr  3 09:18:06 2008 (serrano)                */
+/*    Copyright   :  2008 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Hop login                                                        */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module hoplogin_hss)
+
+/*---------------------------------------------------------------------*/
+/*    login                                                            */
+/*---------------------------------------------------------------------*/
+$(hop-hss-type! "hop-login-panel" "div.hop-login-panel")
+
+hop-login-panel {
+  display: block;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: transparent;
+}
+
+hop-login-panel div.hop-login-logo {
+  width: 64px;
+  height: 64px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url( "icons/hop-login/login.png" );
+}
+
+hop-login-panel div.hop-login-panel-background {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+}
+
+hop-login-panel div.hop-login-panel-background-fast-gpu {
+  background-color: #000;
+  -moz-opacity: 0.7;
+}
+
+hop-login-panel div.hop-login-panel-background-slow-gpu {
+  background-color: none;
+}
+
+hop-login-panel div.hop-login-main {
+  margin-top: 0;
+}
+
+hop-login-panel div.body {
+  width: 100%;
+  max-width: 100%;
+}
+
+hop-login-panel div.hop-login-main {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  right: 10%;
+  z-index: 1000;
+}
+
+hop-login-panel div.hop-login-main-fast-gpu {
+  -moz-opacity: 0.90;
+  background-color: #fff;
+}
+
+hop-login-panel div.hop-login-main-slow-gpu {
+  background-color: #ffd;
+}
+
+hop-login-panel table.hop-login-main-table {
+  border: 5px dashed blue;
+  width: 100%;
+  padding-left: 1em;
+  padding-right: 1em;
+  -moz-border-radius: 0;
+}
+
+hop-login-panel table.hop-login-main-table td.hop-login-logo {
+  text-align: left;
+  vertical-align: top;
+}
+
+hop-login-panel table.hop-login-main-table table.hop-login-prompt {
+  width: 100%;
+}
+
+hop-login-panel table.hop-login-prompt th {
+  text-align: left;
+}
+
+hop-login-panel table.hop-login-prompt th:after {
+  content: ":";
+}
+
+hop-login-panel table.hop-login-prompt td {
+  text-align: left;
+}
+
+hop-login-panel table.hop-login-prompt input {
+  width: 15em;
+  border-width: 1px;
+  font-size: 80%;
+}
+
+hop-login-panel table.hop-login-prompt button {
+  border-width: 1px;
+}
+
+hop-login-panel table.hop-login-prompt button:hover {
+  background-color: #eee;
+  color: #00a;
+}
+

@@ -1,0 +1,4 @@
+((name "wiki")
+ (author "M. Serrano")
+ (version "@VERSION@")
+ (title "The Hop Wiki Viewer"))

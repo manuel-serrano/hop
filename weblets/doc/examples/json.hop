@@ -1,0 +1,13 @@
+;; An example that shows how HOP can use JSON responses
+(define-service (foo/json)
+   (instantiate::http-response-string
+      (start-line "HTTP/1.1 200 Ok")
+      (content-type "application/json")
+      (body "[false, \"foo bar gee\", 23]")))
+
+(define-service (foo)
+   (<HTML>
+      (<DIV>
+	 (with-url "http://localhost:9090/hop/foo/json"
+	    (lambda (h) (vector-ref h 1))
+	    :header '((authorization: . "Basic Zm9vIGJhciBnZWU"))))))

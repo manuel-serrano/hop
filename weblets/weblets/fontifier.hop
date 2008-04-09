@@ -1,0 +1,477 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/1.9.x/weblets/weblets/fontifier.hop     */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano, Florian Loitsch                   */
+;*    Creation    :  Thu Sep  7 17:29:41 2006                          */
+;*    Last change :  Mon Dec 10 14:11:35 2007 (serrano)                */
+;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    fontifiers                                                       */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblets_fontifier
+
+   (export (xml-fontifier::pair-nil ::input-port)
+	   (hop-fontifier::pair-nil ::input-port
+	       #!optional (keyword-fontifier (lambda (x) #f)))
+	   (ebnf-fontifier::pair-nil ::input-port)
+	   (plain-fontifier::pair-nil ::input-port)
+	   (js-fontifier::pair-nil ::input-port)))
+
+;*---------------------------------------------------------------------*/
+;*    fontifier-error-line ...                                         */
+;*---------------------------------------------------------------------*/
+(define (fontifier-error-line c port)
+   (let ((line (read-line port)))
+      (if (string? line)
+	  (string-append "{" (string c) "}" line)
+	  c)))
+
+;*---------------------------------------------------------------------*/
+;*    *xml-grammar* ...                                                */
+;*---------------------------------------------------------------------*/
+(define *xml-grammar*
+   (regular-grammar ()
+      ((: #\; (in "<!--") (* (or all #\Newline)) "-->")
+       ;; comments
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-line-comment" str)
+		(ignore))))
+      ((+ (or #\Newline #\Space))
+       ;; separators
+       (let ((str (xml-string-encode (the-string))))
+	  (cons str (ignore))))
+      ((: #\<
+	  (: (? #\/) alpha (* (out #\> #\space #\tab #\Newline)))
+	  (? #\>))
+       ;; markup
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-markup" str)
+		(ignore))))
+      (#\>
+       (cons (<SPAN> :class "homepage-program-markup" "&gt;")
+	     (ignore)))
+      ((: "<?" (: (? (in "/?")) alpha (* (out #\> #\space #\tab #\Newline))))
+       ;; special
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-special" str)
+		(ignore))))
+      ("?>"
+       ;; special
+       (cons (<SPAN> :class "homepage-program-special" "?&gt;")
+	     (ignore)))
+      (#\<
+       (cons "&lt;" (ignore)))
+      ((+ (out #\< #\> #\Space #\Tab #\= #\" #\Newline))
+       ;; regular text
+       (let ((string (xml-string-encode (the-string))))
+	  (cons string (ignore))))
+      ((or (: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
+	   (: "\'" (* (or (out #a000 #\\ #\') (: #\\ all))) "\'"))
+       ;; strings
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-string" str)
+		(ignore))))
+      ((in "\"=")
+       (let ((str (the-string)))
+	  (cons str (ignore))))
+      (else
+       (let ((c (the-failure)))
+	  (if (eof-object? c)
+	      '()
+	      (error 'xml-fontifier
+		     "Unexpected character"
+		     (fontifier-error-line c (the-port))))))))
+
+;*---------------------------------------------------------------------*/
+;*    *lisp-grammar* ...                                               */
+;*---------------------------------------------------------------------*/
+(define *lisp-grammar*
+   (regular-grammar (keyword-fontifier)
+      ((: ";;" (* all))
+       ;; italic comments
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-line-comment" str)
+		(ignore))))
+      ((: ";*" (* all))
+       ;; bold comments
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-comment" str)
+		(ignore))))
+      ((: ";" (out #\; #\*) (* all))
+       ;; plain comments
+       (let ((str (xml-string-encode (the-string))))
+	  (cons str (ignore))))
+      ((: #\\ (* (in #\space #\tab)) ";" (out #\; #\*) (* all))
+       ;; plain comments
+       (let ((str (the-substring 1 (the-length))))
+	  (cons str (ignore))))
+      ((+ (or #\Space #\Tab #\Newline))
+       ;; separators
+       (let ((str (the-string)))
+	  (cons str (ignore))))
+      ((+ #\#)
+       ;; sharp signs
+       (let ((str (the-string)))
+	  (cons str (ignore))))
+      ((: "#" (out #\/ #\space #\tab) (* (out #\# #\space)) #\#)
+       ;; anchor
+       (let* ((id (the-substring 1 -1))
+	      (body (ignore)))
+	  (cons (<SPAN> :id id body) (ignore))))
+      ((: "#/" (+ (out #\#)) #\#)
+       ;; end anchor
+       '())
+      ((or "(" (+ (in ")[]")))
+       ;; open parenthesis
+       (let ((str (the-string)))
+	  (cons str (ignore))))
+      ((in "~")
+       ;; client
+       (let ((str (the-string)))
+	  (cons (<SPAN> :class "homepage-program-client" str) (ignore))))
+      ((in "$")
+       ;; special
+       (let ((str (the-string)))
+	  (cons (<SPAN> :class "homepage-program-server" str) (ignore))))
+      ((: #\( (+ (or (: ":" (out ":")) (out "; $\t()[]\"\n#"))))
+       ;; keywords
+       (let* ((string (the-substring 1 (the-length)))
+	      (obj (keyword-fontifier string #t)))
+	  (cons* "(" obj (ignore))))
+      ((+ (or (: ":" (out ":")) (out "; \t()[]:\"\n~$#")))
+       ;; keywords
+       (let* ((string (the-string))
+	      (obj (keyword-fontifier string #f)))
+	  (cons obj (ignore))))
+      ((or (: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
+	   (: "#\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\""))
+       ;; strings
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-string" str)
+		(ignore))))
+      ((: "::" (+ (out ";\n \t()[]:\"")))
+       ;; types
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-type" str)
+		(ignore))))
+      ((: ":" (out ":()[] \n\t\"") (* (out ";\n \t()[]:\"")))
+       ;; keywords annotations
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-keyword" str)
+		(ignore))))
+      ((+ (or #\: #\; #\"))
+       (let ((str (xml-string-encode (the-string))))
+	  (cons str (ignore))))
+      ((: #\# #\\ (+ (out " \n\t")))
+       ;; characters
+       (let ((str (xml-string-encode (the-string))))
+	  (cons str (ignore))))
+      (else
+       (let ((c (the-failure)))
+	  (if (eof-object? c)
+	      '()
+	      (error 'lisp-fontifier "Unexpected character" c))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-fontifier ...                                                */
+;*---------------------------------------------------------------------*/
+(define (xml-fontifier ip)
+   (read/rp *xml-grammar* ip))
+
+;*---------------------------------------------------------------------*/
+;*    *hop-keywords* ...                                               */
+;*---------------------------------------------------------------------*/
+(define *hop-keywords*
+   (let ((t (make-hashtable)))
+      (for-each (lambda (k)
+		   (hashtable-put! t k "define"))
+		'("define" "module" "define-macro" "define-generic"
+		  "define-method" "define-service"))
+      (for-each (lambda (k)
+		   (hashtable-put! t k "reserved"))
+		'("lambda" "service" "let" "let*" "letrec" "if"
+		  "begin" "cond" "case" "instantiate"))
+      (for-each (lambda (k)
+		   (hashtable-put! t k "important"))
+		'("try" "with-handler" "unwind-protect"
+		  "with-hop" "with-url"))
+      (for-each (lambda (k)
+		   (hashtable-put! t k "server"))
+		'("roundtrip"))
+      t))
+
+;*---------------------------------------------------------------------*/
+;*    hop-fontifier ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hop-fontifier ip #!optional (keyword-fontifier (lambda (x) #f)))
+
+   (define (hop-keyword-fontifier x op)
+      (let ((s (xml-string-encode x))
+	    (l (string-length x)))
+	 (cond
+	    ((and (char=? (string-ref x 0) #\<)
+		  (char=? (string-ref x (-fx l 1)) #\>))
+	     (<SPAN> :class "homepage-program-markup" s))
+	    ((hashtable-get *hop-keywords* s)
+	     =>
+	     (lambda (k)
+		(<SPAN> :class (string-append "homepage-program-" k) s)))
+	    ((keyword-fontifier s)
+	     => 
+	     (lambda (k) k))
+	    (else
+	     s))))
+
+   (read/rp *lisp-grammar* ip hop-keyword-fontifier))
+
+;*---------------------------------------------------------------------*/
+;*    ebnf-fontifier ...                                               */
+;*---------------------------------------------------------------------*/
+(define (ebnf-fontifier ip)
+
+   (define *ebnf-grammar*
+      (regular-grammar ()
+	 ("-->"
+	  (cons (<SPAN> :class "ebnf-arrow" (<SYM> '-->)) (ignore)))
+	 ("|"
+	  (cons (<SPAN> :class "ebnf-pipe" "|") (ignore)))
+	 ((in "+*")
+	  (let ((el (<SPAN> :class "ebnf-meta" (<SUP> (the-string)))))
+	     (cons el (ignore))))
+	 ((in "[]")
+	  (let ((el (<SPAN> :class "ebnf-meta" (the-string))))
+	     (cons el (ignore))))
+	 ((: #\< (+ (out " \t\n>")) #\>)
+	  (let ((el (<SPAN> :class "ebnf-markup"
+		       (xml-string-encode (the-string)))))
+	     (cons el (ignore))))
+	 ((or (+ (in " \t\n")) (+ (in "<>")))
+	  (let ((el (the-string)))
+	     (cons el (ignore))))
+	 ((context strike "--")
+	  '())
+	 ("--"
+	  (rgc-context 'strike)
+	  (let ((rest (ignore)))
+	     (cons (<STRIKE> rest) (ignore))))
+	 ((context add "##")
+	  '())
+	 ("##"
+	  (rgc-context 'add)
+	  (let ((rest (ignore)))
+	     (cons (<SPAN> :class "ebnf-add" rest) (ignore))))
+	 ((+ (or (out "<> \t\n-#") (: #\- (out #\-)) (: #\# (out #\#))))
+	  (let ((el (<SPAN> :class "ebnf-keyword" (the-string))))
+	     (cons el (ignore))))
+	 (else
+	  (let ((c (the-failure)))
+	     (if (eof-object? c)
+		 '()
+		 (error 'ebnf-fontifier "Unexpected character" c))))))
+
+   (read/rp *ebnf-grammar* ip))
+
+;*---------------------------------------------------------------------*/
+;*    plain-fontifier ...                                              */
+;*---------------------------------------------------------------------*/
+(define (plain-fontifier ip)
+   (list (xml-string-encode (read-string ip))))
+
+;*---------------------------------------------------------------------*/
+;*    *js-keyword-list* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *js-keyword-list*
+   '("as"
+     "break"
+     "case"
+     "catch"
+     "class"
+     "const"
+     "continue"
+     "default"
+     "delete"
+     "do"
+     "else"
+     "extends"
+     "false"
+     "finally"
+     "for"
+     "function"
+     "if"
+     "import"
+     "in"
+     "instanceof"
+     "is"
+     "namespace"
+     "new"
+     "null"
+     "package"
+     "private"
+     "public"
+     "return"
+     "super"
+     "switch"
+     "this"
+     "throw"
+     "true"
+     "try"
+     "typeof"
+     "use"
+     "var"
+     "void"
+     "while"
+     "with"))
+
+;*---------------------------------------------------------------------*/
+;*    *js-future-reserver-list* ...                                    */
+;*---------------------------------------------------------------------*/
+(define *js-future-reserved-list*
+   '("abstract"
+     "debugger"
+     "enum"
+     "export"
+     "goto"
+     "implements"
+     "interface"
+     "native"
+     "protected"
+     "synchronized"
+     "throws"
+     "transient"
+     "volatile"))
+
+;*---------------------------------------------------------------------*/
+;*    *js-init-lexer* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *js-init-lexer* #f)
+
+;*---------------------------------------------------------------------*/
+;*    *js-care-future-reserved* ...                                    */
+;*---------------------------------------------------------------------*/
+(define *js-care-future-reserved* #f)
+
+;*---------------------------------------------------------------------*/
+;*    js-lexer-init! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-lexer-init!)
+   (unless *js-init-lexer*
+      (begin
+	 (set! *js-init-lexer* #t)
+	 (for-each (lambda (word)
+		      (putprop! (string->symbol word) 'reserved #t))
+	           *js-keyword-list*)
+	 (if *js-care-future-reserved*
+	     (for-each (lambda (word)
+	                  (putprop! (string->symbol word) 'reserved #t))
+		       *js-future-reserved-list*)))))
+
+;*---------------------------------------------------------------------*/
+;*    *js-lexer*                                                       */
+;*---------------------------------------------------------------------*/
+(define *js-lexer*
+   (regular-grammar
+	 ;; TODO: are a010 and a013 really correct?
+	 ((blank (in #\Space #\Tab #a010 #a012 #a013 #\Newline))
+	  (blank_no_lt (in #\Space #\Tab #a012))
+	  (nonzero-digit (in ("19")))
+	  (id_start (or alpha #\$ #\_))
+	  (id_part (or alnum #\$ #\_))) ;; TODO: not spec-conform!
+      
+      
+      ((+ blank)
+       (let ((blanks (xml-string-encode (the-string))))
+	  (cons blanks (ignore))))
+      
+      ;; LineComment
+      ((:"//" (* all))
+       (let ((cmt (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-line-comment" cmt)
+		(ignore))))
+      
+      ;; multi-line comment on one line
+      ((: "/*" (* (or (out #\*) (: (+ #\*) (out #\/ #\*)))) (+ #\*) "/")
+       (let ((cmt (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-line-comment" cmt)
+		(ignore))))
+      
+      ((: "/*"
+	  (* (or #\Newline
+		 (out #\*)
+		 (: (+ #\*) (out #\/ #\*))))
+	  (+ #\*) "/")
+       (let ((cmt (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-line-comment" cmt)
+		(ignore))))
+      
+      ;; TODO: verify if this is really the correct syntax
+      ((or
+	;; integer constant
+	#\0
+	(: nonzero-digit (* digit))
+	(: (uncase "0x") (+ xdigit))
+	;; floating-point constant
+	(: (+ digit)
+	   (: (in #\e #\E) (? (in #\- #\+)) (+ digit)))
+	(: (or (: (+ digit) #\. (* digit)) (: #\. (+ digit)))
+	   (? (: (in #\e #\E) (? (in #\- #\+)) (+ digit)))))
+       (let ((num (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-number" num)
+		(ignore))))
+      
+      ((or #\{ #\} #\( #\) #\[ #\] #\. #\; #\, #\| "||" "|="
+	   #\< #\> "<=" ">=" "==" "!=" "===" "!==" #\+ #\- #\* #\% "++" "--"
+	   "<<" ">>" ">>>" #\& #\^ #\! #\~ "&&" #\: #\= "+=" "-="  
+	   "*=" "%=" "<<=" ">>=" ">>>=" "&=" "^=" "/=" #\/ #\?)
+       (let ((tmp (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-operator" tmp)
+		(ignore))))
+      
+      ;; TODO: probably not spec-conform
+      ((: #\" (* (or (out #\" #\\ #\Newline) (: #\\ all))) #\")
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-string" str)
+		(ignore))))
+      ((: #\' (* (or (out #\' #\\ #\Newline) (: #\\ all))) #\')
+       (let ((str (xml-string-encode (the-string))))
+	  (cons (<SPAN> :class "homepage-program-string" str)
+		(ignore))))
+      
+      ;; Identifiers and Keywords
+      ((: id_start (* id_part))
+       (let* ((symbol (the-symbol))
+	      (symbol-str (xml-string-encode (the-string))))
+	  (cond
+	     ((eq? symbol 'function)
+	      (cons (<SPAN> :class "homepage-program-define" symbol-str)
+		    (ignore)))
+	     ((getprop symbol 'reserved)
+	      (cons (<SPAN> :class "homepage-program-reserved" symbol-str)
+		    (ignore)))
+	     (else
+	      (cons symbol-str (ignore))))))
+      
+      ;; TODO: add regular expressions
+      (all
+       (let ((tmp (xml-string-encode (the-string))))
+	  (cons tmp (ignore))))
+      ;; error
+      (else
+       (let ((c (the-failure)))
+	  (if (eof-object? c)
+	      '()
+	      (raise
+	       (instantiate::&io-parse-error
+		  (proc 'js-fontifier)
+		  (msg "Javascript syntax: 'Unexpected char'")
+		  (obj c))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-fontifier ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-fontifier ip)
+   (js-lexer-init!)
+   (read/rp *js-lexer* ip))

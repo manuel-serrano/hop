@@ -65,7 +65,7 @@ function sc_typeof( x ) {
 
 /*** META ((export #t)) */
 function sc_error() {
-    var a = [sc_jsstring2symbol("*error*")];
+    var a = [jsstring2symbol("*error*")];
     for (var i = 0; i < arguments.length; i++) {
 	a[i+1] = arguments[i];
     }

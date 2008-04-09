@@ -1,0 +1,239 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/1.9.x/weblets/weblets/homepage.hop      */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Dec  7 07:29:36 2007                          */
+;*    Last change :  Fri Feb 29 08:47:40 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    The service that dynamically creates weblets homagepage.         */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblets_homepage
+
+   (import weblets
+	   weblets_config
+	   weblets_package
+	   weblets_markup
+	   weblets_fontifier)
+   
+   (export weblets/homepage))
+
+;*---------------------------------------------------------------------*/
+;*    weblets-cache ...                                                */
+;*---------------------------------------------------------------------*/
+(define weblets-mutex (make-mutex))
+
+;*---------------------------------------------------------------------*/
+;*    weblets/homepage ...                                             */
+;*---------------------------------------------------------------------*/
+(define-service (weblets/homepage weblet)
+   ;; check if the weblet exists
+   (if (not weblet)
+       (http-bad-request "/hop/weblets/homage -- parameter `weblet' should be provided")
+       (let ((hzs (get-weblets (weblets-repository) weblet)))
+	  (if (null? hzs)
+	      (http-file-not-found weblet)
+	      (let ((hz (car hzs)))
+		 (untar-hz hz)
+		 (weblets-homepage weblet hz))))))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-cache-dir ...                                             */
+;*---------------------------------------------------------------------*/
+(define (weblet-cache-dir hz)
+   (multiple-value-bind (base name)
+      (package-name-parse (basename hz))
+      (make-file-name (weblets-cache-dir) base)))
+
+;*---------------------------------------------------------------------*/
+;*    weblets-homepage ...                                             */
+;*---------------------------------------------------------------------*/
+(define (weblets-homepage weblet hz)
+   (let* ((dir (make-file-name (weblet-cache-dir hz) "etc"))
+	  (homedir (make-file-name dir "homepage"))
+	  (info (with-input-from-file (make-file-name dir "weblet.info")
+		   read))
+	  (logo (make-file-name dir "logo.png"))
+	  (fi (make-file-name dir "favicon.png"))
+	  (title (find-info info 'name weblet)))
+      (<HTML>
+	 (<HEAD> :favicon fi
+	    :title title
+	    :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
+	    :include (when (directory? homedir) "hop-notepad")
+	    :css (service-resource weblets "weblets.hss")
+	    :css (service-resource weblets "weblets-homepage.hss"))
+	 (<BODY> :id "weblet-homepage"
+	    (<DIV> :align 'center
+	       (<TABLE> :class "weblet-homepage"
+		  (<COLGROUP> (<COL> :width "0*"))
+		  (<TR>
+		     (<TD> :class "logo"
+			(<IMG> :class "logo" :inline #t :src logo))
+		     (<TD> :class "content"
+			(<DIV> :class "weblet-homepage"
+			   (<DIV> :id "title"
+			      (string-capitalize title)
+			      (let ((title (find-info info 'title "")))
+				 (when title (list " - " title))))
+			   (if (directory? homedir)
+			       (weblets-homepage-custom weblet hz info)
+			       (weblets-homepage-default weblet hz info))))))
+	       (<FOOT>))))))
+
+;*---------------------------------------------------------------------*/
+;*    weblets-homepage-default ...                                     */
+;*---------------------------------------------------------------------*/
+(define (weblets-homepage-default weblets hz info)
+   (let ((url (format "http://~a:~a~a" (hostname) (hop-port) hz)))
+      (list 
+       (<WEBLET-INSTALL> url)
+       (<DIV> :class "author" (find-info info 'author ""))
+       (<DIV> :class "version" "Version: " (find-info info 'version ""))
+       (let ((date (find-info info 'date #f)))
+	  (when date (<DIV> :class "date" date)))
+       (let ((minhop (find-info info 'minhop ""))
+	     (maxhop (find-info info 'maxhop "")))
+	  (<DIV> :class "hop"
+	     (when (> (string-length minhop) 0)
+		(<DIV> "Min hop: " (<SPAN> :class "min" minhop)))
+	     (when (> (string-length maxhop) 0)
+		(<DIV> "Max hop: " (<SPAN> :class "max" maxhop)))
+	     (<DIV> "md5: " (<SPAN> :class "signature" (md5sum hz)))))
+       (<DIV> :class "comment" (find-info info 'comment "")))))
+
+;*---------------------------------------------------------------------*/
+;*    <CODE-HOP> ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (<CODE-HOP> body)
+   (<PRE> :class "hop"
+      (map (lambda (str)
+	      (with-input-from-string str
+		 (lambda ()
+		    (read/rp hop-fontifier (current-input-port)))))
+	   body)))
+
+;*---------------------------------------------------------------------*/
+;*    weblets-homepage-wiki-file ...                                   */
+;*---------------------------------------------------------------------*/
+(define (weblets-homepage-wiki-file file dir url info)
+   (let ((m (eval-module)))
+      (eval `(module ,(gensym 'weblets-home-page-wiki)
+	      (import weblets_markup)))
+      (eval `(define (weblet-url) ,url))
+      (eval `(define (weblet-etc-dir) ,dir))
+      (eval `(define (weblet-info) ',info))
+      (eval `(define (<CODE-HOP> body) (,<CODE-HOP> body)))
+      (unwind-protect
+	 (wiki-file->hop file)
+	 (eval-module-set! m))))
+
+;*---------------------------------------------------------------------*/
+;*    tab-title ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (tab-title f)
+   (string-capitalize (prefix (pregexp-replace "^[0-9]+-" (basename f) ""))))
+
+;*---------------------------------------------------------------------*/
+;*    weblets-homepage-custom ...                                      */
+;*---------------------------------------------------------------------*/
+(define (weblets-homepage-custom weblets hz info)
+   (let* ((dir (make-file-name (weblet-cache-dir hz) "etc"))
+	  (url (format "http://~a:~a~a" (hostname) (hop-port) hz))
+	  (homedir (make-file-name dir "homepage"))
+	  (files (directory->path-list homedir))
+	  (wikis (filter (lambda (f)
+			    (string-suffix? ".wiki" f))
+			 files)))
+      (cond
+	 ((null? files)
+	  (weblets-homepage-default weblets hz info))
+	 ((null? (cdr wikis))
+	  (if (string-suffix? ".wiki" (car wikis))
+	      (<DIV> :class "weblet-homepage-tab"
+		 (weblets-homepage-wiki-file (car wikis) dir url info))
+	      (weblets-homepage-default weblets hz info)))
+	 (else
+	  (let ((wikis (sort string<? wikis)))
+	     (<NOTEPAD>
+		(map (lambda (f)
+			(<NPTAB>
+			   (<NPTABHEAD>
+			      (let ((ico (string-append (prefix f) ".png")))
+				 (if (file-exists? ico)
+				     (list
+				      (<IMG> :inline #t :src ico)
+				      (tab-title f))
+				     (tab-title f))))
+			   (<DIV> :class "weblets-homepage-tab"
+			      (weblets-homepage-wiki-file f dir url info))))
+		     wikis)))))))
+
+;*---------------------------------------------------------------------*/
+;*    untar-hz ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (untar-hz hz)
+   (with-lock weblets-mutex
+      (lambda ()
+	 (let ((cache (weblet-cache-dir hz)))
+	    (unless (and (file-exists? cache)
+			 (>elong (file-modification-time cache)
+				 (file-modification-time hz)))
+	       (when (directory? cache)
+		  (delete-path cache))
+	       (unless (directory? (weblets-cache-dir))
+		  (make-directories (weblets-cache-dir)))
+	       (let ((p (open-input-gzip-file hz)))
+		  (unwind-protect
+		     (multiple-value-bind (base version)
+			(package-name-parse (basename hz))
+			(untar-directory p
+					 (weblets-cache-dir)
+					 (make-file-name base "etc")))
+		     (close-input-port p))))))))
+
+;*---------------------------------------------------------------------*/
+;*    untar-directory ...                                              */
+;*---------------------------------------------------------------------*/
+(define (untar-directory ip base prefix)
+   (let loop ()
+      (let ((h (tar-read-header ip)))
+	 (when h
+	    (case (tar-header-type h)
+	       ((dir)
+		(if (substring-at? (tar-header-name h) prefix 0)
+		    (let ((path (make-file-name base (tar-header-name h))))
+		       (if (make-directories path)
+			   (loop)
+			   (raise
+			    (instantiate::&io-error
+			       (proc 'untar)
+			       (msg "Cannot create directory")
+			       (obj path)))))
+		    (loop)))
+	       ((normal)
+		(let ((b (tar-read-block h ip)))
+		   (when (substring-at? (tar-header-name h) prefix 0)
+		      (let* ((path (make-file-name base (tar-header-name h)))
+			     (dir (dirname path)))
+			 (when (and (file-exists? dir) (not (directory? dir)))
+			    (delete-file dir))
+			 (unless (file-exists? dir)
+			    (make-directories dir))
+			 (with-output-to-file path
+			    (lambda ()
+			       (display b)))))
+		   (loop)))
+	       (else
+		(raise
+		 (instantiate::&io-parse-error
+		    (proc 'untar)
+		    (msg (format "Illegal file type `~a'" (tar-header-type h)))
+		    (obj (tar-header-name h))))))))))
+
+
+   
