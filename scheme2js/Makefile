@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Thu Feb 21 11:43:24 2008 (serrano)                */
+#*    Last change :  Wed Apr  9 10:09:47 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -63,7 +63,17 @@ INCLUDES = nodes.sch protobject.sch tools.sch mapping.sch
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
 POPULATION = $(SOURCES) $(INCLUDES) make-lib.scm Makefile \
-             runtime/exporter.scm runtime/runtime_callcc.js
+             runtime/exporter.scm runtime/runtime_callcc.js \
+             Makefile.configs \
+	     runtime/IO.js \
+             runtime/Makefile.include \
+             runtime/immutable.js \
+             runtime/interface.scm \
+             runtime/meta.scm \
+             runtime/multi-file-port.scm \
+             runtime/mutable.js \
+             runtime/runtime_part.js \
+             runtime/string.scm
 
 -include ../etc/Makefile.library
 

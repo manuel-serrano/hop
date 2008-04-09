@@ -1,0 +1,14 @@
+#*---------------------------------------------------------------------*/
+#*    Standard Bigloo configuration                                    */
+#*---------------------------------------------------------------------*/
+-include ../etc/Makefile.hopconfig
+-include ../etc/Makefile.version
+-include $(BIGLOOLIBDIR)/Makefile.config
+
+#*---------------------------------------------------------------------*/
+#*    Compilers, Tools and Destinations                                */
+#*---------------------------------------------------------------------*/
+HOPCLOSELIBS	= $(BGLCLOSELIBS)
+HOPCLOSELIBS_E	= -lscheme2js_s-$(HOPRELEASE)
+
+SCHEME2JSSHAREDIR = $(HOPSHAREDIR)
