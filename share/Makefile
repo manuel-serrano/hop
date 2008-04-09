@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Apr  9 12:05:35 2008 (serrano)                */
+#*    Last change :  Wed Apr  9 12:21:38 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -194,7 +194,7 @@ flash/%.swf: flash/%.as
 native:
 
 jvm:
-	$(MAKE) -s jvm-list SRC=.. DIR=share DEST=share
+	$(MAKE) -s jvm-list SRC=.. DIR=share DEST=..
 
 jvm-list:
 	ls $(SRC)/$(DIR) > $(DEST)/$(DIR)/.list

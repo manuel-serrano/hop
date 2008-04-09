@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Apr  8 18:35:16 2008 (serrano)                */
+;*    Last change :  Wed Apr  9 12:18:55 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -380,7 +380,8 @@
 (define (audio-onstate %event engine player)
    (lambda (state pllen song pos len vol err _1 _2)
       (tprint "audio signal state: state=" state
-	      " len=" len " pos=" pos " vol=" vol " song=" song
+	      " len=" len " pos=" pos " vol=" vol
+	      " song=" song " pllen=" pllen
 	      " thread=" (current-thread))
       (hop-audio-player-%errcount-set! player 0)
       (hop-event-broadcast! %event (list state len pos vol song))))
@@ -406,7 +407,8 @@
 		   (else
 		    s)))
 	     (plist (map conv plist)))
-	 (tprint "signal meta s=" s " thread=" (current-thread))
+	 (tprint "signal meta s=" s " plist.length=" (length plist)
+		 " thread=" (current-thread))
 	 (hop-event-broadcast! %event (list 'meta s plist))))
    
    (define (audio-onfile-name meta plist)
