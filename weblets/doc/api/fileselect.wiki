@@ -15,7 +15,6 @@ presenting the server files.
 
 === Server ===
 
-  (<FILESELECT> arg ...)
   (<FILEBROWSE> arg ...)
 
   (filebrowse arg ...)
@@ -43,31 +42,10 @@ browsers// must include in their header, the following statement:
 
 == Examples ==
 
-<example><FILEBROWSE>, <FILESELECT>, filebrowse</example>
+<example><FILEBROWSE>, filebrowse</example>
 
 == Server Definitions ==
 <server>
-
-=== ++<FILESELECT>++ ===
-<markup> <FILESELECT>
-
-<arguments>
-^  attributes  ^   type    ^   default    ^  short description          ^
-| :id          |  string   |  //random//  | element identifier.         |
-| :value       |  string   |              | the default value.          |
-| :size        |  integer  |     10       | the size in character.      |
-</arguments>
-
-The argument :value specifies an initial value for the file selector.
-The argument :size give the length expressed in number of characters.
-
-When the value of the ++<FILESELECT>++ changes (i.e., when the
-character ++Return++ is typed in) the event handler :onchange is
-invoked.  
-
-The ++<FILESELECT>++ widget handles access controls. That is, it does not
-complete inside directories for which the access is not granted.
-</markup>
 
 === ++<FILEBROWSE>++ ===
 <markup> <FILEBROWSE>
@@ -142,14 +120,6 @@ prefixed with a ++~++ sign.
 This section describes the various CSS elements used to configure
 file selectors.
 
-=== ++fileselect++ ===
-<css> fileselect
-
-This element specifies the graphical configuration of the input text
-of the file selector. The HSS selector ++fileselect++ is an alias
-for ++input.hop-fileselect++.
-</css>
-
 === ++filebrowse++ ===
 <css> filebrowse
 
@@ -157,5 +127,8 @@ This element specifies the graphical configuration of the main division
 of the file browser. The HSS selector ++filebrowse++ is an alias
 for ++div.hop-filebrowse++.
 </css>
+
+== See also ==
+<see-also><FILEBROWSE>, filebrowse</see-also>
 
 </doc>

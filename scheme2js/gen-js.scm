@@ -4,42 +4,23 @@
 
 (define counter 0)
 
+(define *js-counter-mutex* (make-mutex))
+
+;; mangle variables, so they are valid JS-vars.
 (define (mangle-JS-sym sym)
    ;; MS: 21 mar 2006
    (let ((s (symbol->string sym)))
       (if (bigloo-need-mangling? s)
 	  (bigloo-mangle s)
 	  s)))
-;*    (let ((cs (string->list (symbol->string sym))))                  */
-;*       (let loop ((cs cs)                                            */
-;* 		 (acc '()))                                            */
-;* 	 (if (null? cs)                                                */
-;* 	     (list->string (reverse acc))                              */
-;* 	     (let ((c (car cs)))                                       */
-;* 		(cond                                                  */
-;* 		   ((char-alphabetic? c)                               */
-;* 		    (loop (cdr cs) (cons c acc)))                      */
-;* 		   ((char-numeric? c)                                  */
-;* 		    (loop (cdr cs) (cons c acc)))                      */
-;* 		   (else                                               */
-;* 		    (loop                                              */
-;* 		     (cdr cs)                                          */
-;* 		     (append                                           */
-;* 		      ;; get ascii-number, and transform the           */
-;* 		      ;; number into string.                           */
-;* 		      ;; the number will be reversed, but still        */
-;* 		      ;; unique                                        */
-;* 		      (string->list                                    */
-;* 		       (integer->string                                */
-;* 			(char->integer c)))                            */
-;* 		      ;; prefix with "_" (don't forget: reverse acc)   */
-;* 		      (cons #\_ acc))))))))))                          */
-;*                                                                     */
-;; mangle variables, so they are valid JS-vars.
+
 ;; kind of adapted gen-sym
 (define (gen-JS-sym sym)
-   (set! counter (+ counter 1))
-   (mangle-JS-sym (symbol-append 'sc_ ;; start with "sc_"
-				 sym
-				 '_
-				 (string->symbol (integer->string counter)))))
+   (with-lock *js-counter-mutex*
+      (lambda ()
+	 (set! counter (+ counter 1))
+	 (mangle-JS-sym
+	  (symbol-append 'sc_ ;; start with "sc_"
+			 sym
+			 '_
+			 (string->symbol (integer->string counter)))))))

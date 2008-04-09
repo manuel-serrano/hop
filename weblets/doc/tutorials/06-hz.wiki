@@ -75,12 +75,12 @@ all the files are created in a directory named
   
   (define-service (roman num)
      (<HTML>
-       (<HEAD> :base (service-base roman (current-request)) :css "roman.hss")
+       (<HEAD> :base (service-base-url roman (current-request)) :css "roman.hss")
        (<BODY>
           (<TABLE> 
               (<TR> 
-                 (<TD> :class "roman" num) 
-                 (<TD> :class "arabic" (roman->arabic num))))
+                 (<TD> :class "roman" (or num 10))
+                 (<TD> :class "arabic" (roman->arabic (or num 10)))))
           (<FOOT>))))
 
   (define-service (roman/preferences)
@@ -317,7 +317,7 @@ following:
         ...
         ~(hop_install_weblet 
              "http://mhost.mydomain.org/roman-0.0.1.hz"
-             (string-append (hop-weblets-directory) "/hz/etc/hz-install.png"))
+             $(string-append (hop-weblets-directory) "/hz/etc/hz-install.png"))
         ...))
 </code>
 
@@ -409,5 +409,21 @@ command:
 
 generates a sync list out of the weblets found in the directory 
 ++/tmp/repository++ located in the server.
+
+=== Creating a web page for the weblet ===
+
+The [[/hop/weblets|WEBLETS]] weblet can be used to generated **automatically**
+a Web page for a weblet. This support two modes:
+
+  * a fully automatic mode where the Web page is generated out of the
+ information found in the ++etc/weblet.info++ file.
+  * a semi-automatic mode where the Web page is generated out of the optional
+ wiki files found in the directory ++etc/homepage++.
+
+
+These two techniques are presented in the [[/hop/weblets|WEBLETS]]
+,(<WEBLETREF> "documentation" 
+(make-file-path (hop-weblets-directory) "weblets/etc/weblets.wiki")).
+
 
 </doc>

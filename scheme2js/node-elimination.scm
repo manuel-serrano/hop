@@ -11,57 +11,57 @@
 (define (node-elimination! tree::pobject)
    (verbose "node-elimination")
    (overload traverse! node-elimination! (Node
-					  Body
-					  Let-form
+					  Module
 					  Set!
 					  Begin
 					  Labelled
-					  Break)
-	     (tree.traverse!)))
+					  Break
+					  Let
+					  )
+	     (tree.traverse! #f)))
 
-(define-pmethod (Node-node-elimination!)
-   (this.traverse0!))
+;; last? is a hack to see, if the element is the last element in a Module.
+;; In this case it must not be removed (this is especially important in the
+;; Begin-expression, which is the only one looking for it.
 
-;; let-form becomes a sequence ('begin') of bindings followed by the body.
-(define-pmethod (Let-form-node-elimination!)
-   (new-node Begin (append (map (lambda (binding)
-				   (binding.traverse!))
-				this.bindings)
-			   (list (this.body.traverse!)))))
+(define-pmethod (Node-node-elimination! last?)
+   (this.traverse1! last?))
+
+(define-pmethod (Module-node-elimination! last?)
+   (this.traverse1! #t))
 
 ;; drop Body-node
-(define-pmethod (Body-node-elimination!)
-   (this.expr.traverse!))
+(define-pmethod (Body-node-elimination! last?)
+   (this.expr.traverse! last?))
 
 ;; remove x=x sets
-;; leave Decl, if there was one.
-(define-pmethod (Set!-node-elimination!)
-   (this.traverse0!)
+(define-pmethod (Set!-node-elimination! last?)
+   (this.traverse1! #f)
    (if (and (inherits-from? this.lvalue (node 'Var-ref))
 	    (inherits-from? this.val (node 'Var-ref))
 	    (eq? this.lvalue.var this.val.var))
-       (cond
-	  ((inherits-from? this.lvalue (node 'Decl))
-	   this.lvalue)
-	  ((inherits-from? this.val (node 'Decl))
-	   this.val)
-	  (else (new-node Const #unspecified)))
+       (let ((const-node (new-node Const #unspecified)))
+	  (when (statement-form? this) (mark-statement-form! const-node #t))
+	  const-node)
        this))
    
 ;; if Begin only contains one entry, replace it by this entry.
 ;; if a Begin contains another Begin merge them.
-(define-pmethod (Begin-node-elimination!)
+(define-pmethod (Begin-node-elimination! last-for-module?)
    (let ((exprs this.exprs)
 	 (statement? (statement-form? this)))
       (cond
 	 ((null? exprs)
-	  (new-node Const #unspecified))
+	  (let ((const-node (new-node Const #unspecified)))
+	     (when (statement-form? this) (mark-statement-form! const-node #t))
+	     const-node))
 	 ((null? (cdr exprs))
-	  ((car exprs).traverse!))
+	  ((car exprs).traverse! last-for-module?))
 	 (else
 	  (let loop ((exprs exprs))
 	     (unless (null? exprs)
-		(let ((expr ((car exprs).traverse!))
+		(let ((expr ((car exprs).traverse! (and last-for-module?
+							(null? (cdr exprs)))))
 		      (exprs-tail (cdr exprs)))
 		   (set-car! exprs expr)
 		   (if (inherits-from? expr (node 'Begin))
@@ -80,16 +80,22 @@
 		     (head exprs)
 		     (last #f)) ;; last-pair, that is in the 'accepted' list
 	     (cond
-		((null? exprs) ;; should only happen if statement
+		((null? exprs) ;; happens only if the last element is not
+		               ;; always copied
 		 (cond
 		    ((not last) ;; no element got through our weeding
-		     (new-node Const #unspecified))
+		     (let ((const-node (new-node Const #unspecified)))
+			(when (statement-form? this)
+			   (mark-statement-form! const-node #t))
+			const-node))
 		    ((null? (cdr head)) ;; only one element got through
 		     (car head))
 		    (else
 		     (set! this.exprs head)
 		     this)))
-		((and (not statement?) (null? (cdr exprs)))
+		((and (null? (cdr exprs))
+		      (or last-for-module?
+			  (not statement?)))
 		 (if last
 		     (begin
 			(set! this.exprs head)
@@ -97,8 +103,7 @@
 		     (car exprs)))
 		((or (inherits-from? (car exprs) (node 'Lambda))
 		     (inherits-from? (car exprs) (node 'Const))
-		     (and (inherits-from? (car exprs) (node 'Var-ref))
-			  (not (inherits-from? (car exprs) (node 'Decl)))))
+		     (inherits-from? (car exprs) (node 'Var-ref)))
 		 (if last
 		     (begin
 			(set-cdr! last (cdr exprs)) ;; remove the current el.
@@ -110,7 +115,7 @@
 			   #f)))
 		((or (inherits-from? (car exprs) (node 'Break))
 		     (inherits-from? (car exprs) (node 'Return))
-		     (inherits-from? (car exprs) (node 'Tail-rec-call)))
+		     (inherits-from? (car exprs) (node 'Continue)))
 		 ;; remove remaining els
 		 (set-cdr! exprs '())
 		 (if last
@@ -124,14 +129,23 @@
 		       exprs)))))))) ;; we are the last pair that got through
 
 ;; remove unused labels.
-(define-pmethod (Labelled-node-elimination!)
-   (this.traverse0!)
-   (if (not this.used?)
+(define-pmethod (Labelled-node-elimination! last?)
+   (delete! this.label.used?)
+   (this.traverse1! last?)
+   (if (not this.label.used?)
        this.body
        (begin
-	  (delete! this.used?)
+	  (delete! this.label.used?)
 	  this)))
 
-(define-pmethod (Break-node-elimination!)
-   (set! this.labelled.used? #t)
-   this)
+(define-pmethod (Break-node-elimination! last?)
+   (set! this.label.used? #t)
+   (this.traverse1! last?))
+
+;; remove empty Lets
+(define-pmethod (Let-node-elimination! last?)
+   (if (null? this.scope-vars)
+       (let ((bnode (new-node Begin
+			      (append this.bindings (list this.body)))))
+	  (bnode.traverse! last?))
+       (this.traverse1! last?)))

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-tree.js                       */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-tree.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Tue Nov 13 14:07:49 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Sun Mar  9 16:17:22 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
@@ -71,6 +71,7 @@ function hop_tree_root( tree ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_close ...                                               */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-close)) */
 function hop_tree_close( tree ) {
    if( tree.openp ) {
       tree.openp = false;
@@ -97,12 +98,15 @@ function hop_tree_close( tree ) {
 	    hop_tree_close( children[ i ] );
 	 }
       }
+      
+      if( tree.onclose ) tree.onclose();
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_tree_open ...                                                */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-open)) */
 function hop_tree_open( tree ) {
    if( tree.proc ) hop_tree_populate( tree );
    
@@ -118,6 +122,8 @@ function hop_tree_open( tree ) {
       tree.iconerror = tree.iconopenerr;
       tree.img_folder.src = tree.iconopen;
    }
+
+   if( tree.onopen ) tree.onopen();
       
    node_style_set( tree.body, "display", "block" );
 }
@@ -126,6 +132,7 @@ function hop_tree_open( tree ) {
 /*    hop_tree_populate ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_tree_populate( tree ) {
+   
    var success = function( html ) {
       tree.populated = true;
 
@@ -140,7 +147,18 @@ function hop_tree_populate( tree ) {
       }
    }
    
-   return hop( tree.proc(), success );
+   var failure = function( xhr ) {
+      try {
+	 var proc = eval( xhr.responseText );
+	 if( proc ) proc( function() { return hop_tree_populate( tree ) } );
+      } catch( e ) {
+	 hop_error( "*** Hop Tree, handler error failure: " + tree +
+		    ": " + e + " -- " +
+		    hop_responsetext_error( xhr ) );
+      }
+   }
+
+   return hop( tree.proc(), success, failure );
 }
 
 /*---------------------------------------------------------------------*/
@@ -297,6 +315,9 @@ function hop_tree_row_set_select_all( tree, select ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select_all ...                                      */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-select-all!)
+           (peehole (hole 1 "hop_tree_row_set_select_all(" tree ", true)")))
+*/
 function hop_tree_row_select_all( tree ) {
    hop_tree_row_set_select_all( tree, true );
 }
@@ -321,6 +342,7 @@ function hop_tree_row_toggle_selected( event, tree, row ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select_next ...                                     */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-select-next!)) */
 function hop_tree_row_select_next( tree ) {
    var root = hop_tree_root( tree );
 
@@ -367,6 +389,7 @@ function hop_tree_row_select_next( tree ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select_previous ...                                 */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-select-previous!)) */
 function hop_tree_row_select_previous( tree ) {
    var root = hop_tree_root( tree );
 
@@ -415,7 +438,7 @@ function hop_tree_row_select_previous( tree ) {
 /*---------------------------------------------------------------------*/
 function hop_make_tree( parent, id, visible, level, proc, title,
 			openp, delayedp,
-			mu, ons, onus, value, history,
+			mu, ons, onus, ono, onc, value, history,
 			iconopen, iconopenerr,
 			iconclose, iconcloseerr,
 			icondir ) {
@@ -585,6 +608,8 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       tree.multiselect = false;
       tree.onselect = false;
       tree.onunselect = false;
+      tree.onopen = false;
+      tree.onclose = false;
    } else {
       parent.appendChild( tree );
 
@@ -596,7 +621,11 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       tree.forcemulti = false;
    }
 
-   /* populate the tree is not delayed */
+   /* open/close listeneres */
+   tree.onopen = ono;
+   tree.onclose = onc;
+
+   /* populate the tree if not delayed */
    if( delayedp ) {
       /* store the populate procedure and not populate yet */
       tree.proc = proc;
@@ -614,7 +643,7 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    
    /* open the tree if required */
    if( openp ) hop_tree_open( tree );
-   
+
    return tree;
 }
 
@@ -709,6 +738,7 @@ function hop_make_tree_leaf( tree, content, value, icon, iconerr ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_reset ...                                               */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-reset!)) */
 function hop_tree_reset( tree ) {
    if( !tree ) {
       return false;
@@ -746,6 +776,7 @@ function hop_tree_id_reset( id ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_selection ...                                           */
 /*---------------------------------------------------------------------*/
+/*** META ((export tree-selection)) */
 function hop_tree_selection( tree ) {
    var sel = tree.selections;
    var len = sel.length;

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/flash/HopAudio.as                 */
+/*    serrano/prgm/project/hop/1.9.x/share/flash/HopAudio.as           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Wed Nov 14 17:40:41 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Tue Apr  8 10:17:43 2008 (serrano)                */
+/*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
 /*                                                                     */
@@ -105,18 +105,25 @@ class HopAudio {
 
       // setPosition
       var setPosition = function( position ) {
-	 seek = true;
-	 snd.stop();
-	 seek= false;
-
-	 snd.start( position );
+	 // this is not implemented because snd.start( offset ) just delay
+	 // the starting, it does not seek!
       }
 
       // getPosition
       var getPosition = function() {
-	 return Math.floor( snd.getPosition() / 1000 );
+	 var pos = snd.getPosition();
+	 
+	 if( pos > 0 ) {
+	    return Math.floor( pos / 1000 );
+	 } else {
+	    return 0;
+	 }
       }
 
+      // markPosition
+      var markPosition = function( m ) {
+      }
+      
       // getId3
       var getId3 = function() {
 	 if( snd.id3 ) {
@@ -165,7 +172,10 @@ class HopAudio {
 	    }
 	 }
       }
-	       
+
+      // initial configuration
+      setVolume( 50 );
+      
       // External interface binding
       ExternalInterface.addCallback( 'load', this, loadSound );
       ExternalInterface.addCallback( 'flash_play', this, playSound );
@@ -178,6 +188,7 @@ class HopAudio {
       ExternalInterface.addCallback( 'duration_get', this, getDuration );
       ExternalInterface.addCallback( 'position_set', this, setPosition );
       ExternalInterface.addCallback( 'position_get', this, getPosition );
+      ExternalInterface.addCallback( 'position_mark', this, markPosition );
       ExternalInterface.addCallback( 'id3_get', this, getId3 );
       ExternalInterface.addCallback( 'onload_set', this, setOnLoad );
       ExternalInterface.addCallback( 'onerror_set', this, setOnError );

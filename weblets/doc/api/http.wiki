@@ -53,15 +53,15 @@ code of the HTTP response in order to build the value sent to ++success++:
 === ++(http-send-request request callback)++ ===
 <function> http-send-request
 <arguments>
-^  arguments  ^   type           ^   short description              ^
-| request     |  ::http-request  | a HTTP request.                  |
-| callback    |  procedure       | a procedure of three arguments.  |
+^  arguments  ^   type           ^   short description  ^
+| request     |  ::http-request  | a HTTP request.  |
+| callback    |  procedure       | a procedure of five arguments.  |
 </arguments>
 
 This low level function is used to handle primitive HTTP requests. 
 It opens a connection to a remote HTTP server as referenced to by the
 ++request++. When such a connection is established, it calls the
-++callback++ procedure with four parameters:
+++callback++ procedure with five parameters:
 
   - an input stream containing the characters of the response. If the response
  has no body, the input stream is the boolean ++#f++.

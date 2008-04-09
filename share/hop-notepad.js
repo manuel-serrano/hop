@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-notepad.js                    */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-notepad.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Wed Nov 21 08:28:30 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Wed Mar 26 08:38:01 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
 /*=====================================================================*/
@@ -58,11 +58,23 @@ function hop_notepad_inner_select( np, to, callback ) {
 	      function( html ) {
 		 hop_innerHTML_set( bodies.childNodes[ to ], html );
 		 hop_notepad_inner_toggle( np, to, tabs, bodies );
+		 
 		 if( callback ) callback();
+		 /* the tab onselect handler */
+		 if( tabs.childNodes[ to ].onselect )
+		    tabs.childNodes[ to ].onselect();
+		 /* the global onchange handler */
+		 if( np.onchange )
+		    np.onchange( tabs.childNodes[ to ] );
 	      } );
       } else {
 	 hop_notepad_inner_toggle( np, to, tabs, bodies );
+	 
 	 if( callback ) callback();
+	 /* the tab onselect handler */
+	 if( tabs.childNodes[ to ].onselect ) tabs.childNodes[ to ].onselect();
+	 /* the global onchange handler */
+	 if( np.onchange ) np.onchange( tabs.childNodes[ to ] );
       }
    }
 }
@@ -73,6 +85,7 @@ function hop_notepad_inner_select( np, to, callback ) {
 /*    This is a user function that might be invoked with NOTEPAD       */
 /*    and PAN or IDENTs.                                               */
 /*---------------------------------------------------------------------*/
+/*** META ((export notepad-select)) */
 function hop_notepad_select( id1, id2, history, callback ) {
    var np = hop_is_html_element( id1 ) ? id1 : document.getElementById( id1 );
    var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );

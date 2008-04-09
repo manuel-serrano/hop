@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-paned.scm                   */
+;*    serrano/prgm/project/hop/1.9.x/runtime/hop-paned.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Nov 13 09:35:17 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Thu Apr  3 15:06:30 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
 ;*=====================================================================*/
@@ -170,13 +170,15 @@
 ;*    xml-write ::html-pan ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::html-pan p backend)
-   (with-access::html-pan obj (id klass body)
+   (with-access::html-pan obj (id klass body attributes)
       (display "<div id='" p)
       (display id p)
       (display "' class='hop-pan" p)
       (when (string? klass)
 	 (display " " p)
 	 (display klass p))
-      (display "'>" p)
+      (display "' " p)
+      (xml-write-attributes attributes p)
+      (display ">" p)
       (xml-write body p backend)
       (display "</div>" p)))

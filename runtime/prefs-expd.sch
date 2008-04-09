@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/prefs-expd.sch                  */
+;*    serrano/prgm/project/hop/1.9.x/runtime/prefs-expd.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Tue Jun 26 10:12:48 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Thu Apr  3 09:07:22 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
 ;*=====================================================================*/
@@ -19,9 +19,12 @@
    (define (make-load id)
       (let ((mod (eval-module)))
 	 `(define (,id file)
-	     ,(if (evmodule? mod)
-		  `(hop-load file :env (eval-find-module ',(evmodule-name mod)))
-		  `(hop-load file)))))
+	     (with-lock (preferences-mutex)
+		(lambda ()
+		   ,(if (evmodule? mod)
+			`(hop-load file
+		            :env (eval-find-module ',(evmodule-name mod)))
+			`(hop-load file)))))))
    
    (define (make-save-clause c)
       (match-case c
@@ -47,9 +50,11 @@
    
    (define (make-save id clauses)
       `(define (,id file)
-	  (with-output-to-file file
+	  (with-lock (preferences-mutex)
 	     (lambda ()
-		,@(map make-save-clause clauses)))
+		(with-output-to-file file
+		   (lambda ()
+		      ,@(map make-save-clause clauses)))))
 	  file))
    
    (define (make-value-clause lbl value)

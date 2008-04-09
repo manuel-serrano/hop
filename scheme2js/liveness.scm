@@ -39,7 +39,7 @@
    (this.traverse1 (cons this nesting)))
 
 (define-pmethod (Lambda-liveness nesting)
-   (hashtable-for-each this.free-vars
+   (hashtable-for-each this.free-vars-ht
 		       (lambda (var ignored)
 			  (delete! var.live-begin-stack)
 			  (delete! var.live-end-stack)
@@ -55,9 +55,9 @@
 	  (live-begin-stack var.live-begin-stack)
 	  (live-end-stack var.live-end-stack))
       (cond
-	 (var.captured?
+	 (var.extern?
 	  'do-nothing)
-	 (var.imported?
+	 (var.captured?
 	  'do-nothing)
 	 (var.free?
 	  'do-nothing)

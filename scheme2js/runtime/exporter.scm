@@ -1,32 +1,66 @@
-(module export-runtime
-   (main myMain))
+(module exporter
+   (main my-main))
 
-(define *export-line-pattern* (pregexp "/// export(-higher)?[ ]*(.*)"))
-(define *exported-fun-pattern* (pregexp "(?:var|function) ((?:sc_)?([^ (;]*))"))
-(define *attributes-pattern* (pregexp "((?:sc_)?(?:_[A-Z]|[^_])*)(?:_(.*))?"))
+;; unmarshalling recognizes the following patterns:
+;; is-XX, has-YY, ZZ-bang which are converted to XX?, YY? and ZZ!
+;;
+;; by default both CamlCase and c_underscores are recognized. Both can be
+;; disabled with a flage. In either case a '-' is inserted instead (ex
+;; Caml-case and c-underscores).
+;;
+;; prefixes can be ignored: --ignored-prefixes '("pre" "sc_" "SC_" "hop_")'
+;;
+;; the --constant flag will add a (constant #f) clause to every exported
+;; variable. scheme2js will then make sure that none of these are
+;; modified.
+;;
+;; --constant-functions will only add the (constant #f) clause to
+;; functions. This is purely syntactic. var f = function() {}; will _not_ be
+;; exported as (constant #t). but function f() {}; will.
 
-(define (starts-with? s sub-s)
-   (substring-at? s sub-s 0))
+(define *ignored-prefixes* '())
+(define *out-file* #f)
+(define *in-files* '())
 
-(define (ends-with? s sub-s)
-   (let ((s-length (string-length s))
-	 (sub-s-length (string-length sub-s)))
-      (and (>= s-length sub-s-length)
-	   (substring-at? s sub-s (- s-length sub-s-length)))))
+(define *module-name* #f)
+
+(define *camel-case?* #t)
+(define *c_underlines?* #t)
+
+(define *constant?* #f)
+(define *constant-functions?* #f)
 
 (define (unmarshall s)
-   (let ((s-without-attributes (cadr (pregexp-match *attributes-pattern* s))))
-      (let loop ((chars (string->list s-without-attributes))
+   (define (is-has-bang str)
+      (cond
+	 ((starts-with? str "is-")
+	  (is-has-bang (string-append (substring str 3 (string-length str)) "?")))
+	 ((starts-with? str "has-")
+	  (is-has-bang (string-append str "?")))
+	 ((ends-with? str "-bang")
+	  (is-has-bang (string-append (substring str 0
+						 (- (string-length str) 5))
+				       "!")))
+	 (else
+	  str)))
+   
+   (let* ((str (symbol->string s))
+	  (s-without-ignored-prefixes
+	   (remove-prefix str *ignored-prefixes*)))
+      (let loop ((chars (string->list s-without-ignored-prefixes))
 		 (rev-res '()))
 	 (if (null? chars)
 	     (let ((res (list->string (reverse! rev-res))))
-		(if (starts-with? res "is-")
-		    (string-append (substring res 3 (string-length res)) "?")
-		    res))
+		(string->symbol (is-has-bang res)))
 	     (cond
-		((char-upper-case? (car chars)) ;; starting upper-case
+		((and *camel-case?*
+		      (char-upper-case? (car chars))) ;; starting upper-case
 		 (loop (cdr chars)
 		       (cons (char-downcase (car chars)) (cons #\- rev-res))))
+		((and *c_underlines?*
+		      (eq? (car chars) #\_))
+		 (loop (cdr chars)
+		       (cons #\- rev-res)))
 		((eq? (car chars) #\2)
 		 (loop (cdr chars)
 		       (cons #\> (cons #\- rev-res))))
@@ -34,149 +68,99 @@
 		 (loop (cdr chars)
 		       (cons (car chars) rev-res))))))))
 
-(define (extract-attributes s)
-   (let* ((match (pregexp-match *attributes-pattern* s))
-	  (attributes_ext (caddr match)))
-      (and attributes_ext
-	   (map string->symbol
-		(string-split attributes_ext "_")))))
+(define (extract-scheme-names var meta)
+   (let* ((JS-fun var)
+	  (scheme-funs-entry (assq 'export meta)))
+      (cond
+	 ((not scheme-funs-entry)
+	  (warning "Function has META info but is not exported."
+		   JS-fun)
+	  '())
+	 ((null? (cdr scheme-funs-entry))
+	  (error "exporter" "(export) -clause without value" meta))
+	 ((eq? (cadr scheme-funs-entry) #t)
+	  (list (unmarshall JS-fun)))
+	 (else
+	  (cdr scheme-funs-entry)))))
 
-(define (parse-line line)
-   (let ((match (pregexp-match *export-line-pattern* line)))
-      (and match
-	   (let* ((fun-match (pregexp-match *exported-fun-pattern* line))
-		  (exported-fun (cadr fun-match))
-		  (interface-fun (string-append "sci_"
-						(caddr fun-match)))
-		  (attributes (extract-attributes exported-fun))
-		  (higher-order? (and (cadr match) #t))
-		  (override-names (caddr match))
-		  (scheme-funs (if (string=? override-names "")
-				   (list (unmarshall (caddr fun-match)))
-				   (string-split override-names
-						 " "))))
-	      (if (eq? *mode* 'map)
-		  (list attributes scheme-funs interface-fun higher-order?)
-		  (cons interface-fun exported-fun))))))
+(define (construct-module-clause exports-ht macros-ht)
+   `(module ,(string->symbol *module-name*)
+       (export-macros ,@(hashtable-map macros-ht
+				       (lambda (ignored macro)
+					  macro)))
+       (export ,@(hashtable-map exports-ht
+				(lambda (scheme-name export-clause)
+				   (cons scheme-name export-clause))))))
 
-(define *mode* #f)
-
-(define (print-runtime-var-mapping ht)
-   (let ((combinations '(("mutable" mutable default)
-			 ("immutable" immutable default)
-			 ("mutable-call/cc" mutable-call/cc call/cc mutable
-					    default)
-			 ("immutable-call/cc" immutable-call/cc call/cc
-					      immutable default))))
+(define (print-module-clause metas)
+   (let ((exports-ht (make-hashtable))
+	 (macros-ht (make-hashtable)))
+      ;; TODO: hard-coded combinations.
       (for-each
-       (lambda (combination)
-	  (let ((name (string->symbol
-		       (string-append "*" (car combination) "-runtime-var-mapping*")))
-		(done-symbols (make-hashtable)))
-	     ;(with-output-to-port (current-error-port) (lambda () (print name)))
-	     (let loop ((res-mapping '())
-			(remaining (cdr combination)))
-		(if (null? remaining)
-		    (pp `(define ,name ',res-mapping))
-		    (let* ((part-mapping (hashtable-get ht (car remaining)))
-;			   (dummy
-;			    (with-output-to-port (current-error-port)
-;			       (lambda () (print (car remaining)))))
-			   (part-mapping-filtered
-			    (filter (lambda (p)
-				       (not (hashtable-get done-symbols
-							   (car p))))
-				    part-mapping)))
-		       (for-each (lambda (p)
-				    (hashtable-put! done-symbols (car p) #t))
-				 part-mapping-filtered)
-		       (loop (append! part-mapping-filtered res-mapping)
-			     (cdr remaining)))))))
-       combinations)))
+       (lambda (var/kind/meta)
+	  (let ((var (car var/kind/meta))
+		(kind (cadr var/kind/meta))
+		(meta (caddr var/kind/meta)))
+	     (if (not var)
+		 (hashtable-put! macros-ht (caadr meta) meta)
+		 (let* ((scheme-funs (extract-scheme-names var meta))
+			(without-export
+			 (filter (lambda (assoc)
+				    (not (eq? (car assoc) 'export)))
+				 meta))
+			(with-JS (cons (list 'JS var)
+				       without-export))
+			(with-constant (if (or *constant?*
+					       (and *constant-functions?*
+						    (eq? kind 'function)))
+					   (cons (list 'constant? #t)
+						 with-JS)
+					   with-JS)))
+			 
+		    (for-each (lambda (scheme-fun)
+				 (hashtable-put! exports-ht
+						 scheme-fun
+						 with-constant))
+			      scheme-funs)))))
+       metas)
+      (pp (construct-module-clause exports-ht macros-ht))))
 
-(define (print-higher-order-list ht)
-   (pp `(define *higher-order-runtime* ',(hashtable-key-list ht))))
-
-(define (extract-mapping! file)
-   (with-input-from-file file
-      (lambda ()
-	 (let ((ht (make-hashtable))
-	       (higher-order-ht (make-hashtable)))
-	    (let loop ((line (read-line)))
-	       (if (eof-object? line)
-		   (begin
-		      (print-runtime-var-mapping ht)
-		      (print-higher-order-list higher-order-ht))
-		   (let ((parsed-line (parse-line line)))
-		      (if parsed-line
-			  (let* ((attributes (car parsed-line))
-				 (scheme-funs (cadr parsed-line))
-				 (interface-fun (caddr parsed-line))
-				 (higher-order? (cadddr parsed-line))
-				 (sym-interface-fun (string->symbol interface-fun))
-				 (new-mappings
-				  (map (lambda (scheme-fun)
-					  (list (string->symbol scheme-fun)
-						sym-interface-fun))
-				       scheme-funs)))
-			     (when higher-order?
-				(for-each (lambda (id)
-					     (hashtable-put! higher-order-ht
-							     (string->symbol id)
-							     #t))
-					  scheme-funs))
-			     (hashtable-update!
-			      ht
-			      (cond
-				 ((not attributes)
-				  'default)
-				 ((and (memq 'mutable attributes)
-				       (memq 'callcc attributes))
-				  'mutable-call/cc)
-				 ((and (memq 'immutable attributes)
-				       (memq 'callcc attributes))
-				  'immutable-call/cc)
-				 ((memq 'mutable attributes)
-				  'mutable)
-				 ((memq 'immutable attributes)
-				  'immutable)
-				 ((memq 'callcc attributes)
-				  'call/cc)
-				 (else
-				  (error 'extract-mapping!
-					 "Illegal attributes "
-					 attributes)))
-			      (lambda (old-mappings)
-				 (append! new-mappings old-mappings))
-			      new-mappings)))
-		      (loop (read-line)))))))))
-
-(define (extract-interface! file)
-   (with-input-from-file file
-      (lambda ()
-	 (let loop ((line (read-line)))
-	    (unless (eof-object? line)
-	       (let ((parsed-line (parse-line line)))
-		  (if parsed-line
-		      (print "var " (car parsed-line) " = "
-			     (cdr parsed-line) ";")))
-	       (loop (read-line)))))))
-   
-(define (myMain args)
-   (cond
-      ((not (and (pair? args)
-		 (pair? (cdr args))
-		 (pair? (cddr args))))
-       (error #f (string-append (car args) " runtime.js mapping|interface")
-	      (cdr args)))
-      ((string=? (caddr args) "mapping")
-       (set! *mode* 'map))
-      ((string=? (caddr args) "interface")
-       (set! *mode* 'interface))
+(define (handle-args args)
+   (args-parse (cdr args)
+      (section "Help")
+      (("?")
+       (args-parse-usage #f))
+      ((("-h" "--help") (help "?,-h,--help" "This help message"))
+       (args-parse-usage #f))
+      (section "Misc")
+      (("-o" ?file (help "The output file. '-' prints to stdout."))
+       (set! *out-file* file))
+      (("--module" ?name (help "The module name"))
+       (set! *module-name* name))
+      (("--ignored-prefixes" ?list
+			     (help "scheme-list of ignored prefixes"))
+       (set! *ignored-prefixes* (with-input-from-string list read)))
+      (("--no-camelCase" (help "Disable camel-case unmarshalling"))
+       (set! *camel-case?* #f))
+      (("--no-c_underscores" (help "Disable underscore unmarshalling"))
+       (set! *c_underlines?* #f))
+      (("--constant" (help "Add (constant? #t) clause to every export"))
+       (set! *constant?* #t))
+      (("--constant-functions"
+	(help "Add (constant? #t) clause to exported functions."))
+       (set! *constant-functions?* #t))
       (else
-       (error #f (string-append (car args) " runtime.js mapping|interface")
-	      (cdr args))))
-   (if (eq? *mode* 'map)
-       (extract-mapping! (cadr args))
-       (extract-interface! (cadr args)))
+       (set! *in-files* (append! *in-files* (list else))))))
+
+(define (my-main args)
+   (handle-args args)
+   (if (not *out-file*)
+       (error "exporter" "no out-file given" #f))
+   (if (null? *in-files*)
+       (error "exporter" "no input-file(s) given" #f))
+   (if (not *module-name*)
+       (error "exporter" "no module-name given" #f))
+   (let ((metas (read-metas (open-multi-file *in-files*))))
+      (with-output-to-file *out-file*
+	 (lambda () (print-module-clause metas))))
    (exit 0))

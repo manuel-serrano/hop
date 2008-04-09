@@ -38,3 +38,7 @@
 
 (define-macro (cons-set! lvalue val)
    `(set! ,lvalue (cons ,val (or ,lvalue '()))))
+
+(define-macro (cp-filter . L)
+   `(map (lambda (x) x)
+	 (filter ,@L)))

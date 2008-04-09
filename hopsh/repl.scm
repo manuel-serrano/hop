@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hopsh/repl.scm                          */
+;*    serrano/prgm/project/hop/1.9.x/hopsh/repl.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Tue Aug 14 08:17:27 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Thu Mar 27 15:29:22 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
 ;*=====================================================================*/
@@ -111,8 +111,8 @@
 	      (count 3))
       (with-url url
 	 (lambda (s) s)
-	 :fail (lambda (status port)
-		  (case status
+	 :fail (lambda (xhr)
+		  (case (xml-http-request-status xhr)
 		     ((404)
 		      (error 'hopsh "url not found" url))
 		     ((401)
@@ -125,8 +125,9 @@
 				      (-fx count 1))))))
 		     (else
 		      (error 'hopsh
-			     (format "Illegal status code `~a'" status)
-			     (read-string port)))))
+			     (format "Illegal status code `~a'"
+				     (xml-http-request-status xhr))
+			     (read-string (xml-http-request-input-port xhr))))))
 	 :header header)))
 
 ;*---------------------------------------------------------------------*/

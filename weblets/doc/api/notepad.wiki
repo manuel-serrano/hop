@@ -69,9 +69,10 @@ if it is not ++#f++ and an ++:id++ value is provided.
 <markup> <NPHEAD>
 
 <arguments>
-^  attributes  ^   type    ^   default    ^  short description          ^
-| :id          |  string   |  //random//  | element identifier.         |
-| body         |  element  |  empty       | the body.                   |
+^  attributes  ^   type     ^   default    ^  short description                      ^
+| :id          |  string    |  //random//  | element identifier.                     |
+| :onchange    |  function  |      -       | a function to invoke on pad selection.  |
+| body         |  element   |  empty       | the body.                               |
 </arguments>
 
 This function creates an optional //notepad// header.
@@ -81,9 +82,10 @@ This function creates an optional //notepad// header.
 <markup> <NPTAB>
 
 <arguments>
-^  attributes  ^   type    ^   default    ^  short description          ^
-| :id          |  string   |  //random//  | element identifier.         |
-| body         |  element  |  empty       | the body.                   |
+^  attributes  ^   type     ^   default    ^  short description                      ^
+| :id          |  string    |  //random//  | element identifier.                     |
+| :onselect    |  function  |      -       | a function to invoke on pad selection.  |
+| body         |  element   |  empty       | the body.                               |
 </arguments>
 
 This function creates a //tab//. The first child of //tab// __must__

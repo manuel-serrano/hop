@@ -1,9 +1,12 @@
 ;; automatically generated, don't edit
-;; /users/serrano/prgm/project/hop/weblets/weblets
-;; Fri Nov 30 14:47:25 2007
+;; /users/serrano/prgm/project/hop/1.9.x/weblets/weblets
+;; Wed Dec 26 16:55:02 2007
 
 (
   (weblets_config "config.hop")
+  (weblets_fontifier "fontifier.hop")
+  (weblets_homepage "homepage.hop")
+  (weblets_markup "markup.hop")
   (weblets_package "package.hop")
   (weblets "weblets.hop")
 )

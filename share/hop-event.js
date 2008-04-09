@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-event.js                      */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-event.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Nov 29 07:18:12 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Wed Apr  2 09:57:04 2008 (serrano)                */
+/*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -12,6 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_add_event_listener ...                                       */
 /*---------------------------------------------------------------------*/
+/*** META ((export add-event-listener!)) */
 function hop_add_event_listener( obj, event, proc, capture ) {
    if( event == "location" )
       return hop_add_active_location_listener( obj, proc );
@@ -21,6 +22,9 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 
    if( event == "serverready" )
       return hop_add_serverready_listener( obj, proc );
+
+   if( event == "serverclose" )
+      return hop_add_serverclose_listener( obj, proc );
 
    if( event == "timeout" )
       return hop_add_timeout_listener( obj, proc );
@@ -35,6 +39,7 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 /*---------------------------------------------------------------------*/
 /*    hop_remove_event_listener ...                                    */
 /*---------------------------------------------------------------------*/
+/*** META ((export remove-event-listener!)) */
 function hop_remove_event_listener( obj, event, proc, capture ) {
    if( event == "location" )
       return hop_remove_active_location_listener( obj, proc );
@@ -44,6 +49,9 @@ function hop_remove_event_listener( obj, event, proc, capture ) {
 
    if( event == "serverready" )
       return hop_remove_serverready_listener( obj, proc );
+
+   if( event == "serverclose" )
+      return hop_remove_serverclose_listener( obj, proc );
 
    if( event == "timeout" )
       return hop_remove_timeout_listener( proc );
@@ -108,6 +116,7 @@ function hop_active_location_set( obj, href ) {
 /*---------------------------------------------------------------------*/
 var hop_servevt_id = "__hop_serevt_proxy";
 var hop_server_event_count = 0;
+var re = new RegExp( "<[\/]?event[^>]*>", "g" );
 
 /*---------------------------------------------------------------------*/
 /*    HopServerEvent ...                                               */
@@ -117,9 +126,14 @@ function HopServerEvent( name, text, value ) {
    o.isStopped = false;
    o.name = name;
    o.value = value;
-   o.responseText = text;
    o.id = hop_server_event_count++;
    
+   if( typeof text == "string" ) {
+      o.responseText = text.replace( re, "" );
+   } else {
+      o.responseText = "";
+   }
+
    return o;
 }
 
@@ -141,22 +155,39 @@ var hop_servevt_dlist = null;
 function start_servevt_ajax_proxy( key ) {
    if( !hop_servevt_proxy.httpreq ) {
       var xhr_error_ttl = 6 * 3;
-      var pending_events = 0;
+      var server_ready = false;
       
       var register = function( id ) {
-	 var svc = "/hop/server-event-register?event=" + id + "&key=" + key;
+	 var svc = hop_service_base() +
+	    "/server-event/register?event=" + id +
+	    "&key=" + key;
 
-	 var success = function( val, http ) {
-	    // erase previous errors
-	    xhr_error_ttl = 6 * 3;
-	    // re-register the event as soon as possible
-	    register( id );
-	    // invoke all the user handlers (we have received a list of values
-	    // corresponding to server buffer).
-	    while( val != null ) {
-	       hop_trigger_servevt( id, http.responseText, val.car, false );
-	       val = val.cdr;
-	       
+	 var success = function( val, xhr ) {
+	    if( !server_ready ) {
+	       server_ready = true;
+	       hop_trigger_serverready_event( new HopServerReadyEvent() );
+	    }
+	    
+	    // null is used as a marker for an abandonned connection
+	    if( val != null ) {
+	       // erase previous errors
+	       xhr_error_ttl = 6 * 3;
+	       // re-register the event as soon as possible
+	       register( "" );
+	       // invoke all the user handlers (we have received a list of
+	       // values corresponding to server buffer).
+	       while( val != null ) {
+		  var v = val.car;
+		  var id = v.car;
+		  var vals = v.cdr;
+
+		  while( vals != null ) {
+		     hop_trigger_servevt( id, vals.car, vals.car, false );
+		     vals = vals.cdr;
+		  }
+
+		  val = val.cdr;
+	       }
 	    }
 	 }
 
@@ -187,20 +218,14 @@ function start_servevt_ajax_proxy( key ) {
 						       // no environment
 						       [] );
 
-	 // raises the ready state when it exists pending events
-	 if( pending_events > 0 ) {
-	    if( pending_events == 1 ) {
-	       hop_trigger_serverready_event( new HopServerReadyEvent() );
-	    }
-	    pending_events--;
-	 }
       }
 
       var unregister = function( id ) {
 	 hop_servevt_proxy.httpreq.abort();
 	 
-	 var svc = "/hop/server-event-unregister?event=" + id
-	 + "&key=" + hop_servevt_proxy.key;
+	 var svc = hop_service_base() +
+	    "/server-event/unregister?event=" + id +
+   	    "&key=" + hop_servevt_proxy.key;
 	 
 	 hop_servevt_proxy.httpreq = hop_send_request( svc, false,
 						       function() { ; }, false,
@@ -211,21 +236,11 @@ function start_servevt_ajax_proxy( key ) {
       hop_servevt_proxy.register = register;
       hop_servevt_proxy.unregister = unregister;
 
-      // count the number of pre-registered events
+      // register the unitialized events
       for( var p in hop_servevt_table ) {
 	 if( hop_servevt_table[ p ].hop_servevt ) {
-	    pending_events++;
+	    register( p );
 	 }
-      }
-
-      if( pending_events > 0 ) {
-	 for( var p in hop_servevt_table ) {
-	    if( hop_servevt_table[ p ].hop_servevt ) {
-	       register( p );
-	    }
-	 }
-      } else {
-	 hop_trigger_serverready_event( new HopServerReadyEvent() );
       }
    }
 }
@@ -317,8 +332,9 @@ function hop_servevt_proxy_flash_init() {
    hop_servevt_proxy = document.getElementById( hop_servevt_id );
 
    var abort = function( id ) {
-      var svc = "/hop/server-event-unregister?event=" + id
-      + "&key=" + hop_servevt_proxy.key;
+      var svc = hop_service_base() +
+         "/server-event/unregister?event=" + id
+         + "&key=" + hop_servevt_proxy.key;
       hop_servevt_proxy.httpreq = hop_send_request( svc, false,
 						    function() {;}, false,
 						    false, [] );
@@ -333,14 +349,15 @@ function hop_servevt_proxy_flash_init() {
 	 }
       }
 
-      hop_send_request( "/hop/server-event-close?key=" + hop_servevt_proxy.key,
+      hop_send_request( hop_service_base() +
+			"/server-event/close?key=" + hop_servevt_proxy.key,
 			false,
 			function() {;}, false,
 			false, [] );
    }
 
    var register = function( id ) {
-      var svc = "/hop/server-event-register?event=" + id
+      var svc = hop_service_base() + "/server-event/register?event=" + id
          + "&key=" + hop_servevt_proxy.key + "&flash=true";
       
       var success = function( e ) {
@@ -408,7 +425,7 @@ function hop_start_servevt_proxy() {
    hop_servevt_proxy = new Object();
    hop_servevt_proxy.register = function( x ) {};
 
-   hop_send_request( "/hop/server-event-info",
+   hop_send_request( hop_service_base() + "/server-event/info",
 		     // asynchronous call
 		     false,
 		     // success callback
@@ -439,31 +456,85 @@ function hop_start_servevt_proxy() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    eeval ...                                                        */
+/*---------------------------------------------------------------------*/
+function eeval( value, text ) {
+   try {
+      return eval( value );
+   } catch( e ) {
+      hop_servevt_onerror( "Error in json value: " + e + "\n" + text );
+   }
+}      
+   
+/*---------------------------------------------------------------------*/
 /*    hop_trigger_servevt ...                                          */
 /*    -------------------------------------------------------------    */
 /*    This function is invoked by Flash and Ajax on event reception.   */
 /*---------------------------------------------------------------------*/
 function hop_trigger_servevt( id, text, value, json ) {
-   var evt = new HopServerEvent( id, text, json ? eval( value ) : value );
-   var p2 = hop_servevt_table[ id ];
+   try {
+      var evt = new HopServerEvent( id, text, json ? eeval( value, text ) : value );
+      var p2 = hop_servevt_table[ id ];
 
-   if( sc_isPair( hop_servevt_dlist ) &&
-       sc_isPair( hop_servevt_ctable[ id ] ) ) {
-      // the event is captured and we have document listener bound
-      var p1 = hop_servevt_dlist;
+      if( sc_isPair( hop_servevt_dlist ) &&
+	  sc_isPair( hop_servevt_ctable[ id ] ) ) {
+	 // the event is captured and we have document listener bound
+	 var p1 = hop_servevt_dlist;
 
-      while( sc_isPair( p1 ) ) {
-	 p1.car( evt );
-	 p1 = p1.cdr;
+	 while( sc_isPair( p1 ) ) {
+	    p1.car( evt );
+	    p1 = p1.cdr;
+	 }
       }
-   }
    
-   evt.isStopped = false;
+      evt.isStopped = false;
 
-   while( sc_isPair( p2 ) ) {
-      p2.car( evt );
-      if( evt.isStopped ) break;
-      p2 = p2.cdr;
+      while( sc_isPair( p2 ) ) {
+	 p2.car( evt );
+	 if( evt.isStopped ) break;
+	 p2 = p2.cdr;
+      }
+   } catch( e ) {
+      hop_servevt_onerror( "Error raised in event handler" + e );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_serverclose_list ...                                         */
+/*---------------------------------------------------------------------*/
+var hop_serverclose_list = null;
+var hop_serverclose_triggered = false;
+
+/*---------------------------------------------------------------------*/
+/*    hop_add_serverclose_listener ...                                 */
+/*---------------------------------------------------------------------*/
+function hop_add_serverclose_listener( obj, proc ) {
+   if( obj === document ) {
+      if( hop_serverclose_triggered ) {
+	 // the server is close
+	 var evt = new HopServerEvent( "serverclose", false, false );
+	 proc( evt );
+      } else {
+	 // the server is not close yet, we register the callback
+	 hop_serverclose_list = sc_cons( proc, hop_serverclose_list );
+      }
+   } else {
+      throw new Error( "add-event-listener!: Illegal `serverclose' recipient"
+		       + obj );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_remove_serverclose_listener ...                              */
+/*---------------------------------------------------------------------*/
+function hop_remove_serverclose_listener( obj, proc ) {
+   if( obj === document ) {
+      hop_serverclose_list = sc_remqBang( proc, hop_serverclose_list );
+      return true;
+   } else {
+      throw new Error( "remove-event-listener!: Illegal `serverclose' recipient"
+		       + obj );
+      return false;
    }
 }
 
@@ -473,17 +544,17 @@ function hop_trigger_servevt( id, text, value, json ) {
 /*    This function is invoked by Flash and Ajax on connection close.  */
 /*---------------------------------------------------------------------*/
 function hop_servevt_onclose() {
-   for( id in hop_servevt_table ) {
-      // allocate a new event in order to hide handler side effects
-      var evt = new HopServerEvent( id, false, false );
-      var p = hop_servevt_table[ id ];
+   // allocate a new event in order to hide handler side effects
+   var evt = new HopServerEvent( "serverclose", false, false );
+   var p = hop_serverclose_list;
 
-      while( sc_isPair( p ) ) {
-	 p.car( evt );
-	 if( evt.isStopped ) break;
-	 p = p.cdr;
-      }
+   while( sc_isPair( p ) ) {
+      p.car( evt );
+      if( evt.isStopped ) break;
+      p = p.cdr;
    }
+
+   hop_serverclose_triggered = true;
 }
 
 /*---------------------------------------------------------------------*/
@@ -520,11 +591,12 @@ function hop_add_server_listener( obj, proc, capture ) {
 /*---------------------------------------------------------------------*/
 function hop_remove_server_listener( obj, proc ) {
    if( obj === document ) {
-      hop_servevt_dlist = sc_remqbang( proc, hop_servevt_dlist );
+      hop_servevt_dlist = sc_remqBang( proc, hop_servevt_dlist );
    } else {
       // unregister the event listener
-      hop_servevt_table[ obj ] = sc_remqbang( proc, hop_servevt_table[ obj ] );
-      hop_servevt_ctable[ obj ] = sc_remqbang( proc,hop_servevt_ctable[ obj ] );
+      hop_servevt_table[ obj ] = sc_remqBang( proc, hop_servevt_table[ obj ] );
+      if( hop_servevt_ctable[ obj ] )
+	 hop_servevt_ctable[ obj ] = sc_remqBang( proc,hop_servevt_ctable[ obj ] );
 
       // try to close the socket
       for( id in hop_servevt_table ) {
@@ -589,7 +661,7 @@ function hop_add_serverready_listener( obj, proc ) {
 /*---------------------------------------------------------------------*/
 function hop_remove_serverready_listener( obj, proc ) {
    if( obj === document ) {
-      hop_serverready_list = sc_remqbang( proc, hop_serverready_list );
+      hop_serverready_list = sc_remqBang( proc, hop_serverready_list );
       return true;
    } else {
       throw new Error( "remove-event-listener!: Illegal `serverready' recipient"

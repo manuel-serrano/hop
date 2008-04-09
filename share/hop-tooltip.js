@@ -17,6 +17,7 @@ var hop_current_tooltip;
 /*---------------------------------------------------------------------*/
 /*    hop_tooltip_show ...                                             */
 /*---------------------------------------------------------------------*/
+/*** META ((export tooltip-show)) */
 function hop_tooltip_show( event, id, ux, uy ) {
    var el;
 
@@ -65,6 +66,7 @@ function hop_tooltip_show( event, id, ux, uy ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tooltip_hide ...                                             */
 /*---------------------------------------------------------------------*/
+/*** META ((export tooltip-hide)) */
 function hop_tooltip_hide() {
    if( hop_is_html_element( hop_current_tooltip ) ) {
       node_style_set( hop_current_tooltip, "visibility", "hidden" );

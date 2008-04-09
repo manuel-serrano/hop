@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/hz/markup.hop                   */
+;*    serrano/prgm/project/hop/1.9.x/weblets/hz/markup.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Thu Nov 29 07:29:26 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Wed Feb 13 21:22:52 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
 ;*=====================================================================*/
@@ -696,9 +696,9 @@
       (<HZ:WEBLET-UNINSTALL> id w)))
 
 ;*---------------------------------------------------------------------*/
-;*    <HZ:ACTION-INCOMPATIBLE> ...                                     */
+;*    <HZ:WEBLET-ACTION-INCOMPATIBLE> ...                              */
 ;*---------------------------------------------------------------------*/
-(define (<HZ:ACTION-INCOMPATIBLE> id msg)
+(define (<HZ:WEBLET-ACTION-INCOMPATIBLE> id msg)
    (<TR>
       (<TD>
 	 :class "icon"

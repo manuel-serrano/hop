@@ -10,31 +10,30 @@
 	   verbose)
    (export (rm-unused-vars! tree::pobject)))
 
+;; Variables with use-count 0 are not used, and can be removed.
+;; Attention: external variables are excempted from this rule.
 (define (rm-unused-vars! tree)
    (verbose " removing unused vars")
    (use-count tree)
    (overload traverse! rm! (Node
-			   Set!
-			   Lambda
-			   Decl)
+			    Set!
+			    Let)
 	     (tree.traverse!)))
+
 
 (define-pmethod (Node-rm!)
    (this.traverse0!))
 
 (define-pmethod (Set!-rm!)
-   (if (and (not this.lvalue.var.is-global?)
-	    (= this.lvalue.var.uses 0))
+   (if this.lvalue.var.remove?
        (this.val.traverse!)
        (this.traverse0!)))
 
-(define-pmethod (Lambda-rm!)
-   ;; don't go into formals (they must not be removed)
-   (set! this.body (this.body.traverse!))
-   this)
-
-(define-pmethod (Decl-rm!)
-   (if (and (not this.var.is-global?)
-	    (= this.var.uses 0))
-       (new-node Const #unspecified)
-       (this.traverse0!)))
+(define-pmethod (Let-rm!)
+   (set! this.scope-vars (filter! (lambda (var)
+				     (if (zero? var.uses)
+					 (begin (set! var.remove? #t)
+						#f)
+					 #t))
+				  this.scope-vars))
+   (this.traverse0!))

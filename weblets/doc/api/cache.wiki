@@ -7,6 +7,8 @@ These functions handle HOP server //caches//.
 == Synopsis ==
 
   (class cache ...)
+  (class cache-disk ...)
+  (class cache-memory ...)
   (registered-caches)
   (unregister-cache! cache)
   (cache-clear cache)
@@ -26,18 +28,39 @@ These functions handle HOP server //caches//.
 
 <fields>
 ^  fields       ^   type      ^  default value  ^  short description           ^
-| path          |  string     |      _          | a file name                  | 
-| out           |  procedure  |   ++display++   | a procedure                  | 
 | max-entries   |  integer    |      128        | maximum number of entries    |
 | max-file-size |  long       |   #e100000      | largest possible cached file |
 </fields>
+
+An abstract class for caches.
+
 </class>
 
-This class specifies //cache//entries. The argument ++out++ is 
-a procedure of two arguments that specify how the value stored in
-the cache should be displayed. A good candidate is:
+=== ++(class cache-disk::cache ...)++ ===
+<class> cache-disk
+
+<fields>
+^  fields       ^   type      ^  default value  ^  short description           ^
+| path          |  string     |      _          | a file name                  | 
+| out           |  procedure  |   ++display++   | a procedure                  | 
+</fields>
+
+This class specifies //cache// whose entries are stored on a disk. 
+The argument ++out++ is a procedure of two arguments that specify how the 
+value stored in the cache should be displayed. A good candidate is:
 
   (lambda (o p) (xml-write o p (hop-xml-backend)))
+</class>
+
+=== ++(class cache-memory::cache ...)++ ===
+<class> cache-memory
+
+<fields>
+</fields>
+
+This class specifies //cache// whose entries are stored in memory
+
+</class>
 
 
 === ++(registered-caches)++ ===

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-request.js                    */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Nov 14 10:51:09 2007 (serrano)                */
-/*    Copyright   :  2004-07 Manuel Serrano                            */
+/*    Last change :  Mon Mar 31 11:06:24 2008 (serrano)                */
+/*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -250,6 +250,16 @@ function hop_anim( service ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_responsetext_error ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_responsetext_error( xhr ) {
+   if( xhr.responseText.length > 80 )
+      return xhr.responseText.substring( 0, 80 );
+   else
+      return responseText;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_send_request ...                                             */
 /*    -------------------------------------------------------------    */
 /*    In this function SUCCESS and FAILURE are *always* bound to       */
@@ -268,17 +278,22 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 	    switch( status ) {
 	       case 200:
 		  try {
-		     if( hop_is_http_json( xhr ) ) {
+		     var ctype = hop_header_content_type( xhr );
+
+		     if( ctype == "application/json" ) {
 			var expr;
 			try {
 			   expr = eval( xhr.responseText );
 			} catch( e ) {
 			   hop_error( "*** WITH-HOP JSON error: " + svc +
 				      ": " + e + " -- " +
-				      xhr.responseText );
+				      hop_responsetext_error( xhr ) );
 			   expr = false;
 			}
 			return success( expr, xhr );
+		     } else if( ctype == "text/html" ) {
+			var el = hop_create_element( xhr.responseText );
+			return success( el, xhr );
 		     } else {
 			return success( xhr.responseText, xhr );
 		     }
@@ -286,11 +301,11 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 		     if( e.line ) {
 			hop_error( "*** WITH-HOP error: " + svc +
 				   ": " + e + "(line " + e.line + ") -- " +
-				   xhr.responseText );
+				   hop_responsetext_error( xhr ) );
 		     } else {
 			hop_error( "*** WITH-HOP error: " + svc +
 				   ": " + e + " -- " +
-				   xhr.responseText );
+				   hop_responsetext_error( xhr ) );
 		     }
 		  }
 
@@ -315,7 +330,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 
 	       case 407:
 		  hop_error( "*** Hop Authentication Error " + status + ": `"
-			     + xhr.responseText + "'" );
+			     + hop_responsetext_error( xhr ) + "'" );
 		  return false;
 
 	       default:
@@ -398,6 +413,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 /*---------------------------------------------------------------------*/
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
 function with_hop( svc, success, failure, sync ) {
    if( !success ) success = function( h ) { return h };
    if( !failure ) failure = hop_default_failure;
@@ -505,7 +521,7 @@ function hop_serialize_request_env() {
 /*    Is this really needed?                                           */
 /*    I think that if it is, a function that returns the whole list    */
 /*    of currently binding cells will also be required. For now,       */
-/*       this function is not bound in the Hop syntax (hop-alias.scm). */
+/*    this function is not exported.                                   */
 /*---------------------------------------------------------------------*/
 function hop_request_reset() {
    hop_request_env_string = "";
@@ -516,6 +532,7 @@ function hop_request_reset() {
 /*---------------------------------------------------------------------*/
 /*    hop_request_set ...                                              */
 /*---------------------------------------------------------------------*/
+/*** META ((export request-set!)) */
 function hop_request_set( key, val ) {
    hop_request_env_invalid = true;
    hop_request_env[ key ] = val;
@@ -525,6 +542,8 @@ function hop_request_set( key, val ) {
 /*---------------------------------------------------------------------*/
 /*    hop_request_get ...                                              */
 /*---------------------------------------------------------------------*/
+/*** META ((export request-get)
+           (peephole: (hole 1 "hop_request[" key"]"))) */
 function hop_request_get( key ) {
    return hop_request[ key ];
 }

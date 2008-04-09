@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-inline.scm                  */
+;*    serrano/prgm/project/hop/1.9.x/runtime/hop-inline.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Sun Oct 21 23:42:32 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Fri Mar  7 14:44:06 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
 ;*=====================================================================*/
@@ -20,6 +20,7 @@
 
    (import  __hop_param
 	    __hop_types
+	    __hop_user
 	    __hop_xml
 	    __hop_dom
 	    __hop_misc
@@ -54,7 +55,9 @@
 		 (auth (and (http-request? req)
 			    (http-request-authorization req))))
 	     (if early
-		 (xml-inline host port path userinfo auth id)
+		 (xml-inline (or host (hostname))
+			     (or port (hop-port))
+			     path userinfo auth id)
 		 (instantiate::xml-inline-element
 		    (markup '_)
 		    (eid id)
@@ -84,6 +87,7 @@
        (host host)
        (port port)
        (path path)
+       (user (user-nil))
        (userinfo userinfo)
        (authorization authorization))
     (lambda (p status header clength tenc)

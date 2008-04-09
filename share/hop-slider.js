@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-slider.js                     */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-slider.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Fri Aug 31 08:52:18 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Tue Apr  8 11:10:43 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
@@ -12,6 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_slider_value_set ...                                         */
 /*---------------------------------------------------------------------*/
+/*** META ((export slider-value-set!)) */
 function hop_slider_value_set( slider, value ) {
    value = Math.round( value / slider.step ) * slider.step;
 
@@ -54,6 +55,9 @@ function hop_slider_mousemove( e, slider ) {
 /*---------------------------------------------------------------------*/
 /*    hop_slider_value_get ...                                         */
 /*---------------------------------------------------------------------*/
+/*** META ((export slider-value)
+           (peephole (postfix ".value")))
+*/
 function hop_slider_value_get( slider ) {
    return slider.value;
 }
@@ -147,14 +151,17 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 
    div = doc.createElement( "div" );
    div.className = "lineleft";
+   div.id = id + "-lineleft";
    line1.appendChild(div);
 
    div = doc.createElement( "div" );
    div.className = "lineright";
+   div.id = id + "-lineright";
    line2.appendChild(div);
 
    div = doc.createElement( "div" );
    div.className = "cursor cursoroff";
+   div.id = id + "-cursor";
    cursor.appendChild( div );
 
    slider.min = min;
@@ -209,6 +216,9 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 /*---------------------------------------------------------------------*/
 /*    hop_slider_onchange_get ...                                      */
 /*---------------------------------------------------------------------*/
+/*** META ((export slider-onchange)
+           (peephole: (hole 1 "(" slider ").onchange")))
+*/
 function hop_slider_onchange_get( slider ) {
    return slider.onchange;
 }
@@ -216,6 +226,9 @@ function hop_slider_onchange_get( slider ) {
 /*---------------------------------------------------------------------*/
 /*    hop_slider_onchange_set ...                                      */
 /*---------------------------------------------------------------------*/
+/*** META ((export slider-onchange-set!)
+           (peephole (hole 2 "(" slider ").onchange = " onchange)))
+*/
 function hop_slider_onchange_set( slider, onchange ) {
    slider.onchange = onchange;
 }

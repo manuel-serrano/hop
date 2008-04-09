@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/hop/Makefile                    */
+#*    serrano/prgm/project/hop/1.9.x/weblets/hop/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Aug  3 09:21:14 2006 (serrano)                */
-#*    Copyright   :  2006 Manuel Serrano                               */
+#*    Last change :  Tue Jan 22 09:24:49 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -22,4 +22,4 @@ POPULATION	= Makefile .afile hop.hss \
 build: .afile
 
 .afile: $(HOP_POP)
-	$(AFILE) -suffix hop $(POPULATION) > .afile
+	$(AFILE) -suffix hop $(POPULATION) -o .afile

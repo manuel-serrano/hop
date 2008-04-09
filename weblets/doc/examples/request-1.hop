@@ -14,4 +14,4 @@
 	 res
 	 (<SCRIPT> ~(with-hop ($doc/demo/request "foo")
 		       (lambda (h)
-			  (set! $res.innerHTML h)))))))
+			  (innerHTML-set! $res h)))))))

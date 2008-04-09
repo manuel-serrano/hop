@@ -14,9 +14,8 @@
 (define (fun-size tree::pobject)
    (verbose " fun-size")
    (overload traverse fun-size (Node
-				   (Program Fun-fun-size)
+				   (Module Fun-fun-size)
 				   (Lambda Fun-fun-size)
-;				   (Tail-rec Fun-fun-size)
 				   )
 	     (tree.traverse #f)))
 

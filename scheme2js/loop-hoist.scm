@@ -11,8 +11,10 @@
 	   verbose)
    (export (loop-hoist! tree::pobject)))
 
+;; moves function-definitions outside loops (unless they are closures).
 (define (loop-hoist! tree)
-   (when (config 'loop-hoist)
+   (when (and (config 'loop-hoist)
+	      (not (config 'suspend/resume)))
       (verbose "loop hoist")
       (side-effect tree)
       (captured-vars tree)
@@ -20,10 +22,10 @@
 				 (Module Fun-hoist!)
 				 (Lambda Fun-hoist!)
 				 Set!
-				 (While Loop-hoist!)
-				 (Tail-rec Loop-hoist!))
+				 While)
 		(tree.traverse! #f))))
 
+;; outer-loop represents the least nested loop.
 (define-pmethod (Node-hoist! outer-loop)
    (this.traverse1! outer-loop))
 
@@ -33,15 +35,17 @@
 (define-pmethod (Set!-hoist! outer-loop)
    (this.traverse1! outer-loop)
    (if (and outer-loop
-	    this.lvalue.var.single-value
+	    this.lvalue.var.constant?
 	    (inherits-from? this.val (node 'Lambda))
 	    (not this.val.closure?))
        (begin
+	  (verbose "moving")
+	  ;; moves this Set! outside all surrounding-loops.
 	  (cons-set! outer-loop.decls-to-hoist this)
 	  (new-node Const #unspecified))
        this))
 
-(define-pmethod (Loop-hoist! outer-loop)
+(define-pmethod (While-hoist! outer-loop)
    (this.traverse1! (or outer-loop this))
    (if this.decls-to-hoist
        (let ((decls this.decls-to-hoist))

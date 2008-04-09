@@ -94,7 +94,6 @@ vectors.
   (css-add-style! document texta)
   (iframe-scroll-height iframe)
   (innerHTML-set! node-or-id html)
-  (outerHTML-set! node-or-id html)
   (get-selection)
 
 
@@ -791,32 +790,24 @@ fit its content height. Example:
 === ++(innerHTML-set! nid html)++ ===
 <procedure> innerHTML-set!
 <arguments>
-^  arguments   ^   type              ^  short description                    ^
+^  arguments   ^   type              ^  short description  ^
 | nid          |  element or string  | an element or an element identifier.  |
-| html         |  string             | a string denoting a HTML tree.        |
+| html         |  string or tree     | a HTML tree.  |
 </arguments>
 
-Parses the ++html++ tree and replaces the body of the element ++nid++ 
-(or the element whose identifier is ++nid++) with that new value.
+Replaces the body of the element ++nid++ with the new HTML ++tree++.
+The function ++innerHTML-set!++ **evaluates all the scripts** of the
+argument ++html++.
 
-In addition to set the element inner HTML content, this function also
-**evaluates the scripts** of the ++html++ tree.
-</procedure>
+~~ The element ++nid++ is either an DOM node or a identifier referring to
+a node. 
 
-=== ++(outerHTML-set! nid html)++ ===
-<procedure> outerHTML-set!
-<arguments>
-^  arguments   ^   type              ^  short description                    ^
-| nid          |  element or string  | an element or an element identifier.  |
-| html         |  string             | a string denoting a HTML tree.        |
-</arguments>
+~~ The ++html++ tree is either:
 
-Parses the ++html++ tree and replaces the body of the **parent** of 
-element ++nid++  (or parent of the element whose identifier is ++nid++) with 
-that new value.
+  * a string denoting an HTML tree. In case that, it is parsed for
+ constructing an actual DOM tree that is set to ++nid++.
 
-In addition to set the element inner HTML content, this function also
-**evaluates the scripts** of the ++html++ tree.
+  * a DOM tree.
 </procedure>
 
 === ++(get-selection)++ ===

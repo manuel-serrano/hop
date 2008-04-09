@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/hop/config.hop                  */
+;*    serrano/prgm/project/hop/1.9.x/weblets/hop/config.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Wed Nov 21 08:36:40 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Sun Mar 30 13:04:19 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop configuration                                                */
 ;*=====================================================================*/
@@ -42,4 +42,5 @@
 ;*    hop-dir                                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-dir
-   (dirname (the-loading-file)))
+   (let ((f (the-loading-file)))
+      (dirname (the-loading-file))))

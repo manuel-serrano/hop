@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-fileselector.scm            */
+;*    serrano/prgm/project/hop/1.9.x/runtime/hop-fileselector.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 14 09:36:55 2006                          */
-;*    Last change :  Mon Oct 15 15:46:58 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Wed Apr  2 09:22:45 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implement of server-side file selector.                  */
 ;*=====================================================================*/
@@ -22,6 +22,7 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
+	    __hop_hop-extra
 	    __hop_misc
 	    __hop_js-lib
 	    __hop_service
@@ -32,8 +33,7 @@
 	    __hop_css
 	    __hop_read)
 
-   (export  (<FILESELECT> . ::obj)
-	    (<FILEBROWSE> . ::obj)
+   (export  (<FILEBROWSE> . ::obj)
 	    filebrowse))
 
 ;*---------------------------------------------------------------------*/
@@ -48,62 +48,6 @@
       (else
        "function() { return false }")))
    
-;*---------------------------------------------------------------------*/
-;*    *fileselect-service* ...                                         */
-;*---------------------------------------------------------------------*/
-(define *fileselect-service* #f)
-
-;*---------------------------------------------------------------------*/
-;*    auto-complete ...                                                */
-;*---------------------------------------------------------------------*/
-(define (auto-complete req path)
-   (let ((dir (dirname path))
-	 (base (basename path)))
-      (if (and (file-exists? dir) (directory? dir) (authorized-path? req dir))
-	  (list->vector 
-	   (map! (lambda (s)
-		    (let ((p (make-file-name dir s)))
-		       (if (directory? p)
-			   (make-file-name p "")
-			   p)))
-		 (sort (filter (lambda (s) (substring-at? s base 0))
-			       (directory->list dir))
-		       string<?)))
-	  '#())))
-
-;*---------------------------------------------------------------------*/
-;*    get-fileselect-service ...                                       */
-;*---------------------------------------------------------------------*/
-(define (get-fileselect-service)
-   (unless *fileselect-service*
-      (set! *fileselect-service*
-	    (service (d o) (auto-complete (current-request) d))))
-   *fileselect-service*)
-
-;*---------------------------------------------------------------------*/
-;*    <FILESELECT> ...                                                 */
-;*---------------------------------------------------------------------*/
-(define-xml-compound <FILESELECT> ((id #unspecified string)
-				   (class #unspecified string)
-				   (onchange #f)
-				   (size 10)
-				   (value "" string)
-				   (attributes)
-				   body)
-   :hss-type "input.hop-fileselect"
-   (let ((svc (get-fileselect-service)))
-      (apply <INPUT>
-	     :id (xml-make-id id 'FILESELECT)
-	     :class (if (string? class)
-			(string-append "hop-fileselect " class)
-			"hop-fileselect")
-	     :type "text" :size size :value value
-	     :onkeydown (format "hop_fileselect_keypress( ~a, this, event, ~a )"
-				(hop-service-javascript svc)
-				(val->fun onchange))
-	     (map (lambda (e) (list (symbol->keyword (car e)) (cdr e)))
-		  attributes))))
-
 ;*---------------------------------------------------------------------*/
 ;*    webdav? ...                                                      */
 ;*---------------------------------------------------------------------*/

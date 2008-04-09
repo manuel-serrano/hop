@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/user.scm                        */
+;*    serrano/prgm/project/hop/1.9.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Nov 30 15:05:17 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Tue Apr  8 18:11:46 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -15,6 +15,7 @@
 (module __hop_user
    
    (import  __hop_param
+	    __hop_configure
 	    __hop_types
 	    __hop_http-lib
 	    __hop_misc
@@ -35,7 +36,7 @@
 	    (user-access-denied ::http-request #!optional message)
 	    (user-service-denied ::http-request ::user ::symbol)
 	    (proxy-denied ::http-request ::user ::bstring)))
-
+	    
 ;*---------------------------------------------------------------------*/
 ;*    *user-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -82,61 +83,78 @@
 ;*    %add-user! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (%add-user! name args)
-   (let loop ((a args)
-	      (g '())
-	      (p #f)
-	      (s '())
-	      (d '()))
-      (cond
-	 ((null? a)
-	  (let ((u (instantiate::user
-		      (name name)
-		      (groups g)
-		      (password (or p (symbol->string (gensym))))
-		      (services s)
-		      (directories d)))
-		(k (make-user-key name p)))
+   (let ((g '())
+	 (p #f)
+	 (s '())
+	 (cname (make-file-path
+		 (hop-rc-directory) "users" (string-append name ".prefs")))
+	 (c '())
+	 (d (list (hop-share-directory)
+		  (make-file-name (hop-rc-directory) "cache"))))
+      (let loop ((a args))
+	 (cond
+	    ((null? a)
 	     (with-lock *user-mutex*
 		(lambda ()
-		   (if (hashtable-get *users* name)
-		       (begin
-			  (hashtable-remove! *users* name)
+		   (when (string? cname)
+		      (unless (directory? (dirname cname))
+			 (make-directories (dirname cname))))
+		   (let* ((prefs (if (and (hop-load-preferences)
+					  (string? cname)
+					  (file-exists? cname))
+				     (with-input-from-file cname read)
+				     '()))
+			  (u (instantiate::user
+				(name name)
+				(groups g)
+				(password (or p (symbol->string (gensym))))
+				(services s)
+				(preferences (append c prefs))
+				(preferences-filename cname)
+				(directories d)))
+			  (k (make-user-key name p)))
+		      (if (hashtable-get *users* name)
+			  (begin
+			     (hashtable-remove! *users* name)
+			     (hashtable-put! *users* name u))
 			  (hashtable-put! *users* name u))
-		       (hashtable-put! *users* name u))))
-	     u))
-	 ((or (not (keyword? (car a))) (null? (cdr a)))
-	  (error 'add-user! "Illegal arguments" args))
-	 (else
-	  (case (car a)
-	     ((:groups)
-	      (if (not (and (list? (cadr a)) (every? symbol? (cadr a))))
-		  (error 'add-user! "Illegal group" (cadr a))
-		  (loop (cddr a) (cadr a) p s d)))
-	     ((:password)
-	      (if (not (string? (cadr a)))
-		  (error 'add-user! "Illegal password" (cadr a))
-		  (loop (cddr a) g (cadr a) s d)))
-	     ((:services)
-	      (if (not (or (eq? (cadr a) '*)
-			   (and (list? (cadr a)) (every? symbol? (cadr a)))))
-		  (error 'add-user! "Illegal services" (cadr a))
-		  (loop (cddr a) g p
-			(if (eq? s '*)
-			    s
-			    (if (eq? (cadr a) '*)
-				'*
-				(cons (hop-service-weblet-wid) (cadr a))))
-			d)))
-	     ((:directories)
-	      (cond
-		 ((eq? (cadr a) '*)
-		  (loop (cddr a) g p s (if (eq? d '*) d (cadr a))))
-		 ((and (list? (cadr a)) (every? string? (cadr a)))
-		  (loop (cddr a) g p s (map file-name-unix-canonicalize (cadr a))))
-		 (else
-		  (error 'add-user! "Illegal directories" (cadr a)))))
-	     (else
-	      (error 'add-user! "Illegal argument" args)))))))
+		      u))))
+	    ((or (not (keyword? (car a))) (null? (cdr a)))
+	     (error 'add-user! "Illegal arguments" args))
+	    (else
+	     (case (car a)
+		((:groups)
+		 (if (not (and (list? (cadr a)) (every? symbol? (cadr a))))
+		     (error 'add-user! "Illegal group" (cadr a))
+		     (set! g (cadr a))))
+		((:password)
+		 (if (not (string? (cadr a)))
+		     (error 'add-user! "Illegal password" (cadr a))
+		     (set! p (cadr a))))
+		((:services)
+		 (if (not (or (eq? (cadr a) '*)
+			      (and (list? (cadr a)) (every? symbol? (cadr a)))))
+		     (error 'add-user! "Illegal services" (cadr a))
+		     (unless (eq? s '*)
+			(if (eq? (cadr a) '*)
+			    (set! s '*)
+			    (set! s (cons (hop-service-weblet-wid) (cadr a)))))))
+		((:directories)
+		 (unless (eq? d '*)
+		    (cond
+		       ((eq? (cadr a) '*)
+			(set! d '*))
+		       ((and (list? (cadr a)) (every? string? (cadr a)))
+			(set! d (append (map file-name-unix-canonicalize (cadr a)) d)))
+		       (else
+			(error 'add-user! "Illegal directories" (cadr a))))))
+		((:preferences)
+		 (set! c (append c (cadr a))))
+		((:preferences-filename)
+		 (set! cname (cadr a)))
+		(else
+		 (error 'add-user! "Illegal argument" args)))
+	     (loop (cddr a)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-exists? ...                                                 */
@@ -281,7 +299,11 @@
 (define (user-authorized-service? user service)
    (or (with-access::user user (services)
 	  (or (eq? services '*) (memq service services)))
-       ((hop-authorize-service-hook) user service)))
+       ((hop-authorize-service-hook) user service)
+       ;; flash sends anonymous requests so we have to access server-event/init
+       ;; requests for all users
+       (eq? service 'server-event/init)
+       (eq? service 'server-event/policy-file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    authorized-service? ...                                          */

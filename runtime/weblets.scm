@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/weblets.scm                     */
+;*    serrano/prgm/project/hop/1.9.x/runtime/weblets.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue Nov 20 07:06:36 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Wed Apr  2 10:02:44 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/
@@ -16,7 +16,8 @@
 
    (include "xml.sch")
    
-   (import __hop_param
+   (import __hop_configure
+	   __hop_param
 	   __hop_types
 	   __hop_xml
 	   __hop_service
@@ -105,9 +106,9 @@
 ;*    install-autoload-weblets! ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (install-autoload-weblets! dirs)
-   
+
    (define (install-autoload-prefix path url)
-      (hop-verb 2 "Setting autoload " path " on " url "\n")
+      (hop-verb 4 (hop-color 1 "" "AUTOLOAD") " " path " for " url "\n")
       (autoload path (autoload-prefix url)))
    
    (define (is-service-base? req)

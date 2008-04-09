@@ -111,6 +111,7 @@ function hop_hpaned_fraction_set( paned, fraction ) {
 /*---------------------------------------------------------------------*/
 /*    hop_paned_fraction_set ...                                       */
 /*---------------------------------------------------------------------*/
+/*** META ((export paned-fraction-set!)) */
 function hop_paned_fraction_set( paned, fraction ) {
    if( paned.className == "hop-vpaned" )
       hop_vpaned_fraction_set( paned, fraction );
@@ -121,6 +122,9 @@ function hop_paned_fraction_set( paned, fraction ) {
 /*---------------------------------------------------------------------*/
 /*    hop_paned_fraction_get ...                                       */
 /*---------------------------------------------------------------------*/
+/*** META ((export paned-fraction)
+           (peephole: (hole 1 "(" paned ").fraction")))
+*/
 function hop_paned_fraction_get( paned ) {
    return paned.fraction;
 }
@@ -128,6 +132,8 @@ function hop_paned_fraction_get( paned ) {
 /*---------------------------------------------------------------------*/
 /*    hop_paned_onresize_get ...                                       */
 /*---------------------------------------------------------------------*/
+/*** META ((export paned-onresize)) */
+/// peephole: (hole 1 "(" paned ").onresize")
 function hop_paned_onresize_get( paned ) {
    return paned.onresize;
 }
@@ -135,6 +141,7 @@ function hop_paned_onresize_get( paned ) {
 /*---------------------------------------------------------------------*/
 /*    hop_paned_onresize_set ...                                       */
 /*---------------------------------------------------------------------*/
+/*** META ((export paned-onresize-set!)) */
 function hop_paned_onresize_set( paned, onresize ) {
    paned.onresize = onresize;
    paned.onresize();

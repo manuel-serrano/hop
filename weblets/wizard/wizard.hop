@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/wizard/wizard.hop               */
+;*    serrano/prgm/project/hop/1.9.x/weblets/wizard/wizard.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Nov 30 12:37:38 2007 (serrano)                */
+;*    Last change :  Sun Dec  2 19:21:55 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -90,19 +90,19 @@
 							     proxyr proxym
 							     webdav)
 					(lambda (h)
-					   (set! status.innerHTML (cadr h))
-					   (set! message.innerHTML
-						 (if (pair? (cddr h))
-						     (caddr h)
-						     ""))))
+					   (innerHTML-set! status (cadr h))
+					   (innerHTML-set! message
+							   (if (pair? (cddr h))
+							       (caddr h)
+							       ""))))
 				     (begin
-					(set! status.innerHTML "Nothing saved")
-					(set! message.innerHTML "")))))
+					(innerHTML-set! status "Nothing saved")
+					(innerHTML-set! message "")))))
 			     (else
-			      (set! status.innerHTML (cadr h))
+			      (innerHTML-set! status (cadr h))
 			      (if (pair? (cddr h))
-				  (set! message.innerHTML (caddr h))
-				  (set! message.innerHTML ""))))))))))
+				  (innerHTML-set! message (caddr h))
+				  (innerHTML-set! message ""))))))))))
 	 (<DIV> :align "center"
 	    (<TABLE> :class "wizard" 
 	       (<TR>

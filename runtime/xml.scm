@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/xml.scm                         */
+;*    serrano/prgm/project/hop/1.9.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Nov 29 12:21:41 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Wed Apr  2 06:48:12 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -25,7 +25,7 @@
 	    __hop_param
 	    __hop_configure
 	    __hop_css)
-   
+
    (export  (class xml-backend
 	      (id::symbol read-only)
 	      (mime-type::bstring read-only)
@@ -112,8 +112,6 @@
 	    (tilde-make-thunk::xml-tilde ::xml-tilde)
 	    (xml-write-tilde-as-expression ::xml-tilde ::output-port)
 
-	    (img-base64-encode::bstring ::bstring)
-	    
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
 	    (<ACRONYM> . ::obj)
@@ -159,8 +157,6 @@
 	    (<HR> . ::obj)
 	    (<I> . ::obj)
 	    (<IFRAME> . ::obj)
-	    (<IMG> . ::obj)
-	    (<INPUT> . ::obj)
 	    (<INS> . ::obj)
 	    (<ISINDEX> . ::obj)
 	    (<KBD> . ::obj)
@@ -556,9 +552,9 @@
 	 ((and (null? body) (null? attributes))
 	  (display "<" p)
 	  (display markup p)
-	  (display " id=\"" p)
+	  (display " id='" p)
 	  (display id p)
-	  (display "\"" p)
+	  (display "'" p)
 	  (if (xml-backend-abbrev-emptyp backend)
 	      (display "/>" p)
 	      (begin
@@ -568,9 +564,9 @@
 	 ((null? body)
 	  (display "<" p)
 	  (display markup p)
-	  (display " id=\"" p)
+	  (display " id='" p)
 	  (display id p)
-	  (display "\"" p)
+	  (display "'" p)
 	  (xml-write-attributes attributes p)
 	  (cond
 	     ((xml-backend-abbrev-emptyp backend)
@@ -585,9 +581,9 @@
 	 (else
 	  (display "<" p)
 	  (display markup p)
-	  (display " id=\"" p)
+	  (display " id='" p)
 	  (display id p)
-	  (display "\"" p)
+	  (display "'" p)
 	  (xml-write-attributes attributes p)
 	  (display ">" p)
 	  (for-each (lambda (b) (xml-write b p backend)) body)
@@ -603,9 +599,9 @@
    (with-access::xml-empty-element obj (markup id attributes)
       (display "<" p)
       (display markup p)
-      (display " id=\"" p)
+      (display " id='" p)
       (display id p)
-      (display "\"" p)
+      (display "'" p)
       (xml-write-attributes attributes p)
       (display "/>" p)
       (xml-write-initializations obj p backend)))
@@ -831,7 +827,6 @@
 (define-xml xml-empty-element #t <HR>)
 (define-xml-element <I>)
 (define-xml-element <IFRAME>)
-(define-xml xml-empty-element #t <INPUT>)
 (define-xml-element <INS>)
 (define-xml-element <ISINDEX>)
 (define-xml-element <KBD>)
@@ -897,71 +892,6 @@
        (error '<DELAY> "Illegal delay's thunk" (car body))))
 
 ;*---------------------------------------------------------------------*/
-;*    img-base64-encode ...                                            */
-;*---------------------------------------------------------------------*/
-(define (img-base64-encode src)
-   (if (file-exists? src)
-       (let ((p (open-input-file src)))
-	  (if (input-port? p)
-	      (unwind-protect
-		 (format "data:~a;base64,~a"
-			 (mime-type src (format "image/~a" (suffix src)))
-			 (base64-encode (read-string p) -1))
-		 (close-input-port p))
-	      src))
-       src))
-
-;*---------------------------------------------------------------------*/
-;*    onerror-img ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (onerror-img attributes src)
-   (let* ((val (format "if( !this.onhoperror ) { this.onhoperror = true; hop_deinline_image(this, ~s) }" src))
-	  (onerror (when (pair? attributes) (assq 'onerror attributes)))
-	  (oval (when (pair? onerror) (cdr onerror))))
-      (cond
-	 ((string? oval)
-	  (set-cdr! onerror (string-append oval "; " val))
-	  attributes)
-	 ((xml-tilde? oval)
-	  (let ((tilde (string->tilde val)))
-	     (set-cdr! onerror (tilde-compose oval tilde)))
-	  attributes)
-	 (else
-	  (cons `(onerror . ,val) attributes)))))
-
-;*---------------------------------------------------------------------*/
-;*    IMG ...                                                          */
-;*---------------------------------------------------------------------*/
-(define-xml-compound <IMG> ((id #unspecified string)
-			    (inline #f boolean)
-			    (alt #f)
-			    (src #unspecified)
-			    (attributes)
-			    body)
-   (cond
-      ((xml-tilde? src)
-       (instantiate::xml-empty-element
-	  (markup 'img)
-	  (id (xml-make-id id 'img))
-	  (attributes (cons* `(alt . ,alt) attributes))
-	  (initializations (list (cons 'src src)))
-	  (body '())))
-      ((string? src)
-       (let ((src (if inline (img-base64-encode src) src))
-	     (attrs (if (eq? inline #t)
-			(onerror-img attributes src)
-			attributes)))
-	  (instantiate::xml-empty-element
-	     (markup 'img)
-	     (id (xml-make-id id 'img))
-	     (attributes (cons* `(src . ,src)
-				`(alt . ,(or alt src))
-				attrs))
-	     (body '()))))
-      (else
-       (error '<IMG> "Illegal image src" src))))
-
-;*---------------------------------------------------------------------*/
 ;*    string->tilde ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (string->tilde string)
@@ -995,28 +925,36 @@
 (define (xml-write-tilde-as-expression t::xml-tilde p::output-port)
    (let* ((t (tilde->string t))
 	  (l (string-length t)))
-      (let loop ((i (-fx l 1)))
-	 (if (<fx i 0)
-	     ;; the tilde expression is empty!
-	     #unspecified
-	     (let ((c (string-ref t i)))
-		(case c
-		   ((#\Newline #\Return #\Space #\Tab)
-		    ;; skip the trailing space and newline
-		    (loop (-fx i 1)))
-		   ((#\;)
-		    ;; a statement
-		    (display "(function(){ return " p)
+      (if (substring-at? t "var " 0)
+	  (let* ((i (string-index t " \n;" 4))
+		 (var (substring t 4 i)))
+	     (display "(function(){ " p)
 		    (display t p)
-		    (display "})()" p))
-		   ((#\})
-		    ;; a block
-		    (display "(function()" p)
-		    (display t p)
-		    (display ")()" p))
-		   (else
-		    ;; a regular expression
-		    (display t p))))))))
+		    (display "return " p)
+		    (display var p)
+		    (display ";})()" p))
+	  (let loop ((i (-fx l 1)))
+	     (if (<fx i 0)
+		 ;; the tilde expression is empty!
+		 #unspecified
+		 (let ((c (string-ref t i)))
+		    (case c
+		       ((#\Newline #\Return #\Space #\Tab)
+			;; skip the trailing space and newline
+			(loop (-fx i 1)))
+		       ((#\;)
+			;; a statement
+			(display "(function(){ return " p)
+			(display t p)
+			(display "})()" p))
+		       ((#\})
+			;; a block
+			(display "(function()" p)
+			(display t p)
+			(display ")()" p))
+		       (else
+			;; a regular expression
+			(display t p)))))))))
       
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializer ...                                        */

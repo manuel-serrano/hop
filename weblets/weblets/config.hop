@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/weblets/config.hop              */
+;*    serrano/prgm/project/hop/1.9.x/weblets/weblets/config.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Fri Nov 23 12:16:47 2007 (serrano)                */
+;*    Last change :  Sun Dec  9 05:31:32 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets configuration                                            */
@@ -17,6 +17,7 @@
            (weblets-date::bstring)
            (weblets-author::bstring)
 	   (weblets-dir::bstring)
+	   (weblets-cache-dir::bstring)
 	   (weblets-repository::bstring)
 	   (weblets-repository-set! ::bstring)
 	   (weblets-publisher::bstring)
@@ -37,6 +38,14 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter weblets-dir
    (dirname (the-loading-file)))
+
+;*---------------------------------------------------------------------*/
+;*    weblets-cache-dir ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter weblets-cache-dir
+   (make-file-path (hop-rc-directory)
+		   "cache"
+		   (string-append "weblets-" (integer->string (hop-port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets-repository ...                                           */

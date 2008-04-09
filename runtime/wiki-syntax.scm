@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/wiki-syntax.scm                 */
+;*    serrano/prgm/project/hop/1.9.x/runtime/wiki-syntax.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Oct 15 15:33:26 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Wed Mar 12 10:31:16 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -260,7 +260,7 @@
 	       (enter-block! 'table (wiki-syntax-table syn) #f #f))
 	    (enter-expr! 'tr
 			 (lambda exp
-			    (let ((cl (if (even? trcount)
+			    (let ((cl (if (evenfx? trcount)
 					  "hopwiki-row-even"
 					  "hopwiki-row-odd")))
 			       (apply (wiki-syntax-tr syn) :class cl exp)))

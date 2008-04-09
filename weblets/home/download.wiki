@@ -64,6 +64,14 @@ from the source code to the pre-compiled JVM version because it gives
 much better performance. On Linux, the JVM version should only be considered
 for quick Hop experiments.])))
 
+~~ HOP is shipped with some **Linux distributions** on which it can be
+used without downloading and installing the source code manually:
+
+|  ,(<DIV> :style "width:4em" "") | |
+|  ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "arch-16x16.png")) | [[http://aur.archlinux.org|Arch Linux]]  |
+|  ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) | [[http://www.gentoo.org|Gentoo]]  |
+
+
 == Getting Bigloo ==
 
 In order to install HOP from the source (for significantly improving

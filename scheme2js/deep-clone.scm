@@ -10,15 +10,9 @@
    (export (deep-clone o::pobject)))
 
 (define (deep-clone o)
+   ;; variables and labels are only to clone, if they are in the scope.
+   ;; 'to-clone' keeps track of them.
    (define to-clone (make-eq-hashtable))
-   
-   (define label-ht (make-eq-hashtable))
-   (define (label-map label)
-      (or (hashtable-get label-ht label)
-	  (let ((label-replacement (gensym 'label)))
-	     (hashtable-put! label-ht label-replacement label-replacement)
-	     (hashtable-put! label-ht label label-replacement)
-	     label-replacement)))
    
    (define (to-clone-add! ht)
       (hashtable-for-each ht
@@ -31,7 +25,7 @@
 	  this))
 
    (define-pmethod (Lambda-deep-clone cloned-ht)
-      (to-clone-add! this.local-vars)
+      (to-clone-add! this.local-vars-ht)
       (pcall this pobject-deep-clone cloned-ht))
 
    (define-pmethod (Call-deep-clone cloned-ht)
@@ -42,27 +36,27 @@
 		(set! this.cloned-fun cloned-fun))
 	    res)))
 
-   (define-pmethod (Tail-rec-deep-clone cloned-ht)
-      (let ((res (pcall this pobject-deep-clone cloned-ht)))
-	 (set! res.label (label-map res.label))
-	 res))
-
-   (define-pmethod (Tail-rec-call-deep-clone cloned-ht)
-      (let ((res (pcall this pobject-deep-clone cloned-ht)))
-	 (set! res.label (label-map res.label))
-	 res))
-
+   (define-pmethod (Label-deep-clone cloned-ht)
+      (if (hashtable-get to-clone this)
+	  (let ((new-this (pcall this pobject-deep-clone cloned-ht)))
+	     (set! new-this.id (gensym 'label))
+	     new-this)
+	  this))
+      
    (define-pmethod (Labelled-deep-clone cloned-ht)
-      (let ((res (pcall this pobject-deep-clone cloned-ht)))
-	 (set! res.label (label-map res.label))
-	 res))
+      (hashtable-put! to-clone this.label #t)
+      (pcall this pobject-deep-clone cloned-ht))
+
+   (define-pmethod (Tail-rec-deep-clone cloned-ht)
+      (hashtable-put! to-clone this.label #t)
+      (pcall this pobject-deep-clone cloned-ht))
 
    ;; not needed (if I'm not wrong...)
    ;(to-clone-add! fun.local-vars)
    (overload deep-clone deep-clone (Var
 				    Lambda
 				    Call
-				    Tail-rec
-				    Tail-rec-call
-				    Labelled)
+				    Label
+				    Labelled
+				    Tail-rec)
 	     (o.deep-clone (make-eq-hashtable))))

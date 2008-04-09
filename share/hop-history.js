@@ -144,6 +144,7 @@ function hop_state_history_add( id, op, val ) {
 /*---------------------------------------------------------------------*/
 /*    hop_with_history ...                                             */
 /*---------------------------------------------------------------------*/
+/*** META ((export with-history)) */
 function hop_with_history( proc ) {
    var res;
    hop_state_history_transaction++;
@@ -325,6 +326,7 @@ function hop_eval_history_state( location ) {
 /*---------------------------------------------------------------------*/
 /*    hop_current_history ...                                          */
 /*---------------------------------------------------------------------*/
+/*** META ((export current-history)) */
 function hop_current_history() {
    var hash = location.hash;
    
@@ -342,6 +344,7 @@ function hop_current_history() {
 /*---------------------------------------------------------------------*/
 /*    hop_replay_history ...                                           */
 /*---------------------------------------------------------------------*/
+/*** META ((export replay-history)) */
 function hop_replay_history( hist ) {
    hop_current_state_history = undefined;
    var loc = function( v ) { this.hash = v; }
@@ -363,6 +366,7 @@ function _hop_history( key ) {
 /*    This is the high level constructor presented to the Hop          */
 /*    API.                                                             */
 /*---------------------------------------------------------------------*/
+/*** META ((export make-history)) */
 function hop_make_history( key, handler, reset ) {
    hop_state_history_register_handler( key, reset, handler );
    return new _hop_history( key );
@@ -373,6 +377,7 @@ function hop_make_history( key, handler, reset ) {
 /*    -------------------------------------------------------------    */
 /*    This high level function for adding an entry into the history.   */
 /*---------------------------------------------------------------------*/
+/*** META ((export history-add!)) */
 function hop_history_add( history, id, val ) {
    if( !history instanceof _hop_history ) {
       alert( "*** ERROR: Illegal history object -- " + history );

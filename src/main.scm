@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/src/main.scm                            */
+;*    serrano/prgm/project/hop/1.9.x/src/main.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Nov 16 07:08:30 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Wed Apr  2 10:23:04 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -14,18 +14,23 @@
 ;*---------------------------------------------------------------------*/
 (module main
 
-   (library multimedia web hop)
-
    (cond-expand
       (enable-threads (library pthread)))
 
    (cond-expand
       (enable-ssl (library ssl)))
 
-   (import  hop_parseargs
-	    hop_param)
+   (library multimedia web hop hopscheme scheme2js)
 
-   (with    hop_init)
+   (import  hop_parseargs
+	    hop_param
+	    hop_init
+	    hop_scheduler
+	    hop_scheduler-nothread
+	    hop_scheduler-queue
+	    hop_scheduler-one-to-one
+	    hop_scheduler-pool
+	    hop_scheduler-cohort)
 
    (main    main))
 
@@ -44,69 +49,17 @@
 	  `(hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))
  
 ;*---------------------------------------------------------------------*/
-;*    main ...                                                         */
+;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (main args)
-   ;; catch critical signals
-   (signal-init!)
-   ;; set the Hop cond-expand identification
-   (register-eval-srfi! 'hop)
-   (register-eval-srfi! (string->symbol (format "hop-~a" (hop-version))))
-   ;; set the library load path
-   (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
-      (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
-   ;; preload the hop libraries
-   (for-each (lambda (l)
-		(eval `(library-load ',l))) (hop-preload-libraries))
-   ;; setup the hop readers
-   (bigloo-load-reader-set! hop-read)
-   (bigloo-load-module-set! hop-load-modified)
-   ;; install the hop expanders
-   (hop-install-expanders!)
-   ;; parse the command line
-   (parse-args args)
-   (hop-verb 1 "Starting hop (v" (hop-version)
-	     ", " (hop-backend)
-	     (cond-expand
-		(enable-threads ", multi-threaded")
-		(else ", single-threaded"))
-	     ") "
-	     (if (hop-enable-https)
-		 (format "https (~a):" (hop-https-protocol)) "http:")
-	     (hop-port)
-	     (if (hop-enable-fast-server-event)
-		 (format ", server-events:~a" (hop-fast-server-event-port))
-		 "")
-	     "\n")
-   ;; install the builtin filters
-   (hop-filter-add! service-filter)
-   ;; start the job scheduler
-   (job-start-scheduler!)
-   ;; close filters and users registration before starting
-   (hop-filters-close!)
-   (users-close!)
-   ;; start the hop main loop
-   (with-handler
-      (lambda (e)
-	 (exception-notify e)
-	 (exit 1))
-      (let* ((ap (make-threads-pool 'accpt (hop-max-accept-thread) -1))
-	     (rp (case (hop-scheduling)
-		    ((cohort)
-		     (make-threads-pool 'reply (hop-max-reply-thread) -1))
-		    ((simple)
-		     #f)
-		    (else
-		     (error 'hop
-			    "Illegal scheduling policy"
-			    (hop-scheduling)))))
-	     (serv (hop-server-socket)))
-	 ;; when needed, start the HOP repl
-	 (hop-repl ap)
-	 ;; when needed, start a loop for server events
-	 (hop-server-event-loop ap rp)
-	 ;; start the main loop
-	 (hop-main-loop serv ap rp))))
+(define (signal-init!)
+   (cond-expand
+      (enable-threads #unspecified)
+      (else (signal sigpipe (lambda (n) #unspecified))))
+   (signal sigsegv
+	   (lambda (n)
+	      (fprint (current-error-port) "Segmentation violation")
+	      (dump-trace-stack (current-error-port) 10)
+	      (exit 2))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-socket ...                                            */
@@ -127,270 +80,353 @@
        (make-server-socket (hop-port))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-server-event-loop ...                                        */
+;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (hop-server-event-loop ap rp)
-   (when (hop-enable-fast-server-event)
-      (cond
-	 ((=fx (hop-fast-server-event-port) (hop-port))
-	  ;; will use the regular HOP port
-	  (hop-event-init! (hop-port)))
-	 ((=fx (pool-thread-available ap) 1)
-	  ;; disable fast event because no thread is available
-	  ;; and extra port is needed
-	  (hop-event-init! #f))
+(define (main args)
+   ;; catch critical signals
+   (signal-init!)
+   ;; set the Hop cond-expand identification
+   (register-eval-srfi! 'hop)
+   (register-eval-srfi! (string->symbol (format "hop-~a" (hop-version))))
+   ;; set the library load path
+   (let ((hop-path (make-file-path (hop-lib-directory) "hop" (hop-version))))
+      (bigloo-library-path-set! (cons hop-path (bigloo-library-path))))
+   ;; preload the hop libraries
+   (for-each (lambda (l)
+		(eval `(library-load ',l)))
+	     (hop-preload-libraries))
+   ;; setup the hop readers
+   (bigloo-load-reader-set! hop-read)
+   (bigloo-load-module-set! hop-load-modified)
+   ;; install the hop expanders
+   (hop-install-expanders!)
+   ;; parse the command line
+   (parse-args args)
+   (hop-verb 1 "Starting hop (v" (hop-version)
+	     ", " (hop-backend)
+	     (cond-expand
+		(enable-threads
+		 (format ", ~a scheduler" (hop-scheduling)))
+		(else
+		 ", single-threaded"))
+	     ") "
+	     (if (hop-enable-https)
+		 (format "https (~a):" (hop-https-protocol)) "http:")
+	     (hop-port)
+	     (if (hop-enable-fast-server-event)
+		 (format ", server-events:~a" (hop-fast-server-event-port))
+		 "")
+	     "\n")
+   ;; init hss, scm compilers, and services
+   (init-hss-compiler!)
+   (init-scm-compiler! compile-scheme-file)
+   (init-hop-services!)
+   ;; install the builtin filters
+   (hop-filter-add! service-filter)
+   ;; prepare the regular http handling
+   (init-http!)
+   (when (hop-enable-webdav) (init-webdav!))
+   (when (hop-enable-fast-server-event) (init-flash!))
+   ;; close filters and users registration before starting
+   (hop-filters-close!)
+   (users-close!)
+   ;; create the scheduler
+   (unless (scheduler? (hop-scheduler))
+      (cond-expand
+	 (enable-threads
+	  (case (hop-scheduling)
+	     ((nothread)
+	      (hop-scheduler-set! (instantiate::nothread-scheduler)))
+	     ((cohort)
+	      (hop-scheduler-set! (instantiate::cohort-scheduler
+				     (size (hop-max-threads))
+				     (names '(stage-start
+					      stage-response
+					      stage-answer)))))
+	     ((queue)
+	      (hop-scheduler-set! (instantiate::queue-scheduler
+				     (size (hop-max-threads)))))
+	     ((one-to-one)
+	      (hop-scheduler-set! (instantiate::one-to-one-scheduler
+				     (size (hop-max-threads)))))
+	     ((pool)
+	      (hop-scheduler-set! (instantiate::pool-scheduler
+				     (size (hop-max-threads)))))
+	     (else
+	      (error 'hop "Unknown scheduling policy" (hop-scheduling)))))
 	 (else
-	  ;; run in a separate thread
-	  (hop-event-init! (hop-fast-server-event-port))
-	  (let ((sv (make-server-socket (hop-fast-server-event-port))))
-	     (pool-thread-execute ap
-				  (lambda ()
-				     (hop-main-loop sv ap rp))
-				  (lambda (m)
-				     'persistent)
-				  0))))))
+	  (unless (eq? (hop-scheduling) 'nothread)
+	     (warning 'hop "Threads disabled, forcing \"nothread\" scheduler."))
+	  (hop-scheduler-set! (instantiate::nothread-scheduler)))))
+   ;; start the hop scheduler loop (i.e. the hop main loop)
+   (with-handler
+      (lambda (e)
+	 (exception-notify e)
+	 (exit 1))
+      (let ((serv (hop-server-socket)))
+	 ;; start the job (background taks, a la cron) scheduler
+	 (when (>fx (hop-max-threads) 1)
+	    (job-start-scheduler!))
+	 ;; when needed, start the HOP repl
+	 (when (and (hop-enable-repl) (>fx (hop-max-threads) 1))
+	    (hop-repl (hop-scheduler)))
+	 ;; when needed, start a loop for server events
+	 (when (hop-enable-fast-server-event)
+	    (hop-event-server (hop-scheduler)))
+	 ;; start the main loop
+	 (hop-main-loop (hop-scheduler) serv))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-repl ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hop-repl scd)
+   (if (<=fx (scheduler-size scd) 1)
+       (error 'hop-repl
+	      "HOP REPL cannot be spawned without multi-threading"
+	      scd)
+       (schedule-start scd hop-repl-stage 'stage-start)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-repl-stage ...                                               */
+;*---------------------------------------------------------------------*/
+(define (hop-repl-stage scd thread)
+   (thread-info-set! thread "hop-repl")
+   (hop-verb 1 "Entering repl...\n")
+   (begin (repl) (exit 0)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-server ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-event-server scd)
+   (cond
+      ((=fx (hop-fast-server-event-port) (hop-port))
+       ;; will use the regular HOP port
+       (hop-event-init! (hop-port)))
+      ((<=fx (scheduler-size scd) 1)
+       ;; disable fast event because no thread is available
+       ;; and extra port is needed
+       (hop-event-init! #f))
+      (else
+       ;; run in a separate thread
+       (hop-event-init! (hop-fast-server-event-port))
+       (let ((serv (make-server-socket (hop-fast-server-event-port))))
+	  (hop-main-loop scd serv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-main-loop ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-main-loop s ap rp)
-   (let loop ((n 1))
-      (with-handler
-	 (lambda (e)
-	    (exception-notify e))
-	 (let liip ()
-	    (accept-connection s ap rp n)
-	    (set! n (+fx n 1))
-	    (liip)))
-      (loop n)))
+(define (hop-main-loop scd serv)
+   (let loop ((id 1))
+      (let ((sock (socket-accept serv)))
+	 (schedule-start scd
+			 (lambda (s t)
+			    (stage-request s t id
+					   sock 'connect (hop-read-timeout)))
+			 'stage-start)
+	 (loop (+fx id 1)))))
 
 ;*---------------------------------------------------------------------*/
-;*    signal-init! ...                                                 */
+;*    with-time ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (signal-init!)
-   (cond-expand
-      (enable-thread #unspecified)
-      (else (signal sigpipe (lambda (n) #unspecified))))
-   (signal sigsegv
-	   (lambda (n)
-	      (fprint (current-error-port) "Segmentation violation")
-	      (dump-trace-stack (current-error-port) 10)
-	      (exit 2))))
+(define-macro (with-time expr id msg)
+   (let ((v (gensym)))
+      `(if (hop-report-execution-time)
+	   (multiple-value-bind (value real sys user)
+	      (time (lambda () ,expr))
+	      (hop-verb 1
+			(hop-color ,id ,id (format " ~a.time " ,msg))
+			" real: " real
+			" sys: " sys
+			" user: " user
+			"\n")
+	      value)
+	   ,expr)))
 
 ;*---------------------------------------------------------------------*/
-;*    accept-connection ...                                            */
+;*    stage-request ...                                                */
+;*    -------------------------------------------------------------    */
+;*    This stage is in charge of parsing the request. It produces a    */
+;*    request.                                                         */
 ;*---------------------------------------------------------------------*/
-(define (accept-connection s::socket accept-pool::pool reply-pool::obj n::int)
-   (let ((sock (socket-accept s)))
-      (when (socket? sock)
-	 (hop-verb 1 (hop-color n n " CONNECT"))
-	 (hop-verb 2
-		   " (" (pool-thread-available accept-pool)
-		   "/" (hop-max-accept-thread)
-		   "-"
-		   (if (pool? reply-pool)
-		       (pool-thread-available reply-pool)
-		       "")
-		   "/" (hop-max-reply-thread)
-		   ")")
-	 (hop-verb 1
-		   ": " (socket-hostname sock) " [" (current-date) "]\n")
-	 (handle-connection
-	  sock accept-pool reply-pool (hop-read-timeout) n 'connect))))
+(define (stage-request scd thread id sock mode timeout)
+   
+   ;; is the error raised of a timeout in a keep-alive connection?
+   (define (keep-alive-ellapsed-error? e)
+      (and (eq? mode 'keep-alive)
+	   (or (&io-timeout-error? e)
+	       (and (&io-parse-error? e)
+		    (eof-object? (&io-parse-error-obj e))))))
+   
+   ;; error handler specific that the stage
+   (define (connect-error-handler e)
+      (if (keep-alive-ellapsed-error? e)
+	  ;; this is not a true error, just log
+	  (hop-verb 3 (hop-color id id " SHUTTING DOWN")
+		    (if (&io-timeout-error? e)
+			" (keep-alive timeout ellapsed)"
+			" (parse error)")
+		    "\n")
+	  ;; this one is a true error
+	  (begin
+	     (hop-verb 1 (hop-color id id " ABORTING")
+		       " " (trace-color 1 (find-runtime-type e))
+		       "...\n")
+	     (when (&error? e) (error-notify e))
+	     (when (and (&io-unknown-host-error? e) (not (socket-down? sock)))
+		(with-handler
+		   (lambda (e)
+		      ;; this error handler is invoked when the attempt to
+		      ;; notify the previous error to the client fails
+		      (when (&error? e) (error-notify e))
+		      #unspecified)
+		   ;; we will try to answer the error to the client 
+		   (unless (&io-sigpipe-error? e)
+		      (let ((resp ((or (hop-http-request-error)
+				       http-request-error)
+				   e)))
+			 (http-response resp sock)))))))
+      ;; abort this request
+      (socket-close sock))
+   
+   ;; verbose function (only for log and debug)
+   (define (http-connect-verb scd id sock req)
+      (when (eq? mode 'keep-alive)
+	 (hop-verb 3 (hop-color id id " KEEP-ALIVE"))
+	 (hop-verb 3 (scheduler-stat scd))
+	 (hop-verb 3 ": " (socket-hostname sock) " [" (current-date) "]\n"))
+      (with-access::http-request req (method scheme host port path proxyp user
+					     header)
+	 (hop-verb 4 (hop-color id id " CONNECT.header") ": "
+		   (with-output-to-string (lambda () (write header))) "\n")
+	 (hop-verb 2 (if proxyp
+			 (hop-color req req " EXEC.prox")
+			 (hop-color req req " EXEC.serv"))
+		   (scheduler-stat scd)
+		   ": " method " " scheme "://"
+		   (user-name user) "@" host ":" port (string-for-read path)
+		   "\n")))
+
+   ;; log
+   (hop-verb 1 (hop-color id id " CONNECT") (if (eq? mode 'keep-alive) "+" ""))
+   (hop-verb 2 (scheduler-stat scd))
+   (hop-verb 1 ": " (socket-hostname sock) " [" (current-date) "]\n")
+   
+   ;; debug trace
+   (thread-info-set! thread "connection establied with ~a")
+
+   (with-handler
+      connect-error-handler
+      (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
+	 ;; debug info
+	 (thread-info-set! thread
+			   (format "request parsed for ~a, ~a ~a"
+				   (socket-hostname sock)
+				   (http-request-method req)
+				   (http-request-path req)))
+	 (http-connect-verb scd id sock req)
+	 (schedule scd
+		   (lambda (s t) (stage-response s t id req))
+		   'stage-response))))
 
 ;*---------------------------------------------------------------------*/
-;*    handle-connection ...                                            */
+;*    response-error-handler ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (handle-connection sock
-			   accept-pool::pool
-			   reply-pool
-			   timeout::int
-			   id::int
-			   mode::symbol)
-   (pool-thread-execute accept-pool
-			(lambda ()
-			   (http-connect sock
-					 accept-pool reply-pool
-					 timeout id mode))
-			(lambda (m)
-			   (http-response
-			    (http-service-unavailable m) sock))
-			id))
-
-;*---------------------------------------------------------------------*/
-;*    http-connect ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (http-connect sock accept-pool reply-pool timeout id mode)
-   (let ((req (with-handler
-		 (lambda (e)
-		    (if (and (eq? mode 'keep-alive)
-			     (or (&io-timeout-error? e)
-				 (and (&io-parse-error? e)
-				      (eof-object? (&io-parse-error-obj e)))))
-			(hop-verb 2 (hop-color id id " SHUTTING DOWN") "\n")
-			(begin
-			   (when (&error? e) (error-notify e))
-			   (when (and (&io-unknown-host-error? e)
-				      (not (socket-down? sock)))
-			      (with-handler
-				 (lambda (e)
-				    (when (&error? e) (error-notify e))
-				    #unspecified)
-				 (unless (&io-sigpipe-error? e)
-				    (let ((resp ((or (hop-http-request-error)
-						     http-request-error)
-						 e)))
-				       (http-response resp sock)))))
-			   (hop-verb 1 (hop-color id id " ABORTING")
-				     " " (trace-color 1 (find-runtime-type e))
-				     "\n")))
-		    (socket-close sock)
-		    #f)
-		 (http-parse-request sock id timeout))))
-      (when (http-request? req)
-	 (when (eq? mode 'keep-alive)
-	    (hop-verb 1 (hop-color id id " KEEP-ALIVE"))
-	    (hop-verb 2
-		      " (" (pool-thread-available accept-pool)
-		      "/" (hop-max-accept-thread)
-		      "-" 
-		      (if (pool? reply-pool)
-			  (pool-thread-available reply-pool)
-			  "")
-		      "/" (hop-max-reply-thread)
-		      ")")
-	    (hop-verb 1
-		      ": "
-		      (socket-hostname sock) " [" (current-date) "]\n"))
-	 (with-access::http-request req (method scheme host port path proxyp
-						user)
-	    (hop-verb 2
-		      (if proxyp
-			  (hop-color req req " EXEC.prox")
-			  (hop-color req req " EXEC.serv"))
-		      " ("
-		      (pool-thread-available accept-pool)
-		      "/" (hop-max-accept-thread)
-		      "-"
-		      (if (pool? reply-pool)
-			  (pool-thread-available reply-pool)
-			  "")
-		      "/" (hop-max-reply-thread) "): "
-		      method " "
-		      scheme "://"
-		      (user-name user)
-		      "@"
-		      host ":" port (string-for-read path)
-		      "\n"))
-	 (if reply-pool
-	     (pool-thread-execute
-	      reply-pool
-	      (lambda ()
-		 (http-process req sock accept-pool reply-pool id))
-	      (lambda (m)
-		 (http-response
-		  (http-service-unavailable m) sock))
-	      req)
-	     (http-process req sock accept-pool reply-pool id)))))
-
-;*---------------------------------------------------------------------*/
-;*    http-debug ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (http-debug lvl . args)
-   (when (>=fx (bigloo-debug) lvl)
-      (apply fprint (current-error-port) args)))
-
-;*---------------------------------------------------------------------*/
-;*    http-process ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (http-process req sock accept-pool reply-pool id)
+(define (response-error-handler e scd req)
    (with-handler
       (lambda (e)
-	 (with-handler
-	    (lambda (e) #f)
-	    (hop-verb 1 (hop-color req req " ERROR"))
-	    (hop-verb 2
-		      " (" (pool-thread-available accept-pool)
-		      "/" (hop-max-accept-thread)
-		      "-" 
-		      (pool-thread-available reply-pool)
-		      "/" (hop-max-reply-thread)
-		      ")")
-	    (hop-verb 1 ": " (trace-color 1 e) "\n")
-	    (if (http-response-string? e)
-		(http-response e sock)
-		(begin
-		   (cond
-		      ((&error? e)
-		       (error-notify (evmeaning-annotate-exception! e)))
-		      ((&warning? e)
-		       (warning-notify (evmeaning-annotate-exception! e))))
-		   (unless (&io-sigpipe-error? e)
-		      (let ((resp ((or (hop-http-response-error) http-error)
-				   e req)))
-			 (http-response resp sock))))))
-	 (socket-close sock)
-	 #f)
-      (let ((hp (request->response req)))
-	 (hop-verb 4 (hop-color req req " EXEC")
-		   " ("
-		   (pool-thread-available accept-pool)
-		   "/" (hop-max-accept-thread)
-		   "-" 
-		   (pool-thread-available reply-pool)
-		   "/" (hop-max-reply-thread) "): "
-		   (find-runtime-type hp)
-		   " "
-		   (user-name (http-request-user req))
-		   "\n")
-	 (let ((connection (http-response hp sock)))
-	    (hop-verb 2 (hop-color req req " END")
-		      " ("
-		      (pool-thread-available accept-pool)
-		      "/" (hop-max-accept-thread)
-		      "-" 
-		      (pool-thread-available reply-pool)
-		      "/" (hop-max-reply-thread) "): "
-		      (find-runtime-type hp) " " connection
-		      " [" (current-date) "]"
-		      (if (http-response-persistent? hp)
-			  " persistent\n"
-			  "\n"))
-	    (case connection
-	       ((persistent)
-		#unspecified)
-	       ((keep-alive)
-		(if (and (hop-enable-keep-alive)
-			 (>fx (pool-thread-available accept-pool) 0)
-			 (>fx (pool-thread-available reply-pool) 0))
-		    (handle-connection
-		     sock accept-pool reply-pool
-		     (hop-keep-alive-timeout) id connection)
-		    (socket-close sock)))
-	       (else
-		(socket-close sock)))))))
+	 ;; there is nothing we can do but aborting the request
+	 (socket-close (http-request-socket req))
+	 (raise #f))
+      (begin
+	 ;; when the error is a response, we transmit it to the next stage
+	 (hop-verb 1 (hop-color req req " ERROR"))
+	 (hop-verb 2 (scheduler-stat scd))
+	 (hop-verb 1 ": " (trace-color 1 e) "\n")
+	 (if (%http-response? e)
+	     e
+	     (begin
+		(cond
+		   ((&error? e)
+		    (error-notify (evmeaning-annotate-exception! e)))
+		   ((&warning? e)
+		    (warning-notify (evmeaning-annotate-exception! e))))
+		(if (&io-sigpipe-error? e)
+		    (begin
+		       ;; there is nothing we can do but aborting the request
+		       (socket-close (http-request-socket req))
+		       (raise #f))
+		    ;; generate a legal response for the next stage (although
+		    ;; this response denotes the error).
+		    ((or (hop-http-response-error) http-error) e req)))))))
+
+;*---------------------------------------------------------------------*/
+;*    stage-response ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This stage is in charge of building a response to the received   */
+;*    request.                                                         */
+;*---------------------------------------------------------------------*/
+(define (stage-response scd thread id req)
+   (current-request-set! req)
+   (hop-verb 3 (hop-color id id " RESPONSE") "\n")
+   (with-handler
+      (lambda (e) (response-error-handler e scd req))
+      (let ((resp (with-time (request->response req) id "RESPONSE")))
+	 (thread-info-set! thread
+			   (format "~a ~a://~a:~a~a... -> ~a"
+				   (http-request-method req)
+				   (http-request-scheme req)
+				   (http-request-host req)
+				   (http-request-port req)
+				   (http-request-path req)
+				   (find-runtime-type resp)))
+	 (schedule scd
+		   (lambda (s t) (stage-answer s t id req resp))
+		   'stage-answer))))
+
+;*---------------------------------------------------------------------*/
+;*    stage-answer ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (stage-answer scd thread id req resp)
+   (current-request-set! req)
+   ;; log4
+   (hop-verb 4 (hop-color req req " EXEC")
+	     (scheduler-stat scd)
+	     ": " (find-runtime-type resp)
+	     " " (user-name (http-request-user req)) "\n")
    
-;*---------------------------------------------------------------------*/
-;*    hop-repl ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (hop-repl pool)
-   (when (hop-enable-repl)
-      (cond-expand
-	 (enable-threads
-	  (cond
-	     ((> (pool-thread-available pool) 2)
-	      (pool-thread-execute pool
-				   (lambda ()
-				      (hop-verb 1 "Entering repl...\n")
-				      (begin (repl) (exit 0)))
-				   (lambda (m)
-				      (error 'hop-repl "Illegal value" m))
-				   0))
-	     (else
-	      (error 'hop-repl
-		     "HOP REPL cannot be started because not enought accept threads avaiable"
-		     (pool-thread-available pool)))))
-	 (else
-	  (error 'hop-repl
-		 "HOP REPL cannot be spawned when threads support disabled"
-		 #unspecified)))))
+   (with-handler
+      (lambda (e) (response-error-handler e scd req))
+      (let* ((sock (http-request-socket req))
+	     (connection (with-time (http-response resp sock) id "EXEC")))
+	 ;; debug
+	 (thread-info-set! thread
+			   (format "~a ~a://~a:~a~a... -> ~a ~a"
+				   (http-request-method req)
+				   (http-request-scheme req)
+				   (http-request-host req)
+				   (http-request-port req)
+				   (http-request-path req)
+				   (find-runtime-type resp)
+				   connection))
+	 ;; log2
+	 (hop-verb 3 (hop-color req req " END")
+		   (scheduler-stat scd)
+		   ": " (find-runtime-type resp) " " connection
+		   " [" (current-date) "] " connection "\n")
+	 (case connection
+	    ((persistent)
+	     #unspecified)
+	    ((keep-alive)
+	     (if (and (hop-enable-keep-alive) (<fx (scheduler-load scd) 50))
+		 (schedule scd
+			   (lambda (s t)
+			      (stage-request s t id sock
+					     'keep-alive
+					     (hop-keep-alive-timeout)))
+			   'stage-start)
+		 (socket-close sock)))
+	    (else
+	     (socket-close sock))))))
+      
+	       
+   

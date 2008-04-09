@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/weblets/home/demos/sudoku/sudoku.hop        */
+;*    .../project/hop/1.9.x/weblets/home/demos/sudoku/sudoku.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Sun Nov 19 07:28:08 2006 (serrano)                */
+;*    Last change :  Tue Dec  4 16:08:57 2007 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
@@ -173,44 +173,40 @@
 ;;; 	run-sudoku ...
 ;;; ======================================================================
 (define-service (home/demos/sudoku)
-  (let* ((level 1)
-	 (board (init-sudoku level)))
-    (<HTML>
-     (<HEAD>
-	:base (service-base-url home/demos/sudoku (current-request))
-	:jscript "sudoku.scm" :css "sudoku.hss")
-     (<BODY>
-      (<DIV> :class "sudoku-title" (<IMG> :src "sudoku.png"))
-      (<DIV> :class "sudoku-panel"
-	 (<H2>  "Menu")
-	 (<DIV> :class "sudoku-menu"
-	   (<DIV> 
-	      "Level: " [,(<A> "1") ,(<A> "2") ,(<A> "3") ,(<A> "4") ,(<A> "5")])
-
-	   (<DIV>
-	      "Show errors: " (<INPUT> :type "radio" :name "err" :checked "checked"
-				       :style "cursor: pointer"
-				       :onclick ~(set! *show-errors* #t)
-				       "yes")
-			       " "
-			       (<INPUT> :type "radio" :name "err"
+   (let* ((level 1)
+	  (board (init-sudoku level)))
+      (<HTML>
+	 (<HEAD>
+	    :base (service-base-url home/demos/sudoku (current-request))
+	    :jscript "sudoku.scm" :css "sudoku.hss")
+	 (<BODY>
+	    (<DIV> :class "sudoku-title" (<IMG> :src "sudoku.png"))
+	    (<DIV> :class "sudoku-panel"
+	       (<H2>  "Menu")
+	       (<DIV> :class "sudoku-menu"
+		  (<DIV> 
+		     "Level: " [,(<A> "1") ,(<A> "2") ,(<A> "3") ,(<A> "4") ,(<A> "5")])
+		  
+		  (<DIV>
+		     "Show errors: " (<INPUT> :type "radio" :name "err" :checked "checked"
 					:style "cursor: pointer"
-					:onclick ~(set! *show-errors* #f)
-					"no"))
-	   (<DIV> :style "cursor: pointer" :onclick ~(show-solution)
-		  "Show-solution")
-	   (<DIV> :style "cursor: pointer" :onclick ~(window.print)
-		  "Print the board"))
-	 (<H2> "Help")
-	 (<DIV> :class "sudoku-help"
-	    (<DIV> "- Click on a cell and enter a number")
-	    (<DIV> "- You can use arrows to move on the board")
-	    (<DIV> "- Use \"h\" or \"?\" to reveal the value of the selected cell")
-	    (<DIV> "- Numbers in red are misplaced")))
-     (board->html board level)
-     (<SCRIPT>
-         ~(begin
-	    (set! *show-errors* #t)
-	    (set! *board* $board)
-	    (set! document.documentElement.onkeydown key-event)
-	    (set! document.onkeydown key-event)))))))
+					:onclick ~(set! *show-errors* #t)
+					"yes")
+		     " "
+		     (<INPUT> :type "radio" :name "err"
+			:style "cursor: pointer"
+			:onclick ~(set! *show-errors* #f)
+			"no"))
+		  (<DIV> :style "cursor: pointer" :onclick ~(show-solution)
+		     "Show-solution")
+		  (<DIV> :style "cursor: pointer" :onclick ~(window.print)
+		     "Print the board"))
+	       (<H2> "Help")
+	       (<DIV> :class "sudoku-help"
+		  (<DIV> "- Click on a cell and enter a number")
+		  (<DIV> "- You can use arrows to move on the board")
+		  (<DIV> "- Use \"h\" or \"?\" to reveal the value of the selected cell")
+		  (<DIV> "- Numbers in red are misplaced")))
+	    (board->html board level)
+	    (<SCRIPT>
+	       ~(start-game $board))))))

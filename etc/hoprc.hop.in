@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/etc/hoprc.hop.in                        */
+;*    serrano/prgm/project/hop/1.9.x/etc/hoprc.hop.in                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 26 08:20:34 2006                          */
-;*    Last change :  Sat Feb  3 18:42:59 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Mon Apr  7 10:35:17 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP runtime command file.                                        */
 ;*    -------------------------------------------------------------    */
@@ -53,8 +53,9 @@
 ;; It is required to define the "anonymous" user. An error will be raised
 ;; if this user is not declared when the first request is intercepted.
 (add-user! "anonymous" 
-           :services '(home doc epassword wizard hz/list)
-	   :directories (hop-path))
+           :services '(home doc epassword wizard hz/list shutdown/kill)
+	   :directories (hop-path)
+           :preferences-filename #f)
 
 (when (file-exists? (make-file-name (hop-etc-directory) "passwd.hop"))
    (hop-load (make-file-name (hop-etc-directory) "passwd.hop")))

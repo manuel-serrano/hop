@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/doc/tutorials.hop               */
+;*    serrano/prgm/project/hop/1.9.x/weblets/doc/tutorials.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Thu Sep 20 13:46:40 2007 (serrano)                */
+;*    Last change :  Sun Dec  2 19:17:45 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -126,7 +126,7 @@
 		       (with-hop ($doc/tutorial $path)
 			  (lambda (h)
 			     (let ((el (dom-get-element-by-id document $id)))
-				(set! el.innerHTML h)
+				(innerHTML-set! el h)
 				(notepad-select "doc-notepad" "doc-tutorials")
 				(window.scrollTo 0 0))))))
 	 lbl)))
@@ -155,7 +155,7 @@
 	  (with-hop ($doc/tutorial val)
 	     (lambda (h)
 		(let ((el (dom-get-element-by-id document $id)))
-		   (set! el.innerHTML h)))))
+		   (innerHTML-set! el h)))))
       (<TABLE> :width "100%" :border 0
 	 (<TR>
 	    (<TH> :align "left"
@@ -212,6 +212,6 @@
 					(window-close "tutorial/search")
 					(let ((el (dom-get-element-by-id
 						   document $id)))
-					   (set! el.innerHTML h)))))
+					   (innerHTML-set! el h)))))
 			      (car v)))))
 		  l2)))))

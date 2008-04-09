@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/hz/hz-install.js                */
+/*    serrano/prgm/project/hop/1.9.x/weblets/hz/hz-install.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 16 11:07:40 2007                          */
-/*    Last change :  Fri Nov 30 15:12:40 2007 (serrano)                */
+/*    Last change :  Wed Dec 12 14:39:24 2007 (serrano)                */
 /*    Copyright   :  2007 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Create a click and install panel                                 */
@@ -32,11 +32,11 @@ function hop_install_weblet( url, srci, srcr, parent ) {
    
    var oninstall = 'var host = document.getElementById( "hop_click_and_install_host_' + hop_install_stamp + '" );' +
       'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' +
-      'document.location = "http://" + host.value + ":" + port.value + ' +
+      'this.href = "http://" + host.value + ":" + port.value + ' +
       '"/hop/hz/install?url=' + encodeURIComponent( url ) + '";';
    var onrun = 'var host = document.getElementById( "hop_click_and_install_host_' + hop_install_stamp + '" );' +
       'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' + 
-      'document.location = "http://" + host.value + ":" + port.value + ' +
+      'this.href = "http://" + host.value + ":" + port.value + ' +
       '"/hop/hz/run?url=' + encodeURIComponent( url ) + '";';
 
    var host = "<table style='font-size: 60%'>" +
@@ -48,13 +48,17 @@ function hop_install_weblet( url, srci, srcr, parent ) {
       "<tr>" +
       "<td><table style='border-collapse: collapse'>" +
       "<tr><td style='text-align: center'>" +
-      "<img class='hop_hz_click' src='" + srci + "' alt='Click and install' title='Install or update the weblet' onclick='" + oninstall + "'/>" +
+      "<a href='' target='_blank' onclick='" + oninstall + "'>" +
+      "<img class='hop_hz_click' src='" + srci + "' alt='Click and install' title='Install or update the weblet'/>" +
+      "</a>" +
       "</td></tr>" +
       "<tr><td style='text-align: center; font-size: 70%'>Install / Update</td></tr>" +
       "</table></td>" +
       "<td><table style='border-collapse: collapse'>" +
       "<tr><td style='text-align: center'>" +
-      "<img class='hop_hz_click' src='" + srcr + "' alt='Click and run' title='Run the weblet' onclick='" + onrun + "'/>" +
+      "<a href='' target='_blank' onclick='" + onrun + "'>" +
+      "<img class='hop_hz_click' src='" + srcr + "' alt='Click and run' title='Run the weblet'/>" +
+      "</a>" +
       "</td></tr>" +
       "<tr><td style='text-align: center; font-size: 70%'>Run</td></tr>" +
       "</table></td>" +

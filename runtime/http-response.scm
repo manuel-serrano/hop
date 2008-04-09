@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/http-response.scm               */
+;*    serrano/prgm/project/hop/1.9.x/runtime/http-response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Nov 28 10:54:44 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Mon Mar 31 11:29:33 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -33,9 +33,8 @@
 
    (export  (generic http-response::symbol ::%http-response ::socket)
 	    (generic scheme->response ::obj ::http-request)
-	    (http-response-void)
-	    (http-send-request ::http-request ::procedure)
-	    (response-is-xml?::bool ::obj)))
+	    (http-response-void ::http-request)
+	    (http-send-request ::http-request ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ...                                                */
@@ -46,15 +45,9 @@
 ;*    http-write-content-type ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (http-write-content-type p content-type charset)
-   (when content-type
-      (if charset
-	  (http-write-line p
-			   "Content-type: "
-			   (if content-type content-type "text/plain")
-			   "; charset=" charset)
-	  (http-write-line p
-			   "Content-type: "
-			   (if content-type content-type "text/plain")))))
+   (if charset
+       (http-write-line p "Content-type: " content-type "; charset=" charset)
+       (http-write-line p "Content-type: " content-type)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-authentication ...                 */
@@ -92,12 +85,16 @@
 					    timeout request)
 	 (let* ((p (socket-output socket))
 		(s body)
-		(connection (http-request-connection request)))
+		(connection (http-request-connection request))
+		(l (string-length s))
+		(clen (if (and (>= content-length 0) (< content-length l))
+			  content-length
+			  l)))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! p timeout))
 	    (http-write-line p start-line)
 	    (http-write-header p header)
-	    (http-write-line p "Content-Length: " (string-length s))
+	    (http-write-line p "Content-Length: " clen)
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
 	    (when server
@@ -121,24 +118,19 @@
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! p timeout))
-	    (http-write-line p "HTTP/1.1 200 Ok")
+	    (http-write-line p start-line)
 	    (http-write-header p header)
 	    (if (>elong content-length #e0)
 		(http-write-line p "Content-Length: " content-length)
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
-	    (http-write-content-type p content-type charset)
+	    (http-write-content-type p (or content-type (hop-json-mime-type)) charset)
 	    (when server
 	       (http-write-line p "Server: " server))
-	    ;; The case of the header names depends on the browse
-	    ;; by doubling the initial h, we eliminate the need for
-	    ;; testing twice the header in the client (see hop_is_http_json,
-	    ;; defined in hop-autoconf.js.in).
-	    (http-write-line p "Hhopjson: true")
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js
-	       (when bodyp (display (hop->json value) p)))
+	       (when bodyp (display (hop->json value #t) p)))
 	    (flush-output-port p)
 	    connection))))
       
@@ -172,6 +164,7 @@
 	    (http-write-content-type p (xml-backend-mime-type backend) charset)
 	    (when server
 	       (http-write-line p "Server: " server))
+	    (http-write-line p "Hhop: true")
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-hop
@@ -213,6 +206,22 @@
 	    connection))))
 
 ;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-raw ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-raw socket)
+   (with-trace 3 'http-response::http-response-raw
+      (with-access::http-response-raw r (bodyp proc timeout request connection)
+	 (let ((p (socket-output socket)))
+	    (when (>fx timeout 0)
+	       (output-timeout-set! p timeout))
+	    (when bodyp
+	       (proc p)
+	       (flush-output-port p))
+	    (if (symbol? connection)
+		connection
+		(http-request-connection request))))))
+
+;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-file ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-file socket)
@@ -221,39 +230,37 @@
 	 (if (authorized-path? request file)
 	     ;; In C the file is never read with RGC so it can
 	     ;; be open with a tiny buffer
-	     (let ((p (socket-output socket))
-		   (pf (cond-expand
-			  (bigloo-c (open-input-file file 1))
-			  (else (open-input-file file))))
-		   (connection (http-request-connection request)))
-		(cond
-		   ((not (input-port? pf))
-		    (let ((rep (if (file-exists? file)
-				   (http-permission-denied file)
-				   (http-file-not-found file))))
-		       (http-response rep socket)))
-		   ((directory? file)
-		    (let ((rep (response-directory r file)))
-		       (http-response rep socket)))
-		   (else
-		    (when (>fx timeout 0)
-		       (output-timeout-set! p timeout))
-		    (http-write-line p start-line)
-		    (http-write-header p header)
-		    (http-write-line p "Connection: " connection)
-		    (http-write-content-type p content-type charset)
-		    (when server
-		       (http-write-line p "Server: " server))
-		    (http-write-line p "Content-Length: " (file-size file))
-		    (http-write-line p)
-		    ;; the body
-		    (with-trace 4 'http-response-file
-		       (when bodyp
-			  (unwind-protect
-			     (send-chars pf p)
-			     (close-input-port pf))))
-		    (flush-output-port p)
-		    connection)))
+	     (if (directory? file)
+		 (http-response (response-directory r file) socket)
+		 (let ((pf (cond-expand
+			      (bigloo-c (open-input-file file 1))
+			      (else (open-input-file file)))))
+		    (if (input-port? pf)
+			(unwind-protect
+			   (let ((connection (http-request-connection request))
+				 (p (socket-output socket)))
+			      (when (>fx timeout 0)
+				 (output-timeout-set! p timeout))
+			      (http-write-line p start-line)
+			      (http-write-header p header)
+			      (http-write-line p "Connection: " connection)
+			      (http-write-content-type
+			       p content-type charset)
+			      (when server
+				 (http-write-line p "Server: " server))
+			      (http-write-line p "Content-Length: "
+					       (file-size file))
+			      (http-write-line p)
+			      ;; the body
+			      (with-trace 4 'http-response-file
+				 (when bodyp (send-chars pf p)))
+			      (flush-output-port p)
+			      connection)
+			   (close-input-port pf))
+			(let ((rep (if (file-exists? file)
+				       (http-permission-denied file)
+				       (http-file-not-found file))))
+			   (http-response rep socket)))))
 	     (http-response (user-access-denied request) socket)))))
 
 ;*---------------------------------------------------------------------*/
@@ -465,22 +472,14 @@
 	  (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
 	  (body obj)))
-      ((response-is-xml? obj)
-       (instantiate::http-response-hop
-	  (backend (hop-xml-backend))
-	  (content-type (xml-backend-mime-type (hop-xml-backend)))
-	  (charset (hop-charset))
-	  (request req)
-	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
-	  (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	  (xml obj)))
       (else
        (instantiate::http-response-js
 	  (backend (hop-xml-backend))
-	  (content-type (xml-backend-mime-type (hop-xml-backend)))
+	  (content-type (hop-json-mime-type))
 	  (charset (hop-charset))
 	  (request req)
 	  (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	  (bodyp (not (eq? (http-request-method req) 'HEAD)))
 	  (value obj)))))
 
 ;*---------------------------------------------------------------------*/
@@ -505,9 +504,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response-void ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (http-response-void)
+(define (http-response-void req)
    (instantiate::http-response-string
-      (request (instantiate::http-request))
+      (request req)
       (charset (hop-locale))
       (start-line "HTTP/1.0 204 No Content")))
 

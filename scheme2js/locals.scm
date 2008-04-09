@@ -6,39 +6,37 @@
    (import protobject
 	   nodes
 	   verbose)
-   (export (locals tree::pobject collect-formals?::bool)))
+   (export (locals tree::pobject)))
 
 
-(define (locals tree::pobject collect-formals?)
-   (define-pmethod (Node-locals ht)
-      (this.traverse1 ht))
-   
-   (define-pmethod (Module-locals ht)
-      (let ((new-ht (make-eq-hashtable)))
-	 (set! this.local-vars new-ht)
-	 (this.traverse1 new-ht)))
-
-   (define-pmethod (Lambda-locals ht)
-      (let ((new-ht (make-eq-hashtable)))
-	 (set! this.local-vars new-ht)
-	 (if collect-formals?
-	     ;; go into formals and vaarg and collect them.
-	     (this.traverse1 new-ht)
-	     ;; don't go into formals and vaarg.
-	     (this.body.traverse new-ht))))
-
-   (define-pmethod (Closure-ref-locals ht)
-      ;; don't go into field-ref
-      (this.obj-ref.traverse ht))
-
-   (define-pmethod (Decl-locals ht)
-      (hashtable-put! ht this.var #t))
-   
+;; Every function (and the Module too) receives a hashtable 'local-vars-ht'
+;; containing all local variables. This function does not take into account
+;; storage objects introduced by Scopes.
+;; Variables of Scopes are considered to be locals, and are hence in the
+;; hashtable.
+(define (locals tree::pobject)
    (verbose " locals (collect)")
    (overload traverse locals (Node
-			      Module
+			      (Module Lambda-locals)
 			      Lambda
-			      Closure-ref
-			      Decl)
+			      (Tail-rec Scope-locals)
+			      (While Scope-locals)
+			      (Let Scope-locals))
 	     (tree.traverse #f)))
 
+(define-pmethod (Node-locals ht)
+   (this.traverse1 ht))
+
+(define-pmethod (Lambda-locals ht)
+   (let ((new-ht (make-eq-hashtable)))
+      (set! this.local-vars-ht new-ht)
+      (for-each (lambda (var)
+		   (hashtable-put! new-ht var #t))
+		this.scope-vars)
+      (this.traverse1 new-ht)))
+
+(define-pmethod (Scope-locals ht)
+   (this.traverse1 ht)
+   (for-each (lambda (var)
+		(hashtable-put! ht var #t))
+	     this.scope-vars))

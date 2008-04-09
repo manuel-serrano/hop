@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/doc/weblets.hop                 */
+;*    serrano/prgm/project/hop/1.9.x/weblets/doc/weblets.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon May  8 06:21:47 2006                          */
-;*    Last change :  Mon Oct 29 14:49:09 2007 (serrano)                */
+;*    Last change :  Sun Dec  2 19:18:56 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP weblets doc.                                             */
@@ -32,7 +32,7 @@
       (<DIV> :class "weblets"
 	 (<DIV> :class "weblets-title"
 	    (<SPAN> :onclick ~(with-hop ($(service () (<WEBLETS-TOC>)))
-				 (lambda (h) (set! $d.innerHTML h)))
+				 (lambda (h) (innerHTML-set! $d h)))
 	       "Weblets" ))
 	 d)))
 
@@ -71,7 +71,7 @@
 		 (lambda (r)
 		    (notepad-select "doc-notepad" "doc-weblets")
 		    (let ((el (dom-get-element-by-id document "pad-weblet")))
-		       (set! el.innerHTML r))))))
+		       (innerHTML-set! el r))))))
 	#f)))
 
 ;*---------------------------------------------------------------------*/
@@ -85,7 +85,7 @@
 	     (lambda (r)
 		(notepad-select "doc-notepad" "doc-weblets")
 		(let ((el (document.getElementById "pad-weblet")))
-		   (set! el.innerHTML r)))))))
+		   (innerHTML-set! el r)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETREF> ...                                                  */

@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/weblets/weblets.hop             */
+;*    serrano/prgm/project/hop/1.9.x/weblets/weblets/weblets.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Fri Nov 30 14:44:15 2007 (serrano)                */
+;*    Last change :  Mon Dec 10 15:34:38 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    HOP slide weblet                                                 */
+;*    HOP weblets distribution weblet.                                 */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -15,17 +15,15 @@
 (module weblets
    
    (import  weblets_config
-	    weblets_package)
+	    weblets_package
+	    weblets_homepage
+	    weblets_markup)
 
    (export  weblets
 	    weblets/list
 	    weblets/synclist
-	    weblets/rss))
-
-;*---------------------------------------------------------------------*/
-;*    category-filter ...                                              */
-;*---------------------------------------------------------------------*/
-(define category-filter "all")
+	    weblets/rss
+	    (get-weblets dir #!optional weblet)))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets ...                                                      */
@@ -51,7 +49,7 @@
 		  (<TD> :class "content"
 		     (<DIV> :id "title" "Hop Weblets")
 		     (<WEBLETS-PUBLISHER>)
-		     (<WEBLETS> (current-request)))))
+		     (<WEBLETS> (current-request) "all"))))
 	    (<FOOT>
 	       (<FOOT-BUTTON>
 		  :inline #t
@@ -86,7 +84,7 @@
 	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
 	 :css (service-resource weblets "weblets.hss"))
       (<BODY>
-	 (<WEBLETS> (current-request)))))
+	 (<WEBLETS> (current-request) "all"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets/synclist ...                                             */
@@ -159,117 +157,19 @@
 			l)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    weblets/filter ...                                               */
-;*---------------------------------------------------------------------*/
-(define-service (weblets/filter category)
-   (set! category-filter category)
-   (<WEBLETS-LIST>))
-       
-;*---------------------------------------------------------------------*/
-;*    <WEBLETS> ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (<WEBLETS> req)
-   (list (<WEBLETS-CATEGORIES>)
-	 (<DIV> :id "weblets-list" (<WEBLETS-LIST> req))))
-
-;*---------------------------------------------------------------------*/
-;*    <WEBLETS-LIST> ...                                               */
-;*---------------------------------------------------------------------*/
-(define (<WEBLETS-LIST> req)
-   (let* ((autho (http-request-authorization req))
-	  (authe (if autho (http-decode-authentication autho) #f)))
-      (<DIV>
-	 (filter-map (lambda (w) (<WEBLET> w authe))
-		     (sort string<? (get-weblets (weblets-repository)))))))
-
-;*---------------------------------------------------------------------*/
-;*    <WEBLETS-PUBLISHER> ...                                          */
-;*---------------------------------------------------------------------*/
-(define (<WEBLETS-PUBLISHER>)
-   (<DIV> :class "publisher"
-      "Publisher URL: " (<SPAN> :id "publisher-url" (weblets-publisher))
-      (<DIV> :class "comment"
-	 [This URL will get automatically added to your
-	     ,(<A> :href "/hop/hz" "hz") publishers list
-	     when you install your first weblet.])))
-
-;*---------------------------------------------------------------------*/
-;*    <WEBLETS-CATEGORIES> ...                                         */
-;*---------------------------------------------------------------------*/
-(define (<WEBLETS-CATEGORIES>)
-   (<DIV> :class "weblets-category"
-      "Weblets category: "
-      (<SELECT> :class "weblets-category"
-	 :onchange ~(with-hop ($weblets/filter this.value)
-		       (lambda (h)
-			  (innerHTML-set! "weblets-list" h)))
-	 :onkeyup ~(with-hop ($weblets/filter this.value)
-		      (lambda (h)
-			 (innerHTML-set! "weblets-list" h)))
-	 (map (lambda (f)
-		 (<OPTION> :selected (string=? f category-filter)
-		    :value f
-		    (string-capitalize f)))
-	      (cons "all" (weblets-categories))))))
-
-;*---------------------------------------------------------------------*/
-;*    find-info ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (find-info info key default)
-   (cond
-      ((assq key info) => cadr)
-      (else default)))
-
-;*---------------------------------------------------------------------*/
-;*    <WEBLET> ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (<WEBLET> path auth)
-   
-   (let* ((info (with-input-from-string (package-info path) read))
-	  (dir (make-file-path (hop-weblets-directory) "hz" "etc"))
-	  (srci  (make-file-name dir "hz-install.png"))
-	  (srcr (make-file-name dir "hz-run.png"))
-	  (url (if (string? auth)
-		   (format "http://~a@~a:~a~a" auth (hostname) (hop-port) path)
-		   (format "http://~a:~a~a" (hostname) (hop-port) path))))
-
-      (when (or (string=? category-filter "all")
-		(string=? (find-info info 'category "other") category-filter))
-	 (<DIV> :class "weblet"
-	    (<DIV> :class "package"
-	       (<SPAN> :class "name"
-		  (find-info info 'name (basename path))
-		  "-"
-		  (find-info info 'version ""))
-	       " - " (find-info info 'title ""))
-	    (let ((id (symbol->string (gensym))))
-	       (<DIV> :class "install" :id id
-		  ~(hop_install_weblet $url $srci $srcr $id)))
-	    (<DIV> :class "author" (find-info info 'author ""))
-	    (let ((minhop (find-info info 'minhop ""))
-		  (maxhop (find-info info 'maxhop "")))
-	       (<DIV> :class "hop"
-		  (when (> (string-length minhop) 0)
-		     (<DIV> "Min hop: " (<SPAN> :class "min" minhop)))
-		  (when (> (string-length maxhop) 0)
-		     (<DIV> "Max hop: " (<SPAN> :class "max" maxhop)))
-		  (<DIV> "md5: "
-			 (<SPAN> :class "signature" (md5sum path)))))
-	    (<DIV> :class "comment" (find-info info 'comment ""))))))
-
-;*---------------------------------------------------------------------*/
 ;*    get-weblets ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (get-weblets dir)
+(define (get-weblets dir #!optional weblet)
    ;; get the whole file list
    (let ((table (make-hashtable)))
       (for-each (lambda (file)
 		   (multiple-value-bind (name version)
 		      (package-name-parse file)
-		      (hashtable-update! table name
-					 (lambda (old)
-					    (cons (cons version file) old))
-					 (list (cons version file)))))
+		      (when (or (not weblet) (string=? weblet name))
+			 (hashtable-update! table name
+					    (lambda (old)
+					       (cons (cons version file) old))
+					    (list (cons version file))))))
 		(directory->list dir))
       ;; get the list
       (map (lambda (f)
@@ -282,7 +182,7 @@
 				    (v2 (car e2)))
 				 (>=fx (string-natural-compare3 v1 v2) 0)))
 			   elements)))))))
-      
+
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */
 ;*---------------------------------------------------------------------*/

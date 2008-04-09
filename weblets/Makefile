@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/Makefile                        */
+#*    serrano/prgm/project/hop/1.9.x/weblets/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Nov 21 07:06:56 2007 (serrano)                */
-#*    Copyright   :  2004-07 Manuel Serrano                            */
+#*    Last change :  Fri Apr  4 09:31:22 2008 (serrano)                */
+#*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
 #*=====================================================================*/

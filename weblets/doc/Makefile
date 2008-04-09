@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/doc/Makefile                    */
+#*    serrano/prgm/project/hop/1.9.x/weblets/doc/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Nov 29 07:27:38 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Wed Apr  2 09:24:58 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
 #*=====================================================================*/
@@ -23,28 +23,30 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   fileselect.wiki filters.wiki foldlist.wiki head.wiki \
                   hooks.wiki hss.wiki html.wiki http-message.wiki \
                   http-request.wiki http-response.wiki http.wiki \
-                  img.wiki inline.wiki md5.wiki notepad.wiki \
+                  img.wiki input.wiki inline.wiki md5.wiki notepad.wiki \
                   pan.wiki param-misc.wiki param-rc.wiki parameter.wiki \
                   read.wiki service.wiki slider.wiki sorttable.wiki \
                   sound.wiki sqlite.wiki tabslider.wiki timeout.wiki \
                   tooltip.wiki tree.wiki url.wiki wiki.wiki window.wiki \
                   xml.wiki symbol.wiki rss.wiki history.wiki \
                   regexp.wiki format.wiki webdav.wiki \
-                  charset.wiki svg.wiki mathml.wiki canvas.wiki
+                  charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki
 CORE_POP	= core.wiki
 EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   canvas.hop canvas2.hop canvas3.hop canvas4.hop canvas5.hop \
                   filebrowse.hop filebrowse2.hop fileselect.hop \
                   filter-1.hop filter-2.hop \
                   foldlist-1.hop foldlist-2.hop hook-1.hop inline.hop \
-                  iwindow.hop notepad-1.hop notepad-2.hop paned-1.hop \
-                  paned-2.hop parameter.hop request-1.hop rss.hop \
+                  iwindow.hop notepad-1.hop notepad-2.hop notepad-3.hop \
+                  paned-1.hop paned-2.hop parameter.hop request-1.hop rss.hop \
                   service-1.hop service-2.hop service-3.hop service-4.hop \
                   service-5.hop service-6.hop slider-1.hop slider-2.hop \
                   sorttable.hop sound-1.hop sound-2.hop sound-3.hop \
-                  tabslider-1.hop tooltip-1.hop tree-1.hop tree-2.hop \
+                  tabslider-1.hop tabslider-2.hop \
+                  tooltip-1.hop tree-1.hop tree-2.hop \
                   wiki.hop wiki2.hop window.hop history-1.hop history-2.hop \
-                  cookie.hop webdav.hop svg.hop svg2.hop mathml.hop
+                  cookie.hop webdav.hop svg.hop svg2.hop mathml.hop \
+                  login.hop json.hop
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \
@@ -71,4 +73,4 @@ POPULATION	= Makefile .afile doc.hss doc.scm \
 build: .afile
 
 .afile: $(HOP_POP)
-	$(AFILE) -suffix hop $(HOP_POP) > .afile
+	$(AFILE) -suffix hop $(HOP_POP) -o .afile

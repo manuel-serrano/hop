@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/read.scm                        */
+;*    serrano/prgm/project/hop/1.9.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Nov 19 10:03:43 2007 (serrano)                */
+;*    Last change :  Wed Dec 26 10:58:20 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -23,6 +23,8 @@
 	    __hop_read-js
 	    __hop_css
 	    __hop_charset)
+
+   (use     __hop_types)
    
    (export  (loading-file-set! ::obj)
 	    (the-loading-file)
@@ -304,7 +306,7 @@
 		     (kid      (or digit letter kspecial))
 		     (blank    (in #\Space #\Tab #a012 #a013))
 		     
-		     cycles par-open bra-open par-poses bra-poses charset)
+		     cycles par-open bra-open par-poses bra-poses cset)
       
       ;; newlines
       ((+ #\Newline)
@@ -387,7 +389,7 @@
       ;; in order to increment the line-num variable strings
       ((: (? #\#) "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
        (let ((str (the-substring 0 (-fx (the-length) 1))))
-	  (charset (escape-C-string str))))
+	  (cset (escape-C-string str))))
       
       ;; fixnums
       ((: (? "+") (+ digit))
@@ -467,7 +469,7 @@
       (#\[
        (let ((exp (read/rp *text-grammar* (the-port)
 			   cycles par-open bra-open par-poses bra-poses
-			   charset)))
+			   cset)))
 	  (list 'quasiquote exp)))
       
       ;; vectors
@@ -606,28 +608,28 @@
 ;*    The grammar that parses texts (the [...] forms).                 */
 ;*---------------------------------------------------------------------*/
 (define *text-grammar*
-   (regular-grammar (cycles par-open bra-open par-poses bra-poses charset)
+   (regular-grammar (cycles par-open bra-open par-poses bra-poses cset)
 
       ((: (* (out ",[]\\")) #\])
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (charset (the-substring 0 (-fx (the-length) 1)))))
+	      (item (cset (the-substring 0 (-fx (the-length) 1)))))
 	  (econs item '() loc)))
       ((: (* (out ",[\\")) ",]")
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (charset (the-substring 0 (-fx (the-length) 1)))))
+	      (item (cset (the-substring 0 (-fx (the-length) 1)))))
 	  (econs item '() loc)))
       ((: (* (out ",[]\\")) #\, (out #\( #\] #\,))
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (charset (the-string)))
+	      (item (cset (the-string)))
 	      (rest (ignore)))
 	  (econs item rest loc)))
       ((: (* (out ",[]\\")) #\,)
@@ -635,10 +637,10 @@
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (charset (the-substring 0 (-fx (the-length) 1))))
+	      (item (cset (the-substring 0 (-fx (the-length) 1))))
 	      (sexp (read/rp *hop-grammar* (the-port)
 			     cycles par-open bra-open
-			     par-poses bra-poses charset))
+			     par-poses bra-poses cset))
 	      (rest (ignore)))
 	  (if (string=? item "")
 	      (cons (list 'unquote sexp) rest)
@@ -650,7 +652,7 @@
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
-	      (item (charset (the-string)))
+	      (item (cset (the-string)))
 	      (rest (ignore)))
 	  (econs item rest loc)))
       ("\\\\"
@@ -691,8 +693,8 @@
        (error 'hop-read "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
-	  (let* ((cvt (charset-converter! charset (hop-charset)))
-		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cvt)))
+	  (let* ((cset (charset-converter! charset (hop-charset)))
+		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset)))
 	     ((hop-read-post-hook) iport)
 	     e))))
 
@@ -838,6 +840,7 @@
 		   ((error)
 		    ;; the file failed to be loaded
 		    (trace-item "error")
+		    (mutex-unlock! *load-once-mutex*)
 		    #f)
 		   ((loaded)
 		    ;; the file is already loaded

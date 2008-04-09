@@ -159,43 +159,19 @@
    (set! Decl.proto (empty-pobject Var-ref))
    (proto-traverses Decl)
 
-   (define-node (Scope))
-   (set! Scope.proto (new Node))
-   (proto-traverses Scope) ;; should not be necessary
-
-   (define-node (Program body)
+   (define-node (Module body)
       (set! this.body body))
-   (set! Program.proto (new Scope))
-   (proto-traverses Program body)
-
-   ;; a Module represents a functional part of a program. Besides of free variables
-   ;; the generated code should be fully functionally.
-   ;; the given function is called before code-generation with the current port
-   ;; as parameter and must return a
-   ;; pair containing a port as 'car' and a function to close the port as cdr.
-   ;; the closing function should have the following signature:
-   ;;  (define (close-port p::port is-statement-form?::bool) ...)
-   ;; A Module is currently *not* a scope. Two parts at the same level can
-   ;; therefore share  variables.
-   (define-node (Module body fun)
-      (set! this.body body)
-      (set! this.fun fun))
    (set! Module.proto (empty-pobject Node))
    (proto-traverses Module body)
 
-   ;; Body must receive an expr. (usually a Begin).
-   ;; this way there's only one class sequencing exprs.
-   (define-node (Body expr)
-      (set! this.expr expr))
-   (set! Body.proto (new Scope)) ;; every body might have 'defines'
-   (proto-traverses Body expr)
-
-   (define-node (Lambda formals vaarg body)
+   ;; if the fun was vaarg, then the flag vaarg? has to be set, and the vaarg
+   ;; must be the last element of the formals.
+   (define-node (Lambda formals vaarg? body)
       (set! this.formals formals)
-      (set! this.vaarg vaarg)
+      (set! this.vaarg? vaarg?)
       (set! this.body body))
-   (set! Lambda.proto (new Scope))
-   (proto-traverses Lambda (formals) ?vaarg body)
+   (set! Lambda.proto (empty-pobject Node))
+   (proto-traverses Lambda (formals) body)
 
    (define-node (If test then else)
       (set! this.test test)
@@ -223,6 +199,7 @@
    (set! Set!.proto (new Node))
    (proto-traverses Set! lvalue val)
 
+   ;; first assignment to a variable.
    (define-node (Binding lvalue val)
       (set! this.lvalue lvalue)
       (set! this.val val))
@@ -230,14 +207,15 @@
    (proto-traverses Binding lvalue val)
 
    ;; kind is either 'let or 'letrec
-   (define-node (Let-form bindings body kind)
+   ;; vars can be #f when instantiated before symbol-resolution
+   (define-node (Let scope-vars bindings body kind)
+      (set! this.scope-vars scope-vars)
       (set! this.bindings bindings)
       (set! this.body body)
       (set! this.kind kind))
-   (set! Let-form.proto (new Scope))
-   (proto-traverses Let-form (bindings) body)
+   (set! Let.proto (empty-pobject Node))
+   (proto-traverses Let (bindings) body)
 
-   ;; Body and Begin are not equivalent.
    (define-node (Begin exprs)
       (set! this.exprs exprs))
    (set! Begin.proto (new Node))
@@ -257,46 +235,26 @@
 
    ;; optimization-nodes
 
-   (define-node (Tail-rec body label)
-      (set! this.body body)
-      (set! this.label label))
-   (set! Tail-rec.proto (empty-pobject Scope))
-   (proto-traverses Tail-rec body)
+   (define-node (Frame-alloc storage-var vars)
+      (set! this.storage-var storage-var)
+      (set! this.vars vars))
+   (set! Frame-alloc.proto (new Node))
+   (proto-traverses Frame-alloc)
 
-   (define-node (Tail-rec-call label)
-      (set! this.label label))
-   (set! Tail-rec-call.proto (new Node))
-   (proto-traverses Tail-rec-call)
+   (define-node (Frame-push storage-vars body)
+      (set! this.storage-vars storage-vars)
+      (set! this.body body))
+   (set! Frame-push.proto (new Node))
+   ;; we are not visiting the storage-refs.
+   (proto-traverses Frame-push body)
+
+   (define-node (Label id)
+      (set! this.id id))
    
    (define-node (Return val)
       (set! this.val val))
    (set! Return.proto (new Node))
    (proto-traverses Return val)
-
-   (define-node (Closure-alloc)
-      'do-nothing)
-   (set! Closure-alloc.proto (new Node))
-   (proto-traverses Closure-alloc)
-
-   (define-node (Closure-use closures body)
-      (set! this.closures closures)
-      (set! this.body body))
-   (set! Closure-use.proto (new Node))
-   (proto-traverses Closure-use (closures) body)
-
-   (define-node (Closure-with-use closures body)
-      (set! this.closures closures)
-      (set! this.body body))
-   (set! Closure-with-use.proto (empty-pobject Closure-use))
-   (proto-traverses Closure-with-use (closures) body)
-
-   (define-node (Closure-ref id var)
-      (set! this.id id)
-      (set! this.var var)
-      (set! this.obj-ref (var.obj.reference))
-      (set! this.field-ref (var.field.reference)))
-   (set! Closure-ref.proto (new Node))
-   (proto-traverses Closure-ref obj-ref field-ref)
 
    (define-node (Labelled body label)
       (set! this.body body)
@@ -304,20 +262,55 @@
    (set! Labelled.proto (new Node))
    (proto-traverses Labelled body)
 
-   (define-node (Break val labelled)
+   ;; break must never reference a loop.
+   ;; if this is needed, then the loop must be wrapped into a 'labelled'.
+   (define-node (Break val label)
       (set! this.val val)
-      (set! this.labelled labelled))
+      (set! this.label label))
    (set! Break.proto (new Node))
    (proto-traverses Break val)
+
+   ;; break must never reference a loop.
+   ;; if this is needed, then the loop must be wrapped into a 'labelled'.
+   (define-node (Break val label)
+      (set! this.val val)
+      (set! this.label label))
+   (set! Break.proto (new Node))
+   (proto-traverses Break ?val)
+
+   (define-node (Continue label)
+      (set! this.label label))
+   (set! Continue.proto (new Node))
+   (proto-traverses Continue)
 
    (define-node (Pragma str)
       (set! this.str str))
    (set! Pragma.proto (new Node))
    (proto-traverses Pragma)
 
-   (define-node (While test body)
+   ;; inits are Set!s, but must be in same order as scope-vars
+   (define-node (Tail-rec scope-vars inits body label)
+      ;; I would have preferred the name 'loop-vars' but this way some
+      ;; code-sharing should be possible.
+      (set! this.scope-vars scope-vars)
+      (set! this.inits inits)
+      (set! this.body body)
+      (set! this.label label))
+   (set! Tail-rec.proto (new Node))
+   (proto-traverses Tail-rec (inits) body)
+
+   ;; updates here are not assignments
+   ;; they must be in the same order, as the scope-vars in the Tail-rec.
+   (define-node (Tail-call updates label)
+      (set! this.updates updates)
+      (set! this.label label))
+   (set! Tail-call.proto (empty-pobject Node))
+   (proto-traverses Tail-call (updates))
+
+   (define-node (While test body label)
       (set! this.test test)
-      (set! this.body body))
+      (set! this.body body)
+      (set! this.label label))
    (set! While.proto (new Node))
    (proto-traverses While test body)
 
@@ -331,5 +324,10 @@
       (set! this.indices/vars (list (cons index #f))))
    (set! Call/cc-Resume.proto (empty-pobject Node))
    (proto-traverses Call/cc-Resume)
+
+   (define-node (Call/cc-Counter-Update index)
+      (set! this.index index))
+   (set! Call/cc-Counter-Update.proto (empty-pobject Node))
+   (proto-traverses Call/cc-Counter-Update)
    )
    

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-wiki.scm                    */
+;*    serrano/prgm/project/hop/1.9.x/runtime/hop-wiki.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Mon Oct 15 15:36:14 2007 (serrano)                */
+;*    Last change :  Tue Dec 18 09:20:41 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */

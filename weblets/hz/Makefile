@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/hz/Makefile                     */
+#*    serrano/prgm/project/hop/1.9.x/weblets/hz/Makefile               */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Nov 29 07:29:11 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Tue Jan 22 09:24:59 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -33,4 +33,4 @@ POPULATION	= $(SOURCES) \
                   etc/hz-install.png etc/hz-run.png hz-install.js
 
 .afile: $(SOURCES)
-	$(AFILE) -suffix hop $(SOURCES) > .afile
+	$(AFILE) -suffix hop $(SOURCES) -o .afile

@@ -6,7 +6,14 @@
 	   config
 	   protobject
 	   verbose)
-   (export (pobject-conv::pobject prog)))
+   (export (pobject-conv::pobject prog)
+	   (runtime-ref id::symbol)))
+
+;; recognized as "artificial" runtime-reference.
+(define (runtime-ref id)
+   ;; we use a function to differenciate this construct
+   ;; from similar user-constructs.
+   (list 'runtime-ref id (lambda () 'runtime-ref)))
 
 (define (location s-expr)
    (and (epair? s-expr)
@@ -39,43 +46,50 @@
 (define (pobject-conv prog)
    (verbose "list->pobject")
    (nodes-init!)
-   (new-node Program
-	(new-node Module
-		  (scheme->pobject prog (location prog))
-		  (lambda (p) (cons p (lambda (p) 'do-nothing))))))
-   
-(define (expr-list->Body expr-list)
-   (new-node Body (expr-list->Begin expr-list)))
+   (new-node Module (scheme->pobject prog (location prog))))
 
 (define (expr-list->Begin expr-list)
    (new-node Begin (scheme->pobject-map expr-list)))
 
-(define (lambda->pobject formals-vaarg body)
-   (define (split-formals-vaarg! formals-vaarg)
+(define (lambda->pobject arguments body)
+   ;; if there's a vaarg, make it a the last element of the list and return
+   ;; (the list . #t)
+   (define (vaarg-list! arguments)
       (cond
-	 ((null? formals-vaarg)
-	  (cons '() #f))
-	 ((not (pair? formals-vaarg))
-	  (cons '() formals-vaarg))
+	 ((null? arguments)
+	  (cons arguments #f))
+	 ((not (pair? arguments))
+	  (cons (list arguments) #t))
 	 (else
-	  (let* ((p (last-pair formals-vaarg))
+	  (let* ((p (last-pair arguments))
 		 (vaarg (cdr p)))
-	     (set-cdr! p '()) ;; physically truncate the list
-	     (cons formals-vaarg
-		   (and (not (null? vaarg)) vaarg))))))
+	     (if (null? vaarg)
+		 (cons arguments #f)
+		 (begin
+		    (set-cdr! p (list vaarg)) ;; physically attach the vaarg
+		    (cons arguments #t)))))))
       
-   (let* ((formals/vaarg (split-formals-vaarg! formals-vaarg))
-	  (formals (car formals/vaarg))
-	  (vaarg (cdr formals/vaarg)))
-      (new-node Lambda
+   (let* ((formals/vaarg? (vaarg-list! arguments))
+	  (formals (car formals/vaarg?))
+	  (vaarg? (cdr formals/vaarg?))
+	  (formal-decls
 	   (location-map (lambda (formal loc)
 			    (attach-location (new-node Decl formal) loc))
-			 formals)
-	   (and vaarg (new-node Decl vaarg))
-	   (new-node Return (expr-list->Body body)))))
+			 formals)))
+      (new-node Lambda
+		formal-decls
+		vaarg?
+		(new-node Return (expr-list->Begin body)))))
 
 (define (let-form->pobject bindings body kind)
    (define (binding->pobject binding)
+      (when (or (null? binding)
+		(null? (cdr binding))
+		(not (symbol? (car binding)))
+		(not (null? (cddr binding))))
+	 (error "pobject-conversion"
+		"Bad Let-form binding"
+		binding))
       (let ((var (car binding))
 	    (val (cadr binding)))
 	 (new-node Binding
@@ -83,7 +97,7 @@
 	      (scheme->pobject val (location (cdr binding))))))
    
    (let ((pobject-bindings (map! binding->pobject bindings)))
-      (new-node Let-form pobject-bindings (expr-list->Body body) kind)))
+      (new-node Let #f pobject-bindings (expr-list->Begin body) kind)))
 
 (define (case->pobject key clauses)
    (define (clause->pobject clause last?)
@@ -139,7 +153,7 @@
 	  ((if . ?L) (error #f "bad if-form: " exp))
 	  ((case ?key . ?clauses)
 	   (case->pobject key clauses))
-	  ((set! ?var ?expr)
+	  ((set! (and ?var (? symbol?)) ?expr)
 	   (new-node Set!
 		(attach-location (new-node Var-ref var) (location (cdr exp)))
 		(scheme->pobject expr (location (cddr exp)))))
@@ -153,15 +167,6 @@
 		(scheme->pobject expr (location (cddr exp)))))
 	  ((pragma ?str)
 	   (new-node Pragma str))
-	  ;; 'part' is obsolete.
-	  ((part ?expr (and ?fun (? procedure?)))
-	   (new-node Module
-		     (scheme->pobject expr (location (cdr exp)))
-		     fun))
-	  ((module ?expr (and ?fun (? procedure?)))
-	   (new-node Module
-		     (scheme->pobject expr (location (cdr exp)))
-		     fun))
 	  ((runtime-ref ?id (? procedure?))
 	   (new-node Runtime-Var-ref id))
 	  ((?operator . ?operands)

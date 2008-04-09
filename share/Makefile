@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/share/Makefile                          */
+#*    serrano/prgm/project/hop/1.9.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Nov 21 14:27:25 2007 (serrano)                */
-#*    Copyright   :  2004-07 Manuel Serrano                            */
+#*    Last change :  Sun Apr  6 08:29:12 2008 (serrano)                */
+#*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -21,30 +21,33 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    FLASHOBJS                                                        */
 #*---------------------------------------------------------------------*/
-FLASHOBJS	= HopServevt.swf HopAudio.swf \
+FLASHOBJS	= HopServevt.swf HopAudio.swf HopVideo.swf \
                   JavaScriptFlashGateway.swf JavaScriptFlashGateway.js \
                   hop-sound.swf 
-FLASHSRC	= HopServevt.as HopAudio.as
+FLASHSRC	= HopServevt.as HopAudio.as HopVideo.as
 FLASH		= $(FLASHOBJS) $(FLASHSRC)
 
 RTSSRC		= hopscheme.js hop-dom.js hop-event.js hop-serialize.js \
-                  hop-request.js hop-history.js hop-lib.js
+                  base64.js hop-request.js hop-history.js hop-lib.js
 
 RTS		= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-error.hss hop-paned.js hop-table.js hop.css \
                   hop-fx.js \
-                  md5.js base64.js \
+                  md5.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css \
                   hop-notepad.css hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
                   hop-window.js hop-window.hss \
                   hop-editor.js hop-editor.css \
+                  hop-file.js hop-file.hss \
                   hop-fileselect.js hop-fileselect.css \
                   hop-tooltip.js hop-dashboard.js \
                   hop-debug.js hop-debug.css \
 		  hop-sound.js hop-sound.scm \
                   hop-audio.js hop-audio.hss \
+                  hop-video.js hop-video.hss \
+                  hop-login.js hop-login.hss \
                   hop-canvas.scm
 
 ICONS_AUDIO	= mute.png pause.png playlist.png prefs.png stop.png \
@@ -65,19 +68,29 @@ ICONS_TREE	= device.png folder-close.png joinbottom.png plus.png \
 
 ICONS_FOLDLIST	= triangle-down.png triangle-right.png
 
+ICONS_LOGIN	= login.png
+
+ICONS_FCHOOSER	= cancel.png open.png run.png \
+                  folder-close.png file.png home.png hdd.png desktop.png \
+                  keyboard.png drag.png \
+                  edit-add.png edit-remove.png
+
 ICONS		= bookcase.png important.png shadow-se.png \
 		  busy-anim-16.gif logo-bg.png shadow-sw.png \
 		  dashboard.png notfound.png source.png \
 		  dict.png resize-grip.png stop.png \
 		  error.png shadow-e.png timeout.png \
 		  error2.png shadow-ne.png warning.png \
-		  hop-16x16.png hop.png shadow-s.png window-handle.png \
+		  hop-16x16.png hop.png hop-128x128.png \
+                  shadow-s.png window-handle.png \
 		  $(ICONS_AUDIO:%=hop-audio/%) \
                   $(ICONS_PANED:%=hop-paned/%) \
                   $(ICONS_SLIDER:%=hop-slider/%) \
                   $(ICONS_WINDOW:%=hop-window/%) \
                   $(ICONS_TREE:%=hop-tree/%) \
-                  $(ICONS_FOLDLIST:%=hop-foldlist/%)
+                  $(ICONS_FOLDLIST:%=hop-foldlist/%) \
+                  $(ICONS_LOGIN:%=hop-login/%) \
+                  $(ICONS_FCHOOSER:%=hop-filechooser/%)
 
 BUTTONS		= cc.png firefox.png hop2.png inria.png opera.png \
 		  css.png freebsd.png html401.png inria2.png paypal.png \
@@ -97,7 +110,7 @@ POPULATION	= $(RTSSRC) $(RTS) \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: hop.js $(FLASHSRC:%.as=flash/%.swf)
+build: hop.js $(FLASHSRC:%.as=flash/%.swf) hop-runtime.sch
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -105,6 +118,7 @@ build: hop.js $(FLASHSRC:%.as=flash/%.swf)
 install:
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR) && \
 	install -m a+r $(BUILDSHAREDIR)/hop.js $(DESTDIR)$(HOPSHAREDIR)/hop.js; \
+	install -m a+r $(BUILDSHAREDIR)/hop-runtime.sch $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch; \
         for p in $(RTS); do \
 	  install -m a+r $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
@@ -128,6 +142,7 @@ install:
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/editor && \
 	install -m a+r $(BUILDSHAREDIR)/editor/* $(DESTDIR)$(HOPSHAREDIR)/editor
+	- $(GZIP) $(BUILDSHAREDIR)/hop.js -c > $(HOPSHAREDIR)/hop.js.gz 2> /dev/null
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -146,7 +161,6 @@ uninstall:
 #*---------------------------------------------------------------------*/
 hop.js: hop-autoconf.js \
         ../scheme2js/runtime/runtime.js \
-        ../scheme2js/runtime/runtime-interface.js \
         $(RTSSRC)
 	if [ "$(DEBUG) " != "yes " ]; then \
 	  cat $^ | sed -e "s%/[*]\([^*]\|[*][^/]\)*[*]/%%g" \
@@ -155,6 +169,16 @@ hop.js: hop-autoconf.js \
         else \
 	  cat $^ > $@; \
         fi
+
+
+SCHEME2JS_RUNTIME = ../scheme2js/runtime
+include $(SCHEME2JS_RUNTIME)/Makefile.include
+EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
+EXPORTER_FLAGS = --module "hop-runtime" --constant
+EXPORTED_RTS = $(RTSSRC) $(filter %.js,$(RTS)) hop-autoconf.js
+
+hop-runtime.sch: $(EXPORTER) $(EXPORTED_RTS)
+	$(EXPORTER) $(EXPORTER_FLAGS) -o $@ $(EXPORTED_RTS)
 
 #*---------------------------------------------------------------------*/
 #*    Flash compilation                                                */

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-window.js                     */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-window.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Fri Nov  9 12:43:28 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Sun Apr  6 08:37:40 2008 (serrano)                */
+/*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
 /*=====================================================================*/
@@ -491,23 +491,24 @@ function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resiz
 /*---------------------------------------------------------------------*/
 /*    pre-allocated keywords                                           */
 /*---------------------------------------------------------------------*/
-var Ktitle = sc_string2keyword_immutable( "title" );
-var Kid = sc_string2keyword_immutable( "id" );
-var Kparent = sc_string2keyword_immutable( "parent" );
-var Ksrc = sc_string2keyword_immutable( "src" );
-var Kclass = sc_string2keyword_immutable( "class" );
-var Kwidth = sc_string2keyword_immutable( "width" );
-var Kheight = sc_string2keyword_immutable( "height" );
-var Kleft = sc_string2keyword_immutable( "left" );
-var Ktop = sc_string2keyword_immutable( "top" );
-var Kbackground = sc_string2keyword_immutable( "background" );
-var Kbg = sc_string2keyword_immutable( "bg" );
-var Kresizable = sc_string2keyword_immutable( "resizable" );
-var Kprop = sc_string2keyword_immutable( "prop" );
+var Ktitle = sc_jsstring2keyword( "title" );
+var Kid = sc_jsstring2keyword( "id" );
+var Kparent = sc_jsstring2keyword( "parent" );
+var Ksrc = sc_jsstring2keyword( "src" );
+var Kclass = sc_jsstring2keyword( "class" );
+var Kwidth = sc_jsstring2keyword( "width" );
+var Kheight = sc_jsstring2keyword( "height" );
+var Kleft = sc_jsstring2keyword( "left" );
+var Ktop = sc_jsstring2keyword( "top" );
+var Kbackground = sc_jsstring2keyword( "background" );
+var Kbg = sc_jsstring2keyword( "bg" );
+var Kresizable = sc_jsstring2keyword( "resizable" );
+var Kprop = sc_jsstring2keyword( "prop" );
 
 /*---------------------------------------------------------------------*/
 /*    hop_window_open ...                                              */
 /*---------------------------------------------------------------------*/
+/*** META ((export window-open)) */
 function hop_window_open() {
    var title = "Hop", id, parent, src, klass, width, height, left, top,
       background, resizable = true;
@@ -569,7 +570,7 @@ function hop_window_open() {
    while( i < l ) {
       var k = arguments[ i++ ];
 
-      if( sci_isKeyword( k ) ) {
+      if( sc_isKeyword( k ) ) {
 	 if( k === Ktitle ) {
 	    title = arguments[ i++ ];
 	 } else {
@@ -612,9 +613,9 @@ function hop_window_open() {
 					  if( k === Kprop ) {
 					     prop += arguments[ i++ ];
 					  } else {
-					     prop +=
-						"," + k.toJSString() + "=" + 
-						prop_to_string(arguments[i++]);
+					      prop +=
+						  "," + sc_keyword2jsstring(k) + "=" + 
+						  prop_to_string(arguments[i++]);
 					  }
 				       }
 				    }
@@ -632,7 +633,7 @@ function hop_window_open() {
 	    if( body ) {
 	       dom_append_child( div, k );
 	    } else {
-	       body = dom_create_div( k );
+	       body = dom_create( "div", k );
 	    }
 	 } else if( i < l ) {
 	    throw new Error( "window-open: illegal argument -- "
@@ -661,6 +662,7 @@ function hop_window_open() {
 /*---------------------------------------------------------------------*/
 /*    hop_window_iconify ...                                           */
 /*---------------------------------------------------------------------*/
+/*** META ((export window-iconify)) */
 function hop_window_iconify( o ) {
    return hop_get_window( o ).iconify();
 }
@@ -668,6 +670,7 @@ function hop_window_iconify( o ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_close ...                                             */
 /*---------------------------------------------------------------------*/
+/*** META ((export window-close)) */
 function hop_window_close( o ) {
    return hop_get_window( o ).close();
 }

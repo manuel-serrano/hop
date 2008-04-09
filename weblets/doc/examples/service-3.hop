@@ -5,4 +5,4 @@
 	 s
 	 (<SCRIPT> ~(with-hop ($(service (x y) (<TABLE> (<TR> (<TD> x) (<TD> y)))) 1 2)
 		       (lambda (h)
-			  (set! $s.innerHTML h)))))))
+			  (innerHTML-set! $s h)))))))

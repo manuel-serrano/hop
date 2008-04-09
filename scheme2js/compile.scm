@@ -2,14 +2,11 @@
    (include "protobject.sch")
    (include "nodes.sch")
    (include "tools.sch")
-   (include "compile-optimized-call.scm")
-   (include "compile-optimized-boolify.scm")
-   (include "compile-optimized-set.scm")
    (option (loadq "protobject-eval.sch"))
-   (export (compile tree::pobject p)
-	   (default-max-tail-call-depth))
+   (export (compile tree::pobject p))
    (import protobject
 	   gen-js
+	   mutable-strings
 	   config
 	   nodes
 	   var
@@ -18,51 +15,63 @@
 	   liveness
 	   constants
 	   verbose
-	   allocate-names))
+	   allocate-names
+	   compile-optimized-call
+	   compile-optimized-boolify
+	   compile-optimized-set))
 
-(define *max-tail-call-depth* 40)
+;; TODO: not thread-save. but doesn't really matter
 
-(define (default-max-tail-call-depth)
-   *max-tail-call-depth*)
-
-(define (max-tail-call-depth)
-   (or (config 'max-tail-depth)
-       *max-tail-call-depth*))
+;; MS 19 Jan 2008: Changed the hashtable for a vector (hey, after level 50
+;; it does matter how we indent)
+;; Accessing a thread specific variable is very expensive. Hence, a solution
+;; should be found for replacing (config 'indent) with a global variable
+;; (anyhow, I don't understand why *this* property is thread dependent,
+;; isn't it a global configuration?).
+(define *indentation* 0)
+(define *indent-max* 50)
+(define *indent-vec*
+   (let ((vec (make-vector (+fx *indent-max* 1))))
+      (let loop ((i *indent-max*))
+	 (if (=fx i -1)
+	     vec
+	     (let ((margin (make-string (*fx i 2) #\space)))
+		(vector-set! vec i margin)
+		(loop (-fx i 1)))))))
+      
+;; indentation is not thread-safe, but we want to avoid catastrophies.
+(define *indent-lock* (make-mutex))
 
 (define (compile tree::pobject p)
    (verbose "Compiling")
-   (liveness tree)
-   (if (config 'optimize-consts)
-       (constants! tree))
-
-   (locals tree
-	   #f)   ;; don't collect formals
-
    (gen-var-names tree)
+   (set! *indentation* 0)
    (gen-code tree p))
 
 
 (define (gen-code tree p)
    (verbose "  generating code")
    (overload compile compile
-	     (Node Program Module Node Const Var-ref Lambda
-		   If Case Clause Set! Begin Call/cc-Resume
-		   Call Call/cc-Call Tail-rec While Tail-rec-call Return
-		   Closure-use Closure-with-use Closure-ref
-		   Closure-alloc Labelled Break Pragma)
+	     (Node Module Node Const Var-ref Lambda Frame-alloc
+		   Frame-push If Case Clause Set! Begin Call/cc-Resume
+		   Call Call/cc-Call While Call/cc-Counter-Update Continue
+		   Return Labelled Break Pragma)
 	     (tree.compile p)))
 
-(define *tmp-var* "tmp") ;; can't conflict, as all vars are starting with 'sc_
-(define *symbol-prefix* "\\u1E9C") ;; "\\u1E9D\\u1E9E\\u1E9F")
+(define *tmp-var* "sc_tmp") ;; can't conflict with generated names.
+
+;; when using immutable values.
+(define *symbol-prefix* "\\u1E9C")
+(define *keyword-prefix* "\\u1E9D")
 
 ;; TODO: *last-line* is not thread-safe!
 (define *last-line* 0)
 (define *last-file* "")
 
 (define (scm2js-globals-init p)
-   (p-display p "var scm2js_globals = SC_SCM2JS_GLOBALS;\n"))
+   (p-display p (indent) "var sc_globals = SC_SCM2JS_GLOBALS;\n"))
 (define (scm2js-global global)
-   (string-append "scm2js_globals." global))
+   (string-append "sc_globals." global))
 
 ;; TODO propose other global access as option.
 ; (define (scm2js-globals-init p)
@@ -70,6 +79,41 @@
 ; (define (scm2js-global global)
 ;    (string-append "SC_" global))
 
+(define (indent)
+   ;; CARE: MS 18 Jan 2008 !!!
+   ;; It may happens that indentation is negative and
+   ;; this produces a crash in Hop.
+   (if (config 'indent)
+       (with-lock *indent-lock*
+	  (lambda ()
+	     (if (<fx *indentation* *indent-max*)
+		 (vector-ref *indent-vec* *indentation*)
+		 (vector-ref *indent-vec* *indent-max*))))
+       ""))
+
+(define (indent++)
+   (let ((conf-indent (config 'indent)))
+      (if conf-indent
+	  (let ((in (indent)))
+	     (set! *indentation* (+ *indentation* conf-indent))
+	     in)
+	  "")))
+
+(define (--indent)
+   (let ((conf-indent (config 'indent)))
+      (if conf-indent
+	  (begin
+	     (set! *indentation* (- *indentation* conf-indent))
+	     (indent))
+	  "")))
+
+(define (indent--)
+   (let ((conf-indent (config 'indent)))
+      (if conf-indent
+	  (let ((in (indent)))
+	     (set! *indentation* (- *indentation* conf-indent))
+	     in)
+	  "")))
 
 (define-macro (check-stmt-form node p . Lbody)
    `(if (statement-form? ,node)
@@ -80,17 +124,18 @@
 	       (line-changed? (and line (not (= *last-line* line)))))
 
 	   (when (or file-changed? line-changed?)
-	      (p-display ,p "{"))
+	      (p-display ,p (indent++) "{\n"))
 	   (when file-changed?
-	      (p-display ,p "__sc_FILE=\"" (string-for-read file) "\";")
+	      (p-display ,p (indent) "__sc_FILE=\"" (string-for-read file) "\";\n")
 	      (if file (set! *last-file* file)))
 	   (when line-changed?
-	      (p-display ,p "__sc_LINE=" line ";")
+	      (p-display ,p (indent) "__sc_LINE=" line ";\n")
 	      (set! *last-line* line))
+	   (p-display ,p (indent))
 	   ,@Lbody
 	   (p-display ,p ";")
 	   (when (or file-changed? line-changed?)
-	      (p-display ,p "}"))
+	      (p-display ,p "\n" (--indent) "}"))
 	   (p-display ,p "\n"))
 	(begin
 	   ,@Lbody)))
@@ -133,7 +178,7 @@
 			    (p-display p "false")))
       ((symbol? const)
        (p-display p "\"")
-       (if (not (config 'mutable-strings))
+       (if (not (use-mutable-strings?))
 	   (display *symbol-prefix* p))
        (p-display p const)
        (p-display p "\""))
@@ -142,7 +187,7 @@
       ((number? const)
        (p-display p "(" const ")"))
       ((string? const)
-       (if (config 'mutable-strings)
+       (if (use-mutable-strings?)
 	   (p-display p "(new sc_String(\"" (string-for-read const) "\"))")
 	   (p-display p "\"" (string-for-read const) "\"")))
       ((vector? const)
@@ -172,7 +217,9 @@
 	      (p-display p ")"))))
       ((eq? const #unspecified) (p-display p "undefined"))
       ((keyword? const)
-       (p-display p "(new sc_Keyword('" (keyword->string const) "'))"))
+       (if (use-mutable-strings?)
+	   (p-display p "(new sc_Keyword('" (keyword->string const) "'))")
+	   (p-display p "\"" *keyword-prefix* (keyword->string const) "\"")))
       (else (error #f "forgot Const-type: " const))))
    
 (define-pmethod (Const-compile p)
@@ -183,85 +230,43 @@
 (define-pmethod (Var-ref-compile p)
    (check-stmt-form
     this p
-    ;; don't generate useless statement (like "x;")
-    ;; this only happens when "this" is a Decl.
-    ;; PATCH: 7aug07
-    ;; (unless (statement-form? this)
-    ;;   (p-display p this.var.compiled))
     (p-display p this.var.compiled)))
-
-(define-pmethod (Program-compile p)
-   (this.body.compile p))
 
 (define-pmethod (Module-compile p)
    (define (trampoline-start-code p)
       (when (config 'trampoline)
-	 (p-display p "var sc_tailTmp;\n")
-	 (p-display p (scm2js-global "TAIL_OBJECT") ".calls = " (max-tail-call-depth) ";\n")
-	 (p-display p "var sc_funTailCalls = " (max-tail-call-depth)";\n")))
-      
-   (define (split-globals local-vars)
-      ;; HACK; TODO: outer-vars are for now just global vars.
-      ;;    should be all vars that are visible to the outside of the module
-      ;;    maybe not. depends on 'semantics' of Module...
-      (let ((outer-vars (make-eq-hashtable))
-	    (module-vars (make-eq-hashtable)))
-	 (hashtable-for-each local-vars
-			     (lambda (var ignored)
-				(hashtable-put! (if var.is-global?
-						    outer-vars
-						    module-vars)
-						var
-						#t)))
-	 (cons outer-vars module-vars)))
+	 (p-display p (indent) "var sc_tailTmp;\n")
+	 (p-display p (indent) (scm2js-global "TAIL_OBJECT") ".calls = "
+		    (config 'max-tail-depth) ";\n")
+	 (p-display p (indent) "var sc_funTailCalls = "
+		    (config 'max-tail-depth) ";\n")))
 
-   (let* ((outer/module-vars (if (or (config 'encapsulate-modules)
-				   (config 'call/cc))
-			       (split-globals this.local-vars)
-			       (cons this.local-vars #f)))
-	  (outer-vars (car outer/module-vars))
-	  (outer-vars? (not (= 0 (hashtable-size outer-vars))))
-	  (module-vars (cdr outer/module-vars))
+   (define (exported-vars-code p)
+      (unless (null? this.exported-vars)
+	 (p-display p (indent) "/* Exported Variables */\n")
+	 (for-each (lambda (var)
+		      (p-display p (indent) "var " var.compiled ";\n"))
+		   this.exported-vars)
+	 (p-display p (indent) "/* End Exports */\n\n")))
 
-	  (module-filter-fun this.fun)
-	  (module-filter-port/close (module-filter-fun p))
-	  (module-filter-port (car module-filter-port/close))
-	  (module-filter-close (cdr module-filter-port/close))
-	  
-	  (encapsulated (if (or (config 'call/cc)
-				(and (config 'encapsulate-modules)
-				     '(HACK HACK HACK we need a body at the
-					    moment cause we introduced a
-					    'return in the
-					    hack-encapsulation-pass))
-				(and (and module-vars
-					  (> (hashtable-size module-vars) 0))))
-			    (let ((fun (new-node Lambda '() #f this.body)))
-			       (set! fun.local-vars (or module-vars (make-eq-hashtable)))
-			       (if this.indices/indicators
-				   (set! fun.indices/indicators
-					 this.indices/indicators))
-			       fun)
-			    #f)))
-      (scm2js-globals-init p)
-      (trampoline-start-code p)
-      (set! this.body.source-element? #t)
-      (if outer-vars?
-	  (hashtable-for-each outer-vars
-			      (lambda (var ignored)
-				 (p-display module-filter-port
-					    "var " var.compiled ";\n")
-				 (set! var.encapsulated? #t))))
-      (if encapsulated
-	  (begin
-	     (p-display module-filter-port "(")
-	     (encapsulated.compile module-filter-port)
-	     (p-display module-filter-port
-			").call(this)\n"))
-	  (this.body.compile module-filter-port))
+   (exported-vars-code p)
 
-      (module-filter-close module-filter-port)))
+   (if (or (config 'suspend/resume)
+	   (config 'trampoline))
+       (scm2js-globals-init p))
+   (for-each (lambda (var)
+		(unless var.exported?
+		   (p-display p (indent) "var " var.compiled ";\n")))
+	     this.declared-vars)
 
+   (trampoline-start-code p)
+   (this.body.compile p))
+
+(define (call/cc-loop-counter index)
+   (string-append "sc_callccLoopCounter" (number->string index) "_"))
+
+(define (call/cc-frame scope)
+   (string-append "'frame-" (symbol->string scope.id) "'"))
 
 ;; Llvalue/stmt?, if given, indicate, that this lambda should be assigned to
 ;; the given lvalue. stmt? is true, if we should treat this node, as if it was
@@ -272,183 +277,236 @@
 (define-pmethod (Lambda-compile p . Llvalue/stmt?/source-element?)
    (define (vaarg-code vaarg nb-args)
       (let ((L vaarg.compiled))
-	 (p-display p "var " L " = null;\n"
-		    "for (var " *tmp-var* " = arguments.length - 1;"
-		    *tmp-var* ">=" (number->string nb-args) ";"
+	 (p-display p (indent) "var " L " = null;\n")
+	 (p-display p (indent++)
+		    "for (var " *tmp-var* " = arguments.length - 1; "
+		    *tmp-var* " >= " (number->string nb-args) "; "
 		    *tmp-var* "--) {\n")
-	 (p-display p L " = sc_cons(arguments[" *tmp-var* "], " L ");\n}\n")))
+	 (p-display p (indent) L " = sc_cons(arguments[" *tmp-var* "], " L
+		    ");\n")
+	 (p-display p (--indent) "}\n")))
 
    (define (trampoline-start-code p)
-      (p-display
-       p
-       "var sc_tailTmp;\n"
-       "var sc_funTailCalls = " (scm2js-global "TAIL_OBJECT") ".calls;\n"))
+      (let ((in (indent)))
+	 (p-display
+	  p
+	  in
+	  "var sc_tailTmp;\n"
+	  in
+	  "var sc_funTailCalls = " (scm2js-global "TAIL_OBJECT") ".calls;\n")))
 
-   (define (var-names formals vaarg vars-ht)
+   (define (var-names formals vars-ht)
       (append (map (lambda (n)
 		      n.var.compiled)
-		   (if vaarg
-		       (cons vaarg formals)
-		       formals))
+		   formals)
 	      (hashtable-key-list vars-ht)))
    
-   (define (call/cc-start-code p formals vaarg locals indices/vars indices/indicators)
-      (let* ((formal-vars (map (lambda (n) n.var) formals))
-	     (formal/vaarg-vars (if vaarg
-				    (cons vaarg.var formal-vars)
-				    formal-vars))
-	     (local/formal-vars (append! (hashtable-key-list locals)
-					 formal/vaarg-vars))
-	     (local/formal-names (map (lambda (v)
-					 v.compiled)
-				      local/formal-vars)))
+   (define (call/cc-start-code p
+			       call/cc-scopes
+			       nb-loop-counters
+			       resume-indices/vars)
+      (let ((in (indent)))
 	 (p-display
 	  p
-	  "var sc_callCcTmp;\n"
-	  "var sc_callCcIndex = 0;\n"
-	  "var sc_callCcState;\n"
-	  "var sc_callCcFrame = false;\n"
-	  "if (" (scm2js-global "CALLCC_STORAGE") "['doCall/CcDefault?']) {\n")
-	 (if indices/indicators
-	     (let ((ht (make-eq-hashtable)))
-		(for-each (lambda (index/indicator-indices)
-			     (for-each (lambda (indicator-index)
-					  (hashtable-put! ht indicator-index #t))
-				       (cdr index/indicator-indices)))
-			  indices/indicators)
-		(hashtable-for-each ht
-				    (lambda (indicator-index ignored)
-				       (p-display
-					p
-					"    var " (call/cc-indicator-name
-						indicator-index)
-					" = false;\n"))))
-	     (p-display p "   /* do nothing */\n"))
+	  in "var sc_callCcTmp;\n"
+	  in "var sc_callCcIndex = 0;\n"
+	  in "var sc_callCcState = false;\n")
+	 (p-display p (indent++) "try {\n")
 	 (p-display
 	  p
-	  "} else if (" (scm2js-global "CALLCC_STORAGE") "['doCall/CcRestore?']) {\n"
-	  "  sc_callCcState = " (scm2js-global "CALLCC_STORAGE") ".pop();\n"
-	  "  sc_callCcIndex = sc_callCcState.sc_callCcIndex;\n"
-	  "  sc_callCcFrame = sc_callCcState.frame;\n")
-	 (for-each (lambda (var-name)
-		      (p-display
-		       p
-		       "  " var-name " = sc_callCcFrame." var-name ";\n"))
-		   local/formal-names)
+	  (indent++) "if (" (scm2js-global "CALLCC_STORAGE")
+	  "['doCall/CcDefault?']) {\n"))
+      (if (> nb-loop-counters 0)
+	  (for-each (lambda (index)
+		       (p-display
+			p (indent)
+			"var " (call/cc-loop-counter index) " = 0;\n"))
+		    (iota nb-loop-counters))
+	  (p-display p (indent) "/* do nothing */\n"))
+      (p-display
+       p
+       (--indent)
+       "} else if (" (scm2js-global "CALLCC_STORAGE") "['doCall/CcRestore?'])")
+      (p-display p (indent++) "{\n")
+      (let ((in (indent)))
 	 (p-display
 	  p
-	  "  try {\n"
-	  "    sc_callCcTmp = "
-	  (scm2js-global "CALLCC_STORAGE") ".callNext();\n")
-	 
-	 (when (not (null? indices/vars))
+	  in "var sc_callCcFrame;\n"
+	  in "sc_callCcState = " (scm2js-global "CALLCC_STORAGE") ".pop();\n"
+	  in "sc_callCcIndex = sc_callCcState.sc_callCcIndex;\n")
+	 (for-each (lambda (index)
+		      (let ((counter (call/cc-loop-counter index)))
+			 (p-display
+			  p in counter " = sc_callCcState[" counter "];\n")))
+		   (iota nb-loop-counters)))
+      (for-each
+       (lambda (scope)
+	  (let ((frame (call/cc-frame scope)))
+	     (p-display
+	      p (indent++) "if (sc_callCcFrame = sc_callCcState[" frame "]) {\n")
+	     (for-each (lambda (var)
+			  (p-display  p (indent) var.compiled " = "
+				      "sc_callCcFrame." var.compiled ";\n"))
+		       scope.call/cc-vars)
+	     (p-display p (--indent) "}\n")))
+       call/cc-scopes)
+      (p-display
+       p
+       (indent)
+       "sc_callCcTmp = " (scm2js-global "CALLCC_STORAGE") ".callNext();\n")
+      (let ((filtered-indices/vars (filter cdr resume-indices/vars)))
+	 (when (not (null? filtered-indices/vars))
 	    (p-display
 	     p
-	     "    switch (sc_callCcIndex) {\n")
+	     (indent) "switch (sc_callCcIndex) {\n")
 	    (for-each (lambda (index/var)
-			 (if (cdr index/var)
-			     (p-display
-			      p
-			      "case " (car index/var) ": "
-			      (cdr index/var).compiled " = sc_callCcTmp; break;")))
-		      indices/vars)
-	    (p-display
-	     p
-	     "    }\n"))
-
-	 (when indices/indicators
-	    (p-display
-	     p
-	     "    switch (sc_callCcIndex) {\n")
-	    (for-each (lambda (index/indicator-indices)
 			 (p-display
 			  p
-			  "      "
-			  "case " (car index/indicator-indices) ":\n")
-			 (for-each (lambda (indicator-index)
-				      (p-display
-				       p
-				       "        "
-				       (call/cc-indicator-name indicator-index)
-				       " = true;\n"))
-				   (cdr index/indicator-indices))
-			 (p-display
-			  p
-			  "        break;\n"))
-		      indices/indicators)
-	    (p-display
-	     p
-	     "    }\n"))
-	 (p-display
-	  p
-	  "  } catch(e) {\n"
-	  "    if (e instanceof sc_CallCcException && e.backup) {\n"
-	  "       e.push(sc_callCcState);\n"
-	  "    }\n"
-	  "    throw e;\n"
-	  "  }\n"
-	  "} else { // root-fun\n"
-	  "  return sc_callCcRoot(this, arguments);\n"
-	  "}\n"
-	  "try {\n")))
+			  (indent) "case " (car index/var) ": "
+			  (cdr index/var).compiled " = sc_callCcTmp; break;\n"))
+		      filtered-indices/vars)
+	    (p-display p (indent) "}\n")))
+       (p-display
+	p
+	(--indent) "} else { // root-fun\n")
+       (indent++)
+       (p-display
+	p
+	(indent) "return sc_callCcRoot(this, arguments);\n")
+       (p-display
+	p
+	(--indent)
+	"}\n"))
 
-   (define (call/cc-end-code p formals vaarg locals)
-      (let* ((formal-vars (map (lambda (n) n.var) formals))
-	     (formal/vaarg-vars (if vaarg
-				    (cons vaarg.var formal-vars)
-				    formal-vars))
-	     (local/formal-vars (append! (hashtable-key-list locals)
-					 formal/vaarg-vars))
-	     (muted-locals-str (map (lambda (v) v.compiled)
-				    (filter (lambda (v)
-					       v.muted?)
-					    local/formal-vars)))
-	     (constant-locals-str (map (lambda (v) v.compiled)
-				       (filter (lambda (v)
-						  (not v.muted?))
-					       local/formal-vars))))
-	 (p-display
-	  p
-	  "} catch (e) {\n"
-	  "  if (e instanceof sc_CallCcException &&"
-	  " e.backup && sc_callCcIndex !== 0) {\n" ;; if 0 then it was a tail-call.
-	  "    if (!sc_callCcFrame)\n"
-	  "      sc_callCcFrame = new Object();\n"
-	  "    sc_callCcState = new Object();\n"
-	  "    sc_callCcState.sc_callCcIndex = sc_callCcIndex;\n"
-	  "    sc_callCcState.frame = sc_callCcFrame;\n"
-	  ;; if we were a tail-call target undo this. (Call/cc removes the caller).
-	  "    sc_callCcState.this_ ="
-	  "(this === " (scm2js-global "TAIL_OBJECT") ")? null: this;\n"
-	  "    sc_callCcState.callee = arguments.callee;\n")
-	 (for-each (lambda (var-name)
+   (define (call/cc-end-code p
+			     call/cc-scopes
+			     nb-loop-counters
+			     finally-scopes)
+      (p-display
+       p
+       (--indent) "} catch (sc_e) {\n")
+      (indent++)
+      (p-display
+       p
+       (indent++)
+       "if (sc_e instanceof sc_CallCcException &&"
+       " sc_e.backup && sc_callCcIndex !== 0) {\n") ;;if 0 then it was a tail-call.
+      (p-display
+       p
+       (indent) "var sc_old_callCcState = sc_callCcState;\n"
+       (indent) "sc_callCcState = new Object();\n")
+      (for-each (lambda (index)
+		   (let ((counter (call/cc-loop-counter index)))
 		      (p-display
-		       p
-		       "     sc_callCcFrame." var-name " = " var-name ";\n"))
-		   constant-locals-str)
+		       p (indent) "sc_callCcState[" counter "] = " counter ";\n")))
+		(iota nb-loop-counters))
+      (for-each
+       (lambda (scope)
+	  (p-display
+	   p
+	   (indent) "switch (sc_callCcIndex) {\n"
+	   (indent))
+	  (for-each (lambda (index) (p-display p "case " index ":"))
+		    scope.call/cc-indices)
+	  (p-display p "\n")
+	  (indent++)
+	  (if (and (config 'call/cc)
+		   scope.surrounding-while)
+	      (let* ((while scope.surrounding-while)
+		     (counter (call/cc-loop-counter while.call/cc-loop-counter))
+		     (frame (call/cc-frame scope)))
+		 (p-display
+		  p
+		  (indent) "sc_callCcState[" frame "] = (sc_old_callCcState && "
+		  "sc_old_callCcState[" counter "] == " counter " && "
+		  "sc_callCcState[" frame "]) || {};\n"))
+	      (let ((frame (call/cc-frame scope)))
+		 (p-display
+		  p (indent) "sc_callCcState[" frame "] = "
+		  "(sc_old_callCcState && sc_old_callCcState[" frame "])"
+		  " || {};\n")))
+	  (p-display p (--indent) "}\n")) ;; switch
+       call/cc-scopes)
+      (for-each
+       (lambda (scope)
+	  (when scope.call/cc-indices
+	     (let ((frame (call/cc-frame scope)))
+		(p-display p (indent++) "if (sc_callCcFrame = sc_callCcState[" frame "]) {\n")
+		(for-each
+		 (lambda (var)
+		    (p-display p (indent) "sc_callCcFrame." var.compiled
+			       " = " var.compiled ";\n"))
+		 scope.call/cc-vars)
+		(p-display p (--indent) "}\n")))) ;; if
+       call/cc-scopes)
+      (p-display
+       p
+       (indent) "sc_callCcState.sc_callCcIndex = sc_callCcIndex;\n"
+       ;; if we were a tail-call target undo this. (Call/cc removes the caller).
+       (indent) "sc_callCcState.this_ ="
+       "(this === " (scm2js-global "TAIL_OBJECT") ")? null: this;\n"
+       (indent) "sc_callCcState.callee = arguments.callee;\n")
+      (p-display
+       p
+       (indent) "sc_e.push(sc_callCcState);\n")
+      (p-display
+       p
+       (--indent) "}\n") ;; if call/cc-exception
+      (p-display
+       p
+       (indent) "throw sc_e;\n")
+      (when (not (null? finally-scopes))
 	 (p-display
 	  p
-	  "    e.push(sc_callCcState);\n"
-	  "  }\n"
-	  "  throw e;\n"
-	  "}\n") ;; try
-	 (when (not (null? muted-locals-str))
-	    (p-display
-	     p
-	     "finally {\n"
-	     "  if (sc_callCcFrame) {\n")
-	    (for-each (lambda (var-name)
-			 (p-display
-			  p
-			  "     sc_callCcFrame." var-name " = " var-name ";\n"))
-		      muted-locals-str)
-	    (p-display
-	     p
-	     "  }"
-	     "}\n")))) ;; try
+	  (--indent) "} finally {\n")
+	 (indent++)
+	 (p-display
+	  p
+	  (indent++) "if (sc_callCcState) {\n")
+	 (for-each
+	  (lambda (scope)
+	     (let ((frame (call/cc-frame scope)))
+		(p-display
+		 p
+		 (indent++) "if (sc_callCcFrame = sc_callCcState[" frame "]) {\n")
+		(for-each
+		 (lambda (var)
+		    (p-display p (indent) "sc_callCcFrame."
+			       var.compiled " = " var.compiled ";\n"))
+		 scope.finally-vars)
+		(p-display p (--indent) "}\n")))
+	  finally-scopes)
+	 (p-display
+	  p
+	  (--indent) "}\n"))
+      (p-display
+       p
+       (--indent) "}\n")) ;; try or finally
 
-   (let* ((locals this.local-vars)
-	  (local-vars-ht (make-hashtable))
+   (let* ((locals-ht this.frame-vars-ht)
+	  (local-names-ht (make-hashtable))
+	  (formals-w/o-vaarg/vaarg
+	   (if this.vaarg?
+	       (let* ((locals-copy (map (lambda (x) x)
+					this.formals)))
+		  (let loop ((copy locals-copy))
+		     (cond
+			((null? copy)
+			 (error "compile"
+				"internal compiler error. (vaarg)"
+				'()))
+			((null? (cdr copy))
+			 (cons '() (car copy)))
+			((null? (cddr copy))
+			 (let ((vaarg (cadr copy)))
+			    (set-cdr! copy '())
+			    (cons locals-copy vaarg)))
+			(else
+			 (loop (cdr copy))))))
+	       (cons this.formals #f)))
+	  (formals-w/o-vaarg (car formals-w/o-vaarg/vaarg))
+	  (vaarg (cdr formals-w/o-vaarg/vaarg))
+
 	  (needs-trampoline? (and (config 'trampoline)
 				  this.contains-tail-calls?))
 	  (lvalue (and (not (null? Llvalue/stmt?/source-element?))
@@ -467,21 +525,14 @@
 			     ;; variables. Don't play with that...
 			     (not (config 'optimize-var-number))
 			     
-			     ;; call/cc has bad property of putting
-			     ;; declarations into an anonymous function.
-			     ;; the variable itself is however still accessible
-			     ;; outside this function. -> we can't do
-			     ;; declarations then.
-			     (not lvalue.var.encapsulated?)
-			     
-			     lvalue.var.single-value ;; not muted or anything
+			     lvalue.var.constant? ;; not muted or anything
 			     
 			     ;; a declaration puts the assignment at the
 			     ;; beginning of the scope. This is not good, if we
 			     ;; want to access 'with' variables, that represent
 			     ;; closures...
-			     (not this.references-tail-rec-variables?)))
-	  
+			     #f ;; TODO: correct this
+			     ))
 	  ;; a function can't be alone as statement. ie.
 	  ;; function () {}; is not a valid statement.
 	  ;; but
@@ -502,15 +553,9 @@
 	  (needs-call/cc? (and this.body.call/cc-range
 			       (not (null? this.body.call/cc-range))))
 	  (needs-scm2js-globals? (or needs-trampoline? needs-call/cc?)))
-      
-      ;; local-vars-ht will contain the var-names. by putting them into a
-      ;; hashtable we remove the duplicates. Not very elegant, but it should work ;)
-      (hashtable-for-each locals
-			  (lambda (var ignored)
-			     (hashtable-put! local-vars-ht var.compiled #t)))
-      
-      (if needs-parenthesis?
-	  (p-display p "("))
+
+      (when stmt? (p-display p (indent)))
+      (when needs-parenthesis? (p-display p "("))
       
       (cond
 	 ; 	 ;; if it's a declaration we write the beginning of it: 'function name('
@@ -526,53 +571,83 @@
 	  'do-nothing))
       
       (p-display p "function(")
-      
-      (compile-separated-list p this.formals ", ")
+      (compile-separated-list p formals-w/o-vaarg ", ")
       (p-display p ") {\n")
-      (if this.vaarg
-	  (vaarg-code this.vaarg.var (length this.formals)))
-      (hashtable-for-each local-vars-ht
-			  (lambda (var ignored)
-			     (p-display p "var " var ";\n")))
-      (if needs-scm2js-globals?
-	  (scm2js-globals-init p))
-      (if needs-trampoline?
-	  (trampoline-start-code p))
-      (if needs-call/cc?
-	  (call/cc-start-code p this.formals this.vaarg
-			      locals
-			      this.body.call/cc-range
-			      this.indices/indicators))
-      (if (and source-element?
-	       (not needs-trampoline?)
-	       (not needs-call/cc?))
-	  (set! this.body.source-element? #t))
+      (indent++)
+      (when this.vaarg? (vaarg-code vaarg.var (- (length this.formals) 1)))
+      (for-each (lambda (var) (p-display p (indent) "var " var.compiled ";\n"))
+		this.declared-vars)
+      (when needs-scm2js-globals? (scm2js-globals-init p))
+      (when needs-trampoline? (trampoline-start-code p))
+      (when needs-call/cc? (call/cc-start-code p
+					       this.call/cc-scopes
+					       (or this.call/cc-nb-counters 0)
+					       (or this.body.call/cc-range '())))
+      (when (and source-element?
+		 (not needs-trampoline?)
+		 (not needs-call/cc?))
+	 (set! this.body.source-element? #t))
+      
       (this.body.compile p)
-      (if needs-call/cc?
-	  (call/cc-end-code p this.formals this.vaarg locals))
+      (when needs-call/cc? (call/cc-end-code p
+					     this.call/cc-scopes
+					     (or this.call/cc-nb-counters 0)
+					     this.finally-scopes))
       
       ;; with the following p-display we close the function-body.
-      (p-display p "\n}\n")
+      (p-display p (--indent) "}")
       
       ;; close the previously opened parenthesis
-      (if needs-parenthesis?
-	  (p-display p ")"))
+      (when needs-parenthesis? (p-display p ")"))
       
       ;; add the stmt-semicolon. In theory we don't need any when it's a
       ;; function declaration, but this simplifies the code, and some editors
       ;; prefer the semicolon.
-      (if stmt?
-	  (p-display p ";\n"))))
+      (when stmt? (p-display p ";\n"))))
 
-(define (compile-unoptimized-boolify p node)
-   (p-display p "(")
-   (node.compile p)
-   (p-display p "!== false)"))
-   
-(define (compile-boolified p node)
-   (if (config 'optimize-boolify)
-       (compile-optimized-boolify p node)
-       (compile-unoptimized-boolify p node)))
+(define-pmethod (Frame-alloc-compile p)
+    (p-display p "{") ;; literal-object creation
+    (when (config 'with-closures)
+       (let loop ((vars this.vars))
+	  (cond
+	     ((null? vars) 'done) ;; was empty to begin with.
+	     ((null? (cdr vars))
+	      (p-display p (car vars).compiled ": undefined"))
+	     (else
+	      (p-display p (car vars).compiled ": undefined, ")
+	      (loop (cdr vars))))))
+    (p-display p "}"))
+
+(define-pmethod (Frame-push-compile p)
+    (if (config 'with-closures)
+	(begin
+	   (p-display
+	    p
+	    (indent++) "with(" (car this.storage-vars).compiled ") {\n")
+	   (this.body.compile p)
+	   (p-display p (--indent) "}\n"))
+	(begin
+	   (check-stmt-form
+	    this p
+	    (if (statement-form? this) (p-display p "("))
+	    (p-display p "function(")
+	    (p-display p (car this.storage-vars).compiled)
+	    (for-each (lambda (var)
+			 (p-display p ", " var.compiled))
+		      (cdr this.storage-vars))
+	    (p-display p ") {\n")
+	    (indent++)
+	    (p-display p (indent) "return ")
+	    (this.body.compile p)
+	    (p-display p ";\n")
+	    (p-display p (--indent) "}")
+	    (if (statement-form? this) (p-display p ") "))
+	    (p-display p "(")
+	    (p-display p (car this.storage-vars).compiled)
+	    (for-each (lambda (var)
+			 (p-display p ", " var.compiled))
+		      (cdr this.storage-vars))
+		(p-display p ")\n")))))
 
 (define-pmethod (If-compile p)
    (cond
@@ -582,90 +657,86 @@
        (cond
 	  ((and this.call/cc-then-range
 		this.call/cc-else-range)
-	   (p-display p
-		      "if (sc_callCcIndex && sc_callCcIndex <= "
+	   (p-display p (indent++) "if (sc_callCcIndex && sc_callCcIndex <= "
 		      (apply max (map car this.call/cc-then-range))
 		      "    || (!sc_callCcIndex &&"))
 	  (this.call/cc-then-range
-	   (p-display p "if (sc_callCcIndex || ("))
+	   (p-display p (indent++) "if (sc_callCcIndex || ("))
 	  (else
-	   (p-display p "if (!sc_callCcIndex && (")))
+	   (p-display p (indent++) "if (!sc_callCcIndex && (")))
        (compile-boolified p this.test)
        (p-display p ")) ")
        (this.then.compile p)
-       (p-display p "\nelse\n")
-       (this.else.compile p))
+       (p-display p (--indent) "else\n")
+       (indent++)
+       (this.else.compile p)
+       (indent--))
       ((statement-form? this)
-       (p-display p "if (")
+       (p-display p (indent++) "if (")
        (compile-boolified p this.test)
-       (p-display p ") ")
+       (p-display p ")\n")
        (this.then.compile p)
+       (indent--)
        (unless (inherits-from? this.else (node 'Const)) ;; avoid common case 'undefined'
-	  (p-display p "\nelse\n")
-	  (this.else.compile p)))
+	  (p-display p (indent) "else\n")
+	  (indent++)
+	  (this.else.compile p)
+	  (indent--)))
       (else
        (p-display p "(")
        (compile-boolified p this.test)
-       (p-display p "?\n")
+       (p-display p "?")
        (this.then.compile p)
-       (p-display p ":\n")
+       (p-display p ":")
        (this.else.compile p)
        (p-display p ")"))))
 
 (define-pmethod (Case-compile p)
-   (p-display p "switch (")
+   (p-display p (indent) "switch (")
    (when this.call/cc-range
       (p-display p "sc_callCcIndex? sc_getCallCcIndexObject(sc_callCcIndex) :"))
    (this.key.compile p)
    (p-display p ") {\n")
    (for-each (lambda (clause)
-		(clause.compile p)
-		(p-display p "\n"))
+		(clause.compile p))
 	     this.clauses)
-   (p-display p "}\n"))
+   (p-display p (indent) "}\n"))
 
 (define-pmethod (Clause-compile p)
    (if this.default-clause?
        (begin
-	  (p-display p "default: ")
+	  (p-display p (indent++) "default:\n")
 	  (this.expr.compile p)
-	  (p-display p "\nbreak;"))
+	  (p-display p (indent--) "break;\n"))
        (begin
 	  (when this.call/cc-range
-	      (for-each (lambda (index/var)
-			   (let ((index (car index/var)))
-			      ;; sc_storage can not be used as key, and will hence
+	     (for-each (lambda (index/var)
+			  (let ((index (car index/var)))
+			     ;; sc_storage can not be used as key, and will hence
 			      ;; never match.
-			      (p-display
-			       p
-			       "case (sc_callCcIndex === " index "?"
-			       "sc_getCallCcIndexObject(" index "):"
-			       ;; storage can't clash with user values
-			       (scm2js-global "CALLCC_STORAGE") "):\n")))
+			     (p-display
+			      p
+			      (indent)
+			      "case (sc_callCcIndex === " index "?"
+			      "sc_getCallCcIndexObject(" index "):"
+			      ;; storage can't clash with user values
+			      (scm2js-global "CALLCC_STORAGE") "):\n")))
 			this.call/cc-range))
 	  (for-each (lambda (const)
-		       (p-display p "case ")
+		       (p-display p (indent) "case ")
 		       (const.compile p)
 		       (p-display p ":\n"))
 		    this.consts)
+	  (indent++)
 	  (this.expr.compile p)
-	  (p-display p "\nbreak;"))))
-
-(define (compile-unoptimized-set! p n)
-   (p-display p "(")
-   (n.lvalue.compile p)
-   (p-display p " = ")
-   (n.val.compile p)
-   (p-display p ")"))
+	  (p-display p (indent--) "break;\n"))))
 
 (define-pmethod (Set!-compile p)
    (if (instance-of? this.val (node 'Lambda))
        (this.val.compile p this.lvalue (statement-form? this) this.source-element?)
        (check-stmt-form
 	this p
-	(if (config 'optimize-set!)
-	    (compile-optimized-set! p this)
-	    (compile-unoptimized-set! p this)))))
+	(compile-set! p this))))
 
 (define-pmethod (Begin-compile p)
    ;; if only the first element has a call/cc range we don't need a switch, as
@@ -680,18 +751,21 @@
       ((and this.call/cc-range
 	    (not (null? this.call/cc-range))
 	    (not (only-first-el-has-call/cc-range?)))
-       (p-display p
-		  "switch (sc_callCcIndex) {\n"
-		  "case 0:\n")
+       (p-display p (indent)   "switch (sc_callCcIndex) {\n")
+       (p-display p (indent) "case 0:\n")
        (for-each (lambda (n)
 		    (let ((call/cc-range n.call/cc-range))
 		       (when (and call/cc-range (not (null? call/cc-range)))
-			  (for-each (lambda (index/var)
-				       (p-display p "case " (car index/var) ":\n"))
+			  (for-each (lambda (indx/var)
+				       (p-display
+					p
+					(indent) "case " (car indx/var) ":\n"))
 				    call/cc-range)))
-		    (n.compile p))
+		    (indent++)
+		    (n.compile p)
+		    (--indent))
 		 this.exprs)
-       (p-display p "}\n"))
+       (p-display p (indent) "}\n"))
       ((and (statement-form? this)
 	    this.source-element?)
        (for-each (lambda (n)
@@ -699,11 +773,11 @@
 		    (n.compile p))
 		 this.exprs))
       ((statement-form? this)
-       (p-display p "\n{\n")
+       (p-display p (indent++) "{\n")
        (for-each (lambda (n)
 		    (n.compile p))
 		 this.exprs)
-       (p-display p "}\n"))
+       (p-display p (--indent) "}\n"))
       (else
        (p-display p "(")
        (compile-separated-list p this.exprs ", ")
@@ -712,15 +786,16 @@
 (define-pmethod (Call/cc-Resume-compile p)
    (p-display
     p
-    "sc_callCcIndex = 0;\n"))
+    (indent) "sc_callCcIndex = 0;\n"))
 
 (define-pmethod (Call/cc-Call-compile p)
    (if (statement-form? this)
-       (p-display p "{ sc_callCcIndex = " this.call/cc-index ";\n")
+       (p-display p
+		  (indent++) "{ sc_callCcIndex = " this.call/cc-index ";\n")
        (p-display p "(sc_callCcIndex = " this.call/cc-index ", "))
    (pcall this Call-compile p)
    (if (statement-form? this)
-       (p-display p "}\n")
+       (p-display p (--indent) "}\n")
        (p-display p ")")))
 
 (define (tail-call-compile n p)
@@ -734,42 +809,42 @@
       (compile-separated-list p n.operands ", ")
       (p-display p "))"))
    
-      
    (p-display
     p
     "(\n"
-    "  (this === (sc_tailTmp =" (scm2js-global "TAIL_OBJECT") "))?\n"
-    "  ((!sc_funTailCalls)?\n"
-    "    (sc_tailTmp = [")
+    (indent) "  (this === (sc_tailTmp =" (scm2js-global "TAIL_OBJECT") "))?\n"
+    (indent) "  ((!sc_funTailCalls)?\n"
+    (indent) "    (sc_tailTmp = [")
    (compile-separated-list p n.operands ", ")
    (p-display
     p
     "],\n"
-    "    sc_tailTmp.callee = ")
+    (indent) "    sc_tailTmp.callee = ")
    (n.operator.compile p)
    (p-display
     p
     ",\n"
-    "    new sc_Trampoline(sc_tailTmp, " (max-tail-call-depth) "))\n"
-    "    :\n"
-    "    (this.calls = sc_funTailCalls - 1,\n"
-    "     ")
+    (indent) "    new sc_Trampoline(sc_tailTmp, " (config 'max-tail-depth) "))\n"
+    (indent) "    :\n"
+    (indent) "    (this.calls = sc_funTailCalls - 1,\n"
+    (indent) "     ")
    (tail-call n "sc_tailTmp")
    (p-display
     p
-    ")\n   ):(\n"
-    "    sc_tailTmp.calls = " (max-tail-call-depth) ","
-    "    sc_tailTmp = ")
+    ")\n"
+    (indent) "):(\n"
+    (indent) "    sc_tailTmp.calls = " (config 'max-tail-depth) ",\n"
+    (indent) "    sc_tailTmp = ")
    (tail-call n "sc_tailTmp") ;(scm2js-global "TAIL_OBJECT"))
    (p-display
     p
     ",\n"
-    "    ((typeof sc_tailTmp === 'object' &&"
+    (indent) "    ((typeof sc_tailTmp === 'object' &&"
     "sc_tailTmp instanceof sc_Trampoline)?\n"
-    "       sc_tailTmp.restart() :\n"
-    "       sc_tailTmp)\n"
-    "  )\n"
-    ")\n"))
+    (indent) "       sc_tailTmp.restart() :\n"
+    (indent) "       sc_tailTmp)\n"
+    (indent) "  )\n"
+    (indent) ")"))
 
 (define-pmethod (Call-compile p)
    (check-stmt-form
@@ -780,97 +855,116 @@
 	   (unless (and (config 'optimize-calls)
 			(compile-optimized-call p operator this.operands))
 	      (p-display p "(")
-	      (operator.compile p)
+	      ;; if the operator is a var-ref and contains a "." we have to do
+	      ;; some tricks: frame.f() would give 'frame' to f as this-object.
+	      ;; by using the sequence-construct we can avoid that:
+	      ;; (0,frame.f)() sends the global-object as 'this'-object.
+	      (if (and (inherits-from? operator (node 'Var-ref))
+		       (string-index operator.var.compiled #\.))
+		  (p-display p "(0," operator.var.compiled ")")
+		  (operator.compile p))
 	      (p-display p "(")
 	      (compile-separated-list p this.operands ", ")
 	      (p-display p ")")
 	      (p-display p ")"))))))
 
-(define-pmethod (Tail-rec-compile p)
-   (let ((label (and this.label (mangle-JS-sym this.label))))
-      (if label (p-display p label ": "))
-      (p-display p "while (true) {")
-      (this.body.compile p)
-      (if label
-	  (p-display p "break " label ";\n")
-	  (p-display p "break;\n"))
-      (p-display p "}\n")))
-
 (define-pmethod (While-compile p)
-   ;; while nodes shouldn't need their label.
-   (p-display p "while (")
-   (if this.call/cc-range
-       (p-display p "sc_callCcIndex || "))
-   (this.test.compile p)
-   (p-display p ") {\n")
-   (this.body.compile p)
-   (p-display p "}\n"))
+   (let ((needs-call/cc? this.call/cc-range)
+	 (needs-loop-var-call/cc? this.call/cc-loop-index))
 
-(define-pmethod (Tail-rec-call-compile p)
-   (let ((label (and this.label (mangle-JS-sym this.label))))
-      (if label
-	  (p-display p "continue " label ";\n")
-	  (p-display p "continue;\n"))))
+      (define (compile-test)
+	 (p-display p (indent++) "while (")
+	 (if (and (inherits-from? this.test (node 'Const))
+		  (eq? this.test.value #t))
+	     (p-display p "true")
+	     (begin
+		(if needs-call/cc?
+		    (p-display p "sc_callCcIndex || ("))
+		(this.test.compile p)
+		(if needs-call/cc? (p-display p ")"))))
+	 (p-display p ") "))
+      
+      (define (compile-body)
+	 (p-display p "{\n")
+	 (this.body.compile p)
+	 (p-display p (--indent) "}\n"))
+      
+      (compile-test)
+      (if (or (not (config 'call/cc))
+	      (not needs-loop-var-call/cc?))
+	  (compile-body)
+	  (let* ((index this.call/cc-loop-index)
+		 (counter (call/cc-loop-counter index))
+		 (finally-scopes this.finally-scopes))
+	     (p-display
+	      p
+	      (indent++) "{\n")
+	     (unless (null? finally-scopes)
+		(p-display
+		 p
+		"try {\n"))
+	     (compile-body)
+	     (unless (null? finally-scopes)
+		(p-display
+		 p
+		 (--indent)
+		 "} finally {\n")
+		(indent++)
+		(p-display
+		 p
+		 (indent++)
+		 "if (sc_callCcState) {\n")
+		(for-each
+		 (lambda (scope)
+		    (let ((frame (call/cc-frame scope)))
+		       (p-display
+			p
+			(indent++) "if (" frame "." counter " === " counter " &&"
+			" sc_callCcState[" frame "]) {\n")
+		       (for-each
+			(lambda (var)
+			   (p-display p (indent) "sc_callCcFrame[" frame "]."
+				      var.compiled-name " = " var.compiled ";\n"))
+			scope.finally-vars)
+		       (p-display p (--indent) "}\n")))
+		 finally-scopes)
+		(p-display p (--indent) "}\n") ;; if sc_callCcState
+		(p-display p (--indent) "}\n")) ;; finally
+	     (p-display p (--indent) "}\n")))))
+
+			  
+(define-pmethod (Call/cc-Counter-Update-compile p)
+   (check-stmt-form
+    this p
+    (p-display p (call/cc-loop-counter this.index) "++")))
+
+(define-pmethod (Continue-compile p)
+   ;; TODO: care about label?
+   (check-stmt-form
+    this p
+    (p-display p "continue")))
 
 (define-pmethod (Return-compile p)
-   (p-display p "return ")
-   (this.val.compile p)
-   (p-display p ";\n"))
-
-(define-pmethod (Closure-alloc-compile p)
-   (p-display p "(new Object())"))
-
-(define-pmethod (Closure-use-compile p)
-   (define (p-display-closures p closures)
-      (p-display p
-		 (car closures).var.compiled)
-      (for-each (lambda (closure)
-		   (p-display p
-			      ", "
-			      closure.var.compiled))
-		(cdr closures)))
-   
    (check-stmt-form
     this p
-    (p-display p "function(")
-    (p-display-closures p this.closures)
-    (p-display p ") { return ")
-    (this.body.compile p)
-    (p-display p "; }(")
-    (p-display-closures p this.closures)
-    (p-display p ")")))
+    (p-display p "return ")
+    (this.val.compile p)))
 
-(define-pmethod (Closure-with-use-compile p)
-   (for-each (lambda (closure)
-		(p-display
-		 p
-		 "with (" closure.var.compiled ") {\n"))
-	     this.closures)
-   (this.body.compile p)
-   (for-each (lambda (closure)
-		(p-display
-		 p
-		 "}"))
-	     this.closures)
-   (p-display p "\n"))
-
-(define-pmethod (Closure-ref-compile p)
-   (check-stmt-form
-    this p
-    (p-display p this.var.compiled)))
-   
 (define-pmethod (Labelled-compile p)
-   (p-display p (mangle-JS-sym this.label) ":{\n")
+   (p-display p (indent++) (mangle-JS-sym this.label.id) ":{\n")
    (this.body.compile p)
-   (p-display p "\n}"))
+   (p-display p (--indent) "}\n"))
 
 (define-pmethod (Break-compile p)
-   (p-display p "{\n")
-   (this.val.compile p)
-   (if this.labelled
-       (p-display p "break " (mangle-JS-sym this.labelled.label) ";\n")
-       (p-display p "break;\n"))
-   (p-display p "}\n"))
+   ;; TODO: should never happen. Verify.
+   (when this.val
+      (p-display p (indent++) "{\n")
+      (this.val.compile p))
+   (if this.label
+       (p-display p (indent) "break " (mangle-JS-sym this.label.id) ";\n")
+       (p-display p (indent) "break;\n"))
+   (when this.val
+      (p-display p (--indent) "}\n")))
 
 (define-pmethod (Pragma-compile p)
    (p-display p "(" this.str ")"))

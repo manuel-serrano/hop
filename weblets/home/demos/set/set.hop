@@ -1,32 +1,9 @@
 (module hophome_demos-set
-;   (include "util.sch")
-   (library hopscheme)
-   (import hophome_demos-set-game)
+   (import hophome_demos-set-util
+	   hophome_demos-set-game)
    (export (home/demos/set)))
 
-;; TODO: include "util.sch" doesn't work...
-;; =======================================
-(define *home-directory* (string-append (dirname (the-loading-file)) "/"))
-
-(define *set-lock* (make-mutex "set"))
-
-(define (rel-path path)
-   (string-append *home-directory* path))
-
-(define (<CHECKBOX> name checked? . L)
-   (if checked?
-       (apply <INPUT> (cons* :name name :type "checkbox" :checked "checked" L))
-       (apply <INPUT> (cons* :name name :type "checkbox" L))))
-
-(define (<TEXT-FIELD> name . L)
-   (apply <INPUT> (cons* :name name :type "text" L)))
-
-(define (<SUBMIT> label . L)
-   (apply <INPUT> (cons* :value label :type "submit" L)))
-
-(define (<RESET> label . L)
-   (apply <INPUT> (cons* :value label :type "reset" L)))
-;; =======================================
+(define *set-lock* (make-mutex))
 
 (define *small-card-width* 51) 
 (define *small-card-height* 76) 
@@ -37,6 +14,8 @@
    (let ((join-login (<INPUT> :type "hidden" :name "login"))
 	 (new-login (<INPUT> :type "hidden" :name "login")))
       (<HTML>
+	 (<HEAD>
+	    :base (service-base-url home/demos/set (current-request)))
 	 (<BODY>
 	    (<DIV>
 	       :id "createJoin-div"
@@ -107,17 +86,17 @@
 		  (<P> "A set of three matches, if for each property, all cards "
 		       "are either different or equal.")
 		  (<TABLE>
-		     (<TR> (<TH> :colspan 2 "Valid Exemples"))
+		     (<TR> (<TH> :colspan 2 "Valid Examples"))
 		     (<TR> (<TD>
 			      (<IMG> :height *small-card-height*
 				     :width *small-card-width*
-				     :src (rel-path "pics/bc1e.png"))
+				     :src "pics/bc1e.png")
 			      (<IMG> :height *small-card-height*
 				     :width *small-card-width*
-				     :src (rel-path "pics/bc2e.png"))
+				     :src "pics/bc2e.png")
 			      (<IMG> :height *small-card-height*
 				     :width *small-card-width*
-				     :src (rel-path "pics/bc3e.png")))
+				     :src "pics/bc3e.png"))
 			   (<TD>
 			      (<FONT>
 				 :size -3
@@ -129,13 +108,13 @@
 		     (<TR> (<TD>
 			      (<IMG> :height *small-card-height*
 				     :width *small-card-width*
-				     :src (rel-path "pics/bw2h.png"))
+				     :src "pics/bw2h.png")
 			      (<IMG> :height *small-card-height*
 				     :width *small-card-width*
-				     :src (rel-path "pics/gc2e.png"))
+				     :src "pics/gc2e.png")
 			      (<IMG> :height *small-card-height*
 				     :width *small-card-width*
-				     :src (rel-path "pics/rr2f.png")))
+				     :src "pics/rr2f.png"))
 			   (<TD>
 			      (<FONT>
 				 :size -3
@@ -173,14 +152,16 @@
 		   (<BODY>
 		      "Login is invalid or already used")))
 	       (else
-		(<GAME> login (cdr g) #f)))))))
+		(<GAME> (service-base-url home/demos/set/join-game
+					  (current-request))
+			login (cdr g) #f)))))))
 
 (define-service (home/demos/set/new-game login name rounds)
 ;   (tprint "login: " login "\n"
 ;	   "name: " name "\n"
 ;	   "rounds: " rounds)
-   (if (string? rounds)
-       (set! rounds (string->number rounds)))
+   (when (string? rounds)
+      (set! rounds (string->number rounds)))
    (with-lock *set-lock*
       (lambda ()
 	 (cond
@@ -203,10 +184,14 @@
 		(<BODY>
 		   "Game rounds must be > 0")))
 	    (else
-	     (let ((g (new-game name rounds)))
+	     (let* ((g (new-game name rounds))
+		    (base (service-base-url home/demos/set/new-game
+					    (current-request)))
+		    (svc (service  :ttl 1 ()
+				   (<GAME> base login g #t))))
+
 		(set! *games* (cons (cons name g) *games*))
 		(instantiate::http-response-string
 		   (start-line "HTTP/1.0 301 Moved Permanently")
-		   (header (list (cons 'location: (make-service-url
-						   (service :ttl 1 ()
-						      (<GAME> login g #t)))))))))))))
+		   (header (list (cons 'location:
+				       (make-service-url svc)))))))))))

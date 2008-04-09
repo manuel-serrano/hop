@@ -49,7 +49,7 @@ inside the HTML tree itself.
 
 If the attribute :inline is ++#t++ then the image content 
 (which is read from the :file name) is embedded inside the markup
-itself. This prevents the client to address a new request
+itself. This prevents the client from addressing a new request
 to the server in order to get the actual bytes composing the image.
 
 </markup>

@@ -5,133 +5,97 @@
    (option (loadq "protobject-eval.sch"))
    (import protobject
 	   nodes
+	   free-vars
+	   side
 	   verbose)
    (export (captured-vars tree::pobject)))
 
-;; free-vars and locals must be executed before using captured-vars
-
-;; assigns a "captured-vars" hashtable to each function.
-;; if a function captures a variable, it is marked as ".closure?" too.
-;; we handle the special case, where the function is only used within the scope
+;; if a function captures a variable, it is marked as ".closure?".
+;; Every variable that is captured is marked as ".captured?".
+;;
+;; we handle some cases, where the function is only used within the scope
 ;; of its variables. That is, if a function has free variables, but the
 ;; lifetime of the function itself is shorter than those of its free variables,
-;; the function is not considered to be a closure (and the '.captured-vars'
-;; would be empty).
+;; then the function is not considered to be a closure. (and the function is
+;; not marked es .closure, nor are its free variables marked as .captured?.
 (define (captured-vars tree::pobject)
    (verbose " collect captured")
+   (free-vars tree)
+   (side-effect tree)
    (overload traverse clean (Node
-			     Lambda
-			     Decl)
+			     (Module Scope-clean)
+			     (Lambda Scope-clean)
+			     (Let Scope-clean)
+			     (Tail-rec Scope-clean))
 	     (tree.traverse))
-   (overload traverse cc (Node
-			  Program
-			  Module
-			  Lambda
-			  Call
-			  Set!
-			  Var-ref)
-	     (tree.traverse '())))
+   (overload traverse captured (Node
+				Lambda
+				Call
+				Set!
+				Frame-alloc
+				Var-ref)
+	     (tree.traverse)))
 
 (define-pmethod (Node-clean)
    (this.traverse0))
 
-(define-pmethod (Lambda-clean)
+(define-pmethod (Scope-clean)
    (this.traverse0)
-   (delete! this.closure?)
-   (delete! this.captured-vars))
-
-(define-pmethod (Decl-clean)
-   (delete! this.var.captured?))
+   (delete! this.closure?) ;; only for Lambdas
+   (for-each (lambda (var) (delete! var.captured?))
+	     this.scope-vars))
 
 (define (mark-closure! proc)
    (unless proc.closure? ;; already done
       (set! proc.closure? #t)
-      (let ((captured-vars (make-eq-hashtable)))
-	 (set! proc.captured-vars captured-vars)
-	 (hashtable-for-each proc.free-vars
-			     (lambda (key val)
-				(hashtable-put! captured-vars key #t)
-				(set! key.captured? #t))))))
+      (hashtable-for-each proc.free-vars-ht
+			  (lambda (key val)
+			     (set! key.captured? #t)))))
 
-(define (in-visible-vars var visible-vars)
-   (any? (lambda (ht) (hashtable-contains? ht var))
-	 visible-vars))
+(define-pmethod (Node-captured)
+   (this.traverse0))
 
-(define (indirect-fun-call proc-var-ref visible-vars)
-   (let ((single-val proc-var-ref.var.single-value))
-      (if (and single-val
-	       (inherits-from? single-val (node 'Lambda)))
-	  (let* ((proc single-val)
-		 (free-vars proc.free-vars)
-		 (captured-vars (make-eq-hashtable)))
-	     (hashtable-for-each free-vars
-				 (lambda (key val)
-				    (if (not (in-visible-vars key
-							      visible-vars))
-					(begin
-					   (hashtable-put! captured-vars key #t)
-					   (set! key.captured? #t)))))
-
-	     (if (> (hashtable-size captured-vars) 0)
-		 (begin
-		    (set! proc.closure? #t)
-		    (set! proc.captured-vars captured-vars)))))))
-
-(define-pmethod (Node-cc visible-vars)
-   (this.traverse1 visible-vars))
-
-(define-pmethod (Program-cc visible-vars)
-   (let ((imported-ht (make-eq-hashtable)))
-      (for-each (lambda (var)
-		   (hashtable-put! imported-ht var #t))
-		this.imported)
-      (this.traverse1 (cons imported-ht visible-vars))))
-
-(define-pmethod (Module-cc visible-vars)
-   (pcall this Scope-cc visible-vars))
-
-(define-pmethod (Lambda-cc visible-vars)
-   (if this.free-vars?
+(define-pmethod (Lambda-captured . Lno-mark?)
+   (if (and (null? Lno-mark?)
+	    this.free-vars?)
        (mark-closure! this))
-   (this.traverse1 (cons this.local-vars visible-vars))
-   (let ((escaping-locals (make-eq-hashtable)))
-      (hashtable-for-each this.local-vars
-			  (lambda (var val)
-			     (if var.captured?
-				 (hashtable-put! escaping-locals var #t))))
-      (set! this.escaping-locals escaping-locals)))
+   (this.traverse0))
 
-(define-pmethod (Scope-cc visible-vars)
-   (this.traverse1 (cons this.local-vars visible-vars)))
-
-;; this is the only place, where we allow capturing functions.
-(define-pmethod (Call-cc visible-vars)
+;; a Call is the only place, where we allow capturing functions.
+(define-pmethod (Call-captured)
    (let ((operator this.operator)
 	 (operands this.operands))
       (cond
 	 ((inherits-from? operator (node 'Lambda))
-	      (pcall operator Scope-cc visible-vars))
+	  (pcall operator Lambda-captured 'no-mark))
 	 ((inherits-from? operator (node 'Var-ref))
-	  (indirect-fun-call operator visible-vars))
+	  ;; no need to go into Var-ref. if it references a lambda, we don't
+	  ;; want to know (as we allow lambda-refs in calls).
+	  'done)
 	 (else
-	  (operator.traverse visible-vars)))
+	  (operator.traverse)))
       (for-each (lambda (node)
-		   (node.traverse visible-vars))
+		   (node.traverse))
 		operands)))
 
-(define-pmethod (Set!-cc visible-vars)
+(define-pmethod (Set!-captured)
    (let ((var this.lvalue.var)
 	 (val this.val))
-      ;; if this is the single assignment, we can ignore it.
-      (if (and var.single-value
+      ;; If val is a lambda do not yet mark it as closure (if it has free
+      ;; vars), but wait for its first use. (In the best case we are able to
+      ;; determine that all free vars are still alive.
+      (if (and var.constant?
 	       (inherits-from? val (node 'Lambda)))
-	  (pcall val Scope-cc visible-vars)
-	  (val.traverse visible-vars))))
+	  (pcall val Lambda-captured 'no-mark)
+	  (val.traverse))))
 
-(define-pmethod (Var-ref-cc visible-vars)
-   (let ((single-val this.var.single-value))
-      (if (and single-val
-	       (inherits-from? single-val (node 'Lambda)))
-	  (mark-closure! single-val))))
+(define-pmethod (Frame-alloc-captured)
+   (this.traverse0)
+   (set! this.storage-var.captured? #t))
 
-
+(define-pmethod (Var-ref-captured)
+   (let ((constant? this.var.constant?)
+	 (value this.var.value))
+      (if (and constant?
+	       (inherits-from? value (node 'Lambda)))
+	  (mark-closure! value))))

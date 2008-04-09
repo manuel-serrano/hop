@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/Makefile                                */
+#*    serrano/prgm/project/hop/1.9.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Nov 23 12:21:16 2007 (serrano)                */
+#*    Last change :  Wed Apr  9 08:38:05 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -32,7 +32,7 @@ POPDIRS		= runtime hopscheme scheme2js src hopsh \
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib share weblets bin
 
-build: showflags bindir libdir lib share weblets bin
+build: showflags bindir libdir lib share weblets bin $(BUILD-SPECIFIC)
 
 bindir:
 	mkdir -p bin
@@ -80,9 +80,17 @@ ude:
 	(cd hopsh; $(MAKE) ude)
 
 #*---------------------------------------------------------------------*/
+#*    changelog                                                        */
+#*---------------------------------------------------------------------*/
+.PHONY: changelog
+
+changelog:
+	@ $(MAKE) log
+
+#*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
-install: install-quick
+install: install-quick $(INSTALL-SPECIFIC)
 	(cd share && $(MAKE) install)
 	(cd weblets && $(MAKE) install)
 
@@ -155,8 +163,8 @@ cleanall: distclean
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
 distrib:
-	if [ -d $(HOPTMPDIR)/hop ]; then \
-          echo "*** ERROR: $(HOPTMPDIR)/hop exists!"; \
+	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop-tmp exists!"; \
           exit 1; \
         elif [ -d $(HOPTMPDIR)/hop-$(HOPRELEASE) ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop-$(HOPRELEASE) exists!"; \
@@ -188,9 +196,10 @@ distrib:
           echo "minor=$$min" >> .hoprelease; \
           (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
 	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
-          $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
-          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
-          tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
+          $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
+	  $(MAKE) changelog > $(HOPTMPDIR)/hop-tmp/ChangeLog && \
+          mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
+          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .hgtags -C $(HOPTMPDIR) hop-$$distrib && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
@@ -199,11 +208,12 @@ distrib:
             fi \
           fi; \
 	  echo "Building hop-$(HOPRELEASE).jar..."; \
-          $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
-          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
+          $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
+          mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
           (cd $(HOPTMPDIR)/hop-$$distrib && \
            ./configure --backend=jvm && \
            $(MAKE) && \
+	   $(MAKE) changelog > ChangeLog && \
            /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.jar && \
            mv bin/hop.jar $(HOPDISTRIBDIR)/hop-$$distrib.jar) && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
@@ -211,8 +221,8 @@ distrib:
 
 # build a distribution without incrementing the version number
 distrib-sans-version:
-	if [ -d $(HOPTMPDIR)/hop ]; then \
-          echo "*** ERROR: $(HOPTMPDIR)/hop exists!"; \
+	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
+          echo "*** ERROR: $(HOPTMPDIR)/hop-tmp exists!"; \
           exit 1; \
         elif [ -d $(HOPTMPDIR)/hop-$(HOPRELEASE) ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop$(HOPRELEASE) exists!"; \
@@ -231,8 +241,9 @@ distrib-sans-version:
           fi; \
           (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
 	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
-          $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
-          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
+          $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
+	  $(MAKE) changelog > $(HOPTMPDIR)/hop-tmp/ChangeLog && \
+          mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
           tar cvfz hop-$$distrib.tar.gz --exclude .hg -C $(HOPTMPDIR) hop-$$distrib && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
@@ -242,11 +253,12 @@ distrib-sans-version:
             fi \
           fi; \
 	  echo "Building hop-$(HOPRELEASE).jar..."; \
-          $(MAKE) clone DESTDIR=$(HOPTMPDIR)/hop && \
-          mv $(HOPTMPDIR)/hop $(HOPTMPDIR)/hop-$$distrib && \
+          $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
+          mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
           (cd $(HOPTMPDIR)/hop-$$distrib && \
            ./configure --backend=jvm && \
            $(MAKE) && \
+	   $(MAKE) changelog > ChangeLog && \
            /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.jar && \
            mv bin/hop.jar $(HOPDISTRIBDIR)/hop-$$distrib.jar) && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \

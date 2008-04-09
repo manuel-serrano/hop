@@ -41,14 +41,14 @@ function hop_dashboard_start_applet( name, svc ) {
    node_style_set( ifr, "background", "white" );
    node_style_set( ifr, "overflow", "hidden" );
    
-   hop_window_open( new sc_Keyword( "id" ), id,
-		    new sc_Keyword( "src" ), ifr,
-		    new sc_Keyword( "background" ), "white",
-		    new sc_Keyword( "title" ), name,
-		    new sc_Keyword( "class" ), "hop_dashboard_applet",
-		    new sc_Keyword( "left" ), 10,
-		    new sc_Keyword( "top" ), 10,
-		    new sc_Keyword( "parent" ), document.body );
+   hop_window_open( sc_jsstring2keyword( "id" ), id,
+		    sc_jsstring2keyword( "src" ), ifr,
+		    sc_jsstring2keyword( "background" ), "white",
+		    sc_jsstring2keyword( "title" ), name,
+		    sc_jsstring2keyword( "class" ), "hop_dashboard_applet",
+		    sc_jsstring2keyword( "left" ), 10,
+		    sc_jsstring2keyword( "top" ), 10,
+		    sc_jsstring2keyword( "parent" ), document.body );
 }
 
 /*---------------------------------------------------------------------*/

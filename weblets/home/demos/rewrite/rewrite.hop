@@ -8,8 +8,7 @@
       (<HTML>
 	 (<HEAD>
 	    :title "Home rewrite demo"
-	    :base (service-base-url home/demos/rewrite (current-request))
-	    :css "rewrite.hss")
+	    :css (service-resource home/demos/rewrite "rewrite.hss"))
 	 (<BODY>
 	    (<H1> "Rewrite the following URL")
 	    url

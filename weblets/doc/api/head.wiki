@@ -86,7 +86,9 @@ overrides the previous ones).
   * The attribute :inline enables inlining of local scripts and CSS/HSS files.
  Note that only local (i.e., files whose name is a relative URL) can be inlined.
  This option is useful for building stand alone documents. That is documents, 
- whose complete implementation is contained in one source file.
+ whose complete implementation is contained in one source file. When 
+ the :inline attribute is set to ++#t++, the client does not address new
+ requests to get the CSS and script files.
 
   (<HEAD> 
      :css (service-resource svc "foo.css")

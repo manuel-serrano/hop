@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/home/config.hop                 */
+;*    serrano/prgm/project/hop/1.9.x/weblets/home/config.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Mon Sep 24 09:59:28 2007 (serrano)                */
+;*    Last change :  Tue Dec  4 11:08:56 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Home configuration                                               */
@@ -19,6 +19,7 @@
 	   (home-dir)
 	   (home-rc-directory)
 	   (home-hop-stable-version)
+	   (home-hop-stable-version-set! version)
 	   (home-hop-devel-version)
 	   (home-hop-devel-version-set! version)
 	   (home-articles-url-base)
@@ -50,7 +51,7 @@
 ;*    home-hop-stable-version ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter home-hop-stable-version
-   "1.7.0")
+   "1.8.0")
 
 ;*---------------------------------------------------------------------*/
 ;*    home-hop-devel-version ...                                       */

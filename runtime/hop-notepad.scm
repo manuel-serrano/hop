@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-notepad.scm                 */
+;*    serrano/prgm/project/hop/1.9.x/runtime/hop-notepad.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Oct 10 05:36:27 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Wed Mar 26 07:31:03 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
 ;*=====================================================================*/
@@ -19,6 +19,7 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
+	    __hop_hop-extra
 	    __hop_misc
 	    __hop_js-lib
 	    __hop_service)
@@ -26,7 +27,8 @@
    (static  (class xml-nphead-element::xml-element)
 	    (class xml-nptabhead-element::xml-element)
 	    (class xml-nptab-element::xml-element
-	       (head::xml-nptabhead-element read-only)))
+	       (head::xml-nptabhead-element read-only)
+	       (onselect read-only)))
    
    (export  (<NOTEPAD> . ::obj)
 	    (<NPHEAD> . ::obj)
@@ -45,15 +47,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    notepad ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (notepad id history attrs head tabs)
+(define (notepad id history attrs head tabs onchange)
+   
    (define svc
       (hop->json
        (procedure->service
 	(lambda (i)
-	   (nptab-get-body (list-ref tabs i))))))
+	   (nptab-get-body (list-ref tabs i))))
+       #f))
+   
    (define (make-tab-div tab i)
       (with-access::xml-nptab-element tab (attributes (idt id) body)
-	 (let ((click (format "hop_notepad_select( \"~a\", \"~a\", ~a )"
+	 (let ((click (format "hop_notepad_select( '~a', '~a', ~a )"
 			      id idt (if history "true" "false"))))
 	    (set! attributes
 		  (cons* (cons "onclick" click)
@@ -74,6 +79,7 @@
 		"")
 	       (else
 		body)))))
+   
    (let ((bodies (map (lambda (t i) (make-tab-div t i))
 		      tabs (iota (length tabs))))
 	 (attrs (append-map (lambda (a)
@@ -86,6 +92,10 @@
 	     head
 	     (<DIV> :class "hop-notepad-tabs" tabs)
 	     (<DIV> :class "hop-notepad-body" bodies)
+	     (when onchange
+		(<SCRIPT> :class "hop-notepad-init"
+		   (format "document.getElementById('~a').onchange = ~a"
+			   id (obj->thunk onchange))))
 	     attrs)))
    
 ;*---------------------------------------------------------------------*/
@@ -93,6 +103,7 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <NOTEPAD> ((id #unspecified string)
 				(history #unspecified)
+				(onchange #f)
 				(attrs)
 				body)
    (let ((id (xml-make-id id 'NOTEPAD))
@@ -107,7 +118,7 @@
 	     (set! body (filter xml-nptab-element? body))))
       (if (null? body)
 	  (error '<NOTEPAD> "Missing <NPTAB> elements" id)
-	  (notepad id history attrs head body))))
+	  (notepad id history attrs head body onchange))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <NPHEAD> ...                                                     */
@@ -138,6 +149,7 @@
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <NPTAB> ((id #unspecified string)
 			      (selected #f)
+			      (onselect #f)
 			      (attr)
 			      body)
    (cond
@@ -150,19 +162,39 @@
 	  (markup 'span)
 	  (id (xml-make-id id 'NPTAB))
 	  (attributes attr)
+	  (onselect onselect)
 	  (head (car body))
 	  (body (cdr body))))))
+
+;*---------------------------------------------------------------------*/
+;*    obj->thunk ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (obj->thunk obj)
+   (cond
+      ((xml-tilde? obj)
+       (tilde->string (tilde-make-thunk obj)))
+      ((string? obj)
+       (format "function( val ) { ~a }" obj))
+      (else
+       "false")))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-nptab-element p backend)
-   (with-access::xml-nptab-element obj (id head attributes)
-      (display "<span id=\"" p)
+   (with-access::xml-nptab-element obj (id head attributes onselect)
+      (display "<span id='" p)
       (display id p)
-      (display "\"" p)
+      (display "'" p)
       (xml-write-attributes attributes p)
       (display ">" p)
+      (when onselect
+	 (display "<script>" p)
+	 (display "document.getElementById( '" p)
+	 (display id p)
+	 (display "' ).onselect = " p)
+	 (display (obj->thunk onselect) p)
+	 (display "</script>" p))
       (xml-write head p backend)
       (display "</span>" p)))
 

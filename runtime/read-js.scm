@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/read-js.scm                     */
+;*    serrano/prgm/project/hop/1.9.x/runtime/read-js.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Wed Nov 14 07:32:54 2007 (serrano)                */
+;*    Last change :  Mon Dec  3 11:56:34 2007 (serrano)                */
 ;*    Copyright   :  2005-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
@@ -15,9 +15,12 @@
 (module __hop_read-js
    
    (import __hop_read
-	   __hop_param)
+	   __hop_param
+	   __hop_charset)
    
-   (export (hop-read-javascript ::input-port)))
+   (export (hop-read-javascript #!optional
+				(iport::input-port (current-input-port))
+				(charset (hop-locale)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-read-javascript ...                                          */
@@ -25,9 +28,12 @@
 ;*    This function is invoked when the initial "{" character has      */
 ;*    already been parsed.                                             */
 ;*---------------------------------------------------------------------*/
-(define (hop-read-javascript iport)
+(define (hop-read-javascript #!optional
+			     (iport::input-port (current-input-port))
+			     (charset (hop-locale)))
+
    (let* ((sp (input-port-position iport))
-	  (g (regular-grammar (bra-open acc)
+	  (g (regular-grammar (bra-open acc cset)
 		("{"
 		 (set! bra-open (+fx bra-open 1))
 		 (set! acc (cons "{" acc))
@@ -41,11 +47,11 @@
 		     (reverse! acc)))
 		((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
 		 (let ((s (the-substring 1 (-fx (the-length) 1))))
-		    (set! acc (cons (string-append "\"" s "\"") acc))
+		    (set! acc (cons (string-append "\"" (cset s) "\"") acc))
 		    (ignore)))
 		((: "\'" (* (or (out #a000 #\\ #\') (: #\\ all))) "\'")
 		 (let ((s (the-substring 1 (-fx (the-length) 1))))
-		    (set! acc (cons (string-append "\'" s "\'") acc))
+		    (set! acc (cons (string-append "\'" (cset s) "\'") acc))
 		    (ignore)))
 		((: "//" (* all))
 		 (ignore))
@@ -61,7 +67,7 @@
 		 (set! acc (cons "$" acc))
 		 (ignore))
 		("$"
-		 (let ((exp (hop-read iport))
+		 (let ((exp (hop-read iport charset))
 		       (pos (input-port-position iport)))
 		    (if (eof-object? exp)
 			(read-error/location "Unexpected end-of-file"
@@ -69,7 +75,7 @@
 					     (input-port-name iport)
 				 	     pos)
 			(begin
-			   (set! acc (cons `(hop->json ,exp) acc))
+			   (set! acc (cons `(hop->json ,exp #f) acc))
 			   (ignore)))))
 		(else
 		 (let ((char (the-failure)))
@@ -82,15 +88,16 @@
 					     (illegal-char-rep char)
 					     (input-port-name iport)
 					     (input-port-position iport))))))))
-      (let ((exp (read/rp g iport 1 '())))
-	 (cond
-	    ((null? exp)
-	     "")
-	    ((null? (cdr exp))
-	     (car exp))
-	    (else
-	     (if (every? string? exp)
-		 (apply string-append exp)
-		 `(string-append ,@exp)))))))
+      (let ((cvt (charset-converter! charset (hop-charset))))
+	 (let ((exp (read/rp g iport 1 '() cvt)))
+	    (cond
+	       ((null? exp)
+		"")
+	       ((null? (cdr exp))
+		(car exp))
+	       (else
+		(if (every? string? exp)
+		    (apply string-append exp)
+		    `(string-append ,@exp))))))))
 		
    

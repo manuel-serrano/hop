@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/test/Makefile                   */
+#*    serrano/prgm/project/hop/1.9.x/weblets/test/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Nov 30 17:37:16 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Tue Jan 22 09:24:14 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wizard weblet                                */
 #*=====================================================================*/
@@ -31,6 +31,6 @@ POPULATION	= Makefile test.hss test.hop \
 build: .afile
 
 .afile: $(POPULATION)
-	$(AFILE) -suffix hop $(POPULATION) > .afile
+	$(AFILE) -suffix hop $(POPULATION) -o .afile
 
 clean:

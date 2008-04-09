@@ -50,7 +50,7 @@ must include in their header, the following statement:
 | :height     |  integer  | the optional height.                            |
 | :left       |  integer  | the optional X coordinate.                      |
 | :top        |  integer  | the optional Y coordinate.                      |
-| :background |  color    | an optional background color.                   |
+| :background  |  color    | an optional background color.                   |
 | :toolbar    |  bool     | shows a toolbar.                                |
 | :scrollbars  |  bool     | shows scrollbars.                              |
 | :status     |  bool     | shows a status bar.                             |
@@ -106,7 +106,7 @@ that is the string value argument following the ++:prop++ keyword is append,
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
-| obj         |   obj     | A window identifier or a window itself.         |
+| obj         |   obj     | A window identifier or a window.                |
 </arguments>
 
 ~~
@@ -120,7 +120,7 @@ This client-side procedure closes a //window//.
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
-| obj         |   obj     | A window identifier or a window itself.         |
+| obj         |   obj     | A window identifier or a window.                |
 </arguments>
 
 ~~
@@ -134,7 +134,7 @@ This client-side procedure raises a //window//.
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
-| obj         |   obj     | A window identifier or a window itself.         |
+| obj         |   obj     | A window identifier or a window.                |
 </arguments>
 
 ~~
@@ -148,7 +148,7 @@ This client-side procedure iconifies a //window//.
 
 <arguments>
 ^  arguments  ^   type      ^   description                              ^
-| obj         |   obj       | A window identifier or a window itself.    |
+| obj         |   obj       | A window identifier or a window.           |
 | width       |  dimension  | new window width.                          |
 | height      |  dimension  | new window height.                         |
 </arguments>
@@ -164,7 +164,7 @@ This client-side procedure resizes a //window//.
 
 <arguments>
 ^  arguments  ^   type    ^   description                                   ^
-| obj         |   obj     | A window identifier or a window itself.         |
+| obj         |   obj     | A window identifier or a window.                |
 </arguments>
 
 ~~

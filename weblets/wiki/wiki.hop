@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/wiki/wiki.hop                   */
+;*    serrano/prgm/project/hop/1.9.x/weblets/wiki/wiki.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Nov 29 07:29:43 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Fri Apr  4 15:13:47 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
 ;*=====================================================================*/
@@ -12,7 +12,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module weblet_wiki
+(module wiki
+   (import wiki_config)
    (export wiki
 	   wiki/documentation
 	   wiki/preferences))
@@ -20,121 +21,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-service (wiki file)
+(define-service (wiki path)
    (let ((req (current-request)))
-      (if (string? file)
-	  (if (authorized-path? req file)
-	      (wiki-view req file)
+      (if (string? path)
+	  (if (authorized-path? req path)
+	      (wiki-view req path)
 	      (user-access-denied))
 	  (wiki-query req))))
-
-;*---------------------------------------------------------------------*/
-;*    wiki-filter ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (wiki-filter p)
-   (let* ((b (basename p))
-	  (l (string-length b)))
-      (if (directory? p)
-	  (not (or (string=? b ".")
-		   (string=? b "..")
-		   (string=? b "lost+found")))
-	  (and (>fx l 0)
-	       (not (char=? (string-ref b 0) #\.))
-	       (or (not (request-get 'browser-filter))
-		   (is-suffix? p "wiki"))))))
-
-;*---------------------------------------------------------------------*/
-;*    wiki-query ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (wiki-query req)
-   (<HTML>
-      (<HEAD>
-	 :title "Wiki selection page"
-	 :include "hop-fileselect" "hop-window" "hop-tree"
-	 :base (service-base-url wiki req)
-	 :favicon "etc/favicon.png"
-	 :css "wiki.hss")
-      (<BODY> :class "wiki"
-	 (<DIV> :align 'center
-	    (<TABLE> :class "wiki"
-	       (<TR>
-		  (<TD> :valign "top"
-		     (<IMG> :id "logo"
-			:inline #t
-			:src (service-resource wiki "etc/logo.png")))
-		  (<TD>
-		     (<DIV> :id "wiki-title" "Hop Wiki Pre-Viewer")
-		     (<FORM>
-			:action wiki
-			(let ((hide (<INPUT> :type 'checkbox
-				       :value "sld"
-				       :checked #t)))
-			   (<TABLE>
-			      (<TR>
-				 (<TH>
-				    "File: ")
-				 (<TD>
-				    (<FILESELECT>
-				       :id "file"
-				       :value (getenv "HOME")
-				       :onchange ~(set! document.location ($wiki this.value))
-				       :size 60))
-				 (<TD>
-				    (<FILEBROWSE>
-				       :title "Wiki File Selector"
-				       :value "/"
-				       :path (getenv "HOME")
-				       :onmousedown ~(set! this.value "/")
-				       :filter wiki-filter
-				       :onclick ~(request-set! 'browser-filter $hide.checked)
-				       :onselect ~(set! document.location ($wiki this.value)))))
-			      (<TR>
-				 (<TD> :colspan 3 :class "comment"
-				    :style "border-bottom: 1px solid #bbb"
-				    [Only show ,(<TT> ".wiki") files]
-				    ~(request-set! 'browser-filter #t)
-				    hide))
-			      (<TR>
-				 (<TD> :colspan 3 :class "separator"
-				    "&#160;"))
-			      (<TR>
-				 (<TD> :align 'left :colspan 3
-				    (<BUTTON>
-				       :onclick
-				       ~(let ((v (dom-get-element-by-id document "file")))
-					   (stop-event-propagation event)
-					   (set! document.location ($wiki v.value)))
-				       "Go..."))))))))))
-	 (<FOOT>))))
-
-
-;*---------------------------------------------------------------------*/
-;*    wiki-view ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (wiki-view req file)
-   (if (file-exists? file)
-       (<HTML>
-	  (<HEAD> :title "Hop wiki"
-	     :base (service-base-url wiki req)
-	     :favicon "etc/favicon.png"
-	     :css "wiki.hss")
-	  (<BODY> :class "wiki"
-	     (<DIV> :align "center"
-		(<TABLE> :class "wiki"
-		   (<COLGROUP> (<COL> :width "0*"))
-		   (<TR>
-		      (<TD> :valign "top"
-			 (<IMG> :id "logo"
-			    :inline #t
-			    :src (service-resource wiki "etc/logo.png")))
-		      (<TD> (<DIV> :id "wiki-title" "Hop Wiki Pre-Viewer")
-			    (<TABLE> :width "100%"
-			       (<TR> (<TD> :class "document"
-					(when (and (file-exists? file)
-						   (not (directory? file)))
-					   (wiki-file->hop file)))))))))
-	     (<FOOT>)))
-       (http-file-not-found file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki/documentation ...                                           */
@@ -151,4 +44,150 @@
 ;*---------------------------------------------------------------------*/
 (define-service (wiki/preferences)
    (<HTML>
-      "No preferences defined for wiki"))
+      (<HEAD> :title "Hop wiki"
+	 :base (service-base-url wiki req)
+	 :favicon "etc/favicon.png"
+	 :css "wiki.hss")
+      (<WIKI:BODY> :class "wiki"
+	 ~(define (preferences)
+	     (with-hop ($(service ()
+			    (let ((prefs (hopmail-prefs))
+				  (dir (dirname prefs)))
+			       (unless (directory? dir)
+				  (make-directories dir))
+			       (hopmail-preferences-save prefs)
+			       prefs)))))
+	 (wiki-preferences-edit :onclick ~(preferences)))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki/edit ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-service (wiki/edit file)
+   (let ((req (current-request)))
+      (if (and (authorized-service? req 'wiki/edit)
+	       (authorized-path? req file))
+	  (if (file-exists? file)
+	      (<HTML>
+		 (<HEAD> :title "Hop wiki"
+		    :base (service-base-url wiki req)
+		    :favicon "etc/favicon.png"
+		    :css "wiki.hss")
+		 (let ((editor (<TEXTAREA>
+				  :class "editor"
+				  :rows 70 :cols 80
+				  (with-input-from-file file read-string)))
+		       (base (service-base-url wiki/edit req)))
+		    (<WIKI:BODY>
+		       (<DIV> :id "wiki-edit" file)
+		       (<BUTTON>
+			  :onclick ~(if (confirm "Save the document?")
+					(with-hop ($(service (body)
+						       (with-output-to-file file
+							  (lambda ()
+							     (display body))))
+						    $editor.value)))
+			  "Save")
+		       (<DIV> :align "center"
+			  editor))))
+	      (htt-file-not-found file))
+	  (user-access-denied))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki/edit/editor ...                                             */
+;*---------------------------------------------------------------------*/
+(define-service (wiki/edit/editor file editor)
+   (let ((req (current-request)))
+      (if (and (authorized-service? req 'wiki/edit/editor)
+	       (authorized-path? req file))
+	  (begin
+	     (run-process editor file :wait #f)
+	     #f)
+	  (user-access-denied))))
+   
+;*---------------------------------------------------------------------*/
+;*    <WIKI:BODY> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<WIKI:BODY> . body)
+   (<BODY> :class "wiki"
+      (<DIV> :align 'center
+	 (<TABLE> :class "wiki"
+	    (<TR>
+	       (<TD> :valign "top"
+		  (<DIV>
+		     (<IMG> :id "logo"
+			:inline #t
+			:src (service-resource wiki "etc/logo.png")))
+		  (<DIV> :class "version" "HopWiki v " (wiki-version)))
+	       (<TD> :id "body"
+		  (<DIV> :id "wiki-title" "Hop Wiki Pre-Viewer")
+		  body))))
+      (<FOOT>)))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-query ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (wiki-query req)
+   (<HTML>
+      (<HEAD>
+	 :title "Wiki selection page"
+	 :include "hop-paned" "hop-file" "hop-window" "hop-tree"
+	 :base (service-base-url wiki req)
+	 :favicon "etc/favicon.png"
+	 :css "wiki.hss")
+      (<WIKI:BODY>
+	 (<FORM> :action wiki
+	    (<FILECHOOSER>
+	       :filters '(("Wiki (*.wiki)" "^[^.].*[.]wiki$")
+			  ("All Files" ".*"))
+	       :onopen ~(set! document.location ($wiki this.value)))))))
+
+;*---------------------------------------------------------------------*/
+;*    wiki-view ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (wiki-view req file)
+   (if (file-exists? file)
+       (<HTML>
+	  (<HEAD> :title "Hop wiki"
+	     :base (service-base-url wiki req)
+	     :favicon "etc/favicon.png"
+	     :css "wiki.hss")
+	  (<WIKI:BODY> :class "wiki"
+	     (<DIV> :id "wiki-edit"
+		(when (authorized-service? req 'wiki/edit)
+		   (<TABLE> :class 'edit :width "100%"
+		      (<TR> (<TD> file)
+			    (<TD> :class 'edit
+			       (if (http-request-localhostp req)
+				   (<EDIT:EMACS> file)
+				   (<EDIT:EDIT> file)))))))
+	     (<TABLE> :width "100%"
+		(<TR> (<TD> :class "document"
+			 (when (and (file-exists? file)
+				    (not (directory? file)))
+			    (wiki-file->hop file)))))))
+       (http-file-not-found file)))
+
+;*---------------------------------------------------------------------*/
+;*    <EDIT:EDIT> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<EDIT:EDIT> file)
+   (list "[ "
+	 (<SPAN> :class "edit"
+	    :onclick ~(window.open $(make-service-url wiki/edit file)) "edit")
+	 " ]"))
+   
+;*---------------------------------------------------------------------*/
+;*    <EDIT:EMACS> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<EDIT:EMACS> file)
+   (let ((editor (preference-get 'wiki-editor :default "emacs")))
+      (list "[ "
+	    (<SPAN> :class "edit"
+	       :onclick ~(window.open $(make-service-url wiki/edit file)) "edit")
+	    " | "
+	    (<SPAN>
+	       :class "edit"
+	       :onclick ~(with-hop ($wiki/edit/editor $file $editor))
+	       (basename editor))
+	    " ]")))
+   

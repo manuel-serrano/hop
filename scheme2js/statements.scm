@@ -1,6 +1,7 @@
 (module statements
    (include "protobject.sch")
    (include "nodes.sch")
+   (include "tools.sch")
    (option (loadq "protobject-eval.sch"))
    (import protobject
 	   mark-statements
@@ -9,6 +10,11 @@
 	   verbose)
    (export (statements! tree::pobject)))
 
+;; these pass happens after the scope-flattening pass. As a result there don't
+;; exist any Let nodes anymore, and temporary variables can not be put into
+;; Let-nodes. Any allocated var has to be added into the "declared-vars" list
+;; of the surrounding fun/module.
+;; Also they must not have any influence on call/cc.
 (define (statements! tree::pobject)
    (verbose "statements")
    (mark-statements tree)
@@ -17,106 +23,141 @@
 (define (transform-statements! tree::pobject)
    (verbose "  transform-statements")
    (overload traverse! transform-statements! (Node
-					      Program
 					      Module
 					      (Const Value-transform-statements!)
 					      (Var-ref Value-transform-statements!)
 					      Lambda
+					      (Frame-alloc Value-transform-statements!)
+					      Frame-push
 					      If
 					      Case
 					      Clause
 					      Set!
 					      Begin
 					      Call
-					      Tail-rec
 					      While
-					      Tail-rec-call
+					      Continue
 					      Return
-					      (Closure-alloc Value-transform-statements!)
-					      Closure-use
-					      Closure-with-use
-					      (Closure-ref Value-transform-statements!)
+					      (Call/cc-Counter-Update Value-transform-statements!)
+					      (Call/cc-Resume Value-transform-statements!)
 					      Labelled
 					      Break
 					      (Pragma Value-transform-statements!))
-	     (tree.traverse! #f #t)))
+	     (tree.traverse! #f #f #t)))
 
 (define-pclass (Return-Assig))
 (set! Return-Assig.proto.assig (pmethod (val) (new-node Return val)))
 
-(define-macro (as-expression field)
-   (let* ((this-field (symbol-append 'this. field))
-	  (this-field-traverse! (symbol-append this-field '.traverse!)))
-      `(if (marked-node? ,this-field)
-	   (let* ((stmt-id (gensym ',field))
-		  (stmt-var-decl (Decl-of-new-Var stmt-id))
-		  (stmt-var stmt-var-decl.var)
-		  (new-stmt (,this-field-traverse! stmt-var #t))
-		  (begin-node (new-node Begin (list new-stmt this))))
-	      (mark-node! begin-node #t)
-	      (set! ,this-field stmt-var-decl)
-	      begin-node)
-	   (begin
-	      (set! ,this-field (,this-field-traverse! #f #f))
-	      this))))
-   
-(define-pmethod (Node-transform-statements! state-var/return statement-form?)
-   (error "Node-transform-statements!" "forgot Node-type: " this))
+(define (as-expression this surrounding-fun field)
+   (if (marked-node? (pfield this field))
+       (let* ((stmt-id field)
+	      (stmt-var-decl (Decl-of-new-Var stmt-id))
+	      (stmt-var stmt-var-decl.var)
+	      (new-stmt ((pfield this field).traverse!
+					    surrounding-fun stmt-var #t))
+	      (bnode (new-node Begin
+			       (list new-stmt this))))
+	  (cons-set! surrounding-fun.declared-vars stmt-var)
+	  (mark-node! bnode #t)
+	  (pfield-set! this field stmt-var-decl)
+	  bnode)
+       (begin
+	  (pfield-set! this field ((pfield this field).traverse!
+						      surrounding-fun #f #f))
+	  this)))
 
-(define-pmethod (Program-transform-statements! state-var/return statement-form?)
-   (set! this.body (this.body.traverse! state-var/return statement-form?)))
 
-(define-pmethod (Module-transform-statements! state-var/return statement-form?)
-   ;; we ignore the state-var/return entering Modules. (bad luck...)
-   (set! this.body (this.body.traverse! #f statement-form?))
+(define-pmethod (Node-transform-statements! surrounding-fun
+					    state-var/return
+					    statement-form?)
+   (error "Node-transform-statements!"
+	  "forgot Node-type: "
+	  (pobject-name this)))
+
+(define-pmethod (Module-transform-statements! surrounding-fun
+					      state-var/return
+					      statement-form?)
+   ;; treat module like a lambda (for surrounding-fun).
+   (set! this.body (this.body.traverse! this #f statement-form?))
    (mark-node! this statement-form?)
    this)
 
-(define-pmethod (Value-transform-statements! state-var/return statement-form?)
+(define-pmethod (Value-transform-statements! surrounding-fun
+					     state-var/return
+					     statement-form?)
    (let ((new-this (if state-var/return
 		       (state-var/return.assig this)
 		       this)))
       (mark-node! new-this statement-form?)
       new-this))
 
-(define-pmethod (Lambda-transform-statements! state-var/return statement-form?)
-   (set! this.body (this.body.traverse! #f #t))
-   (pcall this Value-transform-statements! state-var/return statement-form?))
+(define-pmethod (Lambda-transform-statements! surrounding-fun
+					      state-var/return
+					      statement-form?)
+   (set! this.body (this.body.traverse! this #f #t))
+   (pcall this Value-transform-statements!
+	  surrounding-fun state-var/return statement-form?))
 
-(define-pmethod (If-transform-statements! state-var/return statement-form?)
-   (let ((new-this (as-expression test)))
-      (set! this.then (this.then.traverse! state-var/return statement-form?))
-      (set! this.else (this.else.traverse! state-var/return statement-form?))
+(define-pmethod (Frame-push-transform-statements! surrounding-fun
+						  state-var/return
+						  statement-form?)
+   (set! this.body (this.body.traverse! surrounding-fun
+					state-var/return
+					statement-form?))
+   (mark-node! this statement-form?)
+   this)
+
+(define-pmethod (If-transform-statements! surrounding-fun
+					  state-var/return
+					  statement-form?)
+   (let ((new-this (as-expression this surrounding-fun 'test)))
+      (set! this.then (this.then.traverse! surrounding-fun
+					   state-var/return
+					   statement-form?))
+      (set! this.else (this.else.traverse! surrounding-fun
+					   state-var/return
+					   statement-form?))
       (mark-node! this statement-form?)
       new-this))
 
-(define-pmethod (Case-transform-statements! state-var/return statement-form?)
-   (let ((new-this (as-expression key)))
+(define-pmethod (Case-transform-statements! surrounding-fun
+					    state-var/return
+					    statement-form?)
+   (let ((new-this (as-expression this surrounding-fun 'key)))
       (let loop ((clauses this.clauses))
 	 (if (null? clauses)
 	     new-this
-	     (let ((new-clause ((car clauses).traverse! state-var/return #t)))
+	     (let ((new-clause ((car clauses).traverse!
+					     surrounding-fun
+					     state-var/return
+					     #t)))
 		(set-car! clauses new-clause)
 		(loop (cdr clauses)))))))
 
-(define-pmethod (Clause-transform-statements! state-var/return statement-form?)
+(define-pmethod (Clause-transform-statements! surrounding-fun
+					      state-var/return
+					      statement-form?)
    ;; the consts *must* be expressions.
    ;; the following loop should hence not be necessary.
    (let loop ((consts this.consts))
       (unless (null? consts)
-	 (set-car! consts ((car consts).traverse! #f #f))
+	 (set-car! consts ((car consts).traverse! surrounding-fun #f #f))
 	 (loop (cdr consts))))
    ;; statement-form? must be #t (as we are always in a 'case')
-   (set! this.expr (this.expr.traverse! state-var/return statement-form?))
+   (set! this.expr (this.expr.traverse! surrounding-fun
+					state-var/return
+					statement-form?))
    this)
 
-(define-pmethod (Set!-transform-statements! state-var/return statement-form?)
+(define-pmethod (Set!-transform-statements! surrounding-fun
+					    state-var/return
+					    statement-form?)
    (cond
       ((marked-node? this)
        (let* ((lvalue this.lvalue)
 	      (state-var/return-assig (and state-var/return
 				    (state-var/return.assig (new-node Const #unspecified))))
-	      (new-val (this.val.traverse! lvalue.var #t))
+	      (new-val (this.val.traverse! surrounding-fun lvalue.var #t))
 	      (bnode (new-node Begin
 			  `(,@(if (inherits-from? lvalue (node 'Decl))
 				  (list lvalue) ;; don't loose the Decl
@@ -140,33 +181,47 @@
 ; 	  (mark-node! bnode statement-form?)
 ; 	  bnode))
       (else
-       (set! this.val (this.val.traverse! #f #f))
+       (set! this.val (this.val.traverse! surrounding-fun #f #f))
        (mark-node! this statement-form?)
        this)))
 
-(define-pmethod (Begin-transform-statements! state-var/return statement-form?)
+(define-pmethod (Begin-transform-statements! surrounding-fun
+					     state-var/return
+					     statement-form?)
    (let loop ((exprs this.exprs))
       (cond
 	 ((null? exprs) 'do-nothing)
 	 ((null? (cdr exprs))
-	  (set-car! exprs ((car exprs).traverse! state-var/return statement-form?)))
+	  (set-car! exprs ((car exprs).traverse!
+				      surrounding-fun
+				      state-var/return
+				      statement-form?)))
 	 (else
-	  (set-car! exprs ((car exprs).traverse! #f statement-form?)) ;state-var/return))
+	  (set-car! exprs ((car exprs).traverse!
+				      surrounding-fun
+				      #f
+				      statement-form?)) ;state-var/return))
 	  (loop (cdr exprs)))))
    (mark-node! this statement-form?)
    this)
 
-(define-pmethod (Call-transform-statements! state-var/return statement-form?)
-   (let ((prolog '()))
+(define-pmethod (Call-transform-statements! surrounding-fun
+					    state-var/return
+					    statement-form?)
+   (let ((prolog '())
+	 (tmp-vars '()))
       (define (transform-optr/opnd expr)
 	 (if (marked-node? expr)
-	     (let* ((id (gensym 'optrOpnd))
+	     (let* ((id 'optrOpnd)
 		    (optr/opnd-var-decl (Decl-of-new-Var id))
 		    (expr-state-var optr/opnd-var-decl.var)
-		    (new-expr (expr.traverse! expr-state-var #t)))
+		    (new-expr (expr.traverse! surrounding-fun
+					      expr-state-var
+					      #t)))
 		(set! prolog (cons new-expr prolog))
-		optr/opnd-var-decl)
-	     (expr.traverse! #f #f)))
+		(set! tmp-vars (cons expr-state-var tmp-vars))
+		(expr-state-var.reference))
+	     (expr.traverse! surrounding-fun #f #f)))
 
       (set! this.operator (transform-optr/opnd this.operator))
       (let loop ((opnds this.operands))
@@ -183,7 +238,10 @@
 			  this)))
 	 
 	 (if (not (null? prolog))
-	     (let ((bnode (new-node Begin (append! prolog (list new-this)))))
+	     (let ((bnode (new-node Begin
+				    (append! prolog (list new-this)))))
+		(set! surrounding-fun.declared-vars
+		      (append! tmp-vars surrounding-fun.declared-vars))
 		(mark-node! bnode #t)
 		(mark-node! new-this #t)
 		bnode)
@@ -191,46 +249,53 @@
 		(mark-node! new-this statement-form?)
 		new-this)))))
 
-(define-pmethod (Tail-rec-transform-statements! state-var/return statement-form?)
-   (this.traverse2! state-var/return #t))
-
-(define-pmethod (While-transform-statements! state-var/return statement-form?)
+(define-pmethod (While-transform-statements! surrounding-fun
+					     state-var/return
+					     statement-form?)
    (if (marked-node? this.test)
        (error "While-transform-statements!"
 	      "while-test must not be statement-form"
 	      #f))
    
-   (set! this.test (this.test.traverse! #f #f))
-   (set! this.body (this.body.traverse! state-var/return #t))
+   (set! this.test (this.test.traverse! surrounding-fun #f #f))
+   (set! this.body (this.body.traverse! surrounding-fun #f #t))
    this)
 
-(define-pmethod (Tail-rec-call-transform-statements! state-var/return statement-form?)
+(define-pmethod (Continue-transform-statements! surrounding-fun
+						state-var/return
+						statement-form?)
    this)
 
-(define-pmethod (Return-transform-statements! state-var/return statement-form?)
+(define-pmethod (Return-transform-statements! surrounding-fun state-var/return statement-form?)
    (if (marked-node? this.val)
-       (this.val.traverse! (new Return-Assig) #t) ;; Return-Assig comes from this file.
+       ;; The class Return-Assig is declared in this file.
+       (this.val.traverse! surrounding-fun (new Return-Assig) #t)
        (begin
-	  (set! this.val (this.val.traverse! #f #f))
+	  (set! this.val (this.val.traverse! surrounding-fun #f #f))
 	  this)))
 
-(define-pmethod (Closure-use-transform-statements! state-var/return statement-form?)
-   (set! this.body (this.body.traverse! #f #f))
-   (pcall this Value-transform-statements! state-var/return statement-form?))
-
-(define-pmethod (Closure-with-use-transform-statements! state-var/return statement-form?)
-   (set! this.body (this.body.traverse! state-var/return #t))
-   this)
-
-(define-pmethod (Labelled-transform-statements! state-var/return statement-form?)
+(define-pmethod (Labelled-transform-statements! surrounding-fun
+						state-var/return
+						statement-form?)
    (set! this.state-var/return state-var/return)
-   (set! this.body (this.body.traverse! state-var/return #t))
+   ;; inform Breaks of state-var/return through the label.
+   (set! this.label.state-var/return state-var/return)
+   (set! this.body (this.body.traverse! surrounding-fun state-var/return #t))
+   (delete! this.label.state-var/return)
    this)
 
-(define-pmethod (Break-transform-statements! state-var/return statement-form?)
-   (let ((labelled-state-var/return this.labelled.state-var/return))
+(define-pmethod (Break-transform-statements! surrounding-fun
+					     state-var/return
+					     statement-form?)
+   (let ((labelled-state-var/return this.label.state-var/return))
       (if (inherits-from? labelled-state-var/return Return-Assig)
-	  (this.val.traverse! labelled-state-var/return #t)
-	  (begin
-	     (set! this.val (this.val.traverse! this.labelled.state-var/return #t))
-	     this))))
+	  (this.val.traverse! surrounding-fun labelled-state-var/return #t)
+	  (let ((traversed-val (this.val.traverse! surrounding-fun
+						   labelled-state-var/return
+						   #t)))
+	     ;; from now on the Break does not have any 'val' anymore.
+	     (set! this.val #f)
+	     (let ((bnode (new-node Begin
+				    (list traversed-val this))))
+		(mark-statement-form! bnode #t)
+		bnode)))))

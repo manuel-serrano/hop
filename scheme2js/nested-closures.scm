@@ -5,6 +5,8 @@
    (option (loadq "protobject-eval.sch"))
    (import protobject
 	   nodes
+	   locals
+	   free-vars
 	   captured-vars
 	   verbose)
    (export (nested-closures tree::pobject)))
@@ -14,7 +16,7 @@
    (verbose " nested-closures")
    (captured-vars tree)
    (overload traverse nested-closures (Node
-				       (Program Fun-nested-closures)
+				       (Module Fun-nested-closures)
 				       (Lambda Fun-nested-closures))
 	     (tree.traverse #f)))
 

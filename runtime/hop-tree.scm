@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-tree.scm                    */
+;*    serrano/prgm/project/hop/1.9.x/runtime/hop-tree.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Oct 10 05:38:47 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Mon Mar 31 09:50:32 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -20,6 +20,7 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
+	    __hop_img
 	    __hop_misc
 	    __hop_js-lib
 	    __hop_service
@@ -28,10 +29,12 @@
    (static  (class html-tree::xml-element
 	       (klass read-only)
 	       (head read-only)
-	       (open::bool read-only)
+	       (open::obj read-only)
 	       (multiselect::bool read-only)
 	       (onselect read-only)
 	       (onunselect read-only)
+	       (onopen read-only)
+	       (onclose read-only)
 	       (value read-only)
 	       (history::bool read-only)
 	       (inline::bool (default #t))
@@ -62,6 +65,8 @@
 			     (multiselect #f)
 			     (onselect #f)
 			     (onunselect #f)
+			     (onopen #f)
+			     (onclose #f)
 			     (value #unspecified)
 			     (history #unspecified)
 			     (inline #t boolean)
@@ -89,6 +94,8 @@
 	 (multiselect multiselect)
 	 (onselect onselect)
 	 (onunselect onunselect)
+	 (onopen onopen)
+	 (onclose onclose)
 	 (value value)
 	 (inline inline)
 	 (iconopen iconopen)
@@ -168,7 +175,9 @@
 			 be::xml-backend)
    (with-access::html-tree obj (id visible
 				   open head body
-				   multiselect onselect onunselect
+				   multiselect
+				   onselect onunselect
+				   onopen onclose
 				   value history
 				   inline iconopen iconclose icondir)
       (let* ((title (let ((ps (open-output-string)))
@@ -181,11 +190,14 @@
 		       (hop->json
 			(procedure->service
 			 (lambda ()
-			    (with-output-to-string
-			       (lambda ()
-				  (html-write-tree-body (+ 1 level) (car body)
-							id (current-output-port)
-							be)))))))
+			    (let* ((p (open-output-string))
+				   (v (html-write-tree-body (+ 1 level)
+							    (car body)
+							    id p
+							    be))
+				   (vp (close-output-port p)))
+			       (or v vp))))
+			#f))
 		      (else
 		       (with-output-to-string
 			  (lambda ()
@@ -222,7 +234,11 @@
 	 (display (json-string-encode title) p)
 	 (display "\", " p)
 	 ;; is the tree open
-	 (display (if open "true, " "false, ") p)
+	 (if (xml-tilde? open)
+	     (begin
+		(xml-write-tilde-as-expression open p)
+		(display ", " p))
+	     (display (if open "true, " "false, ") p))
 	 ;; is the tree cached
 	 (display (if (delayed-tree-body? body) "true, " "false, ") p)
 	 ;; multi-selection
@@ -231,6 +247,11 @@
 	 (display (obj->js-tree-thunk onselect) p)
 	 (display ", " p)
 	 (display (obj->js-tree-thunk onunselect) p)
+	 (display ", " p)
+	 ;; onopen/onclose event handlers
+	 (display (obj->js-tree-thunk onopen) p)
+	 (display ", " p)
+	 (display (obj->js-tree-thunk onclose) p)
 	 (display ", " p)
 	 ;; the value associated with the tree
 	 (if (string? value)
@@ -308,24 +329,34 @@
 ;*---------------------------------------------------------------------*/
 (define (html-write-tree-body level obj parent p be)
    (with-access::xml-element obj (body)
-      (for-each (lambda (b)
-		   (let loop ((b b))
-		      (cond
-			 ((pair? b)
-			  (map loop b))
-			 ((xml-delay? b)
-			  (loop ((xml-delay-thunk b))))
-			 ((html-tree? b)
-			  (html-write-tree level b parent p be)
-			  (display ";\n" p))
-			 ((html-tree-leaf? b)
-			  (html-write-tree-leaf b parent p be)
-			  (display ";\n" p))
-			 ((null? b)
-			  #unspecified)
-			 (else
-			  (error '<TREE> "Illegal tree body" b)))))
-		body)))
+      (bind-exit (return)
+	 (for-each (lambda (b)
+		      (let loop ((b b))
+			 (cond
+			    ((pair? b)
+			     (for-each loop b))
+			    ((xml-delay? b)
+			     (loop ((xml-delay-thunk b))))
+			    ((html-tree? b)
+			     (html-write-tree level b parent p be)
+			     (display ";\n" p))
+			    ((html-tree-leaf? b)
+			     (html-write-tree-leaf b parent p be)
+			     (display ";\n" p))
+			    ((null? b)
+			     #f)
+			    ((%http-response? b)
+			     (return b))
+			    ((xml-tilde? b)
+			     (return
+			      (instantiate::http-response-js
+				 (start-line "HTTP/1.0 501 Internal Server Error")
+				 (content-type (hop-json-mime-type))
+				 (value b))))
+			    (else
+			     (error '<TREE> "Illegal tree body" b)))))
+		   body)
+	 #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-write-tree-leaf ...                                         */

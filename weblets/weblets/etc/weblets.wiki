@@ -22,6 +22,9 @@ Here are the services defined by WEBLETS:
    * ++url++, the url (that could use the ++file://++ syntax) specifying the
  location of the weblets repository for which a list must be produced. This
  argument defaults to ++(weblets-repository)++.
+  - ++[[weblets/homepage]]++: Generates dynamically a Home Page for a
+ weblet. This service requires one argument :
+   * ++weblet**: the base name of the weblet.
 
 == Configuring WEBLETS ==
 
@@ -68,6 +71,33 @@ I.e., the list of available weblets in the format of
 ,(<WEBLETREF> "HZ"
 (make-file-path (hop-weblets-directory) "hz/etc/hz.wiki")) weblet.
 </parameter>
+
+== Generating Weblet Homepages ==
+
+The weblet ++[[weblets|WEBLETS]]++ can generate dynamically homage pages for
+weblets. The service ++weblets/homepage++ collects all the wiki files it founds
+in the directory ++WEBLET/etc/homepage++ and build a web page out of it. 
+
+  * If no wiki file is found, it builds a default web page out of the 
+ information found in the weblet.info file.
+  * If only one file is found, it is used to generate the home page. 
+  * If it finds several pages, they are collected inside a ++<NOTEPAD>++. For 
+ a wiki file ++file.wiki++ if it exists a file named ++file.png++ then, the 
+ image is used as an icon of the notepad tab. The name of the files may start
+ with a numeral prefix followed by a dash sign (i.e, the regular expression
+ ++"[0-9]+-"++ in order to sort them. These prefixed are invisible from the
+ notepad tabs.
+
+
+The wiki files that are handled by ++weblets/homepage++ can use four
+additional predefined functions:
+
+  - ++(weblet-url)++: the URL of the associated weblet.
+  - ++(weblet-etc-dir)++: the weblets cache directory containing the ++etc++ 
+ directory of the weblet.
+  - ++(weblet-info)++: returns the content of the ++weblet.info++ file read
+ as a list.
+  - ++(<CODE-HOP> body)++: pretty prints a Hop code source.
 
   
 </doc>

@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hopsh/main.scm                          */
+;*    serrano/prgm/project/hop/1.9.x/hopsh/main.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 23 10:38:36 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Tue Mar 25 08:16:50 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    The HOP entry point                                              */
+;*    The HOPSH entry point                                            */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/

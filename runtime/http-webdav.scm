@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/http-webdav.scm                 */
+;*    serrano/prgm/project/hop/1.9.x/runtime/http-webdav.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Tue Nov 20 10:47:35 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Mon Mar  3 09:26:54 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
 ;*    This module implements a WebDAV server as specified              */
@@ -212,11 +212,11 @@
 ;*    webdav-propfind ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (webdav-propfind req::http-request)
-   (with-access::http-request req (content-length socket path user header)
+   (with-access::http-request req (content-length socket encoded-path user header)
       (cond
 	 ((not (authorized-service? req 'webdav))
 	  (user-service-denied req user 'webdav))
-	 ((not (authorized-path? req path))
+	 ((not (authorized-path? req encoded-path))
 	  (user-access-denied req))
 	 (else
 	  (let ((depth (get-header header depth: "infinity"))
@@ -233,7 +233,7 @@
 		(force-content-length #t)
 		(xml (<DAV>
 			(<DAV:MULTISTATUS>
-			   (directory->dav path depth props))))))))))
+			   (directory->dav encoded-path depth props))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-proppatch ...                                             */
@@ -345,8 +345,8 @@
 ;*    webdav-mkcol ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (webdav-mkcol req::http-request)
-   (with-access::http-request req (path content-length)
-      (let* ((dir (dirname path))
+   (with-access::http-request req (encoded-path content-length)
+      (let* ((dir (dirname encoded-path))
 	     (parent (dirname dir)))
 	 (cond
 	    ((not (authorized-service? req 'webdav-write))
@@ -385,18 +385,18 @@
 ;*    webdav-delete ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (webdav-delete req::http-request)
-   (with-access::http-request req (path content-length header)
+   (with-access::http-request req (encoded-path content-length header)
       (let ((depth (assq depth: header)))
 	 (cond
-	    ((not (file-exists? path))
+	    ((not (file-exists? encoded-path))
 	     (instantiate::http-response-string
 		(request req)
 		(charset (hop-locale))
 		(start-line "HTTP/1.1 404 File Not Found")))
-	    ((directory? path)
+	    ((directory? encoded-path)
 	     (if (and (pair? depth) (not (string=? (cadr depth) "infinity")))
 		 (http-bad-request (format "Illegal depth: ~a" (cadr depth)))
-		 (if (delete-path path)
+		 (if (delete-path encoded-path)
 		     (instantiate::http-response-string
 			(request req)
 			(charset (hop-locale))
@@ -407,7 +407,7 @@
 			(start-line "HTTP/1.1 424 Failed Dependency")))))
 	    
 	    (else
-	     (if (delete-file path)
+	     (if (delete-file encoded-path)
 		 (instantiate::http-response-string
 		    (request req)
 		    (charset (hop-locale))
@@ -508,7 +508,7 @@
 	     (http-bad-request (format "Illegal depth: ~a" (cadr depth)))))))
    
    (with-access::http-request req (header
-				   path content-length
+				   encoded-path content-length
 				   scheme host port user)
       (let* ((destination (get-header header destination: #f))
 	     (overwrite (get-header header overwrite: "T"))
@@ -525,18 +525,18 @@
 	 (cond
 	    ((not dest)
 	     (http-bad-request "Missing destination"))
-	    ((not (file-exists? path))
+	    ((not (file-exists? encoded-path))
 	     (resp "HTTP/1.1 404 File Not Found"))
-	    ((string=? path destination)
+	    ((string=? encoded-path destination)
 	     (resp "HTTP/1.1 403 Forbidden"))
 	    ((or (not (user-authorized-path? user (dirname dest)))
-		 (not (user-authorized-path? user path)))
+		 (not (user-authorized-path? user encoded-path)))
 	     (user-access-denied req))
-	    ((directory? path)
+	    ((directory? encoded-path)
 	     (let ((depth (get-header header depth: "infinity")))
-		(cp-dir overwrite depth path dest)))
+		(cp-dir overwrite depth encoded-path dest)))
 	    (else
-	     (cp-file overwrite path dest))))))
+	     (cp-file overwrite encoded-path dest))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-move ...                                                  */
@@ -584,7 +584,7 @@
 		 (resp "HTTP/1.1 204 No Content"))))))
    
    (with-access::http-request req (header
-				   path
+				   encoded-path
 				   content-length scheme host port user)
       (let* ((destination (get-header header destination: #f))
 	     (overwrite (get-header header overwrite: "T"))
@@ -601,37 +601,37 @@
 	 (cond
 	    ((not dest)
 	     (http-bad-request "Missing destination"))
-	    ((not (file-exists? path))
+	    ((not (file-exists? encoded-path))
 	     (resp "HTTP/1.1 404 File Not Found"))
-	    ((string=? path destination)
+	    ((string=? encoded-path destination)
 	     (resp "HTTP/1.1 403 Forbidden"))
 	    ((or (not (user-authorized-path? user dest))
-		 (not (user-authorized-path? user path)))
+		 (not (user-authorized-path? user encoded-path)))
 	     (user-access-denied req))
-	    ((directory? path)
+	    ((directory? encoded-path)
 	     (let ((depth (get-header header depth: "infinity")))
 		(if (and (string? depth) (string=? depth "infinity"))
-		    (mv-dir overwrite depth path dest)
+		    (mv-dir overwrite depth encoded-path dest)
 		    (http-bad-request (format "Illegal depth: ~a" depth)))))
 	    (else
-	     (mv-file overwrite path dest))))))
+	     (mv-file overwrite encoded-path dest))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-put ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (webdav-put req::http-request)
-   (with-access::http-request req (path content-length socket)
-      (let ((status (if (file-exists? path)
+   (with-access::http-request req (encoded-path content-length socket)
+      (let ((status (if (file-exists? encoded-path)
 			"HTTP/1.1 204 No Content"
 			"HTTP/1.1 201 Created"))
-	    (p (open-output-file path))
+	    (p (open-output-file encoded-path))
 	    (len (elong->fixnum content-length)))
 	 (cond
 	    ((not (output-port? p))
 	     (instantiate::http-response-string
 		(request req)
 		(charset (hop-locale))
-		(start-line (if (directory? (dirname path))
+		(start-line (if (directory? (dirname encoded-path))
 				"HTTP/1.1 507 Insufficient Storage"
 				"HTTP/1.1 409 Conflict"))))
 	    ((<=fx len (send-chars (socket-input socket) p len))
@@ -641,7 +641,7 @@
 		(start-line status)))
 	    (else
 	     (close-output-port p)
-	     (delete-file path)
+	     (delete-file encoded-path)
 	     (instantiate::http-response-string
 		(request req)
 		(charset (hop-locale))

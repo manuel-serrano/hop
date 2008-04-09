@@ -4,6 +4,15 @@
 
 This simple weblet displays ,(<WIKIREF> "Wiki documents").
 
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TH> (string-capitalize "") " version") (<TD> "1.1.0"))
+  (<TR> (<TH> "Hop min version") (<TD> "1.9.0 "))
+  (<TR> (<TH> "Hop max version") (<TD> ""))
+  (<TR> (<TH> "Date") (<TD> ""))
+  (<TR> (<TH> "Category") (<TD> "")))
+
+
 == Services ==
 
 WIKI defines one service:

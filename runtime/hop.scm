@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop.scm                         */
+;*    serrano/prgm/project/hop/1.9.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Nov 28 19:20:48 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Mon Mar 31 12:31:26 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -19,7 +19,6 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_misc
-	    __hop_thread
 	    __hop_user
 	    __hop_service
 	    __hop_http-response
@@ -38,22 +37,52 @@
 	    __hop_hop-foldlist
 	    __hop_event)
    
-   (export  (current-request::obj)
+   (export  (generic thread-request ::obj)
+	    (generic thread-request-set! ::obj ::obj)
+	    (current-request::obj)
+	    (current-request-set! ::obj)
 	    (request-get::obj ::symbol)
 	    (request->response::%http-response ::http-request)
 	    (with-url ::bstring ::obj #!key fail (header '()) (timeout 0))
-	    (with-remote-host ::bstring ::hop-service ::pair-nil ::obj ::obj)
-	    (generic with-hop-response obj proc fail)
+	    (with-hop-remote path success failure
+			     #!key
+			     (host "localhost")
+			     (port (hop-port))
+			     (abspath #f)
+			     (user #f)
+			     (password #f)
+			     (authorization #f))
+	    (generic with-hop-local obj proc fail)
 	    (hop-get-file::obj ::bstring)))
+
+;*---------------------------------------------------------------------*/
+;*    *current-request* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *current-request* #f)
+
+;*---------------------------------------------------------------------*/
+;*    thread-request ::obj ...                                         */
+;*---------------------------------------------------------------------*/
+(define-generic (thread-request th)
+   *current-request*)
+
+;*---------------------------------------------------------------------*/
+;*    thread-request-set! ::obj ...                                    */
+;*---------------------------------------------------------------------*/
+(define-generic (thread-request-set! th::obj req)
+   (set! *current-request* req))
 
 ;*---------------------------------------------------------------------*/
 ;*    current-request ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (current-request)
-   (let ((d (thread-data (hop-current-thread))))
-      (if (http-request? d)
-	  d
-	  #f)))
+   (thread-request (current-thread)))
+
+;*---------------------------------------------------------------------*/
+;*    current-request-set! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (current-request-set! req)
+   (thread-request-set! (current-thread) req))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-get ...                                                  */
@@ -154,31 +183,60 @@
 	  res))))
 
 ;*---------------------------------------------------------------------*/
+;*    header-content-type ...                                          */
+;*---------------------------------------------------------------------*/
+(define (header-content-type header)
+   (let ((cell (assq content-type: header)))
+      (when (and (pair? cell) (string? (cdr cell)))
+	 (let* ((str (cdr cell))
+		(i (string-index str #\;)))
+	    (if i
+		(string->symbol (substring str 0 i))
+		(string->symbol str))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (make-http-callback proc::symbol req success fail)
    (lambda (p status header clength tenc)
-      (when (>elong clength #e0)
+      (when (and (input-port? p) (>elong clength #e0))
 	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
       (case status
 	 ((200)
-	  (success (read-string p)))
-	 ((201)
-	  (success (json->hop p)))
-	 ((202)
-	  (success (string->obj (read p))))
+	  ;; see hop-json-mime-type and hop-bigloo-mime-type
+	  (case (header-content-type header)
+	     ((application/json)
+	      (success (json->hop p)))
+	     ((text/html)
+	      (error 'make-http-callback "Not implemenented yet" header))
+	     ((application/bigloo)
+	      (success (string->obj (read p))))
+	     (else
+	      (success (read-string p)))))
+	 ((201 204 304)
+	  ;; no message body
+	  (success (instantiate::xml-http-request
+		      (status status)
+		      (header header)
+		      (input-port p))))
 	 ((401 407)
 	  (if (procedure? fail)
-	      (fail status p)
+	      (fail (instantiate::xml-http-request
+		       (status status)
+		       (header header)
+		       (input-port p)))
 	      (raise (user-access-denied req))))
 	 (else
 	  (if (procedure? fail)
-	      (fail status p)
+	      (fail (instantiate::xml-http-request
+		       (status status)
+		       (header header)
+		       (input-port p)))
 	      (raise
 	       (instantiate::&error
 		  (proc proc)
 		  (msg (format "Illegal status `~a'" status))
-		  (obj (read-string p)))))))))
+		  (obj (if (input-port? p) (read-string p) #f)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-to-hop-id ...                                                */
@@ -196,7 +254,7 @@
       (trace-item "url=" url)
       (trace-item "header=" header)
       (cond
-	 ((and (procedure? fail) (not (correct-arity? fail 2)))
+	 ((and (procedure? fail) (not (correct-arity? fail 1)))
 	  (error 'with-url "Illegal fail handler" fail))
 	 ((and (procedure? success) (not (correct-arity? success 1)))
 	  (error 'with-url "Illegal success handler" success))
@@ -226,6 +284,7 @@
 				      (obj url)))))))
 		(else
 		 (let* ((r (instantiate::http-request
+			      (user (anonymous-user))
 			      (scheme (string->symbol scheme))
 			      (id hop-to-hop-id)
 			      (userinfo userinfo)
@@ -236,138 +295,173 @@
 			      (path path)))
 			(suc (if (procedure? success) success (lambda (x) x)))
 			(hdl (make-http-callback 'with-url r suc fail)))
+		    (when (>fx (bigloo-debug) 2)
+		       (with-output-to-port (current-error-port)
+			  (lambda ()
+			     (print "GET " path " HTTP/1.1")
+			     (print "Host: " host)
+			     (print "Port: " port)
+			     (for-each (lambda (h)
+					  (display (keyword->string (car h)))
+					  (display ": ")
+					  (display (cadr h))
+					  (newline))
+				       header))))
 		    (trace-item "remote path=" path)
 		    (http-send-request r hdl)))))))))
-   
+
 ;*---------------------------------------------------------------------*/
-;*    with-remote-host ...                                             */
+;*    with-hop-remote ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (with-remote-host url service args success fail)
+(define (with-hop-remote path success fail
+			 #!key
+			 (host "localhost")
+			 (port (hop-port))
+			 (abspath #f)
+			 (user #f)
+			 (password #f)
+			 (authorization #f))
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
-	     ": " url ":" (hop-service-id service) "\n")
+	     ": " path "\n")
    (with-trace 2 'with-hop
-      (trace-item "url=" url " service=" (hop-service-id service))
+      (trace-item "host=" host " port=" port " path=" path " abspath=" abspath)
       (cond
-	 ((and (procedure? fail) (not (correct-arity? fail 2)))
+	 ((and (procedure? fail) (not (correct-arity? fail 1)))
 	  (error 'with-hop "Illegal fail handler" fail))
 	 ((and (procedure? success) (not (correct-arity? success 1)))
 	  (error 'with-hop "Illegal success handler" success))
 	 (else
-	  (multiple-value-bind (_ userinfo host port path)
-	     (url-parse url)
-	     (let ((suc (if (procedure? success) success (lambda (x) x))))
-		(if (and (is-local? host) (=fx port (hop-port)))
-		    (with-hop-response (apply (hop-service-proc service) args)
-				       suc fail)
-		    (let* ((path (apply make-hop-service-url service args))
-			   (r (instantiate::http-request
-				 (id hop-to-hop-id)
-				 (userinfo userinfo)
-				 (host host)
-				 (port port)
-				 (path path)))
-			   (hdl (make-http-callback 'with-hop r suc fail)))
-		       (trace-item "remote path=" path)
-		       (http-send-request r hdl)))))))))
+	  (let* ((req (instantiate::http-request
+			 (userinfo (when (and (string? user) (string? password))
+				      (string-append user ":" password)))
+			 (id hop-to-hop-id)
+			 (host host)
+			 (port port)
+			 (header (if authorization
+				     (list (cons authorization: authorization))
+				     '()))
+			 (path (or abspath path))))
+		 (suc (or success (lambda (x) x)))
+		 (hdl (make-http-callback 'with-hop req suc fail)))
+	     (trace-item "remote path=" path)
+	     (if (procedure? fail)
+		 (with-handler
+		    (lambda (e)
+		       (let* ((strerr (if (&error? e)
+					 (let ((op (open-output-string)))
+					    (with-error-to-port op
+					       (lambda ()
+						  (error-notify e)))
+					    (close-output-port op))
+					 "connection refused"))
+			      (ip (open-input-string strerr)))
+			  (fail (instantiate::xml-http-request
+				   (status 501)
+				   (header '())
+				   (input-port ip)))))
+		    (http-send-request req hdl))
+		 (http-send-request req hdl)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ...                                            */
+;*    with-hop-local ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (with-hop-response obj success fail)
-   (if (response-is-xml? obj)
-       (with-hop-response-xml obj success (hop-xml-backend))
-       (success obj)))
+(define-generic (with-hop-local obj success fail)
+   (success obj))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response-xml ...                                        */
+;*    with-hop-local ::http-response-remote ...                        */
+;*    -------------------------------------------------------------    */
+;*    This method is used for imported services. This services         */
+;*    are called locally but they are still remote.                    */
 ;*---------------------------------------------------------------------*/
-(define (with-hop-response-xml obj success backend)
-   (let ((s (with-output-to-string
-	       (lambda ()
-		  (xml-write obj (current-output-port) backend)))))
-      (success s)))
+(define-method (with-hop-local obj::http-response-remote success fail)
+   (with-hop-remote (http-response-remote-path obj) success fail))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-authentication ...             */
+;*    with-hop-local ::xml ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response o::http-response-authentication success fail)
+(define-method (with-hop-local obj::xml success fail)
+   (success obj))
+
+;*---------------------------------------------------------------------*/
+;*    with-hop-local ::http-response-authentication ...                */
+;*---------------------------------------------------------------------*/
+(define-method (with-hop-local o::http-response-authentication success fail)
    (fail (instantiate::&error
 	       (proc 'with-hop)
 	       (msg "Authentication required")
 	       (obj o))))
    
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-string ...                     */
+;*    with-hop-local ::http-response-string ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response obj::http-response-string success fail)
+(define-method (with-hop-local obj::http-response-string success fail)
    (success (http-response-string-body obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-js ...                         */
+;*    with-hop-local ::http-response-js ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response obj::http-response-js success fail)
+(define-method (with-hop-local obj::http-response-js success fail)
    (success (http-response-js-value obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-hop ...                        */
+;*    with-hop-local ::http-response-hop ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response obj::http-response-hop success fail)
-   (with-hop-response-xml (http-response-hop-xml obj)
-			  success
-			  (http-response-hop-backend obj)))
+(define-method (with-hop-local obj::http-response-hop success fail)
+   (success (http-response-hop-xml obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-procedure ...                  */
+;*    with-hop-local ::http-response-procedure ...                     */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response obj::http-response-procedure success fail)
+(define-method (with-hop-local obj::http-response-procedure success fail)
    (success (with-output-to-string (http-response-procedure-proc obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-file ...                       */
+;*    with-hop-local ::http-response-file ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response obj::http-response-file success fail)
+(define-method (with-hop-local obj::http-response-file success fail)
    (let* ((f (http-response-file-file obj))
 	  (pf (open-input-file f)))
       (if (not (input-port? pf))
-	  (fail
-	   (if (not (file-exists? f))
-	       (instantiate::&io-file-not-found-error
-		  (proc 'with-hop)
-		  (msg "File not found")
-		  (obj f))
-	       (instantiate::&io-port-error
-		  (proc 'with-hop)
-		  (msg "Cannot open file")
-		  (obj f))))
+	  (fail (if (not (file-exists? f))
+		    (instantiate::&io-file-not-found-error
+		       (proc 'with-hop)
+		       (msg "File not found")
+		       (obj f))
+		    (instantiate::&io-port-error
+		       (proc 'with-hop)
+		       (msg "Cannot open file")
+		       (obj f))))
 	  (unwind-protect
 	     (success (read-string pf))
 	     (close-input-port pf)))))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-cgi ...                        */
+;*    with-hop-local ::http-response-cgi ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response obj::http-response-cgi success fail)
+(define-method (with-hop-local obj::http-response-cgi success fail)
    (fail (instantiate::&error
 	    (proc 'with-response)
 	    (msg "Illegal response")
 	    (obj obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-put ...                        */
+;*    with-hop-local ::http-response-put ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response obj::http-response-put success fail)
+(define-method (with-hop-local obj::http-response-put success fail)
    (fail (instantiate::&error
 	    (proc 'with-response)
 	    (msg "Illegal response")
 	    (obj obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-remote ...                     */
+;*    with-hop-local ::http-response-remote ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response obj::http-response-remote success fail)
+(define-method (with-hop-local obj::http-response-remote success fail)
    (with-access::http-response-remote obj (host port path userinfo)
       (let ((req (instantiate::http-request
+		    (user (anonymous-user))
 		    (userinfo userinfo)
 		    (host host)
 		    (port port)
@@ -390,18 +484,18 @@
 					    (obj (read-string )))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-filter ...                     */
+;*    with-hop-local ::http-response-filter ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response obj::http-response-filter success fail)
+(define-method (with-hop-local obj::http-response-filter success fail)
    (fail (instantiate::&error
 	    (proc 'with-response)
 	    (msg "Illegal response")
 	    (obj obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-response ::http-response-persistent ...                 */
+;*    with-hop-local ::http-response-persistent ...                    */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-response o::http-response-persistent success fail)
+(define-method (with-hop-local o::http-response-persistent success fail)
    (success o))
    
 ;*---------------------------------------------------------------------*/
@@ -414,12 +508,17 @@
 ;*    The function HOP-GET-FILE simulates a user request to            */
 ;*    the broker.                                                      */
 ;*    This function has been first added for implementing the          */
-;*    :inline option of HEAD, LINK, and SCRIPT markups.                */
+;*    :inline option of HEAD, LINK, and SCRIPT markups. Since version  */
+;*    1.9.0, it is only used in the SCRIPT markup.                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-get-file path)
-   (let* ((req (instantiate::http-request
+   (let* ((reqi (current-request))
+	  (req (instantiate::http-request
 		  (localhostp #t)
 		  (localclientp #t)
+		  (user (if (http-request? reqi)
+			    (http-request-user reqi)
+			    (anonymous-user)))
 		  (path path)))
 	  (rep (request->response req)))
       (cond
@@ -434,8 +533,11 @@
 	 ((http-response-procedure? rep)
 	  (let ((p (open-output-string)))
 	     (with-access::http-response-procedure rep (proc)
-		(proc p)
-		(close-output-port p))))
+		(unwind-protect
+		   (proc p)
+		   (close-output-port p)))))
+	 ((http-response-string? rep)
+	  (http-response-string-body rep))
 	 (else
 	  #f))))
    

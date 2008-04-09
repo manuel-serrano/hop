@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-lib.js                        */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Wed Oct  3 14:23:11 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Mon Mar 10 11:39:53 2008 (serrano)                */
+/*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -12,6 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    trace ...                                                        */
 /*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
 function trace() {
    var svc = hop_service_url( "/hop/trace",
 			      [ "args" ],
@@ -58,6 +59,7 @@ function hop_set_cookie( http ) {
 /*---------------------------------------------------------------------*/
 /*    hop_cookie_remove ...                                            */
 /*---------------------------------------------------------------------*/
+/*** META ((export cookie-remove!)) */
 function hop_cookie_remove( name, path, domain ) {
    if( hop_cookie_get_value( name ) ) {
       hop_cookie_set_value( name, "", path, domain );
@@ -67,6 +69,7 @@ function hop_cookie_remove( name, path, domain ) {
 /*---------------------------------------------------------------------*/
 /*    hop_cookie_get_value ...                                         */
 /*---------------------------------------------------------------------*/
+/*** META ((export cookie-get)) */
 function hop_cookie_get_value( name ) {
    var cookies = document.cookie;
    var i = cookies.indexOf( name + "=" );
@@ -84,6 +87,7 @@ function hop_cookie_get_value( name ) {
 /*---------------------------------------------------------------------*/
 /*    hop_cookie_set_value ...                                         */
 /*---------------------------------------------------------------------*/
+/*** META ((export cookie-set!)) */
 function hop_cookie_set_value( name, val, path, domain, expires ) {
    var cookie = name + "=" + val;
 
@@ -126,6 +130,7 @@ function HopLoadError( file ) {
 /*---------------------------------------------------------------------*/
 /*    hop_load ...                                                     */
 /*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
 function hop_load( src, timeout ) {
    var script = document.createElement( "script" );
    script.src = src;
@@ -162,6 +167,7 @@ function hop_load( src, timeout ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_onload_add ...                                        */
 /*---------------------------------------------------------------------*/
+/*** META ((export add-window-onload!)) */
 function hop_window_onload_add( proc ) {
    var oldonload = window.onload;
 
@@ -178,6 +184,7 @@ function hop_window_onload_add( proc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_onunload_add ...                                      */
 /*---------------------------------------------------------------------*/
+/*** META ((export add-window-onunload!)) */
 function hop_window_onunload_add( proc ) {
    if( typeof( window.onunload ) != 'function' ) {
       window.onunload = proc;
@@ -216,6 +223,7 @@ function hop_update( node ) {
 /*    -------------------------------------------------------------    */
 /*    A wrapper for using typeof as a function in Hop.                 */
 /*---------------------------------------------------------------------*/
+/*** META ((export find-runtime-type)) */
 function hop_find_runtime_type( obj ) {
    if( obj instanceof Object ) {
       if( obj instanceof Date ) {
@@ -234,10 +242,10 @@ function hop_find_runtime_type( obj ) {
       var tname = typeof obj;
 
       if( tname == "string" ) {
+	 if( sc_isSymbol( obj ) )
+	    return "symbol";
 	 if( sc_isKeyword( obj ) )
 	    return "keyword";
-	 if( sc_isSymbol_mutable( obj ) || sc_isSymbol_immutable( obj ) )
-	    return "symbol";
 
 	 return tname;
       }
@@ -248,6 +256,7 @@ function hop_find_runtime_type( obj ) {
 /*---------------------------------------------------------------------*/
 /*    after ...                                                        */
 /*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
 function after( timeout, proc ) {
    var tm = sc_isNumber( timeout ) ? timeout : 1;
    var i = setInterval( function() { clearInterval( i ); proc() }, tm );
@@ -257,6 +266,25 @@ function after( timeout, proc ) {
 /*---------------------------------------------------------------------*/
 /*    timeout ...                                                      */
 /*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
 function timeout( tm, proc ) {
    var i = setInterval( function() { if( !proc() ) clearInterval( i )}, tm );
 }
+
+/*---------------------------------------------------------------------*/
+/*    url-decode ...                                                   */
+/*---------------------------------------------------------------------*/
+/*** META ((export url-decode)) */
+function url_decode( s ) {
+   try {
+      return decodeURI( s );
+   } catch( e ) {
+      return s;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    url-encode ...                                                   */
+/*---------------------------------------------------------------------*/
+/*** META ((export url-encode)) */
+var url_encode;

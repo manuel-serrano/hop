@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/css.scm                         */
+;*    serrano/prgm/project/hop/1.9.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Oct 10 08:03:46 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Fri Jan 18 12:27:33 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -16,15 +16,117 @@
 
    (library web)
    
+   (include "xml.sch"
+	    "service.sch")
+
    (import  __hop_read
-	    __hop_param)
+	    __hop_param
+	    __hop_cache)
 
-   (use     __hop_types)
+   (use	    __hop_user
+	    __hop_hop
+	    __hop_cgi
+	    __hop_misc
+	    __hop_service
+	    __hop_mime
+	    __hop_types)
 
-   (export  (hop-load-hss ::bstring)
+   (export  (init-hss-compiler!)
+	    (hss-response::%http-response ::http-request ::bstring)
+	    (hss->css ::bstring)
+	    (hss->css-url ::bstring)
+	    (hop-load-hss ::bstring)
 	    (hop-read-hss ::input-port)
 
 	    (hop-hss-type! ::bstring ::bstring)))
+
+;*---------------------------------------------------------------------*/
+;*    hss-mutex ...                                                    */
+;*---------------------------------------------------------------------*/
+(define hss-mutex (make-mutex 'hss))
+
+;*---------------------------------------------------------------------*/
+;*    hss-write ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hss-write hss p)
+   (let loop ((hss hss))
+      (if (string? hss)
+	  (display hss p)
+	  (for-each loop hss))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-cache ...                                                    */
+;*---------------------------------------------------------------------*/
+(define hss-cache
+   #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hss->css ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (hss->css path)
+   (with-lock hss-mutex
+      (lambda ()
+	 (let ((cache (cache-get hss-cache path))
+	       (mime (mime-type path "text/css")))
+	    (if (string? cache)
+		(with-input-from-file cache read-string)
+		(let* ((hss (hop-load-hss path))
+		       (cache (cache-put! hss-cache path hss)))
+		   (let ((p (open-output-string)))
+		      (hss-write hss p)
+		      (close-output-port p))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hss->css-url ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (hss->css-url path)
+   (string-append path (hop-hss-compile-suffix)))
+
+;*---------------------------------------------------------------------*/
+;*    init-hss-compiler! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (init-hss-compiler!)
+   (set! hss-cache
+	 (instantiate::cache-disk
+	    (path (make-file-path (hop-rc-directory)
+				  "cache"
+				  (format "hss-~a" (hop-port))))
+	    (out (lambda (o p) (hss-write o p))))))
+
+;*---------------------------------------------------------------------*/
+;*    hss-response ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (hss-response req path)
+   (if (authorized-path? req path)
+       (with-lock hss-mutex
+	  (lambda ()
+	     (let ((cache (cache-get hss-cache path))
+		   (mime (mime-type path "text/css"))
+		   (method (http-request-method req)))
+		(if (string? cache)
+		    (instantiate::http-response-file
+		       (request req)
+		       (charset (hop-locale))
+		       (content-type mime)
+		       (bodyp (eq? method 'GET))
+		       (file cache))
+		    (let* ((hss (hop-load-hss path))
+			   (cache (cache-put! hss-cache path hss)))
+		       (if (string? cache)
+			   (instantiate::http-response-file
+			      (request req)
+			      (charset (hop-locale))
+			      (content-type mime)
+			      (bodyp (eq? method 'GET))
+			      (file cache))
+			   (instantiate::http-response-procedure
+			      (request req)
+			      (charset (hop-locale))
+			      (content-type mime)
+			      (bodyp (eq? method 'GET))
+			      (proc (lambda (p)
+				       (hss-write hss p))))))))))
+       (user-access-denied req)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-hss ...                                                 */
@@ -49,7 +151,7 @@
 			(proc 'hop-load)
 			(msg "Can't open file")
 			(obj file)))))
-       (raise (instantiate::&io-port-error
+       (raise (instantiate::&io-file-not-found-error
 		 (proc 'hop-load)
 		 (msg "file does not exist")
 		 (obj file)))))

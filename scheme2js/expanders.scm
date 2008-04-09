@@ -1,10 +1,6 @@
 (module expanders
-   (import expand))
-
-(define (runtime-ref id)
-   ;; we use a function to differenciate this construct
-   ;; from similar user-constructs.
-   (list 'runtime-ref id (lambda () 'runtime-ref)))
+   (import expand
+	   (runtime-ref pobject-conv)))
 
 ;; don't go into quotes.
 (install-expander! 'quote identify-expander)
@@ -29,9 +25,27 @@
 ;        (install-expander! id (eval expander))
 ;        #unspecified)))
 
+
 (install-expander!
  'define-macro
  (lambda (x e macros-ht)
+
+    (define (deep-copy o)
+       (cond
+	  ((epair? o)
+	   (econs (deep-copy (car o))
+		  (deep-copy (cdr o))
+		  (deep-copy (cer o))))
+	  ((pair? o)
+	   (cons (deep-copy (car o))
+		 (deep-copy (cdr o))))
+	  ((vector? o)
+	   (copy-vector o (vector-length o)))
+	  ((string? o)
+	   (string-copy o))
+	  (else
+	   o)))
+
     (define (destructure pat arg bindings)
        (cond
 	  ((null? pat) bindings)
@@ -42,33 +56,21 @@
 			(destructure (cdr pat) `(cdr ,arg) bindings)))))
 
     (match-case x
-       ((?- (?name . ?args) . ?body)
-	(hashtable-put!
-	 macros-ht
-	 name
-	 (eval `(lambda (x e macros-ht)
-		   (define (deep-copy o)
-		      (cond
-			 ((epair? o)
-			  (econs (deep-copy (car o))
-				 (deep-copy (cdr o))
-				 (deep-copy (cer o))))
-			 ((pair? o)
-			  (cons (deep-copy (car o)) (deep-copy (cdr o))))
-			 ((vector? o)
-			  (copy-vector o (vector-length o)))
-			 ((string? o)
-			  (string-copy o))
-			 (else
-			  o)))
-
-		   ;; macros might reference lists twice.
-		   ;; by deep-copying the result, we are sure, that
-		   ;; we don't share anything.
-		   (e (deep-copy
-		       (let ,(destructure args '(cdr x) '())
-			  ,@body))
-		      e macros-ht))))
+       ((?- (?name . ?args) ?e0 . ?body)
+	(let* ((L (gensym 'L))
+	       (body-f (eval `(lambda (,L)
+				 (let ,(destructure args L '())
+				    ,e0 ,@body)))))
+	   (hashtable-put!
+	    macros-ht
+	    name
+	    (lambda (x e macros-ht)
+	       (e
+		;; macros might reference lists twice.
+		;; by deep-copying the result, we are sure, that
+		;; we don't share anything.
+		(deep-copy (body-f (cdr x)))
+		e macros-ht))))
 	#unspecified)
        (else
 	(error "define-macro" "Illegal 'define-macro' syntax" x)))))
@@ -282,9 +284,9 @@
 	  (vars (map car binding-clauses))
 	  (init-values (map cadr binding-clauses)))
       ;; correct version would be the following expansion
-      `((letrec ((,loop-name (lambda ,vars ,@body)))
-	   ,loop-name)
-	,@init-values)
+;      `((letrec ((,loop-name (lambda ,vars ,@body)))
+;	   ,loop-name)
+;	,@init-values)
       ;; this version is however more efficient:
       `(letrec ((,loop-name (lambda ,vars ,@body)))
 	  (,loop-name ,@init-values))))
@@ -359,92 +361,6 @@
 			   (lambda () ,@(cdr x))) e macros-ht)))
 
 (install-expander!
- 'for-each
- (lambda (x e macros-ht)
-    (match-case x
-       ((?- ?proc . ?Ls)
-	(e
-	 (let ((L-ids (map (lambda (ignored)
-			      (gensym 'L))
-			   Ls))
-	       (tmp-f (gensym 'tmpF)))
-	    `(let ((,tmp-f ,proc))
-		(do ,(map (lambda (id l)
-			     `(,id ,l (cdr ,id)))
-			  L-ids Ls)
-		    ((null? ,(car L-ids)) #unspecified)
-		    (,tmp-f ,@(map (lambda (id)
-				      `(car ,id))
-				   L-ids)))))
-	 e macros-ht))
-       (else
-	(error "for-each-expander" "Invalid for-each-form: " x)))))
-
-(install-expander!
- 'map
- (lambda (x e macros-ht)
-    (match-case x
-       ((?- ?proc . ?Ls)
-	(e
-	 (let ((L-ids (map (lambda (ignored)
-			      (gensym 'L))
-			   Ls))
-	       (rev-res (gensym 'revRes))
-	       (loop (gensym 'loop))
-	       (false-head (gensym 'falseHead))
-	       (tail (gensym 'tail))
-	       (tmp-f (gensym 'tmpF)))
-	    `(let ((,tmp-f ,proc)
-		   (,false-head (cons '() '())))
-		(let ,loop ((,tail ,false-head)
-			    ,@(map list L-ids Ls))
-		     (if (null? ,(car L-ids))
-			 (cdr ,false-head)
-			 (begin
-			    (set-cdr! ,tail
-				      (cons (,tmp-f ,@(map (lambda (id)
-							      `(car ,id))
-							   L-ids))
-					    '()))
-			    (,loop (cdr ,tail)
-				   ,@(map (lambda (id)
-					     `(cdr ,id))
-					  L-ids)))))))
-	 e macros-ht))
-       (else
-	(error "map-expander" "Invalid map-form: " x)))))
-
-(install-expander!
- 'map!
- (lambda (x e macros-ht)
-    (match-case x
-       ((?- ?proc ?L1 . ?Lrest)
-	(e
-	 (let ((L-ids (map (lambda (ignored)
-			      (gensym 'L))
-			   (cons L1 Lrest)))
-	       (loop (gensym 'loop))
-	       (tmp-f (gensym 'tmpF))
-	       (first-L (gensym 'firstL)))
-	    `(let ((,tmp-f ,proc)
-		   (,first-L ,L1))
-		(let ,loop ((,(car L-ids) ,first-L)
-			    ,@(map list (cdr L-ids) Lrest))
-		     (if (null? ,(car L-ids))
-			 ,first-L
-			 (begin
-			    (set-car! ,(car L-ids)
-				      (,tmp-f ,@(map (lambda (id)
-							`(car ,id))
-						     L-ids)))
-			    (,loop ,@(map (lambda (id)
-					     `(cdr ,id))
-					  L-ids)))))))
-	 e macros-ht))
-       (else
-	(error "map!-expander" "Invalid map!-form: " x)))))
-
-(install-expander!
  'bind-exit
  (lambda (x e macros-ht)
     (match-case x
@@ -472,3 +388,21 @@
 	 e macros-ht))
        (else
 	(error "with-handler" "Invalid with-handler-form: " x)))))
+
+(define (receive-expander x e macros-ht)
+   (match-case x
+      ((?- ?vars ?producer ?expr . ?Lrest)
+       (e
+	`(,(runtime-ref 'call-with-values)
+	  ,producer
+	  (lambda ,vars
+	     ,expr
+	     ,@Lrest))
+	e macros-ht))
+      (else
+       (error "receive/multiple-value-bind"
+	      "Invalid form: "
+	      x))))
+
+(install-expander! 'receive receive-expander)
+(install-expander! 'multiple-value-bind receive-expander)

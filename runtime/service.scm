@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/service.scm                     */
+;*    serrano/prgm/project/hop/1.9.x/runtime/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Nov 24 07:24:06 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Fri Apr  4 13:42:34 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -18,21 +18,23 @@
    
    (library web)
    
-   (import  __hop_param
+   (import  __hop_configure
+	    __hop_param
 	    __hop_types
 	    __hop_misc
 	    __hop_read
-	    __hop_thread
 	    __hop_http-error
 	    __hop_http-response
 	    __hop_cgi
 	    __hop_xml
 	    __hop_hop-extra
+	    __hop_hop-file
 	    __hop_js-lib
 	    __hop_user
 	    __hop_weblets)
    
-   (export  (get-service-url::bstring #!optional (prefix ""))
+   (export  (init-hop-services!)
+	    (get-service-url::bstring #!optional (prefix ""))
 	    (hop-service-path? ::bstring)
 	    (make-hop-service-url::bstring ::hop-service . o)
 	    (make-service-url::bstring ::hop-service . o)
@@ -60,6 +62,20 @@
 ;*    *service-table-count* ...                                        */
 ;*---------------------------------------------------------------------*/
 (define *service-table-count* 1)
+
+;*---------------------------------------------------------------------*/
+;*    *service-table*                                                  */
+;*---------------------------------------------------------------------*/
+(define *service-table*
+   (make-hashtable #unspecified #unspecified equal-path? hash-path))
+
+;*---------------------------------------------------------------------*/
+;*    init-hop-services! ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Create the first HOP services.                                   */
+;*---------------------------------------------------------------------*/
+(define (init-hop-services!)
+   (init-hop-file-services!))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-service-url ...                                              */
@@ -142,10 +158,11 @@
 			     (let ((a (if (string? v) (url-encode v) v)))
 				(format "&~a=~a" f a)))
 			  args vals)))
-	     ((<fx (length args) (length vals))
-	      (error 'make-service-url id "too many arguments provided"))
 	     (else
-	      (error 'make-service-url id "missing arguments"))))))
+	      (error 'make-service-url
+		     (format "arity mismatch, expecting ~a values, getting ~a"
+			     (length args) (length vals))
+		     id))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */
@@ -217,7 +234,7 @@
 ;*    %eval ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%eval exp req cont)
-   (let ((s (hop->json (procedure->service (lambda (res) (cont res))))))
+   (let ((s (hop->json (procedure->service (lambda (res) (cont res))) #f)))
       (instantiate::http-response-hop
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
@@ -230,12 +247,6 @@
 		       (format "hop( ~a( eval( '~a' ) ), true )"
 			       s
 			       (exp-list->eval-string exp)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    *service-table*                                                  */
-;*---------------------------------------------------------------------*/
-(define *service-table*
-   (make-hashtable #unspecified #unspecified equal-path? hash-path))
 
 ;*---------------------------------------------------------------------*/
 ;*    equal-path? ...                                                  */
@@ -300,8 +311,8 @@
 			 ((service-expired? svc)
 			  (mark-service-path-expired! path)
 			  #f)
-			 ((or (user-authorized-service? user wid)
-			      (user-authorized-service? user id))
+			 ((or (authorized-service? req wid)
+			      (authorized-service? req id))
 			  (scheme->response (%exec req) req))
 			 (else
 			  (user-service-denied req user id)))))
@@ -331,12 +342,22 @@
 ;*    register-service! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (register-service! svc)
-   (with-access::hop-service svc (path)
+   (with-access::hop-service svc (path id)
       (let ((sz (hashtable-size *service-table*)))
-	 (hop-verb 2 (hop-color 1 "" "REG. SERVICE ")
+	 (hop-verb 4 (hop-color 1 "" "REG. SERVICE ")
 		   "(" (/fx sz 2) "): "
 		   svc " " path "\n")
 	 (mutex-lock! *service-mutex*)
+	 ;; CARE: for security matters, service re-definition should probably
+	 ;; be for
+	 (when (hashtable-get *service-table* path)
+	    (cond
+	       ((>fx (bigloo-debug) 0)
+		(warning 'register-service! "Service re-defined -- " id))
+	       ((not (hop-allow-service-override))
+		(error id
+		       "Service re-definition not permitted"
+		       "use `-g' or `--allow-service-override' options to enable re-definitions"))))
 	 (hashtable-put! *service-table* path svc)
 	 (hashtable-put! *service-table* (string-append path "/") svc)
 	 (let ((l (string-length path)))
@@ -429,7 +450,6 @@
 		     "~a://~a:~a~a/")
 		 (if (eq? scheme '*) "http" scheme) host port
 		 path))))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    *etc-table*                                                      */

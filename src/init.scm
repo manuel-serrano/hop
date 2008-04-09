@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/src/init.scm                            */
+;*    serrano/prgm/project/hop/1.9.x/src/init.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Oct 10 08:23:23 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Sat Apr  5 07:00:06 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -15,182 +15,184 @@
 (module hop_init
 
    (library hop)
+
+   (import  hop_param)
    
-   (import  hop_param))
+   (export  (init-http!)
+	    (init-webdav!)
+	    (init-flash!)))
 
 ;*---------------------------------------------------------------------*/
-;*    *hss-mutex* ...                                                  */
+;*    *http-method-handlers* ...                                       */
 ;*---------------------------------------------------------------------*/
-(define *hss-mutex* (make-mutex 'hss))
+(define *http-method-handlers* '())
 
 ;*---------------------------------------------------------------------*/
-;*    hss-write ...                                                    */
+;*    http-find-method-handler ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (hss-write hss p)
-   (let loop ((hss hss))
-      (if (string? hss)
-	  (display hss p)
-	  (for-each loop hss))))
+(define (http-find-method-handler method)
+   ;; make a special case for GET, the most frequent method to avoid
+   ;; a useless lookup
+   (if (eq? method 'GET)
+       http-get
+       (let ((c (assq method *http-method-handlers*)))
+	  (when (pair? c)
+	     (cdr c)))))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-cache ...                                                    */
+;*    add-http-handler! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define hss-cache
-   (instantiate::cache
-      (path (make-file-path (hop-rc-directory)
-			    "cache"
-			    (string-append "hss-"
-					   (integer->string (hop-port)))))
-      (out (lambda (o p) (hss-write o p)))))
+(define (add-http-handler! method handler)
+   (let ((tail (list (cons method handler))))
+      (if (null? *http-method-handlers*)
+	  (set! *http-method-handlers* tail)
+	  (set-cdr! (last-pair *http-method-handlers*) tail))))
 
 ;*---------------------------------------------------------------------*/
-;*    hss-response ...                                                 */
+;*    accept-gzip? ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (hss-response req)
-   (with-access::http-request req (path method header)
-      (with-lock *hss-mutex*
-	 (lambda ()
-	    (let ((cache (cache-get hss-cache path))
-		  (mime (mime-type path "text/css")))
-	       (if (string? cache)
-		   (instantiate::http-response-file
-		      (request req)
-		      (charset (hop-locale))
-		      (content-type mime)
-		      (bodyp (eq? method 'GET))
-		      (file cache))
-		   (let* ((hss (hop-load-hss path))
-			  (cache (cache-put! hss-cache path hss)))
-		      (if (string? cache)
-			  (instantiate::http-response-file
-			     (request req)
-			     (charset (hop-locale))
-			     (content-type mime)
-			     (bodyp (eq? method 'GET))
-			     (file cache))
-			  (instantiate::http-response-procedure
-			     (request req)
-			     (charset (hop-locale))
-			     (content-type mime)
-			     (bodyp (eq? method 'GET))
-			     (proc (lambda (p) (hss-write hss p))))))))))))
+(define (accept-gzip? header)
+   (let ((c (assq :accept-encoding header)))
+      (and (pair? c)
+	   (or (string-prefix? "gzip" (cdr c) 0)
+	       (member "gzip" (string-split (cdr c) ","))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-filter ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    Default local file filter.                                       */
+;*    http-get ...                                                     */
 ;*---------------------------------------------------------------------*/
-(hop-filter-add-always-last!
- (lambda (req)
-    (when (http-request-localhostp req)
-       (with-access::http-request req (path method header)
-	  (case method
-	     ((GET HEAD)
-	      (cond
-		 ((not (file-exists? path))
-		  (let ((i (string-index path #\?)))
-		     (cond
-			((and (fixnum? i) (>fx i 0))
-			 (let ((p (substring path 0 i)))
-			    (cond
-			       ((file-exists? p)
-				(instantiate::http-response-file
-				   (request req)
-				   (charset (hop-locale))
-				   (content-type (mime-type p "text/plain"))
-				   (bodyp (eq? method 'GET))
-				   (file p)))
-			       ((hop-service-path? p)
-				(http-service-not-found p))
-			       (else
-				(http-file-not-found p)))))
-			((hop-service-path? path)
-			 (http-service-not-found path))
-			(else
-			 (http-file-not-found path)))))
-		 ((is-suffix? (http-request-path req) "hop")
-		  (let ((rep (hop-load (http-request-path req))))
-		     (cond
-			((%http-response? rep)
-			 rep)
-			((xml? rep)
-			 (instantiate::http-response-hop
-			    (request req)
-			    (content-type (mime-type path "text/html"))
-			    (charset (hop-charset))
-			    (bodyp (eq? method 'GET))
-			    (header '((Cache-Control: . "no-cache")))
-			    (xml rep)))
-			(else
-			 (http-warning
-			  (format "File `~a' loaded but produced no result"
-				  (http-request-path req)))))))
-		 ((is-suffix? (http-request-path req) "hss")
-		  (hss-response req))
-		 ((pair? (assq 'icy-metadata: header))
-		  (instantiate::http-response-shoutcast
-		     (request req)
-		     (start-line "ICY 200 OK")
-		     (bodyp (eq? method 'GET))
-		     (file path)))
-		 (else
-		  (instantiate::http-response-file
-		     (request req)
-		     (content-type (mime-type path "text/plain"))
-		     (charset (hop-locale))
-		     (bodyp (eq? method 'GET))
-		     (file path)))))
-	     ((OPTIONS)
-	      (if (hop-enable-webdav)
-		  (instantiate::http-response-string
-		     (request req)
-		     (charset (hop-locale))
-		     (header `((dav: . 1)
-			       (allow: . "GET, HEAD, POST, OPTIONS, COPY, MOVE, PUT, PROPFIND, PROPPATCH, MKCOL, DELETE")))
-		     (bodyp #f))
-		  (instantiate::http-response-string
-		     (request req)
-		     (charset (hop-locale))
-		     (header `((allow: . "GET, HEAD, POST, OPTIONS")))
-		     (bodyp #f))))
-	     ((PROPFIND)
-	      (if (hop-enable-webdav)
-		  (webdav-propfind req)
-		  (http-bad-request 'propfind)))
-	     ((PROPPATCH)
-	      (if (hop-enable-webdav)
-		  (webdav-proppatch req)
-		  (http-bad-request 'proppatch)))
-	     ((MKCOL)
-	      (if (hop-enable-webdav)
-		  (webdav-mkcol req)
-		  (http-bad-request 'mkcol)))
-	     ((DELETE)
-	      (if (hop-enable-webdav)
-		  (webdav-delete req)
-		  (http-bad-request 'delete)))
-	     ((COPY)
-	      (if (hop-enable-webdav)
-		  (webdav-copy req)
-		  (http-bad-request 'copy)))
-	     ((MOVE)
-	      (if (hop-enable-webdav)
-		  (webdav-move req)
-		  (http-bad-request 'move)))
-	     ((PUT)
-	      (if (hop-enable-webdav)
-		  (webdav-put req)
-		  (http-bad-request 'put)))
-	     ((LOCK)
-	      (if (hop-enable-webdav)
-		  (webdav-lock req)
-		  (http-bad-request 'lock)))
-	     ((UNLOCK)
-	      (if (hop-enable-webdav)
-		  (webdav-unlock req)
-		  (http-bad-request 'unlock)))
+(define (http-get req)
+   (with-access::http-request req (encoded-path method header)
+      (cond
+	 ((not (file-exists? encoded-path))
+	  (let ((i (string-index encoded-path #\?)))
+	     (cond
+		((and (fixnum? i) (>fx i 0))
+		 (let ((p (substring encoded-path 0 i))
+		       (suf (substring encoded-path i (string-length encoded-path))))
+		    (cond
+		       ((string=? suf (hop-scm-compile-suffix))
+			(scm-response req p))
+		       ((string=? suf (hop-hss-compile-suffix))
+			(hss-response req p))
+		       ((file-exists? p)
+			(instantiate::http-response-file
+			   (request req)
+			   (charset (hop-locale))
+			   (content-type (mime-type p "text/plain"))
+			   (bodyp (eq? method 'GET))
+			   (file p)))
+		       ((hop-service-path? p)
+			(http-service-not-found p))
+		       (else
+			(http-file-not-found p)))))
+		((hop-service-path? encoded-path)
+		 (http-service-not-found encoded-path))
+;* 			((string=? path "/crossdomain.xml")            */
+;* 			 (tprint "======================== /crossdomain.xml") */
+;* 			 (http-request-connection-set! req 'close)     */
+;* 			 (let ((s (format "<?xml version=\"1.0\" encoding=\"UTF-8\"?> */
+;* <!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\"> */
+;* <cross-domain-policy>                                               */
+;*  <allow-access-from domain=\"*\" />                                 */
+;* </cross-domain-policy>" (hop-port))))                               */
+;* 			    (tprint s)                                 */
+;* 			    (instantiate::http-response-string         */
+;* 			       (request req)                           */
+;* 			       (content-type "application/xml")        */
+;* 			       (body s))))                             */
+		(else
+		 (http-file-not-found encoded-path)))))
+	 ((is-suffix? (http-request-encoded-path req) "hop")
+	  (let ((rep (hop-load (http-request-encoded-path req))))
+	     (cond
+		((%http-response? rep)
+		 rep)
+		((xml? rep)
+		 (instantiate::http-response-hop
+		    (request req)
+		    (content-type (mime-type encoded-path (hop-default-mime-type)))
+		    (charset (hop-charset))
+		    (bodyp (eq? method 'GET))
+		    (header '((Cache-Control: . "no-cache")))
+		    (xml rep)))
+		(else
+		 (let ((url (make-hop-url-name
+			     (prefix
+			      (basename
+			       (http-request-encoded-path req))))))
+		    (instantiate::http-response-string
+		       (start-line "HTTP/1.0 307 Temporary Redirect")
+		       (header (list (cons 'location: url)))))))))
+	 ((pair? (assq 'icy-metadata: header))
+	  (instantiate::http-response-shoutcast
+	     (request req)
+	     (start-line "ICY 200 OK")
+	     (bodyp (eq? method 'GET))
+	     (file encoded-path)))
+	 (else
+	  (cond
+	     ((and (string-suffix? ".gz" encoded-path) (accept-gzip? header))
+	      ;; send a gzipped file with a mime type corresponding
+	      ;; to the ungzipped file
+	      (instantiate::http-response-file
+		 (request req)
+		 (content-type (mime-type (prefix encoded-path) "text/plain"))
+		 (charset (hop-locale))
+		 (header `((content-encoding: . "gzip")))
+		 (bodyp (eq? method 'GET))
+		 (file encoded-path)))
+	     ((and (file-exists? (string-append encoded-path ".gz"))
+		   (member (dirname encoded-path) (hop-gzipped-directories))
+		   (accept-gzip? header))
+	      ;; send a gzipped version of the file
+	      (instantiate::http-response-file
+		 (request req)
+		 (content-type (mime-type encoded-path "text/plain"))
+		 (charset (hop-locale))
+		 (header `((content-encoding: . "gzip")))
+		 (bodyp (eq? method 'GET))
+		 (file (string-append encoded-path ".gz"))))
 	     (else
-	      (http-method-error req)))))))
+	      ;; send a regular file
+	      (instantiate::http-response-file
+		 (request req)
+		 (content-type (mime-type encoded-path "text/plain"))
+		 (charset (hop-locale))
+		 (bodyp (eq? method 'GET))
+		 (file encoded-path))))))))
+
+;*---------------------------------------------------------------------*/
+;*    webdav-options ...                                               */
+;*---------------------------------------------------------------------*/
+(define (webdav-options)
+   '((dav: . 1)
+     (allow: . "COPY, MOVE, PUT, PROPFIND, PROPPATCH, MKCOL, DELETE")))
+
+;*---------------------------------------------------------------------*/
+;*    add-options! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (add-options! opt1 opt2)
+   (for-each (lambda (opt)
+		(let* ((key (car opt))
+		       (cell (assq key opt1)))
+		   (if (pair? cell)
+		       (set-cdr! cell (string-append (cdr cell) ", " (cdr opt)))
+		       (set! opt1 (cons opt opt1)))))
+	     opt2)
+   opt1)
+
+;*---------------------------------------------------------------------*/
+;*    http-options ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (http-options req)
+   (let ((options '((allow: . "GET, HEAD, POST, OPTIONS"))))
+      (when (hop-enable-webdav)
+	 (set! options (add-options! options (webdav-options))))
+      (instantiate::http-response-string
+	 (request req)
+	 (charset (hop-locale))
+	 (header options)
+	 (bodyp #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    log-response ...                                                 */
@@ -267,33 +269,68 @@
 	     (=elong (bit-andelong ip (hop-proxy-ip-mask-word)) ip)))))
 
 ;*---------------------------------------------------------------------*/
-;*    proxy authentication ...                                         */
+;*    init-webdav! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(hop-http-response-remote-hook-add!
- (lambda (req resp)
-    (cond
-       ((and (not (http-request-localclientp req))
-	     (or (not (hop-proxy-allow-remote-client))
-		 (not (hop-proxy-ip-allowed? req))))
-	(instantiate::http-response-abort
-	   (request req)))
-       ((and (http-request-localclientp req)
-	     (not (hop-proxy-authentication)))
-	resp)
-       ((and (not (http-request-localclientp req))
-	     (not (hop-proxy-remote-authentication))
-	     (not (hop-proxy-authentication)))
-	resp)
-       (else
-	(with-access::http-request req (user host port path header)
-	   (if (user-authorized-service? user 'proxy)
-	       resp
-	       (proxy-denied req user host)))))))
+(define (init-webdav!)
+   (add-http-handler! 'PROPFIND webdav-propfind)
+   (add-http-handler! 'PROPPATCH webdav-proppatch)
+   (add-http-handler! 'MKCOL webdav-mkcol)
+   (add-http-handler! 'DELETE webdav-delete)
+   (add-http-handler! 'COPY webdav-copy)
+   (add-http-handler! 'MOVE webdav-move)
+   (add-http-handler! 'PUT webdav-put)
+   (add-http-handler! 'LOCK webdav-lock)
+   (add-http-handler! 'UNLOCK webdav-unlock))
 
 ;*---------------------------------------------------------------------*/
-;*    server logging ...                                               */
+;*    init-flash! ...                                                  */
 ;*---------------------------------------------------------------------*/
-(when (output-port? (hop-log-file))
-   (hop-http-response-local-hook-add!
+(define (init-flash!)
+   (add-http-handler! 'FLASH-POLICY-FILE hop-event-policy-file))
+   
+;*---------------------------------------------------------------------*/
+;*    init-http! ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (init-http!)
+
+   ;; regular http handlers
+   (add-http-handler! 'GET http-get)
+   (add-http-handler! 'HEAD http-get)
+   (add-http-handler! 'OPTIONS http-options)
+   
+   ;; local filter (Fallback local file filter)
+   (hop-filter-add-always-last!
+    (lambda (req)
+       (when (http-request-localhostp req)
+	  (let ((handler (http-find-method-handler (http-request-method req))))
+	     (if (procedure? handler)
+		 (handler req)
+		 (http-method-error req))))))
+   
+   ;; remote hooks
+   (hop-http-response-remote-hook-add!
     (lambda (req resp)
-       (log-response (hop-log-file) req resp))))
+       (cond
+	  ((and (not (http-request-localclientp req))
+		(or (not (hop-proxy-allow-remote-client))
+		    (not (hop-proxy-ip-allowed? req))))
+	   (instantiate::http-response-abort
+	      (request req)))
+	  ((and (http-request-localclientp req)
+		(not (hop-proxy-authentication)))
+	   resp)
+	  ((and (not (http-request-localclientp req))
+		(not (hop-proxy-remote-authentication))
+		(not (hop-proxy-authentication)))
+	   resp)
+	  (else
+	   (with-access::http-request req (user host port path header)
+	      (if (user-authorized-service? user 'proxy)
+		  resp
+		  (proxy-denied req user host)))))))
+   
+   ;; logging
+   (when (output-port? (hop-log-file))
+      (hop-http-response-local-hook-add!
+       (lambda (req resp)
+	  (log-response (hop-log-file) req resp)))))

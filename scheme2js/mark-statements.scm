@@ -4,6 +4,7 @@
    (option (loadq "protobject-eval.sch"))
    (import protobject
 	   nodes
+	   config
 	   var
 	   verbose)
    (export (mark-statements tree::pobject)
@@ -17,15 +18,17 @@
    (overload traverse mark-statements (Node
 				       Module
 				       Lambda
+				       Let
+				       Frame-push
 				       If
 				       Case
 				       Begin
 				       Call/cc-Call
 				       Call
-				       Tail-rec
 				       While
-				       Tail-rec-call
-				       Closure-with-use
+				       Tail-rec
+				       Tail-call
+				       Continue
 				       Return
 				       Labelled
 				       Break
@@ -73,6 +76,19 @@
    (mark-node! this #f)
    #f)
 
+(define-pmethod (Let-mark-statements)
+   (let* ((bindings-res (list-mark-statements this.bindings))
+	  (body-res (this.body.traverse)))
+      (mark-node! this #t)
+      #t))
+
+(define-pmethod (Frame-push-mark-statements)
+   (let* ((body-tmp (this.body.traverse))
+	  (res (or body-tmp
+		   (config 'with-closures))))
+      (mark-node! this res)
+      res))
+
 (define-pmethod (If-mark-statements)
    (let* ((test-res (this.test.traverse))
 	  (then-res (this.then.traverse))
@@ -98,6 +114,10 @@
       (mark-node! this #t)
       #t))
    
+(define-pmethod (Call/cc-Resume-mark-statements)
+   (mark-node! this #t)
+   #t)
+
 (define-pmethod (Call-mark-statements)
    (let* ((operands-tmp (list-mark-statements this.operands))
 	  (operator-tmp (this.operator.traverse))
@@ -105,22 +125,24 @@
       (mark-node! this res)
       res))
 
-(define-pmethod (Tail-rec-mark-statements)
-   (this.body.traverse)
-   (mark-node! this #t)
-   #t)
-
 (define-pmethod (While-mark-statements)
    (this.test.traverse)
    (this.body.traverse)
    (mark-node! this #t)
    #t)
 
-(define-pmethod (Tail-rec-call-mark-statements)
+(define-pmethod (Tail-rec-mark-statements)
+   (let* ((inits-res (list-mark-statements this.inits))
+	  (body-res (this.body.traverse)))
+      (mark-node! this #t)
+      #t))
+
+(define-pmethod (Tail-call-mark-statements)
+   (this.traverse)
    (mark-node! this #t)
    #t)
 
-(define-pmethod (Closure-with-use-mark-statements)
+(define-pmethod (Continue-mark-statements)
    (mark-node! this #t)
    #t)
 
@@ -140,7 +162,6 @@
    #t)
 
 (define-pmethod (Set!-mark-statements)
-   (let ((res (or (this.val.traverse)
-		  this.call/cc-stmt?)))
+   (let ((res (this.val.traverse)))
       (mark-node! this res)
       res))

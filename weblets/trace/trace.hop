@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/trace/trace.hop                 */
+;*    serrano/prgm/project/hop/1.9.x/weblets/trace/trace.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Nov 20 14:31:07 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Thu Feb 14 15:42:54 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
 ;*=====================================================================*/
@@ -16,11 +16,6 @@
    (export trace
 	   trace/documentation
 	   trace/preferences))
-
-;*---------------------------------------------------------------------*/
-;*    The user configuration                                           */
-;*---------------------------------------------------------------------*/
-(hop-load-rc "tracerc.hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    Global parameters                                                */
@@ -60,3 +55,9 @@
    (trace-preferences-edit
     :onclick ~(with-hop ($(service ()
 			     (trace-preferences-save trace-prefs))))))
+
+;*---------------------------------------------------------------------*/
+;*    The user configuration                                           */
+;*---------------------------------------------------------------------*/
+(hop-load-rc "tracerc.hop")
+

@@ -10,6 +10,7 @@
    (option (set! *dlopen-init* "hopscheme_e"))
    
    (import hopscheme
-	   tilde-escape)
+	   tilde-escape
+	   scm-compil)
    
    (eval   (export-all)))

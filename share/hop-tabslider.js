@@ -1,13 +1,24 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-tabslider.js                  */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-tabslider.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio [eg@essi.fr]                       */
 /*    Creation    :  14-Sep-2005 09:24 (eg)                            */
-/*    Last change :  Sat Sep 29 08:43:02 2007 (serrano)                */
-/*    Copyright   :  2006-07 Inria                                     */
+/*    Last change :  Wed Mar 26 08:38:33 2008 (serrano)                */
+/*    Copyright   :  2006-08 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    HOP tabslider implementation                                     */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    hop_tabslider_user_select ...                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export tabslider-select)) ***/
+function hop_tabslider_user_select( id1, id2 ) {
+   var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );
+   var tshead = tab.previousSibling;
+
+   return hop_tabslider_select( tshead );
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_tabslider_select ...                                         */
@@ -32,7 +43,7 @@ function hop_tabslider_select_inner( parent, item ) {
    var titlesHeight = 0;
    var selected;
    var i;
-   
+
    /* select the correct tab */
    for( i = 0; i < parent.childNodes.length; i += 2 ) {
       var title = parent.childNodes[ i ];
@@ -48,18 +59,26 @@ function hop_tabslider_select_inner( parent, item ) {
 		 function( html ) {
 		    hop_innerHTML_set( selected, html );
 		    selected.style.display = "block";
+		    
+		    /* event handlers */
+		    if( selected.onselect ) selected.onselect();
+		    if( parent.onchange ) parent.onchange( item );
 		 } );
 	 } else {
 	    selected.style.display = "block";
 	    /* update the layout of the children of the new tab */
 	    hop_update( selected );
+	    
+	    /* event handlers */
+	    if( selected.onselect ) selected.onselect();
+	    if( parent.onchange ) parent.onchange( item );
 	 }
       } else {
 	 content.style.display = "none";
 	 title.className = "hop-tabslider-head hop-tabslider-head-inactive";
       }
    }
-    
+
    /* Set the height of the selected item */
    selected.style.height = (totalHeight - titlesHeight) + "px";
    parent.tab_selected = item;
@@ -75,13 +94,13 @@ function hop_tabslider_update() {
 /*---------------------------------------------------------------------*/
 /*    hop_tabslider_init ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_tabslider_init( id, ind, history ) {
+function hop_tabslider_init( id, ind, history, onchange ) {
    var ts = document.getElementById( id );
    var update = function( e ) {
       ts.tab_selected = ts.childNodes[ 2 * ind ];
       ts.hop_update();
    };
-   
+
    ts.hop_update = hop_tabslider_update;
    ts.history = (history != false);
    
@@ -90,6 +109,8 @@ function hop_tabslider_init( id, ind, history ) {
    // is sent via a with-hop call).
    update();
 
+   ts.onchange = onchange;
+   
    hop_state_history_register_handler(
       "ts", /* key argument */
       "",  /* reset value  */

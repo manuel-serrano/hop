@@ -28,9 +28,8 @@
       (<HTML>
 	 (<HEAD>
 	    :title "Podcast demo"
-	    :base (service-base-url home/demos/music (current-request))
 	    :include "hop-audio" "hop-slider"
-	    :css "music.hss")
+	    :css (service-resource home/demos/music "music.hss"))
 	 (<BODY>
 	    ~(define snd #f)
 	    ~(define (play-url url)

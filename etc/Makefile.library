@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/etc/Makefile.library                    */
+#*    serrano/prgm/project/hop/1.9.x/etc/Makefile.library              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon Sep 10 20:30:50 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Tue Apr  1 12:22:51 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -35,13 +35,13 @@ o/%.o: %.scm
 	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$< -o $@ -c)
 
 $(CLASS_DIR)/%.class: %.scm
-	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+	@ $(call compile2,BIGLOO,BJVMFLAGS,BLFLAGS,$< -o $@ -c)
 
 $(CLASS_EDIR)/%.class: %.scm
 	@ $(call compile2,BIGLOO,BJVMFLAGS,BLJVMFLAGS,$< -o $@ -c)
 
 $(DOTNET_OBJ_DIR)/%.obj: %.scm
-	@ $(call compile,BIGLOO,BDOTNETFLAGS,$< -o $@ -c)
+	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLFLAGS,$< -o $@ -c)
 
 $(DOTNET_OBJ_EDIR)/%.obj: %.scm
 	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLDOTNETFLAGS,$< -o $@ -c)
@@ -77,10 +77,11 @@ lib-c: $(TAGS) .afile o lib-c-static lib-c-shared
 o:
 	mkdir -p $@
 
-lib-c-static: $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
+lib-c-static: o \
+              $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
               $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
 
-# lib-c-shared depends on lib-c-static only to force compilation
+# lib-c-shared depends on lib-c-static only to force the compilation
 # order when invoking make with --jobs N
 lib-c-shared: lib-c-static
 	@ if [ "$(SHAREDLIBRARYSUPPORT)" = "yes" ]; then \

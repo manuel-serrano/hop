@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/home/Makefile                   */
+#*    serrano/prgm/project/hop/1.9.x/weblets/home/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Aug  8 15:57:12 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Tue Jan 22 09:23:47 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -27,7 +27,7 @@ POPULATION	= Makefile .afile home.hss tips.hss \
 build: .afile license.wiki install.wiki install-jvm.wiki release.info
 
 .afile: $(HOP_POP)
-	$(AFILE) -suffix hop $(POPULATION) demos/*/*.hop > .afile
+	$(AFILE) -suffix hop $(POPULATION) demos/*/*.hop -o .afile
 
 license.wiki: ../../LICENSE
 	cp $< $@

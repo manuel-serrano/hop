@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/weblets/weblets/Makefile                */
+#*    serrano/prgm/project/hop/1.9.x/weblets/weblets/Makefile          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Nov 29 07:30:08 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Tue Jan 22 09:25:26 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
 #*=====================================================================*/
@@ -20,14 +20,15 @@ build: .afile
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
-SOURCES		= weblets.hop package.hop config.hop
+SOURCES		= weblets.hop package.hop config.hop markup.hop \
+                  homepage.hop fontifier.hop
 
 POPULATION	= $(SOURCES) \
                   Makefile \
-                  weblets.hss config.hop.in \
+                  weblets.hss weblets-homepage.hss config.hop \
                   LICENSE \
                   etc/logo.png etc/favicon.png \
                   etc/weblet.info etc/weblets.wiki .afile
 
 .afile: $(SOURCES)
-	$(AFILE) -suffix hop $(SOURCES) > .afile
+	$(AFILE) -suffix hop $(SOURCES) -o .afile

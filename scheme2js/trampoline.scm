@@ -10,11 +10,16 @@
 	   var
 	   tail
 	   side
-	   js-interface
-	   verbose)
+	   verbose
+	   var-ref-util)
    (export (trampoline tree::pobject)))
 
-   
+;; find tail-calls, and mark them with .tail-call?
+;; for our trampolines to work we must not execute any tail-call during
+;; evaluation of the operator and operands. -> if any of them is not just a
+;; const or a var-ref, move them in front of the call (using temporary
+;; variables). As the creation of these variables creates new scopes, we have
+;; to do this pass before the scope-resolution pass.
 (define (trampoline tree::pobject)
    (when (config 'trampoline)
       (verbose "trampoline")
@@ -37,17 +42,6 @@
       (set! this.trampolined? #t))
    this)
 
-(define (runtime-var-ref? n)
-   (and (inherits-from? n (node 'Var-ref))
-	(let* ((var n.var)
-	       (js-id var.js-id))
-;	   (and (verbose "id: " var.id))
-;	   (and (verbose "js-id: " var.js-id))
-	   (and (inherits-from? var (node 'JS-Var))
-		js-id
-		(not var.muted?)
-		(any? (lambda (p) (eq? js-id (cadr p))) *runtime-var-mapping*)))))
-
 (define (potential-tail-fun? operator)
    (cond
       ((inherits-from? operator (node 'Lambda))
@@ -60,27 +54,12 @@
 	   (operator.traverse! #f)
 	   operator.contains-tail-calls?)))
       ((runtime-var-ref? operator)
-       (memq operator.var.id *higher-order-runtime*))
+       #f)
       ((and (inherits-from? operator (node 'Var-ref))
-	    operator.var.single-value)
-       (potential-tail-fun? operator.var.single-value))
+	    operator.var.constant?)
+       (potential-tail-fun? operator.var.value))
       (else
        #t)))
-
-;; only called, once we already established, that the operator is a potential
-;; tail-call.
-;; "certain" means, we are going to decrement the tail-counter later on.
-;; "uncertain" means, that we might call a "non-tail"-function.
-;;       in other words: "uncertain" means, we don't know what we are calling.
-(define (certain-tail-fun? operator)
-   (cond
-      ((inherits-from? operator (node 'Lambda))
-       #t)
-      ((and (inherits-from? operator (node 'Var-ref))
-	    operator.var.single-value)
-       #t)
-      (else
-       #f)))
 
 (define (a-normal-form call)
    (let ((hoisted '()))
@@ -92,10 +71,10 @@
 	     n)
 	    ((and (inherits-from? n (node 'Call))
 		  (runtime-var-ref? n.operator)
-		  (not (memq n.operator.var.js-id
-			     *higher-order-runtime*)))
+		  (not (runtime-var n.operator).higher?))
 	     n)
 	    (else
+	     ;; TODO: variables must be in scope
 	     (let* ((tmp-decl (Decl-of-new-Var (gensym 'tail)))
 		    (assig (new-node Set! tmp-decl n)))
 		(set! hoisted (cons assig hoisted))
@@ -105,7 +84,11 @@
       (set! call.operator (hoist call.operator))
       (if (null? hoisted)
 	  call
-	  (new-node Begin (append! hoisted (list call))))))
+	  (new-node Let
+		    (map (lambda (assig) assig.lvalue.var) hoisted)
+		    hoisted
+		    call
+		    'let))))
 
 (define-pmethod (Call-trampoline! current-fun)
    (this.traverse1! current-fun)
@@ -114,9 +97,6 @@
        (begin
 	  (set! this.tail-call? #t)
 	  (and current-fun (set! current-fun.contains-tail-calls? #t))))
-   (if (and this.tail-call?
-	    (certain-tail-fun? this.operator))
-       (set! this.certain-tail-call? #t))
    (if this.tail-call?
        (a-normal-form this)
        this))

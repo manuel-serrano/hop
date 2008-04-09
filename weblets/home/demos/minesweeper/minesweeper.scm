@@ -1,3 +1,8 @@
+(module minesweeper
+   (export board-init!
+	   game-start!)
+   (JS Math))
+
 (define (img-path file)
    file)
 
@@ -27,7 +32,8 @@
 (define *bomb-death-img* (img-path "bombdeath.gif"))
 
 (define (remaining-bombs-update!)
-   (set! (document.getElementById "remaining").innerHTML (- *nb-mines* *nb-marked-bombs*)))
+   (innerHTML-set! (dom-get-element-by-id "remaining")
+		   (- *nb-mines* *nb-marked-bombs*)))
    
 (define (cell x y)
    (vector-ref *cells* (+ (* x *width*) y)))
@@ -153,8 +159,7 @@
       (set! this.bomb-marked? #f)
       (set! this.revealed? #f))
    
-   (let ((cell (document.createElement "img")))
-      (set! cell.src *blank-img*)
+   (let ((cell (<IMG> :src *blank-img*)))
       (set! cell.mine (js-new Mine))
       (add-event-listener! cell
 			   "click"
@@ -171,26 +176,26 @@
 		   v))
 
 (define (board-init!)
-   (let ((board-div (document.getElementById "board"))
+   (let ((board-div (dom-get-element-by-id "board"))
 	 (line-div #f))
       (node-style-set! board-div "padding" 0)
       (node-style-set! board-div "margin" 0)
       (node-style-set! board-div "border" 0)
-      (set! board-div.style.visibility "hidden")
+      (node-style-set! board-div "visibility" "hidden")
       (for-each-cell (lambda (cell)
 			(node-style-set! cell "padding" 0)
 			(node-style-set! cell "margin" 0)
 			(node-style-set! cell "border" 0)
 			(if (= cell.mine.y 0)
 			    (begin
-			       (set! line-div (document.createElement "div"))
+			       (set! line-div (<DIV>))
 			       (node-style-set! line-div "padding" 0)
 			       (node-style-set! line-div "margin" 0)
 			       (node-style-set! line-div "border" 0)
 			       (node-style-set! line-div "height" "15px")
 			       (board-div.appendChild line-div)))
-			(line-div.appendChild cell)))
-      (set! board-div.style.visibility "visible")))
+			(dom-append-child! line-div cell)))
+      (node-style-set! board-div "visibility" "visible")))
 
 (define (game-start!)
    (set! *missing-cells* (- (* *width* *height*) *nb-mines*))
@@ -215,5 +220,3 @@
    (for-each-cell (lambda (c)
 			(set! c.mine.nb-neighbors (nb-neighbor-mines c))))
    (remaining-bombs-update!))
-
-   

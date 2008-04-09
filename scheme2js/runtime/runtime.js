@@ -1,52 +1,86 @@
-function sc_print_debug() {
-    sc_print_immutable.apply(null, arguments);
-}
-var sc_JS_GLOBALS = this; /// export *js*
+/************* GENERATED FILE - DO NOT EDIT *************/
+/************* GENERATED FILE - DO NOT EDIT *************/
+/************* GENERATED FILE - DO NOT EDIT *************/
+/************* GENERATED FILE - DO NOT EDIT *************/
+/************* GENERATED FILE - DO NOT EDIT *************/
+/************* GENERATED FILE - DO NOT EDIT *************/
+/************* GENERATED FILE - DO NOT EDIT *************/
+/************* GENERATED FILE - DO NOT EDIT *************/
+/*
+ * To use write/prints/... the default-output port has to be set first.
+ * Simply setting SC_DEFAULT_OUT and SC_ERROR_OUT to the desired values
+ * should do the trick.
+ * In the following example the std-out and error-port are redirected to
+ * a DIV.
+function initRuntime() {
+    function escapeHTML(s) {
+	var tmp = s;
+	tmp = tmp.replace(/&/g, "&amp;");
+	tmp = tmp.replace(/</g, "&lt;");
+	tmp = tmp.replace(/>/g, "&gt;");
+	tmp = tmp.replace(/ /g, "&nbsp;");
+	tmp = tmp.replace(/\n/g, "<br />");
+	tmp = tmp.replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp");
+	return tmp;
+	
+    }
 
-var sc_SYMBOL_PREFIX = "\u1E9C"; // "\u1E9D\u1E9E\u1E9F";
+    document.write("<div id='stdout'></div>");
+    SC_DEFAULT_OUT = new sc_GenericOutputPort(
+	function(s) {
+	    var stdout = document.getElementById('stdout');
+	    stdout.innerHTML = stdout.innerHTML + escapeHTML(s);
+	});
+    SC_ERROR_OUT = SC_DEFAULT_OUT;
+}
+*/
+
+
+function sc_print_debug() {
+    sc_print.apply(null, arguments);
+}
+/*** META ((export *js*)) */
+var sc_JS_GLOBALS = this;
 
 var __sc_LINE=-1;
 var __sc_FILE="";
 
-function sc_alert() { /// export
+/*** META ((export #t)) */
+function sc_alert() {
    var len = arguments.length;
    var s = "";
    var i;
 
    for( i = 0; i < len; i++ ) {
-      s += arguments[ i ];
+       s += sc_toDisplayString(arguments[ i ]);
    }
 
    return alert( s );
 }
 
-function sc_typeof( x ) { /// export
+/*** META ((export #t)) */
+function sc_typeof( x ) {
    return typeof x;
 }
 
-function sc_error_mutable() {  /// export
-    var t = sc_withOutputToString_mutable(
-	function () {
-	    sc_print_mutable("**ERROR**");
-	    for (var i = 0; i < arguments.length; i++) {
-		sc_print_mutable(arguments[i]);
-	    }
-	});
-    throw t;
+/*** META ((export #t)) */
+function sc_error() {
+    var a = [sc_jsstring2symbol("*error*")];
+    for (var i = 0; i < arguments.length; i++) {
+	a[i+1] = arguments[i];
+    }
+    throw a;
 }
 
-function sc_error_immutable() {  /// export
-    var t = sc_withOutputToString_mutable(
-	function () {
-	    sc_print_immutable("**ERROR**");
-	    for (var i = 0; i < arguments.length; i++) {
-		sc_print_mutable(arguments[i]);
-	    }
-	});
-    throw t;
+/*** META ((export #t)
+           (peephole (prefix "throw ")))
+*/
+function sc_raise(obj) {
+    throw obj;
 }
 
-function sc_withHandlerLambda(handler, body) { /// export-higher with-handler-lambda
+/*** META ((export with-handler-lambda)) */
+function sc_withHandlerLambda(handler, body) {
     try {
 	return body();
     } catch(e) {
@@ -57,34 +91,10 @@ function sc_withHandlerLambda(handler, body) { /// export-higher with-handler-la
     }
 }
 
-function sc_withHandlerLambda_callcc(handler, body) { /// export-higher with-handler-lambda
-    var sc_storage = SC_CALLCC_STORAGE;
-    if (sc_storage['doCall/CcDefault?']) {
-    } else if (sc_storage['doCall/CcRestore?']) {
-	var _sc_frame = sc_storage.pop();
-	handler = _sc_frame.handler;
-	body = sc_storage.callNextFunction();
-    } else { // root-fun?
-	return sc_callCcRoot(this, arguments);
-    }
-    try {
-	return body();
-    } catch(e) {
-	if (!e._internalException)
-	    return handler(e);
-	if (e instanceof sc_CallCcException && e.backup) {
-	    _sc_frame = new Object();
-	    _sc_frame.callee = sc_withHandlerLambda_callcc;
-	    _sc_frame.handler = handler;
-	    e.push(_sc_frame);
-	}
-	throw e;
-    }
-}
-
 var sc_properties = new Object();
 
-function sc_putProp(sym, key, val) { /// export putprop!
+/*** META ((export #t)) */
+function sc_putpropBang(sym, key, val) {
     var ht = sc_properties[sym];
     if (!ht) {
 	ht = new Object();
@@ -93,7 +103,8 @@ function sc_putProp(sym, key, val) { /// export putprop!
     ht[key] = val;
 }
 
-function sc_getProp(sym, key) { /// export getprop
+/*** META ((export #t)) */
+function sc_getprop(sym, key) {
     var ht = sc_properties[sym];
     if (ht) {
 	if (key in ht)
@@ -104,105 +115,102 @@ function sc_getProp(sym, key) { /// export getprop
 	return false;
 }
 
-function sc_remProp(sym, key) { /// export remprop!
+/*** META ((export #t)) */
+function sc_rempropBang(sym, key) {
     var ht = sc_properties[sym];
     if (ht)
 	delete ht[key];
 }
 
-var sc_gensym_mutable = function() { /// export
-    var counter = 1000;
-    return function(sym) {
-	counter++;
-	if (!sym) sym = "";
-	return "s" + counter + "~" + sym + "^sC-GeNsYm ";
-    };
-}();
+/*** META ((export #t)) */
+function sc_any2String(o) {
+    return jsstring2string(sc_toDisplayString(o));
+}    
 
-var sc_gensym_immutable = function() { /// export
-    var counter = 1000;
-    return function(sym) {
-	counter++;
-	if (!sym) sym = sc_SYMBOL_PREFIX;
-	return sym + "s" + counter + "~" + "^sC-GeNsYm ";
-    };
-}();
-
-function sc_toString(o) {
-    if (o === null)
-	return "()";
-    else if (o === true)
-	return "#t";
-    else if (o === false)
-	return "#f";
-    else if (o === undefined)
-	return "#unspecified"
-    else
-	return o.toString();
-}
-
-function sc_isEqv(o1, o2) { /// export
+/*** META ((export #t)
+           (peephole (infix 2 2 "==="))
+           (type bool))
+*/
+function sc_isEqv(o1, o2) {
     return (o1 === o2);
 }
 
-function sc_isEq(o1, o2) { /// export
+/*** META ((export #t)
+           (peephole (infix 2 2 "==="))
+           (type bool))
+*/
+function sc_isEq(o1, o2) {
     return (o1 === o2);
 }
 
-function sc_isEqual_immutable(o1, o2) { /// export
-    return ((o1 === o2) ||
-	    (sc_isPair(o1) && sc_isPair(o2)
-	     && sc_isPairEqual(o1, o2, sc_isEqual_immutable)) ||
-	    (sc_isVector(o1) && sc_isVector(o2)
-	     && sc_isVectorEqual(o1, o2, sc_isEqual_immutable)));
-}
-function sc_isEqual_mutable(o1, o2) { /// export
-    return ((o1 === o2) ||
-	    (sc_isPair(o1) && sc_isPair(o2)
-	     && sc_isPairEqual(o1, o2, sc_isEqual_mutable)) ||
-	    (sc_isVector(o1) && sc_isVector(o2)
-	     && sc_isVectorEqual(o1, o2, sc_isEqual_mutable)) ||
-	    (sc_isString_mutable(o1) && sc_isString_mutable(o2)
-	     && sc_isStringEqual_mutable(o1, o2)));
-}
-
-function sc_isNumber(n) { /// export
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isNumber(n) {
     return (typeof n === "number");
 }
 
-function sc_isComplex(n) { /// export
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isComplex(n) {
     return sc_isNumber(n);
 }
 
-function sc_isReal(n) { /// export
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isReal(n) {
     return sc_isNumber(n);
 }
 
-function sc_isRational(n) { /// export
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isRational(n) {
     return sc_isReal(n);
 }
 
-function sc_isInteger(n) { /// export
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isInteger(n) {
     return (parseInt(n) === n);
 }
 
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix ", false")))
+*/
 // we don't have exact numbers...
-function sc_isExact(n) { /// export
+function sc_isExact(n) {
     return false;
 }
 
-function sc_isInexact(n) { /// export
+/*** META ((export #t)
+           (peephole (postfix ", true"))
+	   (type bool))
+*/
+function sc_isInexact(n) {
     return true;
 }
 
-function sc_equal(x) { /// export = =fx =fl
+/*** META ((export = =fx =fl)
+           (type bool)
+           (peephole (infix 2 2 "===")))
+*/
+function sc_equal(x) {
     for (var i = 1; i < arguments.length; i++)
 	if (x !== arguments[i])
 	    return false;
     return true;
 }
 
-function sc_less(x) { /// export < <fx <fl
+/*** META ((export < <fx <fl)
+           (type bool)
+           (peephole (infix 2 2 "<")))
+*/
+function sc_less(x) {
     for (var i = 1; i < arguments.length; i++) {
 	if (x >= arguments[i])
 	    return false;
@@ -211,7 +219,11 @@ function sc_less(x) { /// export < <fx <fl
     return true;
 }
 
-function sc_greater(x, y) { /// export > >fx >fl
+/*** META ((export > >fx >fl)
+           (type bool)
+           (peephole (infix 2 2 ">")))
+*/
+function sc_greater(x, y) {
     for (var i = 1; i < arguments.length; i++) {
 	if (x <= arguments[i])
 	    return false;
@@ -220,7 +232,11 @@ function sc_greater(x, y) { /// export > >fx >fl
     return true;
 }
 
-function sc_lessEqual(x, y) { /// export <= <=fx <=fl
+/*** META ((export <= <=fx <=fl)
+           (type bool)
+           (peephole (infix 2 2 "<=")))
+*/
+function sc_lessEqual(x, y) {
     for (var i = 1; i < arguments.length; i++) {
 	if (x > arguments[i])
 	    return false;
@@ -229,7 +245,11 @@ function sc_lessEqual(x, y) { /// export <= <=fx <=fl
     return true;
 }
 
-function sc_greaterEqual(x, y) { /// export >= >=fl >=fx
+/*** META ((export >= >=fl >=fx)
+           (type bool)
+           (peephole (infix 2 2 ">=")))
+*/
+function sc_greaterEqual(x, y) {
     for (var i = 1; i < arguments.length; i++) {
 	if (x < arguments[i])
 	    return false;
@@ -238,44 +258,75 @@ function sc_greaterEqual(x, y) { /// export >= >=fl >=fx
     return true;
 }
 
-function sc_isZero(x) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix "=== 0")))
+*/
+function sc_isZero(x) {
     return (x === 0);
 }
 
-function sc_isPositive(x) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix "> 0")))
+*/
+function sc_isPositive(x) {
     return (x > 0);
 }
 
-function sc_isNegative(x) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix "< 0")))
+*/
+function sc_isNegative(x) {
     return (x < 0);
 }
 
-function sc_isOdd(x) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix "%2===1")))
+*/
+function sc_isOdd(x) {
     return (x % 2 === 1);
 }
 
-function sc_isEven(x) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix "%2===0")))
+*/
+function sc_isEven(x) {
     return (x % 2 === 0);
 }
 
-var sc_max = Math.max; /// export
-var sc_min = Math.min; /// export
+/*** META ((export #t)) */
+var sc_max = Math.max;
+/*** META ((export #t)) */
+var sc_min = Math.min;
 
-function sc_plus() { /// export + +fx +fl
+/*** META ((export + +fx +fl)
+           (peephole (infix 0 #f "+" "0")))
+*/
+function sc_plus() {
     var sum = 0;
     for (var i = 0; i < arguments.length; i++)
 	sum += arguments[i];
     return sum;
 }
 
-function sc_multi() { /// export * *fx *fl
+/*** META ((export * *fx *fl)
+           (peephole (infix 0 #f "*" "1")))
+*/
+function sc_multi() {
     var product = 1;
     for (var i = 0; i < arguments.length; i++)
 	product *= arguments[i];
     return product;
 }
 
-function sc_minus(x) { /// export - -fx -fl
+/*** META ((export - -fx -fl)
+           (peephole (minus)))
+*/
+function sc_minus(x) {
     if (arguments.length === 1)
 	return -x;
     else {
@@ -286,7 +337,10 @@ function sc_minus(x) { /// export - -fx -fl
     }
 }
 
-function sc_div(x) { /// export / /fl
+/*** META ((export / /fl)
+           (peephole (div)))
+*/
+function sc_div(x) {
     if (arguments.length === 1)
 	return 1/x;
     else {
@@ -297,17 +351,27 @@ function sc_div(x) { /// export / /fl
     }
 }
 
-var sc_abs = Math.abs; /// export
+/*** META ((export #t)) */
+var sc_abs = Math.abs;
 
-function sc_quotient(x, y) { /// export quotient /fx
+/*** META ((export quotient /fx)
+           (peephole (hole 2 "parseInt(" x "/" y ")")))
+*/
+function sc_quotient(x, y) {
     return parseInt(x / y);
 }
 
-function sc_remainder(x, y) { /// export
+/*** META ((export #t)
+           (peephole (infix 2 2 "%")))
+*/
+function sc_remainder(x, y) {
     return x % y;
 }
 
-function sc_modulo(x, y) { /// export
+/*** META ((export #t)
+           (peephole (modulo)))
+*/
+function sc_modulo(x, y) {
     var remainder = x % y;
     // if they don't have the same sign
     if ((remainder * y) < 0)
@@ -332,14 +396,16 @@ function sc_euclid_gcd(a, b) {
     return b;
 }
 
-function sc_gcd() { /// export
+/*** META ((export #t)) */
+function sc_gcd() {
     var gcd = 0;
     for (var i = 0; i < arguments.length; i++)
 	gcd = sc_euclid_gcd(gcd, arguments[i]);
     return gcd;
 }
 
-function sc_lcm() { /// export
+/*** META ((export #t)) */
+function sc_lcm() {
     var lcm = 1;
     for (var i = 0; i < arguments.length; i++) {
 	var f = Math.round(arguments[i] / sc_euclid_gcd(arguments[i], lcm));
@@ -361,83 +427,100 @@ function sc_lcm() { /// export
 //     return Math.round(SC_MAX_DECIMALS / sc_euclid_gcd(rounded, SC_MAX_DECIMALS));
 // }
 
-var sc_floor = Math.floor; /// export
-var sc_ceiling = Math.ceil; /// export
-var sc_truncate = parseInt; /// export
-var sc_round = Math.round; /// export
+/*** META ((export #t)) */
+var sc_floor = Math.floor;
+/*** META ((export #t)) */
+var sc_ceiling = Math.ceil;
+/*** META ((export #t)) */
+var sc_truncate = parseInt;
+/*** META ((export #t)) */
+var sc_round = Math.round;
 
 // LIMITATION: sc_rationalize doesn't make sense in a floating point world.
 
-var sc_exp = Math.exp; /// export
-var sc_log = Math.log; /// export
-var sc_sin = Math.sin; /// export
-var sc_cos = Math.cos; /// export
-var sc_tan = Math.tan; /// export
-var sc_asin = Math.asin; /// export
-var sc_acos = Math.acos; /// export
-var sc_atan = Math.atan; /// export
+/*** META ((export #t)) */
+var sc_exp = Math.exp;
+/*** META ((export #t)) */
+var sc_log = Math.log;
+/*** META ((export #t)) */
+var sc_sin = Math.sin;
+/*** META ((export #t)) */
+var sc_cos = Math.cos;
+/*** META ((export #t)) */
+var sc_tan = Math.tan;
+/*** META ((export #t)) */
+var sc_asin = Math.asin;
+/*** META ((export #t)) */
+var sc_acos = Math.acos;
+/*** META ((export #t)) */
+var sc_atan = Math.atan;
 
-var sc_sqrt = Math.sqrt; /// export
-var sc_expt = Math.pow; /// export
+/*** META ((export #t)) */
+var sc_sqrt = Math.sqrt;
+/*** META ((export #t)) */
+var sc_expt = Math.pow;
 
 // LIMITATION: we don't have complex numbers.
 // LIMITATION: the following functions are hence not implemented.
 // LIMITATION: make-rectangular, make-polar, real-part, imag-part, magnitude, angle
 // LIMITATION: 2 argument atan
 
-function sc_exact2inexact(x) { /// export
+/*** META ((export #t)
+           (peephole (id)))
+*/
+function sc_exact2inexact(x) {
     return x;
 }
 
-function sc_inexact2exact(x) { /// export
+/*** META ((export #t)
+           (peephole (id)))
+*/
+function sc_inexact2exact(x) {
     return x;
 }
 
-function sc_number2symbol_mutable(x, radix) { /// export
+function sc_number2jsstring(x, radix) {
     if (radix)
 	return x.toString(radix);
     else
 	return x.toString();
 }
 
-function sc_number2string_mutable(x, radix) { /// export
-    return new sc_String(sc_number2symbol_mutable(x, radix));
+function sc_jsstring2number(s, radix) {
+    if (s === "") return false;
+
+    if (radix) {
+	var t = parseInt(s, radix);
+	if (!t && t !== 0) return false;
+	// verify that each char is in range. (parseInt ignores leading
+	// white and trailing chars)
+	var allowedChars = "01234567890abcdefghijklmnopqrstuvwxyz".substring(0, radix+1);
+	if ((new RegExp("^["+allowedChars+"]*$", "i")).test(s))
+	    return t;
+	else return false;
+    } else {
+	var t = +s; // does not ignore trailing chars.
+	if (!t && t !== 0) return false;
+	// simply verify that first char is not whitespace.
+	var c = s.charAt(0);
+	// if +c is 0, but the char is not "0", then we have a whitespace.
+	if (+c === 0 && c !== "0") return false;
+	return t;
+    }
 }
 
-function sc_number2symbol_immutable(x, radix) { /// export
-    return sc_SYMBOL_PREFIX + sc_number2string_immutable(x, radix);
-}
-    
-var sc_number2string_immutable = sc_number2symbol_mutable; /// export
-
-
-function sc_symbol2number_mutable(s, radix) { /// export
-    // first test, if there aren't any trailing chars
-    // (which are ignored by parseFloat/parseInt)
-    if (+s || +s === 0) {
-	if (radix) {
-	    var t = parseInt(s, radix);
-	    if (t || t === 0) return t; else return false;
-	} else return parseFloat(s);
-    } else
-	return false;
-}
-
-function sc_string2number_mutable(s, radix) { /// export
-    return sc_symbol2number_mutable(s.val, radix);
-}
-
-function sc_symbol2number_immutable(s, radix) { /// export
-    return sc_SYMBOL_PREFIX + sc_string2number_immutable(s, radix);
-}
-
-var sc_string2number_immutable = sc_symbol2number_mutable; /// export
-
-function sc_not(b) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (not)))
+*/
+function sc_not(b) {
     return b === false;
 }
 
-function sc_isBoolean(b) { /// export
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isBoolean(b) {
     return (b === true) || (b === false);
 }
 
@@ -446,20 +529,38 @@ function sc_Pair(car, cdr) {
     this.cdr = cdr;
 }
 
-sc_Pair.prototype.toString = function(inList) {
+sc_Pair.prototype.toString = function() {
+    return sc_toDisplayString(this);
+};
+sc_Pair.prototype.sc_toWriteOrDisplayString = function(writeOrDisplay, inList) {
     var isP = sc_isPair(this.cdr);
-    var tmp = sc_toString(this.car);
-    if (sc_isPair(this.cdr))
-	tmp += " " + this.cdr.toString(true);
+    var res;
+    if (inList) res = "";
+    else        res = "(";
+    
+    res += writeOrDisplay(this.car);
+    if (isP)
+	res += " " + this.cdr.sc_toWriteOrDisplayString(writeOrDisplay, true);
     else if (this.cdr !== null)
-	tmp += " . " + sc_toString(this.cdr);
-    if (inList)
-	return tmp;
-    else
-	return "(" + tmp + ")";
-}
+	res += " . " + writeOrDisplay(this.cdr);
+	
+    if (!inList) res += ")";
 
-function sc_isPair(p) { /// export
+    return res;
+};
+sc_Pair.prototype.sc_toDisplayString = function() {
+    return this.sc_toWriteOrDisplayString(sc_toDisplayString, false);
+};
+sc_Pair.prototype.sc_toWriteString = function() {
+    return this.sc_toWriteOrDisplayString(sc_toWriteString, false);
+};
+// sc_Pair.prototype.sc_toWriteCircleString in IO.js
+
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix " instanceof sc_Pair")))
+*/
+function sc_isPair(p) {
     return (p instanceof sc_Pair);
 }
 
@@ -467,63 +568,164 @@ function sc_isPairEqual(p1, p2, comp) {
     return (comp(p1.car, p2.car) && comp(p1.cdr, p2.cdr));
 }
 
-function sc_cons(car, cdr) { /// export
+/*** META ((export #t)
+           (peephole (hole 2 "new sc_Pair(" car ", " cdr ")")))
+*/
+function sc_cons(car, cdr) {
     return new sc_Pair(car, cdr);
 }
 
-function sc_consStar() { /// export cons*
+/*** META ((export cons*)) */
+function sc_consStar() {
     var res = arguments[arguments.length - 1];
     for (var i = arguments.length-2; i >= 0; i--)
 	res = new sc_Pair(arguments[i], res);
     return res;
 }
 
-function sc_car(p) { /// export
+/*** META ((export #t)
+           (peephole (postfix ".car")))
+*/
+function sc_car(p) {
     return p.car;
 }
 
-function sc_cdr(p) { /// export
+/*** META ((export #t)
+           (peephole (postfix ".cdr")))
+*/
+function sc_cdr(p) {
     return p.cdr;
 }
 
-function sc_setCar(p, o) { /// export set-car!
-    p.car = o;
+/*** META ((export #t)
+           (peephole (hole 2 p ".car = " val)))
+*/
+function sc_setCarBang(p, val) {
+    p.car = val;
 }
 
-function sc_setCdr(p, o) { /// export set-cdr!
-    p.cdr = o;
+/*** META ((export #t)
+           (peephole (hole 2 p ".cdr = " val)))
+*/
+function sc_setCdrBang(p, val) {
+    p.cdr = val;
 }
 
-function sc_caar(p) { return p.car.car; } /// export
-function sc_cadr(p) { return p.cdr.car; } /// export
-function sc_cdar(p) { return p.car.cdr; } /// export
-function sc_cddr(p) { return p.cdr.cdr; } /// export
-function sc_caaar(p) { return p.car.car.car; } /// export
-function sc_cadar(p) { return p.car.cdr.car; } /// export
-function sc_caadr(p) { return p.cdr.car.car; } /// export
-function sc_caddr(p) { return p.cdr.cdr.car; } /// export
-function sc_cdaar(p) { return p.car.car.cdr; } /// export
-function sc_cdadr(p) { return p.cdr.car.cdr; } /// export
-function sc_cddar(p) { return p.car.cdr.cdr; } /// export
-function sc_cdddr(p) { return p.cdr.cdr.cdr; } /// export
-function sc_caaaar(p) { return p.car.car.car.car; } /// export
-function sc_caadar(p) { return p.car.cdr.car.car; } /// export
-function sc_caaadr(p) { return p.cdr.car.car.car; } /// export
-function sc_caaddr(p) { return p.cdr.cdr.car.car; } /// export
-function sc_cdaaar(p) { return p.car.car.car.cdr; } /// export
-function sc_cdadar(p) { return p.car.cdr.car.cdr; } /// export
-function sc_cdaadr(p) { return p.cdr.car.car.cdr; } /// export
-function sc_cdaddr(p) { return p.cdr.cdr.car.cdr; } /// export
-function sc_cadaar(p) { return p.car.car.cdr.car; } /// export
-function sc_caddar(p) { return p.car.cdr.cdr.car; } /// export
-function sc_cadadr(p) { return p.cdr.car.cdr.car; } /// export
-function sc_cadddr(p) { return p.cdr.cdr.cdr.car; } /// export
-function sc_cddaar(p) { return p.car.car.cdr.cdr; } /// export
-function sc_cdddar(p) { return p.car.cdr.cdr.cdr; } /// export
-function sc_cddadr(p) { return p.cdr.car.cdr.cdr; } /// export
-function sc_cddddr(p) { return p.cdr.cdr.cdr.cdr; } /// export
+/*** META ((export #t)
+           (peephole (postfix ".car.car")))
+*/
+function sc_caar(p) { return p.car.car; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.car")))
+*/
+function sc_cadr(p) { return p.cdr.car; }
+/*** META ((export #t)
+           (peephole (postfix ".car.cdr")))
+*/
+function sc_cdar(p) { return p.car.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.cdr")))
+*/
+function sc_cddr(p) { return p.cdr.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".car.car.car")))
+*/
+function sc_caaar(p) { return p.car.car.car; }
+/*** META ((export #t)
+           (peephole (postfix ".car.cdr.car")))
+*/
+function sc_cadar(p) { return p.car.cdr.car; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.car.car")))
+*/
+function sc_caadr(p) { return p.cdr.car.car; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.cdr.car")))
+*/
+function sc_caddr(p) { return p.cdr.cdr.car; }
+/*** META ((export #t)
+           (peephole (postfix ".car.car.cdr")))
+*/
+function sc_cdaar(p) { return p.car.car.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.car.cdr")))
+*/
+function sc_cdadr(p) { return p.cdr.car.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".car.cdr.cdr")))
+*/
+function sc_cddar(p) { return p.car.cdr.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.cdr.cdr")))
+*/
+function sc_cdddr(p) { return p.cdr.cdr.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".car.car.car.car")))
+*/
+function sc_caaaar(p) { return p.car.car.car.car; }
+/*** META ((export #t)
+           (peephole (postfix ".car.cdr.car.car")))
+*/
+function sc_caadar(p) { return p.car.cdr.car.car; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.car.car.car")))
+*/
+function sc_caaadr(p) { return p.cdr.car.car.car; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.cdr.car.car")))
+*/
+function sc_caaddr(p) { return p.cdr.cdr.car.car; }
+/*** META ((export #t)
+           (peephole (postfix ".car.car.car.cdr")))
+*/
+function sc_cdaaar(p) { return p.car.car.car.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".car.cdr.car.cdr")))
+*/
+function sc_cdadar(p) { return p.car.cdr.car.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.car.car.cdr")))
+*/
+function sc_cdaadr(p) { return p.cdr.car.car.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.cdr.car.cdr")))
+*/
+function sc_cdaddr(p) { return p.cdr.cdr.car.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".car.car.cdr.car")))
+*/
+function sc_cadaar(p) { return p.car.car.cdr.car; }
+/*** META ((export #t)
+           (peephole (postfix ".car.cdr.cdr.car")))
+*/
+function sc_caddar(p) { return p.car.cdr.cdr.car; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.car.cdr.car")))
+*/
+function sc_cadadr(p) { return p.cdr.car.cdr.car; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.cdr.cdr.car")))
+*/
+function sc_cadddr(p) { return p.cdr.cdr.cdr.car; }
+/*** META ((export #t)
+           (peephole (postfix ".car.car.cdr.cdr")))
+*/
+function sc_cddaar(p) { return p.car.car.cdr.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".car.cdr.cdr.cdr")))
+*/
+function sc_cdddar(p) { return p.car.cdr.cdr.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.car.cdr.cdr")))
+*/
+function sc_cddadr(p) { return p.cdr.car.cdr.cdr; }
+/*** META ((export #t)
+           (peephole (postfix ".cdr.cdr.cdr.cdr")))
+*/
+function sc_cddddr(p) { return p.cdr.cdr.cdr.cdr; }
 
-function sc_lastPair(l) { /// export
+/*** META ((export #t)) */
+function sc_lastPair(l) {
     if (!sc_isPair(l)) sc_error("sc_lastPair: pair expected");
     var res = l;
     var cdr = l.cdr;
@@ -534,11 +736,18 @@ function sc_lastPair(l) { /// export
     return res;
 }
 
-function sc_isNull(o) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix " === null")))
+*/
+function sc_isNull(o) {
     return (o === null);
 }
 
-function sc_isList(o) { /// export
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isList(o) {
     var rabbit;
     var turtle;
 
@@ -558,7 +767,8 @@ function sc_isList(o) { /// export
     }
 }
 
-function sc_list() { /// export
+/*** META ((export #t)) */
+function sc_list() {
     var res = null;
     var a = arguments;
     for (var i = a.length-1; i >= 0; i--)
@@ -566,96 +776,106 @@ function sc_list() { /// export
     return res;
 }
 
-function sc_iota(num, init) { /// export
+/*** META ((export #t)) */
+function sc_iota(num, init) {
    var res = null;
-   for (var i = num-1; i >= 0; i--)
-      res = new sc_Pair(i+init, res);
+   if (!init) init = 0;
+   for (var i = num - 1; i >= 0; i--)
+      res = new sc_Pair(i + init, res);
    return res;
 }
 
-function sc_makeList(nbEls, fill) { /// export
+/*** META ((export #t)) */
+function sc_makeList(nbEls, fill) {
     var res = null;
     for (var i = 0; i < nbEls; i++)
 	res = new sc_Pair(fill, res);
     return res;
 }
 
-function sc_length(l) { /// export
+/*** META ((export #t)) */
+function sc_length(l) {
     var res = 0;
-    while (l != null) {
+    while (l !== null) {
 	res++;
 	l = l.cdr;
     }
     return res;
 }
 
-function sc_remq(o, l) { /// export
-   if (sc_isPair(l)) {
-      if (l.car === o) {
-	 return sc_remq(o, l.cdr);
-      } else {
-	 return sc_cons(l.car, sc_remq(o, l.cdr));
-      }
-   } else {
-      return null;
-   }
+/*** META ((export #t)) */
+function sc_remq(o, l) {
+    var dummy = { cdr : null };
+    var tail = dummy;
+    while (l !== null) {
+	if (l.car !== o) {
+	    tail.cdr = sc_cons(l.car, null);
+	    tail = tail.cdr;
+	}
+	l = l.cdr;
+    }
+    return dummy.cdr;
 }
 
-function sc_remqbang(o, l) { /// export remq!
-   if (sc_isPair(l)) {
-      if (l.car === o) {
-	 return sc_remqbang(o, l.cdr);
-      } else {
-	 var l2 = l;
-	 while (sc_isPair(l2.cdr)) {
-	    if (l2.cdr.car === o) {
-	       l2.cdr = l2.cdr.cdr;
-	    } else {
-	       l2 = l2.cdr;
+/*** META ((export #t)) */
+function sc_remqBang(o, l) {
+    var dummy = { cdr : null };
+    var tail = dummy;
+    var needsAssig = true;
+    while (l !== null) {
+	if (l.car === o) {
+	    needsAssig = true;
+	} else {
+	    if (needsAssig) {
+		tail.cdr = l;
+		needsAssig = false;
 	    }
-	 }
-	 return l;
-      }
-   } else {
-      return l;
-   }
+	    tail = l;
+	}
+	l = l.cdr;
+    }
+    tail.cdr = null;
+    return dummy.cdr;
 }
 
-function sc_delete(o, l) { /// export
-   if (sc_isPair(l)) {
-      if (sc_equal(l.car, o)) {
-	 return sc_delete(o, l.cdr);
-      } else {
-	 return sc_cons(l.car, sc_delete(o, l.cdr));
-      }
-   } else {
-      return null;
-   }
+/*** META ((export #t)) */
+function sc_delete(o, l) {
+    var dummy = { cdr : null };
+    var tail = dummy;
+    while (l !== null) {
+	if (!sc_isEqual(l.car, o)) {
+	    tail.cdr = sc_cons(l.car, null);
+	    tail = tail.cdr;
+	}
+	l = l.cdr;
+    }
+    return dummy.cdr;
 }
 
-function sc_deletebang(o, l) { /// export delete!
-   if (sc_isPair(l)) {
-      if (sc_equal(l.car, o)) {
-	 return sc_deletebang(o, l.cdr);
-      } else {
-	 var l2 = l;
-	 while (sc_isPair(l2.cdr)) {
-	    if (sc_equal(l2.cdr.car, o)) {
-	       l2.cdr = l2.cdr.cdr;
-	    } else {
-	       l2 = l2.cdr;
+/*** META ((export #t)) */
+function sc_deleteBang(o, l) {
+    var dummy = { cdr : null };
+    var tail = dummy;
+    var needsAssig = true;
+    while (l !== null) {
+	if (sc_isEqual(l.car, o)) {
+	    needsAssig = true;
+	} else {
+	    if (needsAssig) {
+		tail.cdr = l;
+		needsAssig = false;
 	    }
-	 }
-	 return l;
-      }
-   } else {
-      return l;
-   }
+	    tail = l;
+	}
+	l = l.cdr;
+    }
+    tail.cdr = null;
+    return dummy.cdr;
 }
 
-function sc_destReverseAppend(l1, l2) {
+function sc_reverseAppendBang(l1, l2) {
     var res = l2;
-    while (l1 != null) {
+    while (l1 !== null) {
 	var tmp = res;
 	res = l1;
 	l1 = l1.cdr;
@@ -668,10 +888,11 @@ function sc_dualAppend(l1, l2) {
     if (l1 === null) return l2;
     if (l2 === null) return l1;
     var rev = sc_reverse(l1);
-    return sc_destReverseAppend(rev, l2);
+    return sc_reverseAppendBang(rev, l2);
 }
 
-function sc_append() { /// export
+/*** META ((export #t)) */
+function sc_append() {
     if (arguments.length === 0)
 	return null;
     var res = arguments[arguments.length - 1];
@@ -680,36 +901,40 @@ function sc_append() { /// export
     return res;
 }
 
-function sc_destDualAppend(l1, l2) {
+function sc_dualAppendBang(l1, l2) {
     if (l1 === null) return l2;
     if (l2 === null) return l1;
     var tmp = l1;
-    while (tmp.cdr != null) tmp=tmp.cdr;
+    while (tmp.cdr !== null) tmp=tmp.cdr;
     tmp.cdr = l2;
     return l1;
 }
     
-function sc_destAppend() { /// export append!
+/*** META ((export #t)) */
+function sc_appendBang() {
     var res = null;
     for (var i = 0; i < arguments.length; i++)
-	res = sc_destDualAppend(res, arguments[i]);
+	res = sc_dualAppendBang(res, arguments[i]);
     return res;
 }
 
-function sc_reverse(l1) { /// export
+/*** META ((export #t)) */
+function sc_reverse(l1) {
     var res = null;
-    while (l1 != null) {
+    while (l1 !== null) {
 	res = sc_cons(l1.car, res);
 	l1 = l1.cdr;
     }
     return res;
 }
 
-function sc_destReverse(l) { /// export reverse!
-    return sc_destReverseAppend(l, null);
+/*** META ((export #t)) */
+function sc_reverseBang(l) {
+    return sc_reverseAppendBang(l, null);
 }
 
-function sc_listTail(l, k) { /// export
+/*** META ((export #t)) */
+function sc_listTail(l, k) {
     var res = l;
     for (var i = 0; i < k; i++) {
 	res = res.cdr;
@@ -717,7 +942,8 @@ function sc_listTail(l, k) { /// export
     return res;
 }
 
-function sc_listRef(l, k) { /// export
+/*** META ((export #t)) */
+function sc_listRef(l, k) {
     return sc_listTail(l, k).car;
 }
 
@@ -736,39 +962,33 @@ function sc_member(o, l) { return sc_memX(o, l, sc_isEqual); }
 */
 
 /* optimized versions */
-function sc_memq(o, l) { /// export
-    while (l != null) {
+/*** META ((export #t)) */
+function sc_memq(o, l) {
+    while (l !== null) {
 	if (l.car === o)
 	    return l;
 	l = l.cdr;
     }
     return false;
 }
-function sc_memv(o, l) { /// export
-    while (l != null) {
+/*** META ((export #t)) */
+function sc_memv(o, l) {
+    while (l !== null) {
 	if (l.car === o)
 	    return l;
 	l = l.cdr;
     }
     return false;
 }
-function sc_member_mutable(o, l) { /// export
-    while (l != null) {
-	if (sc_isEqual_mutable(l.car,o))
+/*** META ((export #t)) */
+function sc_member(o, l) {
+    while (l !== null) {
+	if (sc_isEqual(l.car,o))
 	    return l;
 	l = l.cdr;
     }
     return false;
 }
-function sc_member_immutable(o, l) { /// export
-    while (l != null) {
-	if (sc_isEqual_immutable(l.car,o))
-	    return l;
-	l = l.cdr;
-    }
-    return false;
-}
-
 
 /* // generic unoptimized versions
 function sc_assX(o, al, comp) {
@@ -784,73 +1004,32 @@ function sc_assv(o, al) { return sc_assX(o, al, sc_isEqv); }
 function sc_assoc(o, al) { return sc_assX(o, al, sc_isEqual); }
 */
 // optimized versions
-function sc_assq(o, al) { /// export
-    while (al != null) {
+/*** META ((export #t)) */
+function sc_assq(o, al) {
+    while (al !== null) {
 	if (al.car.car === o)
 	    return al.car;
 	al = al.cdr;
     }
     return false;
 }
-function sc_assv(o, al) { /// export
-    while (al != null) {
+/*** META ((export #t)) */
+function sc_assv(o, al) {
+    while (al !== null) {
 	if (al.car.car === o)
 	    return al.car;
 	al = al.cdr;
     }
     return false;
 }
-function sc_assoc_mutable(o, al) { /// export
-    while (al != null) {
-	if (sc_isEqual_mutable(al.car.car, o))
+/*** META ((export #t)) */
+function sc_assoc(o, al) {
+    while (al !== null) {
+	if (sc_isEqual(al.car.car, o))
 	    return al.car;
 	al = al.cdr;
     }
     return false;
-}
-function sc_assoc_immutable(o, al) { /// export
-    while (al != null) {
-	if (sc_isEqual_immutable(al.car.car, o))
-	    return al.car;
-	al = al.cdr;
-    }
-    return false;
-}
-
-function sc_isSymbol_mutable(s) { /// export
-    return (typeof s === "string");
-}
-
-function sc_isSymbol_immutable(s) { /// export
-    return (typeof s === "string") &&
-	(s.charAt(0) === sc_SYMBOL_PREFIX);
-}
-
-function sc_symbol2string_mutable(s) { /// export
-    return new sc_String(s);
-}
-
-function sc_symbol2string_immutable(s) { /// export
-    return s.slice(1);
-}
-
-function sc_string2symbol_mutable(s) { /// export
-    return s.val;
-}
-
-function sc_string2symbol_immutable(s) { /// export
-    return sc_SYMBOL_PREFIX + s;
-}
-
-function sc_symbolAppend_mutable() { /// export
-    return "".concat.apply("", arguments);
-}
-
-function sc_symbolAppend_immutable() { /// export
-    var res = sc_SYMBOL_PREFIX;
-    for (var i = 0; i < arguments.length; i++)
-	res += arguments[i].slice(1);
-    return res;
 }
 
 /* can be used for mutable strings and characters */
@@ -973,22 +1152,74 @@ sc_Char.readable2char = {
     
 sc_Char.prototype.toString = function() {
     return this.val;
-}
+};
+// sc_toDisplayString == toString
+sc_Char.prototype.sc_toWriteString = function() {
+    var entry = sc_Char.char2readable[this.val];
+    if (entry)
+	return entry;
+    else
+	return "#\\" + this.val;
+};
 
-function sc_isChar(c) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix "instanceof sc_Char")))
+*/
+function sc_isChar(c) {
     return (c instanceof sc_Char);
 }
 
-var sc_isCharEqual = sc_isCharStringEqual; /// export char=?
-var sc_isCharLess = sc_isCharStringLess; /// export char<?
-var sc_isCharGreater = sc_isCharStringGreater; /// export char>?
-var sc_isCharLessEqual = sc_isCharStringLessEqual; /// export char<=?
-var sc_isCharGreaterEqual = sc_isCharStringGreaterEqual; /// export char>=?
-var sc_isCharCIEqual = sc_isCharStringCIEqual; /// export char-ci=?
-var sc_isCharCILess = sc_isCharStringCILess; /// export char-ci<?
-var sc_isCharCIGreater = sc_isCharStringCIGreater; /// export char-ci>?
-var sc_isCharCILessEqual = sc_isCharStringCILessEqual; /// export char-ci<=?
-var sc_isCharCIGreaterEqual = sc_isCharStringCIGreaterEqual; /// export char-ci>=?
+/*** META ((export char=?)
+           (type bool)
+           (peephole (hole 2 c1 ".val === " c2 ".val")))
+*/
+var sc_isCharEqual = sc_isCharStringEqual;
+/*** META ((export char<?)
+           (type bool)
+           (peephole (hole 2 c1 ".val < " c2 ".val")))
+*/
+var sc_isCharLess = sc_isCharStringLess;
+/*** META ((export char>?)
+           (type bool)
+           (peephole (hole 2 c1 ".val > " c2 ".val")))
+*/
+var sc_isCharGreater = sc_isCharStringGreater;
+/*** META ((export char<=?)
+           (type bool)
+           (peephole (hole 2 c1 ".val <= " c2 ".val")))
+*/
+var sc_isCharLessEqual = sc_isCharStringLessEqual;
+/*** META ((export char>=?)
+           (type bool)
+           (peephole (hole 2 c1 ".val >= " c2 ".val")))
+*/
+var sc_isCharGreaterEqual = sc_isCharStringGreaterEqual;
+/*** META ((export char-ci=?)
+           (type bool)
+           (peephole (hole 2 c1 ".val.toLowerCase() === " c2 ".val.toLowerCase()")))
+*/
+var sc_isCharCIEqual = sc_isCharStringCIEqual;
+/*** META ((export char-ci<?)
+           (type bool)
+           (peephole (hole 2 c1 ".val.toLowerCase() < " c2 ".val.toLowerCase()")))
+*/
+var sc_isCharCILess = sc_isCharStringCILess;
+/*** META ((export char-ci>?)
+           (type bool)
+           (peephole (hole 2 c1 ".val.toLowerCase() > " c2 ".val.toLowerCase()")))
+*/
+var sc_isCharCIGreater = sc_isCharStringCIGreater;
+/*** META ((export char-ci<=?)
+           (type bool)
+           (peephole (hole 2 c1 ".val.toLowerCase() <= " c2 ".val.toLowerCase()")))
+*/
+var sc_isCharCILessEqual = sc_isCharStringCILessEqual;
+/*** META ((export char-ci>=?)
+           (type bool)
+           (peephole (hole 2 c1 ".val.toLowerCase() >= " c2 ".val.toLowerCase()")))
+*/
+var sc_isCharCIGreaterEqual = sc_isCharStringCIGreaterEqual;
 
 var SC_NUMBER_CLASS = "0123456789";
 var SC_WHITESPACE_CLASS = ' \r\n\t\f';
@@ -996,37 +1227,58 @@ var SC_LOWER_CLASS = 'abcdefghijklmnopqrstuvwxyz';
 var SC_UPPER_CLASS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function sc_isCharOfClass(c, cl) { return (cl.indexOf(c) != -1); }
-function sc_isCharAlphabetic(c)  /// export
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isCharAlphabetic(c)
     { return sc_isCharOfClass(c.val, SC_LOWER_CLASS) ||
 	  sc_isCharOfClass(c.val, SC_UPPER_CLASS); }
-function sc_isCharNumeric(c) /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (hole 1 "SC_NUMBER_CLASS.indexOf(" c ".val) != -1")))
+*/
+function sc_isCharNumeric(c)
     { return sc_isCharOfClass(c.val, SC_NUMBER_CLASS); }
-function sc_isCharWhitespace(c) /// export
-    {
-	var tmp = c.val;
-	return tmp === " " || tmp === "\r" || tmp === "\n" || tmp === "\t" || tmp === "\f";
-    }
-function sc_isCharUpperCase(c) /// export
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isCharWhitespace(c) {
+    var tmp = c.val;
+    return tmp === " " || tmp === "\r" || tmp === "\n" || tmp === "\t" || tmp === "\f";
+}
+/*** META ((export #t)
+           (type bool)
+           (peephole (hole 1 "SC_UPPER_CLASS.indexOf(" c ".val) != -1")))
+*/
+function sc_isCharUpperCase(c)
     { return sc_isCharOfClass(c.val, SC_UPPER_CLASS); }
-function sc_isCharLowerCase(c) /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (hole 1 "SC_LOWER_CLASS.indexOf(" c ".val) != -1")))
+*/
+function sc_isCharLowerCase(c)
     { return sc_isCharOfClass(c.val, SC_LOWER_CLASS); }
 
-function sc_char2integer(c) /// export
+/*** META ((export #t)
+           (peephole (postfix ".val.charCodeAt(0)")))
+*/
+function sc_char2integer(c)
     { return c.val.charCodeAt(0); }
-function sc_char2string_mutable(c) /// export
-    { return new sc_String(c.val); }
-function sc_char2string_immutable(c) /// export
-    { return c.val; }
-function sc_char2symbol_mutable(c) /// export
-    { return c.val; }
-function sc_char2symbol_immutable(c) /// export
-    { return sc_SYMBOL_PREFIX + c.val; }
-function sc_integer2char(n) /// export
+/*** META ((export #t)
+           (peephole (hole 1 "new sc_Char(String.fromCharCode(" n "))")))
+*/
+function sc_integer2char(n)
     { return new sc_Char(String.fromCharCode(n)); }
 
-function sc_charUpcase(c) /// export
+/*** META ((export #t)
+           (peephole (hole 1 "new sc_Char(" c ".val.toUpperCase())")))
+*/
+function sc_charUpcase(c)
     { return new sc_Char(c.val.toUpperCase()); }
-function sc_charDowncase(c) /// export
+/*** META ((export #t)
+           (peephole (hole 1 "new sc_Char(" c ".val.toLowerCase())")))
+*/
+function sc_charDowncase(c)
     { return new sc_Char(c.val.toLowerCase()); }
 
 function sc_makeJSStringOfLength(k, c) {
@@ -1047,28 +1299,7 @@ function sc_makeJSStringOfLength(k, c) {
     return res;
 }
 
-function sc_String(s) {
-    this.val = s;
-}
-
-sc_String.prototype.toString = function() {
-    return this.val;
-}
-
-function sc_isString_mutable(s) { /// export
-    return (s instanceof sc_String);
-}
-
-function sc_isString_immutable(s) { /// export
-    return (typeof s === "string") &&
-	(s.charAt(0) !== sc_SYMBOL_PREFIX);
-}
-
-function sc_makeString_mutable(k, c) { /// export
-    return new sc_String(sc_makeString_immutable(k, c));
-}
-
-function sc_makeString_immutable(k, c) { /// export
+function sc_makejsString(k, c) {
     var fill;
     if (c)
 	fill = c.val;
@@ -1077,252 +1308,185 @@ function sc_makeString_immutable(k, c) { /// export
     return sc_makeJSStringOfLength(k, fill);
 }
 
-function sc_string_mutable() { /// export
-    for (var i = 0; i < arguments.length; i++)
-	arguments[i] = arguments[i].val;
-    return new sc_String("".concat.apply("", arguments));
-}
-
-function sc_string_immutable() { /// export
-    for (var i = 0; i < arguments.length; i++)
-	arguments[i] = arguments[i].val;
-    return "".concat.apply("", arguments);
-}
-
-function sc_stringLength_mutable(s) { /// export
-    return s.val.length;
-}
-
-function sc_stringLength_immutable(s) { /// export
-    return s.length;
-}
-
-function sc_stringRef_mutable(s, k) { /// export
-    return new sc_Char(s.val.charAt(k));
-}
-
-function sc_stringRef_immutable(s, k) { /// export
-    return new sc_Char(s.charAt(k));
-}
-
-function sc_stringSet_mutable(s, k, c) { /// export string-set!
-    var start = s.val.slice(0, k);
-    var end = s.val.slice(k+1);
-    s.val = start.concat(c.val, end);
-}
-
-/* there's no stringSet in the immutable version
-function sc_stringSet_immutable(s, k, c)
-*/
-
-var sc_isStringEqual_mutable = sc_isCharStringEqual; /// export string=?
-var sc_isStringLess_mutable = sc_isCharStringLess; /// export string<?
-var sc_isStringGreater_mutable = sc_isCharStringGreater; /// export string>?
-var sc_isStringLessEqual_mutable = sc_isCharStringLessEqual; /// export string<=?
-var sc_isStringGreaterEqual_mutable = sc_isCharStringGreaterEqual; /// export string>=?
-var sc_isStringCIEqual_mutable = sc_isCharStringCIEqual; /// export string-ci=?
-var sc_isStringCILess_mutable = sc_isCharStringCILess; /// export string-ci<?
-var sc_isStringCIGreater_mutable = sc_isCharStringCIGreater; /// export string-ci>?
-var sc_isStringCILessEqual_mutable = sc_isCharStringCILessEqual; /// export string-ci<=?
-var sc_isStringCIGreaterEqual_mutable = sc_isCharStringCIGreaterEqual; /// export string-ci>=?
-
-function sc_isStringEqual_immutable(s1, s2) { /// export string=?
-    return s1 === s2;
-}
-function sc_isStringLess_immutable(s1, s2) { /// export string<?
-    return s1 < s2;
-}
-function sc_isStringGreater_immutable(s1, s2) { /// export string>?
-    return s1 > s2;
-}
-function sc_isStringLessEqual_immutable(s1, s2) { /// export string<=?
-    return s1 <= s2;
-}
-function sc_isStringGreaterEqual_immutable(s1, s2) { /// export string>=?
-    return s1 >= s2;
-}
-function sc_isStringCIEqual_immutable(s1, s2) { /// export string-ci=?
-    return s1.toLowerCase() === s2.toLowerCase();
-}
-function sc_isStringCILess_immutable(s1, s2) { /// export string-ci<?
-    return s1.toLowerCase() < s2.toLowerCase();
-}
-function sc_isStringCIGreater_immutable(s1, s2) { /// export string-ci>?
-    return s1.toLowerCase() > s2.toLowerCase();
-}
-function sc_isStringCILessEqual_immutable(s1, s2) { /// export string-ci<=?
-    return s1.toLowerCase() <= s2.toLowerCase();
-}
-function sc_isStringCIGreaterEqual_immutable(s1, s2) { /// export string-ci>=?
-    return s1.toLowerCase() >= s2.toLowerCase();
-}
-
-function sc_substring_mutable(s, start, end) { /// export
-    return new sc_String(s.val.substring(start, end));
-}
-
-function sc_substring_immutable(s, start, end) { /// export
-    return s.substring(start, end);
-}
-
-function sc_stringAppend_mutable() { /// export
-    for (var i = 0; i < arguments.length; i++)
-	arguments[i] = arguments[i].val;
-    return new sc_String("".concat.apply("", arguments));
-}
-
-function sc_stringAppend_immutable() { /// export
-    return "".concat.apply("", arguments);
-}
-
-function sc_string2list_mutable(s) { /// export
-    return sc_string2list_immutable(s.val);
-}
-
-function sc_string2list_immutable(s) { /// export
+function sc_jsstring2list(s) {
     var res = null;
     for (var i = s.length - 1; i >= 0; i--)
 	res = sc_cons(new sc_Char(s.charAt(i)), res);
     return res;
 }
 
-function sc_list2string_mutable(l) { /// export
-    return new sc_String(sc_list2string_immutable(l));
-}
-
-function sc_list2string_immutable(l) { /// export
+function sc_list2jsstring(l) {
     var a = new Array();
-    while(l != null) {
+    while(l !== null) {
 	a.push(l.car.val);
 	l = l.cdr;
     }
     return "".concat.apply("", a);
 }
 
-function sc_stringCopy_mutable(s) { /// export
-    return new sc_String(s.val);
-}
-
-function sc_stringCopy_immutable(s) { /// export
-    return s;
-}
-
-function sc_stringFill_mutable(s, c) { /// export string-fill!
-    s.val = sc_makeJSStringOfLength(s.val.length, c.val);
-}
-
-/* there's no string-fill in the immutable version
-function sc_stringFill_immutable(s, c)
-*/
-
 var sc_Vector = Array;
 
-sc_Vector.prototype.toString = function() {
-    var res = "#(";
-    for (var i = 0; i < this.length; i++)
-	res += this[i] + " ";
-    return res + ")";
-}
+sc_Vector.prototype.sc_toWriteOrDisplayString = function(writeOrDisplay) {
+    if (this.length === 0) return "#()";
 
-function sc_isVector(v) { /// export vector? array?
+    var res = "#(" + writeOrDisplay(this[0]);
+    for (var i = 1; i < this.length; i++)
+	res += " " + writeOrDisplay(this[i]);
+    res += ")";
+    return res;
+};
+sc_Vector.prototype.sc_toDisplayString = function() {
+    return this.sc_toWriteOrDisplayString(sc_toDisplayString, false);
+};
+sc_Vector.prototype.sc_toWriteString = function() {
+    return this.sc_toWriteOrDisplayString(sc_toWriteString, false);
+};
+
+/*** META ((export vector? array?)
+           (type bool)
+           (peephole (postfix " instanceof sc_Vector")))
+*/
+function sc_isVector(v) {
     return (v instanceof sc_Vector);
 }
 
 // only applies to vectors
 function sc_isVectorEqual(v1, v2, comp) {
-    if (v1.length != v2.length) return false;
+    if (v1.length !== v2.length) return false;
     for (var i = 0; i < v1.length; i++)
 	if (!comp(v1[i], v2[i])) return false;
     return true;
 }
 
-function sc_makeVector(size, fill) { /// export make-vector make-array
+/*** META ((export make-vector make-array)) */
+function sc_makeVector(size, fill) {
     var a = new sc_Vector(size);
-    if (fill != undefined)
-	sc_vectorFill(a, fill);
+    if (fill !== undefined)
+	sc_vectorFillBang(a, fill);
     return a;
 }
 
-function sc_vector() { /// export vector array
+/*** META ((export vector array)
+           (peephole (vector)))
+*/
+function sc_vector() {
     var a = new sc_Vector();
     for (var i = 0; i < arguments.length; i++)
 	a.push(arguments[i]);
     return a;
 }
 
-function sc_vectorLength(v) { /// export vector-length array-length
+/*** META ((export vector-length array-length)
+           (peephole (postfix ".length")))
+*/
+function sc_vectorLength(v) {
     return v.length;
 }
 
-function sc_vectorRef(v, pos) { /// export vector-ref array-ref
+/*** META ((export vector-ref array-ref)
+           (peephole (hole 2 v "[" pos "]")))
+*/
+function sc_vectorRef(v, pos) {
     return v[pos];
 }
 
-function sc_vectorSet(v, pos, val) { /// export vector-set! array-set!
+/*** META ((export vector-set! array-set!)
+           (peephole (hole 3 v "[" pos "] = " val)))
+*/
+function sc_vectorSetBang(v, pos, val) {
     v[pos] = val;
 }
 
-function sc_vector2list(a) { /// export vector->list array->list
+/*** META ((export vector->list array->list)) */
+function sc_vector2list(a) {
     var res = null;
     for (var i = a.length-1; i >= 0; i--)
 	res = sc_cons(a[i], res);
     return res;
 }
 
-function sc_list2vector(l) { /// export list->vector list->array
+/*** META ((export list->vector list->array)) */
+function sc_list2vector(l) {
     var a = new sc_Vector();
-    while(l != null) {
+    while(l !== null) {
 	a.push(l.car);
 	l = l.cdr;
     }
     return a;
 }
 
-function sc_vectorFill(a, fill) { /// export vector-fill! array-fill!
+/*** META ((export vector-fill! array-fill!)) */
+function sc_vectorFillBang(a, fill) {
     for (var i = 0; i < a.length; i++)
 	a[i] = fill;
 }
 
-function sc_isProcedure(o) { /// export
+
+/*** META ((export #t)) */
+function sc_copyVector(a, len) {
+    if (len <= a.length)
+	return a.slice(0, len);
+    else {
+	var tmp = a.concat();
+	tmp.length = len;
+	return tmp;
+    }
+}
+
+/*** META ((export #t)
+           (peephole (hole 3 a ".slice(" start "," end ")")))
+*/
+function sc_vectorCopy(a, start, end) {
+    return a.slice(start, end);
+}
+
+/*** META ((export #t)) */
+function sc_vectorCopyBang(target, tstart, source, sstart, send) {
+    if (!sstart) sstart = 0;
+    if (!send) send = source.length;
+
+    // if target == source we don't want to overwrite not yet copied elements.
+    if (tstart <= sstart) {
+	for (var i = tstart, j = sstart; j < send; i++, j++) {
+	    target[i] = source[j];
+	}
+    } else {
+	var diff = send - sstart;
+	for (var i = tstart + diff - 1, j = send - 1;
+	     j >= sstart;
+	     i--, j--) {
+	    target[i] = source[j];
+	}
+    }
+    return target;
+}
+
+/*** META ((export #t)
+           (type bool)
+           (peephole (hole 1 "typeof " o " === 'function'")))
+*/
+function sc_isProcedure(o) {
     return (typeof o === "function");
 }
 
-// no need for _callcc version
-function sc_apply(proc) { /// export-higher
+/*** META ((export #t)) */
+function sc_apply(proc) {
     var args = new Array();
     // first part of arguments are not in list-form.
     for (var i = 1; i < arguments.length - 1; i++)
 	args.push(arguments[i]);
     var l = arguments[arguments.length - 1];
-    while (l != null) {
+    while (l !== null) {
 	args.push(l.car);
 	l = l.cdr;
     }
     return proc.apply(null, args);
 }
 
-function sc_map1(proc, l1) {
-    var revres = null;
-    while (l1 !== null) {
-	revres = sc_cons(proc(l1.car), revres);
-	l1 = l1.cdr;
-    }
-    return sc_destReverseAppend(revres, null);
-}
-function sc_map2(proc, l1, l2) {
-    var revres = null;
-    while (l1 !== null) {
-	var revres = sc_cons(proc(l1.car, l2.car), revres);
-	l1 = l1.cdr;
-	l2 = l2.cdr
-    }
-    return sc_destReverseAppend(revres, null);
-}
-function sc_map(proc, l1, l2, l3) { /// export-higher
-    if (l2 === undefined)
-	return sc_map1(proc, l1);
-    else if (l3 === undefined)
-	return sc_map2(proc, l1, l2);
+/*** META ((export #t)) */
+function sc_map(proc, l1) {
+    if (l1 === undefined)
+	return null;
     // else
     var nbApplyArgs = arguments.length - 1;
     var applyArgs = new Array(nbApplyArgs);
@@ -1334,77 +1498,32 @@ function sc_map(proc, l1, l2, l3) { /// export-higher
 	}
 	revres = sc_cons(proc.apply(null, applyArgs), revres);
     }
-    return sc_destReverseAppend(revres, null);
+    return sc_reverseAppendBang(revres, null);
 }
 
-function sc_map_callcc(proc) { /// export-higher
-    var sc_storage = SC_CALLCC_STORAGE;
-    if (sc_storage['doCall/CcDefault?']) {
-	var args = arguments;
-	var revres = null;
-    } else if (sc_storage['doCall/CcRestore?']) {
-	var _sc_frame = sc_storage.pop();
-	args = new Array();
-	// can't use .concat, as 'arguments' is not an array.
-	// do not copy procedure (_sc_frame.args[0])
-	for (var i = 1; i < _sc_frame.args.length; i++) {
-	    args[i] = _sc_frame.args[i];
-	}
-	revres = _sc_frame.revres;
-	proc = _sc_frame.proc;
-	try {
-	    revres = sc_cons(sc_storage.callNext(), revres);
-	} catch(e) {
-	    if (e instanceof sc_CallCcException && e.backup) {
-		e.push(_sc_frame);
-	    }
-	    throw e;
-	}
-    } else { // root-fun?
-	return sc_callCcRoot(this, arguments);
-    }
-    try {
-	var nbApplyArgs = args.length - 1;
-	var applyArgs = new Array(nbApplyArgs);
-	while (args[1] !== null) {
-	    for (var i = 0; i < nbApplyArgs; i++) {
-		applyArgs[i] = args[i + 1].car;
-		args[i + 1] = args[i + 1].cdr;
-	    }
-	    revres = sc_cons(proc.apply(null, applyArgs), revres);
-	}
-	return sc_destReverseAppend(revres, null);
-    } catch (e) {
-	if (e instanceof sc_CallCcException && e.backup) {
-	    var _sc_frame = new Object();
-	    _sc_frame.args = args;
-	    _sc_frame.revres = revres;
-	    _sc_frame.proc = proc;
-	    _sc_frame.callee = sc_map_callcc;
-	    e.push(_sc_frame);
-	}
-	throw e;
-    }
-}
-
-function sc_forEach1(proc, l1) {
+/*** META ((export #t)) */
+function sc_mapBang(proc, l1) {
+    if (l1 === undefined)
+	return null;
+    // else
+    var l1_orig = l1;
+    var nbApplyArgs = arguments.length - 1;
+    var applyArgs = new Array(nbApplyArgs);
     while (l1 !== null) {
-	proc(l1.car);
-	l1 = l1.cdr;
+	var tmp = l1;
+	for (var i = 0; i < nbApplyArgs; i++) {
+	    applyArgs[i] = arguments[i + 1].car;
+	    arguments[i + 1] = arguments[i + 1].cdr;
+	}
+	tmp.car = proc.apply(null, applyArgs);
     }
+    return l1_orig;
 }
-function sc_forEach2(proc, l1, l2) {
-    while (l1 !== null) {
-	proc(l1.car, l2.car);
-	l1 = l1.cdr;
-	l2 = l2.cdr;
-    }
-}
-function sc_forEach(proc, l1, l2, l3) { /// export-higher
-    if (l2 === undefined)
-	return sc_forEach1(proc, l1);
-    else if (l3 === undefined)
-	return sc_forEach2(proc, l1, l2);
+     
+/*** META ((export #t)) */
+function sc_forEach(proc, l1) {
+    if (l1 === undefined)
+	return undefined;
     // else
     var nbApplyArgs = arguments.length - 1;
     var applyArgs = new Array(nbApplyArgs);
@@ -1419,39 +1538,58 @@ function sc_forEach(proc, l1, l2, l3) { /// export-higher
     return undefined;
 }
 
-function sc_forEach_callcc(proc, l1) { /// export-higher
-    sc_map_callcc.apply(this, arguments);
+/*** META ((export #t)) */
+function sc_filter(proc, l1) {
+    var dummy = { cdr : null };
+    var tail = dummy;
+    while (l1 !== null) {
+	if (proc(l1.car) !== false) {
+	    tail.cdr = sc_cons(l1.car, null);
+	    tail = tail.cdr;
+	}
+	l1 = l1.cdr;
+    }
+    return dummy.cdr;
 }
 
-function sc_filter(proc, l1) { /// export-higher
-    var revres = null;
-    while (l1 !== null) {
-        if (proc(l1.car)) revres = sc_cons(l1.car, revres);
-        l1 = l1.cdr;
+/*** META ((export #t)) */
+function sc_filterBang(proc, l1) {
+    var head = sc_cons("dummy", l1);
+    var it = head;
+    var next = l1;
+    while (next !== null) {
+        if (proc(next.car) !== false) {
+	    it.cdr = next
+	    it = next;
+	}
+	next = next.cdr;
     }
-    return sc_destReverseAppend(revres, null);
+    it.cdr = null;
+    return head.cdr;
 }
 
 function sc_filterMap1(proc, l1) {
     var revres = null;
     while (l1 !== null) {
         var tmp = proc(l1.car)
-        if (tmp) revres = sc_cons(tmp, revres);
+        if (tmp !== false) revres = sc_cons(tmp, revres);
         l1 = l1.cdr;
     }
-    return sc_destReverseAppend(revres, null);
+    return sc_reverseAppendBang(revres, null);
 }
 function sc_filterMap2(proc, l1, l2) {
     var revres = null;
     while (l1 !== null) {
         var tmp = proc(l1.car, l2.car);
-        if(tmp) revres = sc_cons(tmp, revres);
+        if(tmp !== false) revres = sc_cons(tmp, revres);
 	l1 = l1.cdr;
 	l2 = l2.cdr
     }
-    return sc_destReverseAppend(revres, null);
+    return sc_reverseAppendBang(revres, null);
 }
-function sc_filterMap(proc, l1, l2, l3) { /// export-higher
+
+/*** META ((export #t)) */
+function sc_filterMap(proc, l1, l2, l3) {
     if (l2 === undefined)
 	return sc_filterMap1(proc, l1);
     else if (l3 === undefined)
@@ -1466,17 +1604,59 @@ function sc_filterMap(proc, l1, l2, l3) { /// export-higher
 	    arguments[i + 1] = arguments[i + 1].cdr;
 	}
 	var tmp = proc.apply(null, applyArgs);
-	if(tmp) revres = sc_cons(tmp, revres);
+	if(tmp !== false) revres = sc_cons(tmp, revres);
     }
-    return sc_destReverseAppend(revres, null);
+    return sc_reverseAppendBang(revres, null);
 }
 
+/*** META ((export #t)) */
+function sc_any(proc, l) {
+    var revres = null;
+    while (l !== null) {
+        var tmp = proc(l.car);
+        if(tmp !== false) return tmp;
+	l = l.cdr;
+    }
+    return false;
+}
 
-function sc_force(o) { /// export-higher
+/*** META ((export any?)
+           (peephole (hole 2 "sc_any(" proc "," l ") !== false")))
+*/
+function sc_anyPred(proc, l) {
+    return sc_any(proc, l)!== false;
+}
+
+/*** META ((export #t)) */
+function sc_every(proc, l) {
+    var revres = null;
+    var tmp = true;
+    while (l !== null) {
+        tmp = proc(l.car);
+        if (tmp === false) return false;
+	l = l.cdr;
+    }
+    return tmp;
+}
+
+/*** META ((export every?)
+           (peephole (hole 2 "sc_every(" proc "," l ") !== false")))
+*/
+function sc_everyPred(proc, l) {
+    var tmp = sc_every(proc, l);
+    if (tmp !== false) return true;
+    return false;
+}
+
+/*** META ((export #t)
+           (peephole (postfix "()")))
+*/
+function sc_force(o) {
     return o();
 }
 
-function sc_makePromise(proc) { /// export
+/*** META ((export #t)) */
+function sc_makePromise(proc) {
     var isResultReady = false;
     var result = undefined;
     return function() {
@@ -1495,15 +1675,18 @@ function sc_Values(values) {
     this.values = values;
 }
 
-// no need for _callcc version
-function sc_values() { /// export
+/*** META ((export #t)
+           (peephole (values)))
+*/
+function sc_values() {
     if (arguments.length === 1)
 	return arguments[0];
     else
 	return new sc_Values(arguments);
 }
 
-function sc_callWithValues(producer, consumer) { /// export-higher
+/*** META ((export #t)) */
+function sc_callWithValues(producer, consumer) {
     var produced = producer();
     if (produced instanceof sc_Values)
 	return consumer.apply(null, produced.values);
@@ -1511,34 +1694,8 @@ function sc_callWithValues(producer, consumer) { /// export-higher
 	return consumer(produced);
 }
 
-function sc_callWithValues_callcc(producer, consumer) { /// export-higher
-    var sc_storage = SC_CALLCC_STORAGE;
-    if (sc_storage['doCall/CcDefault?']) {
-    } else if (sc_storage['doCall/CcRestore?']) {
-	var _sc_frame = sc_storage.pop();
-	consumer = _sc_frame.consumer;
-	producer = sc_storage.callNextFunction();
-    } else { // root-fun?
-	return sc_callCcRoot(this, arguments);
-    }
-    try {
-	var produced = producer();
-    } catch (e) {
-	if (e instanceof sc_CallCcException && e.backup) {
-	    var _sc_frame = new Object();
-	    _sc_frame.callee = sc_callWithValues_callcc;
-	    _sc_frame.consumer = consumer;
-	    e.push(_sc_frame);
-	}
-	throw e;
-    }
-    if (produced instanceof sc_Values)
-	return consumer.apply(null, produced.values);
-    else
-	return consumer(produced);
-}
-
-function sc_dynamicWind(before, thunk, after) { /// export-higher
+/*** META ((export #t)) */
+function sc_dynamicWind(before, thunk, after) {
     before();
     try {
 	var res = thunk();
@@ -1548,86 +1705,6 @@ function sc_dynamicWind(before, thunk, after) { /// export-higher
     }
 }
 
-var sc_DYNAMIC_WIND_COUNTER = 0; // unique id for each dynamic-wind
-
-function sc_dynamicWind_callcc(before, thunk, after) { /// export-higher
-    var sc_storage = SC_CALLCC_STORAGE;
-    var callCc_tmp;
-    if (sc_storage['doCall/CcDefault?']) {
-	var id = sc_DYNAMIC_WIND_COUNTER++;
-	var sc_state = 'before';
-    } else if (sc_storage['doCall/CcRestore?']) {
-	var _sc_frame = sc_storage.pop();
-	sc_state = _sc_frame.sc_state;
-	id = _sc_frame.id;
-	before = _sc_frame.before;
-	thunk = _sc_frame.thunk;
-	after = _sc_frame.after;
-	res = _sc_frame.res;
-	caught_exception = _sc_frame.caught_exception;
-	switch (sc_state) {
-	case 'before':
-	    before = sc_storage.callNextFunction();
-	    break;
-	case 'during':
-	    thunk = sc_storage.callNextFunction();
-	    break;
-	case 'after':
-	    after = sc_storage.callNextFunction();
-	    break;
-	case 'exception':
-	    var remainingAfter = sc_storage.callNextFunction();
-	    break;
-	}
-    } else { // root-fun?
-	return sc_callCcRoot(this, arguments);
-    }
-    try {
-	try {
-	    switch (sc_state) {
-	    case 'before':
-		before();
-	    case 'during':
-		sc_state = 'during';
-		res = thunk();
-	    case 'after':
-		sc_state = 'after';
-		after();
-		return res;
-	    case 'exception':
-		remainingAfter();
-		throw caught_exception;
-	    }
-	} catch (e_inner) {
-	    if (!(e_inner instanceof sc_CallCcException) &&
-		sc_state === 'during') {
-		var caught_exception = e_inner;
-		sc_state = 'exception';
-		after();
-	    }
-	    throw e_inner;
-	}
-    } catch (e) {
-	if (e instanceof sc_CallCcException && e.backup) {
-	    var _sc_frame = new Object();
-	    _sc_frame.callee = sc_dynamicWind_callcc;
-	    _sc_frame.sc_state = sc_state;
-	    _sc_frame.id = id;
-	    _sc_frame.before = before;
-	    _sc_frame.thunk = thunk;
-	    _sc_frame.after = after;
-	    _sc_frame.res = res;
-	    _sc_frame.caught_exception = caught_exception;
-	    e.push(_sc_frame);
-	}
-	if (sc_state === 'during' &&
-	    (e instanceof sc_CallCcException)) {
-	    e.pushDynamicWind({ id: id, before: before, after: after });
-	}
-	throw e;
-    }
-    return undefined; // for FF2.0
-}
 
 // TODO: eval/scheme-report-environment/null-environment/interaction-environment
 
@@ -1638,81 +1715,142 @@ function sc_dynamicWind_callcc(before, thunk, after) { /// export-higher
 function sc_Struct(name) {
     this.name = name;
 }
+sc_Struct.prototype.sc_toDisplayString = function() {
+    return "#<struct" + sc_hash(this) + ">";
+};
+sc_Struct.prototype.sc_toWriteString = sc_Struct.prototype.sc_toDisplayString;
 
-function sc_makeStruct(name) { /// export
+/*** META ((export #t)
+           (peephole (hole 1 "new sc_Struct(" name ")")))
+*/
+function sc_makeStruct(name) {
     return new sc_Struct(name);
 }
 
-function sc_isStruct(o) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix " instanceof sc_Struct")))
+*/
+function sc_isStruct(o) {
     return (o instanceof sc_Struct);
 }
 
-function sc_isStructNamed(name, s) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (hole 2 "(" 1 " instanceof sc_Struct) && ( " 1 ".name === " 0 ")")))
+*/
+function sc_isStructNamed(name, s) {
     return ((s instanceof sc_Struct) && (s.name === name));
 }
 
-function sc_getStructField(s, name, field) { /// export struct-field
+/*** META ((export struct-field)
+           (peephole (hole 3 0 "[" 2 "]")))
+*/
+function sc_getStructField(s, name, field) {
     return s[field];
 }
 
-function sc_setStructField(s, name, field, val) { /// export struct-field-set!
+/*** META ((export struct-field-set!)
+           (peephole (hole 4 0 "[" 2 "] = " 3)))
+*/
+function sc_setStructFieldBang(s, name, field, val) {
     s[field] = val;
 }
 
-function sc_bitAnd(x, y) { /// export
+/*** META ((export #t)
+           (peephole (prefix "~")))
+*/
+function sc_bitNot(x) {
+    return ~x;
+}
+
+/*** META ((export #t)
+           (peephole (infix 2 2 "&")))
+*/
+function sc_bitAnd(x, y) {
     return x & y;
 }
 
-function sc_bitOr(x, y) { /// export
+/*** META ((export #t)
+           (peephole (infix 2 2 "|")))
+*/
+function sc_bitOr(x, y) {
     return x | y;
 }
 
-function sc_bitXor(x, y) { /// export
+/*** META ((export #t)
+           (peephole (infix 2 2 "^")))
+*/
+function sc_bitXor(x, y) {
     return x ^ y;
 }
 
-function sc_bitLsh(x, y) { /// export
+/*** META ((export #t)
+           (peephole (infix 2 2 "<<")))
+*/
+function sc_bitLsh(x, y) {
     return x << y;
 }
 
-function sc_bitRsh(x, y) { /// export
+/*** META ((export #t)
+           (peephole (infix 2 2 ">>")))
+*/
+function sc_bitRsh(x, y) {
     return x >> y;
 }
 
-function sc_bitUrsh(x, y) { /// export
+/*** META ((export #t)
+           (peephole (infix 2 2 ">>>")))
+*/
+function sc_bitUrsh(x, y) {
     return x >>> y;
 }
 
-function sc_jsField(o, field) { /// export
+/*** META ((export js-field js-property)
+           (peephole (hole 2 o "[" field "]")))
+*/
+function sc_jsField(o, field) {
     return o[field];
 }
 
-function sc_setJsField(o, field, val) { /// export js-field-set!
+/*** META ((export js-field-set! js-property-set!)
+           (peephole (hole 3 o "[" field "] = " val)))
+*/
+function sc_setJsFieldBang(o, field, val) {
     return o[field] = val;
 }
 
-function sc_deleteJsField(o, field) { /// export js-field-delete!
+/*** META ((export js-field-delete! js-property-delete!)
+           (peephole (hole 2 "delete" o "[" field "]")))
+*/
+function sc_deleteJsFieldBang(o, field) {
     delete o[field];
 }
 
-// no need for _callcc version
-function sc_jsCall(o, fun) { /// export-higher
+/*** META ((export #t)
+           (peephole (jsCall)))
+*/
+function sc_jsCall(o, fun) {
     var args = new Array();
     for (var i = 2; i < arguments.length; i++)
 	args[i-2] = arguments[i];
     return fun.apply(o, args);
 }
 
-// no need for _callcc version
-function sc_jsMethodCall(o, field) { /// export-higher
+/*** META ((export #t)
+           (peephole (jsMethodCall)))
+*/
+function sc_jsMethodCall(o, field) {
     var args = new Array();
     for (var i = 2; i < arguments.length; i++)
 	args[i-2] = arguments[i];
     return o[field].apply(o, args);
 }
 
-// HACK: we don't export jsNew as higher, as we can't handle it in our call/cc anyways.
-function sc_jsNew(c) { /// export new js-new
+/*** META ((export new js-new)
+           (peephole (jsNew)))
+*/
+function sc_jsNew(c) {
     var evalStr = "new c(";
     evalStr +=arguments.length > 1? "arguments[1]": "";
     for (var i = 2; i < arguments.length; i++)
@@ -1721,108 +1859,226 @@ function sc_jsNew(c) { /// export new js-new
     return eval(evalStr);
 }    
 
-// Keywords
-function sc_Keyword(str) {
-    var cached = sc_Keyword.lazy[str];
-
-    if (cached)
-	return cached;
-
-    sc_Keyword.lazy[str] = this;
-    this.val = str;
-    // add return so FF does not complain.
-    return undefined;
-}
-sc_Keyword.lazy = new Object;
-
-sc_Keyword.prototype.toString = function() {
-    return ":" + this.val;
-}
-sc_Keyword.prototype.toJSString = function() {
-    return this.val;
-}
-
-function sc_isKeyword(o) { /// export
-    return (o instanceof sc_Keyword);
-}
-
-function sc_keyword2string_mutable(o) { /// export
-    return new sc_String(o.val);
-}
-
-function sc_keyword2string_immutable(o) { /// export
-    return o.val;
-}
-
-function sc_string2keyword_mutable(o) { /// export
-    return new sc_Keyword(o.val);
-}
-
-function sc_string2keyword_immutable(o) { /// export
-    return new sc_Keyword(o);
-}
-
 // ======================== RegExp ====================
-function sc_pregexp(re) { /// export
-   return new RegExp(re);
+/*** META ((export #t)) */
+function sc_pregexp(re) {
+    return new RegExp(sc_string2jsstring(re));
 }
 
-function sc_pregexpMatch(re, s) { /// export
-   var reg = ((re instanceof RegExp) ? re : new RegExp(re));
-   var tmp = reg.exec(s);
-
-   if (tmp == null) return false;
-
+/*** META ((export #t)) */
+function sc_pregexpMatch(re, s) {
+    var reg = (re instanceof RegExp) ? re : sc_pregexp(re);
+    var tmp = reg.exec(sc_string2jsstring(s));
+    
+    if (tmp == null) return false;
+    
     var res = null;
     for (var i = tmp.length-1; i >= 0; i--) {
-       if (tmp[i] != null) {
-	  res = sc_cons(tmp[i], res);
-       } else {
-	  res = sc_cons(false, res);
-       }
+	if (tmp[i] !== null) {
+	    res = sc_cons(sc_jsstring2string(tmp[i]), res);
+	} else {
+	    res = sc_cons(false, res);
+	}
     }
     return res;
 }
    
-function sc_pregexpReplace(re, s1, s2) { /// export
+/*** META ((export #t)) */
+function sc_pregexpReplace(re, s1, s2) {
    var reg;
+   var jss1 = sc_string2jsstring(s1);
+   var jss2 = sc_string2jsstring(s2);
 
    if (re instanceof RegExp) {
-      if (re.global)
-	 reg = re;
-      else
-	 reg = new RegExp(re);
+       if (re.global)
+	   reg = re;
+       else
+	   reg = new RegExp(re.source);
    } else {
-	 reg = new RegExp(re.source);
+       reg = new RegExp(sc_string2jsstring(re));
    }
 
-   return s1.replace(reg, s2);
+   return jss1.replace(reg, jss2);
 }
    
-function sc_pregexpReplaceAll(re, s1, s2) { /// export pregexp-replace*
+/*** META ((export pregexp-replace*)) */
+function sc_pregexpReplaceAll(re, s1, s2) {
    var reg;
+   var jss1 = sc_string2jsstring(s1);
+   var jss2 = sc_string2jsstring(s2);
 
    if (re instanceof RegExp) {
       if (re.global)
-	 reg = re;
+	  reg = re;
       else
-	 reg = new RegExp(re.source, "g");
+	  reg = new RegExp(re.source, "g");
    } else {
-      reg = new RegExp(re, "g");
+       reg = new RegExp(sc_string2jsstring(re), "g");
    }
 
-   return s1.replace(reg, s2);
+   return jss1.replace(reg, jss2);
 }
 
-function sc_pregexpSplit(re,s) { /// export
-   var reg = ((re instanceof RegExp) ? re : new RegExp(re));
-   var tmp = s.split(reg);
+/*** META ((export #t)) */
+function sc_pregexpSplit(re, s) {
+   var reg = ((re instanceof RegExp) ?
+	      re :
+	      new RegExp(sc_string2jsstring(re)));
+   var jss = sc_string2jsstring(s);
+   var tmp = jss.split(reg);
 
    if (tmp == null) return false;
 
    return sc_vector2list(tmp);
 }
    
+
+/* =========================================================================== */
+/* Other library stuff */
+/* =========================================================================== */
+
+/*** META ((export #t)
+           (peephole (hole 1 "Math.floor(Math.random()*" 'n ")")))
+*/
+function sc_random(n) {
+    return Math.floor(Math.random()*n);
+}
+var sc_random = Math.random;
+
+/*** META ((export current-date)
+           (peephole (hole 0 "new Date()")))
+*/
+function sc_currentDate() {
+   return new Date();
+}
+
+function sc_Hashtable() {
+}
+sc_Hashtable.prototype.toString = function() {
+    return "#{%hashtable}";
+};
+// sc_toWriteString == sc_toDisplayString == toString
+
+function sc_HashtableElement(key, val) {
+    this.key = key;
+    this.val = val;
+}
+
+/*** META ((export #t)
+           (peephole (hole 0 "new sc_Hashtable()")))
+*/
+function sc_makeHashtable() {
+    return new sc_Hashtable();
+}
+
+/*** META ((export #t)) */
+function sc_hashtablePutBang(ht, key, val) {
+    var hash = sc_hash(key);
+    ht[hash] = new sc_HashtableElement(key, val);
+}
+
+/*** META ((export #t)) */
+function sc_hashtableGet(ht, key) {
+    var hash = sc_hash(key);
+    if (hash in ht)
+	return ht[hash].val;
+    else
+	return false;
+}
+
+/*** META ((export #t)) */
+function sc_hashtableForEach(ht, f) {
+    for (var v in ht) {
+	if (ht[v] instanceof sc_HashtableElement)
+	    f(ht[v].key, ht[v].val);
+    }
+}
+
+/*** META ((export hashtable-contains?)
+           (peephole (hole 2 "sc_hash(" 1 ") in " 0)))
+*/
+function sc_hashtableContains(ht, key) {
+    var hash = sc_hash(key);
+    if (hash in ht)
+	return true;
+    else
+	return false;
+}
+
+var SC_HASH_COUNTER = 0;
+
+function sc_hash(o) {
+    if (o === null)
+	return "null";
+    else if (o === undefined)
+	return "undefined";
+    else if (o === true)
+	return "true";
+    else if (o === false)
+	return "false";
+    else if (typeof o === "number")
+	return "num-" + o;
+    else if (typeof o === "string")
+	return "jsstr-" + o;
+    else if (o.sc_getHash)
+	return o.sc_getHash();
+    else
+	return sc_counterHash.call(o);
+}
+function sc_counterHash() {
+    if (!this.sc_hash) {
+	this.sc_hash = "hash-" + SC_HASH_COUNTER;
+	SC_HASH_COUNTER++;
+    }
+    return this.sc_hash;
+}
+
+function sc_Trampoline(args, maxTailCalls) {
+    this['__trampoline return__'] = true;
+    this.args = args;
+    this.MAX_TAIL_CALLs = maxTailCalls;
+}
+// TODO: call/cc stuff
+sc_Trampoline.prototype.restart = function() {
+    var o = this;
+    while (true) {
+	// set both globals.
+	SC_TAIL_OBJECT.calls = o.MAX_TAIL_CALLs-1;
+	var fun = o.args.callee;
+	var res = fun.apply(SC_TAIL_OBJECT, o.args);
+	if (res instanceof sc_Trampoline)
+	    o = res;
+	else
+	    return res;
+    }
+}
+
+/*** META ((export bind-exit-lambda)) */
+function sc_bindExitLambda(proc) {
+    var escape_obj = new sc_BindExitException();
+    var escape = function(res) {
+	escape_obj.res = res;
+	throw escape_obj;
+    };
+    try {
+	return proc(escape);
+    } catch(e) {
+	if (e === escape_obj) {
+	    return e.res;
+	}
+	throw e;
+    }
+}
+function sc_BindExitException() {
+    this._internalException = true;
+}
+
+var SC_SCM2JS_GLOBALS = new Object();
+
+// default tail-call depth.
+// normally the program should set it again. but just in case...
+var SC_TAIL_OBJECT = new Object();
+SC_SCM2JS_GLOBALS.TAIL_OBJECT = SC_TAIL_OBJECT;
 // ======================== I/O =======================
 
 /*------------------------------------------------------------------*/
@@ -1838,7 +2094,7 @@ function sc_Port() {
 
 function sc_InputPort() {
 }
-sc_InputPort.prototype = new sc_Port;
+sc_InputPort.prototype = new sc_Port();
 
 sc_InputPort.prototype.peekChar = function() {
     if (!("peeked" in this))
@@ -1875,11 +2131,10 @@ function sc_StringInputPort(jsStr) {
     // we are going to do some charAts on the str.
     // instead of recreating all the time a String-object, we
     // create one in the beginning. (not sure, if this is really an optim)
-    str = new String(jsStr);
-    this.str = str;
+    this.str = new String(jsStr);
     this.pos = 0;
 }
-sc_StringInputPort.prototype = new sc_InputPort;
+sc_StringInputPort.prototype = new sc_InputPort();
 sc_StringInputPort.prototype.getNextChar = function() {
     if (this.pos >= this.str.length)
 	return SC_EOF_OBJECT;
@@ -2235,10 +2490,7 @@ sc_Reader.prototype.read = function() {
     case 8/*QUOTE*/:
 	return readQuote.call(this);
     case 11/*STRING*/:
-	if (this.mutableStrings)
-	    return new sc_String(token.val);
-	else
-	    return token.val;
+	return sc_jsstring2string(token.val);
     case 20/*CHAR*/:
 	return new sc_Char(token.val);
     case 14/*VECTOR_BEGIN*/:
@@ -2248,10 +2500,7 @@ sc_Reader.prototype.read = function() {
     case 19/*STORE*/:
 	return storeRefence.call(this, token.val);
     case 9/*ID*/:
-	if (this.mutableStrings)
-	    return token.val;
-	else
-	    return sc_SYMBOL_PREFIX + token.val;
+	return sc_jsstring2symbol(token.val);
     case 0/*EOF*/:
     case 12/*NUMBER*/:
     case 15/*TRUE*/:
@@ -2263,79 +2512,99 @@ sc_Reader.prototype.read = function() {
     }
 };
 
-function sc_read_mutable(port) { /// export
-    if (port === undefined) // we assume the port hasn't been given.
-	port = SC_DEFAULT_IN; // THREAD: shared var...
-    var reader = new sc_Reader(new sc_Tokenizer(port));
-    reader.mutableStrings = true;
-    return reader.read();
-}
-function sc_read_immutable(port) { /// export
+/*** META ((export #t)) */
+function sc_read(port) {
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
     var reader = new sc_Reader(new sc_Tokenizer(port));
     return reader.read();
 }
-function sc_readChar(port) { /// export
+/*** META ((export #t)) */
+function sc_readChar(port) {
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
     var t = port.readChar();
     return t === SC_EOF_OBJECT? t: new sc_Char(t);
 }
-function sc_peekChar(port) { /// export
+/*** META ((export #t)) */
+function sc_peekChar(port) {
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
     var t = port.peekChar();
     return t === SC_EOF_OBJECT? t: new sc_Char(t);
 }    
-function sc_isCharReady(port) { /// export
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isCharReady(port) {
     if (port === undefined) // we assume the port hasn't been given.
 	port = SC_DEFAULT_IN; // THREAD: shared var...
     return port.isCharReady();
 }
-function sc_closeInputPort(p) { /// export
+/*** META ((export #t)
+           (peephole (postfix ".close()")))
+*/
+function sc_closeInputPort(p) {
     return p.close();
 }
 
-function sc_isInputPort(o) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix " instanceof sc_InputPort")))
+*/
+function sc_isInputPort(o) {
     return (o instanceof sc_InputPort);
 }
 
-function sc_isEOFObject(o) { /// export eof-object?
+/*** META ((export eof-object?)
+           (type bool)
+           (peephole (postfix " === SC_EOF_OBJECT")))
+*/
+function sc_isEOFObject(o) {
     return o === SC_EOF_OBJECT;
 }
 
-function sc_currentInputPort() { /// export
+/*** META ((export #t)
+           (peephole (hole 0 "SC_DEFAULT_IN")))
+*/
+function sc_currentInputPort() {
     return SC_DEFAULT_IN;
 }
 
 /* ------------ file operations are not supported -----------*/
-function sc_callWithInputFile(s, proc) { /// export
+/*** META ((export #t)) */
+function sc_callWithInputFile(s, proc) {
     throw "can't open " + s;
 }
 
-function sc_callWithOutputFile(s, proc) { /// export
+/*** META ((export #t)) */
+function sc_callWithOutputFile(s, proc) {
     throw "can't open " + s;
 }
 
-function sc_withInputFromFile(s, thunk) { /// export
+/*** META ((export #t)) */
+function sc_withInputFromFile(s, thunk) {
     throw "can't open " + s;
 }
 
-function sc_withOutputToFile(s, thunk) { /// export
+/*** META ((export #t)) */
+function sc_withOutputToFile(s, thunk) {
     throw "can't open " + s;
 }
 
-function sc_openInputFile(s) { /// export
+/*** META ((export #t)) */
+function sc_openInputFile(s) {
     throw "can't open " + s;
 }
 
-function sc_openOutputFile(s) { /// export
+/*** META ((export #t)) */
+function sc_openOutputFile(s) {
     throw "can't open " + s;
 }
 
 /* ----------------------------------------------------------------------------*/
-function sc_basename(p) { /// export
+/*** META ((export #t)) */
+function sc_basename(p) {
    var i = p.lastIndexOf('/');
 
    if(i >= 0)
@@ -2344,7 +2613,8 @@ function sc_basename(p) { /// export
       return '';
 }
 
-function sc_dirname(p) { /// export
+/*** META ((export #t)) */
+function sc_dirname(p) {
    var i = p.lastIndexOf('/');
 
    if(i >= 0)
@@ -2355,7 +2625,8 @@ function sc_dirname(p) { /// export
 
 /* ----------------------------------------------------------------------------*/
 
-function sc_withInputFromPort(p, thunk) { /// export-higher
+/*** META ((export #t)) */
+function sc_withInputFromPort(p, thunk) {
     try {
 	var tmp = SC_DEFAULT_IN; // THREAD: shared var.
 	SC_DEFAULT_IN = p;
@@ -2365,32 +2636,13 @@ function sc_withInputFromPort(p, thunk) { /// export-higher
     }
 }
 
-function sc_withInputFromPort_callcc(p, thunk) { /// export-higher
-    // no need to verify for "restore...". All operations are safe, and
-    // dynamicWind_callcc will handle the rest.
-    var tmp = SC_DEFAULT_IN;
-    return sc_dynamicWind_callcc(function() { SC_DEFAULT_IN = p; },
-				 thunk,
-				 function() { SC_DEFAULT_IN = tmp; });
+/*** META ((export #t)) */
+function sc_withInputFromString(s, thunk) {
+    return sc_withInputFromPort(new sc_StringInputPort(sc_string2jsstring(s)), thunk);
 }
 
-function sc_withInputFromString_mutable(s, thunk) { /// export-higher
-    return sc_withInputFromString_immutable(s.val, thunk);
-}
-
-function sc_withInputFromString_mutable_callcc(s, thunk) { /// export-higher
-    return sc_withInputFromString_immutable_callcc(s.val, thunk);
-}
-
-function sc_withInputFromString_immutable(s, thunk) { /// export-higher
-    return sc_withInputFromPort(new sc_StringInputPort(s), thunk);
-}
-
-function sc_withInputFromString_immutable_callcc(s, thunk) { /// export-higher
-    return sc_withInputFromPort_callcc(new sc_StringInputPort(s), thunk);
-}
-
-function sc_withOutputToPort(p, thunk) { /// export-higher
+/*** META ((export #t)) */
+function sc_withOutputToPort(p, thunk) {
     try {
 	var tmp = SC_DEFAULT_OUT; // THREAD: shared var.
 	SC_DEFAULT_OUT = p;
@@ -2400,89 +2652,29 @@ function sc_withOutputToPort(p, thunk) { /// export-higher
     }
 }
 
-function sc_withOutputToPort_callcc(p, thunk) { /// export-higher
-    // no need to verify for "restore...". All operations are safe, and
-    // dynamicWind_callcc will handle the rest.
-    var tmp = SC_DEFAULT_OUT;
-    sc_dynamicWind_callcc(function() { SC_DEFAULT_OUT = p; },
-			  thunk,
-			  function() { SC_DEFAULT_OUT = tmp; });
-}
-
-function sc_withOutputToString_mutable(thunk) { /// export-higher
-    var p = new sc_StringOutputPort_mutable();
+/*** META ((export #t)) */
+function sc_withOutputToString(thunk) {
+    var p = new sc_StringOutputPort();
     sc_withOutputToPort(p, thunk);
     return p.close();
 }
 
-function sc_withOutputToString_immutable(thunk) { /// export-higher
-    var p = new sc_StringOutputPort_immutable();
-    sc_withOutputToPort(p, thunk);
-    return p.close();
-}
-
-function sc_withOutputToString_callcc(p, thunk) {
-    var sc_storage = SC_CALLCC_STORAGE;
-    if (sc_storage['doCall/CcDefault?']) {
-	var delegate = sc_withOutputToPort_callcc;
-    } else if (sc_storage['doCall/CcRestore?'])  {
-	var sc_frame = sc_storage.pop();
-	p = sc_frame.p;
-	delegate = sc_storage.callNextFunction();
-    } else { // root-fun?
-	return sc_callCcRoot(this, arguments);
-    }
-    try {
-	delegate(p, thunk);
-	return p.close();
-    } catch (e) {
-	if (e instanceof sc_CallCcException && e.backup) {
-	    var sc_frame = new Object();
-	    sc_frame.callee = sc_withOutputToString_mutable_callcc;
-	    sc_frame.p = p;
-	    e.push(sc_frame);
-	}
-	throw e;
-    }
-}
-
-function sc_withOutputToString_mutable_callcc(thunk) { /// export-higher
-    return sc_withOutputToString_callcc(new sc_StringOutputPort_mutable(), thunk);
-}
-
-function sc_withOutputToString_immutable_callcc(thunk) { /// export-higher
-    return sc_withOutputToString_callcc(new sc_StringOutputPort_immutable(), thunk);
-}
-
-/* with-output-to-procedure proc must not call call/cc! */
-function sc_withOutputToProcedure_mutable(proc, thunk) { /// export-higher
-    var t = function(s) { proc(new sc_String(s)); };
+/*** META ((export #t)) */
+function sc_withOutputToProcedure(proc, thunk) {
+    var t = function(s) { proc(sc_jsstring2string(s)); };
     return sc_withOutputToPort(new sc_GenericOutputPort(t), thunk);
 }
-function sc_withOutputToProcedure_mutable_callcc(proc, thunk) { /// export-higher
-    var t = function(s) { proc(new sc_String(s)); };
-    return sc_withOutputToPort_callcc(new sc_GenericOutputPort(t), thunk);
-}
-function sc_withOutputToProcedure_immutable(proc, thunk) { /// export-higher
-    return sc_withOutputToPort(new sc_GenericOutputPort(proc), thunk);
-}
-function sc_withOutputToProcedure_immutable_callcc(proc, thunk) { /// export-higher
-    return sc_withOutputToPort_callcc(new sc_GenericOutputPort(proc), thunk);
+
+/*** META ((export #t)
+           (peephole (hole 0 "new sc_StringOutputPort()")))
+*/
+function sc_openOutputString() {
+    return new sc_StringOutputPort();
 }
 
-function sc_openOutputString_mutable() { /// export
-    return new sc_StringOutputPort_mutable();
-}
-function sc_openOutputString_immutable() { /// export
-    return new sc_StringOutputPort_immutable();
-}
-
-function sc_openInputString_mutable(str) { /// export
-    return new sc_StringInputPort(str.val);
-}
-
-function sc_openInputString_immutable(str) { /// export
-    return new sc_StringInputPort(str);
+/*** META ((export #t)) */
+function sc_openInputString(str) {
+    return new sc_StringInputPort(sc_string2jsstring(str));
 }
 
 /* ----------------------------------------------------------------------------*/
@@ -2497,35 +2689,21 @@ sc_OutputPort.prototype.close = function() {
     /* do nothing */
 }
 
-function sc_StringOutputPort_mutable() {
+function sc_StringOutputPort() {
     this.res = "";
 }
-sc_StringOutputPort_mutable.prototype = new sc_OutputPort();
-sc_StringOutputPort_mutable.prototype.appendJSString = function(s) {
+sc_StringOutputPort.prototype = new sc_OutputPort();
+sc_StringOutputPort.prototype.appendJSString = function(s) {
     this.res += s;
 }
-sc_StringOutputPort_mutable.prototype.close = function() {
-    return new sc_String(this.res);
+sc_StringOutputPort.prototype.close = function() {
+    return sc_jsstring2string(this.res);
 }
 
-function sc_StringOutputPort_immutable() {
-    this.res = "";
+/*** META ((export #t)) */
+function sc_getOutputString(sp) {
+    return sc_jsstring2string(sp.res);
 }
-sc_StringOutputPort_immutable.prototype = new sc_OutputPort();
-sc_StringOutputPort_immutable.prototype.appendJSString = function(s) {
-    this.res += s;
-}
-sc_StringOutputPort_immutable.prototype.close = function() {
-    return this.res;
-}
-
-function sc_getOutputString_mutable(sp) { /// export
-    return new sc_String(sp.res);
-}
-function sc_getOutputString_immutable(sp) { /// export
-    return sp.res;
-}
-    
     
 
 function sc_ErrorOutputPort() {
@@ -2545,11 +2723,18 @@ function sc_GenericOutputPort(appendJSString, close) {
 }
 sc_GenericOutputPort.prototype = new sc_OutputPort();
 
-function sc_isOutputPort(o) { /// export
+/*** META ((export #t)
+           (type bool)
+           (peephole (postfix " instanceof sc_OutputPort")))
+*/
+function sc_isOutputPort(o) {
     return (o instanceof sc_OutputPort);
 }
 
-function sc_closeOutputPort(p) { /// export
+/*** META ((export #t)
+           (peephole (postfix ".close()")))
+*/
+function sc_closeOutputPort(p) {
     return p.close();
 }
 
@@ -2585,32 +2770,28 @@ sc_Vector.prototype.writeOrDisplay = function(p, writeOrDisplay) {
 
 /* ------------------ write ---------------------------------------------------*/
 
-// write
-function sc_write_mutable(o, p) { /// export
-    String.prototype.doWrite = String_prototype_doWrite_mutable;
+/*** META ((export #t)) */
+function sc_write(o, p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
-    sc_doWrite(p, o);
+    p.appendJSString(sc_toWriteString(o));
 }
 
-function sc_write_immutable(o, p) { /// export
-    String.prototype.doWrite = String_prototype_doWrite_immutable;
-    if (p === undefined) // we assume not given
-	p = SC_DEFAULT_OUT;
-    sc_doWrite(p, o);
-}
-
-function sc_doWrite(p, o) {
+function sc_toWriteString(o) {
     if (o === null)
-	p.appendJSString("()");
+	return "()";
     else if (o === true)
-	p.appendJSString("#t");
+	return "#t";
     else if (o === false)
-	p.appendJSString("#f");
+	return "#f";
     else if (o === undefined)
-	p.appendJSString("#unspecified");
+	return "#unspecified";
+    else if (typeof o === 'function')
+	return "#<procedure " + sc_hash(o) + ">";
+    else if (o.sc_toWriteString)
+	return o.sc_toWriteString();
     else
-	o.doWrite(p);
+	return o.toString();
 }
 
 function sc_escapeWriteString(s) {
@@ -2633,7 +2814,7 @@ function sc_escapeWriteString(s) {
 	default:
 	    if (s.charAt(i) < ' ' || s.charCodeAt(i) > 127) {
 		/* non printable character and special chars */
-		res += s.substring(j, i) + "\\x" + charCodeAt(i).toString(16);
+		res += s.substring(j, i) + "\\x" + s.charCodeAt(i).toString(16);
 		j = i + 1;
 	    }
 	    // else just let i increase...
@@ -2643,110 +2824,36 @@ function sc_escapeWriteString(s) {
     return res;
 }
 
-Number.prototype.doWrite = function(p) {
-    p.appendJSString(this.toString());
-}
-var String_prototype_doWrite_mutable = function(p) {
-    p.appendJSString(this);
-}
-var String_prototype_doWrite_immutable = function(p) {
-    // TODO: handle escape-chars symbols
-
-    if (this.charAt(0) !== sc_SYMBOL_PREFIX)
-	p.appendJSString('"' + sc_escapeWriteString(this) + '"');
-    else
-	p.appendJSString(this.slice(1));
-}
-Function.prototype.doWrite = function(p) {
-    p.appendJSString("#<procedure " + this.getHash() + ">");
-}
-Boolean.prototype.doWrite = function(p) {
-    p.appendJSString(this.toString());
-}
-sc_Pair.prototype.doWrite = function(p) {
-    this.writeOrDisplay(p, sc_doWrite);
-}
-sc_String.prototype.doWrite = function(p) {
-    p.appendJSString('"' + sc_escapeWriteString(this.val) + '"');
-}
-sc_Char.prototype.doWrite = function(p) {
-    var entry = sc_Char.char2readable[this.val];
-    if (entry)
-	p.appendJSString(entry);
-    else
-	p.appendJSString("#\\" + this.val);
-}
-sc_Vector.prototype.doWrite = function(p) {
-    this.writeOrDisplay(p, sc_doWrite);
-}
-sc_Struct.prototype.doWrite = function(p) {
-    p.appendJSString("#<struct" + this.getHash() + ">");
-}
-sc_Keyword.prototype.doWrite = function(p) {
-    p.appendJSString(":" + this.val);
-}
-
 /* ------------------ display ---------------------------------------------------*/
 
-// display
-function sc_display_mutable(o, p) { /// export
-    String.prototype.doDisplay = String_prototype_doDisplay_mutable;
+/*** META ((export #t)) */
+function sc_display(o, p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
-    sc_doDisplay(p, o);
+    p.appendJSString(sc_toDisplayString(o));
 }
 
-function sc_display_immutable(o, p) { /// export
-    String.prototype.doDisplay = String_prototype_doDisplay_immutable;
-    if (p === undefined) // we assume not given
-	p = SC_DEFAULT_OUT;
-    sc_doDisplay(p, o);
-}
-
-function sc_doDisplay(p, o) {
+function sc_toDisplayString(o) {
     if (o === null)
-	p.appendJSString("()");
+	return "()";
     else if (o === true)
-	p.appendJSString("#t");
+	return "#t";
     else if (o === false)
-	p.appendJSString("#f");
+	return "#f";
     else if (o === undefined)
-	p.appendJSString("#unspecified");
+	return "#unspecified";
+    else if (typeof o === 'function')
+	return "#<procedure " + sc_hash(o) + ">";
+    else if (o.sc_toDisplayString)
+	return o.sc_toDisplayString();
     else
-	o.doDisplay(p);
+	return o.toString();
 }
-Object.prototype.doDisplay = function(p) {
-    p.appendJSString(this.toString());
-}
-Number.prototype.doDisplay = Number.prototype.doWrite;
-
-var String_prototype_doDisplay_mutable = String_prototype_doWrite_mutable;
-var String_prototype_doDisplay_immutable = function(p) {
-    if (this.charAt(0) !== sc_SYMBOL_PREFIX)
-	p.appendJSString(this);
-    else
-	p.appendJSString(this.slice(1));
-}
-Function.prototype.doDisplay = Function.prototype.doWrite;
-Boolean.prototype.doDisplay = Boolean.prototype.doWrite;
-sc_Pair.prototype.doDisplay = function(p) {
-    this.writeOrDisplay(p, sc_doDisplay);
-};
-sc_String.prototype.doDisplay = function(p) {
-    p.appendJSString(this.val);
-}
-sc_Char.prototype.doDisplay = function(p) {
-    p.appendJSString(this.val);
-}
-sc_Vector.prototype.doDisplay = function(p) {
-    this.writeOrDisplay(p, sc_doDisplay);
-}
-sc_Struct.prototype.doDisplay = sc_Struct.prototype.doWrite;
-sc_Keyword.prototype.doDisplay = sc_Keyword.prototype.doWrite;
 
 /* ------------------ newline ---------------------------------------------------*/
 
-function sc_newline(p) { /// export
+/*** META ((export #t)) */
+function sc_newline(p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
     p.appendJSString("\n");
@@ -2754,7 +2861,8 @@ function sc_newline(p) { /// export
     
 /* ------------------ write-char ---------------------------------------------------*/
 
-function sc_writeChar(c, p) { /// export
+/*** META ((export #t)) */
+function sc_writeChar(c, p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
     p.appendJSString(c.val);
@@ -2762,84 +2870,50 @@ function sc_writeChar(c, p) { /// export
 
 /* ------------------ write-circle ---------------------------------------------------*/
 
-function sc_writeCircle_immutable(o, p) { /// export
-    String.prototype.doWriteCircle = String_prototype_doWriteCirce_immutable;
-    sc_writeCirce(o, p);
-}
-function sc_writeCircle_mutable(o, p) { /// export
-    String.prototype.doWriteCircle = String_prototype_doWriteCirce_mutable;
-    sc_writeCirce(o, p);
+/*** META ((export #t)) */
+function sc_writeCircle(o, p) {
+    if (p === undefined) // we assume not given
+	p = SC_DEFAULT_OUT;
+    p.appendJSString(sc_toWriteCircleString(o));
 }
 
-function sc_writeCircle(o, p) {
+function sc_toWriteCircleString(o) {
     var symb = sc_gensym("writeCircle");
     var nbPointer = new Object();
     nbPointer.nb = 0;
     sc_prepWriteCircle(o, symb, nbPointer);
-    
-    if (p === undefined) // we assume not given
-	p = SC_DEFAULT_OUT;
-    sc_doWriteCircle(p, o, symb);
+    return sc_genToWriteCircleString(o, symb);
 }
 
 function sc_prepWriteCircle(o, symb, nbPointer) {
-    if (o !== null &&
-	o !== undefined &&
-	o !== true &&
-	o !== false)
-	o.prepWriteCircle(symb, nbPointer);
-}
-var doNothing = function() {};
-Number.prototype.prepWriteCircle = doNothing;
-String.prototype.prepWriteCircle = doNothing;
-Function.prototype.prepWriteCircle = doNothing;
-Boolean.prototype.prepWriteCircle = doNothing;
-sc_Pair.prototype.prepWriteCircle = function(symb, nbPointer) {
-    if (this[symb] !== undefined) {
-	this[symb]++;
-	this[symb + "nb"] = nbPointer.nb++;
-    } else {
-	this[symb] = 0;
-	sc_prepWriteCircle(this.car, symb, nbPointer);
-	sc_prepWriteCircle(this.cdr, symb, nbPointer);
+    // TODO sc_Struct
+    if (o instanceof sc_Pair ||
+	o instanceof sc_Vector) {
+	if (o[symb] !== undefined) {
+	    // not the first visit.
+	    o[symb]++;
+	    // unless there is already a number, assign one.
+	    if (!o[symb + "nb"]) o[symb + "nb"] = nbPointer.nb++;
+	    return;
+	}
+	o[symb] = 0;
+	if (o instanceof sc_Pair) {
+	    sc_prepWriteCircle(o.car, symb, nbPointer);
+	    sc_prepWriteCircle(o.cdr, symb, nbPointer);
+	} else {
+	    for (var i = 0; i < o.length; i++)
+		sc_prepWriteCircle(o[i], symb, nbPointer);
+	}
     }
-};
-sc_String.prototype.prepWriteCircle = doNothing;
-sc_Char.prototype.prepWriteCircle = doNothing;
-sc_Vector.prototype.prepWriteCircle = function(symb, nbPointer) {
-    if (this[symb] !== undefined) {
-	this[symb]++;
-	this[symb + "nb"] = nbPointer.nb++;
-    } else {
-	this[symb] = 0;
-	for (var i = 0; i < this.length; i++)
-	    sc_prepWriteCircle(this[i], symb, nbPointer);
-    }
-};
-// TODO: not correct
-sc_Struct.prototype.prepWriteCircle = doNothing;
-
-function sc_doWriteCircle(p, o, symb) {
-    if (o === null)
-	p.appendJSString("()");
-    else if (o === true)
-	p.appendJSString("#t");
-    else if (o === false)
-	p.appendJSString("#f");
-    else if (o === undefined)
-	p.appendJSString("#unspecified");
-    else
-	o.doWriteCircle(p, symb);
 }
 
-// extra arguments (in our case 'symb') are going to be lost. so no prob.
-Number.prototype.doWriteCircle = Number.prototype.doWrite;
-var String_prototype_doWriteCircle_mutable = String_prototype_doWrite_mutable;
-var String_prototype_doWriteCircle_immutable = String_prototype_doWrite_immutable;
-Function.prototype.doWriteCircle = Function.prototype.doWrite;
-Boolean.prototype.doWriteCircle = Boolean.prototype.doWrite;
-
-sc_Pair.prototype.doWriteCircle = function(p, symb, inList) {
+function sc_genToWriteCircleString(o, symb) {
+    if (!(o instanceof sc_Pair ||
+	  o instanceof sc_Vector))
+	return sc_toWriteString(o);
+    return o.sc_toWriteCircleString(symb);
+}
+sc_Pair.prototype.sc_toWriteCircleString = function(symb, inList) {
     if (this[symb + "use"]) { // use-flag is set. Just use it.
 	var nb = this[symb + "nb"];
 	if (this[symb]-- === 0) { // if we are the last use. remove all fields.
@@ -2848,11 +2922,9 @@ sc_Pair.prototype.doWriteCircle = function(p, symb, inList) {
 	    delete this[symb + "use"];
 	}
 	if (inList)
-	    p.appendJSString('. #' + nb + '#');
+	    return '. #' + nb + '#';
 	else
-	    p.appendJSString('#' + nb + '#');
-	
-	return;
+	    return '#' + nb + '#';
     }
     if (this[symb]-- === 0) { // if we are the last use. remove all fields.
 	delete this[symb];
@@ -2860,35 +2932,33 @@ sc_Pair.prototype.doWriteCircle = function(p, symb, inList) {
 	delete this[symb + "use"];
     }
 
+    var res = "";
+    
     if (this[symb] !== undefined) { // implies > 0
 	this[symb + "use"] = true;
 	if (inList)
-	    p.appendJSString('. #' + this[symb + "nb"] + '=');
+	    res += '. #' + this[symb + "nb"] + '=';
 	else
-	    p.appendJSString('#' + this[symb + "nb"] + '=');
+	    res += '#' + this[symb + "nb"] + '=';
 	inList = false;
     }
 
     if (!inList)
-	p.appendJSString("(");
+	res += "(";
     
     // print car
-    sc_doWriteCircle(p, this.car, symb);
+    res += sc_genToWriteCircleString(this.car, symb);
     
     if (sc_isPair(this.cdr)) {
-	p.appendJSString(" ");
-	this.cdr.doWriteCircle(p, symb, true);
+	res += " " + this.cdr.sc_toWriteCircleString(symb, true);
     } else if (this.cdr !== null) {
-	p.appendJSString(" . ");
-	sc_doWriteCircle(p, this.cdr);
+	res += " . " + sc_genToWriteCircleString(this.cdr, symb);
     }
     if (!inList)
-	p.appendJSString(")");
-}
-sc_String.prototype.doWriteCircle = sc_String.prototype.doWrite;
-sc_Char.prototype.doWriteCircle = sc_Char.prototype.doWrite;
-
-sc_Vector.prototype.doWriteCircle = function(p, symb) {
+	res += ")";
+    return res;
+};
+sc_Vector.prototype.sc_toWriteCircleString = function(symb) {
     if (this[symb + "use"]) { // use-flag is set. Just use it.
 	var nb = this[symb + "nb"];
 	if (this[symb]-- === 0) { // if we are the last use. remove all fields.
@@ -2896,71 +2966,64 @@ sc_Vector.prototype.doWriteCircle = function(p, symb) {
 	    delete this[symb + "nb"];
 	    delete this[symb + "use"];
 	}
-	p.appendJSString('#' + nb + '#');
-	return;
+	return '#' + nb + '#';
     }
     if (this[symb]-- === 0) { // if we are the last use. remove all fields.
 	delete this[symb];
 	delete this[symb + "nb"];
 	delete this[symb + "use"];
     }
+
+    var res = "";
     if (this[symb] !== undefined) { // implies > 0
 	this[symb + "use"] = true;
-	p.appendJSString('#' + this[symb + "nb"] + '=');
+	res += '#' + this[symb + "nb"] + '=';
     }
-    p.appendJSString("#(");
+    res += "#(";
     for (var i = 0; i < this.length; i++) {
-	sc_doWriteCircle(p, this[i], symb);
-	p.appendJSString(" ");
+	res += sc_genToWriteCircleString(this[i], symb);
+	if (i < this.length - 1) res += " ";
     }
-    p.appendJSString(")");
-}
-sc_Struct.prototype.doWriteCircle = sc_Struct.prototype.doWrite;
+    res += ")";
+    return res;
+};
 
 
 /* ------------------ print ---------------------------------------------------*/
 
-function sc_print_mutable(s) { /// export
+/*** META ((export #t)) */
+function sc_print(s) {
     if (arguments.length === 1) {
-	sc_display_mutable(s);
+	sc_display(s);
 	sc_newline();
     }
     else {
 	for (var i = 0; i < arguments.length; i++)
-	    sc_display_mutable(arguments[i]);
-	sc_newline();
-    }
-}
-
-function sc_print_immutable(s) { /// export
-    if (arguments.length === 1) {
-	sc_display_immutable(s);
-	sc_newline();
-    }
-    else {
-	for (var i = 0; i < arguments.length; i++)
-	    sc_display_immutable(arguments[i]);
+	    sc_display(arguments[i]);
 	sc_newline();
     }
 }
 
 /* ------------------ format ---------------------------------------------------*/
-function sc_format(s, args) { /// export
+/*** META ((export #t)) */
+function sc_format(s, args) {
    var len = s.length;
-   var p = new sc_StringOutputPort_mutable();
+   var p = new sc_StringOutputPort();
    var i = 0, j = 1;
 
    while( i < len ) {
       var i2 = s.indexOf("~", i);
 
       if (i2 == -1) {
-	 return p.res.concat( s.substring( i, len ) );
+	  p.appendJSString( s.substring( i, len ) );
+	  return p.close();
       } else {
 	 if (i2 > i) {
 	    if (i2 == (len - 1)) {
-	       return p.res.concat(s.substring(i, len));
+		p.appendJSString(s.substring(i, len));
+		return p.close();
 	    } else {
-	       p.res = p.res.concat(s.substring(i, i2));
+	       p.appendJSString(s.substring(i, i2));
 	       i = i2;
 	    }
 	 }
@@ -2969,67 +3032,67 @@ function sc_format(s, args) { /// export
 	    case 65:
 	    case 97:
 	       // a
-	       sc_doDisplay(p, arguments[j]);
+	       sc_display(arguments[j], p);
 	       i += 2; j++;
 	       break;
 
 	    case 83:
 	    case 115:
 	       // s
-	       sc_doWrite(p,arguments[j]);
+	       sc_write(arguments[j], p);
 	       i += 2; j++;
 	       break;
 
 	    case 86:
 	    case 118:
 	       // v
-	       sc_doDisplay(p, arguments[j]);
-	       p.res = p.res.concat("\n");
+	       sc_display(arguments[j], p);
+	       p.appendJSString("\n");
 	       i += 2; j++;
 	       break;
 
 	    case 67:
 	    case 99:
 	       // c
-	       p.res = p.res.concat(String.formCharCode(arguments[j]));
+	       p.appendJSString(String.fromCharCode(arguments[j]));
 	       i += 2; j++;
 	       break;
 
 	    case 88:
 	    case 120:
 	       // x
-	       p.res = p.res.concat(arguments[j].toString(6));
+	       p.appendJSString(arguments[j].toString(6));
 	       i += 2; j++;
 	       break;
 
 	    case 79:
 	    case 111:
 	       // o
-	       p.res = p.res.concat(arguments[j].toString(8));
+	       p.appendJSString(arguments[j].toString(8));
 	       i += 2; j++;
 	       break;
 
 	    case 66:
 	    case 98:
 	       // b
-	       p.res = p.res.concat(arguments[j].toString(2));
+	       p.appendJSString(arguments[j].toString(2));
 	       i += 2; j++;
 	       break;
 	       
 	    case 37:
 	    case 110:
 	       // %, n
-	       p.res = p.res.concat("\n");
+	       p.appendJSString("\n");
 	       i += 2; break;
 
 	    case 114:
 	       // r
-	       p.res = p.res.concat("\r");
+	       p.appendJSString("\r");
 	       i += 2; break;
 
 	    case 126:
 	       // ~
-	       p.res = p.res.concat("~");
+	       p.appendJSString("~");
 	       i += 2; break;
 
 	    default:
@@ -3041,7 +3104,7 @@ function sc_format(s, args) { /// export
       }
    }
 
-   return p.res;
+   return p.close();
 }
 
 /* ------------------ global ports ---------------------------------------------------*/
@@ -3050,460 +3113,328 @@ var SC_DEFAULT_IN = new sc_ErrorInputPort();
 var SC_DEFAULT_OUT = new sc_ErrorOutputPort();
 var SC_ERROR_OUT = new sc_ErrorOutputPort();
 
-/* ------------------ initRuntime ---------------------------------------------------*/
+var sc_SYMBOL_PREFIX = "\u1E9C";
+var sc_KEYWORD_PREFIX = "\u1E9D";
 
-function initRuntime() {
-    function escapeHTML(s) {
-	var tmp = s;
-	tmp = tmp.replace(/&/g, "&amp;");
-	tmp = tmp.replace(/</g, "&lt;");
-	tmp = tmp.replace(/>/g, "&gt;");
-	tmp = tmp.replace(/ /g, "&nbsp;");
-	tmp = tmp.replace(/\n/g, "<br />");
-	tmp = tmp.replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp");
-	return tmp;
-	
-    }
+/*** META ((export #t)
+           (peephole (id))) */
+function sc_jsstring2string(s) {
+    return s;
+}
 
-    document.write("<div id='stdout'></div>");
-    SC_DEFAULT_OUT = new sc_GenericOutputPort(
-	function(s) {
-	    var stdout = document.getElementById('stdout');
-	    stdout.innerHTML = stdout.innerHTML + escapeHTML(s);
-	});
-    SC_ERROR_OUT = SC_DEFAULT_OUT;
+/*** META ((export #t)
+           (peephole (prefix "'\\u1E9C' +")))
+*/
+function sc_jsstring2symbol(s) {
+    return sc_SYMBOL_PREFIX + s;
+}
+
+/*** META ((export #t)
+           (peephole (id)))
+*/
+function sc_string2jsstring(s) {
+    return s;
+}
+
+/*** META ((export #t)
+           (peephole (symbol2jsstring_immutable)))
+*/
+function sc_symbol2jsstring(s) {
+    return s.slice(1);
+}
+
+/*** META ((export #t)
+           (peephole (postfix ".slice(1)")))
+*/
+function sc_keyword2jsstring(k) {
+    return k.slice(1);
+}
+
+/*** META ((export #t)
+           (peephole (prefix "'\\u1E9D' +")))
+*/
+function sc_jsstring2keyword(s) {
+    return sc_KEYWORD_PREFIX + s;
+}
+
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isKeyword(s) {
+    return (typeof s === "string") &&
+	(s.charAt(0) === sc_KEYWORD_PREFIX);
 }
 
 
+/*** META ((export #t)) */
+var sc_gensym = function() {
+    var counter = 1000;
+    return function(sym) {
+	counter++;
+	if (!sym) sym = sc_SYMBOL_PREFIX;
+	return sym + "s" + counter + "~" + "^sC-GeNsYm ";
+    };
+}();
 
-/* =========================================================================== */
-/* Other library stuff */
-/* =========================================================================== */
 
-
-function sc_Hashtable() {
-}
-sc_Hashtable.prototype.toString = function() {
-    return "#{%hashtable}";
-}
-function sc_HashtableElement(key, val) {
-    this.key = key;
-    this.val = val;
-}
-
-function sc_makeHashtable() { /// export
-    return new sc_Hashtable();
-}
-
-function sc_hashtablePut(ht, key, val) { /// export hashtable-put!
-    var hash = sc_hash(key);
-    ht[hash] = new sc_HashtableElement(key, val);
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isEqual(o1, o2) {
+    return ((o1 === o2) ||
+	    (sc_isPair(o1) && sc_isPair(o2)
+	     && sc_isPairEqual(o1, o2, sc_isEqual)) ||
+	    (sc_isVector(o1) && sc_isVector(o2)
+	     && sc_isVectorEqual(o1, o2, sc_isEqual)));
 }
 
-function sc_hashtableGet(ht, key) { /// export
-    var hash = sc_hash(key);
-    if (hash in ht)
-	return ht[hash].val;
+/*** META ((export number->symbol integer->symbol)) */
+function sc_number2symbol(x, radix) {
+    return sc_SYMBOL_PREFIX + sc_number2jsstring(x, radix);
+}
+    
+/*** META ((export number->string integer->string)) */
+var sc_number2string = sc_number2jsstring;
+
+/*** META ((export #t)) */
+function sc_symbol2number(s, radix) {
+    return sc_jsstring2number(s.slice(1), radix);
+}
+
+/*** META ((export #t)) */
+var sc_string2number = sc_jsstring2number;
+
+/*** META ((export #t)
+           (peephole (prefix "+" s)))
+           ;; peephole will only apply if no radix is given.
+*/
+function sc_string2integer(s, radix) {
+    if (!radix) return +s;
+    return parseInt(s, radix);
+}
+
+/*** META ((export #t)
+           (peephole (prefix "+")))
+*/
+function sc_string2real(s) {
+    return +s;
+}
+
+
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isSymbol(s) {
+    return (typeof s === "string") &&
+	(s.charAt(0) === sc_SYMBOL_PREFIX);
+}
+
+/*** META ((export #t)
+           (peephole (symbol2string_immutable)))
+*/
+function sc_symbol2string(s) {
+    return s.slice(1);
+}
+
+/*** META ((export #t)
+           (peephole (prefix "'\\u1E9C' +")))
+*/
+function sc_string2symbol(s) {
+    return sc_SYMBOL_PREFIX + s;
+}
+
+/*** META ((export symbol-append)
+           (peephole (symbolAppend_immutable)))
+*/
+function sc_symbolAppend() {
+    var res = sc_SYMBOL_PREFIX;
+    for (var i = 0; i < arguments.length; i++)
+	res += arguments[i].slice(1);
+    return res;
+}
+
+/*** META ((export #t)
+           (peephole (postfix ".val")))
+*/
+function sc_char2string(c) { return c.val; }
+
+/*** META ((export #t)
+           (peephole (hole 1 "'\\u1E9C' + " c ".val")))
+*/
+function sc_char2symbol(c) { return sc_SYMBOL_PREFIX + c.val; }
+
+/*** META ((export #t)
+           (type bool))
+*/
+function sc_isString(s) {
+    return (typeof s === "string") &&
+	(s.charAt(0) !== sc_SYMBOL_PREFIX);
+}
+
+/*** META ((export #t)) */
+var sc_makeString = sc_makejsString;
+
+
+/*** META ((export #t)) */
+function sc_string() {
+    for (var i = 0; i < arguments.length; i++)
+	arguments[i] = arguments[i].val;
+    return "".concat.apply("", arguments);
+}
+
+/*** META ((export #t)
+           (peephole (postfix ".length")))
+*/
+function sc_stringLength(s) { return s.length; }
+
+/*** META ((export #t)) */
+function sc_stringRef(s, k) {
+    return new sc_Char(s.charAt(k));
+}
+
+/* there's no stringSet in the immutable version
+function sc_stringSet(s, k, c)
+*/
+
+
+/*** META ((export string=?)
+	   (type bool)
+           (peephole (hole 2 str1 " === " str2)))
+*/
+function sc_isStringEqual(s1, s2) {
+    return s1 === s2;
+}
+/*** META ((export string<?)
+	   (type bool)
+           (peephole (hole 2 str1 " < " str2)))
+*/
+function sc_isStringLess(s1, s2) {
+    return s1 < s2;
+}
+/*** META ((export string>?)
+	   (type bool)
+           (peephole (hole 2 str1 " > " str2)))
+*/
+function sc_isStringGreater(s1, s2) {
+    return s1 > s2;
+}
+/*** META ((export string<=?)
+	   (type bool)
+           (peephole (hole 2 str1 " <= " str2)))
+*/
+function sc_isStringLessEqual(s1, s2) {
+    return s1 <= s2;
+}
+/*** META ((export string>=?)
+	   (type bool)
+           (peephole (hole 2 str1 " >= " str2)))
+*/
+function sc_isStringGreaterEqual(s1, s2) {
+    return s1 >= s2;
+}
+/*** META ((export string-ci=?)
+	   (type bool)
+           (peephole (hole 2 str1 ".toLowerCase() === " str2 ".toLowerCase()")))
+*/
+function sc_isStringCIEqual(s1, s2) {
+    return s1.toLowerCase() === s2.toLowerCase();
+}
+/*** META ((export string-ci<?)
+	   (type bool)
+           (peephole (hole 2 str1 ".toLowerCase() < " str2 ".toLowerCase()")))
+*/
+function sc_isStringCILess(s1, s2) {
+    return s1.toLowerCase() < s2.toLowerCase();
+}
+/*** META ((export string-ci>?)
+	   (type bool)
+           (peephole (hole 2 str1 ".toLowerCase() > " str2 ".toLowerCase()")))
+*/
+function sc_isStringCIGreater(s1, s2) {
+    return s1.toLowerCase() > s2.toLowerCase();
+}
+/*** META ((export string-ci<=?)
+	   (type bool)
+           (peephole (hole 2 str1 ".toLowerCase() <= " str2 ".toLowerCase()")))
+*/
+function sc_isStringCILessEqual(s1, s2) {
+    return s1.toLowerCase() <= s2.toLowerCase();
+}
+/*** META ((export string-ci>=?)
+	   (type bool)
+           (peephole (hole 2 str1 ".toLowerCase() >= " str2 ".toLowerCase()")))
+*/
+function sc_isStringCIGreaterEqual(s1, s2) {
+    return s1.toLowerCase() >= s2.toLowerCase();
+}
+
+/*** META ((export #t)
+           (peephole (hole 3 s ".substring(" start ", " end ")")))
+*/
+function sc_substring(s, start, end) {
+    return s.substring(start, end);
+}
+
+/*** META ((export #t))
+*/
+function sc_isSubstring_at(s1, s2, i) {
+    return s2 == s1.substring(i, i+ s2.length);
+}
+
+/*** META ((export #t)
+           (peephole (infix 0 #f "+" "''")))
+*/
+function sc_stringAppend() {
+    return "".concat.apply("", arguments);
+}
+
+/*** META ((export #t)) */
+var sc_string2list = sc_jsstring2list;
+
+/*** META ((export #t)) */
+var sc_list2string = sc_list2jsstring;
+
+/*** META ((export #t)
+           (peephole (id)))
+*/
+function sc_stringCopy(s) {
+    return s;
+}
+
+/* there's no string-fill in the immutable version
+function sc_stringFill(s, c)
+*/
+
+/*** META ((export #t)
+           (peephole (postfix ".slice(1)")))
+*/
+function sc_keyword2string(o) {
+    return o.slice(1);
+}
+
+/*** META ((export #t)
+           (peephole (prefix "'\\u1E9D' +")))
+*/
+function sc_string2keyword(o) {
+    return sc_KEYWORD_PREFIX + o;
+}
+
+String.prototype.sc_toDisplayString = function() {
+    if (this.charAt(0) === sc_SYMBOL_PREFIX)
+	// TODO: care for symbols with spaces (escape-chars symbols).
+	return this.slice(1);
+    else if (this.charAt(0) === sc_KEYWORD_PREFIX)
+	return ":" + this.slice(1);
     else
-	return false;
-}
+	return this.toString();
+};
 
-function sc_hashtableForEach(ht, f) { /// export-higher
-    for (var v in ht) {
-	if (ht[v] instanceof sc_HashtableElement)
-	    f(ht[v].key, ht[v].val);
-    }
-}
-function sc_hashtableForEach_callcc(ht, f) { /// export-higher
-    var l = null;
-    for (var v in ht) {
-	if (ht[v] instanceof sc_HashtableElement)
-	    l = new sc_Pair(ht[v], l);
-    }
-    sc_forEach_callcc(function(e) { f(e.key, e.val); },
-		      l);
-}
-
-function sc_hashtableContains(ht, key) { /// export hashtable-contains?
-    var hash = sc_hash(key);
-    if (hash in ht)
-	return true;
+String.prototype.sc_toWriteString = function() {
+    if (this.charAt(0) === sc_SYMBOL_PREFIX)
+	// TODO: care for symbols with spaces (escape-chars symbols).
+	return this.slice(1);
+    else if (this.charAt(0) === sc_KEYWORD_PREFIX)
+	return ":" + this.slice(1);
     else
-	return false;
-}
-
-var SC_HASH_COUNTER = 0;
-
-function sc_hash(o) {
-    if (o === null)
-	return "null";
-    else if (o === undefined)
-	return "undefined";
-    else
-	return o.getHash();
-}
-function sc_counterHash() {
-    if (!this.hash) {
-	this.hash = "hash-" + SC_HASH_COUNTER;
-	SC_HASH_COUNTER++;
-    }
-    return this.hash;
-}
-Number.prototype.getHash = function() {
-    return "num-" + this;
-}
-String.prototype.getHash = function() {
-    return "sym-" + this;
-}
-Boolean.prototype.getHash = function() {
-    return "" + this;
-}
-Function.prototype.getHash = sc_counterHash;
-sc_Pair.prototype.getHash = sc_counterHash;
-sc_Vector.prototype.getHash = sc_counterHash;
-sc_Struct.prototype.getHash = sc_counterHash;
-sc_String.prototype.getHash = function() {
-    return "str-" + this.val;
-}
-sc_Char.prototype.getHash = sc_counterHash;
-sc_Hashtable.prototype.getHash = sc_counterHash;
-
-
-function sc_Trampoline(args, maxTailCalls) {
-    this['__trampoline return__'] = true;
-    this.args = args;
-    this.MAX_TAIL_CALLs = maxTailCalls;
-}
-// TODO: call/cc stuff
-sc_Trampoline.prototype.restart = function() {
-    var o = this;
-    while (true) {
-	// set both globals.
-	SC_TAIL_OBJECT.calls = o.MAX_TAIL_CALLs-1;
-	var fun = o.args.callee;
-	var res = fun.apply(SC_TAIL_OBJECT, o.args);
-	if (res instanceof sc_Trampoline)
-	    o = res;
-	else
-	    return res;
-    }
-}
-
-function sc_bindExitLambda(proc) { /// export-higher bind-exit-lambda
-    var escape_obj = new sc_BindExitException();
-    var escape = function(res) {
-	escape_obj.res = res;
-	throw escape_obj;
-    };
-    try {
-	return proc(escape);
-    } catch(e) {
-	if (e === escape_obj) {
-	    return e.res;
-	}
-	throw e;
-    }
-}
-function sc_bindExitLambda_callcc(proc) { /// export-higher bind-exit-lambda
-    var sc_storage = SC_CALLCC_STORAGE;
-    if (sc_storage['doCall/CcDefault?']) {
-	var escape_obj = new sc_BindExitException();
-	var escape = function(res) {
-	    escape_obj.res = res;
-	    throw escape_obj;
-	};
-    } else if (sc_storage['doCall/CcRestore?'])  {
-	var sc_frame = sc_storage.pop();
-	escape_obj = sc_frame.escape_obj;
-	proc = sc_storage.callNextFunction();
-    } else { // root-fun?
-	return sc_callCcRoot(this, arguments);
-    }
-    try {
-	return proc(escape);
-    } catch(e) {
-	if (e === escape_obj) {
-	    return e.res;
-	}
-	if (e instanceof sc_CallCcException && e.backup) {
-	    var sc_frame = new Object();
-	    sc_frame.callee = sc_bindExitLambda_callcc;
-	    sc_frame.proc = proc;
-	    sc_frame.escape_obj = escape_obj;
-	    e.push(sc_frame);
-	}
-	throw e;
-    }
-}
-function sc_BindExitException() {
-    this._internalException = true;
-}
-
-var SC_SCM2JS_GLOBALS = new Object();
-
-// default tail-call depth.
-// normally the program should set it again. but just in case...
-var SC_TAIL_OBJECT = new Object();
-SC_SCM2JS_GLOBALS.TAIL_OBJECT = SC_TAIL_OBJECT;
-
-function sc_CallCcStorage() {
-    this['__call/cc-Object'] = true;
-    this['doCall/CcDefault?'] = true;
-    this.dynamicWinds = [];
-}
-sc_CallCcStorage.prototype.push = function(frame) {
-    if (!this.frames)
-	this.frames = new Array();
-    this.frames.push(frame);
+	return '"' + sc_escapeWriteString(this) + '"';
 };
-sc_CallCcStorage.prototype.pop = function() {
-    return this.frames.pop();
-};
-sc_CallCcStorage.prototype.peek = function() {
-    return this.frames[this.frames.length - 1];
-};
-sc_CallCcStorage.prototype.popAll = function() {
-    this.frames.length = 0;
-};
-sc_CallCcStorage.prototype.isEmpty = function() {
-    return this.frames.length == 0;
-};
-sc_CallCcStorage.prototype.length = function() {
-    return this.frames.length;
-};
-sc_CallCcStorage.prototype.duplicate = function() {
-    var dupl = new sc_CallCcStorage();
-    dupl.frames = this.frames.concat();
-    dupl.rootFun = this.rootFun;
-    dupl.rootThis = this.rootThis;
-    dupl.dynamicWinds = this.dynamicWinds;
-    return dupl;
-};
-sc_CallCcStorage.prototype.callNext = function() {
-    var nextFrame = this.frames[this.frames.length-1];
-    return nextFrame.callee.call(nextFrame.this_);
-};
-sc_CallCcStorage.prototype.callNextFunction = function() {
-    var storage = this;
-    return function() {
-	return storage.callNext();
-    };
-};
-
-sc_CallCcStorage.prototype.resetFrameIterator = function() {
-    this.frameIndex = 0;
-};
-sc_CallCcStorage.prototype.getNextFrame = function() {
-    return this.frames[this.frameIndex++];
-};
-
-function sc_CallCcException() {
-    this._internalException = true;
-    this.storage = new sc_CallCcStorage();
-    this.dynamicWinds = [];
-};
-sc_CallCcException.prototype.push = function(frame) {
-    this.storage.push(frame);
-};
-sc_CallCcException.prototype.pushDynamicWind =  function(dynamicWind) {
-    this.dynamicWinds.push(dynamicWind);
-};
-
-function sc_callcc(proc) { /// export-higher call/cc call-with-current-continuation
-
-    var sc_storage = SC_CALLCC_STORAGE;
-    if (sc_storage['doCall/CcDefault?']) {
-	/* do nothing */
-    } else if (sc_storage['doCall/CcRestore?'])  {
-	throw "call/cc can never be used in restoration context";
-    } else { // root-fun?
-	return sc_callCcRoot(this, arguments);
-    }
-
-    var e = new sc_CallCcException();
-
-    // push last frame (artificially created).
-    var sc_frame = new Object();
-    // short-cut call/cc and continue directly with "whenRestored".
-    // 'whenRestored' will either call 'proc' or return the value (when invoked as continuation).
-    sc_frame.callee = function() {
-	var sc_storage = SC_CALLCC_STORAGE;
-	sc_storage['doCall/CcDefault?'] = true;
-	sc_storage['doCall/CcRestore?'] = false;
-	sc_storage.popAll();
-	return sc_storage.whenRestored();
-    };
-    sc_frame.this_ = null;
-    e.push(sc_frame);
-
-    // we are retrieving all frames.
-    e.backup = true;
-
-    // just in case the exception is not handled. -> nice error-message.
-    e.text = "call/cc-exception_backup";
-
-    // at root call this function
-    e.atRoot = function() {
-	// backuping is done.
-	e.backup = false;
-
-	// backup e.dynamicWinds. these are the dynamicWinds of the stack-frames.
-	e.storage.dynamicWinds = e.dynamicWinds;
-
-	// the continuation function...
-	var k = function(val) {
-	    // 
-	    if (!SC_CALLCC_STORAGE['doCall/CcDefault?']) {
-		// apparently we are not called out of regular scheme-code.
-		// make the best out of it...
-		return sc_callCcRoot(null, arguments);
-	    }
-	    var e_invoke = new sc_CallCcException();
-	    e_invoke.text = "call/cc-exception_invocation";
-	    e_invoke.atRoot = function() { /* do nothing */ };
-	    e_invoke.storage = e.storage; // use the backuped stack-frames.
-	    e_invoke.whenRestored = function() { return val; };
-
-	    // throw exception to invoke the continuation
-	    throw e_invoke;
-	};
-	e.whenRestored = function() { return proc(k); };
-    };
-
-    // throw e, thus starting the backup.
-    throw e;
-}
-
-function sc_callCcRestart(e) {
-    // fromStack is the dynamic-winds stack from the continuation we are coming from
-    // toStack is the dynamic-winds stack we are going to.
-    // for both stacks: last element is top-level-dynamic-wind. ie stack[0] is the most nested one.
-    // continueFun is the fun we are going to execute once we have executed all the
-    // dynamicwinds.
-    function dynamicWindsAndContinue(fromStack, toStack, continueFun) {
-	var i = fromStack.length - 1;
-	var j = toStack.length - 1;
-	// find the shared part of dynamic-winds.
-	while (i >= 0 &&
-	       j >= 0 &&
-	       fromStack[i].id === toStack[j].id) {
-	    i--;
-	    j--;
-	}
-	
-	var toDos = [];
-	// 0->i are afters we need to run.
-	// j->0 are befores we need to run.    
-	for (var k = 0; k <= i; k++) {
-	    toDos.push(fromStack[k].after);
-	}
-	for (var k = j; k >= 0; k--) {
-	    toDos.push(toStack[k].before);
-	}
-	if (toDos.length == 0)
-	    return continueFun;
-	else
-	    toDos.push(continueFun);
-	
-	return function() {
-	    var sc_storage = SC_CALLCC_STORAGE;
-	    if (sc_storage['doCall/CcDefault?']) {
-		var i = 0;
-		var f = toDos[i];
-	    } else if (sc_storage['doCall/CcRestore?'])  {
-		var sc_frame = sc_storage.pop();
-		i = sc_frame.i;
-		f = sc_storage.callNextFunction();
-	    } else { // root-fun?
-		return sc_callCcRoot(this, arguments);
-	    }
-	    try {
-		do {
-		    var res = f();
-		    i++;
-		    f = toDos[i]; // in JS we can access elements out of boundaries.
-		} while (i < toDos.length);
-		return res;
-	    } catch (e) {
-		if (e instanceof sc_CallCcException && e.backup) {
-		    var sc_frame = new Object();
-		    sc_frame.callee = arguments.callee;
-		    sc_frame.i = i;
-		    e.push(sc_frame);
-		}
-		throw e;
-	    }
-	};
-    }
-	
-    while (true) {
-	try {
-	    e.atRoot();
-	    // always duplicate the storage.
-	    // (each restored function will pop its frame).
-	    var sc_storage = e.storage.duplicate();
-
-	    // we have a new storage...
-	    SC_CALLCC_STORAGE = sc_storage;
-	    SC_SCM2JS_GLOBALS.CALLCC_STORAGE = SC_CALLCC_STORAGE;
-
-	    // once restored executed the dynamic winds first.
-	    sc_storage.whenRestored = dynamicWindsAndContinue(e.dynamicWinds,
-							      sc_storage.dynamicWinds,
-							      e.whenRestored);
-	    sc_storage['doCall/CcDefault?'] = false;
-	    sc_storage['doCall/CcRestore?'] = true;
-	    // and GO!
-	    return sc_storage.callNext();
-	} catch (e2) {
-	    if (e2 instanceof sc_CallCcException) {
-		e = e2;
-	    } else
-		throw e2;
-	}
-    }
-}
-
-var SC_CALLCC_STORAGE = new Object();
-SC_CALLCC_STORAGE['doCall/CcDefault?'] = false;
-SC_CALLCC_STORAGE['doCall/CcRestore?'] = false;
-SC_CALLCC_STORAGE['__call/cc-Object'] = true;
-SC_SCM2JS_GLOBALS.CALLCC_STORAGE = SC_CALLCC_STORAGE;
-
-function sc_callCcRoot(rootThis, rootArguments) {
-    var tmp = SC_CALLCC_STORAGE;
-    try {
-	SC_CALLCC_STORAGE = new sc_CallCcStorage();
-	SC_SCM2JS_GLOBALS.CALLCC_STORAGE = SC_CALLCC_STORAGE;
-	return rootArguments.callee.apply(rootThis, rootArguments);
-    } catch (e) {
-	if (e instanceof sc_CallCcException) {
-	    return sc_callCcRestart(e);
-	} else
-	    throw e;
-    } finally {
-	SC_CALLCC_STORAGE = tmp;
-	SC_SCM2JS_GLOBALS.CALLCC_STORAGE = SC_CALLCC_STORAGE;
-    }
-	
-}
-
-var sc_EMPTY_CALLCC;
-sc_callcc(function(k) { sc_EMPTY_CALLCC = k; });
-
-
-var sc_INDEX_OBJECT_HASH = new Array;
-
-function sc_getCallCcIndexObject(index) {
-    if (sc_INDEX_OBJECT_HASH[index])
-	return sc_INDEX_OBJECT_HASH[index];
-    else {
-	var tmp = { index: index };
-	sc_INDEX_OBJECT_HASH[index] = tmp;
-	return tmp;
-    }
-}
-
-function sc_CurrentDate() { /// export current-date
-   return new Date();
-}

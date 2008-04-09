@@ -30,8 +30,7 @@
       (<HEAD>
 	 :title "Home Rss demo"
 	 :include "hop-foldlist"
-	 :base (service-base-url home/demos/rss (current-request))
-	 :css "rss.hss")
+	 :css (service-resource home/demos/rss "rss.hss"))
       (<BODY>
 	 (<FL>
 	    (map (lambda (url)
@@ -40,7 +39,7 @@
 		       (<DELAY>
 			  (lambda ()
 			     (rss->html (car url))))))
-		 '(("kernel.org/kdist/rss.xml" "Linux Kernel")
+		 '(("http://kernel.org/kdist/rss.xml" "Linux Kernel")
 		   ("http://lambda-the-ultimate.org/node/feed" "Lambda the Ultimate")
 		   ("http://www.gentoo-portage.com/RSSfeed" "Gentoo")
 		   ("http://rss.slashdot.org/Slashdot/slashdot" "Slashdot")

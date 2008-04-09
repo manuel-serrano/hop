@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/js-lib.scm                      */
+;*    serrano/prgm/project/hop/1.9.x/runtime/js-lib.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Oct 30 08:48:24 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Mon Mar 31 12:36:24 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
 ;*=====================================================================*/
@@ -14,51 +14,47 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_js-lib
 
+   (library web)
+	    
    (import  __hop_param
 	    __hop_types
 	    __hop_xml)
 
    (export  (json-string-encode::bstring ::bstring)
-	    (generic hop->json ::obj)
+	    (generic hop->json ::obj ::bool)
 	    (json->hop ::input-port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    list->arguments ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (list->arguments lst)
+(define (list->arguments lst isrep)
    (let loop ((lst lst)
 	      (res '()))
       (if (null? lst)
 	  (apply string-append (reverse! res))
 	  (loop (cdr lst)
 		(cons* (if (pair? (cdr lst)) "," ")")
-		       (hop->json (car lst))
+		       (hop->json (car lst) isrep)
 		       res)))))
-
-;*---------------------------------------------------------------------*/
-;*    list->array ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (list->array lst)
-   (string-append "new Array(" (list->arguments lst)))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector->json ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (vector->json vec)
+(define (vector->json vec m)
    (let ((len (vector-length vec)))
       (case len
 	 ((0)
 	  "[]")
 	 ((1)
-	  (string-append "[" (hop->json (vector-ref vec 0)) "]"))
+	  (string-append "[" (hop->json (vector-ref vec 0) m) "]"))
 	 (else
 	  (let loop ((i (-fx len 2))
-		     (strs (list (hop->json (vector-ref vec (-fx len 1)))
+		     (strs (list (hop->json (vector-ref vec (-fx len 1)) m)
 				 "]")))
 	     (if (=fx i -1)
 		 (apply string-append "[" strs)
 		 (loop (-fx i 1)
-		       (cons* (hop->json (vector-ref vec i)) ", " strs))))))))
+		       (cons* (hop->json (vector-ref vec i) m) ", " strs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    json-string-encode ...                                           */
@@ -110,16 +106,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (hop->json obj)
+(define-generic (hop->json obj isrep)
    (cond
       ((string? obj)
        (string-append "\"" (json-string-encode obj) "\"\n"))
       ((number? obj)
        (number->string obj))
       ((symbol? obj)
-       (string-append "sc_string2symbol_immutable(\"" (symbol->string obj) "\")"))
+       (string-append "sc_jsstring2symbol(\"" (symbol->string obj) "\")"))
       ((keyword? obj)
-       (string-append "sc_string2keyword_immutable(\"" (keyword->string obj) "\")"))
+       (string-append "sc_jsstring2keyword(\"" (keyword->string obj) "\")"))
       ((eq? obj #t)
        "true")
       ((eq? obj #f)
@@ -127,24 +123,23 @@
       ((null? obj)
        "null")
       ((pair? obj)
-       (if (and (pair? (cdr obj))
-		(pair? (cddr obj)))
+       (if (and (pair? (cdr obj)) (pair? (cddr obj)))
 	   ;; avoid deep recursion for long lists
-	   (let loop ((els (hop->json (car obj)))
+	   (let loop ((els (hop->json (car obj) isrep))
 		      (rest (cdr obj)))
 	      (cond
 		 ((null? rest)
 		  (format "sc_list(~a)" els))
 		 ((pair? rest)
-		  (loop (format "~a, ~a" els (hop->json (car rest)))
+		  (loop (format "~a, ~a" els (hop->json (car rest) isrep))
 			(cdr rest)))
 		 (else
-		  (format "sc_consStar(~a, ~a)" els (hop->json rest)))))
-	   (let ((car (hop->json (car obj)))
-		 (cdr (hop->json (cdr obj))))
+		  (format "sc_consStar(~a, ~a)" els (hop->json rest isrep)))))
+	   (let ((car (hop->json (car obj) isrep))
+		 (cdr (hop->json (cdr obj) isrep)))
 	      (format "new sc_Pair( ~a, ~a )" car cdr))))
       ((vector? obj)
-       (vector->json obj))
+       (vector->json obj isrep))
       ((eq? obj #unspecified)
        "undefined")
       ((procedure? obj)
@@ -159,7 +154,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::object ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::object)
+(define-method (hop->json obj::object isrep)
    (define (list->block lst)
       (let loop ((lst lst)
 		 (res '()))
@@ -187,30 +182,43 @@
 			  fields))
 	      name
 	      (list->arguments (map (lambda (f) ((class-field-accessor f) obj))
-				    fields)))))
+				    fields)
+			       isrep))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::xml)
+(define-method (hop->json obj::xml isrep)
    (error 'hop->json "Cannot translate xml element" xml))
+
+;*---------------------------------------------------------------------*/
+;*    hop->json ::xml-markup ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (hop->json obj::xml-markup isrep)
+   (with-access::xml-markup obj (markup)
+      (let ((s (with-output-to-string
+		  (lambda ()
+		     (xml-write obj (current-output-port) (hop-xml-backend))))))
+	 (format "hop_create_encoded_element( \"~a\" )" (url-encode s)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml-element ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::xml-element)
-   (format "document.getElementById( \"~a\" )" (xml-element-id obj)))
+(define-method (hop->json obj::xml-element isrep)
+   (if isrep
+       (call-next-method)
+       (format "document.getElementById( '~a' )" (xml-element-id obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml-tilde ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::xml-tilde)
+(define-method (hop->json obj::xml-tilde isrep)
    (xml-tilde-body obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::hop-service)
+(define-method (hop->json obj::hop-service isrep)
    (hop-service-javascript obj))
 
 ;*---------------------------------------------------------------------*/
@@ -289,8 +297,6 @@
 	  ((new) (list 'NEW))
 	  ((function) (list 'FUNCTION))
 	  ((return) (list 'RETURN))
-	  ((sc_Pair) (list 'CONS))
-	  ((Date) (list 'DATE))
 	  (else (list 'IDENTIFIER (the-symbol)))))
       
       (else
@@ -320,17 +326,37 @@
       (expression
        ((CONSTANT)
 	(car CONSTANT))
-       ((NEW CONS PAR-OPEN expression@a COMMA expression@d PAR-CLO)
-	(cons a d))
-       ((NEW DATE PAR-OPEN CONSTANT PAR-CLO)
-	(let ((sec (car CONSTANT)))
-	   (if (integer? sec)
-	       (seconds->date (/fx sec 1000))
-	       (error 'json->hop "Illegal `date' construction" sec))))
+       ((NEW IDENTIFIER PAR-OPEN vals PAR-CLO)
+	(case (car IDENTIFIER)
+	   ((sc_Pair)
+	    (match-case vals
+	       ((?a ?d)
+		(cons a d))
+	       (else
+		(error 'json->hop "Illegal `cons' construction" vals))))
+	   ((Date)
+	    (match-case vals
+	       ((and ?sec (? integer?))
+		(seconds->date (/fx sec 1000)))
+	       (else
+		(error 'json->hop "Illegal `date' construction" vals))))
+	   (else
+	    (let ((c (find-class (car IDENTIFIER))))
+	       (if (not (class? c))
+		   (error 'json->hop "Can't find class" c)
+		   (let* ((constr (class-constructor c))
+			  (create (class-creator c))
+			  (ins (apply constr vals)))
+		      (when (procedure? create) (create ins))
+		      ins))))))
+       ((IDENTIFIER PAR-OPEN vals PAR-CLO)
+	(case (car IDENTIFIER)
+	   ((sc_consStart) (apply cons* vals))
+	   ((sc_Pair) (cons (car vals) (cadr vals)))
+	   ((sc_list) vals)
+	   (else (error 'json->hop "Unknown function" (car IDENTIFIER)))))
        ((ANGLE-OPEN ANGLE-CLO)
 	'#())
-       ((ANGLE-OPEN expression ANGLE-CLO)
-	(vector expression))
        ((ANGLE-OPEN array-elements ANGLE-CLO)
 	(list->vector array-elements))
        ((object)
@@ -342,9 +368,9 @@
       
       ;; array
       (array-elements
-       ((COMMA expression)
-	expression)
-       ((expression array-elements)
+       ((expression)
+	(list expression))
+       ((expression COMMA array-elements)
 	(cons expression array-elements)))
 
       ;; object
@@ -382,6 +408,8 @@
       (vals
        (()
 	'())
+       ((expression)
+	(list expression))
        ((expression COMMA vals)
 	(cons expression vals)))
 

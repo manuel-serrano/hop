@@ -1,6 +1,5 @@
 (module hophome_demos-set-game
-;   (include "util.sch")
-   (library hopscheme)
+   (import hophome_demos-set-util)
    (export
     (class Player
        (login::bstring read-only)
@@ -15,28 +14,6 @@
        board)
     (new-game name rounds)
     (<GAME> login game can-start?)))
-
-;; TODO: include "util.sch" doesn't work...
-;; =======================================
-(define *home-directory* (string-append (dirname (the-loading-file)) "/"))
-
-(define (rel-path path)
-   (string-append *home-directory* path))
-
-(define (<CHECKBOX> name checked? . L)
-   (if checked?
-       (apply <INPUT> (cons* :name name :type "checkbox" :checked "checked" L))
-       (apply <INPUT> (cons* :name name :type "checkbox" L))))
-
-(define (<TEXT-FIELD> name . L)
-   (apply <INPUT> (cons* :name name :type "text" L)))
-
-(define (<SUBMIT> label . L)
-   (apply <INPUT> (cons* :value label :type "submit" L)))
-
-(define (<RESET> label . L)
-   (apply <INPUT> (cons* :value label :type "reset" L)))
-;; =======================================
 
 (define *card-width* 72)
 (define *card-height* 92)
@@ -138,9 +115,7 @@
 
 (define (upload-board player board)
    (with-access::Player player (event)
-      (hop-event-signal! event (with-output-to-string
-				  (lambda ()
-				     (write `(board ,board)))))))
+      (hop-event-signal! event `(board ,board))))
 
 (define (start-game game)
    ;(tprint "starting game")
@@ -149,34 +124,25 @@
    (next-board! game))
 
 (define (update-scores game)
+   ;(tprint "updating")
    (with-access::Game game (players)
       (let* ((players/scores (map (lambda (player)
 				     (with-access::Player player (score login)
 					(cons login score)))
 				  players))
-	     (scores (with-output-to-string
-			(lambda ()
-			   (write players/scores)))
-		     (reverse players/scores))
-	     (scores-str (with-output-to-string
-			    (lambda ()
-			       (write `(score ,scores))))))
+	     (scores (reverse players/scores)))
 	 (for-each (lambda (player)
-		      (hop-event-signal!
-		       (Player-event player)
-		       scores-str))
+		      (hop-event-signal! (Player-event player) `(score ,scores)))
 		   players))))
 
 (define (publish-winner game login)
    (for-each
     (lambda (player)
        (with-access::Player player (event)
-	  (hop-event-signal! event (with-output-to-string
-				      (lambda ()
-					 (write `(winner ,login)))))))
+	  (hop-event-signal! event `(winner ,login))))
     (Game-players game)))
    
-(define (<GAME> login game can-start?)
+(define (<GAME> base-url login game can-start?)
    (define (<CARD> id)
       (let* ((x (modulo id 4))
 	     (y (/fx id 4))
@@ -192,7 +158,7 @@
 				      "left: " x-pos-str "px;"
 				      "z-index: 1; "
 				      "cursor: pointer;")
-		:src (rel-path "pics/waiting.png"))))
+		:src "pics/waiting.png")))
 
    (define (<BORDER> id)
       (<IMG> :width (+ *card-width* 2)
@@ -203,7 +169,7 @@
 				   "left: 0px; "
 				   "display: none; "
 				   "z-index: 0;")
-	     :src (rel-path "pics/border.png")))
+	     :src "pics/border.png"))
 
    (let* ((event (string-append login "-event"))
 	  (player (instantiate::Player
@@ -219,8 +185,8 @@
 	 (set! players (cons player players)))
       (<HTML>
 	 (<HEAD>
-	    (<SCRIPT> :type "text/javascript"
-		      :src (rel-path "set.scm")))
+	    :base base-url
+	    :jscript "set.scm")
 	 (<BODY>
 	    (<DIV>
 	       :style (string-append "width: "
@@ -242,18 +208,20 @@
 	    (if can-start?
 		(<DIV>
 		   (<BUTTON> :onclick ~(begin
-					  (set! this.style.display "none")
+					  (node-style-set! this "display" "none")
 					  (hop ($(service ()
 						    (start-game game)))))
 			     "Start Game")))
 	    
-	    ~(begin
-		(add-event-listener! $event "server" event-handler)
-		(define (rel-path path) (string-append $*home-directory* path))
-		(define (submit-set! set) (hop ($(service (set)
-						    (set-submit player game set))
-						 set)))
-		(init-game $(list->vector cards)
-			   $(list->vector borders)
-			   $scores-div)
-		(hop ($(service () (update-scores game)))))))))
+	    ~(init-game! $(list->vector cards)
+			 $(list->vector borders)
+			 $scores-div
+			 
+			 $event
+			 
+			 (lambda (set)
+			    (hop ($(service (set)
+					 (set-submit player game set))
+				   set)))
+			 (lambda ()
+			    (hop ($(service () (update-scores game))))))))))

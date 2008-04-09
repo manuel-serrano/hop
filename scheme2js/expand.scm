@@ -3,7 +3,8 @@
    (include "tools.sch")
    (export (my-expand x)
 	   (install-expander! id e)
-	   (add-pre-expand! f::procedure)
+	   ;; priority: lower -> later
+	   (add-pre-expand! priority::bint f::procedure)
 	   (pre-expand! x)
 	   (identify-expander x e macros-ht))
    (eval (export add-pre-expand!)))
@@ -13,10 +14,18 @@
 (define *mutex* (make-mutex))
 
 ;; pre-expander is shared by all parallel computations.
-;; TODO: remove pre-expander.
-(define (add-pre-expand! f)
+(define (add-pre-expand! priority f)
+   (define (insert L priority f)
+      (cond
+	 ((null? L)
+	  (list (cons priority f)))
+	 ((>= priority (caar L))
+	  (cons (cons priority f) L))
+	 (else
+	  (cons (car L) (insert (cdr L) priority f)))))
+   
    (mutex-lock! *mutex*)
-   (set! *pre-expanders* (cons f *pre-expanders*))
+   (set! *pre-expanders* (insert *pre-expanders* priority f))
    (mutex-unlock! *mutex*))
 
 (define (pre-expand! x)
@@ -25,7 +34,7 @@
 		 (pre-expanders *pre-expanders*))
 	 (if (null? pre-expanders)
 	     x
-	     (loop ((car pre-expanders) x)
+	     (loop ((cdar pre-expanders) x)
 		   (cdr pre-expanders)))))
    (mutex-lock! *mutex*)
    (let ((res (pre-expand!-inner x)))

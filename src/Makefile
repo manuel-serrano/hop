@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/src/Makefile                            */
+#*    serrano/prgm/project/hop/1.9.x/src/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Sep  3 15:34:58 2007 (serrano)                */
+#*    Last change :  Sat Mar 29 08:05:13 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -23,7 +23,13 @@ EXEC		= hop
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hop-param parseargs main init
+MODULES		= hop-param parseargs main init \
+                  scheduler \
+                  nothread-scheduler \
+                  queue-scheduler \
+                  oto-scheduler \
+                  pool-scheduler \
+                  cohort-scheduler
 
 INCLUDES	= 
 
@@ -82,10 +88,9 @@ jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
         done
 
 jvm-share:
+	$(RM) -r o/class_s/share
 	cp -r ../share o/class_s
 	cp -r ../scheme2js/runtime/*.js o/class_s/share
-	cp -r ../weblets o/class_s/share
-	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/share
 
 jvm-etc:
 	mkdir -p o/class_s/etc
@@ -101,7 +106,9 @@ jvm-list:
         done
 
 jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
-	cp $(BUILDLIBDIR)/*.init $<
+	cp -r ../weblets o/class_s/lib
+	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/lib
+	touch $</foo.init && $(RM) $</*.init && cp $(BUILDLIBDIR)/*.init $<
 
 META-INF/MANIFEST.MF: META-INF
 	echo "Manifest-Version: 1.0" > $@
@@ -170,7 +177,8 @@ install: install-$(BACKEND)
 
 install-native:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
-	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
+	install -m $(BMASK) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
+	(cd $(DESTDIR)$(HOPBINDIR) && $(RM) hop && ln hop-$(HOPRELEASE) hop)
 
 install-jvm:
 	mkdir -p $(DESTDIR)$(HOPBINDIR)
@@ -180,7 +188,9 @@ install-jvm:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
+	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)-$(HOPRELEASE)
 	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */

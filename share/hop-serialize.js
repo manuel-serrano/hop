@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-serialize.js                  */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Thu Oct 18 13:32:29 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Sun Apr  6 09:12:09 2008 (serrano)                */
+/*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialized (Bigloo compatible).                              */
 /*                                                                     */
@@ -17,9 +17,12 @@ function hop_bigloo_serialize( item ) {
    var tname = typeof item;
 
    if( (item instanceof String) || (tname == "string") ) {
-      if( sc_isSymbol_immutable( item ) ) {
+      if( sc_isSymbol( item ) ) {
 	 return "%27"
-	    + hop_serialize_string( '%22', sc_symbol2string_immutable( item ) );
+	    + hop_serialize_string( '%22', sc_symbol2jsstring( item ) );
+      } else if( sc_isKeyword( item ) ) {
+	 return "%3a"
+	    + hop_serialize_string( '%22', sc_keyword2jsstring( item ) );
       } else {
 	 return hop_serialize_string( '%22', item );
       }
@@ -119,7 +122,8 @@ function hop_serialize_word( word ) {
 /*---------------------------------------------------------------------*/
 /*    ucs2_to_utf8 ...                                                 */
 /*---------------------------------------------------------------------*/
-function ucs2_to_utf8( s ) { /// export ucs2-string->utf8-sring
+/*** META ((export ucs2-string->utf8-string)) */
+function ucs2_to_utf8( s ) {
    var len = s.length;
 
    for( var i = 0; i < len; i++ ) {
@@ -178,7 +182,7 @@ function utf_length( s ) {
 function hop_serialize_string( mark, item ) {
    return mark +
       hop_serialize_word( utf_length( item ) ) +
-      encodeURIComponent(  item );
+      encodeURIComponent( item );
 }
 
 /*---------------------------------------------------------------------*/

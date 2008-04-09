@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/types.scm                       */
+;*    serrano/prgm/project/hop/1.9.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Nov 14 13:30:32 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Mon Apr  7 10:31:48 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -26,6 +26,8 @@
 	       (password::bstring read-only)
 	       (services read-only)
 	       (directories read-only)
+	       (preferences-filename::obj read-only)
+	       (preferences::pair-nil (default '()))
 	       (data::obj (default #unspecified)))
 
 	   (class &hop-method-error::&io-parse-error)
@@ -39,7 +41,7 @@
 	      (timeout::int (default -1)))
 	   
 	   (class http-request::%http-message
-	      (user (default #f))
+	      (user::user read-only (default (user-nil)))
 	      (id::int read-only (default -1))
 	      (localhostp::bool (default #f))
 	      (localclientp::bool (default #f))
@@ -59,25 +61,30 @@
 	      (connection::symbol (default 'keep-alive))
 	      (service::obj (default #unspecified))
 	      (%env (default #f)))
+
+	   (class xml-http-request
+	      (status::int read-only)
+	      (header::pair-nil read-only (default '()))
+	      (input-port read-only))
 	   
 	   (abstract-class %http-response::%http-message
 	      (content-type::bstring (default (hop-default-mime-type)))
-	      (request::http-request (default (instantiate::http-request)))
+	      (request::http-request (default (http-request-nil)))
 	      (bodyp::bool read-only (default #t)))
 
 	   (class http-response-abort::%http-response)
 	   
 	   (class http-response-remote::%http-response
-	      (http::bstring read-only)
-	      (host::bstring read-only)
-	      (scheme::symbol read-only)
- 	      (port::bint read-only)
-	      (method::symbol read-only)
+	      (http::bstring read-only (default "http"))
+	      (host::bstring read-only (default "localhost"))
+	      (scheme::symbol read-only (default '?))
+ 	      (port::bint read-only (default 80))
+	      (method::symbol read-only (default 'GET))
 	      (path::bstring read-only)
-	      (userinfo read-only)
+	      (userinfo read-only (default #f))
 	      (encoded-path::bstring read-only)
-	      (remote-timeout read-only)
-	      (connection-timeout read-only))
+	      (remote-timeout read-only (default #f))
+	      (connection-timeout read-only (default #f)))
 
 	   (class http-response-filter::%http-response
 	      (response::%http-response read-only)
@@ -104,6 +111,10 @@
 	   (class http-response-procedure::%http-response-local
 	      (proc::procedure read-only))
 	   
+	   (class http-response-raw::%http-response-local
+	      (connection::obj read-only (default #f))
+	      (proc::procedure read-only))
+
 	   (class http-response-file::%http-response-local
 	      (file::bstring read-only))
 	   

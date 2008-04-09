@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/http-request.scm                */
+;*    serrano/prgm/project/hop/1.9.x/runtime/http-request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Nov 20 16:32:02 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Sun Mar 23 16:24:38 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -25,10 +25,11 @@
 	    __hop_types
 	    __hop_http-lib
 	    __hop_user
-	    __hop_misc)
+	    __hop_misc
+	    __hop_charset)
    
    (export  (http-parse-request::http-request ::socket ::int ::int)))
-	   
+
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -66,11 +67,6 @@
 	    (set! socket sock)
 	    (set! localclientp localc)
 	    (set! localhostp localh)
-	    (when (and (not user) localhostp)
-	       (set! user (if (string? userinfo)
-			      (or (find-authenticated-user userinfo)
-				  (anonymous-user))
-			      (anonymous-user))))
 	    req))))
 
 ;*---------------------------------------------------------------------*/
@@ -81,44 +77,21 @@
 		     (CRLF "\r\n")
 		     id
 		     out)
-      ((: "GET" SP)
-       (http-parse-method-request 'GET (the-port) out id))
-      ((: "HOP" SP)
-       (http-parse-method-request 'HOP (the-port) out id))
-      ((: "HEAD" SP)
-       (http-parse-method-request 'HEAD (the-port) out id))
-      ((: "POST" SP)
-       (http-parse-method-request 'POST (the-port) out id))
-      ((: "PUT" SP)
-       (http-parse-method-request 'PUT (the-port) out id))
-      ((: "TRACE" SP)
-       (http-parse-method-request 'TRACE (the-port) out id))
-      ((: "OPTIONS" SP)
-       (http-parse-method-request 'OPTIONS (the-port) out id))
-      ((: "PROPFIND" SP)
-       (http-parse-method-request 'PROPFIND (the-port) out id))
-      ((: "PROPPATCH" SP)
-       (http-parse-method-request 'PROPPATCH (the-port) out id))
-      ((: "MKCOL" SP)
-       (http-parse-method-request 'MKCOL (the-port) out id))
-      ((: "DELETE" SP)
-       (http-parse-method-request 'DELETE (the-port) out id))
-      ((: "COPY" SP)
-       (http-parse-method-request 'COPY (the-port) out id))
-      ((: "MOVE" SP)
-       (http-parse-method-request 'MOVE (the-port) out id))
-      ((: "LOCK" SP)
-       (http-parse-method-request 'LOCK (the-port) out id))
-      ((: "UNLOCK" SP)
-       (http-parse-method-request 'UNLOCK (the-port) out id))
-      ((: (+ (in ("AZaz"))) SP)
+      ((: (+ (in ("AZ"))) SP)
+       ;; HTTP requests
+       (http-parse-method-request (the-subsymbol 0 -1) (the-port) out id))
+      ((: "<" (+ (in "policyferqust" #\-)) (* SP) "/>" #a000)
+       ;; Flash authentication requests
+       (http-parse-policy-file-request id (the-string) (the-port)))
+      ((: (out #\< SP) (+ (out SP)) SP)
+       ;; Illegal (parsed) requests
        (raise (instantiate::&hop-method-error
 		 (proc 'request-line-grammar)
 		 (msg "Method not implemented")
 		 (obj (the-string)))))
       (else
        (parse-error 'request-line-grammar
-		    "Illegal character"
+		    "Illegal method"
 		    (the-failure)
 		    (the-port)))))
 
@@ -128,10 +101,10 @@
 (define (http-parse-method-request method pi::input-port po::output-port id)
    (with-trace 3 'http-parse-method-request
       (let (scheme hostname port abspath http-version userinfo)
-	 (let ((pi2 (if (or (>fx (hop-verbose) 2) (>=fx (bigloo-debug) 3))
+	 (let ((pi2 (if (or (>fx (hop-verbose) 3) (>=fx (bigloo-debug) 3))
 			(let ((line (http-read-line pi)))
-			   (when (>fx (hop-verbose) 2)
-			      (hop-verb 3 (hop-color id id " PARSE REQ")
+			   (when (>fx (hop-verbose) 3)
+			      (hop-verb 4 (hop-color id id " PARSE REQ")
 					": [" method " "
 					(string-for-read line) "]\n"))
 			   (trace-item method " " )
@@ -153,7 +126,7 @@
 		   (close-input-port pi2))))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
 	    (http-parse-header pi po)
-	    (let ((cabspath (http-file-name-canonicalize! abspath))
+	    (let ((cabspath (http-file-name-canonicalize abspath))
 		  (connection (or co
 				  (if (string<? http-version "HTTP/1.1")
 				      'close
@@ -165,8 +138,8 @@
 		  (http http-version)
 		  (scheme scheme)
 		  (proxyp (string? hostname))
-		  (path (xml-string-decode cabspath))
 		  (userinfo userinfo)
+		  (path abspath)
 		  (encoded-path cabspath)
 		  (header header)
 		  (port (or actual-port port (hop-port)))
@@ -177,25 +150,58 @@
 		  (proxy-authorization pauth)
 		  (connection connection)
 		  (user (or (and (string? auth)
-				 (or (find-authenticated-user auth)
-				     (anonymous-user)))
+				 (find-authenticated-user auth))
 			    (and (string? pauth)
-				 (or (find-authenticated-user pauth)
-				     (anonymous-user)))
+				 (find-authenticated-user pauth))
+			    (and (string? userinfo)
+				 (find-authenticated-user userinfo))
 			    (anonymous-user)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    http-file-name-canonicalize! ...                                 */
+;*    http-parse-policy-file-request ...                               */
 ;*---------------------------------------------------------------------*/
-(define (http-file-name-canonicalize! path)
+(define (http-parse-policy-file-request id string port)
+   (if (substring-at? string "<policy-file-request" 0)
+       ;; This request is emitted by Flash plugins >= 9.0.115.
+       ;; This plugins are buggous because they should seek for
+       ;; the policy file using the /hop/server-event/policy-file.
+       ;; In the meantime, Hop also handles the <policy-file-request/>.
+       (instantiate::http-request
+	  (id id)
+	  (method 'FLASH-POLICY-FILE)
+	  (http "0.0")
+	  (scheme 'policy-file-request)
+	  (proxyp #f)
+	  (path "<policy-file-request/>")
+	  (encoded-path "<policy-file-request/>")
+	  (header '())
+	  (port (hop-port))
+	  (host "localhost")
+	  (content-length 10)
+	  (user (anonymous-user)))
+       (raise (instantiate::&hop-method-error
+		 (proc 'request-line-grammar)
+		 (msg "Method not implemented")
+		 (obj string)))))
+
+;*---------------------------------------------------------------------*/
+;*    cs-convert ...                                                   */
+;*---------------------------------------------------------------------*/
+(define cs-convert #f)
+
+;*---------------------------------------------------------------------*/
+;*    http-file-name-canonicalize ...                                  */
+;*---------------------------------------------------------------------*/
+(define (http-file-name-canonicalize path)
    (let ((len (string-length path)))
       (let loop ((i 0))
 	 (cond
 	    ((=fx i len)
-	     (file-name-canonicalize! path))
+	     (file-name-canonicalize! (url-decode path)))
 	    ((char=? (string-ref path i) #\?)
-	     (string-append (file-name-canonicalize! (substring path 0 i))
-			    (substring path i len)))
+	     (let ((base (file-name-canonicalize (substring path 0 i)))
+		   (args (substring path i len)))
+		(string-append (url-decode! base) (url-decode! args))))
 	    (else
 	     (loop (+fx i 1)))))))
    

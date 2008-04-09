@@ -73,7 +73,7 @@ This returns a vector that is displayed in the ++show++ ++<DIV>++ element.
            (<DIV> "Type a programming language name")
            (<INPUT> :type "text"
                     :onkeyup ~(with-hop ($tutorial-ajax this.value)
-                                  (lambda (h) (set! $show.innerHTML h))))
+                                  (lambda (h) (innerHTML-set! $show h))))
            (<DIV> "Results...")
            show)))
 

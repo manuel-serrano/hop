@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/http-error.scm                  */
+;*    serrano/prgm/project/hop/1.9.x/runtime/http-error.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Oct 10 08:32:06 2007 (serrano)                */
-;*    Copyright   :  2004-07 Manuel Serrano                            */
+;*    Last change :  Thu Mar 27 11:04:13 2008 (serrano)                */
+;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
 ;*=====================================================================*/
@@ -21,7 +21,9 @@
    (import  __hop_param
 	    __hop_configure
 	    __hop_types
+	    __hop_user
 	    __hop_xml
+	    __hop_img
 	    __hop_hop-extra
 	    __hop_service
 	    __hop_misc
@@ -98,24 +100,19 @@
 ;*    <EHEAD> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (<EHEAD> req)
-   (if (http-request? req)
-       (with-access::http-request req (scheme host port socket)
-	  (<HEAD>
-	     :base (format "~a://~a:~a~a/"
-			   (if (eq? scheme '*) "http" scheme)
-			   (socket-local-address socket) (hop-port)
-			   (hop-share-directory))
-	     :include "hop-error"))
-       (<HEAD>
-	  :base (format "http://~a:~a~a/" (hostname) (hop-port)
-			(hop-share-directory))
-	  :include "hop-error")))
+   (if (and (http-request? req) (not (http-request-localhostp req)))
+       ;; this is a proxy request
+       (<HEAD> :include "hop-error"
+	  :base (format "http://~a:~a" (hostname) (hop-port)))
+       ;; this is a local request
+       (<HEAD> :include "hop-error")))
    
 ;*---------------------------------------------------------------------*/
 ;*    <EIMG> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (<EIMG> . args)
-   (apply <IMG> :style "padding: 20px;" args))
+(define (<EIMG> #!key src)
+   (<IMG> :style "padding: 20px;"
+      :src (make-file-name (hop-icons-directory) src)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ETD> ...                                                        */
@@ -167,12 +164,28 @@
    "font-size: x-large; font-weight: bold; padding-bottom: 1px;")
 
 ;*---------------------------------------------------------------------*/
+;*    *anonymous-request* ...                                          */
+;*---------------------------------------------------------------------*/
+(define *anonymous-request* #f)
+
+;*---------------------------------------------------------------------*/
+;*    anonymous-request ...                                            */
+;*---------------------------------------------------------------------*/
+(define (anonymous-request)
+   (unless (http-request? *anonymous-request*)
+      (set! *anonymous-request*
+	    (instantiate::http-request
+	       (connection 'close)
+	       (user (anonymous-user)))))
+   *anonymous-request*)
+	    
+;*---------------------------------------------------------------------*/
 ;*    http-unknown-host ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-unknown-host host)
    (instantiate::http-response-hop
       (start-line "HTTP/1.0 404 Not Found")
-      (request (or (current-request) (instantiate::http-request)))
+      (request (or (current-request) (anonymous-request)))
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (backend (hop-xml-backend))
       (content-type (xml-backend-mime-type (hop-xml-backend)))
@@ -184,7 +197,7 @@
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "icons/error2.png"))
+			     (<EIMG> :src "error2.png"))
 			  (<ETD>
 			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title" "Unknown Host"))
@@ -197,11 +210,10 @@
 ;*---------------------------------------------------------------------*/
 (define (http-file-not-found file)
    (instantiate::http-response-hop
-      (request (or (current-request) (instantiate::http-request)))
+      (request (or (current-request) (anonymous-request)))
       (start-line "HTTP/1.0 404 Not Found")
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (backend (hop-xml-backend))
-      (content-type (xml-backend-mime-type (hop-xml-backend)))
       (charset (hop-charset))
       (xml (<HTML>
 	      (<EHEAD> (current-request))
@@ -210,7 +222,7 @@
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "icons/error2.png"))
+			     (<EIMG> :src "error2.png"))
 			  (<ETD>
 			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title" "File not found!"))
@@ -224,12 +236,11 @@
 (define (http-service-not-found file)
    (define (illegal-service key msg)
       (instantiate::http-response-hop
-	 (request (or (current-request) (instantiate::http-request)))
+	 (request (or (current-request) (anonymous-request)))
 	 (start-line "HTTP/1.0 404 Not Found")
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
 		 (<BODY>
@@ -237,7 +248,7 @@
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "icons/warning.png"))
+				(<EIMG> :src "warning.png"))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title"
@@ -275,7 +286,7 @@ a timeout which has now expired. The service is then no longer available."))
 ;*---------------------------------------------------------------------*/
 (define (http-permission-denied file)
    (instantiate::http-response-error
-      (request (instantiate::http-request))
+      (request (anonymous-request))
       (start-line "HTTP/1.0 403 Forbidden")
       (charset (hop-locale))
       (body (format "Permission denied: ~s" file))))
@@ -285,7 +296,7 @@ a timeout which has now expired. The service is then no longer available."))
 ;*---------------------------------------------------------------------*/
 (define (http-method-error obj)
    (instantiate::http-response-error
-      (request (instantiate::http-request))
+      (request (anonymous-request))
       (start-line "HTTP/1.0 501 Not Implemented")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Method not implemented ~a</body></html>"
@@ -296,7 +307,7 @@ a timeout which has now expired. The service is then no longer available."))
 ;*---------------------------------------------------------------------*/
 (define (http-parse-error obj)
    (instantiate::http-response-error
-      (request (instantiate::http-request))
+      (request (anonymous-request))
       (start-line "HTTP/1.0 400 Bad Request")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Parse error in HTTP request on token <tt>~a</tt>/body></html>"
@@ -307,7 +318,7 @@ a timeout which has now expired. The service is then no longer available."))
 ;*---------------------------------------------------------------------*/
 (define (http-bad-request obj)
    (instantiate::http-response-error
-      (request (instantiate::http-request))
+      (request (anonymous-request))
       (start-line "HTTP/1.0 400 Bad Request")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request <tt><pre>~a</pre></tt></body></html>" obj))))
@@ -318,7 +329,7 @@ a timeout which has now expired. The service is then no longer available."))
 (define (http-internal-error e msg)
    (let ((s (with-error-to-string (lambda () (error-notify e)))))
       (instantiate::http-response-hop
-	 (request (or (current-request) (instantiate::http-request)))
+	 (request (or (current-request) (anonymous-request)))
 	 (start-line "HTTP/1.0 501 Internal Server Error")
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (backend (hop-xml-backend))
@@ -332,8 +343,8 @@ a timeout which has now expired. The service is then no longer available."))
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
-						 "icons/timeout.png"
-						 "icons/error.png")))
+						 "timeout.png"
+						 "error.png")))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR>
@@ -382,7 +393,7 @@ a timeout which has now expired. The service is then no longer available."))
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "icons/error.png"))
+				(<EIMG> :src "error.png"))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR>
@@ -414,7 +425,7 @@ a timeout which has now expired. The service is then no longer available."))
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "icons/stop.png"))
+			     (<EIMG> :src "stop.png"))
 			  (<ETD>
 			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title"
@@ -449,7 +460,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "icons/error.png"))
+			     (<EIMG> :src "error.png"))
 			  (<ETD>
 			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title"
@@ -467,7 +478,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 (define (http-internal-warning e)
    (let ((s (with-error-to-string (lambda () (warning-notify e)))))
       (instantiate::http-response-error
-	 (request (instantiate::http-request))
+	 (request (anonymous-request))
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (charset (hop-locale))
 	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>" s)))))
@@ -490,7 +501,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "icons/warning.png"))
+			     (<EIMG> :src "warning.png"))
 			  (<ETD>
 			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title" "Warning"))
@@ -502,7 +513,9 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-service-unavailable e)
    (instantiate::http-response-hop
-      (request (or (current-request) (instantiate::http-request)))
+      (request (if (http-request? e)
+		   e
+		   (or (current-request) (anonymous-request))))
       (start-line "HTTP/1.0 503 Service Unavailable")
       (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
       (backend (hop-xml-backend))
@@ -515,13 +528,15 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 		    (<ETABLE>
 		       (<TR>
 			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "icons/error.png"))
+			     (<EIMG> :src "error.png"))
 			  (<ETD>
 			     (<TABLE> :width "100%"
 				(<TR> (<ETD> :class "title" "Service Unavailable"))
 				(<TR> (<ETD> :class "msg" ""))
 				(<TR> (<ETD> :class "dump"
-					 (<PRE> e)))))))))))))
+					 (<PRE> (if (http-request? e)
+						    (http-request-path e)
+						    e))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-remote-error ...                                            */
@@ -543,8 +558,8 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
-						 "icons/timeout.png"
-						 "icons/error.png")))
+						 "timeout.png"
+						 "error.png")))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "An error occured while talking to a remote host"))
@@ -572,8 +587,8 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
 				(<EIMG> :src (if (&io-timeout-error? e)
-						 "icons/error2.png"
-						 "icons/error.png")))
+						 "error2.png"
+						 "error.png")))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title" "IO Error"))
@@ -589,7 +604,7 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 ;*---------------------------------------------------------------------*/
 (define (http-gateway-timeout e)
    (instantiate::http-response-error
-      (request (instantiate::http-request))
+      (request (anonymous-request))
       (start-line "HTTP/1.0 502 Bad Gateway")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Gateway Timeout ~a</body></html>" e))))

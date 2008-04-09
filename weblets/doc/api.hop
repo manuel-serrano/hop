@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/doc/api.hop                     */
+;*    serrano/prgm/project/hop/1.9.x/weblets/doc/api.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Mon Oct 29 14:26:05 2007 (serrano)                */
+;*    Last change :  Sun Dec  2 19:14:15 2007 (serrano)                */
 ;*    Copyright   :  2006-07 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -448,11 +448,11 @@
    ~(hop_window_onload_add 
      (lambda (e)
 	(with-history
-	   (lambda ()
-	      (history-add! api-history "pad-weblet" $weblet)
-	      (with-hop ($doc/api $weblet)
-		 (lambda (r)
-		    (notepad-select "doc-notepad" "doc-api")
-		    (let ((el (dom-get-element-by-id document "pad-api")))
-		       (set! el.innerHTML r))))))
+	 (lambda ()
+	    (history-add! api-history "pad-weblet" $weblet)
+	    (with-hop ($doc/api $weblet)
+	       (lambda (r)
+		  (notepad-select "doc-notepad" "doc-api")
+		  (let ((el (dom-get-element-by-id document "pad-api")))
+		     (innerHTML-set! el r))))))
 	#f)))

@@ -12,6 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_debug_reset ...                                              */
 /*---------------------------------------------------------------------*/
+/*** META ((export debug-reset!)) */
 function hop_debug_reset() {
    var pre = document.getElementById( "hop_debug_content" );
 
@@ -37,14 +38,14 @@ function hop_debug_get_container() {
 
       div.innerHTML = "<DIV class='hop_debug_reset'><BUTTON onclick='hop_debug_reset()'>Reset</BUTTON></DIV>";
       div.appendChild( pre );
-      win = hop_window_open( new sc_Keyword( "id" ), "hop_debug",
-			     new sc_Keyword( "src" ), div,
-			     new sc_Keyword( "class" ), "hop_debug",
-			     new sc_Keyword( "width" ), 640,
-			     new sc_Keyword( "height" ), 480,
-			     new sc_Keyword( "left" ), 10,
-			     new sc_Keyword( "top" ), 10,
-			     new sc_keyword( "parent" ), document.body );
+      win = hop_window_open( sc_jsstring2keyword( "id" ), "hop_debug",
+			     sc_jsstring2keyword( "src" ), div,
+			     sc_jsstring2keyword( "class" ), "hop_debug",
+			     sc_jsstring2keyword( "width" ), 640,
+			     sc_jsstring2keyword( "height" ), 480,
+			     sc_jsstring2keyword( "left" ), 10,
+			     sc_jsstring2keyword( "top" ), 10,
+			     sc_jsstring2keyword( "parent" ), document.body );
    } else {
       win.style.display = "block";
    }
@@ -55,6 +56,7 @@ function hop_debug_get_container() {
 /*---------------------------------------------------------------------*/
 /*    hop_debug ...                                                    */
 /*---------------------------------------------------------------------*/
+/*** META ((export debug)) */
 function hop_debug() {
    var pre = hop_debug_get_container();
    var i;

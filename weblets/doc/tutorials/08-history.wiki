@@ -52,7 +52,7 @@ entries. First let's consider the declaration of the //history manager//.
            (make-history "myhist"
                          (lambda (id val)
                             (let ((el (dom-get-element-by-id document id)))
-		  	     (set! el.innerHTML val)))))
+		  	     (innerHTML-set! el val)))))
         ..))
 </code>
 
@@ -71,7 +71,7 @@ key. This manager is used to record history entries as shown above:
   (let ((box (<SPAN> "_" :id "box")))
      (<BUTTON> :onclick ~(begin
 	  	           (set! val (+ 1 val))
-		           (set! $box.innerHTML val)
+		           (innerHTML-set! $box val)
 			   (history-add! hist-manager $box.id val)))
      box)
 </code>

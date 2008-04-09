@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/webfilter/webfilter.hop         */
+;*    .../prgm/project/hop/1.9.x/weblets/webfilter/webfilter.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Nov 29 07:28:28 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Thu Mar 27 11:00:52 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
 ;*=====================================================================*/
@@ -385,7 +385,7 @@ Google, each containing a forward pointer to the actual URL.])))
 (define (http-headers-rewrite resp)
    (with-access::%http-response resp (header)
       (for-each (lambda (h)
-		   (when (pair? h)
+		   (when (and (pair? h) (string? (car h)))
 		      (let* ((v (string->keyword
 				 (string-downcase!
 				  (keyword->string (car h)))))
@@ -402,8 +402,8 @@ Google, each containing a forward pointer to the actual URL.])))
    (when (webfilter-blacklist)
       (with-access::http-request req (host port path header)
 	 (when (hashtable-get *domain-blacklist*  host)
-	    (hop-verb 2 (hop-color req req " BLACKLISTED") ": " host ":" port path "\n")
-	    (hop-verb 3 " header: " header "\n")
+	    (hop-verb 3 (hop-color req req " BLACKLISTED") ": " host ":" port path "\n")
+	    (hop-verb 4 " header: " header "\n")
 	    (instantiate::http-response-string
 	       (start-line "HTTP/1.0 404 Not Found"))))))
 

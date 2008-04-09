@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-extra.scm                   */
+;*    serrano/prgm/project/hop/1.9.x/runtime/hop-extra.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Nov 30 07:34:57 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Wed Apr  2 10:54:11 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -23,9 +23,13 @@
 	    __hop_types
 	    __hop_misc
 	    __hop_xml
-	    __hop_css
+	    __hop_img
 	    __hop_js-lib
-	    __hop_hop)
+	    __hop_hop
+	    __hop_user
+	    __hop_css
+	    __hop_scm
+	    __hop_hop-file)
 
    (export  (<HTML> . ::obj)
 	    (<HEAD> . ::obj)
@@ -35,6 +39,7 @@
 
 	    (<LINK> . ::obj)
 	    (<SCRIPT> . ::obj)
+	    (<INPUT> . ::obj)
 	    
 	    (<TOOLTIP> . ::obj)
 	    (<SORTTABLE> . ::obj)))
@@ -97,7 +102,7 @@
 ;*    head-parse ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (head-parse args)
-   
+
    (define (absolute-path p dir)
       (cond
 	 ((not dir)
@@ -114,18 +119,8 @@
 	 (else
 	  (string-append dir "/" p))))
    
-   (define (hopscript p inl)
-      (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src
-	 (string-append p (hop-client-script-suffix))))
-   
-   (define (jscript p inl)
-      (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src p))
-   
    (define (script p inl)
-      (if (and (>fx (string-length p) 0)
-	       (or (string-suffix? ".scm" p) (string-suffix? ".hop" p)))
-	  (hopscript p inl)
-	  (jscript p inl)))
+      (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src p))
    
    (define (favicon p)
       (<LINK> :rel "shortcut icon" :href p))
@@ -142,25 +137,25 @@
 			(let ((gw (make-file-path (hop-share-directory)
 						  "flash"
 						  "JavaScriptFlashGateway.js")))
-			   (set! res (cons (jscript gw inl) res))))))
+			   (set! res (cons (script gw inl) res))))))
 	     (js (let ((p (make-file-name (hop-share-directory)
 					  (string-append f ".js"))))
 		    (when (and (file-exists? p)
 			       (or (not (string=? f "dashboard"))
 				   (hop-enable-dashboard)))
-		       (set! res (cons (jscript p inl) res)))))
+		       (set! res (cons (script p inl) res)))))
 	     (scm (let ((p (make-file-name (hop-share-directory)
 					   (string-append f ".scm"))))
 		     (when (file-exists? p)
-			(set! res (cons (hopscript p inl) res)))))
+			(set! res (cons (script p inl) res)))))
 	     (hop (let ((p (make-file-name (hop-share-directory)
 					   (string-append f ".hop"))))
 		     (when (file-exists? p)
-			(set! res (cons (hopscript p inl) res)))))
+			(set! res (cons (script p inl) res)))))
 	     (ss (let ((p (make-file-name (hop-share-directory)
-					   (string-append f ".css"))))
-		     (when (file-exists? p)
-			(set! res (cons (css p inl) res)))))
+					  (string-append f ".css"))))
+		    (when (file-exists? p)
+		       (set! res (cons (css p inl) res)))))
 	     (hss (let ((p (make-file-name (hop-share-directory)
 					   (string-append f ".hss"))))
 		     (when (file-exists? p)
@@ -397,24 +392,44 @@
 			     (href #f string)
 			     (attributes)
 			     body)
-   (if (and inline (null? body) (file-exists? href))
-       (let ((body (hop-get-file href)))
-	  (if body
-	      (instantiate::xml-element
-		 (markup 'style)
-		 (id (xml-make-id id 'link))
-		 (attributes attributes)
-		 (body (list "\n" body)))
-	      (instantiate::xml-element
-		 (markup 'link)
-		 (id (xml-make-id id 'link))
-		 (attributes (cons `(href . ,href) attributes))
-		 (body '()))))
-       (instantiate::xml-element
-	  (markup 'link)
-	  (id (xml-make-id id 'link))
-	  (attributes (cons `(href . ,href) attributes))
-	  (body body))))
+   
+   (define (default href)
+      (when (and (string? href) inline)
+	 (warning '<LINK> "Cannot inline file -- " href))
+      (instantiate::xml-element
+	 (markup 'link)
+	 (id (xml-make-id id 'link))
+	 (attributes (cons `(href . ,href) attributes))
+	 (body '())))
+   
+   (define (inl body)
+      (instantiate::xml-element
+	 (markup 'style)
+	 (id (xml-make-id id 'link))
+	 (attributes attributes)
+	 (body (list "\n" body))))
+
+   (if (string-suffix? ".hss" href)
+       ;; this is a file that need compilation
+       (if (and inline (null? body) (file-exists? href))
+	   (let ((req (current-request)))
+	      (if (or (not req) (authorized-path? req href))
+		  (let ((body (hss->css href)))
+		     (if body
+			 (inl body)
+			 (default (hss->css-url href))))
+		  (default (hss->css-url href))))
+	   (default (hss->css-url href)))
+       ;; this is a plain css file
+       (if (and inline (null? body) (file-exists? href))
+	   (let ((req (current-request)))
+	      (if (or (not req) (authorized-path? req href))
+		  (let ((body (with-input-from-file href read-string)))
+		     (if body
+			 (inl body)
+			 (default href)))
+		  (default href)))
+	   (default href))))
    
 ;*---------------------------------------------------------------------*/
 ;*    SCRIPT ...                                                       */
@@ -423,21 +438,66 @@
 			       (src #unspecified string)
 			       (attributes)
 			       body)
-   (if (and inline (null? body) (file-exists? src))
-       (let ((body (hop-get-file src)))
-	  (if body
-	      (instantiate::xml-script
-		 (markup 'script)
-		 (attributes attributes)
-		 (body (list "\n" body)))
-	      (instantiate::xml-script
-		 (markup 'script)
-		 (attributes (cons `(src . ,src) attributes))
-		 (body '()))))
-       (instantiate::xml-script
-	  (markup 'script)
-	  (attributes (if (eq? src #unspecified)
-			  attributes
-			  (cons `(src . ,src) attributes)))
-	  (body body))))
+
+   (define (default src)
+      (if (string? src)
+	  (let ((src (if (member (suffix src) (hop-client-script-suffixes))
+			 (scm2js-url src)
+			 src)))
+	     (when inline (warning '<SCRIPT> "Cannot inline file -- " src))
+	     (instantiate::xml-script
+		(markup 'script)
+		(attributes (cons `(src . ,src) attributes))
+		(body body)))
+	  (instantiate::xml-script
+	     (markup 'script)
+	     (attributes attributes)
+	     (body body))))
    
+   (define (inl src)
+      (let ((body (if (member (suffix src) (hop-client-script-suffixes))
+		      (scm2js-compile-file src)
+		      (with-input-from-file src read-string))))
+	 (if body
+	     (instantiate::xml-script
+		(markup 'script)
+		(attributes attributes)
+		(body (list "\n" body)))
+	     (default src))))
+
+   (if (and inline (string? src))
+       (if (file-exists? src)
+	   (inl src)
+	   (default src))
+       (default src)))
+
+;*---------------------------------------------------------------------*/
+;*    <INPUT> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <INPUT> ((id #unspecified string)
+			      (type 'text)
+			      (onkeydown #f)
+			      (attributes))
+   (if (or (eq? type 'url) (equal? type "url"))
+       (let* ((id (xml-make-id id 'input))
+	      (comp "hop_inputurl_keydown( this, event )")
+	      (onkeydown (if onkeydown
+			     (format "~a; ~a" comp
+				     (if (xml-tilde? onkeydown)
+					 (tilde->string onkeydown)
+					 onkeydown))
+			     comp)))
+	  (instantiate::xml-empty-element
+	     (markup 'input)
+	     (id id)
+	     (attributes `((type . text)
+			   (onkeydown . ,onkeydown)
+			   ,@attributes))
+	     (body '())))
+       (instantiate::xml-empty-element
+	  (markup 'input)
+	  (id (xml-make-id id 'input))
+	  (attributes `((type . ,type)
+			,@(if onkeydown `((onkeydown . ,onkeydown)) '())
+			,@attributes))
+	  (body '()))))

@@ -12,4 +12,4 @@ and decoding on the server."
 			  (with-hop ($(service (val) (base64-decode val))
 				      (base64-encode this.value))
 			     (lambda (h)
-				(set! $out.innerHTML h))))))))
+				(innerHTML-set! $out h))))))))

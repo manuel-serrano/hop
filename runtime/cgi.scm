@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/cgi.scm                         */
+;*    serrano/prgm/project/hop/1.9.x/runtime/cgi.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Tue Oct  2 16:28:26 2007 (serrano)                */
-;*    Copyright   :  2003-07 Manuel Serrano                            */
+;*    Last change :  Fri Feb 29 08:40:15 2008 (serrano)                */
+;*    Copyright   :  2003-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
 ;*=====================================================================*/
@@ -27,13 +27,6 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-url-cgi-args ...                                    */
-;*    -------------------------------------------------------------    */
-;*    The former version of this function used to decode UTF8          */
-;*    argument before deserialization. This was required because       */
-;*    the former definition of the JS function hop_serialize_work      */
-;*    was using String.fromCharCode that produces UTF8 sequences.      */
-;*    This is no longer needed since the new version of this           */
-;*    function uses the %XX encoding.                                  */
 ;*---------------------------------------------------------------------*/
 (define (http-request-url-cgi-args path)
    (let ((i (string-index path #\?)))
@@ -74,7 +67,7 @@
 		    (let ((body (read-chars (elong->fixnum content-length) pi)))
 		       (cons path (cgi-args->list body))))))
 	    ((GET PUT)
-	     (http-request-url-cgi-args encoded-path))
+	     (http-request-url-cgi-args path))
 	    (else
 	     (error 'http-request-cgi-args "Not a cgi request" method)))))
    
