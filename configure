@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Apr  2 09:52:13 2008 (serrano)                */
+#*    Last change :  Wed Apr  9 10:15:39 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -50,7 +50,7 @@ jsmimetype="text/javascript"
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="1.9.0"
-branch=
+branch=1.9.x
 devel=pre
 
 url="http://hop.inria.fr/"
