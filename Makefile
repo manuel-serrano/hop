@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Apr  9 12:12:37 2008 (serrano)                */
+#*    Last change :  Wed Apr  9 12:22:31 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -166,7 +166,7 @@ cleanall: distclean
 
 distrib: 
 	$(MAKE) distrib-inc-version
-	$(MAKE) distribs-sans-version
+	$(MAKE) distrib-sans-version
 
 distrib-inc-version:
 	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
