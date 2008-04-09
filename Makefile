@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Apr  9 11:55:43 2008 (serrano)                */
+#*    Last change :  Wed Apr  9 12:12:37 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -162,7 +162,13 @@ cleanall: distclean
 #*---------------------------------------------------------------------*/
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
-distrib:
+.PHONY: distrib distrib-inc-version distrib-sans-version
+
+distrib: 
+	$(MAKE) distrib-inc-version
+	$(MAKE) distribs-sans-version
+
+distrib-inc-version:
 	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop-tmp exists!"; \
           exit 1; \
@@ -194,33 +200,9 @@ distrib:
           echo "major=$$version" > .hoprelease; \
           echo "state=$$devel" >> .hoprelease; \
           echo "minor=$$min" >> .hoprelease; \
-          (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision && \
-	  echo "Building hop-$(HOPRELEASE).tar.gz..."; \
-          $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
-	  $(MAKE) changelog > $(HOPTMPDIR)/hop-tmp/ChangeLog && \
-          mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
-          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .hgtags -C $(HOPTMPDIR) hop-$$distrib && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
-          if [ $(HOPDISTRIBDIR) != "." ]; then \
-            if [ $(HOPDISTRIBDIR) != "" ]; then \
-              /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
-              mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
-            fi \
-          fi; \
-	  echo "Building hop-$(HOPRELEASE).jar..."; \
-          $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
-          mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
-          (cd $(HOPTMPDIR)/hop-$$distrib && \
-           ./configure --backend=jvm && \
-           $(MAKE) && \
-	   $(MAKE) changelog > ChangeLog && \
-           /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.jar && \
-           mv bin/hop.jar $(HOPDISTRIBDIR)/hop-$$distrib.jar) && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
         fi
 
-# build a distribution without incrementing the version number
-distrib-sans-version:
+distrib-sans-version: 
 	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
           echo "*** ERROR: $(HOPTMPDIR)/hop-tmp exists!"; \
           exit 1; \
