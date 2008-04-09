@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Aug 23 16:16:58 2007                          */
-/*    Last change :  Tue Apr  8 10:17:43 2008 (serrano)                */
+/*    Last change :  Wed Apr  9 12:01:50 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopAudio flash support.                                          */
@@ -120,10 +120,6 @@ class HopAudio {
 	 }
       }
 
-      // markPosition
-      var markPosition = function( m ) {
-      }
-      
       // getId3
       var getId3 = function() {
 	 if( snd.id3 ) {
@@ -188,7 +184,6 @@ class HopAudio {
       ExternalInterface.addCallback( 'duration_get', this, getDuration );
       ExternalInterface.addCallback( 'position_set', this, setPosition );
       ExternalInterface.addCallback( 'position_get', this, getPosition );
-      ExternalInterface.addCallback( 'position_mark', this, markPosition );
       ExternalInterface.addCallback( 'id3_get', this, getId3 );
       ExternalInterface.addCallback( 'onload_set', this, setOnLoad );
       ExternalInterface.addCallback( 'onerror_set', this, setOnError );

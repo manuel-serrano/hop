@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Apr  6 08:29:12 2008 (serrano)                */
+#*    Last change :  Wed Apr  9 12:05:35 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -110,7 +110,7 @@ POPULATION	= $(RTSSRC) $(RTS) \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: hop.js $(FLASHSRC:%.as=flash/%.swf) hop-runtime.sch
+build: hop.js $(FLASHSRC:%.as=flash/%.swf) hop-runtime.sch $(BACKEND)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -185,3 +185,22 @@ hop-runtime.sch: $(EXPORTER) $(EXPORTED_RTS)
 #*---------------------------------------------------------------------*/
 flash/%.swf: flash/%.as
 	(cd flash && $(FLASHCC) $(FFLAGS) $(@F) $(<F))
+
+#*---------------------------------------------------------------------*/
+#*    backends                                                         */
+#*---------------------------------------------------------------------*/
+.PHONY: native jvm
+
+native:
+
+jvm:
+	$(MAKE) -s jvm-list SRC=.. DIR=share DEST=share
+
+jvm-list:
+	ls $(SRC)/$(DIR) > $(DEST)/$(DIR)/.list
+	for p in `ls $(SRC)/$(DIR)`; do \
+	  if [ -d $(SRC)/$(DIR)/$$p ]; then \
+            $(MAKE) jvm-list SRC=$(SRC)/$(DIR) DIR=$$p DEST=$(DEST)/$(DIR) || (echo "*** ERROR: $$p"; exit 1); \
+          fi \
+        done
+
