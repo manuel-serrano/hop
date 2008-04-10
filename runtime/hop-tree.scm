@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Mar 31 09:50:32 2008 (serrano)                */
+;*    Last change :  Thu Apr 10 10:40:41 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -159,9 +159,9 @@
 (define (obj->js-tree-thunk obj)
    (cond
       ((xml-tilde? obj)
-       (tilde->string (tilde-make-thunk obj)))
+       (format "function( event ) { ~a }" (xml-tilde-body obj)))
       ((string? obj)
-       (format "function( val ) { ~a }" obj))
+       (format "function( event ) { ~a }" obj))
       (else
        "false")))
 

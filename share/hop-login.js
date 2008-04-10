@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:20:17 2008                          */
-/*    Last change :  Wed Mar 26 18:51:29 2008 (serrano)                */
+/*    Last change :  Thu Apr 10 09:52:47 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop login panel                                                  */
@@ -14,6 +14,7 @@
 /*---------------------------------------------------------------------*/
 function  hop_login_prompt( id, user, pass ) {
    return "<table class='hop-login-prompt'>"
+      + " <colgroup><col width='0*'></colgroup>"
       + " <tr><th>Login name</th><td><input type='text' id='hop_login_user_" + id + "'>" + (user ? user : "") + "</input><td></tr>"
       + " <tr><th>Password</th><td><input type='password' id='hop_login_password_" + id + "'>" + (pass ? pass : "") + "</input><td></tr>"
       + " <tr>"
@@ -59,7 +60,7 @@ function hop_make_login_panel( id, user, pass, klass  ) {
       + "  <tr>"
       + "   <td class='hop-login-logo'><div class='hop-login-logo id='hop_login_logo_" + id + "'></div></td>"
       + "   <td>"
-      + "    <table class='prompt'>"
+      + "    <table class='hop-login-panel'>"
       + "     <tr><td id='hop_login_message_" + id + "'></td></tr>"
       + "     <tr><td>" + hop_login_prompt( id, user, pass ) + "</td></tr>"
       + "    </table>"

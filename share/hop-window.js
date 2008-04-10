@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Sun Apr  6 08:37:40 2008 (serrano)                */
+/*    Last change :  Thu Apr 10 09:13:55 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -113,11 +113,7 @@ function hop_iwindow_maximize( win ) {
 function hop_iwindow_iconify( win ) {
    if( win.iconifiedp ) {
       win.iconifiedp = false;
-   } else {
-   }
-   
-   if( win.iconify ) {
-      win.iconify();
+      if( win.ondeiconify ) win.ondeiconify();
    } else {
       if( win.style.position == "fixed" ) {
 	 var old = win.offsetTop;
@@ -130,15 +126,10 @@ function hop_iwindow_iconify( win ) {
 	 node_style_set( win, "top", (old - window.pageYOffset) + "px" );
 	 node_style_set( win, "position", "fixed" );
       }
-   }
 
-   /* user event */
-   if( win.iconifiedp ) {
-      if( win.ondeiconify ) win.ondeiconify();
-      win.iconifiedp = false;
-   } else {
-      if( win.oniconify ) win.oniconify();
+      /* user event */
       win.iconifiedp = true;
+      if( win.oniconify ) win.oniconify();
    }
 }
 

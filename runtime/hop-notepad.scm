@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Mar 26 07:31:03 2008 (serrano)                */
+;*    Last change :  Thu Apr 10 10:40:44 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -172,9 +172,9 @@
 (define (obj->thunk obj)
    (cond
       ((xml-tilde? obj)
-       (tilde->string (tilde-make-thunk obj)))
+       (format "function( event ) { ~a }" (xml-tilde-body obj)))
       ((string? obj)
-       (format "function( val ) { ~a }" obj))
+       (format "function( event ) { ~a }" obj))
       (else
        "false")))
 

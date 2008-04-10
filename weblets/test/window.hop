@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/test/window.hop                 */
+;*    serrano/prgm/project/hop/1.9.x/weblets/test/window.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jul  7 08:33:34 2007                          */
-;*    Last change :  Wed Sep 19 19:49:59 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Thu Apr 10 09:09:47 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing window                                                   */
 ;*=====================================================================*/
@@ -23,6 +23,19 @@
    (<TEST-HTML>
       :include "hop-window"
       :source (service-resource test/window "window.hop")
+      (test-window-inner)))
+
+;*---------------------------------------------------------------------*/
+;*    test/window/inner ...                                            */
+;*---------------------------------------------------------------------*/
+(define-service (test/window/inner)
+   (test-window-inner))
+
+;*---------------------------------------------------------------------*/
+;*    test-window-inner ...                                            */
+;*---------------------------------------------------------------------*/
+(define (test-window-inner)
+   (<DIV>
       (<DIV> :class "comment"
 	 "This test checks various Hop windows.")
       (<H2> "Native windows")
@@ -43,8 +56,7 @@
 				    :resizable #t :titlebar #t))
       (<H2> "Inner windows")
       (<H3> "Plain inner window")
-      (<BUTTON> "open" :onclick ~(window-open :src $test/window
+      (<BUTTON> "open" :onclick ~(window-open :src $test/window/inner
 				    :parent document.body
 				    :background "#ccc"
-				    :title "inner window 1"))
-      ))
+				    :title "inner window 1"))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Mar 26 08:09:54 2008 (serrano)                */
+;*    Last change :  Thu Apr 10 10:40:51 2008 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -90,9 +90,9 @@
 (define (obj->thunk obj)
    (cond
       ((xml-tilde? obj)
-       (tilde->string (tilde-make-thunk obj)))
+       (format "function( event ) { ~a }" (xml-tilde-body obj)))
       ((string? obj)
-       (format "function( val ) { ~a }" obj))
+       (format "function( event ) { ~a }" obj))
       (else
        "false")))
 
