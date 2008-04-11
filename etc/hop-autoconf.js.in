@@ -75,23 +75,23 @@ var hop_enable_location_event = @LOCEVENT@;
 /*---------------------------------------------------------------------*/
 var undefined;
 
-if( "HTMLFormElement" in window ) {
+if( !("HTMLFormElement" in window) ) {
    window.HTMLFormElement = window.HTMLForm;
 }
 
-if( "HTMLCollection" in window ) {
+if( !("HTMLCollection" in window) ) {
    window.HTMLCollection = function() { return false; };
 }
 
-if( "HTMLInputElement" in window ) {
+if( !("HTMLInputElement" in window) ) {
    window.HTMLInputElement = function() { return false; };
 }
 
-if( "HTMLTextAreaElement" in window ) {
+if( !("HTMLTextAreaElement" in window) ) {
    window.HTMLTextAreaElement = function() { return false; };
 }
 
-if( "HTMLSelectElement" in window ) {
+if( !("HTMLSelectElement" in window) ) {
    window.HTMLSelectElement = function() { return false; };
 }
 
@@ -137,7 +137,7 @@ function hop_properties_values_to_string( obj ) {
 /*** META ((export html-element?)) */
 var hop_is_html_element;
 
-if( "HTMLElement" in window ) {
+if( !("HTMLElement" in window) ) {
    hop_is_html_element = function hop_is_html_element( obj ) {
       return (obj != null)
               && (((obj instanceof Object) || (typeof obj == "object"))

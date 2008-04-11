@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Apr  9 12:01:37 2008 (serrano)                */
+/*    Last change :  Fri Apr 11 15:36:26 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -49,6 +49,7 @@ function HopAudioProxy() {
 /*    pre-allocated symbols                                            */
 /*---------------------------------------------------------------------*/
 var Splay = sc_jsstring2symbol( "play" );
+var Sstart = sc_jsstring2symbol( "start" );
 var Spause = sc_jsstring2symbol( "pause" );
 var Sstop = sc_jsstring2symbol( "stop" );
 var Sclose = sc_jsstring2symbol( "close" );
@@ -162,7 +163,7 @@ function HopAudioServerProxy( audio, url ) {
 	 var k = e.value.car;
 	 var rest = e.value.cdr;
 
-	 if( k === Splay ) {
+	 if( (k === Splay) || (k === Sstart) ) {
 	    // play
 	    audio.paused = false;
 	    current_duration = rest.car;

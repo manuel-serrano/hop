@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Mar 30 15:38:29 2008 (serrano)                */
+;*    Last change :  Thu Apr 10 17:51:47 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -696,7 +696,7 @@
 		   (flash-signal-value (car l) name val)
 		   #t)))))
 
-   (tprint "hop-event-signal: " name)
+;*    (tprint "hop-event-signal: " name)                               */
    (mutex-lock! *event-mutex*)
    (unless (flash-event-signal! name value)
       (ajax-event-signal! name value))
@@ -730,8 +730,8 @@
 	  (when (pair? l)
 	     (let ((val (flash-make-signal-value value)))
 		(for-each (lambda (req)
-			     (tprint "flash broadcast: " name " "
-				     (http-request-socket req))
+;* 			     (tprint "flash broadcast: " name " "      */
+;* 				     (http-request-socket req))        */
 			     (flash-signal-value req name val))
 			  l))))))
 
