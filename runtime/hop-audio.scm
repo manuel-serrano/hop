@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Apr 11 15:38:34 2008 (serrano)                */
+;*    Last change :  Sat Apr 12 07:01:57 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -382,7 +382,7 @@
       (tprint "audio signal state: state=" state
 	      " len=" len " pos=" pos " vol=" vol
 	      " song=" song " pllen=" pllen
-	      " thread=" (current-thread))
+	      " engine=" (find-runtime-type engine))
       (hop-audio-player-%errcount-set! player 0)
       (hop-event-broadcast! %event (list state len pos vol song))))
 
@@ -409,7 +409,7 @@
 	     (plist (map conv plist)))
 	 (tprint "signal meta s=" (if (string? s) s "id3")
 		 " plist.length=" (length plist)
-		 " thread=" (current-thread))
+		 " engine=" (find-runtime-type engine))
 	 (hop-event-broadcast! %event (list 'meta s plist))))
    
    (define (audio-onfile-name meta plist)
@@ -434,7 +434,7 @@
 ;*---------------------------------------------------------------------*/
 (define (audio-onerror %event engine)
    (lambda (error)
-      (tprint "audio signal error=" error " thread=" (current-thread))
+      (tprint "audio signal error=" error " engine=" (find-runtime-type engine))
       (hop-event-broadcast! %event (list 'error error))))
 
 ;*---------------------------------------------------------------------*/
@@ -442,54 +442,45 @@
 ;*---------------------------------------------------------------------*/
 (define (audio-onvolume %event engine)
    (lambda (vol)
-      (tprint "audio signal volume=" vol " thread=" (current-thread))
+      (tprint "audio signal volume=" vol " engine=" (find-runtime-type engine))
       (hop-event-broadcast! %event (list 'volume vol))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-audio-thread ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (make-audio-thread player)
-   (thread-start-joinable!
+   
+   (define (audio-thread-trace player)
+      (with-access::hop-audio-player player (engine)
+	 (let ((th (current-thread)))
+	    ;; debug
+	    (tprint ">>> AUDIO-LOOP STARTED, e=" (find-runtime-type engine))
+	    (thread-cleanup-set!
+	     th
+	     (lambda (_)
+		(tprint "<<< AUDIO-LOOP ENDED, e=" (find-runtime-type engine)))))))
+
+   (thread-start!
     (make-thread
      (lambda ()
+	(audio-thread-trace player)
 	(with-access::hop-audio-player player (engine %event %errcount)
 	   (let ((onstate (audio-onstate %event engine player))
 		 (onerror (audio-onerror %event engine))
 		 (onvolume (audio-onvolume %event engine))
 		 (onmeta (audio-onmeta %event engine player)))
-	      (let loop ()
-		 (when engine
-		    (with-handler
-		       (lambda (e)
-			  (tprint "***AUDIO-THREAD ERROR ("
-				  %errcount "/" 10 ": " e)
-			  (cond
-			     ((and (&io-error? e) (< %errcount 10))
-			      (set! %errcount (+fx 1 %errcount))
-			      (error-notify e)
-			      (onerror (&io-error-msg e))
-			      (sleep 1500000)
-			      (tprint "========= RESET... err=" %errcount
-				      " thread=" (current-thread))
-			      (music-reset! engine))
-			     (else
-			      (tprint "========= CLOSING..." %event)
-			      (onerror "Player aborted")
-			      (music-close engine)
-			      (raise e))))
-		       (tprint "======== AUDIO-LOOP STARTED...thread="
-			       (current-thread))
-		       (music-event-loop engine
-					 :onstate onstate
-					 :onerror onerror
-					 :onvolume onvolume
-					 :onmeta onmeta)
-		       (tprint "======== AUDIO-LOOP ENDED...thread="
-			       (current-thread))
-		       (music-close engine))
-		    (when (and engine (not (music-closed? engine)))
-		       (music-event-loop-reset! engine)
-		       (loop))))))))))
+	      (with-handler
+		 (lambda (e)
+		    (exception-notify e)
+		    (let ((msg (with-error-to-string
+				  (lambda ()
+				     (exception-notify e)))))
+		       (onerror msg)))
+		 (music-event-loop engine
+				   :onstate onstate
+				   :onerror onerror
+				   :onvolume onvolume
+				   :onmeta onmeta))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-set! ...                                          */
@@ -558,9 +549,10 @@
    (with-access::hop-audio-player audio (%mutex %thread engine)
       (with-lock %mutex
 	 (lambda ()
-	    (music-event-loop-abort! engine)
 	    (when (thread? %thread)
-	       (thread-join! %thread)
+	       (music-event-loop-abort! engine)
+	       (music-close engine)
+	       (thread-terminate! %thread)
 	       (set! %thread #f))))))
 
 ;*---------------------------------------------------------------------*/
