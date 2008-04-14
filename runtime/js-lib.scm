@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Mar 31 12:36:24 2008 (serrano)                */
+;*    Last change :  Mon Apr 14 10:11:11 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -199,7 +199,7 @@
       (let ((s (with-output-to-string
 		  (lambda ()
 		     (xml-write obj (current-output-port) (hop-xml-backend))))))
-	 (format "hop_create_encoded_element( \"~a\" )" (url-encode s)))))
+	 (format "hop_create_encoded_element( \"~a\" )" (url-path-encode s)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml-element ...                                      */

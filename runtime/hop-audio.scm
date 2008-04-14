@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sat Apr 12 07:01:57 2008 (serrano)                */
+;*    Last change :  Mon Apr 14 10:28:01 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -399,7 +399,7 @@
 		       (duplicate::id3 s
 			  (title (cv (id3-title s)))
 			  (artist (cv (id3-artist s)))
-			  (album (cv (id3-artist s)))
+			  (album (cv (id3-album s)))
 			  (orchestra #f)
 			  (conductor #f)
 			  (interpret #f)

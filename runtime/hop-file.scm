@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Mon Apr  7 05:35:37 2008 (serrano)                */
+;*    Last change :  Mon Apr 14 10:13:48 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -71,6 +71,7 @@
 	    (apply <FILECHOOSER> args)))
    (set! *files-service*
 	 (service :name "server-file/files" (id url regexp hidden)
+	    ;; is not encoded 
 	    (preference-store! 'filechooser/url url)
 	    (list (<FILECHOOSER:FILES> id url regexp (equal? hidden "false"))
 		  (<FILECHOOSER:PATH> id url))))
@@ -236,18 +237,18 @@
 			      id url)
 	 dir))
    
-   (define (initial-url proto user host port)
+   (define (initial-url scheme user host port)
       (cond
-	 ((string=? proto "file")
+	 ((string=? scheme "file")
 	  "")
 	 (user
-	  (format "~a://~a@~a~a" proto user host port))
+	  (format "~a://~a@~a:~a" scheme user host port))
 	 (else
-	  (format "~a://~a~a" proto host port))))
+	  (format "~a://~a:~a" scheme host port))))
    
-   (multiple-value-bind (proto user host port abspath)
+   (multiple-value-bind (scheme user host port abspath)
       (url-parse url)
-      (let loop ((url (initial-url proto user host port))
+      (let loop ((url (initial-url scheme user host port))
 		 (dirs (file-name->list abspath))
 		 (buts '()))
 	 (if (pair? dirs)
@@ -337,6 +338,8 @@
 	     
 ;*---------------------------------------------------------------------*/
 ;*    <FILECHOOSER:FILES> ...                                          */
+;*    -------------------------------------------------------------    */
+;*    URL is not encoded for http.                                     */
 ;*---------------------------------------------------------------------*/
 (define (<FILECHOOSER:FILES> id url regexp hidden)
 
@@ -373,7 +376,7 @@
 		 (<TR> :class (if odd "odd" "even")
 		    :onkeydown (format "hop_filechooser_key( this, ~s )" id)
 		    :onclick (format "hop_filechooser_select( this, event, ~s, ~s )" id p)
-		    :ondblclick (if (directory? p)
+		    :ondblclick (if (is-directory? p)
 				    (format "hop_filechooser_open( ~s, ~s )"
 					    id p)
 				    (format "hop_filechooser_ok( event, ~s )"
@@ -383,13 +386,13 @@
 		    (<TD> :class (if (is-directory? p)
 				     "filechooser-icon filechooser-folder"
 				     "filechooser-icon filechooser-file")
-		       (basename p))
+		       (url-decode (basename p)))
 		    (<TD> :class "filechooser-modified" (file-date p))))
 	      (sort (lambda (f1 f2)
 		       (cond
-			  ((directory? f1)
-			   (or (not (directory? f2)) (string<? f1 f2)))
-			  ((directory? f2)
+			  ((is-directory? f1)
+			   (or (not (is-directory? f2)) (string<? f1 f2)))
+			  ((is-directory? f2)
 			   #f)
 			  (else
 			   (string<? f1 f2))))
@@ -397,10 +400,15 @@
 			       (let ((b (basename p)))
 				  (and (or (not (char=? (string-ref b 0) #\.))
 					   (not hidden))
-				       (or (directory? p)
+				       (or (is-directory? p)
 					   (pregexp-match regexp (basename p))))))
 			    (if (webdav? url)
-				(webdav-directory->path-list url)
+				(with-handler
+				   (lambda (e)
+				      '())
+				   (map! url-encode
+					 (webdav-directory->path-list
+					  (url-encode url))))
 				(directory->path-list url))))))))
 
 ;*---------------------------------------------------------------------*/
