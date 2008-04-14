@@ -26,7 +26,7 @@
       (let ((v (eval e)))
 	 (if (eq? v #unspecified)
 	     v
-	     (hop->json v #f)))))
+	     (hop->json v #f #f)))))
 	 
 (define (unhop-list! l)
    (cond
