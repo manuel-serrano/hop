@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr 10 10:40:41 2008 (serrano)                */
+;*    Last change :  Mon Apr 14 17:20:36 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -197,7 +197,7 @@
 							    be))
 				   (vp (close-output-port p)))
 			       (or v vp))))
-			#f))
+			#f #f))
 		      (else
 		       (with-output-to-string
 			  (lambda ()
@@ -231,7 +231,7 @@
 	 (display ", " p)
 	 ;; the title
 	 (display "\"" p)
-	 (display (json-string-encode title) p)
+	 (display (json-string-encode title #f) p)
 	 (display "\", " p)
 	 ;; is the tree open
 	 (if (xml-tilde? open)
@@ -373,7 +373,7 @@
       (let ((sbody (let ((ps (open-output-string)))
 		      (xml-write-body (xml-element-body obj) ps be)
 		      (close-output-port ps))))
-	 (display (json-string-encode sbody) p))
+	 (display (json-string-encode sbody #f) p))
       (display "\", " p)
       ;; the value
       (if (string? value)

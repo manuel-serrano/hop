@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr 10 10:40:51 2008 (serrano)                */
+;*    Last change :  Mon Apr 14 17:20:48 2008 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -127,7 +127,7 @@
 					     (hop->json
 					      (procedure->service
 					       (xml-delay-thunk (cadr body)))
-					      #f))
+					      #f #f))
 			    (tspan-onselect id onselect)
 			    "delayed tab")))))
 	 (else

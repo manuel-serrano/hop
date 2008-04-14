@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Apr 14 10:28:01 2008 (serrano)                */
+;*    Last change :  Mon Apr 14 17:21:18 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -169,7 +169,7 @@
 	      pid id
 	      (if (string? src) (string-append "'" src "'") "false")
 	      (if autoplay "true" "false")
-	      (if player (hop->json player #f) "false"))
+	      (if player (hop->json player #f #f) "false"))
       (format "hop_window_onload_add(
                 function() {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a , ~a, ~a );} );"
 	      id
@@ -565,7 +565,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::hop-audio-player ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json player::hop-audio-player isrep)
+(define-method (hop->json player::hop-audio-player isrep isflash)
    (format "\"~a\"" (hop-audio-player-json player)))
 
    

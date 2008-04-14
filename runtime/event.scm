@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Apr 10 17:51:47 2008 (serrano)                */
+;*    Last change :  Mon Apr 14 17:17:03 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -641,7 +641,7 @@
        value)
       (else
        (string-append "<json>"
-		      (html-string-encode (hop->json value #f))
+		      (html-string-encode (hop->json value #f #t))
 		      "</json>"))))
 
 ;*---------------------------------------------------------------------*/

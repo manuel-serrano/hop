@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Mon Dec  3 11:56:34 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Mon Apr 14 17:24:05 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
 ;*=====================================================================*/
@@ -75,7 +75,7 @@
 					     (input-port-name iport)
 				 	     pos)
 			(begin
-			   (set! acc (cons `(hop->json ,exp #f) acc))
+			   (set! acc (cons `(hop->json ,exp #f #f) acc))
 			   (ignore)))))
 		(else
 		 (let ((char (the-failure)))

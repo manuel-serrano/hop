@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Apr 14 10:11:11 2008 (serrano)                */
+;*    Last change :  Mon Apr 14 17:34:07 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -20,46 +20,46 @@
 	    __hop_types
 	    __hop_xml)
 
-   (export  (json-string-encode::bstring ::bstring)
-	    (generic hop->json ::obj ::bool)
+   (export  (json-string-encode::bstring ::bstring ::bool)
+	    (generic hop->json ::obj ::bool ::bool)
 	    (json->hop ::input-port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    list->arguments ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (list->arguments lst isrep)
+(define (list->arguments lst isrep isflash)
    (let loop ((lst lst)
 	      (res '()))
       (if (null? lst)
 	  (apply string-append (reverse! res))
 	  (loop (cdr lst)
 		(cons* (if (pair? (cdr lst)) "," ")")
-		       (hop->json (car lst) isrep)
+		       (hop->json (car lst) isrep isflash)
 		       res)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector->json ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (vector->json vec m)
+(define (vector->json vec m f)
    (let ((len (vector-length vec)))
       (case len
 	 ((0)
 	  "[]")
 	 ((1)
-	  (string-append "[" (hop->json (vector-ref vec 0) m) "]"))
+	  (string-append "[" (hop->json (vector-ref vec 0) m f) "]"))
 	 (else
 	  (let loop ((i (-fx len 2))
-		     (strs (list (hop->json (vector-ref vec (-fx len 1)) m)
+		     (strs (list (hop->json (vector-ref vec (-fx len 1)) m f)
 				 "]")))
 	     (if (=fx i -1)
 		 (apply string-append "[" strs)
 		 (loop (-fx i 1)
-		       (cons* (hop->json (vector-ref vec i) m) ", " strs))))))))
+		       (cons* (hop->json (vector-ref vec i) m f) ", " strs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    json-string-encode ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (json-string-encode str)
+(define (json-string-encode str isflash)
    (define (count str ol)
       (let loop ((i 0)
 		 (n 0))
@@ -67,8 +67,10 @@
 	     n
 	     (let ((c (string-ref str i)))
 		(case c
-		   ((#\" #\\ #\Newline #\Return)
+		   ((#\" #\\)
 		    (loop (+fx i 1) (+fx n 2)))
+		   ((#\Newline #\Return)
+		    (loop (+fx i 1) (+fx n (if (and #f isflash) 3 2))))
 		   (else
 		    (loop (+fx i 1) (+fx n 1))))))))
    (define (encode str ol nl)
@@ -90,13 +92,27 @@
 			   (string-set! res (+fx j 1) c)
 			   (loop (+fx i 1) (+fx j 2)))
 			  ((#\Newline)
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) #\n)
-			   (loop (+fx i 1) (+fx j 2)))
+			   (if isflash
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) #\\)
+				  (string-set! res (+fx j 2) #\n)
+				  (loop (+fx i 1) (+fx j 3)))
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) #\n)
+				  (loop (+fx i 1) (+fx j 2)))))
 			  ((#\Return)
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) #\r)
-			   (loop (+fx i 1) (+fx j 2)))
+			   (if isflash
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) #\\)
+				  (string-set! res (+fx j 2) #\n)
+				  (loop (+fx i 1) (+fx j 3)))
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) #\n)
+				  (loop (+fx i 1) (+fx j 2)))))
 			  (else
 			   (string-set! res j c)
 			   (loop (+fx i 1) (+fx j 1))))))))))
@@ -106,10 +122,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (hop->json obj isrep)
+(define-generic (hop->json obj isrep isflash)
    (cond
       ((string? obj)
-       (string-append "\"" (json-string-encode obj) "\"\n"))
+       (string-append "\"" (json-string-encode obj isflash) "\"\n"))
       ((number? obj)
        (number->string obj))
       ((symbol? obj)
@@ -125,21 +141,23 @@
       ((pair? obj)
        (if (and (pair? (cdr obj)) (pair? (cddr obj)))
 	   ;; avoid deep recursion for long lists
-	   (let loop ((els (hop->json (car obj) isrep))
+	   (let loop ((els (hop->json (car obj) isrep isflash))
 		      (rest (cdr obj)))
 	      (cond
 		 ((null? rest)
 		  (format "sc_list(~a)" els))
 		 ((pair? rest)
-		  (loop (format "~a, ~a" els (hop->json (car rest) isrep))
+		  (loop (format "~a, ~a"
+				els (hop->json (car rest) isrep isflash))
 			(cdr rest)))
 		 (else
-		  (format "sc_consStar(~a, ~a)" els (hop->json rest isrep)))))
-	   (let ((car (hop->json (car obj) isrep))
-		 (cdr (hop->json (cdr obj) isrep)))
+		  (format "sc_consStar(~a, ~a)"
+			  els (hop->json rest isrep isflash)))))
+	   (let ((car (hop->json (car obj) isrep isflash))
+		 (cdr (hop->json (cdr obj) isrep isflash)))
 	      (format "new sc_Pair( ~a, ~a )" car cdr))))
       ((vector? obj)
-       (vector->json obj isrep))
+       (vector->json obj isrep isflash))
       ((eq? obj #unspecified)
        "undefined")
       ((procedure? obj)
@@ -154,7 +172,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::object ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::object isrep)
+(define-method (hop->json obj::object isrep isflash)
    (define (list->block lst)
       (let loop ((lst lst)
 		 (res '()))
@@ -183,18 +201,19 @@
 	      name
 	      (list->arguments (map (lambda (f) ((class-field-accessor f) obj))
 				    fields)
-			       isrep))))
+			       isrep
+			       isflash))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::xml isrep)
+(define-method (hop->json obj::xml isrep isflash)
    (error 'hop->json "Cannot translate xml element" xml))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml-markup ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::xml-markup isrep)
+(define-method (hop->json obj::xml-markup isrep isflash)
    (with-access::xml-markup obj (markup)
       (let ((s (with-output-to-string
 		  (lambda ()
@@ -204,7 +223,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml-element ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::xml-element isrep)
+(define-method (hop->json obj::xml-element isrep isflash)
    (if isrep
        (call-next-method)
        (format "document.getElementById( '~a' )" (xml-element-id obj))))
@@ -212,13 +231,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ::xml-tilde ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::xml-tilde isrep)
+(define-method (hop->json obj::xml-tilde isrep isflash)
    (xml-tilde-body obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->json obj::hop-service isrep)
+(define-method (hop->json obj::hop-service isrep isflash)
    (hop-service-javascript obj))
 
 ;*---------------------------------------------------------------------*/
