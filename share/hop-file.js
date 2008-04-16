@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Mon Apr 14 06:52:55 2008 (serrano)                */
+/*    Last change :  Wed Apr 16 10:02:16 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
@@ -12,7 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_inputurl_key ...                                             */
 /*---------------------------------------------------------------------*/
-function hop_inputurl_keydown( obj, event, svc ) {
+function hop_inputurl_keydown( obj, event ) {
    
    function hop_inputurl_complete( obj ) {
       if( obj.completion.length > 0 ) {

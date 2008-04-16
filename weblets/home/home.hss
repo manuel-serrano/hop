@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/home/home.hss                   */
+/*    serrano/prgm/project/hop/1.9.x/weblets/home/home.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Nov 21 10:00:52 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Wed Apr 16 10:39:12 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -149,12 +149,7 @@ div#result {
 }  
 
 /*--- notepad ---------------------------------------------------------*/
-div.hop-notepad-title {
-  background-color: transparent;
-  padding: 0 10px 20px 0;
-}
-
-div.hop-notepad-tabs {
+notepad-tabs {
   background-color: transparent;
   padding: 0;
   padding-left: 10px;
@@ -162,38 +157,33 @@ div.hop-notepad-tabs {
   margin-right: 0;
 }
 
-div.hop-notepad-tabs span.hop-nptab {
+nptab {
   font-size: small;
   border-color: $border-color;
   margin: 0 4px 0 0;
   padding-top: 1px;
 }
 
-div.hop-notepad-tabs span.hop-nptab img {
+nptab img {
   vertical-align: bottom;
   padding-right: 2px;
 }
 
-div.hop-notepad-tabs span.hop-nptab-active {
+nptab-active {
   background-color: $home-color;
   border-bottom-color: $home-color;
 }
 
-div.hop-notepad-body {
+nptab-body {
   border-color: $border-color;
 }
 
-div.hop-notepad-body {
+notepad-body {
   border-left: 1px solid $border-color;
   border-right: 1px solid $border-color;
   border-bottom: 1px solid $border-color;
   padding: 10px;
   font-size: small;
-  background-color: $home-color;
-}
-
-div.hop-notepad-body-tab {
-  border-color: blue;
   background-color: $home-color;
 }
 
@@ -288,7 +278,7 @@ div.hop-tab {
   background-image: url( "etc/icons/logo-bg-128x128.png" );
   min-width: 200px;
   min-height: 200px;
-  margin: 5px;
+  margin-top: 5px;
   border: 1px solid $border-color;
   padding: 2px;
 }

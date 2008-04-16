@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Apr  2 10:54:11 2008 (serrano)                */
+;*    Last change :  Wed Apr 16 11:14:46 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -368,11 +368,12 @@
 	  
 ;*---------------------------------------------------------------------*/
 ;*    <SORTTABLE> ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    See __hop_css for HSS type.                                      */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SORTTABLE> ((id #unspecified string)
 				  (attributes)
 				  body)
-   :hss-type "span.hop-sorttable table"
    (let ((i (xml-make-id))
 	 (attr (map! (lambda (e)
 			(list (symbol->keyword (car e)) (cdr e)))

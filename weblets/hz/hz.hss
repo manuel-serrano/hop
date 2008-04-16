@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/hz/hz.hss                       */
+/*    serrano/prgm/project/hop/1.9.x/weblets/hz/hz.hss                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Wed Nov 21 08:24:32 2007 (serrano)                */
-/*    Copyright   :  2006-07 Manuel Serrano                            */
+/*    Last change :  Wed Apr 16 10:46:05 2008 (serrano)                */
+/*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
 /*=====================================================================*/
@@ -154,42 +154,35 @@ foot table.foot-logo {
 }
 
 /*--- notepad ---------------------------------------------------------*/
-div.hop-notepad-title {
+notepad-title {
   background: transparent;
 }
 
-div.hop-notepad-tabs {
+notepad-tabs {
   background: transparent;
 }
 
-div.hop-notepad-body-tab {
+notepad-body {
+  border-color: $border-color;
+  font-size: small;
+  background-color: $info-color;
+}
+
+nptab-body {
   background: transparent;
   min-height: 60ex;
+  background-color: $info-color;
 }
 
-div.hop-notepad-tabs span.hop-nptab {
+nptab {
   font-size: small;
   border-color: $border-color;
 }
 
-div.hop-notepad-tabs span.hop-nptab-active {
+nptab-active {
   background-color: $info-color;
   border-bottom-color: $info-color;
 }
-
-div.hop-notepad-body {
-  border-color: $border-color;
-}
-
-div.hop-notepad-body {
-  border-color: $border-color;
-  font-size: small;
-  background-color: $info-color;
-}
-
-div.hop-notepad-body-tab {
-  background-color: $info-color;
-}  
 
 /*--- paned -----------------------------------------------------------*/
 div.hop-paned {
@@ -228,6 +221,7 @@ td.hop-vpaned-pan {
   padding: 0;
   margin: 0;
   vertical-align: top;
+  background: white;
 }
 
 /*--- tree ------------------------------------------------------------*/

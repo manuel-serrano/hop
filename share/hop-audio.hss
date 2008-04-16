@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Tue Apr  8 14:08:11 2008 (serrano)                */
+/*    Last change :  Wed Apr 16 08:10:34 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -47,8 +47,6 @@ object.hop-audio {
 /*---------------------------------------------------------------------*/
 /*    hop-audio-controls                                               */
 /*---------------------------------------------------------------------*/
-$(hop-hss-type! "audio" "div.hop-audio-controls")
-
 audio {
   font-family: $hopaudio-font;
   font-size: 11pt;

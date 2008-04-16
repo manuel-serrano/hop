@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/webfilter/webfilter.hss         */
+/*    .../prgm/project/hop/1.9.x/weblets/webfilter/webfilter.hss       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Nov 14 11:34:09 2006 (serrano)                */
-/*    Copyright   :  2005-06 Manuel Serrano                            */
+/*    Last change :  Wed Apr 16 10:49:52 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WEBFILTER HOP CSS                                                */
 /*=====================================================================*/
@@ -68,32 +68,32 @@ table td {
   vertical-align: top;
 }
 
-div.hop-notepad-title {
+notepad-title {
   background: transparent;
 }
 
-div.hop-notepad-tabs {
+notepad-tabs {
   background: transparent;
 }
 
-div.hop-notepad-tabs span.hop-nptab {
+notepad-body {
+  background-color: $webfilter-color;
+  border-color: $border-color;
+}  
+
+nptab {
   font-size: small;
   border-color: $border-color;
 }
 
-div.hop-notepad-tabs span.hop-nptab-active {
+nptab-active {
   background-color: $webfilter-color;
   border-bottom-color: $webfilter-color;
 }
 
-div.hop-notepad-body {
+nptab-body {
   border-color: $border-color;
   font-size: small;
-  background-color: $webfilter-color;
-}
-
-div.hop-notepad-body-tab {
-  border-color: blue;
   background-color: $webfilter-color;
 }  
 

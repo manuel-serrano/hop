@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Apr  2 09:57:04 2008 (serrano)                */
+/*    Last change :  Wed Apr 16 09:57:37 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -463,6 +463,7 @@ function eeval( value, text ) {
       return eval( value );
    } catch( e ) {
       hop_servevt_onerror( "Error in json value: " + e + "\n" + text );
+      return unspecified;
    }
 }      
    

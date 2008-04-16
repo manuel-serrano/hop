@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Sat Apr  5 06:52:38 2008 (serrano)                */
+/*    Last change :  Wed Apr 16 10:56:46 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
@@ -55,7 +55,11 @@ filechooser {
 /*---------------------------------------------------------------------*/
 /*    Misc widgets                                                     */
 /*---------------------------------------------------------------------*/
-/*--- vpaned ----------------------------------------------------------*/
+/*--- paned -----------------------------------------------------------*/
+filechooser paned {
+  border: 1px outset #777;
+}
+
 filechooser td.hop-vpaned-pan {
   background-color: white;
 }
@@ -123,7 +127,6 @@ filechooser table.filechooser-location td {
 
 filechooser input.filechooser-location {
   width: 100%;
-  size: 100%;
   border: $hopfile-input-border;
   padding: 2px;
 }

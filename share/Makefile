@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Apr  9 12:21:38 2008 (serrano)                */
+#*    Last change :  Wed Apr 16 08:48:23 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -35,7 +35,7 @@ RTS		= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-fx.js \
                   md5.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css \
-                  hop-notepad.css hop-slider.js hop-tabslider.js \
+                  hop-notepad.hss hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
                   hop-window.js hop-window.hss \

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Apr  4 16:02:01 2008 (serrano)                */
+/*    Last change :  Wed Apr 16 10:53:04 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the WIKI weblet                                          */
@@ -105,7 +105,7 @@ div.version {
   color: #777;
   font-weight: bold;
 }
-  
+
 span.edit:hover {
   cursor: default;
 }

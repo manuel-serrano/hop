@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Apr 10 14:00:55 2008 (serrano)                */
+#*    Last change :  Wed Apr 16 10:34:23 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -24,11 +24,22 @@ POPULATION	= Makefile .afile home.hss tips.hss \
                   demos etc/icons articles etc/weblet.info etc/logo.png \
                   $(HOP_POP) config.hop.in
 
+HOP_DEMOS	= minesweeper/minesweeper.hop \
+                  music/music.hop \
+                  repl/repl.hop \
+                  rewrite/rewrite.hop \
+                  rss/rss.hop \
+                  set/set.hop \
+                  set/util.hop \
+                  set/game.hop \
+                  source/source.hop \
+                  sudoku/sudoku.hop \
+                  wiki/wiki.hop
+                 
 build: .afile license.wiki install.wiki install-jvm.wiki release.info
 
-.afile: $(HOP_POP) config.hop
+.afile: $(HOP_POP) config.hop $(HOP_DEMOS:%=demos/%)
 	$(AFILE) -suffix hop $^ -o $@
-
 
 license.wiki: ../../LICENSE
 	cp $< $@

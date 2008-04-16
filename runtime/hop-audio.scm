@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Apr 14 17:21:18 2008 (serrano)                */
+;*    Last change :  Wed Apr 16 11:15:56 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -58,6 +58,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO> ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <AUDIO> ((id #unspecified string)
 			      (src #f)
@@ -458,8 +460,8 @@
 	    (thread-cleanup-set!
 	     th
 	     (lambda (_)
-		(tprint "<<< AUDIO-LOOP ENDED, e=" (find-runtime-type engine)))))))
-
+		(tprint "<<< AUDIO-LOOP THREAD ENDED, e=" (find-runtime-type engine)))))))
+   
    (thread-start!
     (make-thread
      (lambda ()

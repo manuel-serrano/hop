@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Apr 14 17:34:07 2008 (serrano)                */
+;*    Last change :  Tue Apr 15 14:52:06 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -70,7 +70,7 @@
 		   ((#\" #\\)
 		    (loop (+fx i 1) (+fx n 2)))
 		   ((#\Newline #\Return)
-		    (loop (+fx i 1) (+fx n (if (and #f isflash) 3 2))))
+		    (loop (+fx i 1) (+fx n (if isflash 3 2))))
 		   (else
 		    (loop (+fx i 1) (+fx n 1))))))))
    (define (encode str ol nl)
@@ -107,11 +107,11 @@
 			       (begin
 				  (string-set! res j #\\)
 				  (string-set! res (+fx j 1) #\\)
-				  (string-set! res (+fx j 2) #\n)
+				  (string-set! res (+fx j 2) #\r)
 				  (loop (+fx i 1) (+fx j 3)))
 			       (begin
 				  (string-set! res j #\\)
-				  (string-set! res (+fx j 1) #\n)
+				  (string-set! res (+fx j 1) #\r)
 				  (loop (+fx i 1) (+fx j 2)))))
 			  (else
 			   (string-set! res j c)

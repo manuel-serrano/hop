@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Jan 18 12:27:33 2008 (serrano)                */
+;*    Last change :  Wed Apr 16 11:15:53 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -40,6 +40,28 @@
 
 	    (hop-hss-type! ::bstring ::bstring)))
 
+;*---------------------------------------------------------------------*/
+;*    *hss-builtin-types* ...                                          */
+;*---------------------------------------------------------------------*/
+(define *hss-builtin-types*
+   '(;; notepad
+     ("notepad" "div.hop-notepad")
+     ("notepad" "div.hop-notepad")
+     ("notepad-tabs" "td.hop-notepad-tabs")
+     ("notepad-body" "td.hop-notepad-body")
+     ("nphead" "div.hop-nphead")
+     ("nptab" "span.hop-nptab")
+     ("nptab-active" "span.hop-nptab-active")
+     ("nptab-inactive" "span.hop-nptab-inactive")
+     ("nptab-body" "div.hop-notepad-tab-body")
+     ("hptabhead" "span.hop-nptab-head")
+     ;; paned
+     ("paned" "div.hop-paned")
+     ;; sorttable
+     ("sorttable" "span.hop-sorttable table")
+     ;; audio
+     ("audio" "div.hop-audio-controls")))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hss-mutex ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -86,6 +108,9 @@
 ;*    init-hss-compiler! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (init-hss-compiler!)
+   ;; builtin hss types
+   (for-each (lambda (t) (apply hop-hss-type! t)) *hss-builtin-types*)
+   ;; hss cache
    (set! hss-cache
 	 (instantiate::cache-disk
 	    (path (make-file-path (hop-rc-directory)

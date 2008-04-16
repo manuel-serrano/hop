@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/doc/doc.hss                     */
+/*    serrano/prgm/project/hop/1.9.x/weblets/doc/doc.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Nov 28 08:23:39 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Wed Apr 16 10:25:19 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -209,22 +209,22 @@ table.popup-menu td tt:hover {
 }
 
 /*--- notepad ---------------------------------------------------------*/
-div.hop-notepad-body {
+notepad-body {
   border-color: $border-color;
   font-size: small;
   background-color: $doc-color;
 }
 
-div.hop-notepad-tabs span.hop-nptab {
+nptab {
   border-color: $border-color;
 }
 
-div.hop-notepad-tabs span.hop-nptab-active {
+nptab-active {
   background-color: $doc-color;
   border-bottom-color: $doc-color;
 }
 
-div.hop-notepad-body-tab {
+nptab-body {
   background-color: $doc-color;
 }
 

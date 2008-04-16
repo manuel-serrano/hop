@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Apr  3 15:06:30 2008 (serrano)                */
+;*    Last change :  Wed Apr 16 11:14:00 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -19,6 +19,7 @@
    (import  __hop_param
 	    __hop_types
 	    __hop_xml
+	    __hop_css
 	    __hop_misc
 	    __hop_js-lib
 	    __hop_service)
@@ -41,6 +42,8 @@
    
 ;*---------------------------------------------------------------------*/
 ;*    <PANED> ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <PANED> ((id #unspecified string)
 			      (class #unspecified string)
