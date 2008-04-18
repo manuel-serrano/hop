@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Apr 18 05:53:40 2008 (serrano)                */
+/*    Last change :  Fri Apr 18 09:08:29 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -46,11 +46,10 @@ function hop_trace() {
 /*---------------------------------------------------------------------*/
 /*    hop_tprint ...                                                   */
 /*---------------------------------------------------------------------*/
-/*** META ((export trace)) */
 function hop_tprint( file, pos, rest ) {
    var svc = hop_service_url( hop_service_base() + "/trace/tprint",
-	   	              [ "file", "pos", "rest" ],
-			      file, pos, rest );
+	   	              [ "file", "pos", "args" ],
+			      [ file, pos, rest ] );
    hop_send_request( svc, true, function() {}, function() {}, false, [] );
 }
 

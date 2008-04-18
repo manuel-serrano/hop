@@ -302,6 +302,14 @@ a remote ++host++, the service is executed locally. No remote ++host++
 might specified when used from a client. Only the server that has
 provided the page might be invoked in such a situation.
 
+~~ When used from a client **only**, an animation procedure can be
+specified. This procedure of one argument should return a DOM object
+that is inserted in the document during a ++with-hop++ call. This
+object is automatically hidden when the call completes. If no :anim
+attributed is specified, then the value return by ++((with-hop-default-anim))++
+is used as animation.
+o
+
 ~~ The evaluation of the service ++svc++ produce a response.  If its
 type is not an instance of ::%http-response HOP performs automatic
 casts for converting value into instance of ::%http-response. For an
@@ -332,7 +340,7 @@ In this first example, an anonymous service send a HTML table to
 a client. The return type of the service is an XML element, as
 constructed by any markup.
 
-<example>Sending a HTML Tree</example>
+<example>Sending a HTML tree</example>
 
 ===== 2. Sending Complex Values =====
 
@@ -366,8 +374,18 @@ may transmit compound values. In the example above, one service sends
 an HTML tree. The other one sends a list of strings.
 
 <example>Invoking remote services from the server</example>
+
+===== 5. Specifying a custom animation ====
+
+This example shows how to specify a custom animation when calling
+a server service.
+
+<example>WITH-HOP animation</example>
+
+
 </procedure>
 </function>
+
 
 </client>
 </server>
@@ -377,22 +395,13 @@ an HTML tree. The other one sends a list of strings.
 === (with-hop-default-anim) ===
 
 <procedure> with-hop-default-anim
-<arguments>
-^  arguments       ^   type              ^  short description               ^
-| svc              |  service            | the invoked service.             |
-| v<sub>0</sub>    |  obj                | the first argument.              |
-| ...              |  ...                | ...                              |
-| v<sub>n</sub>    |  obj                | the n<sup>th</sup> argument.     |
-| success          |  procedure          | a procedure of one argument.     |
-| fail             |  procedure          | a procedure of one argument.     |
-</arguments>
 
 The function ++with-hop-default-anim++ returns the default function for
 producing visual animations during ++with-hop++ calls.
 </procedure>
 
 === (with-hop-default-anim-set! procedure) ===
-<procedure> with-hop-default-anim
+<procedure> with-hop-default-anim-set!
 <arguments>
 ^  arguments       ^   type              ^  short description               ^
 | anim             |  procedure or bool  | a procedure of one argument.     |

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/etc/Makefile                            */
+#*    serrano/prgm/project/hop/1.9.x/etc/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Feb  2 06:57:46 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Fri Apr 18 11:41:16 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -18,7 +18,7 @@ include ../etc/Makefile.version
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile Makefile.contrib \
+POPULATION	= Makefile Makefile.contrib Makefile.weblet \
                   Makefile.mercurial Makefile.version Makefile.library \
 		  Makefile.hopconfig.in configure.scm.in hoprc.hop.in \
 		  hop.init.in scheme2js.init.in hopscheme.init.in \

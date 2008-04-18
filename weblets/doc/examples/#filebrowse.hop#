@@ -1,8 +1,0 @@
-;; an example of FILECHOOSER markup
-(<HTML>
-    (<HEAD>
-       :include "hop-paned" "hop-file")
-    (<BODY>
-       (<FILECHOOSER>
-	  :url "/tmp"
-	  :onopen ~(alert "FILEBROWSE=" this.value))))

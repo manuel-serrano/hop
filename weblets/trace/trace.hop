@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Apr 18 05:43:11 2008 (serrano)                */
+;*    Last change :  Fri Apr 18 12:04:59 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -14,6 +14,9 @@
 ;*---------------------------------------------------------------------*/
 (module weblet_trace
    (export trace
+	   trace/tprint
+	   (trace-print)
+	   (trace-print-set!)
 	   trace/documentation
 	   trace/preferences))
 
@@ -27,6 +30,9 @@
 	 (for-each (lambda (x) (hop-verb 1 x)) args))
       (hop-verb 1 "\n")))
 
+(define-preferences trace-preferences
+   ("printer" expr trace-print))
+ 
 ;*---------------------------------------------------------------------*/
 ;*    trace ...                                                        */
 ;*---------------------------------------------------------------------*/
@@ -36,9 +42,12 @@
       (http-warning "The Trace weblet produces no document. It merely implements
  services that print messages on the server console.")))
 
-(define-preferences trace-preferences
-   ("printer" expr trace-print))
- 
+;*---------------------------------------------------------------------*/
+;*    trace/tprint ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-service (trace/tprint file pos args)
+   (apply fprint (current-error-port) file "," pos ":" args))
+
 ;*---------------------------------------------------------------------*/
 ;*    trace/documentation ...                                          */
 ;*---------------------------------------------------------------------*/

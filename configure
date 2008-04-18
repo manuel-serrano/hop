@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Apr  9 10:15:39 2008 (serrano)                */
+#*    Last change :  Fri Apr 18 11:33:57 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -52,6 +52,8 @@ jsmimetype="text/javascript"
 version="1.9.0"
 branch=1.9.x
 devel=pre
+
+date=`date +"%d %B %Y"`
 
 url="http://hop.inria.fr/"
 
@@ -457,6 +459,7 @@ echo "#* Automatically generated file (don't edit) */" > $mkmf
 cat $mkmf.in \
     | sed -e "s|@RELEASE@|$version|" \
           -e "s|@BRANCH@|$branch|" \
+          -e "s|@DATE@|$date|" \
           -e "s|@DEVEL@|$devel|" \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \

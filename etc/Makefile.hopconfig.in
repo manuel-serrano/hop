@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sun Jan 20 09:59:34 2008 (serrano)                */
+#*    Last change :  Fri Apr 18 10:34:24 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -15,6 +15,7 @@
 HOPRELEASE	= @RELEASE@
 HOPDEVEL	= @DEVEL@
 HOPBRANCH	= @BRANCH@
+HOPDATE		= @DATE@
 
 #*---------------------------------------------------------------------*/
 #*    Compilers, tools, and misc configuration                         */

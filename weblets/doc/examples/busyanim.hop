@@ -1,0 +1,16 @@
+;; WITH-HOP animation
+(<HTML>
+ (<BUTTON> :onclick
+    ~(with-hop ($(service () (sleep 3000000) #t))
+	:anim (lambda (title)
+		 (<DIV>
+		    :style {
+                       position: fixed;
+                       top: 50px;
+                       width: 100%;
+                       text-align: center;
+                       z-index: 100;
+                       background: transparent;
+                    }
+		    (<IMG> :src $(make-file-path (hop-weblets-directory) "doc" "etc" "anim.gif")))))
+    "Click me to see the Hop busy animation"))

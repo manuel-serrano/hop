@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Thu Apr 17 10:41:11 2008 (serrano)                */
+/*    Last change :  Fri Apr 18 11:57:10 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -486,6 +486,8 @@ div.doc-arguments table, div.doc-fields table {
 
 div.procedure div.doc-arguments table tr th,
 div.procedure div.doc-arguments table tr td,
+div.parameter div.doc-arguments table tr th,
+div.parameter div.doc-arguments table tr td,
 div.function div.doc-arguments table tr th,
 div.function div.doc-arguments table tr td {
   width: 10em;
@@ -493,6 +495,8 @@ div.function div.doc-arguments table tr td {
 
 div.procedure div.doc-arguments table tr th + th ,
 div.procedure div.doc-arguments table tr td + td,
+div.parameter div.doc-arguments table tr th + th ,
+div.parameter div.doc-arguments table tr td + td,
 div.function div.doc-arguments table tr th + th ,
 div.function div.doc-arguments table tr td + td {
   width: 12em;
@@ -500,18 +504,22 @@ div.function div.doc-arguments table tr td + td {
 
 div.procedure div.doc-arguments table tr th + th + th,
 div.procedure div.doc-arguments table tr td + td + td,
+div.parameter div.doc-arguments table tr th + th + th,
+div.parameter div.doc-arguments table tr td + td + td,
 div.function div.doc-arguments table tr th + th + th,
 div.function div.doc-arguments table tr td + td + td {
   width: auto;
 }
 
 div.procedure div.doc-arguments table tr td + td,
+div.parameter div.doc-arguments table tr td + td,
 div.function div.doc-arguments table tr td + td {
   font-family: monospace;
   color: #00a;
 }
 
 div.procedure div.doc-arguments table tr td + td + td,
+div.parameter div.doc-arguments table tr td + td + td,
 div.function div.doc-arguments table tr td + td + td {
   font-family: $font-family;
   color: #000;

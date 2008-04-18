@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Apr 17 15:23:39 2008 (serrano)                */
+#*    Last change :  Fri Apr 18 09:11:08 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -29,7 +29,7 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   sound.wiki sqlite.wiki tabslider.wiki timeout.wiki \
                   tooltip.wiki tree.wiki url.wiki wiki.wiki window.wiki \
                   xml.wiki symbol.wiki rss.wiki history.wiki \
-                  regexp.wiki format.wiki webdav.wiki \
+                  regexp.wiki output.wiki webdav.wiki \
                   charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki
 CORE_POP	= core.wiki
 EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
@@ -46,7 +46,7 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   tooltip-1.hop tree-1.hop tree-2.hop \
                   wiki.hop wiki2.hop window.hop history-1.hop history-2.hop \
                   cookie.hop webdav.hop svg.hop svg2.hop mathml.hop \
-                  login.hop json.hop
+                  login.hop json.hop busyanim.hop
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \
@@ -62,6 +62,7 @@ POPULATION	= Makefile .afile doc.hss doc.scm \
                   etc/sound1.mp3 etc/sound2.mp3 \
                   etc/kangaroo.svgz \
                   etc/favicon.png \
+                  etc/anim.gif \
                   $(HOP_POP) \
 		  $(API_POP:%=api/%) \
 		  $(CORE_POP:%=core/%) \
