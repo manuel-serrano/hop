@@ -64,7 +64,6 @@ looks like:
   (<HTML> ...)
   (<I> ...)
   (<IFRAME> ...)
-  (<INPUT> ...)
   (<INS> ...)
   (<ISINDEX> ...)
   (<KBD> ...)
@@ -161,7 +160,6 @@ looks like:
 <markup> <HTML>
 <markup> <I>
 <markup> <IFRAME>
-<markup> <INPUT>
 <markup> <INS>
 <markup> <ISINDEX>
 <markup> <KBD>
@@ -213,23 +211,23 @@ The actual list of HTML markup attributes is available at
 summarizes the most frequent ones.
 
 <arguments>
-^  arguments    ^   type     ^    short description                   ^
-| :id           |  string    | element identifier.                    |
-| :class        |  string    | element class name.                    |
-| :lang         |  string    | language information.                  |
-| :dir          |  string    | direction information.                 |
-| :title        |  string    | element title.                         |
-| :style        |  string    | inline style information.              |
-| :onclick      |  script    | event handler.                         |
-| :ondblclick   |  script    | event handler.                         |
-| :onmousedown  |  script    | event handler.                         |
-| :onmouseup    |  script    | event handler.                         |
-| :onmouseover  |  script    | event handler.                         |
-| :onmousemove  |  script    | event handler.                         |
-| :onmouseout   |  script    | event handler.                         |
-| :onkeypress   |  script    | event handler.                         |
-| :onkeydown    |  script    | event handler.                         |
-| :onkeyup      |  script    | event handler.                         |
+^  arguments    ^   type     ^  default  ^  short description                     ^
+| :id           |  string    |           | element identifier.                    |
+| :class        |  string    |           | element class name.                    |
+| :lang         |  string    |           | language information.                  |
+| :dir          |  string    |           | direction information.                 |
+| :title        |  string    |           | element title.                         |
+| :style        |  string    |           | inline style information.              |
+| :onclick      |  script    |           | event handler.                         |
+| :ondblclick   |  script    |           | event handler.                         |
+| :onmousedown  |  script    |           | event handler.                         |
+| :onmouseup    |  script    |           | event handler.                         |
+| :onmouseover  |  script    |           | event handler.                         |
+| :onmousemove  |  script    |           | event handler.                         |
+| :onmouseout   |  script    |           | event handler.                         |
+| :onkeypress   |  script    |           | event handler.                         |
+| :onkeydown    |  script    |           | event handler.                         |
+| :onkeyup      |  script    |           | event handler.                         |
 </arguments>
 
 </markup>

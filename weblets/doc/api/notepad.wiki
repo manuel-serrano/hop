@@ -26,6 +26,7 @@ client side programming. They are only supported on server side.])
 === Client ===
   
   (notepad-select notepad pad [history #t] [callback #f])
+  (notepad-selection notepad)
 
 === Requirements ===
 
@@ -137,7 +138,21 @@ then update asychronously.
 
 
 </procedure>
+
+=== ++(notepad-selection notepad)++ ===
+<procedure> notepad-selection
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| notepad     |  notepad or string   | the notepad.           |
+</arguments>
+
 </client>
+</arguments>
+
+This function returns the currently selected in a //notepad//.
+
+</procedure>
 
 == Style ==
 <style>

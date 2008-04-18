@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Sun Apr  6 08:01:28 2008 (serrano)                */
+/*    Last change :  Wed Apr 16 15:46:36 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1129,10 +1129,12 @@ function hop_node_eval( node, text ) {
 /*---------------------------------------------------------------------*/
 /*    node_style_get ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export node-style-get node-style)
-           (peephole (hole 2 obj ".style[" prop "]")))
+/*** META ((export node-style-get node-style))
 */
 function node_style_get( obj, prop ) {
+   if( (obj instanceof String) || (typeof obj === "string") )
+      obj = document.getElementById( obj );
+   
    return obj.style[ prop ];
 }
 

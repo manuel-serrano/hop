@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Apr 16 11:15:56 2008 (serrano)                */
+;*    Last change :  Thu Apr 17 13:17:48 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -80,6 +80,7 @@
 			      (onpause #f)
 			      (onnext #f)
 			      (onprev #f)
+			      (onclose #f)
 			      ;; the player
 			      (player #f)
 			      ;; controls click events
@@ -130,7 +131,8 @@
 		   :onerror (expr->function onerror)
 		   :onended (expr->function onended)
 		   :onprogress (expr->function onprogress)
-		   :onloadedmetadata (expr->function onloadedmetadata))))
+		   :onloadedmetadata (expr->function onloadedmetadata)
+		   :onclose (expr->function onclose))))
       (<AUDIO-OBJECT> id pid init controller)))
 
 ;*---------------------------------------------------------------------*/
@@ -165,7 +167,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<AUDIO-INIT> #!key id pid player src autoplay start
 		      onplay onstop onpause onload onerror onended onprogress
-		      onloadedmetadata)
+		      onloadedmetadata onclose)
    (<SCRIPT>
       (format "function hop_audio_flash_init_~a() {hop_audio_flash_init( ~s, ~a, ~a, ~a );};"
 	      pid id
@@ -173,7 +175,7 @@
 	      (if autoplay "true" "false")
 	      (if player (hop->json player #f #f) "false"))
       (format "hop_window_onload_add(
-                function() {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a , ~a, ~a );} );"
+                function() {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a , ~a, ~a, ~a );} );"
 	      id
 	      start
 	      (if (string? src) (string-append "'" src "'") "false")
@@ -185,7 +187,8 @@
 	      onerror
 	      onended
 	      onprogress
-	      onloadedmetadata)))
+	      onloadedmetadata
+	      onclose)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO-CONTROLS> ...                                             */
@@ -226,6 +229,7 @@
 	 "el.onmetadata=hop_audio_controls_onmetadata;"
 	 "el.onpause=hop_audio_controls_onpause;"
 	 "el.onstop=hop_audio_controls_onstop;"
+	 "el.onclose=hop_audio_controls_onclose;"
 	 "el.onended=hop_audio_controls_onended;"
          "el.onprogress=hop_audio_controls_onprogress;"
          "el.onvolume=hop_audio_controls_onvolume;"
@@ -453,13 +457,14 @@
 (define (make-audio-thread player)
    
    (define (audio-thread-trace player)
-      (with-access::hop-audio-player player (engine)
+      (with-access::hop-audio-player player (%event engine)
 	 (let ((th (current-thread)))
 	    ;; debug
 	    (tprint ">>> AUDIO-LOOP STARTED, e=" (find-runtime-type engine))
 	    (thread-cleanup-set!
 	     th
 	     (lambda (_)
+		(hop-event-broadcast! %event (list 'close))
 		(tprint "<<< AUDIO-LOOP THREAD ENDED, e=" (find-runtime-type engine)))))))
    
    (thread-start!

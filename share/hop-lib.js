@@ -3,22 +3,72 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Mon Mar 10 11:39:53 2008 (serrano)                */
+/*    Last change :  Fri Apr 18 05:53:40 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
-/*    trace ...                                                        */
+/*    hop_client_debug ...                                             */
+/*---------------------------------------------------------------------*/
+var hop_client_debug = 0;
+
+/*---------------------------------------------------------------------*/
+/*    hop_debug ...                                                    */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t)) */
-function trace() {
-   var svc = hop_service_url( "/hop/trace",
-			      [ "args" ],
-			      new Array( sc_vector2list( arguments ) ) );
+function hop_debug() {
+   return hop_client_debug;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_debug_set ...                                                */
+/*---------------------------------------------------------------------*/
+/*** META ((export hop-client-debug-set!)) */
+function hop_debug_set( v ) {
+   if( sc_isNumber( v ) ) hop_client_debug = v;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_trace ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export trace)) */
+function hop_trace() {
+   if( hop_client_debug > 0 ) {
+      var svc = hop_service_url( hop_service_base() + "/trace",
+				 [ "args" ],
+				 new Array( sc_vector2list( arguments ) ) );
+      hop_send_request( svc, true, function() {}, function() {}, false, [] );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_tprint ...                                                   */
+/*---------------------------------------------------------------------*/
+/*** META ((export trace)) */
+function hop_tprint( file, pos, rest ) {
+   var svc = hop_service_url( hop_service_base() + "/trace/tprint",
+	   	              [ "file", "pos", "rest" ],
+			      file, pos, rest );
    hop_send_request( svc, true, function() {}, function() {}, false, [] );
 }
+
+/*---------------------------------------------------------------------*/
+/*    tprint ...                                                       */
+/*---------------------------------------------------------------------*/
+/*** META
+(define-macro (tprint . rest)
+   (if (epair? rest)
+       (match-case (cer rest)
+	  ((at ?name ?pos)
+	   `(hop_tprint ,(relative-file-name name (pwd))
+			,(file-position->line pos name)
+			(list ,@rest)))
+	  (else
+	   `(hop_tprint #f #f (list ,@rest))))
+       `(hop_tprint #f #f (list ,@rest))))
+*/
 
 /*---------------------------------------------------------------------*/
 /*    hop_replace_inner ...                                            */
@@ -201,7 +251,7 @@ function hop_window_onunload_add( proc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_update ...                                                   */
 /*    -------------------------------------------------------------    */
-/*    This function is called when a widget select a new child         */
+/*    This function is called when a widget selects a new child        */
 /*    (e.g., a notepad or a tabslider). It gives a child the           */
 /*    opportunity to update (i.e., to re-compute dimensions).          */
 /*    Widgets interested have to register by setting their             */

@@ -25,7 +25,13 @@ invoked from client. This page describes how to create and how to use
 
 === Server & Client ===
 
-  (with-hop (svc arg ...) [success] [failure])
+  (with-hop (svc arg ...) [attributes ...] [success] [failure])
+
+
+=== Client ===
+
+  (with-hop-default-anim)
+  (with-hop-default-anim-set! anim)
 
 
 == Examples ==
@@ -251,21 +257,40 @@ the currently available weblets. These are automatically
 <client>
 
 
-=== (with-hop [:host host] (svc v<sub>0</sub> ...) [success] [fail]) ===
+=== (with-hop (svc v<sub>0</sub> ...) [attributes ...] [success] [fail]) ===
 <function> with-hop
 <procedure> with-hop
 <arguments>
-^  arguments       ^   type       ^  short description              ^
-| host             |  string      | a URL of a remote server.       |
-| svc              |  service     | the invoked service.            |
-| v<sub>0</sub>    |  obj         | the first argument.             |
-| ...              |  ...         | ...                             |
-| v<sub>n</sub>    |  obj         | the n<sup>th</sup> argument.    |
-| success          |  procedure   | a procedure of one argument.    |
-| fail             |  procedure   | a procedure of one argument.    |
+^  arguments       ^   type              ^  short description               ^
+| svc              |  service            | the invoked service.             |
+| v<sub>0</sub>    |  obj                | the first argument.              |
+| ...              |  ...                | ...                              |
+| v<sub>n</sub>    |  obj                | the n<sup>th</sup> argument.     |
+| success          |  procedure          | a procedure of one argument.     |
+| fail             |  procedure          | a procedure of one argument.     |
 </arguments>
 
-The special form ++with-hop++ invokes the server service ++svc++ with
+<arguments>
+^  common attributes  ^   type           ^  short description               ^
+| :name             |  string             | a remote user name.              |
+| :password         |  string             | a remote user password.          |
+| :authorization    |  string             | a remote authorization.          |
+</arguments>
+
+<arguments>
+^  server attributes    ^   type         ^  short description           ^
+| :host             |  string             | a remote server name.        |
+| :port             |  integer            | a remote server port.        |
+| :abspath          |  string             | the abspath of the service.  |
+</arguments>
+
+<arguments>
+^  client arguments  ^   type   ^  short description  ^
+| :anim        |  procedure or bool  | the animation to play while calling.  |
+</arguments>
+
+
+~~ The special form ++with-hop++ invokes the server service ++svc++ with
 arguments ++v<sub>0</sub>++, ... On success, it then invokes the
 function ++success++ with an object constructed from the service
 answer. On failure, it invokes ++failure++. 
@@ -346,6 +371,40 @@ an HTML tree. The other one sends a list of strings.
 
 </client>
 </server>
+
+== Client Definitions ==
+<client>
+=== (with-hop-default-anim) ===
+
+<procedure> with-hop-default-anim
+<arguments>
+^  arguments       ^   type              ^  short description               ^
+| svc              |  service            | the invoked service.             |
+| v<sub>0</sub>    |  obj                | the first argument.              |
+| ...              |  ...                | ...                              |
+| v<sub>n</sub>    |  obj                | the n<sup>th</sup> argument.     |
+| success          |  procedure          | a procedure of one argument.     |
+| fail             |  procedure          | a procedure of one argument.     |
+</arguments>
+
+The function ++with-hop-default-anim++ returns the default function for
+producing visual animations during ++with-hop++ calls.
+</procedure>
+
+=== (with-hop-default-anim-set! procedure) ===
+<procedure> with-hop-default-anim
+<arguments>
+^  arguments       ^   type              ^  short description               ^
+| anim             |  procedure or bool  | a procedure of one argument.     |
+</arguments>
+</procedure>
+
+The function ++with-hop-default-anim-set!++ set! the default function for
+producing visual animations during ++with-hop++ calls. It returns the
+previous default animation function.
+
+</client>
+
 
 == See also ==
 <see-also>service, define-service, make-hop-service-url, make-service-url, procedure->service, hop-autoload, with-hop</see-also>

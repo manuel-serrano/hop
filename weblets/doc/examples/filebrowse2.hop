@@ -1,19 +1,12 @@
-;; an example of filebrowse function
+;; an example of INPUT :type url markup
 (<HTML>
-   (<HEAD> :include "hop-fileselect" "hop-tree" "hop-window")
-   (<BODY>
-      ~(define root (list "LABEL" "/tmp"))
-      (<BUTTON> :onclick (filebrowse :title "Browse me"
-			    :label ~(car root)
-			    :value ~(cadr root)
-			    :path ~(cadr root)
-			    :multiselect #t
-			    :filter (lambda (f)
-				       (or (and (substring-at? f "http://" 0)
-						(webdav-directory? f))
-					   (and (not (substring-at? f "http://" 0))
-						(directory? f))
-					   (string-ci=? (suffix f) "hop")))
-			    :select ~(lambda (v)
-					(alert "SELECTION: " v)))
-	 "browse me")))
+    (<HEAD>
+       :include "hop-file")
+    (<BODY>
+       (<DIV> "Hit the [tab] key to complete the current prefix. This
+can be used in WebDAV urls too.")
+       (<INPUT>
+	  :type 'url
+	  :value "/tmp"
+	  :size 80
+	  :onchange ~(alert "FILE=" this.value))))

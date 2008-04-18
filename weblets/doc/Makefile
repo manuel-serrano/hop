@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Apr  2 09:24:58 2008 (serrano)                */
+#*    Last change :  Thu Apr 17 15:23:39 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -34,7 +34,7 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
 CORE_POP	= core.wiki
 EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   canvas.hop canvas2.hop canvas3.hop canvas4.hop canvas5.hop \
-                  filebrowse.hop filebrowse2.hop fileselect.hop \
+                  filebrowse.hop filebrowse2.hop \
                   filter-1.hop filter-2.hop \
                   foldlist-1.hop foldlist-2.hop hook-1.hop inline.hop \
                   iwindow.hop notepad-1.hop notepad-2.hop notepad-3.hop \

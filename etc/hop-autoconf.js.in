@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Apr  8 11:08:09 2008 (serrano)                */
+/*    Last change :  Wed Apr 16 15:02:00 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -248,9 +248,12 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 var node_style_set = undefined;
 
 function node_style_set_native( obj, prop, value ) {
+   if( (obj instanceof String) || (typeof obj === "string") )
+      obj = document.getElementById( obj );
+
    if( sc_isKeyword( prop ) )
       prop = sc_keyword2jsstring( prop );
-   if( !(value instanceof String) && (typeof value != "string") ) {
+   if( !(value instanceof String) && (typeof value !== "string") ) {
       if( !value && (value != 0) ) {
 	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
 			  + value + " obj: " + obj );
@@ -258,14 +261,17 @@ function node_style_set_native( obj, prop, value ) {
 	 value = value.toString();
       }
    }
-   
+
    obj.style.setProperty( prop, value, "" );
 }
 
 function node_style_set_array( obj, prop, value ) {
+   if( (obj instanceof String) || (typeof obj === "string") )
+      obj = document.getElementById( obj );
+
    if( sc_isKeyword( prop ) )
       prop = sc_keyword2jsstring( prop );
-   if( !(value instanceof String) && (typeof value != "string") ) {
+   if( !(value instanceof String) && (typeof value !== "string") ) {
       if( !value && (value != 0) ) {
 	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
 			  + value + " obj: " + obj );
@@ -278,6 +284,9 @@ function node_style_set_array( obj, prop, value ) {
 }
 
 node_style_set = function( obj, property, value ) {
+   if( (obj instanceof String) || (typeof obj === "string") )
+      obj = document.getElementById( obj );
+
    if( "setProperty" in obj.style ) {
       node_style_set = node_style_set_native;
       return node_style_set_native( obj, property, value );

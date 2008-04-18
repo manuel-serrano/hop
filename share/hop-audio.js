@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Fri Apr 11 15:36:26 2008 (serrano)                */
+/*    Last change :  Thu Apr 17 13:25:14 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -200,6 +200,9 @@ function HopAudioServerProxy( audio, url ) {
 	 } else if( k == Serror ) {
 	    // error
 	    hop_audio_run_hooks( audio, "error", rest.car );
+	 } else if( k == Sclose ) {
+	    // close
+	    hop_audio_run_hooks( audio, "close", false );
 	 } else if( k == Smeta ) {
 	    // meta (and playlist)
 	    var val = rest.car;
@@ -267,7 +270,7 @@ function hop_audio_init_obj( audio ) {
 function hop_audio_init( id, start, src, stream,
 			 onplay, onstop, onpause, onload, onerror,
 			 onended, onprogress,
-			 onloadedmetadata ) {
+			 onloadedmetadata, onclose ) {
    var audio = document.getElementById( id );
 
    hop_audio_init_obj( audio );
@@ -286,6 +289,7 @@ function hop_audio_init( id, start, src, stream,
    audio.onprogress = onprogress;
    audio.onmetadata = onloadedmetadata;
    audio.initialized = true;
+   audio.onclose = onclose;
    
    audio.hop_add_event_listener = hop_audio_add_event_listener;
    audio.toString = function() { return "[object Audio]"; };
@@ -852,6 +856,32 @@ function hop_audio_controls_onmetadata( evt ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_audio_controls_onclose ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_audio_controls_onclose( evt ) {
+   var audio = evt.audio;
+   var id = audio.id;
+   var tl = document.getElementById( id + "-controls-metadata-song" );
+   var min = document.getElementById( id + "-controls-status-length-min" );
+   var sec = document.getElementById( id + "-controls-status-length-sec" );
+   var status = document.getElementById( id + "-controls-status-img" );
+   var stopbut = document.getElementById( id + "-hop-audio-button-stop" );
+   var track = document.getElementById( id + "-controls-status-track" );
+
+   min.innerHTML = "  ";
+   sec.innerHTML = "  ";
+   track.innerHTML = "     ";
+   
+   hop_audio_time_interval_clear( audio );
+   hop_audio_controls_metadata( audio, true );
+   
+   status.src = stopbut.src;
+   tl.className = "hop-audio-panel-metadata-close";
+   tl.innerHTML = "Player closed...";
+
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_audio_controls_onplay ...                                    */
 /*---------------------------------------------------------------------*/
 function hop_audio_controls_onplay( evt ) {
@@ -960,8 +990,6 @@ function hop_audio_controls_onplayer( evt ) {
 function hop_audio_controls_onended( evt ) {
    var audio = evt.audio;
    var id = audio.id;
-   var status = document.getElementById( id + "-controls-status" );
-   var track = document.getElementById( id + "-controls-status-track" );
    var min = document.getElementById( id + "-controls-status-length-min" );
    var sec = document.getElementById( id + "-controls-status-length-sec" );
 

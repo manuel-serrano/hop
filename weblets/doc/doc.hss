@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Apr 16 10:25:19 2008 (serrano)                */
+/*    Last change :  Thu Apr 17 10:41:11 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -482,6 +482,74 @@ div.doc-arguments table, div.doc-fields table {
   font-size: x-small;
   border-collapse: collapse;
   background-color: $table-background;
+}
+
+div.procedure div.doc-arguments table tr th,
+div.procedure div.doc-arguments table tr td,
+div.function div.doc-arguments table tr th,
+div.function div.doc-arguments table tr td {
+  width: 10em;
+}
+
+div.procedure div.doc-arguments table tr th + th ,
+div.procedure div.doc-arguments table tr td + td,
+div.function div.doc-arguments table tr th + th ,
+div.function div.doc-arguments table tr td + td {
+  width: 12em;
+}
+
+div.procedure div.doc-arguments table tr th + th + th,
+div.procedure div.doc-arguments table tr td + td + td,
+div.function div.doc-arguments table tr th + th + th,
+div.function div.doc-arguments table tr td + td + td {
+  width: auto;
+}
+
+div.procedure div.doc-arguments table tr td + td,
+div.function div.doc-arguments table tr td + td {
+  font-family: monospace;
+  color: #00a;
+}
+
+div.procedure div.doc-arguments table tr td + td + td,
+div.function div.doc-arguments table tr td + td + td {
+  font-family: $font-family;
+  color: #000;
+}
+
+div.markup div.doc-arguments table tr th,
+div.markup div.doc-arguments table tr td {
+  width: 10em;
+}
+
+div.markup div.doc-arguments table tr th + th ,
+div.markup div.doc-arguments table tr td + td {
+  width: 12em;
+}
+
+div.markup div.doc-arguments table tr th + th + th ,
+div.markup div.doc-arguments table tr td + td + td {
+  width: 12em;
+}
+
+div.markup div.doc-arguments table tr th + th + th + th,
+div.markup div.doc-arguments table tr td + td + td + td {
+  width: auto;
+}
+
+div.markup div.doc-arguments table tr td + td {
+  font-family: monospace;
+  color: #00a;
+}
+
+div.markup div.doc-arguments table tr td + td + td {
+  font-family: monospace;
+  color: #000;
+}
+
+div.markup div.doc-arguments table tr td + td + td + td {
+  font-family: $font-family;
+  color: #000;
 }
 
 table tr.hopwiki-row-odd {

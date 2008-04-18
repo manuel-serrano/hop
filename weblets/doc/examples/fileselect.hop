@@ -1,8 +1,0 @@
-;; an example of FILESELECT markup
-(<HTML>
-   (<HEAD> :include "hop-fileselect" "hop-tree" "hop-window")
-   (<BODY>
-      (<FILESELECT>
-	 :value "/tmp"
-	 :size 50
-	 :onchange ~(alert "value=" this.value))))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Apr 10 20:14:05 2008 (serrano)                */
+/*    Last change :  Thu Apr 17 10:37:07 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -103,6 +103,7 @@ function hop_service_url_varargs( service, args ) {
 /*---------------------------------------------------------------------*/
 /*    hop_default_failure ...                                          */
 /*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
 function hop_default_failure( http ) {
    var t = http.responseText;
    
@@ -212,11 +213,35 @@ function hop_anim_16_16( title ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_default_anim ...                                             */
+/*---------------------------------------------------------------------*/
+var hop_default_anim = hop_anim_16_16;
+
+/*---------------------------------------------------------------------*/
+/*    hop_default_anim_set ...                                         */
+/*---------------------------------------------------------------------*/
+/*** META ((export with-hop-default-anim-set!)) */
+function hop_default_anim_set( anim ) {
+   var old = hop_default_anim;
+   hop_default_anim = anim;
+   return old;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_default_anim_get ...                                         */
+/*---------------------------------------------------------------------*/
+/*** META ((export with-hop-default-anim)) */
+function hop_default_anim_get( ) {
+   return hop_default_anim;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_anim_vis ...                                                 */
 /*---------------------------------------------------------------------*/
 var hop_anim_vis = false;
 var hop_anim_service = false;
 var hop_anim_interval;
+var hop_anim_fun = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_stop_anim ...                                                */
@@ -231,17 +256,17 @@ function hop_stop_anim() {
 /*---------------------------------------------------------------------*/
 /*    hop_anim ...                                                     */
 /*---------------------------------------------------------------------*/
-function hop_anim( service ) {
+function hop_anim( service, user_anim ) {
    hop_stop_anim();
 
    if( hop_anim_service == service ) {
-      if( hop_anim_vis ) {
+      if( hop_anim_vis && (hop_anim_fun == user_anim) ) {
 	 hop_anim_vis.title = service;
 	 // node_style_set( hop_anim_vis, "visibility", "visible" );
 	 node_style_set( hop_anim_vis, "display", "block" );
 	 return hop_anim_vis;
       } else {
-	 hop_anim_vis = hop_anim_16_16( service );
+	 hop_anim_vis = user_anim( service );
 	 document.body.appendChild( hop_anim_vis );
 	 return hop_anim_vis;
       }
@@ -267,7 +292,7 @@ function hop_responsetext_error( xhr ) {
 /*    -------------------------------------------------------------    */
 /*    This function DOES NOT evaluates its result.                     */
 /*---------------------------------------------------------------------*/
-function hop_send_request( svc, sync, success, failure, anim, henv ) {
+function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
    var xhr = hop_make_xml_http_request();
 
    function onreadystatechange() {
@@ -354,10 +379,13 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 	       throw e;
 	    }
 	 } finally {
-	    if( hop_anim_vis != false ) {
-	       node_style_set( hop_anim_vis, "display", "none" );
+	    try {
+	       if( hop_anim_vis != false ) {
+		  node_style_set( hop_anim_vis, "display", "none" );
+	       }
+	       hop_anim_service = false;
+	    } catch( e ) {
 	    }
-	    hop_anim_service = false;
 	 }
       }
 
@@ -378,6 +406,10 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
    if( henv.length > 0 ) {
       xhr.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
    }
+
+   if( auth ) {
+      xhr.setRequestHeader( 'Authorization', auth );
+   }
    
    try {
       if( anim ) hop_anim_service = svc;
@@ -387,8 +419,10 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
       hop_stop_anim();
       
       if( anim ) {
+	 var a = (anim instanceof Function) ? anim : hop_default_anim;
+
 	 hop_anim_interval =
-	    setInterval( function() { hop_anim( svc ) }, hop_anim_latency );
+	    setInterval( function() { hop_anim( svc, a ) }, hop_anim_latency );
       }
 
       if( sync ) {
@@ -414,14 +448,76 @@ function hop_send_request( svc, sync, success, failure, anim, henv ) {
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t)) */
-function with_hop( svc, success, failure, sync ) {
+function with_hop( svc, success, failure, sync, anim ) {
    if( !success ) success = function( h ) { return h };
    if( !failure ) failure = hop_default_failure;
    
    return hop_send_request( svc, sync,
 			    success, failure,
-			    true, hop_serialize_request_env() );
+			    true, hop_serialize_request_env(), false );
 }
+
+/*---------------------------------------------------------------------*/
+/*    with_hop ...                                                     */
+/*---------------------------------------------------------------------*/
+/*** META
+(define-macro (with-hop svc . rest)
+   (let ((success #f)
+	 (fail #f)
+	 (sync #f)
+	 (anim #t)
+	 (user #f)
+	 (password #f)
+	 (authorization #f))
+      (let loop ((rest rest))
+	 (cond
+	    ((null? rest)
+	     `(hop_send_request ,svc
+				,sync
+				,(or success '(lambda (h) h))
+				,(or fail 'hop_default_failure)
+				,anim
+				(hop_serialize_request_env)
+				,(cond
+				    (authorization
+				     authorization)
+				    ((and (string? user)
+					  (string? password))
+				     (string-append
+				      "Basic "
+				      (base64-encode
+				       (string-append
+					user ":" password)))))))
+	    ((eq? (car rest) :anim)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :anim argument" rest)
+		 (set! anim (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :authorization)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :authorization argument" rest)
+		 (set! authorization (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :user)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :user argument" rest)
+		 (set! user (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :password)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :password argument" rest)
+		 (set! password (cadr rest)))
+	     (loop (cddr rest)))
+	    ((not success)
+	     (set! success (car rest))
+	     (loop (cdr rest)))
+	    ((not fail)
+	     (set! fail (car rest))
+	     (loop (cdr rest)))
+	    (else
+	     (set! sync (car rest))
+	     (loop (cdr rest)))))))
+*/
 
 /*---------------------------------------------------------------------*/
 /*    hop ...                                                          */

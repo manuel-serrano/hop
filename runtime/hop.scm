@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Apr 11 18:38:51 2008 (serrano)                */
+;*    Last change :  Thu Apr 17 09:21:28 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -51,7 +51,8 @@
 			     (abspath #f)
 			     (user #f)
 			     (password #f)
-			     (authorization #f))
+			     (authorization #f)
+			     (anim #f))
 	    (generic with-hop-local obj proc fail)
 	    (hop-get-file::obj ::bstring)))
 
@@ -320,7 +321,8 @@
 			 (abspath #f)
 			 (user #f)
 			 (password #f)
-			 (authorization #f))
+			 (authorization #f)
+			 (anim #f))
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
 	     ": " path "\n")

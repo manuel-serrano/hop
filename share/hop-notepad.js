@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Wed Apr 16 10:00:37 2008 (serrano)                */
+/*    Last change :  Wed Apr 16 15:10:19 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -95,6 +95,17 @@ function hop_notepad_select( id1, id2, history, callback ) {
    alert( "*** Hop Error: hop_notepad_select -- Can't find pad: " + id2 );
 
    return false;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_notepad_selection ...                                        */
+/*---------------------------------------------------------------------*/
+/*** META ((export notepad-selection)) */
+function hop_notepad_selection( id ) {
+   var np = hop_is_html_element( id ) ? id : document.getElementById( id );
+   var tabs = document.getElementById( np.id + "-tabs" );
+
+   return tabs.childNodes[ np.active_tab ? np.active_tab : 0 ];
 }
 
 /*---------------------------------------------------------------------*/

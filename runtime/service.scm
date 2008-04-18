@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Apr 14 17:18:36 2008 (serrano)                */
+;*    Last change :  Thu Apr 17 16:54:01 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -34,6 +34,7 @@
 	    __hop_weblets)
    
    (export  (init-hop-services!)
+	    (get-all-services ::http-request)
 	    (get-service-url::bstring #!optional (prefix ""))
 	    (hop-service-path? ::bstring)
 	    (make-hop-service-url::bstring ::hop-service . o)
@@ -68,6 +69,19 @@
 ;*---------------------------------------------------------------------*/
 (define *service-table*
    (make-hashtable #unspecified #unspecified equal-path? hash-path))
+
+;*---------------------------------------------------------------------*/
+;*    get-all-services ...                                             */
+;*---------------------------------------------------------------------*/
+(define (get-all-services req)
+   (with-lock *service-table-mutex*
+      (lambda ()
+	 (delete-duplicates!
+	  (filter (lambda (svc)
+		     (with-access::hop-service svc (id wid)
+			(or (authorized-service? req wid)
+			    (authorized-service? req id))))
+		  (hashtable->list *service-table*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-hop-services! ...                                           */

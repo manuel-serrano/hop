@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Wed Apr 16 08:10:34 2008 (serrano)                */
+/*    Last change :  Thu Apr 17 13:06:27 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -207,6 +207,10 @@ div.hop-audio-panel-metadata-song, div.hop-audio-panel-metadata-error {
 
 div.hop-audio-panel-metadata-error {
   color: red;
+}
+
+div.hop-audio-panel-metadata-close {
+  color: orange;
 }
 
 table.hop-audio-panel-metadata {

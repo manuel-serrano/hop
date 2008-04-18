@@ -60,14 +60,15 @@ on the broker.
 The ++<INPUT>++ ++type++ can be any of:
 ++url|text|password|checkbox|radio|submit|reset|file|hidden|image|button++
 
-~~ That is, in addition to regular HTML types, HOP also supports the ++url++ type.
+~~ That is, in addition to regular HTML types, HOP also supports the **++url++** type.
 This type is used for denoting file paths located on the server. The behavior
 and customization of such fields is similar to ++text++ fields. The only difference
 is that when the ++tab++ key is pressed on the client, the server automatically
 completes the value of the form.
 
 ~~ The ++<INPUT> :type 'url++ markup replaces the ++<FILESELECT>++ markup
-of previous HOP releases.
+of previous HOP releases. It can be used in replacement of ++<FILECHOOSER>++
+when a lightweight widget is needed.
 
 </markup>
 </server>
