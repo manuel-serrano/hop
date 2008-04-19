@@ -39,7 +39,6 @@
 	    (inherits-from? this.val (node 'Lambda))
 	    (not this.val.closure?))
        (begin
-	  (verbose "moving")
 	  ;; moves this Set! outside all surrounding-loops.
 	  (cons-set! outer-loop.decls-to-hoist this)
 	  (new-node Const #unspecified))

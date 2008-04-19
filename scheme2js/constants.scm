@@ -42,8 +42,8 @@
 (define-pmethod (Module-constants! ht)
    (if (config 'encapsulate-modules)
        (this.traverse1! #f)
-       (let* ((ht (make-hashtable))
-	      (new-body (this.body.traverse! ht)))
+       (let ((ht (make-hashtable)))
+	  (this.traverse1! ht)
 	  (set! this.body (make-constants-let ht this.body))
 	  this)))
 
@@ -52,7 +52,8 @@
        (this.traverse1! ht)
        (let* ((ht (make-hashtable)))
 	  (this.traverse1! ht)
-	  (set! this.body (make-constants-let ht this.body))
+	  ;; body must be a Return. keep it that way.
+	  (set! this.body.val (make-constants-let ht this.body.val))
 	  this)))
 
 (define-pmethod (Const-constants! constant-ht)

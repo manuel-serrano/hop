@@ -141,7 +141,9 @@
 			       (unless (eqv? val.value current.value)
 				  (hashtable-put! result-ht var 'unknown)))
 			      ((and (inherits-from? val (node 'Var-ref))
-				    (inherits-from? current (node 'Var-ref))))
+				    (inherits-from? current (node 'Var-ref)))
+			       (unless (eq? val.var current.var)
+				  (hashtable-put! result-ht var 'unknown)))
 			      (else
 			       (hashtable-put! result-ht var 'unknown)))))
 		       (else

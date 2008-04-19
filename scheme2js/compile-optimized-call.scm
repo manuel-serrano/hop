@@ -328,4 +328,5 @@
 				      "forgot optimize-fun:"
 				      (car peephole))))))
 		 (optimize-fun p operands))
-	      #f))))
+	      #f))
+       #f))

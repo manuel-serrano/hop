@@ -138,7 +138,7 @@
       #t))
 
 (define-pmethod (Tail-call-mark-statements)
-   (this.traverse)
+   (this.traverse0)
    (mark-node! this #t)
    #t)
 

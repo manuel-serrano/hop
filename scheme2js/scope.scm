@@ -362,9 +362,9 @@
 ;; calls this is not possible from now on.
 (define-pmethod (Tail-rec-frame inside-loop? inside-call/cc-loop?)
    (for-each (lambda (init)
-		(init.traverse2 inside-loop? inside-call/cc-loop?))
+		(init.traverse inside-loop? inside-call/cc-loop?))
 	     this.inits)
-   (this.body.traverse2 #t inside-call/cc-loop?)
+   (this.body.traverse #t inside-call/cc-loop?)
    ;; loop-variables are not (yet) handled specially.
    (for-each (lambda (var)
 		(cond
@@ -419,7 +419,7 @@
 		       formal-decl))
 		this.formals))
 	  (filtered-formals (filter (lambda (formal-decl)
-				       (needs-boxing? formal-decl))
+				       (needs-boxing? formal-decl.var))
 				    this.formals))
 	  (extracted-vars (map (lambda (decl)
 				  decl.var)
@@ -442,7 +442,7 @@
 	       (new-node Let
 			 extracted-vars
 			 assigs
-			 (list this.body.val)
+			 this.body.val
 			 'let)))))
 
 (define-pmethod (Let-box!)
@@ -673,7 +673,7 @@
 		   '()
 		   (filter! (lambda (var)
 			       var.needs-uniquization?)
-			    (hashtable-key-list this.free-vars-ht)))))
+			    free-vars))))
 	  (if (and (null? storage-vars)
 		   (null? uniquization-vars))
 	      this
@@ -774,7 +774,7 @@
 ;; Also create a declared-vars list for each module/lambda. These nodes need to
 ;; be declared by "var".
 ;;
-;; Finally every Module, Lambda and Tail-rec receive a list of contained scopes.
+;; Finally every Module, Lambda and While receive a list of contained scopes.
 (define (let-removal! tree)
    (overload traverse! remove! (Node
 				Module

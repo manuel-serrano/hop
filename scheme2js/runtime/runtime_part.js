@@ -1932,11 +1932,9 @@ function sc_pregexpSplit(re, s) {
 /*** META ((export #t)
            (peephole (hole 1 "Math.floor(Math.random()*" 'n ")")))
 */
-/* CARE!!! (MS 16apr08): Florian, this has to be fixed, you have to choose! */
-/* function sc_random(n) {                                             */
-/*     return Math.floor(Math.random()*n);                             */
-/* }                                                                   */
-var sc_random = Math.random;
+function sc_random(n) {
+    return Math.floor(Math.random()*n);
+}
 
 /*** META ((export current-date)
            (peephole (hole 0 "new Date()")))

@@ -175,7 +175,7 @@
 			     (eq? type (car entry)))
 			  a-list)))
    (when (not (pair? (cdr clause)))
-      (error "module" "Missing module-name:"  filename))
+      (error "module" "Missing module/infotron-name:"  filename))
    (let* ((module-name (cadr clause))
 	  (a-list (filter pair? clause))
 	  (macros (extract-entries a-list 'export-macros))

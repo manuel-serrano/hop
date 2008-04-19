@@ -12,8 +12,6 @@
 	   var
 	   mark-statements
 	   locals
-	   liveness
-	   constants
 	   verbose
 	   allocate-names
 	   compile-optimized-call
@@ -483,8 +481,7 @@
        p
        (--indent) "}\n")) ;; try or finally
 
-   (let* ((locals-ht this.frame-vars-ht)
-	  (local-names-ht (make-hashtable))
+   (let* ((local-names-ht (make-hashtable))
 	  (formals-w/o-vaarg/vaarg
 	   (if this.vaarg?
 	       (let* ((locals-copy (map (lambda (x) x)
@@ -880,7 +877,7 @@
 	     (begin
 		(if needs-call/cc?
 		    (p-display p "sc_callCcIndex || ("))
-		(this.test.compile p)
+		(compile-boolified p this.test)
 		(if needs-call/cc? (p-display p ")"))))
 	 (p-display p ") "))
       

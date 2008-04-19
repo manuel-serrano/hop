@@ -282,10 +282,10 @@ o/expanders.o classes/mimosa/inria/scheme2js/expanders.class:            \
 o/compile.o classes/mimosa/inria/scheme2js/compile.class:                \
       mco/compile-optimized-set.mco mco/compile-optimized-boolify.mco    \
       mco/compile-optimized-call.mco mco/allocate-names.mco              \
-      mco/verbose.mco mco/constants.mco mco/liveness.mco mco/locals.mco  \
-      mco/mark-statements.mco mco/var.mco mco/nodes.mco mco/config.mco   \
-      mco/mutable-strings.mco mco/gen-js.mco mco/protobject.mco          \
-      tools.sch nodes.sch protobject.sch 
+      mco/verbose.mco mco/locals.mco mco/mark-statements.mco mco/var.mco \
+      mco/nodes.mco mco/config.mco mco/mutable-strings.mco               \
+      mco/gen-js.mco mco/protobject.mco tools.sch nodes.sch              \
+      protobject.sch 
 o/check.o classes/mimosa/inria/scheme2js/check.class: mco/verbose.mco    \
       mco/nodes.mco mco/protobject.mco tools.sch nodes.sch               \
       protobject.sch 
@@ -311,10 +311,10 @@ o/traverse.o classes/mimosa/inria/scheme2js/traverse.class:              \
 o/compile.o classes/mimosa/inria/scheme2js/compile.class:                \
       mco/compile-optimized-set.mco mco/compile-optimized-boolify.mco    \
       mco/compile-optimized-call.mco mco/allocate-names.mco              \
-      mco/verbose.mco mco/constants.mco mco/liveness.mco mco/locals.mco  \
-      mco/mark-statements.mco mco/var.mco mco/nodes.mco mco/config.mco   \
-      mco/mutable-strings.mco mco/gen-js.mco mco/protobject.mco          \
-      tools.sch nodes.sch protobject.sch 
+      mco/verbose.mco mco/locals.mco mco/mark-statements.mco mco/var.mco \
+      mco/nodes.mco mco/config.mco mco/mutable-strings.mco               \
+      mco/gen-js.mco mco/protobject.mco tools.sch nodes.sch              \
+      protobject.sch 
 o/use-count.o classes/mimosa/inria/scheme2js/use-count.class:            \
       mco/verbose.mco mco/var.mco mco/nodes.mco mco/protobject.mco       \
       nodes.sch protobject.sch 
