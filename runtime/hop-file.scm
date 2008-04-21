@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Mon Apr 14 10:13:48 2008 (serrano)                */
+;*    Last change :  Mon Apr 21 15:27:46 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -161,6 +161,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    <FILECHOOSER> ...                                                */
+;*    -------------------------------------------------------------    */
+;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <FILECHOOSER> ((id #unspecified string)
 				    (class #unspecified string)
@@ -172,10 +174,12 @@
 				    (oncancel #f)
 				    (onrun #f)
 				    body)
-   :hss-type "div.filechooser"
    (let ((id (xml-make-id id 'filechooser))
 	 (regexp (if (null? filters) ".*" (cadar filters))))
-      (<DIV> :class "filechooser" :id id
+      (<DIV> :id id
+	 :class (if (string? class)
+		    (string-append "filechooser " class)
+		    "filechooser")
 	 :onkeydown (format "hop_filechooser_key( this, ~s )" id)
 	 (when onselect
 	    (<SCRIPT> (format "document.getElementById( ~s ).select = ~a"
@@ -449,11 +453,12 @@
    (<DIV> :class "filechooser-okcancel"
       (<BUTTON> :class "filechooser-button-cancel"
 	 :onclick (format "hop_filechooser_cancel( event, ~s )" id)
-	 "Cancel")
+	 (<SPAN> :class "filechooser-button-cancel" " "))
       (<BUTTON> :class "filechooser-button-open"
 	 :onclick (format "hop_filechooser_ok( event, ~s )" id)
-	 "Open")
+	 (<SPAN> :class "filechooser-button-open" " "))
       (<BUTTON> :class "filechooser-button-run"
 	 :onclick (format "hop_filechooser_run( event, ~s )" id)
-	 "Run")))
+	 (<SPAN> :class "filechooser-button-run" " "))))
+
 

@@ -1,13 +1,11 @@
-(module scm-compil
-   
-   (option (set! *dlopen-init* "hopscheme_s"))
+(module __hopscheme_scm-compil
    
    (library hop
 	    scheme2js)
    
-   (import hopscheme-config)
+   (import __hopscheme_config)
 
-   (export compile-scheme-file))
+   (export (compile-scheme-file file)))
    
 ;*---------------------------------------------------------------------*/
 (define (hop-file path file)

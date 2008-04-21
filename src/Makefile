@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sat Mar 29 08:05:13 2008 (serrano)                */
+#*    Last change :  Mon Apr 21 10:06:44 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -135,6 +135,9 @@ o/%.o: %.scm .afile
 
 $(CLASS_DIR)/%.class: %.scm .afile
 	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+
+o/main.o: main.scm
+	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

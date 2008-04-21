@@ -1,5 +1,6 @@
 ((name "epassword")
  (author "M. Serrano")
- (version "1.0.0")
+ (version "@VERSION@")
+ (date "@DATE@")
  (title "A MD5 password encoder.")
  (about-service "about"))

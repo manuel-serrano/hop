@@ -1,4 +1,5 @@
 ((name "home")
  (author "M. Serrano")
- (version "1.0.0")
+ (version "@VERSION@")
+ (date "@DATE@")
  (title "HOP home page"))

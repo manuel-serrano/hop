@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Apr 18 11:33:57 2008 (serrano)                */
+#*    Last change :  Mon Apr 21 10:03:32 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -32,6 +32,7 @@ debug=no
 
 bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
+bcflagsdev=""
 bcflagsdbg="-copt -g"
 bcflagsdbg2="-g -O2 -cg"
 bcflagsbmem="-g2 -O2"
@@ -161,11 +162,15 @@ while : ; do
     --brflags=*)
       brflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
+    --bcflagsdev=*)
+      bcflagsdev="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
     --ccflags=*)
       ccflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
     --devel)
       bcflagsrts=;
+      bcflagsdev=-cg;
       bscm2jsflags=;;
 
     --debug)
@@ -233,6 +238,7 @@ while : ; do
       echo "   --bdepend=bdepend..... The Bigloo dependence tool" >&2;
       echo "   --cc=cc............... The C compiler" >&2;
       echo "   --bcflags=args........ The compilation options" >&2;
+      echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
       echo "   --blflags=args........ The link options" >&2;
       echo "   --bhflags=args........ The heap options" >&2;
       echo "   --brflags=args........ The heap options" >&2;
@@ -483,6 +489,7 @@ cat $mkmf.in \
           -e "s|@JVMZIPLIBS@|$jvmziplibs|" \
           -e "s|@JVMINITS@|$jvminits|" \
           -e "s|@CCFLAGS@|$ccflags|" \
+          -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
           -e "s|@BUILDLIBDIR@|$PWD/lib|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \
           -e "s|@BUILDBINDIR@|$PWD/bin|" \
@@ -549,7 +556,8 @@ cat etc/hop.init.in \
     >> $init
 echo "" >> $init
 
-echo "(cond-expand ((not hop)" >> $init
+echo "(cond-expand ((not hop-eval)" >> $init
+echo "(register-eval-srfi! 'hop-eval)" >> $init
 cat runtime/xml-expd.sch >> $init
 echo "" >> $init
 cat runtime/param-expd.sch >> $init

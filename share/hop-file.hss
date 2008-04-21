@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Wed Apr 16 10:56:46 2008 (serrano)                */
+/*    Last change :  Mon Apr 21 15:28:28 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
@@ -386,6 +386,18 @@ filechooser div.filechooser-okcancel button.filechooser-button-run,
 filechooser div.filechooser-okcancel button.filechooser-button-run:hover {
   background-image: $hopfile-run-icon;
   display: none;
+}
+
+filechooser span.filechooser-button-cancel:before {
+  content: "Cancel";
+}
+  
+filechooser span.filechooser-button-open:before {
+  content: "Open";
+}
+  
+filechooser span.filechooser-button-run:before {
+  content: "Run";
 }
 
 /*---------------------------------------------------------------------*/

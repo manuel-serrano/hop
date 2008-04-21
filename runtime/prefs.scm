@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Mon Apr 14 17:21:42 2008 (serrano)                */
+;*    Last change :  Mon Apr 21 17:08:17 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -30,7 +30,13 @@
 	    __hop_hop
 	    __hop_user)
    
-   (export (preferences-mutex)
+   (export (<PREFS> . ::obj)
+	   (<PRLABEL> . ::obj)
+	   (<PR> . ::obj)
+	   
+	   (init-hop-prefs-services!)
+	   (preferences-mutex)
+	   
 	   (preferences-editor ::obj ::obj ::obj)
 	   
 	   (user-write-preferences ::user)
@@ -39,6 +45,8 @@
 	   (user-preference-store! ::user ::symbol ::obj)
 	   (user-preference-update! ::user ::symbol ::obj
 				    #!key (kons cons) (init '()))
+	   
+	   (write-preferences request)
 	   (preference-get ::symbol #!key default (request (current-request)))
 	   (preference-set! ::symbol ::obj #!key (request (current-request)))
 	   (preference-store! ::symbol ::obj #!key (request (current-request)))
@@ -46,8 +54,7 @@
 			       #!key
 			       (request (current-request))
 			       (kons cons)
-			       (init '()))
-	   (write-preferences request)))
+			       (init '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *preferences-mutex* ...                                          */
@@ -61,6 +68,106 @@
    *preferences-mutex*)
 
 ;*---------------------------------------------------------------------*/
+;*    *prefs-service* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *prefs-service* #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    init-hop-prefs-services! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (init-hop-prefs-services!)
+   (set! *prefs-service*
+	 (service :name "prefs/edit" (name type value)
+	    (mutex-lock! (preferences-mutex))
+	    (let* ((pref (string->symbol name))
+		   (value (string->value type value))
+		   (validator (hashtable-get *pref-validator-table* pref)))
+	       (mutex-unlock! (preferences-mutex))
+	       (when (or (not validator) (validator value))
+		  (preference-store! pref value)
+		  #t)))))
+
+;*---------------------------------------------------------------------*/
+;*    string->value ...                                                */
+;*---------------------------------------------------------------------*/
+(define (string->value type val)
+   (case type
+      ((string path)
+       val)
+      ((number)
+       (string->number val))
+      ((symbol)
+       (string->symbol val))
+      ((bool)
+       (string=? val "true"))
+      (else
+       (with-input-from-string (string-append "(" val ")") read))))
+
+;*---------------------------------------------------------------------*/
+;*    value->string ...                                                */
+;*---------------------------------------------------------------------*/
+(define (value->string type val)
+   (let loop ((type type)
+	      (val val)
+	      (kwote #f))
+      (case type
+	 ((string path)
+	  (if kwote
+	      (if (eq? val #unspecified)
+		  "\"\""
+		  (string-append "\"" (string-for-read val) "\"") )
+	      (if (eq? val #unspecified)
+		  ""
+		  val)))
+	 ((symbol)
+	  (if (eq? val #unspecified)
+	      '||
+	      val))
+	 ((number)
+	  (if (eq? val #unspecified)
+	      0
+	      (number->string val)))
+	 ((bool)
+	  (if val "true" "false"))
+	 (else
+	  (match-case type
+	     ((cons ?ta ?td)
+	      (format "(~a . ~a)"
+		      (loop ta (car val) #t)
+		      (loop td (cdr val) #t)))
+	     ((pair ?ta ?td)
+	      (format "(~a ~a)"
+		      (loop ta (car val) #t)
+		      (loop td (cadr val) #t)))
+	     ((list ?t)
+	      (if (eq? val #unspecified)
+		  ""
+		  (let ((s (open-output-string)))
+		     (for-each (lambda (v)
+				  (display (loop t v #t) s)
+				  (display " " s))
+			       val)
+		     (close-output-port s))))
+	     (else
+	      (error 'value->string "Illegal type" type)))))))
+		 
+;*---------------------------------------------------------------------*/
+;*    *pref-validator-table* ...                                       */
+;*---------------------------------------------------------------------*/
+(define *pref-validator-table*
+   (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    add-validator! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (add-validator! pref validator)
+   (unless (correct-arity? validator 1)
+      (error '<PR> "Illegal validate arity" validator))
+   (mutex-lock! (preferences-mutex))
+   (hashtable-update! *pref-validator-table* pref cons (list validator))
+   (mutex-unlock! (preferences-mutex)))
+   
+;*---------------------------------------------------------------------*/
 ;*    preferences-editor ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (preferences-editor type get set)
@@ -70,6 +177,8 @@
       (string
        (text-editor "A string" get (service (v) (set v) #t)))
       (expr
+       (sexp-editor get set))
+      (number
        (sexp-editor get set))
       (bool
        (bool-editor "yes" "no" get (service (v) (set v) #t)))
@@ -253,4 +362,85 @@
       (with-access::http-request request (user)
 	 (when (string? (user-preferences-filename user))
 	    (user-write-preferences user)))))
+
+;*---------------------------------------------------------------------*/
+;*    make-class-name ...                                              */
+;*---------------------------------------------------------------------*/
+(define (make-class-name::bstring default::bstring name)
+   (if (string? name)
+       (string-append default " " name)
+       default))
+
+;*---------------------------------------------------------------------*/
+;*    <PREFS> ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    See __hop_css for HSS types.                                     */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <PREFS> ((id #unspecified string)
+			      (class #unspecified string)
+			      (attrs)
+			      body)
+   (<TABLE> :id (xml-make-id id 'PREFS)
+      (<COLGROUP> (<COL>) (<COL>) (<COL> :width "0*"))
+      :class (make-class-name "hop-prefs" class) 
+      body))
+
+;*---------------------------------------------------------------------*/
+;*    <PRLABEL> ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    See __hop_css for HSS types.                                     */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <PRLABEL> ((id #unspecified string)
+				(class #unspecified string)
+				(attrs)
+				body)
+   (<TR>
+      (<TD> :class (make-class-name "hop-prefs-label" class)
+	 :id (xml-make-id id 'PRLABEL)
+	 :colspan 3 body)))
+
+;*---------------------------------------------------------------------*/
+;*    <PR> ...                                                         */
+;*    -------------------------------------------------------------    */
+;*    See __hop_css for HSS types.                                     */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <PR> ((id #unspecified string)
+			   (pref #f symbol)
+			   (default #unspecified)
+			   (type 'string)
+			   (class #unspecified string)
+			   (validate #unspecified procedure)
+			   (parse #f)
+			   (title #unspecified string)
+			   (attrs)
+			   body)
+   (when (procedure? validate) (add-validator! pref validate))
+   (<TR> :class (make-class-name "hop-pr" class)
+      :id (xml-make-id id 'PR)
+      (<TD> :class "hop-pr-type" (when (pair? body) (car body)))
+      (<TD> :class "hop-pr-editor"
+	 :colspan (if (and (pair? body) (pair? (cdr body))) 1 2)
+	 ((pr-editor type) pref type default title parse))
+      (when (and (pair? body) (pair? (cdr body)))
+	 (<TD> :class "hop-pr-editor-extra" (cdr body)))))
+
+;*---------------------------------------------------------------------*/
+;*    pr-editor ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (pr-editor type)
+   (case type
+      (else
+       pr-editor-input)))
+
+;*---------------------------------------------------------------------*/
+;*    pr-editor-input ...                                              */
+;*---------------------------------------------------------------------*/
+(define (pr-editor-input pref type default title parse)
+   (<INPUT> :class "hop-pr-editor-expr hop-pr-saved"
+      :type "text"
+      :value (value->string type (preference-get pref :default default))
+      :title (format "~a (hit [return] to validate)"
+		     (if (string? title) title pref))
+      :onkeyup (format "hop_prefs_editor_expr( event, this, '~a', ~a, '~a' )"
+		       pref (hop->js-callback parse) type)))
 

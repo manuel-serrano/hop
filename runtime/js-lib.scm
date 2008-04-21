@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Apr 15 14:52:06 2008 (serrano)                */
+;*    Last change :  Mon Apr 21 12:04:42 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -22,7 +22,8 @@
 
    (export  (json-string-encode::bstring ::bstring ::bool)
 	    (generic hop->json ::obj ::bool ::bool)
-	    (json->hop ::input-port)))
+	    (json->hop ::input-port)
+	    (hop->js-callback ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    list->arguments ...                                              */
@@ -450,3 +451,15 @@
 ;*---------------------------------------------------------------------*/
 (define (json->hop ip)
    (read/lalrp *json-parser* *json-lexer* ip))
+
+;*---------------------------------------------------------------------*/
+;*    hop->js-callback ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop->js-callback obj)
+   (cond
+      ((xml-tilde? obj)
+       (format "function( event ) { ~a }" (xml-tilde-body obj)))
+      ((string? obj)
+       (format "function( event ) { ~a }" obj))
+      (else
+       "false")))

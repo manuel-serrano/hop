@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Apr 16 08:48:23 2008 (serrano)                */
+#*    Last change :  Mon Apr 21 11:51:52 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -43,6 +43,7 @@ RTS		= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-file.js hop-file.hss \
                   hop-fileselect.js hop-fileselect.css \
                   hop-tooltip.js hop-dashboard.js \
+                  hop-prefs.js hop-prefs.hss \
                   hop-debug.js hop-debug.css \
 		  hop-sound.js hop-sound.scm \
                   hop-audio.js hop-audio.hss \

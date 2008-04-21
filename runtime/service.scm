@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Apr 17 16:54:01 2008 (serrano)                */
+;*    Last change :  Mon Apr 21 11:59:46 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -29,6 +29,7 @@
 	    __hop_xml
 	    __hop_hop-extra
 	    __hop_hop-file
+	    __hop_prefs
 	    __hop_js-lib
 	    __hop_user
 	    __hop_weblets)
@@ -89,7 +90,8 @@
 ;*    Create the first HOP services.                                   */
 ;*---------------------------------------------------------------------*/
 (define (init-hop-services!)
-   (init-hop-file-services!))
+   (init-hop-file-services!)
+   (init-hop-prefs-services!))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-service-url ...                                              */

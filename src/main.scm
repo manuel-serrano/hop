@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Apr  2 10:23:04 2008 (serrano)                */
+;*    Last change :  Mon Apr 21 10:20:26 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -98,8 +98,6 @@
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set! hop-load-modified)
-   ;; install the hop expanders
-   (hop-install-expanders!)
    ;; parse the command line
    (parse-args args)
    (hop-verb 1 "Starting hop (v" (hop-version)

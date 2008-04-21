@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Jan 22 09:24:59 2008 (serrano)                */
+#*    Last change :  Mon Apr 21 17:57:50 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -22,8 +22,7 @@ include ../../etc/Makefile.version
 
 SOURCES		= config.hop hz.hop \
 		  db.hop hz.hss install.hop sync.hop \
-                  markup.hop package.hop weblet.hop \
-                  authenticate.hop
+                  markup.hop package.hop weblet.hop
 
 POPULATION	= $(SOURCES) \
                   Makefile \

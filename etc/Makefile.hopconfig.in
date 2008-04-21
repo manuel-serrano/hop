@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Fri Apr 18 10:34:24 2008 (serrano)                */
+#*    Last change :  Mon Apr 21 10:11:54 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -42,6 +42,7 @@ BMASK		= 755
 #*---------------------------------------------------------------------*/
 DEBUG		= @DEBUG@
 BCFLAGS		= @BCFLAGS@ -copt "$(CCFLAGS)" $(EFLAGS)
+BCFLAGSDEV	= @BCFLAGSDEV@
 BCFLAGSRTS	= @BCFLAGSRTS@
 FFLAGS		= @FFLAGS@
 BLFLAGS         = @BLFLAGS@ $(BLIBFLAGS)
@@ -177,6 +178,7 @@ showflags:
 	@ if [ "$$TERM" = "rxvt" ]; then \
 	    echo "BIGLOO=[0m[1;33m$(BIGLOO)[0m"; \
 	    echo "BCFLAGS=[0m[1;31m$(BCFLAGS)[0m"; \
+	    echo "BCFLAGSDEV=[0m[1;31m$(BCFLAGS)[0m"; \
 	    echo "BJVMFLAGS=[0m[1;31m$(BJVMFLAGS)[0m"; \
 	    echo "BLFLAGS=[0m[1;31m$(BLFLAGS) $$""(BLIBFLAGS)[0m"; \
 	    echo "BLIBFLAGS=[0m[1;31m$(BLIBFLAGS)[0m"; \
@@ -185,6 +187,7 @@ showflags:
           else \
 	    echo "BIGLOO=$(BIGLOO)"; \
 	    echo "BCFLAGS=$(BCFLAGS)"; \
+	    echo "BCFLAGSDEV=$(BCFLAGS)"; \
 	    echo "BJVMFLAGS=$(BJVMFLAGS)"; \
 	    echo "BLFLAGS=$(BLFLAGS) $$""(BLIBFLAGS)"; \
 	    echo "BLIBFLAGS=$(BLIBFLAGS)"; \

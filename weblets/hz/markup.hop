@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Wed Feb 13 21:22:52 2008 (serrano)                */
+;*    Last change :  Mon Apr 21 17:57:21 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
@@ -19,8 +19,7 @@
 	   hz_install
 	   hz_weblet
 	   hz_db
-	   hz_sync
-	   hz_authenticate)
+	   hz_sync)
    
    (export (<HZ> req #!key (weblet #f))
 	   (<HZ:BODY> . content)
@@ -58,53 +57,75 @@
 ;*    <HZ> ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (<HZ> req #!key (weblet #f))
-   (let ((db '(hz-get-db (hz-db-path mode))))
-      (<HTML>
-	 (<HEAD> :title "Hop Hz"
-	    :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
-	    :include "hop-window"
-	    :base (service-base-url hz req)
-	    :favicon "etc/favicon.png"
-	    :css "hz.hss")
-	 (<HZ:BODY>
-	    
-	    ~(define (hz-publishers url action)
-		(with-hop ($hz/publishers url action)
-		   (lambda (h)
-		      (innerHTML-set! "hz-publishers" h))))
-
-	    (<HZ:AUTHENTICATE>)
-	    
-	    (<NOTEPAD> :id "hz-notepad"
-	       (<NPTAB> :id "hz-weblets-pan"
-		  (<NPTABHEAD> "Weblets")
-		  (<DELAY>
-		     (lambda ()
-			(<HZ:WEBLETS> :weblet weblet))))
-	       (<NPTAB>
-		  (<NPTABHEAD> "Synchronize")
-		  (<HZ:SYNC>))
-	       (<NPTAB>
-		  (<NPTABHEAD> "Publishers")
-		  (<DELAY>
-		     (lambda ()
-			(<HZ:PUBLISHERS>))))
-	       (<NPTAB>
-		  (<NPTABHEAD> "Cache")
-		  (<DELAY>
-		     (lambda ()
-			(<HZ:CACHE>))))
-	       (<NPTAB>
-		  (<NPTABHEAD> "Preferences")
-		  (<DELAY>
-		     (lambda ()
-			(<HZ:PREFERENCES>)))))))))
+   (<HTML>
+      (<HEAD> :title "Hop Hz"
+	 :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
+	 :include "hop-window" "hop-login"
+	 :base (service-base-url hz req)
+	 :favicon "etc/favicon.png"
+	 :css "hz.hss")
+      (<HZ:BODY>
+	 
+	 ~(define (hz-publishers url action)
+	     (with-hop ($hz/publishers url action)
+		(lambda (h)
+		   (innerHTML-set! "hz-publishers" h))))
+	 
+	 (<NOTEPAD> :id "hz-notepad"
+	    (<NPTAB> :id "hz-weblets-pan"
+	       (<NPTABHEAD> "Weblets")
+	       (<DELAY>
+		  (lambda ()
+		     (<HZ:WEBLETS> :weblet weblet))))
+	    (<NPTAB>
+	       (<NPTABHEAD> "Synchronize")
+	       (<HZ:SYNC>))
+	    (<NPTAB>
+	       (<NPTABHEAD> "Publishers")
+	       (<DELAY>
+		  (lambda ()
+		     (<HZ:PUBLISHERS>))))
+	    (<NPTAB>
+	       (<NPTABHEAD> "Cache")
+	       (<DELAY>
+		  (lambda ()
+		     (<HZ:CACHE>))))
+	    (<NPTAB>
+	       (<NPTABHEAD> "Preferences")
+	       (<DELAY>
+		  (lambda ()
+		     (<HZ:PREFERENCES>))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:BODY> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:BODY> . content)
    (<BODY>
+      
+      ~(define (authenticate e url)
+	  (with-hop ($(service (url user passwd)
+			 (hz-sync-authenticate! url user passwd))
+		      url e.user e.password)
+	     (lambda (e)
+		(sync))))
+      
+      ~(define (sync-callback h)
+	  (if (pair? h)
+	      (let ((url (cdr h)))
+		 (login-panel
+		  :message (<DIV> :class "authenticate-message"
+			      "Authentication required for " (<SPAN> url))
+		  :onlogin (lambda (e) (authenticate e url))))
+	      (innerHTML-set! "update" h)))
+      
+      ~(define (sync)
+	  (with-hop ($(service ()
+			 (let ((sync (hz-sync!)))
+			    (if (list? sync)
+				(<HZ:SYNC-UPDATE> sync)
+				(cons 'login sync)))))
+	     sync-callback))
+      
       (<DIV> :align "center"
 	 (<TABLE> :class "main"
 	    (<TR>
@@ -235,7 +256,7 @@
 				       (hz-install-url url)
 				       '()))))
 			(<HZ:SYNC-UPDATE> errs)))))
-      (list
+      (<DIV>
        (<TABLE> :class "hz-direct-install"
 	  (<TR>
 	     (<TH> "Weblet URL: "
@@ -261,22 +282,14 @@
 ;*    <HZ:SYNC-UPDATE> ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:SYNC-UPDATE> errs)
-   (list
+   (<DIV>
     (<TABLE> :class "sync"
        (<TR> (<TH> "Last sync: "
 		   (<SPAN> :class "update" (hz-db-sync-date)))
 	     (<TD> :class "sync-button"
 		(<BUTTON> :class "sync"
 		   :title "Synchronize publishers' list"
-		   :onclick ~(with-hop ($(service ()
-					    (let ((sync (hz-sync!)))
-					       (if (list? sync)
-						   (<HZ:SYNC-UPDATE> sync)
-						   (cons 'login sync)))))
-				(lambda (h)
-				   (if (pair? h)
-				       (login-prompt (cdr h))
-				       (innerHTML-set! "update" h))))
+		   :onclick ~(sync)
 		   "Sync"))))
     (<TABLE> :class "update"
        (<COLGROUP> (<COL> :span 3 :width "33%"))

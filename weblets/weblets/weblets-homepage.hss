@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 12 13:49:57 2006                          */
-/*    Last change :  Mon Dec 10 14:11:17 2007 (serrano)                */
-/*    Copyright   :  2006-07 Manuel Serrano                            */
+/*    Last change :  Mon Apr 21 15:41:43 2008 (serrano)                */
+/*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP weblets homepage cascade style sheet                         */
 /*=====================================================================*/
@@ -33,12 +33,12 @@ $(define deep-magenta2 "#4a346c")
 $(define deep-orange "#d89220")
 
 /*--- notepad ---------------------------------------------------------*/
-div.hop-notepad-title {
+notepad-title {
   background-color: transparent;
   padding: 0 10px 20px 0;
 }
 
-div.hop-notepad-tabs {
+notepad-tabs {
   background-color: transparent;
   padding: 0;
   padding-top: 40px;
@@ -47,28 +47,25 @@ div.hop-notepad-tabs {
   margin-right: 0;
 }
 
-div.hop-notepad-tabs span.hop-nptab {
+nptab {
   font-size: small;
   border-color: $border-color;
   margin: 0 4px 0 0;
   padding-top: 1px;
 }
 
-div.hop-notepad-tabs span.hop-nptab img {
+nptab img {
   vertical-align: bottom;
   padding-right: 2px;
 }
 
-div.hop-notepad-tabs span.hop-nptab-active {
+nptab-active {
   background-color: $home-color;
   border-bottom-color: $home-color;
 }
 
-div.hop-notepad-body {
+notepad-body {
   border-color: $border-color;
-}
-
-div.hop-notepad-body {
   border-left: 1px solid $border-color;
   border-right: 1px solid $border-color;
   border-bottom: 1px solid $border-color;
@@ -77,7 +74,7 @@ div.hop-notepad-body {
   background-color: $home-color;
 }
 
-div.hop-notepad-body-tab {
+nptab-body {
   border-color: blue;
   background-color: $home-color;
 }

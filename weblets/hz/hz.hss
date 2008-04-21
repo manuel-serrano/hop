@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Wed Apr 16 10:46:05 2008 (serrano)                */
+/*    Last change :  Mon Apr 21 17:23:51 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
@@ -696,6 +696,19 @@ table.hz-publishers td.hz-publishers-button {
 /*---------------------------------------------------------------------*/
 /*    login                                                            */
 /*---------------------------------------------------------------------*/
+div.authenticate-message {
+  padding-bottom: 1ex;
+  margin-bottom: 2ex;
+  border-bottom: 1px solid $border-color;
+  font-weight: bold;
+}
+
+div.authenticate-message span {
+  font-family: monospace;
+  font-size: 105%;
+  color: red;
+}
+
 div.login {
   display: none;
   position: fixed;

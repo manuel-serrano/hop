@@ -1,0 +1,17 @@
+<doc> DOC -- Hop self hosting documentation
+
+== Description ==
+
+[[/hop/doc|DOC]] is the Hop documentation system. It is the one you
+are presently using for visualizing this page!
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+</doc>
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Apr  7 10:31:48 2008 (serrano)                */
+;*    Last change :  Mon Apr 21 08:46:46 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -14,8 +14,6 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_types
    
-   (option  (set! *dlopen-init* "hop_s"))
-
    (import __hop_param)
 
    (use    __hop_xml)

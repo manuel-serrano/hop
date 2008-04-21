@@ -82,7 +82,7 @@ A possible default value for ++trace-print++ could be defined as:
                (lambda ()
                    (display "TRACE: ")
                    (for-each display args)
-                   newline)))))
+                   (newline))))))
 </code>
 
 </parameter>

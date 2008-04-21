@@ -1,0 +1,42 @@
+<doc> HOPSH -- A Hop Shell
+
+== Description ==
+
+HopSh is a shell working on by hand with a Hop broker. HopSh let
+users invoke Hop commands and execute Hop programs with a textual
+interface.
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+~~ HopSh reads expressions from the console. 
+
+  * Expressions started with a parenthesis (character ++(++) are sent to 
+ a Hop broker for being evaluated. The result of this evaluation is displayed 
+ on the console.
+  * Expression not staring with a parenthesis are interpreted as 
+ ++service++ invocation. The arguments are denoted by a dash character.
+ For instance, the following HopSh command invokes the Hop service
+ ++foo++ which accepts two parameters: ++file++ and ++dir++:
+
+  > foo -file gee.hop -dir /tmp
+
+
+ The same result could be accomplised with the following shell command:
+
+  $ hopsh -c foo -file gee.hop -dir /tmp
+
+
+== Command line options ==
+
+HopSh accept various command line options:
+
+,(<DIV> :align "center"
+    (<PRE> (system->string "hopsh --help")))
+
+</doc>

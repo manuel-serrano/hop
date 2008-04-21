@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Apr 16 14:15:59 2008 (serrano)                */
+;*    Last change :  Mon Apr 21 15:28:18 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -60,7 +60,16 @@
      ;; sorttable
      ("sorttable" "span.hop-sorttable table")
      ;; audio
-     ("audio" "div.hop-audio-controls")))
+     ("audio" "div.hop-audio-controls")
+     ;; filechooser
+     ("filechooser" "div.filechooser")
+     ;; prefs
+     ("prefs" "table.hop-prefs")
+     ("prlabel" "table.hop-prefs td.hop-prefs-label")
+     ("pr" "table.hop-prefs tr.hop-pr")
+     ("pr-type" "table.hop-prefs td.hop-pr-type")
+     ("pr-editor" "table.hop-prefs td.hop-pr-editor")
+     ("pr-editor-expr" "table.hop-prefs input.hop-pr-editor-expr")))
    
 ;*---------------------------------------------------------------------*/
 ;*    hss-mutex ...                                                    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Apr 18 12:04:59 2008 (serrano)                */
+;*    Last change :  Fri Apr 18 18:03:34 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -37,10 +37,14 @@
 ;*    trace ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (trace args)
-   (let ((req (current-request)))
+   (let ((req (current-request))
+	 (file (service-resource trace "etc/trace.wiki")))
       ((trace-print) req args)
-      (http-warning "The Trace weblet produces no document. It merely implements
- services that print messages on the server console.")))
+      (http-warning [The Trace weblet produces no document. It merely implements
+ services that print messages on the server console.,(<BR>)
+
+ See the ,(<A> :href (format "/hop/doc/weblet?weblet=~a" file)"documentation")
+ for the TRACE weblet.])))
 
 ;*---------------------------------------------------------------------*/
 ;*    trace/tprint ...                                                 */

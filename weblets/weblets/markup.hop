@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 09:54:35 2007                          */
-;*    Last change :  Mon Dec 24 14:26:17 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Mon Apr 21 16:26:12 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets markups                                                  */
 ;*=====================================================================*/
@@ -20,7 +20,7 @@
    
    (export (find-info info key default)
 	   (<WEBLETS> req category)
-	   (<WEBLETS-LIST> req)
+	   (<WEBLETS-LIST> req category)
 	   (<WEBLETS-PUBLISHER>)
 	   (<WEBLETS-CATEGORIES>)
 	   (<WEBLET> path auth)
@@ -38,7 +38,7 @@
 ;*    weblets/filter ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-service (weblets/filter category)
-   (<WEBLETS-LIST> category))
+   (<WEBLETS-LIST> (current-request) category))
        
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLETS> ...                                                    */

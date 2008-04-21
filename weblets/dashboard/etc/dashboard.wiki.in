@@ -1,0 +1,26 @@
+<doc> DASHBOARD -- The Hop Dashboard
+
+== Description ==
+
+todo
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+== Services ==
+
+[[/hop/dashboard|DASHBOARD]] defines two services:
+
+  - ++[[dashboard]]++: This is the configuration entry point of 
+ the DASHBOARD weblet.
+  - ++[[dashboard/populate]]++: Returns the list of registered Dashboard
+ services.
+
+
+</doc>
+
