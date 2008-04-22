@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Mon Apr 21 17:57:21 2008 (serrano)                */
+;*    Last change :  Tue Apr 22 15:24:57 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ markups set                                                   */
@@ -60,7 +60,7 @@
    (<HTML>
       (<HEAD> :title "Hop Hz"
 	 :include "hop-notepad" "hop-paned" "hop-tree" "hop-foldlist"
-	 :include "hop-window" "hop-login"
+	 :include "hop-window" "hop-login" "hop-prefs"
 	 :base (service-base-url hz req)
 	 :favicon "etc/favicon.png"
 	 :css "hz.hss")
@@ -196,13 +196,10 @@
 ;*    <HZ:PREFERENCES> ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:PREFERENCES>)
-   (hz-preferences-edit
-    :onclick ~(with-hop ($(service ()
-			     (let ((d (hz-rc-directory)))
-				(unless (directory? d)
-				   (make-directory d)))
-			     (hz-preferences-save (hz-prefs))
-			     (hz-prefs))))))
+   (<DIV>
+      (<BUTTON> :onclick ~(preferences-save "hz-preferences" $(hz-prefs))
+	 "Save preferences")
+      (hz-preferences-edit :id "hz-preferences")))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:PUBLISHERS> ...                                              */
@@ -589,7 +586,7 @@
 				     (hop-service-base)
 				     (weblet-name w)))
 	  :title "Run the weblet in a new window"
-	  "Preferences"))))
+	  "Configure"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLET-DOC> ...                                              */

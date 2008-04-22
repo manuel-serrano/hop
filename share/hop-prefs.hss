@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:33:24 2008                          */
-/*    Last change :  Mon Apr 21 15:17:36 2008 (serrano)                */
+/*    Last change :  Tue Apr 22 16:26:28 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    CSS for <PREFS> markups                                          */
@@ -30,19 +30,28 @@ prlabel {
 pr {
 }
 
-pr-type {
+pr-name {
   width: 10em;
+  vertical-align: top;
+  font-size: 90%;
 }
 
-pr-type:after {
+pr-name:after {
   content: ":";
 }
 
 pr-editor-expr {
   width: 100%;
-  color: #000;
+  color: #00c;
 }
 
 pr-editor-expr.hop-pr-changed {
   color: #f00;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Editors                                                          */
+/*---------------------------------------------------------------------*/
+table.pr-editor-enum {
+  width: 100%;
 }
