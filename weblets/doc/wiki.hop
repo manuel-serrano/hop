@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/doc/wiki.hop                    */
+;*    serrano/prgm/project/hop/1.9.x/weblets/doc/wiki.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Wed Nov 21 12:16:34 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Wed Apr 23 10:28:42 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
 ;*=====================================================================*/
@@ -56,7 +56,8 @@
       ((<fields>) <WIKI-FIELDS>)
       ((<example>) <WIKI-EXAMPLE>)
       ((<code>) <WIKI-CODE>)
-      ((<share>) <WIKI-SHARE>)))
+      ((<share>) <WIKI-SHARE>)
+      ((<rc>) <WIKI-RC>)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *doc-syntax*                                                     */
@@ -260,6 +261,22 @@
 		     :class "source"
 		     (html-string-encode
 		      (read-string (current-input-port))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <WIKI-RC> ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (<WIKI-RC> port file body)
+   (let ((path (make-file-name (hop-rc-directory) file)))
+      (when (file-exists? path)
+	 (<FL>
+	    (<FLITEM>
+	       (<FLHEAD> file)
+	       (with-input-from-file path
+		  (lambda ()
+		     (<PRE>
+			:class "source"
+			(html-string-encode
+			 (read-string (current-input-port)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-page ...                                                     */
