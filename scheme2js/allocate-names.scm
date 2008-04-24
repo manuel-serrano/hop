@@ -12,19 +12,6 @@
 	   gen-js)
    (export (gen-var-names tree)))
 
-(define *reserved-js* (make-hashtable))
-(for-each (lambda (str)
-	     (hashtable-put! *reserved-js* str #t))
-	  '("as" "break" "case" "catch" "class" "const" "continue" "default"
-		 "delete" "do" "else" "extends" "false" "finally" "for"
-		 "function" "if" "import" "in" "instanceof" "is" "namespace"
-		 "new" "null" "package" "private" "public" "return" "super"
-		 "switch" "this" "throw" "true" "try" "typeof" "use" "var"
-		 "void" "while" "with" "abstract" "debugger" "enum" "export"
-		 "goto" "implements" "interface" "native" "protected"
-		 "synchronized" "throws" "transient" "volatile" "Object"
-		 "undefined"))
-		 
 (define (gen-var-names tree)
    ;; ===================================================================
    ;; procedure starts here
@@ -38,14 +25,18 @@
 	     (overload allocate-name allocate-name (Var JS-Var)
 		       (tree.traverse '() #f))))
 
+(define *bad-js* ;; avoid variables with the following names.
+   '("Object" "Array" "Math" "Number" "String" "undefined"))
+
 (define-pmethod (Var-allocate-name escaping-ids local-ids-ht)
    (define (invalid-or-used? str)
-      (and (or (bigloo-need-mangling? str)
+      (and (or (not (valid-JS-str? str))
+	       (member str *bad-js*)
 	       (hashtable-get local-ids-ht str)
 	       (any? (lambda (ht) (hashtable-get ht str)) escaping-ids)
-	       (hashtable-get *reserved-js* str)
-	       (substring-at? str "SC_" 0)
-	       (substring-at? str "sc_" 0)) ;; avoid any clashes with runtime
+	       ;; avoid clashes with runtime :
+	       (string-prefix? "sc_" str)
+	       (string-prefix? "SC_" str))
 	   #t))
 
    (define (nice-mangle str)
