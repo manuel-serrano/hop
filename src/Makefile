@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Apr 21 10:06:44 2008 (serrano)                */
+#*    Last change :  Wed Apr 23 15:41:40 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -64,7 +64,7 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
+	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-etc jvm-lib
