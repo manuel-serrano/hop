@@ -177,7 +177,7 @@
       ((symbol? const)
        (p-display p "\"")
        (if (not (use-mutable-strings?))
-	   (display *symbol-prefix* p))
+	   (p-display p *symbol-prefix*))
        (p-display p const)
        (p-display p "\""))
       ((char? const)

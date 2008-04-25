@@ -331,34 +331,39 @@ sc_Reader.prototype.read = function() {
 	    	|| open === 3/*OPEN_BRACE*/ && close === 4/*CLOSE_BRACE*/
 		|| open === 5/*OPEN_BRACKET*/ && close === 6/*CLOSE_BRACKET*/;
 	};
-	var token = tokenizer.peekToken();
-	switch (token.type) {
-	case 2/*CLOSE_PAR*/:
-	case 4/*CLOSE_BRACE*/:
-	case 6/*CLOSE_BRACKET*/:
-	    if (matchesPeer(listBeginType, token.type)) {
+	var res = null;
+
+	while (true) {
+	    var token = tokenizer.peekToken();
+	    
+	    switch (token.type) {
+	    case 2/*CLOSE_PAR*/:
+	    case 4/*CLOSE_BRACE*/:
+	    case 6/*CLOSE_BRACKET*/:
+		if (matchesPeer(listBeginType, token.type)) {
+		    tokenizer.readToken(); // consume token
+		    return sc_reverseBang(res);
+		} else
+		    throw "closing par doesn't match: " + listBeginType
+			+ " " + listEndType;
+
+	    case 0/*EOF*/:
+		throw "unexpected end of file";
+
+	    case 10/*DOT*/:
 		tokenizer.readToken(); // consume token
-		return null;
-	    } else
-		throw "closing par doesn't match: " + listBeginType
-		    + " " + listEndType;
-
-	case 0/*EOF*/:
-	    throw "unexpected end of file";
-
-	case 10/*DOT*/:
-	    tokenizer.readToken(); // consume token
-	    var cdr = this.read();
-	    var par = tokenizer.readToken();
-	    if (!matchesPeer(listBeginType, par.type))
-		throw "closing par doesn't match: " + listBeginType
-		    + " " + par.type;
-	    else
-		return cdr;
+		var cdr = this.read();
+		var par = tokenizer.readToken();
+		if (!matchesPeer(listBeginType, par.type))
+		    throw "closing par doesn't match: " + listBeginType
+			+ " " + par.type;
+		else
+		    return sc_reverseAppendBang(res, cdr);
 		
 
-	default:
-	    return sc_cons(this.read(), readList.call(this, listBeginType))
+	    default:
+		res = sc_cons(this.read(), res);
+	    }
 	}
     };
     function readQuote() {
@@ -657,36 +662,6 @@ function sc_closeOutputPort(p) {
     return p.close();
 }
 
-sc_Pair.prototype.writeOrDisplay = function(p, writeOrDisplay, inList) {
-    var isP = sc_isPair(this.cdr);
-    if (!inList)
-	p.appendJSString("(");
-    writeOrDisplay(p, this.car);
-    if (sc_isPair(this.cdr)) {
-	p.appendJSString(" ");
-	this.cdr.writeOrDisplay(p, writeOrDisplay, true);
-    } else if (this.cdr !== null) {
-	p.appendJSString(" . ");
-	writeOrDisplay(p, this.cdr);
-    }
-    if (!inList)
-	p.appendJSString(")");
-};
-sc_Vector.prototype.writeOrDisplay = function(p, writeOrDisplay) {
-    if (this.length === 0) {
-	p.appendJSString("#()");
-	return;
-    }
-
-    p.appendJSString("#(");
-    writeOrDisplay(p, this[0]);
-    for (var i = 1; i < this.length; i++) {
-	p.appendJSString(" ");
-	writeOrDisplay(p, this[i]);
-    }
-    p.appendJSString(")");
-};
-
 /* ------------------ write ---------------------------------------------------*/
 
 /*** META ((export #t)) */
@@ -719,9 +694,6 @@ function sc_escapeWriteString(s) {
     for (i = 0; i < s.length; i++) {
 	switch (s.charAt(i)) {
 	case "\0": res += s.substring(j, i) + "\\0"; j = i + 1; break;
-	    /* \a is not recognized and will escape all 'a' chars.
-	case "\a": res += s.substring(j, i) + "\\a"; j = i + 1; break;
-	    */
 	case "\b": res += s.substring(j, i) + "\\b"; j = i + 1; break;
 	case "\f": res += s.substring(j, i) + "\\f"; j = i + 1; break;
 	case "\n": res += s.substring(j, i) + "\\n"; j = i + 1; break;
@@ -731,7 +703,16 @@ function sc_escapeWriteString(s) {
 	case '"': res += s.substring(j, i) + '\\"'; j = i + 1; break;
 	case "\\": res += s.substring(j, i) + "\\\\"; j = i + 1; break;
 	default:
-	    if (s.charAt(i) < ' ' || s.charCodeAt(i) > 127) {
+	    var c = s.charAt(i);
+	    if ("\a" !== "a" && c == "\a") {
+		res += s.substring(j, i) + "\\a"; j = i + 1; continue;
+	    }
+	    if ("\v" !== "v" && c == "\v") {
+		res += s.substring(j, i) + "\\v"; j = i + 1; continue;
+	    }
+	    //if (s.charAt(i) < ' ' || s.charCodeAt(i) > 127) {
+	    // CARE: Manuel is this OK with HOP?
+	    if (s.charAt(i) < ' ') {
 		/* non printable character and special chars */
 		res += s.substring(j, i) + "\\x" + s.charCodeAt(i).toString(16);
 		j = i + 1;

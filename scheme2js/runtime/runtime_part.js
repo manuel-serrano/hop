@@ -57,7 +57,7 @@ function sc_typeof( x ) {
 
 /*** META ((export #t)) */
 function sc_error() {
-    var a = [jsstring2symbol("*error*")];
+    var a = [sc_jsstring2symbol("*error*")];
     for (var i = 0; i < arguments.length; i++) {
 	a[i+1] = arguments[i];
     }
@@ -524,27 +524,32 @@ function sc_Pair(car, cdr) {
 sc_Pair.prototype.toString = function() {
     return sc_toDisplayString(this);
 };
-sc_Pair.prototype.sc_toWriteOrDisplayString = function(writeOrDisplay, inList) {
-    var isP = sc_isPair(this.cdr);
-    var res;
-    if (inList) res = "";
-    else        res = "(";
-    
-    res += writeOrDisplay(this.car);
-    if (isP)
-	res += " " + this.cdr.sc_toWriteOrDisplayString(writeOrDisplay, true);
-    else if (this.cdr !== null)
-	res += " . " + writeOrDisplay(this.cdr);
+sc_Pair.prototype.sc_toWriteOrDisplayString = function(writeOrDisplay) {
+    var current = this;
+
+    var res = "(";
+
+    while(true) {
+	res += writeOrDisplay(current.car);
+	if (sc_isPair(current.cdr)) {
+	    res += " ";
+	    current = current.cdr;
+	} else if (current.cdr !== null) {
+	    res += " . " + writeOrDisplay(current.cdr);
+	    break;
+	} else // current.cdr == null
+	    break;
+    }
 	
-    if (!inList) res += ")";
+    res += ")";
 
     return res;
 };
 sc_Pair.prototype.sc_toDisplayString = function() {
-    return this.sc_toWriteOrDisplayString(sc_toDisplayString, false);
+    return this.sc_toWriteOrDisplayString(sc_toDisplayString);
 };
 sc_Pair.prototype.sc_toWriteString = function() {
-    return this.sc_toWriteOrDisplayString(sc_toWriteString, false);
+    return this.sc_toWriteOrDisplayString(sc_toWriteString);
 };
 // sc_Pair.prototype.sc_toWriteCircleString in IO.js
 
@@ -1328,10 +1333,10 @@ sc_Vector.prototype.sc_toWriteOrDisplayString = function(writeOrDisplay) {
     return res;
 };
 sc_Vector.prototype.sc_toDisplayString = function() {
-    return this.sc_toWriteOrDisplayString(sc_toDisplayString, false);
+    return this.sc_toWriteOrDisplayString(sc_toDisplayString);
 };
 sc_Vector.prototype.sc_toWriteString = function() {
-    return this.sc_toWriteOrDisplayString(sc_toWriteString, false);
+    return this.sc_toWriteOrDisplayString(sc_toWriteString);
 };
 
 /*** META ((export vector? array?)
