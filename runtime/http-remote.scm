@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Apr 26 14:15:59 2008 (serrano)                */
+;*    Last change :  Sat Apr 26 15:33:37 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -35,7 +35,7 @@
 	       request-id::obj
 	       (keep-alive?::bool (default #f))
 	       (intable?::bool (default #f))
-	       (closed?::bool (default #f))
+	       (debug-closed?::bool (default #f))
 	       (locked?::bool (default #f))
 	       (wstart?::bool (default #f))
 	       date::elong))
@@ -54,10 +54,10 @@
    (mutex-unlock! *remote-lock*))
 
 (define-method (object-display o::connection . p)
-   (with-access::connection o (id socket key intable? locked?)
+   (with-access::connection o (id socket key intable? locked? debug-closed?)
       (fprintf (if p (car p) (current-output-port))
-	       "#<connection id=~a key=~a locked=~a intable=~a"
-	       id key locked? intable?)))
+	       "#<connection id=~a key=~a locked=~a intable=~a closed=~a>"
+	       id key locked? intable? debug-closed?)))
 	     
 ;*---------------------------------------------------------------------*/
 ;*    response-remote-start-line ...                                   */
@@ -315,8 +315,9 @@
 				(lambda (l) (cons conn l))
 				(list conn)))
 	  (begin
-	     (remote-debug "  filter connection=" conn)
-	     (with-access::connection conn (socket)
+	     (remote-debug "  filter out connection=" conn)
+	     (with-access::connection conn (socket debug-closed?)
+		(set! debug-closed? #t)
 		(socket-close socket)))))
    
    (remote-debug "FILTER-CONNECTION-TABLE! number=" *connection-number*)
@@ -388,24 +389,26 @@
 ;*---------------------------------------------------------------------*/
 (define (connection-keep-alive! conn)
    (mutex-lock! *remote-lock*)
-   (remote-debug "CONNECTION-KEEP-ALIVE " conn " num=" *connection-number*)
+   (remote-debug "CONNECTION-KEEP-ALIVE " conn " nb-conn=" *connection-number*)
    (when (>=fx *connection-number* (hop-max-remote-keep-alive-connection))
       ;; we first try to cleanup the timeout connections
       (let ((now (current-seconds)))
 	 (filter-connection-table!
-	  (lambda (c) (not (connection-timeout? c now))))))
+	  (lambda (c)
+	     (or (connection-locked? c)
+		 (not (connection-timeout? c now)))))))
    (if (>=fx *connection-number* (hop-max-remote-keep-alive-connection))
        ;; we have failed
        (filter-connection-table!
-	(lambda (c) (not (connection-locked? c))))
+	(lambda (c) (connection-locked? c)))
        ;; store the connection only if room is available on the table
        (with-access::connection conn (key locked? intable?)
 	  (set! locked? #f)
 	  (unless intable?
 	     (remote-debug "  add in table conn=" conn
-			   " number=" *connection-number*)
+			   " nb-conn=" *connection-number*)
 	     (set! intable? #t)
-	     ;; this is the first time we see this connection, we had it to
+	     ;; this is the first time we see this connection, we add it to
 	     ;; the connection table
 	     (hashtable-update! *connection-table*
 				key
@@ -417,15 +420,16 @@
 ;*    connection-close-sans-lock! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (connection-close-sans-lock! conn::connection)
-   (with-access::connection conn (key socket intable? closed?)
-      (when closed?
+   (with-access::connection conn (key socket intable? debug-closed?)
+      (when debug-closed?
 	 (error 'connection-close-sans-lock! "Connection already closed" conn))
       (set! *connection-number* (-fx *connection-number* 1))
       (remote-debug "CONNECTION-CLOSE conn=" conn
-		    " number=" *connection-number*)
-      (set! closed? #t)
+		    " nb-conn=" *connection-number*)
+      (set! debug-closed? #t)
       (socket-close socket)
       (when intable?
+	 (set! intable? #f)
 	 (hashtable-update! *connection-table*
 			    key
 			    (lambda (l) (remq! conn l))

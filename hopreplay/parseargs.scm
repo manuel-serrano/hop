@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Apr 26 09:46:31 2008 (serrano)                */
+;*    Last change :  Sat Apr 26 14:43:11 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPREPLAY command line parsing                                   */
@@ -68,6 +68,10 @@
 	  (hoprp-threads-num-set! (string->integer num)))
 	 ((("-L" "--loop") (help "Infinite loop"))
 	  (hoprp-loop-set! #t))
+	 ((("-H" "--host") ?host (help (format "Host name (default: localhost)")))
+	  (hoprp-host-set! host))
+	 ((("-p" "--port") ?port (help (format "Port number (default: 8080)")))
+	  (hoprp-port-set! (string->integer port)))
 	 (("-?dummy")
 	  (args-parse-usage #f)
 	  (exit 1))

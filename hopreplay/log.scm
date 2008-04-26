@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr 26 09:03:00 2008                          */
-;*    Last change :  Sat Apr 26 10:31:20 2008 (serrano)                */
+;*    Last change :  Sat Apr 26 15:56:13 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Parse log files                                                  */
@@ -16,7 +16,8 @@
    
    (library web)
    
-   (import  hoprp_param)
+   (import  hoprp_param
+	    hoprp_login)
    
    (export  (parse-log ::bstring)
 	    
@@ -57,26 +58,40 @@
 		      (match-case m
 			 ((?- ?user ?me ?url)
 			  (if (substring-at? url "http://" 0)
-			      (multiple-value-bind (scheme uinfo host port path)
-				 (url-parse url)
-				 (loop (cons (instantiate::request
-						(host host)
-						(port port)
-						(path (format "http://~a:~a~a"
-							      host port
-							      path))
-						(header '((host . ,host)))
-						(method (string->symbol
-							 (string-downcase me))))
-					     res)))
-			      (loop (cons (instantiate::request
-					     (host (hoprp-host))
-					     (port (hoprp-port))
-					     (method (string->symbol
-						      (string-downcase me)))
-					     (path url))
-					  res))))
+			      (loop (cons (proxy-request me url) res))
+			      (loop (cons (remote-request me url) res))))
 			 (else
 			  (loop res))))))))))
 				    
-					  
+;*---------------------------------------------------------------------*/
+;*    proxy-request ...                                                */
+;*---------------------------------------------------------------------*/
+(define (proxy-request met url)
+   (multiple-value-bind (scheme uinfo host port path)
+      (url-parse url)
+      (let ((hd (if (and (not uinfo) (hoprp-login))
+		    `((proxy-authorization: . ,(hoprp-login))
+		      (host: . ,host))
+		    `((host: . ,host)))))
+	 (instantiate::request
+	    (host host)
+	    (port port)
+	    (path url)
+	    (header hd)
+	    (method (string->symbol (string-downcase met)))))))
+
+;*---------------------------------------------------------------------*/
+;*    remote-request ...                                               */
+;*---------------------------------------------------------------------*/
+(define (remote-request me url)
+   (let ((hd (if (hoprp-login)
+		 `((authorization: . ,(hoprp-login)))
+		 '())))
+      (instantiate::request
+	 (host (hoprp-host))
+	 (port (hoprp-port))
+	 (method (string->symbol (string-downcase me)))
+	 (header hd)
+	 (path url))))
+   
+   

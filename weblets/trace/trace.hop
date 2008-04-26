@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Apr 18 18:03:34 2008 (serrano)                */
+;*    Last change :  Sat Apr 26 14:41:39 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -32,14 +32,21 @@
 
 (define-preferences trace-preferences
    ("printer" expr trace-print))
- 
+
+;*---------------------------------------------------------------------*/
+;*    trace-mutex ...                                                  */
+;*---------------------------------------------------------------------*/
+(define trace-mutex (make-mutex))
+
 ;*---------------------------------------------------------------------*/
 ;*    trace ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-service (trace args)
    (let ((req (current-request))
 	 (file (service-resource trace "etc/trace.wiki")))
+      (mutex-lock! trace-mutex)
       ((trace-print) req args)
+      (mutex-unlock! trace-mutex)
       (http-warning [The Trace weblet produces no document. It merely implements
  services that print messages on the server console.,(<BR>)
 
@@ -50,7 +57,9 @@
 ;*    trace/tprint ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-service (trace/tprint file pos args)
-   (apply fprint (current-error-port) file "," pos ":" args))
+   (mutex-lock! trace-mutex)
+   (apply fprint (current-error-port) file "," pos ":" args)
+   (mutex-unlock! trace-mutex))
 
 ;*---------------------------------------------------------------------*/
 ;*    trace/documentation ...                                          */
