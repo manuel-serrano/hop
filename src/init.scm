@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sat Apr  5 07:00:06 2008 (serrano)                */
+;*    Last change :  Sat Apr 26 10:22:15 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -195,9 +195,10 @@
 	 (bodyp #f))))
 
 ;*---------------------------------------------------------------------*/
-;*    log-response ...                                                 */
+;*    log-local-response ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (log-response port req resp)
+(define (log-local-response port req resp)
+   
    (define (two-digits n)
       (when (< n 10)
 	 (display #\0 port))
@@ -207,17 +208,17 @@
       ;; distant host address and user
       (fprintf port "~a - ~a "
 	       (socket-host-address socket)
-	       (or user "-"))
+	       (if (user? user) (user-name user)) "-")
       ;; date
       (display "[" port)
       (let* ((d   (current-date))
 	     (tz  (if (= 1 (date-is-dst d))
 		      (- (date-timezone d) 3600)
 		      (date-timezone d))))
-	 (two-digits (date-day d))    (display "/" port)
-	 (two-digits (date-month d))  (display "/" port)
+	 (two-digits (date-day d)) (display "/" port)
+	 (two-digits (date-month d)) (display "/" port)
 	 (display (date-year d) port) (display ":" port)
-	 (two-digits (date-hour d))   (display ":" port)
+	 (two-digits (date-hour d)) (display ":" port)
 	 (two-digits (date-minute d)) (display ":" port)
 	 (two-digits (date-second d)) (display " " port)
 	 (display (if (> tz 0) "+" "-") port)
@@ -229,21 +230,21 @@
       ;; Return code
       (let* ((str (%http-response-local-start-line resp))
 	     (len (string-length str)))
-	 (let Loop ((i  0)
+	 (let loop ((i  0)
 		    (sp 0))
 	    (cond
-	       ((or (>= i len) (>= sp 2))
+	       ((or (>=fx i len) (>=fx sp 2))
 		#f)
 	       ((char=? (string-ref str i) #\space)
-		(Loop (+ i 1) (+ sp 1)))
-	       ((= sp 1)
+		(loop (+fx i 1) (+fx sp 1)))
+	       ((=fx sp 1)
 		(display (string-ref str i) port)
-		(Loop (+ i 1) sp))
+		(loop (+fx i 1) sp))
 	       (else
-		(Loop (+ i 1) sp)))))
+		(loop (+fx i 1) sp)))))
       (display " " port)
       ;; Content-length
-      (let ((hdrs (%http-response-local-header resp)))
+      (let ((hdrs (%http-response-header resp)))
 	 (cond
 	    ((http-response-file? resp)
 	     (display (file-size (http-response-file-file resp)) port))
@@ -252,12 +253,61 @@
 	    (else
 	     (display "-" port))))
       ;; Long version (add User-Agent and Referer)
-      (let ((agent   (assoc :user-agent header))
-	    (referer (assoc :referer header)))
-	 (when (and (pair? agent) (pair? referer))
-	    (fprintf port " ~s ~s" (cdr referer) (cdr agent))))
+      (when (>fx (hop-log) 1)
+	 (let ((agent   (assoc :user-agent header))
+	       (referer (assoc :referer header)))
+	    (when (and (pair? agent) (pair? referer))
+	       (fprintf port " ~s ~s" (cdr referer) (cdr agent)))))
       (newline port)
-      (flush-output-port port)))
+      (flush-output-port port)
+      resp))
+
+;*---------------------------------------------------------------------*/
+;*    log-remote-response ...                                          */
+;*---------------------------------------------------------------------*/
+(define (log-remote-response port req resp)
+   (define (two-digits n)
+      (when (< n 10)
+	 (display #\0 port))
+      (display n port))
+   
+   (with-access::http-request req (socket host (p port) user method encoded-path http header)
+      ;; distant host address and user
+      (fprintf port "~a - ~a "
+	       (socket-host-address socket)
+	       (if (user? user) (user-name user)) "-")
+      ;; date
+      (display "[" port)
+      (let* ((d   (current-date))
+	     (tz  (if (= 1 (date-is-dst d))
+		      (- (date-timezone d) 3600)
+		      (date-timezone d))))
+	 (two-digits (date-day d)) (display "/" port)
+	 (two-digits (date-month d)) (display "/" port)
+	 (display (date-year d) port) (display ":" port)
+	 (two-digits (date-hour d)) (display ":" port)
+	 (two-digits (date-minute d)) (display ":" port)
+	 (two-digits (date-second d)) (display " " port)
+	 (display (if (> tz 0) "+" "-") port)
+	 (two-digits (quotient  (abs tz) 3600))
+	 (two-digits (remainder (abs tz) 3600)))
+      (display "] " port)
+      ;; request
+      (fprintf port "\"~a http://~a:~a~a ~a\" " method host p encoded-path http)
+      ;; Return code
+      (display "305" port)
+      (display " " port)
+      ;; Content-length
+      (display "-" port)
+      ;; Long version (add User-Agent and Referer)
+      (when (>fx (hop-log) 1)
+	 (let ((agent   (assoc :user-agent header))
+	       (referer (assoc :referer header)))
+	    (when (and (pair? agent) (pair? referer))
+	       (fprintf port " ~s ~s" (cdr referer) (cdr agent)))))
+      (newline port)
+      (flush-output-port port)
+      resp))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy-ip-allowed? ...                                        */
@@ -333,4 +383,7 @@
    (when (output-port? (hop-log-file))
       (hop-http-response-local-hook-add!
        (lambda (req resp)
-	  (log-response (hop-log-file) req resp)))))
+	  (log-local-response (hop-log-file) req resp)))
+      (hop-http-response-remote-hook-add!
+       (lambda (req resp)
+	  (log-remote-response (hop-log-file) req resp)))))

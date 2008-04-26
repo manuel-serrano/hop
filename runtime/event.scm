@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Apr 14 17:17:03 2008 (serrano)                */
+;*    Last change :  Sat Apr 26 08:19:49 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -35,7 +35,7 @@
 	    __hop_http-response
 	    __hop_http-error)
 
-   (static  (class http-response-event::%http-response
+   (static  (class http-response-event::%http-response-local
 	       (name::bstring read-only))
 	    
 	    (class ajax-connection

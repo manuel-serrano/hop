@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri Mar 14 09:29:00 2008 (serrano)                */
+;*    Last change :  Sat Apr 26 14:15:59 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -35,6 +35,7 @@
 	       request-id::obj
 	       (keep-alive?::bool (default #f))
 	       (intable?::bool (default #f))
+	       (closed?::bool (default #f))
 	       (locked?::bool (default #f))
 	       (wstart?::bool (default #f))
 	       date::elong))
@@ -416,10 +417,13 @@
 ;*    connection-close-sans-lock! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (connection-close-sans-lock! conn::connection)
-   (with-access::connection conn (key socket intable?)
+   (with-access::connection conn (key socket intable? closed?)
+      (when closed?
+	 (error 'connection-close-sans-lock! "Connection already closed" conn))
       (set! *connection-number* (-fx *connection-number* 1))
       (remote-debug "CONNECTION-CLOSE conn=" conn
 		    " number=" *connection-number*)
+      (set! closed? #t)
       (socket-close socket)
       (when intable?
 	 (hashtable-update! *connection-table*
