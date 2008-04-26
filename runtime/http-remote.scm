@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Apr 26 15:33:37 2008 (serrano)                */
+;*    Last change :  Sat Apr 26 16:57:42 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -35,13 +35,17 @@
 	       request-id::obj
 	       (keep-alive?::bool (default #f))
 	       (intable?::bool (default #f))
-	       (debug-closed?::bool (default #f))
+	       (%%debug-closed?::bool (default #f))
 	       (locked?::bool (default #f))
 	       (wstart?::bool (default #f))
 	       date::elong))
    
    (export  (response-remote-start-line ::http-response-remote)))
 
+;*---------------------------------------------------------------------*/
+;*    Debug traces to removed when the keep-alive connections          */
+;*    pool is tested ok.                                               */
+;*---------------------------------------------------------------------*/
 (define debug-port (open-output-file "/tmp/HOP-REMOTE.log"))
 (define (remote-debug . args)
    (for-each (lambda (a) (display a debug-port)) args)
@@ -54,10 +58,10 @@
    (mutex-unlock! *remote-lock*))
 
 (define-method (object-display o::connection . p)
-   (with-access::connection o (id socket key intable? locked? debug-closed?)
+   (with-access::connection o (id socket key intable? locked? %%debug-closed?)
       (fprintf (if p (car p) (current-output-port))
 	       "#<connection id=~a key=~a locked=~a intable=~a closed=~a>"
-	       id key locked? intable? debug-closed?)))
+	       id key locked? intable? %%debug-closed?)))
 	     
 ;*---------------------------------------------------------------------*/
 ;*    response-remote-start-line ...                                   */
@@ -316,8 +320,8 @@
 				(list conn)))
 	  (begin
 	     (remote-debug "  filter out connection=" conn)
-	     (with-access::connection conn (socket debug-closed?)
-		(set! debug-closed? #t)
+	     (with-access::connection conn (socket %%debug-closed?)
+		(set! %%debug-closed? #t)
 		(socket-close socket)))))
    
    (remote-debug "FILTER-CONNECTION-TABLE! number=" *connection-number*)
@@ -420,13 +424,13 @@
 ;*    connection-close-sans-lock! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (connection-close-sans-lock! conn::connection)
-   (with-access::connection conn (key socket intable? debug-closed?)
-      (when debug-closed?
+   (with-access::connection conn (key socket intable? %%debug-closed?)
+      (when %%debug-closed?
 	 (error 'connection-close-sans-lock! "Connection already closed" conn))
       (set! *connection-number* (-fx *connection-number* 1))
       (remote-debug "CONNECTION-CLOSE conn=" conn
 		    " nb-conn=" *connection-number*)
-      (set! debug-closed? #t)
+      (set! %%debug-closed? #t)
       (socket-close socket)
       (when intable?
 	 (set! intable? #f)
