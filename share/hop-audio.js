@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Thu Apr 17 13:25:14 2008 (serrano)                */
+/*    Last change :  Sun Apr 27 08:36:18 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -166,6 +166,7 @@ function HopAudioServerProxy( audio, url ) {
 	 if( (k === Splay) || (k === Sstart) ) {
 	    // play
 	    audio.paused = false;
+	    audio.state = Splay;
 	    current_duration = rest.car;
 	    current_position = rest.cdr.car;
 	    current_volume = rest.cdr.cdr.car;
@@ -176,6 +177,7 @@ function HopAudioServerProxy( audio, url ) {
 	 } else if( k == Spause ) {
 	    // pause
 	    audio.paused = true;
+	    audio.state = Spause;
 	    current_duration = rest.car;
 	    current_position = rest.cdr.car;
 	    current_volume = rest.cdr.cdr.car;
@@ -186,6 +188,7 @@ function HopAudioServerProxy( audio, url ) {
 	 } if( k == Sstop ) {
 	    // stop
 	    audio.paused = false;
+	    audio.state = Sstop;
 	    current_duration = rest.car;
 	    current_position = rest.cdr.car;
 	    current_volume = rest.cdr.cdr.car;
@@ -461,9 +464,18 @@ function hop_audio_load( audio, src, stream ) {
    audio.src = src;
    audio.playlist_index = false;
    audio.paused = false;
+   audio.state = stream ? Splay : Sstop;
    hop_audio_run_hooks( audio, "progress" );
 
    return audio.proxy.load( src, stream );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_audio_state ...                                              */
+/*---------------------------------------------------------------------*/
+/*** META ((export audio-state)) */
+function hop_audio_state( audio ) {
+   return audio.state;
 }
 
 /*---------------------------------------------------------------------*/
@@ -553,6 +565,7 @@ function hop_audio_playlist_next( audio ) {
 function hop_audio_play( audio, start ) {
    audio.playlist_index = false;
    audio.paused = false;
+   audio.state = start ? Splay : Sstop;
    audio.proxy.play( start ? start : audio.start );
 }
 
@@ -580,6 +593,7 @@ function hop_audio_stop( audio ) {
 /*** META ((export audio-pause)) */
 function hop_audio_pause( audio ) {
    audio.paused = !audio.paused;
+   audio.state = audio.paused ? Spause : Splay;
    audio.proxy.pause();
 }
 

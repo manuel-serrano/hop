@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Mar 23 16:24:38 2008 (serrano)                */
+;*    Last change :  Sun Apr 27 07:42:28 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -183,11 +183,6 @@
 		 (proc 'request-line-grammar)
 		 (msg "Method not implemented")
 		 (obj string)))))
-
-;*---------------------------------------------------------------------*/
-;*    cs-convert ...                                                   */
-;*---------------------------------------------------------------------*/
-(define cs-convert #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    http-file-name-canonicalize ...                                  */

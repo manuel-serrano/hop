@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sat Apr 19 09:20:24 2008 (serrano)                */
+;*    Last change :  Sun Apr 27 08:28:01 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -398,21 +398,22 @@
 (define (audio-onmeta %event engine player)
    
    (define (signal-meta s plist)
-      (let* ((conv (charset-converter 'UTF-8 (hop-charset)))
+      (let* ((conv (hop-locale->charset))
 	     (s (cond
 		   ((id3? s)
-		    (let ((cv (charset-converter (hop-locale) (hop-charset))))
-		       (duplicate::id3 s
-			  (title (cv (id3-title s)))
-			  (artist (cv (id3-artist s)))
-			  (album (cv (id3-album s)))
-			  (orchestra #f)
-			  (conductor #f)
-			  (interpret #f)
-			  (comment (cv (id3-comment s))))))
+		    (duplicate::id3 s
+		       (title ((hop-locale->charset) (id3-title s)))
+		       (artist ((hop-locale->charset) (id3-artist s)))
+		       (album ((hop-locale->charset) (id3-album s)))
+		       (orchestra #f)
+		       (conductor #f)
+		       (interpret #f)
+		       (comment ((hop-locale->charset) (id3-comment s)))))
+		   ((string? s)
+		    ((hop-locale->charset) s))
 		   (else
 		    s)))
-	     (plist (map conv plist)))
+	     (plist (map (lambda (f) (conv (url-decode f))) plist)))
 	 (tprint "signal meta s=" (if (string? s) s "id3")
 		 " plist.length=" (length plist)
 		 " engine=" (find-runtime-type engine))
@@ -426,12 +427,12 @@
       (hop-audio-player-%errcount-set! player 0)
       (if (string? meta)
 	  ;; this is a file name (a url)
-	  (let ((file (charset-convert meta 'UTF-8 (hop-locale))))
-	     (if (not (file-exists? meta))
-		 (audio-onfile-name meta playlist)
+	  (let ((file ((hop-charset->locale) meta)))
+	     (if (not (file-exists? file))
+		 (audio-onfile-name file playlist)
 		 (let ((id3 (mp3-id3 file)))
 		    (if (not id3)
-			(audio-onfile-name meta playlist)
+			(audio-onfile-name file playlist)
 			(signal-meta id3 playlist)))))
 	  (signal-meta #f playlist))))
 
@@ -495,7 +496,7 @@
 (define (music-playlist-set! engine a1)
    (music-playlist-clear! engine)
    (for-each (lambda (s)
-		(music-playlist-add! engine s))
+		(music-playlist-add! engine ((hop-charset->locale) s)))
 	     a1))
    
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Apr  7 10:38:51 2008 (serrano)                */
+;*    Last change :  Sun Apr 27 08:24:17 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -17,7 +17,8 @@
    (include "param.sch")
 
    (import  __hop_configure
-	    __hop_mime)
+	    __hop_mime
+	    __hop_charset)
 
    (export  (hop-uptime::date)
 	    
@@ -133,6 +134,9 @@
 	    (hop-charset::symbol)
 	    (hop-charset-set! ::symbol)
 	    
+	    (hop-charset->locale::procedure)
+	    (hop-locale->charset::procedure)
+
 	    (hop-locale::symbol)
 	    (hop-locale-set! ::symbol)
 
@@ -708,6 +712,15 @@
    ".hopaccess")
 
 ;*---------------------------------------------------------------------*/
+;*    hop-charset->locale ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-charset->locale
+   (lambda (x) x))
+
+(define-parameter hop-locale->charset
+   (lambda (x) x))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-charset ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    This parameter specifies the charset used by HOP for             */
@@ -721,6 +734,9 @@
 (define-parameter hop-charset
    'UTF-8
    (lambda (v)
+      (when (and (symbol? v) (symbol? *hop-locale*))
+	 (hop-locale->charset-set! (charset-converter v (hop-locale)))
+	 (hop-charset->locale-set! (charset-converter (hop-locale) v)))
       (case v
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((UCS-2 ucs-2) 'UCS-2)
@@ -742,6 +758,9 @@
 (define-parameter hop-locale
    'ISO-8859-1
    (lambda (v)
+      (when (and (symbol? v) (symbol? (hop-charset)))
+	 (hop-locale->charset-set! (charset-converter v (hop-charset)))
+	 (hop-charset->locale-set! (charset-converter (hop-charset) v)))
       (case v
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((UCS-2 ucs-2) 'UCS-2)
