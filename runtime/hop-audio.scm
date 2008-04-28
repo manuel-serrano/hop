@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sun Apr 27 08:28:01 2008 (serrano)                */
+;*    Last change :  Mon Apr 28 15:37:06 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -414,7 +414,7 @@
 		   (else
 		    s)))
 	     (plist (map (lambda (f) (conv (url-decode f))) plist)))
-	 (tprint "signal meta s=" (if (string? s) s "id3")
+	 (tprint "signal meta s=" (if (string? s) s (find-runtime-type s))
 		 " plist.length=" (length plist)
 		 " engine=" (find-runtime-type engine))
 	 (hop-event-broadcast! %event (list 'meta s plist))))

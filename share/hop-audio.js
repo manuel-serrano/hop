@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sun Apr 27 08:36:18 2008 (serrano)                */
+/*    Last change :  Mon Apr 28 16:04:05 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -473,7 +473,8 @@ function hop_audio_load( audio, src, stream ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_state ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-state)) */
+/*** META ((export audio-state)
+           (peephole (postfix ".state"))) */
 function hop_audio_state( audio ) {
    return audio.state;
 }
@@ -852,8 +853,6 @@ function hop_audio_controls_onmetadata( evt ) {
    var plen = sc_length( hop_audio_playlist_get( audio ) );
 
    if( alen > 0 ) {
-      status.src = playbut.src;
-
       track.className = "hop-audio-info-status-track-on-play";
       if( plen > 0 ) {
 	 track.innerHTML = int2( 1 + hop_audio_playlist_index( audio ) )

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Apr 21 10:20:26 2008 (serrano)                */
+;*    Last change :  Mon Apr 28 08:19:28 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -337,25 +337,41 @@
 	 (raise #f))
       (begin
 	 ;; when the error is a response, we transmit it to the next stage
-	 (hop-verb 1 (hop-color req req " ERROR"))
-	 (hop-verb 2 (scheduler-stat scd))
-	 (hop-verb 1 ": " (trace-color 1 e) "\n")
-	 (if (%http-response? e)
-	     e
-	     (begin
-		(cond
-		   ((&error? e)
-		    (error-notify (evmeaning-annotate-exception! e)))
-		   ((&warning? e)
-		    (warning-notify (evmeaning-annotate-exception! e))))
-		(if (&io-sigpipe-error? e)
-		    (begin
-		       ;; there is nothing we can do but aborting the request
-		       (socket-close (http-request-socket req))
-		       (raise #f))
-		    ;; generate a legal response for the next stage (although
-		    ;; this response denotes the error).
-		    ((or (hop-http-response-error) http-error) e req)))))))
+	 (if (&io-sigpipe-error? e)
+	     (response-sigpipe-error-handler e scd req)
+	     (response-default-error-handler e scd req)))))
+
+;*---------------------------------------------------------------------*/
+;*    response-sigpipe-error-handler ...                               */
+;*---------------------------------------------------------------------*/
+(define (response-sigpipe-error-handler e scd req)
+   ;; signal the error
+   (hop-verb 2 (hop-color req req " INTERRUPTED"))
+   (hop-verb 2 ": " (&error-obj e) "\n")
+   ;; there is nothing we can do but aborting the request
+   (socket-close (http-request-socket req))
+   ;; abort the request
+   (raise #f))
+
+;*---------------------------------------------------------------------*/
+;*    response-default-error-handler ...                               */
+;*---------------------------------------------------------------------*/
+(define (response-default-error-handler e scd req)
+   (begin
+      (hop-verb 1 (hop-color req req " ERROR"))
+      (hop-verb 2 (scheduler-stat scd))
+      (hop-verb 1 ": " (trace-color 1 e) "\n")
+      (if (%http-response? e)
+	  e
+	  (begin
+	     (cond
+		((&error? e)
+		 (error-notify (evmeaning-annotate-exception! e)))
+		((&warning? e)
+		 (warning-notify (evmeaning-annotate-exception! e))))
+	     ;; generate a legal response for the next stage (although
+	     ;; this response denotes the error).
+	     ((or (hop-http-response-error) http-error) e req)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-response ...                                               */

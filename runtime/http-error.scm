@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Mar 27 11:04:13 2008 (serrano)                */
+;*    Last change :  Mon Apr 28 08:40:53 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -38,7 +38,7 @@
 	    (http-method-error obj)
 	    (http-parse-error obj)
 	    (http-bad-request obj)
-	    (http-internal-error ::&error ::obj)
+	    (http-internal-error ::obj ::obj)
 	    (http-service-error ::http-request ::symbol ::bstring)
 	    (http-invalidated-service-error ::http-request)
 	    (http-corrupted-service-error ::http-request)
@@ -327,10 +327,16 @@ a timeout which has now expired. The service is then no longer available."))
 ;*    http-internal-error ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-internal-error e msg)
-   (let ((s (with-error-to-string (lambda () (error-notify e)))))
+   (let ((s (cond
+	       ((string? e)
+		e)
+	       ((&exception? e)
+		(with-error-to-string (lambda () (exception-notify e))))
+	       (else
+		(with-output-to-string (lambda () (display e)))))))
       (instantiate::http-response-hop
 	 (request (or (current-request) (anonymous-request)))
-	 (start-line "HTTP/1.0 501 Internal Server Error")
+	 (start-line "HTTP/1.0 500 Internal Server Error")
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
@@ -608,5 +614,4 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (start-line "HTTP/1.0 502 Bad Gateway")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Gateway Timeout ~a</body></html>" e))))
-
 
