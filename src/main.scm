@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May  6 17:39:58 2008 (serrano)                */
+;*    Last change :  Tue May  6 19:44:46 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -368,7 +368,6 @@
       (hop-verb 1 (hop-color req req " ERROR"))
       (hop-verb 2 (scheduler-stat scd))
       (hop-verb 1 ": " (trace-color 1 e) "\n")
-      (tprint "e=" (find-runtime-type e))
       (if (%http-response? e)
 	  e
 	  (begin

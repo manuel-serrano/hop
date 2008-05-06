@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 28 06:23:39 2007                          */
-/*    Last change :  Tue May  6 12:25:38 2008 (serrano)                */
+/*    Last change :  Tue May  6 19:58:00 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Audio's cascade style sheet.                                 */
@@ -55,7 +55,6 @@ audio {
   width: $(format "~aem" hopaudio-width);
   height: $(format "~apx" hopaudio-height);
   border: 1px solid $hopaudio-border-color;
-  display: none;
 }
 
 /*---------------------------------------------------------------------*/

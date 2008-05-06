@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue May  6 12:30:44 2008 (serrano)                */
+;*    Last change :  Tue May  6 19:56:18 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -97,15 +97,6 @@
 			      (onpanchange #unspecified)
 			      (attr)
 			      body)
-
-   (define (expr->function expr)
-      (cond
-	 ((xml-tilde? expr)
-	  (format "function( event ) { ~a }" (tilde->string expr)))
-	 ((string? expr)
-	  (format "function( event ) { ~a }" expr))
-	 (else
-	  "false")))
    
    (let* ((id (xml-make-id id 'audio))
 	  (pid (xml-make-id 'hopaudio))
@@ -124,15 +115,15 @@
 	  (init (<AUDIO-INIT> :id id :pid pid :player player
 		   :src src :autoplay autoplay
 		   :start start
-		   :onplay (expr->function onplay)
-		   :onstop (expr->function onstop)
-		   :onpause (expr->function onpause)
-		   :onload (expr->function onload)
-		   :onerror (expr->function onerror)
-		   :onended (expr->function onended)
-		   :onprogress (expr->function onprogress)
-		   :onloadedmetadata (expr->function onloadedmetadata)
-		   :onclose (expr->function onclose))))
+		   :onplay (hop->js-callback onplay)
+		   :onstop (hop->js-callback onstop)
+		   :onpause (hop->js-callback onpause)
+		   :onload (hop->js-callback onload)
+		   :onerror (hop->js-callback onerror)
+		   :onended (hop->js-callback onended)
+		   :onprogress (hop->js-callback onprogress)
+		   :onloadedmetadata (hop->js-callback onloadedmetadata)
+		   :onclose (hop->js-callback onclose))))
       (<AUDIO-OBJECT> id pid init controller)))
 
 ;*---------------------------------------------------------------------*/
@@ -216,7 +207,7 @@
 	 :title title :alt title :inline #t
 	 :src (make-file-path (hop-icons-directory) "hop-audio" src)
 	 :onclick onclick))
-   
+
    (<DIV> :id (string-append id "-controls") :class "hop-audio-controls"
       ;; the controls callbacks
       (<SCRIPT>
