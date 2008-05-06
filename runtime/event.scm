@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon May  5 21:28:12 2008 (serrano)                */
+;*    Last change :  Tue May  6 17:39:22 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -241,7 +241,7 @@
 ;*    This function assumes that the event mutex is acquired.          */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-event-push! conn name value)
-   [assert (conn) (not (symbol? (mutex-state mutex)))]
+   [assert (conn) (not (symbol? (mutex-state (ajax-connection-mutex conn))))]
    (with-access::ajax-connection conn (buffers mutex buffers)
       (let ((cell (assoc name buffers)))
 	 (when (pair? cell)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May  5 19:00:18 2008 (serrano)                */
+;*    Last change :  Tue May  6 17:39:58 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -257,7 +257,7 @@
 	       (and (&io-parse-error? e)
 		    (eof-object? (&io-parse-error-obj e))))))
    
-   ;; error handler specific that the stage
+   ;; error handler specific to that the stage
    (define (connect-error-handler e)
       (if (keep-alive-ellapsed-error? e)
 	  ;; this is not a true error, just log
