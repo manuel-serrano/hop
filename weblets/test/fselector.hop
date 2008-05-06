@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/test/fselector.hop              */
+;*    serrano/prgm/project/hop/1.9.x/weblets/test/fselector.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 20 11:49:41 2007                          */
-;*    Last change :  Thu Sep 20 13:45:33 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Mon May  5 11:23:34 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File Selector testing                                            */
 ;*=====================================================================*/
@@ -20,24 +20,10 @@
 ;*    test/fselector ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-service (test/fselector)
-   (<TEST-HTML> :include '("hop-fileselect" "hop-window" "hop-tree")
+   (<TEST-HTML> :include '("hop-paned" "hop-file" "hop-window")
       :source (service-resource test/fselector "fselector.hop")
-      (<TABLE>
-	 (<TR>
-	    (<TH>
-	       "File: ")
-	    (<TD>
-	       (<FILESELECT>
-		  :id "file"
-		  :value (hop-share-directory)
-		  :onchange ~(alert this.value)
-		  :size 60))
-	    (<TD>
-	       (<FILEBROWSE>
-		  :title "Hop File browser"
-		  :value "/"
-		  :path (hop-share-directory)
-		  :onmousedown ~(set! this.value "/")
-		  :onselect ~(alert this.value)))))))
+      (<FILECHOOSER>
+	  :url "/tmp"
+	  :onopen ~(alert "FILEBROWSE=" this.value))))
       
    

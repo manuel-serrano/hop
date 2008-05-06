@@ -1,14 +1,40 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hopscheme.js                      */
+/*    serrano/prgm/project/hop/1.9.x/share/hopscheme.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Thu Sep  6 13:23:43 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Tue May  6 10:37:22 2008 (serrano)                */
+/*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
 /*=====================================================================*/
 
+/*---------------------------------------------------------------------*/
+/*    hop_error ...                                                    */
+/*---------------------------------------------------------------------*/
+function hop_error( fun, exc, msg, svc ) {
+   var emsg = exc.toString();
+
+   if( "message" in exc ) {
+      emsg = exc.message;
+   } else {
+      if( "description" in exc ) {
+	 emsg = exc.description;
+      }
+   }
+			
+   if( "line" in exc ) {
+      emsg = emsg + " (line " + exc.line + ")";
+   }
+
+   if( typeof svc === "string" || svc instanceof String )
+      fun = fun + ", " + svc;
+   
+   alert( "*** ERROR " + fun + ": " + emsg + " -- " + msg );
+   
+   throw exc;
+}
+   
 /*---------------------------------------------------------------------*/
 /*    Serialization                                                    */
 /*---------------------------------------------------------------------*/

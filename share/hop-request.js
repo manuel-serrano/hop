@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Apr 17 10:37:07 2008 (serrano)                */
+/*    Last change :  Tue May  6 10:34:42 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -20,21 +20,6 @@ var hop_anim_latency = 400;
 /*    hop_busy_anim ...                                                */
 /*---------------------------------------------------------------------*/
 var hop_busy_anim_16_16 = "data:image/gif;base64,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";
-
-/*---------------------------------------------------------------------*/
-/*    hop_error ...                                                    */
-/*---------------------------------------------------------------------*/
-function hop_error( msg ) {
-   alert( msg );
-   throw new Error( msg );
-}
-
-/*---------------------------------------------------------------------*/
-/*    error ...                                                        */
-/*---------------------------------------------------------------------*/
-function error( msg ) {
-   hop_error( msg );
-}
 
 /*---------------------------------------------------------------------*/
 /*    hop_service_url ...                                              */
@@ -161,21 +146,6 @@ function hop_default_failure( http ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_failure_alert ...                                            */
-/*---------------------------------------------------------------------*/
-function hop_failure_alert( http ) {
-   var t = http.responseText;
-   
-   t = t.replace( /<\tr>/g, "\n" );
-   t = t.replace( /<[^>]+>/g, " " );
-   t = t.replace( /&lt;/g, "<" );
-   t = t.replace( /&gt;/g, ">" );
-   t = t.replace( /&quot;/g, "\"" );
-   
-   hop_error( "*** Hop Error " + http.status + ": " + t );
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_anim_16_16 ...                                               */
 /*---------------------------------------------------------------------*/
 function hop_anim_16_16( title ) {
@@ -201,7 +171,7 @@ function hop_anim_16_16( title ) {
    var img = document.createElement( "img" );
    img.className = "hop-busy-anim";
 
-   if( hop_msiep() ) {
+   if( !hop_config.inline_image ) {
       img.src = hop_share_directory() + "/icons/busy-anim-16.gif";
    } else {
       img.src = hop_busy_anim_16_16;
@@ -309,10 +279,11 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 			var expr;
 			try {
 			   expr = eval( xhr.responseText );
-			} catch( e ) {
-			   hop_error( "*** WITH-HOP JSON error: " + svc +
-				      ": " + e + " -- " +
-				      hop_responsetext_error( xhr ) );
+			} catch( exc ) {
+			   hop_error( "with-hop",
+				      exc,
+				      hop_responsetext_error( xhr ),
+				      svc );
 			   expr = false;
 			}
 			return success( expr, xhr );
@@ -322,16 +293,11 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 		     } else {
 			return success( xhr.responseText, xhr );
 		     }
-		  } catch( e ) {
-		     if( e.line ) {
-			hop_error( "*** WITH-HOP error: " + svc +
-				   ": " + e + "(line " + e.line + ") -- " +
-				   hop_responsetext_error( xhr ) );
-		     } else {
-			hop_error( "*** WITH-HOP error: " + svc +
-				   ": " + e + " -- " +
-				   hop_responsetext_error( xhr ) );
-		     }
+		  } catch( exc ) {
+		     hop_error( "with-hop [content-type=" + ctype + "]",
+				exc,
+				hop_responsetext_error( xhr ),
+				svc );
 		  }
 
 	       case 202:
@@ -354,8 +320,10 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 		  return false;
 
 	       case 407:
-		  hop_error( "*** Hop Authentication Error " + status + ": `"
-			     + hop_responsetext_error( xhr ) + "'" );
+		  hop_error( "with-hop",
+			     "Bad authentication",
+			     hop_responsetext_error( xhr ),
+			     svc );
 		  return false;
 
 	       default:
@@ -429,7 +397,10 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 	 if( xhr.readyState == 4 ) {
 	    onreadystatechange();
 	 } else {
-	    hop_error( "hop_send_request: synchronous call failed: " + svc );
+	    hop_error( "with-hop", 
+		       "synchronous call failed",
+		       "readyState: " + xhr.readyState,
+		       svc );
 	 }
       }
    } catch( e ) {
@@ -437,8 +408,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 	 node_style_set( hop_anim_vis, "display", "none" );
       }
       hop_anim_service = false;
-      
-      hop_error( e );
+
+      hop_error( "with-hop", e, "Cannot call server", svc );
    }
 
    return xhr;

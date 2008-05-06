@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-dashboard.js                  */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-dashboard.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Wed Oct  3 07:52:07 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Tue May  6 06:58:24 2008 (serrano)                */
+/*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
 /*=====================================================================*/
@@ -219,10 +219,10 @@ function hop_dashboard_button_init() {
    but.onclick = hop_toggle_dashboard;
    icon.title = "Toggle Hop Dashboard";
 
-   if( hop_msiep() ) {
-      icon.src = hop_share_directory() + "/icons/dashboard.png";
-   } else {
+   if( hop_config.inline_image ) {
       icon.src = hop_dashboard_icon;
+   } else {
+      icon.src = hop_share_directory() + "/icons/dashboard.png";
    }
    
    but.appendChild( icon );

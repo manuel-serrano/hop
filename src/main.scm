@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Apr 28 08:19:28 2008 (serrano)                */
+;*    Last change :  Mon May  5 19:00:18 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -169,8 +169,7 @@
 	 (when (and (hop-enable-repl) (>fx (hop-max-threads) 1))
 	    (hop-repl (hop-scheduler)))
 	 ;; when needed, start a loop for server events
-	 (when (hop-enable-fast-server-event)
-	    (hop-event-server (hop-scheduler)))
+	 (hop-event-server (hop-scheduler))
 	 ;; start the main loop
 	 (hop-main-loop (hop-scheduler) serv))))
 
@@ -197,6 +196,9 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-event-server scd)
    (cond
+      ((not (hop-enable-fast-server-event))
+       ;; fast event are disabled
+       (hop-event-init! #f))
       ((=fx (hop-fast-server-event-port) (hop-port))
        ;; will use the regular HOP port
        (hop-event-init! (hop-port)))
@@ -266,10 +268,11 @@
 		    "\n")
 	  ;; this one is a true error
 	  (begin
-	     (hop-verb 1 (hop-color id id " ABORTING")
-		       " " (trace-color 1 (find-runtime-type e))
-		       "...\n")
-	     (when (&error? e) (error-notify e))
+	     (when (&exception? e)
+		(hop-verb 1 (hop-color id id " ABORTING: ")
+			  " " (trace-color 1 (find-runtime-type e))
+			  "\n")
+		(exception-notify e))
 	     (when (and (&io-unknown-host-error? e) (not (socket-down? sock)))
 		(with-handler
 		   (lambda (e)
@@ -337,9 +340,13 @@
 	 (raise #f))
       (begin
 	 ;; when the error is a response, we transmit it to the next stage
-	 (if (&io-sigpipe-error? e)
-	     (response-sigpipe-error-handler e scd req)
-	     (response-default-error-handler e scd req)))))
+	 (cond
+	    ((&io-sigpipe-error? e)
+	     (response-sigpipe-error-handler e scd req))
+	    ((&exception? e)
+	     (response-exception-error-handler e scd req))
+	    (else
+	     (raise e))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-sigpipe-error-handler ...                               */
@@ -354,13 +361,14 @@
    (raise #f))
 
 ;*---------------------------------------------------------------------*/
-;*    response-default-error-handler ...                               */
+;*    response-exception-error-handler ...                             */
 ;*---------------------------------------------------------------------*/
-(define (response-default-error-handler e scd req)
+(define (response-exception-error-handler e scd req)
    (begin
       (hop-verb 1 (hop-color req req " ERROR"))
       (hop-verb 2 (scheduler-stat scd))
       (hop-verb 1 ": " (trace-color 1 e) "\n")
+      (tprint "e=" (find-runtime-type e))
       (if (%http-response? e)
 	  e
 	  (begin
@@ -371,7 +379,12 @@
 		 (warning-notify (evmeaning-annotate-exception! e))))
 	     ;; generate a legal response for the next stage (although
 	     ;; this response denotes the error).
-	     ((or (hop-http-response-error) http-error) e req)))))
+	     (let ((resp ((or (hop-http-response-error) http-error) e req))
+		   (sock (http-request-socket req)))
+		(http-response resp sock)
+		;; abort this request
+		(socket-close sock)
+		'close)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-response ...                                               */

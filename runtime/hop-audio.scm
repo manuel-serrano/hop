@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Apr 28 15:37:06 2008 (serrano)                */
+;*    Last change :  Tue May  6 12:30:44 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -384,13 +384,13 @@
 ;*    audio-onstate ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (audio-onstate %event engine player)
-   (lambda (state pllen song pos len vol err _1 _2)
-      (tprint "audio signal state: state=" state
-	      " len=" len " pos=" pos " vol=" vol
-	      " song=" song " pllen=" pllen
-	      " engine=" (find-runtime-type engine))
-      (hop-audio-player-%errcount-set! player 0)
-      (hop-event-broadcast! %event (list state len pos vol song))))
+   (lambda (status)
+      (with-access::musicstatus status (state song songpos songlength volume)
+	 (let ((ev (list state songlength songpos volume song)))
+	    (tprint "audio signal state: event=" ev
+		    " engine=" (find-runtime-type engine))
+	    (hop-audio-player-%errcount-set! player 0)
+	    (hop-event-broadcast! %event ev)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onmeta ...                                                 */
@@ -506,11 +506,14 @@
 
    (define (hop-audio-player-event-loop-start player)
       (with-access::hop-audio-player player (%thread %mutex engine)
-	 (with-lock (hop-audio-player-%mutex player)
-	    (lambda ()
-	       (if (thread? %thread)
-		   (music-event-loop-reset! engine)
-		   (set! %thread (make-audio-thread player)))))))
+	 (mutex-lock! %mutex)
+	 (if (thread? %thread)
+	     (begin
+		(mutex-unlock! %mutex)
+		(music-event-loop-reset! engine))
+	     (unwind-protect
+		(set! %thread (make-audio-thread player))
+		(mutex-unlock! %mutex)))))
    
    (cond-expand
       (enable-threads

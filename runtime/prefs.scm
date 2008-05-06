@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Tue Apr 22 16:24:32 2008 (serrano)                */
+;*    Last change :  Mon May  5 11:29:51 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -230,16 +230,15 @@
 (define (user-write-preferences user::user)
    (mutex-lock! (preferences-mutex))
    (with-access::user user (preferences preferences-filename)
-      (when (hop-store-preferences)
-	 (with-output-to-file preferences-filename
-	    (lambda ()
-	       (display "(\n")
-	       (for-each (lambda (p)
-			    (display " ")
-			    (write p)
-			    (newline))
-			 preferences)
-	       (display ")\n")))))
+      (with-output-to-file preferences-filename
+	 (lambda ()
+	    (display "(\n")
+	    (for-each (lambda (p)
+			 (display " ")
+			 (write p)
+			 (newline))
+		      preferences)
+	    (display ")\n"))))
    (mutex-unlock! (preferences-mutex)))
 
 ;*---------------------------------------------------------------------*/
@@ -254,23 +253,29 @@
 	 v)))
 
 ;*---------------------------------------------------------------------*/
-;*    user-preference-set! ...                                         */
+;*    inner-preference-set! ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (user-preference-set! user::user prop val)
+(define (inner-preference-set! user::user prop val store)
    (with-access::user user (preferences)
       (mutex-lock! (preferences-mutex))
       (let ((c (assq prop preferences)))
 	 (if (pair? c)
-	     (set-cdr! c (list val))
-	     (set! preferences (cons (list prop val) preferences)))
+	     (set-cdr! c (cons val store))
+	     (set! preferences (cons (cons prop (cons val store)) preferences)))
 	 (mutex-unlock! (preferences-mutex)))))
+
+;*---------------------------------------------------------------------*/
+;*    user-preference-set! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (user-preference-set! user::user prop val)
+   (inner-preference-set! user prop val #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-preference-store! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (user-preference-store! user::user prop val)
-   (user-preference-set! user prop val)
-   (user-write-preferences user))
+   (inner-preference-set! user prop val #t)
+   (when (hop-store-preferences) (user-write-preferences user)))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-preference-update! ...                                      */

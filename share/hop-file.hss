@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Mon Apr 21 15:28:28 2008 (serrano)                */
+/*    Last change :  Mon May  5 11:22:35 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
@@ -246,11 +246,13 @@ filechooser table.filechooser-places th {
   padding: 3px;
   text-align: left;
   background: #dddddd;
+  vertical-align: top;
 }
 
 filechooser table.filechooser-places td {
   font-family: $hopfile-font-mono;
   padding: 1px 0px 0px 3px;
+  vertical-align: top;
 }
 
 filechooser table.filechooser-places td.filechooser-icon {

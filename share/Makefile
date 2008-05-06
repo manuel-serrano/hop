@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Apr 21 11:51:52 2008 (serrano)                */
+#*    Last change :  Tue May  6 10:37:10 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -163,12 +163,13 @@ uninstall:
 hop.js: hop-autoconf.js \
         ../scheme2js/runtime/runtime.js \
         $(RTSSRC)
+	echo "/* Automatically generated file (don't edit) */" > $@
 	if [ "$(DEBUG) " != "yes " ]; then \
 	  cat $^ | sed -e "s%/[*]\([^*]\|[*][^/]\)*[*]/%%g" \
                        -e "s|^[ \t]+$$||g" \
-                 > $@; \
+                 >> $@; \
         else \
-	  cat $^ > $@; \
+	  cat $^ >> $@; \
         fi
 
 
