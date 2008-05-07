@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Apr 21 10:03:32 2008 (serrano)                */
+#*    Last change :  Wed May  7 10:04:37 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -52,7 +52,7 @@ jsmimetype="text/javascript"
 #*---------------------------------------------------------------------*/
 version="1.9.0"
 branch=1.9.x
-devel=pre
+devel=rc
 
 date=`date +"%d %B %Y"`
 
