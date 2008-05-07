@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Sat Mar 29 08:09:00 2008 (serrano)                */
+;*    Last change :  Wed May  7 14:06:40 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -36,7 +36,8 @@
 		  (mutex::mutex read-only (default (make-mutex)))
 		  (scheduler::scheduler (default (scheduler-nil)))
 		  (info::obj (default #unspecified))
-		  (request::obj (default #f))))))
+		  (request::obj (default #f))
+		  (body::procedure read-only)))))
 
    (export (abstract-class scheduler
 	      (scheduler-init!)
@@ -53,6 +54,14 @@
 	   (generic thread-info-set! ::obj ::obj)
 
 	   (scheduler-default-handler ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    thread-start!                                                    */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   ((not enable-threads)
+    (define-method (thread-start! o::hopthread . scd)
+       ((hopthread-body o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-init! ::scheduler ...                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue May  6 19:56:18 2008 (serrano)                */
+;*    Last change :  Wed May  7 14:01:39 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -17,7 +17,8 @@
    (library multimedia
 	    web)
 
-   (library pthread)
+   (cond-expand
+      (enable-threads (library pthread)))
    
    (include "xml.sch"
 	    "service.sch")

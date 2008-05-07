@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Apr 26 09:58:59 2008 (serrano)                */
+;*    Last change :  Wed May  7 14:09:10 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPREPLAY entry point                                        */
@@ -14,8 +14,11 @@
 ;*---------------------------------------------------------------------*/
 (module hoprp
 
-   (library hop web pthread)
-   
+   (library hop web)
+
+   (cond-expand
+      (enable-threads (library pthread)))
+
    (import  hoprp_parseargs
 	    hoprp_param
 	    hoprp_replay

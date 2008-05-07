@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr 26 09:44:38 2008                          */
-;*    Last change :  Sat Apr 26 15:56:52 2008 (serrano)                */
+;*    Last change :  Wed May  7 14:10:06 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOPRP Replay machinery                                           */
@@ -14,8 +14,11 @@
 ;*---------------------------------------------------------------------*/
 (module hoprp_replay
 
-   (library pthread web)
+   (library web)
    
+   (cond-expand
+      (enable-threads (library pthread)))
+
    (import  hoprp_log
 	    hoprp_param)
 
