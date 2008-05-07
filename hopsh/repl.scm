@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Thu Mar 27 15:29:22 2008 (serrano)                */
+;*    Last change :  Wed May  7 10:13:42 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -69,7 +69,7 @@
       (make-hopsh-url "hop"
 		      (hopsh-eval-service)
 		      (string-append "&exp="
-				     (url-encode (obj->string obj))))))
+				     (url-path-encode (obj->string obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    eval-command ...                                                 */
@@ -159,7 +159,7 @@
 			(substring (car opts)
 				   1
 				   (string-length (car opts)))
-			(url-encode (cadr opts)))
+			(url-path-encode (cadr opts)))
 		(loop (cddr opts)))))))
 
 ;*---------------------------------------------------------------------*/
