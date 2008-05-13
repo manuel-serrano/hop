@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Mon Apr 14 17:24:05 2008 (serrano)                */
+;*    Last change :  Tue May 13 14:20:33 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
@@ -53,7 +53,7 @@
 		 (let ((s (the-substring 1 (-fx (the-length) 1))))
 		    (set! acc (cons (string-append "\'" (cset s) "\'") acc))
 		    (ignore)))
-		((: "//" (* all))
+		((or (: "// " (* all)) (: " //" (* all)))
 		 (ignore))
 		((: "/*" (* (or (out #\*) (: #\* (out "/")))) "*/")
 		 (ignore))
