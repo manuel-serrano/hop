@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Tue Apr  8 18:11:46 2008 (serrano)                */
+;*    Last change :  Tue May 13 10:28:41 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -24,8 +24,10 @@
    (export  (users-close!)
 	    (add-user! ::bstring . opt)
 	    (user-exists? ::bstring)
+	    (encrypt-authentication ::symbol ::bstring ::bstring)
+	    (decrypt-authentication ::bstring ::bstring)
 	    (anonymous-user::user)
-	    (find-authenticated-user ::bstring)
+	    (find-authenticated-user ::bstring ::bstring)
 	    (find-user ::bstring ::bstring)
 	    (find-user/encrypt ::bstring ::bstring ::procedure)
 	    (user-authorized-request?::bool ::user ::http-request)
@@ -165,6 +167,80 @@
 	 (user? (hashtable-get *users* name)))))
 
 ;*---------------------------------------------------------------------*/
+;*    encrypt-authentication ...                                       */
+;*---------------------------------------------------------------------*/
+(define (encrypt-authentication algo auth path)
+   
+   (define (encrypt-ho0-authentication i auth path)
+      (let ((n (substring auth 0 i))
+	    (p (substring auth (+fx i 1) (string-length auth))))
+	 (string-append "HO0" n ":" (md5sum (format "~a ~a" n p)))))
+
+   (define (encrypt-ho1-authentication i auth path)
+      (let* ((n (substring auth 0 i))
+	     (p (substring auth (+fx i 1) (string-length auth)))
+	     (k (md5sum (string-append n " " p))))
+	 (string-append "HO1" n ":" (md5sum (string-append k path)))))
+   
+   (let* ((i (string-index auth #\:)))
+      (if (not (fixnum? i))
+	  (error 'encrypt-authentication "Illegal authentication" auth)
+	  (case algo
+	     ((none)
+	      auth)
+	     ((ho0)
+	      (encrypt-ho0-authentication i auth path))
+	     ((ho1)
+	      (encrypt-ho1-authentication i auth path))
+	     (else
+	      (error 'encrypt-authentication "Illegal algorithm" algo))))))
+
+;*---------------------------------------------------------------------*/
+;*    decrypt-authentication ...                                       */
+;*    -------------------------------------------------------------    */
+;*    This function never raises an error. It returns #f if something  */
+;*    goes wrong.                                                      */
+;*---------------------------------------------------------------------*/
+(define (decrypt-authentication auth path)
+   
+   (define (find-none-authentication auth n p path)
+      (let ((u (find-user n (md5sum (format "~a ~a" n p)))))
+	 (if (user? u)
+	     (add-cached-user! auth u)
+	     (hop-verb 2 "Can't authentify user: " n))
+	 u))
+   
+   (define (find-ho0-authentication auth n md5p path)
+      (let ((u (find-user n md5p)))
+	 (if (user? u)
+	     (add-cached-user! auth u)
+	     (hop-verb 2 "Can't authentify user: " n))
+	 u))
+   
+   (define (find-ho1-authentication auth n md5p path)
+      (let ((u (hashtable-get *users* n)))
+	 (when (user? u)
+	    (if (string=? (md5sum (string-append (user-password u) path)) md5p)
+		u
+		(begin
+		   (hop-verb 2 "Can't authentify user: " n)
+		   #f)))))
+   
+   (let ((i (string-index auth #\:)))
+      (when (and (fixnum? i) (>fx i 0))
+	 (let ((s (substring auth 0 i))
+	       (p (substring auth (+fx i 1) (string-length auth))))
+	    (cond
+	       ((substring-at? s "HO0" 0)
+		(let ((n (substring s 3 (string-length s))))
+		   (find-ho0-authentication auth n p path)))
+	       ((substring-at? s "HO1" 0)
+		(let ((n (substring s 3 (string-length s))))
+		   (find-ho1-authentication auth n p path)))
+	       (else
+		(find-none-authentication auth s p path)))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    *authenticated-users* ...                                        */
 ;*    -------------------------------------------------------------    */
 ;*    We use a two level cache. A pair of global variables for         */
@@ -210,25 +286,6 @@
 	 (set! *last-user* u))))
 
 ;*---------------------------------------------------------------------*/
-;*    find-authenticated-user ...                                      */
-;*---------------------------------------------------------------------*/
-(define (find-authenticated-user auth)
-   (and (string? auth)
-	(or (find-cached-user auth)
-	    (let* ((dauth (http-decode-authentication auth))
-		   (len (string-length dauth))
-		   (i (string-index dauth #\:)))
-	       (and (fixnum? i)
-		    (>fx i 0)
-		    (let* ((n (substring dauth 0 i))
-			   (p (substring dauth (+fx i 1) len))
-			   (u (find-user n (md5sum (format "~a ~a" n p)))))
-		       (if (user? u)
-			   (add-cached-user! auth u)
-			   (hop-verb 2 "Can't authentify user: " n))
-		       u))))))
-
-;*---------------------------------------------------------------------*/
 ;*    find-user ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-user user-name encoded-passwd)
@@ -245,6 +302,16 @@
       (and (user? u)
 	   (string=? encoded-passwd (encrypt (user-password u)))
 	   u)))
+
+;*---------------------------------------------------------------------*/
+;*    find-authenticated-user ...                                      */
+;*    -------------------------------------------------------------    */
+;*    The authorization is of the form "Basic <base64string>".         */
+;*---------------------------------------------------------------------*/
+(define (find-authenticated-user auth path)
+   (and (string? auth)
+	(or (find-cached-user auth)
+	    (decrypt-authentication (http-decode-authentication auth) path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-hopaccess ...                                               */

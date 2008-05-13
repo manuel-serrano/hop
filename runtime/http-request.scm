@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue May  6 17:51:37 2008 (serrano)                */
+;*    Last change :  Tue May 13 10:15:52 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -150,11 +150,11 @@
 		  (proxy-authorization pauth)
 		  (connection connection)
 		  (user (or (and (string? auth)
-				 (find-authenticated-user auth))
+				 (find-authenticated-user auth abspath))
 			    (and (string? pauth)
-				 (find-authenticated-user pauth))
+				 (find-authenticated-user pauth abspath))
 			    (and (string? userinfo)
-				 (find-authenticated-user userinfo))
+				 (find-authenticated-user userinfo abspath))
 			    (anonymous-user)))))))))
 
 ;*---------------------------------------------------------------------*/
