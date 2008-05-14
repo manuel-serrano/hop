@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Feb 28 09:04:06 2008 (serrano)                */
+;*    Last change :  Wed May 14 09:45:21 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -74,7 +74,10 @@
 	    (hop-process-key-set! ::bstring)
 
 	    (hop-report-execution-time::bool)
-	    (hop-report-execution-time-set! ::bool))
+	    (hop-report-execution-time-set! ::bool)
+
+	    (hop-script-file::obj)
+	    (hop-script-file-set! ::obj))
 
    (eval    (export-exports)))
 
@@ -228,4 +231,10 @@
 ;*    hop-report-execution-time ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-report-execution-time
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-script-file ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-script-file
    #f)

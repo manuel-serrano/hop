@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Tue May 13 14:48:14 2008 (serrano)                */
+;*    Last change :  Wed May 14 09:25:13 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -250,7 +250,7 @@
 		  (loop (cddr opts)
 			(cons* (cadr opts) (car opts) args)
 			success failure))))
-	   ;; a localte call
+	   ;; a local call
 	   (let ((nx `(with-hop-local ((hop-service-proc ,svc) ,@a) ,@opts)))
 	      (e (evepairify nx x) e))))
       (else

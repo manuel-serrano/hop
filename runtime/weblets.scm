@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Apr  2 10:02:44 2008 (serrano)                */
+;*    Last change :  Wed May 14 09:35:36 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -38,7 +38,8 @@
 	    (install-autoload-weblets! ::pair-nil)
 	    (autoload-prefix::procedure ::bstring)
 	    (autoload ::bstring ::procedure . hooks)
-	    (autoload-filter ::http-request)))
+	    (autoload-filter ::http-request)
+	    (autoload-force-load! ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-weblets-in-directory ...                                    */
@@ -292,3 +293,15 @@
 		    (mutex-unlock! *autoload-mutex*)
 		    #t)
 		 (loop (cdr al)))))))
+
+;*---------------------------------------------------------------------*/
+;*    autoload-force-load! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (autoload-force-load! path)
+   (autoload-filter
+    (instantiate::http-request
+       (localhostp #t)
+       (localclientp #t)
+       (port (hop-port))
+       (path path))))
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May  6 19:44:46 2008 (serrano)                */
+;*    Last change :  Wed May 14 09:49:23 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -170,6 +170,11 @@
 	    (hop-repl (hop-scheduler)))
 	 ;; when needed, start a loop for server events
 	 (hop-event-server (hop-scheduler))
+	 ;; execute the script file
+	 (when (string? (hop-script-file))
+	    (if (file-exists? (hop-script-file))
+		(hop-load (hop-script-file))
+		(hop-load-rc (hop-script-file))))
 	 ;; start the main loop
 	 (hop-main-loop (hop-scheduler) serv))))
 
