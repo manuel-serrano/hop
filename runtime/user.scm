@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Tue May 13 14:43:29 2008 (serrano)                */
+;*    Last change :  Wed May 14 12:35:16 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -207,14 +207,14 @@
       (let ((u (find-user n (md5sum (format "~a ~a" n p)))))
 	 (if (user? u)
 	     (add-cached-user! auth u)
-	     (hop-verb 2 "Can't authentify user: " n))
+	     (hop-verb 2 "Can't authentify user: " n "\n"))
 	 u))
    
    (define (find-ho0-authentication auth n md5p path)
       (let ((u (find-user n md5p)))
 	 (if (user? u)
 	     (add-cached-user! auth u)
-	     (hop-verb 2 "Can't authentify user: " n))
+	     (hop-verb 2 "HO0: Can't authentify user: " n "\n"))
 	 u))
    
    (define (find-ho1-authentication auth n md5p path)
@@ -223,7 +223,7 @@
 	    (if (string=? (md5sum (string-append (user-password u) path)) md5p)
 		u
 		(begin
-		   (hop-verb 2 "Can't authentify user: " n)
+		   (hop-verb 2 "HO1: Can't authentify user: " n "\n")
 		   #f)))))
    
    (let ((i (string-index auth #\:)))
