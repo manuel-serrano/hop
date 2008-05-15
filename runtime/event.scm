@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue May  6 17:39:22 2008 (serrano)                */
+;*    Last change :  Thu May 15 09:33:11 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -700,7 +700,7 @@
 		   (flash-signal-value (car l) name val)
 		   #t)))))
 
-   (tprint ">>> hop-event-signal: " name " mstate=" (mutex-state *event-mutex*))
+   (tprint ">>> hop-event-signal: " name)
    (mutex-lock! *event-mutex*)
    (unwind-protect
       (unless (flash-event-signal! name value)
@@ -743,8 +743,7 @@
 			     (flash-signal-value req name val))
 			  l))))))
 
-   (tprint ">>> hop-event-broadcast: " name
-	   " mstate=" (mutex-state *event-mutex*))
+   (tprint ">>> hop-event-broadcast: " name)
    (mutex-lock! *event-mutex*)
    (unwind-protect
       (begin

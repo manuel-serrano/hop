@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May 14 09:44:52 2008 (serrano)                */
+;*    Last change :  Thu May 15 06:39:43 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -51,7 +51,7 @@
           (usage args-parse-usage)
           (exit 0))
          (("--version" (help "Print the version and exit"))
-          (print (hop-name) (hop-version))
+          (print (hop-name) "-" (hop-version))
           (exit 0))
 	 
 	 ;; RC
