@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue May  6 19:51:01 2008 (serrano)                */
+/*    Last change :  Fri May 23 00:13:32 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -645,10 +645,10 @@ function hop_audio_volume( audio ) {
 /*---------------------------------------------------------------------*/
 /*    hop_audio_volume_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export audio-volume-set!)
-           (peephole (hole 2 audio ".proxy.volume_set(" vol ")"))) */
+/*** META ((export audio-volume-set!)) */
 function hop_audio_volume_set( audio, vol ) {
-   return audio.proxy.volume_set( vol );
+   if( hop_audio_volume( audio ) != vol )
+      return audio.proxy.volume_set( vol );
 }
 
 /*---------------------------------------------------------------------*/

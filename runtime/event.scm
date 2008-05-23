@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu May 15 09:33:11 2008 (serrano)                */
+;*    Last change :  Fri May 23 00:04:06 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -654,7 +654,12 @@
 			    l)
 			 '())
       r))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-signal-id ...                                                */
+;*---------------------------------------------------------------------*/
+(define hop-signal-id 0)
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-signal! ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -700,15 +705,20 @@
 		   (flash-signal-value (car l) name val)
 		   #t)))))
 
-   (tprint ">>> hop-event-signal: " name)
+   (set! hop-signal-id (-fx hop-signal-id 1))
+   (hop-verb 2 (hop-color hop-signal-id hop-signal-id " BROADCAST")
+	     ": " name "\n")
    (mutex-lock! *event-mutex*)
    (unwind-protect
       (unless (flash-event-signal! name value)
 	 (ajax-event-signal! name value))
-      (begin
-	 (mutex-unlock! *event-mutex*)
-	 (tprint "<<< hop-event-signal: " name)))
+      (mutex-unlock! *event-mutex*))
    #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hop-broadcast-id ...                                             */
+;*---------------------------------------------------------------------*/
+(define hop-broadcast-id 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-broadcast! ...                                         */
@@ -743,15 +753,15 @@
 			     (flash-signal-value req name val))
 			  l))))))
 
-   (tprint ">>> hop-event-broadcast: " name)
+   (set! hop-broadcast-id (-fx hop-broadcast-id 1))
+   (hop-verb 2 (hop-color hop-broadcast-id hop-broadcast-id " BROADCAST")
+	     ": " name "\n")
    (mutex-lock! *event-mutex*)
    (unwind-protect
       (begin
 	 (ajax-event-broadcast! name value)
 	 (flash-event-broadcast! name value))
-      (begin
-	 (mutex-unlock! *event-mutex*)
-	 (tprint "<<< hop-event-broadcast: " name)))
+      (mutex-unlock! *event-mutex*))
    #unspecified)
 
 ;*---------------------------------------------------------------------*/

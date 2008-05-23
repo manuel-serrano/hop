@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Wed Apr 16 10:22:11 2008 (serrano)                */
+/*    Last change :  Wed May 21 11:54:44 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
@@ -36,7 +36,8 @@ notepad-tabs {
   padding: 0;
   margin: 0;
   padding-left: 10px;
-  margin-bottom: 0px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 /*--- body ------------------------------------------------------------*/

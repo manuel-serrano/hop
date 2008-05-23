@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Apr 26 16:57:42 2008 (serrano)                */
+;*    Last change :  Fri May 23 23:07:09 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -350,12 +350,11 @@
 ;*---------------------------------------------------------------------*/
 (define (remote-get-socket host port timeout request ssl)
    
-   (define (make-new-connection key)
+   (define (make-new-connection key id)
       (with-trace 4 'make--new-connection
 	 (let ((s (make-client-socket/timeout host port timeout request ssl)))
-	    (set! *connection-id* (+fx 1 *connection-id*))
 	    (let ((conn (instantiate::connection
-			   (id *connection-id*)
+			   (id id)
 			   (socket s)
 			   (host host)
 			   (port port)
@@ -369,24 +368,31 @@
    
    (define (get-connection)
       (let ((key (string-append host ":" (integer->string port))))
-	 (or (connection-table-get key)
-	     (begin
-		(set! *connection-number* (+fx 1 *connection-number*))
-		(make-new-connection key)))))
+	 (mutex-lock! *remote-lock*)
+	 (let ((old (connection-table-get key)))
+	    (if old
+		(begin
+		   (mutex-unlock! *remote-lock*)
+		   old)
+		(let ((id (+fx 1 *connection-id*)))
+		   (set! *connection-id* id)
+		   (set! *connection-number* (+fx 1 *connection-number*))
+		   (mutex-unlock! *remote-lock*)
+		   (make-new-connection key id))))))
    
    (remote-debug-with-lock! "REMOTE-GET-SOCKET key=" host ":" port)
    
    (with-trace 4 'remote-get-connection
       (trace-item "host=" host)
       (if (not (hop-enable-remote-keep-alive))
-	  (make-new-connection host)
-	  (begin
-	     (mutex-lock! *remote-lock*)
-	     (unwind-protect
-		(let ((conn (get-connection)))
-		   (remote-debug "REMOTE-GET-SOCKET -> " conn)
-		   conn)
-		(mutex-unlock! *remote-lock*))))))
+	  (let ((id (+fx 1 *connection-id*)))
+	     ;; id is not used unless remote connections are kept alive then
+	     ;; we don't really a lock here to ensure a correct value
+	     (set! *connection-id* id)
+	     (make-new-connection host id))
+	  (let ((conn (get-connection)))
+	     (remote-debug "REMOTE-GET-SOCKET -> " conn)
+	     conn))))
    
 ;*---------------------------------------------------------------------*/
 ;*    connection-keep-alive! ...                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sat Apr 26 10:22:15 2008 (serrano)                */
+;*    Last change :  Thu May 22 23:17:34 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -243,7 +243,7 @@
 	       (else
 		(loop (+fx i 1) sp)))))
       (display " " port)
-      ;; Content-length
+      ;; content-length
       (let ((hdrs (%http-response-header resp)))
 	 (cond
 	    ((http-response-file? resp)
@@ -252,9 +252,9 @@
 	     (display (%http-response-content-length resp) port))
 	    (else
 	     (display "-" port))))
-      ;; Long version (add User-Agent and Referer)
+      ;; long version (add User-Agent and Referer)
       (when (>fx (hop-log) 1)
-	 (let ((agent   (assoc :user-agent header))
+	 (let ((agent (assoc :user-agent header))
 	       (referer (assoc :referer header)))
 	    (when (and (pair? agent) (pair? referer))
 	       (fprintf port " ~s ~s" (cdr referer) (cdr agent)))))
@@ -266,6 +266,7 @@
 ;*    log-remote-response ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (log-remote-response port req resp)
+   
    (define (two-digits n)
       (when (< n 10)
 	 (display #\0 port))

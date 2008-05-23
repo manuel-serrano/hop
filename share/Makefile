@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue May  6 10:37:10 2008 (serrano)                */
+#*    Last change :  Fri May 16 09:49:25 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -82,7 +82,7 @@ ICONS		= bookcase.png important.png shadow-se.png \
 		  dict.png resize-grip.png stop.png \
 		  error.png shadow-e.png timeout.png \
 		  error2.png shadow-ne.png warning.png \
-		  hop-16x16.png hop.png hop-128x128.png \
+		  hop-16x16.png hop-48x48.png hop.png hop-128x128.png hop.svg \
                   shadow-s.png window-handle.png \
 		  $(ICONS_AUDIO:%=hop-audio/%) \
                   $(ICONS_PANED:%=hop-paned/%) \

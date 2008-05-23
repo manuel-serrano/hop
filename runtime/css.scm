@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Apr 22 16:24:44 2008 (serrano)                */
+;*    Last change :  Tue May 20 06:37:10 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -48,6 +48,7 @@
      ("notepad" "div.hop-notepad")
      ("notepad" "div.hop-notepad")
      ("notepad-tabs" "td.hop-notepad-tabs")
+     ("notepad-tabs-row" "div.hop-notepad-tabs-row")
      ("notepad-body" "td.hop-notepad-body")
      ("nphead" "div.hop-nphead")
      ("nptab" "span.hop-nptab")
