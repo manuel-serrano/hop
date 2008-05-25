@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Apr 16 15:46:36 2008 (serrano)                */
+/*    Last change :  Sat May 24 08:20:42 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -961,11 +961,15 @@ function dom_node_type( node ) {
 function dom_parent_node( node ) {
    return node.parentNode;
 }
-/*** META ((export dom-append-child!)
-           (peephole (hole 2 node ".appendChild(" n ")")))
-*/
+/*** META ((export dom-append-child!)) */
 function dom_append_child( node, n ) {
-   return node.appendChild( n );
+   if( (n instanceof String) ||
+       (typeof n == "string") ||
+       (typeof n == "number") ) {
+      return node.appendChild( document.createTextNode( n ) );
+   } else {
+      return node.appendChild( n );
+   }
 }
 /*** META ((export dom-remove-child!)
            (peephole (hole 2 node ".removeChild(" n ")")))

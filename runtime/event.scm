@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri May 23 00:04:06 2008 (serrano)                */
+;*    Last change :  Sat May 24 09:54:21 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -638,9 +638,7 @@
       ((or (string? value) (number? value))
        value)
       (else
-       (string-append "<json>"
-		      (html-string-encode (hop->json value #f #t))
-		      "</json>"))))
+       (string-append "<json><![CDATA[" (hop->json value #f #t) "]]></json>"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-socket ...                                              */
@@ -706,8 +704,10 @@
 		   #t)))))
 
    (set! hop-signal-id (-fx hop-signal-id 1))
-   (hop-verb 2 (hop-color hop-signal-id hop-signal-id " BROADCAST")
-	     ": " name "\n")
+   (hop-verb 2 (hop-color hop-signal-id hop-signal-id " SIGNAL")
+	     ": " name)
+   (hop-verb 3 " value=" (with-output-to-string (lambda () (write value))))
+   (hop-verb 2 "\n")
    (mutex-lock! *event-mutex*)
    (unwind-protect
       (unless (flash-event-signal! name value)
@@ -750,12 +750,21 @@
 		(for-each (lambda (req)
 ;* 			     (tprint "flash broadcast: " name " "      */
 ;* 				     (http-request-socket req))        */
+;* 			     (with-output-to-port (current-error-port) */
+;* 				(lambda ()                             */
+;* 				   (display "flash: [")                */
+;* 				   (write value)                       */
+;* 				   (display "] -> [")                  */
+;* 				   (display val)                       */
+;* 				   (print "]")))                       */
 			     (flash-signal-value req name val))
 			  l))))))
 
    (set! hop-broadcast-id (-fx hop-broadcast-id 1))
    (hop-verb 2 (hop-color hop-broadcast-id hop-broadcast-id " BROADCAST")
-	     ": " name "\n")
+	     ": " name)
+   (hop-verb 3 " value=" (with-output-to-string (lambda () (write value))))
+   (hop-verb 2 "\n")
    (mutex-lock! *event-mutex*)
    (unwind-protect
       (begin
