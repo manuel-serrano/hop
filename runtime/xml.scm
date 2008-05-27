@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Apr  2 06:48:12 2008 (serrano)                */
+;*    Last change :  Mon May 26 09:08:46 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -255,7 +255,7 @@
       (header-format "")
       (no-end-tags-elements '(link))
       ;; the meta-format contains the closing >
-      (meta-format "content=\"~a; charset=~a\">")))
+      (meta-format " content=\"~a; charset=~a\">")))
 
 ;*---------------------------------------------------------------------*/
 ;*    *xhtml-backend* ...                                              */

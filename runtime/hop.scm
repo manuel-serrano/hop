@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Apr 17 09:21:28 2008 (serrano)                */
+;*    Last change :  Mon May 26 09:05:17 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -209,7 +209,7 @@
 	     ((application/json)
 	      (success (json->hop p)))
 	     ((text/html)
-	      (error 'make-http-callback "Not implemenented yet" header))
+	      (success (read-string p)))
 	     ((application/bigloo)
 	      (success (string->obj (read p))))
 	     (else

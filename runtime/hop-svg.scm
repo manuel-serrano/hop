@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/hop-svg.scm                     */
+;*    serrano/prgm/project/hop/1.9.x/runtime/hop-svg.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Mon Oct 29 17:37:17 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Tue May 27 14:43:26 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -428,7 +428,7 @@
 (define-xml-compound <SVG:IMG> ((id #unspecified)
 				(width #f)
 				(height #f)
-				(style "display: -moz-inline-box; position: relative; text-align: center" string)
+				(style "text-align: center" string)
 				(src #unspecified string)
 				(prefix #t boolean)
 				(attrs))
@@ -444,9 +444,10 @@
 			     src)
 		      (lambda ()
 			 (read-svg-img id prefix attrs (current-input-port)))))
+	      (style0 (string-append "display: -moz-inline-box; position: relative; " style))
 	      (style1 (if width
-			  (format "width: ~a; ~a" width style)
-			  style))
+			  (format "width: ~a; ~a" width style0)
+			  style0))
 	      (style2 (if height
 			  (format "height: ~a; ~a" height style1)
 			  style1)))
