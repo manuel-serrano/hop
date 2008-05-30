@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue May 27 05:26:14 2008 (serrano)                */
+;*    Last change :  Fri May 30 08:38:18 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -161,7 +161,8 @@
 		(http-write-line p "Content-Length: " clen)
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
-	    (http-write-content-type p (xml-backend-mime-type backend) charset)
+	    (let ((ctype (or content-type (xml-backend-mime-type backend))))
+	       (http-write-content-type p ctype charset))
 	    (when server
 	       (http-write-line p "Server: " server))
 	    (http-write-line p "Hhop: true")
