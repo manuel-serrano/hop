@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri May 30 08:38:18 2008 (serrano)                */
+;*    Last change :  Fri May 30 09:26:41 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -45,9 +45,10 @@
 ;*    http-write-content-type ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (http-write-content-type p content-type charset)
-   (if charset
-       (http-write-line p "Content-type: " content-type "; charset=" charset)
-       (http-write-line p "Content-type: " content-type)))
+   (let ((ctype (or content-type (hop-default-mime-type))))
+      (if charset
+	  (http-write-line p "Content-type: " ctype "; charset=" charset)
+	  (http-write-line p "Content-type: " ctype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-authentication ...                 */

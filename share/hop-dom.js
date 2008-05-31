@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Sat May 24 08:20:42 2008 (serrano)                */
+/*    Last change :  Sat May 31 07:05:39 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1144,12 +1144,17 @@ function node_style_get( obj, prop ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_create_element ...                                           */
+/*    -------------------------------------------------------------    */
+/*    For a reason that I don't understand (a bug?) IE7 refuses to     */
+/*    create elements whose body is composed of a single SCRIPT        */
+/*    node. To prevent this but, this function always append an        */
+/*    extra node that is then ignored when returning!                  */
 /*---------------------------------------------------------------------*/
 function hop_create_element( html ) {
    var div = document.createElement( 'div' );
 
-   div.innerHTML = html;
-   return div.childNodes[ 0 ];
+   div.innerHTML = "<span>IE7 bug</span>" + html;
+   return div.childNodes[ 1 ];
 }
 
 /*---------------------------------------------------------------------*/

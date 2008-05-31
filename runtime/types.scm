@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Apr 26 08:19:43 2008 (serrano)                */
+;*    Last change :  Fri May 30 09:26:07 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -66,7 +66,7 @@
 	      (input-port read-only))
 	   
 	   (abstract-class %http-response::%http-message
-	      (content-type::bstring (default (hop-default-mime-type)))
+	      (content-type (default #f))
 	      (request::http-request (default (http-request-nil)))
 	      (bodyp::bool read-only (default #t)))
 

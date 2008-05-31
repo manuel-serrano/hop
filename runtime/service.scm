@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue May 13 15:12:21 2008 (serrano)                */
+;*    Last change :  Fri May 30 16:00:52 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -375,7 +375,8 @@
 		       "Service re-definition not permitted"
 		       "use `-g' or `--allow-service-override' options to enable re-definitions"))))
 	 (hashtable-put! *service-table* path svc)
-	 (hashtable-put! *service-table* (string-append path "/") svc)
+	 (unless (char=? #\/ (string-ref path (-fx (string-length path) 1)))
+	    (hashtable-put! *service-table* (string-append path "/") svc))
 	 (let ((l (string-length path)))
 	    (let loop ((i (+fx (string-length (hop-service-base)) 1)))
 	       (cond

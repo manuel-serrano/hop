@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed May 14 09:25:13 2008 (serrano)                */
+;*    Last change :  Fri May 30 15:47:10 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -155,7 +155,7 @@
 	     ((eq? (car a) :name)
 	      (if (null? (cdr a))
 		  (error 'service
-			 "Illegal service declaration (missing url)"
+			 "Illegal service declaration (missing name)"
 			 x)
 		  (loop (cddr a)
 			tmt

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue May 20 06:37:10 2008 (serrano)                */
+;*    Last change :  Sat May 31 06:31:23 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -55,7 +55,7 @@
      ("nptab-active" "span.hop-nptab-active")
      ("nptab-inactive" "span.hop-nptab-inactive")
      ("nptab-body" "div.hop-notepad-tab-body")
-     ("hptabhead" "span.hop-nptab-head")
+     ("nptabhead" "span.hop-nptab-head")
      ;; paned
      ("paned" "div.hop-paned")
      ;; sorttable

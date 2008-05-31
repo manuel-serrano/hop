@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Tue May  6 10:37:22 2008 (serrano)                */
+/*    Last change :  Fri May 30 18:23:14 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -13,7 +13,7 @@
 /*    hop_error ...                                                    */
 /*---------------------------------------------------------------------*/
 function hop_error( fun, exc, msg, svc ) {
-   var emsg = exc.toString();
+   var emsg = exc ? exc.toString() : "???";
 
    if( "message" in exc ) {
       emsg = exc.message;

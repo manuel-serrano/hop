@@ -55,7 +55,8 @@ automatic coercions that take place when a service is invoked.
 ^  arguments       ^   type       ^  short description              ^
 | :timeout         |  integer     | An optional timeout.            |
 | :ttl             |  integer     | An optional time-to-live.       |
-| :url             |  string      | An optional associated url  .   |
+| :url             |  string      | An optional associated url.     |
+| :name            |  string      | An optional associated url.     |
 | arg<sub>0</sub>  |  symbol      | the first argument identifier.  |
 | body             |  expression  | the body of the service.        |
 </arguments>
@@ -68,6 +69,13 @@ the timeout (a number of seconds) is expired the service is invalidated.
 
 ~~ the :ttl argument controls how many the service can be invoked
 before being invalidated.
+
+~~ the :url argument specifies a full URL that can be used to invoke the 
+service.
+
+~~ the :name argument specifies a relative URL suffix that can be used to
+invoke the service. The whole URL is produced by the expression
+++(make-hop-url-name name)++
 </function>
 
 === ++(define-service (name arg<sub>0</sub> ...) body)++ ===

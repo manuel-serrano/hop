@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat Apr 26 08:36:48 2008 (serrano)                */
+#*    Last change :  Sat May 31 06:51:53 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -95,8 +95,12 @@ changelog:
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
-install: install-quick $(INSTALL-SPECIFIC)
+install: install-quick $(INSTALL-SPECIFIC) install-share install-weblets
+
+install-share:
 	(cd share && $(MAKE) install)
+
+install-weblets:
 	(cd weblets && $(MAKE) install)
 
 install-quick: hop-dirs install-init
