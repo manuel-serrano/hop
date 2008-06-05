@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Apr 22 15:22:38 2008 (serrano)                */
+#*    Last change :  Wed Jun  4 15:16:12 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -30,7 +30,8 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   fileselect.wiki filters.wiki foldlist.wiki head.wiki \
                   hooks.wiki hss.wiki html.wiki http-message.wiki \
                   http-request.wiki http-response.wiki http.wiki \
-                  img.wiki input.wiki inline.wiki md5.wiki notepad.wiki \
+                  img.wiki input.wiki inline.wiki md5.wiki sha1.wiki \
+                  notepad.wiki \
                   pan.wiki param-misc.wiki param-rc.wiki parameter.wiki \
                   read.wiki service.wiki slider.wiki sorttable.wiki \
                   sound.wiki sqlite.wiki tabslider.wiki timeout.wiki \

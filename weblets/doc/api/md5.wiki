@@ -74,6 +74,6 @@ Computes the Hmac MD5 authentication. Example
 
 == See also ==
 
-<see-also>md5, base64</see-also>
+<see-also>md5, base64, sha1</see-also>
 
 </doc>

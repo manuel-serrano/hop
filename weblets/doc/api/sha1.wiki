@@ -1,0 +1,59 @@
+<doc> SHA1 checksum
+
+== Description ==
+Compute the SHA1 checksum of a string.
+
+
+== Synopsis ==
+
+=== Server & Client ===
+
+  (sha1sum obj)
+  (sha1sum-string string)
+
+
+=== Requirements ===
+
+Client code using //SHA1// facilities needs to load the script
+++sha1.js++. Hence, documents using //SHA1// must include in their
+header, the following statement:
+
+  (<HEAD> :include "sha1")
+
+
+== Server & Client Definitions ==
+
+=== ++(sha1sum obj)++ ===
+<procedure> sha1sum
+<function> sha1sum
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| obj         |    _     | The object for which the chesum is computed.    |
+</arguments>
+
+The function ++sha1sum++ dispatches over its argument and invokes the
+ad-hoc function. On the client-side this function can only be passed
+//strings// arguments. On the server-side, it can be passed
+//string//, //input ports//, or //mmap// (memory mapped area).
+</function>
+</procedure>
+
+=== ++(sha1sum-string string)++ ===
+<procedure> sha1sum-string
+<function> sha1sum-string
+
+<arguments>
+^  arguments  ^   type   ^   description                                   ^
+| string      |  string  | The string for which the chesum is computed.    |
+</arguments>
+
+Compute the SHA1 checksum of the //string//.
+</function>
+</procedure>
+
+== See also ==
+
+<see-also>sha1, md5, base64</see-also>
+
+</doc>
