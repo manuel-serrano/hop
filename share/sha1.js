@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Chris Veness                                      */
 /*    Creation    :  Wed Jun  4 15:07:23 2008                          */
-/*    Last change :  Wed Jun  4 15:12:13 2008 (serrano)                */
+/*    Last change :  Mon Jun  9 08:21:29 2008 (serrano)                */
 /*    Copyright   :  2002-08 Chris Veness                              */
 /*    -------------------------------------------------------------    */
 /*    sha1 hashing                                                     */
@@ -11,7 +11,6 @@
 /*    See http://www.movable-type.co.uk/scripts/sha1.html for          */
 /*    any details about this implementation.                           */
 /*=====================================================================*/
-
 
 /*---------------------------------------------------------------------*/
 /*    sha1Hash ...                                                     */

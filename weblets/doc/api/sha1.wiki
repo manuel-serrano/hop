@@ -29,7 +29,7 @@ header, the following statement:
 
 <arguments>
 ^  arguments  ^   type   ^   description                                   ^
-| obj         |    _     | The object for which the chesum is computed.    |
+| obj         |    _     | The object for which the checksum is computed.    |
 </arguments>
 
 The function ++sha1sum++ dispatches over its argument and invokes the
@@ -45,7 +45,7 @@ ad-hoc function. On the client-side this function can only be passed
 
 <arguments>
 ^  arguments  ^   type   ^   description                                   ^
-| string      |  string  | The string for which the chesum is computed.    |
+| string      |  string  | The string for which the checksum is computed.    |
 </arguments>
 
 Compute the SHA1 checksum of the //string//.

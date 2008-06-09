@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Jun  4 15:09:55 2008 (serrano)                */
+#*    Last change :  Mon Jun  9 09:33:43 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -33,7 +33,7 @@ RTSSRC		= hopscheme.js hop-dom.js hop-event.js hop-serialize.js \
 RTS		= hop-paned.css hop-sorttable.js hop-tree.js \
 		  hop-error.hss hop-paned.js hop-table.js hop.css \
                   hop-fx.js \
-                  md5.js sha1.js \
+                  md5.js sha1.js aes.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css \
                   hop-notepad.hss hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
