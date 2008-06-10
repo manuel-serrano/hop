@@ -51,6 +51,9 @@
    (this.traverse2 ht surrounding-whiles))
 
 (define-pmethod (Module-changed ht surrounding-whiles)
+   (for-each (lambda (v)
+		(set! v.changed-outside-local? #t))
+	     this.exported-vars)
    (this.traverse2 (make-eq-hashtable) '()))
 
 (define-pmethod (Lambda-changed ht surrounding-whiles)

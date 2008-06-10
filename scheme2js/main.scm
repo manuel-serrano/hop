@@ -69,11 +69,6 @@
 	(help (default-str "Adds the special-form 'return!'."
 		 'return)))
        (hashtable-put! config-ht 'return (not invert-flag?)))
-      (("--with-closures"
-	(help (default-str (string-append "Use the 'with'-keyword to push "
-					  "variables on the stack.")
-		 'with-closures)))
-       (hashtable-put! config-ht 'with-closures (not invert-flag?)))
       (("--constant-runtime"
 	(help (default-str "Assume runtime is constant."
 		 'runtime-is-constant)))

@@ -147,12 +147,4 @@
 		(var.allocate-name escaping-ids local-ids-ht))
 	     this.vars)
    (let ((storage-var this.storage-var))
-      (unless (config 'with-closures)
-	 (let ((storage-compiled storage-var.compiled))
-	    (for-each (lambda (var)
-			 (set! var.compiled
-			       (string-append storage-compiled
-					      "."
-					      var.compiled)))
-			 this.vars)))
       (this.traverse2 escaping-ids local-ids-ht)))

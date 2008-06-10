@@ -379,9 +379,9 @@
    (if (config 'call/cc)
        (set-car! inside-call/cc-loop? #t)))
 
-;; Variables that are not inside any scope, or that do not need any scope
+;; Variables that are not inside any frame, or that do not need any frame
 ;; (either cause they are not in any loop, or cause they are reused) may need
-;; to be boxed (or put into a scope again) if they escape (and if there is a
+;; to be boxed (or put into a frame again) if they escape (and if there is a
 ;; call/cc inside their scope)
 ;; If a var needs to be boxed it is marked with .needs-boxing?
 ;; Arguments must not be boxed, so if one of them responds to a predicate, we
@@ -525,8 +525,7 @@
 	 ((let ((var (car vars)))
 	     (or var.needs-frame?
 		 var.needs-boxing?
-		 (and (config 'with-closures)
-		      var.needs-uniquization?)))
+		 var.needs-uniquization?))
 	  (let ((tmp-decl (Decl-of-new-Var 'tmploop))
 		(old-var (car vars)))
 	     (replace-var! (car inits)
@@ -667,18 +666,11 @@
    (this.traverse2! '() #f)
    (if inside-loop?
        (let* ((free-vars (hashtable-key-list this.free-vars-ht))
-	      (storage-vars (used-storage-vars free-vars))
-	      (uniquization-vars
-	       (if (config 'with-closures) ;; already taken care of
-		   '()
-		   (filter! (lambda (var)
-			       var.needs-uniquization?)
-			    free-vars))))
-	  (if (and (null? storage-vars)
-		   (null? uniquization-vars))
+	      (storage-vars (used-storage-vars free-vars)))
+	  (if (null? storage-vars)
 	      this
 	      (new-node Frame-push
-			(append storage-vars uniquization-vars)
+			storage-vars
 			this)))
        this))
 
@@ -691,35 +683,21 @@
    (let ((frame-vars (cp-filter (lambda (var)
 				   (or var.needs-frame?
 				       var.needs-boxing?
-				       (and (config 'with-closures)
-					    var.needs-uniquization?)))
+				       var.needs-uniquization?))
 				this.scope-vars)))
       (if (null? frame-vars)
 	  (this.traverse2! scope-hts inside-loop?)
 	  ;; create storage-var
 	  (let* ((storage-decl (Decl-of-new-Var 'storage))
-		 (storage-var storage-decl.var))
+		 (storage-var storage-decl.var)
+		 (current-this this))
 	     (for-each (lambda (var)
 			  (set! var.indirect? #t))
 		       frame-vars)
 	     (set! storage-var.call/cc-when-alive?
 		   (any? (lambda (var) var.call/cc-when-alive?)
 			 frame-vars))
-	     (cond
-		((not inside-loop?)
-		 (this.traverse2! scope-hts inside-loop?))
-		((config 'with-closures)
-		 (this.traverse2! scope-hts inside-loop?)
-		 (set! this.body (new-node Frame-push
-					   (list storage-var)
-					   this.body)))
-		(else
-		 (let ((ht (make-eq-hashtable)))
-		    (for-each (lambda (var)
-				 (hashtable-put! ht var #t))
-			      frame-vars)
-		    (this.traverse2! (cons (cons storage-var ht) scope-hts)
-				     inside-loop?))))
+	     (this.traverse2! scope-hts inside-loop?)
 	     (new-node Let
 		       (list storage-var)
 		       (list (new-node Binding
@@ -727,7 +705,9 @@
 				       (new-node Frame-alloc
 						 storage-var
 						 frame-vars)))
-		       this
+		       (new-node Frame-push
+				 (list storage-var)
+				 this)
 		       'let)))))
 
 ;; we can't use traverse! when inside a traverse! pass.

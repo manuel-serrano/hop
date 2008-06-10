@@ -132,7 +132,6 @@
 	     (suspend/resume #f)
 	     (call/cc #f)
 	     (extern-always-call/cc #f)
-	     (with-closures #f)
 	     (include-paths ())
 	     (indent 2)
 	     (statics-suffix #f))

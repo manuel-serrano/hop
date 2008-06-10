@@ -604,47 +604,22 @@
 
 (define-pmethod (Frame-alloc-compile p)
     (p-display p "{") ;; literal-object creation
-    (when (config 'with-closures)
-       (let loop ((vars this.vars))
-	  (cond
-	     ((null? vars) 'done) ;; was empty to begin with.
-	     ((null? (cdr vars))
-	      (p-display p (car vars).compiled ": undefined"))
-	     (else
-	      (p-display p (car vars).compiled ": undefined, ")
-	      (loop (cdr vars))))))
+    (let loop ((vars this.vars))
+       (cond
+	  ((null? vars) 'done) ;; was empty to begin with.
+	  ((null? (cdr vars))
+	   (p-display p (car vars).compiled ": undefined"))
+	  (else
+	   (p-display p (car vars).compiled ": undefined, ")
+	   (loop (cdr vars)))))
     (p-display p "}"))
 
 (define-pmethod (Frame-push-compile p)
-    (if (config 'with-closures)
-	(begin
-	   (p-display
-	    p
-	    (indent++) "with(" (car this.storage-vars).compiled ") {\n")
-	   (this.body.compile p)
-	   (p-display p (--indent) "}\n"))
-	(begin
-	   (check-stmt-form
-	    this p
-	    (if (statement-form? this) (p-display p "("))
-	    (p-display p "function(")
-	    (p-display p (car this.storage-vars).compiled)
-	    (for-each (lambda (var)
-			 (p-display p ", " var.compiled))
-		      (cdr this.storage-vars))
-	    (p-display p ") {\n")
-	    (indent++)
-	    (p-display p (indent) "return ")
-	    (this.body.compile p)
-	    (p-display p ";\n")
-	    (p-display p (--indent) "}")
-	    (if (statement-form? this) (p-display p ") "))
-	    (p-display p "(")
-	    (p-display p (car this.storage-vars).compiled)
-	    (for-each (lambda (var)
-			 (p-display p ", " var.compiled))
-		      (cdr this.storage-vars))
-		(p-display p ")\n")))))
+   (p-display
+    p
+    (indent++) "with(" (car this.storage-vars).compiled ") {\n")
+   (this.body.compile p)
+   (p-display p (--indent) "}\n"))
 
 (define-pmethod (If-compile p)
    (cond

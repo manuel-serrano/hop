@@ -84,8 +84,7 @@
 
 (define-pmethod (Frame-push-mark-statements)
    (let* ((body-tmp (this.body.traverse))
-	  (res (or body-tmp
-		   (config 'with-closures))))
+	  (res #t))
       (mark-node! this res)
       res))
 

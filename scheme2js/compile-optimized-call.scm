@@ -232,7 +232,8 @@
 		       (p-display p ",")
 		       (n.compile p))
 		    (cdr operands))
-	  (p-display p "]))")))))
+	  (p-display p "]))")))
+      #t))
 
 (define (not-op p operands)
    (let ((nb-operands (length operands)))
