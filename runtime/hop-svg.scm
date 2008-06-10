@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Tue May 27 14:43:26 2008 (serrano)                */
+;*    Last change :  Tue Jun 10 07:00:28 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -167,7 +167,7 @@
 		(cond
 		   ((eq? (car a) 'id)
 		    (display prefix)
-		    (display (cdr a)))
+		    (display (xml-attribute-encode (cdr a))))
 		   ((and (eq? (car a) 'xlink:href)
 			 (string? (cdr a))
 			 (char=? (string-ref (cdr a) 0) #\#))
@@ -183,7 +183,7 @@
 		    (display prefix)
 		    (display (substring (cdr a) 5 (string-length (cdr a)))))
 		   (else
-		    (display (cdr a))))
+		    (display (xml-attribute-encode (cdr a)))))
 		(display "'"))
 	     l))
 

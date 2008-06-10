@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:52:54 2008                          */
-/*    Last change :  Wed Apr 16 15:07:59 2008 (serrano)                */
+/*    Last change :  Tue Jun 10 05:55:52 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop login                                                        */
@@ -16,9 +16,12 @@ $(module hoplogin_hss)
 
 /*---------------------------------------------------------------------*/
 /*    login                                                            */
+/*    -------------------------------------------------------------    */
+/*    See runtime/css.scm for HSS up to date aliases list.             */
+/*     "hop-login-panel" -> "div.hop-login-panel"                      */
+/*     "hop-login" -> "div.hop-login-panel table.hop-login-main-table" */
+/*     "hop-login-logo" -> "div.hop-login-panel div.hop-login-logo"    */
 /*---------------------------------------------------------------------*/
-$(hop-hss-type! "hop-login-panel" "div.hop-login-panel")
-
 hop-login-panel {
   display: block;
   position: fixed;
@@ -34,7 +37,7 @@ hop-login-panel td.hop-login-logo {
   height: 64px;
 }
 
-hop-login-panel div.hop-login-logo {
+hop-login-logo {
   width: 64px;
   height: 64px;
   background-repeat: no-repeat;
@@ -125,6 +128,7 @@ hop-login-panel table.hop-login-prompt input {
 
 hop-login-panel table.hop-login-prompt button {
   border-width: 1px;
+  width: 5em;
 }
 
 hop-login-panel table.hop-login-prompt button:hover {
