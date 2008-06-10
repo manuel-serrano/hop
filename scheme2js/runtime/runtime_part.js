@@ -57,7 +57,7 @@ function sc_typeof( x ) {
 
 /*** META ((export #t)) */
 function sc_error() {
-    var a = [jsstring2symbol("*error*")];
+    var a = [sc_jsstring2symbol("*error*")];
     for (var i = 0; i < arguments.length; i++) {
 	a[i+1] = arguments[i];
     }
@@ -1041,9 +1041,6 @@ function sc_isCharStringCILessEqual(cs1, cs2)
 function sc_isCharStringCIGreaterEqual(cs1, cs2)
     { return cs1.val.toLowerCase() >= cs2.val.toLowerCase(); }
 
-
-
-
 function sc_Char(c) {
     var cached = sc_Char.lazy[c];
     if (cached)
@@ -1298,6 +1295,16 @@ function sc_makejsString(k, c) {
     else
 	fill = " ";
     return sc_makeJSStringOfLength(k, fill);
+}
+
+/*** META ((export #t)) */
+function sc_isStringPrefix(cs1,cs2) {
+   return cs2.indexOf(cs1) === 0;
+}
+
+/*** META ((export #t)) */
+function sc_isStringSuffix(cs1,cs2) {
+   return cs2.lastIndexOf(cs1) === cs2.length;
 }
 
 function sc_jsstring2list(s) {

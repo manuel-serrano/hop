@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Mon Jun  9 16:35:17 2008 (serrano)                */
+/*    Last change :  Tue Jun 10 10:41:09 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -291,21 +291,21 @@ function hop_string_to_obj( s ) {
    }
    
    function read_string( s ) {
-      var szst = read_size( s );
-      var res = s.substring( pointer, pointer + szst );
+      var sz = read_size( s );
+      var res = s.substring( pointer, pointer + sz );
 
       if( defining ) {
 	 definitions[ defining ] = res;
 	 defining = false;
       }
-      pointer += szst;
+      pointer += sz;
 
       return res;
    }
 
    function read_definition() {
       defining = read_item();
-      read_item();
+      return read_item();
    }
 
    function read_reference() {
@@ -361,6 +361,30 @@ function hop_string_to_obj( s ) {
       return res;
    }
 
+   function read_extended_list( sz ) {
+      var res = sc_cons( null, null );
+      var hd = res;
+
+      if( defining ) {
+	 definitions[ defining ] = res;
+	 defining = false;
+      }
+
+      for( var i = 0; i < (sz - 2); i++, hd = hd.cdr ) {
+	 hd.car = read_item();
+	 // skip the cer
+	 read_item();
+	 hd.cdr = sc_cons( null, null );
+      }
+
+      hd.car = read_item();
+      // skip the cer
+      read_item();
+      hd.cdr = read_item();
+
+      return res;
+   }
+
    function read_item() {
       switch( s.charAt( pointer++ ) ) {
 	 case '=': return read_definition();
@@ -375,12 +399,11 @@ function hop_string_to_obj( s ) {
 	 case "<": return read_cnst();
 	 case '"': return read_string( s )
 	 case '(': return read_list( read_size( s ) );
+	 case '^': return read_extended_list( read_size( s ) );
 	 case '[': return read_vector( read_size( s ) );
 	 case "f": return read_float( s );
 	 case "-": return -read_integer( s );
-	 default: sc_error( "string->obj",
-			    "code not implemented",
-			    s.charAt( pointer - 1 ) );
+	 default: pointer--; return read_integer( s );
       }
    }
 

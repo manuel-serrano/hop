@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue May  6 10:37:23 2008 (serrano)                */
+/*    Last change :  Tue Jun 10 09:31:55 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -337,3 +337,52 @@ function url_decode( s ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export url-encode)) */
 var url_encode;
+
+/*---------------------------------------------------------------------*/
+/*    string-hex-extern ...                                            */
+/*---------------------------------------------------------------------*/
+/*** META ((export string-hex-extern)) */
+function string_hex_extern( str ) {
+  var res = "";
+  var l = str.length;
+
+  for( var i = 0; i < l; i++ ) {
+    res += "0123456789abcdef".charAt( (str.charCodeAt( i ) >> 4) & 15 )
+         + "0123456789abcdef".charAt( (str.charCodeAt( i ) & 15) );
+  }
+  
+  return res;
+}
+
+/*---------------------------------------------------------------------*/
+/*    string-hex-intern ...                                            */
+/*---------------------------------------------------------------------*/
+/*** META ((export string-hex-intern)) */
+function string_hex_intern( s ) {
+   var res = "";
+   var l = s.length;
+   var z = '0'.charCodeAt( 0 );
+   var n = '9'.charCodeAt( 0 );
+   var a = 'a'.charCodeAt( 0 );
+   var f = 'f'.charCodeAt( 0 );
+   var A = 'A'.charCodeAt( 0 );
+   
+   function hex_to_num( c ) {
+      if( (c >= z) && ( c<= n) ) {
+	 return c - z;
+      }
+      if( (c >= a) && ( c<= f) ) {
+	 return (c - a) + 10;;
+      }
+      return (c - A) + 10;
+   }
+      
+   for( var i = 0; i < l; i += 2 ) {
+      var d1 = hex_to_num( s.charCodeAt( i ) );
+      var d2 = hex_to_num( s.charCodeAt( i + 1 ) );
+
+      res += String.fromCharCode( (d1 << 4) + d2 );
+   }
+
+   return res;
+}

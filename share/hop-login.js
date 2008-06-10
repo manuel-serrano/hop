@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:20:17 2008                          */
-/*    Last change :  Tue Jun 10 05:39:15 2008 (serrano)                */
+/*    Last change :  Tue Jun 10 08:04:15 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop login panel                                                  */
@@ -139,7 +139,8 @@ function hop_login_panel( args ) {
    }
       
    hop_add_event_listener( ok, "click", function( e ) {
-	 e.user = document.getElementById( "hop_login_user_" + id ).value;
+	 var eluser = document.getElementById( "hop_login_user_" + id );
+	 e.user = eluser ? eluser.value : false;
 	 e.password = document.getElementById( "hop_login_password_" + id ).value;
 	 node_style_set( login, "display", "none" );
 	 document.body.removeChild( login );
@@ -148,7 +149,8 @@ function hop_login_panel( args ) {
       } );
    
    hop_add_event_listener( cancel, "click", function( e ) {
-	 e.user = document.getElementById( "hop_login_user_" + id ).value;
+	 var eluser = document.getElementById( "hop_login_user_" + id );
+	 e.user = eluser ? eluser.value : false;
 	 e.password = document.getElementById( "hop_login_password_" + id ).value;
 	 if( oncancel ) oncancel( e );
 	 node_style_set( login, "display", "none" );

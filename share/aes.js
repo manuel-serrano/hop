@@ -1,12 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/bigloo/work/AES/aes.js                      */
+/*    serrano/prgm/project/hop/1.9.x/share/aes.js                      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Chris Veness                                      */
 /*    Creation    :  Mon Jun  9 08:21:51 2008                          */
-/*    Last change :  Mon Jun  9 09:32:50 2008 (serrano)                */
+/*    Last change :  Tue Jun 10 08:34:15 2008 (serrano)                */
 /*    Copyright   :  2005-08 Chris Veness                              */
-/*    -------------------------------------------------------------    */
-/*    aes.js                                                           */
 /*    -------------------------------------------------------------    */
 /*    AES Advanced Encryption Standard in 'Counter' mode operation.    */
 /*    -------------------------------------------------------------    */
@@ -182,7 +180,7 @@ function AESPassword2key(password, nBits) {
   var nBytes = nBits/8;  // no bytes in key
   var pwBytes = new Array(nBytes);
   var shaPass = (password.length < nBytes) ? password + sha1sum(password) : password;
-  for (var i=0; i<nBytes; i++) pwBytes[i] = shapass.charCodeAt(i) & 0xff;
+  for (var i=0; i<nBytes; i++) pwBytes[i] = shaPass.charCodeAt(i) & 0xff;
   return AESCipher(pwBytes, AESKeyExpansion(pwBytes));
 }
    
@@ -197,7 +195,7 @@ function AESPassword2key(password, nBits) {
 /*      - outputblock = cipher(counter, key)                           */
 /*      - cipherblock = plaintext xor outputblock                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-encrypt-ctr-string)) */
+/*** META ((export aes-ctr-encrypt-string)) */
 function AESEncryptCtr(plaintext, password, nBits) {
    if (!(nBits==128 || nBits==192 || nBits==256)) {
       if(!nBits)
@@ -259,7 +257,7 @@ function AESEncryptCtr(plaintext, password, nBits) {
 /*---------------------------------------------------------------------*/
 /*    AESEncryptCtrObj ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-encrypt-ctr)) */
+/*** META ((export aes-ctr-encrypt)) */
 function AESEncryptCtrObj(plaintext, password, nBits) {
    return AESEncryptCtr(plaintext, password, nBits);
 }
@@ -274,7 +272,7 @@ function AESEncryptCtrObj(plaintext, password, nBits) {
 /*      - outputblock = cipher(counter, key)                           */
 /*      - cipherblock = plaintext xor outputblock                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-decrypt-ctr-string)) */
+/*** META ((export aes-ctr-decrypt-string)) */
 function AESDecryptCtr(ciphertext, password, nBits) {
    if (!(nBits==128 || nBits==192 || nBits==256)) {
       if(!nBits)
@@ -325,42 +323,35 @@ function AESDecryptCtr(ciphertext, password, nBits) {
 /*---------------------------------------------------------------------*/
 /*    AESDecryptCtrObj ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export aes-decrypt-ctr)) */
+/*** META ((export aes-ctr-decrypt)) */
 function AESDecryptCtrObj(plaintext, password, nBits) {
    return AESDecryptCtr(plaintext, password, nBits);
 }
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-
-function escCtrlChars(str) {  // escape control chars which might cause problems handling ciphertext
-   return str; // <--- MS: to be removed
-  return str.replace(/[\0\t\n\v\f\r\xa0'"!-]/g, function(c) { return '!' + c.charCodeAt(0) + '!'; });
-}  // \xa0 to cater for bug in Firefox; include '-' to leave it free for use as a block marker
-
-function unescCtrlChars(str) {  // unescape potentially problematic control characters
-  return str.replace(/!\d\d?\d?!/g, function(c) { return String.fromCharCode(c.slice(1,-1)); });
-}
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-
-
-/*
- * Convert an array of little-endian words to a hex string.
- */
-function strhex(str)
-{
-  var hex_tab = "0123456789abcdef";
-  var res = "";
-
-  for(var i = 0; i < str.length; i++)
-  {
-    res += hex_tab.charAt((str.charCodeAt(i) >> 4) & 15) + hex_tab.charAt((str.charCodeAt(i) & 15));
-  }
-  return res;
-}
-
-
-print( "foo bar=" + strhex( "foo bar" ) );
-var s = "toto n'est pas content toto n'est pas content toto n'est pas content toto n'est pas content toto n'est pas content toto n'est pas content toto n'est pas content";
-print( "Encrypt: " + strhex( AESEncryptCtr( s, "foo bar", 128) ) );
-print( "Decrypt: " + AESDecryptCtr( AESEncryptCtr( s, "foo bar", 128), "foo bar", 128 ) );
+/* function escCtrlChars(str) {  // escape control chars which might cause problems handling ciphertext */
+/*    return str; // <--- MS: to be removed                            */
+/*   return str.replace(/[\0\t\n\v\f\r\xa0'"!-]/g, function(c) { return '!' + c.charCodeAt(0) + '!'; }); */
+/* }  // \xa0 to cater for bug in Firefox; include '-' to leave it free for use as a block marker */
+/*                                                                     */
+/* function unescCtrlChars(str) {  // unescape potentially problematic control characters */
+/*   return str.replace(/!\d\d?\d?!/g, function(c) { return String.fromCharCode(c.slice(1,-1)); }); */
+/* }                                                                   */
+/*                                                                     */
+/* {* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  *} */
+/*                                                                     */
+/*                                                                     */
+/* {*                                                                  */
+/*  * Convert an array of little-endian words to a hex string.         */
+/*  *}                                                                 */
+/* function strhex(str)                                                */
+/* {                                                                   */
+/*   var hex_tab = "0123456789abcdef";                                 */
+/*   var res = "";                                                     */
+/*                                                                     */
+/*   for(var i = 0; i < str.length; i++)                               */
+/*   {                                                                 */
+/*     res += hex_tab.charAt((str.charCodeAt(i) >> 4) & 15) + hex_tab.charAt((str.charCodeAt(i) & 15)); */
+/*   }                                                                 */
+/*   return res;                                                       */
+/* }                                                                   */
+/*                                                                     */
