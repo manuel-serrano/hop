@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue Jun 10 09:31:55 2008 (serrano)                */
+/*    Last change :  Thu Jun 12 09:28:59 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -336,7 +336,9 @@ function url_decode( s ) {
 /*    url-encode ...                                                   */
 /*---------------------------------------------------------------------*/
 /*** META ((export url-encode)) */
-var url_encode;
+function url_encode( s ) {
+   return encodeURI( s );
+}
 
 /*---------------------------------------------------------------------*/
 /*    string-hex-extern ...                                            */

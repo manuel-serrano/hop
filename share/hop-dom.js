@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Sat May 31 07:05:39 2008 (serrano)                */
+/*    Last change :  Thu Jun 12 09:30:21 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -326,8 +326,13 @@ function dom_add_head_script( pathname, id ) {
      `(hop_dom_create "iframe" ,@args)) */
 
 /*** META (define-macro (<INPUT> . args)
-     `(hop_dom_create "input" :onkeydown (hop_inputurl_keydown this event)
-          ,@args)) */
+     (let ((k (memq :type args)))
+         (if (and (pair? k) (pair? (cdr k))
+		  (or (eq? (cadr k) 'url))
+		  (or (equal? (cadr k) "url")))
+	     `(hop_dom_create "input" :onkeydown (hop_inputurl_keydown this event)
+			     ,@args)
+	     `(hop_dom_create "input" ,@args)))) */
 
 /*** META (define-macro (<INS> . args)
      `(hop_dom_create "ins" ,@args)) */
