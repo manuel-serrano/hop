@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Apr 28 08:40:53 2008 (serrano)                */
+;*    Last change :  Mon Jun 16 11:47:04 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -270,7 +270,7 @@ Reloading the page is the only way to fix this problem." msg))
       (cond
 	 ((expired-service-path? file)
 	  (illegal-service "expired"
-			   "You are trying to executed an expired service!
+			   "You are trying to execute an expired service!
 <br><br>
 This happens because at creation time, the service has been registered with
 a timeout which has now expired. The service is then no longer available."))

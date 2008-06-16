@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Fri May 30 15:47:10 2008 (serrano)                */
+;*    Last change :  Mon Jun 16 11:53:20 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -91,6 +91,7 @@
 		      (ttl ,ttl)
 		      (resource (and (string? file) (dirname file)))
 		      (source (and (string? file) (basename file))))))
+	  (tprint "hop-service id=" ',id " wid=" ',wid " ttl=" ,ttl)
 	  (register-service! svc))))
    
 ;*---------------------------------------------------------------------*/

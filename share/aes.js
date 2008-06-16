@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Chris Veness                                      */
 /*    Creation    :  Mon Jun  9 08:21:51 2008                          */
-/*    Last change :  Tue Jun 10 08:34:15 2008 (serrano)                */
+/*    Last change :  Thu Jun 12 15:07:30 2008 (serrano)                */
 /*    Copyright   :  2005-08 Chris Veness                              */
 /*    -------------------------------------------------------------    */
 /*    AES Advanced Encryption Standard in 'Counter' mode operation.    */
@@ -242,13 +242,14 @@ function AESEncryptCtr(plaintext, password, nBits) {
     }
     // ct is now ciphertext for this block
 
-    ciphertext[b] = escCtrlChars(ct);  // escape troublesome characters in ciphertext
+    //ciphertext[b] = escCtrlChars(ct);  // escape troublesome characters in ciphertext
+    ciphertext[b]=ct;
   }
 
   // convert the nonce to a string to go on the front of the ciphertext
   var ctrTxt = '';
   for (var i=0; i<8; i++) ctrTxt += String.fromCharCode(counterBlock[i]);
-  ctrTxt = escCtrlChars(ctrTxt);
+  //ctrTxt = escCtrlChars(ctrTxt);
 
   // use Array.join to concatenate arrays of strings for efficiency
   return ctrTxt + ciphertext.join('');
@@ -354,4 +355,3 @@ function AESDecryptCtrObj(plaintext, password, nBits) {
 /*   }                                                                 */
 /*   return res;                                                       */
 /* }                                                                   */
-/*                                                                     */
