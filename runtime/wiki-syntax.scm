@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Mar 12 10:31:16 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 14:19:52 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -111,7 +111,7 @@
 ;*    wiki-file->hop ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (wiki-file->hop file #!key syntax (charset (hop-locale)))
-   (with-input-from-file file
+   (with-input-from-loading-file file
       (lambda ()
 	 (wiki-input-port->hop (current-input-port)
 			       :syntax syntax
@@ -121,15 +121,17 @@
 ;*    wiki-input-port->hop ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (wiki-input-port->hop iport #!key syntax (charset (hop-locale)))
-   (read/rp *wiki-grammar*
-	    iport
-	    (or syntax *default-syntax*)
-	    '()
-	    '()
-	    0
-	    (if (procedure? charset)
-		charset
-		(charset-converter! charset (hop-charset)))))
+   (with-loading-file (input-port-name iport)
+      (lambda ()		      
+	 (read/rp *wiki-grammar*
+		  iport
+		  (or syntax *default-syntax*)
+		  '()
+		  '()
+		  0
+		  (if (procedure? charset)
+		      charset
+		      (charset-converter! charset (hop-charset)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-read-error ...                                              */
@@ -580,7 +582,7 @@
 			   (find-file/path name (list "." dir))))))
 	  (cond
 	     ((and (string? path) (file-exists? path))
-	      (with-input-from-file path
+	      (with-input-from-loading-file path
 		 (lambda ()
 		    (add-expr! ((wiki-syntax-pre syn)
 				(html-string-encode (read-string)))))))

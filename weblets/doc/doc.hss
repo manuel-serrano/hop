@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Apr 23 10:09:21 2008 (serrano)                */
+/*    Last change :  Fri Jun 20 14:25:01 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -374,6 +374,7 @@ pagearea {
 /*--- doc -------------------------------------------------------------*/
 $(hop-hss-type! "doc" "div.doc")
 $(hop-hss-type! "toc" "div.toc")
+$(hop-hss-type! "logo" "div.logo")
 
 div.doc-title {
   border-bottom: 1px solid $border-color;
@@ -720,6 +721,13 @@ doc toc {
   background-color: $popup-menu-color;
   border: $popup-menu-border;
   -moz-opacity: $doc-opacity;
+}
+
+doc logo {
+  width: 56px;
+  height: 50px;
+  float: left;
+  border: 0;
 }
 
 doc toc ul {
@@ -1154,11 +1162,17 @@ table.weblet-facts {
   margin-top: 2ex;
   margin-left: 2em;
   padding: 2px;
-  font-size: 85%;
+  font-size: 80%;
   border: 1px solid $border-color;
   background: #eeffdd;
 }
 
 table.weblet-facts th:after {
   content: ": ";
+}
+
+table.weblet-facts td.logo {
+  vertical-align: top;
+  padding-right: 10px;
+  padding-left: 10px;
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 14 09:49:23 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 13:50:57 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -44,9 +44,18 @@
 	  (let ((v (gensym)))
 	     `(let ((,v ,(e level e)))
 		 (if (>=fx (hop-verbose) ,v)
-		     (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))
+		     (with-lock *verb-mutex*
+			(lambda ()
+			   (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))))
 	 (else
-	  `(hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))
+	  `(with-lock *verb-mutex*
+	      (lambda ()
+		 (hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    *verb-mutex* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define *verb-mutex* (make-mutex 'hop-verb))
  
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */

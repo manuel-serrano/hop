@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 14 08:46:59 2006                          */
-;*    Last change :  Fri Apr 18 08:59:23 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 13:31:14 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The DOC source search engine.                                    */
@@ -423,6 +423,14 @@
 ;*    search-weblets-inner ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (search-weblets-inner)
+   
+   (define (<webletref> l path)
+      (let* ((d (dirname path))
+	     (favicon (make-file-name d "favicon.png")))
+	 (if (file-exists? favicon)
+	     (list (<IMG> :src favicon :inline #t) " " (<WEBLETREF> l path))
+	     (<WEBLETREF> l path))))
+   
    (filter-map (let* ((key "<doc> ")
 		      (t (kmp-table key))
 		      (l (fixnum->elong (string-length key))))
@@ -435,7 +443,7 @@
 				 (let ((r (kmp-mmap t mm #e0)))
 				    (and (>=elong r #e0)
 					 (let ((l (mmap-line mm (+elong r l))))
-					    (cons l (<WEBLETREF> l path)))))
+					    (cons l (<webletref> l path)))))
 				 (close-mmap mm)))))))
 	       (delete-duplicates!
 		(append-map search-weblets-documentation

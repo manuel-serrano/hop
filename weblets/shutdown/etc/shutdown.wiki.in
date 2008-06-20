@@ -1,8 +1,10 @@
-<doc> HOME -- Hop Home page
+<doc> SHUTDOWN -- Shutdown the currently running HOP broker
 
 == Description ==
 
-[[/hop/home|HOME]] implements the Hop Home page.
+This weblet kills all the running HOP threads and it shutdowns the
+running HOP broker. The broker has be to manually re-started after
+this operation.
 
 ~~
 ,(<TABLE> :class "weblet-facts"
@@ -13,6 +15,17 @@
   (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
   (<TR> (<TH> "Date") (<TD> "@DATE@"))
   (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+
+== Synopsis ==
+
+=== Services ===
+
+SHUTDOWN defines one service:
+
+  - ++[[shutdown]]++: 
+
+== Client Definitions ==
 
 </doc>
 

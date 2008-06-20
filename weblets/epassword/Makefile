@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Apr 18 15:56:36 2008 (serrano)                */
+#*    Last change :  Fri Jun 20 14:28:06 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the password weblet                              */
@@ -23,7 +23,8 @@ DATE = 18 april 2008
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile epassword.hss epassword.hop \
-		  etc/weblet.info.in etc/logo.png etc/epassword.wiki.in
+		  etc/weblet.info.in etc/logo.png etc/favicon.png \
+                  etc/epassword.wiki.in
 
 build: etc/weblet.info etc/$(TITLE).wiki .afile
 

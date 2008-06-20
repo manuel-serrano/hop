@@ -9,11 +9,11 @@ weblets and let them been spawned by a simple click.
 ,(<TABLE> :class "weblet-facts"
   (<TR> (<TD> :rowspan 5 :class "logo"
             (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
-        (<TH> (string-capitalize "") " version") (<TD> "1.1.0"))
-  (<TR> (<TH> "Hop min version") (<TD> "1.9.0 "))
-  (<TR> (<TH> "Hop max version") (<TD> ""))
-  (<TR> (<TH> "Date") (<TD> "20 June 2008"))
-  (<TR> (<TH> "Category") (<TD> "hop")))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
 
 </doc>
 

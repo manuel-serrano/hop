@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Jun  9 09:33:43 2008 (serrano)                */
+#*    Last change :  Fri Jun 20 15:43:40 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -76,10 +76,10 @@ ICONS_FCHOOSER	= cancel.png open.png run.png \
                   keyboard.png drag.png \
                   edit-add.png edit-remove.png
 
-ICONS		= bookcase.png important.png shadow-se.png \
+ICONS		= important.png shadow-se.png \
 		  busy-anim-16.gif logo-bg.png shadow-sw.png \
 		  dashboard.png notfound.png source.png \
-		  dict.png resize-grip.png stop.png \
+		  resize-grip.png stop.png \
 		  error.png shadow-e.png timeout.png \
 		  error2.png shadow-ne.png warning.png \
 		  hop-16x16.png hop-48x48.png hop.png hop-128x128.png hop.svg \

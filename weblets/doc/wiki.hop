@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Wed Apr 23 10:28:42 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 14:19:31 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -50,6 +50,7 @@
 (define (wiki-plugins id)
    (case id
       ((<doc>) <WIKI-DOC>)
+      ((<logo>) <WIKI-LOGO>)
       ((<library>) <WIKI-LIBRARY>)
       ((<css>) <WIKI-CSS>)
       ((<arguments>) <WIKI-ARGUMENTS>)
@@ -113,12 +114,22 @@
 	  (<TR>
 	     (<TH>
 		:align 'left title))))
-    (<DIV>
-       :class "doc"
-       (<DIV>
-	  :class "toc"
+    (<DIV> :class "doc"
+       (<DIV> :class "toc"
 	  (hop-wiki->toc expr :max-depth 3))
        expr)))
+
+;*---------------------------------------------------------------------*/
+;*    <WIKI-LOGO> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<WIKI-LOGO> port src expr)
+   (let* ((dname (dirname (input-port-name port)))
+	  (file (if (and (string? src) (>fx (string-length src) 0))
+		    src
+		    "logo.png"))
+	  (logo (make-file-name dname file)))
+      (<DIV> :class "logo"
+	 (<IMG> :src logo :class "doc-logo"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI-LIBRARY> ...                                               */

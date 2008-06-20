@@ -1,8 +1,9 @@
-<doc> HOME -- Hop Home page
+<doc> INFO -- Report information about the Hop broker
 
 == Description ==
 
-[[/hop/home|HOME]] implements the Hop Home page.
+[[info|INFO]] provides information about the state of the currently running 
+Hop broker. For instance, it reports about the up time, the cache status, etc.
 
 ~~
 ,(<TABLE> :class "weblet-facts"
@@ -13,6 +14,7 @@
   (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
   (<TR> (<TH> "Date") (<TD> "@DATE@"))
   (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
 
 </doc>
 

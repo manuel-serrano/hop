@@ -1,6 +1,7 @@
 ((name "weblets")
  (author "M. Serrano")
- (version "1.0.0")
+ (version "@VERSION@")
+ (date "@DATE@")
  (home "http://localhost:8080/hop/weblets")
  (repository "http://localhost:8080/users/serrano/prgm/project/hop/devel/repository")
  (category "hop")

@@ -1,4 +1,5 @@
-((name "hop")
+((name "doc")
  (author "M. Serrano")
- (version "1.0.0")
+ (version "@VERSION@")
+ (date "@DATE@")
  (title "HOP initial weblet"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Apr  4 10:52:31 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 15:18:27 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
@@ -43,7 +43,8 @@
       (<HEAD>
 	 :title "Hop Shutdown weblet"
 	 :base (service-base-url shutdown req)
-	 :css "shutdown.hss")
+	 :css "shutdown.hss"
+	 :favicon "etc/favicon.png")
       (<BODY>
 	 (<DIV> :align "center"
 	    (<TABLE> :class "shutdown"

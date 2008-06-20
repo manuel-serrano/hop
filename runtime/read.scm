@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue May 13 14:19:27 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 14:15:08 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -28,6 +28,8 @@
    (export  (loading-file-set! ::obj)
 	    (the-loading-file)
 	    (the-loading-dir)
+	    (with-loading-file ::obj ::procedure)
+	    (with-input-from-loading-file ::obj ::procedure)
 	    
 	    (hop-load-afile ::bstring)
 	    
@@ -727,6 +729,26 @@
    (let ((path (the-loading-file)))
       (and (string? path) (dirname path))))
 
+;*---------------------------------------------------------------------*/
+;*    with-loading-file ...                                            */
+;*---------------------------------------------------------------------*/
+(define (with-loading-file file proc)
+   (let ((old (the-loading-file)))
+      (loading-file-set! file)
+      (unwind-protect
+	 (proc)
+	 (loading-file-set! old))))
+      
+;*---------------------------------------------------------------------*/
+;*    with-input-from-loading-file ...                                 */
+;*---------------------------------------------------------------------*/
+(define (with-input-from-loading-file file proc)
+   (let ((old (the-loading-file)))
+      (loading-file-set! file)
+      (unwind-protect
+	 (with-input-from-file file proc)
+	 (loading-file-set! old))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    *afile-dirs* ...                                                 */
 ;*---------------------------------------------------------------------*/
