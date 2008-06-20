@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat May 31 07:06:15 2008 (serrano)                */
+/*    Last change :  Fri Jun 20 08:22:55 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -251,7 +251,7 @@ function hop_responsetext_error( xhr ) {
    if( xhr.responseText.length > 80 )
       return xhr.responseText.substring( 0, 80 );
    else
-      return responseText;
+      return xhr.responseText;
 }
 
 /*---------------------------------------------------------------------*/
@@ -264,6 +264,19 @@ function hop_responsetext_error( xhr ) {
 /*---------------------------------------------------------------------*/
 function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
    var xhr = hop_make_xml_http_request();
+   /* MS, 20 Jun 08: I cannot understand why but sometime hop_error is */
+   /* unbound (at least in Firefox) when used inside a catch! Binding  */
+   /* it to a local var elimintates this problem.                      */
+   var hop_err = hop_error;
+   var hop_reperror = hop_responsetext_error;
+   var hop_header_ctype = hop_header_content_type;
+   
+   var err = function( exc, xhr, ctype ) {
+      var txt = hop_reperror( xhr );
+      var fun = ctype ? ("with-hop [content-type=" + ctype + "]") : "with-hop";
+      
+      return hop_err( fun, exc, txt, svc );
+   }
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
@@ -273,17 +286,14 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 	    switch( status ) {
 	       case 200:
 		  try {
-		     var ctype = hop_header_content_type( xhr );
+		     var ctype = hop_header_ctype( xhr );
 
 		     if( ctype == "application/json" ) {
 			var expr;
 			try {
 			   expr = eval( xhr.responseText );
 			} catch( exc ) {
-			   hop_error( "with-hop",
-				      exc,
-				      hop_responsetext_error( xhr ),
-				      svc );
+			   err( exc, xhr );
 			   expr = false;
 			}
 			return success( expr, xhr );
@@ -294,10 +304,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 			return success( xhr.responseText, xhr );
 		     }
 		  } catch( exc ) {
-		     hop_error( "with-hop [content-type=" + ctype + "]",
-				exc,
-				hop_responsetext_error( xhr ),
-				svc );
+		     err( exc, xhr, ctype );
 		  }
 
 	       case 202:
@@ -320,10 +327,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 		  return false;
 
 	       case 407:
-		  hop_error( "with-hop",
-			     "Bad authentication",
-			     hop_responsetext_error( xhr ),
-			     svc );
+		  err( "Bad authentication", xhr );
 		  return false;
 
 	       default:
@@ -340,11 +344,11 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 		     }
 		  }
 	    }
-	 } catch( e ) {
+	 } catch( exc ) {
 	    if( typeof failure == "function" ) {
 	       failure( xhr );
 	    } else {
-	       throw e;
+	       err( exc, xhr );
 	    }
 	 } finally {
 	    try {

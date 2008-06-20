@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 13:54:14 2006                          */
-;*    Last change :  Fri Apr 18 12:27:44 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 09:12:37 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Doc configuration                                                */
@@ -26,7 +26,9 @@
 	   (doc-rc-directory)
 	   (doc-suffix)
 	   (doc-editor)
-	   (doc-editor-set!)
+	   (doc-editor-set! ::obj)
+	   (doc-dashboard)
+	   (doc-dashboard-set! ::obj)
 	   (doc-preferences-load ::bstring)
 	   (doc-preferences-save ::bstring)
 	   (doc-preferences-edit)))
@@ -89,8 +91,15 @@
 (define-parameter doc-editor "emacs")
 
 ;*---------------------------------------------------------------------*/
+;*    doc-dashboard ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter doc-dashboard "hop-dashboard")
+
+;*---------------------------------------------------------------------*/
 ;*    preferences ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-preferences doc-preferences
    "Setup"
-   ("Editor" string doc-editor))
+   ("Editor" string doc-editor)
+   "Gui"
+   ("Dashboard" expr doc-dashboard))

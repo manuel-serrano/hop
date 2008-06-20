@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Jun 12 09:30:21 2008 (serrano)                */
+/*    Last change :  Wed Jun 18 16:09:48 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1037,6 +1037,51 @@ function hop_css_add_style_sheet( document, rules ) {
 	 var st = document.createElement( "style" );
 
 	 st.appendChild( document.createTextNode( rules ) );
+	 els[ 0 ].appendChild( st );
+      }
+   } catch( e ) {
+      ;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_load_css ...                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
+function hop_load_css( url ) {
+   try {
+      var els = document.getElementsByTagName( "head" );
+      if( (els != null) && (els[ 0 ].appendChild != undefined) ) {
+	 var st = document.createElement( "link" );
+
+	 if( url.lastIndexOf( ".hss" ) === url.length ) {
+	    st.href = url + "?hss";
+	 } else {
+	    st.href = url;
+	 }
+	 
+	 st.rel = "stylsheet";
+	 st.type = "text/css";
+	 
+	 els[ 0 ].appendChild( st );
+      }
+   } catch( e ) {
+      ;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_load_jscript ...                                             */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
+function hop_load_jscript( url ) {
+   try {
+      var els = document.getElementsByTagName( "head" );
+      if( (els != null) && (els[ 0 ].appendChild != undefined) ) {
+	 var sc = document.createElement( "script" );
+	 st.src = url;
+	 st.type = "text/javascript";
+	 
 	 els[ 0 ].appendChild( st );
       }
    } catch( e ) {

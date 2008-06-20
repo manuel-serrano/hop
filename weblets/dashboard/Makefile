@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Apr 18 15:51:38 2008 (serrano)                */
+#*    Last change :  Fri Jun 20 10:35:35 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the dashboard weblet                             */
@@ -13,11 +13,11 @@
 #*    CONFIG ...                                                       */
 #*---------------------------------------------------------------------*/
 TITLE = dashboard
-VERSION = 1.0.0
+VERSION = 1.0.1
 MINHOP = $(HOPRELEASE) 
 MAXHOP =
 CATEGORY = hop
-DATE = 18 april 2008
+DATE = 20 June 2008
 
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
@@ -25,7 +25,7 @@ DATE = 18 april 2008
 POPULATION	= Makefile dashboard.hss dashboard.hop \
                   etc/weblet.info.in etc/dashboard.wiki.in \
                   dashboard-applet.hss etc/dashboard-rfc.png \
-                  etc/logo.png
+                  etc/logo.png etc/favicon.png
 
 build: etc/weblet.info etc/$(TITLE).wiki .afile
 

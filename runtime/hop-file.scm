@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Mon Jun 16 12:02:06 2008 (serrano)                */
+;*    Last change :  Thu Jun 19 13:30:15 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -181,18 +181,21 @@
 		    (string-append "filechooser " class)
 		    "filechooser")
 	 :onkeydown (format "hop_filechooser_key( this, ~s )" id)
-	 (when onselect
-	    (<SCRIPT> (format "document.getElementById( ~s ).select = ~a"
-			      id (obj->proc onselect))))
-	 (when onopen
-	    (<SCRIPT> (format "document.getElementById( ~s ).open = ~a"
-			      id (obj->proc onopen))))
-	 (when oncancel
-	    (<SCRIPT> (format "document.getElementById( ~s ).cancel = ~a"
-			      id (obj->proc oncancel))))
-	 (when onrun
-	    (<SCRIPT> (format "document.getElementById( ~s ).run = ~a"
-			      id (obj->proc onrun))))
+	 (<SCRIPT>
+	    (format "hop_window_onload_add( function( e ) { var el = document.getElementById( ~s ); ~a; ~a; ~a; ~a; } )"
+		    id
+		    (if onselect
+			(format "el.select = ~a" (obj->proc onselect))
+			"false")
+		    (if onopen
+			(format "el.open = ~a" (obj->proc onopen))
+			"false")
+		    (if oncancel
+			(format "el.cancel = ~a" (obj->proc oncancel))
+			"false")
+		    (if onrun
+			(format "el.run = ~a" (obj->proc onrun))
+			"false")))
 	 (<IMG> :class "filechooser-drag"
 	    :id (string-append id "-drag")
 	    :src (url-icon-path "drag.png"))

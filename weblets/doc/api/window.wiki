@@ -12,7 +12,7 @@ to display partial documents.
 === Client ===
 
   (window-open arg ...)
-  (window-close win)
+  (window-close [win])
   (window-raise win)
   (window-resize win width height)
   (window-iconify win)
@@ -101,7 +101,7 @@ that is the string value argument following the ++:prop++ keyword is append,
 
 </procedure>
 
-=== ++(window-close obj)++ ===
+=== ++(window-close [obj])++ ===
 <procedure> window-close
 
 <arguments>
@@ -115,7 +115,7 @@ This client-side procedure closes a //window//.
 </procedure>
 <client>
 
-=== ++(window-raise obj)++ ===
+=== ++(window-raise [obj])++ ===
 <procedure> window-raise
 
 <arguments>
@@ -129,7 +129,7 @@ This client-side procedure raises a //window//.
 </procedure>
 <client>
 
-=== ++(window-iconify obj)++ ===
+=== ++(window-iconify [obj])++ ===
 <procedure> window-iconify
 
 <arguments>
@@ -159,7 +159,7 @@ This client-side procedure resizes a //window//.
 </procedure>
 <client>
 
-=== ++(window-maximize obj)++ ===
+=== ++(window-maximize [obj])++ ===
 <procedure> window-maximize
 
 <arguments>

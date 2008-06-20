@@ -5,6 +5,10 @@
 These server parameters control the RC file loaded when HOP execution starts.
 Examples of such file can be found in the tutorial section.
 
+~~ The RC file ,(<TUTORIALREF> "tutorial" "07-hoprc.wiki") shows how this
+file can be used to customize Hop.
+
+
 == Synopsis ==
 
   (hop-rc-directory)

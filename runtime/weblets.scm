@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed May 14 09:35:36 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 08:53:08 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -112,17 +112,6 @@
       (hop-verb 4 (hop-color 1 "" "AUTOLOAD") " " path " for " url "\n")
       (autoload path (autoload-prefix url)))
    
-   (define (is-service-base? req)
-      (with-access::http-request req (path)
-	 (let ((base (hop-service-base)))
-	    (and (substring-at? base path 0)
-		 (let ((lp (string-length path))
-		       (lb (string-length base)))
-		    (or (=fx lp lb)
-			(and (=fx lp (+fx lb 1))
-			     (char=? (string-ref path (-fx lp 1))
-				     #\/))))))))
-   
    (define (warn name opath npath)
       (when (> (bigloo-warning) 1)
 	 (warning name
@@ -132,8 +121,9 @@
 		   npath))))
 
    (define (add-dashboard-applet! name icon svc)
-      (hop-dashboard-weblet-applets-set!
-       (cons (list name icon svc) (hop-dashboard-weblet-applets))))
+      (unless (pair? (assoc name (hop-dashboard-weblet-applets)))
+	 (hop-dashboard-weblet-applets-set!
+	  (cons (list name icon svc) (hop-dashboard-weblet-applets)))))
    
    (define (maybe-autoload x)
       (let ((cname (assq 'name x)))
@@ -146,7 +136,13 @@
 		    (rc (assq 'rc x))
 		    (dashboard (assq 'dashboard x))
 		    (opath (hashtable-get *weblet-table* name)))
-		(if (pair? dashboard)
+		;; dashboard declaration
+		(cond
+		   ((member name (hop-dashboard-weblet-disabled-applets))
+		    ;; the user does not want of this weblet
+		    #f)
+		   ((pair? dashboard)
+		    ;; a customized dashboard
 		    (for-each (lambda (d)
 				 (match-case d
 				    ((?i ?svc)
@@ -154,18 +150,20 @@
 					(add-dashboard-applet! name p svc)))
 				    ((and ?i (? string?))
 				     (let ((p (make-file-path prefix "etc" i)))
-					(add-dashboard-applet! name i "svc")))
+					(add-dashboard-applet! name i (string-append url "/dashboard"))))
 				    (else
 				     (warning 'autoload-weblets
 					      "bad dashboard declaration"
 					      d))))
-			      (cdr dashboard))
+			      (cdr dashboard)))
+		   (else
+		    ;; is there a dashboard icon for a regular an applet?
 		    (let ((icon (make-file-path prefix "etc" "dashboard.png")))
 		       (when (file-exists? icon)
 			  (add-dashboard-applet!
 			   name
 			   icon
-			   (string-append url "/dashboard")))))
+			   (string-append url "/dashboard"))))))
 		(when (pair? rc) (eval (cadr rc)))
 		(cond
 		   ((string? opath)
@@ -203,16 +201,16 @@
 	  (p/ (string-append string "/"))
 	  (lp (string-length p)))
       (lambda (req)
-	 (with-access::http-request req (path)
-	    (let ((i (string-index path #\?))
-		  (l (string-length path)))
+	 (with-access::http-request req (encoded-path)
+	    (let ((i (string-index encoded-path #\?))
+		  (l (string-length encoded-path)))
 	       (if (or (not i) (=fx i -1))
-		   (and (substring-at? path p 0)
-			(or (=fx l lp) (eq? (string-ref path lp) #\/)))
+		   (and (substring-at? encoded-path p 0)
+			(or (=fx l lp) (eq? (string-ref encoded-path lp) #\/)))
 		   (and (>=fx i lp)
-			(substring-at? path p 0 i)
+			(substring-at? encoded-path p 0 i)
 			(or (=fx i lp)
-			    (char=? (string-ref path lp) #\/)))))))))
+			    (char=? (string-ref encoded-path lp) #\/)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *autoload-mutex* ...                                             */

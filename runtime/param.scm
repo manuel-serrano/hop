@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu May 15 09:31:00 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 08:50:38 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -213,6 +213,9 @@
 
 	    (hop-dashboard-weblet-applets::pair-nil)
 	    (hop-dashboard-weblet-applets-set! ::pair-nil)
+
+	    (hop-dashboard-weblet-disabled-applets::pair-nil)
+	    (hop-dashboard-weblet-disabled-applets-set! ::pair-nil)
 
 	    (hop-event-buffer-size::int)
 	    (hop-event-buffer-size-set! ::int)
@@ -979,6 +982,14 @@
 ;*    hop-dashboard-weblet-applets ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-dashboard-weblet-applets
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    hop-dashboard-weblet-disabled-applets ...                        */
+;*    -------------------------------------------------------------    */
+;*    A list of dashboard applets that are disabled.                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-dashboard-weblet-disabled-applets
    '())
 
 ;*---------------------------------------------------------------------*/

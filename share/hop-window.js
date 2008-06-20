@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Thu Apr 10 09:13:55 2008 (serrano)                */
+/*    Last change :  Thu Jun 19 12:20:46 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -26,7 +26,7 @@ function hop_get_window( o ) {
       if( win ) {
 	 return win;
       } else {
-	 throw new Error( "Cannot find window " + o );
+	 return window;
       }
    }
 }
@@ -450,23 +450,17 @@ function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resiz
    win.el_title.innerHTML = title ? title : id;
 
    if( isnew ) {
-      if( x ) node_style_set( win, "left",
-			      ((typeof x)=="number") ? (x + "px") : x );
-      if( y ) node_style_set( win, "top",
-			      ((typeof y) =="number") ? (y + "px") : y );
-
-      if( width ) {
-	 node_style_set( win.el_win, "width",
-			 ((typeof width) == "number") ? (width + "px") : width );
-      } else {
-	 node_style_set( win.el_win, "width", "200px" );
+      var val_to_px = function( x, def ) {
+	 if( !x ) return def;
+	 if( (typeof x)=="number" ) return x + "px";
+	 return x;
       }
-      if( height ) {
-	 node_style_set( win.el_win, "height",
-			 ((typeof height) == "number") ? (height + "px") : height );
-      } else {
-	 node_style_set( win.el_win, "height", "200px" );
-      }
+      
+      node_style_set( win, "left", val_to_px( x, "0px" ) );
+      node_style_set( win, "top", val_to_px( y, "0px" ) );
+      
+      node_style_set( win.el_win, "width", val_to_px( width, "200px" ) );
+      node_style_set( win.el_win, "height", val_to_px( height, "200px" ) );
       
       if( win.onresize ) win.onresize();
    }
@@ -501,8 +495,8 @@ var Kprop = sc_jsstring2keyword( "prop" );
 /*---------------------------------------------------------------------*/
 /*** META ((export window-open)) */
 function hop_window_open() {
-   var title = "Hop", id, parent, src, klass, width, height, left, top,
-      background, resizable = true;
+   var title = "Hop", id, parent, src, klass, width, height, left, top;
+   var background, resizable = true;
    var prop = "";
    var i = 0, l = arguments.length;
    var body = false;
@@ -513,12 +507,21 @@ function hop_window_open() {
       return val + "";
    }
 
+   function unpx( x ) {
+      if( (x instanceof String) || (typeof x == "string" ) 
+	  && ( x.lastIndexOf( "px" ) === x.length ) ) {
+	 return x.substring( 0, x.length - 2 );
+      } else {
+	 return x;
+      }
+   }
+   
    function native_window_open() {
       if( typeof src == "function" ) src = src();
 
       if( (src instanceof String) || (typeof src == "string" ) ) {
-	 if( width ) prop += ",width=" + width;
-	 if( height ) prop += ",height=" + height;
+	 if( width ) prop += ",width=" + unpx( width );
+	 if( height ) prop += ",height=" + unpx( height );
 	 if( left != undefined ) prop += ",screenX=" + left + ",left=" + left;
 	 if( top != undefined  ) prop += ",screenY=" + top + ",top=" + top;
 
