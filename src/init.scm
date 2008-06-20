@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu May 22 23:17:34 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 13:15:45 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -61,14 +61,14 @@
 ;*    http-get ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (http-get req)
-   (with-access::http-request req (encoded-path method header)
+   (with-access::http-request req (decoded-path method header)
       (cond
-	 ((not (file-exists? encoded-path))
-	  (let ((i (string-index encoded-path #\?)))
+	 ((not (file-exists? decoded-path))
+	  (let ((i (string-index decoded-path #\?)))
 	     (cond
 		((and (fixnum? i) (>fx i 0))
-		 (let ((p (substring encoded-path 0 i))
-		       (suf (substring encoded-path i (string-length encoded-path))))
+		 (let ((p (substring decoded-path 0 i))
+		       (suf (substring decoded-path i (string-length decoded-path))))
 		    (cond
 		       ((string=? suf (hop-scm-compile-suffix))
 			(scm-response req p))
@@ -85,8 +85,8 @@
 			(http-service-not-found p))
 		       (else
 			(http-file-not-found p)))))
-		((hop-service-path? encoded-path)
-		 (http-service-not-found encoded-path))
+		((hop-service-path? decoded-path)
+		 (http-service-not-found decoded-path))
 ;* 			((string=? path "/crossdomain.xml")            */
 ;* 			 (tprint "======================== /crossdomain.xml") */
 ;* 			 (http-request-connection-set! req 'close)     */
@@ -101,16 +101,16 @@
 ;* 			       (content-type "application/xml")        */
 ;* 			       (body s))))                             */
 		(else
-		 (http-file-not-found encoded-path)))))
-	 ((is-suffix? (http-request-encoded-path req) "hop")
-	  (let ((rep (hop-load (http-request-encoded-path req))))
+		 (http-file-not-found decoded-path)))))
+	 ((is-suffix? (http-request-decoded-path req) "hop")
+	  (let ((rep (hop-load (http-request-decoded-path req))))
 	     (cond
 		((%http-response? rep)
 		 rep)
 		((xml? rep)
 		 (instantiate::http-response-hop
 		    (request req)
-		    (content-type (mime-type encoded-path (hop-default-mime-type)))
+		    (content-type (mime-type decoded-path (hop-default-mime-type)))
 		    (charset (hop-charset))
 		    (bodyp (eq? method 'GET))
 		    (header '((Cache-Control: . "no-cache")))
@@ -119,7 +119,7 @@
 		 (let ((url (make-hop-url-name
 			     (prefix
 			      (basename
-			       (http-request-encoded-path req))))))
+			       (http-request-decoded-path req))))))
 		    (instantiate::http-response-string
 		       (start-line "HTTP/1.0 307 Temporary Redirect")
 		       (header (list (cons 'location: url)))))))))
@@ -128,38 +128,38 @@
 	     (request req)
 	     (start-line "ICY 200 OK")
 	     (bodyp (eq? method 'GET))
-	     (file encoded-path)))
+	     (file decoded-path)))
 	 (else
 	  (cond
-	     ((and (string-suffix? ".gz" encoded-path) (accept-gzip? header))
+	     ((and (string-suffix? ".gz" decoded-path) (accept-gzip? header))
 	      ;; send a gzipped file with a mime type corresponding
 	      ;; to the ungzipped file
 	      (instantiate::http-response-file
 		 (request req)
-		 (content-type (mime-type (prefix encoded-path) "text/plain"))
+		 (content-type (mime-type (prefix decoded-path) "text/plain"))
 		 (charset (hop-locale))
 		 (header `((content-encoding: . "gzip")))
 		 (bodyp (eq? method 'GET))
-		 (file encoded-path)))
-	     ((and (file-exists? (string-append encoded-path ".gz"))
-		   (member (dirname encoded-path) (hop-gzipped-directories))
+		 (file decoded-path)))
+	     ((and (file-exists? (string-append decoded-path ".gz"))
+		   (member (dirname decoded-path) (hop-gzipped-directories))
 		   (accept-gzip? header))
 	      ;; send a gzipped version of the file
 	      (instantiate::http-response-file
 		 (request req)
-		 (content-type (mime-type encoded-path "text/plain"))
+		 (content-type (mime-type decoded-path "text/plain"))
 		 (charset (hop-locale))
 		 (header `((content-encoding: . "gzip")))
 		 (bodyp (eq? method 'GET))
-		 (file (string-append encoded-path ".gz"))))
+		 (file (string-append decoded-path ".gz"))))
 	     (else
 	      ;; send a regular file
 	      (instantiate::http-response-file
 		 (request req)
-		 (content-type (mime-type encoded-path "text/plain"))
+		 (content-type (mime-type decoded-path "text/plain"))
 		 (charset (hop-locale))
 		 (bodyp (eq? method 'GET))
-		 (file encoded-path))))))))
+		 (file decoded-path))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-options ...                                               */
@@ -204,7 +204,7 @@
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host user method encoded-path http header)
+   (with-access::http-request req (socket host user method decoded-path http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
 	       (socket-host-address socket)
@@ -226,7 +226,7 @@
 	 (two-digits (remainder (abs tz) 3600)))
       (display "] " port)
       ;; request
-      (fprintf port "\"~a ~a ~a\" " method encoded-path http)
+      (fprintf port "\"~a ~a ~a\" " method decoded-path http)
       ;; Return code
       (let* ((str (%http-response-local-start-line resp))
 	     (len (string-length str)))
@@ -272,7 +272,7 @@
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host (p port) user method encoded-path http header)
+   (with-access::http-request req (socket host (p port) user method decoded-path http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
 	       (socket-host-address socket)
@@ -294,7 +294,7 @@
 	 (two-digits (remainder (abs tz) 3600)))
       (display "] " port)
       ;; request
-      (fprintf port "\"~a http://~a:~a~a ~a\" " method host p encoded-path http)
+      (fprintf port "\"~a http://~a:~a~a ~a\" " method host p decoded-path http)
       ;; Return code
       (display "305" port)
       (display " " port)

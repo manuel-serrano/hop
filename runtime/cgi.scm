@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Fri Feb 29 08:40:15 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 11:32:59 2008 (serrano)                */
 ;*    Copyright   :  2003-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -42,7 +42,7 @@
 (define (http-request-cgi-args req::http-request)
    
    (define (cgi-args req)
-      (with-access::http-request req (socket method path encoded-path
+      (with-access::http-request req (socket method path decoded-path
 					     header content-length)
 	 (case method
 	    ((POST)
@@ -88,7 +88,7 @@
 		    (loop (cdr l) (cons (car l) res)))))))
 
    (with-trace 2 'http-request-cgi-args
-      (trace-item "encoded path=" (http-request-encoded-path req))
+      (trace-item "encoded path=" (http-request-decoded-path req))
       (trace-item "decoded path=" (string-for-read (http-request-path req)))
       (let ((args (cgi-args req)))
 	 (trace-item "args=" (map (lambda (a)

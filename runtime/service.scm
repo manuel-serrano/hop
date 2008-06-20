@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Jun 18 14:12:09 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 11:33:18 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -308,10 +308,10 @@
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
    (when (http-request-localhostp req)
-      (with-access::http-request req (encoded-path user service)
-	 (when (hop-service-path? encoded-path)
+      (with-access::http-request req (decoded-path user service)
+	 (when (hop-service-path? decoded-path)
 	    (mutex-lock! *service-mutex*)
-	    (let loop ((svc (hashtable-get *service-table* encoded-path))
+	    (let loop ((svc (hashtable-get *service-table* decoded-path))
 		       (armed #f))
 	       (mutex-unlock! *service-mutex*)
 	       (cond
@@ -336,14 +336,14 @@
 		   (let ((ini (hop-initial-weblet)))
 		      (cond
 			 ((and (string? ini)
-			       (substring-at? encoded-path (hop-service-base) 0)
-			       (let ((l1 (string-length encoded-path))
+			       (substring-at? decoded-path (hop-service-base) 0)
+			       (let ((l1 (string-length decoded-path))
 				     (l2 (string-length (hop-service-base))))
 				  (or (=fx l1 l2)
 				      (and (=fx l1 (+fx l2 1))
-					   (char=? (string-ref encoded-path l2)
+					   (char=? (string-ref decoded-path l2)
 						   #\/)))))
-			  (set! encoded-path
+			  (set! decoded-path
 				(string-append (hop-service-base) "/" ini))
 			  ;; resume the hop loop in order to autoload
 			  ;; the initial weblet
@@ -352,7 +352,7 @@
 			  #f)
 			 ((autoload-filter req)
 			  (mutex-lock! *service-mutex*)
-			  (loop (hashtable-get *service-table* encoded-path) #t))
+			  (loop (hashtable-get *service-table* decoded-path) #t))
 			 (else
 			  #f))))))))))
 

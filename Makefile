@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat May 31 06:51:53 2008 (serrano)                */
+#*    Last change :  Fri Jun 20 13:16:52 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -174,9 +174,12 @@ cleanall: distclean
 #*---------------------------------------------------------------------*/
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
-.PHONY: distrib distrib-inc-version distrib-sans-version
+.PHONY: distrib newdistrib distrib-inc-version distrib-sans-version
 
 distrib: 
+	$(MAKE) distrib-sans-version
+
+newdistrib:
 	$(MAKE) distrib-inc-version
 	$(MAKE) distrib-sans-version
 

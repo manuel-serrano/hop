@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Jun 20 08:53:08 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 11:35:34 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -201,16 +201,16 @@
 	  (p/ (string-append string "/"))
 	  (lp (string-length p)))
       (lambda (req)
-	 (with-access::http-request req (encoded-path)
-	    (let ((i (string-index encoded-path #\?))
-		  (l (string-length encoded-path)))
+	 (with-access::http-request req (decoded-path)
+	    (let ((i (string-index decoded-path #\?))
+		  (l (string-length decoded-path)))
 	       (if (or (not i) (=fx i -1))
-		   (and (substring-at? encoded-path p 0)
-			(or (=fx l lp) (eq? (string-ref encoded-path lp) #\/)))
+		   (and (substring-at? decoded-path p 0)
+			(or (=fx l lp) (eq? (string-ref decoded-path lp) #\/)))
 		   (and (>=fx i lp)
-			(substring-at? encoded-path p 0 i)
+			(substring-at? decoded-path p 0 i)
 			(or (=fx i lp)
-			    (char=? (string-ref encoded-path lp) #\/)))))))))
+			    (char=? (string-ref decoded-path lp) #\/)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *autoload-mutex* ...                                             */

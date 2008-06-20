@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue May 13 10:15:52 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 11:34:47 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -140,7 +140,7 @@
 		  (proxyp (string? hostname))
 		  (userinfo userinfo)
 		  (path abspath)
-		  (encoded-path cabspath)
+		  (decoded-path cabspath)
 		  (header header)
 		  (port (or actual-port port (hop-port)))
 		  (host (or actual-host hostname "localhost"))
@@ -173,7 +173,7 @@
 	  (scheme 'policy-file-request)
 	  (proxyp #f)
 	  (path "<policy-file-request/>")
-	  (encoded-path "<policy-file-request/>")
+	  (decoded-path "<policy-file-request/>")
 	  (header '())
 	  (port (hop-port))
 	  (host "localhost")

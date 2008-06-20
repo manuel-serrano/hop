@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri May 30 09:26:07 2008 (serrano)                */
+;*    Last change :  Fri Jun 20 11:34:30 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -55,7 +55,7 @@
 	      (scheme::symbol (default 'http))
 	      (port::bint (default 80))
 	      (method::symbol read-only (default 'GET))
-	      (encoded-path::bstring (default ""))
+	      (decoded-path::bstring (default ""))
 	      (connection::symbol (default 'keep-alive))
 	      (service::obj (default #unspecified))
 	      (%env (default #f)))
@@ -80,7 +80,7 @@
 	      (method::symbol read-only (default 'GET))
 	      (path::bstring read-only)
 	      (userinfo read-only (default #f))
-	      (encoded-path::bstring read-only)
+	      (decoded-path::bstring read-only)
 	      (remote-timeout read-only (default #f))
 	      (connection-timeout read-only (default #f)))
 

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed May  7 10:04:37 2008 (serrano)                */
+#*    Last change :  Fri Jun 20 11:32:40 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -633,10 +633,12 @@ chmod a-w $init
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */
 #*---------------------------------------------------------------------*/
+. .hoprelease
+
 echo "** Configuration summary **"
 echo 
 echo "Release:"
-echo "  hop release number.................... $version $devel"
+echo "  hop release number.................... $version $state$minor"
 echo "  bigloo................................ $bigloo ($bglversion)"
 echo "  backend............................... $backend"
 echo "  bigloo compilation flags.............. $bcflags"
