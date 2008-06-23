@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:51 2005                          */
-/*    Last change :  Thu Apr  3 20:17:28 2008 (serrano)                */
+/*    Last change :  Mon Jun 23 13:12:33 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned CSS                                                    */
@@ -43,6 +43,7 @@ td.hop-vpaned-pan-right {
 td.hop-vpaned-pan div.hop-pan {
   border-width: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 td.hop-vpaned-cursor {
@@ -89,4 +90,5 @@ div.hop-hpaned-cursor:hover {
 
 div.hop-hpaned > div.hop-pan {
   overflow: auto;
+  border: 1px solid red;
 }
