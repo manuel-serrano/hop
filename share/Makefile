@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Jun 20 15:43:40 2008 (serrano)                */
+#*    Last change :  Fri Jun 27 15:31:10 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -143,7 +143,7 @@ install:
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/editor && \
 	install -m a+r $(BUILDSHAREDIR)/editor/* $(DESTDIR)$(HOPSHAREDIR)/editor
-	- $(GZIP) $(BUILDSHAREDIR)/hop.js -c > $(HOPSHAREDIR)/hop.js.gz 2> /dev/null
+	- $(GZIP) $(BUILDSHAREDIR)/hop.js -c > $(DESTDIR)$(HOPSHAREDIR)/hop.js.gz 2> /dev/null
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

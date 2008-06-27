@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Jun 20 15:32:54 2008 (serrano)                */
+#*    Last change :  Fri Jun 27 15:33:51 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -23,7 +23,7 @@ DATE = $(HOPDATE)
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 HOP_POP		= hz.hop config.hop install.hop sync.hop \
-                  install.hop sync.hop \
+                  install.hop sync.hop db.hop \
                   markup.hop package.hop weblet.hop
 
 POPULATION	= $(HOP_POP) \

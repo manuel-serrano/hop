@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Fri Jun 27 10:58:59 2008 (serrano)                */
+;*    Last change :  Fri Jun 27 13:41:05 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -47,7 +47,7 @@
 	   (<SVG:TREF> . ::obj)
 	   (<SVG:TEXTPATH> . ::obj)
 	   (<SVG:PATH> . ::obj)
-	   (<SVG:FOREIGN> . ::obj)
+	   (<SVG:FOREIGNOBJECT> . ::obj)
 	   (<SVG:IMG> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -79,7 +79,7 @@
 (define-xml xml-element #t <SVG:PATH> :markup path)
 (define-xml xml-element #t <SVG:G> :markup g)
 (define-xml xml-element #t <SVG:DEFS> :markup defs)
-(define-xml xml-element #t <SVG:FOREIGN> :markup foreignObject)
+(define-xml xml-element #t <SVG:FOREIGNOBJECT> :markup foreignObject)
 ;; basic shapes
 (define-xml xml-element #t <SVG:RECT> :markup rect)
 (define-xml xml-element #t <SVG:CIRCLE> :markup circle)
