@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Thu Jun 26 11:21:37 2008 (serrano)                */
+;*    Last change :  Fri Jun 27 11:00:12 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SVG                                                              */
@@ -85,5 +85,13 @@ three images an the drawing of a curve.")
 	 (<SVG:RECT> :style "stroke:green; stroke-width:3; fill: #ded; opacity:.8"
 	    :x "30" :y "80" :height "120" :width "220")
 	 (<SVG:PATH> :style "fill:red;fill-rule:evenodd;stroke:none"
-	    :d "M 230,250 C 360,30 10,255 110,140 z"))))
+	    :d "M 230,250 C 360,30 10,255 110,140 z"))
 
+      (<H3> "Foreign")
+
+      (<SVG> :width 400 :height 400
+	 (<SVG:G> :transform "translate(300, 0) rotate(20)"
+	    (<SVG:FOREIGNOBJECT> :x "10" :y "10" :width "800" :height "800"
+	       (<BODY :xmlns "http://www.w3.org/1999/xhtml"
+		  (<IFRAME> :style "width:700px; height:700px"
+		     :src "http://hop.inria.fr")))))))
