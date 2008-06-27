@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Sun Dec  9 19:36:34 2007 (serrano)                */
+/*    Last change :  Thu Jun 26 09:44:38 2008 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item CSS                                                */
 /*=====================================================================*/
@@ -19,6 +19,7 @@
 .hop-fl td.hop-fl-item {
   margin-left: 4px;
   cursor: pointer;
+  width: 100%;
 }
 
 .hop-fl td.hop-fl-item:hover {

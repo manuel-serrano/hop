@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Wed Apr  2 09:50:39 2008 (serrano)                */
+;*    Last change :  Thu Jun 26 05:10:02 2008 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -26,6 +26,7 @@
            (hop-weblets-directory)
            (hop-mime-types-file)
 	   (hop-configure-javascript-mime-type)
+	   (hop-configure-css-mime-type)
 	   (hop-runtime-system::pair)
 	   (hop-service-base::bstring))
    
@@ -41,6 +42,7 @@
            (export hop-weblets-directory)
            (export hop-mime-types-file)
 	   (export hop-configure-javascript-mime-type)
+	   (export hop-configure-css-mime-type)
            (export hop-runtime-system)
 	   (export hop-service-base)))
 
@@ -69,6 +71,8 @@
        (print (hop-mime-types-file)))
       ((--javascript-mime-type)
        (print (hop-configure-javascript-mime-type)))
+      ((--css-mime-type)
+       (print (hop-configure-css-mime-type)))
       ((--url)
        (print (hop-url)))
       ((--hop-service-base)
@@ -89,6 +93,7 @@
              (print "  [--webletsdir]")
              (print "  [--mimetypes]")
              (print "  [--javascript-mime-type]")
+             (print "  [--css-mime-type]")
 	     (print "  [--url]"))))))
 	     
 ;*---------------------------------------------------------------------*/
@@ -114,6 +119,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-mime-types-file) "@MIMETYPES@")
 (define (hop-configure-javascript-mime-type) "@JSMIMETYPE@")
+(define (hop-configure-css-mime-type) "@CSSMIMETYPE@")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-runtime-system ...                                           */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon May 26 09:08:46 2008 (serrano)                */
+;*    Last change :  Thu Jun 26 10:55:31 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -33,8 +33,10 @@
 	      (header-format::bstring read-only)
 	      (html-attributes::pair-nil read-only (default '()))
 	      (no-end-tags-elements::pair-nil read-only (default '()))
-	      (script-start (default #f))
-	      (script-stop (default #f))
+	      (cdata-start (default #f))
+	      (cdata-stop (default #f))
+	      (css-start (default #f))
+	      (css-stop (default #f))
 	      (meta-format::bstring read-only)
 	      (abbrev-emptyp::bool (default #f)))
 
@@ -67,7 +69,7 @@
 
 	    (class xml-empty-element::xml-element)
 
-	    (class xml-script::xml-element)
+	    (class xml-cdata::xml-element)
 	    
 	    (class xml-tilde::xml
 	       (body read-only)
@@ -184,7 +186,6 @@
 	    (<SPAN> . ::obj)
 	    (<STRIKE> . ::obj)
 	    (<STRONG> . ::obj)
-	    (<STYLE> . ::obj)
 	    (<SUB> . ::obj)
 	    (<SUP> . ::obj)
 	    (<TABLE> . ::obj)
@@ -235,7 +236,8 @@
 ;*    hop-xhtml-xmlns ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-xhtml-xmlns
-   '((xmlns . "http://www.w3.org/1999/xhtml"))
+   '((xmlns . "http://www.w3.org/1999/xhtml")
+     (xmlns:svg . "http://www.w3.org/2000/svg"))
    (lambda (v)
       (if (every? (lambda (x)
 		     (and (pair? x) (symbol? (car x)) (string? (cdr x))))
@@ -264,15 +266,16 @@
    (instantiate::xml-backend
       (id 'xhtml-1.0)
       (mime-type "application/xhtml+xml")
-      (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">")
+;*       (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">") */
+      (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN\" \"http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd\" [<!ENTITY nbsp \"&#160;\">]>")
       (html-attributes (hop-xhtml-xmlns))
       (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>")
       (no-end-tags-elements '())
       ;; XHTML scripts have to be protected
-      (script-start "\n<![CDATA[\n")
-      (script-stop "]]>\n")
+      (cdata-start "\n<![CDATA[\n")
+      (cdata-stop "]]>\n")
       ;; the meta-format contains the closing />
-      (meta-format "/>")))
+      (meta-format " content=\"~a; charset=~a\"/>")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-xml-backend ...                                              */
@@ -468,25 +471,22 @@
 	  (xml-write otherwise p backend))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write ::xml-script ...                                       */
+;*    xml-write ::xml-cdata ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-script p backend)
-   (with-access::xml-script obj (body attributes)
-      (with-access::xml-backend backend (script-start script-stop)
-	 (if (pair? attributes)
-	     (begin
-		(display "<script" p)
-		(xml-write-attributes attributes p)
-		(display ">" p))
-	     (begin
-		(display "<script type='" p)
-		(display (hop-javascript-mime-type) p)
-		(display "'>" p)))
-	 (when (pair? body)
-	    (when script-start (display script-start p))
+(define-method (xml-write obj::xml-cdata p backend)
+   (with-access::xml-cdata obj (markup body attributes)
+      (with-access::xml-backend backend (cdata-start cdata-stop)
+	 (display "<" p)
+	 (display markup p)
+	 (xml-write-attributes attributes p)
+	 (display ">" p)
+	 (unless (or (not body) (null? body))
+	    (when cdata-start (display cdata-start p))
 	    (xml-write body p backend)
-	    (when script-stop (display script-stop p)))
-	 (display "</script>\n" p))))
+	    (when cdata-stop (display cdata-stop p)))
+	 (display "</" p)
+	 (display markup p)
+	 (display ">\n" p))))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-tilde ...                                        */
@@ -495,13 +495,13 @@
    (with-access::xml-tilde obj (body parent)
       (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
 	  (xml-write body p backend)
-	  (with-access::xml-backend backend (script-start script-stop)
+	  (with-access::xml-backend backend (cdata-start cdata-stop)
 	     (display "<script type='" p)
 	     (display (hop-javascript-mime-type) p)
 	     (display "'>" p)
-	     (when script-start (display script-start p))
+	     (when cdata-start (display cdata-start p))
 	     (xml-write body p backend)
-	     (when script-stop (display script-stop p))
+	     (when cdata-stop (display cdata-stop p))
 	     (display "</script>\n" p)))))
       
 ;*---------------------------------------------------------------------*/
@@ -662,7 +662,7 @@
 (define (xml-write-initializations obj p backend)
    (with-access::xml-element obj (id initializations)
       (when (pair? initializations)
-	 (with-access::xml-backend backend (script-start script-stop)
+	 (with-access::xml-backend backend (cdata-start cdata-stop)
 	    (display "<script type='" p)
 	    (display (hop-javascript-mime-type) p)
 	    (display "'>" p)
@@ -672,12 +672,12 @@
 	       (display " = document.getElementById( \"" p)
 	       (display id p)
 	       (display "\" );" p)
-	       (when script-start (display script-start p))
+	       (when cdata-start (display cdata-start p))
 	       (for-each (lambda (a)
 			    (xml-write-initialization (cdr a) (car a) var p)
 			    (newline p))
 			 initializations)
-	       (when script-stop (display script-stop p))
+	       (when cdata-stop (display cdata-stop p))
 	       (display "</script>\n" p))))))
 
 ;*---------------------------------------------------------------------*/
@@ -854,7 +854,6 @@
 (define-xml-element <SPAN>)
 (define-xml-element <STRIKE>)
 (define-xml-element <STRONG>)
-(define-xml-markup <STYLE>)
 (define-xml-element <SUB>)
 (define-xml-element <SUP>)
 (define-xml-element <TABLE>)

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/test/test.hop                   */
+;*    serrano/prgm/project/hop/1.9.x/weblets/test/test.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Nov 30 17:31:10 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Thu Jun 26 11:00:00 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
 ;*=====================================================================*/
@@ -134,7 +134,7 @@
 		  (<COLGROUP> (<COL> :width "0*"))
 		  (<TR>
 		     (<TD> :id "logo"
-			(<IMG> :id "logo"
+			(<IMG> :id "logo-img"
 			   :src (service-resource test "etc/logo.png")))
 		     (<TD> (<TABLE> :width "100%"
 			      (<TR>

@@ -1307,6 +1307,11 @@ function sc_isStringSuffix(cs1,cs2) {
    return cs2.lastIndexOf(cs1) === cs2.length;
 }
 
+/*** META ((export #t)) */
+function sc_stringSplit(s,sep) {
+   return sc_vector2list(s.split(new RegExp( "[" + sep + "]" )));
+}
+
 function sc_jsstring2list(s) {
     var res = null;
     for (var i = s.length - 1; i >= 0; i--)

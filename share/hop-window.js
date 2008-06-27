@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Thu Jun 19 12:20:46 2008 (serrano)                */
+/*    Last change :  Thu Jun 26 10:03:26 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -489,6 +489,7 @@ var Kbackground = sc_jsstring2keyword( "background" );
 var Kbg = sc_jsstring2keyword( "bg" );
 var Kresizable = sc_jsstring2keyword( "resizable" );
 var Kprop = sc_jsstring2keyword( "prop" );
+var Kfullscreen = sc_jsstring2keyword( "fullscreen" );
 
 /*---------------------------------------------------------------------*/
 /*    hop_window_open ...                                              */
@@ -569,7 +570,7 @@ function hop_window_open() {
 	    title = arguments[ i++ ];
 	 } else {
 	    if( k === Kid ) {
-	    id = arguments[ i++ ];
+	       id = arguments[ i++ ];
 	    } else {
 	       if( k === Kparent ) {
 		  parent = arguments[ i++ ];
@@ -607,9 +608,9 @@ function hop_window_open() {
 					  if( k === Kprop ) {
 					     prop += arguments[ i++ ];
 					  } else {
-					      prop +=
-						  "," + sc_keyword2jsstring(k) + "=" + 
-						  prop_to_string(arguments[i++]);
+					     prop +=
+						"," + sc_keyword2jsstring(k) + "=" + 
+						prop_to_string(arguments[i++]);
 					  }
 				       }
 				    }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Tue Jun 10 07:00:28 2008 (serrano)                */
+;*    Last change :  Thu Jun 26 16:02:13 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -423,14 +423,32 @@
        (read-svg-img-brute id attributes p)))
 
 ;*---------------------------------------------------------------------*/
+;*    height->width ...                                                */
+;*---------------------------------------------------------------------*/
+(define (height->width dim)
+   (if (and (string? dim) (string-suffix? "ex" dim))
+       (string-append (substring dim 0 (-fx (string-length dim) 2)) "em")
+       dim))
+
+;*---------------------------------------------------------------------*/
+;*    width->height ...                                                */
+;*---------------------------------------------------------------------*/
+(define (width->height dim)
+   (if (and (string? dim) (string-suffix? "em" dim))
+       (string-append (substring dim 0 (-fx (string-length dim) 2)) "ex")
+       dim))
+
+;*---------------------------------------------------------------------*/
 ;*    SVG:IMG ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <SVG:IMG> ((id #unspecified)
+				(class #f)
 				(width #f)
 				(height #f)
 				(style "text-align: center" string)
 				(src #unspecified string)
 				(prefix #t boolean)
+				(display "-moz-inline-box; -moz-box-orient:vertical; display:inline-block")
 				(attrs))
    (cond
       ((not (string? src))
@@ -443,15 +461,23 @@
 			     (string-append "gzip:" src)
 			     src)
 		      (lambda ()
-			 (read-svg-img id prefix attrs (current-input-port)))))
-	      (style0 (string-append "display: -moz-inline-box; position: relative; " style))
-	      (style1 (if width
-			  (format "width: ~a; ~a" width style0)
-			  style0))
-	      (style2 (if height
-			  (format "height: ~a; ~a" height style1)
-			  style1)))
-	  (<DIV> :style style2
+ 			 (read-svg-img id prefix attrs (current-input-port)))))
+	      (style0 (format "display: ~a; position: relative; ~a" display style))
+	      (style1 (cond
+			 (width
+			  (format "width: ~a; ~a" width style0))
+			 (height
+			  (format "width: ~a; ~a" (height->width height) style0))
+			 (else
+			  style0)))
+	      (style2 (cond
+			 (height
+			  (format "height: ~a; ~a" height style1))
+			 (width
+			  (format "height: ~a; ~a" (width->height width) style1))
+			 (else
+			  style1))))
+	  (<DIV> :style style2 :class class
 	     (instantiate::xml-svg
 		(markup 'dummy)
 		(id 'dummy)
