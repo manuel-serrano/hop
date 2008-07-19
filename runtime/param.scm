@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jun 20 08:50:38 2008 (serrano)                */
+;*    Last change :  Thu Jul  3 11:13:23 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -365,7 +365,7 @@
 ;*    hop-restore-disk-cache ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-restore-disk-cache
-   #t)
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-request-error ...                                       */

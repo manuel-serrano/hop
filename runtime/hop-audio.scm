@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sat May 24 09:43:07 2008 (serrano)                */
+;*    Last change :  Tue Jul 15 15:00:00 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -166,7 +166,7 @@
 	      (if (string? src) (string-append "'" src "'") "false")
 	      (if autoplay "true" "false")
 	      (if player (hop->json player #f #f) "false"))
-      (format "hop_window_onload_add(
+      (format "hop_window_onload_cons(
                 function() {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a , ~a, ~a, ~a );} );"
 	      id
 	      start
@@ -212,7 +212,7 @@
    (<DIV> :id (string-append id "-controls") :class "hop-audio-controls"
       ;; the controls callbacks
       (<SCRIPT>
-	 (format "hop_window_onload_add(
+	 (format "hop_window_onload_cons(
                    function() {var el=document.getElementById(~s);"
 		 (string-append id "-controls"))
 	 "el.onload=hop_audio_controls_onload;"

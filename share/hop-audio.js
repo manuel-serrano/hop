@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Fri Jun 20 08:41:34 2008 (serrano)                */
+/*    Last change :  Tue Jul 15 15:00:37 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -69,10 +69,14 @@ function hop_audio_run_hooks( audio, evname, value ) {
    var evt = new HopAudioEvent( evname, audio, value );
    var handler = "on" + evname;
 
-   if( audio[ handler ] ) {
+   if( (handler in audio) && (typeof( audio[ handler ] ) == "function") ) {
       audio[ handler ]( evt );
    }
-   if( !evt.isStopped && audio.controls && audio.controls[ handler ] ) {
+
+   if( !evt.isStopped
+       && audio.controls
+       && (handler in audio.controls)
+       && ((typeof audio.controls[ handler ]) == "function" ) ) {
       audio.controls[ handler ]( evt );
    }
 }
@@ -423,6 +427,7 @@ function hop_audio_player_set( audio, player, name ) {
 				 "server",
 				 audio.server_proxy.event_listener );
    }
+   
    /* install the new proxy */
    if( !player ) {
       if( "client_proxy" in audio ) {
@@ -430,6 +435,8 @@ function hop_audio_player_set( audio, player, name ) {
       } else {
 	 audio.proxy = new HopAudioProxy();
       }
+      
+      hop_audio_run_hooks( audio, "player", name );
    } else {
       var proxy = new HopAudioServerProxy( audio, player );
       audio.proxy = proxy;
@@ -846,7 +853,7 @@ function hop_audio_controls_metadata( audio, reset ) {
    var ye = document.getElementById( audio.id + "-controls-metadata-year" );
 
    if( reset ) {
-      tl.innerHTML = "";
+//      tl.innerHTML = "";
       ab.innerHTML = "";
       at.innerHTML = "";
       ye.innerHTML = "";
@@ -1027,11 +1034,11 @@ function hop_audio_controls_onplayer( evt ) {
    hop_audio_time_interval_clear( audio );
    hop_audio_controls_metadata( audio, true );
 
-   tl.className = "hop-audio-panel-metadata-song";
+   tl.className = "hop-audio-panel-metadata-player";
    tl.innerHTML = evt.value ?
       evt.value + " initialized..." :
       "Player initialized...";
-   
+
    status.src = stopbut.src;
 }
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Jun 12 09:28:59 2008 (serrano)                */
+/*    Last change :  Tue Jul 15 14:43:47 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -226,6 +226,23 @@ function hop_window_onload_add( proc ) {
       window.onload = function( e ) {
 	 oldonload( e );
 	 proc( e );
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_window_onload_cons ...                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export add-window-onload-first!)) */
+function hop_window_onload_cons( proc ) {
+   var oldonload = window.onload;
+
+   if( typeof oldonload != 'function' ) {
+      window.onload = proc;
+   } else {
+      window.onload = function( e ) {
+	 proc( e );
+	 oldonload( e );
       }
    }
 }
