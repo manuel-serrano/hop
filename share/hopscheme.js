@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Fri May 30 18:23:14 2008 (serrano)                */
+/*    Last change :  Mon Jul 21 12:11:56 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -15,7 +15,7 @@
 function hop_error( fun, exc, msg, svc ) {
    var emsg = exc ? exc.toString() : "???";
 
-   if( "message" in exc ) {
+   if( exc && "message" in exc ) {
       emsg = exc.message;
    } else {
       if( "description" in exc ) {
@@ -23,7 +23,7 @@ function hop_error( fun, exc, msg, svc ) {
       }
    }
 			
-   if( "line" in exc ) {
+   if( exc && "line" in exc ) {
       emsg = emsg + " (line " + exc.line + ")";
    }
 

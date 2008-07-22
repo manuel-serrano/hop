@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri May 23 23:07:09 2008 (serrano)                */
+;*    Last change :  Tue Jul 22 16:30:26 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -324,7 +324,10 @@
 		(set! %%debug-closed? #t)
 		(socket-close socket)))))
    
-   (remote-debug "FILTER-CONNECTION-TABLE! number=" *connection-number*)
+   [assert () (not (symbol? (mutex-state *remote-lock*)))]
+   
+   (remote-debug "FILTER-CONNECTION-TABLE! connection-number="
+		 *connection-number*)
    
    (with-trace 5 'filter-connection-table!
       ;; create a new hashtable
@@ -399,7 +402,7 @@
 ;*---------------------------------------------------------------------*/
 (define (connection-keep-alive! conn)
    (mutex-lock! *remote-lock*)
-   (remote-debug "CONNECTION-KEEP-ALIVE " conn " nb-conn=" *connection-number*)
+   (remote-debug "CONNECTION-KEEP-ALIVE! " conn " nb-conn=" *connection-number*)
    (when (>=fx *connection-number* (hop-max-remote-keep-alive-connection))
       ;; we first try to cleanup the timeout connections
       (let ((now (current-seconds)))
@@ -409,8 +412,10 @@
 		 (not (connection-timeout? c now)))))))
    (if (>=fx *connection-number* (hop-max-remote-keep-alive-connection))
        ;; we have failed
-       (filter-connection-table!
-	(lambda (c) (connection-locked? c)))
+       (begin
+	  (filter-connection-table!
+	   (lambda (c) (connection-locked? c)))
+	  (connection-close-sans-lock! conn))
        ;; store the connection only if room is available on the table
        (with-access::connection conn (key locked? intable?)
 	  (set! locked? #f)

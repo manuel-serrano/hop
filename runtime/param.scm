@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Jul  3 11:13:23 2008 (serrano)                */
+;*    Last change :  Tue Jul 22 16:22:15 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -848,7 +848,7 @@
    (lambda (v)
       (if (<fx v 4)
 	  (error 'hop-max-remote-keep-alive-connection-set!
-		 "value should be greater or equal to 10"
+		 "value should be greater or equal to 4"
 		 v)
 	  v)))
 
