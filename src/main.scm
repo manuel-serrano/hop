@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jun 20 13:50:57 2008 (serrano)                */
+;*    Last change :  Fri Jul 25 14:24:12 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -169,6 +169,10 @@
    (with-handler
       (lambda (e)
 	 (exception-notify e)
+	 (with-output-to-port (current-error-port)
+	    (lambda ()
+	       (print "An error has occurred in the Hop main loop, exiting...")
+	       (newline)))
 	 (exit 1))
       (let ((serv (hop-server-socket)))
 	 ;; start the job (background taks, a la cron) scheduler
@@ -327,7 +331,7 @@
    (hop-verb 1 ": " (socket-hostname sock) " [" (current-date) "]\n")
    
    ;; debug trace
-   (thread-info-set! thread "connection establied with ~a")
+   (thread-info-set! thread "connection established with ~a")
 
    (with-handler
       connect-error-handler

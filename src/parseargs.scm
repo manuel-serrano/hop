@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu May 15 06:39:43 2008 (serrano)                */
+;*    Last change :  Thu Jul 24 11:16:32 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -185,28 +185,33 @@
 	  (else
 	   (set! files (cons else files))))
 	 
+	 ;; http port
+	 (hop-port-set! p)
+	 (when (eq? ep #unspecified) (set! ep p))
+
+	 ;; log
 	 (when log-file
 	    (let ((p (append-output-file log-file)))
 	       (unless p
 		  (error 'hop "Cannot open log file" log-file))
 	       (hop-log-file-set! p)))
-	 
+
+	 ;; mime types
 	 (when mimep
 	    (load-mime-types (hop-mime-types-file))
 	    (load-mime-types (if (string? mime-file)
 				 mime-file
 				 (make-file-name (getenv "HOME") ".mime.types"))))
-	 
+
+	 ;; weblets path
 	 (hop-autoload-directory-add!
 	  (make-file-name (hop-rc-directory) "weblets"))
-	 
+
+	 ;; hoprc
 	 (when loadp (parseargs-loadrc rc-file (hop-rc-file)))
-	 
+
+	 ;; default backend
 	 (when (string? be) (hop-xml-backend-set! (string->symbol be)))
-	 
-	 ;; http port
-	 (hop-port-set! p)
-	 (when (eq? ep #unspecified) (set! ep p))
 	 
 	 ;; server event port
 	 (when (hop-enable-fast-server-event)
