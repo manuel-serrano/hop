@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Jul 15 15:00:00 2008 (serrano)                */
+;*    Last change :  Tue Jul 29 12:12:57 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -380,7 +380,8 @@
       (with-access::musicstatus status (state song songpos songlength volume)
 	 (let ((ev (list state songlength songpos volume song)))
 	    (tprint "audio signal state: event=" ev
-		    " engine=" (find-runtime-type engine))
+		    " engine=" (find-runtime-type engine)
+		    " state=" state " songlength=" songlength)
 	    (hop-audio-player-%errcount-set! player 0)
 	    (hop-event-broadcast! %event ev)))))
 

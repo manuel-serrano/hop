@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Mon May  5 11:29:51 2008 (serrano)                */
+;*    Last change :  Tue Jul 29 10:59:28 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -428,7 +428,7 @@
 		   (else
 		    (error '<PR> "Illegal :param attribute" param))))
 	       (else
-		(error '<PR> "Either `pref' or `get' must be provided" id))))
+		(error '<PR> "Either `pref' or `param' must be provided" id))))
 	 (when (pair? extra)
 	    (<TD> :class "hop-pr-editor-extra" extra)))))
 

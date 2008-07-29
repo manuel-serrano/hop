@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Jul 15 15:00:37 2008 (serrano)                */
+/*    Last change :  Tue Jul 29 13:40:06 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -897,20 +897,18 @@ function hop_audio_controls_onmetadata( evt ) {
    var alen = hop_audio_duration( audio );
    var plen = sc_length( hop_audio_playlist_get( audio ) );
 
-   if( alen > 0 ) {
-      track.className = "hop-audio-info-status-track-on-play";
-      if( plen > 0 ) {
-	 track.innerHTML = int2( 1 + hop_audio_playlist_index( audio ) )
-	    + "/" + int2( plen );
-      } else {
-	 track.innerHTML = "01/01";
-      }
-
-      min.innerHTML = int2( Math.floor( alen / 60 ) );
-      sec.innerHTML = int2( alen % 60 );
-
-      hop_audio_controls_metadata( audio, false );
+   track.className = "hop-audio-info-status-track-on-play";
+   if( plen > 0 ) {
+      track.innerHTML = int2( 1 + hop_audio_playlist_index( audio ) )
+	 + "/" + int2( plen );
+   } else {
+      track.innerHTML = "01/01";
    }
+
+   min.innerHTML = int2( Math.floor( alen / 60 ) );
+   sec.innerHTML = int2( alen % 60 );
+
+   hop_audio_controls_metadata( audio, false );
 }
 
 /*---------------------------------------------------------------------*/
@@ -953,23 +951,21 @@ function hop_audio_controls_onplay( evt ) {
    var alen = hop_audio_duration( audio );
    var plen = sc_length( hop_audio_playlist_get( audio ) );
 
-   if( alen > 0 ) {
-      status.src = playbut.src;
+   status.src = playbut.src;
 
-      track.className = "hop-audio-info-status-track-on-play";
-      if( plen > 0 ) {
-	 track.innerHTML = int2( 1 + hop_audio_playlist_index( audio ) )
-	    + "/" + int2( plen );
-      } else {
-	 track.innerHTML = "01/01";
-      }
-
-      min.innerHTML = int2( Math.floor( alen / 60 ) );
-      sec.innerHTML = int2( alen % 60 );
-
-      hop_audio_controls_metadata( audio, false );
-      hop_audio_time_interval_set( audio );
+   track.className = "hop-audio-info-status-track-on-play";
+   if( plen > 0 ) {
+      track.innerHTML = int2( 1 + hop_audio_playlist_index( audio ) )
+	 + "/" + int2( plen );
+   } else {
+      track.innerHTML = "01/01";
    }
+
+   min.innerHTML = int2( Math.floor( alen / 60 ) );
+   sec.innerHTML = int2( alen % 60 );
+
+   hop_audio_controls_metadata( audio, false );
+   hop_audio_time_interval_set( audio );
 }
 
 /*---------------------------------------------------------------------*/
