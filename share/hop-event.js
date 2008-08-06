@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue May  6 11:15:33 2008 (serrano)                */
+/*    Last change :  Mon Aug  4 09:28:45 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -283,10 +283,11 @@ function start_servevt_flash_proxy( key, host, port ) {
    }
    
    var proxy = document.createElement( "div" );
-   node_style_set( proxy, "visibility", "hidden" );
+/*    node_style_set( proxy, "visibility", "hidden" );                 */
    node_style_set( proxy, "position", "fixed" );
    node_style_set( proxy, "top", "0" );
    node_style_set( proxy, "right", "0" );
+   node_style_set( proxy, "background", "transparent" );
 
    if( hop_config.flash_markup === "embed" ) {
       proxy.appendChild( embed_proxy() );

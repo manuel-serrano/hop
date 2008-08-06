@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Tue Jul 29 13:40:06 2008 (serrano)                */
+/*    Last change :  Wed Jul 30 08:17:25 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -933,8 +933,9 @@ function hop_audio_controls_onclose( evt ) {
    
    status.src = stopbut.src;
    tl.className = "hop-audio-panel-metadata-close";
-   tl.innerHTML = "Player closed...";
-
+   tl.innerHTML = evt.value ?
+      evt.value + " closed..." :
+      "Player closed...";
 }
 
 /*---------------------------------------------------------------------*/
@@ -1032,8 +1033,8 @@ function hop_audio_controls_onplayer( evt ) {
 
    tl.className = "hop-audio-panel-metadata-player";
    tl.innerHTML = evt.value ?
-      evt.value + " initialized..." :
-      "Player initialized...";
+      evt.value + " ready..." :
+      "Player ready...";
 
    status.src = stopbut.src;
 }
