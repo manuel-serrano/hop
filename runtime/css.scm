@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Jun 10 05:53:02 2008 (serrano)                */
+;*    Last change :  Fri Aug 15 14:27:12 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -72,6 +72,8 @@
      ("pr-name" "table.hop-prefs td.hop-pr-name")
      ("pr-editor" "table.hop-prefs td.hop-pr-editor")
      ("pr-editor-expr" "table.hop-prefs input.hop-pr-editor-expr")
+     ("pr-editor-bool" "table.hop-prefs table.hop-pr-editor-bool")
+     ("pr-editor-text" "table.hop-prefs textarea.hop-pr-editor-text")
      ;; hop-login
      ("hop-login-panel" "div.hop-login-panel")
      ("hop-login" "div.hop-login-panel table.hop-login-main-table")

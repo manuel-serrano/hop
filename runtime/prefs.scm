@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Tue Jul 29 10:59:28 2008 (serrano)                */
+;*    Last change :  Fri Aug 15 13:35:15 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -141,7 +141,7 @@
 ;*---------------------------------------------------------------------*/
 (define (string->value type val)
    (case type
-      ((string path)
+      ((string path text)
        val)
       ((number)
        (string->number val))
@@ -211,6 +211,8 @@
 	      (if (eq? val #unspecified)
 		  (symbol->string a)
 		  (symbol->string val)))
+	     ((text ?- . ?-)
+	      val)
 	     (else
 	      (error 'value->string "Illegal type" type)))))))
 		 
@@ -461,6 +463,19 @@
        pr-editor-bool)
       ((enum . ?-)
        pr-editor-enum)
+      ((text . ?rest)
+       (match-case rest
+	  (()
+	   (lambda (name type value title parse key)
+	      (pr-editor-text name type value title parse key 10 80)))
+	  ((?rows)
+	   (lambda (name type value title parse key)
+	      (pr-editor-text name type value title parse key rows 80)))
+	  ((?rows ?cols)
+	   (lambda (name type value title parse key)
+	      (pr-editor-text name type value title parse key rows cols)))
+	  (else
+	   (error 'pr-editor "Illegal syntax" type))))
       (else
        pr-editor-input)))
 
@@ -477,6 +492,18 @@
 		       name (hop->js-callback parse) type key)))
 
 ;*---------------------------------------------------------------------*/
+;*    pr-editor-text ...                                               */
+;*---------------------------------------------------------------------*/
+(define (pr-editor-text name type value title parse key rows cols)
+   (<TEXTAREA> :class "hop-pr-editor-text hop-pr-saved"
+      :rows rows :cols cols
+      :title (format "~a (hit [return] to validate)"
+		     (if (string? title) title name))
+      :onkeyup (format "hop_prefs_editor_expr( event, this, this.value, '~a', ~a, '~a', '~a' )"
+		       name (hop->js-callback parse) type key)
+      (value->string type value)))
+
+;*---------------------------------------------------------------------*/
 ;*    pr-editor-bool ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (pr-editor-bool name type value title parse key)
@@ -489,7 +516,7 @@
 	 ((bool (and (? symbol?) ?y) (and (? symbol?) ?n))
 	  (values (symbol->string y) (symbol->string n))))
       (let ((name (symbol->string (gensym))))
-	 (<TABLE> :class "pr-editor-bool"
+	 (<TABLE> :class "hop-pr-editor-bool"
 	    (<COLGROUP>
 	       (<COL> :span 2 :width "1*"))
 	    (<TR>
@@ -517,7 +544,7 @@
    (let* ((name (symbol->string (gensym)))
 	  (enum (cdr type))
 	  (len (length enum)))
-      (<TABLE> :class "pr-editor-enum"
+      (<TABLE> :class "hop-pr-editor-enum"
 	 (map (lambda (s)
 		 (<TR>
 		    (<TD>

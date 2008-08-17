@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Thu Jun 19 13:30:15 2008 (serrano)                */
+;*    Last change :  Sun Aug 17 07:02:37 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -349,6 +349,7 @@
 ;*    URL is not encoded for http.                                     */
 ;*---------------------------------------------------------------------*/
 (define (<FILECHOOSER:FILES> id url regexp hidden)
+   (tprint "filechooser:files hidden=" hidden)
 
    (let ((odd #t)
 	 (now (current-seconds)))
@@ -436,13 +437,11 @@
 	       (<INPUT> :type 'checkbox
 		  :id (string-append id "-hidden")
 		  :selected (not hidden)
-		  :onchange (format "hop_filechooser_filter( ~s, ~s )"
-				 id url))
+		  :onchange (format "hop_filechooser_filter( ~s, ~s )" id url))
 	       "Show Hidden Files")
 	    (<SELECT> :class "filechooser-filters"
 	       :id (string-append id "-filters")
-	       :onchange (format "hop_filechooser_filter( ~s, ~s )"
-				 id url)
+	       :onchange (format "hop_filechooser_filter( ~s, ~s )" id url)
 	       (map (lambda (o)
 		       (<OPTION> :value (cadr o)
 			  :selected (string=? (cadr o) regexp)

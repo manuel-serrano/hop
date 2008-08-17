@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Mon May  5 11:22:35 2008 (serrano)                */
+/*    Last change :  Sun Aug 17 06:22:55 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
@@ -137,6 +137,7 @@ filechooser input.filechooser-location {
 filechooser div.filechooser-files {
   height: 50ex;
   overflow: auto;
+  width: 100%;
 }
 
 filechooser table.filechooser-body {

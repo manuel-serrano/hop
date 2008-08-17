@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Tue Apr 22 15:28:22 2008 (serrano)                */
+;*    Last change :  Mon Aug 11 09:56:59 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -145,7 +145,8 @@
      ("multimedia" . "multimedia.png")
      ("scientific" . "scientific.png")
      ("devel" . "devel.png")
-     ("office" . "office.png")))
+     ("office" . "office.png")
+     ("system" . "system.png")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-prefs ...                                                     */
