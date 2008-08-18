@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Wed Jun 25 14:43:57 2008 (serrano)                */
+;*    Last change :  Sun Aug 17 15:22:13 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -155,7 +155,7 @@
        (instantiate::xml-empty-element
 	  (markup 'img)
 	  (id (xml-make-id id 'img))
-	  (attributes (cons* `(alt . ,(or alt (basename src))) attributes))
+	  (attributes (cons `(alt . ,(or alt (basename src))) attributes))
 	  (initializations (list (cons 'src src)))
 	  (body '())))
       ((string? src)
