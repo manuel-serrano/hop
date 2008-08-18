@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Wed May  7 14:06:40 2008 (serrano)                */
+;*    Last change :  Mon Aug 18 11:40:03 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -47,8 +47,8 @@
 	   (generic scheduler-stat ::scheduler)
 	   (generic scheduler-load::int ::scheduler)
 	   
-	   (generic schedule-start ::scheduler ::procedure ::obj)
-	   (generic schedule ::scheduler ::procedure ::obj)
+	   (generic spawn ::scheduler ::procedure . args)
+	   (generic stage ::scheduler ::procedure . args)
 
 	   (generic thread-info ::obj)
 	   (generic thread-info-set! ::obj ::obj)
@@ -79,15 +79,15 @@
 (define-generic (scheduler-load scd::scheduler) 100)
 
 ;*---------------------------------------------------------------------*/
-;*    schedule-start ...                                               */
+;*    spawn ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-generic (schedule-start scd::scheduler proc::procedure msg)
-   (schedule scd proc msg))
+(define-generic (spawn scd::scheduler proc::procedure . args)
+   (apply stage scd proc args))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule ...                                                     */
+;*    stage ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-generic (schedule scd::scheduler proc::procedure msg))
+(define-generic (stage scd::scheduler proc::procedure . args))
 
 ;*---------------------------------------------------------------------*/
 ;*    *thread-info* ...                                                */

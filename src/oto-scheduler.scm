@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 06:41:38 2008                          */
-;*    Last change :  Wed Feb 27 07:46:38 2008 (serrano)                */
+;*    Last change :  Mon Aug 18 12:47:09 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    One to one scheduler                                             */
@@ -50,9 +50,9 @@
        (*fl 100. (/fl (fixnum->flonum cur) (fixnum->flonum size))))))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule-start ::one-to-one-scheduler ...                        */
+;*    spawn ::one-to-one-scheduler ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule-start scd::one-to-one-scheduler proc msg)
+(define-method (spawn scd::one-to-one-scheduler proc . args)
    (with-access::one-to-one-scheduler scd (mutex condv cur size)
       (mutex-lock! mutex)
       (let loop ()
@@ -64,7 +64,7 @@
 			  (body (lambda ()
 				   (with-handler
 				      scheduler-default-handler
-				      (proc scd thread))
+				      (apply proc scd thread args))
 				   (mutex-lock! mutex)
 				   (set! cur (-fx cur 1))
 				   (condition-variable-signal! condv)
@@ -74,10 +74,10 @@
 	 (thread-start! thread))))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule ::one-to-one-scheduler ...                              */
+;*    stage ::one-to-one-scheduler ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule scd::one-to-one-scheduler proc msg)
-   (proc scd (current-thread)))
+(define-method (stage scd::one-to-one-scheduler proc  . args)
+   (apply proc scd (current-thread) args))
 
 
 

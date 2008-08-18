@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Wed Feb 27 07:46:07 2008 (serrano)                */
+;*    Last change :  Mon Aug 18 12:49:31 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -11,7 +11,7 @@
 ;*    The characteristics of this scheduler are:                       */
 ;*      - a request is handled by a single thread extracted from the   */
 ;*        pool.                                                        */
-;*      - on competion is thread is stored in the pool.                */
+;*      - on competion the thread is stored in the pool.               */
 ;*      - on heavy load the new request waits for an old request to    */
 ;*        complete.                                                    */
 ;*    This scheduler is a little bit more complex and smarter than     */
@@ -65,9 +65,9 @@
 	    (/fl (fixnum->flonum (-fx size nfree)) (fixnum->flonum size))))))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule-start ::pool-scheduler ...                              */
+;*    spawn ::pool-scheduler ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule-start scd::pool-scheduler p msg)
+(define-method (spawn scd::pool-scheduler p . args)
    (with-access::pool-scheduler scd (mutex condv free nfree)
       (mutex-lock! mutex)
       (let loop ()
@@ -80,16 +80,16 @@
 	 (set! nfree (-fx nfree 1))
 	 (mutex-unlock! mutex)
 	 (with-access::hopthread thread (proc mutex condv)
-	    (set! proc p)
+	    (set! proc (lambda (s t) (apply p s t args)))
 	    (mutex-lock! mutex)
 	    (condition-variable-signal! condv)
 	    (mutex-unlock! mutex)))))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule ::pool-scheduler ...                                    */
+;*    stage ::pool-scheduler ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule scd::pool-scheduler proc msg)
-   (proc scd (current-thread)))
+(define-method (stage scd::pool-scheduler proc . args)
+   (apply proc scd (current-thread) args))
 
 ;*---------------------------------------------------------------------*/
 ;*    pool-thread-body ...                                             */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jul 25 14:24:12 2008 (serrano)                */
+;*    Last change :  Mon Aug 18 11:50:11 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -147,9 +147,7 @@
 	     ((cohort)
 	      (hop-scheduler-set! (instantiate::cohort-scheduler
 				     (size (hop-max-threads))
-				     (names '(stage-start
-					      stage-response
-					      stage-answer)))))
+				     (cohort 4))))
 	     ((queue)
 	      (hop-scheduler-set! (instantiate::queue-scheduler
 				     (size (hop-max-threads)))))
@@ -199,7 +197,7 @@
        (error 'hop-repl
 	      "HOP REPL cannot be spawned without multi-threading"
 	      scd)
-       (schedule-start scd hop-repl-stage 'stage-start)))
+       (spawn scd hop-repl-stage)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-repl-stage ...                                               */
@@ -236,11 +234,7 @@
 (define (hop-main-loop scd serv)
    (let loop ((id 1))
       (let ((sock (socket-accept serv)))
-	 (schedule-start scd
-			 (lambda (s t)
-			    (stage-request s t id
-					   sock 'connect (hop-read-timeout)))
-			 'stage-start)
+	 (spawn scd stage-request id sock 'connect (hop-read-timeout))
 	 (loop (+fx id 1)))))
 
 ;*---------------------------------------------------------------------*/
@@ -343,9 +337,7 @@
 				   (http-request-method req)
 				   (http-request-path req)))
 	 (http-connect-verb scd id sock req)
-	 (schedule scd
-		   (lambda (s t) (stage-response s t id req))
-		   'stage-response))))
+	 (stage scd stage-response id req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-error-handler ...                                       */
@@ -404,6 +396,15 @@
 		'close)))))
 
 ;*---------------------------------------------------------------------*/
+;*    http-response-static? ...                                        */
+;*---------------------------------------------------------------------*/
+(define (http-response-static? resp)
+   (or (http-response-abort? resp)
+       (http-response-string? resp)
+       (http-response-file? resp)
+       (http-response-error? resp)))
+
+;*---------------------------------------------------------------------*/
 ;*    stage-response ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    This stage is in charge of building a response to the received   */
@@ -423,10 +424,23 @@
 				   (http-request-port req)
 				   (http-request-path req)
 				   (find-runtime-type resp)))
-	 (schedule scd
-		   (lambda (s t) (stage-answer s t id req resp))
-		   'stage-answer))))
+	 (let ((proc (if (http-response-static? resp)
+			 stage-static-answer
+			 stage-dynamic-answer)))
+	    (stage scd proc id req resp)))))
 
+;*---------------------------------------------------------------------*/
+;*    stage-static-answer ...                                          */
+;*---------------------------------------------------------------------*/
+(define (stage-static-answer scd thread id req resp)
+   (stage-answer scd thread id req resp))
+
+;*---------------------------------------------------------------------*/
+;*    stage-dynamic-answer ...                                         */
+;*---------------------------------------------------------------------*/
+(define (stage-dynamic-answer scd thread id req resp)
+   (stage-answer scd thread id req resp))
+   
 ;*---------------------------------------------------------------------*/
 ;*    stage-answer ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -462,12 +476,8 @@
 	     #unspecified)
 	    ((keep-alive)
 	     (if (and (hop-enable-keep-alive) (<fx (scheduler-load scd) 50))
-		 (schedule scd
-			   (lambda (s t)
-			      (stage-request s t id sock
-					     'keep-alive
-					     (hop-keep-alive-timeout)))
-			   'stage-start)
+		 (stage scd stage-request
+			id sock 'keep-alive (hop-keep-alive-timeout))
 		 (socket-close sock)))
 	    (else
 	     (socket-close sock))))))

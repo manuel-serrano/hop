@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Apr  4 09:31:22 2008 (serrano)                */
+#*    Last change :  Mon Aug 18 13:00:33 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -65,7 +65,7 @@ install-weblet:
 	for f in $(DIR)/*; do \
           if [ -d $$f ]; then \
             install -m a+rx,u+rwx -d $$f || exit 1 && \
-            make install-weblet DIR=$$f || exit 1; \
+            $(MAKE) install-weblet DIR=$$f || exit 1; \
           else \
             if [ -f $$f ]; then \
 	      install -m a+r,u+r $$f $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) \

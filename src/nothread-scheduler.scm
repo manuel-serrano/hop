@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:28:00 2008                          */
-;*    Last change :  Fri Feb 29 06:28:32 2008 (serrano)                */
+;*    Last change :  Mon Aug 18 12:44:08 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NOTHREAD scheduler                                               */
@@ -29,11 +29,11 @@
    "")
 
 ;*---------------------------------------------------------------------*/
-;*    schedule ::nothread-scheduler ...                                */
+;*    stage ::nothread-scheduler ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    The simplest possible scheduler that schedule a single thread!   */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule scd::nothread-scheduler proc msg)
+(define-method (stage scd::nothread-scheduler proc . args)
    (with-handler
       scheduler-default-handler
-      (proc scd #unspecified)))
+      (apply proc scd #unspecified args)))

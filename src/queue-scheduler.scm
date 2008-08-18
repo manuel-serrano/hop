@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Sat Mar 29 08:17:01 2008 (serrano)                */
+;*    Last change :  Mon Aug 18 12:46:31 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
@@ -57,9 +57,9 @@
 	    (/fl (fixnum->flonum (-fx size nfree)) (fixnum->flonum size))))))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule-start ::queue-scheduler ...                             */
+;*    spawn ::queue-scheduler ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule-start scd::queue-scheduler proc msg)
+(define-method (spawn scd::queue-scheduler proc . args)
    (with-access::queue-scheduler scd (mutex)
       (mutex-lock! mutex)
       (let ((t (get-thread! scd)))
@@ -67,26 +67,26 @@
 	     ;; there is an available thread, we use it...
 	     (begin
 		(mutex-unlock! mutex)
-		(spawn t (lambda (s t) (proc s t))))
-	     ;; everyone is busy, we have to push our task in the queue...
+		(thread-spawn t (lambda (s t) (apply proc s t args))))
+	     ;; everybody is busy, we have to push our task in the queue...
 	     (begin
-		(queue-push! scd (lambda (s t) (proc s t)))
+		(queue-push! scd (lambda (s t) (apply proc s t args)))
 		(mutex-unlock! mutex))))))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule ::queue-scheduler ...                                   */
+;*    stage ::queue-scheduler ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule scd::queue-scheduler proc msg)
+(define-method (stage scd::queue-scheduler proc . args)
    (with-access::queue-scheduler scd (mutex head)
       (mutex-lock! mutex)
       (if (null? head)
 	  ;; the queue is empty, we can keep going with the same thread
 	  (begin
 	     (mutex-unlock! mutex)
-	     (proc scd (current-thread)))
+	     (apply proc scd (current-thread) args))
 	  ;; the queue is filled, we have to push our task
 	  (let ((nproc (queue-pop! scd)))
-	     (queue-push! scd (lambda (s t) (proc s t)))
+	     (queue-push! scd (lambda (s t) (apply proc s t args)))
 	     (mutex-unlock! mutex)
 	     (nproc scd (current-thread))))))
 
@@ -126,7 +126,7 @@
       (let loop ()
 	 (condition-variable-wait! condv mutex)
 	 (let liip ((proc (hopthread-proc t)))
-	    ;; complete the demanded task
+	    ;; complete the user task
 	    (with-handler
 	       scheduler-default-handler
 	       (proc scd t))
@@ -179,9 +179,9 @@
 	    task))))
    
 ;*---------------------------------------------------------------------*/
-;*    spawn ...                                                        */
+;*    thread-spawn ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (spawn th p)
+(define (thread-spawn th p)
    (with-access::hopthread th (condv mutex proc)
       (mutex-lock! mutex)
       (set! proc p)
