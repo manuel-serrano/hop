@@ -699,7 +699,6 @@ function sc_escapeWriteString(s) {
 	case "\n": res += s.substring(j, i) + "\\n"; j = i + 1; break;
 	case "\r": res += s.substring(j, i) + "\\r"; j = i + 1; break;
 	case "\t": res += s.substring(j, i) + "\\t"; j = i + 1; break;
-	case "\v": res += s.substring(j, i) + "\\v"; j = i + 1; break;
 	case '"': res += s.substring(j, i) + '\\"'; j = i + 1; break;
 	case "\\": res += s.substring(j, i) + "\\\\"; j = i + 1; break;
 	default:
@@ -768,24 +767,31 @@ function sc_writeChar(c, p) {
     p.appendJSString(c.val);
 }
 
-/* ------------------ write-circle ---------------------------------------------------*/
+/* ------------------ write/display-circle -----------------------------------------*/
 
 /*** META ((export #t)) */
 function sc_writeCircle(o, p) {
     if (p === undefined) // we assume not given
 	p = SC_DEFAULT_OUT;
-    p.appendJSString(sc_toWriteCircleString(o));
+    p.appendJSString(sc_toCircleString(o, sc_toWriteString));
 }
 
-function sc_toWriteCircleString(o) {
+/*** META ((export #t)) */
+function sc_displayCircle(o, p) {
+    if (p === undefined) // we assume not given
+	p = SC_DEFAULT_OUT;
+    p.appendJSString(sc_toCircleString(o, sc_toDisplayString));
+}
+
+function sc_toCircleString(o, writeOrDisplay) {
     var symb = sc_gensym("writeCircle");
     var nbPointer = new Object();
     nbPointer.nb = 0;
-    sc_prepWriteCircle(o, symb, nbPointer);
-    return sc_genToWriteCircleString(o, symb);
+    sc_prepCircle(o, symb, nbPointer);
+    return sc_genToCircleString(o, symb, writeOrDisplay);
 }
 
-function sc_prepWriteCircle(o, symb, nbPointer) {
+function sc_prepCircle(o, symb, nbPointer) {
     // TODO sc_Struct
     if (o instanceof sc_Pair ||
 	o instanceof sc_Vector) {
@@ -798,22 +804,22 @@ function sc_prepWriteCircle(o, symb, nbPointer) {
 	}
 	o[symb] = 0;
 	if (o instanceof sc_Pair) {
-	    sc_prepWriteCircle(o.car, symb, nbPointer);
-	    sc_prepWriteCircle(o.cdr, symb, nbPointer);
+	    sc_prepCircle(o.car, symb, nbPointer);
+	    sc_prepCircle(o.cdr, symb, nbPointer);
 	} else {
 	    for (var i = 0; i < o.length; i++)
-		sc_prepWriteCircle(o[i], symb, nbPointer);
+		sc_prepCircle(o[i], symb, nbPointer);
 	}
     }
 }
 
-function sc_genToWriteCircleString(o, symb) {
+function sc_genToCircleString(o, symb, writeOrDisplay) {
     if (!(o instanceof sc_Pair ||
 	  o instanceof sc_Vector))
-	return sc_toWriteString(o);
-    return o.sc_toWriteCircleString(symb);
+	return writeOrDisplay(o);
+    return o.sc_toCircleString(symb, writeOrDisplay);
 }
-sc_Pair.prototype.sc_toWriteCircleString = function(symb, inList) {
+sc_Pair.prototype.sc_toCircleString = function(symb, writeOrDisplay, inList) {
     if (this[symb + "use"]) { // use-flag is set. Just use it.
 	var nb = this[symb + "nb"];
 	if (this[symb]-- === 0) { // if we are the last use. remove all fields.
@@ -847,18 +853,18 @@ sc_Pair.prototype.sc_toWriteCircleString = function(symb, inList) {
 	res += "(";
     
     // print car
-    res += sc_genToWriteCircleString(this.car, symb);
+    res += sc_genToCircleString(this.car, symb, writeOrDisplay);
     
     if (sc_isPair(this.cdr)) {
-	res += " " + this.cdr.sc_toWriteCircleString(symb, true);
+	res += " " + this.cdr.sc_toCircleString(symb, writeOrDisplay, true);
     } else if (this.cdr !== null) {
-	res += " . " + sc_genToWriteCircleString(this.cdr, symb);
+	res += " . " + sc_genToCircleString(this.cdr, symb, writeOrDisplay);
     }
     if (!inList)
 	res += ")";
     return res;
 };
-sc_Vector.prototype.sc_toWriteCircleString = function(symb) {
+sc_Vector.prototype.sc_toCircleString = function(symb, writeOrDisplay) {
     if (this[symb + "use"]) { // use-flag is set. Just use it.
 	var nb = this[symb + "nb"];
 	if (this[symb]-- === 0) { // if we are the last use. remove all fields.
@@ -881,7 +887,7 @@ sc_Vector.prototype.sc_toWriteCircleString = function(symb) {
     }
     res += "#(";
     for (var i = 0; i < this.length; i++) {
-	res += sc_genToWriteCircleString(this[i], symb);
+	res += sc_genToCircleString(this[i], symb, writeOrDisplay);
 	if (i < this.length - 1) res += " ";
     }
     res += ")";
@@ -906,7 +912,7 @@ function sc_print(s) {
 
 /* ------------------ format ---------------------------------------------------*/
 /*** META ((export #t)) */
-function sc_format(s, args) {
+function sc_format(s) {
    var len = s.length;
    var p = new sc_StringOutputPort();
    var i = 0, j = 1;
@@ -917,90 +923,105 @@ function sc_format(s, args) {
       if (i2 == -1) {
 	  p.appendJSString( s.substring( i, len ) );
 	  return p.close();
+      } else if (i2 == (len - 1)) {
+	  p.appendJSString(s.substring(i, len));
+	  return p.close();
+      } else if (i2 == (len - 2) && s.charAt(i2 + 1) == ":") {
+	  p.appendJSString(s.substring(i, len));
+	  return p.close();
       } else {
-	 if (i2 > i) {
-	    if (i2 == (len - 1)) {
-		p.appendJSString(s.substring(i, len));
-		return p.close();
-	    } else {
-	       p.appendJSString(s.substring(i, i2));
-	       i = i2;
-	    }
-	 }
+	  if (i2 > i) p.appendJSString(s.substring(i, i2));
 
-	 switch(s.charCodeAt(i2 + 1)) {
-	    case 65:
-	    case 97:
-	       // a
-	       sc_display(arguments[j], p);
-	       i += 2; j++;
-	       break;
+	  var alternativeForm = (s.charAt(i2 + 1) == ":");
+	  if (alternativeForm) i2++;
 
-	    case 83:
-	    case 115:
-	       // s
-	       sc_write(arguments[j], p);
-	       i += 2; j++;
-	       break;
+	  // already advance before evalualating escape sequences.
+	  // this way it is easier to see.
+	  // no escape sequence requires 'i'.
+	  i = i2 + 2;
 
-	    case 86:
-	    case 118:
-	       // v
-	       sc_display(arguments[j], p);
-	       p.appendJSString("\n");
-	       i += 2; j++;
-	       break;
+	  switch(s.charCodeAt(i2 + 1)) {
+	  case 65:
+	  case 97:
+	      // a
+	      if (alternativeForm)
+		  sc_displayCircle(arguments[j], p);
+	      else
+		  sc_display(arguments[j], p);
+	      j++;
+	      break;
 
-	    case 67:
-	    case 99:
-	       // c
-	       p.appendJSString(String.fromCharCode(arguments[j]));
-	       i += 2; j++;
-	       break;
+	  case 83:
+	  case 115:
+	      // s
+	      if (alternativeForm)
+		  sc_writeCircle(arguments[j], p);
+	      else
+		  sc_write(arguments[j], p);
+	      j++;
+	      break;
 
-	    case 88:
-	    case 120:
-	       // x
-	       p.appendJSString(arguments[j].toString(6));
-	       i += 2; j++;
-	       break;
+	  case 86:
+	  case 118:
+	      // v
+	      if (alternativeForm)
+		  sc_displayCircle(arguments[j], p);
+	      else
+		  sc_display(arguments[j], p);
+	      p.appendJSString("\n");
+	      j++;
+	      break;
 
-	    case 79:
-	    case 111:
-	       // o
-	       p.appendJSString(arguments[j].toString(8));
-	       i += 2; j++;
-	       break;
+	  case 67:
+	  case 99:
+	      // c
+	      p.appendJSString(String.fromCharCode(arguments[j]));
+	      j++;
+	      break;
 
-	    case 66:
-	    case 98:
-	       // b
-	       p.appendJSString(arguments[j].toString(2));
-	       i += 2; j++;
-	       break;
+	  case 88:
+	  case 120:
+	      // x
+	      p.appendJSString(arguments[j].toString(6));
+	      j++;
+	      break;
+
+	  case 79:
+	  case 111:
+	      // o
+	      p.appendJSString(arguments[j].toString(8));
+	      j++;
+	      break;
+
+	  case 66:
+	  case 98:
+	      // b
+	      p.appendJSString(arguments[j].toString(2));
+	      j++;
+	      break;
 	       
-	    case 37:
-	    case 110:
-	       // %, n
-	       p.appendJSString("\n");
-	       i += 2; break;
+	  case 37:
+	  case 110:
+	      // %, n
+	      p.appendJSString("\n");
+	      break;
 
-	    case 114:
-	       // r
-	       p.appendJSString("\r");
-	       i += 2; break;
+	  case 114:
+	      // r
+	      p.appendJSString("\r");
+	      break;
 
-	    case 126:
-	       // ~
-	       p.appendJSString("~");
-	       i += 2; break;
+	  case 126:
+	      // ~
+	      p.appendJSString("~");
+	      break;
 
-	    default:
-	       sc_error( "format: illegal ~"
-			 + String.fromCharCode(s.charCodeAt(i2 + 1))
-			 + " sequence" );
-	       return "";
-	 }
+	  default:
+	      sc_error( "format: illegal ~"
+			+ String.fromCharCode(s.charCodeAt(i2 + 1))
+			+ " sequence" );
+	      return "";
+	  }
       }
    }
 
