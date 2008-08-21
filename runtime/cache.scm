@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Thu Aug 21 17:40:33 2008 (serrano)                */
+;*    Last change :  Thu Aug 21 17:43:07 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -118,8 +118,7 @@
 ;*    cache-signature ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (cache-signature path)
-   23)
-;*    (file-modification-time path))                                   */
+   (file-modification-time path))
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-cache ...                                               */
