@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Wed Aug 20 17:48:31 2008 (serrano)                */
+;*    Last change :  Thu Aug 21 17:40:33 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -118,7 +118,8 @@
 ;*    cache-signature ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (cache-signature path)
-   (file-modification-time path))
+   23)
+;*    (file-modification-time path))                                   */
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-cache ...                                               */
@@ -175,18 +176,19 @@
 	 (cond
 	    ((validity ce path)
 	     (with-access::cache-entry ce (value %prev %next)
-		(when %prev
-		   (if %next
-		       (begin
-			  (cache-entry-%prev-set! %next %prev)
-			  (cache-entry-%next-set! %prev %next))
-		       (begin
-			  (cache-entry-%next-set! %prev #f)
-			  (set! %tail %prev)))
-		   (set! %prev #f)
-		   (set! %next %head)
-		   (cache-entry-%prev-set! %head ce)
-		   (set! %head ce))
+		(unless (eq? %head ce)
+		   (when %prev
+		      (if %next
+			  (begin
+			     (cache-entry-%prev-set! %next %prev)
+			     (cache-entry-%next-set! %prev %next))
+			  (begin
+			     (cache-entry-%next-set! %prev #f)
+			     (set! %tail %prev)))
+		      (set! %prev #f)
+		      (set! %next %head)
+		      (cache-entry-%prev-set! %head ce)
+		      (set! %head ce)))
 		(mutex-unlock! %mutex)
 		value))
 	    ((cache-entry? ce)

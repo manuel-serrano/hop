@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Tue Jul 29 12:12:57 2008 (serrano)                */
+;*    Last change :  Thu Aug 21 14:56:18 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -556,7 +556,6 @@
 	    (when (thread? %thread)
 	       (music-event-loop-abort! engine)
 	       (music-close engine)
-	       (thread-terminate! %thread)
 	       (set! %thread #f))))))
 
 ;*---------------------------------------------------------------------*/
