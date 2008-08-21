@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Mon Aug 18 11:40:03 2008 (serrano)                */
+;*    Last change :  Wed Aug 20 10:52:06 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -48,7 +48,18 @@
 	   (generic scheduler-load::int ::scheduler)
 	   
 	   (generic spawn ::scheduler ::procedure . args)
+	   (generic spawn0 ::scheduler ::procedure)
+	   (generic spawn1 ::scheduler ::procedure ::obj)
+	   (generic spawn2 ::scheduler ::procedure ::obj ::obj)
+	   (generic spawn3 ::scheduler ::procedure ::obj ::obj ::obj)
+	   (generic spawn4 ::scheduler ::procedure ::obj ::obj ::obj ::obj)
+	   
 	   (generic stage ::scheduler ::procedure . args)
+	   (generic stage0 ::scheduler ::procedure)
+	   (generic stage1 ::scheduler ::procedure ::obj)
+	   (generic stage2 ::scheduler ::procedure ::obj ::obj)
+	   (generic stage3 ::scheduler ::procedure ::obj ::obj ::obj)
+	   (generic stage4 ::scheduler ::procedure ::obj ::obj ::obj ::obj)
 
 	   (generic thread-info ::obj)
 	   (generic thread-info-set! ::obj ::obj)
@@ -85,9 +96,69 @@
    (apply stage scd proc args))
 
 ;*---------------------------------------------------------------------*/
+;*    spawn0 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (spawn0 scd::scheduler proc::procedure)
+   (stage0 scd proc))
+
+;*---------------------------------------------------------------------*/
+;*    spawn1 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (spawn1 scd::scheduler proc::procedure a0)
+   (stage1 scd proc a0))
+
+;*---------------------------------------------------------------------*/
+;*    spawn2 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (spawn2 scd::scheduler proc::procedure a0 a1)
+   (stage2 scd proc a0 a1))
+
+;*---------------------------------------------------------------------*/
+;*    spawn3 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (spawn3 scd::scheduler proc::procedure a0 a1 a2)
+   (stage3 scd proc a0 a1 a2))
+
+;*---------------------------------------------------------------------*/
+;*    spawn4 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (spawn4 scd::scheduler proc::procedure a0 a1 a2 a3)
+   (stage4 scd proc a0 a1 a2 a3))
+
+;*---------------------------------------------------------------------*/
 ;*    stage ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (stage scd::scheduler proc::procedure . args))
+
+;*---------------------------------------------------------------------*/
+;*    stage0 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (stage0 scd::scheduler proc::procedure)
+   (stage scd proc))
+
+;*---------------------------------------------------------------------*/
+;*    stage1 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (stage1 scd::scheduler proc::procedure a0)
+   (stage scd proc a0))
+
+;*---------------------------------------------------------------------*/
+;*    stage2 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (stage2 scd::scheduler proc::procedure a0 a1)
+   (stage scd proc a0 a1))
+
+;*---------------------------------------------------------------------*/
+;*    stage3 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (stage3 scd::scheduler proc::procedure a0 a1 a2)
+   (stage scd proc a0 a1 a2))
+
+;*---------------------------------------------------------------------*/
+;*    stage4 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (stage4 scd::scheduler proc::procedure a0 a1 a2 a3)
+   (stage scd proc a0 a1 a2 a3))
 
 ;*---------------------------------------------------------------------*/
 ;*    *thread-info* ...                                                */

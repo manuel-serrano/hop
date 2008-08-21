@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Aug 18 11:50:11 2008 (serrano)                */
+;*    Last change :  Wed Aug 20 10:51:20 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -56,7 +56,17 @@
 ;*    *verb-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define *verb-mutex* (make-mutex 'hop-verb))
- 
+
+;*---------------------------------------------------------------------*/
+;*    *socket-mutex* ...                                               */
+;*---------------------------------------------------------------------*/
+(define *socket-mutex* (make-mutex 'hop-sock))
+
+;*---------------------------------------------------------------------*/
+;*    *keep-alive* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define *keep-alive* 0)
+
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -197,7 +207,7 @@
        (error 'hop-repl
 	      "HOP REPL cannot be spawned without multi-threading"
 	      scd)
-       (spawn scd hop-repl-stage)))
+       (spawn0 scd hop-repl-stage)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-repl-stage ...                                               */
@@ -234,9 +244,37 @@
 (define (hop-main-loop scd serv)
    (let loop ((id 1))
       (let ((sock (socket-accept serv)))
-	 (spawn scd stage-request id sock 'connect (hop-read-timeout))
+	 (hop-verb 2 (hop-color id id " ACCEPT")
+		   ": " (socket-hostname sock) " [" (current-date) "]\n")
+	 (spawn4 scd stage-request id sock 'connect (hop-read-timeout))
 	 (loop (+fx id 1)))))
 
+;*---------------------------------------------------------------------*/
+;*    keep-alive ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (keep-alive)
+   (let ((v 0))
+      (mutex-lock! *socket-mutex*)
+      (set! v *keep-alive*)
+      (mutex-unlock! *socket-mutex*)
+      v))
+   
+;*---------------------------------------------------------------------*/
+;*    keep-alive-- ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (keep-alive--)
+   (mutex-lock! *socket-mutex*)
+   (set! *keep-alive* (-fx *keep-alive* 1))
+   (mutex-unlock! *socket-mutex*))
+
+;*---------------------------------------------------------------------*/
+;*    keep-alive++ ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (keep-alive++)
+   (mutex-lock! *socket-mutex*)
+   (set! *keep-alive* (+fx 1 *keep-alive*))
+   (mutex-unlock! *socket-mutex*))
+   
 ;*---------------------------------------------------------------------*/
 ;*    with-time ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -268,15 +306,20 @@
 	   (or (&io-timeout-error? e)
 	       (and (&io-parse-error? e)
 		    (eof-object? (&io-parse-error-obj e))))))
-   
+
    ;; error handler specific to that the stage
    (define (connect-error-handler e)
       (if (keep-alive-ellapsed-error? e)
 	  ;; this is not a true error, just log
 	  (hop-verb 3 (hop-color id id " SHUTTING DOWN")
-		    (if (&io-timeout-error? e)
-			" (keep-alive timeout ellapsed)"
-			" (parse error)")
+		    (cond
+		       ((&io-timeout-error? e)
+			" (keep-alive, timeout ellapsed)")
+		       ((and (&io-parse-error? e)
+			     (eof-object? (&io-parse-error-obj e)))
+			" (keep-alive, connection reset by peer)")
+		       (else
+			" (keep-alive, parse error)"))
 		    "\n")
 	  ;; this one is a true error
 	  (begin
@@ -292,15 +335,17 @@
 		      ;; notify the previous error to the client fails
 		      (when (&error? e) (error-notify e))
 		      #unspecified)
-		   ;; we will try to answer the error to the client 
+		   ;; we will try to answer the error to the client
 		   (unless (&io-sigpipe-error? e)
 		      (let ((resp ((or (hop-http-request-error)
 				       http-request-error)
 				   e)))
 			 (http-response resp sock)))))))
+      ;; decrement the keep-alive number
+      (when (eq? mode 'keep-alive) (keep-alive--))
       ;; abort this request
       (socket-close sock))
-   
+
    ;; verbose function (only for log and debug)
    (define (http-connect-verb scd id sock req)
       (when (eq? mode 'keep-alive)
@@ -320,10 +365,12 @@
 		   "\n")))
 
    ;; log
-   (hop-verb 1 (hop-color id id " CONNECT") (if (eq? mode 'keep-alive) "+" ""))
-   (hop-verb 2 (scheduler-stat scd))
-   (hop-verb 1 ": " (socket-hostname sock) " [" (current-date) "]\n")
-   
+   (hop-verb 1 (hop-color id id " CONNECT")
+	     (if (eq? mode 'keep-alive) "+" "")
+	     (if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
+	     (if (>=fx (hop-verbose) 3) (format " ~a" (current-thread)) "")
+	     ": " (socket-hostname sock) " [" (current-date) "]\n")
+
    ;; debug trace
    (thread-info-set! thread "connection established with ~a")
 
@@ -337,7 +384,10 @@
 				   (http-request-method req)
 				   (http-request-path req)))
 	 (http-connect-verb scd id sock req)
-	 (stage scd stage-response id req))))
+	 ;; decrement the keep-alive number (we have a valid connection)
+	 (when (eq? mode 'keep-alive) (keep-alive--))
+	 ;; start compting the answer
+	 (stage2 scd stage-response id req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-error-handler ...                                       */
@@ -427,7 +477,7 @@
 	 (let ((proc (if (http-response-static? resp)
 			 stage-static-answer
 			 stage-dynamic-answer)))
-	    (stage scd proc id req resp)))))
+	    (stage3 scd proc id req resp)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-static-answer ...                                          */
@@ -470,14 +520,25 @@
 	 (hop-verb 3 (hop-color req req " END")
 		   (scheduler-stat scd)
 		   ": " (find-runtime-type resp) " " connection
-		   " [" (current-date) "] " connection "\n")
+		   " [" (current-date) "] "
+		   (if (and (eq? connection 'keep-alive) (>=fx (hop-verbose) 4))
+		       (format " keep-alive [open=~a/~a]"
+			       (keep-alive)
+			       (hop-keep-alive-threshold))
+		       connection)
+		   "\n")
+	 
 	 (case connection
 	    ((persistent)
 	     #unspecified)
 	    ((keep-alive)
-	     (if (and (hop-enable-keep-alive) (<fx (scheduler-load scd) 50))
-		 (stage scd stage-request
-			id sock 'keep-alive (hop-keep-alive-timeout))
+	     (if (and (hop-enable-keep-alive)
+		      (<fx (scheduler-load scd) 50)
+		      (<fx (keep-alive) (hop-keep-alive-threshold)))
+		 (begin
+		    (keep-alive++)
+		    (stage4 scd stage-request
+			    id sock 'keep-alive (hop-keep-alive-timeout)))
 		 (socket-close sock)))
 	    (else
 	     (socket-close sock))))))

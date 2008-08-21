@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Wed Apr 16 08:13:48 2008 (serrano)                */
+;*    Last change :  Wed Aug 20 17:48:31 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -205,7 +205,7 @@
 	     #f)))))
 
 ;*---------------------------------------------------------------------*/
-;*    cache-get ::cache ...                                            */
+;*    cache-get ::cache-disk ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (cache-get c::cache-disk path::bstring)
    (with-access::cache-disk c (%table %head %tail validity %mutex)
@@ -282,7 +282,7 @@
 (define-generic (cache-put! c::cache upath::bstring value::obj))
 
 ;*---------------------------------------------------------------------*/
-;*    cache-put! ...                                                   */
+;*    cache-put! ::cache-disk ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (cache-put! c::cache-disk upath::bstring value)
    (with-access::cache-disk c (%table %head %tail %mutex
@@ -316,7 +316,7 @@
 	    cpath))))
 
 ;*---------------------------------------------------------------------*/
-;*    cache-put! ...                                                   */
+;*    cache-put! ::cache-memory ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (cache-put! c::cache-memory upath::bstring value)
    (with-access::cache-memory c (%table %head %tail %mutex

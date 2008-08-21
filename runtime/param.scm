@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Jul 22 16:22:15 2008 (serrano)                */
+;*    Last change :  Tue Aug 19 15:29:19 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -58,6 +58,12 @@
 	    (hop-log::int)
 	    (hop-log-set! ::int)
 
+	    (hop-max-file-size-cache::elong)
+	    (hop-max-file-size-cache-set! ::elong)
+
+	    (hop-max-file-entry-cache::int)
+	    (hop-max-file-entry-cache-set! ::int)
+	    
 	    (hop-restore-disk-cache::bool)
 	    (hop-restore-disk-cache-set! ::bool)
 	    
@@ -175,6 +181,9 @@
 	    (hop-remote-keep-alive-timeout::int) 
 	    (hop-remote-keep-alive-timeout-set! ::int)
 
+	    (hop-keep-alive-threshold::int)
+	    (hop-keep-alive-threshold-set! ::int)
+
 	    (hop-max-remote-keep-alive-connection::int)
 	    (hop-max-remote-keep-alive-connection-set! ::int)
 
@@ -196,6 +205,9 @@
 	    (hop-path-access-control::procedure)
 	    (hop-path-access-control-set! ::procedure)
 
+	    (hop-force-content-length::bool)
+	    (hop-force-content-length-set! ::bool)
+	    
 	    (hop-service-access-control::procedure)
 	    (hop-service-access-control-set! ::procedure)
 
@@ -366,6 +378,18 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-restore-disk-cache
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-max-file-size-cache ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-file-size-cache
+   #e16384)
+
+;*---------------------------------------------------------------------*/
+;*    hop-max-file-entry-cache ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-file-entry-cache
+   16)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-request-error ...                                       */
@@ -842,6 +866,10 @@
    ;; the number of milli-seconds to keep alive remote connections
    30)
 
+(define-parameter hop-keep-alive-threshold
+   ;; the max number of connections above which keep-alive are closed
+   256)
+   
 (define-parameter hop-max-remote-keep-alive-connection
    ;; the max number of keep-alive remote (proxing) connections
    8
@@ -926,6 +954,12 @@
 		 v))
 	 (else
 	  v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-force-content-length ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-force-content-length
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-access-control ...                                   */

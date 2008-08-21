@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 16:03:01 2008                          */
-;*    Last change :  Mon Aug 18 12:51:31 2008 (serrano)                */
+;*    Last change :  Tue Aug 19 10:39:18 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    COHORT scheduler                                                 */
@@ -84,8 +84,8 @@
 ;*    pool-info ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (pool-info pool)
-   (with-access::pool pool (id size nfree)
-      (format "~a: ~a/~a" id (-fx size nfree) size)))
+   (with-access::pool pool (size nfree)
+      (format "~a/~a" (-fx size nfree) size)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-load ::cohort-scheduler ...                            */
