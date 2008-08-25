@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 06:41:38 2008                          */
-;*    Last change :  Mon Aug 18 12:47:09 2008 (serrano)                */
+;*    Last change :  Fri Aug 22 14:34:11 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    One to one scheduler                                             */
@@ -63,7 +63,7 @@
       (letrec ((thread (instantiate::hopthread
 			  (body (lambda ()
 				   (with-handler
-				      scheduler-default-handler
+				      (make-scheduler-error-handler thread)
 				      (apply proc scd thread args))
 				   (mutex-lock! mutex)
 				   (set! cur (-fx cur 1))

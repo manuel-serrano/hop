@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jun 20 11:32:40 2008 (serrano)                */
+#*    Last change :  Fri Aug 22 17:09:50 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -35,7 +35,7 @@ bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 bcflagsdev=""
 bcflagsdbg="-copt -g"
 bcflagsdbg2="-g -O2 -cg"
-bcflagsbmem="-g2 -O2"
+bcflagspmem="-pmem -O2 -fno-user-inlining"
 bcflagsopt="-unsafe -O3"
 bcflagsprofile="-pg -L \$(BUILDLIBDIR)"
 
@@ -189,8 +189,8 @@ while : ; do
       bscm2jsflags=;
       bcflags="$bcflags $bcflagsdbg2";;
 
-    --bmem)
-      bcflags="$bcflags $bcflagsbmem";;
+    --pmem)
+      bcflags="$bcflags $bcflagspmem";;
 
     --optimize)
       bcflags="$bcflags $bcflagsopt";;
@@ -250,7 +250,7 @@ while : ; do
       echo "   --ccflags=args........ The heap options" >&2;
       echo "   --devel............... Enables devel mode (safe but not debug)" >&2;
       echo "   --debug[2]............ Enables Bigloo debug mode" >&2;
-      echo "   --bmem................ Enables Bigloo bmem mode" >&2;
+      echo "   --pmem................ Enables memory profiling mode" >&2;
       echo "   --gzip................ The GNU zipper" >&2;
       echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
       echo "   --enable-ssl.......... Enables SSL support" >&2;

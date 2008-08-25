@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 16:03:01 2008                          */
-;*    Last change :  Tue Aug 19 10:39:18 2008 (serrano)                */
+;*    Last change :  Fri Aug 22 14:35:41 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    COHORT scheduler                                                 */
@@ -190,7 +190,7 @@
       (let loop ()
 	 (condition-variable-wait! condv mutex)
 	 (with-handler
-	    scheduler-default-handler
+	    (make-scheduler-error-handler t)
 	    ((hopthread-proc t) scd t))
 	 (pool-add! pool t)
 	 (loop))))

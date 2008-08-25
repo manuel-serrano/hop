@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Aug 19 09:21:10 2008 (serrano)                */
+;*    Last change :  Fri Aug 22 17:01:22 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -122,8 +122,8 @@
 	       (read/rp http-sp-grammar pi2)
 	       (set! http-version (read/rp http-version-grammar pi2))
 	       (http-read-crlf pi2)
-	       (if (input-string-port? pi2)
-		   (close-input-port pi2))))
+	       (when (input-string-port? pi2)
+		  (close-input-port pi2))))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
 	    (http-parse-header pi po)
 	    (let ((cabspath (http-file-name-canonicalize abspath))

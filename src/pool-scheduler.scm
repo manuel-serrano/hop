@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Mon Aug 18 12:49:31 2008 (serrano)                */
+;*    Last change :  Fri Aug 22 14:34:26 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -105,7 +105,7 @@
 	 (let liip ((proc (hopthread-proc t)))
 	    ;; complete the demanded task
 	    (with-handler
-	       scheduler-default-handler
+	       (make-scheduler-error-handler t)
 	       (proc scd t))
 	    ;; go back to the free pool
 	    (mutex-lock! smutex)

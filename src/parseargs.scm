@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/parseargs.scm                 */
+;*    serrano/lab/HOP/1.9.x/src/parseargs.scm                          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Jul 24 11:16:32 2008 (serrano)                */
+;*    Last change :  Fri Aug 22 10:48:33 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -40,6 +40,8 @@
 	 (log-file #f)
 	 (be #f)
 	 (files '()))
+
+      (bigloo-debug-set! 0)
       
       (args-parse (cdr args)
 	 ;; Misc

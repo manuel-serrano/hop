@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Wed Aug 20 10:52:06 2008 (serrano)                */
+;*    Last change :  Fri Aug 22 14:47:59 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -13,9 +13,9 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hop_scheduler
-
+   
    (library hop)
-
+   
    (cond-expand
       (enable-threads
        (library pthread)))
@@ -28,7 +28,8 @@
 		  (mutex::mutex read-only (default (make-mutex)))
 		  (scheduler::scheduler (default (scheduler-nil)))
 		  (info::obj (default #unspecified))
-		  (request::obj (default #f)))))
+		  (request::obj (default #f))
+		  (onerror::obj (default #f)))))
       (else
        (export (class hopthread::thread
 		  (proc::procedure (default (lambda (t) #f)))
@@ -37,12 +38,13 @@
 		  (scheduler::scheduler (default (scheduler-nil)))
 		  (info::obj (default #unspecified))
 		  (request::obj (default #f))
+		  (onerror::obj (default #f))
 		  (body::procedure read-only)))))
-
+   
    (export (abstract-class scheduler
 	      (scheduler-init!)
 	      (size::int read-only (default 0)))
-
+	   
 	   (generic scheduler-init! ::scheduler)
 	   (generic scheduler-stat ::scheduler)
 	   (generic scheduler-load::int ::scheduler)
@@ -60,11 +62,12 @@
 	   (generic stage2 ::scheduler ::procedure ::obj ::obj)
 	   (generic stage3 ::scheduler ::procedure ::obj ::obj ::obj)
 	   (generic stage4 ::scheduler ::procedure ::obj ::obj ::obj ::obj)
-
+	   
 	   (generic thread-info ::obj)
 	   (generic thread-info-set! ::obj ::obj)
-
-	   (scheduler-default-handler ::obj)))
+	   
+	   (scheduler-default-handler ::obj)
+	   (make-scheduler-error-handler ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    thread-start!                                                    */
@@ -99,31 +102,31 @@
 ;*    spawn0 ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (spawn0 scd::scheduler proc::procedure)
-   (stage0 scd proc))
+   (spawn scd proc))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn1 ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (spawn1 scd::scheduler proc::procedure a0)
-   (stage1 scd proc a0))
+   (spawn scd proc a0))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn2 ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (spawn2 scd::scheduler proc::procedure a0 a1)
-   (stage2 scd proc a0 a1))
+   (spawn scd proc a0 a1))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn3 ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (spawn3 scd::scheduler proc::procedure a0 a1 a2)
-   (stage3 scd proc a0 a1 a2))
+   (spawn scd proc a0 a1 a2))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn4 ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (spawn4 scd::scheduler proc::procedure a0 a1 a2 a3)
-   (stage4 scd proc a0 a1 a2 a3))
+   (spawn scd proc a0 a1 a2 a3))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage ...                                                        */
@@ -214,4 +217,14 @@
       (when (thread? th)
 	 (fprint (current-error-port) "Thread: " th " " (thread-info th)))))
 
-	  
+;*---------------------------------------------------------------------*/
+;*    make-scheduler-error-handler ...                                 */
+;*---------------------------------------------------------------------*/
+(define (make-scheduler-error-handler t)
+   (lambda (e)
+      (with-access::hopthread t (onerror)
+	 (if (procedure? onerror)
+	     (with-handler
+		scheduler-default-handler
+		(onerror e))
+	     (scheduler-default-handler e)))))

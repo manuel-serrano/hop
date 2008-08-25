@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Aug 20 10:51:20 2008 (serrano)                */
+;*    Last change :  Fri Aug 22 19:54:06 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -207,13 +207,28 @@
        (error 'hop-repl
 	      "HOP REPL cannot be spawned without multi-threading"
 	      scd)
-       (spawn0 scd hop-repl-stage)))
+       (spawn0 scd stage-repl)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-repl-stage ...                                               */
+;*    debug-thread-info-set! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (hop-repl-stage scd thread)
-   (thread-info-set! thread "hop-repl")
+(define-macro (debug-thread-info-set! thread info)
+   `(when (>fx (bigloo-debug) 0)
+       (thread-info-set! ,thread ,info)))
+
+;*---------------------------------------------------------------------*/
+;*    with-stage-handler ...                                           */
+;*---------------------------------------------------------------------*/
+(define-macro (with-stage-handler handler . body)
+   `(begin
+       (hopthread-onerror-set! thread ,handler)
+       ,@body))
+
+;*---------------------------------------------------------------------*/
+;*    stage-repl ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (stage-repl scd thread)
+   (debug-thread-info-set! thread "stage-repl")
    (hop-verb 1 "Entering repl...\n")
    (begin (repl) (exit 0)))
 
@@ -329,7 +344,7 @@
 			  "\n")
 		(exception-notify e))
 	     (when (and (&io-unknown-host-error? e) (not (socket-down? sock)))
-		(with-handler
+		(with-stage-handler
 		   (lambda (e)
 		      ;; this error handler is invoked when the attempt to
 		      ;; notify the previous error to the client fails
@@ -368,21 +383,21 @@
    (hop-verb 1 (hop-color id id " CONNECT")
 	     (if (eq? mode 'keep-alive) "+" "")
 	     (if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
-	     (if (>=fx (hop-verbose) 3) (format " ~a" (current-thread)) "")
+	     (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 	     ": " (socket-hostname sock) " [" (current-date) "]\n")
 
    ;; debug trace
-   (thread-info-set! thread "connection established with ~a")
+   (debug-thread-info-set! thread "connection established with ~a")
 
-   (with-handler
+   (with-stage-handler
       connect-error-handler
       (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
 	 ;; debug info
-	 (thread-info-set! thread
-			   (format "request parsed for ~a, ~a ~a"
-				   (socket-hostname sock)
-				   (http-request-method req)
-				   (http-request-path req)))
+	 (debug-thread-info-set! thread
+				 (format "request parsed for ~a, ~a ~a"
+					 (socket-hostname sock)
+					 (http-request-method req)
+					 (http-request-path req)))
 	 (http-connect-verb scd id sock req)
 	 ;; decrement the keep-alive number (we have a valid connection)
 	 (when (eq? mode 'keep-alive) (keep-alive--))
@@ -463,17 +478,17 @@
 (define (stage-response scd thread id req)
    (current-request-set! req)
    (hop-verb 3 (hop-color id id " RESPONSE") "\n")
-   (with-handler
+   (with-stage-handler
       (lambda (e) (response-error-handler e scd req))
       (let ((resp (with-time (request->response req) id "RESPONSE")))
-	 (thread-info-set! thread
-			   (format "~a ~a://~a:~a~a... -> ~a"
-				   (http-request-method req)
-				   (http-request-scheme req)
-				   (http-request-host req)
-				   (http-request-port req)
-				   (http-request-path req)
-				   (find-runtime-type resp)))
+	 (debug-thread-info-set! thread
+				 (format "~a ~a://~a:~a~a... -> ~a"
+					 (http-request-method req)
+					 (http-request-scheme req)
+					 (http-request-host req)
+					 (http-request-port req)
+					 (http-request-path req)
+					 (find-runtime-type resp)))
 	 (let ((proc (if (http-response-static? resp)
 			 stage-static-answer
 			 stage-dynamic-answer)))
@@ -502,20 +517,20 @@
 	     ": " (find-runtime-type resp)
 	     " " (user-name (http-request-user req)) "\n")
    
-   (with-handler
+   (with-stage-handler
       (lambda (e) (response-error-handler e scd req))
       (let* ((sock (http-request-socket req))
 	     (connection (with-time (http-response resp sock) id "EXEC")))
 	 ;; debug
-	 (thread-info-set! thread
-			   (format "~a ~a://~a:~a~a... -> ~a ~a"
-				   (http-request-method req)
-				   (http-request-scheme req)
-				   (http-request-host req)
-				   (http-request-port req)
-				   (http-request-path req)
-				   (find-runtime-type resp)
-				   connection))
+	 (debug-thread-info-set! thread
+				 (format "~a ~a://~a:~a~a... -> ~a ~a"
+					 (http-request-method req)
+					 (http-request-scheme req)
+					 (http-request-host req)
+					 (http-request-port req)
+					 (http-request-path req)
+					 (find-runtime-type resp)
+					 connection))
 	 ;; log2
 	 (hop-verb 3 (hop-color req req " END")
 		   (scheduler-stat scd)

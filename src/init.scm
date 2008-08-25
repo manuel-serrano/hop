@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Jun 20 13:15:45 2008 (serrano)                */
+;*    Last change :  Fri Aug 22 15:59:24 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -141,9 +141,9 @@
 		 (header `((content-encoding: . "gzip")))
 		 (bodyp (eq? method 'GET))
 		 (file decoded-path)))
-	     ((and (file-exists? (string-append decoded-path ".gz"))
-		   (member (dirname decoded-path) (hop-gzipped-directories))
-		   (accept-gzip? header))
+	     ((and (accept-gzip? header)
+		   (file-exists? (string-append decoded-path ".gz"))
+		   (member (dirname decoded-path) (hop-gzipped-directories)))
 	      ;; send a gzipped version of the file
 	      (instantiate::http-response-file
 		 (request req)

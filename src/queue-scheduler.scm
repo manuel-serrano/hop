@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Wed Aug 20 12:07:53 2008 (serrano)                */
+;*    Last change :  Fri Aug 22 14:33:42 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
@@ -261,7 +261,7 @@
 ;*---------------------------------------------------------------------*/
 (define (queue-thread-body t)
    (with-handler
-      scheduler-default-handler
+      (make-scheduler-error-handler t)
       (let* ((scd (hopthread-scheduler t))
 	     (mutex (hopthread-mutex t))
 	     (condv (hopthread-condv t))
