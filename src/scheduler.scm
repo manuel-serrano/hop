@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Fri Aug 22 14:47:59 2008 (serrano)                */
+;*    Last change :  Mon Aug 25 15:30:40 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -29,7 +29,8 @@
 		  (scheduler::scheduler (default (scheduler-nil)))
 		  (info::obj (default #unspecified))
 		  (request::obj (default #f))
-		  (onerror::obj (default #f)))))
+		  (onerror::obj (default #f))
+		  (inbuf::bstring (default (make-string 512))))))
       (else
        (export (class hopthread::thread
 		  (proc::procedure (default (lambda (t) #f)))
@@ -39,6 +40,7 @@
 		  (info::obj (default #unspecified))
 		  (request::obj (default #f))
 		  (onerror::obj (default #f))
+		  (inbuf::bstring (default (make-string 512)))
 		  (body::procedure read-only)))))
    
    (export (abstract-class scheduler

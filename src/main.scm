@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Aug 22 19:54:06 2008 (serrano)                */
+;*    Last change :  Mon Aug 25 15:30:47 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -257,12 +257,13 @@
 ;*    hop-main-loop ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (hop-main-loop scd serv)
-   (let loop ((id 1))
-      (let ((sock (socket-accept serv)))
-	 (hop-verb 2 (hop-color id id " ACCEPT")
-		   ": " (socket-hostname sock) " [" (current-date) "]\n")
-	 (spawn4 scd stage-request id sock 'connect (hop-read-timeout))
-	 (loop (+fx id 1)))))
+   (let ((dummy-buffer (make-string 512)))
+      (let loop ((id 1))
+	 (let ((sock (socket-accept serv :buffer dummy-buffer)))
+	    (hop-verb 2 (hop-color id id " ACCEPT")
+		      ": " (socket-hostname sock) " [" (current-date) "]\n")
+	    (spawn4 scd stage-request id sock 'connect (hop-read-timeout))
+	    (loop (+fx id 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    keep-alive ...                                                   */
@@ -389,6 +390,9 @@
    ;; debug trace
    (debug-thread-info-set! thread "connection established with ~a")
 
+   ;; switch to the thread-specific buffer
+   (input-port-buffer-set! (socket-input sock) (hopthread-inbuf thread))
+   
    (with-stage-handler
       connect-error-handler
       (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
