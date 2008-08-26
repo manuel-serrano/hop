@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed May 14 09:45:21 2008 (serrano)                */
+;*    Last change :  Tue Aug 26 10:04:24 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -48,6 +48,9 @@
 	    
 	    (hop-scheduling::symbol)
 	    (hop-scheduling-set! ::symbol)
+
+	    (hop-somaxconn::int)
+	    (hop-somaxconn-set! ::int)
 	    
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
@@ -167,6 +170,15 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-scheduling
    'queue)
+
+;*---------------------------------------------------------------------*/
+;*    hop-somaxconn ...                                                */
+;*    -------------------------------------------------------------    */
+;*    On Linux 2.6.x see /proc/sys/net/core/somaxconn for the          */
+;*    actual maximal limit of SOMAXCONN.                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-somaxconn
+   128)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-https ...                                             */

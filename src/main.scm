@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Aug 25 15:30:47 2008 (serrano)                */
+;*    Last change :  Tue Aug 26 10:02:14 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -96,7 +96,7 @@
 				      :cert cert :pkey pkey)))
 	  (else
 	   (error 'hop "SSL not supported by this version of Hop" #f)))
-       (make-server-socket (hop-port))))
+       (make-server-socket (hop-port) :backlog (hop-somaxconn))))
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */

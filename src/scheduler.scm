@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Mon Aug 25 15:30:40 2008 (serrano)                */
+;*    Last change :  Tue Aug 26 11:03:32 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -212,8 +212,7 @@
 (define (scheduler-default-handler e)
    (if (&exception? e)
        (exception-notify e)
-       (fprint (current-error-port) "*** INTERNAL ERROR"
-	       "uncaught exception: "
+       (fprint (current-error-port) "*** INTERNAL ERROR, uncaught exception: "
 	       (find-runtime-type e)))
    (let ((th (current-thread)))
       (when (thread? th)
