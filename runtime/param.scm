@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Aug 26 08:46:39 2008 (serrano)                */
+;*    Last change :  Tue Aug 26 15:07:42 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -58,6 +58,12 @@
 	    (hop-log::int)
 	    (hop-log-set! ::int)
 
+	    (hop-max-file-size-cache::elong)
+	    (hop-max-file-size-cache-set! ::elong)
+
+	    (hop-max-file-entry-cache::int)
+	    (hop-max-file-entry-cache-set! ::int)
+	    
 	    (hop-restore-disk-cache::bool)
 	    (hop-restore-disk-cache-set! ::bool)
 	    
@@ -372,6 +378,18 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-restore-disk-cache
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-max-file-size-cache ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-file-size-cache
+   #e16384)
+
+;*---------------------------------------------------------------------*/
+;*    hop-max-file-entry-cache ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-file-entry-cache
+   16)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-request-error ...                                       */
