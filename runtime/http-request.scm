@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Aug 27 08:39:46 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 10:38:26 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -129,7 +129,8 @@
 	    (let* ((i (string-index path #\?))
 		   (abspath (cond
 			       ((not i)
-				(file-name-canonicalize! (url-decode! path)))
+				(let ((dpath (url-decode path)))
+				   (file-name-canonicalize! dpath)))
 			       ((>fx i 0)
 				(let ((p (url-decode! (substring path 0 i))))
 				   (file-name-canonicalize! p)))
@@ -143,7 +144,9 @@
 				   (if (string<? http-version "HTTP/1.1")
 				       'close
 				       'keep-alive))))
-	       (trace-item "cabspath=" cabspath " connection=" connection)
+	       (trace-item "abspath=" abspath
+			   " query=" query
+			   " connection=" connection)
 	       (instantiate::http-request
 		  (id id)
 		  (method method)
@@ -197,18 +200,6 @@
 		 (msg "Method not implemented")
 		 (obj string)))))
 
-;*---------------------------------------------------------------------*/
-;*    http-file-name-canonicalize ...                                  */
-;*---------------------------------------------------------------------*/
-(define (http-file-name-canonicalize path)
-   (let ((len (string-length path))
-	 (i (string-index path #\?)))
-      (if i
-	  (let ((base (url-decode! (substring path 0 i)))
-		(args (url-decode! (substring path i len))))
-	     (string-append (file-name-canonicalize! base) args))
-	  (file-name-canonicalize! (url-decode path)))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    http-version-grammar ...                                         */
 ;*---------------------------------------------------------------------*/
