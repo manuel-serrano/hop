@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Aug 27 11:43:38 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 17:06:47 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -237,40 +237,29 @@
 	       (max-file-size (hop-max-file-size-cache))))))
 
 ;*---------------------------------------------------------------------*/
-;*    dummy-file-buffer ...                                            */
-;*---------------------------------------------------------------------*/
-(define dummy-file-buffer (make-string 2))
-
-;*---------------------------------------------------------------------*/
 ;*    http-response-regular-file ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (http-response-regular-file r::http-response-file socket)
    (with-access::http-response-file r (start-line header content-type charset server file bodyp request timeout)
-      (let ((pf (open-input-file file dummy-file-buffer)))
-	 (if (input-port? pf)
-	     (unwind-protect
-		(let ((connection (http-request-connection request))
-		      (p (socket-output socket)))
-		   (when (>fx timeout 0) (output-timeout-set! p timeout))
-		   (http-write-line-string p start-line)
-		   (http-write-header p header)
-		   (http-write-line p "Connection: " connection)
-		   (http-write-content-type p content-type charset)
-		   (when server (http-write-line-string p "Server: " server))
-		   (unless (eq? connection 'close)
-		      (http-write-line p "Content-Length: " (file-size file)))
-		   (http-write-line p)
-		   ;; the body
-		   (with-trace 4 'http-response-file
-		      (when bodyp
-			 (send-chars pf p)))
-		   (flush-output-port p)
-		   connection)
-		(close-input-port pf))
-	     (let ((rep (if (file-exists? file)
-			    (http-permission-denied file)
-			    (http-file-not-found file))))
-		(http-response rep socket))))))
+      (if (file-exists? file)
+	  (let ((connection (http-request-connection request))
+		(p (socket-output socket)))
+	     (when (>fx timeout 0) (output-timeout-set! p timeout))
+	     (http-write-line-string p start-line)
+	     (http-write-header p header)
+	     (http-write-line p "Connection: " connection)
+	     (http-write-content-type p content-type charset)
+	     (when server (http-write-line-string p "Server: " server))
+	     (unless (eq? connection 'close)
+		(http-write-line p "Content-Length: " (file-size file)))
+	     (http-write-line p)
+	     ;; the body
+	     (with-trace 4 'http-response-file
+		(when bodyp
+		   (send-file file p)))
+	     (flush-output-port p)
+	     connection)
+	  (http-response (http-file-not-found file) socket))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response-regular-file/cache ...                             */

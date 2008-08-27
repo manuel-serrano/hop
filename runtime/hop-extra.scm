@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Jun 26 09:31:41 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 16:16:39 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -439,7 +439,7 @@
 		     (if body
 			 (inl body)
 			 (default href)))
-		  (default href)))
+		  (user-access-denied req)))
 	   (default href))))
    
 ;*---------------------------------------------------------------------*/
