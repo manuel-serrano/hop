@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Aug 22 17:01:22 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 08:39:46 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -100,7 +100,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-parse-method-request method pi::input-port po::output-port id)
    (with-trace 3 'http-parse-method-request
-      (let (scheme hostname port abspath http-version userinfo)
+      (let (scheme hostname port path http-version userinfo)
 	 (let ((pi2 (if (or (>fx (hop-verbose) 3) (>=fx (bigloo-debug) 3))
 			(let ((line (http-read-line pi)))
 			   (when (>fx (hop-verbose) 3)
@@ -113,11 +113,11 @@
 	    (multiple-value-bind (s u h p a)
 	       (http-url-parse pi2)
 	       (trace-item "scheme=" s " user=" u
-			   " hostname=" h " port=" p " abspath=[" a "]")
+			   " hostname=" h " port=" p " path=[" a "]")
 	       (set! scheme (string->symbol s))
 	       (set! hostname h)
 	       (set! port p)
-	       (set! abspath a)
+	       (set! path a)
 	       (set! userinfo u)
 	       (read/rp http-sp-grammar pi2)
 	       (set! http-version (read/rp http-version-grammar pi2))
@@ -126,11 +126,23 @@
 		  (close-input-port pi2))))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
 	    (http-parse-header pi po)
-	    (let ((cabspath (http-file-name-canonicalize abspath))
-		  (connection (or co
-				  (if (string<? http-version "HTTP/1.1")
-				      'close
-				      'keep-alive))))
+	    (let* ((i (string-index path #\?))
+		   (abspath (cond
+			       ((not i)
+				(file-name-canonicalize! (url-decode! path)))
+			       ((>fx i 0)
+				(let ((p (url-decode! (substring path 0 i))))
+				   (file-name-canonicalize! p)))
+			       (else
+				"/")))
+		   (query (when i
+			     (let* ((l (string-length path))
+				    (s (substring path (+fx i 1) l)))
+				(url-decode! s))))
+		   (connection (or co
+				   (if (string<? http-version "HTTP/1.1")
+				       'close
+				       'keep-alive))))
 	       (trace-item "cabspath=" cabspath " connection=" connection)
 	       (instantiate::http-request
 		  (id id)
@@ -139,8 +151,9 @@
 		  (scheme scheme)
 		  (proxyp (string? hostname))
 		  (userinfo userinfo)
-		  (path abspath)
-		  (decoded-path cabspath)
+		  (path path)
+		  (abspath abspath)
+		  (query query)
 		  (header header)
 		  (port (or actual-port port (hop-port)))
 		  (host (or actual-host hostname "localhost"))
@@ -173,7 +186,7 @@
 	  (scheme 'policy-file-request)
 	  (proxyp #f)
 	  (path "<policy-file-request/>")
-	  (decoded-path "<policy-file-request/>")
+	  (abspath "<policy-file-request/>")
 	  (header '())
 	  (port (hop-port))
 	  (host "localhost")
@@ -188,17 +201,13 @@
 ;*    http-file-name-canonicalize ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (http-file-name-canonicalize path)
-   (let ((len (string-length path)))
-      (let loop ((i 0))
-	 (cond
-	    ((=fx i len)
-	     (file-name-canonicalize! (url-decode path)))
-	    ((char=? (string-ref path i) #\?)
-	     (let ((base (file-name-canonicalize (substring path 0 i)))
-		   (args (substring path i len)))
-		(string-append (url-decode! base) (url-decode! args))))
-	    (else
-	     (loop (+fx i 1)))))))
+   (let ((len (string-length path))
+	 (i (string-index path #\?)))
+      (if i
+	  (let ((base (url-decode! (substring path 0 i)))
+		(args (url-decode! (substring path i len))))
+	     (string-append (file-name-canonicalize! base) args))
+	  (file-name-canonicalize! (url-decode path)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-version-grammar ...                                         */

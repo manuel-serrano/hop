@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Aug 26 15:07:42 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 08:01:39 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -602,13 +602,13 @@
 ;*    hop-scm-compile-suffix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-scm-compile-suffix
-   "?scm")
+   "scm")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-hss-compile-suffix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-hss-compile-suffix
-   "?hss")
+   "hss")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-client-script-suffixes ...                                   */

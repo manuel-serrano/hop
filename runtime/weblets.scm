@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Jun 20 11:35:34 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 08:14:48 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -196,21 +196,13 @@
 ;*    Builds a predicate that matches iff the request path is a        */
 ;*    prefix of STRING.                                                */
 ;*---------------------------------------------------------------------*/
-(define (autoload-prefix string)
-   (let* ((p string)
-	  (p/ (string-append string "/"))
-	  (lp (string-length p)))
+(define (autoload-prefix path)
+   (let ((lp (string-length path)))
       (lambda (req)
-	 (with-access::http-request req (decoded-path)
-	    (let ((i (string-index decoded-path #\?))
-		  (l (string-length decoded-path)))
-	       (if (or (not i) (=fx i -1))
-		   (and (substring-at? decoded-path p 0)
-			(or (=fx l lp) (eq? (string-ref decoded-path lp) #\/)))
-		   (and (>=fx i lp)
-			(substring-at? decoded-path p 0 i)
-			(or (=fx i lp)
-			    (char=? (string-ref decoded-path lp) #\/)))))))))
+	 (with-access::http-request req (abspath)
+	    (and (substring-at? abspath path 0)
+		 (let ((la (string-length abspath)))
+		    (or (=fx la lp) (char=? (string-ref abspath lp) #\/))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *autoload-mutex* ...                                             */

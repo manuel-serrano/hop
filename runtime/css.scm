@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Aug 15 14:27:12 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 08:03:02 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -119,7 +119,7 @@
 ;*    hss->css-url ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (hss->css-url path)
-   (string-append path (hop-hss-compile-suffix)))
+   (string-append path "?" (hop-hss-compile-suffix)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-hss-compiler! ...                                           */

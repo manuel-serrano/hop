@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec 26 08:30:35 2007                          */
-;*    Last change :  Wed Dec 26 10:59:36 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Wed Aug 27 08:02:42 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side -> JavaScript compiler                           */
 ;*=====================================================================*/
@@ -57,7 +57,7 @@
 ;*    scm2js-url ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (scm2js-url path)
-   (string-append path (hop-scm-compile-suffix)))
+   (string-append path "?" (hop-scm-compile-suffix)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scm-response ...                                                 */

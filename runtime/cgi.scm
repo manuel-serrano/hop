@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Fri Jun 20 11:32:59 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 08:40:43 2008 (serrano)                */
 ;*    Copyright   :  2003-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -20,21 +20,9 @@
 	    __hop_types
 	    __hop_http-lib)
    
-   (export  (http-request-url-cgi-args::pair-nil ::bstring)
-	    (http-request-cgi-args::pair-nil ::http-request)
+   (export  (http-request-cgi-args::pair-nil ::http-request)
 	    (cgi-arg::obj ::bstring ::pair-nil)
 	    (serialized-cgi-arg name args)))
-
-;*---------------------------------------------------------------------*/
-;*    http-request-url-cgi-args ...                                    */
-;*---------------------------------------------------------------------*/
-(define (http-request-url-cgi-args path)
-   (let ((i (string-index path #\?)))
-      (if (or (not i) (=fx i -1))
-	  (list path)
-	  (let ((cmd (xml-string-decode! (substring path 0 i)))
-		(args (substring path (+fx i 1) (string-length path))))
-	     (cons cmd (cgi-args->list args))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-cgi-args ...                                        */
@@ -42,7 +30,7 @@
 (define (http-request-cgi-args req::http-request)
    
    (define (cgi-args req)
-      (with-access::http-request req (socket method path decoded-path
+      (with-access::http-request req (socket method path abspath query
 					     header content-length)
 	 (case method
 	    ((POST)
@@ -67,7 +55,9 @@
 		    (let ((body (read-chars (elong->fixnum content-length) pi)))
 		       (cons path (cgi-args->list body))))))
 	    ((GET PUT)
-	     (http-request-url-cgi-args path))
+	     (if (string? query)
+		 (cons abspath (cgi-args->list query))
+		 (cons abspath '())))
 	    (else
 	     (error 'http-request-cgi-args "Not a cgi request" method)))))
    
@@ -88,19 +78,20 @@
 		    (loop (cdr l) (cons (car l) res)))))))
 
    (with-trace 2 'http-request-cgi-args
-      (trace-item "encoded path=" (http-request-decoded-path req))
-      (trace-item "decoded path=" (string-for-read (http-request-path req)))
+      (trace-item "path=" (http-request-path req))
+      (trace-item "abspath=" (string-for-read (http-request-abspath req)))
+      (trace-item "query=" (string-for-read (http-request-query req)))
       (let ((args (cgi-args req)))
-	 (trace-item "args=" (map (lambda (a)
-				     (cond
-					((string? a)
-					 (string-for-read a))
-					((pair? a)
-					 (cons (car a)
-					       (string-for-read (cdr a))))
-					(else
-					 a)))
-				  args))
+	 (trace-item "args="
+		     (map (lambda (a)
+			     (cond
+				((string? a)
+				 (string-for-read a))
+				((pair? a)
+				 (cons (car a) (string-for-read (cdr a))))
+				(else
+				 a)))
+			  args))
 	 (cons (car args) (normalize (cdr args))))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Jun 20 11:33:32 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 07:53:58 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -133,7 +133,6 @@
 			      (port (http-request-port m))
 			      (path (http-request-path m))
 			      (userinfo (http-request-userinfo m))
-			      (decoded-path (http-request-decoded-path m))
 			      (http (http-request-http m))
 			      (header (http-request-header m))
 			      (bodyp (not (eq? method 'HEAD)))

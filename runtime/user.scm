@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Wed May 14 12:35:16 2008 (serrano)                */
+;*    Last change :  Tue Aug 26 17:27:49 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -19,7 +19,8 @@
 	    __hop_types
 	    __hop_http-lib
 	    __hop_misc
-	    __hop_service)
+	    __hop_service
+	    __hop_cache)
    
    (export  (users-close!)
 	    (add-user! ::bstring . opt)
@@ -314,20 +315,33 @@
 	    (decrypt-authentication (http-decode-authentication auth) path))))
 
 ;*---------------------------------------------------------------------*/
+;*    hopaccess-cache ...                                              */
+;*---------------------------------------------------------------------*/
+(define hopaccess-cache
+   (instantiate::cache-memory
+      (max-entries 256)))
+
+;*---------------------------------------------------------------------*/
 ;*    find-hopaccess ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (find-hopaccess path)
-   (let loop ((path path))
-      (cond
-	 ((string=? path "/")
-	  #f)
-	 ((string=? path ".")
-	  #f)
-	 (else
-	  (let ((hopaccess (make-file-name path (hop-hopaccess))))
-	     (if (file-exists? hopaccess)
-		 hopaccess
-		 (loop (dirname path))))))))
+   (let loop ((p path))
+      (let ((cache (cache-get hopaccess-cache p)))
+	 (cond
+	    (cache
+	     (when (string? cache) cache))
+	    ((string=? p "/")
+	     (cache-put! hopaccess-cache path #t)
+	     #f)
+	    ((string=? p ".")
+	     #f)
+	    (else
+	     (let ((hopaccess (make-file-name p (hop-hopaccess))))
+		(if (file-exists? hopaccess)
+		    (begin
+		       (cache-put! hopaccess-cache path hopaccess)
+		       hopaccess)
+		    (loop (dirname p)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-path? ...                                        */
@@ -336,8 +350,8 @@
    (define (path-member path dirs)
       (any? (lambda (d) (substring-at? path d 0)) dirs))
    (and (with-access::user user (directories services)
-	   (let ((cpath (file-name-unix-canonicalize path)))
-	      (or (eq? directories '*)
+	   (or (eq? directories '*)
+	       (let ((cpath (file-name-unix-canonicalize path)))
 		  (path-member cpath directories)
 		  (let ((service-path (etc-path->service cpath)))
 		     (and (symbol? service-path)

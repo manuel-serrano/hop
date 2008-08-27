@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Aug 22 15:59:24 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 08:50:54 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -58,108 +58,139 @@
 	       (member "gzip" (string-split (cdr c) ","))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-gzipped-directory? ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hop-gzipped-directory? abspath)
+   (any? (lambda (p)
+	    (let ((l (string-length p)))
+	       (and (>fx (string-length abspath) l)
+		    (string-prefix? p abspath)
+		    (char=? (string-ref abspath l) (file-separator)))))
+	 (hop-gzipped-directories)))
+   
+;*---------------------------------------------------------------------*/
 ;*    http-get ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (http-get req)
-   (with-access::http-request req (decoded-path method header)
+   (with-access::http-request req (abspath query)
       (cond
-	 ((not (file-exists? decoded-path))
-	  (let ((i (string-index decoded-path #\?)))
-	     (cond
-		((and (fixnum? i) (>fx i 0))
-		 (let ((p (substring decoded-path 0 i))
-		       (suf (substring decoded-path i (string-length decoded-path))))
-		    (cond
-		       ((string=? suf (hop-scm-compile-suffix))
-			(scm-response req p))
-		       ((string=? suf (hop-hss-compile-suffix))
-			(hss-response req p))
-		       ((file-exists? p)
-			(instantiate::http-response-file
-			   (request req)
-			   (charset (hop-locale))
-			   (content-type (mime-type p "text/plain"))
-			   (bodyp (eq? method 'GET))
-			   (file p)))
-		       ((hop-service-path? p)
-			(http-service-not-found p))
-		       (else
-			(http-file-not-found p)))))
-		((hop-service-path? decoded-path)
-		 (http-service-not-found decoded-path))
-;* 			((string=? path "/crossdomain.xml")            */
-;* 			 (tprint "======================== /crossdomain.xml") */
-;* 			 (http-request-connection-set! req 'close)     */
-;* 			 (let ((s (format "<?xml version=\"1.0\" encoding=\"UTF-8\"?> */
-;* <!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\"> */
-;* <cross-domain-policy>                                               */
-;*  <allow-access-from domain=\"*\" />                                 */
-;* </cross-domain-policy>" (hop-port))))                               */
-;* 			    (tprint s)                                 */
-;* 			    (instantiate::http-response-string         */
-;* 			       (request req)                           */
-;* 			       (content-type "application/xml")        */
-;* 			       (body s))))                             */
-		(else
-		 (http-file-not-found decoded-path)))))
-	 ((is-suffix? (http-request-decoded-path req) "hop")
-	  (let ((rep (hop-load (http-request-decoded-path req))))
-	     (cond
-		((%http-response? rep)
-		 rep)
-		((xml? rep)
-		 (instantiate::http-response-hop
-		    (request req)
-		    (content-type (mime-type decoded-path (hop-default-mime-type)))
-		    (charset (hop-charset))
-		    (bodyp (eq? method 'GET))
-		    (header '((Cache-Control: . "no-cache")))
-		    (xml rep)))
-		(else
-		 (let ((url (make-hop-url-name
-			     (prefix
-			      (basename
-			       (http-request-decoded-path req))))))
-		    (instantiate::http-response-string
-		       (start-line "HTTP/1.0 307 Temporary Redirect")
-		       (header (list (cons 'location: url)))))))))
+	 ((not (file-exists? abspath))
+	  ;; an error
+	  (http-get-file-not-found req))
+	 (query
+	  ;; a file with query arguments
+	  (http-get-file-query req))
+	 ((is-suffix? abspath ".hop")
+	  ;; hop source code
+	  (http-get-hop req))
+	 (else
+	  ;; a regular file
+	  (http-get-file req)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-get-file-not-found ...                                      */
+;*---------------------------------------------------------------------*/
+(define (http-get-file-not-found req)
+   (with-access::http-request req (abspath)
+      (cond
+	 ((hop-service-path? abspath)
+	  (http-service-not-found abspath))
+	 ((string=? abspath "/crossdomain.xml")
+	  (http-request-connection-set! req 'close)
+	  (let ((s (format "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">
+<cross-domain-policy>
+ <allow-access-from domain=\"*\" />
+</cross-domain-policy>" (hop-port))))
+	     (instantiate::http-response-string
+		(request req)
+		(content-type "application/xml")
+		(body s))))
+	 (else
+	  (http-file-not-found abspath)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-get-file-query ...                                          */
+;*---------------------------------------------------------------------*/
+(define (http-get-file-query req)
+   (with-access::http-request req (abspath query method)
+      (cond
+	 ((string=? query (hop-scm-compile-suffix))
+	  (scm-response req abspath))
+	 ((string=? query (hop-hss-compile-suffix))
+	  (hss-response req abspath))
+	 (else
+	  (instantiate::http-response-file
+	     (request req)
+	     (charset (hop-locale))
+	     (content-type (mime-type abspath "text/plain"))
+	     (bodyp (eq? method 'GET))
+	     (file abspath))))))
+   
+;*---------------------------------------------------------------------*/
+;*    http-get-hop ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (http-get-hop req)
+   (with-access::http-request req (abspath method)
+      (let ((rep (hop-load abspath)))
+	 (cond
+	    ((%http-response? rep)
+	     rep)
+	    ((xml? rep)
+	     (instantiate::http-response-hop
+		(request req)
+		(content-type (mime-type abspath (hop-default-mime-type)))
+		(charset (hop-charset))
+		(bodyp (eq? method 'GET))
+		(header '((Cache-Control: . "no-cache")))
+		(xml rep)))
+	    (else
+	     (let ((url (make-hop-url-name (prefix (basename abspath)))))
+		(instantiate::http-response-string
+		   (start-line "HTTP/1.0 307 Temporary Redirect")
+		   (header (list (cons 'location: url))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-get-file ...                                                */
+;*---------------------------------------------------------------------*/
+(define (http-get-file req)
+   (with-access::http-request req (abspath query header method)
+      (cond
 	 ((pair? (assq 'icy-metadata: header))
 	  (instantiate::http-response-shoutcast
 	     (request req)
 	     (start-line "ICY 200 OK")
 	     (bodyp (eq? method 'GET))
-	     (file decoded-path)))
+	     (file abspath)))
+	 ((and (string-suffix? ".gz" abspath) (accept-gzip? header))
+	  ;; send a gzipped file with a mime type corresponding
+	  ;; to the ungzipped file
+	  (instantiate::http-response-file
+	     (request req)
+	     (content-type (mime-type (prefix abspath) "text/plain"))
+	     (charset (hop-locale))
+	     (header `((content-encoding: . "gzip")))
+	     (bodyp (eq? method 'GET))
+	     (file abspath)))
+	 ((and (hop-gzipped-directory? abspath)
+	       (file-exists? (string-append abspath ".gz"))
+	       (accept-gzip? header))
+	  ;; send a gzipped version of the file
+	  (instantiate::http-response-file
+	     (request req)
+	     (content-type (mime-type abspath "text/plain"))
+	     (charset (hop-locale))
+	     (header `((content-encoding: . "gzip")))
+	     (bodyp (eq? method 'GET))
+	     (file (string-append abspath ".gz"))))
 	 (else
-	  (cond
-	     ((and (string-suffix? ".gz" decoded-path) (accept-gzip? header))
-	      ;; send a gzipped file with a mime type corresponding
-	      ;; to the ungzipped file
-	      (instantiate::http-response-file
-		 (request req)
-		 (content-type (mime-type (prefix decoded-path) "text/plain"))
-		 (charset (hop-locale))
-		 (header `((content-encoding: . "gzip")))
-		 (bodyp (eq? method 'GET))
-		 (file decoded-path)))
-	     ((and (accept-gzip? header)
-		   (file-exists? (string-append decoded-path ".gz"))
-		   (member (dirname decoded-path) (hop-gzipped-directories)))
-	      ;; send a gzipped version of the file
-	      (instantiate::http-response-file
-		 (request req)
-		 (content-type (mime-type decoded-path "text/plain"))
-		 (charset (hop-locale))
-		 (header `((content-encoding: . "gzip")))
-		 (bodyp (eq? method 'GET))
-		 (file (string-append decoded-path ".gz"))))
-	     (else
-	      ;; send a regular file
-	      (instantiate::http-response-file
-		 (request req)
-		 (content-type (mime-type decoded-path "text/plain"))
-		 (charset (hop-locale))
-		 (bodyp (eq? method 'GET))
-		 (file decoded-path))))))))
+	  ;; send a regular file
+	  (instantiate::http-response-file
+	     (request req)
+	     (content-type (mime-type abspath "text/plain"))
+	     (charset (hop-locale))
+	     (bodyp (eq? method 'GET))
+	     (file abspath))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-options ...                                               */
@@ -204,7 +235,7 @@
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host user method decoded-path http header)
+   (with-access::http-request req (socket host user method abspath http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
 	       (socket-host-address socket)
@@ -226,7 +257,7 @@
 	 (two-digits (remainder (abs tz) 3600)))
       (display "] " port)
       ;; request
-      (fprintf port "\"~a ~a ~a\" " method decoded-path http)
+      (fprintf port "\"~a ~a ~a\" " method abspath http)
       ;; Return code
       (let* ((str (%http-response-local-start-line resp))
 	     (len (string-length str)))
@@ -272,7 +303,7 @@
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host (p port) user method decoded-path http header)
+   (with-access::http-request req (socket host (p port) user method abspath http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
 	       (socket-host-address socket)
@@ -294,7 +325,7 @@
 	 (two-digits (remainder (abs tz) 3600)))
       (display "] " port)
       ;; request
-      (fprintf port "\"~a http://~a:~a~a ~a\" " method host p decoded-path http)
+      (fprintf port "\"~a http://~a:~a~a ~a\" " method host p abspath http)
       ;; Return code
       (display "305" port)
       (display " " port)
