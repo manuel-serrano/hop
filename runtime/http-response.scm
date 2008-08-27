@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Aug 27 09:18:19 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 11:43:38 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -61,12 +61,12 @@
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type #f)
 	    (when server
-	       (http-write-line p "Server: " server))
+	       (http-write-line-string p "Server: " server))
 	    (when (string? body)
 	       (http-write-line p "Content-Length: " (string-length body)))
 	    (http-write-line p)
@@ -94,12 +94,12 @@
 			  l)))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Content-Length: " clen)
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
-	    (when server (http-write-line p "Server: " server))
+	    (when server (http-write-line-string p "Server: " server))
 	    (http-write-line p)
 	    (when bodyp (display s p))
 	    (flush-output-port p)
@@ -119,7 +119,7 @@
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (if (>elong content-length #e0)
 		(http-write-line p "Content-Length: " content-length)
@@ -127,7 +127,7 @@
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p (or content-type (hop-json-mime-type)) charset)
 	    (when server
-	       (http-write-line p "Server: " server))
+	       (http-write-line-string p "Server: " server))
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js
@@ -156,7 +156,7 @@
 		  (set! clen (fixnum->elong (string-length sbody)))))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (if (>elong clen #e0)
 		(http-write-line p "Content-Length: " clen)
@@ -165,8 +165,8 @@
 	    (let ((ctype (or content-type (xml-backend-mime-type backend))))
 	       (http-write-content-type p ctype charset))
 	    (when server
-	       (http-write-line p "Server: " server))
-	    (http-write-line p "Hhop: true")
+	       (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Hhop: true")
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-hop
@@ -187,7 +187,7 @@
 	       (connection (http-request-connection request)))
 	    (when (>fx timeout 0)
 	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (if (>elong content-length #e0)
 		(http-write-line p "Content-Length: " content-length)
@@ -195,7 +195,7 @@
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
 	    (when server
-	       (http-write-line p "Server: " server))
+	       (http-write-line-string p "Server: " server))
 	    (http-write-line p)
 	    (flush-output-port p)
 	    ;; the body
@@ -252,11 +252,11 @@
 		(let ((connection (http-request-connection request))
 		      (p (socket-output socket)))
 		   (when (>fx timeout 0) (output-timeout-set! p timeout))
-		   (http-write-line p start-line)
+		   (http-write-line-string p start-line)
 		   (http-write-header p header)
 		   (http-write-line p "Connection: " connection)
 		   (http-write-content-type p content-type charset)
-		   (when server (http-write-line p "Server: " server))
+		   (when server (http-write-line-string p "Server: " server))
 		   (unless (eq? connection 'close)
 		      (http-write-line p "Content-Length: " (file-size file)))
 		   (http-write-line p)
@@ -282,11 +282,11 @@
 	 (let ((connection (http-request-connection request))
 	       (p (socket-output socket)))
 	    (when (>fx timeout 0) (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
-	    (when server (http-write-line p "Server: " server))
+	    (when server (http-write-line-string p "Server: " server))
 	    (unless (eq? connection 'close)
 	       (http-write-line p "Content-Length: " (file-size file)))
 	    (http-write-line p)
@@ -305,11 +305,11 @@
 		   (let ((connection (http-request-connection request))
 			 (p (socket-output socket)))
 		      (when (>fx timeout 0) (output-timeout-set! p timeout))
-		      (http-write-line p start-line)
+		      (http-write-line-string p start-line)
 		      (http-write-header p header)
 		      (http-write-line p "Connection: " connection)
 		      (http-write-content-type p content-type charset)
-		      (when server (http-write-line p "Server: " server))
+		      (when server (http-write-line-string p "Server: " server))
 		      (http-write-line p "Content-Length: " size)
 		      (http-write-line p)
 		      ;; the body
@@ -433,12 +433,12 @@
 	     (let ((p (socket-output socket)))
 		(when (>fx timeout 0)
 		   (output-timeout-set! p timeout))
-		(http-write-line p start-line)
+		(http-write-line-string p start-line)
 		(http-write-header p header)
 		(http-write-line p "Connection: close")
 		(http-write-content-type p content-type charset)
 		(when server
-		   (http-write-line p "Server: " server))
+		   (http-write-line-string p "Server: " server))
 		(http-write-line p)
 		;; the body
 		(with-trace 4 'http-response-cgi-process
@@ -484,12 +484,12 @@
 			 (p (socket-output socket)))
 		      (when (>fx timeout 0)
 			 (output-timeout-set! p timeout))
-		      (http-write-line p start-line)
+		      (http-write-line-string p start-line)
 		      (http-write-header p header)
 		      (http-write-line p "Connection: close")
 		      (http-write-content-type p content-type charset)
 		      (when server
-			 (http-write-line p "Server: " server))
+			 (http-write-line-string p "Server: " server))
 		      (http-write-line p)
 		      ;; the body
 		      (with-trace 4 'http-response-put-process

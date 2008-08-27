@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Aug 27 10:38:26 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 13:39:38 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -137,9 +137,8 @@
 			       (else
 				"/")))
 		   (query (when i
-			     (let* ((l (string-length path))
-				    (s (substring path (+fx i 1) l)))
-				(url-decode! s))))
+			     (let ((l (string-length path)))
+				(substring path (+fx i 1) l))))
 		   (connection (or co
 				   (if (string<? http-version "HTTP/1.1")
 				       'close
