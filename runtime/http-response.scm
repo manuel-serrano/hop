@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Aug 27 17:06:47 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 20:34:59 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -241,25 +241,26 @@
 ;*---------------------------------------------------------------------*/
 (define (http-response-regular-file r::http-response-file socket)
    (with-access::http-response-file r (start-line header content-type charset server file bodyp request timeout)
-      (if (file-exists? file)
-	  (let ((connection (http-request-connection request))
-		(p (socket-output socket)))
-	     (when (>fx timeout 0) (output-timeout-set! p timeout))
-	     (http-write-line-string p start-line)
-	     (http-write-header p header)
-	     (http-write-line p "Connection: " connection)
-	     (http-write-content-type p content-type charset)
-	     (when server (http-write-line-string p "Server: " server))
-	     (unless (eq? connection 'close)
-		(http-write-line p "Content-Length: " (file-size file)))
-	     (http-write-line p)
-	     ;; the body
-	     (with-trace 4 'http-response-file
-		(when bodyp
-		   (send-file file p)))
-	     (flush-output-port p)
-	     connection)
-	  (http-response (http-file-not-found file) socket))))
+      (let ((size (file-size file)))
+	 (if (>=elong size #e0)
+	     (let ((connection (http-request-connection request))
+		   (p (socket-output socket)))
+		(when (>fx timeout 0) (output-timeout-set! p timeout))
+		(http-write-line-string p start-line)
+		(http-write-header p header)
+		(http-write-line p "Connection: " connection)
+		(http-write-content-type p content-type charset)
+		(when server (http-write-line-string p "Server: " server))
+		(unless (eq? connection 'close)
+		   (http-write-line p "Content-Length: " size))
+		(http-write-line p)
+		;; the body
+		(with-trace 4 'http-response-file
+		   (when bodyp
+		      (send-file file p size)))
+		(flush-output-port p)
+		connection)
+	     (http-response (http-file-not-found file) socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response-regular-file/cache ...                             */
