@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Feb 29 06:27:24 2008 (serrano)                */
+;*    Last change :  Thu Aug 28 14:26:08 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -31,7 +31,7 @@
 (define traffic-hook
    (lambda (req rep)
       (when traffic-hookingp
-	 (with-access::http-request req (http host port path user date)
+	 (with-access::http-request req (http host port path user seconds)
 	    (hop-event-broadcast! info-event
 				  (<TR> :class "remote"
 				     (<TD> :nowrap #t
@@ -41,7 +41,7 @@
 				     (<TD> :nowrap #t
 					(if (user? user) (user-name user) ""))
 				     (<TD> :nowrap #t
-					date)))))
+					(seconds->date date))))))
       rep))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Aug 28 07:01:27 2008 (serrano)                */
+;*    Last change :  Thu Aug 28 15:03:29 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -218,11 +218,24 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    with-stage-handler ...                                           */
+;*    -------------------------------------------------------------    */
+;*    The goal of the with-stage-handler machinery is twofolds:        */
+;*     - it avoids installing a new error handler at the entry         */
+;*       of each stage by using a per-thread handler.                  */
+;*     - it avoids creating closure for handlers by storing the        */
+;*       free variables of the handler inside hopthread specific       */
+;*       fields.                                                       */
 ;*---------------------------------------------------------------------*/
-(define-macro (with-stage-handler handler . body)
-   `(begin
-       (hopthread-onerror-set! thread ,handler)
-       ,@body))
+(define-macro (with-stage-handler handler args . body)
+   (let ((len (length args)))
+      `(begin
+	  (hopthread-onerror-set! thread ,handler)
+	  (hopthread-error-args-length-set! thread ,len)
+	  ,@(map (lambda (v i)
+		    `(vector-set! (hopthread-error-args thread) ,i ,v))
+		 args
+		 (iota len))
+	  ,@body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-repl ...                                                   */
@@ -316,52 +329,6 @@
 ;*---------------------------------------------------------------------*/
 (define (stage-request scd thread id sock mode timeout)
    
-   ;; is the error raised of a timeout in a keep-alive connection?
-   (define (keep-alive-ellapsed-error? e)
-      (and (eq? mode 'keep-alive)
-	   (or (&io-timeout-error? e)
-	       (and (&io-parse-error? e)
-		    (eof-object? (&io-parse-error-obj e))))))
-
-   ;; error handler specific to that the stage
-   (define (connect-error-handler e)
-      (if (keep-alive-ellapsed-error? e)
-	  ;; this is not a true error, just log
-	  (hop-verb 3 (hop-color id id " SHUTTING DOWN")
-		    (cond
-		       ((&io-timeout-error? e)
-			" (keep-alive, timeout ellapsed)")
-		       ((and (&io-parse-error? e)
-			     (eof-object? (&io-parse-error-obj e)))
-			" (keep-alive, connection reset by peer)")
-		       (else
-			" (keep-alive, parse error)"))
-		    "\n")
-	  ;; this one is a true error
-	  (begin
-	     (when (&exception? e)
-		(hop-verb 1 (hop-color id id " ABORTING: ")
-			  " " (trace-color 1 (find-runtime-type e))
-			  "\n")
-		(exception-notify e))
-	     (when (and (&io-unknown-host-error? e) (not (socket-down? sock)))
-		(with-stage-handler
-		   (lambda (e)
-		      ;; this error handler is invoked when the attempt to
-		      ;; notify the previous error to the client fails
-		      (when (&error? e) (error-notify e))
-		      #unspecified)
-		   ;; we will try to answer the error to the client
-		   (unless (&io-sigpipe-error? e)
-		      (let ((resp ((or (hop-http-request-error)
-				       http-request-error)
-				   e)))
-			 (http-response resp sock)))))))
-      ;; decrement the keep-alive number
-      (when (eq? mode 'keep-alive) (keep-alive--))
-      ;; abort this request
-      (socket-close sock))
-
    ;; verbose function (only for log and debug)
    (define (http-connect-verb scd id sock req)
       (when (eq? mode 'keep-alive)
@@ -394,7 +361,7 @@
    (input-port-buffer-set! (socket-input sock) (hopthread-inbuf thread))
    
    (with-stage-handler
-      connect-error-handler
+      stage-request-error-handler (id sock mode)
       (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
 	 ;; debug info
 	 (debug-thread-info-set! thread
@@ -407,6 +374,55 @@
 	 (when (eq? mode 'keep-alive) (keep-alive--))
 	 ;; start compting the answer
 	 (stage2 scd stage-response id req))))
+
+;*---------------------------------------------------------------------*/
+;*    stage-request-error-handler ...                                  */
+;*---------------------------------------------------------------------*/
+(define (stage-request-error-handler e id sock mode)
+   
+   ;; is the error raised of a timeout in a keep-alive connection?
+   (define (keep-alive-ellapsed-error? e)
+      (and (eq? mode 'keep-alive)
+	   (or (&io-timeout-error? e)
+	       (and (&io-parse-error? e)
+		    (eof-object? (&io-parse-error-obj e))))))
+
+   (if (keep-alive-ellapsed-error? e)
+       ;; this is not a true error, just log
+       (hop-verb 3 (hop-color id id " SHUTTING DOWN")
+		 (cond
+		    ((&io-timeout-error? e)
+		     " (keep-alive, timeout ellapsed)")
+		    ((and (&io-parse-error? e)
+			  (eof-object? (&io-parse-error-obj e)))
+		     " (keep-alive, connection reset by peer)")
+		    (else
+		     " (keep-alive, parse error)"))
+		 "\n")
+       ;; this one is a true error
+       (begin
+	  (when (&exception? e)
+	     (hop-verb 1 (hop-color id id " ABORTING: ")
+		       " " (trace-color 1 (find-runtime-type e))
+		       "\n")
+	     (exception-notify e))
+	  (when (and (&io-unknown-host-error? e) (not (socket-down? sock)))
+	     (with-handler
+		(lambda (e)
+		   ;; this error handler is invoked when the attempt to
+		   ;; notify the previous error to the client fails
+		   (when (&error? e) (error-notify e))
+		   #unspecified)
+		;; we will try to answer the error to the client
+		(unless (&io-sigpipe-error? e)
+		   (let ((resp ((or (hop-http-request-error)
+				    http-request-error)
+				e)))
+		      (http-response resp sock)))))))
+   ;; decrement the keep-alive number
+   (when (eq? mode 'keep-alive) (keep-alive--))
+   ;; abort this request
+   (socket-close sock))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-error-handler ...                                       */
@@ -483,7 +499,7 @@
    (current-request-set! req)
    (hop-verb 3 (hop-color id id " RESPONSE") "\n")
    (with-stage-handler
-      (lambda (e) (response-error-handler e scd req))
+      response-error-handler (scd req)
       (let ((resp (with-time (request->response req) id "RESPONSE")))
 	 (debug-thread-info-set! thread
 				 (format "~a ~a://~a:~a~a... -> ~a"
@@ -522,7 +538,7 @@
 	     " " (user-name (http-request-user req)) "\n")
    
    (with-stage-handler
-      (lambda (e) (response-error-handler e scd req))
+      response-error-handler (scd req)
       (let* ((sock (http-request-socket req))
 	     (connection (with-time (http-response resp sock) id "EXEC")))
 	 ;; debug

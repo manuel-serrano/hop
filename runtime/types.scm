@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Aug 27 08:00:20 2008 (serrano)                */
+;*    Last change :  Thu Aug 28 14:21:58 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -31,7 +31,7 @@
 	   (class &hop-method-error::&io-parse-error)
 	   
            (abstract-class %http-message
-	      (date::date read-only (default (current-date)))
+	      (seconds::elong read-only (default (current-seconds)))
 	      (socket (default #f))
 	      (header::pair-nil (default '()))
 	      (content-length::elong read-only (default #e-1))

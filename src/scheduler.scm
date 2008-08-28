@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Tue Aug 26 11:03:32 2008 (serrano)                */
+;*    Last change :  Thu Aug 28 14:59:02 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -30,6 +30,8 @@
 		  (info::obj (default #unspecified))
 		  (request::obj (default #f))
 		  (onerror::obj (default #f))
+		  (error-args::vector read-only (default (make-vector 3)))
+		  (error-args-length::int (default 0))
 		  (inbuf::bstring (default (make-string 512))))))
       (else
        (export (class hopthread::thread
@@ -40,6 +42,8 @@
 		  (info::obj (default #unspecified))
 		  (request::obj (default #f))
 		  (onerror::obj (default #f))
+		  (error-args::vector read-only (default (make-vector 3)))
+		  (error-args-length::int (default 0))
 		  (inbuf::bstring (default (make-string 512)))
 		  (body::procedure read-only)))))
    
@@ -223,9 +227,24 @@
 ;*---------------------------------------------------------------------*/
 (define (make-scheduler-error-handler t)
    (lambda (e)
-      (with-access::hopthread t (onerror)
+      (with-access::hopthread t (onerror error-args-length error-args)
 	 (if (procedure? onerror)
 	     (with-handler
 		scheduler-default-handler
-		(onerror e))
+		(case error-args-length
+		   ((0)
+		    (onerror e))
+		   ((1)
+		    (onerror e (vector-ref error-args 0)))
+		   ((2)
+		    (onerror e
+			     (vector-ref error-args 0)
+			     (vector-ref error-args 1)))
+		   ((3)
+		    (onerror e
+			     (vector-ref error-args 0)
+			     (vector-ref error-args 1)
+			     (vector-ref error-args 2)))
+		   (else
+		    (onerror e))))
 	     (scheduler-default-handler e)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Aug 27 08:09:51 2008 (serrano)                */
+;*    Last change :  Thu Aug 28 12:18:45 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -109,12 +109,11 @@
 ;*    hop-service-path? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-service-path? path)
-   (let ((l1 (string-length (hop-service-base)))
-	 (lp (string-length path)))
-      (and (substring-at? path (hop-service-base) 0)
-	   (or (=fx lp l1)
-	       (and (>fx lp l1)
-		    (char=? (string-ref path l1) #\/))))))
+   (when (substring-at? path (hop-service-base) 0)
+      (let ((l1 (string-length (hop-service-base)))
+	    (lp (string-length path)))
+	 (or (=fx lp l1)
+	     (and (>fx lp l1) (char=? (string-ref path l1) #\/))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-request-service-name ...                                     */
