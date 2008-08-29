@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Sun Aug 17 07:02:37 2008 (serrano)                */
+;*    Last change :  Fri Aug 29 10:36:46 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -349,8 +349,6 @@
 ;*    URL is not encoded for http.                                     */
 ;*---------------------------------------------------------------------*/
 (define (<FILECHOOSER:FILES> id url regexp hidden)
-   (tprint "filechooser:files hidden=" hidden)
-
    (let ((odd #t)
 	 (now (current-seconds)))
       

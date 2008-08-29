@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Aug 27 13:39:38 2008 (serrano)                */
+;*    Last change :  Fri Aug 29 12:10:19 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -140,7 +140,9 @@
 			     (let ((l (string-length path)))
 				(substring path (+fx i 1) l))))
 		   (connection (or co
-				   (if (string<? http-version "HTTP/1.1")
+				   (if (string<?
+					(symbol->string! http-version)
+					"HTTP/1.1")
 				       'close
 				       'keep-alive))))
 	       (trace-item "abspath=" abspath
@@ -184,7 +186,7 @@
        (instantiate::http-request
 	  (id id)
 	  (method 'FLASH-POLICY-FILE)
-	  (http "0.0")
+	  (http 'HTTP/0.0)
 	  (scheme 'policy-file-request)
 	  (proxyp #f)
 	  (path "<policy-file-request/>")
@@ -205,7 +207,7 @@
 (define http-version-grammar
    (regular-grammar ((DIGIT (in ("09"))))
       ((: "HTTP/" (+ DIGIT) "." (+ DIGIT))
-       (the-string))
+       (the-symbol))
       (else
        (parse-error 'http-version-grammar "Illegal character"
 		    (the-failure)

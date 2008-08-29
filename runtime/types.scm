@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Aug 28 14:21:58 2008 (serrano)                */
+;*    Last change :  Fri Aug 29 12:01:36 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -48,7 +48,7 @@
 	      (transfer-encoding (default #f))
 	      (authorization (default #f))
 	      (proxy-authorization (default #f))
-	      (http::bstring (default "HTTP/1.1"))
+	      (http::symbol (default 'HTTP/1.1))
 	      (host::bstring (default "localhost"))
 	      (path::bstring (default "/dummy"))
 	      (userinfo read-only (default #f))
