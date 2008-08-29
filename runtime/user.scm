@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Tue Aug 26 17:27:49 2008 (serrano)                */
+;*    Last change :  Thu Aug 28 20:49:37 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -351,11 +351,12 @@
       (any? (lambda (d) (substring-at? path d 0)) dirs))
    (and (with-access::user user (directories services)
 	   (or (eq? directories '*)
+	       (path-member path directories)
 	       (let ((cpath (file-name-unix-canonicalize path)))
-		  (path-member cpath directories)
-		  (let ((service-path (etc-path->service cpath)))
-		     (and (symbol? service-path)
-			  (user-authorized-service? user service-path))))))
+		  (or (path-member cpath directories)
+		      (let ((service-path (etc-path->service cpath)))
+			 (and (symbol? service-path)
+			      (user-authorized-service? user service-path)))))))
 	(let ((hopaccess (find-hopaccess path)))
 	   (or (not hopaccess)
 	       (let ((access (with-input-from-file hopaccess read)))

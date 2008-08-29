@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Aug 28 15:03:29 2008 (serrano)                */
+;*    Last change :  Fri Aug 29 06:56:11 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -325,7 +325,7 @@
 ;*    stage-request ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    This stage is in charge of parsing the request. It produces a    */
-;*    request.                                                         */
+;*    http-request.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (stage-request scd thread id sock mode timeout)
    
