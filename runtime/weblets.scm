@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Aug 27 08:14:48 2008 (serrano)                */
+;*    Last change :  Sat Aug 30 18:54:34 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -289,8 +289,7 @@
 ;*---------------------------------------------------------------------*/
 (define (autoload-force-load! path)
    (autoload-filter
-    (instantiate::http-request
-       (localhostp #t)
+    (instantiate::http-server-request
        (localclientp #t)
        (port (hop-port))
        (path path))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Aug 29 11:48:39 2008 (serrano)                */
+;*    Last change :  Sat Aug 30 18:52:33 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -91,7 +91,7 @@
 (define (request-get key)
    (let ((req (current-request)))
       (if req
-	  (with-access::http-request req (%env)
+	  (with-access::http-server-request req (%env)
 	     (unless %env (set! %env (request-env-parse req)))
 	     (if (pair? %env)
 		 (let ((c (assq key %env)))
@@ -125,8 +125,10 @@
 	      (filters (hop-filters)))
       (if (null? filters)
 	  (with-access::http-request m (content-length method path host user)
-	     (let* ((n (if (hop-enable-proxing)
-			   (instantiate::http-response-remote
+	     (if (or (not (http-proxy-request? req))
+		     (not (hop-enable-proxing)))
+		 (hop-request-hook m (http-file-not-found path))
+		 (let* ((n (instantiate::http-response-remote
 			      (scheme (http-request-scheme m))
 			      (method (http-request-method m))
 			      (host (http-request-host m))
@@ -139,10 +141,9 @@
 			      (content-length content-length)
 			      (request req)
 			      (remote-timeout (hop-read-timeout))
-			      (connection-timeout (hop-connection-timeout)))
-			   (http-file-not-found path)))
-		    (r (hop-run-hook (hop-http-response-remote-hooks) m n)))
-		(hop-request-hook m r)))
+			      (connection-timeout (hop-connection-timeout))))
+			(r (hop-run-hook (hop-http-response-remote-hooks) m n)))
+		    (hop-request-hook m r))))
 	  (let ((n ((cdar filters) m)))
 	     (cond
 		((eq? n 'hop-resume)
@@ -461,7 +462,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-remote success fail)
    (with-access::http-response-remote obj (host port path userinfo)
-      (let ((req (instantiate::http-request
+      (let ((req (instantiate::http-server-request
 		    (user (anonymous-user))
 		    (userinfo userinfo)
 		    (host host)
@@ -514,8 +515,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-get-file path)
    (let* ((reqi (current-request))
-	  (req (instantiate::http-request
-		  (localhostp #t)
+	  (req (instantiate::http-server-request
 		  (localclientp #t)
 		  (user (if (http-request? reqi)
 			    (http-request-user reqi)

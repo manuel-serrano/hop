@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Aug 29 14:23:24 2008 (serrano)                */
+;*    Last change :  Sat Aug 30 18:47:05 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -39,15 +39,11 @@
 	      (timeout::int (default -1)))
 	   
 	   (class http-request::%http-message
-	      (user::user read-only (default (user-nil)))
 	      (id::int read-only (default -1))
-	      (localhostp::bool (default #f))
+	      (user::user read-only (default (user-nil)))
 	      (localclientp::bool (default #f))
-	      (proxyp::bool read-only (default #f))
 	      (hook::procedure (default (lambda (rep) rep)))
 	      (transfer-encoding (default #f))
-	      (authorization (default #f))
-	      (proxy-authorization (default #f))
 	      (http::symbol (default 'HTTP/1.1))
 	      (host::bstring (default "localhost"))
 	      (path::bstring (default "/dummy"))
@@ -57,9 +53,15 @@
 	      (method::symbol read-only (default 'GET))
 	      (abspath::bstring (default ""))
 	      (query::obj (default #f))
-	      (connection::symbol (default 'keep-alive))
+	      (connection::symbol (default 'keep-alive)))
+
+	   (class http-server-request::http-request
+	      (authorization (default #f))
 	      (service::obj (default #unspecified))
 	      (%env (default #f)))
+
+	   (class http-proxy-request::http-request
+	      (proxy-authorization (default #f)))
 
 	   (class xml-http-request
 	      (status::int read-only)

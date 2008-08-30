@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Aug 28 12:18:45 2008 (serrano)                */
+;*    Last change :  Sat Aug 30 18:47:35 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -306,8 +306,8 @@
 ;*    initial weblet.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
-   (when (http-request-localhostp req)
-      (with-access::http-request req (abspath user service)
+   (when (http-request? req)
+      (with-access::http-server-request req (abspath user service)
 	 (when (hop-service-path? abspath)
 	    (mutex-lock! *service-mutex*)
 	    (let loop ((svc (hashtable-get *service-table* abspath))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Aug 27 08:50:54 2008 (serrano)                */
+;*    Last change :  Sat Aug 30 19:02:12 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -383,7 +383,7 @@
    ;; local filter (Fallback local file filter)
    (hop-filter-add-always-last!
     (lambda (req)
-       (when (http-request-localhostp req)
+       (when (http-server-request? req)
 	  (let ((handler (http-find-method-handler (http-request-method req))))
 	     (if (procedure? handler)
 		 (handler req)

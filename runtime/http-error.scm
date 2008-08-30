@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Jun 16 11:47:04 2008 (serrano)                */
+;*    Last change :  Sat Aug 30 18:32:46 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -100,7 +100,7 @@
 ;*    <EHEAD> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (<EHEAD> req)
-   (if (and (http-request? req) (not (http-request-localhostp req)))
+   (if (http-proxy-request? req) 
        ;; this is a proxy request
        (<HEAD> :include "hop-error"
 	  :base (format "http://~a:~a" (hostname) (hop-port)))

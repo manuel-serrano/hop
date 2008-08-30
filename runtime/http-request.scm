@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Aug 29 12:26:22 2008 (serrano)                */
+;*    Last change :  Sat Aug 30 18:39:33 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -54,19 +54,11 @@
       (input-timeout-set! port timeout)
       (let* ((req (read/rp request-line-grammar port id out))
 	     (localc (string=? (socket-local-address sock)
-			       (socket-host-address sock)))
-	     (localh (or (not (hop-enable-proxing))
-			 (not (http-request-proxyp req))
-			 (when (=fx (http-request-port req) (hop-port))
-			    (or (is-local? (http-request-host req))
-				(let ((ip (host (http-request-host req))))
-				   (or (string=? ip (socket-local-address sock))
-				       (string=? ip (hop-server-hostip)))))))))
-	 (input-timeout-set! port 0)
-	 (with-access::http-request req (socket localclientp localhostp user userinfo)
+			       (socket-host-address sock))))
+;* 	 (input-timeout-set! port 0)                                   */
+	 (with-access::http-request req (socket localclientp user userinfo)
 	    (set! socket sock)
 	    (set! localclientp localc)
-	    (set! localhostp localh)
 	    req))))
 
 ;*---------------------------------------------------------------------*/
@@ -148,31 +140,53 @@
 	       (trace-item "abspath=" abspath
 			   " query=" query
 			   " connection=" connection)
-	       (instantiate::http-request
-		  (id id)
-		  (method method)
-		  (http http-version)
-		  (scheme scheme)
-		  (proxyp (string? hostname))
-		  (userinfo userinfo)
-		  (path path)
-		  (abspath abspath)
-		  (query query)
-		  (header header)
-		  (port (or actual-port port (hop-port)))
-		  (host (or actual-host hostname "localhost"))
-		  (content-length cl)
-		  (transfer-encoding te)
-		  (authorization auth)
-		  (proxy-authorization pauth)
-		  (connection connection)
-		  (user (or (and (string? auth)
-				 (find-authenticated-user auth abspath))
-			    (and (string? pauth)
-				 (find-authenticated-user pauth abspath))
-			    (and (string? userinfo)
-				 (find-authenticated-user userinfo abspath))
-			    (anonymous-user)))))))))
+	       (if (string? hostname)
+		   (instantiate::http-proxy-request
+		      (id id)
+		      (method method)
+		      (http http-version)
+		      (scheme scheme)
+		      (userinfo userinfo)
+		      (path path)
+		      (abspath abspath)
+		      (query query)
+		      (header header)
+		      (port (or actual-port port (hop-port)))
+		      (host (or actual-host hostname "localhost"))
+		      (content-length cl)
+		      (transfer-encoding te)
+		      (proxy-authorization pauth)
+		      (connection connection)
+		      (user (or (and (string? auth)
+				     (find-authenticated-user auth abspath))
+				(and (string? pauth)
+				     (find-authenticated-user pauth abspath))
+				(and (string? userinfo)
+				     (find-authenticated-user userinfo abspath))
+				(anonymous-user))))
+		   (instantiate::http-server-request
+		      (id id)
+		      (method method)
+		      (http http-version)
+		      (scheme scheme)
+		      (userinfo userinfo)
+		      (path path)
+		      (abspath abspath)
+		      (query query)
+		      (header header)
+		      (port (or actual-port port (hop-port)))
+		      (host (or actual-host hostname "localhost"))
+		      (content-length cl)
+		      (transfer-encoding te)
+		      (authorization auth)
+		      (connection connection)
+		      (user (or (and (string? auth)
+				     (find-authenticated-user auth abspath))
+				(and (string? pauth)
+				     (find-authenticated-user pauth abspath))
+				(and (string? userinfo)
+				     (find-authenticated-user userinfo abspath))
+				(anonymous-user))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-policy-file-request ...                               */
@@ -183,12 +197,11 @@
        ;; This plugins are buggous because they should seek for
        ;; the policy file using the /hop/server-event/policy-file.
        ;; In the meantime, Hop also handles the <policy-file-request/>.
-       (instantiate::http-request
+       (instantiate::http-server-request
 	  (id id)
 	  (method 'FLASH-POLICY-FILE)
 	  (http 'HTTP/0.0)
 	  (scheme 'policy-file-request)
-	  (proxyp #f)
 	  (path "<policy-file-request/>")
 	  (abspath "<policy-file-request/>")
 	  (header '())

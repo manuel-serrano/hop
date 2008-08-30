@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Aug 29 06:56:11 2008 (serrano)                */
+;*    Last change :  Sat Aug 30 19:00:41 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -335,11 +335,10 @@
 	 (hop-verb 3 (hop-color id id " KEEP-ALIVE"))
 	 (hop-verb 3 (scheduler-stat scd))
 	 (hop-verb 3 ": " (socket-hostname sock) " [" (current-date) "]\n"))
-      (with-access::http-request req (method scheme host port path proxyp user
-					     header)
+      (with-access::http-request req (method scheme host port path user header)
 	 (hop-verb 4 (hop-color id id " CONNECT.header") ": "
 		   (with-output-to-string (lambda () (write header))) "\n")
-	 (hop-verb 2 (if proxyp
+	 (hop-verb 2 (if (http-proxy-request? req)
 			 (hop-color req req " EXEC.prox")
 			 (hop-color req req " EXEC.serv"))
 		   (scheduler-stat scd)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Fri Mar  7 14:44:06 2008 (serrano)                */
+;*    Last change :  Sat Aug 30 18:53:05 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
@@ -52,8 +52,8 @@
        (multiple-value-bind (_ userinfo host port path)
 	  (url-parse src)
 	  (let* ((req (current-request))
-		 (auth (and (http-request? req)
-			    (http-request-authorization req))))
+		 (auth (and (http-server-request? req)
+			    (http-server-request-authorization req))))
 	     (if early
 		 (xml-inline (or host (hostname))
 			     (or port (hop-port))
@@ -83,7 +83,7 @@
    (define (filter-attr attr)
       (not (eq? (car attr) 'id)))
    (http-send-request
-    (instantiate::http-request
+    (instantiate::http-server-request
        (host host)
        (port port)
        (path path)

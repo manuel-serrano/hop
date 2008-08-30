@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Aug 28 20:39:53 2008 (serrano)                */
+;*    Last change :  Sat Aug 30 18:51:19 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -590,7 +590,7 @@
 ;*    http-send-request ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure)
-   (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo authorization timeout)
+   (with-access::http-server-request req (scheme method path (httpv http) host port header socket userinfo authorization timeout)
       (let ((ssl (eq? scheme 'https)))
 	 (let loop ((host host)
 		    (port port)
