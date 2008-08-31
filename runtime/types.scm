@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Aug 30 18:47:05 2008 (serrano)                */
+;*    Last change :  Sun Aug 31 15:02:34 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -55,9 +55,11 @@
 	      (query::obj (default #f))
 	      (connection::symbol (default 'keep-alive)))
 
-	   (class http-server-request::http-request
+	   (final-class http-server-request::http-request
 	      (authorization (default #f))
-	      (service::obj (default #unspecified))
+	      (service::obj (default #unspecified)))
+
+	   (wide-class http-server-request+::http-server-request
 	      (%env (default #f)))
 
 	   (class http-proxy-request::http-request
@@ -168,7 +170,8 @@
    (with-output-to-port (if (null? port) (current-output-port) (car port))
       (lambda ()
 	 (with-access::http-request o (method scheme host port path http)
-	    (display* "#<http-request: " method " "
+	    (display* "#<" (class-name (object-class o)) ": "
+		      method " "
 		      scheme "://" host ":" port (string-for-read path))
 	    (when (string? http)
 	       (display " ")

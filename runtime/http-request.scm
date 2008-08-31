@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Aug 30 18:39:33 2008 (serrano)                */
+;*    Last change :  Sun Aug 31 16:24:35 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -55,7 +55,7 @@
       (let* ((req (read/rp request-line-grammar port id out))
 	     (localc (string=? (socket-local-address sock)
 			       (socket-host-address sock))))
-;* 	 (input-timeout-set! port 0)                                   */
+	 (input-timeout-set! port 0)
 	 (with-access::http-request req (socket localclientp user userinfo)
 	    (set! socket sock)
 	    (set! localclientp localc)

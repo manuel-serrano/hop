@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Aug 30 18:52:33 2008 (serrano)                */
+;*    Last change :  Sun Aug 31 15:45:18 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -90,16 +90,20 @@
 ;*---------------------------------------------------------------------*/
 (define (request-get key)
    (let ((req (current-request)))
-      (if req
-	  (with-access::http-server-request req (%env)
-	     (unless %env (set! %env (request-env-parse req)))
-	     (if (pair? %env)
-		 (let ((c (assq key %env)))
-		    (if (not (pair? c))
-			#unspecified
-			(cdr c)))
-		 #unspecified))
-	  #unspecified)))
+      (let loop ()
+	 (cond
+	    ((http-server-request+? req)
+	     (with-access::http-server-request+ req (%env)
+		(let ((c (assq key %env)))
+		   (if (not (pair? c))
+		       #unspecified
+		       (cdr c)))))
+	    ((http-server-request? req)
+	     (widen!::http-server-request+ req
+		(%env (request-env-parse req)))
+	     (loop))
+	    (else
+	     #unspecified)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-env-parse ...                                            */
