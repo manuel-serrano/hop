@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Aug 30 19:00:41 2008 (serrano)                */
+;*    Last change :  Sun Aug 31 16:56:49 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -277,6 +277,22 @@
 		      ": " (socket-hostname sock) " [" (current-date) "]\n")
 	    (spawn4 scd stage-request id sock 'connect (hop-read-timeout))
 	    (loop (+fx id 1))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-main-loop2 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (hop-main-loop2 scd serv)
+   (let ((dummy-buffer (make-string 512)))
+
+      (define (connect-stage id)
+	 (spawn0 scd (lambda (scd thread)
+			(let ((sock (socket-accept serv :buffer dummy-buffer)))
+			   (hop-verb 2 (hop-color id id " ACCEPT")
+				     ": " (socket-hostname sock) " [" (current-date) "]\n")
+			   (spawn1 scd connect-stage (+fx id 1))
+			   (stage4 scd stage-request id sock 'connect (hop-read-timeout))))))
+
+      (connect-stage 1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    keep-alive ...                                                   */
