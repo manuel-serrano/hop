@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Aug 30 18:32:46 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 09:07:37 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -174,7 +174,7 @@
 (define (anonymous-request)
    (unless (http-request? *anonymous-request*)
       (set! *anonymous-request*
-	    (instantiate::http-request
+	    (instantiate::http-server-request
 	       (connection 'close)
 	       (user (anonymous-user)))))
    *anonymous-request*)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat May 24 09:54:21 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 09:07:17 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -76,7 +76,7 @@
 (define *policy-file-service #f)
 (define *close-service* #f)
 (define *client-key* 0)
-(define *default-request* (instantiate::http-request (user (user-nil))))
+(define *default-request* (instantiate::http-server-request (user (user-nil))))
 (define *ping* (symbol->string (gensym 'ping)))
 (define *clients-number* 0)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun Aug 31 15:45:18 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 09:06:32 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -288,7 +288,7 @@
 				      (msg "Cannot open url")
 				      (obj url)))))))
 		(else
-		 (let* ((r (instantiate::http-request
+		 (let* ((r (instantiate::http-server-request
 			      (user (anonymous-user))
 			      (scheme (string->symbol scheme))
 			      (id hop-to-hop-id)
@@ -338,7 +338,7 @@
 	 ((and (procedure? success) (not (correct-arity? success 1)))
 	  (error 'with-hop "Illegal success handler" success))
 	 (else
-	  (let* ((req (instantiate::http-request
+	  (let* ((req (instantiate::http-server-request
 			 (userinfo (when (and (string? user) (string? password))
 				      (string-append user ":" password)))
 			 (id hop-to-hop-id)
