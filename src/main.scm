@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep  1 08:45:12 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 09:35:22 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -34,29 +34,6 @@
 	    hop_scheduler-cohort)
 
    (main    main))
-
-;*---------------------------------------------------------------------*/
-;*    hop-verb ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-expander hop-verb
-   (lambda (x e)
-      (match-case x
-	 ((?- (and (? integer?) ?level) . ?rest)
-	  (let ((v (gensym)))
-	     `(let ((,v ,(e level e)))
-		 (if (>=fx (hop-verbose) ,v)
-		     (with-lock *verb-mutex*
-			(lambda ()
-			   (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))))
-	 (else
-	  `(with-lock *verb-mutex*
-	      (lambda ()
-		 (hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    *verb-mutex* ...                                                 */
-;*---------------------------------------------------------------------*/
-(define *verb-mutex* (make-mutex 'hop-verb))
 
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */

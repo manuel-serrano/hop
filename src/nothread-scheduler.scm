@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:28:00 2008                          */
-;*    Last change :  Mon Sep  1 09:01:05 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 13:39:42 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NOTHREAD scheduler                                               */
@@ -45,101 +45,109 @@
 ;*---------------------------------------------------------------------*/
 ;*    spawn ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (spawn scd::scheduler proc::procedure . args)
+(define-method (spawn scd::nothread-scheduler proc::procedure . args)
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (apply stage scd proc args))
+   (apply stage scd *fake-thread* proc args))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn0 ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (spawn0 scd::scheduler proc::procedure)
+(define-method (spawn0 scd::nothread-scheduler proc::procedure)
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (stage0 scd proc))
+   (stage0 scd *fake-thread* proc))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn1 ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (spawn1 scd::scheduler proc::procedure a0)
+(define-method (spawn1 scd::nothread-scheduler proc::procedure a0)
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (stage1 scd proc a0))
+   (stage1 scd *fake-thread* proc a0))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn2 ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (spawn2 scd::scheduler proc::procedure a0 a1)
+(define-method (spawn2 scd::nothread-scheduler proc::procedure a0 a1)
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (stage2 scd proc a0 a1))
+   (stage2 scd *fake-thread* proc a0 a1))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn3 ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (spawn3 scd::scheduler proc::procedure a0 a1 a2)
+(define-method (spawn3 scd::nothread-scheduler proc::procedure a0 a1 a2)
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (stage3 scd proc a0 a1 a2))
+   (stage3 scd *fake-thread* proc a0 a1 a2))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn4 ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (spawn4 scd::scheduler proc::procedure a0 a1 a2 a3)
+(define-method (spawn4 scd::nothread-scheduler proc::procedure a0 a1 a2 a3)
    (unless (thread? *fake-thread*)
       (set! *fake-thread* (instantiate::hopthread (body list))))
    (hopthread-onerror-set! *fake-thread* #f)
-   (stage4 scd proc a0 a1 a2 a3))
+   (stage4 scd *fake-thread* proc a0 a1 a2 a3))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage ::nothread-scheduler ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    The simplest possible scheduler that schedule a single thread!   */
 ;*---------------------------------------------------------------------*/
-(define-method (stage scd::nothread-scheduler proc . args)
-   (apply proc scd *fake-thread* args))
+(define-method (stage scd::nothread-scheduler thread proc . args)
+   (apply proc scd thread args))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage0 ::nothread-scheduler ...                                  */
 ;*    -------------------------------------------------------------    */
 ;*    The simplest possible scheduler that schedule a single thread!   */
 ;*---------------------------------------------------------------------*/
-(define-method (stage0 scd::nothread-scheduler proc)
-   (proc scd *fake-thread*))
+(define-method (stage0 scd::nothread-scheduler thread proc)
+   (proc scd thread))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage1 ::nothread-scheduler ...                                  */
 ;*    -------------------------------------------------------------    */
 ;*    The simplest possible scheduler that schedule a single thread!   */
 ;*---------------------------------------------------------------------*/
-(define-method (stage1 scd::nothread-scheduler proc a0)
-   (proc scd *fake-thread* a0))
+(define-method (stage1 scd::nothread-scheduler thread proc a0)
+   (proc scd thread a0))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage2 ::nothread-scheduler ...                                  */
 ;*    -------------------------------------------------------------    */
 ;*    The simplest possible scheduler that schedule a single thread!   */
 ;*---------------------------------------------------------------------*/
-(define-method (stage2 scd::nothread-scheduler proc a0 a1)
-   (proc scd *fake-thread* a0 a1))
+(define-method (stage2 scd::nothread-scheduler thread proc a0 a1)
+   (proc scd thread a0 a1))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage3 ::nothread-scheduler ...                                  */
 ;*    -------------------------------------------------------------    */
 ;*    The simplest possible scheduler that schedule a single thread!   */
 ;*---------------------------------------------------------------------*/
-(define-method (stage3 scd::nothread-scheduler proc a0 a1 a2)
-   (proc scd *fake-thread* a0 a1 a2))
+(define-method (stage3 scd::nothread-scheduler thread proc a0 a1 a2)
+   (proc scd thread a0 a1 a2))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage4 ::nothread-scheduler ...                                  */
 ;*    -------------------------------------------------------------    */
 ;*    The simplest possible scheduler that schedule a single thread!   */
 ;*---------------------------------------------------------------------*/
-(define-method (stage4 scd::nothread-scheduler proc a0 a1 a2 a3)
-   (proc scd *fake-thread* a0 a1 a2 a3))
+(define-method (stage4 scd::nothread-scheduler thread proc a0 a1 a2 a3)
+   (proc scd thread a0 a1 a2 a3))
+
+;*---------------------------------------------------------------------*/
+;*    stage5 ::nothread-scheduler ...                                  */
+;*    -------------------------------------------------------------    */
+;*    The simplest possible scheduler that schedule a single thread!   */
+;*---------------------------------------------------------------------*/
+(define-method (stage5 scd::nothread-scheduler thread proc a0 a1 a2 a3 a4)
+   (proc scd thread a0 a1 a2 a3 a4))

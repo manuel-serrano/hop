@@ -3,13 +3,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 06:41:38 2008                          */
-;*    Last change :  Fri Aug 22 14:34:11 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 13:40:43 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    One to one scheduler                                             */
 ;*    -------------------------------------------------------------    */
 ;*    The characteristics of this scheduler are:                       */
-;*      - each request is handled by a new single thread.              */
+;*      - each accept is handled by a new single thread.               */
 ;*      - on heavy load the new request waits for an old request to    */
 ;*        complete.                                                    */
 ;*    This is the simplest and most naive multi-threaded scheduler.    */
@@ -74,10 +74,34 @@
 	 (thread-start! thread))))
 
 ;*---------------------------------------------------------------------*/
+;*    spawn4 ::one-to-one-scheduler ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (spawn4 scd::one-to-one-scheduler proc a0 a1 a2 a3)
+   (with-access::one-to-one-scheduler scd (mutex condv cur size)
+      (mutex-lock! mutex)
+      (let loop ()
+	 (when (>=fx cur size)
+	    ;; we have to wait for a thread to complete
+	    (condition-variable-wait! condv mutex)
+	    (loop)))
+      (letrec ((thread (instantiate::hopthread
+			  (body (lambda ()
+				   (with-handler
+				      (make-scheduler-error-handler thread)
+				      (proc scd thread a0 a1 a2 a3))
+				   (mutex-lock! mutex)
+				   (set! cur (-fx cur 1))
+				   (condition-variable-signal! condv)
+				   (mutex-unlock! mutex))))))
+	 (set! cur (+fx cur 1))
+	 (mutex-unlock! mutex)
+	 (thread-start! thread))))
+
+;*---------------------------------------------------------------------*/
 ;*    stage ::one-to-one-scheduler ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (stage scd::one-to-one-scheduler proc  . args)
-   (apply proc scd (current-thread) args))
+(define-method (stage scd::one-to-one-scheduler thread proc  . args)
+   (apply proc scd thread args))
 
 
 

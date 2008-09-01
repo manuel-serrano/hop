@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Aug 26 10:04:24 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 11:51:58 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -169,7 +169,7 @@
 ;*    hop-scheduling ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-scheduling
-   'queue)
+   'pool)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-somaxconn ...                                                */

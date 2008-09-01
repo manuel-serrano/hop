@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 16:03:01 2008                          */
-;*    Last change :  Fri Aug 22 14:35:41 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 13:41:13 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    COHORT scheduler                                                 */
@@ -116,7 +116,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    stage ::cohort-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (stage scd::cohort-scheduler proc . args)
+(define-method (stage scd::cohort-scheduler thread proc . args)
    (%spawn scd proc args))
    
 ;*---------------------------------------------------------------------*/

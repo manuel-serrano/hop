@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Mon Sep  1 09:00:25 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 13:36:58 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -37,6 +37,29 @@
    (export  (generic scheduler-accept-loop ::scheduler ::socket)))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-verb ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-expander hop-verb
+   (lambda (x e)
+      (match-case x
+	 ((?- (and (? integer?) ?level) . ?rest)
+	  (let ((v (gensym)))
+	     `(let ((,v ,(e level e)))
+		 (if (>=fx (hop-verbose) ,v)
+		     (with-lock *verb-mutex*
+			(lambda ()
+			   (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))))
+	 (else
+	  `(with-lock *verb-mutex*
+	      (lambda ()
+		 (hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    *verb-mutex* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define *verb-mutex* (make-mutex 'hop-verb))
+
+;*---------------------------------------------------------------------*/
 ;*    *socket-mutex* ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *socket-mutex* (make-mutex 'hop-sock))
@@ -63,16 +86,81 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::queue-scheduler serv::socket)
    
+   (let ((dummy-buffer (make-string 512))
+	 (idcount (scheduler-size scd))
+	 (idmutex (make-mutex)))
+      
+      (define (get-next-id id)
+	 (if (=fx (remainder id 1000) 0)
+	     (begin
+		(mutex-lock! idmutex)
+		(let ((v (+fx 1 (*fx idcount 1000))))
+		   (mutex-unlock! idmutex)
+		   v))
+	     (+fx id 1)))
+      
+      (define (connect-stage scd thread id)
+	 (let ((sock (socket-accept serv :buffer dummy-buffer)))
+	    (hop-verb 2 (hop-color id id " ACCEPT")
+		      (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
+		      ": " (socket-hostname sock) " [" (current-date) "]\n")
+	    (stage4 scd thread stage-request id sock 'connect (hop-read-timeout))
+	    (connect-stage scd thread (get-next-id id))))
+      
+      (let loop ((i (/fx (scheduler-size scd) 4)))
+	 (if (<=fx i 1)
+	     (thread-join! (spawn1 scd connect-stage i))
+	     (begin
+		(spawn1 scd connect-stage i)
+		(loop (-fx i 1)))))))
+
+'(define-method (scheduler-accept-loop scd::queue-scheduler serv::socket)
+   
    (let ((dummy-buffer (make-string 512)))
 
       (define (connect-stage scd thread id)
 	 (let ((sock (socket-accept serv :buffer dummy-buffer)))
 	    (hop-verb 2 (hop-color id id " ACCEPT")
+		      (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 		      ": " (socket-hostname sock) " [" (current-date) "]\n")
 	    (spawn1 scd connect-stage (+fx id 1))
-	    (stage4 scd stage-request id sock 'connect (hop-read-timeout))))
+	    (stage4 scd thread stage-request id sock 'connect (hop-read-timeout))
+	    (connect-stage scd thread (+fx id 1))))
 
       (thread-join! (spawn1 scd connect-stage 1))))
+
+;*---------------------------------------------------------------------*/
+;*    scheduler-accept-loop ::pool-scheduler ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (scheduler-accept-loop scd::pool-scheduler serv::socket)
+   
+   (let ((dummy-buffer (make-string 512))
+	 (idcount (scheduler-size scd))
+	 (idmutex (make-mutex)))
+
+      (define (get-next-id id)
+	 (if (=fx (remainder id 1000) 0)
+	     (begin
+		(mutex-lock! idmutex)
+		(let ((v (+fx 1 (*fx idcount 1000))))
+		   (mutex-unlock! idmutex)
+		   v))
+	     (+fx id 1)))
+      
+      (define (connect-stage scd thread id)
+	 (let ((sock (socket-accept serv :buffer dummy-buffer)))
+	    (hop-verb 2 (hop-color id id " ACCEPT")
+		      (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
+		      ": " (socket-hostname sock) " [" (current-date) "]\n")
+	    (stage4 scd thread stage-request id sock 'connect (hop-read-timeout))
+	    (connect-stage scd thread (get-next-id id))))
+      
+      (let loop ((i (scheduler-size scd)))
+	 (if (<=fx i 1)
+	     (thread-join! (spawn1 scd connect-stage (+fx 1 (*fx i 1000))))
+	     (begin
+		(spawn1 scd connect-stage (+fx 1 (*fx i 1000)))
+		(loop (-fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ...                                        */
@@ -85,6 +173,7 @@
 	    (let loop ((id 1))
 	       (let ((sock (socket-accept serv :buffer dummy-buffer)))
 		  (hop-verb 2 (hop-color id id " ACCEPT")
+			    (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 			    ": " (socket-hostname sock) " [" (current-date)
 			    "]\n")
 		  (spawn4 scd stage-request id sock 'connect (hop-read-timeout))
@@ -144,7 +233,7 @@
    ;; verbose function (only for log and debug)
    (define (http-connect-verb scd id sock req)
       (when (eq? mode 'keep-alive)
-	 (hop-verb 3 (hop-color id id " KEEP-ALIVE"))
+	 (hop-verb 3 (hop-color id id " KEEP-ALIVE") (format " ~a" thread))
 	 (hop-verb 3 (scheduler-stat scd))
 	 (hop-verb 3 ": " (socket-hostname sock) " [" (current-date) "]\n"))
       (with-access::http-request req (method scheme host port path user header)
@@ -153,6 +242,7 @@
 	 (hop-verb 2 (if (http-proxy-request? req)
 			 (hop-color req req " EXEC.prox")
 			 (hop-color req req " EXEC.serv"))
+		   (format " ~a" thread)
 		   (scheduler-stat scd)
 		   ": " method " " scheme "://"
 		   (user-name user) "@" host ":" port (string-for-read path)
@@ -161,8 +251,8 @@
    ;; log
    (hop-verb 1 (hop-color id id " CONNECT")
 	     (if (eq? mode 'keep-alive) "+" "")
-	     (if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
 	     (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
+	     (if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
 	     ": " (socket-hostname sock) " [" (current-date) "]\n")
 
    ;; debug trace
@@ -184,7 +274,7 @@
 	 ;; decrement the keep-alive number (we have a valid connection)
 	 (when (eq? mode 'keep-alive) (keep-alive--))
 	 ;; start compting the answer
-	 (stage2 scd stage-response id req))))
+	 (stage2 scd thread stage-response id req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-request-error-handler ...                                  */
@@ -308,7 +398,7 @@
 ;*---------------------------------------------------------------------*/
 (define (stage-response scd thread id req)
    (current-request-set! req)
-   (hop-verb 3 (hop-color id id " RESPONSE") "\n")
+   (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n")
    (with-stage-handler
       response-error-handler (scd req)
       (let ((resp (with-time (request->response req) id "RESPONSE")))
@@ -323,7 +413,7 @@
 	 (let ((proc (if (http-response-static? resp)
 			 stage-static-answer
 			 stage-dynamic-answer)))
-	    (stage3 scd proc id req resp)))))
+	    (stage3 scd thread proc id req resp)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-static-answer ...                                          */
@@ -345,6 +435,7 @@
    ;; log4
    (hop-verb 4 (hop-color req req " EXEC")
 	     (scheduler-stat scd)
+	     (format " ~a" thread)
 	     ": " (find-runtime-type resp)
 	     " " (user-name (http-request-user req)) "\n")
    
@@ -364,6 +455,7 @@
 					 connection))
 	 ;; log2
 	 (hop-verb 3 (hop-color req req " END")
+		   (format " ~a" thread)
 		   (scheduler-stat scd)
 		   ": " (find-runtime-type resp) " " connection
 		   " [" (current-date) "] "
@@ -383,7 +475,7 @@
 		      (<fx (keep-alive) (hop-keep-alive-threshold)))
 		 (begin
 		    (keep-alive++)
-		    (stage4 scd stage-request
+		    (stage4 scd thread stage-request
 			    id sock 'keep-alive (hop-keep-alive-timeout)))
 		 (socket-close sock)))
 	    (else
