@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Wed Apr 23 15:41:40 2008 (serrano)                */
+#*    Last change :  Mon Sep  1 08:37:19 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -24,7 +24,7 @@ EXEC		= hop
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
 MODULES		= hop-param parseargs main init \
-                  scheduler \
+                  accept scheduler \
                   nothread-scheduler \
                   queue-scheduler \
                   oto-scheduler \

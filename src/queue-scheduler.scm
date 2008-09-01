@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Fri Aug 22 14:33:42 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 08:31:36 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
@@ -91,6 +91,23 @@
 		(mutex-unlock! mutex))))))
 
 ;*---------------------------------------------------------------------*/
+;*    spawn1 ::queue-scheduler ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (spawn1 scd::queue-scheduler proc a0)
+   (with-access::queue-scheduler scd (mutex)
+      (mutex-lock! mutex)
+      (let ((t (get-thread! scd)))
+	 (if (thread? t)
+	     ;; there is an available thread, we use it...
+	     (begin
+		(mutex-unlock! mutex)
+		(thread-spawn t (lambda (s t) (proc s t a0))))
+	     ;; everybody is busy, we have to push our task in the queue...
+	     (begin
+		(queue-push! scd (lambda (s t) (proc s t a0)))
+		(mutex-unlock! mutex))))))
+
+;*---------------------------------------------------------------------*/
 ;*    spawn4 ::queue-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (spawn4 scd::queue-scheduler proc a0 a1 a2 a3)
@@ -111,11 +128,13 @@
 ;*    thread-spawn ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (thread-spawn th p)
-   (with-access::hopthread th (condv mutex proc)
+   (with-access::hopthread th (condv mutex onerror proc)
       (mutex-lock! mutex)
+      (set! onerror #f)
       (set! proc p)
       (condition-variable-signal! condv)
-      (mutex-unlock! mutex)))
+      (mutex-unlock! mutex)
+      th))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage ::queue-scheduler ...                                      */
@@ -261,7 +280,9 @@
 ;*---------------------------------------------------------------------*/
 (define (queue-thread-body t)
    (with-handler
-      (make-scheduler-error-handler t)
+      (lambda (e)
+	 (scheduler-error-handler e t)
+	 (queue-thread-body t))
       (let* ((scd (hopthread-scheduler t))
 	     (mutex (hopthread-mutex t))
 	     (condv (hopthread-condv t))
@@ -294,7 +315,7 @@
 		  (name (gensym 'queue-scheduler))
 		  (scheduler scd)
 		  (body (lambda () (queue-thread-body t))))))
-      (thread-start! t)
+      (thread-start-joinable! t)
       t))
 		   
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Thu Aug 28 14:59:02 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 08:45:19 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -47,14 +47,17 @@
 		  (inbuf::bstring (default (make-string 512)))
 		  (body::procedure read-only)))))
    
-   (export (abstract-class scheduler
+   (export (macro debug-thread-info-set! thread info)
+	   (macro with-stage-handler thread args . body)
+
+	   (abstract-class scheduler
 	      (scheduler-init!)
 	      (size::int read-only (default 0)))
 	   
 	   (generic scheduler-init! ::scheduler)
 	   (generic scheduler-stat ::scheduler)
 	   (generic scheduler-load::int ::scheduler)
-	   
+
 	   (generic spawn ::scheduler ::procedure . args)
 	   (generic spawn0 ::scheduler ::procedure)
 	   (generic spawn1 ::scheduler ::procedure ::obj)
@@ -73,6 +76,7 @@
 	   (generic thread-info-set! ::obj ::obj)
 	   
 	   (scheduler-default-handler ::obj)
+	   (scheduler-error-handler ::obj ::thread)
 	   (make-scheduler-error-handler ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -82,6 +86,34 @@
    ((not enable-threads)
     (define-method (thread-start! o::hopthread . scd)
        ((hopthread-body o)))))
+
+;*---------------------------------------------------------------------*/
+;*    debug-thread-info-set! ...                                       */
+;*---------------------------------------------------------------------*/
+(define-macro (debug-thread-info-set! thread info)
+   `(when (>fx (bigloo-debug) 0)
+       (thread-info-set! ,thread ,info)))
+
+;*---------------------------------------------------------------------*/
+;*    with-stage-handler ...                                           */
+;*    -------------------------------------------------------------    */
+;*    The goal of the with-stage-handler machinery is twofolds:        */
+;*     - it avoids installing a new error handler at the entry         */
+;*       of each stage by using a per-thread handler.                  */
+;*     - it avoids creating closure for handlers by storing the        */
+;*       free variables of the handler inside hopthread specific       */
+;*       fields.                                                       */
+;*---------------------------------------------------------------------*/
+(define-macro (with-stage-handler handler args . body)
+   (let ((len (length args)))
+      `(begin
+	  (hopthread-onerror-set! thread ,handler)
+	  (hopthread-error-args-length-set! thread ,len)
+	  ,@(map (lambda (v i)
+		    `(vector-set! (hopthread-error-args thread) ,i ,v))
+		 args
+		 (iota len))
+	  ,@body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-init! ::scheduler ...                                  */
@@ -223,28 +255,34 @@
 	 (fprint (current-error-port) "Thread: " th " " (thread-info th)))))
 
 ;*---------------------------------------------------------------------*/
+;*    scheduler-error-handler ...                                      */
+;*---------------------------------------------------------------------*/
+(define (scheduler-error-handler e t)
+   (with-access::hopthread t (onerror error-args-length error-args)
+      (if (procedure? onerror)
+	  (with-handler
+	     scheduler-default-handler
+	     (case error-args-length
+		((0)
+		 (onerror e))
+		((1)
+		 (onerror e (vector-ref error-args 0)))
+		((2)
+		 (onerror e
+			  (vector-ref error-args 0)
+			  (vector-ref error-args 1)))
+		((3)
+		 (onerror e
+			  (vector-ref error-args 0)
+			  (vector-ref error-args 1)
+			  (vector-ref error-args 2)))
+		(else
+		 (onerror e))))
+	  (scheduler-default-handler e))))
+
+;*---------------------------------------------------------------------*/
 ;*    make-scheduler-error-handler ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (make-scheduler-error-handler t)
    (lambda (e)
-      (with-access::hopthread t (onerror error-args-length error-args)
-	 (if (procedure? onerror)
-	     (with-handler
-		scheduler-default-handler
-		(case error-args-length
-		   ((0)
-		    (onerror e))
-		   ((1)
-		    (onerror e (vector-ref error-args 0)))
-		   ((2)
-		    (onerror e
-			     (vector-ref error-args 0)
-			     (vector-ref error-args 1)))
-		   ((3)
-		    (onerror e
-			     (vector-ref error-args 0)
-			     (vector-ref error-args 1)
-			     (vector-ref error-args 2)))
-		   (else
-		    (onerror e))))
-	     (scheduler-default-handler e)))))
+      (scheduler-error-handler e t)))

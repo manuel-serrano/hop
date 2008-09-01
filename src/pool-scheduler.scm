@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Fri Aug 22 14:34:26 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 05:54:17 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -83,7 +83,8 @@
 	    (set! proc (lambda (s t) (apply p s t args)))
 	    (mutex-lock! mutex)
 	    (condition-variable-signal! condv)
-	    (mutex-unlock! mutex)))))
+	    (mutex-unlock! mutex)
+	    thread))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage ::pool-scheduler ...                                       */
