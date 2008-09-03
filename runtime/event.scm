@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Sep  1 09:07:17 2008 (serrano)                */
+;*    Last change :  Wed Sep  3 11:30:16 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -472,7 +472,6 @@
 		   (request req))))))
    
    (define (flash-register-event! req name)
-      (tprint "flash-register-event, name=" name)
       (hashtable-update! *flash-socket-table*
 			 name
 			 (lambda (l) (cons req l))

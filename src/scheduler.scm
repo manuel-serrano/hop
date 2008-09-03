@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Mon Sep  1 13:34:42 2008 (serrano)                */
+;*    Last change :  Wed Sep  3 12:03:41 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -50,6 +50,8 @@
    (export (macro debug-thread-info-set! thread info)
 	   (macro with-stage-handler thread args . body)
 
+	   (class &ignore-exception::&exception)
+	   
 	   (abstract-class scheduler
 	      (scheduler-init!)
 	      (size::int read-only (default 0)))
@@ -260,10 +262,14 @@
 ;*    scheduler-default-handler ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (scheduler-default-handler e)
-   (if (&exception? e)
-       (exception-notify e)
+   (cond
+      ((&ignore-exception? e)
+       #unspecified)
+      ((&exception? e)
+       (exception-notify e))
+      (else
        (fprint (current-error-port) "*** INTERNAL ERROR, uncaught exception: "
-	       (find-runtime-type e)))
+	       (find-runtime-type e))))
    (let ((th (current-thread)))
       (when (thread? th)
 	 (fprint (current-error-port) "Thread: " th " " (thread-info th)))))

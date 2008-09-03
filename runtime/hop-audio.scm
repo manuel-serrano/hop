@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Aug 21 14:56:18 2008 (serrano)                */
+;*    Last change :  Wed Sep  3 11:32:35 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -511,7 +511,7 @@
    (cond-expand
       (enable-threads
        (with-access::hop-audio-player player (%service %event engine)
-	  (set! %service (service :name (get-service-url "hopaudio") (a0 a1)
+	  (set! %service (service :name (get-service-url "hop-audio") (a0 a1)
 			    (with-handler
 			       (lambda (e)
 				  (error-notify e)

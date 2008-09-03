@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Tue Sep  2 08:14:12 2008 (serrano)                */
+;*    Last change :  Wed Sep  3 12:03:24 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -302,7 +302,7 @@
       (lambda (e)
 	 ;; there is nothing we can do but aborting the request
 	 (socket-close (http-request-socket req))
-	 (raise #f))
+	 (raise (instantiate::&ignore-exception)))
       (begin
 	 ;; when the error is a response, we transmit it to the next stage
 	 (cond
@@ -323,7 +323,7 @@
    ;; there is nothing we can do but aborting the request
    (socket-close (http-request-socket req))
    ;; abort the request
-   (raise #f))
+   (raise (instantiate::&ignore-exception)))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-exception-error-handler ...                             */
