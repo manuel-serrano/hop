@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Sep  3 11:30:16 2008 (serrano)                */
+;*    Last change :  Wed Sep  3 14:24:51 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -505,14 +505,12 @@
    (define (unregister-ajax-event! name key)
       (let ((conn (ajax-find-connection-by-key key)))
 	 (when (ajax-connection? conn)
-	    (tprint "server-event-unregister ajax: event=" event " key=" key)
 	    (ajax-connection-remove-event! conn name))))
    
    (define (unregister-flash-event! event key)
       (let ((c (assq (string->symbol key) *flash-request-list*)))
 	 (when (pair? c)
 	    (let ((req (cadr c)))
-	       (tprint "server-event-unregister flash: event=" event " key=" key)
 	       (hashtable-update! *flash-socket-table*
 				  event
 				  (lambda (l) (delete! req l))

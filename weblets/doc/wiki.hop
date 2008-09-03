@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Fri Jun 20 14:19:31 2008 (serrano)                */
+;*    Last change :  Wed Sep  3 15:22:14 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -95,7 +95,7 @@
 			 (lambda (port t expr)
 			    (let ((title (if mktitle (mktitle t) t)))
 			       (if (authorized-service? req 'admin)
-				   (if (http-request-localhostp req)
+				   (if (http-request-localclientp req)
 				       (<DOC/emacs> port title expr)
 				       (<DOC/edit> port title expr))
 				   (<WIKI-DOC> port title expr)))))
