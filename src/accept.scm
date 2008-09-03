@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Mon Sep  1 13:36:58 2008 (serrano)                */
+;*    Last change :  Tue Sep  2 08:14:12 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -86,47 +86,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::queue-scheduler serv::socket)
    
-   (let ((dummy-buffer (make-string 512))
-	 (idcount (scheduler-size scd))
-	 (idmutex (make-mutex)))
-      
-      (define (get-next-id id)
-	 (if (=fx (remainder id 1000) 0)
-	     (begin
-		(mutex-lock! idmutex)
-		(let ((v (+fx 1 (*fx idcount 1000))))
-		   (mutex-unlock! idmutex)
-		   v))
-	     (+fx id 1)))
-      
-      (define (connect-stage scd thread id)
-	 (let ((sock (socket-accept serv :buffer dummy-buffer)))
-	    (hop-verb 2 (hop-color id id " ACCEPT")
-		      (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
-		      ": " (socket-hostname sock) " [" (current-date) "]\n")
-	    (stage4 scd thread stage-request id sock 'connect (hop-read-timeout))
-	    (connect-stage scd thread (get-next-id id))))
-      
-      (let loop ((i (/fx (scheduler-size scd) 4)))
-	 (if (<=fx i 1)
-	     (thread-join! (spawn1 scd connect-stage i))
-	     (begin
-		(spawn1 scd connect-stage i)
-		(loop (-fx i 1)))))))
-
-'(define-method (scheduler-accept-loop scd::queue-scheduler serv::socket)
-   
    (let ((dummy-buffer (make-string 512)))
-
+      
       (define (connect-stage scd thread id)
 	 (let ((sock (socket-accept serv :buffer dummy-buffer)))
 	    (hop-verb 2 (hop-color id id " ACCEPT")
 		      (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 		      ": " (socket-hostname sock) " [" (current-date) "]\n")
 	    (spawn1 scd connect-stage (+fx id 1))
-	    (stage4 scd thread stage-request id sock 'connect (hop-read-timeout))
-	    (connect-stage scd thread (+fx id 1))))
-
+	    (stage4 scd thread stage-request id sock 'connect (hop-read-timeout))))
+      
       (thread-join! (spawn1 scd connect-stage 1))))
 
 ;*---------------------------------------------------------------------*/
@@ -139,10 +108,10 @@
 	 (idmutex (make-mutex)))
 
       (define (get-next-id id)
-	 (if (=fx (remainder id 1000) 0)
+	 (if (=fx (remainder id 100) 0)
 	     (begin
 		(mutex-lock! idmutex)
-		(let ((v (+fx 1 (*fx idcount 1000))))
+		(let ((v (+fx 1 (*fx idcount 100))))
 		   (mutex-unlock! idmutex)
 		   v))
 	     (+fx id 1)))
@@ -157,9 +126,9 @@
       
       (let loop ((i (scheduler-size scd)))
 	 (if (<=fx i 1)
-	     (thread-join! (spawn1 scd connect-stage (+fx 1 (*fx i 1000))))
+	     (thread-join! (spawn1 scd connect-stage (+fx 1 (*fx i 100))))
 	     (begin
-		(spawn1 scd connect-stage (+fx 1 (*fx i 1000)))
+		(spawn1 scd connect-stage (+fx 1 (*fx i 100)))
 		(loop (-fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/

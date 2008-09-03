@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Aug 30 18:47:35 2008 (serrano)                */
+;*    Last change :  Wed Sep  3 07:25:55 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -306,7 +306,7 @@
 ;*    initial weblet.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
-   (when (http-request? req)
+   (when (http-server-request? req)
       (with-access::http-server-request req (abspath user service)
 	 (when (hop-service-path? abspath)
 	    (mutex-lock! *service-mutex*)
