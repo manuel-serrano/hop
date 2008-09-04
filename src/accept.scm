@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Thu Sep  4 09:33:36 2008 (serrano)                */
+;*    Last change :  Thu Sep  4 10:39:22 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -76,13 +76,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ::queue-scheduler ...                      */
 ;*---------------------------------------------------------------------*/
-#;(define-method (scheduler-accept-loop scd::queue-scheduler serv::socket)
+(define-method (scheduler-accept-loop scd::queue-scheduler serv::socket)
    (let* ((acclen (min 50 (/fx (hop-max-threads) 2)))
 	  (dummy-buffers (make-vector acclen (make-string 512)))
-	  (socks (make-vector acclen)))
+	  (socks (make-vector acclen))) 
       (let loop ((id 1))
 	 (let ((n (socket-accept-many serv socks :buffers dummy-buffers)))
-	    (tprint "socket-accept-many: n=" n)
+	    (when (>fx n 1) (tprint "*** socket-accept-many: n=" n))
 	    (let liip ((i 0))
 	       (if (=fx i n)
 		   (loop (+fx id i))
