@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Apr  2 09:58:37 2008 (serrano)                */
+;*    Last change :  Thu Sep  4 14:45:58 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -47,6 +47,7 @@
 	   (inline micro-seconds::int ::int)
 	   (inline input-timeout-set! ::input-port ::int)
 	   (inline output-timeout-set! ::output-port ::int)
+	   (inline socket-timeout-set! ::socket ::int ::int)
 	   (call-in-background ::procedure)))	   
 
 ;*---------------------------------------------------------------------*/
@@ -420,6 +421,13 @@
    (let ((ms (micro-seconds t)))
       (output-port-timeout-set! port ms)))
 
+;*---------------------------------------------------------------------*/
+;*    socket-timeout-set! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (socket-timeout-set! socket ti to)
+   (input-timeout-set! (socket-input socket) ti)
+   (output-timeout-set! (socket-output socket) to))
+   
 ;*---------------------------------------------------------------------*/
 ;*    call-in-background ...                                           */
 ;*    -------------------------------------------------------------    */

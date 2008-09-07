@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu Sep  4 10:27:06 2008 (serrano)                */
+;*    Last change :  Sat Sep  6 15:00:20 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -133,6 +133,7 @@
 
    ;; switch to the thread-specific buffer
    (input-port-buffer-set! (socket-input sock) (hopthread-inbuf thread))
+   (output-port-buffer-set! (socket-output sock) (hopthread-outbuf thread))
    
    (with-stage-handler
       stage-request-error-handler (id sock mode)

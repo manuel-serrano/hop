@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Sep  3 15:42:16 2008 (serrano)                */
+;*    Last change :  Thu Sep  4 15:33:41 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -51,11 +51,11 @@
 (define (http-parse-request sock id timeout)
    (let ((port (socket-input sock))
 	 (out (socket-output sock)))
-      (input-timeout-set! port timeout)
+      (socket-timeout-set! sock timeout timeout)
       (let* ((req (read/rp request-line-grammar port id out))
 	     (localc (string=? (socket-local-address sock)
 			       (socket-host-address sock))))
-	 (input-timeout-set! port 0)
+	 (socket-timeout-set! sock 0 0)
 	 (with-access::http-request req (socket localclientp user userinfo)
 	    (set! socket sock)
 	    (set! localclientp localc)

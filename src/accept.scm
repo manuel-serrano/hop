@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Thu Sep  4 10:39:22 2008 (serrano)                */
+;*    Last change :  Sat Sep  6 16:25:20 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -65,9 +65,9 @@
 ;*    scheduler-accept-loop ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (scheduler-accept-loop scd::scheduler serv::socket)
-   (let ((dummy-buffer (make-string 512)))
+   (let ((dummy-buf (make-string 512)))
       (let loop ((id 1))
-	 (let ((sock (socket-accept serv :buffer dummy-buffer)))
+	 (let ((sock (socket-accept serv :inbuf dummy-buf :outbuf dummy-buf)))
 	    (hop-verb 2 (hop-color id id " ACCEPT")
 		      ": " (socket-hostname sock) " [" (current-date) "]\n")
 	    (spawn4 scd stage-request id sock 'connect (hop-read-timeout))
@@ -81,7 +81,9 @@
 	  (dummy-buffers (make-vector acclen (make-string 512)))
 	  (socks (make-vector acclen))) 
       (let loop ((id 1))
-	 (let ((n (socket-accept-many serv socks :buffers dummy-buffers)))
+	 (let ((n (socket-accept-many serv socks
+				      :inbufs dummy-buffers
+				      :outbufs dummy-buffers)))
 	    (when (>fx n 1) (tprint "*** socket-accept-many: n=" n))
 	    (let liip ((i 0))
 	       (if (=fx i n)
@@ -100,7 +102,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::pool-scheduler serv::socket)
    
-   (let ((dummy-buffer (make-string 512))
+   (let ((dummybuf (make-string 512))
 	 (idcount (scheduler-size scd))
 	 (idmutex (make-mutex)))
 
@@ -114,7 +116,7 @@
 	     (+fx id 1)))
       
       (define (connect-stage scd thread id)
-	 (let ((sock (socket-accept serv :buffer dummy-buffer)))
+	 (let ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf)))
 	    (hop-verb 2 (hop-color id id " ACCEPT")
 		      (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 		      ": " (socket-hostname sock) " [" (current-date) "]\n")
@@ -135,9 +137,9 @@
    (let ((thread (nothread-scheduler-get-fake-thread)))
       (with-handler
 	 (make-scheduler-error-handler thread)
-	 (let ((dummy-buffer (make-string 512)))
+	 (let ((dummybuf (make-string 512)))
 	    (let loop ((id 1))
-	       (let ((sock (socket-accept serv :buffer dummy-buffer)))
+	       (let ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf)))
 		  (hop-verb 2 (hop-color id id " ACCEPT")
 			    (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 			    ": " (socket-hostname sock) " [" (current-date)
