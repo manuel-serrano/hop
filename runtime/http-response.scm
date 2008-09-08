@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Sep  6 15:12:36 2008 (serrano)                */
+;*    Last change :  Mon Sep  8 07:54:09 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -32,6 +32,9 @@
 	    __hop_user
 	    __hop_cache)
 
+   (extern (export http-response-regular-file "http_response_regular_file"))
+   (export (http-response-regular-file ::http-response-file ::socket))
+   
    (export  (generic http-response::symbol ::%http-response ::socket)
 	    (generic scheme->response ::obj ::http-request)
 	    (http-response-void ::http-request)
@@ -218,7 +221,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response-regular-file ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (http-response-regular-file r::http-response-file socket)
+(define (http-response-regular-file r::http-response-file socket::socket)
    (with-access::http-response-file r (start-line header content-type charset server file bodyp request timeout)
       (let ((size (file-size file)))
 	 (if (>=elong size #e0)
@@ -231,12 +234,14 @@
 		(http-write-content-type p content-type charset)
 		(when server (http-write-line-string p "Server: " server))
 		(unless (eq? connection 'close)
-		   (http-write-line p "Content-Length: " size))
+		   (display "Content-Length: " p)
+		   (display-elong size p)
+		   (http-write-line p))
 		(http-write-line p)
 		;; the body
 		(with-trace 4 'http-response-file
 		   (if bodyp
-		      (send-file file p size)
+		      (send-file file p size #e-1)
 		      (flush-output-port p)))
 		connection)
 	     (http-response (http-file-not-found file) socket)))))

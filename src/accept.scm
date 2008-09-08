@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sat Sep  6 16:25:20 2008 (serrano)                */
+;*    Last change :  Sun Sep  7 19:32:27 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -103,17 +103,27 @@
 (define-method (scheduler-accept-loop scd::pool-scheduler serv::socket)
    
    (let ((dummybuf (make-string 512))
-	 (idcount (scheduler-size scd))
-	 (idmutex (make-mutex)))
+	 (idmutex (make-mutex))
+	 (idcount (scheduler-size scd)))
 
       (define (get-next-id id)
-	 (if (=fx (remainder id 100) 0)
-	     (begin
-		(mutex-lock! idmutex)
-		(let ((v (+fx 1 (*fx idcount 100))))
-		   (mutex-unlock! idmutex)
-		   v))
-	     (+fx id 1)))
+	 (case (hop-verbose)
+	    ((0)
+	     0)
+	    ((1)
+	     (if (=fx (remainder id 100) 0)
+		 (begin
+		    (mutex-lock! idmutex)
+		    (let ((v (+fx 1 (*fx idcount 100))))
+		       (mutex-unlock! idmutex)
+		       v))
+		 (+fx id 1)))
+	    (else
+	     (mutex-lock! idmutex)
+	     (let ((v (+fx idcount 1)))
+		(set! idcount v)
+		(mutex-unlock! idmutex)
+		v))))
       
       (define (connect-stage scd thread id)
 	 (let ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf)))
@@ -125,9 +135,9 @@
       
       (let loop ((i (scheduler-size scd)))
 	 (if (<=fx i 1)
-	     (thread-join! (spawn1 scd connect-stage (+fx 1 (*fx i 100))))
+	     (thread-join! (spawn1 scd connect-stage i))
 	     (begin
-		(spawn1 scd connect-stage (+fx 1 (*fx i 100)))
+		(spawn1 scd connect-stage i)
 		(loop (-fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
