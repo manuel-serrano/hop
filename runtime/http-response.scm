@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Sep  8 07:54:09 2008 (serrano)                */
+;*    Last change :  Mon Sep  8 10:21:08 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -32,9 +32,6 @@
 	    __hop_user
 	    __hop_cache)
 
-   (extern (export http-response-regular-file "http_response_regular_file"))
-   (export (http-response-regular-file ::http-response-file ::socket))
-   
    (export  (generic http-response::symbol ::%http-response ::socket)
 	    (generic scheme->response ::obj ::http-request)
 	    (http-response-void ::http-request)
