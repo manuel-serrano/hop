@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Wed Sep 10 15:11:18 2008 (serrano)                */
+;*    Last change :  Wed Sep 10 15:14:11 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -122,14 +122,16 @@
       ;; we need to resume the connect-stage (with new connections) on errors.
       (with-handler
 	 (make-scheduler-error-handler thread)
-	 (let* ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf))
-		(id  (get-next-id)))
-	    (tprint "accept thread=" thread " current-thread=" (current-thread))
-	    (hop-verb 2 (hop-color id id " ACCEPT")
-		      (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
-		      ": " (socket-hostname sock) " [" (current-date) "]\n")
-	    (stage4 scd thread stage-request id sock 'connect (hop-read-timeout))
-	    (connect-stage scd thread)))
+	 (let loop ()
+	    (let* ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf))
+		   (id  (get-next-id)))
+	       (hop-verb 2 (hop-color id id " ACCEPT")
+			 (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
+			 ": " (socket-hostname sock) " [" (current-date) "]\n")
+	       (stage4 scd thread
+		       stage-request id sock
+		       'connect (hop-read-timeout))
+	       (loop))))
       (connect-stage scd thread))
    
    (let loop ((i (scheduler-size scd)))
