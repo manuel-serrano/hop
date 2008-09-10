@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Wed Aug  6 10:03:45 2008 (serrano)                */
+/*    Last change :  Wed Sep 10 08:22:49 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -14,6 +14,34 @@
 /*---------------------------------------------------------------------*/
 var hop_client_debug = 0;
 
+/*---------------------------------------------------------------------*/
+/*    hop_error ...                                                    */
+/*---------------------------------------------------------------------*/
+function hop_error( fun, exc, msg, svc ) {
+   var emsg = exc ? exc.toString() : "???";
+
+   if( exc ) {
+      if( "message" in exc ) {
+	 emsg = exc.message;
+      } else {
+	 if( "description" in exc ) {
+	    emsg = exc.description;
+	 }
+      }
+      
+      if( "line" in exc ) {
+	 emsg = emsg + " (line " + exc.line + ")";
+      }
+   }
+
+   if( typeof svc === "string" || svc instanceof String )
+      fun = fun + ", " + svc;
+   
+   alert( "*** ERROR " + fun + ": " + emsg + " -- " + msg );
+   
+   throw exc;
+}
+   
 /*---------------------------------------------------------------------*/
 /*    hop_debug ...                                                    */
 /*---------------------------------------------------------------------*/

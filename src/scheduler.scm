@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Sat Sep  6 14:59:09 2008 (serrano)                */
+;*    Last change :  Wed Sep 10 14:59:26 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -274,7 +274,8 @@
 	       (find-runtime-type e))))
    (let ((th (current-thread)))
       (when (thread? th)
-	 (fprint (current-error-port) "Thread: " th " " (thread-info th)))))
+	 (fprint (current-error-port) "Thread: " th
+		 " thread-info: " (thread-info th)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-error-handler ...                                      */

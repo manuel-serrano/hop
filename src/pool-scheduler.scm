@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Mon Sep  1 13:37:50 2008 (serrano)                */
+;*    Last change :  Wed Sep 10 15:00:02 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -132,29 +132,25 @@
 ;*    pool-thread-body ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (pool-thread-body t)
-   (with-handler
-      (lambda (e)
-	 (scheduler-error-handler e t)
-	 (pool-thread-body t))
-      (let* ((scd (hopthread-scheduler t))
-	     (mutex (hopthread-mutex t))
-	     (condv (hopthread-condv t))
-	     (smutex (pool-scheduler-mutex scd)))
-	 (mutex-lock! mutex)
-	 (let loop ()
-	    (condition-variable-wait! condv mutex)
-	    (let liip ((proc (hopthread-proc t)))
-	       ;; complete the demanded task
-	       (with-handler
-		  (make-scheduler-error-handler t)
-		  (proc scd t))
-	       ;; go back to the free pool
-	       (mutex-lock! smutex)
-	       (with-access::pool-scheduler scd (free nfree)
-		  (set! free (cons t free))
-		  (set! nfree (+fx nfree 1))
-		  (mutex-unlock! smutex)
-		  (loop)))))))
+   (let* ((scd (hopthread-scheduler t))
+	  (mutex (hopthread-mutex t))
+	  (condv (hopthread-condv t))
+	  (smutex (pool-scheduler-mutex scd)))
+      (mutex-lock! mutex)
+      (let loop ()
+	 (condition-variable-wait! condv mutex)
+	 (let liip ((proc (hopthread-proc t)))
+	    ;; complete the demanded task
+	    (with-handler
+	       (make-scheduler-error-handler t)
+	       (proc scd t))
+	    ;; go back to the free pool
+	    (mutex-lock! smutex)
+	    (with-access::pool-scheduler scd (free nfree)
+	       (set! free (cons t free))
+	       (set! nfree (+fx nfree 1))
+	       (mutex-unlock! smutex)
+	       (loop))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    make-pool-thread ...                                             */

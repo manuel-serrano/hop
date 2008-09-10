@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Wed May  7 15:26:18 2008 (serrano)                */
+#*    Last change :  Wed Sep 10 08:39:28 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -89,6 +89,11 @@ HOPCONTRIBSDIR	= @CONTRIBSDIR@
 
 HOPFILDIR	= hop/$(HOPRELEASE)
 HOPDEMOSDIR	= $(HOPSHAREDIR)/demos
+
+#*---------------------------------------------------------------------*/
+#*    Runtime system                                                   */
+#*---------------------------------------------------------------------*/
+RTSCONFIG	= @RTSCONFIG@
 
 #*---------------------------------------------------------------------*/
 #*    JVM zips                                                         */

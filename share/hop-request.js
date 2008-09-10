@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jun 20 08:22:55 2008 (serrano)                */
+/*    Last change :  Wed Sep 10 08:42:27 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -218,7 +218,7 @@ var hop_anim_fun = false;
 /*---------------------------------------------------------------------*/
 function hop_stop_anim() {
    if( hop_anim_interval ) {
-      clearInterval( hop_anim_interval );
+      if( hop_has_setInterval ) clearInterval( hop_anim_interval );
       hop_anim_interval = false;
    }
 }
@@ -288,7 +288,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 		  try {
 		     var ctype = hop_header_ctype( xhr );
 
-		     if( ctype == "application/json" ) {
+		     if( ctype === "application/json" ) {
 			var expr;
 			try {
 			   expr = eval( xhr.responseText );
@@ -297,7 +297,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 			   expr = false;
 			}
 			return success( expr, xhr );
-		     } else if( ctype == "text/html" ) {
+		     } else if( ctype === "text/html" ) {
 			var el = hop_create_element( xhr.responseText );
 			return success( el, xhr );
 		     } else {
@@ -390,7 +390,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 
       hop_stop_anim();
       
-      if( anim ) {
+      if( anim && hop_has_setInterval ) {
 	 var a = (anim instanceof Function) ? anim : hop_default_anim;
 
 	 hop_anim_interval =
@@ -618,4 +618,5 @@ function hop_request_set( key, val ) {
 function hop_request_get( key ) {
    return hop_request[ key ];
 }
+
 

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Sep  3 03:45:16 2008 (serrano)                */
+#*    Last change :  Wed Sep 10 08:25:37 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -25,7 +25,7 @@ flashcc=mtasc
 fflags="-main -version 9 -cp std8 -swf"
 backend=native
 unzip=unzip
-gzip=gzip
+gzip="gzip -9"
 jar="jar cfm"
 
 debug=no
@@ -87,8 +87,15 @@ ssl="no"
 locevent="true"
 threads=""
 
-hopjs='"hop.js"'
+rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js"
+
 hopservicebase="/hop"
+hopjs='"hop.js"'
+hopjsfiles='"hop-autoconf.js" "runtime.js"'
+ 
+for p in $rts; do
+  hopjsfiles="$hopjsfiles \"$p\""; 
+done
 
 # Argument parsing
 while : ; do
@@ -515,6 +522,7 @@ cat $mkmf.in \
           -e "s|@HOPDISTRIBDIR@|$distribdir|" \
           -e "s|@BIGLOOSSLLIB@|$bigloossllib|" \
           -e "s|@BIGLOOPTHLIB@|$bigloopthlib|" \
+          -e "s|@RTSCONFIG@|$rts|" \
     >> $mkmf
 
 # runtime/configure.scm
@@ -536,6 +544,7 @@ cat etc/configure.scm.in \
           -e "s|@JSMIMETYPE@|$jsmimetype|" \
           -e "s|@CSSMIMETYPE@|$cssmimetype|" \
           -e "s|@HOPJS@|$hopjs|" \
+          -e "s|@HOPJSFILES@|$hopjsfiles|" \
           -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
     >> $configure
 
@@ -628,7 +637,10 @@ rm -f $init 2> /dev/null
 echo "/* Automatically generated file (don't edit) */" > $init
 
 cat etc/hop-autoconf.js.in \
-    | sed -e "s|@BINDIR@|$bindir|" \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BACKEND@|$backend|" \
+          -e "s|@URL@|$url|" \
+          -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@ETCDIR@|$etcdir|" \

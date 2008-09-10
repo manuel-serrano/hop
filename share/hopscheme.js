@@ -3,40 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Mon Aug 18 08:11:15 2008 (serrano)                */
+/*    Last change :  Wed Sep 10 08:22:51 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
 /*=====================================================================*/
 
-/*---------------------------------------------------------------------*/
-/*    hop_error ...                                                    */
-/*---------------------------------------------------------------------*/
-function hop_error( fun, exc, msg, svc ) {
-   var emsg = exc ? exc.toString() : "???";
-
-   if( exc ) {
-      if( "message" in exc ) {
-	 emsg = exc.message;
-      } else {
-	 if( "description" in exc ) {
-	    emsg = exc.description;
-	 }
-      }
-      
-      if( "line" in exc ) {
-	 emsg = emsg + " (line " + exc.line + ")";
-      }
-   }
-
-   if( typeof svc === "string" || svc instanceof String )
-      fun = fun + ", " + svc;
-   
-   alert( "*** ERROR " + fun + ": " + emsg + " -- " + msg );
-   
-   throw exc;
-}
-   
 /*---------------------------------------------------------------------*/
 /*    Serialization                                                    */
 /*---------------------------------------------------------------------*/

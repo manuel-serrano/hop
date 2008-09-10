@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue May  6 19:07:36 2008 (serrano)                */
+/*    Last change :  Tue Sep  9 15:02:41 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -12,26 +12,60 @@
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    Name and version                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export hop-name)) */
+function hop_name() {
+   return "Hop";
+}
+
+/*** META ((export hop-version)) */
+function hop_version() {
+   return "@VERSION@";
+}
+
+/*** META ((export hop-backend)) */
+function hop_backend() {
+   return "@BACKEND@";
+}
+
+/*** META ((export hop-url)) */
+function hop_url() {
+   return "@URL@";
+}
+
+/*---------------------------------------------------------------------*/
 /*    Hop server directories ...                                       */
 /*---------------------------------------------------------------------*/
+/*** META ((export hop-etc-directory)) */
 function hop_etc_directory() { 
    return "@ETCDIR@";
 }
+/*** META ((export hop-bin-directory)) */
 function hop_bin_directory() {
    return "@BINDIR@";
 }
+/*** META ((export hop-lib-directory)) */
 function hop_lib_directory() {
    return "@LIBDIR@";
 }
+/*** META ((export hop-share-directory)) */
 function hop_share_directory() {
    return "@SHAREDIR@";
 }
+/*** META ((export hop-contribs-directory)) */
 function hop_contribs_directory() {
    return "@CONTRIBSDIR@";
 }
+/*** META ((export hop-weblets-directory)) */
 function hop_weblets_directory() {
    return "@WEBLETSDIR@";
 }
+
+/*---------------------------------------------------------------------*/
+/*    Hop configuration                                                */
+/*---------------------------------------------------------------------*/
+var hop_enable_location_event = @LOCEVENT@;
 
 /*---------------------------------------------------------------------*/
 /*    hop-service-base                                                 */
@@ -74,6 +108,7 @@ function hop_Config() {
   this.cpu_speed = 100;
   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.cpu_speed = 40;
   if( navigator.platform.indexOf( "armv5" ) >= 0 ) this.cpu_speed = 30;
+  if( navigator.platform.indexOf( "WinCE" ) >= 0 ) this.cpu_speed = 30;
   
   /* gpu speed */
   this.gpu_speed = 100;
@@ -100,6 +135,9 @@ function hop_Config() {
      this.flash_audio = false;
      this.flash_markup = "object";
      this.inline_image = false;
+     if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
+	hop_enable_location_event = false;
+     }
   } else if( navigator.userAgent.indexOf( "Opera" ) >= 0 ) {
      this.navigator_family = "opera";
      this.mouse_left_button = 0;
@@ -161,9 +199,35 @@ function hop_flash_audio_set( v ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    Hop configuration                                                */
+/*    hop_innerHTML_need_evalp ...                                     */
+/*    -------------------------------------------------------------    */
+/*    This test sets the variable hop_innerHTML_need_eval to           */
+/*    false if innerHTML evaluates the scripts contained in the        */
+/*    DOM nodes it receives as argument.                               */
 /*---------------------------------------------------------------------*/
-var hop_enable_location_event = @LOCEVENT@;
+var hop_innerHTML_need_evalp = true;
+
+var tmp = document.createElement( "div" );
+
+try {
+   tmp.innerHTML = "<script type='text/javascript'>hop_innerHTML_need_evalp = false</script>";
+   if( ("body" in document) && (document.body != null) ) {
+      document.body.appendChild( tmp );
+      document.body.removeChild( tmp );
+   } else {
+      if( ("documentElement" in document) &&  
+          (document.documentElement != null) ) {
+	 document.documentElement.appendChild( tmp );
+	 document.documentElement.removeChild( tmp );
+      } else {
+	 var body = document.getElementsByTagName( "body" )[ 0 ];
+	 body.appendChild( tmp );
+	 body.removeChild( tmp );
+      }
+   }
+} catch( e ) {
+     ;
+}
 
 /*---------------------------------------------------------------------*/
 /*    DOMFormElement ...                                               */
@@ -279,7 +343,11 @@ if( "XMLHttpRequest" in window ) {
 	 try {
 	    return new ActiveXObject( "Msxml2.XMLHTTP" );
 	 } catch( e ) {
-	    return new ActiveXObject( "Microsoft.XMLHTTP" );
+	    try {
+	       return new ActiveXObject( "Microsoft.XMLHTTP" );
+	    } catch( e ) {
+	       alert( "*** ERROR: Don't know how to create XMLHttpRequest" );
+	    }
 	 }
       }
    } else {
@@ -402,14 +470,33 @@ var hop_active_location_timeout =
    (hop_config.cpu_speed < 66) ? 100 : 250;
 
 /*---------------------------------------------------------------------*/
+/*    setInterval ...                                                  */
+/*---------------------------------------------------------------------*/
+var hop_has_setInterval = true;
+
+try {
+   var i = setInterval( function() { ; }, 1000 );
+   clearInterval( i );
+} catch( e ) {
+   var hop_has_setInterval = false;
+}
+
+/*---------------------------------------------------------------------*/
 /*    Event handlers                                                   */
 /*---------------------------------------------------------------------*/
 var hop_add_native_event_listener = undefined;
 var hop_remove_native_event_listener = undefined;
 /*** META ((export stop-event-propagation)) */
 var hop_stop_propagation = undefined;
+var hop_has_event20 = false;
 
-if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
+try {
+   hop_has_event20 = document.implementation.hasFeature( "Events" , "2.0" );
+} catch( e ) {
+   ;
+}
+
+if( hop_has_event20 ) {
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
       if( "addEventListener" in obj ) {
 	 return obj.addEventListener( event, proc, capture );
@@ -502,7 +589,7 @@ function hop_event_value( evt ) { return evt.value; }
            (peephole: (postfix ".responseText"))) */
 function hop_event_response_text( evt ) { return evt.responseText; }
 
-if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
+if( hop_has_event20  ) {
    hop_event_mouse_x = function hop_event_mouse_x( event ) {
       return event.pageX;
    }
@@ -630,30 +717,5 @@ if( window.getSelection ) {
 	    return "";
 	 }
       }
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_innerHTML_need_evalp ...                                     */
-/*    -------------------------------------------------------------    */
-/*    This test sets the variable hop_innerHTML_need_eval to           */
-/*    false if innerHTML evaluates the scripts contained in the        */
-/*    DOM nodes it receives as argument.                               */
-/*---------------------------------------------------------------------*/
-var hop_innerHTML_need_evalp = true;
-
-var tmp = document.createElement( "div" );
-tmp.innerHTML = "<script type='text/javascript'>hop_innerHTML_need_evalp = false</script>";
-if( document.body != null ) {
-   document.body.appendChild( tmp );
-   document.body.removeChild( tmp );
-} else {
-   if( document.documentElement != null ) {
-      document.documentElement.appendChild( tmp );
-      document.documentElement.removeChild( tmp );
-   } else {
-      var body = document.getElementsByTagName( "body" )[ 0 ];
-      body.appendChild( tmp );
-      body.removeChild( tmp );
    }
 }

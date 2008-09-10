@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Sep  3 17:06:45 2008 (serrano)                */
+;*    Last change :  Wed Sep 10 05:27:33 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -46,9 +46,14 @@
 	    (<SORTTABLE> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    head-runtime-system ...                                          */
+;*    head-runtime-system-packed ...                                   */
 ;*---------------------------------------------------------------------*/
-(define head-runtime-system #f)
+(define head-runtime-system-packed #f)
+
+;*---------------------------------------------------------------------*/
+;*    head-runtime-system-unpacked ...                                 */
+;*---------------------------------------------------------------------*/
+(define head-runtime-system-unpacked #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-system-inline ...                                   */
@@ -78,8 +83,9 @@
 ;*    init-extra! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (init-extra!)
-   (unless head-runtime-system
-      (set! head-runtime-system 
+   ;; this is used for non-inlined header on common regular browsers
+   (unless head-runtime-system-packed
+      (set! head-runtime-system-packed 
 	    (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
 		     (<LINK> :inline #f
 			:rel "stylesheet"
@@ -91,6 +97,21 @@
 				:type (hop-configure-javascript-mime-type)
 				:src p)))
 		       (hop-runtime-system))))
+      ;; this is used for non-inlined header for browsers that restrict
+      ;; size of javascript files (e.g., IE6 on WinCE)
+      (set! head-runtime-system-unpacked
+	    (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
+		     (<LINK> :inline #f
+			:rel "stylesheet"
+			:type (hop-configure-css-mime-type) 
+			:href p))
+		  (map (lambda (f)
+			  (let ((p (make-file-name (hop-share-directory) f)))
+			     (<SCRIPT> :inline #f
+				:type (hop-configure-javascript-mime-type)
+				:src p)))
+		       (hop-runtime-system-files))))
+      ;; this is used for inlined headers
       (set! head-runtime-system-inline
 	    (cons (let ((p (make-file-name (hop-share-directory) "hop.css")))
 		     (<LINK> :inline #t
@@ -174,20 +195,22 @@
 	      (dir #f)
 	      (path '())
 	      (inl #f)
+	      (packed #t)
 	      (els '()))
       (cond
 	 ((null? a)
 	  (let ((body (reverse! els)))
 	     (if rts
-		 (append (if inl
-			     head-runtime-system-inline
-			     head-runtime-system)
+		 (append (cond
+			    (inl head-runtime-system-inline)
+			    (packed head-runtime-system-packed)
+			    (else head-runtime-system-unpacked))
 			 body)
 		 body)))
 	 ((pair? (car a))
-	  (loop (append (car a) (cdr a)) mode rts dir path inl els))
+	  (loop (append (car a) (cdr a)) mode rts dir path inl packed els))
 	 ((null? (car a))
-	  (loop (cdr a) mode rts dir path inl els))
+	  (loop (cdr a) mode rts dir path inl packed els))
 	 ((keyword? (car a))
 	  (if (null? (cdr a))
 	      (error '<HEAD> (format "Missing ~a value" (car a)) a)
@@ -195,20 +218,20 @@
 		 ((:css)
 		  (cond
 		     ((string? (cadr a))
-		      (loop (cddr a) :css rts dir path inl
+		      (loop (cddr a) :css rts dir path inl packed
 			    (cons (css (absolute-path (cadr a) dir) inl) els)))
 		     ((pair? (cadr a))
 		      (let ((css-files (map (lambda (f)
 					       (css (absolute-path f dir) inl))
 					    (cadr a))))
-			 (loop (cddr a) :css rts dir path inl
+			 (loop (cddr a) :css rts dir path inl packed
 			       (append! (reverse! css-files) els))))
 		     (else
 		      (error '<HEAD> "Illegal :css" (cadr a)))))
 		 ((:jscript)
 		  (cond
 		     ((string? (cadr a))
-		      (loop (cddr a) :jscript rts dir path inl
+		      (loop (cddr a) :jscript rts dir path inl packed
 			    (cons (script (absolute-path (cadr a) dir) inl)
 				  els)))
 		     ((pair? (cadr a))
@@ -216,24 +239,24 @@
 					      (script (absolute-path f dir)
 						      inl))
 					   (cadr a))))
-			 (loop (cddr a) :jscript rts dir path inl
+			 (loop (cddr a) :jscript rts dir path inl packed
 			       (append! (reverse! js-files) els))))
 		     (else
 		      (error '<HEAD> "Illegal :jscript" (cadr a)))))
 		 ((:favicon)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path inl
+		      (loop (cddr a) #f rts dir path inl packed
 			    (cons (favicon (absolute-path (cadr a) dir)) els))
 		      (error '<HEAD> "Illegal :favicon" (cadr a))))
 		 ((:include)
 		  (cond
 		     ((not (cadr a))
-		      (loop (cddr a) :include rts dir path inl els))
+		      (loop (cddr a) :include rts dir path inl packed els))
 		     ((string? (cadr a))
-		      (loop (cddr a) :include rts dir path inl
+		      (loop (cddr a) :include rts dir path inl packed
 			    (append (incl (cadr a) inl path) els)))
 		     ((pair? (cadr a))
-		      (loop (cddr a) :include rts dir path inl
+		      (loop (cddr a) :include rts dir path inl packed
 			    (append (reverse!
 				     (append-map (lambda (i)
 						    (incl i inl path))
@@ -243,30 +266,34 @@
 		      (error '<HEAD> "Illegal :include" (cadr a)))))
 		 ((:rts)
 		  (if (boolean? (cadr a))
-		      (loop (cddr a) #f (cadr a) dir path inl els)
+		      (loop (cddr a) #f (cadr a) dir path inl packed els)
 		      (error '<HEAD> "Illegal :rts" (cadr a))))
 		 ((:title)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path inl
+		      (loop (cddr a) #f rts dir path inl packed
 			    (cons (<TITLE> (cadr a)) els))
 		      (error '<HEAD> "Illegal :title" (cadr a))))
 		 ((:base)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path inl
+		      (loop (cddr a) #f rts dir path inl packed
 			    (cons (<BASE> :href (cadr a)) els))
 		      (error '<HEAD> "Illegal :title" (cadr a))))
 		 ((:dir)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts (cadr a) path inl els)
+		      (loop (cddr a) #f rts (cadr a) path inl packed els)
 		      (error '<HEAD> "Illegal :dir" (cadr a))))
 		 ((:path)
 		  (if (string? (cadr a))
 		      (loop (cddr a) #f rts dir (append! path (list (cadr a)))
-			    inl els)
+			    inl packed els)
 		      (error '<HEAD> "Illegal :path" (cadr a))))
 		 ((:inline)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
-		      (loop (cddr a) #f rts dir path (cadr a) els)
+		      (loop (cddr a) #f rts dir path (cadr a) packed els)
+		      (error '<HEAD> "Illegal :inline" (cadr a))))
+		 ((:packed)
+		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
+		      (loop (cddr a) #f rts dir path inl (cadr a) els)
 		      (error '<HEAD> "Illegal :inline" (cadr a))))
 		 (else
 		  (error '<HEAD>
@@ -275,21 +302,21 @@
 	 ((string? (car a))
 	  (case mode
 	     ((:css)
-	      (loop (cdr a) mode rts dir path inl
+	      (loop (cdr a) mode rts dir path inl packed
 		    (cons (css (absolute-path (car a) dir) inl) els)))
 	     ((:jscript)
-	      (loop (cdr a) mode rts dir path inl
+	      (loop (cdr a) mode rts dir path inl packed
 		    (cons (script (absolute-path (car a) dir) inl) els)))
 	     ((:include)
-	      (loop (cdr a) mode rts dir path inl
+	      (loop (cdr a) mode rts dir path inl packed
 		    (append (incl (car a) inl path) els)))
 	     (else
-	      (loop (cdr a) #f rts dir path inl
+	      (loop (cdr a) #f rts dir path inl packed
 		    (cons (car a) els)))))
 	 ((not (car a))
-	  (loop (cdr a) #f rts dir path inl els))
+	  (loop (cdr a) #f rts dir path inl packed els))
 	 (else
-	  (loop (cdr a) #f rts dir path inl (cons (car a) els))))))
+	  (loop (cdr a) #f rts dir path inl packed (cons (car a) els))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HEAD> ...                                                       */

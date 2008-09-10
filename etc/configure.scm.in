@@ -28,6 +28,7 @@
 	   (hop-configure-javascript-mime-type)
 	   (hop-configure-css-mime-type)
 	   (hop-runtime-system::pair)
+	   (hop-runtime-system-files::pair)
 	   (hop-service-base::bstring))
    
    (eval   (export hop-name)
@@ -44,6 +45,7 @@
 	   (export hop-configure-javascript-mime-type)
 	   (export hop-configure-css-mime-type)
            (export hop-runtime-system)
+           (export hop-runtime-system-files)
 	   (export hop-service-base)))
 
 ;*---------------------------------------------------------------------*/
@@ -75,6 +77,10 @@
        (print (hop-configure-css-mime-type)))
       ((--url)
        (print (hop-url)))
+      ((--hop-runtime-system)
+       (print (hop-runtime-system)))
+      ((--hop-runtime-system-files)
+       (print (hop-runtime-system-files)))
       ((--hop-service-base)
        (print (hop-service-base)))
       (else
@@ -125,6 +131,7 @@
 ;*    hop-runtime-system ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop-runtime-system) '(@HOPJS@))
+(define (hop-runtime-system-files) '(@HOPJSFILES@))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-base ...                                             */

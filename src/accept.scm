@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sun Sep  7 19:32:27 2008 (serrano)                */
+;*    Last change :  Wed Sep 10 15:11:18 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -102,43 +102,42 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::pool-scheduler serv::socket)
    
-   (let ((dummybuf (make-string 512))
-	 (idmutex (make-mutex))
-	 (idcount (scheduler-size scd)))
-
-      (define (get-next-id id)
-	 (case (hop-verbose)
-	    ((0)
-	     0)
-	    ((1)
-	     (if (=fx (remainder id 100) 0)
-		 (begin
-		    (mutex-lock! idmutex)
-		    (let ((v (+fx 1 (*fx idcount 100))))
-		       (mutex-unlock! idmutex)
-		       v))
-		 (+fx id 1)))
-	    (else
+   (define dummybuf (make-string 512))
+   (define idmutex (make-mutex))
+   (define idcount (scheduler-size scd))
+   
+   (define (get-next-id)
+      (if (=fx (hop-verbose) 0)
+	  0
+	  (begin
 	     (mutex-lock! idmutex)
 	     (let ((v (+fx idcount 1)))
 		(set! idcount v)
 		(mutex-unlock! idmutex)
 		v))))
-      
-      (define (connect-stage scd thread id)
-	 (let ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf)))
+   
+   (define (connect-stage scd thread)
+      ;; We need to install our own handler (in addition to the one
+      ;; installed by the scheduler when it builds the thread) because
+      ;; we need to resume the connect-stage (with new connections) on errors.
+      (with-handler
+	 (make-scheduler-error-handler thread)
+	 (let* ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf))
+		(id  (get-next-id)))
+	    (tprint "accept thread=" thread " current-thread=" (current-thread))
 	    (hop-verb 2 (hop-color id id " ACCEPT")
 		      (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 		      ": " (socket-hostname sock) " [" (current-date) "]\n")
 	    (stage4 scd thread stage-request id sock 'connect (hop-read-timeout))
-	    (connect-stage scd thread (get-next-id id))))
-      
-      (let loop ((i (scheduler-size scd)))
-	 (if (<=fx i 1)
-	     (thread-join! (spawn1 scd connect-stage i))
-	     (begin
-		(spawn1 scd connect-stage i)
-		(loop (-fx i 1)))))))
+	    (connect-stage scd thread)))
+      (connect-stage scd thread))
+   
+   (let loop ((i (scheduler-size scd)))
+      (if (<=fx i 1)
+	  (thread-join! (spawn0 scd connect-stage))
+	  (begin
+	     (spawn0 scd connect-stage)
+	     (loop (-fx i 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ...                                        */

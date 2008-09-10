@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Mon Sep  1 13:40:26 2008 (serrano)                */
+;*    Last change :  Wed Sep 10 14:07:12 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
@@ -238,8 +238,7 @@
       (let* ((scd (hopthread-scheduler t))
 	     (mutex (hopthread-mutex t))
 	     (condv (hopthread-condv t)))
-	 (mutex-lock! mutex)
-	 (let loop ()
+	 (define (loop)
 	    (condition-variable-wait! condv mutex)
 	    (let liip ((proc (hopthread-proc t)))
 	       ;; execute the user task
@@ -252,7 +251,8 @@
 		      ;; nothing to do, go to sleep waiting for a new task
 		      (begin
 			 (put-thread! scd t)
-			 (loop)))))))))
+			 (loop))))))
+	 (with-lock mutex loop))))
    
 ;*---------------------------------------------------------------------*/
 ;*    make-queue-thread ...                                            */

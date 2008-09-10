@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Jun 18 16:09:48 2008 (serrano)                */
+/*    Last change :  Wed Sep 10 12:10:30 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1079,10 +1079,10 @@ function hop_load_jscript( url ) {
       var els = document.getElementsByTagName( "head" );
       if( (els != null) && (els[ 0 ].appendChild != undefined) ) {
 	 var sc = document.createElement( "script" );
-	 st.src = url;
-	 st.type = "text/javascript";
+	 sc.src = url;
+	 sc.type = "text/javascript";
 	 
-	 els[ 0 ].appendChild( st );
+	 els[ 0 ].appendChild( sc );
       }
    } catch( e ) {
       ;
@@ -1136,7 +1136,6 @@ document.getElementsByClass = function( className ) {
 /*** META ((export dom-node-eval)) */
 function hop_node_eval( node, text ) {
    var res;
-   var scripts = node.getElementsByTagName( "script" );
 
    function hop_node_eval_from_text( text ) {
       var res;
@@ -1159,15 +1158,23 @@ function hop_node_eval( node, text ) {
    }
 
    try {
-      if( scripts.length > 0 ) {
-	 for ( var j = 0; j < scripts.length; j++ ) {
-	    if( false && scripts[ j ].childNodes.length > 0 ) {
-	       res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
-	    } else {
-	       /* this is a buggy browser (Opera 8?) that does not */
-	       /* correctly implement script nodes                 */
-	       res = eval( scripts[ j ].innerHTML );
+      /* some browsers (guess who) are supporting getElementsByTagName */
+      /* only for the entire document and not for individual nodes.    */
+      if( "getElementsByTagName" in node ) {
+	 var scripts = node.getElementsByTagName( "script" );
+
+	 if( scripts && scripts.length > 0 ) {
+	    for ( var j = 0; j < scripts.length; j++ ) {
+	       if( false && scripts[ j ].childNodes.length > 0 ) {
+		  res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+	       } else {
+		  /* this is a buggy browser (Opera 8?) that does not */
+		  /* correctly implement script nodes                 */
+		  res = eval( scripts[ j ].innerHTML );
+	       }
 	    }
+	 } else {
+	    return hop_node_eval_from_text( text );
 	 }
       } else {
 	 return hop_node_eval_from_text( text );
