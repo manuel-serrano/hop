@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Sep 10 08:42:27 2008 (serrano)                */
+/*    Last change :  Thu Sep 11 12:30:36 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -33,9 +33,7 @@ function hop_service_url( service, formals, args ) {
       var url = service + "?hop-encoding=hop";
       var i;
 
-      if( (args.length == 1) &&
-	  (HTMLFormElement != undefined) &&
-	  (args[ 0 ] instanceof HTMLFormElement) ) {
+      if( (args.length == 1) && hop_is_dom_form_element( args[ 0 ] ) ) {
 	 var els = args[ 0 ].elements;
 
 	 for( i = 0; i < els.length; i++ ) {

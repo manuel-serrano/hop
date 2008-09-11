@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Sep  3 14:24:51 2008 (serrano)                */
+;*    Last change :  Thu Sep 11 12:40:29 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -667,13 +667,13 @@
 		(with-access::ajax-connection (car l) (req mutex)
 		   (mutex-lock! mutex)
 		   (if (http-request? req)
-		       (let ((val (unwind-protect
-				     (scheme->response
-				      (list (list name value)) req)
-				     (begin
-					(set! req #f)
-					(mutex-unlock! mutex))))
-			     (r req))
+		       (let* ((r req)
+			      (val (unwind-protect
+				      (scheme->response
+				       (list (list name value)) req)
+				      (begin
+					 (set! req #f)
+					 (mutex-unlock! mutex)))))
 			  (tprint "AJAX SIGNAL: " name)
 			  (or (ajax-signal-value r val)
 			      (loop (cdr l))))

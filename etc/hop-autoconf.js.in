@@ -3,13 +3,18 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Sep  9 15:02:41 2008 (serrano)                */
+/*    Last change :  Thu Sep 11 13:44:38 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
 /*    availabilities.                                                  */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    undefined value                                                  */
+/*---------------------------------------------------------------------*/
+var undefined;
 
 /*---------------------------------------------------------------------*/
 /*    Name and version                                                 */
@@ -230,31 +235,6 @@ try {
 }
 
 /*---------------------------------------------------------------------*/
-/*    DOMFormElement ...                                               */
-/*---------------------------------------------------------------------*/
-var undefined;
-
-if( !("HTMLFormElement" in window) ) {
-   window.HTMLFormElement = window.HTMLForm;
-}
-
-if( !("HTMLCollection" in window) ) {
-   window.HTMLCollection = function() { return false; };
-}
-
-if( !("HTMLInputElement" in window) ) {
-   window.HTMLInputElement = function() { return false; };
-}
-
-if( !("HTMLTextAreaElement" in window) ) {
-   window.HTMLTextAreaElement = function() { return false; };
-}
-
-if( !("HTMLSelectElement" in window) ) {
-   window.HTMLSelectElement = function() { return false; };
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_properties_to_string ...                                     */
 /*---------------------------------------------------------------------*/
 function hop_properties_to_string( obj ) {
@@ -319,6 +299,49 @@ if( !("HTMLElement" in window) ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    DOMFormElement ...                                               */
+/*---------------------------------------------------------------------*/
+var hop_is_dom_form_element;
+
+try {
+   if( undefined instanceof HTMLFormElement ) {
+      /* this test is always false but it checks if HTMLFormElement */
+      /* is a plain JavaScript class. See below the catch clause.   */
+      hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+	 return false;
+      };
+   } else {
+      hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+	 return obj instanceof HTMLFormElement;
+      };
+   }
+} catch( e ) {
+   /* on some browsers (guess how, always the same), HTMLFormElement is */
+   /* an opaque object that is not implemented as a plain JavaScript    */
+   /* class (i.e., a JavaScript function), hence instanceof cannot be   */
+   /* used.                                                             */
+   hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+      return hop_is_html_element( obj ) && (obj.tagName === "form");
+   };
+}
+  
+if( !("HTMLCollection" in window) ) {
+   window.HTMLCollection = function() { return false; };
+}
+
+if( !("HTMLInputElement" in window) ) {
+   window.HTMLInputElement = function() { return false; };
+}
+
+if( !("HTMLTextAreaElement" in window) ) {
+   window.HTMLTextAreaElement = function() { return false; };
+}
+
+if( !("HTMLSelectElement" in window) ) {
+   window.HTMLSelectElement = function() { return false; };
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_make_xml_http_request ...                                    */
 /*---------------------------------------------------------------------*/
 var hop_make_xml_http_request;
@@ -351,7 +374,7 @@ if( "XMLHttpRequest" in window ) {
 	 }
       }
    } else {
-      if( XMLHttpRequest != undefined ) {
+      if( "XMLHttpRequest" in window ) {
 	 hop_make_xml_http_request = function hop_make_xml_http_request() {
 	    return new XMLHttpRequest();
 	 }
@@ -409,8 +432,6 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 /*    node_style_set ...                                               */
 /*---------------------------------------------------------------------*/
 /*** META ((export node-style-set!)) */
-var node_style_set = undefined;
-
 function node_style_set_native( obj, prop, value ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
