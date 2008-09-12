@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Sep 11 18:35:26 2008 (serrano)                */
+;*    Last change :  Fri Sep 12 12:01:13 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -403,8 +403,8 @@ Google, each containing a forward pointer to the actual URL.])))
    (when (webfilter-blacklist)
       (with-access::http-request req (host port path header)
 	 (when (hashtable-get *domain-blacklist*  host)
-	    (hop-verb 3 (hop-color req req " BLACKLISTED") ": " host ":" port path "\n")
-	    (hop-verb 4 " header: " header "\n")
+	    (hop-verb 2 (hop-color req req " BLACKLISTED") ": " host ":" port path "\n")
+	    (hop-verb 3 " header: " header "\n")
 	    (instantiate::http-response-string
 	       (start-line "HTTP/1.0 404 Not Found"))))))
 
