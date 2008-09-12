@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Sep 10 08:25:37 2008 (serrano)                */
+#*    Last change :  Fri Sep 12 16:15:49 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -71,12 +71,12 @@ buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 buildbindir=$PWD/bin
 
-bigloorequired=3.1a
+bigloorequired=3.1b
 bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
 
-if [ $USER = "serrano" ]; then
+if [ "$USER " = "serrano " ]; then
   distribdir=$HOME/prgm/distrib
 else
   distribdir=.
