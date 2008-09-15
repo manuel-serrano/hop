@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Wed Sep 10 15:14:11 2008 (serrano)                */
+;*    Last change :  Mon Sep 15 09:48:08 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -123,8 +123,18 @@
       (with-handler
 	 (make-scheduler-error-handler thread)
 	 (let loop ()
+	    (when (>=fx (hop-verbose) 2)
+	       (mutex-lock! (pool-scheduler-mutex scd))
+	       (pool-scheduler-naccept-set!
+		scd (+fx (pool-scheduler-naccept scd) 1))
+	       (mutex-unlock! (pool-scheduler-mutex scd)))
 	    (let* ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf))
 		   (id  (get-next-id)))
+	       (when (>=fx (hop-verbose) 2)
+		  (mutex-lock! (pool-scheduler-mutex scd))
+		  (pool-scheduler-naccept-set!
+		   scd (-fx (pool-scheduler-naccept scd) 1))
+		  (mutex-unlock! (pool-scheduler-mutex scd)))
 	       (hop-verb 2 (hop-color id id " ACCEPT")
 			 (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 			 ": " (socket-hostname sock) " [" (current-date) "]\n")
@@ -134,7 +144,7 @@
 	       (loop))))
       (connect-stage scd thread))
    
-   (let loop ((i (scheduler-size scd)))
+   (let loop ((i (length (pool-scheduler-free scd))))
       (if (<=fx i 1)
 	  (thread-join! (spawn0 scd connect-stage))
 	  (begin

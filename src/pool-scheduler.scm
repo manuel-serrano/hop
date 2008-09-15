@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Wed Sep 10 15:00:02 2008 (serrano)                */
+;*    Last change :  Sun Sep 14 19:05:52 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -37,7 +37,8 @@
 	       (mutex::mutex read-only (default (make-mutex)))
 	       (condv::condvar read-only (default (make-condition-variable)))
 	       (nfree::int (default 0))
-	       (free::pair-nil (default '())))))
+	       (free::pair-nil (default '()))
+	       (naccept::int (default 0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-init! ::pool-scheduler ...                             */
@@ -52,8 +53,11 @@
 ;*    scheduler-stat ::pool-scheduler ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-stat scd::pool-scheduler)
-   (with-access::pool-scheduler scd (size nfree)
-      (format " (~a/~a)" (- size nfree) size)))
+   (with-access::pool-scheduler scd (size naccept mutex)
+      (mutex-lock! mutex)
+      (let ((r (format " (~a/~a)" (-fx size naccept) size)))
+	 (mutex-unlock! mutex)
+	 r)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-load ::pool-scheduler ...                              */
