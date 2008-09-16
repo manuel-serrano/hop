@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Sep 11 12:30:36 2008 (serrano)                */
+/*    Last change :  Tue Sep 16 11:05:39 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -285,15 +285,18 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 	       case 200:
 		  try {
 		     var ctype = hop_header_ctype( xhr );
-
-		     if( ctype === "application/json" ) {
-			var expr;
+		     var expr;
+		     
+		     if( ctype === "application/x-javascript" ) {
+			/* ctype must match the value hop-json-mime-type */
+			/* which is defined in runtime/param.scm.        */
 			try {
 			   expr = eval( xhr.responseText );
 			} catch( exc ) {
 			   err( exc, xhr );
 			   expr = false;
 			}
+			
 			return success( expr, xhr );
 		     } else if( ctype === "text/html" ) {
 			var el = hop_create_element( xhr.responseText );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Aug 27 08:01:39 2008 (serrano)                */
+;*    Last change :  Tue Sep 16 10:49:35 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -696,9 +696,13 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-json-mime-type ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Opera8 only accepts application/x-javascript. It encodes all     */
+;*    the other mimetypes that are then unusable with with-hop.        */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-json-mime-type
-   "application/json")
+   ;;"application/json"
+   "application/x-javascript")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-bigloo-mime-type ...                                         */
