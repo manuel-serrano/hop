@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Jul 24 09:30:24 2008 (serrano)                */
+;*    Last change :  Thu Sep 18 09:21:11 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -269,7 +269,7 @@
 ;*       (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">") */
       (doctype "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN\" \"http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd\" [<!ENTITY nbsp \"&#160;\">]>")
       (html-attributes (hop-xhtml-xmlns))
-      (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>")
+      (header-format "<?xml version=\"1.0\" encoding=\"~a\"?>\n")
       (no-end-tags-elements '())
       ;; XHTML scripts have to be protected
       (cdata-start "\n<![CDATA[\n")
@@ -612,7 +612,6 @@
 (define-method (xml-write obj::xml-html p backend)
    (with-access::xml-backend backend (header-format doctype html-attributes)
       (fprintf p header-format (hop-charset))
-      (newline p)
       (display doctype p)
       (newline p)
       (with-access::xml-html obj (markup attributes body)

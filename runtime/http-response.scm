@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Sep  8 10:21:08 2008 (serrano)                */
+;*    Last change :  Thu Sep 18 10:03:36 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -88,13 +88,15 @@
 		(s body)
 		(connection (http-request-connection request))
 		(l (string-length s))
-		(clen (if (and (>= content-length 0) (< content-length l))
-			  content-length
-			  l)))
+		(clen (if (=elong content-length #e-1)
+			  l
+			  content-length)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
 	    (http-write-header p header)
-	    (http-write-line p "Content-Length: " clen)
+	    (if (>= clen 0)
+		(http-write-line p "Content-Length: " clen)
+		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
 	    (when server (http-write-line-string p "Server: " server))
@@ -131,9 +133,19 @@
 	       (when bodyp (display (hop->json value #t #f) p)))
 	    (flush-output-port p)
 	    connection))))
-      
+
+;*---------------------------------------------------------------------*/
+;*    chunked-flush-hook ...                                           */
+;*---------------------------------------------------------------------*/
+(define (chunked-flush-hook size)
+   (string-append "\r\n" (integer->string size 16) "\r\n"))
+   
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-hop ...                            */
+;*    -------------------------------------------------------------    */
+;*    Since Bigloo3.1c hop response are transmitted as chunked         */
+;*    response to allow HOP to use keep-alive connections              */
+;*    for dynamic responses.                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop socket)
    (with-trace 3 'http-response::http-response-hop
@@ -145,7 +157,12 @@
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request))
 	       (sbody #f)
-	       (clen content-length))
+	       (clen content-length)
+	       (chunked (cond-expand
+			   ((or bigloo3.1a bigloo3.1b)
+			    #f)
+			   (else
+			    #t))))
 	    (when (and force-content-length (<=elong clen #e0))
 	       (let ((op (open-output-string)))
 		  (xml-write xml op backend)
@@ -154,16 +171,30 @@
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
 	    (http-write-header p header)
-	    (if (>elong clen #e0)
+	    (cond
+	       ((>elong clen #e0)
 		(http-write-line p "Content-Length: " clen)
+		(set! chunked #f))
+	       ((not chunked)
 		(set! connection 'close))
+	       ((eq? connection 'close)
+		(set! chunked #f))
+	       ((eq? (http-request-http request) 'HTTP/1.0)
+		(set! connection 'close))
+	       (else
+		(http-write-line p "Transfer-Encoding: chunked")))
 	    (http-write-line p "Connection: " connection)
 	    (let ((ctype (or content-type (xml-backend-mime-type backend))))
 	       (http-write-content-type p ctype charset))
 	    (when server
 	       (http-write-line-string p "Server: " server))
 	    (http-write-line-string p "Hhop: true")
-	    (http-write-line p)
+	    (if chunked
+		(begin
+		   
+		   (flush-output-port p)
+		   (output-port-flush-hook-set! p chunked-flush-hook))
+		(http-write-line p))
 	    ;; the body
 	    (with-trace 4 'http-response-hop
 	       (when bodyp
@@ -171,6 +202,10 @@
 		      (display sbody p)
 		      (xml-write xml p backend))))
 	    (flush-output-port p)
+	    ;; for chunked, write the last 0 chunk
+	    (when chunked
+	       (output-port-flush-hook-set! p #unspecified)
+	       (http-write-line p "\r\n0"))
 	    connection))))
 
 ;*---------------------------------------------------------------------*/

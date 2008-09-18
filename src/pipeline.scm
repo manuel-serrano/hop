@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Sat Sep  6 15:00:20 2008 (serrano)                */
+;*    Last change :  Thu Sep 18 10:08:05 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -343,7 +343,7 @@
 			       (hop-keep-alive-threshold))
 		       connection)
 		   "\n")
-	 
+
 	 (case connection
 	    ((persistent)
 	     #unspecified)

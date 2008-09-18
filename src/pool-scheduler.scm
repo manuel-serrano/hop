@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Sun Sep 14 19:05:52 2008 (serrano)                */
+;*    Last change :  Thu Sep 18 10:07:05 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -63,10 +63,14 @@
 ;*    scheduler-load ::pool-scheduler ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-load scd::pool-scheduler)
-   (with-access::pool-scheduler scd (nfree size)
-      (flonum->fixnum
-       (*fl 100.
-	    (/fl (fixnum->flonum (-fx size nfree)) (fixnum->flonum size))))))
+   (with-access::pool-scheduler scd (naccept size mutex)
+      (mutex-lock! mutex)
+      (let ((r (flonum->fixnum
+		(*fl 100.
+		     (/fl (fixnum->flonum (-fx size naccept))
+			  (fixnum->flonum size))))))
+	 (mutex-unlock! mutex)
+	 r)))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn ::pool-scheduler ...                                       */
