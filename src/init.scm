@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue Sep  9 19:58:47 2008 (serrano)                */
+;*    Last change :  Fri Sep 19 09:51:52 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -82,10 +82,29 @@
 	  (http-get-file-query req))
 	 ((is-suffix? abspath ".hop")
 	  ;; hop source code
-	  (http-get-hop req))
+	  (http-get-hop req #t))
 	 (else
 	  ;; a regular file
-	  (http-get-file req)))))
+	  (http-get-file/cache req)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-head ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (http-head req)
+   (with-access::http-request req (abspath query)
+      (cond
+	 ((not (file-exists? abspath))
+	  ;; an error
+	  (http-get-file-not-found req))
+	 (query
+	  ;; a file with query arguments
+	  (http-get-file-query req))
+	 ((is-suffix? abspath ".hop")
+	  ;; hop source code
+	  (http-get-hop req #f))
+	 (else
+	  ;; a regular file
+	  (http-get-file req #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file-not-found ...                                      */
@@ -130,8 +149,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-get-hop ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (http-get-hop req)
-   (with-access::http-request req (abspath method)
+(define (http-get-hop req bodyp::bool)
+   (with-access::http-request req (abspath)
       (let ((rep (hop-load abspath)))
 	 (cond
 	    ((%http-response? rep)
@@ -141,7 +160,7 @@
 		(request req)
 		(content-type (mime-type abspath (hop-default-mime-type)))
 		(charset (hop-charset))
-		(bodyp (eq? method 'GET))
+		(bodyp bodyp)
 		(header '((Cache-Control: . "no-cache")))
 		(xml rep)))
 	    (else
@@ -151,16 +170,42 @@
 		   (header (list (cons 'location: url))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    get-memory-cache ...                                             */
+;*---------------------------------------------------------------------*/
+(define get-memory-cache #f)
+
+;*---------------------------------------------------------------------*/
+;*    init-get-cache ...                                               */
+;*---------------------------------------------------------------------*/
+(define (init-get-cache!)
+   (set! get-memory-cache
+	 (instantiate::cache-memory
+	    (validity (lambda (ce _) (cache-entry? ce)))
+	    (max-entries (hop-get-cache-size)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-get-file/cache ...                                          */
+;*---------------------------------------------------------------------*/
+(define (http-get-file/cache req)
+   (with-access::http-request req (abspath)
+      (let ((cache (cache-get get-memory-cache abspath)))
+	 (if (%http-response? cache)
+	     cache
+	     (let ((resp (http-get-file req #t)))
+		(cache-put! get-memory-cache abspath resp)
+		resp)))))
+
+;*---------------------------------------------------------------------*/
 ;*    http-get-file ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (http-get-file req)
+(define (http-get-file req bodyp)
    (with-access::http-request req (abspath query header method)
       (cond
 	 ((pair? (assq 'icy-metadata: header))
 	  (instantiate::http-response-shoutcast
 	     (request req)
 	     (start-line "ICY 200 OK")
-	     (bodyp (eq? method 'GET))
+	     (bodyp bodyp)
 	     (file abspath)))
 	 ((and (string-suffix? ".gz" abspath) (accept-gzip? header))
 	  ;; send a gzipped file with a mime type corresponding
@@ -170,7 +215,7 @@
 	     (content-type (mime-type (prefix abspath) "text/plain"))
 	     (charset (hop-locale))
 	     (header `((content-encoding: . "gzip")))
-	     (bodyp (eq? method 'GET))
+	     (bodyp bodyp)
 	     (file abspath)))
 	 ((and (hop-gzipped-directory? abspath)
 	       (file-exists? (string-append abspath ".gz"))
@@ -181,7 +226,7 @@
 	     (content-type (mime-type abspath "text/plain"))
 	     (charset (hop-locale))
 	     (header `((content-encoding: . "gzip")))
-	     (bodyp (eq? method 'GET))
+	     (bodyp bodyp)
 	     (file (string-append abspath ".gz"))))
 	 (else
 	  ;; send a regular file
@@ -189,7 +234,7 @@
 	     (request req)
 	     (content-type (mime-type abspath "text/plain"))
 	     (charset (hop-locale))
-	     (bodyp (eq? method 'GET))
+	     (bodyp bodyp)
 	     (file abspath))))))
 
 ;*---------------------------------------------------------------------*/
@@ -375,9 +420,12 @@
 ;*---------------------------------------------------------------------*/
 (define (init-http!)
 
+   ;; prepare the get cache
+   (init-get-cache!)
+   
    ;; regular http handlers
    (add-http-handler! 'GET http-get)
-   (add-http-handler! 'HEAD http-get)
+   (add-http-handler! 'HEAD http-head)
    (add-http-handler! 'OPTIONS http-options)
    
    ;; local filter (Fallback local file filter)

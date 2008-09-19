@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu Sep 18 10:08:05 2008 (serrano)                */
+;*    Last change :  Fri Sep 19 10:10:11 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -260,9 +260,9 @@
 ;*    http-response-static? ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (http-response-static? resp)
-   (or (http-response-abort? resp)
+   (or (http-response-file? resp)
        (http-response-string? resp)
-       (http-response-file? resp)
+       (http-response-abort? resp)
        (http-response-error? resp)))
 
 ;*---------------------------------------------------------------------*/

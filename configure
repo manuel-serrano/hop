@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Sep 12 16:15:49 2008 (serrano)                */
+#*    Last change :  Fri Sep 19 07:52:17 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -252,6 +252,7 @@ while : ; do
       echo "   --afile=afile......... The Bigloo afile tool" >&2;
       echo "   --btags=btags......... The Bigloo btags tool" >&2;
       echo "   --bdepend=bdepend..... The Bigloo dependence tool" >&2;
+      echo "   --gzip................ The GNU zipper" >&2;
       echo "   --cc=cc............... The C compiler" >&2;
       echo "   --bcflags=args........ The compilation options" >&2;
       echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
@@ -262,7 +263,7 @@ while : ; do
       echo "   --devel............... Enables devel mode (safe but not debug)" >&2;
       echo "   --debug[2]............ Enables Bigloo debug mode" >&2;
       echo "   --pmem[2]............. Enables memory profiling mode" >&2;
-      echo "   --gzip................ The GNU zipper" >&2;
+      echo "   --profile............. Enables Bigloo profiling mode" >&2;
       echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
       echo "   --enable-ssl.......... Enables SSL support" >&2;
       echo "   --disable-ssl......... Disables SSL support (default)" >&2;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Sep 19 07:47:37 2008 (serrano)                */
+;*    Last change :  Fri Sep 19 07:58:22 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -118,18 +118,20 @@
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
 	    (http-parse-header pi po)
 	    (let* ((i (string-index path #\?))
-		   (abspath (cond
-			       ((not i)
-				(let ((dpath (url-decode path)))
-				   (file-name-canonicalize! dpath)))
-			       ((>fx i 0)
-				(let ((p (url-decode! (substring path 0 i))))
-				   (file-name-canonicalize! p)))
-			       (else
-				"/")))
-		   (query (when i
-			     (let ((l (string-length path)))
-				(substring path (+fx i 1) l))))
+		   (query #f)
+                   (abspath (cond
+                               ((not i)
+                                (let ((dpath (url-decode path)))
+                                   (file-name-canonicalize! dpath)))
+                               ((>fx i 0)
+                                (let ((l (string-length path)))
+                                   (set! query (substring path (+fx i 1) l)))
+                                (let ((p (url-decode! (substring path 0 i))))
+                                   (file-name-canonicalize! p)))
+                               (else
+                                (let ((l (string-length path)))
+                                   (set! query (substring path 1 l)))   
+                                "/")))
 		   (connection (or co
 				   (if (eq? http-version 'HTTP/1.1)
 				       'keep-alive
