@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Sep  4 15:33:41 2008 (serrano)                */
+;*    Last change :  Fri Sep 19 07:47:37 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -55,7 +55,6 @@
       (let* ((req (read/rp request-line-grammar port id out))
 	     (localc (string=? (socket-local-address sock)
 			       (socket-host-address sock))))
-	 (socket-timeout-set! sock 0 0)
 	 (with-access::http-request req (socket localclientp user userinfo)
 	    (set! socket sock)
 	    (set! localclientp localc)
@@ -132,11 +131,9 @@
 			     (let ((l (string-length path)))
 				(substring path (+fx i 1) l))))
 		   (connection (or co
-				   (if (string<?
-					(symbol->string! http-version)
-					"HTTP/1.1")
-				       'close
-				       'keep-alive))))
+				   (if (eq? http-version 'HTTP/1.1)
+				       'keep-alive
+				       'close))))
 	       (trace-item "abspath=" abspath
 			   " query=" query
 			   " connection=" connection)

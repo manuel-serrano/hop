@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 09:54:35 2007                          */
-;*    Last change :  Mon Apr 21 16:26:12 2008 (serrano)                */
+;*    Last change :  Thu Sep 18 19:30:16 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets markups                                                  */
@@ -51,7 +51,7 @@
 ;*    <WEBLETS-LIST> ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS-LIST> req category)
-   (let* ((autho (http-request-authorization req))
+   (let* ((autho (http-server-request-authorization req))
 	  (authe (if autho (http-decode-authentication autho) #f)))
       (<DIV>
 	 (filter-map (lambda (w) (<WEBLET> w authe category))
