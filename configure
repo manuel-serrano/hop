@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Sep 20 19:04:25 2008 (serrano)                */
+#*    Last change :  Sat Sep 20 19:07:28 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -207,7 +207,6 @@ while : ; do
       bcflags="$bcflags $bcflagsopt";;
 
     --profile)
-      bcflagsrts=;
       bscm2jsflags=;
       bcflags="$bcflagsprofile";;
 

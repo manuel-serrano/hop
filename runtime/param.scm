@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Sep 16 10:49:35 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 19:37:59 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -32,8 +32,9 @@
 	    (hop-load-preferences-set! ::bool)
 	    (hop-store-preferences::bool)
 	    (hop-store-preferences-set! ::bool)
-	    
-	    (hop-verbose::int)
+
+	    %%*hop-verbose*
+	    (inline hop-verbose::int)
 	    (hop-verbose-set! ::int)
 	    
 	    (hop-session::int)
@@ -297,9 +298,14 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-verbose ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    HOP-VERBOSE is used everywhere so it's performance matters.      */
+;*    For that reason it is implemented as an inline function and      */
+;*    the global register *HOP-VERBOSE* is exported.                   */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-verbose
-   0)
+(define %%*hop-verbose* 0)
+(define-inline (hop-verbose) %%*hop-verbose*)
+(define (hop-verbose-set! v) (set! %%*hop-verbose* v))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-session ...                                                  */

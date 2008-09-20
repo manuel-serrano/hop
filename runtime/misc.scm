@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Thu Sep  4 14:45:58 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 19:31:54 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -13,42 +13,42 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_misc
-
+   
    (cond-expand
       (enable-ssl (library ssl)))
-
+   
    (import  __hop_configure
 	    __hop_param
 	    __hop_types
 	    __hop_read)
    
    (extern  (macro fork::int () "fork"))
-
-   (export (hop-verb ::int . args)
-	   (hop-color ::obj ::obj ::obj)
-	   (shortest-prefix ::bstring)
-	   (longest-suffix ::bstring)
-	   (is-suffix?::bool ::bstring ::bstring)
-	   (is-suffix-ci?::bool ::bstring ::bstring)
-	   (suffix-assoc ::bstring ::pair-nil)
-	   (suffix-assoc-ci ::bstring ::pair-nil)
-	   (suffix-member ::bstring ::pair-nil)
-	   (suffix-member-ci ::bstring ::pair-nil)
-	   (string-member? ::bstring ::bstring)
-	   (string-member-ci? ::bstring ::bstring)
-	   (is-local?::bool ::bstring)
-	   (string-escape::bstring ::bstring ::char)
-	   (escape-string::bstring ::bstring)
-	   (delete-path ::bstring)
-	   (make-url-name::bstring ::bstring ::bstring)
-	   (make-hop-url-name::bstring ::bstring)
-	   (make-client-socket/timeout ::bstring ::int ::int ::obj ::bool)
-	   (ipv4->elong::elong ::bstring)
-	   (inline micro-seconds::int ::int)
-	   (inline input-timeout-set! ::input-port ::int)
-	   (inline output-timeout-set! ::output-port ::int)
-	   (inline socket-timeout-set! ::socket ::int ::int)
-	   (call-in-background ::procedure)))	   
+   
+   (export  (hop-verb ::int . args)
+	    (hop-color ::obj ::obj ::obj)
+	    (shortest-prefix ::bstring)
+	    (longest-suffix ::bstring)
+	    (is-suffix?::bool ::bstring ::bstring)
+	    (is-suffix-ci?::bool ::bstring ::bstring)
+	    (suffix-assoc ::bstring ::pair-nil)
+	    (suffix-assoc-ci ::bstring ::pair-nil)
+	    (suffix-member ::bstring ::pair-nil)
+	    (suffix-member-ci ::bstring ::pair-nil)
+	    (string-member? ::bstring ::bstring)
+	    (string-member-ci? ::bstring ::bstring)
+	    (is-local?::bool ::bstring)
+	    (string-escape::bstring ::bstring ::char)
+	    (escape-string::bstring ::bstring)
+	    (delete-path ::bstring)
+	    (make-url-name::bstring ::bstring ::bstring)
+	    (make-hop-url-name::bstring ::bstring)
+	    (make-client-socket/timeout ::bstring ::int ::int ::obj ::bool)
+	    (ipv4->elong::elong ::bstring)
+	    (inline micro-seconds::int ::int)
+	    (inline input-timeout-set! ::input-port ::int)
+	    (inline output-timeout-set! ::output-port ::int)
+	    (inline socket-timeout-set! ::socket ::int ::int)
+	    (call-in-background ::procedure)))	   
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */

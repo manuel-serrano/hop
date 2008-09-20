@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Sep 19 07:58:22 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 19:31:13 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -92,29 +92,20 @@
 (define (http-parse-method-request method pi::input-port po::output-port id)
    (with-trace 3 'http-parse-method-request
       (let (scheme hostname port path http-version userinfo)
-	 (let ((pi2 (if (or (>fx (hop-verbose) 3) (>=fx (bigloo-debug) 3))
-			(let ((line (http-read-line pi)))
-			   (when (>fx (hop-verbose) 3)
-			      (hop-verb 4 (hop-color id id " PARSE REQ")
-					": [" method " "
-					(string-for-read line) "]\n"))
-			   (trace-item method " " )
-			   (open-input-string line))
-			pi)))
-	    (multiple-value-bind (s u h p a)
-	       (http-url-parse pi2)
-	       (trace-item "scheme=" s " user=" u
-			   " hostname=" h " port=" p " path=[" a "]")
-	       (set! scheme (string->symbol s))
-	       (set! hostname h)
-	       (set! port p)
-	       (set! path a)
-	       (set! userinfo u)
-	       (read/rp http-sp-grammar pi2)
-	       (set! http-version (read/rp http-version-grammar pi2))
-	       (http-read-crlf pi2)
-	       (when (input-string-port? pi2)
-		  (close-input-port pi2))))
+	 (multiple-value-bind (s u h p a)
+	    (http-url-parse pi)
+	    (trace-item "scheme=" s " user=" u
+			" hostname=" h " port=" p " path=[" a "]")
+	    (set! scheme (string->symbol s))
+	    (set! hostname h)
+	    (set! port p)
+	    (set! path a)
+	    (set! userinfo u)
+	    (read/rp http-sp-grammar pi)
+	    (set! http-version (read/rp http-version-grammar pi))
+	    (http-read-crlf pi)
+	    (when (input-string-port? pi)
+	       (close-input-port pi)))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
 	    (http-parse-header pi po)
 	    (let* ((i (string-index path #\?))
