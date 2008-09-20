@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Mon Sep 15 09:48:08 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 20:24:10 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -15,6 +15,8 @@
 (module hop_accept
 
    (library hop)
+
+   (include "stage.sch")
 
    (cond-expand
       (enable-threads (library pthread)))

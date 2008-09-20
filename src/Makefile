@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Thu Sep  4 09:29:39 2008 (serrano)                */
+#*    Last change :  Sat Sep 20 20:24:29 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -31,7 +31,7 @@ MODULES		= hop-param parseargs main init \
                   pool-scheduler \
                   cohort-scheduler
 
-INCLUDES	= 
+INCLUDES	= stage.sch
 
 CLASS_DIR	= o/class_s/bigloo/hop
 
