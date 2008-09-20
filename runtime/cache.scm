@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Thu Aug 21 17:43:07 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 18:54:37 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -55,6 +55,7 @@
 	   (%cache-memory-new ::cache-memory)
 	   (generic cache-clear ::cache)
 	   (generic cache->list ::cache)
+	   (cache-memory-get::obj ::cache ::bstring)
 	   (generic cache-get::obj ::cache ::bstring)
 	   (generic cache-put! ::cache ::bstring ::obj)))
 
@@ -166,9 +167,9 @@
 	     (loop (cache-entry-%prev tail) (cons tail res))))))
 
 ;*---------------------------------------------------------------------*/
-;*    cache-get ::cache ...                                            */
+;*    cache-memory-get ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-generic (cache-get c::cache path::bstring)
+(define (cache-memory-get c::cache path::bstring)
    (with-access::cache c (%table %head %tail %mutex validity)
       (mutex-lock! %mutex)
       (let ((ce (hashtable-get %table path)))
@@ -204,6 +205,12 @@
 	    (else
 	     (mutex-unlock! %mutex)
 	     #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    cache-get ::cache ...                                            */
+;*---------------------------------------------------------------------*/
+(define-generic (cache-get c::cache path::bstring)
+   (cache-memory-get c path))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-get ::cache-disk ...                                       */

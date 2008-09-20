@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Thu Aug 28 20:49:37 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 18:54:42 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -326,7 +326,7 @@
 ;*---------------------------------------------------------------------*/
 (define (find-hopaccess path)
    (let loop ((p path))
-      (let ((cache (cache-get hopaccess-cache p)))
+      (let ((cache (cache-memory-get hopaccess-cache p)))
 	 (cond
 	    (cache
 	     (when (string? cache) cache))

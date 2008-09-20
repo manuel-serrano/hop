@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Sep 19 11:52:11 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 18:54:21 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -188,7 +188,7 @@
 ;*---------------------------------------------------------------------*/
 (define (http-get-file/cache req)
    (with-access::http-request req (abspath)
-      (let ((cache (cache-get get-memory-cache abspath)))
+      (let ((cache (cache-memory-get get-memory-cache abspath)))
 	 (if (%http-response? cache)
 	     cache
 	     (let ((resp (http-get-file req #t)))

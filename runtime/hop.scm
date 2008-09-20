@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Sep  1 09:06:32 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 18:35:08 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -39,8 +39,8 @@
    
    (export  (generic thread-request ::obj)
 	    (generic thread-request-set! ::obj ::obj)
-	    (current-request::obj)
-	    (current-request-set! ::obj)
+	    (inline current-request::obj)
+	    (inline current-request-set! ::thread ::obj)
 	    (request-get::obj ::symbol)
 	    (request->response::%http-response ::http-request)
 	    (with-url ::bstring ::obj #!key fail (header '()) (timeout 0))
@@ -76,14 +76,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    current-request ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (current-request)
+(define-inline (current-request)
    (thread-request (current-thread)))
 
 ;*---------------------------------------------------------------------*/
 ;*    current-request-set! ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (current-request-set! req)
-   (thread-request-set! (current-thread) req))
+(define-inline (current-request-set! thread req)
+   (thread-request-set! thread req))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-get ...                                                  */
