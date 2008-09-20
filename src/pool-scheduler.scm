@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Thu Sep 18 10:07:05 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 07:53:22 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -33,7 +33,7 @@
    (import  hop_scheduler
 	    hop_param)
 
-   (export  (class pool-scheduler::scheduler
+   (export  (class pool-scheduler::row-scheduler
 	       (mutex::mutex read-only (default (make-mutex)))
 	       (condv::condvar read-only (default (make-condition-variable)))
 	       (nfree::int (default 0))
@@ -93,48 +93,6 @@
 	    (condition-variable-signal! condv)
 	    (mutex-unlock! mutex)
 	    thread))))
-
-;*---------------------------------------------------------------------*/
-;*    stage ::pool-scheduler ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (stage scd::pool-scheduler thread proc . args)
-   (apply proc scd thread args))
-
-;*---------------------------------------------------------------------*/
-;*    stage0 ::pool-scheduler ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (stage0 scd::pool-scheduler thread proc)
-   (proc scd thread))
-
-;*---------------------------------------------------------------------*/
-;*    stage1 ::pool-scheduler ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (stage1 scd::pool-scheduler thread proc a0)
-   (proc scd thread a0))
-
-;*---------------------------------------------------------------------*/
-;*    stage2 ::pool-scheduler ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (stage2 scd::pool-scheduler thread proc a0 a1)
-   (proc scd thread a0 a1))
-
-;*---------------------------------------------------------------------*/
-;*    stage3 ::pool-scheduler ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (stage3 scd::pool-scheduler thread proc a0 a1 a2)
-   (proc scd thread a0 a1 a2))
-
-;*---------------------------------------------------------------------*/
-;*    stage4 ::pool-scheduler ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (stage4 scd::pool-scheduler thread proc a0 a1 a2 a3)
-   (proc scd thread a0 a1 a2 a3))
-
-;*---------------------------------------------------------------------*/
-;*    stage5 ::pool-scheduler ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (stage5 scd::pool-scheduler thread proc a0 a1 a2 a3 a4)
-   (proc scd thread a0 a1 a2 a3 a4))
 
 ;*---------------------------------------------------------------------*/
 ;*    pool-thread-body ...                                             */

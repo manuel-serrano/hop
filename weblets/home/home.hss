@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Apr 16 10:39:12 2008 (serrano)                */
+/*    Last change :  Fri Sep 19 16:13:47 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -237,6 +237,11 @@ div.motd {
   margin-top: 20px;
   padding: 2px;
   text-align: justify;
+}
+
+span.feature {
+  color: #ff6c00;
+  font-style: italic;
 }
 
 /*---------------------------------------------------------------------*/

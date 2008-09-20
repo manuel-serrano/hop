@@ -67,16 +67,20 @@ for quick Hop experiments.])))
 ~~ HOP is shipped with some **Linux distributions** on which it can be
 used without downloading and installing the source code manually:
 
-|  ,(<DIV> :style "width:4em" "") | |
-|  ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "arch-16x16.png")) | [[http://aur.archlinux.org|Arch Linux]]  |
-|  ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) | [[http://www.gentoo.org|Gentoo]]  |
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "arch-16x16.png")) [[http://aur.archlinux.org|Arch Linux]]
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) [[http://www.gentoo.org|Gentoo]]
+
+
+~~ We provide some pre-compiled packages for non-standard architectures:
+
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "maemo-16x16.png")) ,(<A> :href *maemo-deb-url* "maemo") (Nokia N810)
 
 
 == Getting Bigloo ==
 
 In order to install HOP from the source (for significantly improving
 performance), the ,(<A> :href (home-bigloo-url) "Bigloo") compiler has
-first to be installed. Bigloo version 3.1a or higher is required for
+first to be installed. Bigloo version **3.1b** or higher is required for
 compiling HOP.
 
 ~~ Bigloo versions may be downloaded

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 06:41:38 2008                          */
-;*    Last change :  Mon Sep  1 13:40:43 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 07:54:21 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    One to one scheduler                                             */
@@ -29,7 +29,7 @@
    (import  hop_scheduler
 	    hop_param)
 
-   (export  (class one-to-one-scheduler::scheduler
+   (export  (class one-to-one-scheduler::row-scheduler
 	       (mutex::mutex read-only (default (make-mutex)))
 	       (condv::condvar read-only (default (make-condition-variable)))
 	       (cur::int (default 0)))))
@@ -96,12 +96,6 @@
 	 (set! cur (+fx cur 1))
 	 (mutex-unlock! mutex)
 	 (thread-start! thread))))
-
-;*---------------------------------------------------------------------*/
-;*    stage ::one-to-one-scheduler ...                                 */
-;*---------------------------------------------------------------------*/
-(define-method (stage scd::one-to-one-scheduler thread proc  . args)
-   (apply proc scd thread args))
 
 
 

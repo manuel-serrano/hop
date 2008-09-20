@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Wed Sep  3 15:21:47 2008 (serrano)                */
+;*    Last change :  Fri Sep 19 15:02:38 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
@@ -216,6 +216,9 @@
    (regular-grammar ((letter (in "_-<>!?%" ("azAZ09")))
 		     (sep (out "_-<>!?%" ("azAZ09")))
 		     res)
+      ((: ";;" (* all))
+       (let ((k (the-string)))
+	  (<SPAN> :class "code-comment" k)))
       ((+ (or letter (: #\/ (out #\/))))
        (let ((k (the-string)))
 	  (set! res (cons (or (markup-parser k)

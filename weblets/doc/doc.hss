@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Jun 20 14:25:01 2008 (serrano)                */
+/*    Last change :  Fri Sep 19 15:03:10 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -407,6 +407,11 @@ doc pre, doc textarea {
 
 div.code pre {
   background-color: $example-background;
+}
+
+div.code span.code-comment {
+  font-weight: bold;
+  color: orange;
 }
 
 doc span.href {
@@ -962,6 +967,11 @@ libraries div.libraries-title {
   font-weight: bold;
   font-size: large;
   border-bottom: 1px solid $border-color;
+  cursor: pointer;
+}
+
+libraries div.libraries-title:hover {
+  text-decoration: underline;
 }
 
 libraries table.api-index {

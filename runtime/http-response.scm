@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Sep 18 10:03:36 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 14:21:42 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -162,7 +162,7 @@
 			   ((or bigloo3.1a bigloo3.1b)
 			    #f)
 			   (else
-			    #t))))
+			    (eq? (http-request-http request) 'HTTP/1.1)))))
 	    (when (and force-content-length (<=elong clen #e0))
 	       (let ((op (open-output-string)))
 		  (xml-write xml op backend)
@@ -179,8 +179,6 @@
 		(set! connection 'close))
 	       ((eq? connection 'close)
 		(set! chunked #f))
-	       ((eq? (http-request-http request) 'HTTP/1.0)
-		(set! connection 'close))
 	       (else
 		(http-write-line p "Transfer-Encoding: chunked")))
 	    (http-write-line p "Connection: " connection)

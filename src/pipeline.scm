@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Sep 19 10:10:11 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 08:11:29 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -26,7 +26,22 @@
 	   hop_param
 	   hop_accept)
    
-   (export (stage-request ::scheduler ::thread ::int ::socket ::symbol ::obj)))
+   (export (stage-request ::scheduler ::thread ::int ::socket ::symbol ::obj))
+
+   (option (define (stage-expander x e)
+	      (match-case x
+		 ((?stage ?scd ?thread ?proc . ?args)
+		  (let ((s (gensym 'scd))
+			(eproc (e proc e))
+			(ethread (e thread e))
+			(escd (e scd e))
+			(eargs (map (lambda (x) (e x e)) args)))
+		     `(let ((,s ,escd))
+			 (if (row-scheduler? ,s)
+			     (,eproc ,s ,ethread ,@eargs)
+			     (,stage ,s ,ethread ,eproc ,@eargs)))))
+		 (else
+		  (map (lambda (x) (e x e)) x))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-verb ...                                                     */
@@ -46,6 +61,16 @@
 	      (lambda ()
 		 (hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))))
 
+;*---------------------------------------------------------------------*/
+;*    stage ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-expander stage0 stage-expander)
+(define-expander stage1 stage-expander)
+(define-expander stage2 stage-expander)
+(define-expander stage3 stage-expander)
+(define-expander stage4 stage-expander)
+(define-expander stage5 stage-expander)
+		
 ;*---------------------------------------------------------------------*/
 ;*    *socket-mutex* ...                                               */
 ;*---------------------------------------------------------------------*/

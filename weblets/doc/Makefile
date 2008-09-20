@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Jun  9 11:56:11 2008 (serrano)                */
+#*    Last change :  Fri Sep 19 14:26:22 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -31,12 +31,12 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   hooks.wiki hss.wiki html.wiki http-message.wiki \
                   http-request.wiki http-response.wiki http.wiki \
                   img.wiki input.wiki inline.wiki md5.wiki sha1.wiki aes.wiki \
-                  notepad.wiki \
-                  pan.wiki param-misc.wiki param-rc.wiki parameter.wiki \
+                  notepad.wiki pan.wiki param-misc.wiki \
+                  param-rc.wiki parameter.wiki \
                   read.wiki service.wiki slider.wiki sorttable.wiki \
-                  sound.wiki sqlite.wiki tabslider.wiki timeout.wiki \
-                  tooltip.wiki tree.wiki url.wiki wiki.wiki window.wiki \
-                  xml.wiki symbol.wiki rss.wiki history.wiki \
+                  sound.wiki sqlite.wiki multimedia.wiki tabslider.wiki \
+                  timeout.wiki tooltip.wiki tree.wiki url.wiki wiki.wiki \
+                  window.wiki xml.wiki symbol.wiki rss.wiki history.wiki \
                   regexp.wiki output.wiki webdav.wiki \
                   charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki
 CORE_POP	= core.wiki
@@ -55,7 +55,7 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   prefs-1.hop \
                   wiki.hop wiki2.hop window.hop history-1.hop history-2.hop \
                   cookie.hop webdav.hop svg.hop svg2.hop mathml.hop \
-                  login.hop json.hop busyanim.hop
+                  login.hop json.hop busyanim.hop musicplay.hop
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \

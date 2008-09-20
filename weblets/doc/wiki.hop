@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Wed Sep  3 15:22:14 2008 (serrano)                */
+;*    Last change :  Fri Sep 19 14:58:11 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -247,9 +247,7 @@
 ;*    <WIKI-CODE> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (<WIKI-CODE> port title expr)
-   (<DIV>
-      :class "code"
-      :align "center"
+   (<DIV> :class "code" :align "center"
       (decorate-api-wiki-code expr)))
 
 ;*---------------------------------------------------------------------*/
