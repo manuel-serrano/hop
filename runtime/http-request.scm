@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Sep 20 19:31:13 2008 (serrano)                */
+;*    Last change :  Sun Sep 21 07:43:59 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -101,7 +101,6 @@
 	    (set! port p)
 	    (set! path a)
 	    (set! userinfo u)
-	    (read/rp http-sp-grammar pi)
 	    (set! http-version (read/rp http-version-grammar pi))
 	    (http-read-crlf pi)
 	    (when (input-string-port? pi)
@@ -112,8 +111,10 @@
 		   (query #f)
                    (abspath (cond
                                ((not i)
-                                (let ((dpath (url-decode path)))
-                                   (file-name-canonicalize! dpath)))
+				;; MS: 21 sep 2008, remove the
+				;; FILE-NAME-CANONICALIZE that used to be
+				;; applied after url-decode!
+				(url-decode! path))
                                ((>fx i 0)
                                 (let ((l (string-length path)))
                                    (set! query (substring path (+fx i 1) l)))
@@ -130,53 +131,48 @@
 	       (trace-item "abspath=" abspath
 			   " query=" query
 			   " connection=" connection)
-	       (if (string? hostname)
-		   (instantiate::http-proxy-request
-		      (id id)
-		      (method method)
-		      (http http-version)
-		      (scheme scheme)
-		      (userinfo userinfo)
-		      (path path)
-		      (abspath abspath)
-		      (query query)
-		      (header header)
-		      (port (or actual-port port (hop-port)))
-		      (host (or actual-host hostname "localhost"))
-		      (content-length cl)
-		      (transfer-encoding te)
-		      (proxy-authorization pauth)
-		      (connection connection)
-		      (user (or (and (string? auth)
-				     (find-authenticated-user auth abspath))
-				(and (string? pauth)
-				     (find-authenticated-user pauth abspath))
-				(and (string? userinfo)
-				     (find-authenticated-user userinfo abspath))
-				(anonymous-user))))
-		   (instantiate::http-server-request
-		      (id id)
-		      (method method)
-		      (http http-version)
-		      (scheme scheme)
-		      (userinfo userinfo)
-		      (path path)
-		      (abspath abspath)
-		      (query query)
-		      (header header)
-		      (port (or actual-port port (hop-port)))
-		      (host (or actual-host hostname "localhost"))
-		      (content-length cl)
-		      (transfer-encoding te)
-		      (authorization auth)
-		      (connection connection)
-		      (user (or (and (string? auth)
-				     (find-authenticated-user auth abspath))
-				(and (string? pauth)
-				     (find-authenticated-user pauth abspath))
-				(and (string? userinfo)
-				     (find-authenticated-user userinfo abspath))
-				(anonymous-user))))))))))
+	       (let ((user (or (and (string? auth)
+				    (find-authenticated-user auth abspath))
+			       (and (string? pauth)
+				    (find-authenticated-user pauth abspath))
+			       (and (string? userinfo)
+				    (find-authenticated-user userinfo abspath))
+			       (anonymous-user))))
+		  (if (string? hostname)
+		      (instantiate::http-proxy-request
+			 (id id)
+			 (method method)
+			 (http http-version)
+			 (scheme scheme)
+			 (userinfo userinfo)
+			 (path path)
+			 (abspath abspath)
+			 (query query)
+			 (header header)
+			 (port (or actual-port port (hop-port)))
+			 (host (or actual-host hostname "localhost"))
+			 (content-length cl)
+			 (transfer-encoding te)
+			 (proxy-authorization pauth)
+			 (connection connection)
+			 (user user))
+		      (instantiate::http-server-request
+			 (id id)
+			 (method method)
+			 (http http-version)
+			 (scheme scheme)
+			 (userinfo userinfo)
+			 (path path)
+			 (abspath abspath)
+			 (query query)
+			 (header header)
+			 (port (or actual-port port (hop-port)))
+			 (host (or actual-host hostname "localhost"))
+			 (content-length cl)
+			 (transfer-encoding te)
+			 (authorization auth)
+			 (connection connection)
+			 (user user)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-policy-file-request ...                               */
@@ -208,7 +204,10 @@
 ;*    http-version-grammar ...                                         */
 ;*---------------------------------------------------------------------*/
 (define http-version-grammar
-   (regular-grammar ((DIGIT (in ("09"))))
+   (regular-grammar ((DIGIT (in ("09")))
+		     (SP (+ #\Space)))
+      (SP
+       (ignore))
       ((: "HTTP/" (+ DIGIT) "." (+ DIGIT))
        (the-symbol))
       (else
