@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Sep 21 08:21:12 2008 (serrano)                */
+;*    Last change :  Sun Sep 21 09:32:02 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -102,7 +102,6 @@
 	    (set! path a)
 	    (set! userinfo u)
 	    (set! http-version (read/rp http-version-grammar pi))
-	    (http-read-crlf pi)
 	    (when (input-string-port? pi)
 	       (close-input-port pi)))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
@@ -207,8 +206,10 @@
 		     (SP (+ #\Space)))
       (SP
        (ignore))
-      ((: "HTTP/" (+ DIGIT) "." (+ DIGIT))
-       (the-symbol))
+      ((: "HTTP/" (+ DIGIT) "." (+ DIGIT) "\n")
+       (the-subsymbol 0 -1))
+      ((: "HTTP/" (+ DIGIT) "." (+ DIGIT) "\r\n")
+       (the-subsymbol 0 -2))
       (else
        (parse-error 'http-version-grammar "Illegal character"
 		    (the-failure)
