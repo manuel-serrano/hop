@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sat Sep 20 20:24:10 2008 (serrano)                */
+;*    Last change :  Sun Sep 21 09:14:11 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -125,17 +125,15 @@
       (with-handler
 	 (make-scheduler-error-handler thread)
 	 (let loop ()
-	    (when (>=fx (hop-verbose) 2)
+	    (with-access::pool-scheduler scd (naccept)
 	       (mutex-lock! (pool-scheduler-mutex scd))
-	       (pool-scheduler-naccept-set!
-		scd (+fx (pool-scheduler-naccept scd) 1))
+	       (set! naccept (+fx naccept 1))
 	       (mutex-unlock! (pool-scheduler-mutex scd)))
 	    (let* ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf))
 		   (id  (get-next-id)))
-	       (when (>=fx (hop-verbose) 2)
+	       (with-access::pool-scheduler scd (naccept)
 		  (mutex-lock! (pool-scheduler-mutex scd))
-		  (pool-scheduler-naccept-set!
-		   scd (-fx (pool-scheduler-naccept scd) 1))
+		  (set! naccept (-fx naccept 1))
 		  (mutex-unlock! (pool-scheduler-mutex scd)))
 	       (hop-verb 2 (hop-color id id " ACCEPT")
 			 (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")

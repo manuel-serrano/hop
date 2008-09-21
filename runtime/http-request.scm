@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Sep 21 07:43:59 2008 (serrano)                */
+;*    Last change :  Sun Sep 21 08:21:12 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -111,10 +111,9 @@
 		   (query #f)
                    (abspath (cond
                                ((not i)
-				;; MS: 21 sep 2008, remove the
-				;; FILE-NAME-CANONICALIZE that used to be
-				;; applied after url-decode!
-				(url-decode! path))
+				;; file name canonicalization is needed
+				;; for authentication
+				(file-name-canonicalize! (url-decode! path)))
                                ((>fx i 0)
                                 (let ((l (string-length path)))
                                    (set! query (substring path (+fx i 1) l)))
