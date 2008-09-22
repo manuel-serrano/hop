@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/http-response.scm         */
+;*    serrano/prgm/project/hop/1.10.x/runtime/http-response.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Sep 20 14:21:42 2008 (serrano)                */
+;*    Last change :  Mon Sep 22 16:55:06 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -187,12 +187,15 @@
 	    (when server
 	       (http-write-line-string p "Server: " server))
 	    (http-write-line-string p "Hhop: true")
-	    (if chunked
-		(begin
-		   
-		   (flush-output-port p)
-		   (output-port-flush-hook-set! p chunked-flush-hook))
+	    (cond-expand
+	       ((or bigloo3.1a bigloo3.1b)
 		(http-write-line p))
+	       (else
+		(if chunked
+		    (begin
+		       (flush-output-port p)
+		       (output-port-flush-hook-set! p chunked-flush-hook))
+		    (http-write-line p))))
 	    ;; the body
 	    (with-trace 4 'http-response-hop
 	       (when bodyp
@@ -201,9 +204,13 @@
 		      (xml-write xml p backend))))
 	    (flush-output-port p)
 	    ;; for chunked, write the last 0 chunk
-	    (when chunked
-	       (output-port-flush-hook-set! p #unspecified)
-	       (http-write-line p "\r\n0"))
+	    (cond-expand
+	       ((or bigloo3.1a bigloo3.1b)
+		#unspecified)
+	       (else
+		(when chunked
+		   (output-port-flush-hook-set! p #unspecified)
+		   (http-write-line p "\r\n0"))))
 	    connection))))
 
 ;*---------------------------------------------------------------------*/
