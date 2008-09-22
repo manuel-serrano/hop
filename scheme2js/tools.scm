@@ -1,5 +1,14 @@
-(define (make-eq-hashtable)
-   (make-hashtable #unspecified #unspecified eq?))
+(module tools
+   (export (inline make-eq-hashtable #!optional (size #unspecified))
+	   (eq-hashtable-clone ht)
+	   (hashtable-append! ht1 ht2)
+	   (macro begin0)
+	   (macro cons-set!)
+	   (macro cp-filter)
+	   (macro for)))
+
+(define-inline (make-eq-hashtable #!optional (size #unspecified))
+   (make-hashtable size #unspecified eq?))
 
 (define (eq-hashtable-clone ht)
    (let ((cloned-ht (make-eq-hashtable)))
@@ -13,23 +22,6 @@
 		       (lambda (key val)
 			  (hashtable-put! ht1 key val))))
 
-;; '("a" "b" "c") -> "a,b,c"
-(define (separated-list els sep . Ldefault)
-   (cond
-      ((null? els) (if (null? Ldefault)
-		       ""
-		       (car Ldefault)))
-      ;; last element is verbatim returned
-      ((null? (cdr els)) (car els))
-      ;; otherwise add "," between elements
-      (else (string-append (car els) sep (separated-list (cdr els) sep)))))
-
-(define-macro (p-display p . Largs)
-   `(begin
-       ,@(map (lambda (arg)
-		 `(display ,arg ,p))
-	      Largs)))
-
 (define-macro (begin0 . L)
    (let ((fst (gensym 'fst)))
       `(let ((,fst ,(car L)))
@@ -42,3 +34,12 @@
 (define-macro (cp-filter . L)
    `(map (lambda (x) x)
 	 (filter ,@L)))
+
+(define-macro (for i from to . Lbody)
+   (let ((loop (gensym 'loop))
+	 (to-tmp (gensym 'to)))
+      `(let ((,to-tmp ,to))
+	  (let ,loop ((,i ,from))
+	       (when (< ,i ,to-tmp)
+		  ,@Lbody
+		  (,loop (+fx ,i 1)))))))

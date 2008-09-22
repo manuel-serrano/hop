@@ -1,11 +1,10 @@
 (module module-system
-   (option (loadq "protobject-eval.sch"))
    (import verbose
 	   infotron
 	   config)
    (export (create-module-from-file filename module-headers reader)
 	   (create-module-from-expr expr module-headers)
-	   (class Module
+	   (class Module-header
 	      name              ;; #f if no module-clause
 	      top-level         ;; id or pair-nil
 	      macros::pair-nil  ;; of form (define-macro ... )
@@ -90,7 +89,7 @@
       (receive (name macros imports exports includes)
 	 (read-module-header header #f include-paths read)
 	 (let ((included (read-includes includes read)))
-	    (instantiate::Module
+	    (instantiate::Module-header
 	       (name #f)
 	       (top-level (append included (list expr)))
 	       (macros macros)
@@ -136,7 +135,7 @@
 
 	 (receive (name macros imports exports includes)
 	    (read-module-header header file include-paths reader)
-	    (let ((module (instantiate::Module
+	    (let ((module (instantiate::Module-header
 			     (name name)
 			     (top-level (append (read-includes includes reader)
 						top-level))

@@ -1,5 +1,5 @@
-var sc_SYMBOL_PREFIX = "\u1E9C";
-var sc_KEYWORD_PREFIX = "\u1E9D";
+var sc_SYMBOL_PREFIX = "\uEBAC";
+var sc_KEYWORD_PREFIX = "\uEBAD";
 
 /*** META ((export #t)
            (peephole (id))) */
@@ -8,7 +8,7 @@ function sc_jsstring2string(s) {
 }
 
 /*** META ((export #t)
-           (peephole (prefix "'\\u1E9C' +")))
+           (peephole (prefix "'\\uEBAC' +")))
 */
 function sc_jsstring2symbol(s) {
     return sc_SYMBOL_PREFIX + s;
@@ -36,7 +36,7 @@ function sc_keyword2jsstring(k) {
 }
 
 /*** META ((export #t)
-           (peephole (prefix "'\\u1E9D' +")))
+           (peephole (prefix "'\\uEBAD' +")))
 */
 function sc_jsstring2keyword(s) {
     return sc_KEYWORD_PREFIX + s;
@@ -122,7 +122,7 @@ function sc_symbol2string(s) {
 }
 
 /*** META ((export #t)
-           (peephole (prefix "'\\u1E9C' +")))
+           (peephole (prefix "'\\uEBAC' +")))
 */
 function sc_string2symbol(s) {
     return sc_SYMBOL_PREFIX + s;
@@ -144,7 +144,7 @@ function sc_symbolAppend() {
 function sc_char2string(c) { return c.val; }
 
 /*** META ((export #t)
-           (peephole (hole 1 "'\\u1E9C' + " c ".val")))
+           (peephole (hole 1 "'\\uEBAC' + " c ".val")))
 */
 function sc_char2symbol(c) { return sc_SYMBOL_PREFIX + c.val; }
 
@@ -298,7 +298,7 @@ function sc_keyword2string(o) {
 }
 
 /*** META ((export #t)
-           (peephole (prefix "'\\u1E9D' +")))
+           (peephole (prefix "'\\uEBAD' +")))
 */
 function sc_string2keyword(o) {
     return sc_KEYWORD_PREFIX + o;

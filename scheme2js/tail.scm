@@ -1,124 +1,96 @@
 (module tail
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   nodes
+   (import nodes
+	   walk
 	   verbose)
-   (export (tail-exprs tree::pobject intermediate-nodes-are-tail?::bool)))
+   (export (wide-class Tail-Call::SCall))
+   (static (wide-class Tail-Label::Label))
+   (export (tail-calls tree::Module)))
 
 ;; might be called only after Node-elimination.
 ;; but then anytime. so don't assume nodes exist or not.
-(define (tail-exprs tree intermediate-nodes-are-tail?)
+(define (tail-calls tree)
    (verbose "tail")
-   (overload traverse clean (Node)
-	     (tree.traverse))
-   (overload traverse tail (Node
-			    Module
-			    (Const Value-tail)
-			    (Var-ref Value-tail)
-			    Let
-			    (Frame-alloc Value-tail)
-			    Lambda
-			    If
-			    Case
-			    Clause
-			    (Set! Enclosing-tail)
-			    Begin
-			    (Call Enclosing-tail)
-			    Tail-rec
-			    (Tail-call Enclosing-tail)
-			    While
-			    Return
-			    Labelled
-			    Break
-			    (Continue Value-tail)
-			    (Pragma Value-tail))
-	     (tree.traverse #f intermediate-nodes-are-tail?)))
+   (tail tree #f #f))
 
-(define-pmethod (Node-clean)
-   (delete! this.tail?)
-   (this.traverse0))
+(define-nmethod (Node.tail tail?)
+   (default-walk this #f)) ;; be conservative here.
 
-(define-pmethod (Node-tail tail? inter-tail?)
-   (error #f "tail. forgot node-type" (pobject-name this)))
+(define-nmethod (Module.tail tail?)
+   (default-walk this #t))
 
-(define-pmethod (Value-tail tail? inter-tail?)
-   (set! this.tail? tail?))
-   
-(define-pmethod (Inter-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.traverse2 tail? inter-tail?))
+(define-nmethod (Lambda.tail tail?)
+   (default-walk this #t))
 
-(define-pmethod (Enclosing-tail tail? inter-tail?)
-   (set! this.tail? tail?)
-   (this.traverse2 #f inter-tail?))
+(define-nmethod (If.tail tail?)
+   (with-access::If this (test then else)
+      (walk test #f)
+      (walk then tail?)
+      (walk else tail?)))
 
-(define-pmethod (Module-tail tail? inter-tail?)
-   (set! this.tail? #t)
-   ;; module's content is tail
-   (this.traverse2 #t inter-tail?))
+(define-nmethod (Case.tail tail?)
+   (with-access::Case this (key clauses)
+      (walk key #f)
+      (for-each (lambda (clause)
+		   (walk clause tail?))
+		clauses)))
 
-(define-pmethod (Let-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (for-each (lambda (n) (n.traverse #f inter-tail?)) this.bindings)
-   (this.body.traverse tail? inter-tail?))
+(define-nmethod (Clause.tail tail?)
+   ;; default-walk is fine. (Consts do nothing with 'tail?')
+   (default-walk this tail?))
 
-(define-pmethod (Lambda-tail tail? inter-tail?)
-   (set! this.tail? tail?)
-   ;; function's content is tail.
-   (this.traverse2 #t inter-tail?))
+(define-nmethod (Set!.tail tail?)
+   (default-walk this #f))
 
-(define-pmethod (If-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.test.traverse #f inter-tail?)
-   (this.then.traverse tail? inter-tail?)
-   (this.else.traverse tail? inter-tail?))
+(define-nmethod (Let.tail tail?)
+   (with-access::Let this (bindings body)
+      (for-each (lambda (n) (walk n #f)) bindings)
+      (walk body tail?)))
 
-(define-pmethod (Case-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.key.traverse #f inter-tail?)
-   (for-each (lambda (clause)
-		(clause.traverse tail? inter-tail?))
-	     this.clauses))
+(define-nmethod (Begin.tail tail?)
+   (with-access::Begin this (exprs)
+      (let loop ((exprs exprs))
+	 (cond
+	    ((null? exprs) 'do-nothing)
+	    ((null? (cdr exprs))
+	     (walk (car exprs) tail?))
+	    (else
+	     (walk (car exprs) #f)
+	     (loop (cdr exprs)))))))
 
-(define-pmethod (Clause-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (for-each (lambda (const)
-		(const.traverse #f inter-tail?))
-	     this.consts)
-   (this.expr.traverse tail? inter-tail?))
+(define-nmethod (SCall.tail tail?)
+   (when tail?
+      (widen!::Tail-Call this))
+   (default-walk this #f))
 
-(define-pmethod (Begin-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (let loop ((exprs this.exprs))
-      (cond
-	 ((null? exprs) 'do-nothing)
-	 ((null? (cdr exprs))
-	  ((car exprs).traverse tail? inter-tail?))
-	 (else
-	  ((car exprs).traverse #f inter-tail?)
-	  (loop (cdr exprs))))))
+(define-nmethod (Frame-alloc.tail tail?)
+   (default-walk this tail?))
 
-(define-pmethod (Tail-rec-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.traverse2 tail? inter-tail?))
+(define-nmethod (Return.tail tail?)
+   (default-walk this #t))
 
-(define-pmethod (While-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (this.traverse2 #f inter-tail?))
+(define-nmethod (Labeled.tail tail?)
+   (with-access::Labeled this (label)
+      (when tail?
+	 (widen!::Tail-Label label)))
+   (default-walk this tail?))
 
-(define-pmethod (Return-tail tail? inter-tail?)
-   (set! this.tail? tail?)
-   (this.val.traverse #t inter-tail?))
+(define-nmethod (Break.tail tail?)
+   (with-access::Break this (label val)
+      (if (Tail-Label? label)
+	  (walk val #t)
+	  (walk val #f))))
 
-(define-pmethod (Labelled-tail tail? inter-tail?)
-   (set! this.tail? (and inter-tail? tail?))
-   (set! this.label.break-tail? tail?)
-   (this.traverse2 tail? inter-tail?)
-   (delete! this.label.break-tail?))
+(define-nmethod (Tail-rec-Call.tail tail?)
+   (default-walk this #f))
 
-(define-pmethod (Break-tail tail? inter-tail?)
-   (set! this.tail? tail?)
-   (if this.val
-       (this.val.traverse this.label.break-tail? inter-tail?)))
+(define-nmethod (While.tail tail?)
+   (default-walk this #f))
+
+(define-nmethod (Call/cc-Call.tail tail?)
+   (error #f "TODO Call/cc-Call.tail TODO" #f))
+
+(define-nmethod (Call/cc-Resume.tail tail?)
+   (error #f "TODO Call/cc-Resume.tail TODO" #f))
+
+(define-nmethod (Call/cc-Counter-Update.tail tail?)
+   (error #f "TODO Call/cc-Counter-Update.tail TODO" #f))

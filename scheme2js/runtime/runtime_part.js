@@ -465,10 +465,10 @@ function sc_exact2inexact(x) {
 }
 
 /*** META ((export #t)
-           (peephole (id)))
+           (peephole (suffix "<< 0")))
 */
 function sc_inexact2exact(x) {
-    return x;
+    return x << 0;
 }
 
 function sc_number2jsstring(x, radix) {

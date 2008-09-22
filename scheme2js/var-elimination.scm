@@ -1,17 +1,15 @@
 (module var-elimination
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-      (import protobject
-	      var-ref-util
-	      config
-	      nodes
-	      var
-	      side
-	      use-count
-	      verbose)
-   (export (var-elimination! tree::pobject)))
+   (import config
+	   tools
+	   nodes
+	   walk
+	   var-ref-util
+	   side
+	   use-count
+	   verbose)
+   (export (var-elimination! tree::Module)))
+
+;; TODO TODO TODO: rewrite pass.
 
 ;; uses While -> after while-pass
 ;;
@@ -29,58 +27,41 @@
 ;; can't reuse the variables.
 
 (define (var-elimination! tree)
-   (if (config 'var-elimination)
-       (begin
-	  (verbose "var-elimination")
-	  (side-effect tree)
-	  (use-count tree)
-	  (overload traverse! var-elim! (Node
-					 Module
-					 Lambda
-					 While
-					 Let
-					 Call/cc-Call
-					 Binding)
-		    (tree.traverse! #f #f)))))
+   (when (config 'var-elimination)
+      (verbose "var-elimination")
+      (side-effect tree)
+      (use-count tree)
+      (elim! tree #f #f #f)))
 
 (define (var-is-available? var)
    (and (=fx var.uses 1)
 	var.constant?
 	(not var.escapes?)))
    
-(define-pmethod (Node-var-elim! avail-vars call/cc?)
-   (this.traverse2! avail-vars call/cc?))
+(define-nmethod (Node.elim! avail-vars call/cc?)
+   (default-walk! this avail-vars call/cc?))
 
-(define-pmethod (Module-var-elim! avail-vars call/cc?)
-   (this.traverse2! (make-eq-hashtable) (cons #f #f)))
+(define-nmethod (Module.elim! avail-vars call/cc?)
+   (default-walk! this (make-eq-hashtable) (cons #f #f)))
 
-(define-pmethod (Lambda-var-elim! avail-vars call/cc?)
-   (let ((fun-ht (make-eq-hashtable)))
-      (let loop ((formals this.formals))
-	 (unless (null? formals)
-	    (let ((decl (car formals)))
-;	       (verbose "ID: " decl.id)
-;	       (verbose "uses: " decl.var.uses)
-;	       (verbose "constant?: " decl.var.constant?)
-;	       (verbose "escapes?: " decl.var.escapes?)
-	       (when (var-is-available? decl.var)
-;		  (verbose "added : " decl.var.id)
-		  (hashtable-put! fun-ht decl.var
-				  (lambda (new-lvar)
-;				     (verbose "replacing formal " decl.var.id
-;					      "with "new-lvar.id)
-				     (let ((ref (new-lvar.reference)))
-					(set! decl.var.replaced? #t)
-					(set-car! formals ref)
-					(when decl.var.vaarg?
-					   (set! new-lvar.vaarg? #t))))))
-	       (loop (cdr formals)))))
-      (this.traverse2! fun-ht (cons #f #f))
-      (set! this.scope-vars (filter! (lambda (var)
-					(not var.replaced?))
-				     this.scope-vars))
+(define-nmethod (Lambda.elim! avail-vars call/cc?)
+   (with-access::Lambda this (formals scope-vars)
+      (let ((fun-ht (make-eq-hashtable)))
+	 (let loop ((formals formals))
+	    (unless (null? formals)
+	       (with-access::Ref (car formals) (var)
+		  (when (var-is-available? var)
+		     (hashtable-put! fun-ht var
+				     (lambda (new-lvar)
+					(let ((ref (var-reference new-lvar)))
+					   (widen!::Replaced-Var var)
+					   (set-car! formals ref))))
+		     (loop (cdr formals))))))
+	 (default-walk! this fun-ht (cons #f #f))
+	 (set! scope-vars Ref-var formals))
       this))
 
+;; TODO TODO TODO.
 (define-pmethod (While-var-elim! avail-vars call/cc?)
    ;; even if the avail-vars are used only once in the while loop, due to the
    ;; iterations the use-count is actually multiplied by each iteration. -> we

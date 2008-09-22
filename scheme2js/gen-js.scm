@@ -34,8 +34,14 @@
      "void" "while" "with" "abstract" "debugger" "enum" "export"
      "goto" "implements" "interface" "native" "protected"
      "synchronized" "throws" "transient" "volatile"
+     ;; following variables are not really reserved, but let's not take the
+     ;; risk...
+     "Object" "undefined" "Array" "Number" "String" "Date" "RegExp"
      ))
 
 (define (valid-JS-str? str)
    (not (or (bigloo-need-mangling? str)
-	    (member str *reserved-js*))))
+	    (member str *reserved-js*)
+	    ;; avoid clashes with runtime :
+	    (string-prefix? "sc_" str)
+	    (string-prefix? "SC_" str))))

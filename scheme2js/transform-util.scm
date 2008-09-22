@@ -1,11 +1,6 @@
 (module transform-util
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   nodes
-	   symbol
-	   var)
+   (import nodes
+	   symbol)
    (export (parameter-assig-mapping operands
 				    formals
 				    vaarg)))
@@ -42,7 +37,7 @@
 	       (null? opnds))
 	  ;; just map vaarg to '(), and return the
 	  ;; whole assig-list
-	  (cons (cons (car formals) (new-node Const '()))
+	  (cons (cons (car formals) (instantiate::Const (value '())))
 		rev-res))
 	 
 	 ;; the last element is a vaarg, and there are still operands
@@ -50,9 +45,9 @@
 	       vaarg?)
 	  ;; create a list, and map vaarg to it.
 	  ;; then return the whole list of pairs.
-	  (let ((rvalue (new-node Call
-			     (runtime-reference 'list)
-			     opnds)))
+	  (let ((rvalue (instantiate::SCall
+			   (operator (runtime-reference 'list))
+			   (operands opnds))))
 	     (cons (cons (car formals) rvalue)
 		   rev-res)))
 

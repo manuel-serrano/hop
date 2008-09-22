@@ -1,14 +1,14 @@
 (module captured-vars
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   nodes
+   (import nodes
+	   walk
 	   free-vars
 	   side
 	   verbose)
-   (export (captured-vars tree::pobject)))
+   (static (class Env
+	      token::symbol)
+	   (wide-class Capture-Lambda::Lambda
+	      token::symbol))
+   (export (captured-vars tree::Module)))
 
 ;; if a function captures a variable, it is marked as ".closure?".
 ;; Every variable that is captured is marked as ".captured?".
@@ -18,84 +18,100 @@
 ;; lifetime of the function itself is shorter than those of its free variables,
 ;; then the function is not considered to be a closure. (and the function is
 ;; not marked es .closure, nor are its free variables marked as .captured?.
-(define (captured-vars tree::pobject)
+(define (captured-vars tree)
    (verbose " collect captured")
    (free-vars tree)
    (side-effect tree)
-   (overload traverse clean (Node
-			     (Module Scope-clean)
-			     (Lambda Scope-clean)
-			     (Let Scope-clean)
-			     (Tail-rec Scope-clean))
-	     (tree.traverse))
-   (overload traverse captured (Node
-				Lambda
-				Call
-				Set!
-				Frame-alloc
-				Var-ref)
-	     (tree.traverse)))
+   (captured tree (make-Env (gensym 'token))))
 
-(define-pmethod (Node-clean)
-   (this.traverse0))
+(define (clean-var v::Var)
+   (with-access::Var v (captured? id)
+      (set! captured? #f)))
 
-(define-pmethod (Scope-clean)
-   (this.traverse0)
-   (delete! this.closure?) ;; only for Lambdas
-   (for-each (lambda (var) (delete! var.captured?))
-	     this.scope-vars))
+;; cleans lambda, if it's the first time we encounter the lambda.
+(define (clean-lambda l::Lambda env)
+   (with-access::Env env (token)
+      (unless (and (Capture-Lambda? l)
+		   (eq? (Capture-Lambda-token l) token))
+	 (widen!::Capture-Lambda l (token token))
+	 (with-access::Lambda l (closure? scope-vars)
+	    (set! closure? #f)
+	    ;; this-var cannot leave local scope and can thus not be captured
+	    (for-each clean-var scope-vars)))))
 
 (define (mark-closure! proc)
-   (unless proc.closure? ;; already done
-      (set! proc.closure? #t)
-      (hashtable-for-each proc.free-vars-ht
-			  (lambda (key val)
-			     (set! key.captured? #t)))))
+   (with-access::Capture-Lambda proc (closure? free-vars)
+      (unless closure? ;; already done
+	 (set! closure? #t)
+	 (for-each (lambda (var)
+		      (with-access::Var var (captured?)
+			 (set! captured? #t)))
+		   free-vars))))
 
-(define-pmethod (Node-captured)
-   (this.traverse0))
+(define-nmethod (Node.captured)
+   (default-walk this))
 
-(define-pmethod (Lambda-captured . Lno-mark?)
-   (if (and (null? Lno-mark?)
-	    this.free-vars?)
-       (mark-closure! this))
-   (this.traverse0))
+(define (Lambda-non-closure-walk l::Lambda env)
+   (clean-lambda l env)
+   (walk0 l env captured))
+
+(define-nmethod (Lambda.captured)
+   (clean-lambda this env)
+
+   (with-access::Lambda this (free-vars)
+      (when (not (null? free-vars))
+	 (mark-closure! this))
+      (default-walk this)))
+
+(define-nmethod (Set!.captured)
+   (with-access::Set! this (lvalue val)
+      (with-access::Ref lvalue (var)
+	 ;; If val is a lambda do not yet mark it as closure (if it has free
+	 ;; vars), but wait for its first use. (In the best case we are able to
+	 ;; determine that all free vars are still alive.
+	 (if (and (Var-constant? var)
+		  (Lambda? val))
+	     (Lambda-non-closure-walk val env)
+	     (walk val)))))
 
 ;; a Call is the only place, where we allow capturing functions.
-(define-pmethod (Call-captured)
-   (let ((operator this.operator)
-	 (operands this.operands))
+(define-nmethod (Call.captured)
+   (with-access::Call this (operator operands)
       (cond
-	 ((inherits-from? operator (node 'Lambda))
-	  (pcall operator Lambda-captured 'no-mark))
-	 ((inherits-from? operator (node 'Var-ref))
-	  ;; no need to go into Var-ref. if it references a lambda, we don't
+	 ((Lambda? operator)
+	  (Lambda-non-closure-walk operator env)) ;; NOT (walk operator).
+	 ((Ref? operator)
+	  ;; no need to go into Ref. if it references a lambda, we don't
 	  ;; want to know (as we allow lambda-refs in calls).
 	  'done)
 	 (else
-	  (operator.traverse)))
-      (for-each (lambda (node)
-		   (node.traverse))
-		operands)))
+	  (walk operator)))
+      (for-each walk operands)))
 
-(define-pmethod (Set!-captured)
-   (let ((var this.lvalue.var)
-	 (val this.val))
-      ;; If val is a lambda do not yet mark it as closure (if it has free
-      ;; vars), but wait for its first use. (In the best case we are able to
-      ;; determine that all free vars are still alive.
-      (if (and var.constant?
-	       (inherits-from? val (node 'Lambda)))
-	  (pcall val Lambda-captured 'no-mark)
-	  (val.traverse))))
 
-(define-pmethod (Frame-alloc-captured)
-   (this.traverse0)
-   (set! this.storage-var.captured? #t))
+(define-nmethod (Module.captured)
+   (with-access::Module this (scope-vars)
+      ;; don't care for runtime and imported variables.
+      (for-each (lambda (v)
+		   (with-access::Exported-Var v (captured?)
+		      (set! captured? #t)))
+		scope-vars))
+   (default-walk this))
 
-(define-pmethod (Var-ref-captured)
-   (let ((constant? this.var.constant?)
-	 (value this.var.value))
-      (if (and constant?
-	       (inherits-from? value (node 'Lambda)))
-	  (mark-closure! value))))
+(define-nmethod (Scope.captured)
+   (with-access::Scope this (scope-vars)
+      (for-each clean-var scope-vars))
+   (default-walk this))
+
+(define-nmethod (Frame-alloc.captured)
+   (default-walk this)
+   (with-access::Frame-alloc this (storage-var)
+      (with-access::Var storage-var (captured?)
+	 (set! captured? #t))))
+
+(define-nmethod (Ref.captured)
+   (with-access::Ref this (var)
+      (with-access::Var var (constant? value)
+	 (if (and constant?
+		  (Lambda? value))
+	     (mark-closure! value)))))

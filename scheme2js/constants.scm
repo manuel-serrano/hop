@@ -1,62 +1,60 @@
 (module constants
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (export (constants! tree::pobject))
-   (import protobject
-	   config
+   (import config
+	   tools
 	   nodes
-	   mark-statements
-	   var
-	   verbose))
+	   walk
+	   verbose)
+   (export (constants! tree::Module)))
 
 (define (constants! tree)
    (verbose "constants")
    (when (config 'optimize-consts)
-      (overload traverse! constants! (Node
-				      Module
-				      Lambda
-				      Const)
-		(tree.traverse! #f))))
+      (const! tree #f #f)))
 
-(define-pmethod (Node-constants! constant-ht)
-   (this.traverse1! constant-ht))
+(define-nmethod (Node.const! constant-ht)
+   (default-walk! this constant-ht))
 
 (define (make-constants-let constants-ht body)
-   (let ((bindings (hashtable-map constants-ht
-				  (lambda (const decl)
-				     (new-node Binding
-					       decl
-					       (new-node Const const))))))
+   (let ((bindings (hashtable-map
+		    constants-ht
+		    (lambda (const decl)
+		       (instantiate::Set!
+			  (lvalue decl)
+			  (val (instantiate::Const
+				  (value const))))))))
       (if (pair? bindings)
-	  (new-node Let
-		    (map (lambda (binding)
-			    binding.lvalue.var)
-			 bindings)
-		    bindings
-		    body
-		    'let)
+	  (instantiate::Let
+	     (scope-vars (map (lambda (binding)
+				 (with-access::Set! binding (lvalue)
+				    (with-access::Ref lvalue (var)
+				       var)))
+			      bindings))
+	     (bindings bindings)
+	     (body body)
+	     (kind 'let))
 	  body)))
    
-(define-pmethod (Module-constants! ht)
-   (if (config 'encapsulate-modules)
-       (this.traverse1! #f)
-       (let ((ht (make-hashtable)))
-	  (this.traverse1! ht)
-	  (set! this.body (make-constants-let ht this.body))
-	  this)))
+(define-nmethod (Module.const! ht)
+   (with-access::Module this (body)
+      (if (config 'encapsulate-modules)
+	  (default-walk! this #f)
+	  (let ((ht (make-hashtable)))
+	     (default-walk! this ht)
+	     (set! body (make-constants-let ht body))
+	     this))))
 
-(define-pmethod (Lambda-constants! ht)
-   (if ht ;; either module or another lambda already created the ht)
-       (this.traverse1! ht)
-       (let* ((ht (make-hashtable)))
-	  (this.traverse1! ht)
-	  ;; body must be a Return. keep it that way.
-	  (set! this.body.val (make-constants-let ht this.body.val))
-	  this)))
+(define-nmethod (Lambda.const! ht)
+   (with-access::Lambda this (body)
+      (if ht ;; either module or another lambda already created the ht)
+	  (default-walk! this ht)
+	  (let ((ht (make-hashtable)))
+	     (default-walk! this ht)
+	     ;; Lambda-body must be Return.
+	     (with-access::Return body (val)
+		(set! val (make-constants-let ht val)))
+	     this))))
 
-(define-pmethod (Const-constants! constant-ht)
+(define-nmethod (Const.const! constant-ht)
    (define (long-enough-list? l)
       (let loop ((l l)
 		 (nb 0))
@@ -82,15 +80,17 @@
 		     (vector? (vector-ref v i)))
 		 #t)
 		(else (loop (+ i 1)))))))
-   (let ((value this.value))
+   (with-access::Const this (value)
       (if (or (and (pair? value)
 		   (long-enough-list? value))
 	      (and (vector? value)
 		   (long-enough-vector? value)))
 	  (let ((cached (hashtable-get constant-ht value)))
 	     (if cached
-		 (cached.var.reference)
-		 (let ((new-const (Decl-of-new-Var 'const)))
+		 (with-access::Ref cached (var)
+		    (var-reference var))
+		 (let ((new-const (Ref-of-new-Var 'const)))
 		    (hashtable-put! constant-ht value new-const)
-		    (new-const.var.reference))))
+		    (with-access::Ref new-const (var)
+		       (var-reference var)))))
 	  this)))

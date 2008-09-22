@@ -57,10 +57,15 @@
 
     (match-case x
        ((?- (?name . ?args) ?e0 . ?body)
-	(let* ((L (gensym 'L))
-	       (body-f (eval `(lambda (,L)
-				 (let ,(destructure args L '())
-				    ,e0 ,@body)))))
+	(letrec ((L (gensym 'L))
+		 (body-f (lambda (arg)
+			    ;; lazy eval.
+			    (let ((f (eval `(lambda (,L)
+					       (let ,(destructure args L '())
+						  ,e0 ,@body)))))
+			       ;; replace body-f
+			       (set! body-f f)
+			       (f arg)))))
 	   (hashtable-put!
 	    macros-ht
 	    name

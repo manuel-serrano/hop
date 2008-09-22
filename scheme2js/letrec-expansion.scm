@@ -1,14 +1,10 @@
 (module letrec-expansion
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   config
+   (import config
 	   nodes
-	   var
+	   walk
 	   verbose
 	   gen-js)
-   (export (letrec-expansion! tree::pobject)))
+   (export (letrec-expansion! tree::Module)))
 
 ;; According to the spec a (letrec ((x0 v0) (x1 v1) ...) body) is equivalent
 ;; to: (let ((x0 _undef) (x1 _undef) ...) (set! x0 v0) (set! x1 v1) ... body)
@@ -21,16 +17,9 @@
 ;; they can stay where they are. Obvious example:
 ;;  (letrec ((x0 (lambda (...) ... x3))
 ;;           (x1 3)
-;;           (x2 "...")
+;;           (x2 "some_string")
 ;;           (x3 (lambda (...) x0 x1 x2)))
 ;;      body)
-;; would become:
-;;  (let ((x0 _undef) (x1 _undef) (x2 _undef))
-;;     (set! x0 (lambda () ... x3))
-;;     (set! x1 3)
-;;     (set! x2 "...")
-;;     (set! x3 (lambda (...) x0 x1 x2))
-;;     body)
 ;;
 ;; Obviously the initial assignments can directly be replaced by the following
 ;; assignments. In this case the letrec only served as a way to mutually
@@ -52,40 +41,40 @@
 ;;
 ;; Let-recs are introduced by symbol-pass. This pass must hence happen after
 ;; the symbol-pass.
+
 (define (letrec-expansion! tree)
    (verbose "letrec-expansion")
-   (overload traverse expand! (Node
-			       Let)
-	     (tree.traverse)))
+   (letrec-expand tree #f)) ;; no environment.
 
-(define-pmethod (Node-expand!)
-   (this.traverse0))
+(define-nmethod (Node.letrec-expand)
+   (default-walk this))
 
 (define (letrec-constant? n)
-   (or (inherits-from? n (node 'Const))
-       (inherits-from? n (node 'Var-ref))
-       (inherits-from? n (node 'Lambda))))
+   (or (Const? n)
+       (Ref? n)
+       (Lambda? n)))
 
-(define-pmethod (Let-expand!)
-   (this.traverse0)
-   (when (eq? this.kind 'letrec)
-      (let loop ((bindings this.bindings)
-		 (body-assigs '()))
-	 (cond
-	    ((and (null? bindings)
-		  (null? body-assigs))
-	     'do-nothing)
-	    ((null? bindings)
-	     (set! this.body (new-node Begin
-				       (append! body-assigs
-						(list this.body)))))
-	    ((letrec-constant? (car bindings).val)
-	     (loop (cdr bindings)
-		   body-assigs))
-	    (else
-	     (let* ((binding (car bindings))
-		    (binding-val binding.val))
-		(set! binding.val (new-node Const #unspecified))
+(define-nmethod (Let.letrec-expand)
+   (default-walk this)
+   (with-access::Let this (kind body bindings)
+      (when (eq? kind 'letrec)
+	 (let loop ((bindings bindings)
+		    (body-assigs '()))
+	    (cond
+	       ((and (null? bindings)
+		     (null? body-assigs))
+		'do-nothing)
+	       ((null? bindings)
+		(set! body (instantiate::Begin
+			      (exprs (append! body-assigs
+					      (list body))))))
+	       ((letrec-constant? (Set!-val (car bindings)))
 		(loop (cdr bindings)
-		      (cons (binding.lvalue.var.assig binding-val)
-			    body-assigs))))))))
+		      body-assigs))
+	       (else
+		(with-access::Set! (car bindings) (lvalue val)
+		   (let ((old-val val))
+		      (set! val (instantiate::Const (value #unspecified)))
+		      (loop (cdr bindings)
+			    (cons (var-assig (Ref-var lvalue) old-val)
+				  body-assigs))))))))))

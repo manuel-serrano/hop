@@ -1,14 +1,23 @@
 (module loop-updates
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
+   (import config
+	   tools
 	   nodes
+	   walk
 	   var-ref-util
-	   var
-	   config
 	   verbose)
+   (static (wide-class Update-Var::Local
+	      new-val
+	      (referenced-vars (default #f))
+	      (rev-referenced-vars (default #f))
+	      (cyclic-var? (default #f))
+	      (active? (default #f))
+	      (visited? (default #f))
+	      (break-var (default #f))
+	      (pending? (default #f)))
+	   (class Shallow-Env
+	      escaping-vars)
+	   (class List-Box
+	      l::pair-nil))
    (export (loop-updates-free-order loop-vars::pair-nil assigs::pair-nil)))
 
 ;; assigs may appear in any order.
@@ -16,7 +25,8 @@
 (define (loop-updates-free-order loop-vars updates)
    ;; we will work on vars only.
    (for-each (lambda (var update)
-		(set! var.new-val update))
+		(widen!::Update-Var var
+		   (new-val update)))
 	     loop-vars
 	     updates)
    (dep-tree loop-vars)
@@ -34,106 +44,94 @@
 ;;           (f)))
 ;; In this case i, j and k depend on each other.
 ;;
-;; the tree is stored in hashtables directly in the vars:
-;;   - var.referenced-vars-ht
-;;   - and var.rev-referenced-vars-ht (the back-pointers)
+;; the tree is stored in lists directly in the vars:
+;;   - var.referenced-vars
+;;   - and var.rev-referenced-vars (the back-pointers)
 ;;
 ;; this procedure stops at function boundaries.
 (define (dep-tree vars)
-   (let ((vars-ht (make-eq-hashtable))
-	 (escaping-vars (filter (lambda (v)
-				   v.escapes?)
-				vars)))
+   (let* ((escaping-vars (filter Var-escapes? vars))
+	  (shallow-refs-env (make-Shallow-Env escaping-vars)))
+
       (for-each (lambda (var)
-		   (hashtable-put! vars-ht var #t))
+		   (with-access::Update-Var var (new-val referenced-vars)
+		      (let ((box (make-List-Box '())))
+			 (shallow-refs new-val shallow-refs-env var box)
+			 (set! referenced-vars (List-Box-l box)))))
 		vars)
-      
-      ;; traverse new values
-      (define (potential-uses use-vars self-var ht)
-	 (for-each (lambda (v)
-		      ;; don't count self.
-		      (if (and (not (eq? v self-var))
-			       (hashtable-contains? vars-ht v))
-			  (hashtable-put! ht v #t)))
-		   use-vars))
-      
-      (define-pmethod (Node-shallow-refs self-var ht)
-	 (this.traverse2 self-var ht))
-      (define-pmethod (Var-ref-shallow-refs self-var ht)
-	 (potential-uses (list this.var) self-var ht))
-      (define-pmethod (Call-shallow-refs self-var ht)
-	 (this.traverse2 self-var ht)
-	 (let* ((op this.operator)
-		(target (call-target op)))
-	    (cond
-	       ((not target)
-		(potential-uses escaping-vars self-var ht))
-	       ((higher-order-runtime-var-ref? target)
-		(potential-uses escaping-vars self-var ht))
-	       ((runtime-var-ref? target)
-		;; arguments are already taken care of.
-		'do-nothing)
-	       ((inherits-from? target (node 'Lambda))
-		(if target.free-vars?
-		    (potential-uses (hashtable-key-list target.free-vars-ht)
-				    self-var
-				    ht)))
-	       (else
-		(potential-uses escaping-vars self-var ht)))))
-      (define-pmethod (Lambda-shallow-refs self-var ht)
-	 'do-not-go-into-lambdas)
-      
-      (overload traverse shallow-refs (Node
-				       Var-ref
-				       Call
-				       Lambda)
-		(for-each (lambda (var)
-			     (let* ((value var.new-val)
-				    (referenced-vars-ht (make-eq-hashtable)))
-				(set! var.referenced-vars-ht referenced-vars-ht)
-				(value.traverse var referenced-vars-ht)))
-			  vars))
       ;; fill rev-pointers.
       (for-each (lambda (var)
-		   (set! var.rev-referenced-vars-ht (make-eq-hashtable)))
+		   (with-access::Update-Var var (rev-referenced-vars)
+		      (set! rev-referenced-vars '())))
 		vars)
       (for-each (lambda (var)
-		   (hashtable-for-each var.referenced-vars-ht
-				       (lambda (v ignored)
-					  (hashtable-put!
-					   v.rev-referenced-vars-ht
-					   var
-					   #t))))
+		   (with-access::Update-Var var (referenced-vars)
+		      (for-each
+		       (lambda (v)
+			  (with-access::Update-Var v (rev-referenced-vars)
+			     (unless (memq v rev-referenced-vars)
+				(cons-set! rev-referenced-vars var))))
+		       referenced-vars)))
 		vars)))
+
+;; traverse new values
+(define (potential-uses use-vars self-var b::List-Box)
+   (with-access::List-Box b (l)
+      (for-each (lambda (v)
+		   ;; don't count self.
+		   (when (and (not (eq? v self-var))
+			      (Update-Var? v)
+			      (not (memq v l)))
+		      (cons-set! l v)))
+	     use-vars)))
+      
+(define-nmethod (Node.shallow-refs self-var b::List-Box)
+   (default-walk this self-var b))
+(define-nmethod (Ref.shallow-refs self-var b::List-Box)
+   (with-access::Ref this (var)
+      (potential-uses (list var) self-var b)))
+(define-nmethod (Call.shallow-refs self-var b)
+   (default-walk this self-var b)
+   (with-access::Call this (operator)
+      (let ((target (call-target operator)))
+	 (cond
+	    ((not target)
+	     (potential-uses (Shallow-Env-escaping-vars env) self-var b))
+	    ((higher-order-runtime-var-ref? target)
+	     (potential-uses (Shallow-Env-escaping-vars env) self-var b))
+	    ((runtime-var-ref? target)
+	     ;; arguments are already taken care of.
+	     'do-nothing)
+	    ((Lambda? target)
+	     (with-access::Lambda target (free-vars)
+		(unless  (null? free-vars)
+		   (potential-uses free-vars self-var b))))
+	    (else
+	     (potential-uses (Shallow-Env-escaping-vars env) self-var b))))))
+(define-nmethod (Lambda.shallow-refs self-var ht)
+   'do-not-go-into-lambdas)
 
 ;; breaks dependency cycles, by marking cyclic vars, that should be
 ;; replaced by a tmp-var. (marked with 'var.cyclic-var?'
 (define (break-cycles vars)
    ;; TODO: replace this suboptimal algo (break-cycles)
    (define (break-cycle var)
-      (unless var.visited?
-	 (set! var.active? #t)
-	 (set! var.visited? #t)
-	 (hashtable-for-each var.referenced-vars-ht
-			     (lambda (v ignored)
-				(if v.active?
-				    (set! v.cyclic-var? #t)
-				    (break-cycle v))))
-	 (delete! var.active?)))
-   (for-each (lambda (var)
-		(break-cycle var))
-	     vars)
-   (for-each (lambda (var)
-		(delete! var.visited?))
-	     vars))
+      (with-access::Update-Var var (visited? active? referenced-vars)
+	 (unless visited?
+	    (set! active? #t)
+	    (set! visited? #t)
+	    (for-each (lambda (v)
+			 (with-access::Update-Var v
+			       (active? cyclic-var?)
+			    (if active?
+				(set! cyclic-var? #t)
+				(break-cycle v))))
+		      referenced-vars)
+	    (set! active? #f))))
+   (for-each break-cycle vars))
 
-(define (clean-var! var)
-   (delete! var.new-val)
-   (delete! var.referenced-vars-ht)
-   (delete! var.rev-referenced-vars-ht)
-   (delete! var.cyclic-var?)
-   (delete! var.break-var)
-   (delete! var.pending?))
+(define (clean-var! var::Update-Var)
+   (shrink! var))
 
 ;; creates break-var, and breaks cycle (decreasing rev-dep.
 ;; ex: var x should be broken:
@@ -144,23 +142,28 @@
 ;; variable. (except tmp-x, which is going to be treated at the very
 ;; beginning anyways).
 (define (break-var-decl cyclic-var)
-   (let ((new-var-decl (Decl-of-new-Var cyclic-var.id)))
-      ;; TODO decl must be in Let
-      (set! new-var-decl.var.new-val cyclic-var.new-val)
-      (set! cyclic-var.new-val (new-var-decl.var.reference))
-      ;; the cyclic-var is not cyclic anymore, and doesn't depend on
-      ;; any variables anymore. We therefore remove the cyclic-var
-      ;; from the revdeps of its "ex"-dependencies.
-      ;; We don't add these references to the break-vars, as these are
-      ;; going to be treated differently anyways, and are going to be
-      ;; assigned first. (As we know, that they don't have any revdeps.
-      (hashtable-for-each cyclic-var.referenced-vars-ht
-			  (lambda (v ignored)
-			     (hashtable-remove! v.rev-referenced-vars-ht
-						cyclic-var)))
-      ;; and we replace the deps by an empty hashtable.
-      (set! cyclic-var.referenced-vars-ht (make-eq-hashtable))
-      new-var-decl))
+   (with-access::Update-Var cyclic-var (id new-val referenced-vars)
+      (let ((new-var-decl (Ref-of-new-Var id)))
+	 ;; decls will be put into Lets later on.
+	 (with-access::Ref new-var-decl (var)
+	    (widen!::Update-Var var
+	       (new-val new-val))
+	    (set! new-val (var-reference var)))
+	 ;; the cyclic-var is not cyclic anymore, and doesn't depend on
+	 ;; any variables anymore. We therefore remove the cyclic-var
+	 ;; from the revdeps of its "ex"-dependencies.
+	 ;; We don't add these references to the break-vars, as these are
+	 ;; going to be treated differently anyways, and are going to be
+	 ;; assigned first. (As we know, that they don't have any revdeps.)
+	 (for-each (lambda (v)
+		      (with-access::Update-Var v (rev-referenced-vars)
+			 (set! rev-referenced-vars
+			       (remq! cyclic-var rev-referenced-vars))))
+		   referenced-vars)
+	  
+	 ;; and we replace the deps by an empty list.
+	 (set! referenced-vars '())
+	 new-var-decl)))
 
 
 ;; every var has its new-value and dependencies in it. Some variables are
@@ -174,35 +177,33 @@
    ;;  now we can start with assigning tmp-x (the cyclic tmp-vars)
    ;;  then with the "reverse independent" variable 't'. nobody depends
    ;;  on 't'.
-   (let* ((cyclic-vars (filter (lambda (var)
-				  var.cyclic-var?)
-			       vars))
+   (let* ((cyclic-vars (filter Update-Var-cyclic-var? vars))
 	  ;; break-var-decls are tmp-vars, that are inside a Let.
 	  (break-var-decls (map break-var-decl cyclic-vars))
-	  (let-vars (map (lambda (decl) decl.var) break-var-decls))
+	  (let-vars (map Ref-var break-var-decls))
 	  (let-bindings (map! (lambda (break-var-decl)
-				 (let* ((val break-var-decl.var.new-val))
-				    (clean-var! break-var-decl.var)
-				    (new-node Binding
-					      break-var-decl
-					      val)))
+				 (with-access::Ref break-var-decl (var)
+				    (with-access::Update-Var var (new-val)
+				       (begin0
+					(instantiate::Set!
+					   (lvalue break-var-decl)
+					   (val new-val))
+					(clean-var! var)))))
 			      break-var-decls))
 	  ;; now that we have introduced the break-vars we can search for
-	  ;; rev-independant variables. IE vars, that are not used by
+	  ;; rev-independant variables. i.e. vars, that are not used by
 	  ;; anyone else.
 	  (indeps (filter (lambda (var)
-			     (= (hashtable-size var.rev-referenced-vars-ht)
-				0))
+			     (with-access::Update-Var var (rev-referenced-vars)
+				(null? rev-referenced-vars)))
 			  vars)))
 
-      ;(verbose "cyclic-vars: " (map (lambda (var) var.id) cyclic-vars))
-      ;(verbose "indeps: " (map (lambda (var) var.id) indeps))
-      
       ;; the indeps will be our pending set.
 
       ;; mark all indeps vars as .pending?
       (for-each (lambda (var)
-		   (set! var.pending? #t))
+		   (with-access::Update-Var var (pending?)
+		      (set! pending? #t)))
 		indeps)
 
       ;; We then add the pending-vars one by one.
@@ -211,39 +212,45 @@
       (let loop ((pending indeps)
 		 (rev-assigs '()))
 	 (if (null? pending)
-	     (new-node Let
-		       let-vars
-		       let-bindings
-		       (new-node Begin
-				 (reverse! rev-assigs))
-		       'let)
-	     (let* ((var (car pending))
-		    (new-val var.new-val))
-		;; remove rev-deps.
-		(hashtable-for-each var.referenced-vars-ht
-				    (lambda (v ignored)
-				       (if v.rev-referenced-vars-ht
-					   ;; hasn't been cleaned yet
-					   (hashtable-remove!
-					    v.rev-referenced-vars-ht
-					    var))))
-		;; retain vars, without rev-dep that aren't yet pending?
-		(hashtable-filter! var.referenced-vars-ht
-				   (lambda (v ignored)
-				      (and (not v.pending?)
-					   ;; hasn't been cleaned yet
-					   v.rev-referenced-vars-ht
-					   (= (hashtable-size
-					       v.rev-referenced-vars-ht)
-					      0))))
-		;; mark them as pending?
-		(hashtable-for-each var.referenced-vars-ht
-				    (lambda (var ignored)
-				       (set! var.pending? #t)))
-		(let ((new-pending
-		       (append (hashtable-key-list var.referenced-vars-ht)
-			       (cdr pending))))
-		   (clean-var! var)
-		   (loop new-pending
-			 (cons (var.assig new-val)
-			       rev-assigs))))))))
+	     (instantiate::Let
+		(scope-vars let-vars)
+		(bindings let-bindings)
+		(body (instantiate::Begin
+			 (exprs (reverse! rev-assigs))))
+		(kind 'let))
+	     (let ((var (car pending)))
+		(with-access::Update-Var var (new-val referenced-vars)
+		   ;; remove rev-deps.
+		   (for-each
+		    (lambda (v)
+		       (when (Update-Var? v)
+			  ;; hasn't been cleaned yet
+			  (with-access::Update-Var v (rev-referenced-vars)
+			     (set! rev-referenced-vars
+				   (remq! var rev-referenced-vars)))))
+		    referenced-vars)
+		   ;; retain vars, without rev-dep, that aren't yet .pending?
+		   (set! referenced-vars
+			 (filter!
+			  (lambda (v)
+			     (with-access::Update-Var v (pending?
+							 rev-referenced-vars)
+				(and (not pending?)
+				     ;; hasn't been cleaned yet
+				     rev-referenced-vars
+				     (null? rev-referenced-vars))))
+			  referenced-vars))
+
+		   ;; mark them as .pending?
+		   (for-each (lambda (var)
+				(with-access::Update-Var var (pending?)
+				   (set! pending? #t)))
+			     referenced-vars)
+
+		   (let ((new-pending (append referenced-vars
+					      (cdr pending)))
+			 (new-val-tmp new-val)) ;; will be erased by clean-var!
+		      (clean-var! var)
+		      (loop new-pending
+			    (cons (var-assig var new-val-tmp)
+				  rev-assigs)))))))))

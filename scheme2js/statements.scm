@@ -1,301 +1,311 @@
 (module statements
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
+   (import nodes
+	   tools
+	   config
+	   walk
 	   mark-statements
-	   nodes
-	   var
+	   side
+	   push-set
 	   verbose)
-   (export (statements! tree::pobject)))
+   (static (wide-class Stmt-Label::Label
+	      state-var/return))
+   (export (statements! tree::Module)))
 
 ;; these pass happens after the scope-flattening pass. As a result there don't
 ;; exist any Let nodes anymore, and temporary variables can not be put into
 ;; Let-nodes. Any allocated var has to be added into the "declared-vars" list
 ;; of the surrounding fun/module.
 ;; Also they must not have any influence on call/cc.
-(define (statements! tree::pobject)
+(define (statements! tree)
    (verbose "statements")
+   (push-set!s/return! tree)
    (mark-statements tree)
-   (transform-statements! tree))
+   (side-effect tree)
+   (transform-statements! tree)
+   (push-set!s/return! tree)
+   )
 
-(define (transform-statements! tree::pobject)
+(define (transform-statements! tree::Module)
    (verbose "  transform-statements")
-   (overload traverse! transform-statements! (Node
-					      Module
-					      (Const Value-transform-statements!)
-					      (Var-ref Value-transform-statements!)
-					      Lambda
-					      (Frame-alloc Value-transform-statements!)
-					      Frame-push
-					      If
-					      Case
-					      Clause
-					      Set!
-					      Begin
-					      Call
-					      While
-					      Continue
-					      Return
-					      (Call/cc-Counter-Update Value-transform-statements!)
-					      (Call/cc-Resume Value-transform-statements!)
-					      Labelled
-					      Break
-					      (Pragma Value-transform-statements!))
-	     (tree.traverse! #f #f #t)))
+   (stmts! tree #f
+	   #f #f))
 
-(define-pclass (Return-Assig))
-(set! Return-Assig.proto.assig (pmethod (val) (new-node Return val)))
-
-(define (as-expression this surrounding-fun field)
-   (if (marked-node? (pfield this field))
-       (let* ((stmt-id field)
-	      (stmt-var-decl (Decl-of-new-Var stmt-id))
-	      (stmt-var stmt-var-decl.var)
-	      (new-stmt ((pfield this field).traverse!
-					    surrounding-fun stmt-var #t))
-	      (bnode (new-node Begin
-			       (list new-stmt this))))
-	  (cons-set! surrounding-fun.declared-vars stmt-var)
-	  (mark-node! bnode #t)
-	  (pfield-set! this field stmt-var-decl)
-	  bnode)
-       (begin
-	  (pfield-set! this field ((pfield this field).traverse!
-						      surrounding-fun #f #f))
-	  this)))
+(define (move-to-begin n walk! surrounding-fun stmt-begin
+		       #!optional (use-var? #t))
+   (if use-var?
+       (let* ((tmp (Ref-of-new-Var 'tmp))
+	      (tmp-var (Ref-var tmp)))
+	  (with-access::Begin stmt-begin (exprs)
+	     (cons-set! exprs
+			(walk! (var-assig tmp-var n)
+			       surrounding-fun
+			       #f))) ;; if is at stmt-level now.
+	  (with-access::Execution-Unit surrounding-fun (declared-vars)
+	     (cons-set! declared-vars tmp-var))
+	  tmp) ;; replace n with the tmp-var.
+       (with-access::Begin stmt-begin (exprs)
+	  (cons-set! exprs
+		     (walk! n surrounding-fun #f)) ;; n is at stmt-level now.
+	  (instantiate::Const (value #unspecified)))))
 
 
-(define-pmethod (Node-transform-statements! surrounding-fun
-					    state-var/return
-					    statement-form?)
-   (error "Node-transform-statements!"
+;; if state-var/return is not #f, then we need to assign any value to it
+;; if stmt-begin is not #f, then the construct must be converted to expression
+;; (by moving any stmt to stmt-begin).
+(define-nmethod (Node.stmts! surrounding-fun stmt-begin)
+   (error "Node-stmts!"
 	  "forgot Node-type: "
-	  (pobject-name this)))
+	  this))
 
-(define-pmethod (Module-transform-statements! surrounding-fun
-					      state-var/return
-					      statement-form?)
+(define-nmethod (Const.stmts! surrounding-fun stmt-begin)
+   this)
+
+(define-nmethod (Ref.stmts! surrounding-fun stmt-begin)
+   this)
+
+(define-nmethod (Module.stmts! surrounding-fun stmt-begin)
    ;; treat module like a lambda (for surrounding-fun).
-   (set! this.body (this.body.traverse! this #f statement-form?))
-   (mark-node! this statement-form?)
-   this)
+   (default-walk! this this #f))
 
-(define-pmethod (Value-transform-statements! surrounding-fun
-					     state-var/return
-					     statement-form?)
-   (let ((new-this (if state-var/return
-		       (state-var/return.assig this)
-		       this)))
-      (mark-node! new-this statement-form?)
-      new-this))
+(define-nmethod (Lambda.stmts! surrounding-fun stmt-begin)
+   ;; treat module like a lambda (for surrounding-fun).
+   (default-walk! this this #f))
 
-(define-pmethod (Lambda-transform-statements! surrounding-fun
-					      state-var/return
-					      statement-form?)
-   (set! this.body (this.body.traverse! this #f #t))
-   (pcall this Value-transform-statements!
-	  surrounding-fun state-var/return statement-form?))
-
-(define-pmethod (Frame-push-transform-statements! surrounding-fun
-						  state-var/return
-						  statement-form?)
-   (set! this.body (this.body.traverse! surrounding-fun
-					state-var/return
-					statement-form?))
-   (mark-node! this statement-form?)
-   this)
-
-(define-pmethod (If-transform-statements! surrounding-fun
-					  state-var/return
-					  statement-form?)
-   (let ((new-this (as-expression this surrounding-fun 'test)))
-      (set! this.then (this.then.traverse! surrounding-fun
-					   state-var/return
-					   statement-form?))
-      (set! this.else (this.else.traverse! surrounding-fun
-					   state-var/return
-					   statement-form?))
-      (mark-node! this statement-form?)
-      new-this))
-
-(define-pmethod (Case-transform-statements! surrounding-fun
-					    state-var/return
-					    statement-form?)
-   (let ((new-this (as-expression this surrounding-fun 'key)))
-      (let loop ((clauses this.clauses))
-	 (if (null? clauses)
-	     new-this
-	     (let ((new-clause ((car clauses).traverse!
-					     surrounding-fun
-					     state-var/return
-					     #t)))
-		(set-car! clauses new-clause)
-		(loop (cdr clauses)))))))
-
-(define-pmethod (Clause-transform-statements! surrounding-fun
-					      state-var/return
-					      statement-form?)
-   ;; the consts *must* be expressions.
-   ;; the following loop should hence not be necessary.
-   (let loop ((consts this.consts))
-      (unless (null? consts)
-	 (set-car! consts ((car consts).traverse! surrounding-fun #f #f))
-	 (loop (cdr consts))))
-   ;; statement-form? must be #t (as we are always in a 'case')
-   (set! this.expr (this.expr.traverse! surrounding-fun
-					state-var/return
-					statement-form?))
-   this)
-
-(define-pmethod (Set!-transform-statements! surrounding-fun
-					    state-var/return
-					    statement-form?)
-   (cond
-      ((marked-node? this)
-       (let* ((lvalue this.lvalue)
-	      (state-var/return-assig (and state-var/return
-				    (state-var/return.assig (new-node Const #unspecified))))
-	      (new-val (this.val.traverse! surrounding-fun lvalue.var #t))
-	      (bnode (new-node Begin
-			  `(,@(if (inherits-from? lvalue (node 'Decl))
-				  (list lvalue) ;; don't loose the Decl
-				  '())
-			    ,new-val
-			    ,@(if state-var/return-assig
-				  (list state-var/return-assig)
-				  '())))))
-	  (mark-node! lvalue #t) ;; is now a statement
-	  (and state-var/return-assig (mark-node! state-var/return-assig #t))
-	  (mark-node! new-val #t)
-	  (mark-node! bnode #t)
-	  bnode))
-      ;; result of assignment is unspecified. We don't need to set it to #unspecified...
-;       (state-var/return
-;        (set! this.val (this.val.traverse! #f #f))
-;        (let* ((unspec-assig (state-var/return.assig (new-node Const #unspecified)))
-; 	      (bnode (new-node Begin `(,this ,unspec-assig))))
-; 	  (mark-node! this statement-form?)
-; 	  (mark-node! unspec-assig statement-form?)
-; 	  (mark-node! bnode statement-form?)
-; 	  bnode))
-      (else
-       (set! this.val (this.val.traverse! surrounding-fun #f #f))
-       (mark-node! this statement-form?)
-       this)))
-
-(define-pmethod (Begin-transform-statements! surrounding-fun
-					     state-var/return
-					     statement-form?)
-   (let loop ((exprs this.exprs))
+(define-nmethod (If.stmts! surrounding-fun stmt-begin)
+   (with-access::Stmt-If this (test then else stmt-test? stmt-then? stmt-else?)
       (cond
-	 ((null? exprs) 'do-nothing)
-	 ((null? (cdr exprs))
-	  (set-car! exprs ((car exprs).traverse!
-				      surrounding-fun
-				      state-var/return
-				      statement-form?)))
+	 ((and (not stmt-begin)
+	       stmt-test?)
+	  (shrink! this)
+	  ;; test-statement needs to be moved out of test.
+	  (let ((bnode (instantiate::Begin (exprs (list this)))))
+	     (set! test (walk! test surrounding-fun bnode))
+	     (set! then (walk! then surrounding-fun #f))
+	     (set! else (walk! else surrounding-fun #f))
+	     bnode))
+	 ((and stmt-begin
+	       (or stmt-then? stmt-else?))
+	  (move-to-begin this walk! surrounding-fun stmt-begin))
+	 ((and stmt-begin
+	       stmt-test?)
+	  (shrink! this)
+	  ;; we can leave the if at the current location, but we have to move
+	  ;; the test to the surrounding stmt-begin.
+	  (let ((tmp (move-to-begin test walk! surrounding-fun stmt-begin)))
+	     (set! test tmp)
+	     ;; test, then and else are now
+	     ;; expressions. no need for the stmt-begin anymore.
+	     (default-walk! this surrounding-fun #f)))
 	 (else
-	  (set-car! exprs ((car exprs).traverse!
-				      surrounding-fun
-				      #f
-				      statement-form?)) ;state-var/return))
-	  (loop (cdr exprs)))))
-   (mark-node! this statement-form?)
+	  (shrink! this)
+	  (default-walk! this surrounding-fun stmt-begin)))))
+
+(define-nmethod (Case.stmts! surrounding-fun stmt-begin)
+   (with-access::Stmt-Case this (key clauses stmt-key?)
+      (cond
+	 ((and (not stmt-begin)
+	       stmt-key?)
+	  (shrink! this)
+	  ;; key-statement needs to be moved out of key.
+	  (let ((bnode (instantiate::Begin (exprs (list this)))))
+	     (set! key (walk! key surrounding-fun bnode))
+	     (set! clauses (map! (lambda (clause)
+				    (walk! clause surrounding-fun #f))
+				 clauses))
+	     bnode))
+	 (stmt-begin
+	  (move-to-begin this walk! surrounding-fun stmt-begin))
+	 (else
+	  (shrink! this)
+	  (default-walk! this surrounding-fun #f)))))
+
+(define-nmethod (Clause.stmts! surrounding-fun stmt-begin)
+   (default-walk! this surrounding-fun #f))
+
+(define-nmethod (Set!.stmts! surrounding-fun stmt-begin)
+   ;; value needs to be expression. but we can ignore this for now.
+   ;; another push-set!s/return will take care of this.
+   (default-walk! this surrounding-fun #f))
+
+;; Lets don't exist anymore in this pass.
+
+(define-nmethod (Begin.stmts! surrounding-fun stmt-begin)
+   (with-access::Stmt-Begin this (exprs stmt-exprs)
+      (cond
+	 ((null? exprs)
+	  (shrink! this)
+	  this)
+	 ((or (not stmt-exprs)
+	      (not stmt-begin))
+	  (shrink! this)
+	  (default-walk! this surrounding-fun #f))
+	 ((and (car stmt-exprs)
+	       (not (any? (lambda (x) x) (cdr stmt-exprs))))
+	  (shrink! this)
+	  ;; only the first expression is in stmt-form.
+	  ;; simply pass the stmt-begin to it.
+	  (default-walk! this surrounding-fun stmt-begin))
+	 (else ;; we have a stmt-begin, and at least one el in stmt-form.
+	  ;; find the last one.
+	  (let* ((last-p (let loop ((exprs exprs)
+				    (stmt-exprs stmt-exprs)
+				    (last-p #f))
+			    (cond
+			       ((null? exprs)
+				last-p) ;; there must be one.
+			       ((car stmt-exprs)
+				(loop (cdr exprs) (cdr stmt-exprs) exprs))
+			       (else
+				(loop (cdr exprs) (cdr stmt-exprs) last-p)))))
+		 (remaining (cdr last-p)))
+	     (if (null? remaining)
+		 (move-to-begin this walk! surrounding-fun stmt-begin)
+		 (let ((this-exprs exprs))
+		    (shrink! this)
+		    ;; cut the list
+		    (set-cdr! last-p '())
+		    ;; move the stmt-elements to the surrounding stmt-begin
+		    (move-to-begin (instantiate::Begin
+				      (exprs this-exprs))
+				   walk!
+				   surrounding-fun
+				   stmt-begin
+				   #f) ;; no need to retrieve result
+		    ;; update this begin.
+		    (set! exprs remaining)
+		    (default-walk! this surrounding-fun #f))))))))
+
+(define-nmethod (Call.stmts! surrounding-fun stmt-begin)
+   (with-access::Stmt-Call this (operator operands stmt-operator? stmt-operands)
+      (define (stmt-ops-count)
+	 (let loop ((ops (cons stmt-operator? (or stmt-operands '())))
+		    (count 0))
+	    (cond
+	       ((null? ops)
+		count)
+	       ((car ops)
+		(loop (cdr ops) (+ count 1)))
+	       (else
+		(loop (cdr ops) count)))))
+
+      (let ((stmt-count (stmt-ops-count)))
+	 (cond
+	    ((zero? stmt-count) ;; no el is in stmt-form.
+	     (shrink! this)
+	     (default-walk! this surrounding-fun stmt-begin))
+	    ((not stmt-begin)
+	     (let ((bnode (instantiate::Begin
+			     (exprs (list this)))))
+		(walk! this surrounding-fun bnode)
+		bnode))
+	    (else
+	     ;; we can't simply recurse, as this could yield undefined
+	     ;; order:
+	     ;; ((if s1 a b) (if s2 c d))
+	     ;; would yield
+	     ;; x=s1, y=s2, ((if x a b) (if y c d)), and we would have the first
+	     ;; 'if' mixed with second 'if' (in execution).
+	     ;;  for instance we could have the execution: s1, s2, a, c.
+	     ;; allow the first stmt-op to be partially moved. the remaining ones
+	     ;; are completely moved.
+	     ;;
+	     ;; we want the moved elements to be evaluated in order.
+	     ;; -> create some new begins...
+	     (let ((call-begin (instantiate::Begin (exprs '()))))
+		(with-access::Begin stmt-begin (exprs)
+		   (cons-set! exprs call-begin))
+		   
+		(define (move-stmt-walk n stmt-form? partial?)
+		   (cond
+		      ((and stmt-form? partial?)
+		       ;; we are allowed to partially move the stmt.
+		       ;; but it must be after all existing elements.
+		       (with-access::Begin call-begin (exprs)
+			  (if (null? exprs) ;; no elements yet
+			      (walk! n surrounding-fun call-begin)
+			      (let ((op-begin (instantiate::Begin (exprs '()))))
+				 (set! exprs (append! exprs (list op-begin)))
+				 (walk! n surrounding-fun op-begin)))))
+		      (stmt-form?
+		       ;; we must move the entire operand/operator
+		       ;; don't care if it is before or after other elements.
+		       (move-to-begin n walk! surrounding-fun stmt-begin))
+		      (else
+		       (walk! n surrounding-fun #f))))
+
+		(define (unaffected? n)
+		   (or (Const? n)
+		       (and (Ref? n)
+			    (with-access::Ref n (var)
+			       (with-access::Var var (constant?)
+				  constant?)))))
+
+		(set! operator (move-stmt-walk operator stmt-operator? #t))
+
+		(let loop ((ops operands)
+			   (stmts? stmt-operands)
+			   (partial? (unaffected? operator)))
+		   (if (null? ops)
+		       'done
+		       (begin
+			  (set-car! ops
+				    (move-stmt-walk (car ops) (car stmts?)
+						    partial?))
+			  (loop (cdr ops) (cdr stmts?)
+				(and partial? (unaffected? (car ops)))))))
+		       
+		(shrink! this)
+		this))))))
+
+(define-nmethod (Frame-alloc.stmts! surrounding-fun stmt-begin)
    this)
 
-(define-pmethod (Call-transform-statements! surrounding-fun
-					    state-var/return
-					    statement-form?)
-   (let ((prolog '())
-	 (tmp-vars '()))
-      (define (transform-optr/opnd expr)
-	 (if (marked-node? expr)
-	     (let* ((id 'optrOpnd)
-		    (optr/opnd-var-decl (Decl-of-new-Var id))
-		    (expr-state-var optr/opnd-var-decl.var)
-		    (new-expr (expr.traverse! surrounding-fun
-					      expr-state-var
-					      #t)))
-		(set! prolog (cons new-expr prolog))
-		(set! tmp-vars (cons expr-state-var tmp-vars))
-		(expr-state-var.reference))
-	     (expr.traverse! surrounding-fun #f #f)))
+(define-nmethod (Frame-push.stmts! surrounding-fun stmt-begin)
+   (if (not stmt-begin)
+       (default-walk! this surrounding-fun #f)
+       (move-to-begin this walk! surrounding-fun stmt-begin)))
 
-      (set! this.operator (transform-optr/opnd this.operator))
-      (let loop ((opnds this.operands))
-	 (unless (null? opnds)
-	    (set-car! opnds (transform-optr/opnd (car opnds)))
-	    (loop (cdr opnds))))
+(define-nmethod (Return.stmts! surrounding-fun stmt-begin)
+   (if stmt-begin
+       (move-to-begin this walk! surrounding-fun stmt-begin
+		      #f) ;; no need to get result.
+       (default-walk! this surrounding-fun #f)))
 
-      ;; remove potential mark (we might re-add the statement-form?
-      ;; mark again)
-      (mark-node! this #f)
+(define-nmethod (Labeled.stmts! surrounding-fun stmt-begin)
+   (if stmt-begin
+       (move-to-begin this walk! surrounding-fun stmt-begin)
+       (default-walk! this surrounding-fun #f)))
 
-      (let ((new-this (if state-var/return
-			  (state-var/return.assig this)
-			  this)))
-	 
-	 (if (not (null? prolog))
-	     (let ((bnode (new-node Begin
-				    (append! prolog (list new-this)))))
-		(set! surrounding-fun.declared-vars
-		      (append! tmp-vars surrounding-fun.declared-vars))
-		(mark-node! bnode #t)
-		(mark-node! new-this #t)
-		bnode)
-	     (begin
-		(mark-node! new-this statement-form?)
-		new-this)))))
+(define-nmethod (Break.stmts! surrounding-fun stmt-begin)
+   (if stmt-begin
+       (move-to-begin this walk! surrounding-fun stmt-begin
+		      #f) ;; no need to get result
+       (default-walk! this surrounding-fun #f)))
 
-(define-pmethod (While-transform-statements! surrounding-fun
-					     state-var/return
-					     statement-form?)
-   (if (marked-node? this.test)
-       (error "While-transform-statements!"
-	      "while-test must not be statement-form"
-	      #f))
-   
-   (set! this.test (this.test.traverse! surrounding-fun #f #f))
-   (set! this.body (this.body.traverse! surrounding-fun #f #t))
+(define-nmethod (Continue.stmts! surrounding-fun stmt-begin)
+   (if stmt-begin
+       (move-to-begin this walk! surrounding-fun stmt-begin
+		      #f) ;; no need to get result
+       this))
+
+(define-nmethod (Pragma.stmts! surrounding-fun stmt-begin)
    this)
 
-(define-pmethod (Continue-transform-statements! surrounding-fun
-						state-var/return
-						statement-form?)
-   this)
+;; Tail-rec and Tail-rec-Call do not exist anymore.
 
-(define-pmethod (Return-transform-statements! surrounding-fun state-var/return statement-form?)
-   (if (marked-node? this.val)
-       ;; The class Return-Assig is declared in this file.
-       (this.val.traverse! surrounding-fun (new Return-Assig) #t)
-       (begin
-	  (set! this.val (this.val.traverse! surrounding-fun #f #f))
-	  this)))
-
-(define-pmethod (Labelled-transform-statements! surrounding-fun
-						state-var/return
-						statement-form?)
-   (set! this.state-var/return state-var/return)
-   ;; inform Breaks of state-var/return through the label.
-   (set! this.label.state-var/return state-var/return)
-   (set! this.body (this.body.traverse! surrounding-fun state-var/return #t))
-   (delete! this.label.state-var/return)
-   this)
-
-(define-pmethod (Break-transform-statements! surrounding-fun
-					     state-var/return
-					     statement-form?)
-   (let ((labelled-state-var/return this.label.state-var/return))
-      (if (inherits-from? labelled-state-var/return Return-Assig)
-	  (this.val.traverse! surrounding-fun labelled-state-var/return #t)
-	  (let ((traversed-val (this.val.traverse! surrounding-fun
-						   labelled-state-var/return
-						   #t)))
-	     ;; from now on the Break does not have any 'val' anymore.
-	     (set! this.val #f)
-	     (let ((bnode (new-node Begin
-				    (list traversed-val this))))
-		(mark-statement-form! bnode #t)
-		bnode)))))
+(define-nmethod (While.stmts! surrounding-fun stmt-begin)
+   (with-access::While this (init test body)
+      ;; by construction test cannot be in statement-form.
+      (if stmt-begin
+	  (move-to-begin this walk! surrounding-fun stmt-begin)
+	  (default-walk! this surrounding-fun #f))))
+      
+;; TODO: what about Call/cc-Call ?
+;(define-nmethod (Call/cc-Resume.stmts! surrounding-fun state-var/return
+;				       statement-form?)
+;   (Value-stmts! this state-var/return statement-form?))
+;
+;(define-nmethod (Call/cc-Counter-Update.stmts! surrounding-fun
+;					       state-var/return
+;					       statement-form?)
+;   (Value-stmts! this state-var/return statement-form?))

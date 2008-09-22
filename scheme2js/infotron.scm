@@ -1,5 +1,4 @@
 (module infotron
-   (option (loadq "protobject-eval.sch"))
    (import verbose
 	   module-system
 	   mutable-strings
@@ -42,7 +41,7 @@
    (config-set! 'export-globals #f)
    
    (let* ((a-list (filter pair? header))
-	  (uuid (make-uuid a-list (Module-name module)))
+	  (uuid (make-uuid a-list (Module-header-name module)))
 	  (config-name (let ((entry (assq 'config-name a-list)))
 			  (if entry (cadr entry) *default-config-name*)))
 	  (iterms (extract-entries a-list 'iterms))
@@ -51,10 +50,10 @@
 	  (BLUEPRINT (gensym 'BLUEPRINT))
 	  (Object (gensym 'Object))
 
-	  (imports (Module-imports module))
-	  (exports (Module-exports module))
-	  (macros (Module-macros module)))
-      (verbose "Infotran " (Module-name module) " has uuid " uuid) 
+	  (imports (Module-header-imports module))
+	  (exports (Module-header-exports module))
+	  (macros (Module-header-macros module)))
+      (verbose "Infotran " (Module-header-name module) " has uuid " uuid) 
       (unless (string? uuid)
 	 (error "infotron" "uuid must be given (as string)" uuid))
       (unless (symbol? config-name)
@@ -63,22 +62,22 @@
 	 (error "infotron" "infotrons must not export variables" exports))
       (unless (null? macros)
 	 (error "infotron" "infotrons must not export macros" macros))
-      (let ((tl (infotron-preexpand (Module-top-level module)
+      (let ((tl (infotron-preexpand (Module-header-top-level module)
 				    BLUEPRINT
 				    Object
-				    (Module-name module)
+				    (Module-header-name module)
 				    uuid
 				    config-name
 				    iterms
 				    oterms
 				    properties))
-	    (imps (append (Module-imports module)
+	    (imps (append (Module-header-imports module)
 			  `((,BLUEPRINT (JS "BLUEPRINT")
 					(constant? #t))
 			    (,Object (JS "Object")
 				     (constant? #t))))))
-      (Module-top-level-set! module tl)
-      (Module-imports-set! module imps)
+      (Module-header-top-level-set! module tl)
+      (Module-header-imports-set! module imps)
       module)))
 
 (define (symbol->jsstring s)

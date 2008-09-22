@@ -1,39 +1,38 @@
 (module rm-unused-vars
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   nodes
-	   var
+   (import nodes
+	   tools
+	   walk
 	   use-count
 	   verbose)
-   (export (rm-unused-vars! tree::pobject)))
+   (static (wide-class Rm-Var::Local))
+   (export (rm-unused-vars! tree::Module)))
 
 ;; Variables with use-count 0 are not used, and can be removed.
 ;; Attention: external variables are excempted from this rule.
 (define (rm-unused-vars! tree)
    (verbose " removing unused vars")
    (use-count tree)
-   (overload traverse! rm! (Node
-			    Set!
-			    Let)
-	     (tree.traverse!)))
+   (rm! tree #f))
 
+(define-nmethod (Node.rm!)
+   (default-walk! this))
 
-(define-pmethod (Node-rm!)
-   (this.traverse0!))
+(define-nmethod (Set!.rm!)
+   (with-access::Set! this (lvalue val)
+      (with-access::Ref lvalue (var)
+	 (if (Rm-Var? var)
+	     (walk! val)
+	     (default-walk! this)))))
 
-(define-pmethod (Set!-rm!)
-   (if this.lvalue.var.remove?
-       (this.val.traverse!)
-       (this.traverse0!)))
-
-(define-pmethod (Let-rm!)
-   (set! this.scope-vars (filter! (lambda (var)
-				     (if (zero? var.uses)
-					 (begin (set! var.remove? #t)
-						#f)
-					 #t))
-				  this.scope-vars))
-   (this.traverse0!))
+(define-nmethod (Let.rm!)
+   (with-access::Let this (scope-vars)
+      (set! scope-vars
+	    (filter! (lambda (var)
+			(with-access::Var var (uses)
+			   (if (zero? uses)
+			       (begin
+				  (widen!::Rm-Var var)
+				  #f)
+			       #t)))
+		     scope-vars))
+      (default-walk! this)))
