@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sun Sep 21 09:14:11 2008 (serrano)                */
+;*    Last change :  Mon Sep 22 11:09:32 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -64,6 +64,17 @@
 (define *verb-mutex* (make-mutex 'hop-verb))
 
 ;*---------------------------------------------------------------------*/
+;*    tune-socket! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (tune-socket! sock)
+   (cond-expand
+      ((or bigloo3.1a bigloo3.1b)
+       #unspecified)
+      (else
+       (unless (socket-option-set! sock :TCP_CORK #t)
+	  (socket-option-set! sock :TCP_NODELAY #t)))))
+   
+;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (scheduler-accept-loop scd::scheduler serv::socket)
@@ -72,6 +83,9 @@
 	 (let ((sock (socket-accept serv :inbuf dummy-buf :outbuf dummy-buf)))
 	    (hop-verb 2 (hop-color id id " ACCEPT")
 		      ": " (socket-hostname sock) " [" (current-date) "]\n")
+	    ;; tune the socket
+	    (tune-socket! sock)
+	    ;; process the request
 	    (spawn4 scd stage-request id sock 'connect (hop-read-timeout))
 	    (loop (+fx id 1))))))
 
@@ -94,6 +108,9 @@
 		      (hop-verb 2 (hop-color id id " ACCEPT")
 				": " (socket-hostname sock)
 				" [" (current-date) "]\n")
+		      ;; tune the socket
+		      (tune-socket! sock)
+		      ;; process the request
 		      (spawn4 scd stage-request (+fx id i)
 			      sock
 			      'connect (hop-read-timeout))
@@ -138,6 +155,9 @@
 	       (hop-verb 2 (hop-color id id " ACCEPT")
 			 (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 			 ": " (socket-hostname sock) " [" (current-date) "]\n")
+	       ;; tune the socket
+	       (tune-socket! sock)
+	       ;; process the request
 	       (stage4 scd thread
 		       stage-request id sock
 		       'connect (hop-read-timeout))
@@ -165,6 +185,9 @@
 			    (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
 			    ": " (socket-hostname sock) " [" (current-date)
 			    "]\n")
+		  ;; tune the socket
+		  (tune-socket! sock)
+		  ;; process the request
 		  (spawn4 scd stage-request id sock 'connect (hop-read-timeout))
 		  (loop (+fx id 1))))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep  1 09:35:22 2008 (serrano)                */
+;*    Last change :  Mon Sep 22 10:58:25 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -151,6 +151,13 @@
 	       (newline)))
 	 (exit 1))
       (let ((serv (hop-server-socket)))
+	 ;; tune the server socket
+	 (cond-expand
+	    ((or bigloo3.1a bigloo3.1b)
+	     #unspecified)
+	    (else
+	     (unless (socket-option-set! serv :TCP_CORK #t)
+		(socket-option-set! serv :TCP_NODELAY #t))))
 	 ;; start the job (background taks, a la cron) scheduler
 	 (when (>fx (hop-max-threads) 1)
 	    (job-start-scheduler!))
