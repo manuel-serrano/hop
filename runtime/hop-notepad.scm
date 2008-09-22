@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Apr 16 14:16:19 2008 (serrano)                */
+;*    Last change :  Wed May 21 11:48:11 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -107,6 +107,7 @@
 	    (set! attributes (cons (cons "lang" "delay") attributes)))
 	 (<DIV> :class "hop-notepad-tab-body"
 	    :style (if (=fx i 0) "display: block" "display: none")
+	    :id (string-append id "-notepad-tab-body")
 	    (cond
 	       ((=fx i 0)
 		(nptab-get-body tab))
@@ -137,7 +138,7 @@
 	     (when onchange
 		(<SCRIPT> :class "hop-notepad-init"
 		   (format "document.getElementById('~a').onchange = ~a"
-			   id (obj->thunk onchange))))
+			   id (hop->js-callback onchange))))
 	     attrs)))
    
 ;*---------------------------------------------------------------------*/
@@ -195,18 +196,6 @@
 	 (body body))))
    
 ;*---------------------------------------------------------------------*/
-;*    obj->thunk ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (obj->thunk obj)
-   (cond
-      ((xml-tilde? obj)
-       (format "function( event ) { ~a }" (xml-tilde-body obj)))
-      ((string? obj)
-       (format "function( event ) { ~a }" obj))
-      (else
-       "false")))
-
-;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-nptab-element p backend)
@@ -221,7 +210,7 @@
 	 (display "document.getElementById( '" p)
 	 (display id p)
 	 (display "' ).onselect = " p)
-	 (display (obj->thunk onselect) p)
+	 (display (hop->js-callback onselect) p)
 	 (display "</script>" p))
       (xml-write head p backend)
       (display "</span>" p)))

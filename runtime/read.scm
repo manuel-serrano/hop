@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Dec 26 10:58:20 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Wed Aug 20 16:38:05 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -16,8 +16,7 @@
 (module __hop_read
 
    (cond-expand
-      (enable-threads (library pthread))
-      (else (import __hop_thread)))
+      (enable-threads (library pthread)))
 
    (import  __hop_param
 	    __hop_read-js
@@ -29,6 +28,8 @@
    (export  (loading-file-set! ::obj)
 	    (the-loading-file)
 	    (the-loading-dir)
+	    (with-loading-file ::obj ::procedure)
+	    (with-input-from-loading-file ::obj ::procedure)
 	    
 	    (hop-load-afile ::bstring)
 	    
@@ -167,23 +168,39 @@
 	   (reverse-improper-list! l)))
       (else
        (reverse-proper-list! l)))) 
-	   
+
 ;*---------------------------------------------------------------------*/
-;*    collect-up-to ...                                                */
+;*    collect-upto ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (collect-up-to ignore kind port)
-   ;; move one character backward for the open-parenthesis
-   (let* ((name (input-port-name port))
-	  (po (-fx (input-port-position port) 1))
-	  (item (ignore)))
-      (if (eq? item *end-of-list*)
-	  '()
-	  (let loop ((acc (econs item '() (list 'at name po))))
-	     (let ((item (ignore)))
-		(if (eq? item *end-of-list*)
-		    acc
-		    (loop (let ((po (input-port-last-token-position port)))
-			     (econs item acc (list 'at name po))))))))))
+(define (collect-upto ignore kind port)
+   
+   (define (collect-upto.debug ignore kind port)
+      ;; move one character backward for the open-parenthesis
+      (let* ((name (input-port-name port))
+	     (po (-fx (input-port-position port) 1))
+	     (item (ignore)))
+	 (if (eq? item *end-of-list*)
+	     '()
+	     (let loop ((acc (econs item '() (list 'at name po))))
+		(let ((item (ignore)))
+		   (if (eq? item *end-of-list*)
+		       acc
+		       (loop (let ((po (input-port-last-token-position port)))
+				(econs item acc (list 'at name po))))))))))
+   
+   (define (collect-upto.optim ignore kind port)
+      (let ((item (ignore)))
+	 (if (eq? item *end-of-list*)
+	     '()
+	     (let loop ((acc (cons item '())))
+		(let ((item (ignore)))
+		   (if (eq? item *end-of-list*)
+		       acc
+		       (loop (cons item acc))))))))
+   
+   (if (>fx (bigloo-debug) 0)
+       (collect-upto.debug ignore kind port)
+       (collect-upto.optim ignore kind port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-quote ...                                                   */
@@ -453,7 +470,7 @@
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
        ;; and then, we compute the result list...
-       (make-list! (collect-up-to ignore "list" (the-port)) (the-port)))
+       (make-list! (collect-upto ignore "list" (the-port)) (the-port)))
       (")"
        ;; we decrement the number of open parenthesis
        (set! par-open (-fx par-open 1))
@@ -479,7 +496,7 @@
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
        (list->vector
-	(reverse! (collect-up-to ignore "vector" (the-port)))))
+	(reverse! (collect-upto ignore "vector" (the-port)))))
 
       ;; typed vectors
       ((: "#" letterid "(")
@@ -490,37 +507,37 @@
 	  (cond
 	     ((string=? s "s8")
 	      (list->s8vector
-	       (reverse! (collect-up-to ignore "s8vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s8vector" (the-port)))))
 	     ((string=? s "u8")
 	      (list->u8vector
-	       (reverse! (collect-up-to ignore "u8vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u8vector" (the-port)))))
 	     ((string=? s "s16")
 	      (list->s16vector
-	       (reverse! (collect-up-to ignore "s16vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s16vector" (the-port)))))
 	     ((string=? s "u16")
 	      (list->u16vector
-	       (reverse! (collect-up-to ignore "u16vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u16vector" (the-port)))))
 	     ((string=? s "s32")
 	      (list->s32vector
-	       (reverse! (collect-up-to ignore "s32vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s32vector" (the-port)))))
 	     ((string=? s "u32")
 	      (list->u32vector
-	       (reverse! (collect-up-to ignore "u32vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u32vector" (the-port)))))
 	     ((string=? s "s64")
 	      (list->s64vector
-	       (reverse! (collect-up-to ignore "s64vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s64vector" (the-port)))))
 	     ((string=? s "u64")
 	      (list->u64vector
-	       (reverse! (collect-up-to ignore "u64vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u64vector" (the-port)))))
 	     ((string=? s "f32")
 	      (list->f32vector
-	       (reverse! (collect-up-to ignore "f32vector" (the-port)))))
+	       (reverse! (collect-upto ignore "f32vector" (the-port)))))
 	     ((string=? s "f64")
 	      (list->f64vector
-	       (reverse! (collect-up-to ignore "f64vector" (the-port)))))
+	       (reverse! (collect-upto ignore "f64vector" (the-port)))))
 	     (else
 	      (let* ((id (string->symbol s))
-		     (l (reverse! (collect-up-to ignore "vector" (the-port)))))
+		     (l (reverse! (collect-upto ignore "vector" (the-port)))))
 		 (list->tvector id l))))))
       
       ;; javascript (this reads up to the closing bracket).
@@ -542,7 +559,7 @@
        (set! bra-open (+fx 1 bra-open))
        (set! bra-poses (cons (-fx (input-port-position (the-port)) 1)
 			     bra-poses))
-       (let ((l (reverse! (collect-up-to ignore "structure" (the-port)))))
+       (let ((l (reverse! (collect-upto ignore "structure" (the-port)))))
 	  (cons '_structure_ l)))
       ("}"
        (set! bra-open (-fx bra-open 1))
@@ -728,6 +745,26 @@
    (let ((path (the-loading-file)))
       (and (string? path) (dirname path))))
 
+;*---------------------------------------------------------------------*/
+;*    with-loading-file ...                                            */
+;*---------------------------------------------------------------------*/
+(define (with-loading-file file proc)
+   (let ((old (the-loading-file)))
+      (loading-file-set! file)
+      (unwind-protect
+	 (proc)
+	 (loading-file-set! old))))
+      
+;*---------------------------------------------------------------------*/
+;*    with-input-from-loading-file ...                                 */
+;*---------------------------------------------------------------------*/
+(define (with-input-from-loading-file file proc)
+   (let ((old (the-loading-file)))
+      (loading-file-set! file)
+      (unwind-protect
+	 (with-input-from-file file proc)
+	 (loading-file-set! old))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    *afile-dirs* ...                                                 */
 ;*---------------------------------------------------------------------*/

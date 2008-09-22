@@ -1,0 +1,37 @@
+;; An example of music playback with Hop
+(module musicplay
+   (library multimedia))
+
+(define-service (musicplay backend directory)
+   ;; create a music player
+   (let ((player (case backend
+		    ((mpg123)
+		     (if command
+			 (instantiate::mpg123
+			    (path command))
+			 (instantiate::mpg123)))
+		    ((mplayer)
+		     (if command
+			 (instantiate::mplayer
+			    (path command))
+			 (instantiate::mplayer)))
+		    ((mpc)
+		     (instantiate::mpc)))))
+      ;; fill the music play list
+      (for-each (lambda (p) (music-playlist-add! player p))
+		(directory->path-list directory))
+      ;; start playing
+      (music-play player)
+      ;; run an event loop with call-backs associated to some events
+      (music-event-loop
+       player
+       :onstate (lambda (status)
+		   (with-access::musicstatus status (state song volume)
+		      (print "state   : " state)
+		      (print "song    : " song)))
+       :onmeta (lambda (meta playlist)
+		  (print "meta    : " meta)
+		  (print "playlist: ")
+		  (for-each (lambda (s) (print "        " s)) playlist))
+       :onvolume (lambda (volume)
+		    (print "volume  : " volume)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Apr  7 10:38:51 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 19:37:59 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -17,7 +17,8 @@
    (include "param.sch")
 
    (import  __hop_configure
-	    __hop_mime)
+	    __hop_mime
+	    __hop_charset)
 
    (export  (hop-uptime::date)
 	    
@@ -31,8 +32,9 @@
 	    (hop-load-preferences-set! ::bool)
 	    (hop-store-preferences::bool)
 	    (hop-store-preferences-set! ::bool)
-	    
-	    (hop-verbose::int)
+
+	    %%*hop-verbose*
+	    (inline hop-verbose::int)
 	    (hop-verbose-set! ::int)
 	    
 	    (hop-session::int)
@@ -57,6 +59,12 @@
 	    (hop-log::int)
 	    (hop-log-set! ::int)
 
+	    (hop-max-file-size-cache::elong)
+	    (hop-max-file-size-cache-set! ::elong)
+
+	    (hop-max-file-entry-cache::int)
+	    (hop-max-file-entry-cache-set! ::int)
+	    
 	    (hop-restore-disk-cache::bool)
 	    (hop-restore-disk-cache-set! ::bool)
 	    
@@ -133,6 +141,9 @@
 	    (hop-charset::symbol)
 	    (hop-charset-set! ::symbol)
 	    
+	    (hop-charset->locale::procedure)
+	    (hop-locale->charset::procedure)
+
 	    (hop-locale::symbol)
 	    (hop-locale-set! ::symbol)
 
@@ -171,6 +182,9 @@
 	    (hop-remote-keep-alive-timeout::int) 
 	    (hop-remote-keep-alive-timeout-set! ::int)
 
+	    (hop-keep-alive-threshold::int)
+	    (hop-keep-alive-threshold-set! ::int)
+
 	    (hop-max-remote-keep-alive-connection::int)
 	    (hop-max-remote-keep-alive-connection-set! ::int)
 
@@ -192,6 +206,9 @@
 	    (hop-path-access-control::procedure)
 	    (hop-path-access-control-set! ::procedure)
 
+	    (hop-force-content-length::bool)
+	    (hop-force-content-length-set! ::bool)
+	    
 	    (hop-service-access-control::procedure)
 	    (hop-service-access-control-set! ::procedure)
 
@@ -209,6 +226,9 @@
 
 	    (hop-dashboard-weblet-applets::pair-nil)
 	    (hop-dashboard-weblet-applets-set! ::pair-nil)
+
+	    (hop-dashboard-weblet-disabled-applets::pair-nil)
+	    (hop-dashboard-weblet-disabled-applets-set! ::pair-nil)
 
 	    (hop-event-buffer-size::int)
 	    (hop-event-buffer-size-set! ::int)
@@ -278,9 +298,14 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-verbose ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    HOP-VERBOSE is used everywhere so it's performance matters.      */
+;*    For that reason it is implemented as an inline function and      */
+;*    the global register *HOP-VERBOSE* is exported.                   */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-verbose
-   0)
+(define %%*hop-verbose* 0)
+(define-inline (hop-verbose) %%*hop-verbose*)
+(define (hop-verbose-set! v) (set! %%*hop-verbose* v))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-session ...                                                  */
@@ -358,7 +383,19 @@
 ;*    hop-restore-disk-cache ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-restore-disk-cache
-   #t)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-max-file-size-cache ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-file-size-cache
+   #e16384)
+
+;*---------------------------------------------------------------------*/
+;*    hop-max-file-entry-cache ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-file-entry-cache
+   16)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-request-error ...                                       */
@@ -571,13 +608,13 @@
 ;*    hop-scm-compile-suffix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-scm-compile-suffix
-   "?scm")
+   "scm")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-hss-compile-suffix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-hss-compile-suffix
-   "?hss")
+   "hss")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-client-script-suffixes ...                                   */
@@ -665,9 +702,13 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-json-mime-type ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Opera8 only accepts application/x-javascript. It encodes all     */
+;*    the other mimetypes that are then unusable with with-hop.        */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-json-mime-type
-   "application/json")
+   ;;"application/json"
+   "application/x-javascript")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-bigloo-mime-type ...                                         */
@@ -708,6 +749,15 @@
    ".hopaccess")
 
 ;*---------------------------------------------------------------------*/
+;*    hop-charset->locale ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-charset->locale
+   (lambda (x) x))
+
+(define-parameter hop-locale->charset
+   (lambda (x) x))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-charset ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    This parameter specifies the charset used by HOP for             */
@@ -721,6 +771,9 @@
 (define-parameter hop-charset
    'UTF-8
    (lambda (v)
+      (when (and (symbol? v) (symbol? *hop-locale*))
+	 (hop-locale->charset-set! (charset-converter v (hop-locale)))
+	 (hop-charset->locale-set! (charset-converter (hop-locale) v)))
       (case v
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((UCS-2 ucs-2) 'UCS-2)
@@ -742,6 +795,9 @@
 (define-parameter hop-locale
    'ISO-8859-1
    (lambda (v)
+      (when (and (symbol? v) (symbol? (hop-charset)))
+	 (hop-locale->charset-set! (charset-converter v (hop-charset)))
+	 (hop-charset->locale-set! (charset-converter (hop-charset) v)))
       (case v
 	 ((UTF-8 utf-8) 'UTF-8)
 	 ((UCS-2 ucs-2) 'UCS-2)
@@ -785,11 +841,11 @@
 
 (define-parameter hop-connection-timeout
    ;; a number of milli-seconds before a connection fails
-   10000)
+   20000)
 
 (define-parameter hop-read-timeout
    ;; the number of milli-seconds to wait for parsing http headers
-   30000)
+   60000)
 
 (define-parameter hop-enable-keep-alive
    ;; does hop support keep-alive connection
@@ -820,13 +876,17 @@
    ;; the number of milli-seconds to keep alive remote connections
    30)
 
+(define-parameter hop-keep-alive-threshold
+   ;; the max number of connections above which keep-alive are closed
+   256)
+   
 (define-parameter hop-max-remote-keep-alive-connection
    ;; the max number of keep-alive remote (proxing) connections
    8
    (lambda (v)
       (if (<fx v 4)
 	  (error 'hop-max-remote-keep-alive-connection-set!
-		 "value should be greater or equal to 10"
+		 "value should be greater or equal to 4"
 		 v)
 	  v)))
 
@@ -906,6 +966,12 @@
 	  v))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-force-content-length ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-force-content-length
+   #f)
+
+;*---------------------------------------------------------------------*/
 ;*    hop-service-access-control ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    This parameter enables user customization of path access         */
@@ -960,6 +1026,14 @@
 ;*    hop-dashboard-weblet-applets ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-dashboard-weblet-applets
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    hop-dashboard-weblet-disabled-applets ...                        */
+;*    -------------------------------------------------------------    */
+;*    A list of dashboard applets that are disabled.                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-dashboard-weblet-disabled-applets
    '())
 
 ;*---------------------------------------------------------------------*/

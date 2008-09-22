@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-paned.js                      */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-paned.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Mon Aug  6 10:49:56 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Mon Jun 23 13:12:30 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
 /*=====================================================================*/
@@ -35,9 +35,13 @@ function hop_vpaned_fraction_set( paned, fraction ) {
       }
 
       frac = fraction;
-      
+
       if( w > 0 ) {
-	 node_style_set( paned.td1, "width", Math.round(w*(frac/100)) + "px" );
+	 var lw = Math.round(w*(frac/100));
+	 node_style_set( paned.td1, "width", lw + "px" );
+	 node_style_set( paned.td2, "width", (w - lw) + "px" );
+	 // firefox 3 workaround
+	 node_style_set( paned.td2.childNodes[ 0 ], "width", (w - lw) + "px" );
       } else {
 	 paned.td1.width = frac + "%";
       }
@@ -113,6 +117,10 @@ function hop_hpaned_fraction_set( paned, fraction ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export paned-fraction-set!)) */
 function hop_paned_fraction_set( paned, fraction ) {
+   if( (paned instanceof String) || (typeof paned == "string") ) {
+      paned = document.getElementById( paned );
+   }
+   
    if( paned.className == "hop-vpaned" )
       hop_vpaned_fraction_set( paned, fraction );
    else 

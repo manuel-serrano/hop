@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Apr 18 09:08:29 2008 (serrano)                */
+/*    Last change :  Wed Sep 10 08:22:49 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -14,6 +14,34 @@
 /*---------------------------------------------------------------------*/
 var hop_client_debug = 0;
 
+/*---------------------------------------------------------------------*/
+/*    hop_error ...                                                    */
+/*---------------------------------------------------------------------*/
+function hop_error( fun, exc, msg, svc ) {
+   var emsg = exc ? exc.toString() : "???";
+
+   if( exc ) {
+      if( "message" in exc ) {
+	 emsg = exc.message;
+      } else {
+	 if( "description" in exc ) {
+	    emsg = exc.description;
+	 }
+      }
+      
+      if( "line" in exc ) {
+	 emsg = emsg + " (line " + exc.line + ")";
+      }
+   }
+
+   if( typeof svc === "string" || svc instanceof String )
+      fun = fun + ", " + svc;
+   
+   alert( "*** ERROR " + fun + ": " + emsg + " -- " + msg );
+   
+   throw exc;
+}
+   
 /*---------------------------------------------------------------------*/
 /*    hop_debug ...                                                    */
 /*---------------------------------------------------------------------*/
@@ -231,6 +259,23 @@ function hop_window_onload_add( proc ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_window_onload_cons ...                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export add-window-onload-first!)) */
+function hop_window_onload_cons( proc ) {
+   var oldonload = window.onload;
+
+   if( typeof oldonload != 'function' ) {
+      window.onload = proc;
+   } else {
+      window.onload = function( e ) {
+	 proc( e );
+	 oldonload( e );
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_window_onunload_add ...                                      */
 /*---------------------------------------------------------------------*/
 /*** META ((export add-window-onunload!)) */
@@ -336,4 +381,103 @@ function url_decode( s ) {
 /*    url-encode ...                                                   */
 /*---------------------------------------------------------------------*/
 /*** META ((export url-encode)) */
-var url_encode;
+function url_encode( s ) {
+   return encodeURI( s );
+}
+
+/*---------------------------------------------------------------------*/
+/*    string-hex-extern ...                                            */
+/*---------------------------------------------------------------------*/
+/*** META ((export string-hex-extern)) */
+function string_hex_extern( str ) {
+  var res = "";
+  var l = str.length;
+
+  for( var i = 0; i < l; i++ ) {
+    res += "0123456789abcdef".charAt( (str.charCodeAt( i ) >> 4) & 15 )
+         + "0123456789abcdef".charAt( (str.charCodeAt( i ) & 15) );
+  }
+  
+  return res;
+}
+
+/*---------------------------------------------------------------------*/
+/*    string-hex-intern ...                                            */
+/*---------------------------------------------------------------------*/
+/*** META ((export string-hex-intern)) */
+function string_hex_intern( s ) {
+   var res = "";
+   var l = s.length;
+   var z = '0'.charCodeAt( 0 );
+   var n = '9'.charCodeAt( 0 );
+   var a = 'a'.charCodeAt( 0 );
+   var f = 'f'.charCodeAt( 0 );
+   var A = 'A'.charCodeAt( 0 );
+   
+   function hex_to_num( c ) {
+      if( (c >= z) && ( c<= n) ) {
+	 return c - z;
+      }
+      if( (c >= a) && ( c<= f) ) {
+	 return (c - a) + 10;;
+      }
+      return (c - A) + 10;
+   }
+      
+   for( var i = 0; i < l; i += 2 ) {
+      var d1 = hex_to_num( s.charCodeAt( i ) );
+      var d2 = hex_to_num( s.charCodeAt( i + 1 ) );
+
+      res += String.fromCharCode( (d1 << 4) + d2 );
+   }
+
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
+/*    date-year ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
+function date_year( d ) {
+   return d.getYear();
+}
+
+/*---------------------------------------------------------------------*/
+/*    date-month ...                                                   */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
+function date_month( d ) {
+   return d.getMonth();
+}
+
+/*---------------------------------------------------------------------*/
+/*    date-day ...                                                     */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
+function date_day( d ) {
+   return d.getDay();
+}
+
+/*---------------------------------------------------------------------*/
+/*    date-hour ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
+function date_hour( d ) {
+   return d.getHours();
+}
+
+/*---------------------------------------------------------------------*/
+/*    date-minute ...                                                  */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
+function date_minute( d ) {
+   return d.getMinutes();
+}   
+
+/*---------------------------------------------------------------------*/
+/*    date-second ...                                                  */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
+function date_second( d ) {
+   return d.getSeconds();
+}   

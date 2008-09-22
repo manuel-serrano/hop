@@ -3,16 +3,49 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Jan 22 09:24:59 2008 (serrano)                */
+#*    Last change :  Fri Jun 27 15:33:51 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
-#*    build                                                            */
+#*    CONFIG ...                                                       */
 #*---------------------------------------------------------------------*/
-build: .afile
+TITLE = hz
+VERSION = 1.1.1
+MINHOP = $(HOPRELEASE) 
+MAXHOP =
+CATEGORY = hop
+DATE = $(HOPDATE)
+
+#*---------------------------------------------------------------------*/
+#*    POPULATION                                                       */
+#*---------------------------------------------------------------------*/
+HOP_POP		= hz.hop config.hop install.hop sync.hop \
+                  install.hop sync.hop db.hop \
+                  markup.hop package.hop weblet.hop
+
+POPULATION	= $(HOP_POP) \
+                  hz.hss \
+                  Makefile \
+                  etc/icons .afile etc/weblet.info.in \
+                  etc/logo.png etc/favicon.png \
+                  etc/hz.wiki.in \
+                  etc/hz-install.png etc/hz-run.png hz-install.js
+
+#*---------------------------------------------------------------------*/
+#*    Targets                                                          */
+#*---------------------------------------------------------------------*/
+build: etc/weblet.info etc/$(TITLE).wiki .afile
+
+.afile: $(HOP_POP)
+	$(AFILE) -suffix hop $(POPULATION) -o .afile
+
+clean:
+
+distclean:
+	$(RM) etc/weblet.info etc/$(TITLE).wiki
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
@@ -20,17 +53,28 @@ build: .afile
 include ../../etc/Makefile.hopconfig
 include ../../etc/Makefile.version
 
-SOURCES		= config.hop hz.hop \
-		  db.hop hz.hss install.hop sync.hop \
-                  markup.hop package.hop weblet.hop \
-                  authenticate.hop
+#*---------------------------------------------------------------------*/
+#*    Dependencies                                                     */
+#*---------------------------------------------------------------------*/
+etc/weblet.info: etc/weblet.info.in Makefile
+	cat $< | sed -e "s|@HZ@|$(HZ)|" \
+                     -e "s|@TITLE@|$(TITLE)|" \
+                     -e "s|@VERSION@|$(VERSION)|" \
+                     -e "s|@MINHOP@|$(MINHOP)|" \
+                     -e "s|@MAXHOP@|$(MAXHOP)|" \
+                     -e "s|@PUBLISHER@|$(PUBLISHER)|" \
+                     -e "s|@DATE@|$(DATE)|" \
+                     -e "s|@PRIVATEHOST@|$(PRIVATEHOST)|" \
+                     -e "s|@PUBLICHOST@|$(PUBLICKHOST)|" \
+                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@
 
-POPULATION	= $(SOURCES) \
-                  Makefile \
-                  etc/icons .afile etc/weblet.info \
-                  etc/logo.png etc/favicon.png \
-                  etc/hz.wiki \
-                  etc/hz-install.png etc/hz-run.png hz-install.js
-
-.afile: $(SOURCES)
-	$(AFILE) -suffix hop $(SOURCES) -o .afile
+%.wiki: %.wiki.in Makefile
+	cat $< | sed -e "s|@VERSION@|$(VERSION)|" \
+                     -e "s|@MINHOP@|$(MINHOP)|" \
+                     -e "s|@HZ@|$(HZ)|" \
+                     -e "s|@MAXHOP@|$(MAXHOP)|" \
+                     -e "s|@HOST@|$(PRIVATEHOST)|" \
+                     -e "s|@DATE@|$(DATE)|" \
+                     -e "s|@PUBLISHER@|$(PUBLISHER)|" \
+                     -e "s|@TITLE@|$(TITLE)|" \
+                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@

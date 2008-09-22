@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Mon Apr 14 10:13:48 2008 (serrano)                */
+;*    Last change :  Fri Aug 29 10:36:46 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -161,6 +161,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    <FILECHOOSER> ...                                                */
+;*    -------------------------------------------------------------    */
+;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <FILECHOOSER> ((id #unspecified string)
 				    (class #unspecified string)
@@ -172,23 +174,28 @@
 				    (oncancel #f)
 				    (onrun #f)
 				    body)
-   :hss-type "div.filechooser"
    (let ((id (xml-make-id id 'filechooser))
 	 (regexp (if (null? filters) ".*" (cadar filters))))
-      (<DIV> :class "filechooser" :id id
+      (<DIV> :id id
+	 :class (if (string? class)
+		    (string-append "filechooser " class)
+		    "filechooser")
 	 :onkeydown (format "hop_filechooser_key( this, ~s )" id)
-	 (when onselect
-	    (<SCRIPT> (format "document.getElementById( ~s ).select = ~a"
-			      id (obj->proc onselect))))
-	 (when onopen
-	    (<SCRIPT> (format "document.getElementById( ~s ).open = ~a"
-			      id (obj->proc onopen))))
-	 (when oncancel
-	    (<SCRIPT> (format "document.getElementById( ~s ).cancel = ~a"
-			      id (obj->proc oncancel))))
-	 (when onrun
-	    (<SCRIPT> (format "document.getElementById( ~s ).run = ~a"
-			      id (obj->proc onrun))))
+	 (<SCRIPT>
+	    (format "hop_window_onload_add( function( e ) { var el = document.getElementById( ~s ); ~a; ~a; ~a; ~a; } )"
+		    id
+		    (if onselect
+			(format "el.select = ~a" (obj->proc onselect))
+			"false")
+		    (if onopen
+			(format "el.open = ~a" (obj->proc onopen))
+			"false")
+		    (if oncancel
+			(format "el.cancel = ~a" (obj->proc oncancel))
+			"false")
+		    (if onrun
+			(format "el.run = ~a" (obj->proc onrun))
+			"false")))
 	 (<IMG> :class "filechooser-drag"
 	    :id (string-append id "-drag")
 	    :src (url-icon-path "drag.png"))
@@ -342,7 +349,6 @@
 ;*    URL is not encoded for http.                                     */
 ;*---------------------------------------------------------------------*/
 (define (<FILECHOOSER:FILES> id url regexp hidden)
-
    (let ((odd #t)
 	 (now (current-seconds)))
       
@@ -429,13 +435,11 @@
 	       (<INPUT> :type 'checkbox
 		  :id (string-append id "-hidden")
 		  :selected (not hidden)
-		  :onchange (format "hop_filechooser_filter( ~s, ~s )"
-				 id url))
+		  :onchange (format "hop_filechooser_filter( ~s, ~s )" id url))
 	       "Show Hidden Files")
 	    (<SELECT> :class "filechooser-filters"
 	       :id (string-append id "-filters")
-	       :onchange (format "hop_filechooser_filter( ~s, ~s )"
-				 id url)
+	       :onchange (format "hop_filechooser_filter( ~s, ~s )" id url)
 	       (map (lambda (o)
 		       (<OPTION> :value (cadr o)
 			  :selected (string=? (cadr o) regexp)
@@ -449,11 +453,12 @@
    (<DIV> :class "filechooser-okcancel"
       (<BUTTON> :class "filechooser-button-cancel"
 	 :onclick (format "hop_filechooser_cancel( event, ~s )" id)
-	 "Cancel")
+	 (<SPAN> :class "filechooser-button-cancel" " "))
       (<BUTTON> :class "filechooser-button-open"
 	 :onclick (format "hop_filechooser_ok( event, ~s )" id)
-	 "Open")
+	 (<SPAN> :class "filechooser-button-open" " "))
       (<BUTTON> :class "filechooser-button-run"
 	 :onclick (format "hop_filechooser_run( event, ~s )" id)
-	 "Run")))
+	 (<SPAN> :class "filechooser-button-run" " "))))
+
 

@@ -50,6 +50,7 @@ times in an invocation. A typical ++<HEAD>++ looks like:
 | :base        |  URI       |     _        | The base URI for the document.        |
 | :include     |  string    |     _        | A system resource.                    |
 | :dir         |  string    |     _        | a directory name added to the path.   |
+| :path        |  string    |     _        | a directory name added to the include path.   |
 | :css         |  string    |     _        | a CSS/HSS file name.                  |
 | :jscript     |  string    |     _        | a script file name.                   |
 | :favicon     |  string    |     _        | a favicon file name.                  |
@@ -72,7 +73,8 @@ overrides the previous ones).
   * The attribute :include adds a Hop resource. A Hop resource might optionally
  be composed of a script file and a CSS/HSS file. The :include attributes force
  Hop to scan its installation directory in order to find the file associated with
- a resource. The :include attribute is a shorthand for a list of :css and :jscript
+ a resource **plus** the directories specified in the ++:path++ argument. 
+ The :include attribute is a shorthand for a list of :css and :jscript
  attributes. For instance ++:include "hop-notepad"++ is actually equivalent to
  ++:css (make-file-name (hop-share-directory) "hop-notepad.css")++
  ++:jscript (make-file-name (hop-share-directory) "hop-notepad.js")++. See also

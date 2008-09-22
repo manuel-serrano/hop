@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Tue Feb 26 05:50:53 2008 (serrano)                */
+;*    Last change :  Tue Aug 19 14:52:21 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -58,20 +58,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-base64 ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (inline-base64 src)
-   (let ((p (open-input-file src)))
-      (when (input-port? p)
-	 (unwind-protect
-	    (format "data:~a;base64,~a"
-		    (mime-type src (format "image/~a" (suffix src)))
-		    (base64-encode (read-string p) -1))
-	    (close-input-port p)))))
+(define (inline-base64 src content)
+   (format "data:~a;base64,~a"
+	   (mime-type src (format "image/~a" (suffix src)))
+	   (base64-encode content -1)))
 		       
 ;*---------------------------------------------------------------------*/
 ;*    img-base64-encode ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (img-base64-encode src)
-   (or (inline-base64 src) src))
+   (let ((p (open-input-file src)))
+      (if (input-port? p)
+	  (unwind-protect
+	     (inline-base64 src (read-string p))
+	     (close-input-port p))
+	  src)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-memory-inline-image ...                                    */
@@ -82,7 +83,7 @@
 	(let ((cache (cache-get img-memory-cache path)))
 	   (if (string? cache)
 	       cache
-	       (let ((img (inline-base64 path)))
+	       (let ((img (img-base64-encode path)))
 		  (cache-put! img-memory-cache path img)
 		  img)))))
 
@@ -93,7 +94,7 @@
    (let ((cache (cache-get img-disk-cache path)))
       (if (string? cache)
 	  (with-input-from-file cache read-string)
-	  (let ((img (inline-base64 path)))
+	  (let ((img (img-base64-encode path)))
 	     (cache-put! img-disk-cache path img)
 	     img))))
 
@@ -138,33 +139,39 @@
 	    (else
 	     (cons `(onerror . ,val) attributes)))))
    
-   (define (inline-img src cssrc)
-      (let ((isrc (inline-image src)))
-	 (if isrc
-	     (instantiate::xml-empty-element
-		(markup 'img)
-		(id (xml-make-id id 'img))
-		(attributes (cons* `(src . ,isrc)
-				   `(alt . ,(or alt (basename src)))
-				   (onerror-img attributes src)))
-		(body '()))
-	     (plain-img src cssrc))))
+   (define (inline-img src cssrc isrc)
+      (if isrc
+	  (instantiate::xml-empty-element
+	     (markup 'img)
+	     (id (xml-make-id id 'img))
+	     (attributes (cons* `(src . ,isrc)
+				`(alt . ,(or alt (basename src)))
+				(onerror-img attributes src)))
+	     (body '()))
+	  (plain-img src cssrc)))
    
    (cond
       ((xml-tilde? src)
        (instantiate::xml-empty-element
 	  (markup 'img)
 	  (id (xml-make-id id 'img))
-	  (attributes (cons* `(alt . ,alt) attributes))
+	  (attributes (cons `(alt . ,(or alt (basename src))) attributes))
 	  (initializations (list (cons 'src src)))
 	  (body '())))
       ((string? src)
        (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))
-	  (if (not inline)
-	      (plain-img src cssrc)
+	  (cond
+	     ((and (pair? body) (string? (car body)) (null? (cdr body)))
 	      (let ((req (current-request)))
 		 (if (or (not req) (authorized-path? (current-request) src))
-		     (inline-img src cssrc)
-		     (plain-img src cssrc))))))
+		     (inline-img src cssrc (inline-base64 src (car body)))
+		     (plain-img src cssrc))))
+	     (inline
+	      (let ((req (current-request)))
+		 (if (or (not req) (authorized-path? (current-request) src))
+		     (inline-img src cssrc (inline-image src))
+		     (plain-img src cssrc))))
+	     (else
+	      (plain-img src cssrc)))))
       (else
        (error '<IMG> "Illegal image src" src))))

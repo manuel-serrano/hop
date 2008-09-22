@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-dashboard.js                  */
+/*    serrano/prgm/project/hop/1.9.x/share/hop-dashboard.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Wed Oct  3 07:52:07 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Fri Jun 20 11:18:17 2008 (serrano)                */
+/*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
 /*=====================================================================*/
@@ -18,37 +18,31 @@ var hop_dashboard_anim_speed = 10;
 var hop_dashboard = false;
 var hop_dashboard_icon_size = 32;
 var hop_dashboard_interval = false;
+var hop_dashboard_opacity = "0.75";
 
 /*---------------------------------------------------------------------*/
 /*    hop_dashboard_start_applet ...                                   */
 /*---------------------------------------------------------------------*/
 function hop_dashboard_start_applet( name, svc ) {
-   var id = "hop_dashboard_" + name;
-   var ifr = document.createElement( "iframe" );
-   ifr.src = svc;
-   ifr.onload = function () {
-      var win = document.getElementById( id );
-      var w = hop_iframe_scroll_width( ifr );
-      var h = hop_iframe_scroll_height( ifr );
-
-      node_style_set( ifr, "width", w + "px" );
-      node_style_set( ifr, "height", h + "px" );
-      node_style_set( ifr, "border", "0" );
-
-      hop_window_resize( win, w, h );
+   function success( obj, xhr ) {
+      if( hop_is_html_element( obj ) ) {
+	 document.body.appendChild( obj );
+	 return true;
+      }
+      
+      if( (obj instanceof String) || (typeof obj === "string") ) {
+	 return alert( obj );
+      }
    }
-   
-   node_style_set( ifr, "background", "white" );
-   node_style_set( ifr, "overflow", "hidden" );
-   
-   hop_window_open( sc_jsstring2keyword( "id" ), id,
-		    sc_jsstring2keyword( "src" ), ifr,
-		    sc_jsstring2keyword( "background" ), "white",
-		    sc_jsstring2keyword( "title" ), name,
-		    sc_jsstring2keyword( "class" ), "hop_dashboard_applet",
-		    sc_jsstring2keyword( "left" ), 10,
-		    sc_jsstring2keyword( "top" ), 10,
-		    sc_jsstring2keyword( "parent" ), document.body );
+
+   function failure( obj, xhr ) {
+      window.open( sc_dirname( svc ), name );
+   }
+
+   if( (svc.indexOf( "http://" ) === 0) || (svc.indexOf( "https://" ) === 0) )
+      window.open( svc, name );
+   else
+      with_hop( svc, success, failure );
 }
 
 /*---------------------------------------------------------------------*/
@@ -62,7 +56,7 @@ function hop_dashboard_populate( div, proc ) {
       
       while( h !== null ) {
 	 var p = h.car;
-	 var app = document.createElement( "app" );
+	 var app = document.createElement( "span" );
 	 var img = document.createElement( "img" );
 		   
 	 img.src = p.cdr.car
@@ -204,25 +198,26 @@ function hop_dashboard_button_init() {
    node_style_set( but, "width", "18px" );
    node_style_set( but, "height", "18px" );
    node_style_set( but, "-moz-border-radius", "2px" );
-   node_style_set( but, "-moz-opacity", "0.7" );
-   node_style_set( but, "opacity", "0.7" );
+   node_style_set( but, "-moz-opacity", hop_dashboard_opacity );
+   node_style_set( but, "opacity", hop_dashboard_opacity );
 
    var icon = document.createElement( "img" );
+   
    but.onmouseover = function() {
       node_style_set( but, "-moz-opacity", "1" )
       node_style_set( but, "opacity", "1" )
    };
    but.onmouseout = function() {
-      node_style_set( but, "-moz-opacity", "0.7" )
-      node_style_set( but, "opacity", "0.7" )
+      node_style_set( but, "-moz-opacity", hop_dashboard_opacity )
+      node_style_set( but, "opacity", hop_dashboard_opacity )
    };
    but.onclick = hop_toggle_dashboard;
    icon.title = "Toggle Hop Dashboard";
 
-   if( hop_msiep() ) {
-      icon.src = hop_share_directory() + "/icons/dashboard.png";
-   } else {
+   if( hop_config.inline_image ) {
       icon.src = hop_dashboard_icon;
+   } else {
+      icon.src = hop_share_directory() + "/icons/dashboard.png";
    }
    
    but.appendChild( icon );
@@ -252,10 +247,19 @@ function hop_dashboard_control_panel_init() {
    node_style_set( div, "border-right-style", "solid" );
    node_style_set( div, "border-right-color", "#333" );
    node_style_set( div, "border-bottom-width", "0" );
-   node_style_set( div, "-moz-opacity", "0.9" );
-   node_style_set( div, "opacity", "0.9" );
+   node_style_set( div, "-moz-opacity", hop_dashboard_opacity );
+   node_style_set( div, "opacity", hop_dashboard_opacity );
 
    hop_dashboard_populate( div, function( div ) { hop_dashboard = div } );
+   
+   div.onmouseover = function() {
+      node_style_set( div, "-moz-opacity", "1" )
+      node_style_set( div, "opacity", "1" )
+   };
+   div.onmouseout = function() {
+      node_style_set( div, "-moz-opacity", hop_dashboard_opacity )
+      node_style_set( div, "opacity", hop_dashboard_opacity )
+   };
    
    document.body.appendChild( div );
 }

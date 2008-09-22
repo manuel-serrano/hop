@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/configure                         */
+#*    serrano/prgm/project/hop/1.10.x/configure                        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Apr 18 11:33:57 2008 (serrano)                */
+#*    Last change :  Mon Sep 22 15:29:00 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -25,18 +25,20 @@ flashcc=mtasc
 fflags="-main -version 9 -cp std8 -swf"
 backend=native
 unzip=unzip
-gzip=gzip
+gzip="gzip -9"
 jar="jar cfm"
 
 debug=no
 
 bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
 
+bcflagsdev=""
 bcflagsdbg="-copt -g"
 bcflagsdbg2="-g -O2 -cg"
-bcflagsbmem="-g2 -O2"
+bcflagspmem="-pmem -O2 -fno-user-inlining"
+bcflagspmem2="-pmem2 -O2 -fno-user-inlining"
 bcflagsopt="-unsafe -O3"
-bcflagsprofile="-pg -L \$(BUILDLIBDIR)"
+bcflagsprofile="-O3 -pg -L \$(BUILDLIBDIR)"
 
 bcflagsrts="-unsafe -safee"
 bscm2jsflags="-unsafe"
@@ -45,13 +47,14 @@ blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR)"
 
 mimetypes=/etc/mime.types
 jsmimetype="text/javascript"
+cssmimetype="text/css"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="1.9.0"
-branch=1.9.x
-devel=pre
+version="1.10.0"
+branch=1.10.x
+devel=
 
 date=`date +"%d %B %Y"`
 
@@ -68,12 +71,12 @@ buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 buildbindir=$PWD/bin
 
-bigloorequired=3.1a
+bigloorequired=3.2a
 bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
 
-if [ $USER = "serrano" ]; then
+if [ "$USER " = "serrano " ]; then
   distribdir=$HOME/prgm/distrib
 else
   distribdir=.
@@ -84,8 +87,15 @@ ssl="no"
 locevent="true"
 threads=""
 
-hopjs='"hop.js"'
+rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js"
+
 hopservicebase="/hop"
+hopjs='"hop.js"'
+hopjsfiles='"hop-autoconf.js" "runtime.js"'
+ 
+for p in $rts; do
+  hopjsfiles="$hopjsfiles \"$p\""; 
+done
 
 # Argument parsing
 while : ; do
@@ -128,6 +138,9 @@ while : ; do
     --jsmimetype=*)
       jsmimetype="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --cssmimetype=*)
+      cssmimetype="`echo $1 | sed 's/^[^=]*=//'`";;
+
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
 
@@ -161,11 +174,15 @@ while : ; do
     --brflags=*)
       brflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
+    --bcflagsdev=*)
+      bcflagsdev="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
     --ccflags=*)
       ccflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
     --devel)
       bcflagsrts=;
+      bcflagsdev=-cg;
       bscm2jsflags=;;
 
     --debug)
@@ -180,14 +197,16 @@ while : ; do
       bscm2jsflags=;
       bcflags="$bcflags $bcflagsdbg2";;
 
-    --bmem)
-      bcflags="$bcflags $bcflagsbmem";;
+    --pmem)
+      bcflags="$bcflags $bcflagspmem";;
+
+    --pmem2)
+      bcflags="$bcflags $bcflagspmem2";;
 
     --optimize)
       bcflags="$bcflags $bcflagsopt";;
 
     --profile)
-      bcflagsrts=;
       bscm2jsflags=;
       bcflags="$bcflagsprofile";;
 
@@ -225,22 +244,25 @@ while : ; do
       echo "   --contribsdir=dir..... alternative Hop contribs directory" >&2;
       echo "   --mimetypes=file...... default mime.types file" >&2;
       echo "   --jsmimetype=type..... default 'text/javascript'" >&2;
+      echo "   --cssmimetype=type.... default 'text/css'" >&2;
       echo "   --bigloo=comp......... The Bigloo compiler" >&2;
       echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
       echo "   --cigloo=comp......... The Cigloo compiler" >&2;
       echo "   --afile=afile......... The Bigloo afile tool" >&2;
       echo "   --btags=btags......... The Bigloo btags tool" >&2;
       echo "   --bdepend=bdepend..... The Bigloo dependence tool" >&2;
+      echo "   --gzip................ The GNU zipper" >&2;
       echo "   --cc=cc............... The C compiler" >&2;
       echo "   --bcflags=args........ The compilation options" >&2;
+      echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
       echo "   --blflags=args........ The link options" >&2;
       echo "   --bhflags=args........ The heap options" >&2;
       echo "   --brflags=args........ The heap options" >&2;
       echo "   --ccflags=args........ The heap options" >&2;
       echo "   --devel............... Enables devel mode (safe but not debug)" >&2;
       echo "   --debug[2]............ Enables Bigloo debug mode" >&2;
-      echo "   --bmem................ Enables Bigloo bmem mode" >&2;
-      echo "   --gzip................ The GNU zipper" >&2;
+      echo "   --pmem[2]............. Enables memory profiling mode" >&2;
+      echo "   --profile............. Enables Bigloo profiling mode" >&2;
       echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
       echo "   --enable-ssl.......... Enables SSL support" >&2;
       echo "   --disable-ssl......... Disables SSL support (default)" >&2;
@@ -483,6 +505,7 @@ cat $mkmf.in \
           -e "s|@JVMZIPLIBS@|$jvmziplibs|" \
           -e "s|@JVMINITS@|$jvminits|" \
           -e "s|@CCFLAGS@|$ccflags|" \
+          -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
           -e "s|@BUILDLIBDIR@|$PWD/lib|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \
           -e "s|@BUILDBINDIR@|$PWD/bin|" \
@@ -499,6 +522,7 @@ cat $mkmf.in \
           -e "s|@HOPDISTRIBDIR@|$distribdir|" \
           -e "s|@BIGLOOSSLLIB@|$bigloossllib|" \
           -e "s|@BIGLOOPTHLIB@|$bigloopthlib|" \
+          -e "s|@RTSCONFIG@|$rts|" \
     >> $mkmf
 
 # runtime/configure.scm
@@ -518,7 +542,9 @@ cat etc/configure.scm.in \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
           -e "s|@JSMIMETYPE@|$jsmimetype|" \
+          -e "s|@CSSMIMETYPE@|$cssmimetype|" \
           -e "s|@HOPJS@|$hopjs|" \
+          -e "s|@HOPJSFILES@|$hopjsfiles|" \
           -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
     >> $configure
 
@@ -549,7 +575,8 @@ cat etc/hop.init.in \
     >> $init
 echo "" >> $init
 
-echo "(cond-expand ((not hop)" >> $init
+echo "(cond-expand ((not hop-eval)" >> $init
+echo "(register-eval-srfi! 'hop-eval)" >> $init
 cat runtime/xml-expd.sch >> $init
 echo "" >> $init
 cat runtime/param-expd.sch >> $init
@@ -610,7 +637,10 @@ rm -f $init 2> /dev/null
 echo "/* Automatically generated file (don't edit) */" > $init
 
 cat etc/hop-autoconf.js.in \
-    | sed -e "s|@BINDIR@|$bindir|" \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BACKEND@|$backend|" \
+          -e "s|@URL@|$url|" \
+          -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -625,10 +655,12 @@ chmod a-w $init
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */
 #*---------------------------------------------------------------------*/
+. .hoprelease
+
 echo "** Configuration summary **"
 echo 
 echo "Release:"
-echo "  hop release number.................... $version $devel"
+echo "  hop release number.................... $version $state$minor"
 echo "  bigloo................................ $bigloo ($bglversion)"
 echo "  backend............................... $backend"
 echo "  bigloo compilation flags.............. $bcflags"
@@ -645,5 +677,6 @@ echo
 echo "Internals:"
 echo "  mime types............................ $mimetypes"
 echo "  default JavaScript mime type.......... $jsmimetype"
+echo "  default CSS mime type................. $cssmimetype"
 echo "  multi threading....................... $threads"
 echo "  https support......................... $ssl"

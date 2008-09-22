@@ -3,13 +3,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 06:41:38 2008                          */
-;*    Last change :  Wed Feb 27 07:46:38 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 07:54:21 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    One to one scheduler                                             */
 ;*    -------------------------------------------------------------    */
 ;*    The characteristics of this scheduler are:                       */
-;*      - each request is handled by a new single thread.              */
+;*      - each accept is handled by a new single thread.               */
 ;*      - on heavy load the new request waits for an old request to    */
 ;*        complete.                                                    */
 ;*    This is the simplest and most naive multi-threaded scheduler.    */
@@ -29,7 +29,7 @@
    (import  hop_scheduler
 	    hop_param)
 
-   (export  (class one-to-one-scheduler::scheduler
+   (export  (class one-to-one-scheduler::row-scheduler
 	       (mutex::mutex read-only (default (make-mutex)))
 	       (condv::condvar read-only (default (make-condition-variable)))
 	       (cur::int (default 0)))))
@@ -50,9 +50,9 @@
        (*fl 100. (/fl (fixnum->flonum cur) (fixnum->flonum size))))))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule-start ::one-to-one-scheduler ...                        */
+;*    spawn ::one-to-one-scheduler ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule-start scd::one-to-one-scheduler proc msg)
+(define-method (spawn scd::one-to-one-scheduler proc . args)
    (with-access::one-to-one-scheduler scd (mutex condv cur size)
       (mutex-lock! mutex)
       (let loop ()
@@ -63,8 +63,8 @@
       (letrec ((thread (instantiate::hopthread
 			  (body (lambda ()
 				   (with-handler
-				      scheduler-default-handler
-				      (proc scd thread))
+				      (make-scheduler-error-handler thread)
+				      (apply proc scd thread args))
 				   (mutex-lock! mutex)
 				   (set! cur (-fx cur 1))
 				   (condition-variable-signal! condv)
@@ -74,10 +74,28 @@
 	 (thread-start! thread))))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule ::one-to-one-scheduler ...                              */
+;*    spawn4 ::one-to-one-scheduler ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule scd::one-to-one-scheduler proc msg)
-   (proc scd (current-thread)))
+(define-method (spawn4 scd::one-to-one-scheduler proc a0 a1 a2 a3)
+   (with-access::one-to-one-scheduler scd (mutex condv cur size)
+      (mutex-lock! mutex)
+      (let loop ()
+	 (when (>=fx cur size)
+	    ;; we have to wait for a thread to complete
+	    (condition-variable-wait! condv mutex)
+	    (loop)))
+      (letrec ((thread (instantiate::hopthread
+			  (body (lambda ()
+				   (with-handler
+				      (make-scheduler-error-handler thread)
+				      (proc scd thread a0 a1 a2 a3))
+				   (mutex-lock! mutex)
+				   (set! cur (-fx cur 1))
+				   (condition-variable-signal! condv)
+				   (mutex-unlock! mutex))))))
+	 (set! cur (+fx cur 1))
+	 (mutex-unlock! mutex)
+	 (thread-start! thread))))
 
 
 

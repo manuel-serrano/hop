@@ -52,6 +52,22 @@ If the attribute :inline is ++#t++ then the image content
 itself. This prevents the client from addressing a new request
 to the server in order to get the actual bytes composing the image.
 
+~~ In addition, //inline// content can be provided for an image, as 
+the //body// of the image. That is, if the ++<IMG>++ markup is provided
+a body and if this body is a string, then, it is used as the image
+content. Example:
+
+  (let ((p (open-input-file "/tmp/foo.jpg")))
+    (unwind-protect
+       (<IMG> :src "/tmp/foo.jpg" (read-string p))
+       (close-input-port p)))
+
+
+This is equivalent to:
+
+  (<IMG> :src "/tmp/foo.jpg" (read-string p) :inline #t)
+
+
 </markup>
 </server>
 

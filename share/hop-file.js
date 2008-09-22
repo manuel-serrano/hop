@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Wed Apr 16 10:02:16 2008 (serrano)                */
+/*    Last change :  Sun Aug 17 14:53:49 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
@@ -65,6 +65,7 @@ function hop_inputurl_keydown( obj, event ) {
 function hop_filechooser_button_push( button, id, url ) {
    var el = document.getElementById( id );
    var fe = document.getElementById( id + "-filters" );
+   var he = document.getElementById( id + "-hidden" );
    
    // update the button row
    if( el.button ) {
@@ -76,7 +77,7 @@ function hop_filechooser_button_push( button, id, url ) {
    // get the files content
    // the name of the service is defined in runtime/hop-file.scm
    var svc = hop_service_base() + "/server-file/files?id=" + id +
-      "&url=" + url + "&regexp=" + fe.value;
+      "&url=" + url + "&regexp=" + fe.value + "&hidden=" + he.checked;
 
    function callback( h ) {
       hop_innerHTML_set( id + "-files", h.car )

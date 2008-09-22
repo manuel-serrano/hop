@@ -5,12 +5,18 @@
 These server parameters control the RC file loaded when HOP execution starts.
 Examples of such file can be found in the tutorial section.
 
+~~ The RC file ,(<TUTORIALREF> "tutorial" "07-hoprc.wiki") shows how this
+file can be used to customize Hop.
+
+
 == Synopsis ==
 
   (hop-rc-directory)
   (hop-rc-directory-set! arg)
   (hop-rc-file)
   (hop-rc-file-set! arg)
+  (hop-script-file)
+  (hop-script-file-set! arg)
 
 == Server Definitions ==
 <server>
@@ -23,6 +29,8 @@ Examples of such file can be found in the tutorial section.
 ^  access  ^   type   ^  current value            ^  short description        ^
 |   r/w    |  string  |  ++,(hop-rc-directory)++  | The path of rc files.     |
 </arguments>
+
+The path of the directory containing the ++(hop-rc-file)++ file.
 </parameter>
 </parameter>
 
@@ -34,6 +42,23 @@ Examples of such file can be found in the tutorial section.
 ^  access  ^   type   ^  current value       ^  short description            ^
 |   r/w    |  string  |  ++,(hop-rc-file)++  | The rc file.                  |
 </arguments>
+
+The RC file is loaded *before* the ++(hop-script-file)++, just *after* the
+command line options have been parsed.
+</parameter>
+</parameter>
+
+=== ++hop-script-file++ ===
+<parameter> hop-script-file
+<parameter> hop-script-file-set!
+
+<arguments>
+^  access  ^   type   ^  current value       ^  short description            ^
+|   r/w    |  string  |  ++,(hop-script-file)++  | The script file.                  |
+</arguments>
+
+The script file is loaded *after* the ++(hop-rc-file)++, just *before* the
+HOP main loop is entered.
 </parameter>
 </parameter>
 </server>

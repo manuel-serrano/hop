@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Thu Apr  3 09:07:22 2008 (serrano)                */
+;*    Last change :  Tue Apr 22 14:19:57 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
@@ -28,18 +28,12 @@
    
    (define (make-save-clause c)
       (match-case c
-	 ((?- ?type ?get ?set)
+	 ((?- ?type (and (? symbol?) ?param))
 	  `(begin
 	      ,(if (eq? type 'expr)
-		   `(write (list ,set '(,get)))
-		   `(write (list ,set (,get))))
-	      (newline)))
-	 ((?- ?type (and (? symbol?) ?get))
-	  `(begin
-	      ,(if (eq? type 'expr)
-		   `(write (list ',(symbol-append get '-set!)
-				 (list 'quote (,get))))
-		   `(write (list ',(symbol-append get '-set!) (,get))))
+		   `(write (list ',(symbol-append param '-set!)
+				 (list 'quote (,param))))
+		   `(write (list ',(symbol-append param '-set!) (,param))))
 	      (newline)))
 	 ((or (? string?) (? symbol?))
 	  #unspecified)
@@ -47,74 +41,77 @@
 	  #unspecified)
 	 (else
 	  (error 'define-preferences "Illegal clause" c))))
+
+   (define sig ";; hop-sig: ")
    
-   (define (make-save id clauses)
-      `(define (,id file)
-	  (with-lock (preferences-mutex)
-	     (lambda ()
-		(with-output-to-file file
-		   (lambda ()
-		      ,@(map make-save-clause clauses)))))
-	  file))
-   
-   (define (make-value-clause lbl value)
-      `(<TR>
-	  (<TH> ,lbl)
-	  (<TD> ,value)))
-   
-   (define (make-edit-clause/set-get lbl type get set)
-      `(<TR>
-	  (<TH> ,lbl)
-	  (<TD> (preferences-editor ',type ,get ,set))))
-   
-   (define (make-label-clause lbl)
-      `(<TR>
-	  (<TH> :class "label" :colspan 2 ,lbl)))
-   
-   (define (make-sep-clause lbl)
-      `(<TR>
-	  (<TD> :class "separator" :colspan 2 "&nbsp;")))
+   (define (make-save id key clauses)
+      
+      `(begin
+	  ;; generate the save procedure
+	  (define (,id file #!optional force-override)
+	     
+	     (define (save file)
+		(let* ((str (with-output-to-string
+			       (lambda ()
+				  ,@(map make-save-clause clauses))))
+		       (sum (md5sum str)))
+		   (with-lock (preferences-mutex)
+		      (lambda ()
+			 (with-output-to-file file
+			    (lambda ()
+			       (display ,sig)
+			       (print sum)
+			       (display str))))))
+		file)
+	     
+	     (define (signed? file)
+		(when (file-exists? file)
+		   (with-input-from-file file
+		      (lambda ()
+			 (let ((l (read-line)))
+			    (when (substring-at? l ,sig 0)
+			       (let ((sum (substring l
+						     ,(string-length sig)
+						     (string-length l)))
+				     (rest (read-string)))
+				  (string=? sum (md5sum rest)))))))))
+
+	     (cond
+		((or (not (file-exists? file)) (signed? file))
+		 (save file))
+		(force-override
+		 (rename-file file (string-append file ".hopsave"))
+		 (save file))
+		(else
+		 #f)))
+	  ;; register the save procedure
+	  (preferences-register-save! ,key ,id)))
    
    (define (make-edit-clause c)
       (match-case c
-	 (((and (? string?) ?lbl) ?value)
-	  (make-value-clause lbl value))
-	 ((?lbl ?type ?get ?set)
-	  (make-edit-clause/set-get lbl type get set))
-	 ((?lbl ?type (and (? symbol?) ?get))
-	  (make-edit-clause/set-get lbl type get (symbol-append get '-set!)))
+	 (((and (? string?) ?lbl) ?type (and (? symbol?) ?param))
+	  (let ((get param)
+		(set (symbol-append param '-set!)))
+	     `(<PR> :param (list ',param ,get ,set) :type ',type ,lbl)))
 	 ((? string?)
-	  (make-label-clause c))
+	  `(<PRLABEL> ,c))
 	 (--
-	  (make-sep-clause c))
+	  '(<PRSEP>))
 	 (else
 	  (error 'define-preferences "Illegal clause" c))))
    
-   (define (make-edit id clauses)
-      `(define (,id #!key onclick)
-	  (<TABLE> :class "preferences"
-	     (<COLGROUP>
-		(<COL> :width "0*" :class "col1")
-		(<COL> :width "0*" :class "col2"))
-	     (when onclick
-		(<TR> (<TD> :class "save"
-			 :colspan 2
-			 :title "Save current preferences"
-			 (<BUTTON>
-			    :onclick
-			    (tilde-compose
-			     (string->tilde
-			      "var els = document.getElementsByClass( 'pref_applied' ); var i; for( i = 0; i < els.length; i++ ) { els[ i ].className = 'pref_saved'; }")
-			     onclick)
-			    "save preferences"))))
+   (define (make-edit id key clauses)
+      `(define (,id #!key id)
+	  (<PREFS> :id (xml-make-id id 'preferences) :lang ,key
 	     ,@(map make-edit-clause clauses))))
    
    (match-case x
       ((?- (and (? symbol?) ?id) . ?clauses)
-       (let ((body `(begin
-		       ,(make-load (symbol-append id '-load))
-		       ,(make-save (symbol-append id '-save) clauses)
-		       ,(make-edit (symbol-append id '-edit) clauses))))
+       (let* ((key (symbol->string (gensym id)))
+	      (body `(begin
+			,(make-load (symbol-append id '-load))
+			,(make-save (symbol-append id '-save) key clauses)
+			,(make-edit (symbol-append id '-edit) key clauses))))
 	  (e (evepairify body x) e)))
       (else
        (error 'define-preferences "Illegal form" x))))

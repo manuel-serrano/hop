@@ -1,9 +1,0 @@
-<doc> HOME -- Hop Home page
-
-== Description ==
-
-[[home|HOME]] implements the Hop Home page.
-
-
-</doc>
-

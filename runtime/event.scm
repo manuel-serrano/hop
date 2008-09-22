@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Apr 14 17:17:03 2008 (serrano)                */
+;*    Last change :  Thu Sep 11 12:40:29 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -35,7 +35,7 @@
 	    __hop_http-response
 	    __hop_http-error)
 
-   (static  (class http-response-event::%http-response
+   (static  (class http-response-event::%http-response-local
 	       (name::bstring read-only))
 	    
 	    (class ajax-connection
@@ -76,7 +76,7 @@
 (define *policy-file-service #f)
 (define *close-service* #f)
 (define *client-key* 0)
-(define *default-request* (instantiate::http-request (user (user-nil))))
+(define *default-request* (instantiate::http-server-request (user (user-nil))))
 (define *ping* (symbol->string (gensym 'ping)))
 (define *clients-number* 0)
 
@@ -237,18 +237,15 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-connection-event-push! ...                                  */
+;*    -------------------------------------------------------------    */
+;*    This function assumes that the event mutex is acquired.          */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-event-push! conn name value)
+   [assert (conn) (not (symbol? (mutex-state (ajax-connection-mutex conn))))]
    (with-access::ajax-connection conn (buffers mutex buffers)
-      (mutex-lock! mutex)
       (let ((cell (assoc name buffers)))
-	 (if (pair? cell)
-	     (let ((val (buffer-push! (cdr cell) value)))
-		(mutex-unlock! mutex)
-		val)
-	     (begin
-		(mutex-unlock! mutex)
-		#f)))))
+	 (when (pair? cell)
+	    (buffer-push! (cdr cell) value)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-connection-abandon-for! ...                                 */
@@ -449,7 +446,7 @@
 (define (server-event-register event key flash)
    
    (define (ajax-register-event! req name key)
-      (tprint "***** ajax-register-event, name=" name)
+      (tprint "***** ajax-register-event, name=" name " key=" key)
       (let ((conn (ajax-find-connection-by-key key)))
 	 (if conn
 	     (with-lock (ajax-connection-mutex conn)
@@ -475,14 +472,13 @@
 		   (request req))))))
    
    (define (flash-register-event! req name)
-      (tprint "flash-register-event, name=" name)
       (hashtable-update! *flash-socket-table*
 			 name
 			 (lambda (l) (cons req l))
 			 (list req))
       (instantiate::http-response-string
 	 (request req)))
-   
+
    (with-lock *event-mutex*
       (lambda ()
 	 (if (<fx *clients-number* (hop-event-max-clients))
@@ -524,7 +520,6 @@
 	       ;; will be removed from the tables.
 	       (flash-signal-value req *ping* #unspecified)))))
    
-   (tprint "server-event-unregister: " event " key=" key)
    (with-lock *event-mutex*
       (lambda ()
 	 (unregister-ajax-event! event key)
@@ -640,9 +635,7 @@
       ((or (string? value) (number? value))
        value)
       (else
-       (string-append "<json>"
-		      (html-string-encode (hop->json value #f #t))
-		      "</json>"))))
+       (string-append "<json><![CDATA[" (hop->json value #f #t) "]]></json>"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-socket ...                                              */
@@ -656,7 +649,12 @@
 			    l)
 			 '())
       r))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-signal-id ...                                                */
+;*---------------------------------------------------------------------*/
+(define hop-signal-id 0)
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-signal! ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -669,12 +667,14 @@
 		(with-access::ajax-connection (car l) (req mutex)
 		   (mutex-lock! mutex)
 		   (if (http-request? req)
-		       (let ((val (scheme->response
-				   (list (list name value)) req))
-			     (r req))
+		       (let* ((r req)
+			      (val (unwind-protect
+				      (scheme->response
+				       (list (list name value)) req)
+				      (begin
+					 (set! req #f)
+					 (mutex-unlock! mutex)))))
 			  (tprint "AJAX SIGNAL: " name)
-			  (set! req #f)
-			  (mutex-unlock! mutex)
 			  (or (ajax-signal-value r val)
 			      (loop (cdr l))))
 		       (begin
@@ -682,8 +682,12 @@
 			  (loop (cdr l)))))
 		(when (pair? conns)
 		   (tprint "PUSHING: " value)
-		   (ajax-connection-event-push! (car conns) name value)
-		   (tprint "PUSHING: done")
+		   (let* ((conn (car conns))
+			  (mutex (ajax-connection-mutex conn)))
+		      (mutex-lock! mutex)
+		      (ajax-connection-event-push! conn name value)
+		      (mutex-unlock! mutex)
+		      (tprint "PUSHING: done"))
 		   #t)))))
    
    (define (flash-event-signal! name value)
@@ -696,11 +700,22 @@
 		   (flash-signal-value (car l) name val)
 		   #t)))))
 
-;*    (tprint "hop-event-signal: " name)                               */
+   (set! hop-signal-id (-fx hop-signal-id 1))
+   (hop-verb 2 (hop-color hop-signal-id hop-signal-id " SIGNAL")
+	     ": " name)
+   (hop-verb 3 " value=" (with-output-to-string (lambda () (write value))))
+   (hop-verb 2 "\n")
    (mutex-lock! *event-mutex*)
-   (unless (flash-event-signal! name value)
-      (ajax-event-signal! name value))
-   (mutex-unlock! *event-mutex*))
+   (unwind-protect
+      (unless (flash-event-signal! name value)
+	 (ajax-event-signal! name value))
+      (mutex-unlock! *event-mutex*))
+   #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hop-broadcast-id ...                                             */
+;*---------------------------------------------------------------------*/
+(define hop-broadcast-id 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-broadcast! ...                                         */
@@ -715,7 +730,7 @@
 			    (if (http-request? req)
 				(let ((val (scheme->response
 					    (list (list name value)) req)))
-				   (tprint "ajax broadcast: " name " "
+				   (tprint ">>> hop-event-broadcast, ajax broadcast: " name " "
 					   (http-request-socket req))
 				   (ajax-signal-value req val)
 				   (set! req #f))
@@ -732,13 +747,27 @@
 		(for-each (lambda (req)
 ;* 			     (tprint "flash broadcast: " name " "      */
 ;* 				     (http-request-socket req))        */
+;* 			     (with-output-to-port (current-error-port) */
+;* 				(lambda ()                             */
+;* 				   (display "flash: [")                */
+;* 				   (write value)                       */
+;* 				   (display "] -> [")                  */
+;* 				   (display val)                       */
+;* 				   (print "]")))                       */
 			     (flash-signal-value req name val))
 			  l))))))
 
+   (set! hop-broadcast-id (-fx hop-broadcast-id 1))
+   (hop-verb 2 (hop-color hop-broadcast-id hop-broadcast-id " BROADCAST")
+	     ": " name)
+   (hop-verb 3 " value=" (with-output-to-string (lambda () (write value))))
+   (hop-verb 2 "\n")
    (mutex-lock! *event-mutex*)
-   (ajax-event-broadcast! name value)
-   (flash-event-broadcast! name value)
-   (mutex-unlock! *event-mutex*)
+   (unwind-protect
+      (begin
+	 (ajax-event-broadcast! name value)
+	 (flash-event-broadcast! name value))
+      (mutex-unlock! *event-mutex*))
    #unspecified)
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sat Apr  5 07:00:06 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 18:54:21 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -58,108 +58,184 @@
 	       (member "gzip" (string-split (cdr c) ","))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-gzipped-directory? ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hop-gzipped-directory? abspath)
+   (any? (lambda (p)
+	    (let ((l (string-length p)))
+	       (and (>fx (string-length abspath) l)
+		    (string-prefix? p abspath)
+		    (char=? (string-ref abspath l) (file-separator)))))
+	 (hop-gzipped-directories)))
+   
+;*---------------------------------------------------------------------*/
 ;*    http-get ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (http-get req)
-   (with-access::http-request req (encoded-path method header)
+   (with-access::http-request req (abspath query)
       (cond
-	 ((not (file-exists? encoded-path))
-	  (let ((i (string-index encoded-path #\?)))
-	     (cond
-		((and (fixnum? i) (>fx i 0))
-		 (let ((p (substring encoded-path 0 i))
-		       (suf (substring encoded-path i (string-length encoded-path))))
-		    (cond
-		       ((string=? suf (hop-scm-compile-suffix))
-			(scm-response req p))
-		       ((string=? suf (hop-hss-compile-suffix))
-			(hss-response req p))
-		       ((file-exists? p)
-			(instantiate::http-response-file
-			   (request req)
-			   (charset (hop-locale))
-			   (content-type (mime-type p "text/plain"))
-			   (bodyp (eq? method 'GET))
-			   (file p)))
-		       ((hop-service-path? p)
-			(http-service-not-found p))
-		       (else
-			(http-file-not-found p)))))
-		((hop-service-path? encoded-path)
-		 (http-service-not-found encoded-path))
-;* 			((string=? path "/crossdomain.xml")            */
-;* 			 (tprint "======================== /crossdomain.xml") */
-;* 			 (http-request-connection-set! req 'close)     */
-;* 			 (let ((s (format "<?xml version=\"1.0\" encoding=\"UTF-8\"?> */
-;* <!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\"> */
-;* <cross-domain-policy>                                               */
-;*  <allow-access-from domain=\"*\" />                                 */
-;* </cross-domain-policy>" (hop-port))))                               */
-;* 			    (tprint s)                                 */
-;* 			    (instantiate::http-response-string         */
-;* 			       (request req)                           */
-;* 			       (content-type "application/xml")        */
-;* 			       (body s))))                             */
-		(else
-		 (http-file-not-found encoded-path)))))
-	 ((is-suffix? (http-request-encoded-path req) "hop")
-	  (let ((rep (hop-load (http-request-encoded-path req))))
-	     (cond
-		((%http-response? rep)
-		 rep)
-		((xml? rep)
-		 (instantiate::http-response-hop
-		    (request req)
-		    (content-type (mime-type encoded-path (hop-default-mime-type)))
-		    (charset (hop-charset))
-		    (bodyp (eq? method 'GET))
-		    (header '((Cache-Control: . "no-cache")))
-		    (xml rep)))
-		(else
-		 (let ((url (make-hop-url-name
-			     (prefix
-			      (basename
-			       (http-request-encoded-path req))))))
-		    (instantiate::http-response-string
-		       (start-line "HTTP/1.0 307 Temporary Redirect")
-		       (header (list (cons 'location: url)))))))))
+	 ((not (file-exists? abspath))
+	  ;; an error
+	  (http-get-file-not-found req))
+	 (query
+	  ;; a file with query arguments
+	  (http-get-file-query req))
+	 ((is-suffix? abspath ".hop")
+	  ;; hop source code
+	  (http-get-hop req #t))
+	 (else
+	  ;; a regular file
+	  (http-get-file/cache req)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-head ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (http-head req)
+   (with-access::http-request req (abspath query)
+      (cond
+	 ((not (file-exists? abspath))
+	  ;; an error
+	  (http-get-file-not-found req))
+	 (query
+	  ;; a file with query arguments
+	  (http-get-file-query req))
+	 ((is-suffix? abspath ".hop")
+	  ;; hop source code
+	  (http-get-hop req #f))
+	 (else
+	  ;; a regular file
+	  (http-get-file req #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-get-file-not-found ...                                      */
+;*---------------------------------------------------------------------*/
+(define (http-get-file-not-found req)
+   (with-access::http-request req (abspath)
+      (cond
+	 ((hop-service-path? abspath)
+	  (http-service-not-found abspath))
+	 ((string=? abspath "/crossdomain.xml")
+	  (http-request-connection-set! req 'close)
+	  (let ((s (format "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">
+<cross-domain-policy>
+ <allow-access-from domain=\"*\" />
+</cross-domain-policy>" (hop-port))))
+	     (instantiate::http-response-string
+		(request req)
+		(content-type "application/xml")
+		(body s))))
+	 (else
+	  (http-file-not-found abspath)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-get-file-query ...                                          */
+;*---------------------------------------------------------------------*/
+(define (http-get-file-query req)
+   (with-access::http-request req (abspath query method)
+      (cond
+	 ((string=? query (hop-scm-compile-suffix))
+	  (scm-response req abspath))
+	 ((string=? query (hop-hss-compile-suffix))
+	  (hss-response req abspath))
+	 (else
+	  (instantiate::http-response-file
+	     (request req)
+	     (charset (hop-locale))
+	     (content-type (mime-type abspath "text/plain"))
+	     (bodyp (eq? method 'GET))
+	     (file abspath))))))
+   
+;*---------------------------------------------------------------------*/
+;*    http-get-hop ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (http-get-hop req bodyp::bool)
+   (with-access::http-request req (abspath)
+      (let ((rep (hop-load abspath)))
+	 (cond
+	    ((%http-response? rep)
+	     rep)
+	    ((xml? rep)
+	     (instantiate::http-response-hop
+		(request req)
+		(content-type (mime-type abspath (hop-default-mime-type)))
+		(charset (hop-charset))
+		(bodyp bodyp)
+		(header '((Cache-Control: . "no-cache")))
+		(xml rep)))
+	    (else
+	     (let ((url (make-hop-url-name (prefix (basename abspath)))))
+		(instantiate::http-response-string
+		   (start-line "HTTP/1.0 307 Temporary Redirect")
+		   (header (list (cons 'location: url))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    get-memory-cache ...                                             */
+;*---------------------------------------------------------------------*/
+(define get-memory-cache #f)
+
+;*---------------------------------------------------------------------*/
+;*    init-get-cache ...                                               */
+;*---------------------------------------------------------------------*/
+(define (init-get-cache!)
+   (set! get-memory-cache
+	 (instantiate::cache-memory
+	    (validity (lambda (ce _) (cache-entry? ce)))
+	    (max-entries (hop-get-cache-size)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-get-file/cache ...                                          */
+;*---------------------------------------------------------------------*/
+(define (http-get-file/cache req)
+   (with-access::http-request req (abspath)
+      (let ((cache (cache-memory-get get-memory-cache abspath)))
+	 (if (%http-response? cache)
+	     cache
+	     (let ((resp (http-get-file req #t)))
+		(cache-put! get-memory-cache abspath resp)
+		resp)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-get-file ...                                                */
+;*---------------------------------------------------------------------*/
+(define (http-get-file req bodyp)
+   (with-access::http-request req (abspath query header method)
+      (cond
 	 ((pair? (assq 'icy-metadata: header))
 	  (instantiate::http-response-shoutcast
 	     (request req)
 	     (start-line "ICY 200 OK")
-	     (bodyp (eq? method 'GET))
-	     (file encoded-path)))
+	     (bodyp bodyp)
+	     (file abspath)))
+	 ((and (string-suffix? ".gz" abspath) (accept-gzip? header))
+	  ;; send a gzipped file with a mime type corresponding
+	  ;; to the ungzipped file
+	  (instantiate::http-response-file
+	     (request req)
+	     (content-type (mime-type (prefix abspath) "text/plain"))
+	     (charset (hop-locale))
+	     (header `((content-encoding: . "gzip")))
+	     (bodyp bodyp)
+	     (file abspath)))
+	 ((and (hop-gzipped-directory? abspath)
+	       (file-exists? (string-append abspath ".gz"))
+	       (accept-gzip? header))
+	  ;; send a gzipped version of the file
+	  (instantiate::http-response-file
+	     (request req)
+	     (content-type (mime-type abspath "text/plain"))
+	     (charset (hop-locale))
+	     (header `((content-encoding: . "gzip")))
+	     (bodyp bodyp)
+	     (file (string-append abspath ".gz"))))
 	 (else
-	  (cond
-	     ((and (string-suffix? ".gz" encoded-path) (accept-gzip? header))
-	      ;; send a gzipped file with a mime type corresponding
-	      ;; to the ungzipped file
-	      (instantiate::http-response-file
-		 (request req)
-		 (content-type (mime-type (prefix encoded-path) "text/plain"))
-		 (charset (hop-locale))
-		 (header `((content-encoding: . "gzip")))
-		 (bodyp (eq? method 'GET))
-		 (file encoded-path)))
-	     ((and (file-exists? (string-append encoded-path ".gz"))
-		   (member (dirname encoded-path) (hop-gzipped-directories))
-		   (accept-gzip? header))
-	      ;; send a gzipped version of the file
-	      (instantiate::http-response-file
-		 (request req)
-		 (content-type (mime-type encoded-path "text/plain"))
-		 (charset (hop-locale))
-		 (header `((content-encoding: . "gzip")))
-		 (bodyp (eq? method 'GET))
-		 (file (string-append encoded-path ".gz"))))
-	     (else
-	      ;; send a regular file
-	      (instantiate::http-response-file
-		 (request req)
-		 (content-type (mime-type encoded-path "text/plain"))
-		 (charset (hop-locale))
-		 (bodyp (eq? method 'GET))
-		 (file encoded-path))))))))
+	  ;; send a regular file
+	  (instantiate::http-response-file
+	     (request req)
+	     (content-type (mime-type abspath "text/plain"))
+	     (charset (hop-locale))
+	     (bodyp bodyp)
+	     (file abspath))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-options ...                                               */
@@ -195,29 +271,30 @@
 	 (bodyp #f))))
 
 ;*---------------------------------------------------------------------*/
-;*    log-response ...                                                 */
+;*    log-local-response ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (log-response port req resp)
+(define (log-local-response port req resp)
+   
    (define (two-digits n)
       (when (< n 10)
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host user method encoded-path http header)
+   (with-access::http-request req (socket host user method abspath http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
 	       (socket-host-address socket)
-	       (or user "-"))
+	       (if (user? user) (user-name user)) "-")
       ;; date
       (display "[" port)
       (let* ((d   (current-date))
 	     (tz  (if (= 1 (date-is-dst d))
 		      (- (date-timezone d) 3600)
 		      (date-timezone d))))
-	 (two-digits (date-day d))    (display "/" port)
-	 (two-digits (date-month d))  (display "/" port)
+	 (two-digits (date-day d)) (display "/" port)
+	 (two-digits (date-month d)) (display "/" port)
 	 (display (date-year d) port) (display ":" port)
-	 (two-digits (date-hour d))   (display ":" port)
+	 (two-digits (date-hour d)) (display ":" port)
 	 (two-digits (date-minute d)) (display ":" port)
 	 (two-digits (date-second d)) (display " " port)
 	 (display (if (> tz 0) "+" "-") port)
@@ -225,25 +302,25 @@
 	 (two-digits (remainder (abs tz) 3600)))
       (display "] " port)
       ;; request
-      (fprintf port "\"~a ~a ~a\" " method encoded-path http)
+      (fprintf port "\"~a ~a ~a\" " method abspath http)
       ;; Return code
       (let* ((str (%http-response-local-start-line resp))
 	     (len (string-length str)))
-	 (let Loop ((i  0)
+	 (let loop ((i  0)
 		    (sp 0))
 	    (cond
-	       ((or (>= i len) (>= sp 2))
+	       ((or (>=fx i len) (>=fx sp 2))
 		#f)
 	       ((char=? (string-ref str i) #\space)
-		(Loop (+ i 1) (+ sp 1)))
-	       ((= sp 1)
+		(loop (+fx i 1) (+fx sp 1)))
+	       ((=fx sp 1)
 		(display (string-ref str i) port)
-		(Loop (+ i 1) sp))
+		(loop (+fx i 1) sp))
 	       (else
-		(Loop (+ i 1) sp)))))
+		(loop (+fx i 1) sp)))))
       (display " " port)
-      ;; Content-length
-      (let ((hdrs (%http-response-local-header resp)))
+      ;; content-length
+      (let ((hdrs (%http-response-header resp)))
 	 (cond
 	    ((http-response-file? resp)
 	     (display (file-size (http-response-file-file resp)) port))
@@ -251,13 +328,63 @@
 	     (display (%http-response-content-length resp) port))
 	    (else
 	     (display "-" port))))
-      ;; Long version (add User-Agent and Referer)
-      (let ((agent   (assoc :user-agent header))
-	    (referer (assoc :referer header)))
-	 (when (and (pair? agent) (pair? referer))
-	    (fprintf port " ~s ~s" (cdr referer) (cdr agent))))
+      ;; long version (add User-Agent and Referer)
+      (when (>fx (hop-log) 1)
+	 (let ((agent (assoc :user-agent header))
+	       (referer (assoc :referer header)))
+	    (when (and (pair? agent) (pair? referer))
+	       (fprintf port " ~s ~s" (cdr referer) (cdr agent)))))
       (newline port)
-      (flush-output-port port)))
+      (flush-output-port port)
+      resp))
+
+;*---------------------------------------------------------------------*/
+;*    log-remote-response ...                                          */
+;*---------------------------------------------------------------------*/
+(define (log-remote-response port req resp)
+   
+   (define (two-digits n)
+      (when (< n 10)
+	 (display #\0 port))
+      (display n port))
+   
+   (with-access::http-request req (socket host (p port) user method abspath http header)
+      ;; distant host address and user
+      (fprintf port "~a - ~a "
+	       (socket-host-address socket)
+	       (if (user? user) (user-name user)) "-")
+      ;; date
+      (display "[" port)
+      (let* ((d   (current-date))
+	     (tz  (if (= 1 (date-is-dst d))
+		      (- (date-timezone d) 3600)
+		      (date-timezone d))))
+	 (two-digits (date-day d)) (display "/" port)
+	 (two-digits (date-month d)) (display "/" port)
+	 (display (date-year d) port) (display ":" port)
+	 (two-digits (date-hour d)) (display ":" port)
+	 (two-digits (date-minute d)) (display ":" port)
+	 (two-digits (date-second d)) (display " " port)
+	 (display (if (> tz 0) "+" "-") port)
+	 (two-digits (quotient  (abs tz) 3600))
+	 (two-digits (remainder (abs tz) 3600)))
+      (display "] " port)
+      ;; request
+      (fprintf port "\"~a http://~a:~a~a ~a\" " method host p abspath http)
+      ;; Return code
+      (display "305" port)
+      (display " " port)
+      ;; Content-length
+      (display "-" port)
+      ;; Long version (add User-Agent and Referer)
+      (when (>fx (hop-log) 1)
+	 (let ((agent   (assoc :user-agent header))
+	       (referer (assoc :referer header)))
+	    (when (and (pair? agent) (pair? referer))
+	       (fprintf port " ~s ~s" (cdr referer) (cdr agent)))))
+      (newline port)
+      (flush-output-port port)
+      resp))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy-ip-allowed? ...                                        */
@@ -293,15 +420,18 @@
 ;*---------------------------------------------------------------------*/
 (define (init-http!)
 
+   ;; prepare the get cache
+   (init-get-cache!)
+   
    ;; regular http handlers
    (add-http-handler! 'GET http-get)
-   (add-http-handler! 'HEAD http-get)
+   (add-http-handler! 'HEAD http-head)
    (add-http-handler! 'OPTIONS http-options)
    
    ;; local filter (Fallback local file filter)
    (hop-filter-add-always-last!
     (lambda (req)
-       (when (http-request-localhostp req)
+       (when (http-server-request? req)
 	  (let ((handler (http-find-method-handler (http-request-method req))))
 	     (if (procedure? handler)
 		 (handler req)
@@ -333,4 +463,7 @@
    (when (output-port? (hop-log-file))
       (hop-http-response-local-hook-add!
        (lambda (req resp)
-	  (log-response (hop-log-file) req resp)))))
+	  (log-local-response (hop-log-file) req resp)))
+      (hop-http-response-remote-hook-add!
+       (lambda (req resp)
+	  (log-remote-response (hop-log-file) req resp)))))

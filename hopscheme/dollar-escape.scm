@@ -1,4 +1,4 @@
-(module dollar-escape
+(module __hopscheme_dollar-escape
    (library scheme2js
 	    hop))
 

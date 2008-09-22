@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Apr 16 09:57:37 2008 (serrano)                */
+/*    Last change :  Wed Sep  3 11:28:01 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -121,20 +121,17 @@ var re = new RegExp( "<[\/]?event[^>]*>", "g" );
 /*---------------------------------------------------------------------*/
 /*    HopServerEvent ...                                               */
 /*---------------------------------------------------------------------*/
-function HopServerEvent( name, text, value ) {
-   var o = new Object();
-   o.isStopped = false;
-   o.name = name;
-   o.value = value;
-   o.id = hop_server_event_count++;
+function HopServerEvent( n, text, val ) {
+   this.isStopped = false;
+   this.name = n;
+   this.value = val;
+   this.id = hop_server_event_count++;
    
    if( typeof text == "string" ) {
-      o.responseText = text.replace( re, "" );
+      this.responseText = text.replace( re, "" );
    } else {
-      o.responseText = "";
+      this.responseText = "";
    }
-
-   return o;
 }
 
 /*---------------------------------------------------------------------*/
@@ -202,7 +199,6 @@ function start_servevt_ajax_proxy( key ) {
 	       register( id );
 	    } else {
 	       hop_servevt_onclose();
-	       hop_trigger_servevt( id, "Ajax Server Event error", false, false );
 	    }
 	 }
 
@@ -222,7 +218,7 @@ function start_servevt_ajax_proxy( key ) {
 
       var unregister = function( id ) {
 	 hop_servevt_proxy.httpreq.abort();
-	 
+
 	 var svc = hop_service_base() +
 	    "/server-event/unregister?event=" + id +
    	    "&key=" + hop_servevt_proxy.key;
@@ -287,15 +283,16 @@ function start_servevt_flash_proxy( key, host, port ) {
    }
    
    var proxy = document.createElement( "div" );
-   node_style_set( proxy, "visibility", "hidden" );
+/*    node_style_set( proxy, "visibility", "hidden" );                 */
    node_style_set( proxy, "position", "fixed" );
    node_style_set( proxy, "top", "0" );
    node_style_set( proxy, "right", "0" );
+   node_style_set( proxy, "background", "transparent" );
 
-   if( hop_msiep() ) {
-      proxy.innerHTML = object_proxy();
-   } else {
+   if( hop_config.flash_markup === "embed" ) {
       proxy.appendChild( embed_proxy() );
+   } else {
+      proxy.innerHTML = object_proxy();
    }
 
    document.body.appendChild( proxy );
@@ -308,8 +305,7 @@ function start_servevt_flash_proxy( key, host, port ) {
 /*    hop_servevt_onerror ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_servevt_onerror( msg ) {
-   alert( msg );
-   throw new Error( msg );
+   hop_error( "servevt", new Error( msg ), "internal server event error" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -415,7 +411,9 @@ function hop_servevt_proxy_flash_init() {
 /*    servevt_flashp ...                                               */
 /*---------------------------------------------------------------------*/
 function servevt_flashp( port ) {
-   return port && (hop_flash_version() >= 8) && !(hop_operap());
+   return port &&
+      (hop_config.flash_version >= 8) &&
+      (hop_config.flash_external_interface);
 }
       
 /*---------------------------------------------------------------------*/
@@ -438,8 +436,9 @@ function hop_start_servevt_proxy() {
 			   try {
 			      start_servevt_flash_proxy( key, host, port );
 			   } catch( e ) {
-			      hop_servevt_onerror( "Cannot start flash proxy: "
-						   + e );
+			      hop_error( "hop_start_servevt_proxy",
+					 e,
+					 "Cannot start flash proxy, port=" + port);
 			   }
 			} else {
 			   start_servevt_ajax_proxy( key );
@@ -456,25 +455,14 @@ function hop_start_servevt_proxy() {
 }
 
 /*---------------------------------------------------------------------*/
-/*    eeval ...                                                        */
-/*---------------------------------------------------------------------*/
-function eeval( value, text ) {
-   try {
-      return eval( value );
-   } catch( e ) {
-      hop_servevt_onerror( "Error in json value: " + e + "\n" + text );
-      return unspecified;
-   }
-}      
-   
-/*---------------------------------------------------------------------*/
 /*    hop_trigger_servevt ...                                          */
 /*    -------------------------------------------------------------    */
 /*    This function is invoked by Flash and Ajax on event reception.   */
 /*---------------------------------------------------------------------*/
 function hop_trigger_servevt( id, text, value, json ) {
    try {
-      var evt = new HopServerEvent( id, text, json ? eeval( value, text ) : value );
+      var v = (json ? eval( value, text ) : value);
+      var evt = new HopServerEvent( id, text, v );
       var p2 = hop_servevt_table[ id ];
 
       if( sc_isPair( hop_servevt_dlist ) &&
@@ -487,16 +475,21 @@ function hop_trigger_servevt( id, text, value, json ) {
 	    p1 = p1.cdr;
 	 }
       }
-   
+
       evt.isStopped = false;
 
       while( sc_isPair( p2 ) ) {
-	 p2.car( evt );
+	 try {
+	    p2.car( evt );
+	 } catch( exc ) {
+	    hop_error( "hop_trigger_servevt [event " + id + "]", exc, p2.car );
+	 }
+	 
 	 if( evt.isStopped ) break;
 	 p2 = p2.cdr;
       }
-   } catch( e ) {
-      hop_servevt_onerror( "Error raised in event handler" + e );
+   } catch( exc ) {
+      hop_error( "hop_trigger_servevt [event " + id + "]", exc, value );
    }
 }
 
@@ -595,9 +588,12 @@ function hop_remove_server_listener( obj, proc ) {
       hop_servevt_dlist = sc_remqBang( proc, hop_servevt_dlist );
    } else {
       // unregister the event listener
-      hop_servevt_table[ obj ] = sc_remqBang( proc, hop_servevt_table[ obj ] );
-      if( hop_servevt_ctable[ obj ] )
-	 hop_servevt_ctable[ obj ] = sc_remqBang( proc,hop_servevt_ctable[ obj ] );
+      if( sc_isPair( hop_servevt_table[ obj ] ) )
+	 hop_servevt_table[ obj ] =
+	    sc_remqBang( proc, hop_servevt_table[ obj ] );
+      if( sc_isPair( hop_servevt_ctable[ obj ] ) )
+	 hop_servevt_ctable[ obj ] =
+	    sc_remqBang( proc,hop_servevt_ctable[ obj ] );
 
       // try to close the socket
       for( id in hop_servevt_table ) {

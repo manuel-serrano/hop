@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Apr  9 12:22:31 2008 (serrano)                */
+#*    Last change :  Fri Jun 20 13:16:52 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -23,7 +23,7 @@ do: build
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
                   configure .hoprelease
-POPDIRS		= runtime hopscheme scheme2js src hopsh \
+POPDIRS		= runtime hopscheme scheme2js src hopsh hopreplay \
                   etc share \
                   weblets # contribs
 
@@ -40,13 +40,16 @@ bindir:
 libdir:
 	mkdir -p lib
 
-bin: bindir src-bin hopsh-bin
+bin: bindir src-bin hopsh-bin hopreplay-bin
 
 src-bin: lib share
 	(cd src && $(MAKE) build)
 
 hopsh-bin: lib
 	(cd hopsh && $(MAKE) build)
+
+hopreplay-bin: lib
+	(cd hopreplay && $(MAKE) build)
 
 lib: libdir
 	(cd runtime && $(MAKE) build)
@@ -68,6 +71,7 @@ dep:
 	(cd hopscheme; $(MAKE) dep)
 	(cd src; $(MAKE) dep)
 	(cd hopsh; $(MAKE) dep)
+	(cd hopreplay; $(MAKE) dep)
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
@@ -78,6 +82,7 @@ ude:
 	(cd hopscheme; $(MAKE) ude)
 	(cd src; $(MAKE) ude)
 	(cd hopsh; $(MAKE) ude)
+	(cd hopreplay; $(MAKE) ude)
 
 #*---------------------------------------------------------------------*/
 #*    changelog                                                        */
@@ -90,8 +95,12 @@ changelog:
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
-install: install-quick $(INSTALL-SPECIFIC)
+install: install-quick $(INSTALL-SPECIFIC) install-share install-weblets
+
+install-share:
 	(cd share && $(MAKE) install)
+
+install-weblets:
 	(cd weblets && $(MAKE) install)
 
 install-quick: hop-dirs install-init
@@ -138,6 +147,7 @@ clean-quick:
 	(cd runtime; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
+	(cd hopreplay; $(MAKE) clean)
 
 clean:
 	(cd runtime; $(MAKE) clean)
@@ -145,11 +155,13 @@ clean:
 	(cd hopscheme; $(MAKE) clean)
 	(cd src; $(MAKE) clean)
 	(cd hopsh; $(MAKE) clean)
+	(cd hopreplay; $(MAKE) clean)
 
 devclean:
 	(cd runtime; $(MAKE) devclean)
 	(cd src; $(MAKE) devclean)
 	(cd hopsh; $(MAKE) devclean)
+	(cd hopreplay; $(MAKE) devclean)
 
 distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig
@@ -162,9 +174,12 @@ cleanall: distclean
 #*---------------------------------------------------------------------*/
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
-.PHONY: distrib distrib-inc-version distrib-sans-version
+.PHONY: distrib newdistrib distrib-inc-version distrib-sans-version
 
 distrib: 
+	$(MAKE) distrib-sans-version
+
+newdistrib:
 	$(MAKE) distrib-inc-version
 	$(MAKE) distrib-sans-version
 

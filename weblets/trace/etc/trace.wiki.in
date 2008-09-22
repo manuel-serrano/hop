@@ -12,7 +12,9 @@ functions ++trace++ and ++tprint++.
 
 ~~
 ,(<TABLE> :class "weblet-facts"
-  (<TR> (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
   (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
   (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
   (<TR> (<TH> "Date") (<TD> "@DATE@"))
@@ -82,7 +84,7 @@ A possible default value for ++trace-print++ could be defined as:
                (lambda ()
                    (display "TRACE: ")
                    (for-each display args)
-                   newline)))))
+                   (newline))))))
 </code>
 
 </parameter>

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 16:03:01 2008                          */
-;*    Last change :  Wed Feb 27 07:47:04 2008 (serrano)                */
+;*    Last change :  Mon Sep  1 13:41:13 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    COHORT scheduler                                                 */
@@ -23,7 +23,7 @@
    (import  hop_scheduler)
 
    (static  (class pool
-	       (id::symbol read-only)
+	       (id::obj (default #unspecified))
 	       (size::int read-only)
 	       (scheduler::scheduler read-only)
 	       (mutex::mutex read-only (default (make-mutex)))
@@ -36,7 +36,7 @@
    
    (export  (class cohort-scheduler::scheduler
 	       (mutex::mutex read-only (default (make-mutex 'cohort-scheduler)))
-	       (names::pair-nil (default '()))
+	       (cohort::int read-only (default 1))
 	       (pools::pair-nil (default '()))
 	       (nfree::int (default 0)))))
 
@@ -44,8 +44,8 @@
 ;*    scheduler-init! ::cohort-scheduler ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-init! scd::cohort-scheduler)
-   (with-access::cohort-scheduler scd (size nfree pools names)
-      (let ((psize (/fx size (length names))))
+   (with-access::cohort-scheduler scd (size nfree pools cohort)
+      (let ((psize (/fx size cohort)))
 	 (when (<fx psize 3)
 	    (error 'cohort-scheduler
 		   (format "cohort scheduling requires at least ~a threads"
@@ -53,7 +53,6 @@
 		   size))
 	 (set! pools (map (lambda (id)
 			     (let ((pool (instantiate::pool
-					    (id id)
 					    (scheduler scd)
 					    (nfree psize)
 					    (size psize))))
@@ -62,7 +61,7 @@
 						(make-list psize))))
 				   (pool-free-set! pool ts)
 				   pool)))
-			  names))
+			  (iota cohort)))
 	 (set! nfree size)
 	 scd)))
 
@@ -85,8 +84,8 @@
 ;*    pool-info ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (pool-info pool)
-   (with-access::pool pool (id size nfree)
-      (format "~a: ~a/~a" id (-fx size nfree) size)))
+   (with-access::pool pool (size nfree)
+      (format "~a/~a" (-fx size nfree) size)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-load ::cohort-scheduler ...                            */
@@ -98,40 +97,55 @@
 	    (/fl (fixnum->flonum (-fx size nfree)) (fixnum->flonum size))))))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule-start ::cohort-scheduler ...                            */
+;*    spawn ::cohort-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule-start scd::cohort-scheduler p msg)
-   (let ((thread (pool-get (cohort-get-pool scd msg) msg)))
+(define-method (spawn scd::cohort-scheduler p . args)
+   (%spawn scd p args))
+
+;*---------------------------------------------------------------------*/
+;*    %spawn ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (%spawn scd::cohort-scheduler p args)
+   (let ((thread (pool-get (cohort-get-pool scd p))))
       (with-access::hopthread thread (proc mutex condv)
 	 (mutex-lock! mutex)
-	 (set! proc p)
+	 (set! proc (lambda (s t) (apply p s t args)))
 	 (condition-variable-signal! condv)
 	 (mutex-unlock! mutex))))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule ::cohort-scheduler ...                                  */
+;*    stage ::cohort-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule scd::cohort-scheduler proc msg)
-   (schedule-start scd proc msg))
+(define-method (stage scd::cohort-scheduler thread proc . args)
+   (%spawn scd proc args))
    
 ;*---------------------------------------------------------------------*/
 ;*    cohort-get-pool ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (cohort-get-pool::pool scd::cohort-scheduler id)
    (with-access::cohort-scheduler scd (pools)
-      (let loop ((pools (cohort-scheduler-pools scd)))
+      (let loop ((pools (cohort-scheduler-pools scd))
+		 (pool #f))
 	 (cond
 	    ((null? pools)
-	     (error 'cohor-get-pool "Cannot find pool" id))
+	     (if (not pool)
+		 (error 'cohor-get-pool "Cannot find pool" id)
+		 (begin
+		    (pool-id-set! pool id)
+		    pool)))
 	    ((eq? (pool-id (car pools)) id)
 	     (car pools))
 	    (else
-	     (loop (cdr pools)))))))
+	     (loop (cdr pools)
+		   (cond
+		      (pool pool)
+		      ((eq? (pool-id (car pools)) #unspecified) (car pools))
+		      (else #f))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    pool-get ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (pool-get pool::pool msg)
+(define (pool-get pool::pool)
    (with-access::pool pool (id free nfree condv mutex scheduler)
       (mutex-lock! mutex)
       (let loop ()
@@ -176,7 +190,7 @@
       (let loop ()
 	 (condition-variable-wait! condv mutex)
 	 (with-handler
-	    scheduler-default-handler
+	    (make-scheduler-error-handler t)
 	    ((hopthread-proc t) scd t))
 	 (pool-add! pool t)
 	 (loop))))

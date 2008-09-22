@@ -11,6 +11,7 @@ parsing URLs.
 
   (url-encode url)
   (url-parse url)
+  (make-hop-url-name abspath)
 
 == Examples ==
 
@@ -72,6 +73,20 @@ value composed of:
      (url-parse "https://foo:bar@nowhere.org:4567/tmp/")
      (list proto uinfo host port path)))
 </function> 
+
+=== ++(make-hop-url-name abspath) ===
+<function> make-hop-url-name
+
+<arguments>
+^  arguments  ^   type          ^  short description             ^
+| abspath     |  string         | an path.                       |
+</arguments>
+
+The function ++make-hop-url-name++ builds a complete URL as used in a HOP
+service. The function ++make-hop-url-name++ prefixes the ++abspath++ argument
+with the common prefix used by all HOP services, generally the prefix ++/hop++.
+</function>
+
 </server>
 
 == See also ==

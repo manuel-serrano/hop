@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Apr 17 09:21:28 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 18:35:08 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -39,8 +39,8 @@
    
    (export  (generic thread-request ::obj)
 	    (generic thread-request-set! ::obj ::obj)
-	    (current-request::obj)
-	    (current-request-set! ::obj)
+	    (inline current-request::obj)
+	    (inline current-request-set! ::thread ::obj)
 	    (request-get::obj ::symbol)
 	    (request->response::%http-response ::http-request)
 	    (with-url ::bstring ::obj #!key fail (header '()) (timeout 0))
@@ -76,30 +76,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    current-request ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (current-request)
+(define-inline (current-request)
    (thread-request (current-thread)))
 
 ;*---------------------------------------------------------------------*/
 ;*    current-request-set! ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (current-request-set! req)
-   (thread-request-set! (current-thread) req))
+(define-inline (current-request-set! thread req)
+   (thread-request-set! thread req))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-get ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (request-get key)
    (let ((req (current-request)))
-      (if req
-	  (with-access::http-request req (%env)
-	     (unless %env (set! %env (request-env-parse req)))
-	     (if (pair? %env)
-		 (let ((c (assq key %env)))
-		    (if (not (pair? c))
-			#unspecified
-			(cdr c)))
-		 #unspecified))
-	  #unspecified)))
+      (let loop ()
+	 (cond
+	    ((http-server-request+? req)
+	     (with-access::http-server-request+ req (%env)
+		(let ((c (assq key %env)))
+		   (if (not (pair? c))
+		       #unspecified
+		       (cdr c)))))
+	    ((http-server-request? req)
+	     (widen!::http-server-request+ req
+		(%env (request-env-parse req)))
+	     (loop))
+	    (else
+	     #unspecified)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-env-parse ...                                            */
@@ -125,25 +129,25 @@
 	      (filters (hop-filters)))
       (if (null? filters)
 	  (with-access::http-request m (content-length method path host user)
-	     (let* ((n (if (hop-enable-proxing)
-			   (instantiate::http-response-remote
+	     (if (or (not (http-proxy-request? req))
+		     (not (hop-enable-proxing)))
+		 (hop-request-hook m (http-file-not-found path))
+		 (let* ((n (instantiate::http-response-remote
 			      (scheme (http-request-scheme m))
 			      (method (http-request-method m))
 			      (host (http-request-host m))
 			      (port (http-request-port m))
 			      (path (http-request-path m))
 			      (userinfo (http-request-userinfo m))
-			      (encoded-path (http-request-encoded-path m))
 			      (http (http-request-http m))
 			      (header (http-request-header m))
 			      (bodyp (not (eq? method 'HEAD)))
 			      (content-length content-length)
 			      (request req)
 			      (remote-timeout (hop-read-timeout))
-			      (connection-timeout (hop-connection-timeout)))
-			   (http-file-not-found path)))
-		    (r (hop-run-hook (hop-http-response-remote-hooks) m n)))
-		(hop-request-hook m r)))
+			      (connection-timeout (hop-connection-timeout))))
+			(r (hop-run-hook (hop-http-response-remote-hooks) m n)))
+		    (hop-request-hook m r))))
 	  (let ((n ((cdar filters) m)))
 	     (cond
 		((eq? n 'hop-resume)
@@ -209,7 +213,7 @@
 	     ((application/json)
 	      (success (json->hop p)))
 	     ((text/html)
-	      (error 'make-http-callback "Not implemenented yet" header))
+	      (success (read-string p)))
 	     ((application/bigloo)
 	      (success (string->obj (read p))))
 	     (else
@@ -284,7 +288,7 @@
 				      (msg "Cannot open url")
 				      (obj url)))))))
 		(else
-		 (let* ((r (instantiate::http-request
+		 (let* ((r (instantiate::http-server-request
 			      (user (anonymous-user))
 			      (scheme (string->symbol scheme))
 			      (id hop-to-hop-id)
@@ -334,7 +338,7 @@
 	 ((and (procedure? success) (not (correct-arity? success 1)))
 	  (error 'with-hop "Illegal success handler" success))
 	 (else
-	  (let* ((req (instantiate::http-request
+	  (let* ((req (instantiate::http-server-request
 			 (userinfo (when (and (string? user) (string? password))
 				      (string-append user ":" password)))
 			 (id hop-to-hop-id)
@@ -462,7 +466,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-remote success fail)
    (with-access::http-response-remote obj (host port path userinfo)
-      (let ((req (instantiate::http-request
+      (let ((req (instantiate::http-server-request
 		    (user (anonymous-user))
 		    (userinfo userinfo)
 		    (host host)
@@ -515,8 +519,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-get-file path)
    (let* ((reqi (current-request))
-	  (req (instantiate::http-request
-		  (localhostp #t)
+	  (req (instantiate::http-server-request
 		  (localclientp #t)
 		  (user (if (http-request? reqi)
 			    (http-request-user reqi)

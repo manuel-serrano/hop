@@ -1,0 +1,5 @@
+((name "shutdown")
+ (author "M. Serrano")
+ (version "@VERSION@")
+ (date "@DATE@")
+ (title "Shutdown the currently running broker"))

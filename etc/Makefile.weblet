@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Apr 18 11:40:57 2008                          */
-#*    Last change :  Fri Apr 18 11:54:44 2008 (serrano)                */
+#*    Last change :  Fri Apr 18 13:54:50 2008 (serrano)                */
 #*    Copyright   :  2008 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Generic entries for weblets Makefile                             */
@@ -34,6 +34,7 @@ etc/weblet.info: etc/weblet.info.in Makefile
 
 config.hop: config.hop.in Makefile
 	cat $< | sed -e "s|@VERSION@|$(VERSION)|" \
+                     -e "s|@HOPRELEASE@|$(HOPRELEASE)|" \
                      -e "s|@TITLE@|$(TITLE)|" \
                      -e "s|@MINHOP@|$(MINHOP)|" \
                      -e "s|@DATE@|$(DATE)|" \

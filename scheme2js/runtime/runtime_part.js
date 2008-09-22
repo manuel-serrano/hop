@@ -745,23 +745,22 @@ function sc_isNull(o) {
            (type bool))
 */
 function sc_isList(o) {
-    var rabbit;
-    var turtle;
+   var rabbit = o;
+   var turtle = o;
 
-    var rabbit = o;
-    var turtle = o;
-    while (true) {
-	if (rabbit === null ||
-	    (rabbit instanceof sc_Pair && rabbit.cdr === null))
-	    return true;  // end of list
-	else if ((rabbit instanceof sc_Pair) &&
-		 (rabbit.cdr instanceof sc_Pair)) {
+   while (true) {
+      if (rabbit === null || (rabbit instanceof sc_Pair && rabbit.cdr === null))
+	 return true;  // end of list
+      else {
+	 if ((rabbit instanceof sc_Pair) &&
+	     (rabbit.cdr instanceof sc_Pair)) {
 	    rabbit = rabbit.cdr.cdr;
 	    turtle = turtle.cdr;
 	    if (rabbit === turtle) return false; // cycle
-	} else
+	 } else
 	    return false; // not pair
-    }
+      }
+   }
 }
 
 /*** META ((export #t)) */
@@ -1046,9 +1045,6 @@ function sc_isCharStringCILessEqual(cs1, cs2)
 function sc_isCharStringCIGreaterEqual(cs1, cs2)
     { return cs1.val.toLowerCase() >= cs2.val.toLowerCase(); }
 
-
-
-
 function sc_Char(c) {
     var cached = sc_Char.lazy[c];
     if (cached)
@@ -1303,6 +1299,21 @@ function sc_makejsString(k, c) {
     else
 	fill = " ";
     return sc_makeJSStringOfLength(k, fill);
+}
+
+/*** META ((export #t)) */
+function sc_isStringPrefix(cs1,cs2) {
+   return cs2.indexOf(cs1) === 0;
+}
+
+/*** META ((export #t)) */
+function sc_isStringSuffix(cs1,cs2) {
+   return cs2.lastIndexOf(cs1) === cs2.length;
+}
+
+/*** META ((export #t)) */
+function sc_stringSplit(s,sep) {
+   return sc_vector2list(s.split(new RegExp( "[" + sep + "]" )));
 }
 
 function sc_jsstring2list(s) {

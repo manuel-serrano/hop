@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Mar 27 11:04:13 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 14:20:22 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -38,7 +38,7 @@
 	    (http-method-error obj)
 	    (http-parse-error obj)
 	    (http-bad-request obj)
-	    (http-internal-error ::&error ::obj)
+	    (http-internal-error ::obj ::obj)
 	    (http-service-error ::http-request ::symbol ::bstring)
 	    (http-invalidated-service-error ::http-request)
 	    (http-corrupted-service-error ::http-request)
@@ -100,7 +100,7 @@
 ;*    <EHEAD> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (<EHEAD> req)
-   (if (and (http-request? req) (not (http-request-localhostp req)))
+   (if (http-proxy-request? req) 
        ;; this is a proxy request
        (<HEAD> :include "hop-error"
 	  :base (format "http://~a:~a" (hostname) (hop-port)))
@@ -174,73 +174,34 @@
 (define (anonymous-request)
    (unless (http-request? *anonymous-request*)
       (set! *anonymous-request*
-	    (instantiate::http-request
+	    (instantiate::http-server-request
+	       (http 'HTTP/1.0)
 	       (connection 'close)
 	       (user (anonymous-user)))))
    *anonymous-request*)
-	    
+
+;*---------------------------------------------------------------------*/
+;*    http-start-line ...                                              */
+;*---------------------------------------------------------------------*/
+(define-macro (http-start-line req msg)
+   (let ((tmp (gensym 'req)))
+      `(let ((,tmp ,req))
+	  (if (eq? (http-request-http ,tmp) 'HTTP/1.0)
+	      ,(string-append "HTTP/1.0 " msg)
+	      ,(string-append "HTTP/1.1 " msg)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    http-unknown-host ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-unknown-host host)
-   (instantiate::http-response-hop
-      (start-line "HTTP/1.0 404 Not Found")
-      (request (or (current-request) (anonymous-request)))
-      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-      (backend (hop-xml-backend))
-      (content-type (xml-backend-mime-type (hop-xml-backend)))
-      (charset (hop-charset))
-      (xml (<HTML>
-	      (<EHEAD> (current-request))
-	      (<BODY>
-		 (<CENTER>
-		    (<ETABLE>
-		       (<TR>
-			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "error2.png"))
-			  (<ETD>
-			     (<TABLE> :width "100%"
-				(<TR> (<ETD> :class "title" "Unknown Host"))
-				(<TR> (<ETD> :class "msg"
-					 (<SPAN> :class "filenotfound"
-					    host)))))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    http-file-not-found ...                                          */
-;*---------------------------------------------------------------------*/
-(define (http-file-not-found file)
-   (instantiate::http-response-hop
-      (request (or (current-request) (anonymous-request)))
-      (start-line "HTTP/1.0 404 Not Found")
-      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-      (backend (hop-xml-backend))
-      (charset (hop-charset))
-      (xml (<HTML>
-	      (<EHEAD> (current-request))
-	      (<BODY>
-		 (<CENTER>
-		    (<ETABLE>
-		       (<TR>
-			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "error2.png"))
-			  (<ETD>
-			     (<TABLE> :width "100%"
-				(<TR> (<ETD> :class "title" "File not found!"))
-				(<TR> (<ETD> :class "msg"
-					 (<SPAN> :class "filenotfound"
-					    file)))))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    http-service-not-found ...                                       */
-;*---------------------------------------------------------------------*/
-(define (http-service-not-found file)
-   (define (illegal-service key msg)
+   (let ((req (or (current-request) (anonymous-request))))
       (instantiate::http-response-hop
-	 (request (or (current-request) (anonymous-request)))
-	 (start-line "HTTP/1.0 404 Not Found")
+	 (start-line (http-start-line req "404 Not Found"))
+	 (request req)
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
 	 (xml (<HTML>
 		 (<EHEAD> (current-request))
 		 (<BODY>
@@ -248,17 +209,71 @@
 		       (<ETABLE>
 			  (<TR>
 			     (<ETD> :class "logo" :valign 'top
-				(<EIMG> :src "warning.png"))
+				(<EIMG> :src "error2.png"))
+			     (<ETD>
+				(<TABLE> :width "100%"
+				   (<TR> (<ETD> :class "title" "Unknown Host"))
+				   (<TR> (<ETD> :class "msg"
+					    (<SPAN> :class "filenotfound"
+					       host))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-file-not-found ...                                          */
+;*---------------------------------------------------------------------*/
+(define (http-file-not-found file)
+   (let ((req (or (current-request) (anonymous-request))))
+      (instantiate::http-response-hop
+	 (request req)
+	 (start-line (http-start-line req "404 Not Found"))
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (charset (hop-charset))
+	 (xml (<HTML>
+		 (<EHEAD> (current-request))
+		 (<BODY>
+		    (<CENTER>
+		       (<ETABLE>
+			  (<TR>
+			     (<ETD> :class "logo" :valign 'top
+				(<EIMG> :src "error2.png"))
 			     (<ETD>
 				(<TABLE> :width "100%"
 				   (<TR> (<ETD> :class "title"
-					    (format "~a service!"
-						    (string-capitalize key))))
+					    "File not found!"))
 				   (<TR> (<ETD> :class "msg"
 					    (<SPAN> :class "filenotfound"
-					       file)))
-				   (<TR> (<ETD> :class "dump"
-					    (<SPAN> msg)))))))))))))
+					       file))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-service-not-found ...                                       */
+;*---------------------------------------------------------------------*/
+(define (http-service-not-found file)
+   (define (illegal-service key msg)
+      (let ((req (or (current-request) (anonymous-request))))
+	 (instantiate::http-response-hop
+	    (request req)
+	    (start-line (http-start-line req "404 Not Found"))
+	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	    (backend (hop-xml-backend))
+	    (content-type (xml-backend-mime-type (hop-xml-backend)))
+	    (xml (<HTML>
+		    (<EHEAD> (current-request))
+		    (<BODY>
+		       (<CENTER>
+			  (<ETABLE>
+			     (<TR>
+				(<ETD> :class "logo" :valign 'top
+				   (<EIMG> :src "warning.png"))
+				(<ETD>
+				   (<TABLE> :width "100%"
+				      (<TR> (<ETD> :class "title"
+					       (format "~a service!"
+						       (string-capitalize key))))
+				      (<TR> (<ETD> :class "msg"
+					       (<SPAN> :class "filenotfound"
+						  file)))
+				      (<TR> (<ETD> :class "dump"
+					       (<SPAN> msg))))))))))))))
    (define (illegal-service-message msg)
       (format "You are trying to execute an ~a service!
 <br><br>
@@ -270,7 +285,7 @@ Reloading the page is the only way to fix this problem." msg))
       (cond
 	 ((expired-service-path? file)
 	  (illegal-service "expired"
-			   "You are trying to executed an expired service!
+			   "You are trying to execute an expired service!
 <br><br>
 This happens because at creation time, the service has been registered with
 a timeout which has now expired. The service is then no longer available."))
@@ -327,10 +342,17 @@ a timeout which has now expired. The service is then no longer available."))
 ;*    http-internal-error ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-internal-error e msg)
-   (let ((s (with-error-to-string (lambda () (error-notify e)))))
+   (let ((s (cond
+	       ((string? e)
+		e)
+	       ((&exception? e)
+		(with-error-to-string (lambda () (exception-notify e))))
+	       (else
+		(with-output-to-string (lambda () (display e))))))
+	 (req (or (current-request) (anonymous-request))))
       (instantiate::http-response-hop
-	 (request (or (current-request) (anonymous-request)))
-	 (start-line "HTTP/1.0 501 Internal Server Error")
+	 (request req)
+	 (start-line (http-start-line req "500 Internal Server Error"))
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
@@ -487,65 +509,71 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 ;*    http-warning ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (http-warning msg #!optional dump)
-   (instantiate::http-response-hop
-      (request (current-request))
-      (start-line "HTTP/1.0 200 ok")
-      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-      (backend (hop-xml-backend))
-      (content-type (xml-backend-mime-type (hop-xml-backend)))
-      (charset (hop-charset))
-      (xml (<HTML>
-	      (<EHEAD> (current-request))
-	      (<BODY>
-		 (<CENTER>
-		    (<ETABLE>
-		       (<TR>
-			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "warning.png"))
-			  (<ETD>
-			     (<TABLE> :width "100%"
-				(<TR> (<ETD> :class "title" "Warning"))
-				(<TR> (<ETD> :class "msg" msg))
-				(<TR> (<ETD> :class "dump" (or dump "")))))))))))))
+   (let ((req (or (current-request) (anonymous-request))))
+      (instantiate::http-response-hop
+	 (request req)
+	 (start-line (http-start-line req "200 ok"))
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
+	 (xml (<HTML>
+		 (<EHEAD> (current-request))
+		 (<BODY>
+		    (<CENTER>
+		       (<ETABLE>
+			  (<TR>
+			     (<ETD> :class "logo" :valign 'top
+				(<EIMG> :src "warning.png"))
+			     (<ETD>
+				(<TABLE> :width "100%"
+				   (<TR> (<ETD> :class "title"
+					    "Warning"))
+				   (<TR> (<ETD> :class "msg"
+					    msg))
+				   (<TR> (<ETD> :class "dump"
+					    (or dump ""))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-service-unavailable ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (http-service-unavailable e)
-   (instantiate::http-response-hop
-      (request (if (http-request? e)
+   (let ((req (if (http-request? e)
 		   e
-		   (or (current-request) (anonymous-request))))
-      (start-line "HTTP/1.0 503 Service Unavailable")
-      (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-      (backend (hop-xml-backend))
-      (content-type (xml-backend-mime-type (hop-xml-backend)))
-      (charset (hop-charset))
-      (xml (<HTML>
-	      (<EHEAD> (current-request))
-	      (<BODY>
-		 (<CENTER>
-		    (<ETABLE>
-		       (<TR>
-			  (<ETD> :class "logo" :valign 'top
-			     (<EIMG> :src "error.png"))
-			  (<ETD>
-			     (<TABLE> :width "100%"
-				(<TR> (<ETD> :class "title" "Service Unavailable"))
-				(<TR> (<ETD> :class "msg" ""))
-				(<TR> (<ETD> :class "dump"
-					 (<PRE> (if (http-request? e)
-						    (http-request-path e)
-						    e))))))))))))))
+		   (or (current-request) (anonymous-request)))))
+      (instantiate::http-response-hop
+	 (request req)
+	 (start-line (http-start-line req "503 Service Unavailable"))
+	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (backend (hop-xml-backend))
+	 (content-type (xml-backend-mime-type (hop-xml-backend)))
+	 (charset (hop-charset))
+	 (xml (<HTML>
+		 (<EHEAD> (current-request))
+		 (<BODY>
+		    (<CENTER>
+		       (<ETABLE>
+			  (<TR>
+			     (<ETD> :class "logo" :valign 'top
+				(<EIMG> :src "error.png"))
+			     (<ETD>
+				(<TABLE> :width "100%"
+				   (<TR> (<ETD> :class "title" "Service Unavailable"))
+				   (<TR> (<ETD> :class "msg" ""))
+				   (<TR> (<ETD> :class "dump"
+					    (<PRE> (if (http-request? e)
+						       (http-request-path e)
+						       e)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-remote-error ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-remote-error host e)
-   (let ((s (with-error-to-string (lambda () (error-notify e)))))
+   (let ((s (with-error-to-string (lambda () (error-notify e))))
+	 (req (current-request)))
       (instantiate::http-response-hop
-	 (request (current-request))
-	 (start-line "HTTP/1.0 503 Service Unavailable")
+	 (request req)
+	 (start-line (http-start-line req "503 Service Unavailable"))
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
@@ -571,10 +599,11 @@ Reloading the page is the only way to fix this problem.")))))))))))))
 ;*    http-io-error ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (http-io-error e)
-   (let ((s (with-error-to-string (lambda () (error-notify e)))))
+   (let ((s (with-error-to-string (lambda () (error-notify e))))
+	 (req (current-request)))
       (instantiate::http-response-hop
-	 (request (current-request))
-	 (start-line "HTTP/1.0 404 Not Found")
+	 (request req)
+	 (start-line (http-start-line req "404 Not Found"))
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
@@ -608,5 +637,4 @@ Reloading the page is the only way to fix this problem.")))))))))))))
       (start-line "HTTP/1.0 502 Bad Gateway")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Gateway Timeout ~a</body></html>" e))))
-
 

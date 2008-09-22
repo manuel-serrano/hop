@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Wed Apr 16 10:56:46 2008 (serrano)                */
+/*    Last change :  Sun Aug 17 06:22:55 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
@@ -137,6 +137,7 @@ filechooser input.filechooser-location {
 filechooser div.filechooser-files {
   height: 50ex;
   overflow: auto;
+  width: 100%;
 }
 
 filechooser table.filechooser-body {
@@ -246,11 +247,13 @@ filechooser table.filechooser-places th {
   padding: 3px;
   text-align: left;
   background: #dddddd;
+  vertical-align: top;
 }
 
 filechooser table.filechooser-places td {
   font-family: $hopfile-font-mono;
   padding: 1px 0px 0px 3px;
+  vertical-align: top;
 }
 
 filechooser table.filechooser-places td.filechooser-icon {
@@ -386,6 +389,18 @@ filechooser div.filechooser-okcancel button.filechooser-button-run,
 filechooser div.filechooser-okcancel button.filechooser-button-run:hover {
   background-image: $hopfile-run-icon;
   display: none;
+}
+
+filechooser span.filechooser-button-cancel:before {
+  content: "Cancel";
+}
+  
+filechooser span.filechooser-button-open:before {
+  content: "Open";
+}
+  
+filechooser span.filechooser-button-run:before {
+  content: "Run";
 }
 
 /*---------------------------------------------------------------------*/

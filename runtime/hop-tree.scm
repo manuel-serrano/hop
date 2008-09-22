@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Apr 14 17:20:36 2008 (serrano)                */
+;*    Last change :  Wed Sep 17 17:03:57 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -46,6 +46,7 @@
 	    (class html-trbody::xml-element)
 	    
 	    (class html-tree-leaf::xml-element
+	       (klass read-only)
 	       (value read-only)
 	       (icon read-only)
 	       (iconerr read-only)))
@@ -112,12 +113,16 @@
 ;*    <TRLEAF> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <TRLEAF> ((id #unspecified string)
+			       (class #f)
 			       (value #unspecified)
 			       (inline #t boolean)
 			       (icon #t)
 			       body)
    (instantiate::html-tree-leaf
       (markup 'tree-leaf)
+      (klass (if (string? class)
+		 (string-append "hop-tree-leaf " class)
+		 "hop-tree-leaf"))
       (id (xml-make-id id 'TRLEAF))
       (value value)
       (icon (tree-icon icon inline "file.png"))
@@ -362,12 +367,16 @@
 ;*    html-write-tree-leaf ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (html-write-tree-leaf obj::html-tree-leaf parent p be)
-   (with-access::html-tree-leaf obj (icon iconerr body value)
+   (with-access::html-tree-leaf obj (icon iconerr body value klass)
       (display "hop_make_tree_leaf(" p)
       ;; parent
       (display "document.getElementById('" p)
       (display parent p)
       (display "'), " p)
+      ;; the class
+      (display "\"" p)
+      (display klass p)
+      (display "\", " p)
       ;; the body
       (display #\" p)
       (let ((sbody (let ((ps (open-output-string)))

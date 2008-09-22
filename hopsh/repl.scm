@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Thu Mar 27 15:29:22 2008 (serrano)                */
+;*    Last change :  Mon May 26 05:10:32 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
@@ -20,14 +20,14 @@
    (import  hopsh_param
 	    hopsh_login)
    
-   (export  (hopsh-eval ::bstring)
+   (export  (hopsh-eval ::obj)
 	    (hopsh-eval-string ::bstring)
 	    (hopsh-repl)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopsh-eval ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (hopsh-eval str)
+(define (hopsh-eval exp)
    (with-handler
       (lambda (e)
 	 (if (&error? e)
@@ -38,38 +38,32 @@
 		(sigsetmask 0)
 		#unspecified)
 	     (raise e)))
-      (hopsh-eval-string str)))
+      (if (string? exp)
+	  (hopsh-eval-string exp)
+	  (hopsh-eval-expression exp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopsh-eval-string ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hopsh-eval-string str)
-   (cond
-      ((=fx (string-length str) 0)
-       ;; an empty command
-       "")
-      ((char=? (string-ref str 0) #\()
-       ;; a parenthetical expression
-       (eval-expression str))
-      (else
-       ;; a command
-       (eval-command str))))
+   (if (=fx (string-length str) 0)
+       ""
+       (eval-command str)))
 
 ;*---------------------------------------------------------------------*/
-;*    eval-expression ...                                              */
+;*    hopsh-eval-expression ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (eval-expression str)
-   (hopsh-exec (expression->url str)))
+(define (hopsh-eval-expression exp)
+   (hopsh-exec (expression->url exp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    expression->url ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (expression->url str)
-   (let ((obj (with-input-from-string str read)))
-      (make-hopsh-url "hop"
-		      (hopsh-eval-service)
-		      (string-append "&exp="
-				     (url-encode (obj->string obj))))))
+(define (expression->url obj)
+   (make-hopsh-url "hop"
+		   (hopsh-eval-service)
+		   (string-append "&exp="
+				  (url-path-encode (obj->string obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    eval-command ...                                                 */
@@ -159,8 +153,17 @@
 			(substring (car opts)
 				   1
 				   (string-length (car opts)))
-			(url-encode (cadr opts)))
+			(url-path-encode (cadr opts)))
 		(loop (cddr opts)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopsh-read-line-or-exp ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hopsh-read-line-or-exp)
+   (let ((c (peek-char)))
+      (if (eq? c #\()
+	  (read)
+	  (read-line))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopsh-repl ...                                                   */
@@ -168,9 +171,9 @@
 (define (hopsh-repl)
    (let loop ()
       (hopsh-prompt)
-      (let ((str (read-line)))
-	 (unless (eof-object? str)
-	    (print (hopsh-eval str))
+      (let ((exp (hopsh-read-line-or-exp)))
+	 (unless (eof-object? exp)
+	    (print (hopsh-eval exp))
 	    (loop)))))
 
 ;*---------------------------------------------------------------------*/

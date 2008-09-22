@@ -1,4 +1,5 @@
 ((name "trace")
  (author "M. Serrano")
- (version "1.0.0")
+ (version "@VERSION@")
+ (date "@DATE@")
  (title "A simple server debug (trace) facility"))

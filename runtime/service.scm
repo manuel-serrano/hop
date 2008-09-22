@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Apr 17 16:54:01 2008 (serrano)                */
+;*    Last change :  Wed Sep  3 07:25:55 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -29,6 +29,7 @@
 	    __hop_xml
 	    __hop_hop-extra
 	    __hop_hop-file
+	    __hop_prefs
 	    __hop_js-lib
 	    __hop_user
 	    __hop_weblets)
@@ -89,7 +90,8 @@
 ;*    Create the first HOP services.                                   */
 ;*---------------------------------------------------------------------*/
 (define (init-hop-services!)
-   (init-hop-file-services!))
+   (init-hop-file-services!)
+   (init-hop-prefs-services!))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-service-url ...                                              */
@@ -107,12 +109,11 @@
 ;*    hop-service-path? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-service-path? path)
-   (let ((l1 (string-length (hop-service-base)))
-	 (lp (string-length path)))
-      (and (substring-at? path (hop-service-base) 0)
-	   (or (=fx lp l1)
-	       (and (>fx lp l1)
-		    (char=? (string-ref path l1) #\/))))))
+   (when (substring-at? path (hop-service-base) 0)
+      (let ((l1 (string-length (hop-service-base)))
+	    (lp (string-length path)))
+	 (or (=fx lp l1)
+	     (and (>fx lp l1) (char=? (string-ref path l1) #\/))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-request-service-name ...                                     */
@@ -305,11 +306,11 @@
 ;*    initial weblet.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
-   (when (http-request-localhostp req)
-      (with-access::http-request req (path user service)
-	 (when (hop-service-path? path)
+   (when (http-server-request? req)
+      (with-access::http-server-request req (abspath user service)
+	 (when (hop-service-path? abspath)
 	    (mutex-lock! *service-mutex*)
-	    (let loop ((svc (hashtable-get *service-table* path))
+	    (let loop ((svc (hashtable-get *service-table* abspath))
 		       (armed #f))
 	       (mutex-unlock! *service-mutex*)
 	       (cond
@@ -334,13 +335,15 @@
 		   (let ((ini (hop-initial-weblet)))
 		      (cond
 			 ((and (string? ini)
-			       (substring-at? path (hop-service-base) 0)
-			       (let ((l1 (string-length path))
+			       (substring-at? abspath (hop-service-base) 0)
+			       (let ((l1 (string-length abspath))
 				     (l2 (string-length (hop-service-base))))
 				  (or (=fx l1 l2)
 				      (and (=fx l1 (+fx l2 1))
-					   (char=? (string-ref path l2) #\/)))))
-			  (set! path (string-append (hop-service-base) "/" ini))
+					   (char=? (string-ref abspath l2)
+						   #\/)))))
+			  (set! abspath
+				(string-append (hop-service-base) "/" ini))
 			  ;; resume the hop loop in order to autoload
 			  ;; the initial weblet
 			  'hop-resume)
@@ -348,7 +351,7 @@
 			  #f)
 			 ((autoload-filter req)
 			  (mutex-lock! *service-mutex*)
-			  (loop (hashtable-get *service-table* path) #t))
+			  (loop (hashtable-get *service-table* abspath) #t))
 			 (else
 			  #f))))))))))
 
@@ -373,7 +376,8 @@
 		       "Service re-definition not permitted"
 		       "use `-g' or `--allow-service-override' options to enable re-definitions"))))
 	 (hashtable-put! *service-table* path svc)
-	 (hashtable-put! *service-table* (string-append path "/") svc)
+	 (unless (char=? #\/ (string-ref path (-fx (string-length path) 1)))
+	    (hashtable-put! *service-table* (string-append path "/") svc))
 	 (let ((l (string-length path)))
 	    (let loop ((i (+fx (string-length (hop-service-base)) 1)))
 	       (cond

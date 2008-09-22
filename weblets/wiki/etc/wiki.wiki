@@ -6,10 +6,12 @@ This simple weblet displays ,(<WIKIREF> "Wiki documents").
 
 ~~
 ,(<TABLE> :class "weblet-facts"
-  (<TR> (<TH> (string-capitalize "") " version") (<TD> "1.1.0"))
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "") " version") (<TD> "1.1.0"))
   (<TR> (<TH> "Hop min version") (<TD> "1.9.0 "))
   (<TR> (<TH> "Hop max version") (<TD> ""))
-  (<TR> (<TH> "Date") (<TD> "18 April 2008"))
+  (<TR> (<TH> "Date") (<TD> "20 June 2008"))
   (<TR> (<TH> "Category") (<TD> "hop")))
 
 

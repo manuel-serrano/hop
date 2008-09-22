@@ -3,17 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Thu Apr 10 10:41:48 2008 (serrano)                */
+/*    Last change :  Wed Sep 17 17:04:33 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
-
-/*---------------------------------------------------------------------*/
-/*    Autoconfiguration                                                */
-/*---------------------------------------------------------------------*/
-var hop_tree_correct_browserp =
-   hop_mozillap() && !hop_msiep() && !hop_khtmlp() && !hop_operap();
 
 /*---------------------------------------------------------------------*/
 /*    hop tree default connection icons                                */
@@ -36,7 +30,7 @@ var hop_tree_default_open_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA
 var hop_tree_default_close_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSoOOKfPRwAAAJRJREFUOMvFUzkShDAMEwwfMl8i3b5nO/Meuvg5KUUBuwMkZpKlWM1kcliSVcTAQ3Sfgyp4LYZw5rhQBVNKJOO+lKRyN+VtAlVwHCeXEONcfA9hSzYAgMjLNchrEWYLgJkAuuFYqIKdr32TyADILwZyEDcluHZuTiAFcVUCr7Pl1L5K5Ii//8DsnZuU9ptZ4NNZ+h9WRsVBhT94M5oAAAAASUVORK5CYII=";
 var hop_tree_default_device_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wYSBSsEwWkXGAAAAJRJREFUOMvtkrENwyAURB8SBS1lxvAKtB6HNWAExoCSNTxCSijpSEWU2IkclCpSrrrmnfTvH/wlhrHW9lnYey/kgI0xU3DOGaBLa213zk3BIYS7lwDbtlFrfQuUUlgvKySIS6S19hyglKKUgtb6JQwQrxGWY7jc3XSqfVcSoLXGpz2klI4Bj6VMvBBAjB30bzb047oBYBc056hSeS0AAAAASUVORK5CYII=";
 
-if( hop_msiep() ) {
+if( !hop_config.inline_image ) {
    /* IE does not support inline images! */
    var icon_dir = hop_share_directory() + "/icons/hop-tree/";
    
@@ -650,14 +644,14 @@ function hop_make_tree( parent, id, visible, level, proc, title,
 /*---------------------------------------------------------------------*/
 /*    hop_make_tree_leaf ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_make_tree_leaf( tree, content, value, icon, iconerr ) {
+function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
    var level = tree.level + 1;
    var leaf = document.createElement( "table" );
 
    leaf.setAttribute( "cellpadding", 0 );
    leaf.setAttribute( "cellspacing", 0 );
    leaf.setAttribute( "border", 0 );
-   leaf.className = "hop-tree-leaf";
+   leaf.className = klass;
 
    /* the body of the table */
    var tb = document.createElement( "tbody" );

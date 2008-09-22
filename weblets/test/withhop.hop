@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Mon Dec  3 05:40:55 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Mon May  5 11:41:37 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing with-hop                                                 */
 ;*=====================================================================*/
@@ -91,7 +91,7 @@ then the test failed.")
 	 "This test calls a service that returns a list of XML elements.")
       (let ((res (<SPAN> :style "color: red" "???")))
 	 (<DIV>
-	    (<BUTTON> :onclick ~(with-hop ($(service (x)
+	    (<BUTTON> :onclick ~(with-hop ($(service ()
 					       `((one ,(<SPAN> "o"))
 						 (two ,(<SPAN> "k")))))
 				   (lambda (v)

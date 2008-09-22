@@ -3,18 +3,25 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Apr 18 09:11:08 2008 (serrano)                */
+#*    Last change :  Fri Sep 19 14:26:22 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
-#*    Configuration                                                    */
+#*    CONFIG ...                                                       */
 #*---------------------------------------------------------------------*/
-include ../../etc/Makefile.hopconfig
-include ../../etc/Makefile.version
+TITLE = doc
+VERSION = 1.1.0
+MINHOP = $(HOPRELEASE) 
+MAXHOP =
+CATEGORY = hop
+DATE = $(HOPDATE)
 
+#*---------------------------------------------------------------------*/
+#*    Population                                                       */
+#*---------------------------------------------------------------------*/
 HOP_POP         = doc.hop config.hop \
                   api.hop tutorials.hop libraries.hop weblets.hop \
                   search.hop widgets.hop wiki.hop services.hop index.hop
@@ -23,12 +30,13 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   fileselect.wiki filters.wiki foldlist.wiki head.wiki \
                   hooks.wiki hss.wiki html.wiki http-message.wiki \
                   http-request.wiki http-response.wiki http.wiki \
-                  img.wiki input.wiki inline.wiki md5.wiki notepad.wiki \
-                  pan.wiki param-misc.wiki param-rc.wiki parameter.wiki \
+                  img.wiki input.wiki inline.wiki md5.wiki sha1.wiki aes.wiki \
+                  notepad.wiki pan.wiki param-misc.wiki \
+                  param-rc.wiki parameter.wiki \
                   read.wiki service.wiki slider.wiki sorttable.wiki \
-                  sound.wiki sqlite.wiki tabslider.wiki timeout.wiki \
-                  tooltip.wiki tree.wiki url.wiki wiki.wiki window.wiki \
-                  xml.wiki symbol.wiki rss.wiki history.wiki \
+                  sound.wiki sqlite.wiki multimedia.wiki tabslider.wiki \
+                  timeout.wiki tooltip.wiki tree.wiki url.wiki wiki.wiki \
+                  window.wiki xml.wiki symbol.wiki rss.wiki history.wiki \
                   regexp.wiki output.wiki webdav.wiki \
                   charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki
 CORE_POP	= core.wiki
@@ -44,9 +52,10 @@ EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   sorttable.hop sound-1.hop sound-2.hop sound-3.hop \
                   tabslider-1.hop tabslider-2.hop \
                   tooltip-1.hop tree-1.hop tree-2.hop \
+                  prefs-1.hop \
                   wiki.hop wiki2.hop window.hop history-1.hop history-2.hop \
                   cookie.hop webdav.hop svg.hop svg2.hop mathml.hop \
-                  login.hop json.hop busyanim.hop
+                  login.hop json.hop busyanim.hop musicplay.hop
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \
@@ -57,8 +66,8 @@ TUTORIAL_POP	= 00-hello.wiki 01-ajax.wiki 02-hss.wiki 03-proxy.wiki \
                   10-javascript.wiki
 
 POPULATION	= Makefile .afile doc.hss doc.scm \
-                  examples api core wiki tutorials etc/weblet.info \
-                  etc/logo.png etc/doc.wiki \
+                  examples api core wiki tutorials etc/weblet.info.in \
+                  etc/logo.png etc/doc.wiki.in \
                   etc/sound1.mp3 etc/sound2.mp3 \
                   etc/kangaroo.svgz \
                   etc/favicon.png \
@@ -71,7 +80,54 @@ POPULATION	= Makefile .afile doc.hss doc.scm \
 		  $(WIKI_POP:%=wiki/%) \
 		  $(TUTORIAL_POP:%=tutorials/%)
 
-build: .afile
+build: etc/weblet.info etc/$(TITLE).wiki .afile
+
+clean:
+
+distclean:
+	$(RM) etc/weblet.info etc/$(TITLE).wiki
+
+#*---------------------------------------------------------------------*/
+#*    Configuration                                                    */
+#*---------------------------------------------------------------------*/
+include ../../etc/Makefile.hopconfig
+include ../../etc/Makefile.version
+
+#*---------------------------------------------------------------------*/
+#*    Dependencies                                                     */
+#*---------------------------------------------------------------------*/
+etc/weblet.info: etc/weblet.info.in Makefile
+	cat $< | sed -e "s|@HZ@|$(HZ)|" \
+                     -e "s|@TITLE@|$(TITLE)|" \
+                     -e "s|@VERSION@|$(VERSION)|" \
+                     -e "s|@MINHOP@|$(MINHOP)|" \
+                     -e "s|@MAXHOP@|$(MAXHOP)|" \
+                     -e "s|@PUBLISHER@|$(PUBLISHER)|" \
+                     -e "s|@DATE@|$(DATE)|" \
+                     -e "s|@PRIVATEHOST@|$(PRIVATEHOST)|" \
+                     -e "s|@PUBLICHOST@|$(PUBLICKHOST)|" \
+                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@
+
+%.wiki: %.wiki.in Makefile
+	cat $< | sed -e "s|@VERSION@|$(VERSION)|" \
+                     -e "s|@MINHOP@|$(MINHOP)|" \
+                     -e "s|@HZ@|$(HZ)|" \
+                     -e "s|@MAXHOP@|$(MAXHOP)|" \
+                     -e "s|@HOST@|$(PRIVATEHOST)|" \
+                     -e "s|@DATE@|$(DATE)|" \
+                     -e "s|@PUBLISHER@|$(PUBLISHER)|" \
+                     -e "s|@TITLE@|$(TITLE)|" \
+                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@
+
+config.hop: config.hop.in Makefile
+	cat $< | sed -e "s|@VERSION@|$(VERSION)|" \
+                     -e "s|@HOPRELEASE@|$(HOPRELEASE)|" \
+                     -e "s|@TITLE@|$(TITLE)|" \
+                     -e "s|@MINHOP@|$(MINHOP)|" \
+                     -e "s|@DATE@|$(DATE)|" \
+                     -e "s|@HOST@|$(PRIVATEHOST)|" \
+                     -e "s|@CATEGORY@|$(CATEGORY)|" > $@
 
 .afile: $(HOP_POP)
 	$(AFILE) -suffix hop $(HOP_POP) -o .afile
+

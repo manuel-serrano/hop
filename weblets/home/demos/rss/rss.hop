@@ -4,25 +4,33 @@
 (define (make-rss channel items)
    (<FL> items))
 
-(define (make-channel link title)
+(define (make-channel #!key link title)
    (<STRONG> (<A> :href link title)))
 
-(define (make-item link title date subject descr)
+(define (alternate links)
+   (when (pair? links)
+      (let ((e (assq 'alternate links)))
+	 (when (pair? e)
+	    (let ((c (assq 'href (cdr e))))
+	       (when (pair? c)
+		  (cdr c)))))))
+
+(define (make-item #!key links title date categories summary)
    (<FLITEM>
       (<FLHEAD> title)
       (<DIV>
 	 :class "entry"
-	 (<A> :href link title)
+	 (<A> :href (alternate links) title)
 	 (if date (list "(" date ")") "")
-	 (if subject (<I> subject))
-	 descr)))
+	 (if categories (<I> categories))
+	 summary)))
 
 (define (rss->html url)
    (with-url url
       (lambda (h)
 	 (with-input-from-string h
 	    (lambda ()
-	       (rss-parse (current-input-port) make-rss make-channel make-item))))))
+	       (feed-parse (current-input-port) make-rss make-channel make-item))))))
 
 ;; main function
 (define-service (home/demos/rss)

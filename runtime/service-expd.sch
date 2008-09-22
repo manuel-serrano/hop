@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Mar 30 15:49:25 2008 (serrano)                */
+;*    Last change :  Wed Jun 18 08:42:25 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -47,7 +47,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    expand-service ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (expand-service id url wid timeout ttl args body)
+(define (expand-service id wid url timeout ttl args body)
    (let ((proc (if (symbol? wid) wid 'svc))
 	 (errid (if (symbol? wid) `',wid wid)))
       `(let* ((,proc ,(if (pair? body)
@@ -80,7 +80,7 @@
 	      (file (the-loading-file))
 	      (svc (instantiate::hop-service
 		      (wid ,(if (symbol? wid) `',wid wid))
-		      (id (string->symbol ,url))
+		      (id ,(if (symbol? id) `',id `(string->symbol ,url)))
 		      (path path)
 		      (args ',args)
 		      (%exec exec)
@@ -91,6 +91,8 @@
 		      (ttl ,ttl)
 		      (resource (and (string? file) (dirname file)))
 		      (source (and (string? file) (basename file))))))
+	  (unless (<fx ,ttl 0)
+	     (tprint "hop-service id=" ',id " wid=" ',wid " ttl=" ,ttl))
 	  (register-service! svc))))
    
 ;*---------------------------------------------------------------------*/
@@ -103,7 +105,7 @@
 	   (error 'define-service "Illegal service declaration" x)
 	   (let* ((url (symbol->string id))
 		  (wid (string->symbol (car (file-name->list url))))
-		  (svc (expand-service id `(make-hop-url-name ,url) wid -1 -1 args body)))
+		  (svc (expand-service id wid `(make-hop-url-name ,url) -1 -1 args body)))
 	      `(define ,id ,(e (evepairify svc x) e)))))
       (else
        (error 'define-service "Illegal form" x))))
@@ -131,9 +133,8 @@
 		 (else
 		  (let ((svc (expand-service
 			      #f
-			      url
 			      '(hop-service-weblet-wid)
-			      tmt ttl (car a) (cdr a))))
+			      url tmt ttl (car a) (cdr a))))
 		     (e (evepairify svc x) e)))))
 	     ((eq? (car a) :timeout)
 	      (if (null? (cdr a))
@@ -156,7 +157,7 @@
 	     ((eq? (car a) :name)
 	      (if (null? (cdr a))
 		  (error 'service
-			 "Illegal service declaration (missing url)"
+			 "Illegal service declaration (missing name)"
 			 x)
 		  (loop (cddr a)
 			tmt
@@ -251,7 +252,7 @@
 		  (loop (cddr opts)
 			(cons* (cadr opts) (car opts) args)
 			success failure))))
-	   ;; a localte call
+	   ;; a local call
 	   (let ((nx `(with-hop-local ((hop-service-proc ,svc) ,@a) ,@opts)))
 	      (e (evepairify nx x) e))))
       (else

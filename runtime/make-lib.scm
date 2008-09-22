@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed Apr  2 12:36:54 2008 (serrano)                */
+;*    Last change :  Sun Aug 31 15:44:53 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -14,8 +14,6 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_makelib
 
-   (option  (set! *dlopen-init* "hop_e"))
-   
    (import __hop_configure
 	   __hop_param
 	   __hop_expanders
@@ -81,6 +79,8 @@
 	   
 	   (class %http-message)
 	   (class http-request)
+	   (class http-server-request)
+	   (class http-proxy-request)
 	   (class %http-response)
 	   (class http-response-remote)
 	   (class http-response-filter)
@@ -105,7 +105,7 @@
 	   (class xml)
 	   (class xml-markup)
 	   (class xml-element)
-	   (class xml-script)
+	   (class xml-cdata)
 	   (class xml-html)
 
 	   (class cache)

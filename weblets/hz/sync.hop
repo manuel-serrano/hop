@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/hz/sync.hop                     */
+;*    serrano/prgm/project/hop/1.9.x/weblets/hz/sync.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed Nov 28 11:16:04 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Mon Apr 21 17:52:20 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
 ;*=====================================================================*/
@@ -85,12 +85,8 @@
 		:timeout (* 1000 (hz-connection-timeout))
 		:header (if (pair? auth)
 			    (list (list authorization:
-					(string-append "Basic "
-						       (base64-encode
-							(string-append
-							 (car auth)
-							 ":"
-							 (cdr auth))))))
+					(http-basic-authorization (car auth)
+								  (cdr auth))))
 			    '()))))
        '()))
 

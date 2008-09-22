@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Apr 16 08:48:23 2008 (serrano)                */
+#*    Last change :  Tue Sep  9 20:02:05 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -27,13 +27,12 @@ FLASHOBJS	= HopServevt.swf HopAudio.swf HopVideo.swf \
 FLASHSRC	= HopServevt.as HopAudio.as HopVideo.as
 FLASH		= $(FLASHOBJS) $(FLASHSRC)
 
-RTSSRC		= hopscheme.js hop-dom.js hop-event.js hop-serialize.js \
-                  base64.js hop-request.js hop-history.js hop-lib.js
+RTS		= $(RTSCONFIG)
 
-RTS		= hop-paned.css hop-sorttable.js hop-tree.js \
-		  hop-error.hss hop-paned.js hop-table.js hop.css \
+EXTRA		= hop-paned.css hop-sorttable.js hop-tree.js \
+		  hop-error.hss hop-paned.js hop.css \
                   hop-fx.js \
-                  md5.js \
+                  md5.js sha1.js aes.js \
 		  hop-lframe.css hop-slider.css hop-tabslider.css \
                   hop-notepad.hss hop-slider.js hop-tabslider.js \
 	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
@@ -43,6 +42,7 @@ RTS		= hop-paned.css hop-sorttable.js hop-tree.js \
                   hop-file.js hop-file.hss \
                   hop-fileselect.js hop-fileselect.css \
                   hop-tooltip.js hop-dashboard.js \
+                  hop-prefs.js hop-prefs.hss \
                   hop-debug.js hop-debug.css \
 		  hop-sound.js hop-sound.scm \
                   hop-audio.js hop-audio.hss \
@@ -75,13 +75,13 @@ ICONS_FCHOOSER	= cancel.png open.png run.png \
                   keyboard.png drag.png \
                   edit-add.png edit-remove.png
 
-ICONS		= bookcase.png important.png shadow-se.png \
+ICONS		= important.png shadow-se.png \
 		  busy-anim-16.gif logo-bg.png shadow-sw.png \
 		  dashboard.png notfound.png source.png \
-		  dict.png resize-grip.png stop.png \
+		  resize-grip.png stop.png \
 		  error.png shadow-e.png timeout.png \
 		  error2.png shadow-ne.png warning.png \
-		  hop-16x16.png hop.png hop-128x128.png \
+		  hop-16x16.png hop-48x48.png hop.png hop-128x128.png hop.svg \
                   shadow-s.png window-handle.png \
 		  $(ICONS_AUDIO:%=hop-audio/%) \
                   $(ICONS_PANED:%=hop-paned/%) \
@@ -100,7 +100,7 @@ BUTTONS		= cc.png firefox.png hop2.png inria.png opera.png \
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= $(RTSSRC) $(RTS) \
+POPULATION	= $(RTS) $(EXTRA) \
                   $(ICONS:%=icons/%) \
                   $(BUTTONS:%=buttons/%) \
                   editor \
@@ -117,9 +117,14 @@ build: hop.js $(FLASHSRC:%.as=flash/%.swf) hop-runtime.sch $(BACKEND)
 #*---------------------------------------------------------------------*/
 install:
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR) && \
-	install -m a+r $(BUILDSHAREDIR)/hop.js $(DESTDIR)$(HOPSHAREDIR)/hop.js; \
+        for p in hop.js hop-autoconf.js $(RTS); do \
+	  install -m a+r $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$$p.gz 2> /dev/null; \
+        done
+	  install -m a+r ../scheme2js/runtime/runtime.js $(DESTDIR)$(HOPSHAREDIR)/runtime.js; \
+	  $(GZIP) ../scheme2js/runtime/runtime.js -c > $(DESTDIR)$(HOPSHAREDIR)/runtime.js.gz; \
 	install -m a+r $(BUILDSHAREDIR)/hop-runtime.sch $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch; \
-        for p in $(RTS); do \
+        for p in $(EXTRA); do \
 	  install -m a+r $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/icons && \
@@ -142,7 +147,6 @@ install:
 	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
 	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/editor && \
 	install -m a+r $(BUILDSHAREDIR)/editor/* $(DESTDIR)$(HOPSHAREDIR)/editor
-	- $(GZIP) $(BUILDSHAREDIR)/hop.js -c > $(HOPSHAREDIR)/hop.js.gz 2> /dev/null
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
@@ -152,30 +156,33 @@ uninstall:
 	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/flash && \
 	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/buttons && \
 	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/editor && \
-        for p in $(RTS); do \
-	  /bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/$(RTS); \
+        for p in $(EXTRA); do \
+	  /bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/$(EXTRA); \
+        done
+	for p in $(RTS) hop-autoconf runtime hop; do \
+	  /bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  /bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
         done
 
 #*---------------------------------------------------------------------*/
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-hop.js: hop-autoconf.js \
-        ../scheme2js/runtime/runtime.js \
-        $(RTSSRC)
+hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
+	echo "/* Automatically generated file (don't edit) */" > $@
 	if [ "$(DEBUG) " != "yes " ]; then \
 	  cat $^ | sed -e "s%/[*]\([^*]\|[*][^/]\)*[*]/%%g" \
-                       -e "s|^[ \t]+$$||g" \
-                 > $@; \
+                       -e "/^[ \t]*$$/D" \
+                       -e "s|//[^\"]*$$||g" \
+                 >> $@; \
         else \
-	  cat $^ > $@; \
+	  cat $^ >> $@; \
         fi
-
 
 SCHEME2JS_RUNTIME = ../scheme2js/runtime
 include $(SCHEME2JS_RUNTIME)/Makefile.include
 EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
 EXPORTER_FLAGS = --module "hop-runtime" --constant
-EXPORTED_RTS = $(RTSSRC) $(filter %.js,$(RTS)) hop-autoconf.js
+EXPORTED_RTS = $(RTS) $(filter %.js,$(EXTRA)) hop-autoconf.js
 
 hop-runtime.sch: $(EXPORTER) $(EXPORTED_RTS)
 	$(EXPORTER) $(EXPORTER_FLAGS) -o $@ $(EXPORTED_RTS)

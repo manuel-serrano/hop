@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Apr 18 11:57:10 2008 (serrano)                */
+/*    Last change :  Fri Sep 19 15:03:10 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -20,8 +20,12 @@ $(define header-color "#fffff0")
 $(define title-color "#ddd")
 $(define pagearea-color "#fff")
 $(define table-header-background "#6357da")
-$(define table-header-markup-background "#d8a62a")
+$(define table-header-markup-background "#6357da")
 $(define table-header-class-background "#71d830")
+$(define table-header-parameter-background "#9482ff")
+$(define table-header-preference-background "#698ee0")
+$(define table-header-procedure-background "#5cb72a")
+$(define table-header-function-background "#433bff")
 $(define table-header-foreground "#fff")
 $(define table-background "#d8d7ff")
 $(define popup-menu-color "#eeeeee")
@@ -54,6 +58,16 @@ $(define button-padding "padding-left: 5px;
   padding-right: 5px;
   padding-top: 0;
   padding-bottom: 0")
+
+$(define attributes-width "8em")
+$(define rw-width "5em")
+$(define type-width "12em")
+$(define current-value-width "18em")
+
+$(define description-style (format "padding-left: 2px;
+ color: #000;
+ font-style: italic;
+ font-family: ~a" font-family))
 
 /*---------------------------------------------------------------------*/
 /*    Common CSS rules                                                 */
@@ -360,6 +374,7 @@ pagearea {
 /*--- doc -------------------------------------------------------------*/
 $(hop-hss-type! "doc" "div.doc")
 $(hop-hss-type! "toc" "div.toc")
+$(hop-hss-type! "logo" "div.logo")
 
 div.doc-title {
   border-bottom: 1px solid $border-color;
@@ -392,6 +407,11 @@ doc pre, doc textarea {
 
 div.code pre {
   background-color: $example-background;
+}
+
+div.code span.code-comment {
+  font-weight: bold;
+  color: orange;
 }
 
 doc span.href {
@@ -484,60 +504,78 @@ div.doc-arguments table, div.doc-fields table {
   background-color: $table-background;
 }
 
-div.procedure div.doc-arguments table tr th,
-div.procedure div.doc-arguments table tr td,
-div.parameter div.doc-arguments table tr th,
-div.parameter div.doc-arguments table tr td,
+/* function */
 div.function div.doc-arguments table tr th,
 div.function div.doc-arguments table tr td {
   width: 10em;
 }
 
-div.procedure div.doc-arguments table tr th + th ,
-div.procedure div.doc-arguments table tr td + td,
-div.parameter div.doc-arguments table tr th + th ,
-div.parameter div.doc-arguments table tr td + td,
 div.function div.doc-arguments table tr th + th ,
 div.function div.doc-arguments table tr td + td {
-  width: 12em;
+  width: $type-width;
 }
 
-div.procedure div.doc-arguments table tr th + th + th,
-div.procedure div.doc-arguments table tr td + td + td,
-div.parameter div.doc-arguments table tr th + th + th,
-div.parameter div.doc-arguments table tr td + td + td,
 div.function div.doc-arguments table tr th + th + th,
 div.function div.doc-arguments table tr td + td + td {
   width: auto;
 }
 
-div.procedure div.doc-arguments table tr td + td,
-div.parameter div.doc-arguments table tr td + td,
 div.function div.doc-arguments table tr td + td {
   font-family: monospace;
   color: #00a;
 }
 
-div.procedure div.doc-arguments table tr td + td + td,
-div.parameter div.doc-arguments table tr td + td + td,
 div.function div.doc-arguments table tr td + td + td {
-  font-family: $font-family;
-  color: #000;
+  $description-style;
 }
 
+div.function div.doc-arguments th {
+  background-color: $table-header-function-background;
+}
+
+/* procedure */
+div.procedure div.doc-arguments table tr th,
+div.procedure div.doc-arguments table tr td {
+  width: 10em;
+}
+
+div.procedure div.doc-arguments table tr th + th ,
+div.procedure div.doc-arguments table tr td + td {
+  width: $type-width;
+}
+
+div.procedure div.doc-arguments table tr th + th + th,
+div.procedure div.doc-arguments table tr td + td + td {
+  width: auto;
+}
+
+div.procedure div.doc-arguments table tr td + td {
+  font-family: monospace;
+  color: #00a;
+}
+
+div.procedure div.doc-arguments table tr td + td + td {
+  $description-style;
+}
+
+div.procedure div.doc-arguments th {
+  background-color: $table-header-procedure-background;
+}
+
+/* markup */
 div.markup div.doc-arguments table tr th,
 div.markup div.doc-arguments table tr td {
-  width: 10em;
+  width: $attributes-width;
 }
 
 div.markup div.doc-arguments table tr th + th ,
 div.markup div.doc-arguments table tr td + td {
-  width: 12em;
+  width: $type-width;
 }
 
 div.markup div.doc-arguments table tr th + th + th ,
 div.markup div.doc-arguments table tr td + td + td {
-  width: 12em;
+  width: $current-value-width;
 }
 
 div.markup div.doc-arguments table tr th + th + th + th,
@@ -556,8 +594,74 @@ div.markup div.doc-arguments table tr td + td + td {
 }
 
 div.markup div.doc-arguments table tr td + td + td + td {
+  $description-style;
+}
+
+div.markup div.doc-arguments th {
+  background-color: $table-header-markup-background;
+}
+
+/* parameter */
+div.parameter div.doc-arguments th {
+  background-color: $table-header-parameter-background;
+}
+
+div.parameter div.doc-arguments table tr th,
+div.parameter div.doc-arguments table tr td {
+  width: $rw-width;
+}
+
+div.parameter div.doc-arguments table tr th + th ,
+div.parameter div.doc-arguments table tr td + td {
+  width: $type-width;
+}
+
+div.parameter div.doc-arguments table tr td + td {
+  font-family: monospace;
+  color: #00a;
+}
+
+div.parameter div.doc-arguments table tr th + th + th,
+div.parameter div.doc-arguments table tr td + td + td {
+  width: $current-value-width;
+}
+
+div.parameter div.doc-arguments table tr td + td + td {
   font-family: $font-family;
   color: #000;
+}
+
+div.parameter div.doc-arguments table tr th + th + th + th,
+div.parameter div.doc-arguments table tr td + td + td + td {
+  width: auto;
+}
+
+div.parameter div.doc-arguments table tr td + td + td + td {
+  $description-style;
+}
+
+/* preference */
+div.preference div.doc-arguments th {
+  background-color: $table-header-preference-background;
+}
+
+div.preference div.doc-arguments table tr th,
+div.preference div.doc-arguments table tr td {
+  width: 12em;
+}
+
+div.preference div.doc-arguments table tr td {
+  font-family: monospace;
+  color: #00a;
+}
+
+div.preference div.doc-arguments table tr th + th ,
+div.preference div.doc-arguments table tr td + td {
+  width: auto;
+}
+
+div.preference div.doc-arguments table tr td + td {
+  $description-style;
 }
 
 table tr.hopwiki-row-odd {
@@ -568,10 +672,6 @@ div.doc-arguments th {
   background-color: $table-header-background;
   color: $table-header-foreground;
   padding: 2px;
-}
-
-div.markup div.doc-arguments th {
-  background-color: $table-header-markup-background;
 }
 
 div.doc-fields th {
@@ -626,6 +726,13 @@ doc toc {
   background-color: $popup-menu-color;
   border: $popup-menu-border;
   -moz-opacity: $doc-opacity;
+}
+
+doc logo {
+  width: 56px;
+  height: 50px;
+  float: left;
+  border: 0;
 }
 
 doc toc ul {
@@ -860,6 +967,11 @@ libraries div.libraries-title {
   font-weight: bold;
   font-size: large;
   border-bottom: 1px solid $border-color;
+  cursor: pointer;
+}
+
+libraries div.libraries-title:hover {
+  text-decoration: underline;
 }
 
 libraries table.api-index {
@@ -1060,11 +1172,17 @@ table.weblet-facts {
   margin-top: 2ex;
   margin-left: 2em;
   padding: 2px;
-  font-size: 85%;
+  font-size: 80%;
   border: 1px solid $border-color;
   background: #eeffdd;
 }
 
 table.weblet-facts th:after {
   content: ": ";
+}
+
+table.weblet-facts td.logo {
+  vertical-align: top;
+  padding-right: 10px;
+  padding-left: 10px;
 }

@@ -3,15 +3,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Wed Feb 27 07:46:07 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 07:53:22 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    The characteristics of this scheduler are:                       */
-;*      - a request is handled by a single thread extracted from the   */
+;*      - an accept is handled by a single thread extracted from the   */
 ;*        pool.                                                        */
-;*      - on competion is thread is stored in the pool.                */
+;*      - on competition the thread is stored in the pool.             */
 ;*      - on heavy load the new request waits for an old request to    */
 ;*        complete.                                                    */
 ;*    This scheduler is a little bit more complex and smarter than     */
@@ -33,11 +33,12 @@
    (import  hop_scheduler
 	    hop_param)
 
-   (export  (class pool-scheduler::scheduler
+   (export  (class pool-scheduler::row-scheduler
 	       (mutex::mutex read-only (default (make-mutex)))
 	       (condv::condvar read-only (default (make-condition-variable)))
 	       (nfree::int (default 0))
-	       (free::pair-nil (default '())))))
+	       (free::pair-nil (default '()))
+	       (naccept::int (default 0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-init! ::pool-scheduler ...                             */
@@ -52,22 +53,29 @@
 ;*    scheduler-stat ::pool-scheduler ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-stat scd::pool-scheduler)
-   (with-access::pool-scheduler scd (size nfree)
-      (format " (~a/~a)" (- size nfree) size)))
+   (with-access::pool-scheduler scd (size naccept mutex)
+      (mutex-lock! mutex)
+      (let ((r (format " (~a/~a)" (-fx size naccept) size)))
+	 (mutex-unlock! mutex)
+	 r)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-load ::pool-scheduler ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-load scd::pool-scheduler)
-   (with-access::pool-scheduler scd (nfree size)
-      (flonum->fixnum
-       (*fl 100.
-	    (/fl (fixnum->flonum (-fx size nfree)) (fixnum->flonum size))))))
+   (with-access::pool-scheduler scd (naccept size mutex)
+      (mutex-lock! mutex)
+      (let ((r (flonum->fixnum
+		(*fl 100.
+		     (/fl (fixnum->flonum (-fx size naccept))
+			  (fixnum->flonum size))))))
+	 (mutex-unlock! mutex)
+	 r)))
 
 ;*---------------------------------------------------------------------*/
-;*    schedule-start ::pool-scheduler ...                              */
+;*    spawn ::pool-scheduler ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (schedule-start scd::pool-scheduler p msg)
+(define-method (spawn scd::pool-scheduler p . args)
    (with-access::pool-scheduler scd (mutex condv free nfree)
       (mutex-lock! mutex)
       (let loop ()
@@ -80,16 +88,11 @@
 	 (set! nfree (-fx nfree 1))
 	 (mutex-unlock! mutex)
 	 (with-access::hopthread thread (proc mutex condv)
-	    (set! proc p)
+	    (set! proc (lambda (s t) (apply p s t args)))
 	    (mutex-lock! mutex)
 	    (condition-variable-signal! condv)
-	    (mutex-unlock! mutex)))))
-
-;*---------------------------------------------------------------------*/
-;*    schedule ::pool-scheduler ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (schedule scd::pool-scheduler proc msg)
-   (proc scd (current-thread)))
+	    (mutex-unlock! mutex)
+	    thread))))
 
 ;*---------------------------------------------------------------------*/
 ;*    pool-thread-body ...                                             */
@@ -105,7 +108,7 @@
 	 (let liip ((proc (hopthread-proc t)))
 	    ;; complete the demanded task
 	    (with-handler
-	       scheduler-default-handler
+	       (make-scheduler-error-handler t)
 	       (proc scd t))
 	    ;; go back to the free pool
 	    (mutex-lock! smutex)
@@ -123,7 +126,7 @@
 		  (name (gensym 'pool-scheduler))
 		  (scheduler scd)
 		  (body (lambda () (pool-thread-body t))))))
-      (thread-start! t)
+      (thread-start-joinable! t)
       t))
 		   
 		   

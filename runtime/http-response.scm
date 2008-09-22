@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Apr 14 17:19:09 2008 (serrano)                */
+;*    Last change :  Sat Sep 20 14:21:42 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -29,7 +29,8 @@
 	    __hop_http-error
 	    __hop_http-filter
 	    __hop_js-lib
-	    __hop_user)
+	    __hop_user
+	    __hop_cache)
 
    (export  (generic http-response::symbol ::%http-response ::socket)
 	    (generic scheme->response ::obj ::http-request)
@@ -45,9 +46,10 @@
 ;*    http-write-content-type ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (http-write-content-type p content-type charset)
-   (if charset
-       (http-write-line p "Content-type: " content-type "; charset=" charset)
-       (http-write-line p "Content-type: " content-type)))
+   (let ((ctype (or content-type (hop-default-mime-type))))
+      (if charset
+	  (http-write-line p "Content-type: " ctype "; charset=" charset)
+	  (http-write-line p "Content-type: " ctype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-authentication ...                 */
@@ -57,14 +59,13 @@
       (with-access::http-response-authentication r (header content-type body server timeout request start-line)
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
-	    (when (>fx timeout 0)
-	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type #f)
 	    (when server
-	       (http-write-line p "Server: " server))
+	       (http-write-line-string p "Server: " server))
 	    (when (string? body)
 	       (http-write-line p "Content-Length: " (string-length body)))
 	    (http-write-line p)
@@ -87,18 +88,18 @@
 		(s body)
 		(connection (http-request-connection request))
 		(l (string-length s))
-		(clen (if (and (>= content-length 0) (< content-length l))
-			  content-length
-			  l)))
-	    (when (>fx timeout 0)
-	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+		(clen (if (=elong content-length #e-1)
+			  l
+			  content-length)))
+	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
-	    (http-write-line p "Content-Length: " clen)
+	    (if (>= clen 0)
+		(http-write-line p "Content-Length: " clen)
+		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
-	    (when server
-	       (http-write-line p "Server: " server))
+	    (when server (http-write-line-string p "Server: " server))
 	    (http-write-line p)
 	    (when bodyp (display s p))
 	    (flush-output-port p)
@@ -116,9 +117,8 @@
 					bodyp timeout request)
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
-	    (when (>fx timeout 0)
-	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (if (>elong content-length #e0)
 		(http-write-line p "Content-Length: " content-length)
@@ -126,16 +126,26 @@
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p (or content-type (hop-json-mime-type)) charset)
 	    (when server
-	       (http-write-line p "Server: " server))
+	       (http-write-line-string p "Server: " server))
 	    (http-write-line p)
 	    ;; the body
 	    (with-trace 4 'http-response-js
 	       (when bodyp (display (hop->json value #t #f) p)))
 	    (flush-output-port p)
 	    connection))))
-      
+
+;*---------------------------------------------------------------------*/
+;*    chunked-flush-hook ...                                           */
+;*---------------------------------------------------------------------*/
+(define (chunked-flush-hook size)
+   (string-append "\r\n" (integer->string size 16) "\r\n"))
+   
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-hop ...                            */
+;*    -------------------------------------------------------------    */
+;*    Since Bigloo3.1c hop response are transmitted as chunked         */
+;*    response to allow HOP to use keep-alive connections              */
+;*    for dynamic responses.                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop socket)
    (with-trace 3 'http-response::http-response-hop
@@ -147,34 +157,53 @@
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request))
 	       (sbody #f)
-	       (clen content-length))
+	       (clen content-length)
+	       (chunked (cond-expand
+			   ((or bigloo3.1a bigloo3.1b)
+			    #f)
+			   (else
+			    (eq? (http-request-http request) 'HTTP/1.1)))))
 	    (when (and force-content-length (<=elong clen #e0))
 	       (let ((op (open-output-string)))
 		  (xml-write xml op backend)
 		  (set! sbody (close-output-port op))
 		  (set! clen (fixnum->elong (string-length sbody)))))
-	    (when (>fx timeout 0)
-	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
-	    (if (>elong clen #e0)
+	    (cond
+	       ((>elong clen #e0)
 		(http-write-line p "Content-Length: " clen)
+		(set! chunked #f))
+	       ((not chunked)
 		(set! connection 'close))
+	       ((eq? connection 'close)
+		(set! chunked #f))
+	       (else
+		(http-write-line p "Transfer-Encoding: chunked")))
 	    (http-write-line p "Connection: " connection)
-	    (http-write-content-type p (xml-backend-mime-type backend) charset)
+	    (let ((ctype (or content-type (xml-backend-mime-type backend))))
+	       (http-write-content-type p ctype charset))
 	    (when server
-	       (http-write-line p "Server: " server))
-	    (http-write-line p "Hhop: true")
-	    (http-write-line p)
+	       (http-write-line-string p "Server: " server))
+	    (http-write-line-string p "Hhop: true")
+	    (if chunked
+		(begin
+		   
+		   (flush-output-port p)
+		   (output-port-flush-hook-set! p chunked-flush-hook))
+		(http-write-line p))
 	    ;; the body
 	    (with-trace 4 'http-response-hop
 	       (when bodyp
 		  (if sbody
-		      (begin
-			 (display sbody p)
-			 (newline p))
+		      (display sbody p)
 		      (xml-write xml p backend))))
 	    (flush-output-port p)
+	    ;; for chunked, write the last 0 chunk
+	    (when chunked
+	       (output-port-flush-hook-set! p #unspecified)
+	       (http-write-line p "\r\n0"))
 	    connection))))
 
 ;*---------------------------------------------------------------------*/
@@ -185,9 +214,8 @@
       (with-access::http-response-procedure r (start-line header content-type charset server content-length proc bodyp timeout request)
 	 (let ((p (socket-output socket))
 	       (connection (http-request-connection request)))
-	    (when (>fx timeout 0)
-	       (output-timeout-set! p timeout))
-	    (http-write-line p start-line)
+	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
+	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (if (>elong content-length #e0)
 		(http-write-line p "Content-Length: " content-length)
@@ -195,7 +223,7 @@
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
 	    (when server
-	       (http-write-line p "Server: " server))
+	       (http-write-line-string p "Server: " server))
 	    (http-write-line p)
 	    (flush-output-port p)
 	    ;; the body
@@ -212,8 +240,7 @@
    (with-trace 3 'http-response::http-response-raw
       (with-access::http-response-raw r (bodyp proc timeout request connection)
 	 (let ((p (socket-output socket)))
-	    (when (>fx timeout 0)
-	       (output-timeout-set! p timeout))
+	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (when bodyp
 	       (proc p)
 	       (flush-output-port p))
@@ -222,45 +249,43 @@
 		(http-request-connection request))))))
 
 ;*---------------------------------------------------------------------*/
+;*    http-response-regular-file ...                                   */
+;*---------------------------------------------------------------------*/
+(define (http-response-regular-file r::http-response-file socket::socket)
+   (with-access::http-response-file r (start-line header content-type charset server file bodyp request timeout)
+      (let ((size (file-size file)))
+	 (if (>=elong size #e0)
+	     (let ((connection (http-request-connection request))
+		   (p (socket-output socket)))
+		(when (>=fx timeout 0) (output-timeout-set! p timeout))
+		(http-write-line-string p start-line)
+		(http-write-header p header)
+		(http-write-line p "Connection: " connection)
+		(http-write-content-type p content-type charset)
+		(when server (http-write-line-string p "Server: " server))
+		(unless (eq? connection 'close)
+		   (display "Content-Length: " p)
+		   (display-elong size p)
+		   (http-write-line p))
+		(http-write-line p)
+		;; the body
+		(with-trace 4 'http-response-file
+		   (if bodyp
+		      (send-file file p size #e-1)
+		      (flush-output-port p)))
+		connection)
+	     (http-response (http-file-not-found file) socket)))))
+
+;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-file ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-file socket)
    (with-trace 3 'http-response::http-response-file
-      (with-access::http-response-file r (start-line header content-type charset server file bodyp request timeout)
+      (with-access::http-response-file r (start-line header file request)
 	 (if (authorized-path? request file)
-	     ;; In C the file is never read with RGC so it can
-	     ;; be open with a tiny buffer
 	     (if (directory? file)
 		 (http-response (response-directory r file) socket)
-		 (let ((pf (cond-expand
-			      (bigloo-c (open-input-file file 1))
-			      (else (open-input-file file)))))
-		    (if (input-port? pf)
-			(unwind-protect
-			   (let ((connection (http-request-connection request))
-				 (p (socket-output socket)))
-			      (when (>fx timeout 0)
-				 (output-timeout-set! p timeout))
-			      (http-write-line p start-line)
-			      (http-write-header p header)
-			      (http-write-line p "Connection: " connection)
-			      (http-write-content-type
-			       p content-type charset)
-			      (when server
-				 (http-write-line p "Server: " server))
-			      (http-write-line p "Content-Length: "
-					       (file-size file))
-			      (http-write-line p)
-			      ;; the body
-			      (with-trace 4 'http-response-file
-				 (when bodyp (send-chars pf p)))
-			      (flush-output-port p)
-			      connection)
-			   (close-input-port pf))
-			(let ((rep (if (file-exists? file)
-				       (http-permission-denied file)
-				       (http-file-not-found file))))
-			   (http-response rep socket)))))
+		 (http-response-regular-file r socket))
 	     (http-response (user-access-denied request) socket)))))
 
 ;*---------------------------------------------------------------------*/
@@ -345,14 +370,13 @@
       (with-access::http-response-cgi r (start-line header content-type charset server cgibin bodyp request timeout)
 	 (if (authorized-path? request cgibin)
 	     (let ((p (socket-output socket)))
-		(when (>fx timeout 0)
-		   (output-timeout-set! p timeout))
-		(http-write-line p start-line)
+		(when (>=fx timeout 0) (output-timeout-set! p timeout))
+		(http-write-line-string p start-line)
 		(http-write-header p header)
 		(http-write-line p "Connection: close")
 		(http-write-content-type p content-type charset)
 		(when server
-		   (http-write-line p "Server: " server))
+		   (http-write-line-string p "Server: " server))
 		(http-write-line p)
 		;; the body
 		(with-trace 4 'http-response-cgi-process
@@ -396,14 +420,13 @@
 		   (let ((cmd (substring uri 0 i))
 			 (args (substring uri (+fx i 1) l))
 			 (p (socket-output socket)))
-		      (when (>fx timeout 0)
-			 (output-timeout-set! p timeout))
-		      (http-write-line p start-line)
+		      (when (>=fx timeout 0) (output-timeout-set! p timeout))
+		      (http-write-line-string p start-line)
 		      (http-write-header p header)
 		      (http-write-line p "Connection: close")
 		      (http-write-content-type p content-type charset)
 		      (when server
-			 (http-write-line p "Server: " server))
+			 (http-write-line-string p "Server: " server))
 		      (http-write-line p)
 		      ;; the body
 		      (with-trace 4 'http-response-put-process
@@ -514,7 +537,7 @@
 ;*    http-send-request ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure)
-   (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo authorization timeout)
+   (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout)
       (let ((ssl (eq? scheme 'https)))
 	 (let loop ((host host)
 		    (port port)
@@ -544,7 +567,9 @@
 		  (http :in in :out out
 		     :protocol scheme :method method :http-version httpv
 		     :host host :port port :path path :header header
-		     :authorization authorization :timeout timeout
+		     :authorization (and (http-server-request? req)
+					 (http-server-request-authorization req))
+		     :timeout timeout
 		     :login user
 		     :body socket
 		     :proxy (hop-use-proxy))

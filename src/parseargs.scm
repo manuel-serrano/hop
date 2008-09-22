@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/parseargs.scm                 */
+;*    serrano/lab/HOP/1.9.x/src/parseargs.scm                          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Apr  7 10:37:35 2008 (serrano)                */
+;*    Last change :  Fri Aug 22 10:48:33 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -40,6 +40,8 @@
 	 (log-file #f)
 	 (be #f)
 	 (files '()))
+
+      (bigloo-debug-set! 0)
       
       (args-parse (cdr args)
 	 ;; Misc
@@ -51,7 +53,7 @@
           (usage args-parse-usage)
           (exit 0))
          (("--version" (help "Print the version and exit"))
-          (print (hop-name) (hop-version))
+          (print (hop-name) "-" (hop-version))
           (exit 0))
 	 
 	 ;; RC
@@ -67,6 +69,8 @@
 	 (("--rc-dir" ?dir (help "Set rc directory"))
 	  (hop-rc-directory-set! dir)
 	  (hop-upload-directory-set! (make-file-name dir "upload")))
+	 (("--script-file" ?file (help "A file loaded before the main loop"))
+	  (hop-script-file-set! file))
 	 (("--enable-autoload" (help "Enable autoload (default)"))
 	  (set! autoloadp #t))
 	 (("--disable-autoload" (help "Disable autoload"))
@@ -183,28 +187,33 @@
 	  (else
 	   (set! files (cons else files))))
 	 
+	 ;; http port
+	 (hop-port-set! p)
+	 (when (eq? ep #unspecified) (set! ep p))
+
+	 ;; log
 	 (when log-file
 	    (let ((p (append-output-file log-file)))
 	       (unless p
 		  (error 'hop "Cannot open log file" log-file))
 	       (hop-log-file-set! p)))
-	 
+
+	 ;; mime types
 	 (when mimep
 	    (load-mime-types (hop-mime-types-file))
 	    (load-mime-types (if (string? mime-file)
 				 mime-file
 				 (make-file-name (getenv "HOME") ".mime.types"))))
-	 
+
+	 ;; weblets path
 	 (hop-autoload-directory-add!
 	  (make-file-name (hop-rc-directory) "weblets"))
-	 
+
+	 ;; hoprc
 	 (when loadp (parseargs-loadrc rc-file (hop-rc-file)))
-	 
+
+	 ;; default backend
 	 (when (string? be) (hop-xml-backend-set! (string->symbol be)))
-	 
-	 ;; http port
-	 (hop-port-set! p)
-	 (when (eq? ep #unspecified) (set! ep p))
 	 
 	 ;; server event port
 	 (when (hop-enable-fast-server-event)

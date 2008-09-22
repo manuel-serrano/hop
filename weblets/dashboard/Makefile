@@ -3,29 +3,41 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Jan 22 09:23:23 2008 (serrano)                */
+#*    Last change :  Fri Jun 20 10:35:35 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the dashboard weblet                             */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
-#*    Configuration                                                    */
+#*    CONFIG ...                                                       */
 #*---------------------------------------------------------------------*/
-include ../../etc/Makefile.hopconfig
-include ../../etc/Makefile.version
+TITLE = dashboard
+VERSION = 1.0.1
+MINHOP = $(HOPRELEASE) 
+MAXHOP =
+CATEGORY = hop
+DATE = 20 June 2008
 
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile dashboard.hss dashboard.hop \
-                  etc/weblet.info etc/dashboard.wiki \
+                  etc/weblet.info.in etc/dashboard.wiki.in \
                   dashboard-applet.hss etc/dashboard-rfc.png \
-                  etc/logo.png
+                  etc/logo.png etc/favicon.png
 
-build: .afile
-
-.afile: $(POPULATION)
-	$(AFILE) -suffix hop $(POPULATION) -o .afile
+build: etc/weblet.info etc/$(TITLE).wiki .afile
 
 clean:
+
+distclean:
+	$(RM) etc/weblet.info etc/$(TITLE).wiki
+
+#*---------------------------------------------------------------------*/
+#*    Configuration                                                    */
+#*---------------------------------------------------------------------*/
+include ../../etc/Makefile.hopconfig
+include ../../etc/Makefile.version
+include ../../etc/Makefile.weblet
+

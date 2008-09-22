@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Apr 15 14:52:06 2008 (serrano)                */
+;*    Last change :  Sat May 24 09:44:48 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -22,7 +22,8 @@
 
    (export  (json-string-encode::bstring ::bstring ::bool)
 	    (generic hop->json ::obj ::bool ::bool)
-	    (json->hop ::input-port)))
+	    (json->hop ::input-port)
+	    (hop->js-callback ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    list->arguments ...                                              */
@@ -60,6 +61,7 @@
 ;*    json-string-encode ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (json-string-encode str isflash)
+
    (define (count str ol)
       (let loop ((i 0)
 		 (n 0))
@@ -67,12 +69,11 @@
 	     n
 	     (let ((c (string-ref str i)))
 		(case c
-		   ((#\" #\\)
-		    (loop (+fx i 1) (+fx n 2)))
-		   ((#\Newline #\Return)
+		   ((#\" #\\ #\Newline #\Return)
 		    (loop (+fx i 1) (+fx n (if isflash 3 2))))
 		   (else
 		    (loop (+fx i 1) (+fx n 1))))))))
+   
    (define (encode str ol nl)
       (if (=fx nl ol)
 	  str
@@ -83,14 +84,17 @@
 		    res
 		    (let ((c (string-ref str i)))
 		       (case c
-			  ((#\")
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) c)
-			   (loop (+fx i 1) (+fx j 2)))
-			  ((#\\)
-			   (string-set! res j #\\)
-			   (string-set! res (+fx j 1) c)
-			   (loop (+fx i 1) (+fx j 2)))
+			  ((#\" #\\)
+			   (if isflash
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) #\\)
+				  (string-set! res (+fx j 2) c)
+				  (loop (+fx i 1) (+fx j 3)))
+			       (begin
+				  (string-set! res j #\\)
+				  (string-set! res (+fx j 1) c)
+				  (loop (+fx i 1) (+fx j 2)))))
 			  ((#\Newline)
 			   (if isflash
 			       (begin
@@ -450,3 +454,15 @@
 ;*---------------------------------------------------------------------*/
 (define (json->hop ip)
    (read/lalrp *json-parser* *json-lexer* ip))
+
+;*---------------------------------------------------------------------*/
+;*    hop->js-callback ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop->js-callback obj)
+   (cond
+      ((xml-tilde? obj)
+       (format "function( event ) { ~a }" (xml-tilde-body obj)))
+      ((string? obj)
+       (format "function( event ) { ~a }" obj))
+      (else
+       "false")))

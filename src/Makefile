@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sat Mar 29 08:05:13 2008 (serrano)                */
+#*    Last change :  Sat Sep 20 20:24:29 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -24,14 +24,14 @@ EXEC		= hop
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
 MODULES		= hop-param parseargs main init \
-                  scheduler \
+                  scheduler accept pipeline \
                   nothread-scheduler \
                   queue-scheduler \
                   oto-scheduler \
                   pool-scheduler \
                   cohort-scheduler
 
-INCLUDES	= 
+INCLUDES	= stage.sch
 
 CLASS_DIR	= o/class_s/bigloo/hop
 
@@ -64,7 +64,7 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
+	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV, -o $@ $(OBJECTS))
 	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-etc jvm-lib
@@ -135,6 +135,9 @@ o/%.o: %.scm .afile
 
 $(CLASS_DIR)/%.class: %.scm .afile
 	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+
+o/main.o: main.scm
+	@ $(call compile2,BIGLOO,BCFLAGS,BCFLAGSDEV,$< -o $@ -c)
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Tue Apr  1 12:22:51 2008 (serrano)                */
+#*    Last change :  Mon May  5 12:24:40 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -97,7 +97,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
 	@ cd $(BUILDLIBDIR) && \
         $(RM) -f lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) && \
-        ln -s lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
+        $(LN_S) lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
               lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX)
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
@@ -128,7 +128,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a: \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
 	@ cd $(BUILDLIBDIR) && \
         $(RM) -f lib$(TARGETNAME)_u-$(HOPRELEASE).a && \
-        ln -s lib$(TARGETNAME)_s-$(HOPRELEASE).a lib$(TARGETNAME)_u-$(HOPRELEASE).a
+        $(LN_S) lib$(TARGETNAME)_s-$(HOPRELEASE).a lib$(TARGETNAME)_u-$(HOPRELEASE).a
 	@ $(call done,$(COLOR),"",$@,"...done.")
 
 $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a: .afile $(OBJECTS)

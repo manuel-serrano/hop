@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:20:17 2008                          */
-/*    Last change :  Thu Apr 10 09:52:47 2008 (serrano)                */
+/*    Last change :  Thu Jun 12 14:22:22 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop login panel                                                  */
@@ -15,13 +15,14 @@
 function  hop_login_prompt( id, user, pass ) {
    return "<table class='hop-login-prompt'>"
       + " <colgroup><col width='0*'></colgroup>"
-      + " <tr><th>Login name</th><td><input type='text' id='hop_login_user_" + id + "'>" + (user ? user : "") + "</input><td></tr>"
-      + " <tr><th>Password</th><td><input type='password' id='hop_login_password_" + id + "'>" + (pass ? pass : "") + "</input><td></tr>"
+      + ((user || (user instanceof String) || (typeof user === "string")) ?
+	 " <tr><th>Login name</th><td><input type='text' id='hop_login_user_" + id + "' value='" + user + "'></input><td></tr>" : "")
+      + " <tr><th>Password</th><td><input type='password' id='hop_login_password_" + id + "' value='" + (pass ? pass : "") + "'></input><td></tr>"
       + " <tr>"
       + "  <td colspan=2>"
       + "   <table class='hop_login_button'>"
       + "    <tr>"
-      + "     <td><button class='hop-login-login' id='hop_login_login_" + id + "'>Login</td>"
+      + "     <td><button class='hop-login-login' id='hop_login_login_" + id + "'>Ok</td>"
       + "     <td><button class='hop-login-cancel' id='hop_login_cancel_" + id + "'>Cancel</td>"
       + "    </tr>"
       + "   </table>"
@@ -58,7 +59,7 @@ function hop_make_login_panel( id, user, pass, klass  ) {
       + "<div align='center' " + hop_login_class( 'hop-login-main', klass ) + ">"
       + " <table class='hop-login-main-table'>"
       + "  <tr>"
-      + "   <td class='hop-login-logo'><div class='hop-login-logo id='hop_login_logo_" + id + "'></div></td>"
+      + "   <td class='hop-login-logo'><div class='hop-login-logo' id='hop_login_logo_" + id + "'></div></td>"
       + "   <td>"
       + "    <table class='hop-login-panel'>"
       + "     <tr><td id='hop_login_message_" + id + "'></td></tr>"
@@ -82,7 +83,7 @@ function hop_login_panel( args ) {
    var klass = false;
    var onlogin, oncancel;
    var logo = false, message = false;
-   var user = false, pass = false;
+   var user = "", pass = false;
    var i = 0;
    var l = arguments.length;
 
@@ -133,12 +134,14 @@ function hop_login_panel( args ) {
       var l = document.getElementById( 'hop_login_logo_' + id );
       if( hop_is_html_element( logo ) )
 	 l.appendChild( logo );
-      else
+      else {
 	 l.innerHTML = logo;
+      }
    }
       
    hop_add_event_listener( ok, "click", function( e ) {
-	 e.user = document.getElementById( "hop_login_user_" + id ).value;
+	 var eluser = document.getElementById( "hop_login_user_" + id );
+	 e.user = eluser ? eluser.value : false;
 	 e.password = document.getElementById( "hop_login_password_" + id ).value;
 	 node_style_set( login, "display", "none" );
 	 document.body.removeChild( login );
@@ -147,7 +150,8 @@ function hop_login_panel( args ) {
       } );
    
    hop_add_event_listener( cancel, "click", function( e ) {
-	 e.user = document.getElementById( "hop_login_user_" + id ).value;
+	 var eluser = document.getElementById( "hop_login_user_" + id );
+	 e.user = eluser ? eluser.value : false;
 	 e.password = document.getElementById( "hop_login_password_" + id ).value;
 	 if( oncancel ) oncancel( e );
 	 node_style_set( login, "display", "none" );

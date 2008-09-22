@@ -1,0 +1,6 @@
+((name "hopsh")
+ (author "M. Serrano")
+ (version "@VERSION@")
+ (date "@DATE@")
+ (title "A service handling HopSh eval requests.")
+ (about-service "about"))

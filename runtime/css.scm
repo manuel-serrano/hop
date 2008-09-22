@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Apr 16 14:15:59 2008 (serrano)                */
+;*    Last change :  Wed Aug 27 08:03:02 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -48,19 +48,36 @@
      ("notepad" "div.hop-notepad")
      ("notepad" "div.hop-notepad")
      ("notepad-tabs" "td.hop-notepad-tabs")
+     ("notepad-tabs-row" "div.hop-notepad-tabs-row")
      ("notepad-body" "td.hop-notepad-body")
      ("nphead" "div.hop-nphead")
      ("nptab" "span.hop-nptab")
      ("nptab-active" "span.hop-nptab-active")
      ("nptab-inactive" "span.hop-nptab-inactive")
      ("nptab-body" "div.hop-notepad-tab-body")
-     ("hptabhead" "span.hop-nptab-head")
+     ("nptabhead" "span.hop-nptab-head")
      ;; paned
      ("paned" "div.hop-paned")
      ;; sorttable
      ("sorttable" "span.hop-sorttable table")
      ;; audio
-     ("audio" "div.hop-audio-controls")))
+     ("audio" "div.hop-audio-controls")
+     ;; filechooser
+     ("filechooser" "div.filechooser")
+     ;; prefs
+     ("prefs" "table.hop-prefs")
+     ("prlabel" "table.hop-prefs td.hop-prefs-label")
+     ("prsep" "table.hop-prefs td.hop-prefs-separator")
+     ("pr" "table.hop-prefs tr.hop-pr")
+     ("pr-name" "table.hop-prefs td.hop-pr-name")
+     ("pr-editor" "table.hop-prefs td.hop-pr-editor")
+     ("pr-editor-expr" "table.hop-prefs input.hop-pr-editor-expr")
+     ("pr-editor-bool" "table.hop-prefs table.hop-pr-editor-bool")
+     ("pr-editor-text" "table.hop-prefs textarea.hop-pr-editor-text")
+     ;; hop-login
+     ("hop-login-panel" "div.hop-login-panel")
+     ("hop-login" "div.hop-login-panel table.hop-login-main-table")
+     ("hop-login-logo" "div.hop-login-panel div.hop-login-logo")))
    
 ;*---------------------------------------------------------------------*/
 ;*    hss-mutex ...                                                    */
@@ -102,7 +119,7 @@
 ;*    hss->css-url ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (hss->css-url path)
-   (string-append path (hop-hss-compile-suffix)))
+   (string-append path "?" (hop-hss-compile-suffix)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-hss-compiler! ...                                           */

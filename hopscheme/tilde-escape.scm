@@ -1,8 +1,8 @@
-(module tilde-escape
+(module __hopscheme_tilde-escape
    (library hop
 	    scheme2js)
    (export (compile-hop-client e))
-   (import hopscheme-config))
+   (import __hopscheme_config))
 
 ;; ===========================================================================
 ;; add hook for '~'-escaped expressions.

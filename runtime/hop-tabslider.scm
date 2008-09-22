@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Apr 14 17:20:48 2008 (serrano)                */
+;*    Last change :  Mon Apr 21 12:08:32 2008 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -82,19 +82,7 @@
 	       (hop-javascript-mime-type)
 	       id index
 	       (if history "true" "false")
-	       (obj->thunk onchange))))
-
-;*---------------------------------------------------------------------*/
-;*    obj->thunk ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (obj->thunk obj)
-   (cond
-      ((xml-tilde? obj)
-       (format "function( event ) { ~a }" (xml-tilde-body obj)))
-      ((string? obj)
-       (format "function( event ) { ~a }" obj))
-      (else
-       "false")))
+	       (hop->js-callback onchange))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TSPAN> ...                                                      */
@@ -107,7 +95,7 @@
       (when onselect
 	 (<SCRIPT>
 	    (format "document.getElementById('~a').onselect=~a;"
-		    id (obj->thunk onselect)))))
+		    id (hop->js-callback onselect)))))
    
    (let ((id (xml-make-id id 'TSPAN)))
       ;; Check that body is well formed

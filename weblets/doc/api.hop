@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Sun Dec  2 19:14:15 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Fri Sep 19 15:02:38 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
 ;*=====================================================================*/
@@ -216,6 +216,9 @@
    (regular-grammar ((letter (in "_-<>!?%" ("azAZ09")))
 		     (sep (out "_-<>!?%" ("azAZ09")))
 		     res)
+      ((: ";;" (* all))
+       (let ((k (the-string)))
+	  (<SPAN> :class "code-comment" k)))
       ((+ (or letter (: #\/ (out #\/))))
        (let ((k (the-string)))
 	  (set! res (cons (or (markup-parser k)
@@ -287,7 +290,7 @@
 		  (case id
 		     ((<see-also>)
 		      <SEE-ALSO>)
-		     ((<markup> <parameter> <function> <class>)
+		     ((<markup> <parameter> <preference> <function> <class>)
 		      (let* ((s (symbol->string id))
 			     (c (substring s 1 (-fx (string-length s) 1))))
 			 (lambda (port title expr)
@@ -350,7 +353,11 @@
 	       (set! *markup-menu-table* menu)
 	       (set! *markup-table* table))
 	    (multiple-value-bind (menu table)
-	       (make-doc-tables 0 "<parameter>" "<function>" "<class>")
+	       (make-doc-tables 0
+				"<parameter>"
+				"<preference>"
+				"<function>"
+				"<class>")
 	       (set! *server-menu-table* menu)
 	       (set! *server-table* table))
 	    (multiple-value-bind (_ table)

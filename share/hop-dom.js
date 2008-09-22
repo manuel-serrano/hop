@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Apr 16 15:46:36 2008 (serrano)                */
+/*    Last change :  Wed Sep 10 12:10:30 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -326,8 +326,13 @@ function dom_add_head_script( pathname, id ) {
      `(hop_dom_create "iframe" ,@args)) */
 
 /*** META (define-macro (<INPUT> . args)
-     `(hop_dom_create "input" :onkeydown (hop_inputurl_keydown this event)
-          ,@args)) */
+     (let ((k (memq :type args)))
+         (if (and (pair? k) (pair? (cdr k))
+		  (or (eq? (cadr k) 'url))
+		  (or (equal? (cadr k) "url")))
+	     `(hop_dom_create "input" :onkeydown (hop_inputurl_keydown this event)
+			     ,@args)
+	     `(hop_dom_create "input" ,@args)))) */
 
 /*** META (define-macro (<INS> . args)
      `(hop_dom_create "ins" ,@args)) */
@@ -961,11 +966,15 @@ function dom_node_type( node ) {
 function dom_parent_node( node ) {
    return node.parentNode;
 }
-/*** META ((export dom-append-child!)
-           (peephole (hole 2 node ".appendChild(" n ")")))
-*/
+/*** META ((export dom-append-child!)) */
 function dom_append_child( node, n ) {
-   return node.appendChild( n );
+   if( (n instanceof String) ||
+       (typeof n == "string") ||
+       (typeof n == "number") ) {
+      return node.appendChild( document.createTextNode( n ) );
+   } else {
+      return node.appendChild( n );
+   }
 }
 /*** META ((export dom-remove-child!)
            (peephole (hole 2 node ".removeChild(" n ")")))
@@ -1036,6 +1045,51 @@ function hop_css_add_style_sheet( document, rules ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_load_css ...                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
+function hop_load_css( url ) {
+   try {
+      var els = document.getElementsByTagName( "head" );
+      if( (els != null) && (els[ 0 ].appendChild != undefined) ) {
+	 var st = document.createElement( "link" );
+
+	 if( url.lastIndexOf( ".hss" ) === url.length ) {
+	    st.href = url + "?hss";
+	 } else {
+	    st.href = url;
+	 }
+	 
+	 st.rel = "stylsheet";
+	 st.type = "text/css";
+	 
+	 els[ 0 ].appendChild( st );
+      }
+   } catch( e ) {
+      ;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_load_jscript ...                                             */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t)) */
+function hop_load_jscript( url ) {
+   try {
+      var els = document.getElementsByTagName( "head" );
+      if( (els != null) && (els[ 0 ].appendChild != undefined) ) {
+	 var sc = document.createElement( "script" );
+	 sc.src = url;
+	 sc.type = "text/javascript";
+	 
+	 els[ 0 ].appendChild( sc );
+      }
+   } catch( e ) {
+      ;
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    dom_get_element_by_class ...                                     */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t)) */
@@ -1082,7 +1136,6 @@ document.getElementsByClass = function( className ) {
 /*** META ((export dom-node-eval)) */
 function hop_node_eval( node, text ) {
    var res;
-   var scripts = node.getElementsByTagName( "script" );
 
    function hop_node_eval_from_text( text ) {
       var res;
@@ -1105,15 +1158,23 @@ function hop_node_eval( node, text ) {
    }
 
    try {
-      if( scripts.length > 0 ) {
-	 for ( var j = 0; j < scripts.length; j++ ) {
-	    if( false && scripts[ j ].childNodes.length > 0 ) {
-	       res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
-	    } else {
-	       /* this is a buggy browser (Opera 8?) that does not */
-	       /* correctly implement script nodes                 */
-	       res = eval( scripts[ j ].innerHTML );
+      /* some browsers (guess who) are supporting getElementsByTagName */
+      /* only for the entire document and not for individual nodes.    */
+      if( "getElementsByTagName" in node ) {
+	 var scripts = node.getElementsByTagName( "script" );
+
+	 if( scripts && scripts.length > 0 ) {
+	    for ( var j = 0; j < scripts.length; j++ ) {
+	       if( false && scripts[ j ].childNodes.length > 0 ) {
+		  res = eval( scripts[ j ].childNodes[ 0 ].nodeValue );
+	       } else {
+		  /* this is a buggy browser (Opera 8?) that does not */
+		  /* correctly implement script nodes                 */
+		  res = eval( scripts[ j ].innerHTML );
+	       }
 	    }
+	 } else {
+	    return hop_node_eval_from_text( text );
 	 }
       } else {
 	 return hop_node_eval_from_text( text );
@@ -1140,12 +1201,17 @@ function node_style_get( obj, prop ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_create_element ...                                           */
+/*    -------------------------------------------------------------    */
+/*    For a reason that I don't understand (a bug?) IE7 refuses to     */
+/*    create elements whose body is composed of a single SCRIPT        */
+/*    node. To prevent this but, this function always append an        */
+/*    extra node that is then ignored when returning!                  */
 /*---------------------------------------------------------------------*/
 function hop_create_element( html ) {
    var div = document.createElement( 'div' );
 
-   div.innerHTML = html;
-   return div.childNodes[ 0 ];
+   div.innerHTML = "<span>IE7 bug</span>" + html;
+   return div.childNodes[ 1 ];
 }
 
 /*---------------------------------------------------------------------*/

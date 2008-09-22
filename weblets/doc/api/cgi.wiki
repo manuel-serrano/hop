@@ -84,7 +84,7 @@ implementation that shows how POST requests are internally
 handled.
 
   (define (cgi-args req)
-     (with-access::http-request req (socket method path encoded-path header content-length)
+     (with-access::http-request req (socket method path header content-length)
         (case method
            ((POST)
             (let* ((pi (socket-input socket))
@@ -103,9 +103,9 @@ handled.
                    (let ((body (read-chars (elong->fixnum content-length) pi)))
                       (cons path (cgi-args->list body))))))
            ((HOP GET PUT HOPEVT)
-            (http-request-url-cgi-args encoded-path))
+            ...
            (else
-            (error 'http-request-cgi-args "Not a cgi request" method)))))
+            (error 'cgi-args "Not a cgi request" method)))))
 
 
 </function>

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri Mar 14 09:29:00 2008 (serrano)                */
+;*    Last change :  Thu Jul 24 10:43:19 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -35,12 +35,17 @@
 	       request-id::obj
 	       (keep-alive?::bool (default #f))
 	       (intable?::bool (default #f))
+	       (%%debug-closed?::bool (default #f))
 	       (locked?::bool (default #f))
 	       (wstart?::bool (default #f))
 	       date::elong))
    
    (export  (response-remote-start-line ::http-response-remote)))
 
+;*---------------------------------------------------------------------*/
+;*    Debug traces to removed when the keep-alive connections          */
+;*    pool is tested ok.                                               */
+;*---------------------------------------------------------------------*/
 (define debug-port (open-output-file "/tmp/HOP-REMOTE.log"))
 (define (remote-debug . args)
    (for-each (lambda (a) (display a debug-port)) args)
@@ -53,10 +58,10 @@
    (mutex-unlock! *remote-lock*))
 
 (define-method (object-display o::connection . p)
-   (with-access::connection o (id socket key intable? locked?)
+   (with-access::connection o (id socket key intable? locked? %%debug-closed?)
       (fprintf (if p (car p) (current-output-port))
-	       "#<connection id=~a key=~a locked=~a intable=~a"
-	       id key locked? intable?)))
+	       "#<connection id=~a key=~a locked=~a intable=~a closed=~a>"
+	       id key locked? intable? %%debug-closed?)))
 	     
 ;*---------------------------------------------------------------------*/
 ;*    response-remote-start-line ...                                   */
@@ -252,8 +257,21 @@
 ;*    *connection-table* ...                                           */
 ;*---------------------------------------------------------------------*/
 (define *connection-table* (make-hashtable))
-(define *connection-number* 0)
+(define *open-connection-number* 0)
+(define *keep-alive-connection-number* 0)
 (define *connection-id* 0)
+
+;*---------------------------------------------------------------------*/
+;*    ++ ...                                                           */
+;*---------------------------------------------------------------------*/
+(define-macro (++ v)
+   `(set! ,v (+fx ,v 1)))
+
+;*---------------------------------------------------------------------*/
+;*    -- ...                                                           */
+;*---------------------------------------------------------------------*/
+(define-macro (-- v)
+   `(set! ,v (-fx ,v 1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-table-get ...                                         */
@@ -291,12 +309,47 @@
 		      (list conn)))
 
 ;*---------------------------------------------------------------------*/
+;*    close-connection! ...                                            */
+;*    -------------------------------------------------------------    */
+;*    This function assumes *remote-lock* acquired.                    */
+;*---------------------------------------------------------------------*/
+(define (close-connection! conn)
+   (with-access::connection conn (socket %%debug-closed?)
+      (-- *open-connection-number*)
+      (set! %%debug-closed? #t)
+      (socket-close socket)))
+
+;*---------------------------------------------------------------------*/
 ;*    connection-timeout? ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (connection-timeout? c now)
    (with-access::connection c (date)
       (let ((age (*fx 1000 (elong->fixnum (-elong now date)))))
 	 (>=fx age (hop-remote-keep-alive-timeout)))))
+
+;*---------------------------------------------------------------------*/
+;*    connection-table-add! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (connection-table-add! conn)
+   (++ *keep-alive-connection-number*)
+   (with-access::connection conn (key intable?)
+      (set! intable? #t)
+      (hashtable-update! *connection-table*
+			 key
+			 (lambda (l) (cons conn l))
+			 (list conn))))
+
+;*---------------------------------------------------------------------*/
+;*    connection-table-remove! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (connection-table-remove! conn)
+   (-- *keep-alive-connection-number*)
+   (with-access::connection conn (key intable?)
+      (set! intable? #f)
+      (hashtable-update! *connection-table*
+			 key
+			 (lambda (l) (remq! conn l))
+			 '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    filter-connection-table! ...                                     */
@@ -308,24 +361,26 @@
    (define (filter-connection! key conn)
       (if (pred conn)
 	  (begin
-	     (set! *connection-number* (+fx 1 *connection-number*))
+	     (++ *keep-alive-connection-number*)
 	     (hashtable-update! *connection-table*
 				key
 				(lambda (l) (cons conn l))
 				(list conn)))
 	  (begin
-	     (remote-debug "  filter connection=" conn)
-	     (with-access::connection conn (socket)
-		(socket-close socket)))))
+	     (remote-debug "  filter out connection=" conn)
+	     (close-connection! conn))))
    
-   (remote-debug "FILTER-CONNECTION-TABLE! number=" *connection-number*)
+   [assert () (not (symbol? (mutex-state *remote-lock*)))]
+   
+   (remote-debug "FILTER-CONNECTION-TABLE! open-conn=" *open-connection-number*
+		 " keep-alive-conn=" *keep-alive-connection-number*)
    
    (with-trace 5 'filter-connection-table!
       ;; create a new hashtable
       (let ((otable *connection-table*))
 	 (set! *connection-table* (make-hashtable))
 	 ;; reset the number of connections
-	 (set! *connection-number* 0)
+	 (set! *keep-alive-connection-number* 0)
 	 ;; fill the new hashtable
 	 (hashtable-for-each
 	  otable
@@ -344,12 +399,11 @@
 ;*---------------------------------------------------------------------*/
 (define (remote-get-socket host port timeout request ssl)
    
-   (define (make-new-connection key)
+   (define (make-new-connection key id)
       (with-trace 4 'make--new-connection
 	 (let ((s (make-client-socket/timeout host port timeout request ssl)))
-	    (set! *connection-id* (+fx 1 *connection-id*))
 	    (let ((conn (instantiate::connection
-			   (id *connection-id*)
+			   (id id)
 			   (socket s)
 			   (host host)
 			   (port port)
@@ -358,74 +412,92 @@
 			   (date (current-seconds))
 			   (locked? #t)
 			   (intable? #f))))
-	       (remote-debug " MAKE-NEW-CONNECT conn=" conn)
+	       (remote-debug "MAKE-NEW-CONNECT conn=" conn)
 	       conn))))
    
    (define (get-connection)
       (let ((key (string-append host ":" (integer->string port))))
-	 (or (connection-table-get key)
-	     (begin
-		(set! *connection-number* (+fx 1 *connection-number*))
-		(make-new-connection key)))))
+	 (mutex-lock! *remote-lock*)
+	 (let ((old (connection-table-get key)))
+	    (if old
+		(begin
+		   (mutex-unlock! *remote-lock*)
+		   old)
+		(let ((id (+fx 1 *connection-id*)))
+		   (set! *connection-id* id)
+		   (++ *open-connection-number*)
+		   (mutex-unlock! *remote-lock*)
+		   (make-new-connection key id))))))
    
    (remote-debug-with-lock! "REMOTE-GET-SOCKET key=" host ":" port)
    
    (with-trace 4 'remote-get-connection
       (trace-item "host=" host)
       (if (not (hop-enable-remote-keep-alive))
-	  (make-new-connection host)
-	  (begin
-	     (mutex-lock! *remote-lock*)
-	     (unwind-protect
-		(let ((conn (get-connection)))
-		   (remote-debug "REMOTE-GET-SOCKET -> " conn)
-		   conn)
-		(mutex-unlock! *remote-lock*))))))
-   
+	  (let ((id (+fx 1 *connection-id*)))
+	     ;; id is not used unless remote connections are kept alive then
+	     ;; we don't really a lock here to ensure a correct value
+	     (set! *connection-id* id)
+	     (make-new-connection host id))
+	  (let ((conn (get-connection)))
+	     (remote-debug "REMOTE-GET-SOCKET -> " conn)
+	     conn))))
+
+;*---------------------------------------------------------------------*/
+;*    too-many-keep-alive-connection? ...                              */
+;*---------------------------------------------------------------------*/
+(define (too-many-keep-alive-connection?)
+   (>=fx *keep-alive-connection-number* (hop-max-remote-keep-alive-connection)))
+
 ;*---------------------------------------------------------------------*/
 ;*    connection-keep-alive! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (connection-keep-alive! conn)
    (mutex-lock! *remote-lock*)
-   (remote-debug "CONNECTION-KEEP-ALIVE " conn " num=" *connection-number*)
-   (when (>=fx *connection-number* (hop-max-remote-keep-alive-connection))
+   (remote-debug "CONNECTION-KEEP-ALIVE! " conn
+		 " open-conn=" *open-connection-number*
+		 " keep-alive-conn=" *keep-alive-connection-number*)
+   (when (too-many-keep-alive-connection?)
       ;; we first try to cleanup the timeout connections
       (let ((now (current-seconds)))
 	 (filter-connection-table!
-	  (lambda (c) (not (connection-timeout? c now))))))
-   (if (>=fx *connection-number* (hop-max-remote-keep-alive-connection))
-       ;; we have failed
-       (filter-connection-table!
-	(lambda (c) (not (connection-locked? c))))
+	  (lambda (c)
+	     (or (connection-locked? c)
+		 (not (connection-timeout? c now)))))))
+   (if (too-many-keep-alive-connection?)
+       ;; we have failed, we still have too many keep-alive connections open
+       (begin
+	  (filter-connection-table!
+	   (lambda (c) (connection-locked? c)))
+	  (connection-close-sans-lock! conn))
        ;; store the connection only if room is available on the table
-       (with-access::connection conn (key locked? intable?)
+       (with-access::connection conn (locked?)
 	  (set! locked? #f)
-	  (unless intable?
-	     (remote-debug "  add in table conn=" conn
-			   " number=" *connection-number*)
-	     (set! intable? #t)
-	     ;; this is the first time we see this connection, we had it to
+	  (unless (connection-intable? conn)
+	     ;; this is the first time we see this connection, we add it to
 	     ;; the connection table
-	     (hashtable-update! *connection-table*
-				key
-				(lambda (l) (cons conn l))
-				(list conn)))))
+	     (connection-table-add! conn)
+	     (remote-debug "  add in table conn=" conn
+			   " open-conn=" *open-connection-number*
+			   " keep-alive-conn=" *keep-alive-connection-number*))))
    (mutex-unlock! *remote-lock*))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-close-sans-lock! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (connection-close-sans-lock! conn::connection)
-   (with-access::connection conn (key socket intable?)
-      (set! *connection-number* (-fx *connection-number* 1))
+   (with-access::connection conn (socket %%debug-closed?)
+      (when %%debug-closed?
+	 (error 'connection-close-sans-lock! "Connection already closed" conn))
+      (close-connection! conn)
       (remote-debug "CONNECTION-CLOSE conn=" conn
-		    " number=" *connection-number*)
-      (socket-close socket)
-      (when intable?
-	 (hashtable-update! *connection-table*
-			    key
-			    (lambda (l) (remq! conn l))
-			    '()))))
+		    " open-conn=" *open-connection-number*
+		    " keep-alive-conn=" *keep-alive-connection-number*)
+      (when (connection-intable? conn)
+	 (connection-table-remove! conn)
+	 (remote-debug "  remove from table conn=" conn
+		       " open-conn=" *open-connection-number*
+		       " keep-alive-conn=" *keep-alive-connection-number*))))
    
 ;*---------------------------------------------------------------------*/
 ;*    connection-close! ...                                            */

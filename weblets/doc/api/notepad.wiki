@@ -147,12 +147,11 @@ then update asychronously.
 | notepad     |  notepad or string   | the notepad.           |
 </arguments>
 
-</client>
-</arguments>
-
 This function returns the currently selected in a //notepad//.
 
 </procedure>
+
+</client>
 
 == Style ==
 <style>

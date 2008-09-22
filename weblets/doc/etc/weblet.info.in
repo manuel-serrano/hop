@@ -1,0 +1,5 @@
+((name "doc")
+ (author "M. Serrano")
+ (version "@VERSION@")
+ (date "@DATE@")
+ (title "HOP meta documentation center"))

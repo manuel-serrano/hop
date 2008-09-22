@@ -1,0 +1,5 @@
+((name "test")
+ (author "M. Serrano")
+ (version "@VERSION@")
+ (date "@DATE@")
+ (title "A test suite for client-side execution"))

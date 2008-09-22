@@ -6,16 +6,24 @@
       :style { border: 1px solid black; background: #ddd; } channel
       (map (lambda (i) (<DIV> i)) items)))
 
-(define (make-channel link title)
+(define (make-channel #!key link title)
    (<BIG> (<STRONG> (<A> :href link title))))
 
-(define (make-item link title date subject descr)
+(define (alternate links)
+   (when (pair? links)
+      (let ((e (assq 'alternate links)))
+	 (when (pair? e)
+	    (let ((c (assq 'href (cdr e))))
+	       (when (pair? c)
+		  (cdr c)))))))
+
+(define (make-item #!key links title date categories summary)
    (<DIV>
       :style { border: 1px solid #ccc; margin: 1px; padding: 2px; }
-      (<A> :href link title)
+      (<A> :href (alternate links) title)
       (if date (list "(" date ")") "")
-      (if subject (<I> subject))
-      descr))
+      (if categories (<I> categories))
+      summary))
 
 (<HTML>
    (<HEAD>
@@ -27,4 +35,7 @@
 	    (lambda (h)
 	       (with-input-from-string h
 		  (lambda ()
-		     (rss-parse (current-input-port) make-rss make-channel make-item))))))))
+		     (feed-parse (current-input-port)
+				 make-rss
+				 make-channel
+				 make-item))))))))

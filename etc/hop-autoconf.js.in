@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Wed Apr 16 15:02:00 2008 (serrano)                */
+/*    Last change :  Tue Sep 16 09:49:32 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -12,26 +12,65 @@
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    undefined value                                                  */
+/*---------------------------------------------------------------------*/
+var undefined;
+
+/*---------------------------------------------------------------------*/
+/*    Name and version                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export hop-name)) */
+function hop_name() {
+   return "Hop";
+}
+
+/*** META ((export hop-version)) */
+function hop_version() {
+   return "@VERSION@";
+}
+
+/*** META ((export hop-backend)) */
+function hop_backend() {
+   return "@BACKEND@";
+}
+
+/*** META ((export hop-url)) */
+function hop_url() {
+   return "@URL@";
+}
+
+/*---------------------------------------------------------------------*/
 /*    Hop server directories ...                                       */
 /*---------------------------------------------------------------------*/
+/*** META ((export hop-etc-directory)) */
 function hop_etc_directory() { 
    return "@ETCDIR@";
 }
+/*** META ((export hop-bin-directory)) */
 function hop_bin_directory() {
    return "@BINDIR@";
 }
+/*** META ((export hop-lib-directory)) */
 function hop_lib_directory() {
    return "@LIBDIR@";
 }
+/*** META ((export hop-share-directory)) */
 function hop_share_directory() {
    return "@SHAREDIR@";
 }
+/*** META ((export hop-contribs-directory)) */
 function hop_contribs_directory() {
    return "@CONTRIBSDIR@";
 }
+/*** META ((export hop-weblets-directory)) */
 function hop_weblets_directory() {
    return "@WEBLETSDIR@";
 }
+
+/*---------------------------------------------------------------------*/
+/*    Hop configuration                                                */
+/*---------------------------------------------------------------------*/
+var hop_enable_location_event = @LOCEVENT@;
 
 /*---------------------------------------------------------------------*/
 /*    hop-service-base                                                 */
@@ -44,13 +83,37 @@ function hop_service_base() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_get_flash_version ...                                        */
+/*---------------------------------------------------------------------*/
+function hop_get_flash_version() {
+   if( navigator.mimeTypes
+       && navigator.mimeTypes[ "application/x-shockwave-flash" ] ) {
+      var p = navigator.mimeTypes[ "application/x-shockwave-flash" ].enabledPlugin;
+   
+      if( p && p.description ) {
+	 var d = p.description;
+
+	 if( (typeof d == "string") && (d.indexOf( "Shockwave Flash " ) == 0) ) {
+	    return parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
+	 }
+      }
+   }
+
+   return 0;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_Config ...                                                   */
+/*    -------------------------------------------------------------    */
+/*    This mostly contains external information that cannot be         */
+/*    deduced by introspection.                                        */
 /*---------------------------------------------------------------------*/
 function hop_Config() {
   /* cpu speed */
   this.cpu_speed = 100;
   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.cpu_speed = 40;
   if( navigator.platform.indexOf( "armv5" ) >= 0 ) this.cpu_speed = 30;
+  if( navigator.platform.indexOf( "WinCE" ) >= 0 ) this.cpu_speed = 30;
   
   /* gpu speed */
   this.gpu_speed = 100;
@@ -58,6 +121,67 @@ function hop_Config() {
 
   /* pointing device */
   this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
+
+  /* flash version */
+  this.flash_version = hop_get_flash_version();
+
+  /* default navigator setting (firefox settings) */
+  this.mouse_left_button = 0;
+  this.flash_external_interface = false;
+  this.flash_audio = false;
+  this.flash_markup = "embed";
+  this.inline_image = false;
+
+  /* navigator specific configuration */
+  if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
+     this.navigator_family = "msie";
+     this.mouse_left_button = 1;
+     this.flash_external_interface = true;
+     this.flash_audio = false;
+     this.flash_markup = "object";
+     this.inline_image = false;
+     if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
+	hop_enable_location_event = false;
+     }
+  } else if( navigator.userAgent.indexOf( "Opera" ) >= 0 ) {
+     this.navigator_family = "opera";
+     this.mouse_left_button = 0;
+     this.flash_external_interface = false;
+     this.flash_audio = false;
+     this.flash_markup = "embed";
+     this.inline_image = true;
+  } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
+     this.navigator_family = "safari";
+     this.mouse_left_button = 0;
+     this.flash_external_interface = true;
+     this.flash_audio = false;
+     this.flash_markup = "embed";
+     this.inline_image = true;
+  } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
+     this.navigator_family = "webkit";
+     this.mouse_left_button = 0;
+     this.flash_external_interface = true;
+     this.flash_audio = false;
+     this.flash_markup = "embed";
+     this.inline_image = true;
+  } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
+     this.navigator_family = "khtml";
+     this.mouse_left_button = 1;
+     this.flash_external_interface = true;
+     this.flash_audio = false;
+     this.flash_markup = "embed";
+     this.inline_image = true;
+  } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
+     this.navigator_family = "mozilla";
+     this.mouse_left_button = 0;
+     this.flash_external_interface = true;
+     this.flash_audio = true;
+     this.flash_markup = "embed";
+     this.inline_image = true;
+  } else {
+     alert( "Unknown navigator (" + navigator.userAgent +
+	    "), using default settings..." );
+  }
 }
 
 /*---------------------------------------------------------------------*/
@@ -66,33 +190,48 @@ function hop_Config() {
 var hop_config = new hop_Config();
 
 /*---------------------------------------------------------------------*/
-/*    Hop configuration                                                */
+/*    hop_flash_minversion_set ...                                     */
 /*---------------------------------------------------------------------*/
-var hop_enable_location_event = @LOCEVENT@;
+function hop_flash_minversion_set( v ) {
+   if( v > hop_config.flash_version ) hop_config.flash_version = v;
+}
 
 /*---------------------------------------------------------------------*/
-/*    DOMFormElement ...                                               */
+/*    hop_flash_audio_set ...                                          */
 /*---------------------------------------------------------------------*/
-var undefined;
-
-if( !("HTMLFormElement" in window) ) {
-   window.HTMLFormElement = window.HTMLForm;
+function hop_flash_audio_set( v ) {
+   hop_config.flash_audio = v;
 }
 
-if( !("HTMLCollection" in window) ) {
-   window.HTMLCollection = function() { return false; };
-}
+/*---------------------------------------------------------------------*/
+/*    hop_innerHTML_need_evalp ...                                     */
+/*    -------------------------------------------------------------    */
+/*    This test sets the variable hop_innerHTML_need_eval to           */
+/*    false if innerHTML evaluates the scripts contained in the        */
+/*    DOM nodes it receives as argument.                               */
+/*---------------------------------------------------------------------*/
+var hop_innerHTML_need_evalp = true;
 
-if( !("HTMLInputElement" in window) ) {
-   window.HTMLInputElement = function() { return false; };
-}
+var tmp = document.createElement( "div" );
 
-if( !("HTMLTextAreaElement" in window) ) {
-   window.HTMLTextAreaElement = function() { return false; };
-}
-
-if( !("HTMLSelectElement" in window) ) {
-   window.HTMLSelectElement = function() { return false; };
+try {
+   tmp.innerHTML = "<script type='text/javascript'>hop_innerHTML_need_evalp = false</script>";
+   if( ("body" in document) && (document.body != null) ) {
+      document.body.appendChild( tmp );
+      document.body.removeChild( tmp );
+   } else {
+      if( ("documentElement" in document) &&  
+          (document.documentElement != null) ) {
+	 document.documentElement.appendChild( tmp );
+	 document.documentElement.removeChild( tmp );
+      } else {
+	 var body = document.getElementsByTagName( "body" )[ 0 ];
+	 body.appendChild( tmp );
+	 body.removeChild( tmp );
+      }
+   }
+} catch( e ) {
+     ;
 }
 
 /*---------------------------------------------------------------------*/
@@ -160,6 +299,49 @@ if( !("HTMLElement" in window) ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    DOMFormElement ...                                               */
+/*---------------------------------------------------------------------*/
+var hop_is_dom_form_element;
+
+try {
+   if( undefined instanceof HTMLFormElement ) {
+      /* this test is always false but it checks if HTMLFormElement */
+      /* is a plain JavaScript class. See below the catch clause.   */
+      hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+	 return false;
+      };
+   } else {
+      hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+	 return obj instanceof HTMLFormElement;
+      };
+   }
+} catch( e ) {
+   /* on some browsers (guess how, always the same), HTMLFormElement is */
+   /* an opaque object that is not implemented as a plain JavaScript    */
+   /* class (i.e., a JavaScript function), hence instanceof cannot be   */
+   /* used.                                                             */
+   hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+      return hop_is_html_element( obj ) && (obj.tagName === "form");
+   };
+}
+  
+if( !("HTMLCollection" in window) ) {
+   window.HTMLCollection = function() { return false; };
+}
+
+if( !("HTMLInputElement" in window) ) {
+   window.HTMLInputElement = function() { return false; };
+}
+
+if( !("HTMLTextAreaElement" in window) ) {
+   window.HTMLTextAreaElement = function() { return false; };
+}
+
+if( !("HTMLSelectElement" in window) ) {
+   window.HTMLSelectElement = function() { return false; };
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_make_xml_http_request ...                                    */
 /*---------------------------------------------------------------------*/
 var hop_make_xml_http_request;
@@ -184,11 +366,15 @@ if( "XMLHttpRequest" in window ) {
 	 try {
 	    return new ActiveXObject( "Msxml2.XMLHTTP" );
 	 } catch( e ) {
-	    return new ActiveXObject( "Microsoft.XMLHTTP" );
+	    try {
+	       return new ActiveXObject( "Microsoft.XMLHTTP" );
+	    } catch( e ) {
+	       alert( "*** ERROR: Don't know how to create XMLHttpRequest" );
+	    }
 	 }
       }
    } else {
-      if( XMLHttpRequest != undefined ) {
+      if( "XMLHttpRequest" in window ) {
 	 hop_make_xml_http_request = function hop_make_xml_http_request() {
 	    return new XMLHttpRequest();
 	 }
@@ -209,7 +395,7 @@ var hop_header_autoconf = hop_make_xml_http_request();
 if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
    hop_header_content_type = function hop_header_content_type( http ) {
       var h = http.getResponseHeader( "Content-Type" );
-      
+
       if( h ) {
 	 var i = h.indexOf( ";" );
 
@@ -227,11 +413,12 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
       var hds = http.getAllResponseHeaders();
       var i = hds.indexOf( "Content-Type" );
 
-      if( !i ) i = hds.indexOf( "content-type" );
-      if( !i ) return "application/text";
+      if( i < 0 ) i = hds.indexOf( "content-type" );
+      if( i < 0 ) i = hds.indexOf( "Content-type" );
+      if( i < 0 ) return "application/text";
 
       var j = hds.indexOf( "\n", i + 1 );
-      var s = j ? hds.substring( i, j ) : hds.substring( i, s.length );
+      var s = (j >= 0) ? hds.substring( i, j ) : hds.substring( i, s.length );
       var m = s.match( "[ \t:]+([^ \n;]*)" );
 
       if( m )
@@ -245,8 +432,6 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 /*    node_style_set ...                                               */
 /*---------------------------------------------------------------------*/
 /*** META ((export node-style-set!)) */
-var node_style_set = undefined;
-
 function node_style_set_native( obj, prop, value ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
@@ -306,14 +491,33 @@ var hop_active_location_timeout =
    (hop_config.cpu_speed < 66) ? 100 : 250;
 
 /*---------------------------------------------------------------------*/
+/*    setInterval ...                                                  */
+/*---------------------------------------------------------------------*/
+var hop_has_setInterval = true;
+
+try {
+   var i = setInterval( function() { ; }, 1000 );
+   clearInterval( i );
+} catch( e ) {
+   var hop_has_setInterval = false;
+}
+
+/*---------------------------------------------------------------------*/
 /*    Event handlers                                                   */
 /*---------------------------------------------------------------------*/
 var hop_add_native_event_listener = undefined;
 var hop_remove_native_event_listener = undefined;
 /*** META ((export stop-event-propagation)) */
 var hop_stop_propagation = undefined;
+var hop_has_event20 = false;
 
-if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
+try {
+   hop_has_event20 = document.implementation.hasFeature( "Events" , "2.0" );
+} catch( e ) {
+   ;
+}
+
+if( hop_has_event20 ) {
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
       if( "addEventListener" in obj ) {
 	 return obj.addEventListener( event, proc, capture );
@@ -374,84 +578,6 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_mozillap ...                                                 */
-/*---------------------------------------------------------------------*/
-function hop_mozillap() {
-   return navigator.userAgent.indexOf( "Mozilla" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_msiep ...                                                    */
-/*---------------------------------------------------------------------*/
-function hop_msiep() {
-   return navigator.userAgent.indexOf( "MSIE" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_khtmlp ...                                                   */
-/*---------------------------------------------------------------------*/
-function hop_khtmlp() {
-   return navigator.userAgent.indexOf( "KHTML" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_safarip ...                                                  */
-/*---------------------------------------------------------------------*/
-function hop_safarip() {
-   return navigator.userAgent.indexOf( "Safari" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_webkitp ...                                                  */
-/*---------------------------------------------------------------------*/
-function hop_webkitp() {
-   return navigator.userAgent.indexOf( "WebKit" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_operap ...                                                   */
-/*---------------------------------------------------------------------*/
-function hop_operap() {
-   return navigator.userAgent.indexOf( "Opera" ) >= 0;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_flash ...                                                    */
-/*---------------------------------------------------------------------*/
-var hop_flash = 0;
-
-/*---------------------------------------------------------------------*/
-/*    hop_flash_minversion_set ...                                     */
-/*---------------------------------------------------------------------*/
-function hop_flash_minversion_set( v ) {
-   if( v > hop_flash ) hop_flash = v;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_flash_version ...                                            */
-/*---------------------------------------------------------------------*/
-function hop_flash_version() {
-   if( hop_flash > 0 )
-      return hop_flash;
-   
-   if( navigator.mimeTypes
-       && navigator.mimeTypes[ "application/x-shockwave-flash" ] ) {
-      var p = navigator.mimeTypes[ "application/x-shockwave-flash" ].enabledPlugin;
-   
-      if( p && p.description ) {
-	 var d = p.description;
-
-	 if( (typeof d == "string") && (d.indexOf( "Shockwave Flash " ) == 0) ) {
-	    hop_flash = parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
-	    return hop_flash;
-	 }
-      }
-   }
-
-   return 0;
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_deinline_image ...                                           */
 /*    -------------------------------------------------------------    */
 /*    This function is invoked on inline images. It gives the          */
@@ -484,7 +610,7 @@ function hop_event_value( evt ) { return evt.value; }
            (peephole: (postfix ".responseText"))) */
 function hop_event_response_text( evt ) { return evt.responseText; }
 
-if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
+if( hop_has_event20  ) {
    hop_event_mouse_x = function hop_event_mouse_x( event ) {
       return event.pageX;
    }
@@ -516,14 +642,21 @@ if( document.implementation.hasFeature( "Events" , "2.0" ) ) {
    }
 }
 
-if( hop_msiep() || (hop_khtmlp() && !hop_safarip() && !hop_webkitp()) ) {
-   hop_event_mouse_button = function hop_event_mouse_button( e ) {
-      return e.button;
-   }
-} else {
-   hop_event_mouse_button = function hop_event_mouse_button( e ) {
-      return 1 + e.button;
-   }
+switch( hop_config.mouse_left_button ) {
+   case 0:
+      hop_event_mouse_button = function hop_event_mouse_button( e ) {
+	 return e.button + 1;
+      };
+      break;
+   case 1:
+      hop_event_mouse_button = function hop_event_mouse_button( e ) {
+	 return e.button;
+      }
+      break;
+   default:
+      hop_event_mouse_button = function hop_event_mouse_button( e ) {
+	 return e.button + (1 - hop_config.mouse_left_button);
+      }
 }
 
 /*---------------------------------------------------------------------*/
@@ -605,30 +738,5 @@ if( window.getSelection ) {
 	    return "";
 	 }
       }
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_innerHTML_need_evalp ...                                     */
-/*    -------------------------------------------------------------    */
-/*    This test sets the variable hop_innerHTML_need_eval to           */
-/*    false if innerHTML evaluates the scripts contained in the        */
-/*    DOM nodes it receives as argument.                               */
-/*---------------------------------------------------------------------*/
-var hop_innerHTML_need_evalp = true;
-
-var tmp = document.createElement( "div" );
-tmp.innerHTML = "<script type='text/javascript'>hop_innerHTML_need_evalp = false</script>";
-if( document.body != null ) {
-   document.body.appendChild( tmp );
-   document.body.removeChild( tmp );
-} else {
-   if( document.documentElement != null ) {
-      document.documentElement.appendChild( tmp );
-      document.documentElement.removeChild( tmp );
-   } else {
-      var body = document.getElementsByTagName( "body" )[ 0 ];
-      body.appendChild( tmp );
-      body.removeChild( tmp );
    }
 }

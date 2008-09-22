@@ -1,4 +1,4 @@
-(module hopscheme-config
+(module __hopscheme_config
    (library scheme2js)
    (library hop)
    (export (hopscheme-config compile-file?)))

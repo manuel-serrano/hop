@@ -19,11 +19,11 @@ HTML.
   (html-string-encode string)
   (html-string-decode string)
 
-  (rss-parse arg ...)
+  (feed-parse arg ...)
 
 == Examples ==
 
-<example>xml-parse, xml-string, html-parse, html-string, rss-parse</example>
+<example>xml-parse, xml-string, html-parse, html-string, feed-parse</example>
 
 == Server Definitions ==
 <server>
@@ -163,8 +163,8 @@ its arguments is:
 </arguments>
 </function>
 
-=== ++(rss-parse port rss channel item [content-length] [encoding UTF-8])++ ===
-<function> rss-parse
+=== ++(feed-parse port rss channel item [content-length] [encoding UTF-8])++ ===
+<function> feed-parse
 
 <arguments>
 ^  arguments  ^   type          ^  default    ^  short description             ^
@@ -177,23 +177,27 @@ its arguments is:
 </arguments>
 
 This function parses a input stream and builds a tree for representing
-the parsed RSS document. It is a wrapper of ++xml-parse++. The meaning 
-of its arguments is:
+the parsed RSS or atom document. It is a wrapper of ++xml-parse++. The
+meaning of its arguments is:
 
   * ++port++, the input port from which the characters are read.
   * ++rss++, a procedure of two arguments that is applied to build the
  nodes representing the RSS. The two arguments are:
     - the channel.
     - the list of items.
-  * ++channel++, a procedure of two arguments:
-    - a URL.
-    - a title.
-  * ++item++, a procedure of five arguments:
-    - a URL.
-    - a title.
-    - a date.
-    - a subject.
-    - a description.
+  * ++channel++, a procedure of two keyword arguments:
+    - ++link:++, a URL.
+    - ++titie:++, a title.
+  * ++item++, a procedure of with variable keyword arguments:
+    - ++links:++, a list of links
+    - ++title:++, a title.
+    - ++date:++, a date.
+    - ++categories:++, a list of categories.
+    - ++summray:++, a description.
+    - ++content:++, a content.
+    - ++source:++, a source.
+    - ++authors::++, a list of authors.
+    - ++rights::++, a list of rights.
   * ++content-length++, a maximum number of characters to be parsed. This 
  is useful when reading HTTP characters stream that don't end with 
  //end of file// markers.
@@ -208,5 +212,5 @@ of its arguments is:
 </server>
 
 == See also ==
-<see-also>xml-parse, html-parser, xml-string-, html-string, rss-parse</see-also>
+<see-also>xml-parse, html-parser, xml-string-, html-string, feed-parse</see-also>
 </doc>

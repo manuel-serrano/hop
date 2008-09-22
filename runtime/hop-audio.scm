@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Apr 17 13:17:48 2008 (serrano)                */
+;*    Last change :  Wed Sep  3 11:32:35 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -17,7 +17,8 @@
    (library multimedia
 	    web)
 
-   (library pthread)
+   (cond-expand
+      (enable-threads (library pthread)))
    
    (include "xml.sch"
 	    "service.sch")
@@ -97,15 +98,6 @@
 			      (onpanchange #unspecified)
 			      (attr)
 			      body)
-
-   (define (expr->function expr)
-      (cond
-	 ((xml-tilde? expr)
-	  (format "function( event ) { ~a }" (tilde->string expr)))
-	 ((string? expr)
-	  (format "function( event ) { ~a }" expr))
-	 (else
-	  "false")))
    
    (let* ((id (xml-make-id id 'audio))
 	  (pid (xml-make-id 'hopaudio))
@@ -124,15 +116,15 @@
 	  (init (<AUDIO-INIT> :id id :pid pid :player player
 		   :src src :autoplay autoplay
 		   :start start
-		   :onplay (expr->function onplay)
-		   :onstop (expr->function onstop)
-		   :onpause (expr->function onpause)
-		   :onload (expr->function onload)
-		   :onerror (expr->function onerror)
-		   :onended (expr->function onended)
-		   :onprogress (expr->function onprogress)
-		   :onloadedmetadata (expr->function onloadedmetadata)
-		   :onclose (expr->function onclose))))
+		   :onplay (hop->js-callback onplay)
+		   :onstop (hop->js-callback onstop)
+		   :onpause (hop->js-callback onpause)
+		   :onload (hop->js-callback onload)
+		   :onerror (hop->js-callback onerror)
+		   :onended (hop->js-callback onended)
+		   :onprogress (hop->js-callback onprogress)
+		   :onloadedmetadata (hop->js-callback onloadedmetadata)
+		   :onclose (hop->js-callback onclose))))
       (<AUDIO-OBJECT> id pid init controller)))
 
 ;*---------------------------------------------------------------------*/
@@ -174,7 +166,7 @@
 	      (if (string? src) (string-append "'" src "'") "false")
 	      (if autoplay "true" "false")
 	      (if player (hop->json player #f #f) "false"))
-      (format "hop_window_onload_add(
+      (format "hop_window_onload_cons(
                 function() {hop_audio_init( ~s, ~s, ~a, ~a, ~a, ~a, ~a, ~a, ~a, ~a , ~a, ~a, ~a );} );"
 	      id
 	      start
@@ -216,11 +208,11 @@
 	 :title title :alt title :inline #t
 	 :src (make-file-path (hop-icons-directory) "hop-audio" src)
 	 :onclick onclick))
-   
+
    (<DIV> :id (string-append id "-controls") :class "hop-audio-controls"
       ;; the controls callbacks
       (<SCRIPT>
-	 (format "hop_window_onload_add(
+	 (format "hop_window_onload_cons(
                    function() {var el=document.getElementById(~s);"
 		 (string-append id "-controls"))
 	 "el.onload=hop_audio_controls_onload;"
@@ -384,13 +376,14 @@
 ;*    audio-onstate ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (audio-onstate %event engine player)
-   (lambda (state pllen song pos len vol err _1 _2)
-      (tprint "audio signal state: state=" state
-	      " len=" len " pos=" pos " vol=" vol
-	      " song=" song " pllen=" pllen
-	      " engine=" (find-runtime-type engine))
-      (hop-audio-player-%errcount-set! player 0)
-      (hop-event-broadcast! %event (list state len pos vol song))))
+   (lambda (status)
+      (with-access::musicstatus status (state song songpos songlength volume)
+	 (let ((ev (list state songlength songpos volume song)))
+	    (tprint "audio signal state: event=" ev
+		    " engine=" (find-runtime-type engine)
+		    " state=" state " songlength=" songlength)
+	    (hop-audio-player-%errcount-set! player 0)
+	    (hop-event-broadcast! %event ev)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onmeta ...                                                 */
@@ -398,22 +391,23 @@
 (define (audio-onmeta %event engine player)
    
    (define (signal-meta s plist)
-      (let* ((conv (charset-converter 'UTF-8 (hop-charset)))
+      (let* ((conv (hop-locale->charset))
 	     (s (cond
 		   ((id3? s)
-		    (let ((cv (charset-converter (hop-locale) (hop-charset))))
-		       (duplicate::id3 s
-			  (title (cv (id3-title s)))
-			  (artist (cv (id3-artist s)))
-			  (album (cv (id3-album s)))
-			  (orchestra #f)
-			  (conductor #f)
-			  (interpret #f)
-			  (comment (cv (id3-comment s))))))
+		    (duplicate::id3 s
+		       (title ((hop-locale->charset) (id3-title s)))
+		       (artist ((hop-locale->charset) (id3-artist s)))
+		       (album ((hop-locale->charset) (id3-album s)))
+		       (orchestra #f)
+		       (conductor #f)
+		       (interpret #f)
+		       (comment ((hop-locale->charset) (id3-comment s)))))
+		   ((string? s)
+		    ((hop-locale->charset) s))
 		   (else
 		    s)))
-	     (plist (map conv plist)))
-	 (tprint "signal meta s=" (if (string? s) s "id3")
+	     (plist (map (lambda (f) (conv (url-decode f))) plist)))
+	 (tprint "signal meta s=" (if (string? s) s (find-runtime-type s))
 		 " plist.length=" (length plist)
 		 " engine=" (find-runtime-type engine))
 	 (hop-event-broadcast! %event (list 'meta s plist))))
@@ -426,12 +420,12 @@
       (hop-audio-player-%errcount-set! player 0)
       (if (string? meta)
 	  ;; this is a file name (a url)
-	  (let ((file (charset-convert meta 'UTF-8 (hop-locale))))
-	     (if (not (file-exists? meta))
-		 (audio-onfile-name meta playlist)
+	  (let ((file ((hop-charset->locale) meta)))
+	     (if (not (file-exists? file))
+		 (audio-onfile-name file playlist)
 		 (let ((id3 (mp3-id3 file)))
 		    (if (not id3)
-			(audio-onfile-name meta playlist)
+			(audio-onfile-name file playlist)
 			(signal-meta id3 playlist)))))
 	  (signal-meta #f playlist))))
 
@@ -495,7 +489,7 @@
 (define (music-playlist-set! engine a1)
    (music-playlist-clear! engine)
    (for-each (lambda (s)
-		(music-playlist-add! engine s))
+		(music-playlist-add! engine ((hop-charset->locale) s)))
 	     a1))
    
 ;*---------------------------------------------------------------------*/
@@ -505,16 +499,19 @@
 
    (define (hop-audio-player-event-loop-start player)
       (with-access::hop-audio-player player (%thread %mutex engine)
-	 (with-lock (hop-audio-player-%mutex player)
-	    (lambda ()
-	       (if (thread? %thread)
-		   (music-event-loop-reset! engine)
-		   (set! %thread (make-audio-thread player)))))))
+	 (mutex-lock! %mutex)
+	 (if (thread? %thread)
+	     (begin
+		(mutex-unlock! %mutex)
+		(music-event-loop-reset! engine))
+	     (unwind-protect
+		(set! %thread (make-audio-thread player))
+		(mutex-unlock! %mutex)))))
    
    (cond-expand
       (enable-threads
        (with-access::hop-audio-player player (%service %event engine)
-	  (set! %service (service :name (get-service-url "hopaudio") (a0 a1)
+	  (set! %service (service :name (get-service-url "hop-audio") (a0 a1)
 			    (with-handler
 			       (lambda (e)
 				  (error-notify e)
@@ -559,7 +556,6 @@
 	    (when (thread? %thread)
 	       (music-event-loop-abort! engine)
 	       (music-close engine)
-	       (thread-terminate! %thread)
 	       (set! %thread #f))))))
 
 ;*---------------------------------------------------------------------*/

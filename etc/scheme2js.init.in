@@ -10,14 +10,11 @@
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
-;*    The basename of the HOP library name                             */
+;*    The library                                                      */
 ;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo-c
-    ;; the C basename of the HOP library
-    (library-translation-table-add! 'scheme2js "scheme2js" "@VERSION@"))
-   (bigloo-jvm
-    ;; the C basename of the HOP library
-    (library-translation-table-add! 'scheme2js "bigloo/scheme2js/make-lib" #f))
-   (else
-    #unspecified))
+(declare-library! 'scheme2js
+		  :version "@VERSION@"
+		  :module-init 'scheme2js
+		  :module-eval '__scheme2js_makelib
+		  :class-init "bigloo.scheme2js.scheme2js"
+		  :class-eval "bigloo.scheme2js.make-lib")

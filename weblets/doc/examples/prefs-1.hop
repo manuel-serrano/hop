@@ -1,0 +1,54 @@
+;; an example of preferences
+(module foo)
+
+(define-parameter foo1 "foo1")
+(define-parameter foo2 '(foo2.1 foo2.1))
+(define-parameter foo3 #t)
+(define-parameter foo4 '("foo4.1" "foo4.2"))
+(define-parameter foo5 10)
+(define-parameter foo6 'hop)
+
+(define-preferences foo-preferences
+   ("foo1" string foo1)
+   ("foo2" expr foo2)
+   ("foo3" (bool "yes" "no") foo3)
+   ("foo4" (list string) foo4)
+   ("foo5" number foo5)
+   ("foo6" (enum hop scheme lisp) foo6))
+
+(define-service (foo)
+   (<HTML>
+      (<TABLE>
+	 (<TR> (<TH> "foo1") (<TD> (foo1)))
+	 (<TR> (<TH> "foo2") (<TD> (foo2)))
+	 (<TR> (<TH> "foo3") (<TD> (foo3)))
+	 (<TR> (<TH> "foo4") (<TD> (foo4)))
+	 (<TR> (<TH> "foo5") (<TD> (foo5)))
+	 (<TR> (<TH> "foo6") (<TD> (foo6))))))
+
+(define (<SAVE-PREFS>)
+   (<BUTTON> :onclick
+      ~(if (or (prefs-valid? "foo-pref")
+	       (confirm "Some values or not validated, save anyway?"))
+	   (let loop ((override #f))
+	      (with-hop ($(service (ov)
+			     (foo-preferences-save "/tmp/foorc.hop" ov))
+			  override)
+		 (lambda (h)
+		    (unless h
+		       (when (confirm "The RC file has been changed, save anyway")
+			  (loop #t)))))))
+      "Save"))
+
+(define-service (foo/preferences)
+   (<HTML>
+      (<HEAD> :include "hop-prefs")
+      (<BODY>
+	 (foo-preferences-edit :id "foo-pref")
+	 (<DIV>
+	    "Automatic save procedure: " 
+	    (<BUTTON> :onclick ~(preferences-save "foo-pref" "/tmp/foorc.hop")
+	       "Save")
+	    " Manual save procedure: "
+	    (<SAVE-PREFS>)))))
+   

@@ -70,6 +70,7 @@ The ++//type//++ of the last two clauses can be one of:
 
   * ++integer++: a numeral value.
   * ++string++: a string of characters.
+  * ++(text rows cols)++: a text displayed in a ++rows x cols++ text area.
   * ++expr++: any HOP value.
   * ++bool++: a //yes-no// value.
   * ++(bool //yes-label// //no-label//)++: a //yes-no// value with user 

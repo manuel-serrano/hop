@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Feb 28 09:04:06 2008 (serrano)                */
+;*    Last change :  Fri Sep 19 09:13:09 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -48,6 +48,9 @@
 	    
 	    (hop-scheduling::symbol)
 	    (hop-scheduling-set! ::symbol)
+
+	    (hop-somaxconn::int)
+	    (hop-somaxconn-set! ::int)
 	    
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
@@ -74,7 +77,13 @@
 	    (hop-process-key-set! ::bstring)
 
 	    (hop-report-execution-time::bool)
-	    (hop-report-execution-time-set! ::bool))
+	    (hop-report-execution-time-set! ::bool)
+
+	    (hop-script-file::obj)
+	    (hop-script-file-set! ::obj)
+
+	    (hop-get-cache-size::int)
+	    (hop-get-cache-size-set! ::int))
 
    (eval    (export-exports)))
 
@@ -163,7 +172,16 @@
 ;*    hop-scheduling ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-scheduling
-   'queue)
+   'pool)
+
+;*---------------------------------------------------------------------*/
+;*    hop-somaxconn ...                                                */
+;*    -------------------------------------------------------------    */
+;*    On Linux 2.6.x see /proc/sys/net/core/somaxconn for the          */
+;*    actual maximal limit of SOMAXCONN.                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-somaxconn
+   128)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-https ...                                             */
@@ -229,3 +247,15 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-report-execution-time
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-script-file ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-script-file
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-get-cache-size ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-get-cache-size
+   64)

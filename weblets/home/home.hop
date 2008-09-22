@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Tue Dec 18 09:54:02 2007 (serrano)                */
-;*    Copyright   :  2006-07 Manuel Serrano                            */
+;*    Last change :  Fri Sep 19 16:39:23 2008 (serrano)                */
+;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
 ;*=====================================================================*/
@@ -239,6 +239,8 @@
 (define *stable-jar* #unspecified)
 (define *stable-tar-url* #unspecified)
 (define *stable-jar-url* #unspecified)
+(define *maemo-deb-url* #unspecified)
+(define *maemo-deb* #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    download-versions-set! ...                                       */
@@ -278,10 +280,20 @@
       
       (set! *stable-tar-url*
 	    (if (string? *stable-tar-gz*)
-		(make-file-name(home-ftp-hop-url) *stable-tar-gz*)
+		(make-file-name (home-ftp-hop-url) *stable-tar-gz*)
 		"not available"))
       
       (set! *stable-jar-url*
 	    (if (string? *stable-jar*)
-		(make-file-name(home-ftp-hop-url) *stable-jar*)
+		(make-file-name (home-ftp-hop-url) *stable-jar*)
+		"not available"))
+
+      (set! *maemo-deb*
+	    (if (string? (home-hop-stable-version))
+		(string-append "hop_" (home-hop-stable-version) "_armel.deb")
+		"not available"))
+      
+      (set! *maemo-deb-url*
+	    (if (string? *maemo-deb*)
+		(make-file-name (home-ftp-hop-url) *maemo-deb*)
 		"not available"))))

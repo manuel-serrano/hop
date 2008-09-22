@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/job.scm                         */
+;*    serrano/prgm/project/hop/1.9.x/runtime/job.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Wed May 23 11:33:22 2007 (serrano)                */
-;*    Copyright   :  2005-07 Manuel Serrano                            */
+;*    Last change :  Wed May  7 14:01:04 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
 ;*=====================================================================*/
@@ -15,8 +15,7 @@
 (module __hop_job
 
    (cond-expand
-      (enable-threads (library pthread))
-      (else (import __hop_thread)))
+      (enable-threads (library pthread)))
 
    (import  __hop_param
 	    __hop_read)
