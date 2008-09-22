@@ -330,3 +330,25 @@ function sc_keyword2string(o) {
 function sc_string2keyword(o) {
     return new sc_Keyword(o.val);
 }
+
+/*** META ((export #t)
+           (peephole (hole 2 1 ".val.indexOf(" 0 ".val) === 0")))
+*/
+function sc_isStringPrefix(cs1, cs2) {
+    return cs2.val.indexOf(cs1.val) === 0;
+}
+
+/*** META ((export #t)) */
+function sc_isStringSuffix(cs1, cs2) {
+    var s1 = cs1.val;
+    var s2 = cs2.val;
+    var tmp = s2.lastIndexOf(s1);
+    return tmp !== false && tmp >= 0 && tmp === s2.length - s1.length;
+}
+
+/*** META ((export #t)) */
+function sc_stringSplit(s, sep) {
+    if (sep.val.length === 1)
+	return sc_vector2list(s.val.split(sep.val));
+    return sc_vector2list(s.val.split(sc_pregexpCreateCharsetMatcher(sep.val)));
+}

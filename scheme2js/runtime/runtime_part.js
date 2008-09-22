@@ -749,17 +749,18 @@ function sc_isList(o) {
    var turtle = o;
 
    while (true) {
-      if (rabbit === null || (rabbit instanceof sc_Pair && rabbit.cdr === null))
-	 return true;  // end of list
-      else {
-	 if ((rabbit instanceof sc_Pair) &&
-	     (rabbit.cdr instanceof sc_Pair)) {
-	    rabbit = rabbit.cdr.cdr;
-	    turtle = turtle.cdr;
-	    if (rabbit === turtle) return false; // cycle
-	 } else
-	    return false; // not pair
-      }
+       if (rabbit === null ||
+	   (rabbit instanceof sc_Pair && rabbit.cdr === null))
+	   return true;  // end of list
+       else {
+	   if ((rabbit instanceof sc_Pair) &&
+	       (rabbit.cdr instanceof sc_Pair)) {
+	       rabbit = rabbit.cdr.cdr;
+	       turtle = turtle.cdr;
+	       if (rabbit === turtle) return false; // cycle
+	   } else
+	       return false; // not pair
+       }
    }
 }
 
@@ -1299,21 +1300,6 @@ function sc_makejsString(k, c) {
     else
 	fill = " ";
     return sc_makeJSStringOfLength(k, fill);
-}
-
-/*** META ((export #t)) */
-function sc_isStringPrefix(cs1,cs2) {
-   return cs2.indexOf(cs1) === 0;
-}
-
-/*** META ((export #t)) */
-function sc_isStringSuffix(cs1,cs2) {
-   return cs2.lastIndexOf(cs1) === cs2.length;
-}
-
-/*** META ((export #t)) */
-function sc_stringSplit(s,sep) {
-   return sc_vector2list(s.split(new RegExp( "[" + sep + "]" )));
 }
 
 function sc_jsstring2list(s) {
@@ -1940,6 +1926,23 @@ function sc_pregexpSplit(re, s) {
    return sc_vector2list(tmp);
 }
    
+function sc_pregexpCreateCharsetMatcher(set) {
+    if (set.length === 0 || set.length === 1) return new RegExp("[" + set + "]");
+    var res = "[";
+    for (var i = 0; i < set.length; i++) {
+	var c = set.charAt(i);
+	if (c === "]")
+	    res += "\\]";
+	else if (c === "^")
+	    res += "\\^";
+	else if (c === "\\")
+	    res += "\\\\";
+	else if (c === "-")
+	    res += "\\-";
+	else res += c;
+    }
+    return new RegExp(res + "]");
+}
 
 /* =========================================================================== */
 /* Other library stuff */

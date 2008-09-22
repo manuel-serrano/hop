@@ -323,3 +323,23 @@ String.prototype.sc_toWriteString = function() {
     else
 	return '"' + sc_escapeWriteString(this) + '"';
 };
+
+/*** META ((export #t)
+           (peephole (hole 2 1 ".indexOf(" 0 ") === 0")))
+*/
+function sc_isStringPrefix(cs1, cs2) {
+    return cs2.indexOf(cs1) === 0;
+}
+
+/*** META ((export #t)) */
+function sc_isStringSuffix(cs1, cs2) {
+    var tmp = cs2.lastIndexOf(cs1);
+    return tmp !== false && tmp >= 0 && tmp === cs2.length - cs1.length;
+}
+
+/*** META ((export #t)) */
+function sc_stringSplit(s, sep) {
+    if (sep.length === 1)
+	return sc_vector2list(s.split(sep));
+    return sc_vector2list(s.split(sc_pregexpCreateCharsetMatcher(sep)));
+}
