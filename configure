@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/configure                         */
+#*    serrano/prgm/project/hop/1.10.x/configure                        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Sep 22 15:17:01 2008 (serrano)                */
+#*    Last change :  Mon Sep 22 15:29:00 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -52,8 +52,8 @@ cssmimetype="text/css"
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="1.9.0"
-branch=1.9.x
+version="1.10.0"
+branch=1.10.x
 devel=
 
 date=`date +"%d %B %Y"`
@@ -71,7 +71,7 @@ buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 buildbindir=$PWD/bin
 
-bigloorequired=3.1b
+bigloorequired=3.2a
 bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
