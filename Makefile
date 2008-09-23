@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/Makefile                          */
+#*    serrano/prgm/project/hop/1.10.x/Makefile                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Jun 20 13:16:52 2008 (serrano)                */
+#*    Last change :  Mon Sep 22 17:21:25 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -222,7 +222,7 @@ distrib-sans-version:
           echo "*** ERROR: $(HOPTMPDIR)/hop-tmp exists!"; \
           exit 1; \
         elif [ -d $(HOPTMPDIR)/hop-$(HOPRELEASE) ]; then \
-          echo "*** ERROR: $(HOPTMPDIR)/hop$(HOPRELEASE) exists!"; \
+          echo "*** ERROR: $(HOPTMPDIR)/hop-$(HOPRELEASE) exists!"; \
           exit 1; \
         else \
           version=$(HOPRELEASE); \

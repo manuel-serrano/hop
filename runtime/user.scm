@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/1.10.x/runtime/user.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Sep 20 18:54:42 2008 (serrano)                */
+;*    Last change :  Mon Sep 22 17:15:28 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -422,7 +422,7 @@
 	       (message
 		message)
 	       ((http-request? req)
-		(format "Protected Area! Authentication required: ~a:~a:/~a"
+		(format "Protected Area! Authentication required: ~a:~a:~a"
 			(http-request-host req)
 			(http-request-port req)
 			(http-request-path req)))

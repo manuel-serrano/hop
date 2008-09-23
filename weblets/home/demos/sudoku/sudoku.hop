@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Tue Dec  4 16:08:57 2007 (serrano)                */
+;*    Last change :  Tue Sep 23 05:54:54 2008 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
@@ -185,18 +185,18 @@
 	       (<H2>  "Menu")
 	       (<DIV> :class "sudoku-menu"
 		  (<DIV> 
-		     "Level: " [,(<A> "1") ,(<A> "2") ,(<A> "3") ,(<A> "4") ,(<A> "5")])
-		  
+		     "Level: "
+		     [,(<A> "1") ,(<A> "2") ,(<A> "3") ,(<A> "4") ,(<A> "5")])
 		  (<DIV>
-		     "Show errors: " (<INPUT> :type "radio" :name "err" :checked "checked"
-					:style "cursor: pointer"
-					:onclick ~(set! *show-errors* #t)
-					"yes")
-		     " "
+		     "Show errors: "
+		     (<INPUT> :type "radio" :name "err" :checked "checked"
+			:style "cursor: pointer"
+			:onclick ~(set! *show-errors* #t))
+		     "yes "
 		     (<INPUT> :type "radio" :name "err"
 			:style "cursor: pointer"
-			:onclick ~(set! *show-errors* #f)
-			"no"))
+			:onclick ~(set! *show-errors* #f))
+		     "no")
 		  (<DIV> :style "cursor: pointer" :onclick ~(show-solution)
 		     "Show-solution")
 		  (<DIV> :style "cursor: pointer" :onclick ~(window.print)

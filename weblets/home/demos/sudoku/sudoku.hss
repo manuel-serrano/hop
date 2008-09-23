@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/weblets/home/demos/sudoku/sudoku.hss        */
+/*    .../project/hop/1.9.x/weblets/home/demos/sudoku/sudoku.hss       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-/*    Last change :  Thu May 11 16:37:41 2006 (serrano)                */
+/*    Last change :  Tue Sep 23 05:56:03 2008 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    Sudoku HOP demo                                                  */
 /*=====================================================================*/
@@ -73,7 +73,7 @@ H1 {
   padding: 0;
   margin: 5;
   text-align: center;
-  color: #6A96FF
+  color: #6A96FF;
 }
 
 .sudoku-menu {
