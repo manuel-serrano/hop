@@ -2,7 +2,7 @@
    (import nodes
 	   tools
 	   walk)
-   (export (scm-out tree::Module p)))
+   (export (scm-out tree p)))
 
 ;; NOT THREAD-SAFE.
 ;; (should not be a problem, as this module should only be used for

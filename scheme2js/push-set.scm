@@ -74,12 +74,11 @@
 (define-nmethod (Set!.push! var/return)
    (with-access::Set! this (lvalue val)
       (with-access::Ref lvalue (var)
-	 (if (Return? var/return)
-	     (instantiate::Return
-		(val (walk! val var)))
-	     ;; otherwise ignore assignment, as set! is unspecified (and we
-	     ;; avoid a set!.
-	     (walk! val var)))))
+	 (if (Var? var/return)
+	     ;; ignore var/return. the value of set! is unspecified.
+	     (walk! val var)
+	     (assign! (walk! val var)
+		      var/return)))))
 
 ;; Let must not exist at this stage anymore
 

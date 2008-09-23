@@ -465,7 +465,7 @@ function sc_exact2inexact(x) {
 }
 
 /*** META ((export #t)
-           (peephole (suffix "<< 0")))
+           (peephole (postfix "<< 0")))
 */
 function sc_inexact2exact(x) {
     return x << 0;
