@@ -12,7 +12,10 @@
 
 (define-service (home/demos/set)
    (let ((join-login (<INPUT> :type "hidden" :name "login"))
-	 (new-login (<INPUT> :type "hidden" :name "login")))
+	 (new-login (<INPUT> :type "hidden" :name "login"))
+	 (active-games (filter (lambda (g)
+				  (eq? (Game-state (cdr g)) 'open))
+			       *games*)))
       (<HTML>
 	 (<HEAD>
 	    :base (service-base-url home/demos/set (current-request)))
@@ -28,37 +31,40 @@
 						  :onchange
 						  ~(begin
 						      (set! $join-login.value this.value)
-						      (set! $new-login.value this.value))))))
+						      (set! $new-login.value this.value)
+						      )))))
 		  (<TR>
-		     (<TH> "Join a game")
+		     (if (null? active-games)
+			 (<TH> "")
+			 (<TH> "Join a game"))
 		     (<TH> "Create a new game"))
 		  (<TR>
-		     (<TD>
-			(<DIV>
-			   :id "join-game-div"
-			   (<FORM>
-			      :id "join-game-form"
-			      :action home/demos/set/join-game
-			      join-login
-			      (<TABLE>
-				 (<TR>
-				    (<TD>
-				       (<SELECT> :name "name"
-						 (map (lambda (g)
-							 (<OPTION> (car g)))
-						      (filter (lambda (g)
-								 (eq? (Game-state (cdr g)) 'open))
-							      *games*)))))
-				 (<TR>
-				    (<TD> :align "right"
-					  (<SUBMIT> "Join")))))))
+		     (if (null? active-games)
+			 (<TD> join-login)
+			 (<TD>
+			    (<DIV>
+			       :id "join-game-div"
+			       (<FORM>
+				  :id "join-game-form"
+				  :action home/demos/set/join-game
+				  join-login
+				  (<TABLE>
+				     (<TR>
+					(<TD>
+					   (<SELECT> :name "name"
+					      (map (lambda (g)
+						      (<OPTION> (car g)))
+						   active-games))))
+				     (<TR>
+					(<TD> :align "right"
+					   (<SUBMIT> "Join"))))))))
 		     (<TD>
 			(<DIV>
 			   :id "new-game-div"
 			   (<FORM>
-			      new-login
 			      :id "new-game-form"
 			      :action home/demos/set/new-game
+			      new-login
 			      (<TABLE>
 				 (<TR>
 				    (<TD>
@@ -69,7 +75,7 @@
 				       "Rounds: ")
 				    (<TD> (<TEXT-FIELD> "rounds")))
 				 (<TR> (<TD> :align "right"  :colspan 2
-					     (<SUBMIT> "Create"))))))))))
+					  (<SUBMIT> "Create"))))))))))
 	    (<FONT>
 	       :size -2
 	       (<DIV>
@@ -126,7 +132,6 @@
 			      
 
 (define-service (home/demos/set/join-game login name)
-;   (tprint "login : " login)
    (with-lock *set-lock*
       (lambda ()
 	 (let ((g (assoc name *games*)))
