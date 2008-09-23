@@ -45,10 +45,10 @@
 			       (template-display p env
 				  "(~a~a~a)"
 				  (cadr entry) (cadr entry) ;; ++ or --
-				  (Var-compiled var))
-			       (with-access::Var var (compiled)
+				  (Var-js-id var))
+			       (with-access::Var var (js-id)
 				  (template-display p env
-				     "($compiled ~a= ~e)"
+				     "($js-id ~a= ~e)"
 				     (cadr entry)
 				     (compile (cadr operands) p #f))))
 			   (compile-unoptimized-set! p env compile n)))

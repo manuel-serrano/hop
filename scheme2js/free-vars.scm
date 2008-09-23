@@ -19,7 +19,11 @@
 (define-nmethod (Execution-Unit.find-free surrounding-fun visible-vars-list)
    (with-access::Execution-Unit this (scope-vars free-vars)
       (set! free-vars '())
-      (default-walk this this (list scope-vars))))
+      (default-walk this this (list scope-vars))
+      (for-each (lambda (v)
+		   (with-access::Var v (escapes?)
+		      (set! escapes? #t)))
+		free-vars)))
 
 (define-nmethod (Scope.find-free surrounding-fun visible-vars-list)
    (with-access::Scope this (scope-vars)

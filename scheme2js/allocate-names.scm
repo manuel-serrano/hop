@@ -75,19 +75,17 @@
 (define-generic (allocate-name v::Var env used-ht)
 
    ;; generate ids
-   (with-access::Var v (compiled escapes? id)
-      (when (string-null? compiled)
+   (with-access::Var v (js-id escapes? id)
+      (when (string-null? js-id)
 	 (let ((short (nice-mangle (symbol->string id))))
-	    (set! compiled
+	    (set! js-id
 		  (if (invalid-or-used? short used-ht)
 		      (gen-JS-sym id)
 		      short))
-	    (hashtable-put! used-ht compiled #t)))))
+	    (hashtable-put! used-ht js-id #t)))))
 
 (define-method (allocate-name v::JS-Var env used-ht)
-   (with-access::JS-Var v (compiled js-id)
-      (set! compiled js-id)
-      (hashtable-put! used-ht compiled #t)))
+   'do-nothing) ;; js-id is already up to date.
 
 (define-method (allocate-name v::Global-Var env used-ht)
    (with-access::Name-Env env (suffix)
@@ -95,15 +93,15 @@
 	  (begin ;; no suffix -> treat it, as if it was a local var.
 	     (shrink! v)
 	     (allocate-name v env used-ht))
-	  (with-access::Var v (id compiled escapes?)
+	  (with-access::Var v (id js-id escapes?)
 	     (let* ((suf (suffix-mangle suffix))
 		    (short (string-append (nice-mangle (symbol->string id))
 					  suf)))
-		(set! compiled
+		(set! js-id
 		      (if (invalid-or-used? short used-ht)
 			  (string-append (gen-JS-sym id) suf)
 			  short)))
-	     (hashtable-put! used-ht compiled #t)))))
+	     (hashtable-put! used-ht js-id #t)))))
 
 (define-nmethod (Node.name-gen used-ht)
    (default-walk this used-ht))
@@ -130,7 +128,7 @@
       (let ((lambda-used-ht (make-hashtable)))
 	 (for-each (lambda (var)
 		      (hashtable-put! lambda-used-ht
-				      (Var-compiled var)
+				      (Var-js-id var)
 				      #t))
 		   free-vars)
 	 

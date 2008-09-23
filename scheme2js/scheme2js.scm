@@ -43,49 +43,62 @@
 				   configuration
 				   #!key (reader read))))
 
+(define-macro (pass name . Lrest)
+   `(begin
+       ,@Lrest
+       (when (eq? debug-stage ,name)
+	  (scm-out tree p))))
+
 (define (scheme2js module p)
-   (let* ((top-level-e (my-expand `(begin
+   (let* ((debug-stage (config 'debug-stage))
+	  (top-level-e (my-expand `(begin
 				      ,@(Module-header-macros module)
 				      ,@(Module-header-top-level module))))
-	  (dummy1 (if (eq? (config 'debug-stage) 'expand)
+	  (dummy1 (if (eq? debug-stage 'expand)
 		      (pp top-level-e p)))
 	  (top-level-runtime-e (runtime-expand! top-level-e))
-	  (dummy2 (if (eq? (config 'debug-stage) 'runtime-expand)
+	  (dummy2 (if (eq? debug-stage 'runtime-expand)
 		      (pp top-level-runtime-e p)))
 	  (tree (pobject-conv top-level-runtime-e)))
-      (letrec-expansion! tree) ;;we could do this expansion in list-form too...
-      (symbol-resolution tree
-			 (Module-header-imports module)
-			 (Module-header-exports module))
-      (encapsulation! tree)
-      (node-elimination! tree)
-;      (scm-out tree (current-output-port))
-      (tail-rec! tree)
-      (node-elimination! tree)
-      (inline! tree #t)
-      (tail-rec! tree)
-      (inline! tree #f) ;; a second faster inlining.
-      (constant-propagation! tree)
-      (rm-unused-vars! tree)
-      (node-elimination! tree)
+
+      ;;we could do the letrec-expansion in list-form too.
+      (pass 'letrec        (letrec-expansion! tree))
+
+      (pass 'symbol        (symbol-resolution tree
+					      (Module-header-imports module)
+					      (Module-header-exports module)))
+      (pass 'encapsulation (encapsulation! tree))
+      (pass 'node-elim1    (node-elimination! tree))
+      (pass 'tail-rec      (tail-rec! tree))
+      (pass 'node-elim2    (node-elimination! tree))
+      (pass 'inline        (inline! tree #t))
+      (pass 'tail-rec2     (tail-rec! tree))
+      (pass 'inline2       (inline! tree #f)) ;; a second faster inlining.
+      (pass 'constant      (constant-propagation! tree))
+      (pass 'rm-unused     (rm-unused-vars! tree))
+      (pass 'node-elim3    (node-elimination! tree))
       ;(call/cc-early tree)
       ;(trampoline tree)
-      (constants! tree)
-      (scope-resolution! tree)
-      (tail-rec->while! tree)
-      (loop-hoist! tree)
-      (propagation! tree)
+      (pass 'constants     (constants! tree))
+      (pass 'scope         (scope-resolution! tree))
+      (pass 'while         (tail-rec->while! tree))
+      (pass 'hoist         (loop-hoist! tree))
+      (pass 'propagation   (propagation! tree))
       ;(var-elimination! tree)
-      (rm-unused-vars! tree)
-      (scope-flattening! tree)
-      (statements! tree)
-      (optimize-while! tree)
-      (node-elimination! tree)
-      (rm-tail-breaks! tree)
-      (node-elimination! tree)
+      (pass 'rm-unused2    (rm-unused-vars! tree))
+      (pass 'flatten       (scope-flattening! tree))
+      (pass 'stmts         (statements! tree))
+      (pass 'while-optim   (optimize-while! tree))
+      (pass 'node-elim4    (node-elimination! tree))
+      (pass 'rm-breaks     (rm-tail-breaks! tree))
+      (pass 'node-elim5    (node-elimination! tree))
       ;(call/cc-late! tree)
       ;(locations tree)
-      (out tree p)
+      (if debug-stage
+	  (let ((tmp (open-output-string)))
+	     (out tree tmp)
+	     (close-output-port tmp))
+	  (out tree p))
       (verbose "--- compiled")))
 
 (define (scheme2js-compile-expr expr out-p

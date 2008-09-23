@@ -30,10 +30,9 @@
        (current (default #f))
 
        ;; see out for the following field
-       (compiled::bstring (default "")))
+       (js-id::bstring (default "")))
     (final-class Local::Var)
-    (class JS-Var::Var
-       (js-id::bstring read-only))
+    (class JS-Var::Var)
     (final-class Imported-Var::JS-Var
        (exported-as-const?::bool read-only)
        (runtime?::bool read-only)

@@ -145,10 +145,10 @@
 
 (define-nmethod (Ref.compile p stmt?)
    (with-access::Ref this (var)
-      (with-access::Var var (compiled)
+      (with-access::Var var (js-id)
 	 (template-display p env
 	    (?@ stmt? "~@;\n")
-	    "$compiled"))))
+	    "$js-id"))))
 
 (define-nmethod (Module.compile p stmt?)
    (define (exported-vars-code)
@@ -157,9 +157,9 @@
 	    (template-display p env
 	       "/* Exported Variables */\n"
 	       "~e" (for-each (lambda (var)
-				 (with-access::Var var (compiled)
+				 (with-access::Var var (js-id)
 				    (template-display p env
-				       "var $compiled;\n")))
+				       "var $js-id;\n")))
 			      scope-vars)
 	       "/* End Exports */\n\n"))))
 
@@ -168,9 +168,9 @@
    (with-access::Module this (declared-vars body)
       (for-each (lambda (var)
 		   (unless (Exported-Var? var)
-		      (with-access::Var var (compiled)
+		      (with-access::Var var (js-id)
 			 (template-display p env
-			    "var $compiled;\n"))))
+			    "var $js-id;\n"))))
 		declared-vars)
       
       (walk body p #t)))
@@ -192,13 +192,13 @@
 ;; lambda).
 (define-nmethod (Out-Lambda.compile p stmt?)
    (define (vaarg-code vaarg nb-args)
-      (with-access::Var vaarg (compiled)
+      (with-access::Var vaarg (js-id)
 	 (template-display p env
-	    "var $compiled = null;\n"
+	    "var $js-id = null;\n"
 	    "for (var $*tmp-var* = arguments.length - 1;"
 	    "     $*tmp-var* >= $(number->string nb-args);"
 	    "     --$*tmp-var*) {\n"
-	    "  $compiled = sc_cons(arguments[$*tmp-var*], $compiled);\n"
+	    "  $js-id = sc_cons(arguments[$*tmp-var*], $js-id);\n"
 	    "}\n")))
 
    (define (split-formals/vaarg)
@@ -266,7 +266,7 @@
 	       (when vaarg? (with-access::Ref vaarg (var)
 			       (vaarg-code var (- (length formals) 1))))
 	       (each (lambda (var)
-			"var ~a;\n" (Var-compiled var))
+			"var ~a;\n" (Var-js-id var))
 		     declared-vars)
 	       (walk body p #t))))))
 
@@ -277,18 +277,18 @@
       (with-access::Frame-alloc this (vars)
 	 (unless (null? vars)
 	    (let loop ((vars vars))
-	       (with-access::Var (car vars) (compiled)
+	       (with-access::Var (car vars) (js-id)
 		  (if (null? (cdr vars))
-		      (template-display p env "$compiled : undefined")
+		      (template-display p env "$js-id : undefined")
 		      (begin
-			 (template-display p env "$compiled : undefined, ")
+			 (template-display p env "$js-id : undefined, ")
 			 (loop (cdr vars))))))))))
 
 (define-nmethod (Frame-push.compile p stmt?)
    (with-access::Frame-push this (body storage-vars)
-      (with-access::Var (car storage-vars) (compiled)
+      (with-access::Var (car storage-vars) (js-id)
 	 (template-display p env
-	    "with ($compiled) {\n"
+	    "with ($js-id) {\n"
 	    "  ~e" (walk body p #t)
 	    "}\n"))))
 
@@ -448,12 +448,12 @@
       (with-access::Call this (operator)
 	 (if (and (Ref? operator)
 		  (with-access::Ref operator (var)
-		     (with-access::Var var (compiled)
-			(string-index compiled #\.))))
+		     (with-access::Var var (js-id)
+			(string-index js-id #\.))))
 	     (with-access::Ref operator (var)
-		(with-access::Var var (compiled)
+		(with-access::Var var (js-id)
 		   (template-display p env
-		      "(0, $compiled)")))
+		      "(0, $js-id)")))
 	     (walk operator p #f))))
       
    (template-display p env
