@@ -1,5 +1,5 @@
-var sc_SYMBOL_PREFIX = "\u1E9C";
-var sc_KEYWORD_PREFIX = "\u1E9D";
+var sc_SYMBOL_PREFIX = "\uEBAC";
+var sc_KEYWORD_PREFIX = "\uEBAD";
 
 /*** META ((export #t)
            (peephole (id))) */
@@ -8,7 +8,7 @@ function sc_jsstring2string(s) {
 }
 
 /*** META ((export #t)
-           (peephole (prefix "'\\u1E9C' +")))
+           (peephole (prefix "'\\uEBAC' +")))
 */
 function sc_jsstring2symbol(s) {
     return sc_SYMBOL_PREFIX + s;
@@ -36,7 +36,7 @@ function sc_keyword2jsstring(k) {
 }
 
 /*** META ((export #t)
-           (peephole (prefix "'\\u1E9D' +")))
+           (peephole (prefix "'\\uEBAD' +")))
 */
 function sc_jsstring2keyword(s) {
     return sc_KEYWORD_PREFIX + s;
@@ -122,7 +122,7 @@ function sc_symbol2string(s) {
 }
 
 /*** META ((export #t)
-           (peephole (prefix "'\\u1E9C' +")))
+           (peephole (prefix "'\\uEBAC' +")))
 */
 function sc_string2symbol(s) {
     return sc_SYMBOL_PREFIX + s;
@@ -144,7 +144,7 @@ function sc_symbolAppend() {
 function sc_char2string(c) { return c.val; }
 
 /*** META ((export #t)
-           (peephole (hole 1 "'\\u1E9C' + " c ".val")))
+           (peephole (hole 1 "'\\uEBAC' + " c ".val")))
 */
 function sc_char2symbol(c) { return sc_SYMBOL_PREFIX + c.val; }
 
@@ -298,7 +298,7 @@ function sc_keyword2string(o) {
 }
 
 /*** META ((export #t)
-           (peephole (prefix "'\\u1E9D' +")))
+           (peephole (prefix "'\\uEBAD' +")))
 */
 function sc_string2keyword(o) {
     return sc_KEYWORD_PREFIX + o;
@@ -323,3 +323,23 @@ String.prototype.sc_toWriteString = function() {
     else
 	return '"' + sc_escapeWriteString(this) + '"';
 };
+
+/*** META ((export #t)
+           (peephole (hole 2 1 ".indexOf(" 0 ") === 0")))
+*/
+function sc_isStringPrefix(cs1, cs2) {
+    return cs2.indexOf(cs1) === 0;
+}
+
+/*** META ((export #t)) */
+function sc_isStringSuffix(cs1, cs2) {
+    var tmp = cs2.lastIndexOf(cs1);
+    return tmp !== false && tmp >= 0 && tmp === cs2.length - cs1.length;
+}
+
+/*** META ((export #t)) */
+function sc_stringSplit(s, sep) {
+    if (sep.length === 1)
+	return sc_vector2list(s.split(sep));
+    return sc_vector2list(s.split(sc_pregexpCreateCharsetMatcher(sep)));
+}

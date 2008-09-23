@@ -1,54 +1,55 @@
 (module compile-optimized-boolify
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (export (compile-boolified  p
-			       node::pobject))
-   (import protobject
-	   config
+   (export (compile-boolified p
+			      env
+			      compile::procedure
+			      node::Node))
+   (import config
+	   tools
 	   nodes
-	   var
+	   template-display
 	   verbose))
 
-(define (compile-optimized-if-boolify p n)
-   (if (and (inherits-from? n.else (node 'Const))
-	    (not n.else.value))
-       (begin
-	  (p-display p "(")
-	  (n.test.compile p)
-	  (p-display p "&&")
-	  (compile-optimized-boolify p n.then)
-	  (p-display p ")"))
-       (compile-unoptimized-boolify p n)))
+(define (compile-optimized-if-boolify p env compile n)
+   (with-access::If n (test then else)
+      (if (and (Const? else)
+	       (with-access::Const else (value)
+		  (not value)))
+	  (template-display p env
+	     "(~e&&~e)"
+	     (compile test p #f)
+	     (compile-optimized-boolify p env compile then))
+	  (compile-unoptimized-boolify p env compile n))))
 
-(define (compile-optimized-boolify p n)
+(define (compile-optimized-boolify p env compile n)
    (cond
-      ((inherits-from? n (node 'Call))
-       (let ((op n.operator))
-	  (if (inherits-from? op (node 'Var-ref))
-	      (let* ((var op.var))
-		 (if (and var.constant?
-			  (eq? var.return-type 'bool))
-		     (n.compile p)
-		     (compile-unoptimized-boolify p n)))
-	      (compile-unoptimized-boolify p n))))
-      ((inherits-from? n (node 'If))
-       (compile-optimized-if-boolify p n))
-      ((inherits-from? n (node 'Const))
-       (if (not n.value)
-	   (p-display p "false")
-	   (p-display p "true")))
+      ((Call? n)
+       (with-access::Call n (operator operands)
+	  (if (Ref? operator)
+	      (with-access::Ref operator (var)
+		 (if (and (Imported-Var? var)
+			  (Imported-Var-constant? var)
+			  (eq? (Imported-Var-return-type var)
+			       'bool))
+		     (compile n p #f)
+		     (compile-unoptimized-boolify p env compile n)))
+	      (compile-unoptimized-boolify p env compile n))))
+      ((If? n)
+       (compile-optimized-if-boolify p env compile n))
+      ((Const? n)
+       (with-access::Const n (value)
+	  (template-display p env
+	     "~a" (if value "true" "false"))))
       (else
-       (compile-unoptimized-boolify p n))))
+       (compile-unoptimized-boolify p env compile n))))
 
-(define (compile-unoptimized-boolify p node)
-   (p-display p "(")
-   (node.compile p)
-   (p-display p "!== false)"))
+(define (compile-unoptimized-boolify p env compile node)
+   (template-display p env
+      "(~e !== false)"
+      (compile node p #f)))
    
-(define (compile-boolified p node)
+(define (compile-boolified p env compile node)
+   ;; TODO: get rid of '(config ... )
    (if (config 'optimize-boolify)
-       (compile-optimized-boolify p node)
-       (compile-unoptimized-boolify p node)))
+       (compile-optimized-boolify p env compile node)
+       (compile-unoptimized-boolify p env compile node)))
 

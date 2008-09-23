@@ -1,12 +1,9 @@
 (module liveness
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
+   (import nodes
+	   walk
 	   captured-vars
-	   nodes
 	   verbose)
-   (export (liveness tree::pobject)))
+   (export (liveness tree::Module)))
 
 ;; very simple liveness analysis:
 ;; every node represents a nesting-level.

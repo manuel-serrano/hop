@@ -1,87 +1,45 @@
 (module free-vars
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   locals
-	   nodes
+   (import nodes
+	   tools
+	   walk
 	   verbose)
-   (export (free-vars tree::pobject)))
+   (export (free-vars tree::Module)))
 
-(define *empty-hashtable* (make-eq-hashtable))
-
-;; Every Lambda/Module receives a hashtable free-vars-ht and a flag free-vars?
-;; indicating all free variables. Modules will have imported variables marked
-;; as free.
-;; variables that are escaping receive the flag .escapes?
-(define (free-vars tree::pobject)
+;; Every Lambda/Module receives a list .free-vars of free variables.
+;; Modules will have imported variables marked as free.
+;; variables that are escaping (i.e. are free in some fun) have their
+;; .escapes? flag set to #t.
+(define (free-vars tree)
    (verbose " free vars")
-   (locals tree)
-   (overload traverse clean (Node
-			     (Module Fun-clean)
-			     (Lambda Fun-clean)
-			     Let)
-	     (tree.traverse))
-   (overload traverse capt-fun (Node
-				(Module Fun-capt-fun)
-				(Lambda Fun-capt-fun)
-				Frame-alloc
-				Var-ref)
-	     (tree.traverse #f (make-eq-hashtable))))
+   (find-free tree #f #f '()))
 
-(define-pmethod (Node-clean)
-   (this.traverse0))
+(define-nmethod (Node.find-free surrounding-fun visible-vars-list::pair-nil)
+   (default-walk this surrounding-fun visible-vars-list))
 
-(define-pmethod (Fun-clean)
-   (delete! this.free-vars-ht)
-   (delete! this.free-vars?)
-   (for-each (lambda (var) (delete! var.escapes?)) this.scope-vars)
-   (this.traverse0))
+(define-nmethod (Execution-Unit.find-free surrounding-fun visible-vars-list)
+   (with-access::Execution-Unit this (scope-vars free-vars)
+      (set! free-vars '())
+      (default-walk this this (list scope-vars))
+      (for-each (lambda (v)
+		   (with-access::Var v (escapes?)
+		      (set! escapes? #t)))
+		free-vars)))
 
-(define-pmethod (Let-clean)
-   (for-each (lambda (var) (delete! var.escapes?)) this.scope-vars))
+(define-nmethod (Scope.find-free surrounding-fun visible-vars-list)
+   (with-access::Scope this (scope-vars)
+      (default-walk this surrounding-fun (cons scope-vars visible-vars-list))))
 
-(define-pmethod (Node-capt-fun local-scope free-vars-ht)
-   (this.traverse2 local-scope free-vars-ht))
+(define-nmethod (Frame-alloc.find-free surrounding-fun visible-vars-list)
+   (default-walk this surrounding-fun visible-vars-list)
+   (with-access::Frame-alloc this (storage-var)
+      (with-access::Var storage-var (escapes?)
+	 (set! escapes? #t))))
 
-(define-pmethod (Fun-capt-fun local-scope free-vars-ht)
-   (let ((local-vars-ht this.local-vars-ht)
-	 (fun-free-vars-ht (make-eq-hashtable)))
-      
-      ;; store all free vars in fun-free-vars-ht
-      (this.traverse2 local-vars-ht fun-free-vars-ht)
-
-      ;; fun-free-vars might contain local vars.
-      ;; remove them.
-      ;; This is possible, if we have nested lambdas.
-      ;; In this case the "Var-ref-capt-fun" checks for local vars, but once we
-      ;; got out of the nested Lambda, we still have the now local vars in it.
-      (hashtable-for-each local-vars-ht
-			  (lambda (var ignored)
-			     (hashtable-remove! fun-free-vars-ht var)))
-      
-      ;; store remaining free vars
-      (if (> (hashtable-size fun-free-vars-ht) 0)
-	  (begin
-	     (set! this.free-vars? #t)
-	     (set! this.free-vars-ht fun-free-vars-ht)
-	     ;; mark these vars as escaping
-	     (hashtable-for-each fun-free-vars-ht
-				 (lambda (var ignored)
-				    (set! var.escapes? #t))))
-	  (set! this.free-vars-ht *empty-hashtable*))
-
-      ;; pass free vars to parent-fun.
-      (hashtable-for-each fun-free-vars-ht
-			  (lambda (key val)
-			     (hashtable-put! free-vars-ht key #t)))))
-
-(define-pmethod (Frame-alloc-capt-fun local-scope free-vars-ht)
-   (this.traverse2 local-scope free-vars-ht)
-   (set! this.storage-var.escapes? #t))
-
-(define-pmethod (Var-ref-capt-fun local-scope free-vars-ht)
-   (let ((var this.var))
-      (unless (hashtable-get local-scope var)
-	 (hashtable-put! free-vars-ht var #t))))
+(define-nmethod (Ref.find-free surrounding-fun visible-vars-list)
+   (with-access::Ref this (var)
+      (unless (any? (lambda (s)
+		       (memq var s))
+		    visible-vars-list)
+	 (with-access::Execution-Unit surrounding-fun (free-vars)
+	    (unless (memq var free-vars)
+	       (cons-set! free-vars var))))))

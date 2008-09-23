@@ -1,19 +1,20 @@
 (module while
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   mark-statements
-	   config
+   (import config
+	   tools
 	   nodes
-	   var
+	   walk
 	   symbol
-	   tail
 	   loop-updates
 	   verbose)
-   (export (tail-rec->while! tree::pobject)
-	   (optimize-while! tree::pobject)))
+   (static (wide-class Vars-Label::Label
+	      vars)
+	   (wide-class Tail-Label::Label
+	      (used?::bool (default #f))
+	      ;; if a Labeled surrounds a While, then the while-label is
+	      ;; stored in the break-label too.
+	      (while-label (default #f))))
+   (export (tail-rec->while! tree::Module)
+	   (optimize-while! tree::Module)))
 
 ;; transform Tail-recs into While-loops.
 ;;
@@ -21,40 +22,45 @@
 ;; -> should be before scope-flattening
 (define (tail-rec->while! tree)
    (verbose " tail-rec->while")
-   (overload traverse! while! (Node
-			       Tail-rec
-			       Tail-call)
-	     (tree.traverse!)))
+   (while! tree #f))
 
-(define-pmethod (Node-while!)
-   (this.traverse0!))
+(define-nmethod (Node.while!)
+   (default-walk! this))
 
-(define-pmethod (Tail-rec-while!)
-   (set! this.label.vars this.scope-vars)
-   (this.traverse0!)
-   (delete! this.label.vars)
-   (let* ((break-label (new-node Label (gensym 'break)))
-	  (while (new-node While
-			   (new-node Const #t)
-			   (new-node Break
-				     this.body
-				     break-label)
-			   this.label))
-	  (labelled (new-node Labelled
-			      while
-			      break-label))
-	  (bnode (new-node Begin
-			   (append! this.inits
-				    (list labelled)))))
-      (set! while.scope-vars this.scope-vars)
-      bnode))
+(define-nmethod (Tail-rec.while!)
+   (with-access::Tail-rec this (label scope-vars body inits)
+      (widen!::Vars-Label label
+	 (vars scope-vars))
+      (default-walk! this)
+      (shrink! label)
+      (let* ((break-label (make-Label (gensym 'while-break)))
+	     (while (instantiate::While
+		       (scope-vars scope-vars)
+		       (init (cond
+				((null? inits)
+				 (instantiate::Const (value #unspecified)))
+				((null? (cdr inits))
+				 (car inits))
+				(else
+				 (instantiate::Begin
+				    (exprs inits)))))
+		       (test (instantiate::Const (value #t)))
+		       (body (instantiate::Break
+				(val body)
+				(label break-label)))
+		       (label label)))
+	     (labeled (instantiate::Labeled
+			  (body while)
+			  (label break-label))))
+	 labeled)))
 
-(define-pmethod (Tail-call-while!)
-   (this.traverse0!)
-   (new-node Begin
-	     (list (loop-updates-free-order this.label.vars
-					    this.updates)
-		   (new-node Continue this.label))))
+(define-nmethod (Tail-rec-Call.while!)
+   (with-access::Tail-rec-Call this (label updates)
+      (with-access::Vars-Label label (vars)
+	 (default-walk! this)
+	 (instantiate::Begin
+	    (exprs (list (loop-updates-free-order vars updates)
+			 (instantiate::Continue (label label))))))))
    
 ;; try to find loops, that can be transformed into optimized whiles.
 ;; In particular we want the test of the while to have a meaning (and not just
@@ -64,261 +70,85 @@
 ;;   break (
 ;;      if test
 ;;         foo
-;;         blah_all_branches_continue
+;;         blah_no_break
 ;;   )
 ;; }
 ;;   =>
 ;; while (not test) {
-;;   blah_all_branches_continue [ remove continues ]
+;;   blah_no_break [ remove continues to this while ]
 ;; }
 ;; foo
 ;;
 (define (optimize-while! tree)
    (when (config 'while)
       (verbose " optimize-while")
-      ;; we need to know, if the test of an 'if' is in statement-form.
-      (mark-statements tree)
-      (search-patterns! tree)
-      (remove-tail-continues! tree)))
+      (search-patterns! tree)))
 
 ;; search for our pattern(s) and apply them/it if found.
 (define (search-patterns! tree)
    (verbose " search-patterns")
-   (overload traverse! patterns! (Node
-				  While
-				  Break)
-	     (tree.traverse!)))
+   (patterns! tree #f))
 
-(define-pmethod (Node-patterns!)
-   (this.traverse0!))
+(define-nmethod (Node.patterns!)
+   (default-walk! this))
 
-(define-pmethod (While-patterns!)
-   (define (apply-pattern! continue-branch)
-      (let* ((break this.body)
-	     (iff break.val))
+(define-nmethod (While.patterns!)
+   (with-access::While this (test body label)
+      
+      (define (apply-pattern! continue-branch iff-test iff-then iff-else)
 	 (case continue-branch
 	    ((no-continue-in-else)
-	     (set! this.test iff.test)
-	     (set! break.val iff.then)
-	     (new-node Begin (list this iff.else)))
+	     (set! test iff-test)
+	     (set! body iff-then)
+	     ;; note that the breaks are still there and go to the Labeled
+	     ;; which is surrounding the While (and the new Begin).
+	     (instantiate::Begin
+		(exprs (list this iff-else))))
 	    ((no-continue-in-then)
-	     (set! this.test (new-node Call
-				       (runtime-reference 'not)
-				       (list iff.test)))
-	     (set! break.val iff.else)
-	     (new-node Begin (list this iff.then)))
+	     (set! test (instantiate::SCall
+			   (operator (runtime-reference 'not))
+			   (operands (list iff-test))))
+	     (set! body iff-else)
+	     ;; note that the breaks are still there and go to the Labeled
+	     ;; which is surrounding the While (and the new Begin).
+	     (instantiate::Begin
+		(exprs (list this iff-then))))
 	    (else
-	     (error "While-patterns!" "should never happen" #f)))))
+	     (error "While-patterns!" "should never happen" #f))))
 
-   (if (and (inherits-from? this.test (node 'Const))
-	    (eq? this.test.value #t)
-	    (inherits-from? this.body (node 'Break))
-	    (inherits-from? this.body.val (node 'If))
-	    (not (statement-form? this.body.val.test)))
-       (let* ((iff this.body.val)
-	      (new-this (cond
-			   ((not (continue-in-branch? iff.else))
-			    (if (only-continues-in-branch? iff.then)
-				(apply-pattern! 'no-continue-in-else)
-				this))
-			   ((not (continue-in-branch? iff.then))
-			    (if (only-continues-in-branch? iff.else)
-				(apply-pattern! 'no-continue-in-then)
-				this))
-			   (else
-			    ;; we don't know how to optimize this case.
-			    this))))
-	  (new-this.traverse0!))
-       (this.traverse0!)))
+      (if (and (Const? test)
+	       (eq? (Const-value test) #t)
+	       (If? body))
+	  (with-access::If body (test then else)
+	     (let ((new-this (cond
+				((not (continue-in-branch? label else))
+				 (apply-pattern! 'no-continue-in-else
+						 test then else))
+				((not (continue-in-branch? label then))
+				 (apply-pattern! 'no-continue-in-then
+						 test then else))
+				(else
+				 ;; we don't know how to optimize this case.
+				 this))))
+		(default-walk! new-this)))
+	  (default-walk! this))))
 
-;; if the enclosed node is a Begin or an If push the Break into the node.
-;; That is, for a Begin only the last element is enclosed by the Break, and for
-;; the If both branches receive a Break.
-(define-pmethod (Break-patterns!)
-   (cond
-      ((not this.val) ;; should not happen
-       this)
-      ((not (statement-form? this.val))
-       (this.traverse0!))
-      ((inherits-from? this.val (node 'If))
-       (let* ((iff this.val)
-	      (then-break (new-node Break
-				    iff.then
-				    this.label)))
-	  (set! this.val iff.else)
-	  (set! iff.then then-break)
-	  (set! iff.else this)
-	  (iff.traverse!)))
-      ((inherits-from? this.val (node 'Begin))
-       (let ((bnode this.val))
-	  (let loop ((exprs bnode.exprs))
-	     (cond
-		((null? exprs) ;; should never happen
-		 (this.traverse0!))
-		((null? (cdr exprs))
-		 (set! this.val (car exprs))
-		 (set-car! exprs this)
-		 (bnode.traverse!))
-		(else
-		 (loop (cdr exprs)))))))
-      ((inherits-from? this.val (node 'Continue))
-       (this.val.traverse!))
-      (else
-       (this.traverse0!))))
-   
-;; #t if the given branch contains a continue
-(define (continue-in-branch? branch)
-      (overload traverse search-shallow-continue (Node
-						  Lambda
-						  While
-						  Continue)
-		(bind-exit (found-fun)
-		   (branch.traverse found-fun)
-		   #f)))
+;; #t if the given branch contains a continue to given label
+(define (continue-in-branch? label branch)
+   (bind-exit (found-fun)
+      (search-shallow-continue branch #f label found-fun)
+      #f))
 
-(define-pmethod (Node-search-shallow-continue found-fun)
-   (this.traverse1 found-fun))
+(define-nmethod (Node.search-shallow-continue label found-fun)
+   (default-walk this label found-fun))
 
-(define-pmethod (Lambda-search-shallow-continue found-fun)
+(define-nmethod (Lambda.search-shallow-continue label found-fun)
    'do-not-go-into-lambdas)
 
-(define-pmethod (While-search-shallow-continue found-fun)
+(define-nmethod (While.search-shallow-continue label found-fun)
    'do-not-go-into-whiles)
 
-(define-pmethod (Continue-search-shallow-continue found-fun)
-;   (verbose "found continue")
-   (found-fun #t))
-
-;; same as continue-in-branch?, but with difference, that all sub-branches have
-;; to have a 'continue'
-(define (only-continues-in-branch? branch)
-   (overload traverse all-continues (Node
-				      Lambda
-				      While
-				      If
-				      Case
-				      Continue)
-	     (bind-exit (found-fun)
-		(branch.traverse found-fun)
-		#f)))
-   
-(define-pmethod (Node-all-continues found-fun)
-   (this.traverse1 found-fun))
-
-(define-pmethod (Lambda-all-continues found-fun)
-   'do-not-go-into-lambdas)
-
-(define-pmethod (While-all-continues found-fun)
-   'do-not-go-into-whiles)
-
-(define-pmethod (If-all-continues found-fun)
-   (this.test.traverse found-fun)
-   (when (bind-exit (then-found-fun)
-	    (this.then.traverse then-found-fun)
-	    #f)
-      (this.else.traverse found-fun))
-   ;; there might be a continue later. but if we reach this line, not both
-   ;; sub-branches had a continue.
-   #f)
-
-(define-pmethod (Case-all-continues found-fun)
-   (this.key.traverse found-fun) ;; can't be (IMHO)
-   (unless (null? this.clauses)
-      (let loop ((clauses this.clauses))
-	 (cond
-	    ((null? clauses)
-	     ;; all clauses had a continue
-	     (found-fun #t))
-	    ((bind-exit (clause-found-fun)
-		((car clauses).traverse clause-found-fun)
-		#f)
-	     (loop (cdr clauses)))
-	    (else
-	     ;; one clause did not have a continue.
-	     #f)))))
-	     
-(define-pmethod (Continue-all-continues found-fun)
-   (found-fun #t))
-
-
-(define (remove-tail-continues! tree)
-   (verbose " tail-continues")
-   (overload traverse! tail-continue! (Node
-				       (Module Enclosing-tail-continue!)
-				       (Lambda Enclosing-tail-continue!)
-				       (Const Value-tail-continue!)
-				       (Var-ref Value-tail-continue!)
-				       (Frame-alloc Value-tail-continue!)
-				       If
-				       Case
-				       Clause
-				       (Set! Enclosing-tail-continue!)
-				       Begin
-				       (Call Enclosing-tail-continue!)
-				       While
-				       (Return Enclosing-tail-continue!)
-				       (Labelled Inter-tail-continue!)
-				       Break
-				       (Frame-push Inter-tail-continue!)
-				       Continue
-				       (Pragma Value-tail-continue!))
-	     (tree.traverse! #f)))
-
-(define-pmethod (Node-tail-continue! tail?)
-   (error #f "tail. forgot node-type" (pobject-name this)))
-
-(define-pmethod (Value-tail-continue! tail?)
-   this)
-   
-(define-pmethod (Inter-tail-continue! tail?)
-   (this.traverse1! tail?))
-
-(define-pmethod (Enclosing-tail-continue! tail?)
-   (this.traverse1! #f))
-
-(define-pmethod (If-tail-continue! tail?)
-   (set! this.test (this.test.traverse! #f))
-   (set! this.then (this.then.traverse! tail?))
-   (set! this.else (this.else.traverse! tail?))
-   this)
-
-(define-pmethod (Case-tail-continue! tail?)
-   (set! this.key (this.key.traverse! #f))
-   (set! this.clauses
-	 (map! (lambda (clause)
-		  (clause.traverse! tail?))
-	       this.clauses))
-   this)
-
-(define-pmethod (Clause-tail-continue! tail?)
-   (set! this.consts
-	 (map! (lambda (const)
-		  (const.traverse! #f))
-	       this.consts))
-   (set! this.expr (this.expr.traverse! tail?))
-   this)
-
-(define-pmethod (Begin-tail-continue! tail?)
-   (let loop ((exprs this.exprs))
-      (cond
-	 ((null? exprs)
-	  this)
-	 ((null? (cdr exprs))
-	  (set-car! exprs
-		    ((car exprs).traverse! tail?)))
-	 (else
-	  (set-car! exprs
-		    ((car exprs).traverse! #f))
-	  (loop (cdr exprs)))))
-   this)
-
-(define-pmethod (While-tail-continue! tail?)
-   (this.traverse1! #t))
-
-(define-pmethod (Break-tail-continue! tail?)
-   (this.traverse1! #f))
-
-(define-pmethod (Continue-tail-continue! tail?)
-   (if tail?
-       (new-node Const #unspecified)
-       this))
+(define-nmethod (Continue.search-shallow-continue search-label found-fun)
+   (with-access::Continue this (label)
+      (when (eq? search-label label)
+	 (found-fun #t))))

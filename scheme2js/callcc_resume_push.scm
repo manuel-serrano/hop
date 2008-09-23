@@ -29,7 +29,7 @@
 				Set!
 				Break
 				While
-				Labelled)
+				Labeled)
 	     (tree.traverse!)))
 
 ;; a resume-begin is a begin finishing with a resume-node.
@@ -209,7 +209,7 @@
 	     bnode)
 	  this)))
 
-(define-pmethod (Labelled-resume!)
+(define-pmethod (Labeled-resume!)
    (this.traverse0!)
    (let* ((body/resume (and (resume-begin? this.body)
 			    (resume-begin-split this.body)))
@@ -223,7 +223,7 @@
       (if body/resume
 	  (set! this.body (car body/resume)))
       (if resume
-	  ;; all resumes are after Labelled.
+	  ;; all resumes are after Labeled.
 	  (let ((bnode (new-node Begin (list this resume))))
 	     (mark-statement-form! bnode #t)
 	     bnode)

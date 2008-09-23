@@ -1,22 +1,29 @@
 (module symbol
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   mapping1 mapping2
+   (import mapping1 mapping2
+	   tools
+	   symbol-table
 	   config
 	   nodes
-	   var
+	   walk
 	   verbose
-	   gen-js)
-   (export (symbol-resolution tree::pobject
+	   gen-js
+	   pobject-conv)
+   (export (symbol-resolution tree::Module
 			      imports::pair-nil
 			      exports::pair-nil)
-	   (runtime-reference id::symbol)))
+	   (runtime-reference id::symbol))
+   (static (final-class Env
+	      runtime
+	      imports
+	      exports
+
+	      export-globals
+	      ;; following entries will be set in Module-resolve
+	      (runtime-scope (default #f))
+	      (unbound-add! (default #f)))))
 
 (define (runtime-reference id)
-   (((thread-parameter '*runtime-id->var*) id).reference))
+   (var-reference ((thread-parameter '*runtime-id->var*) id)))
 
 (define (runtime-reference-init! f)
    (thread-parameter-set! '*runtime-id->var* f))
@@ -43,42 +50,16 @@
 ;; other uses are define to be References.
 (define (symbol-resolution tree imports exports)
    (verbose "symbol-resolution")
-   (var-init!)
-   (let ((runtime (select-runtime)))
-      (resolve! tree runtime imports exports)))
+   (resolve! tree
+	     (instantiate::Env
+		(runtime (select-runtime))
+		(imports imports)
+		(exports exports)
+		(export-globals (config 'export-globals)))
+	     '()))
 
 
 
-;; ============================================================================
-;; symbol-tables are a list of hashtables (each hashtable representing a scope)
-;; ============================================================================
-(define (make-symbol-table) '())
-
-(define (symbol-var symbol-table symbol)
-   (any (lambda (ht)
-	   (hashtable-get ht symbol))
-	symbol-table))
-
-(define (local-symbol-var symbol-table symbol)
-   (and (pair? symbol-table)
-	(hashtable-get (car symbol-table) symbol)))
-
-(define (symbol-var-set! symbol-table symbol var)
-   (scope-symbol-var-set! (car symbol-table) symbol var))
-
-(define (scope-symbol-var-set! scope symbol var)
-   (hashtable-put! scope
-		   symbol
-		   var))
-
-(define (scope-symbol-var scope symbol)
-   (hashtable-get scope symbol))
-
-(define (make-scope)
-   (make-hashtable))
-
-(define (add-scope symbol-table local-scope)
-   (cons local-scope symbol-table))
 
 (define (entry-val sym l)
    (let ((try (assq sym (cdr l))))
@@ -106,268 +87,259 @@
       (else
        (error "normalize-export" "bad import/export clause: " export))))
 
+(define (export-interface export)
+   (let ((js-id (entry-val 'interface export)))
+      (if (symbol? js-id)
+	  (symbol->string js-id)
+	  js-id)))
 
-(define (resolve! tree runtime imports exports)
-   ;; will be set in Module-resolve
-   (define *runtime-scope* #unspecified)
-   (define *unbound-add!* #unspecified)
+(define-nmethod (Node.resolve! symbol-table)
+   (default-walk! this symbol-table))
 
-   (define-pmethod (Node-resolve! symbol-table)
-      (this.traverse1! symbol-table))
-
-   (define (js-symbol-add! scope entry runtime?)
-      (let* ((normalized (normalize-export entry))
-	     (scheme-sym (car normalized))
-	     (peephole (entry-val 'peephole normalized))
-	     (higher? (entry-val 'call/cc? normalized))
-	     (higher-params (entry-val 'call/cc-params normalized))
-	     (return-type (entry-val 'type normalized))
-	     (exported-as-constant? (or (entry-val 'constant? normalized)))
-	     (var (new-node Imported-Var
-			    (entry-val 'interface normalized)
-			    scheme-sym
-			    exported-as-constant?
-			    runtime?)))
-	 (scope-symbol-var-set! scope scheme-sym var)
-	 (if peephole (set! var.peephole peephole))
-	 (if higher? (set! var.higher? #t))
-	 (if higher-params (set! var.higher-params higher-params))
-	 (if return-type (set! var.return-type return-type))))
+(define (js-symbol-add! scope entry runtime?)
+   (let* ((normalized (normalize-export entry))
+	  (scheme-sym (car normalized))
+	  (peephole (entry-val 'peephole normalized))
+	  (higher? (entry-val 'call/cc? normalized))
+	  (higher-params (entry-val 'call/cc-params normalized))
+	  (return-type (entry-val 'type normalized))
+	  (exported-as-constant? (or (entry-val 'constant? normalized))))
+      (symbol-var-set! scope scheme-sym
+		       (instantiate::Imported-Var
+			  (id scheme-sym)
+			  (js-id (export-interface normalized))
+			  (exported-as-const? exported-as-constant?)
+			  (runtime? runtime?)
+			  (peephole peephole)
+			  (higher? higher?)
+			  (higher-params higher-params)
+			  (return-type return-type)))))
    
-   (define-pmethod (Module-resolve! symbol-table)
-      (let* ((runtime-scope (make-scope))
-	     (imported-scope (make-scope))
-	     (module-scope (make-scope))
-	     (extended-symbol-table (add-scope
-				     (add-scope
-				      (add-scope
-				       symbol-table ;; add to symbol-table:
-				       runtime-scope)
-				      imported-scope)
-				     module-scope)))
-
-	 ;; add runtime
-	 (for-each (lambda (entry) (js-symbol-add! runtime-scope entry #t))
-		   runtime)
-
-	 ;; add imported variables
-	 (for-each (lambda (entry) (js-symbol-add! imported-scope entry #f))
-		   imports)
-
-	 ;; insert exported variables
-	 (for-each (lambda (entry)
-		      (let* ((normalized (normalize-export entry))
-			     (scheme-sym (car normalized))
-			     (return-type (entry-val 'type normalized))
-			     (var (new-node Exported-Var
-					    (entry-val 'interface normalized)
-					    scheme-sym
-					    (entry-val 'constant? normalized))))
-			 (if return-type
-			     (set! var.return-type return-type))
-			 (scope-symbol-var-set! module-scope scheme-sym var)))
-		   exports)
-
-	 ;; we need to reference runtime-variables from elsewhere. Export
-	 ;; a function allowing access to them.
-	 (runtime-reference-init! (lambda (id::symbol)
-				     (scope-symbol-var runtime-scope id)))
+(define-nmethod (Module.resolve! symbol-table)
+   (let* ((runtime-scope (make-scope (length (Env-runtime env))))
+	  (imported-scope (make-scope (length (Env-imports env))))
+	  ;; module-scope might grow, but 'length' is just an indication. 
+	  (module-scope (make-scope (length (Env-exports env))))
+	  (extended-symbol-table (cons* module-scope
+					imported-scope
+					runtime-scope
+					symbol-table)))
+      
+      ;; add runtime
+      (for-each (lambda (entry) (js-symbol-add! runtime-scope entry #t))
+		(Env-runtime env))
+      
+      ;; add imported variables
+      (for-each (lambda (entry) (js-symbol-add! imported-scope entry #f))
+		(Env-imports env))
+      
+      ;; insert exported variables
+      (for-each (lambda (entry)
+		   (let* ((normalized (normalize-export entry))
+			  (scheme-sym (car normalized))
+			  (return-type (entry-val 'type normalized))
+			  (var (instantiate::Exported-Var
+				  (id scheme-sym)
+				  (js-id (entry-val 'interface normalized))
+				  (exported-as-const? (entry-val 'constant?
+								 normalized))
+				  (return-type return-type))))
+		      (symbol-var-set! module-scope scheme-sym var)))
+		(Env-exports env))
+      
+      ;; we need to reference runtime-variables from other passes. Export
+      ;; a function allowing access to them.
+      (runtime-reference-init! (lambda (id::symbol)
+				  (symbol-var runtime-scope id)))
+      
+      (Env-runtime-scope-set! env runtime-scope)
+      (Env-unbound-add!-set! env
+			     (lambda (scheme-sym js-sym)
+				(let ((var (instantiate::Imported-Var
+					      (id scheme-sym)
+					      (js-id js-sym)
+					      (exported-as-const? #f)
+					      (runtime? #f))))
+				   (symbol-var-set! imported-scope
+						    scheme-sym
+						    var))))
+      (with-access::Module this (this-var runtime-vars imported-vars
+					  scope-vars body)
 	 
-	 (set! *runtime-scope* runtime-scope)
-	 (set! *unbound-add!* (lambda (scheme-sym js-sym)
-				 (let ((var (new-node Imported-Var
-						      js-sym
-						      scheme-sym
-						      #f
-						      #f)))
-				    (scope-symbol-var-set! imported-scope
-							   scheme-sym
-							   var))))
 	 (when (config 'procedures-provide-js-this)
-	    (let ((t (new-node JS-This-Var)))
-	       (symbol-var-set! extended-symbol-table 'this t)
-	       (set! this.this-var t)))
-
-	 (find-globals this.body module-scope)
-	 ;; traverse
-	 (this.traverse1! extended-symbol-table)
-	 (set! this.runtime-vars (hashtable->list runtime-scope))
-	 (set! this.imported-vars (hashtable->list imported-scope))
+	    (symbol-var-set! module-scope 'this this-var))
+	 
+	 (find-globals env body module-scope)
+	 ;; walk
+	 (default-walk! this extended-symbol-table)
+	 (set! runtime-vars (scope->list runtime-scope))
+	 (set! imported-vars (scope->list imported-scope))
 	 (let* ((module-vars (filter! (lambda (var)
-					 (not (inherits-from?
-					       var (node 'JS-This-Var))))
-				      (hashtable->list module-scope)))
-		(exported-vars (filter (lambda (var)
-					  var.exported?)
-				       module-vars))
-		(local-vars (cp-filter (lambda (var)
-					  (not var.exported?))
+					 (not (This-Var? var)))
+				      (scope->list module-scope)))
+		(local-vars (cp-filter (lambda (var) (not (Exported-Var? var)))
 				       module-vars)))
-	    (set! this.exported-vars exported-vars)
-	    (set! this.scope-vars exported-vars)
-	    (set! this.body (new-node Let
-				      local-vars
-				      '()
-				      this.body
-				      'let)))
-	 this))
+	    (set! scope-vars (filter (lambda (var) (Exported-Var? var))
+				     module-vars))
+	    (set! body (instantiate::Let
+			  (scope-vars local-vars)
+			  (bindings '())
+			  (body body)
+			  (kind 'let)))))
+      this))
 
-   (define (collect decl scope)
-      (let* ((id decl.id)
-	     (var (scope-symbol-var scope id)))
-	 (if var
+(define (collect decl::Ref scope)
+   (with-access::Ref decl (id var)
+      (let ((v (symbol-var scope id)))
+	 (if v
 	     ;; already declared
 	     (error "symbol-resolution"
 		    "Variable already declared"
 		    id)
-	     (let ((new-var (new-node Var id)))
-		(set! decl.var new-var)
-		(scope-symbol-var-set! scope id new-var)))))
+	     (let ((new-var (instantiate::Local
+			       (id id))))
+		(set! var new-var)
+		(symbol-var-set! scope id new-var))))))
 
-   (define-pmethod (Lambda-resolve! symbol-table)
-      ;; this.body must be 'return'.
-      (set! this.body.val (defines->letrec! this.body.val))
+(define-nmethod (Lambda.resolve! symbol-table)
+   ;; this.body must be 'return'.
+   (with-access::Lambda this (body formals scope-vars this-var)
+      (with-access::Return body (val)
+	 (set! val (defines->letrec! val)))
+      
       (let* ((formals-scope (make-scope))
-	     (new-symbol-table (add-scope symbol-table formals-scope)))
+	     (new-symbol-table (cons formals-scope symbol-table)))
 	 (for-each (lambda (formal)
 		      (collect formal formals-scope))
-		   this.formals)
-	 (set! this.scope-vars (map (lambda (formal) formal.var)
-				    this.formals))
+		   formals)
+	 (set! scope-vars (map Ref-var formals))
+	 
 	 (when (config 'procedures-provide-js-this)
-	    (let ((t (new-node JS-This-Var)))
-	       (symbol-var-set! new-symbol-table 'this t)
-	       (set! this.this-var t)))
-	 (this.traverse1! new-symbol-table)))
+	    (symbol-var-set! formals-scope 'this this-var))
+	 (default-walk! this new-symbol-table))))
    
-   (define-pmethod (Let-resolve! symbol-table)
-      (set! this.body (defines->letrec! this.body))
+(define-nmethod (Let.resolve! symbol-table)
+   (with-access::Let this (body bindings kind scope-vars)
+      (set! body (defines->letrec! body))
       (let ((local-scope (make-scope)))
 	 (for-each (lambda (binding)
-		      (collect binding.lvalue local-scope))
-		   this.bindings)
-	 
-	 (let* ((extended-table (add-scope symbol-table local-scope))
-		(bindings-table (if (eq? this.kind 'let)
+		      (with-access::Set! binding (lvalue)
+			 (collect lvalue local-scope)))
+		   bindings)
+	 (let* ((extended-table (cons local-scope symbol-table))
+		(bindings-table (if (eq? kind 'let)
 				    symbol-table
-				    extended-table))
-		(new-bindings (map! (lambda (n)
-				       ;; symbol-table for bindings might be different
-				       ;; than the table for the body.
-				       (set! n.val
-					     (n.val.traverse! bindings-table))
-				       n)
-				    this.bindings))
-		(vars (map (lambda (n) n.lvalue.var) new-bindings))
-		(new-body (this.body.traverse! extended-table)))
+				    extended-table)))
+	    (for-each (lambda (n)
+			 (with-access::Set! n (val)
+			    ;; symbol-table for bindings might be different
+			    ;; than the table for the body.
+			    (set! val (walk! val bindings-table))
+			    n))
+		      bindings)
+	    (set! body (walk! body extended-table))
+	    
+	    (set! scope-vars (map (lambda (b)
+				     (with-access::Set! b (lvalue)
+					(with-access::Ref lvalue (var)
+					   var)))
+				  bindings))
+	    this))))
 
-	    (set! this.scope-vars vars)
-	    (set! this.bindings new-bindings)
-	    (set! this.body new-body)
-	    this)))
-
-   (define-pmethod (Var-ref-resolve! symbol-table)
-      (let ((var (symbol-var symbol-table this.id)))
+(define-nmethod (Ref.resolve! symbol-table)
+   (with-access::Ref this (id var)
+      (let ((v (any (lambda (scope)
+		       (symbol-var scope id))
+		    symbol-table)))
 	 (cond
-	    (var (set! this.var var))
+	    (v (set! var v))
 	    ((config 'unresolved=JS)
-	     (*unbound-add!* this.id (string->symbol (mangle-JS-sym this.id)))
-	     (verbose "Unresolved symbol '" this.id "' assumed to be a JS-var")
-	     (pcall this Var-ref-resolve! symbol-table))
+	     ((Env-unbound-add! env) id (mangle-JS-sym id))
+	     (verbose "Unresolved symbol '" id "' assumed to be a JS-var")
+	     (ncall resolve! this symbol-table)) ;; try again.
 	    (else
-	     (error #f "Unresolved symbol: " this.id))))
-      this)
+	     (error #f "Unresolved symbol: " id)))))
+   this)
 
-   ;; runtime-var-ref directly queries the js-var-scope (short-cutting the
-   ;; intermediate scopes).
-   (define-pmethod (Runtime-Var-ref-resolve! symbol-table)
-      (let ((var (scope-symbol-var *runtime-scope* this.id)))
-	 (set! this.var var))
-      this)
+;; runtime-var-ref directly queries the js-var-scope (short-cutting the
+;; intermediate scopes).
+(define-nmethod (Runtime-Ref.resolve! symbol-table)
+   (with-access::Runtime-Ref this (id var)
+      (let ((v (symbol-var (Env-runtime-scope env) id)))
+	 ;; error should never happen (programming error)
+	 (when (not v) (error "Runtime-Var-Ref.resolve!"
+			      "Runtime-variable not found"
+			      id))
+	 (set! var v)))
+   (shrink! this)
+   this)
 
-   (define-pmethod (Define-resolve! symbol-table)
-      (unless this.legal?
+;; all global 'defines' have been shrunk to Set!s.
+;; all local 'defines' have been transformed to letrecs.
+(define-nmethod (Define.resolve! symbol-table)
+   (with-access::Define this (lvalue)
+      (with-access::Ref lvalue (id)
 	 (error "symbol-resolution"
 		"Define at bad location"
-		this.lvalue.id))
-      (delete! this.legal?)
-      (this.traverse1! symbol-table))
-   
-   ;; ================================================
-   ;; procedure starts here
-   ;; ================================================
-   (overload traverse! resolve! (Node
-				 Module
-				 Lambda
-				 Let
-				 Var-ref
-				 Runtime-Var-ref
-				 Define)
-	     (tree.traverse! (make-symbol-table))))
+		id))))
 
-
-(define (collect-global decl scope)
-   (let* ((id decl.id)
-	  (var (scope-symbol-var scope id)))
-      (unless var
-	 (let ((new-var (new-node Var id)))
-	    (if (config 'export-globals)
-		(set! new-var.exported? #t))
-	    (scope-symbol-var-set! scope id new-var)))))
-
-(define (find-globals body module-scope)
-   (overload traverse globals (Node
-			      Begin
-			      Define)
-	     (body.traverse module-scope)))
-
-(define-pmethod (Node-globals module-scope)
-   'do-nothing)
-
-(define-pmethod (Begin-globals module-scope)
-   (this.traverse1 module-scope))
-
-(define-pmethod (Define-globals module-scope)
-   (set! this.legal? #t)
-   (collect-global this.lvalue module-scope))
-
-
-(define (defines->letrec! tree)
+(define (find-globals env n module-scope)
    (cond
-      ((inherits-from? tree (node 'Define))
-       (defines->letrec! (new-node Begin
-				   (list tree))))
-      ((inherits-from? tree (node 'Begin))
-       (let ((bindings (map (lambda (define-n)
-			       (new-node Binding
-					 define-n.lvalue
-					 define-n.val))
-			    (head-defines! tree))))
-	  (if (null? bindings)
-	      tree
-	      (begin
-		 (new-node Let
-			   '() ;; will be done in the resolve! above
-			   bindings
-			   tree
-			   'letrec)))))
-      (else tree)))
+      ((Begin? n)
+       (with-access::Begin n (exprs)
+	  (for-each (lambda (e) (find-globals env e module-scope))
+		    exprs)))
+      ((Define? n)
+       (shrink! n)
+       (with-access::Set! n (lvalue)
+	  (with-access::Ref lvalue (id)
+	     (let ((var (symbol-var module-scope id)))
+		(cond
+		   (var
+		    'do-nothing)
+		   ((Env-export-globals env)
+		    (let ((new-var (instantiate::Exported-Var
+				      (id id)
+				      (js-id (mangle-JS-sym id))
+				      (exported-as-const? #f))))
+		       (symbol-var-set! module-scope id new-var)))
+		   (else
+		    (let ((new-var (instantiate::Local
+				      (id id))))
+		       (symbol-var-set! module-scope id new-var))))))))
+      (else 'do-nothing)))
 
-(define (head-defines! bnode)
-   (define (inner bnode rev-found-defines finish-fun)
-      (let loop ((exprs bnode.exprs)
+(define (defines->letrec! n)
+   (cond
+      ((Define? n)
+       ;; wrap into begin.
+       (defines->letrec! (instantiate::Begin
+			    (exprs (list n)))))
+      ((Begin? n)
+       (let ((bindings (map (lambda (n) (shrink! n)) (head-defines! n))))
+	  (if (null? bindings)
+	      n
+	      (instantiate::Let
+		 (bindings bindings)
+		 (body n)
+		 (kind 'letrec)))))
+      (else n)))
+
+(define (head-defines! bnode::Begin)
+   (define (inner bnode::Begin rev-found-defines finish-fun)
+      (let loop ((exprs (Begin-exprs bnode))
 		 (rev-defines rev-found-defines))
 	 (cond
 	    ((null? exprs)
 	     rev-defines)
-	    ((inherits-from? (car exprs) (node 'Begin))
+	    ((Begin? (car exprs))
 	     (loop (cdr exprs)
 		   (inner (car exprs)
 			  rev-defines
 			  finish-fun)))
-	    ((inherits-from? (car exprs) (node 'Define))
+	    ((Define? (car exprs))
 	     (let ((binding (car exprs)))
-		(set-car! exprs (new-node Const #unspecified))
+		(set-car! exprs (instantiate::Const (value #unspecified)))
 		(loop (cdr exprs)
 		      (cons binding rev-defines))))
 	    (else

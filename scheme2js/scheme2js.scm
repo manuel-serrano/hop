@@ -1,42 +1,32 @@
 (module scheme2js
-   (option (loadq "protobject-eval.sch"))
+   (option (set! *dlopen-init* "scheme2js_s"))
    (include "version.sch")
    (import config
+	   nodes
 	   module-system
-	   infotron
-	   compile
-	   pobject-conv
 	   expand
 	   expanders
 	   runtime-expander
 	   dot-expand
+	   pobject-conv
 	   symbol
 	   letrec-expansion
-	   side
-	   tail-rec
 	   encapsulation
-	   statements
 	   node-elimination
-	   traverse
 	   inline
-	   loop-hoist
-	   constant-propagation
-	   propagation
-	   var-elimination
-	   while
-	   trampoline
-	   scope
-	   protobject
-	   liveness
 	   rm-unused-vars
+	   tail-rec
+	   constant-propagation
 	   constants
-	   locations
-	   callcc
-	   verbose
-	   check)
-   ;; config-tables are modified during compilation. Do not reuse them!
-   ;; see config.scm for config-tables (how to create them...)
-   ;;
+	   scope
+	   while
+	   loop-hoist
+	   propagation
+	   statements
+	   rm-tail-breaks
+	   out
+	   scm-out
+	   verbose)
    ;; module-headers are module-clauses without the module-name
    ;; they are of the form (module-pairs . kind)
    ;;    kind can be either provide, replace, merge-first or merge-last
@@ -46,106 +36,85 @@
    (export (scheme2js-compile-expr expr
 				   out-p
 				   module-headers::pair-nil
-				   config-ht)
+				   configuration)
 	   (scheme2js-compile-file in-file::bstring
 				   out-file::bstring
 				   module-headers::pair-nil
-				   config-ht
+				   configuration
 				   #!key (reader read))))
 
-(define (dot-out p tree)
-   (with-output-to-port p
-      (lambda ()
-	 (pobject-dot-out tree (lambda (id)
-				  (not (memq id
-					     '(traverse traverse0
-							traverse1 traverse2
-							traverse3
-							traverse0! traverse1!
-							traverse2! traverse3!
-							clone
-							deep-clone
-							already-defined?
-							constant?
-							value
-							target
-							imported-vars
-							runtime-vars
-							exported-vars
-							var
-							loc
-   ))))))))
+(define-macro (pass name . Lrest)
+   `(begin
+       ,@Lrest
+       (when (eq? debug-stage ,name)
+	  (scm-out tree p))))
 
-(define (scheme2js module config-ht p)
-   (define-macro (do-pass name action)
-      `(begin
-	  ,action
-	  (if (eq? (config 'debug-stage) ,name)
-	      (dot-out p tree)
-	      (flush-output-port p))))
-
-   (config-init! config-ht)
-   (let* ((top-level-e (my-expand `(begin
-				      ,@(Module-macros module)
-				      ,@(Module-top-level module))))
-	  (dummy1 (if (eq? (config 'debug-stage) 'expand)
+(define (scheme2js module p)
+   (let* ((debug-stage (config 'debug-stage))
+	  (top-level-e (my-expand `(begin
+				      ,@(Module-header-macros module)
+				      ,@(Module-header-top-level module))))
+	  (dummy1 (if (eq? debug-stage 'expand)
 		      (pp top-level-e p)))
 	  (top-level-runtime-e (runtime-expand! top-level-e))
-	  (dummy2 (if (eq? (config 'debug-stage) 'runtime-expand)
+	  (dummy2 (if (eq? debug-stage 'runtime-expand)
 		      (pp top-level-runtime-e p)))
 	  (tree (pobject-conv top-level-runtime-e)))
-      (if (eq? (config 'debug-stage) 'tree) (dot-out p tree))
-      (do-pass 'symbol (symbol-resolution tree
-					  (Module-imports module)
-					  (Module-exports module)))
-      (do-pass 'letrec (letrec-expansion! tree))
-      (do-pass 'encapsulation (encapsulation! tree))
-      (do-pass 'node-elim1 (node-elimination! tree))
-      (do-pass 'constant-propagation (constant-propagation! tree))
-      (do-pass 'tail-rec (tail-rec! tree))
-      (do-pass 'node-elim2 (node-elimination! tree))
-      (do-pass 'inline (inline! tree))
-      (do-pass 'rm-unused-vars (rm-unused-vars! tree))
-      (do-pass 'node-elim3 (node-elimination! tree))
-      (do-pass 'call/cc-early (call/cc-early! tree))
-      (do-pass 'trampoline (trampoline tree))
-      (do-pass 'constants (constants! tree))
-      (do-pass 'scope (scope-resolution! tree))
-      (do-pass 'while (tail-rec->while! tree))
-      (do-pass 'loop-hoist (loop-hoist! tree))
-      (do-pass 'propagation (propagation! tree))
-      (do-pass 'var-elim (var-elimination! tree))
-      (do-pass 'rm-unused-vars (rm-unused-vars! tree))
-      (do-pass 'scope-flattening (scope-flattening! tree))
-      (do-pass 'while-optim (optimize-while! tree))
-      (do-pass 'statements (statements! tree))
-      (do-pass 'node-elim5 (node-elimination! tree))
-      (do-pass 'call/cc-late (call/cc-late! tree))
-      ;(do-pass 'check (check tree))
-      (do-pass 'locations (locations tree))
-      (let* ((out-p (if (config 'debug-stage)
-			(open-output-string)
-			p))
-	     (compiled (compile tree out-p)))
-	 (if (config 'debug-stage) (close-output-port out-p))
-	 (if (eq? (config 'debug-stage) 'compiled) (dot-out p tree))
-	 (verbose "--- compiled")
-	 )))
+
+      ;;we could do the letrec-expansion in list-form too.
+      (pass 'letrec        (letrec-expansion! tree))
+
+      (pass 'symbol        (symbol-resolution tree
+					      (Module-header-imports module)
+					      (Module-header-exports module)))
+      (pass 'encapsulation (encapsulation! tree))
+      (pass 'node-elim1    (node-elimination! tree))
+      (pass 'tail-rec      (tail-rec! tree))
+      (pass 'node-elim2    (node-elimination! tree))
+      (pass 'inline        (inline! tree #t))
+      (pass 'tail-rec2     (tail-rec! tree))
+      (pass 'inline2       (inline! tree #f)) ;; a second faster inlining.
+      (pass 'constant      (constant-propagation! tree))
+      (pass 'rm-unused     (rm-unused-vars! tree))
+      (pass 'node-elim3    (node-elimination! tree))
+      ;(call/cc-early tree)
+      ;(trampoline tree)
+      (pass 'constants     (constants! tree))
+      (pass 'scope         (scope-resolution! tree))
+      (pass 'while         (tail-rec->while! tree))
+      (pass 'hoist         (loop-hoist! tree))
+      (pass 'propagation   (propagation! tree))
+      ;(var-elimination! tree)
+      (pass 'rm-unused2    (rm-unused-vars! tree))
+      (pass 'flatten       (scope-flattening! tree))
+      (pass 'stmts         (statements! tree))
+      (pass 'while-optim   (optimize-while! tree))
+      (pass 'node-elim4    (node-elimination! tree))
+      (pass 'rm-breaks     (rm-tail-breaks! tree))
+      (pass 'node-elim5    (node-elimination! tree))
+      ;(call/cc-late! tree)
+      ;(locations tree)
+      (if debug-stage
+	  (let ((tmp (open-output-string)))
+	     (out tree tmp)
+	     (close-output-port tmp))
+	  (out tree p))
+      (verbose "--- compiled")))
 
 (define (scheme2js-compile-expr expr out-p
 				module-headers
-				config-ht)
-   (config-init! config-ht)
+				configuration)
+   (config-init! configuration)
    (let ((module (create-module-from-expr expr module-headers)))
-      (scheme2js module config-ht out-p)))
+      (scheme2js module out-p)))
 
 (define (scheme2js-compile-file in-file out-file
 				module-headers ;; list (module-clause . kind)
 				;; kind: provide/replace/merge-first/merge-last
-				config-ht
+				configuration
 				#!key (reader read))
    ;; we need this for "verbose" outputs.
-   (config-init! config-ht)
+   (config-init! configuration)
    (let* ((module (create-module-from-file in-file module-headers reader))
 	  (out-port (if (string=? "-" out-file)
 		       (current-output-port)
@@ -160,12 +129,12 @@
 
       (when (eq? (config 'export-globals) 'module)
 	 (config-set! 'export-globals
-		      (not (Module-name module))))
+		      (not (Module-header-name module))))
 
       (when (eq? (config 'unresolved=JS) 'module)
 	 (config-set! 'unresolved=JS
-		      (not (Module-name module))))
+		      (not (Module-header-name module))))
 
-      (scheme2js module config-ht out-port)
+      (scheme2js module out-port)
       (if (not (string=? "-" out-file))
 	  (close-output-port out-port))))

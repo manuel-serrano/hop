@@ -1,12 +1,12 @@
 (module pobject-conv
-   (option (loadq "protobject-eval.sch"))
-   (include "protobject.sch")
-   (include "nodes.sch")
    (import nodes
 	   config
-	   protobject
 	   verbose)
-   (export (pobject-conv::pobject prog)
+   (export
+    ;; going to be used in symbol-pass.
+    (wide-class Runtime-Ref::Ref)
+    (wide-class Define::Set!))
+   (export (pobject-conv::Node prog)
 	   (runtime-ref id::symbol)))
 
 ;; recognized as "artificial" runtime-reference.
@@ -40,16 +40,17 @@
 			 rev-res))))))
 
 (define (attach-location o loc)
-   (if loc (set! o.loc loc))
+   (when loc (Node-location-set! o loc))
    o)
    
 (define (pobject-conv prog)
    (verbose "list->pobject")
-   (nodes-init!)
-   (new-node Module (scheme->pobject prog (location prog))))
+   (instantiate::Module
+      (body (scheme->pobject prog (location prog)))))
 
 (define (expr-list->Begin expr-list)
-   (new-node Begin (scheme->pobject-map expr-list)))
+   (instantiate::Begin
+      (exprs (scheme->pobject-map expr-list))))
 
 (define (lambda->pobject arguments body)
    ;; if there's a vaarg, make it a the last element of the list and return
@@ -57,29 +58,32 @@
    (define (vaarg-list! arguments)
       (cond
 	 ((null? arguments)
-	  (cons arguments #f))
+	  (values arguments #f))
 	 ((not (pair? arguments))
-	  (cons (list arguments) #t))
+	  (values (list arguments) #t))
 	 (else
 	  (let* ((p (last-pair arguments))
 		 (vaarg (cdr p)))
 	     (if (null? vaarg)
-		 (cons arguments #f)
+		 (values arguments #f)
 		 (begin
 		    (set-cdr! p (list vaarg)) ;; physically attach the vaarg
-		    (cons arguments #t)))))))
+		    (values arguments #t)))))))
       
-   (let* ((formals/vaarg? (vaarg-list! arguments))
-	  (formals (car formals/vaarg?))
-	  (vaarg? (cdr formals/vaarg?))
-	  (formal-decls
-	   (location-map (lambda (formal loc)
-			    (attach-location (new-node Decl formal) loc))
-			 formals)))
-      (new-node Lambda
-		formal-decls
-		vaarg?
-		(new-node Return (expr-list->Begin body)))))
+   (receive (formals vaarg?)
+      (vaarg-list! arguments)
+
+      (let ((formal-decls
+	     (location-map (lambda (formal loc)
+			      (attach-location (instantiate::Ref
+						  (id formal))
+					       loc))
+			   formals)))
+	 (instantiate::Lambda
+	    (formals formal-decls)
+	    (vaarg? vaarg?)
+	    (body (instantiate::Return
+		     (val (expr-list->Begin body))))))))
 
 (define (let-form->pobject bindings body kind)
    (define (binding->pobject binding)
@@ -92,27 +96,35 @@
 		binding))
       (let ((var (car binding))
 	    (val (cadr binding)))
-	 (new-node Binding
-	      (attach-location (new-node Decl var) (location binding))
-	      (scheme->pobject val (location (cdr binding))))))
+	 (instantiate::Set!
+	    (lvalue (attach-location (instantiate::Ref (id var))
+				   (location binding)))
+	    (val (scheme->pobject val (location (cdr binding)))))))
    
    (let ((pobject-bindings (map! binding->pobject bindings)))
-      (new-node Let #f pobject-bindings (expr-list->Begin body) kind)))
+      (instantiate::Let
+	 (bindings pobject-bindings)
+	 (body (expr-list->Begin body))
+	 (kind kind))))
 
 (define (case->pobject key clauses)
    (define (clause->pobject clause last?)
       (let* ((consts (car clause))
 	     (raw-exprs (cdr clause))
 	     (exprs (scheme->pobject-map raw-exprs))
-	     (begin-expr (new-node Begin exprs)))
+	     (begin-expr (instantiate::Begin (exprs exprs))))
 	 (if (and last?
 		  (eq? consts 'else))
-	     (new-node Clause '() begin-expr #t)
-	     (new-node Clause (map (lambda (const)
-				 (new-node Const const))
-			      consts)
-		       begin-expr
-		       #f))))
+	     (instantiate::Clause
+		(consts '())
+		(expr begin-expr)
+		(default-clause? #t))
+	     (instantiate::Clause
+		(consts (map (lambda (const)
+				(instantiate::Const (value const)))
+			     consts))
+		(expr begin-expr)
+		(default-clause? #f)))))
    
    (define (clauses->pobjects clauses rev-result)
       (cond
@@ -122,7 +134,7 @@
 	  (let ((rev-all-clauses (cons (clause->pobject (car clauses) #t)
 				       rev-result)))
 	     ;; if there was no default clause, we add one.
-	     (if (car rev-all-clauses).default-clause?
+	     (if (Clause-default-clause? (car rev-all-clauses))
 		 (reverse! rev-all-clauses)
 		 (reverse! (cons (clause->pobject '(else #unspecified) #t)
 				 rev-all-clauses)))))
@@ -131,64 +143,71 @@
 			     (cons (clause->pobject (car clauses) #f)
 				   rev-result)))))
 
-   (new-node Case
-	(scheme->pobject-no-loc key)
-	(clauses->pobjects clauses '())))
+   (instantiate::Case
+      (key (scheme->pobject-no-loc key))
+      (clauses (clauses->pobjects clauses '()))))
 
 (define (scheme->pobject-no-loc exp)
    (cond
       ((pair? exp)
        (match-case exp
-	  ((quote ?datum) (new-node Const datum))
+	  ((quote ?datum) (instantiate::Const (value datum)))
 	  ((lambda ?formals . ?body) (lambda->pobject formals body))
 	  ((if ?test ?then)
 	   ;(scheme->pobject `(if ,test ,then #unspecified)))
 	   (set-cdr! (cddr exp) '(#unspecified))
 	   (scheme->pobject-no-loc exp))
 	  ((if ?test ?then ?else)
-	   (new-node If
-		(scheme->pobject test (location (cdr exp)))
-		(scheme->pobject then (location (cddr exp)))
-		(scheme->pobject else (location (cdddr exp)))))
+	   (instantiate::If
+	      (test (scheme->pobject test (location (cdr exp))))
+	      (then (scheme->pobject then (location (cddr exp))))
+	      (else (scheme->pobject else (location (cdddr exp))))))
 	  ((if . ?L) (error #f "bad if-form: " exp))
 	  ((case ?key . ?clauses)
 	   (case->pobject key clauses))
 	  ((set! (and ?var (? symbol?)) ?expr)
-	   (new-node Set!
-		(attach-location (new-node Var-ref var) (location (cdr exp)))
-		(scheme->pobject expr (location (cddr exp)))))
+	   (instantiate::Set!
+	      (lvalue (attach-location (instantiate::Ref
+					(id var))
+				     (location (cdr exp))))
+	      (val (scheme->pobject expr (location (cddr exp))))))
 	  ((set! . ?L) (error #f "bad set!-form: " exp))
 	  ((let ?bindings . ?body) (let-form->pobject bindings body 'let))
 	  ((letrec ?bindings . ?body) (let-form->pobject bindings body 'letrec))
-	  ((begin . ?body) (new-node Begin (scheme->pobject-map body)))
+	  ((begin . ?body) (instantiate::Begin (exprs (scheme->pobject-map body))))
 	  ((define ?var ?expr)
-	   (new-node Define
-		(attach-location (new-node Decl var) (location (cdr exp)))
-		(scheme->pobject expr (location (cddr exp)))))
+	   (instantiate::Define
+	      (lvalue (attach-location (instantiate::Ref
+					(id var))
+				     (location (cdr exp))))
+	      (val (scheme->pobject expr (location (cddr exp))))))
 	  ((pragma ?str)
-	   (new-node Pragma str))
+	   (instantiate::Pragma (str str)))
 	  ((runtime-ref ?id (? procedure?))
-	   (new-node Runtime-Var-ref id))
+	   (instantiate::Runtime-Ref
+	      (id id)))
 	  ((?operator . ?operands)
 	   (if (and (config 'return)
 		    (eq? operator 'return!))
 	       (if (or (null? operands)
 		       (not (null? (cdr operands))))
 		   (error #f "bad return! form: " exp)
-		   (new-node Return (scheme->pobject (car operands)
-						     (location operands))))
-	       (new-node Call
-			 (scheme->pobject operator (location exp))
-			 (scheme->pobject-map operands))))))
+		   (instantiate::Return
+		      (val (scheme->pobject (car operands)
+					    (location operands)))))
+	       (instantiate::SCall
+		  (operator (scheme->pobject operator (location exp)))
+		  (operands (scheme->pobject-map operands)))))))
       ((eq? exp #unspecified)
-	(new-node Const #unspecified))
+	(instantiate::Const (value #unspecified)))
        ;; unquoted symbols must be var-refs
       ((symbol? exp)
-       (new-node Var-ref exp))
+       (instantiate::Ref
+	  (id exp)))
       ((vector? exp)
        (error #f "vectors must be quoted" exp))
       (else
-       (new-node Const exp))))
+       (instantiate::Const (value exp)))))
 
 (define (scheme->pobject exp loc)
    (attach-location (scheme->pobject-no-loc exp) loc))

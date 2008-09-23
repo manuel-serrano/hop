@@ -1,6 +1,6 @@
 (module expand
-   (import verbose)
-   (include "tools.sch")
+   (import verbose
+	   tools)
    (export (my-expand x)
 	   (install-expander! id e)
 	   ;; priority: lower -> later
@@ -77,13 +77,15 @@
    (map! (lambda (y) (e y e macros-ht)) x))
 
 ;; compiler expanders are shared by all parallel compilations.
-(define *expanders* (make-eq-hashtable))
+(define *expanders* '())
 
 (define (expander? id)
-   (and (hashtable-get *expanders* id) #t))
+   (and (assq id *expanders*) #t))
 
 (define (expander id)
-   (hashtable-get *expanders* id))
+   (let ((tmp (assq id *expanders*)))
+      (and tmp
+	   (cdr tmp))))
 
 (define (install-expander! id e)
-   (hashtable-put! *expanders* id e))
+   (cons-set! *expanders* (cons id e)))

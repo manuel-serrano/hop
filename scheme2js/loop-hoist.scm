@@ -1,15 +1,14 @@
 (module loop-hoist
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   config
+   (import config
+	   tools
+	   nodes
+	   walk
 	   side
 	   captured-vars
-	   nodes
 	   verbose)
-   (export (loop-hoist! tree::pobject)))
+   (static (wide-class Hoist-While::While
+	      (decls-to-hoist (default '()))))
+   (export (loop-hoist! tree::Module)))
 
 ;; moves function-definitions outside loops (unless they are closures).
 (define (loop-hoist! tree)
@@ -18,36 +17,43 @@
       (verbose "loop hoist")
       (side-effect tree)
       (captured-vars tree)
-      (overload traverse! hoist! (Node
-				 (Module Fun-hoist!)
-				 (Lambda Fun-hoist!)
-				 Set!
-				 While)
-		(tree.traverse! #f))))
+      (hoist! tree #f #f)))
 
 ;; outer-loop represents the least nested loop.
-(define-pmethod (Node-hoist! outer-loop)
-   (this.traverse1! outer-loop))
+(define-nmethod (Node.hoist! outer-loop)
+   (default-walk! this outer-loop))
 
-(define-pmethod (Fun-hoist! outer-loop)
-   (this.traverse1! #f))
+;; Module.hoist! is not necessary.
+(define-nmethod (Module.hoist! outer-loop)
+   (default-walk! this #f))
+(define-nmethod (Lambda.hoist! outer-loop)
+   (default-walk! this #f))
 
-(define-pmethod (Set!-hoist! outer-loop)
-   (this.traverse1! outer-loop)
-   (if (and outer-loop
-	    this.lvalue.var.constant?
-	    (inherits-from? this.val (node 'Lambda))
-	    (not this.val.closure?))
+(define-nmethod (Set!.hoist! outer-loop)
+   (default-walk! this outer-loop)
+   (with-access::Set! this (lvalue val)
+      (with-access::Ref lvalue (var)
+	 (with-access::Var var (constant?)
+	    (if (and outer-loop
+		     constant?
+		     (Lambda? val)
+		     (not (Lambda-closure? val)))
+		(with-access::Hoist-While outer-loop (decls-to-hoist)
+		   ;; moves this Set! outside all surrounding-loops.
+		   (cons-set! decls-to-hoist this)
+		   (instantiate::Const (value #unspecified)))
+		this)))))
+
+(define-nmethod (While.hoist! outer-loop)
+   (if outer-loop
+       (default-walk! this outer-loop)
        (begin
-	  ;; moves this Set! outside all surrounding-loops.
-	  (cons-set! outer-loop.decls-to-hoist this)
-	  (new-node Const #unspecified))
-       this))
-
-(define-pmethod (While-hoist! outer-loop)
-   (this.traverse1! (or outer-loop this))
-   (if this.decls-to-hoist
-       (let ((decls this.decls-to-hoist))
-	  (delete! this.decls-to-hoist)
-	  (new-node Begin (append decls (list this))))
-       this))
+	  (widen!::Hoist-While this)
+	  (default-walk! this this)
+	  (with-access::Hoist-While this (decls-to-hoist)
+	     (if (pair? decls-to-hoist)
+		 (begin0
+		  (instantiate::Begin
+		     (exprs (append! decls-to-hoist (list this))))
+		  (shrink! this))
+		 this)))))
