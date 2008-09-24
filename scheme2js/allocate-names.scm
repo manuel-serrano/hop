@@ -7,7 +7,8 @@
 	   verbose
 	   gen-js)
    (static (class Name-Env
-	      suffix)
+	      suffix
+	      (counter::bint (default 0)))
 	   (wide-class Global-Var::Local))
    (export (gen-var-names tree)))
 
@@ -28,7 +29,8 @@
    (verbose "  generating names for vars")
    (free-vars tree)
    (let ((env (instantiate::Name-Env
-		 (suffix (config 'statics-suffix)))))
+		 (suffix (and (config 'statics-suffix)
+			      (suffix-mangle (config 'statics-suffix)))))))
       (name-gen tree env #f)))
 
 (define (nice-mangle::bstring str)
@@ -67,25 +69,49 @@
 	  (bigloo-mangle str_)
 	  str_)))
 
-(define (invalid-or-used? str used-ht)
-   (and (or (not (valid-JS-str? str))
-	    (hashtable-get used-ht str))
-	#t))
+(define (valid? str)
+   (valid-JS-str? str))
+
+(define *dangerous-js*
+   '("Object" "undefined" "Array" "Number" "String" "Date" "RegExp"))
+
+(define (dangerous? str)
+   (and (member str *dangerous-js*) #t))
+
+(define (used? str used-ht)
+   (and (hashtable-get used-ht str)))
 
 (define-generic (allocate-name v::Var env used-ht)
-
    ;; generate ids
    (with-access::Var v (js-id escapes? id)
       (when (string-null? js-id)
-	 (let ((short (nice-mangle (symbol->string id))))
-	    (set! js-id
-		  (if (invalid-or-used? short used-ht)
-		      (gen-JS-sym id)
-		      short))
-	    (hashtable-put! used-ht js-id #t)))))
+	 (let loop ((short (nice-mangle (symbol->string id)))
+		    (already-tried? #f))
+	    (cond
+	       ((and (valid? short)
+		     (not (dangerous? short))
+		     (not (used? short used-ht)))
+		(set! js-id short))
+	       (already-tried?
+		(set! js-id (gen-JS-sym id)))
+	       (else
+		(with-access::Name-Env env (counter)
+		   (set! counter (+fx counter 1))
+		   (let ((next-try
+			  (cond
+			     ((or (string-prefix? "sc_" short)
+				  (string-prefix? "SC_" short))
+			      (string-append "v_" short "_"
+					     (number->string counter)))
+			     (else
+			      (string-append short "_"
+					     (number->string counter))))))
+		      (loop next-try #t))))))
+	 (hashtable-put! used-ht js-id #t))))
 
 (define-method (allocate-name v::JS-Var env used-ht)
-   'do-nothing) ;; js-id is already up to date.
+   (with-access::Var v (js-id)
+      (hashtable-put! used-ht js-id #t))) ;; js-id is already up to date.
 
 (define-method (allocate-name v::Global-Var env used-ht)
    (with-access::Name-Env env (suffix)
@@ -94,12 +120,12 @@
 	     (shrink! v)
 	     (allocate-name v env used-ht))
 	  (with-access::Var v (id js-id escapes?)
-	     (let* ((suf (suffix-mangle suffix))
-		    (short (string-append (nice-mangle (symbol->string id))
-					  suf)))
+	     (let* ((short (string-append (nice-mangle (symbol->string id))
+					  suffix)))
 		(set! js-id
-		      (if (invalid-or-used? short used-ht)
-			  (string-append (gen-JS-sym id) suf)
+		      (if (or (not (valid? short))
+			      (used? short used-ht))
+			  (string-append (gen-JS-sym id) suffix)
 			  short)))
 	     (hashtable-put! used-ht js-id #t)))))
 
@@ -115,11 +141,20 @@
 	 (for-each (lambda (var)
 		      (allocate-name var env used-ht))
 		   imported-vars)
+	 ;; first allocate Exported, as they have precedence over local vars.
+	 ;; ex: (define export_var _some_val_) (let ((export-var ....)) ...)
+	 ;;   if 'export-var' is handled before the exported one, it receives
+	 ;;   'export_var' as JS-id. -> bad...
 	 (for-each (lambda (var)
-		      ;; might be either an Exported-Var or a Local
+		      (when (Exported-Var? var)
+			 (allocate-name var env used-ht)))
+		   declared-vars)
+	 ;; now that the Exported vars have been handled we can assign the
+	 ;; names to the global vars.
+	 (for-each (lambda (var)
 		      (when (Local? var)
-			  (widen!::Global-Var var))
-		      (allocate-name var env used-ht))
+			 (widen!::Global-Var var)
+			 (allocate-name var env used-ht)))
 		   declared-vars)
 	 (default-walk this used-ht))))
 

@@ -34,9 +34,6 @@
      "void" "while" "with" "abstract" "debugger" "enum" "export"
      "goto" "implements" "interface" "native" "protected"
      "synchronized" "throws" "transient" "volatile"
-     ;; following variables are not really reserved, but let's not take the
-     ;; risk...
-     "Object" "undefined" "Array" "Number" "String" "Date" "RegExp"
      ))
 
 (define (valid-JS-str? str)
