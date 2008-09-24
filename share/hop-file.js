@@ -351,7 +351,7 @@ function hop_filechooser_save_proc( event, proc ) {
 			(attrs '()))
 		(cond
 		   ((null? args)
-		    `(hop_filechooser (sc_list ,@(reverse! attrs))))
+		    `(hop_filechooser (list ,@(reverse! attrs))))
 		   ((or (null? (cdr args)) (not (keyword? (car args))))
 		    (loop (cdr args) (cons (car args) attrs)))
 		   ((string-prefix? "on" (keyword->string (car args)))
