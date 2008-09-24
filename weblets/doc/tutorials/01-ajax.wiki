@@ -9,12 +9,101 @@ containing a status code and a characters string denoting the answer.
 ~~ Asynchronous server calls are ubiquitous in HOP. They are implicitly
 present in on-demand ++<NOTEPAD>++s and ++<TREE>++s. They are explicit
 with the ++with-hop++ client function calls. In this tutorial
-we show to use the latter.
+we show how to use the latter.
 
 ~~ In this tutorial, we are going to use asynchronous function calls for
 searching a database located on the server each time a character is
 typed-in in an input text of the client. The matches will be instantly
 displayed in the client.
+
+
+== Architecture ==
+
+This tutorial will use two HOP modules, one named
+++tutorial-ajax-database++ and one named ++tutorial-ajax++. HOP uses
+no automatic mapping of module-name to file-name. In other words,
+although a source file cannot contain more than one module, there is
+no relationship between the name of a module and the name of the file
+holding that module. There are two ways for instructing HOP with the
+association between modules and file names. The first one, consists in
+specifying when a module is imported.  Assuming a module ++mod1++
+implemented in a file named ++src1.hop++, one may write:
+
+<code>
+  (module my-module
+    (import (mod1 "src1.hop")))
+</code>
+
+
+Specifying the mapping module->file for each import has two drawbacks:
+  * it is fastidious and,
+  * more important, it requires to change the source code as soon as one
+ source file is renamed.
+
+
+To workaround these drawbacks, HOP supports a second mechanism, namely
+the ++afile++ association table, that allows the mapping module->file
+to be specified globally once for all. When a source file name
+++src.hop++ located in a directory ++dir++, is read, HOP checks if the
+file name ++dir/.afile++ exists. If it exists, this file is loaded
+internally in the system. The structure of this file must be a list of
+mapping ++module-name x file-name++. With our previous example, the
+++.afile++ should contain:
+
+<code>
+  (
+   (mod1 "src1.hop")
+  )
+</code>
+
+
+One may write these ++.afile++ by hand of use the tool ++bglafile++ that can
+generate these files. Using ++bglafile++ is straightforward, in general a
+simple execution such as (in the code below, lines prefixed with a ++$++ sign
+are assumed to be command lines executed with a command line editor such as
+a Unix shell):
+
+<console>
+  $ bglafile *.hop > .afile
+</console>
+
+
+is all you need. In the rest of this tutorial we will assume the following
+files organization:
+
+<console>
+  +- tutorial/
+  |    +- .afile
+  |    +- tutorial-ajax-database.hop
+  |    +- tutorial-ajax.hop
+  +- ...
+</console>
+
+
+The file ++.afile++ contains:
+
+<code>
+  (
+   (tutorial-ajax-database "tutorial-ajax-database.hop")
+   (tutorial-ajax "tutorial-ajax.hop")
+  )
+</code>
+
+
+Hop should be ran as:
+
+<console>
+  $ cd tutorial && hop -v2 tutorial-ajax.hop
+</console>
+
+
+~~ The tutorial will defined a service named ++tutorial-ajax++.
+Hence, to run the tutorial, one should direct his Web browser to:
+
+<console>
+  http://localhost:8080/hop/tutorial-ajax
+</console>
+
 
 == Version 1 ==
 
@@ -28,9 +117,9 @@ The server code implements a small database containing programming
 language description.
 
 <example>
-  (module tutorial-ajax
+  (module tutorial-ajax-database
      (library sqlite)
-     (export tutorial-ajax))
+     (export tutorial-ajax/query))
 
   ;; create an in-memory database
   (define *db* (instantiate::sqlite))
@@ -48,9 +137,8 @@ language description.
 	      ("object" ("Smalltalk" "Java"))))
 
   ;; define the weblet searching the database
-  (define-service (tutorial-ajax v)
-      (<TABLE>
-         :border 1
+  (define-service (tutorial-ajax/query v)
+      (<TABLE> :border 1
          (map (lambda (x)
                  (<TR> (<TD> x)))
               (sqlite-map *db* (lambda (x) x) "SELECT name FROM languages WHERE (name LIKE '%~a%')" v))))
@@ -63,19 +151,20 @@ character is typed-in, the client invokes the
 This returns a vector that is displayed in the ++show++ ++<DIV>++ element.
 
 <example>
-  (module tutorial-ajax-html
-     (import tutorial-ajax))
+  (module tutorial-ajax
+     (import tutorial-ajax-database))
 
-  (<HTML>
-     (<HEAD>)
-     (let ((show (<DIV> "")))
-        (<BODY>
-           (<DIV> "Type a programming language name")
-           (<INPUT> :type "text"
-                    :onkeyup ~(with-hop ($tutorial-ajax this.value)
-                                  (lambda (h) (innerHTML-set! $show h))))
-           (<DIV> "Results...")
-           show)))
+  (define-service (tutorial-ajax)
+     (<HTML>
+        (<HEAD>)
+        (let ((show (<DIV> "")))
+           (<BODY>
+              (<DIV> "Type a programming language name")
+              (<INPUT> :type "text"
+                       :onkeyup ~(with-hop ($tutorial-ajax this.value)
+                                     (lambda (h) (innerHTML-set! $show h))))
+              (<DIV> "Results...")
+              show)))
 
 == Version 2 ==
 
@@ -87,7 +176,7 @@ The only variation with respect to the first version are located in the
 ++tutorial-ajax++ service.
 
 <example>
-  (module tutorial-ajax-v2
+  (module tutorial-ajax-database-v2
      (library sqlite)
      (export tutorial-ajax))
 
@@ -121,24 +210,24 @@ second version, the code for building the table has been //shifted// from
 the server to the client.
 
 <example>
-  (module tutorial-ajax-html-v2
-     (import tutorial-ajax-v2))
+  (module tutorial-ajax-v2
+     (import tutorial-ajax-database-v2))
 
-  (<HTML>
-     (<HEAD>)
-     (let ((show (<DIV> "")))
-        (<BODY>
-           (<DIV> "Type a programming language name")
-           (<INPUT> :type "text"
-                    :onkeyup ~(with-hop ($tutorial-ajax this.value)
-                                 (lambda (h)
-                                    (let ((table (<TABLE>
-                                                     :border 1
-					             (<TBODY>
-                                                       (map (lambda (x) (<TR> (<TD> x))) h)))))
-                                       (if (dom-has-child-nodes? $show)
-                                           (dom-remove-child! $show (car (dom-child-nodes $show))))
-                                       (dom-append-child! $show table)))))
-           (<DIV> "Results...")
-           show)))
+  (define-service (tutorial-ajax-v2)
+     (<HTML>
+        (<HEAD>)
+        (let ((show (<DIV> "")))
+           (<BODY>
+              (<DIV> "Type a programming language name")
+              (<INPUT> :type "text"
+                       :onkeyup ~(with-hop ($tutorial-ajax this.value)
+                                    (lambda (h)
+                                       (let ((table (<TABLE> :border 1
+				   	                (<TBODY>
+                                                           (map (lambda (x) (<TR> (<TD> x))) h)))))
+                                          (if (dom-has-child-nodes? $show)
+                                              (dom-remove-child! $show (car (dom-child-nodes $show))))
+                                          (dom-append-child! $show table)))))
+              (<DIV> "Results...")
+              show))))
 </doc>
