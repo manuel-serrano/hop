@@ -11,6 +11,8 @@
 	      stmt-key?::bool)
 	   (wide-class Stmt-Begin::Begin
 	      stmt-exprs) ;; may be #f if none is stmt.
+	   (wide-class Stmt-Set!::Set!
+	      stmt-val?::bool)
 	   (wide-class Stmt-Call::SCall
 	      stmt-operator?::bool
 	      stmt-operands)) ;; may be #f if none is stmt.
@@ -77,7 +79,9 @@
 (define-nmethod (Set!.mark)
    ;; no need to look at lvalue.
    (with-access::Set! this (val)
-      (walk val)))
+      (let ((stmt-val? (walk val)))
+	 (widen!::Stmt-Set! this
+	    (stmt-val? stmt-val?)))))
 
 ;; Let does not exist anymore (at this level)
 

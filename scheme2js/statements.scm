@@ -123,9 +123,16 @@
    (default-walk! this surrounding-fun #f))
 
 (define-nmethod (Set!.stmts! surrounding-fun stmt-begin)
+   (default-walk! this surrounding-fun #f))
+
+(define-nmethod (Stmt-Set!.stmts! surrounding-fun stmt-begin)
    ;; value needs to be expression. but we can ignore this for now.
    ;; another push-set!s/return will take care of this.
-   (default-walk! this surrounding-fun #f))
+   ;; we need to move the whole assignment, though.
+   (if stmt-begin
+       (move-to-begin this walk! surrounding-fun stmt-begin
+		      #f) ;; no need to get result. assigs are unspecified.
+       (default-walk! this surrounding-fun #f)))
 
 ;; Lets don't exist anymore in this pass.
 
@@ -208,52 +215,41 @@
 	     ;;  for instance we could have the execution: s1, s2, a, c.
 	     ;; allow the first stmt-op to be partially moved. the remaining ones
 	     ;; are completely moved.
-	     ;;
-	     ;; we want the moved elements to be evaluated in order.
-	     ;; -> create some new begins...
-	     (let ((call-begin (instantiate::Begin (exprs '()))))
-		(with-access::Begin stmt-begin (exprs)
-		   (cons-set! exprs call-begin))
-		   
+	     (let ((dummy 'dummy)) ;; we need a let so we can have 'define's here.
 		(define (move-stmt-walk n stmt-form? partial?)
 		   (cond
 		      ((and stmt-form? partial?)
 		       ;; we are allowed to partially move the stmt.
-		       ;; but it must be after all existing elements.
-		       (with-access::Begin call-begin (exprs)
-			  (if (null? exprs) ;; no elements yet
-			      (walk! n surrounding-fun call-begin)
-			      (let ((op-begin (instantiate::Begin (exprs '()))))
-				 (set! exprs (append! exprs (list op-begin)))
-				 (walk! n surrounding-fun op-begin)))))
+		       (walk! n surrounding-fun stmt-begin))
 		      (stmt-form?
 		       ;; we must move the entire operand/operator
 		       ;; don't care if it is before or after other elements.
 		       (move-to-begin n walk! surrounding-fun stmt-begin))
 		      (else
 		       (walk! n surrounding-fun #f))))
-
+		
 		(define (unaffected? n)
 		   (or (Const? n)
 		       (and (Ref? n)
 			    (with-access::Ref n (var)
 			       (with-access::Var var (constant?)
 				  constant?)))))
-
+		
 		(set! operator (move-stmt-walk operator stmt-operator? #t))
-
+		
 		(let loop ((ops operands)
 			   (stmts? stmt-operands)
 			   (partial? (unaffected? operator)))
-		   (if (null? ops)
-		       'done
-		       (begin
-			  (set-car! ops
-				    (move-stmt-walk (car ops) (car stmts?)
-						    partial?))
-			  (loop (cdr ops) (cdr stmts?)
-				(and partial? (unaffected? (car ops)))))))
-		       
+		   (cond
+		      ((null? ops)
+		       'done)
+		      (else
+		       (set-car! ops
+				 (move-stmt-walk (car ops) (car stmts?)
+						 partial?))
+		       (loop (cdr ops) (cdr stmts?)
+			     (and partial? (unaffected? (car ops)))))))
+		
 		(shrink! this)
 		this))))))
 

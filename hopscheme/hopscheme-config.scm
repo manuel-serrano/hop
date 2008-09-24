@@ -7,10 +7,6 @@
 (define *cached-config* #f)
 (define *module-counter-lock* (make-mutex))
 
-;; CARE !!!! (MS 19 Jan 2008): THIS MUST BE IMPROVED. IT IS FAR TOO EXPENSIVE
-;; TO CALL HOPSCHEME-CONFIG WHEN COMPILING EACH CLIENT EXPRESSION. IT IS
-;; NOT REALISTIC TO ALLOCATE A NEW HASH TABLE FOR EACH COMPILATION.
-
 (define (get-cached-config)
    (or *cached-config*
        (begin
