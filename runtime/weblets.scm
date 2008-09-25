@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/weblets.scm               */
+;*    serrano/prgm/project/hop/1.10.x/runtime/weblets.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sat Aug 30 18:54:34 2008 (serrano)                */
+;*    Last change :  Thu Sep 25 10:16:24 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -35,6 +35,8 @@
 	    (reset-autoload!)
 	    (get-autoload-directories::pair-nil)
 	    (get-autoload-weblet-directories::pair-nil)
+	    (hop-load-hz ::bstring)
+	    (hop-load-weblet ::bstring)
 	    (install-autoload-weblets! ::pair-nil)
 	    (autoload-prefix::procedure ::bstring)
 	    (autoload ::bstring ::procedure . hooks)
@@ -104,6 +106,76 @@
    *weblet-autoload-dirs*)
 
 ;*---------------------------------------------------------------------*/
+;*    hop-load-hz ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-load-hz path)
+   (let ((p (open-input-gzip-file path)))
+      (unwind-protect
+	 (let* ((tmp (make-file-name (os-tmp) "hop"))
+		(file (car (untar p :directory tmp)))
+		(base (substring file
+				 (+fx (string-length tmp) 1)
+				 (string-length file)))
+		(dir (dirname base))
+		(name (if (string=? dir ".") base dir))
+		(src (make-file-path tmp name (string-append name ".hop"))))
+	    (hop-load-weblet src))
+	 (close-input-port p))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-load-weblet ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-load-weblet path)
+   (let* ((dir (dirname path))
+	  (name (basename (prefix path))))
+      (if (file-exists? path)
+	  (begin
+	     (hop-load path)
+	     (let* ((winfoname (make-file-path name "etc" "weblet.info"))
+		    (winfo (if (file-exists? winfoname)
+			       (with-input-from-file winfoname read)
+			       '()))
+		    (url (string-append "/hop/" name)))
+		(install-weblet-dashboard! name dir winfo url)))
+	  (error 'hop-load-weblet "Cannot find HOP source" path))))
+
+;*---------------------------------------------------------------------*/
+;*    install-weblet-dashboard! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (install-weblet-dashboard! name dir winfo url)
+   
+   (define (add-dashboard-applet! name icon svc)
+      (unless (pair? (assoc name (hop-dashboard-weblet-applets)))
+	 (hop-dashboard-weblet-applets-set!
+	  (cons (list name icon svc) (hop-dashboard-weblet-applets)))))
+
+   (unless (member name (hop-dashboard-weblet-disabled-applets))
+      ;; the user does not want of this weblet
+      (let ((dashboard (assq 'dashboard winfo)))
+	 ;; dashboard declaration
+	 (if (pair? dashboard)
+	     ;; a customized dashboard
+	     (for-each (lambda (d)
+			  (match-case d
+			     ((?i ?svc)
+			      (let ((p (make-file-path dir "etc" i)))
+				 (add-dashboard-applet! dir p svc)))
+			     ((and ?i (? string?))
+			      (let* ((p (make-file-path dir "etc" i))
+				     (svc (string-append url "/dashboard")))
+				 (add-dashboard-applet! name i svc)))
+			     (else
+			      (warning 'autoload-weblets
+				       "bad dashboard declaration"
+				       d))))
+		       (cdr dashboard))
+	     ;; is there a dashboard icon for a regular an applet?
+	     (let ((icon (make-file-path dir "etc" "dashboard.png")))
+		(when (file-exists? icon)
+		   (let ((svc (string-append url "/dashboard")))
+		      (add-dashboard-applet! name icon svc))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    install-autoload-weblets! ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (install-autoload-weblets! dirs)
@@ -119,11 +191,6 @@
 		   "autoload already installed on:\n  ~a\nignoring:\n  ~a"
 		   opath
 		   npath))))
-
-   (define (add-dashboard-applet! name icon svc)
-      (unless (pair? (assoc name (hop-dashboard-weblet-applets)))
-	 (hop-dashboard-weblet-applets-set!
-	  (cons (list name icon svc) (hop-dashboard-weblet-applets)))))
    
    (define (maybe-autoload x)
       (let ((cname (assq 'name x)))
@@ -134,37 +201,12 @@
 		    (path (cadr (assq 'weblet x)))
 		    (autopred (assq 'autoload x))
 		    (rc (assq 'rc x))
-		    (dashboard (assq 'dashboard x))
 		    (opath (hashtable-get *weblet-table* name)))
-		;; dashboard declaration
-		(cond
-		   ((member name (hop-dashboard-weblet-disabled-applets))
-		    ;; the user does not want of this weblet
-		    #f)
-		   ((pair? dashboard)
-		    ;; a customized dashboard
-		    (for-each (lambda (d)
-				 (match-case d
-				    ((?i ?svc)
-				     (let ((p (make-file-path prefix "etc" i)))
-					(add-dashboard-applet! name p svc)))
-				    ((and ?i (? string?))
-				     (let ((p (make-file-path prefix "etc" i)))
-					(add-dashboard-applet! name i (string-append url "/dashboard"))))
-				    (else
-				     (warning 'autoload-weblets
-					      "bad dashboard declaration"
-					      d))))
-			      (cdr dashboard)))
-		   (else
-		    ;; is there a dashboard icon for a regular an applet?
-		    (let ((icon (make-file-path prefix "etc" "dashboard.png")))
-		       (when (file-exists? icon)
-			  (add-dashboard-applet!
-			   name
-			   icon
-			   (string-append url "/dashboard"))))))
+		;; dashboard setup
+		(install-weblet-dashboard! name prefix x url)
+		;; rc setup
 		(when (pair? rc) (eval (cadr rc)))
+		;; autoload per say
 		(cond
 		   ((string? opath)
 		    (warn name opath path))

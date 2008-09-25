@@ -1,0 +1,53 @@
+<doc> HZBUILDER -- a wizard for building HZ packages
+
+== Description ==
+
+[[/hop/hzbuilder|HzBuilder]] is a simple tool that assist you in the
+process of creating a HZ package. ++HzBuilder++ will basically create
+the Makefile needed to generate a package and the standard files 
+that must be present in the package.
+
+
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+
+== Related documentations ==
+
+Several tutorials are related to [[/hop/hzbuilder|HzBuilder]]:
+
+  * ,(<TUTORIALREF> "hz tutorial" "06-hz.wiki")
+
+
+Serveral other Weblets are also related to [[/hop/hzbuilder|HzBuilder]]:
+
+  * ,(<WEBLETREF> "hz" (make-file-path (hop-weblets-directory) "hz/etc/hz.wiki")): the documentation
+ of the HOP Hz package manager.
+  * ,(<WEBLETREF> "weblets" (make-file-path (hop-weblets-directory) "hz/etc/weblets.wiki")): the
+ documentation of the Weblets weblet that let you manage your locals weblets.
+
+
+At least, some internal documentation pages may be helpful to understand
+how HOP weblets should be programmed:
+
+  * ,(<APIREF> "service" "service.wiki"): the definition of HOP services.
+  * ,(<APIREF> "hss" "hss.wiki"): HOP CSS facilities extensions.
+
+
+== Services ==
+
+Here are the services defined by this weblet:
+
+  - ++[[/hop/hzbuilder|hzbuilder]]++: 
+ The main entry point of Hzbuilder. 
+  - ++[[/hop/hzbuilder/documentation|hzbuilder/documentation]]++: 
+ This documentation page.
+  - ++[[/hop/hzbuilder/preferences|hzbuilder/preferences]]++: 
+ Various HzBuilder user configuration.
+

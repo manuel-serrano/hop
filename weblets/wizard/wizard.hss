@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/wizard/wizard.hss               */
+/*    serrano/prgm/project/hop/1.10.x/weblets/wizard/wizard.hss        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Jul 21 06:27:42 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Wed Sep 24 08:58:16 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    history simple CSS                                               */
 /*=====================================================================*/
@@ -36,8 +36,19 @@ div#title {
   font-size: x-large;
   font-weight: bold;
   border-bottom: 1px solid $border-color;
+}
+
+div#description {
+  font-style: italic;
+  font-size: 85%;
+  color: #333;
   margin-bottom: 20px;
   padding-bottom: 1px;
+}
+
+div#description tt {
+  font-size: 120%;
+  color: #00a;
 }
 
 table td {
@@ -52,6 +63,7 @@ input, button {
 /*---------------------------------------------------------------------*/
 /*    wizard                                                           */
 /*---------------------------------------------------------------------*/
+
 table.wizard-user {
   border: 1px solid $border-color;
   background: #ffe;

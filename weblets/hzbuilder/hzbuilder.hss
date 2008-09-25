@@ -1,0 +1,333 @@
+/*=====================================================================*/
+/*    .../prgm/project/hop/1.9.x/weblets/hzbuilder/hzbuilder.hss       */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 24 13:57:44 2005                          */
+/*    Last change :  Thu Sep 25 09:59:59 2008 (serrano)                */
+/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HZBUILDER's CSS                                                  */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module hzbuilder_hss
+    (import hzbuilder_config))
+
+/*---------------------------------------------------------------------*/
+/*    Global configuration                                             */
+/*---------------------------------------------------------------------*/
+$(define border-color "#bbb")
+
+/*---------------------------------------------------------------------*/
+/*    General markups                                                  */
+/*---------------------------------------------------------------------*/
+body {
+  background: #e0e0e0;
+  font-family: arial, sans serif;
+}
+
+tt {
+  font-family: Bitstream Vera Sans Mono, Andale Mono, monospace;
+  font-size: 80%;
+}
+
+table td {
+  text-align: left;
+}
+
+span.browse {
+  background: #cccccc;
+  font-size: 85%;
+  padding: 0px 1.1em 0px 1.1em;
+  border: 1px solid #aaa;
+  -moz-border-radius: 0.3em;
+  cursor: default;
+}
+
+span.browse:hover {
+  background: #eee;
+  color: #005;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Main frame                                                       */
+/*---------------------------------------------------------------------*/
+table.main {
+  width: 90%;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  -moz-border-radius: 0.5em;
+}
+
+td#title {
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+
+table td {
+  vertical-align: top;
+}
+  
+table.body {
+  width: 100%;
+}
+
+/*--- logo ------------------------------------------------------------*/
+table.main img.logo {
+  padding: 20px 25px 0 25px;
+}
+
+table.main div.version {
+  margin-left: 3px;
+  margin-right: 3px;
+  padding-top: 5px;
+  font-size: 60%;
+  text-align: center;
+  color: #777;
+  font-weight: bold;
+}
+
+/*--- doc button ------------------------------------------------------*/
+div.buttons {
+  border-top: 1px solid $border-color;
+  padding-top: 10px;
+  margin-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid $border-color;
+}
+
+div.buttons div.button {
+  text-align: center;
+  margin-left: 6px;
+  margin-right: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border: 1px solid $border-color;
+  background: #f9f9f9;
+  -moz-border-radius: 0.3em;
+}
+
+div.buttons div.prefs {
+  margin-top: 1em;
+}
+
+img.doc {
+  vertical-align: bottom;
+  border: none;
+  padding-right: 4px;
+}
+
+a.doc {
+  font-family: Arial,Helvetica,sans-serif;
+  font-weight: bold; 
+  font-size: 80%;
+  vertical-align: center;
+  cursor: default;
+  color: black;
+  text-decoration: none;
+}
+
+a.doc:hover {
+  color: #8381de;
+}
+
+
+/*---------------------------------------------------------------------*/
+/*    form                                                             */
+/*---------------------------------------------------------------------*/
+table.form {
+  margin-top: 2ex;
+  width: 100%;
+  border: 1px solid $border-color;
+  background: #ffe;
+  padding: 5px;
+  margin-bottom: 1ex;
+  -moz-border-radius: 0.5em;
+}
+
+table.form tr.form > td {
+  padding-right: 1em;
+}
+
+table.form tr.form > td + td {
+  padding-right: 0;
+}
+
+table.form tr.separator-top td {
+  padding-top: 2ex;
+}
+
+table.form tr.separator-bottom td {
+  padding-bottom: 2ex;
+  border-top: 1px dashed #ccc;
+}
+
+table.form-entry {
+  width: 100%;
+}
+
+table.form span.key {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+table.form span.key:after {
+  content: ":";
+  font-weight: bold;
+}
+
+table.form-entry td.key {
+  width: 6em;
+}
+
+table.form-entry td.bottom {
+  vertical-align: bottom;
+}
+
+table.form-entry td.top button {
+  vertical-align: top;
+  margin-right: 2em;
+}
+
+table.form-entry td.checkbox {
+  vertical-align: middle;
+}
+
+table.form-entry td.checkbox input[type="checkbox"] {
+  background: white;
+  color: blue;
+}
+
+table.form-entry input[type=text] {
+  margin-left: 4px;
+  border: 0;
+  border-bottom: 1px dotted $border-color;
+  color: blue;
+  background: white;
+  width: 100%;
+}
+
+table.form-entry input.required {
+  border-color: red;
+}
+
+table.form-entry select {
+  background: white;
+  border-width: 1px;
+  color: blue;
+}
+
+table.form-entry td.icon-legend {
+  color: #666;
+  font-size: 90%;
+}
+
+table.form input#hzb-dir {
+  width: 35em;
+  margin-left: 1em;
+  margin-right: 1em;
+  border: 0;
+  border-bottom: 1px dotted orange;
+  color: blue;
+  background: white;
+}
+
+table.form td#hzb-generate {
+  padding-top: 2em;
+}
+
+table.form td#hzb-generate button {
+  border-width: 1px;
+}
+
+table.form td#hzb-generate button + button {
+  margin-left: 2em;
+}
+
+table.form table.icon-entry td {
+  text-align: center;
+  border-collapse: collapse;
+}
+
+/*---------------------------------------------------------------------*/
+/*    preview                                                          */
+/*---------------------------------------------------------------------*/
+div#hzb-preview {
+  border: 1px inset #777;
+  width: $(format "~apx" (hzbuilder-preview-size));
+  background: white;
+  height: 100%;
+  min-height: $(format "~apx" (hzbuilder-preview-size));
+  font-size: 90%;
+  text-align: center;
+  padding-top: 10px;
+}
+
+table.preview-default {
+  width: 100%;
+  text-align: left;
+}
+
+img.hzbuilder-autosize-img {
+  display: none;
+}
+
+iframe.preview {
+  border: 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    log                                                              */
+/*---------------------------------------------------------------------*/
+div#hzb-log {
+  display: none;
+  position: fixed;
+  top: 80px;
+  bottom: 80px;
+  left: 100px;
+  right: 100px;
+  background: white;
+  -moz-opacity: 0.92;
+  border: 4px dashed #555;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+div#hzb-log {
+  font-size: 140%;
+}
+
+div#hzb-log tt {
+  color: #00a;
+}
+
+div#hzb-log tt.dir {
+  color: #e80b18;
+  font-weight: bold;
+}
+
+div#hzb-log tt.file {
+  color: #ff5c0a;
+}
+
+button#hzb-log-okay {
+  margin-bottom: 2em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    preferences                                                      */
+/*---------------------------------------------------------------------*/
+table.hop-prefs input.hop-pr-editor-expr {
+  border-width: 1px;
+}
+
+button.hop-prefs-save {
+  border-width: 1px;
+} 

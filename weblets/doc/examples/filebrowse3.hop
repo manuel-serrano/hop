@@ -1,0 +1,12 @@
+;; an example of FILECHOOSER popups when  a button is pressed
+(<HTML>
+    (<HEAD>
+       :include "hop-paned" "hop-file" "hop-window")
+    (<BODY>
+       (<BUTTON> :onclick ~(window-open :parent document.body
+			      :width 640
+			      :height 480
+			      :src (<FILECHOOSER>
+				      :url "/tmp"
+				      :onopen (alert "FILEBROWSE=" this.value)))
+	  "browse me")))

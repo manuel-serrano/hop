@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-request.js             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Sep 16 11:05:39 2008 (serrano)                */
+/*    Last change :  Thu Sep 25 10:17:16 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -90,7 +90,10 @@ function hop_service_url_varargs( service, args ) {
 function hop_default_failure( http ) {
    var t = http.responseText;
    
-   if( !t ) return;
+   if( !t ) {
+      alert( "http error " + http.status );
+      return;
+   }
 	       
    var div = document.getElementById( "hop_default_failure" );
    var div2 = document.getElementById( "hop_default_failure_background" );
@@ -371,8 +374,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
 
    xhr.open( "GET", svc, (sync != true) );
 
-   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    xhr.setRequestHeader( 'Connection', 'close' );
+   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    // to force the response to be interpreted as latin-1:
    // xhr.overrideMimeType( 'text/html; charset=ISO-8859-1' );
    
