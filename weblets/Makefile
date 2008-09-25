@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/Makefile                  */
+#*    serrano/prgm/project/hop/1.10.x/weblets/Makefile                 */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Aug 18 13:00:33 2008 (serrano)                */
+#*    Last change :  Wed Sep 24 09:37:02 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
@@ -24,7 +24,7 @@ POPULATION	= Makefile
 #*    weblets                                                          */
 #*---------------------------------------------------------------------*/
 POPDIRS	= hop epassword hz info webfilter doc home hopsh wizard test \
-          dashboard wiki trace shutdown weblets
+          dashboard wiki trace shutdown weblets hzbuilder
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */

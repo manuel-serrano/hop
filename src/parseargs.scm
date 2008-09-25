@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/lab/HOP/1.9.x/src/parseargs.scm                          */
+;*    serrano/prgm/project/hop/1.10.x/src/parseargs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Aug 22 10:48:33 2008 (serrano)                */
+;*    Last change :  Thu Sep 25 10:17:53 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -252,11 +252,17 @@
 				     (else
 				      (file-name-canonicalize!
 				       (make-file-name (pwd) f))))))
-			 (if (string-suffix? ".hz" path)
+			 (cond
+			    ((string-suffix? ".hz" path)
 			     ;; this is a weblet
-			     (hop-load-weblet path)
+			     (hop-load-hz path))
+			    ((directory? path)
+			     ;; load a directory
+			     (let ((src (string-append (basename path) ".hop")))
+				(hop-load-weblet (make-file-name path src))))
+			    (else
 			     ;; this is a plain file
-			     (hop-load path))))
+			     (hop-load-weblet path)))))
 		   (reverse! files))
 	 
 	 ;; write the process key
@@ -273,25 +279,6 @@
    (print "usage: hop [options] ...")
    (print "       hop [options] file.hop|file.hz ...")
    (args-parse-usage #f))
-
-;*---------------------------------------------------------------------*/
-;*    hop-load-weblet ...                                              */
-;*---------------------------------------------------------------------*/
-(define (hop-load-weblet path)
-   (let ((p (open-input-gzip-file path)))
-      (unwind-protect
-	 (let* ((tmp (make-file-name (os-tmp) "hop"))
-		(file (car (untar p :directory tmp)))
-		(base (substring file
-				 (+fx (string-length tmp) 1)
-				 (string-length file)))
-		(dir (dirname base))
-		(name (if (string=? dir ".") base dir))
-		(src (make-file-path tmp name (string-append name ".hop"))))
-	    (if (file-exists? src)
-		(hop-load src)
-		(error 'hop-load-weblet "Cannot find HOP source" path)))
-	 (close-input-port p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %hop-load-rc ...                                                 */

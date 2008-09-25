@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-lib.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Wed Sep 10 08:22:49 2008 (serrano)                */
+/*    Last change :  Wed Sep 24 14:02:53 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -245,7 +245,7 @@ function hop_load( src, timeout ) {
 /*    hop_window_onload_add ...                                        */
 /*---------------------------------------------------------------------*/
 /*** META ((export add-window-onload!)) */
-function hop_window_onload_add( proc ) {
+var hop_window_onload_add = function( proc ) {
    var oldonload = window.onload;
 
    if( typeof oldonload != 'function' ) {
@@ -257,6 +257,12 @@ function hop_window_onload_add( proc ) {
       }
    }
 }
+
+hop_window_onload_add( function( e ) {
+      /* once the window is loaded, onload handlers */
+      /* must be invoked eargly                     */
+      hop_window_onload_add = function( proc ) { proc( e ); }
+   } );
 
 /*---------------------------------------------------------------------*/
 /*    hop_window_onload_cons ...                                       */

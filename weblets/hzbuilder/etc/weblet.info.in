@@ -1,0 +1,13 @@
+;; generated, don't edit
+((name "@HZ@")
+ (author "M. Serrano")
+ (version "@VERSION@")
+ (publisher "@PUBLISHER@")
+ (repository "@REPOSITORY@")
+ (category "@CATEGORY@")
+ (minhop "@MINHOP@")
+ (mxhop "@MAXHOP@")
+ (title "a wizard for building HZ packages")
+ (comment "This HOP weblet helps creating new HOP weblets packages."))
+
+

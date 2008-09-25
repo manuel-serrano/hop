@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/wizard/wizard.hop         */
+;*    serrano/prgm/project/hop/1.10.x/weblets/wizard/wizard.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jun 20 15:51:17 2008 (serrano)                */
+;*    Last change :  Wed Sep 24 08:56:44 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -104,6 +104,7 @@
 			      (if (pair? (cddr h))
 				  (innerHTML-set! message (caddr h))
 				  (innerHTML-set! message ""))))))))))
+	 
 	 (<DIV> :align "center"
 	    (<TABLE> :class "wizard" 
 	       (<TR>
@@ -113,7 +114,11 @@
 		     (<TABLE>
 			(<TR>
 			   (<TD> :colspan 2
-			      (<DIV> :id "title" "Hop Wizard")))
+			      (<DIV> :id "title" "Hop Wizard")
+			      (<DIV> :id "description"
+				 [The Wizard creates the minimal
+				      ,(<TT> "hoprc.hop") file that
+				      is required for running HOP.])))
 			(<TR>
 			   (<TD> :colspan 2
 			      (<SPAN> :class "head" "Accounts:")))

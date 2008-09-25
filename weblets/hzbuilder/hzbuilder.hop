@@ -1,0 +1,487 @@
+;*=====================================================================*/
+;*    .../prgm/project/hop/1.9.x/weblets/hzbuilder/hzbuilder.hop       */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Thu Sep 25 09:58:52 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HZBUILDER weblet                                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hzbuilder
+
+   (import hzbuilder_config
+	   hzbuilder_generate
+	   hzbuilder_test)
+   
+   (export hzbuilder
+	   hzbuilder/preferences
+	   hzbuilder/documentation
+
+	   (<AUTOSIZE-IMG> src)))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-service (hzbuilder)
+   (let* ((req (current-request))
+	  (user (http-request-user req))
+	  (uname (user-name user)))
+      (<HTML>
+	 (<HEAD> :title "HzBuilder"
+	    :favicon (service-resource hzbuilder "etc/favicon.png")
+	    :base (service-base-url hzbuilder (current-request))
+	    :include "hop-paned" "hop-file" "hop-window"
+	    :css "hzbuilder.hss")
+	 (<BODY>
+	    
+	    ~(define (valid? entry)
+		(and (string? entry) (> (string-length entry) 0)))
+
+	    ~(define (generate-weblet)
+		(let ((dir (dom-get-element-by-id "hzb-dir"))
+		      (name (dom-get-element-by-id "hzb-name"))
+		      (au (dom-get-element-by-id "hzb-author"))
+		      (v (dom-get-element-by-id "hzb-version"))
+		      (hd (dom-get-element-by-id "hzb-header"))
+		      (de (dom-get-element-by-id "hzb-comment"))
+		      (lo (dom-get-element-by-id "hzb-logo"))
+		      (fv (dom-get-element-by-id "hzb-favicon"))
+		      (dc (dom-get-element-by-id "hzb-dash"))
+		      (da (dom-get-element-by-id "hzb-dashboard"))
+		      (ca (dom-get-element-by-id "hzb-category"))
+		      (mih (dom-get-element-by-id "hzb-minhop"))
+		      (mah (dom-get-element-by-id "hzb-maxhop")))
+		   (cond
+		      ((not (valid? dir.value))
+		       (alert "No directory provided"))
+		      ((not (valid? name.value))
+		       (alert "No weblet name provided"))
+		      ((not (valid? v.value))
+		       (alert "No weblet version provided"))
+		      (else
+		       (with-hop ($hzbuilder/generate
+				  dir.value
+				  name.value
+				  v.value
+				  hd.value
+				  de.value
+				  au.value
+				  lo.title
+				  fv.title
+				  (when dc.checked da.title)
+				  ca.value
+				  mih.value
+				  mah.value)
+			  (lambda (h)
+			     (let ((log (dom-get-element-by-id
+					 "hzb-log")))
+				(innerHTML-set! log h)
+				(node-style-set!
+				 log
+				 :display "block"))))))))
+
+	    ~(define (test-weblet)
+		(let ((dir (dom-get-element-by-id "hzb-dir"))
+		      (name (dom-get-element-by-id "hzb-name")))
+		   (cond
+		      ((not (valid? dir.value))
+		       (alert "No directory provided"))
+		      ((not (valid? name.value))
+		       (alert "No weblet name provided"))
+		      (else
+		       (with-hop ($hzbuilder/test dir.value name.value)
+			  (lambda (h)
+			     (if (eq? h 'ok)
+				 (let ((url (format "http://~a:~a~a/~a"
+						    $(hostname)
+						    $(hzbuilder-port)
+						    $(hop-service-base)
+						    name.value)))
+				    (window-open :src url)))))))))
+	    
+	    (<DIV> :id "hzb-log")
+	    (<DIV> :align "center"
+	       (<TABLE> :class "main"
+		  (<COLGROUP> (<COL> :width "0*"))
+		  (<TR>
+		     (<TD> (<IMG> :class "logo" :src "etc/logo.png")
+			   (<DIV> :class "version"
+			      (<DIV> "HzBuilder v " (hzbuilder-version))
+			      (<DIV> (hzbuilder-date)))
+			   (<DIV> :class "buttons"
+			      (<DIV> :class "button doc"
+				 (<A> :title "Documentation"
+				    :class "doc"
+				    :href "dummy"
+				    :onclick ~(set! this.href ($hzbuilder/documentation))
+				    :target "_blank"
+				    :title "HzBuilder documentation"
+				    (<IMG> :class "doc"
+				       :inline #t
+				       :src (service-resource hzbuilder "etc/doc.png"))
+				    "Help"))
+			      (<DIV> :class "button prefs"
+				 (<A> :title "Preferences"
+				    :class "doc"
+				    :href "dummy"
+				    :onclick ~(set! this.href ($hzbuilder/preferences))
+				    :target "_blank"
+				    :title "HzBuilder preferences"
+				    (<IMG> :class "doc"
+				       :inline #t
+				       :src (service-resource hzbuilder "etc/configure.png"))
+				    "Prefs"))))
+		     (<TD>
+			(<TABLE> :class "body"
+			   (<TR> (<TD> :id "title"
+				    "HzBuilder  - a simple HOP HZ package creator"))
+			   (<TR> (<TD> (<HZBUILDER>))))))))
+	    (<FOOT>)))))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder/preferences ...                                        */
+;*---------------------------------------------------------------------*/
+(define-service (hzbuilder/preferences)
+   (let* ((req (current-request))
+	  (user (http-request-user req))
+	  (uname (user-name user)))
+      (<HTML>
+	 (<HEAD> :title "Hzbuilder"
+	    :favicon (service-resource hzbuilder "etc/favicon.png")
+	    :base (service-base-url hzbuilder (current-request))
+	    :include "hop-prefs" 
+	    :css "hzbuilder.hss")
+	 (<BODY>
+	    (<DIV> :align "center"
+	       (<TABLE> :class "main"
+		  (<COLGROUP> (<COL> :width "0*"))
+		  (<TR>
+		     (<TD> (<IMG> :class "logo" :src "etc/logo.png")
+			   (<DIV> :class "version"
+			      (<DIV> "HzBuilder v " (hzbuilder-version))
+			      (<DIV> (hzbuilder-date))))
+		     (<TD>
+			(<TABLE> :class "body"
+			   (<TR> (<TD> :id "title" "HzBuilder"))
+			   (<TR> (<TD> (<CONFIGURE>))))))))
+	    (<FOOT>)))))
+
+;*---------------------------------------------------------------------*/
+;*    <CONFIGURE> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<CONFIGURE>)
+   (<DIV> :class "hzbuilder-preferences"
+      (<H1> "HzBuilder Configuration")
+      (<BUTTON> :onclick ~(preferences-save "hzbuilder-configure"
+					    (make-file-name
+					     (hop-rc-directory)
+					     "hzbuilderrc.hop"))
+	 :class "hop-prefs-save"
+	 :title "Save configuration (needs admin privileges)"
+	 "Save Configuration")
+      (<BR>)
+      (<DIV>
+	 (hzbuilder-preferences-edit :id "hzbuilder-configure"))))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder/documentation ...                                      */
+;*---------------------------------------------------------------------*/
+(define-service (hzbuilder/documentation)
+   (let* ((file (service-resource hzbuilder/documentation "etc/hzbuilder.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
+
+;*---------------------------------------------------------------------*/
+;*    <ENTRY> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <ENTRY> ((class "optional")
+			      (id #f)
+			      (title #f)
+			      (default #f)
+			      (onkeypress #f)
+			      (onkeyup #f)
+			      key)
+   (<TABLE> :class "form-entry"
+      (<TR> :title title
+	 (<TD> :class "key" (<SPAN> :class "key" key))
+	 (<TD> (<INPUT> :type 'text :class class :title title 
+		  :id (xml-make-id id 'input)
+		  :onkeyup onkeyup
+		  :value default)))))
+
+;*---------------------------------------------------------------------*/
+;*    <CENTRY> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <CENTRY> ((class "optional")
+			       (id #f)
+			       (title #f)
+			       (default #f)
+			       (onclick #f)
+			       key)
+   (<TABLE> :class "form-entry"
+      (<TR> :title title
+	 (<TD> :class "key bottom" (<SPAN> :class "key" key))
+	 (<TD> :class "checkbox"
+	    (<INPUT> :type 'checkbox :class class :title title
+	       :id (xml-make-id id 'entry)
+	       :onclick onclick
+	       :checked default)))))
+
+;*---------------------------------------------------------------------*/
+;*    <SENTRY> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <SENTRY> ((class "optional")
+			       (id #f)
+			       (title #f)
+			       (default #f)
+			       (options '())
+			       key)
+   (<TABLE> :class "form-entry"
+      (<TR> :title title
+	 (<TD> :class "key bottom" (<SPAN> :class "key" key))
+	 (<TD> (<SELECT> :type 'entry :name key
+		  :id (xml-make-id id 'entry)
+		  (map (lambda (k)
+			  (<OPTION> :label k :value k
+			     :selected (equal? k default)
+			     k))
+		       options))))))
+
+;*---------------------------------------------------------------------*/
+;*    <IENTRY> ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <IENTRY> ((class "optional")
+			       (id #f)
+			       (title #f)
+			       (default #f)
+			       (src #f)
+			       (legend #f)
+			       key)
+   (let ((img (<IMG> :src src :title src :id (xml-make-id id 'img))))
+      (<TABLE> :class "form-entry"
+	 (<TR> :title title
+	    (<TD> :class "key" (<SPAN> :class "key" key))
+	    (<TD> :class "top"
+	       (<TABLE> :class "icon-entry"
+		  (<TR>
+		     (<TD>
+			(<SPAN> :onclick
+			   ~(let ((w (current-window-width))
+				  (h (current-window-height)))
+			       (window-open :parent document.body
+				  :id "hzb-filebrowser"
+				  :width (max (/ w 2) 640)
+				  :height (max (/ h 2) 320)
+				  :src (<FILECHOOSER>
+					  :onselect (let ((path this.value)
+							  (preview (dom-get-element-by-id "hzb-preview")))
+						       (set! preview.value path)
+						       (with-hop ($hzbuilder/filebrowser/preview path)
+							  (lambda (h)
+							     (innerHTML-set! preview h))))
+					  :oncancel (window-close "hzb-filebrowser")
+					  :onopen (begin
+						     (set! $img.src this.value)
+						     (window-close "hzb-filebrowser"))
+					  (<DIV> :id "hzb-preview"
+					     :onclick ~(window-open :src this.value)
+					     (<STRONG> "No preview")))))
+			   :class "browse"
+			   "browse")))
+		  (<TR>
+		     (<TD> :class "icon-legend" legend))
+		  (<TR>
+		     (<TD> img))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder/filebrowser/preview ...                                */
+;*---------------------------------------------------------------------*/
+(define-service (hzbuilder/filebrowser/preview path)
+   (if (authorized-path? (current-request) path)
+       (let ((base (basename path)))
+	  (let loop ((previewers (hzbuilder-previewers)))
+	     (if (null? previewers)
+		 (default-previewer base path)
+		 (let ((preview ((car previewers) base path)))
+		    (or preview (loop (cdr previewers)))))))
+       (user-access-denied)))
+
+;*---------------------------------------------------------------------*/
+;*    default-previewer ...                                            */
+;*---------------------------------------------------------------------*/
+(define (default-previewer base path)
+   (<TABLE> :class "preview-default"
+      (<COLGROUP> (<COL> :width "0*"))
+      (<TR> (<TH> "File: ")
+	    (<TD> base))
+      (if (directory? path)
+	  (<TR> (<TH> "Entries: ")
+		(<TD> (length (directory->list path))))
+	  (<TR> (<TH> "Size: ")
+		(<TD> (<SIZE> (elong->fixnum (file-size path))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <SIZE> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<SIZE> size)
+   (cond
+      ((<fx size 1024)
+       size)
+      ((<fx size (*fx 1024 1024))
+       (format "~aKB" (/fx size 1024)))
+      ((<fx (/fx size 1024) (*fx 1024 1024))
+       (format "~aMB" (/fx size (*fx 1024 1024))))
+      (else
+       (format "~aGB" (/fx (/fx size (*fx 1024 1024)) 1024)))))
+
+;*---------------------------------------------------------------------*/
+;*    <SEPARATOR> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<SEPARATOR>)
+   (list
+    (<TR> :class "separator-top" (<TD> :colspan 2 ""))
+    (<TR> :class "separator-bottom" (<TD> :colspan 2 ""))))
+
+;*---------------------------------------------------------------------*/
+;*    <HZBUILDER> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (<HZBUILDER>)
+   (<TABLE> :class "form"
+      (<COLGROUP> :span 2 :width "50%")
+      (<TR> :class "form"
+	 (<TD> (<ENTRY> :class "required" :title "The name of the weblet"
+		  :id "hzb-name"
+		  :onkeyup ~(let ((e (dom-get-element-by-id "hzb-url")))
+			       (set! e.value (format "http://localhost:8080/hop/weblets/homepage?weblet=~a" this.value)))
+		  "name"))
+	 (<TD> (<ENTRY> :title "The author name"
+		  :id "hzb-author"
+		  "author")))
+      (<TR> :class "form"
+	 (<TD> (<ENTRY> :class "required" :default "1.0.0"
+		  :id "hzb-version"
+		  :title "The weblet version number"
+		  "version"))
+	 (<TD> (<ENTRY> :title "The license" :default "GPL v2"
+		  :id "hzb-license"
+		  "license")))
+      (<TR> :class "form"
+	 (<TD> (<ENTRY> :default (hop-version)
+		  :id "hzb-minhop"
+		  :class "required"
+		  :title "The HOP minimum version required for this weblet"
+		  "min hop"))
+	 (<TD> (<ENTRY> :default #f
+		  :id "hzb-maxhop"
+		  :title "The HOP maximum version supporting this weblet"
+		  "max hop")))
+      (<TR> :class "form"
+	 (<TD> (<SENTRY> :options (hzbuilder-categories)
+		  :title "Weblet category"
+		  :id "hzb-category"
+		  "category"))
+	 (<TD> ""))
+      (<SEPARATOR>)
+      (<TR> :class "form"
+	 (<TD> (<IENTRY> :title "Default weblet icon" :id "hzb-logo"
+		  :src (make-file-name (hzbuilder-dir)
+				       "etc/logo-default.png")
+		  :legend "A 48x48 icon"
+		  "icon"))
+	 (<TD> (<IENTRY> :title "Default weblet favicon" :id "hzb-favicon"
+		  :src (make-file-name (hzbuilder-dir)
+				       "etc/favicon-default.png")
+		  :legend "A 16x16 icon"
+		  "favicon")))
+      (<SEPARATOR>)
+      (<TR> :class "form"
+	 (<TD> (<CENTRY> :title "Enable/disable dashboard entry"
+		  :id "hzb-dash"
+		  :default #f
+		  :onclick ~(let ((el (dom-get-element-by-id "hzb-dashicon")))
+			       (node-style-set!
+				el
+				:display (if this.checked "block" "none")))
+		  "dashboard"))
+	 (<TD> (<DIV> :id "hzb-dashicon" :style "display: none"
+		  (<IENTRY> :title "Default dashboard icon" :id "hzb-dashboard"
+		     :src (service-resource hzbuilder "etc/dashboard-default.png")
+		     :legend "A 32x32 icon"
+		     "Dashboard icon"))))
+      (<SEPARATOR>)
+      (<TR>
+	 (<TD> :colspan 2
+	    (<ENTRY> :title "The URL of the weblet's home page"
+	       :id "hzb-url"
+	       :default (format "http://localhost:8080/hop/weblets/homepage?weblet=")
+	       "Home page")))
+      (<TR>
+	 (<TD> :colspan 2
+	    (<ENTRY> :title "The weblet's header" :id "hzb-header"
+	       "header")))
+      (<TR>
+	 (<TD> :colspan 2
+	    (<ENTRY> :title "The weblet's description" :id "hzb-comment"
+	       "comment")))
+      (<SEPARATOR>)
+      (<TR>
+	 (<TD> :colspan 2 :id "hzb-target"
+	    (<SPAN> :id "hzb-target-key" :class "key" "Destination folder")
+	    (<INPUT> :id "hzb-dir" :type 'url :id "hzb-dir"
+	       :title "Complete with [tab]"
+	       :value "/tmp")
+	    (<SPAN> :class "browse" :onclick
+	       ~(let ((w (current-window-width))
+		      (h (current-window-height)))
+		   (window-open :parent document.body
+		      :id "hzb-dirbrowser"
+		      :width (max (/ w 2) 640)
+		      :height (max (/ h 2) 320)
+		      :src (<FILECHOOSER>
+			      :oncancel (window-close "hzb-dirbrowser")
+			      :onopen (let ((target (dom-get-element-by-id
+						     "hzb-dir")))
+					 (set! target.value this.value)
+					 (window-close "hzb-dirbrowser")))))
+	       "browse")))
+      (<TR>
+	 (<TD> :colspan 2 :id "hzb-generate"
+	    (<BUTTON> :onclick ~(generate-weblet)
+	       "Generate the Weblet")
+	    (<BUTTON> :onclick ~(test-weblet)
+	       "Test the Weblet")))))
+
+;*---------------------------------------------------------------------*/
+;*    <AUTOSIZE-IMG> ...                                               */
+;*---------------------------------------------------------------------*/
+(define (<AUTOSIZE-IMG> src)
+   (let ((id (symbol->string (gensym)))
+	 (size (hzbuilder-preview-size)))
+      (<IMG> :class "hzbuilder-autosize-img" :id id
+	 :onload ~(let* ((el (dom-get-element-by-id $id))
+			 (w el.width)
+			 (h el.height))
+		     (when (or (> w $size) (> h $size))
+			(let ((ratio (/ w h)))
+			   (if (> w h)
+			       (begin
+				  (set! el.width $size)
+				  (set! el.height (/ $size ratio)))
+			       (begin
+				  (set! el.width (* $size ratio))
+				  (set! el.height $size)))))
+		     (node-style-set! el :display "inline"))
+	 :src src)))
+
+;*---------------------------------------------------------------------*/
+;*    The user configuration                                           */
+;*---------------------------------------------------------------------*/
+(hop-load-rc "hzbuilder.hop")
+

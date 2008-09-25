@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/doc/tutorials.hop         */
+;*    serrano/prgm/project/hop/1.10.x/weblets/doc/tutorials.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Wed Sep  3 15:22:02 2008 (serrano)                */
+;*    Last change :  Wed Sep 24 08:18:03 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
@@ -69,16 +69,20 @@
 				(<DIV> :class "doc" expr)))
 			    ((<example>)
 			     (lambda (port title expr)
-				(<DIV>
-				   :class "example"
+				(<DIV> :class "example"
 				   (<EXAMPLE> expr))))
 			    ((<code>)
 			     (lambda (port title expr)
-				(<DIV>
-				   :class "code"
+				(<DIV> :class "code"
 				   :align "center"
 				   (<PRE>
 				      :class "example"
+				      (decorate-api-wiki-code expr)))))
+			    ((<console>)
+			     (lambda (port title expr)
+				(<DIV> :class "console"
+				   :align "center"
+				   (<PRE> :class "console"
 				      (decorate-api-wiki-code expr)))))
 			    (else
 			     ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))

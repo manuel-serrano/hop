@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/pipeline.scm                  */
+;*    serrano/prgm/project/hop/1.10.x/src/pipeline.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Sun Sep 21 09:08:30 2008 (serrano)                */
+;*    Last change :  Wed Sep 24 13:15:58 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -112,8 +112,6 @@
    ;; verbose function (only for log and debug)
    (define (http-connect-verb scd id sock req)
       (with-access::http-request req (method scheme host port path user header)
-	 (hop-verb 4 (hop-color id id " CONNECT.header") ": "
-		   (with-output-to-string (lambda () (write header))) "\n")
 	 (hop-verb 2 (if (http-proxy-request? req)
 			 (hop-color req req " EXEC.prox")
 			 (hop-color req req " EXEC.serv"))
@@ -121,7 +119,9 @@
 		   (scheduler-stat scd)
 		   ": " method " " scheme "://"
 		   (user-name user) "@" host ":" port (string-for-read path)
-		   "\n")))
+		   "\n")
+	 (hop-verb 4 (hop-color id id " CONNECT.header") ": "
+		   (with-output-to-string (lambda () (write header))) "\n")))
 
    ;; log
    (hop-verb 1 (hop-color id id " CONNECT")

@@ -1,0 +1,109 @@
+;*=====================================================================*/
+;*    .../prgm/project/hop/1.9.x/weblets/hzbuilder/config.hop.in       */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Jun 10 07:34:38 2008                          */
+;*    Last change :  Thu Sep 25 09:28:43 2008 (serrano)                */
+;*    Copyright   :  2008 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Hzbuilder configuration                                          */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-directory ...                                          */
+;*---------------------------------------------------------------------*/
+(module hzbuilder_config
+ 
+   (import hzbuilder)
+   
+   (export (hzbuilder-version::bstring)
+           (hzbuilder-date::bstring)
+           (hzbuilder-author::bstring)
+	   (hzbuilder-dir::bstring)
+           (hzbuilder-rc-directory::bstring)
+           (hzbuilder-categories)
+	   (hzbuilder-port)
+	   (hzbuilder-repository)
+           (hzbuilder-previewers)
+	   (hzbuilder-preview-size)
+	   
+	   (hzbuilder-preferences-edit . obj)
+	   (hzbuilder-preferences-save file)))
+
+;*---------------------------------------------------------------------*/
+;*    Version                                                          */
+;*---------------------------------------------------------------------*/
+(define (hzbuilder-version) "@VERSION@")
+(define (hzbuilder-date) "@DATE@")
+(define (hzbuilder-author) "M. Serrano")
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-dir                                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-dir
+   (dirname (the-loading-file)))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-rc-directory ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-rc-directory 
+   (make-file-name (hop-rc-directory) "hzbuilder"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-categories ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-categories
+   '("devel" "games" "multimedia" "other" "system" "desktop" "education"
+     "office" "scientific"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-port ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-port
+   8081)
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-repository ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-repository
+   "/tmp")
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-previewers ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-previewers
+   (list (lambda (base path)
+	    (cond
+	       ((pregexp-match "^.*[.](?:png|gif)$" base)
+		(<AUTOSIZE-IMG> path))
+	       ((pregexp-match "^.*[.](?:svg)$" base)
+		(<IFRAME> :class "preview"
+		   :width (-fx (car (hzbuilder-run-size)) 2)
+		   :height (-fx (cdr (hzbuilder-run-size)) 2)
+		   :src path))))
+	 (lambda (base path)
+	    (when (pregexp-match "^.*[.](?:jpeg|jpg)$" base)
+	       (<AUTOSIZE-IMG> path)))
+	 (lambda (base path)
+	    (when (pregexp-match "^.*[.](?:hop)$" base)
+	       (let ((logo (make-file-path (dirname path) "etc" "logo.png")))
+		  (when (file-exists? logo)
+		     (<DIV>
+			(<DIV>
+			   (<AUTOSIZE-IMG> logo))
+			(<DIV>
+			   (prefix base)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-preview-size ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hzbuilder-preview-size
+   128)
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder-preferences                                            */
+;*---------------------------------------------------------------------*/
+(define-preferences hzbuilder-preferences
+   ("Hz repository" string hzbuilder-repository)
+   ("Test port" integer hzbuilder-port)
+   ("Preview width" integer hzbuilder-preview-size))

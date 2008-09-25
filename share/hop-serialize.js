@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-serialize.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Tue Jun 10 10:41:09 2008 (serrano)                */
+/*    Last change :  Wed Sep 24 15:10:23 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -63,6 +63,9 @@ function hop_bigloo_serialize( item ) {
 
    if( (item.callee != undefined) && (item.length > -1) )
       return hop_serialize_array( item );
+
+   if( hop_is_html_element( item ) )
+      return hop_serialize_html( item );
 
    return hop_bigloo_serialize( "#<" + tname + ">" );
 }
@@ -237,6 +240,28 @@ function hop_serialize_date( item ) {
    return 'd' + hop_serialize_word( ms.length ) + encodeURIComponent( ms );
 }
 
+/*---------------------------------------------------------------------*/
+/*    hop_serialize_html ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_serialize_html( item ) {
+   if( "outerHTML" in item ) {
+      return hop_serialize_string( '%22', item.outHTML );
+   } else {
+      if( item.nodeType == 1 ) {
+	 var str = "<" + item.tagName + " id='" + item.id + "' "
+	    + (item.className ? ("class='" + item.className + "'") : "")
+	    + ">" + item.innerHTML + "</" + item.tagName + ">";
+	 return hop_serialize_string( '%22', str );
+      } else {
+	 if( item.nodeType == 3 ) {
+	    return hop_serialize_string( '%22', item.nodeValue );
+	 } else {
+	    return hop_bigloo_serialize( "#<" + tname + ">" );
+	 }
+      }
+   }
+}
+   
 /*---------------------------------------------------------------------*/
 /*    hop_obj_to_string ...                                            */
 /*---------------------------------------------------------------------*/

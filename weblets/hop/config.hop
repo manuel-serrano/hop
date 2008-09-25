@@ -22,7 +22,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
 ;*---------------------------------------------------------------------*/
-(define (hop-date) "2007")
+(define (hop-date) "2008")
 (define (hop-author) "M. Serrano")
 
 ;*---------------------------------------------------------------------*/
@@ -30,7 +30,8 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-builtin-weblets
    '("wizard" "epassword" "hz" "doc" "info" "webfilter"
-     "hopsh" "test" "dashboard" "wiki" "weblets" "trace" "shutdown"))
+     "hopsh" "test" "dashboard" "wiki" "weblets" "trace" "hzbuilder" 
+     "shutdown"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-view-by-category? ...                                        */
