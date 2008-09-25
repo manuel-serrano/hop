@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 24 15:46:26 2008                          */
-;*    Last change :  Thu Sep 25 10:39:46 2008 (serrano)                */
+;*    Last change :  Thu Sep 25 19:09:24 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The code generator                                               */
@@ -237,7 +237,7 @@
 	 :favicon (service-resource ,(begin name) "etc/favicon.png")
 	 :base (service-base-url ,(begin name) (current-request))
 	 :css (format "\"~a.hss\"" name))
-      (<HOPAUDIO:BODY> :class (format "\"~a-body-preferences\"" name)
+      (<BODY> :class (format "\"~a-body-preferences\"" name)
 	 (<DIV> :id (format "\"~a-title\"" name)
 	    (format "\"~a Configure\"" (string-capitalize name)))
 	 (<CONFIGURE>))))])
