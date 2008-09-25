@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-extra.scm             */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-extra.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Sep 10 05:27:33 2008 (serrano)                */
+;*    Last change :  Thu Sep 25 15:43:17 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -277,7 +277,7 @@
 		  (if (string? (cadr a))
 		      (loop (cddr a) #f rts dir path inl packed
 			    (cons (<BASE> :href (cadr a)) els))
-		      (error '<HEAD> "Illegal :title" (cadr a))))
+		      (error '<HEAD> "Illegal :base" (cadr a))))
 		 ((:dir)
 		  (if (string? (cadr a))
 		      (loop (cddr a) #f rts (cadr a) path inl packed els)
