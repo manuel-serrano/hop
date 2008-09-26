@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Sep 25 10:35:57 2008 (serrano)                */
+#*    Last change :  Fri Sep 26 17:35:32 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -49,7 +49,8 @@ etc/weblet.info: etc/weblet.info.in Makefile
                      -e "s|@PUBLISHER@|$(PUBLISHER)|" \
                      -e "s|@DATE@|$(DATE)|" \
                      -e "s|@PRIVATEHOST@|$(PRIVATEHOST)|" \
-                     -e "s|@PUBLICHOST@|$(PUBLICKHOST)|" \
+                     -e "s|@PUBLICHOST@|$(PUBLIKHOST)|" \
+                     -e "s|@HOME@|$(HOME)|" \
                      -e "s|@CATEGORY@|$(CATEGORY)|" > $@
 
 %.wiki: %.wiki.in Makefile

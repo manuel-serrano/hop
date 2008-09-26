@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 24 15:46:26 2008                          */
-;*    Last change :  Fri Sep 26 11:16:19 2008 (serrano)                */
+;*    Last change :  Fri Sep 26 17:38:57 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The code generator                                               */
@@ -29,7 +29,7 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hzbuilder/generate dir name version header description author
 				    logo favicon dashboard
-				    category minhop maxhop)
+				    category minhop maxhop home)
    ;; mandatory checks
    (cond
       ((not (string-valid? dir))
@@ -53,7 +53,7 @@
       (set! author ""))
    (hzbuilder-generate dir name version header description author
 		       logo favicon dashboard
-		       category minhop maxhop))
+		       category minhop maxhop home))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TTDIR> ...                                                      */
@@ -72,7 +72,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hzbuilder-generate dir name version header description
 			    author logo favicon dashboard
-			    category minhop maxhop)
+			    category minhop maxhop home)
    (let* ((res '())
 	  (dirname (make-file-name dir name))
 	  (filename (string-append (make-file-name dirname name) ".hop"))
@@ -139,7 +139,7 @@
       (unless (file-exists? mkmfname)
 	 (set! res (cons (<DIV> "File created: " (<TTFILE> mkmfname)) res))
 	 (hzbuilder-generate-makefile mkmfname dirname name version
-				      category minhop maxhop))
+				      category minhop maxhop home))
       ;; add the okay button and return
       (cons (<DIV> :align 'center
 	       (<BUTTON> :onclick ~(let ((log (dom-get-element-by-id
@@ -393,7 +393,7 @@ $(module ,(format "~a_hss" name)
 ;*    hzbuilder-generate-makefile ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (hzbuilder-generate-makefile filename dirname name version category
-				     minhop maxhop)
+				     minhop maxhop home)
    (with-output-to-file filename
       (lambda ()
 	 (let* ((srcs (filter (lambda (f)
@@ -409,6 +409,7 @@ HZ=,(begin name)
 VERSION=,(begin version)
 CATEGORY=,(begin category)
 MINHOP=,(begin minhop)
+,(if home (format "HOME=~a" home) "")
 ,(if maxhop (format "MAXHOP=~a" maxhop) "")
 
 FILES=,(begin files)config.hop.in \\

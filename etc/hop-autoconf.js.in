@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/etc/hop-autoconf.js.in            */
+/*    serrano/prgm/project/hop/1.10.x/etc/hop-autoconf.js.in           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Sep 16 09:49:32 2008 (serrano)                */
+/*    Last change :  Fri Sep 26 16:27:46 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -431,13 +431,13 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 /*---------------------------------------------------------------------*/
 /*    node_style_set ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export node-style-set!)) */
 function node_style_set_native( obj, prop, value ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
 
    if( sc_isKeyword( prop ) )
       prop = sc_keyword2jsstring( prop );
+   
    if( !(value instanceof String) && (typeof value !== "string") ) {
       if( !value && (value != 0) ) {
 	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
@@ -456,6 +456,7 @@ function node_style_set_array( obj, prop, value ) {
 
    if( sc_isKeyword( prop ) )
       prop = sc_keyword2jsstring( prop );
+   
    if( !(value instanceof String) && (typeof value !== "string") ) {
       if( !value && (value != 0) ) {
 	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
@@ -468,7 +469,8 @@ function node_style_set_array( obj, prop, value ) {
    obj.style[ prop ] = value;
 }
 
-node_style_set = function( obj, property, value ) {
+/*** META ((export node-style-set!)) */
+var node_style_set = function( obj, property, value ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
 
@@ -488,7 +490,7 @@ node_style_set = function( obj, property, value ) {
 /*    ARM processors), use a reduced frequency.                        */
 /*---------------------------------------------------------------------*/
 var hop_active_location_timeout =
-   (hop_config.cpu_speed < 66) ? 100 : 250;
+   ((hop_config.cpu_speed < 66) ? 100 : 250);
 
 /*---------------------------------------------------------------------*/
 /*    setInterval ...                                                  */

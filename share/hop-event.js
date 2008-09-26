@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-event.js                */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-event.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Sep  3 11:28:01 2008 (serrano)                */
+/*    Last change :  Fri Sep 26 13:33:38 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -562,20 +562,27 @@ function hop_add_server_listener( obj, proc, capture ) {
    if( obj === document ) {
       hop_servevt_dlist = sc_cons( proc, hop_servevt_dlist );
    } else {
-      var o = hop_servevt_table[ obj ];
-      
-      hop_servevt_table[ obj ] = sc_cons( proc, sc_isPair( o ) ? o : null );
-      hop_servevt_table[ obj ].hop_servevt = true;
-
-      if( capture ) {
-	 var o = hop_servevt_ctable[ obj ];
-	 hop_servevt_ctable[ obj ] = sc_cons( proc, sc_isPair( o ) ? o : null );
-      }
-
-      if( !hop_servevt_proxy ) {
-	 hop_start_servevt_proxy();
+      if( !document.body ) {
+	 // delay until the document is fulled built
+	 hop_window_onload_add( function( e ) {
+	       hop_add_server_listener( obj, proc, capture );
+	    } );
       } else {
-	 hop_servevt_proxy.register( obj );
+	 var o = hop_servevt_table[ obj ];
+      
+	 hop_servevt_table[ obj ] = sc_cons( proc, sc_isPair( o ) ? o : null );
+	 hop_servevt_table[ obj ].hop_servevt = true;
+
+	 if( capture ) {
+	    var o = hop_servevt_ctable[ obj ];
+	    hop_servevt_ctable[ obj ] = sc_cons( proc, sc_isPair( o ) ? o : null );
+	 }
+
+	 if( !hop_servevt_proxy ) {
+	    hop_start_servevt_proxy();
+	 } else {
+	    hop_servevt_proxy.register( obj );
+	 }
       }
    }
 }

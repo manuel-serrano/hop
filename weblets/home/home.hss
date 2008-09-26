@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/weblets/home/home.hss             */
+/*    serrano/prgm/project/hop/1.10.x/weblets/home/home.hss            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Sep 19 16:13:47 2008 (serrano)                */
+/*    Last change :  Fri Sep 26 14:30:51 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -155,11 +155,14 @@ notepad-tabs {
   padding-left: 10px;
   margin-left: 10px;
   margin-right: 0;
+  height: 22px;
+  vertical-align: bottom;
 }
 
 nptab {
   font-size: small;
   border-color: $border-color;
+  border-bottom: 0;
   margin: 0 4px 0 0;
   padding-top: 1px;
 }
@@ -172,6 +175,7 @@ nptab img {
 nptab-active {
   background-color: $home-color;
   border-bottom-color: $home-color;
+  color: #8381de;
 }
 
 nptab-body {

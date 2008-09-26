@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Sep 26 08:20:52 2008 (serrano)                */
+;*    Last change :  Fri Sep 26 17:37:21 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
@@ -55,7 +55,8 @@
 		      (da (dom-get-element-by-id "hzb-dashboard"))
 		      (ca (dom-get-element-by-id "hzb-category"))
 		      (mih (dom-get-element-by-id "hzb-minhop"))
-		      (mah (dom-get-element-by-id "hzb-maxhop")))
+		      (mah (dom-get-element-by-id "hzb-maxhop"))
+		      (ho (dom-get-element-by-id "hzb-home")))
 		   (cond
 		      ((not (valid? dir.value))
 		       (alert "No directory provided"))
@@ -76,7 +77,8 @@
 				  (when dc.checked da.title)
 				  ca.value
 				  mih.value
-				  mah.value)
+				  mah.value
+				  ho.value)
 			  (lambda (h)
 			     (let ((log (dom-get-element-by-id
 					 "hzb-log")))
@@ -358,7 +360,7 @@
       (<TR> :class "form"
 	 (<TD> (<ENTRY> :class "required" :title "The name of the weblet"
 		  :id "hzb-name"
-		  :onkeyup ~(let ((e (dom-get-element-by-id "hzb-url")))
+		  :onkeyup ~(let ((e (dom-get-element-by-id "hzb-home")))
 			       (set! e.value (format "http://localhost:8080/hop/weblets/homepage?weblet=~a" this.value)))
 		  "name"))
 	 (<TD> (<ENTRY> :title "The author name"
@@ -419,7 +421,7 @@
       (<TR>
 	 (<TD> :colspan 2
 	    (<ENTRY> :title "The URL of the weblet's home page"
-	       :id "hzb-url"
+	       :id "hzb-home"
 	       :default (format "http://localhost:8080/hop/weblets/homepage?weblet=")
 	       "Home page")))
       (<TR>

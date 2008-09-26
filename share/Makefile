@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/1.10.x/share/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Sep  9 20:02:05 2008 (serrano)                */
+#*    Last change :  Fri Sep 26 15:17:11 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -169,6 +169,9 @@ uninstall:
 #*---------------------------------------------------------------------*/
 hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
 	echo "/* Automatically generated file (don't edit) */" > $@
+	echo "/* " >> $@
+	date >> $@
+	echo " */" >> $@
 	if [ "$(DEBUG) " != "yes " ]; then \
 	  cat $^ | sed -e "s%/[*]\([^*]\|[*][^/]\)*[*]/%%g" \
                        -e "/^[ \t]*$$/D" \
