@@ -805,7 +805,7 @@
 ;*---------------------------------------------------------------------*/
 (define-expander eval!
    (cond-expand
-      ((or bigloo1.3a bigloo3.1b)
+      ((or bigloo3.1a bigloo3.1b)
        (lambda (x e)
  	  `(eval ,@(map (lambda (x) (e x e)) (cdr x)))))
       (else
