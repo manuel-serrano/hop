@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-prefs.js                */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-prefs.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:52:04 2008                          */
-/*    Last change :  Tue Apr 22 14:23:18 2008 (serrano)                */
+/*    Last change :  Fri Sep 26 11:16:56 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    PREFS client-side runtime.                                       */
@@ -12,7 +12,7 @@
 /*---------------------------------------------------------------------*/
 /*    hop_prefs_edit_svc ...                                           */
 /*    -------------------------------------------------------------    */
-/*    The name of the services are defined in runtime/hop-prefs.scm    */
+/*    The name of the services are defined in runtime/prefs.scm        */
 /*---------------------------------------------------------------------*/
 var hop_prefs_edit_svc = hop_service_base() + "/prefs/edit";
 var hop_prefs_save_svc = hop_service_base() + "/prefs/save";
@@ -36,7 +36,7 @@ function hop_prefs_editor_expr( event, inp, name, parse, type, key ) {
 	 var svc = hop_prefs_edit_svc +
 	    "?name=" + name +
 	    "&type=" + type +
-	    "&value=" + value +
+	    "&value=" + inp.value +
 	    "&key=" + key;
       
 	 with_hop( svc, hop_prefs_callback );
@@ -49,12 +49,12 @@ function hop_prefs_editor_expr( event, inp, name, parse, type, key ) {
 /*---------------------------------------------------------------------*/
 /*    hop_prefs_editor_bool ...                                        */
 /*---------------------------------------------------------------------*/
-function hop_prefs_editor_bool( event, value, name, parse, type, key ) {
+function hop_prefs_editor_bool( event, inp, name, parse, type, key ) {
    if( !parse || parse( inp.value ) ) {
       var svc = hop_prefs_edit_svc +
 	 "?name=" + name +
 	 "&type=" + type +
-	 "&value=" + value +
+	 "&value=" + inp +
 	 "&key=" + key;
       
       with_hop( svc, hop_prefs_callback );
@@ -107,4 +107,3 @@ function hop_prefs_save( id, file ) {
 	 } );
    }
 }
-

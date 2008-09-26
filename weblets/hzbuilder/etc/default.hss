@@ -79,7 +79,7 @@ div.buttons {
   margin-top: 10px;
 }
 
-div.buttons div.doc {
+div.buttons div.button {
   text-align: center;
   margin-left: 6px;
   margin-right: 6px;
@@ -88,6 +88,10 @@ div.buttons div.doc {
   border: 1px solid $border-color;
   background: $background-color;
   -moz-border-radius: 0.3em;
+}
+
+div.buttons div.prefs {
+  margin-top: 1em;
 }
 
 img.doc {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 24 15:46:26 2008                          */
-;*    Last change :  Thu Sep 25 19:09:24 2008 (serrano)                */
+;*    Last change :  Fri Sep 26 11:16:19 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The code generator                                               */
@@ -85,7 +85,8 @@
 	  (wikiname (make-file-name etcname (string-append name ".wiki.in")))
 	  (webletinfo (make-file-name etcname "weblet.info.in"))
 	  (mkmfname (make-file-name dirname "Makefile"))
-	  (docname (make-file-name etcname "doc.png")))
+	  (docname (make-file-name etcname "doc.png"))
+	  (prefsname (make-file-name etcname "prefs.png")))
       ;; create the directory if it does not already exist
       (unless (directory? dirname)
 	 (set! res (cons (<DIV> "Directory created: " (<TTDIR> dirname)) res))
@@ -122,6 +123,10 @@
       (unless (file-exists? docname)
 	 (set! res (cons (<DIV> "File created: " (<TTFILE> docname)) res))
 	 (copy-file (make-file-path (hzbuilder-dir) "etc" "doc.png") docname))
+      ;; copy the prefs icon file
+      (unless (file-exists? prefsname)
+	 (set! res (cons (<DIV> "File created: " (<TTFILE> prefsname)) res))
+	 (copy-file (make-file-path (hzbuilder-dir) "etc" "configure.png") prefsname))
       ;; create the wiki file
       (unless (file-exists? wikiname)
 	 (set! res (cons (<DIV> "File created: " (<TTFILE> wikiname)) res))
@@ -163,53 +168,78 @@
 	 :base (service-base-url ,(begin name) (current-request))
 	 ,(if dashboard ":include \"hop-dashboard\"" "")
 	 :css ,(format "\"~a.hss\"" name))
-      (<BODY>
-	 (<DIV> :align "center"
-	    (<TABLE> :class "main"
-	       (<COLGROUP> (<COL> :width "0*"))
-	       (<TR>
-		  (<TD> (<IMG> :class "logo" :src "etc/logo.png")
-			(<DIV> :class "version"
-			   (<DIV> ,(format "\"~a v ~a\"" name version))
-			   (<DIV> ,(let ((d (current-date)))
-				      (format "\"~a ~a ~a\""
-					      (date-day d)
-					      (month-aname (date-month d) )
-					      (date-year d)))))
-			(<DIV> :class "buttons"
-			   (<DIV> :class "doc"
-			      (<A> :title "Documentation"
+      (<,(string-upcase name):BODY> :prefs #t
+	   :header ,(format "~s" header)
+	   ;; ========================================
+	   ;; INSERT HERE YOU CONTENT
+   	   (<DIV>
+	      (<BUTTON> :onclick ~(with-hop (,(format "$~a/example" name))
+				     (lambda (h)
+					(innerHTML-set! "example-result" h)))
+		 "Im an example"))
+	   (<BR>)
+	   (<DIV> :id "example-result")
+	   ;; ========================================
+	   )))
+
+;; an example
+(define-service (,(format "~a/example" name))
+   (let* ((size (,(format "~a-table-size" name)))
+	  (lst (iota size))
+	  (style (format "text-align: ~a" (,(format "~a-table-align" name)))))
+      (<TABLE> :border (if (,(format "~a-table-border" name)) 1 #f)
+	 (<TR> (map (lambda (i) (<TH> (format "col ~a" i))) lst))
+	 (<TR> (map (lambda (i) (<TD> :style style (random size))) lst)))))
+
+;; <,(string-upcase name):BODY> widget
+(define-xml-compound <,(string-upcase name):BODY>
+      ((class ,(format "~s" name))
+       (header string "")
+       (prefs #f)
+       body)
+   (<BODY> :class class
+      (<DIV> :align "center"
+	 (<TABLE> :class "main"
+	    (<COLGROUP> (<COL> :width "0*"))
+	    (<TR>
+	       (<TD> (<IMG> :class "logo" :src "etc/logo.png")
+		     (<DIV> :class "version"
+			(<DIV> ,(format "\"~a v ~a\"" name version))
+			(<DIV> ,(let ((d (current-date)))
+				   (format "\"~a ~a ~a\""
+					   (date-day d)
+					   (month-aname (date-month d) )
+					   (date-year d)))))
+		     (<DIV> :class "buttons"
+			(<DIV> :class "button doc"
+			   (<A> :title "Documentation"
+			      :class "doc"
+			      :href "documentation"
+			      :onclick ~(set! this.href (,(format "$~a/documentation" name)))
+			      :target "_blank"
+			      :title ,(format "\"~a documentation\"" name)
+			      (<IMG> :class "doc"
+				 :inline #t
+				 :src (service-resource ,(begin name) "etc/doc.png"))
+			      "Help"))
+			(when prefs
+			   (<DIV> :class "button prefs"
+			      (<A> :title "Preferences"
 				 :class "doc"
-				 :href "dummy"
-				 :onclick ~(set! this.href (,(format "$~a/documentation" name)))
+				 :href "preferences"
+				 :onclick ~(set! this.href (,(format "$~a/preferences" name)))
 				 :target "_blank"
 				 :title ,(format "\"~a documentation\"" name)
 				 (<IMG> :class "doc"
 				    :inline #t
-				    :src (service-resource ,(begin name) "etc/doc.png"))
-				 "Help"))))
-		  (<TD>
-		     (<TABLE> :class "body"
-			(<TR> (<TD> :class "weblet-title"
-				 ,(format "\"~a - ~a\"" name header)))
-			(<TR> (<TD>
-				 ;; ========================================
-				 ;; INSERT HERE YOU CONTENT
-				 (<DIV>
-				    (<BUTTON> :onclick ~(with-hop (,(format "$~a/example" name))
-							  (lambda (h)
-							     (innerHTML-set! "example-result" h)))
-				       "Im an example"))
-				 (<DIV> :id "example-result")
-				 ;; ========================================
-				 )))))))
-	 (<FOOT>))))
-
-;; an example
-(define-service (,(format "~a/example" name))
-   (<TABLE>
-      (<TR> (<TH> "foo") (<TH> "bar"))
-      (<TR> (<TD> (random 10)) (<TD> (random 99)))))
+				    :src (service-resource ,(begin name) "etc/prefs.png"))
+				 "Prefs")))))
+	       (<TD>
+		  (<TABLE> :class "body"
+		     (<TR> (<TD> :class "weblet-title"
+			      (format ,(format "\"~a - ~~a\"" (string-capitalize name)) header)))
+		     (<TR> (<TD> body)))))))
+      (<FOOT>)))
 
 ;; the documentation entry point
 (define-service (,(format "~a/documentation" name))
@@ -221,33 +251,31 @@
 
 (define (<CONFIGURE>)
    (<DIV> :class ,(format "\"~a-preferences\"" name)
-      (<H1> (<IMG> :src (service-resource ,(begin name) "etc/configure.png"))
-	    (format "\"~a Configuration\"" (string-capitalize name)))
       (<BUTTON> :onclick
-	 ~(preferences-save "hopaudio-configure"
-			    (make-file-name (hop-rc-directory)
-					    (format "\"~arc.hop\"" name)))
+	 ~(preferences-save ,(format "~a-configure" name)
+			    (make-file-name (hop-rc-directory) ,(format "\"~arc.hop\"" name)))
 	 :title "Save configuration (needs admin privileges)"
 	 "Save Configuration")
-      (hopaudio-preferences-edit :id (format "\"~a-configure\"" name))))
+      (<BR>)
+      (,(format "~a-preferences-edit" name) :id ,(format "\"~a-configure\"" name))))
 
 (define-service (,(begin name)/preferences)
    (<HTML>
       (<HEAD> :title ,(format "~s" (string-capitalize name))
 	 :favicon (service-resource ,(begin name) "etc/favicon.png")
 	 :base (service-base-url ,(begin name) (current-request))
-	 :css (format "\"~a.hss\"" name))
-      (<BODY> :class (format "\"~a-body-preferences\"" name)
-	 (<DIV> :id (format "\"~a-title\"" name)
-	    (format "\"~a Configure\"" (string-capitalize name)))
+	 :include "hop-prefs"
+	 :css ,(format "\"~a.hss\"" name))
+      (<,(string-upcase name):BODY> :class ,(format "\"~a-body-preferences\"" name)
+         :header "Preferences"
 	 (<CONFIGURE>))))])
 
          (when dashboard
             (newline)
 	    (for-each display [
-(define-service (hopaudio/dashboard)
+(define-service (,(begin name)/dashboard)
    ~(window-open :id ,(format "\"~a/dashboard\"" name)
-       :title (format "~s" (string-capitalize name)
+       :title ,(format "~s" (string-capitalize name)
        :src (<IFRAME> :src (,(format "$~a/dashboard-panel" name))
 	       :style "border: 0; width: 370px; height: 130px;")
        :parent document.body
@@ -282,19 +310,40 @@ $(module ,(format "~a_hss" name)
           (,(format "~a-date::bstring" name))
 	  (,(format "~a-author::bstring" name))
 	  (,(format "~a-dir::bstring" name))
-	  (,(format "~a-rc-directory::bstring" name))))
+	  (,(format "~a-rc-directory::bstring" name))
+	  (,(format "~a-table-size::int" name))
+	  (,(format "~a-table-size-set!" name) ::int)
+	  (,(format "~a-table-align::symbol" name))
+	  (,(format "~a-table-align-set!" name) ::symbol)
+	  (,(format "~a-table-border::bool" name))
+	  (,(format "~a-table-border-set!" name) ::bool)
 
- (define (,(format "~a-version" name))
-    "@VERSION@")
- (define (,(format "~a-date" name))
-    "@DATE@")
- (define (,(format "~a-author" name))
-    ,(format "~s" author))
+	  (,(format "~a-preferences-edit" name) . obj)
+	  (,(format "~a-preferences-save" name) file)))
+
+(define (,(format "~a-version" name))
+   "@VERSION@")
+(define (,(format "~a-date" name))
+   "@DATE@")
+(define (,(format "~a-author" name))
+   ,(format "~s" author))
  
- (define (,(format "~a-dir" name))
-    (dirname (the-loading-file)))
- (define (,(format "~a-rc-directory" name))
-    (make-file-name (hop-rc-directory) ,(format "~s" name)))
+(define (,(format "~a-dir" name))
+   (dirname (the-loading-file)))
+(define (,(format "~a-rc-directory" name))
+   (make-file-name (hop-rc-directory) ,(format "~s" name)))
+
+(define-parameter ,(format "~a-table-size" name)
+   3)
+(define-parameter ,(format "~a-table-align" name)
+   'center)
+(define-parameter ,(format "~a-table-border" name)
+   #t)
+
+(define-preferences ,(format "~a-preferences" name)
+   ("Example table size" integer ,(format "~a-table-size" name))
+   ("Example table alignment" (enum left center right) ,(format "~a-table-align" name))
+   ("Example table border" bool ,(format "~a-table-border" name)))
  ]))))
    
 ;*---------------------------------------------------------------------*/
