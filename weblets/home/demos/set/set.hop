@@ -11,7 +11,8 @@
 (define *games* '())
 
 (define-service (home/demos/set)
-   (let ((join-login (<INPUT> :type "hidden" :name "login"))
+   (let ((login-field (<INPUT> :type "text" :name "login"))
+	 (join-login (<INPUT> :type "hidden" :name "login"))
 	 (new-login (<INPUT> :type "hidden" :name "login"))
 	 (active-games (filter (lambda (g)
 				  (eq? (Game-state (cdr g)) 'open))
@@ -27,12 +28,7 @@
 		     (<TD> :colspan 2
 			   (<DIV>
 			      :id "player-name-div"
-			      "Play as " (<INPUT> :type "text" :name "login"
-						  :onchange
-						  ~(begin
-						      (set! $join-login.value this.value)
-						      (set! $new-login.value this.value)
-						      )))))
+			      "Play as " login-field)))
 		  (<TR>
 		     (if (null? active-games)
 			 (<TH> "")
@@ -40,13 +36,18 @@
 		     (<TH> "Create a new game"))
 		  (<TR>
 		     (if (null? active-games)
-			 (<TD> join-login)
+			 (<TD> "")
 			 (<TD>
 			    (<DIV>
 			       :id "join-game-div"
 			       (<FORM>
 				  :id "join-game-form"
 				  :action home/demos/set/join-game
+				  :onsubmit ~(return!
+					      (begin
+						 (set! $join-login.value
+						       $login-field.value)
+						 #t))
 				  join-login
 				  (<TABLE>
 				     (<TR>
@@ -64,6 +65,11 @@
 			   (<FORM>
 			      :id "new-game-form"
 			      :action home/demos/set/new-game
+			      :onsubmit ~(return!
+					  (begin
+					     (set! $new-login.value
+						   $login-field.value)
+					     #t))
 			      new-login
 			      (<TABLE>
 				 (<TR>
