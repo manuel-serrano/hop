@@ -4,13 +4,6 @@
 	   nodes
 	   walk
 	   verbose)
-   (static (wide-class Tail-Label::Label
-	      (used?::bool (default #f))
-	      ;; only for while-labels: if they "share" a break-label, store it
-	      ;; in here.
-	      (break-label (default #f)))
-	   (wide-class Default-While::While
-	      break-label))
    (export (rm-tail-breaks! tree::Module)))
 
 ;; the name is actually misleading, as continues, too, are removed.
@@ -94,11 +87,6 @@
    (default-walk! this #f #f))
 
 (define-nmethod (While.tail! break-label while-label)
-   ;; for the next pass.
-   (when break-label
-      (widen!::Default-While this
-	 (break-label break-label)))
-   
    (with-access::While this (label)
       ;; test is exp. -> no 'continue'/'break'
       (default-walk! this #f label)))
@@ -131,14 +119,11 @@
 (define-nmethod (Lambda.default! break-label while-label)
    (default-walk! this #f #f))
 
+(define-nmethod (Case.default! break-label while-label)
+   (default-walk! this #f while-label))
+
 (define-nmethod (While.default! break-label while-label)
    (with-access::While this (label)
-      (default-walk! this #f label)))
-
-;; Default-Whiles have been created in previous pass. avoids us to keep track
-;; of tail-positions.
-(define-nmethod (Default-While.default! break-label while-label)
-   (with-access::Default-While this (break-label label)
       (default-walk! this break-label label)))
 
 (define-nmethod (Break.default! break-label while-label)

@@ -146,7 +146,8 @@
    'do-not-go-into-lambdas)
 
 (define-nmethod (While.search-shallow-continue label found-fun)
-   'do-not-go-into-whiles)
+   (with-access::While this (body)
+      (walk body label found-fun)))
 
 (define-nmethod (Continue.search-shallow-continue search-label found-fun)
    (with-access::Continue this (label)

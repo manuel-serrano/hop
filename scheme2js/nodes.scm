@@ -102,7 +102,7 @@
        lvalue::Ref
        val::Node)
     (final-class Let::Scope
-       bindings::pair-nil
+       bindings::pair-nil          ;; list of Set!s (at least initially)
        body::Node
        kind::symbol) ;; either 'let or 'letrec
     (final-class Begin::Node

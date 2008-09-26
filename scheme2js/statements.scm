@@ -137,6 +137,11 @@
 ;; Lets don't exist anymore in this pass.
 
 (define-nmethod (Begin.stmts! surrounding-fun stmt-begin)
+   ;; stmt-begin must be #f
+   [assert (stmt-begin) (not stmt-begin)]
+   (default-walk! this surrounding-fun #f))
+   
+(define-nmethod (Stmt-Begin.stmts! surrounding-fun stmt-begin)
    (with-access::Stmt-Begin this (exprs stmt-exprs)
       (cond
 	 ((null? exprs)

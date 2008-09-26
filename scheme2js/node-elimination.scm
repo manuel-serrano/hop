@@ -226,7 +226,9 @@
 
       (unless (eq? label (default-label))
 	 (widen!::Elim-Label label
-	    (val-is-needed? val-is-needed?))) ;; will not be used...
+	    ;; will not be used but needs to be set.
+	    ;; important for While-labels is the 'used?'-field.
+	    (val-is-needed? val-is-needed?)))
 
       (set! init (walk! init #f))
       (set! test (walk! test #t))

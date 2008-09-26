@@ -502,7 +502,7 @@
 	  (template-display p env
 	     "continue;\n")
 	  (template-display p env
-	     "continue ~a\n" (mangle-JS-sym (Label-id label))))))
+	     "continue ~a;\n" (mangle-JS-sym (Label-id label))))))
 
 (define-nmethod (Return.compile p stmt?)
    (with-access::Return this (val)

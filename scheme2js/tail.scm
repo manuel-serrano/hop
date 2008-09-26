@@ -58,8 +58,11 @@
 	     (loop (cdr exprs)))))))
 
 (define-nmethod (SCall.tail tail?)
-   (when tail?
-      (widen!::Tail-Call this))
+   (cond
+      (tail?
+       (widen!::Tail-Call this))
+      ((Tail-Call? this)
+       (shrink! this)))
    (default-walk this #f))
 
 (define-nmethod (Frame-alloc.tail tail?)
@@ -70,8 +73,11 @@
 
 (define-nmethod (Labeled.tail tail?)
    (with-access::Labeled this (label)
-      (when tail?
-	 (widen!::Tail-Label label)))
+      (cond
+	 (tail?
+	  (widen!::Tail-Label label))
+	 ((Tail-Label? label)
+	  (shrink! label))))
    (default-walk this tail?))
 
 (define-nmethod (Break.tail tail?)
