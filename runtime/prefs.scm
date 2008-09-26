@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/prefs.scm                 */
+;*    serrano/prgm/project/hop/1.10.x/runtime/prefs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Fri Aug 15 13:35:15 2008 (serrano)                */
+;*    Last change :  Fri Sep 26 11:14:36 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -488,7 +488,7 @@
       :value (value->string type value)
       :title (format "~a (hit [return] to validate)"
 		     (if (string? title) title name))
-      :onkeyup (format "hop_prefs_editor_expr( event, this, this.value, '~a', ~a, '~a', '~a' )"
+      :onkeyup (format "hop_prefs_editor_expr( event, this, \"~a\", ~a, \"~a\", \"~a\" )"
 		       name (hop->js-callback parse) type key)))
 
 ;*---------------------------------------------------------------------*/
@@ -499,7 +499,7 @@
       :rows rows :cols cols
       :title (format "~a (hit [return] to validate)"
 		     (if (string? title) title name))
-      :onkeyup (format "hop_prefs_editor_expr( event, this, this.value, '~a', ~a, '~a', '~a' )"
+      :onkeyup (format "hop_prefs_editor_expr( event, this, \"~a\", ~a, \"~a\", \"~a\" )"
 		       name (hop->js-callback parse) type key)
       (value->string type value)))
 
@@ -525,7 +525,7 @@
 		     :type "radio"
 		     :checked value
 		     :name name
-		     :onclick (format "hop_prefs_editor_bool( event, 'true', '~a', ~a, '~a', '~a' )"
+		     :onclick (format "hop_prefs_editor_bool( event, \"true\", \"~a\", ~a, \"~a\", \"~a\" )"
 				      name (hop->js-callback parse) 'bool key))
 		  yes-string)
 	       (<TD> 
@@ -533,7 +533,7 @@
 		     :type "radio"
 		     :checked (not value)
 		     :name name
-		     :onclick (format "hop_prefs_editor_bool( event, 'false', '~a', ~a, '~a', '~a' )"
+		     :onclick (format "hop_prefs_editor_bool( event, \"false\", \"~a\", ~a, \"~a\", \"~a\" )"
 				      name (hop->js-callback parse) 'bool key))
 		  no-string))))))
 
@@ -552,7 +552,7 @@
 			  :type "radio"
 			  :checked (eq? s value)
 			  :name name
-			  :onclick (format "hop_prefs_editor_bool( event, '~a', '~a', ~a, '~a', '~a' )"
+			  :onclick (format "hop_prefs_editor_bool( event, \"~a\", \"~a\", ~a, \"~a\", \"~a\" )"
 					   s name (hop->js-callback parse) 'enum key))
 		       (symbol->string s))))
 	      enum))))

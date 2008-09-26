@@ -11,6 +11,17 @@ weblet ,(<A> :href "http://localhost:8080/hop/weblets"
          	   (<SPAN> :style {font-variant: small-caps} "Weblets"))
 is intended to help HOP users that wish to distribute their own weblets.
 
+~~ The process described in the tutorial can be automated using
+,(<A> :href "/hop/hzbuilder" 
+  (<SPAN> :style {font-variant: small-caps} "HzBuilder")). 
+This weblet is a tool that creates the 
+minimal file structure needed for a complete weblet. The goal of the present 
+tutorial is thus to present an insight view of the architecture weblet. 
+,(<SPAN> :style { color: red; font-weight: bold } [In production mode, it 
+is thus recommended to use 
+,(<A> :href "/hop/hzbuilder" 
+  (<SPAN> :style {font-weight: 100; font-variant: small-caps} "HzBuilder")).])
+
 
 ~~ A ,(<A> :href "http://localhost:8080/hop/hz"
       (<SPAN> :style {font-variant: small-caps} "Hz")) package, the
@@ -23,10 +34,6 @@ code of the weblet plus some utility files and some contribution files
 ~~ The documentation of the ++[[hz]]++ weblet can be found 
 ,(<WEBLETREF> "here" (make-file-path (hop-weblets-directory) "hz/etc/hz.wiki")). The documentation of ++[[weblets]]++ 
 ,(<WEBLETREF> "here" (make-file-path (hop-weblets-directory) "hz/etc/weblets.wiki")).
-
-~~ The weblet of the ++[[hzbuilder]]++ creates the minimal file 
-structure needed for a complete weblet. It operates automatically
-the various steps presented in this tutorial.
 
 
 == Requirements ==
@@ -43,7 +50,7 @@ In order to build and test HOP ++.hz++ file, you need:
 A package ++MYWEBLET.hz++ must, at least, contain:
 
   - ++MYWEBLET.hop++: The source file that contains the definition of the 
- ,(<APIREF> "service" "service.wiki") ++MYWEBLET++. Note that the definition of
+ ++MYWEBLET++. Note that the definition of
  the service  ++MYWEBLET++ __must__ be present in the file ++MYWEBLET.hop++.
   - optional additional sources (++.hop++ files), ++.hss++, and ++.css++ files.
   - ++.afile++: this file is needed if the weblet uses several source files.

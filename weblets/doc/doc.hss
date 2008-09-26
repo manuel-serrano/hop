@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/weblets/doc/doc.hss               */
+/*    serrano/prgm/project/hop/1.10.x/weblets/doc/doc.hss              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Sep 19 15:03:10 2008 (serrano)                */
+/*    Last change :  Wed Sep 24 08:35:05 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
@@ -36,6 +36,7 @@ $(define client-code-background "#eeffee")
 $(define keyword-color "#bb0088")
 $(define type-color "#00bb00")
 $(define example-background "#eeffdd")
+$(define console-background "#eeeeff")
 $(define edit-background "#ffffee")
 $(define source-background "#ffeeff")
 $(define doc-opacity "0.97")
@@ -409,6 +410,10 @@ div.code pre {
   background-color: $example-background;
 }
 
+div.console pre {
+  background-color: $console-background;
+}
+
 div.code span.code-comment {
   font-weight: bold;
   color: orange;
@@ -463,6 +468,10 @@ doc pre.example, doc textarea.example {
 
 doc pre.example {
   background-color: $example-background;
+}
+
+doc pre.console {
+  background-color: $console-background;
 }
 
 doc textarea.example {
@@ -793,6 +802,10 @@ api doc pre {
 
 api doc pre.example {
   background-color: $example-background;
+}
+
+api doc pre.console {
+  background-color: $console-background;
 }
 
 api doc div.example {

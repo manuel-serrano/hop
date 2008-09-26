@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/1.10.x/runtime/xml.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Sep 18 09:21:11 2008 (serrano)                */
+;*    Last change :  Fri Sep 26 10:31:28 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -252,7 +252,7 @@
    (instantiate::xml-backend
       (id 'html-4.01)
       (mime-type "text/html")
-      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Strict//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n")
+      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Strict//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">")
       (html-attributes '())
       (header-format "")
       (no-end-tags-elements '(link))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Sep 22 16:55:06 2008 (serrano)                */
+;*    Last change :  Thu Sep 25 15:56:50 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -210,7 +210,8 @@
 	       (else
 		(when chunked
 		   (output-port-flush-hook-set! p #unspecified)
-		   (http-write-line p "\r\n0"))))
+		   (http-write-line p "\r\n0")
+		   (flush-output-port p))))
 	    connection))))
 
 ;*---------------------------------------------------------------------*/

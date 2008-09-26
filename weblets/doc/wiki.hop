@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/doc/wiki.hop              */
+;*    serrano/prgm/project/hop/1.10.x/weblets/doc/wiki.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Fri Sep 19 14:58:11 2008 (serrano)                */
+;*    Last change :  Wed Sep 24 08:28:22 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -107,13 +107,10 @@
 ;*---------------------------------------------------------------------*/
 (define (<WIKI-DOC> port title expr)
    (list
-    (<DIV>
-       :class "doc-title"
-       (<TABLE>
-	  :width "100%"
+    (<DIV> :class "doc-title"
+       (<TABLE> :width "100%"
 	  (<TR>
-	     (<TH>
-		:align 'left title))))
+	     (<TH> :align 'left title))))
     (<DIV> :class "doc"
        (<DIV> :class "toc"
 	  (hop-wiki->toc expr :max-depth 3))
@@ -142,29 +139,21 @@
 ;*---------------------------------------------------------------------*/
 (define (<DOC/edit> port title expr)
    (list
-    (<DIV>
-       :class "doc-title"
-       (<TABLE>
-	  :width "100%"
+    (<DIV> :class "doc-title"
+       (<TABLE> :width "100%"
 	  (<TR>
-	     (<TH>
-		:align 'left title)
-	     (<TD>
-		:align 'right "[ "
-		(<SPAN>
-		   :class "edit"
+	     (<TH> :align 'left title)
+	     (<TD> :align 'right "[ "
+		(<SPAN> :class "edit"
 		   :onclick ~(window.open $(make-service-url doc/edit (input-port-name port)))
 		   "edit")
 		" | "
-		(<SPAN>
-		   :class "edit"
+		(<SPAN> :class "edit"
 		   :onclick ~(window.open $(make-service-url doc/edit (input-port-name port)))
 		   "new")
 		" ]"))))
-    (<DIV>
-       :class "doc"
-       (<DIV>
-	  :class "toc"
+    (<DIV> :class "doc"
+       (<DIV> :class "toc"
 	  (hop-wiki->toc expr :max-depth 3))
        expr)))
 
@@ -173,23 +162,17 @@
 ;*---------------------------------------------------------------------*/
 (define (<DOC/emacs> port title expr)
    (list
-    (<DIV>
-       :class "doc-title"
-       (<TABLE>
-	  :width "100%"
+    (<DIV> :class "doc-title"
+       (<TABLE> :width "100%"
 	  (<TR>
-	     (<TH>
-		:align 'left title)
-	     (<TD>
-		:class "edit"
+	     (<TH> :align 'left title)
+	     (<TD> :class "edit"
 		"[ "
-		(<SPAN>
-		   :class "edit"
+		(<SPAN> :class "edit"
 		   :onclick ~(window.open $(make-service-url doc/edit (input-port-name port)))
 		   "edit")
 		" | "
-		(<SPAN>
-		   :class "edit"
+		(<SPAN> :class "edit"
 		   :onclick ~(with-hop
 				   ($(service (file)
 					(run-process (doc-editor) file :wait #f)
@@ -197,8 +180,7 @@
 				     $(input-port-name port)))
 		   (basename (doc-editor)))
 		" | "
-		(<SPAN>
-		   :class "edit"
+		(<SPAN> :class "edit"
 		   :onclick ~(with-hop
 				   ($(service (file)
 					(let ((f (make-file-name
@@ -214,10 +196,8 @@
 				     $(input-port-name port)))
 		   "new")
 		" ]"))))
-    (<DIV>
-       :class "doc"
-       (<DIV>
-	  :class "toc"
+    (<DIV> :class "doc"
+       (<DIV> :class "toc"
 	  (hop-wiki->toc expr :max-depth 3))
        expr)))
 

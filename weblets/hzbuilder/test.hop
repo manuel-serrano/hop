@@ -1,0 +1,85 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/1.9.x/weblets/hzbuilder/test.hop        */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Thu Sep 25 08:41:14 2008                          */
+;*    Last change :  Thu Sep 25 10:41:03 2008 (serrano)                */
+;*    Copyright   :  2008 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The testing unit                                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hzbuilder_test
+
+   (import hzbuilder_config)
+
+   (export hzbuilder/test))
+
+;*---------------------------------------------------------------------*/
+;*    string-valid? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (string-valid? val)
+   (and (string? val) (>fx (string-length val) 0)))
+
+;*---------------------------------------------------------------------*/
+;*    *test-process* ...                                               */
+;*---------------------------------------------------------------------*/
+(define *test-process* #f)
+(define *test-process-mutex* (make-mutex "hzbuilder"))
+
+;*---------------------------------------------------------------------*/
+;*    hzbuilder/test ...                                               */
+;*---------------------------------------------------------------------*/
+(define-service (hzbuilder/test dir name)
+   ;; mandatory checks
+   (cond
+      ((not (string-valid? dir))
+       (http-bad-request (format "Illegal directory name: ~a" dir)))
+      ((not (string-valid? name))
+       (http-bad-request (format "Illegal weblet name: ~a" name)))
+      (else
+       ;; compile the projet
+       (system (format "cd ~a && make > /dev/null 2> /dev/null"
+		       (make-file-name dir name)))
+       ;; spawn the testing hop is needed
+       (start-hzbuilder-process!)
+       ;; force the process to load the new source file
+       (let ((op (process-input-port *test-process*))
+	     (path (make-file-path dir name (string-append name ".hop"))))
+	  (display (format "(hop-load-weblet ~s)\n" path) op)
+	  (flush-output-port op))
+       'ok)))
+
+;*---------------------------------------------------------------------*/
+;*    start-hzbuilder-process! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (start-hzbuilder-process!)
+   (with-lock *test-process-mutex*
+      (lambda ()
+	 ;; kill existing instance of the process
+	 (when (and (process? *test-process*) (process-alive? *test-process*))
+	    (process-kill *test-process*))
+	 ;; start a new the process
+	 (set! *test-process*
+	       (run-process (make-file-name (hop-bin-directory) "hop")
+			    "-p" (integer->string (hzbuilder-port))
+			    "--allow-service-override"
+			    "--repl"
+			    input: pipe:
+			    output: "/dev/null"
+			    error: "/dev/null"
+			    wait: #f))
+	 ;; wait for the server to be up
+	 (let loop ()
+	    (with-handler
+	       (lambda (e)
+		  (if (&io-error? e)
+		      (begin
+			 (sleep 10000)
+			 (loop))
+		      (raise e)))
+	       (socket-close
+		(make-client-socket "localhost" (hzbuilder-port))))))))

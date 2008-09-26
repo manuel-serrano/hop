@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/1.10.x/runtime/read.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Aug 20 16:38:05 2008 (serrano)                */
+;*    Last change :  Thu Sep 25 14:28:47 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -799,7 +799,19 @@
 				       (let ((fs (map! add-dir (cdr a))))
 					  (evmodule-add-access! (car a) fs))))
 				exp))))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    eval! ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-expander eval!
+   (cond-expand
+      ((or bigloo1.3a bigloo3.1b)
+       (lambda (x e)
+ 	  `(eval ,@(map (lambda (x) (e x e)) (cdr x)))))
+      (else
+       (lambda (x e)
+	  (map (lambda (x) (e x e)) x)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */
 ;*---------------------------------------------------------------------*/
@@ -828,13 +840,13 @@
 				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
 					last
-					(loop (eval sexp env))))))
+					(loop (eval! sexp env))))))
 			     ((include)
 			      (let loop ((res '()))
 				 (let ((sexp (hop-read port charset)))
 				    (if (eof-object? sexp)
 					(reverse! res)
-					(loop (cons (eval sexp env) res))))))
+					(loop (cons (eval! sexp env) res))))))
 			     (else
 			      (error 'hop-load "Illegal mode" mode))))
 		       (begin
