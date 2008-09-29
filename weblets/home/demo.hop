@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Fri Sep 26 14:17:37 2008 (serrano)                */
+;*    Last change :  Mon Sep 29 12:25:59 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
@@ -40,7 +40,7 @@
 	 :class "demo"
 	 :id "demo-playground"
 	 :align "left"
-;	 (<TIPS> 550 500)
+	 (<TIPS> 550 500)
 	 (<DIV>
 	    :class "toolbar"
 	    :align "center"

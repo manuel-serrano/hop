@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Sep 20 18:35:08 2008 (serrano)                */
+;*    Last change :  Mon Sep 29 13:23:50 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -209,15 +209,16 @@
       (case status
 	 ((200)
 	  ;; see hop-json-mime-type and hop-bigloo-mime-type
-	  (case (header-content-type header)
-	     ((application/json)
-	      (success (json->hop p)))
-	     ((text/html)
-	      (success (read-string p)))
-	     ((application/bigloo)
-	      (success (string->obj (read p))))
-	     (else
-	      (success (read-string p)))))
+	  (let ((ctype (header-content-type header)))
+	     (case ctype
+		((text/html)
+		 (success (read-string p)))
+		((application/bigloo)
+		 (success (string->obj (read p))))
+		(else
+		 (if (eq? ctype (hop-json-mime-type))
+		     (success (json->hop p))  
+		     (success (read-string p)))))))
 	 ((201 204 304)
 	  ;; no message body
 	  (success (instantiate::xml-http-request
@@ -293,11 +294,11 @@
 			      (scheme (string->symbol scheme))
 			      (id hop-to-hop-id)
 			      (userinfo userinfo)
-			      (host host)
-			      (port port)
+			      (host (or host path))
+			      (port (or port 80))
 			      (header header)
 			      (timeout timeout)
-			      (path path)))
+			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
 			(hdl (make-http-callback 'with-url r suc fail)))
 		    (when (>fx (bigloo-debug) 2)

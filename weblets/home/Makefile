@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Sep 29 09:38:32 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 12:24:50 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -107,5 +107,5 @@ release.info: ../../.hoprelease
 	cat $< | awk -F= '{print " ("$$1 " " $$2")"}' >> $@
 	echo ")" >> $@
 
-.afile: $(HOP_POP) config.hop $(HOP_DEMOS:%=demos/%)
+.afile: $(SOURCES) config.hop $(HOP_DEMOS:%=demos/%)
 	$(AFILE) -suffix hop $^ -o $@

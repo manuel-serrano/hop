@@ -27,9 +27,11 @@
 (define-service (home/demos/rewrite/doit url old new)
    (with-url url
       (lambda (h)
-	 (pregexp-replace*
-	  old h
-	  (format "<span style='color: red'>~a</span>" new)))))
+	 (instantiate::http-response-string
+	    (content-type "text/html")
+	    (body (pregexp-replace*
+		   old h
+		   (format "<span style='color: red'>~a</span>" new)))))))
 
 	       
 	       
