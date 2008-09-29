@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/param.sch                       */
+;*    serrano/prgm/project/hop/1.9.x/runtime/param.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  1 05:02:42 2005                          */
-;*    Last change :  Wed Dec  6 18:17:44 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Mon Sep 29 08:32:53 2008 (serrano)                */
+;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the param macros                               */
 ;*=====================================================================*/
@@ -18,5 +18,10 @@
 ;*    define-parameter ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-expander define-parameter hop-define-parameter-expander)
+
+;*---------------------------------------------------------------------*/
+;*    define-lazy-parameter ...                                        */
+;*---------------------------------------------------------------------*/
+(define-expander define-lazy-parameter hop-define-lazy-parameter-expander)
 
 

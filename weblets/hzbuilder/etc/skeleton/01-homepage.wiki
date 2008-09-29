@@ -1,0 +1,14 @@
+== Presentation ==
+
+,(<WEBLET-INSTALL> (weblet-url))
+
+,(cdr (assq 'comment (weblet-info)))
+
+== Install and run @HZ@ ==
+
+  - Download and install [[http://hop.inria.fr|Hop]] (the impatients can use 
+ the pre-compiled JVM version, although it is significantly slower than the 
+ native version).
+  - Click the ++Install/Update++ button above (or the ++Run++ if you only
+ want to give @HZ@ a try).
+

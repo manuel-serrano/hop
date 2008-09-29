@@ -1,6 +1,6 @@
 ((name "wizard")
  (author "M. Serrano")
  (version "1.0.0")
- (date "23 September 2008")
+ (date "29 September 2008")
  (title "A simplistic Hop Wizard to get you started.")
  (about-service "about"))

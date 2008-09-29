@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:52:04 2008                          */
-/*    Last change :  Fri Sep 26 11:16:56 2008 (serrano)                */
+/*    Last change :  Mon Sep 29 11:12:36 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    PREFS client-side runtime.                                       */
@@ -14,8 +14,8 @@
 /*    -------------------------------------------------------------    */
 /*    The name of the services are defined in runtime/prefs.scm        */
 /*---------------------------------------------------------------------*/
-var hop_prefs_edit_svc = hop_service_base() + "/prefs/edit";
-var hop_prefs_save_svc = hop_service_base() + "/prefs/save";
+var hop_prefs_edit_svc = hop_service_base() + "/admin/preferences/edit";
+var hop_prefs_save_svc = hop_service_base() + "/admin/preferences/save";
 
 /*---------------------------------------------------------------------*/
 /*    hop_prefs_callback ...                                           */

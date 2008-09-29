@@ -13,13 +13,15 @@ These are used for user server-side customizations and configurations.
   (define-preferences name ...)
 
 == Examples ==
-<example>define-parameter</example>
+<example>define-parameter, define-lazy-parameter</example>
 
 == Server Definitions ==
 <server>
 
 === ++(define-parameter name obj [proc])++ ===
+=== ++(define-lazy-parameter name obj [proc])++ ===
 <function> define-parameter
+<function> define-lazy-parameter
 
 <arguments>
 ^  arguments       ^   type       ^  short description                   ^
@@ -38,6 +40,11 @@ named after ++name++.
 provided, the new value of the parameter is the result of the application
 of ++proc++ to the argument.
 
+The form ++define-lazy-parameter++ is similar to ++define-parameter++ with
+a single difference. Until the parameter is set a new value (using the
+++name-//set!//++ function, the default value of the parameter is computed
+lazily, each time the parameter is used.
+</function>
 </function>
 
 === ++(define-preferences name clause<sub>0</sub>...)++ ===
@@ -85,6 +92,11 @@ This special form defines three functions named after ++name++.
  saves preferences in a file.
   * ++name//-edit//++: this is a function of no argument. It produces a
  graphical user interface for letting users configuring arguments.
+
+Editing parameters for a user requires to be granted the right to
+execute the ++/admin/preferences/edit++. Saving the parameters requires
+the ++/admin/preferences/save++ service access.
+
 </function>
 
 </server>

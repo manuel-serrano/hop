@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/dashboard/Makefile        */
+#*    serrano/prgm/project/hop/1.10.x/weblets/dashboard/Makefile       */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Jun 20 10:35:35 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:48:54 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the dashboard weblet                             */
@@ -22,7 +22,8 @@ DATE = 20 June 2008
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile dashboard.hss dashboard.hop \
+SOURCES		= dashboard.hss dashboard.hop
+POPULATION	= Makefile $(SOURCES) \
                   etc/weblet.info.in etc/dashboard.wiki.in \
                   dashboard-applet.hss etc/dashboard-rfc.png \
                   etc/logo.png etc/favicon.png

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/1.9.x/weblets/hzbuilder/generate.hop        */
+;*    .../prgm/project/hop/1.10.x/weblets/hzbuilder/generate.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 24 15:46:26 2008                          */
-;*    Last change :  Fri Sep 26 17:38:57 2008 (serrano)                */
+;*    Last change :  Mon Sep 29 11:21:41 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The code generator                                               */
@@ -73,7 +73,25 @@
 (define (hzbuilder-generate dir name version header description
 			    author logo favicon dashboard
 			    category minhop maxhop home)
-   (let* ((res '())
+   (let* ((now (current-date))
+	  (replac `((@HZ@ ,name)
+		    (@HZUPCASE@ ,(string-upcase name))
+		    (@TITLE@ ,header)
+		    (@VERSION@ ,version)
+		    (@MINHOP@ ,minhop)
+		    (@MAXHOP@ ,maxhop)
+		    (@HOME@ ,home)
+		    (@CATEGORY@ ,category)
+		    (@AUTHOR@ ,author)
+		    (@DATE@ now)
+		    (@DASHBOARD@ ,(if dashboard "#t" "#f"))
+		    (@DESCRIPTION@ description)
+		    (@DATEYEAR@ ,(date-year now))
+		    (@DATEMONTH@ ,(date-month now))
+		    (@DATEAMONTH@ ,(month-name (date-month now)))
+		    (@DATEDAY@ ,(date-day now))
+		    (@REPOSITORY@ ,(hzbuilder-repository))))
+	  (res '())
 	  (dirname (make-file-name dir name))
 	  (filename (string-append (make-file-name dirname name) ".hop"))
 	  (hssname (string-append (make-file-name dirname name) ".hss"))
@@ -86,6 +104,9 @@
 	  (webletinfo (make-file-name etcname "weblet.info.in"))
 	  (mkmfname (make-file-name dirname "Makefile"))
 	  (docname (make-file-name etcname "doc.png"))
+	  (homename (make-file-name etcname "homepage"))
+	  (homepagename (make-file-name homename "01-homepage.wiki"))
+	  (homepagepngname (make-file-name homename "01-homepage.png"))
 	  (prefsname (make-file-name etcname "prefs.png")))
       ;; create the directory if it does not already exist
       (unless (directory? dirname)
@@ -94,15 +115,15 @@
       ;; create the name.hop file if it does not already exists
       (unless (file-exists? filename)
 	 (set! res (cons (<DIV> "File created: " (<TTFILE> filename)) res))
-	 (hzbuilder-generate-file filename name version header dashboard)
+	 (sed (hzbuilder-hop-skeleton) filename replac)
 	 ;; if the hss does not exist, create it
 	 (unless (file-exists? hssname)
 	    (set! res (cons (<DIV> "File created: " (<TTFILE> hssname)) res))
-	    (hzbuilder-generate-hss hssname name))
+	    (sed (hzbuilder-hss-skeleton) hssname replac))
 	 ;; if the config does not exist, create it
 	 (unless (file-exists? cfgname)
 	    (set! res (cons (<DIV> "File created: " (<TTFILE> cfgname)) res))
-	    (hzbuilder-generate-config cfgname name author)))
+	    (sed (hzbuilder-config-skeleton) cfgname replac)))
       ;; create the etc directory
       (unless (directory? etcname)
 	 (set! res (cons (<DIV> "Directory created: " (<TTDIR> etcname)) res))
@@ -122,24 +143,39 @@
       ;; copy the doc icon file
       (unless (file-exists? docname)
 	 (set! res (cons (<DIV> "File created: " (<TTFILE> docname)) res))
-	 (copy-file (make-file-path (hzbuilder-dir) "etc" "doc.png") docname))
+	 (copy-file (make-hzbuilder-path (hzbuilder-docpng)) docname))
       ;; copy the prefs icon file
       (unless (file-exists? prefsname)
 	 (set! res (cons (<DIV> "File created: " (<TTFILE> prefsname)) res))
-	 (copy-file (make-file-path (hzbuilder-dir) "etc" "configure.png") prefsname))
+	 (copy-file (make-hzbuilder-path (hzbuilder-configurepng)) prefsname))
       ;; create the wiki file
       (unless (file-exists? wikiname)
 	 (set! res (cons (<DIV> "File created: " (<TTFILE> wikiname)) res))
-	 (hzbuilder-generate-wiki wikiname name header description))
+	 (sed (hzbuilder-doc-skeleton) wikiname replac))
       ;; create the weblet.info file
       (unless (file-exists? webletinfo)
 	 (set! res (cons (<DIV> "File created: " (<TTFILE> webletinfo)) res))
-	 (hzbuilder-generate-webletinfo webletinfo name header description))
+	 (sed (hzbuilder-webletinfo-skeleton) webletinfo replac))
+      ;; create the directory etc/homepage
+      (unless (directory? homename)
+	 (set! res (cons (<DIV> "Directory created: " (<TTDIR> etcname)) res))
+	 (make-directories homename))
+      ;; create the etc/homepage/01-homepage.wiki file
+      (unless (file-exists? homepagename)
+	 (set! res (cons (<DIV> "File created: " (<TTFILE> homepagename)) res))
+	 (sed (hzbuilder-homepage-skeleton) homepagename replac))
+      ;; create the etc/homepage/01-homepage.png file
+      (unless (file-exists? homepagepngname)
+	 (set! res (cons (<DIV> "File created: " (<TTFILE> homepagepngname)) res))
+	 (copy-file favicon homepagepngname))
       ;; create the Makefile
       (unless (file-exists? mkmfname)
 	 (set! res (cons (<DIV> "File created: " (<TTFILE> mkmfname)) res))
-	 (hzbuilder-generate-makefile mkmfname dirname name version
-				      category minhop maxhop home))
+	 (sed (hzbuilder-makefile-skeleton) mkmfname replac))
+      ;; copy the additional templates
+      (let ((custom (hzbuilder-custom-skeleton-dir)))
+	 (when (and (string? custom) (directory? custom))
+	    (set! res (append (copy-directory custom dirname replac) res))))
       ;; add the okay button and return
       (cons (<DIV> :align 'center
 	       (<BUTTON> :onclick ~(let ((log (dom-get-element-by-id
@@ -151,276 +187,64 @@
 	    (reverse! res))))
 
 ;*---------------------------------------------------------------------*/
-;*    hzbuilder-generate-file ...                                      */
+;*    make-hzbuilder-path ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hzbuilder-generate-file filename name version header dashboard)
-   (with-output-to-file filename
-      (lambda ()
-	 (for-each display [;; the module declaration
-(module ,(begin name)
-   (import ,(format "~a_config" name)))			       
-
-;; The weblet entry point
-(define-service (,(begin name))
-   (<HTML>
-      (<HEAD> :title ,(format "~s" (string-for-read header))
-	 :favicon (service-resource ,(begin name) "etc/favicon.png")
-	 :base (service-base-url ,(begin name) (current-request))
-	 ,(if dashboard ":include \"hop-dashboard\"" "")
-	 :css ,(format "\"~a.hss\"" name))
-      (<,(string-upcase name):BODY> :prefs #t
-	   :header ,(format "~s" header)
-	   ;; ========================================
-	   ;; INSERT HERE YOU CONTENT
-   	   (<DIV>
-	      (<BUTTON> :onclick ~(with-hop (,(format "$~a/example" name))
-				     (lambda (h)
-					(innerHTML-set! "example-result" h)))
-		 "Im an example"))
-	   (<BR>)
-	   (<DIV> :id "example-result")
-	   ;; ========================================
-	   )))
-
-;; an example
-(define-service (,(format "~a/example" name))
-   (let* ((size (,(format "~a-table-size" name)))
-	  (lst (iota size))
-	  (style (format "text-align: ~a" (,(format "~a-table-align" name)))))
-      (<TABLE> :border (if (,(format "~a-table-border" name)) 1 #f)
-	 (<TR> (map (lambda (i) (<TH> (format "col ~a" i))) lst))
-	 (<TR> (map (lambda (i) (<TD> :style style (random size))) lst)))))
-
-;; <,(string-upcase name):BODY> widget
-(define-xml-compound <,(string-upcase name):BODY>
-      ((class ,(format "~s" name))
-       (header string "")
-       (prefs #f)
-       body)
-   (<BODY> :class class
-      (<DIV> :align "center"
-	 (<TABLE> :class "main"
-	    (<COLGROUP> (<COL> :width "0*"))
-	    (<TR>
-	       (<TD> (<IMG> :class "logo" :src "etc/logo.png")
-		     (<DIV> :class "version"
-			(<DIV> ,(format "\"~a v ~a\"" name version))
-			(<DIV> ,(let ((d (current-date)))
-				   (format "\"~a ~a ~a\""
-					   (date-day d)
-					   (month-aname (date-month d) )
-					   (date-year d)))))
-		     (<DIV> :class "buttons"
-			(<DIV> :class "button doc"
-			   (<A> :title "Documentation"
-			      :class "doc"
-			      :href "documentation"
-			      :onclick ~(set! this.href (,(format "$~a/documentation" name)))
-			      :target "_blank"
-			      :title ,(format "\"~a documentation\"" name)
-			      (<IMG> :class "doc"
-				 :inline #t
-				 :src (service-resource ,(begin name) "etc/doc.png"))
-			      "Help"))
-			(when prefs
-			   (<DIV> :class "button prefs"
-			      (<A> :title "Preferences"
-				 :class "doc"
-				 :href "preferences"
-				 :onclick ~(set! this.href (,(format "$~a/preferences" name)))
-				 :target "_blank"
-				 :title ,(format "\"~a documentation\"" name)
-				 (<IMG> :class "doc"
-				    :inline #t
-				    :src (service-resource ,(begin name) "etc/prefs.png"))
-				 "Prefs")))))
-	       (<TD>
-		  (<TABLE> :class "body"
-		     (<TR> (<TD> :class "weblet-title"
-			      (format ,(format "\"~a - ~~a\"" (string-capitalize name)) header)))
-		     (<TR> (<TD> body)))))))
-      (<FOOT>)))
-
-;; the documentation entry point
-(define-service (,(format "~a/documentation" name))
-   (let* ((file (service-resource ,(format "~a/documentation" name) ,(format "\"etc/~a.wiki\"" name)))
-	  (url (format "/hop/doc/weblet?weblet=~a" file)))
-      (instantiate::http-response-string
-	 (start-line "HTTP/1.0 301 Moved Permanently")
-	 (header (list (cons 'location: url))))))
-
-(define (<CONFIGURE>)
-   (<DIV> :class ,(format "\"~a-preferences\"" name)
-      (<BUTTON> :onclick
-	 ~(preferences-save ,(format "~a-configure" name)
-			    (make-file-name (hop-rc-directory) ,(format "\"~arc.hop\"" name)))
-	 :title "Save configuration (needs admin privileges)"
-	 "Save Configuration")
-      (<BR>)
-      (,(format "~a-preferences-edit" name) :id ,(format "\"~a-configure\"" name))))
-
-(define-service (,(begin name)/preferences)
-   (<HTML>
-      (<HEAD> :title ,(format "~s" (string-capitalize name))
-	 :favicon (service-resource ,(begin name) "etc/favicon.png")
-	 :base (service-base-url ,(begin name) (current-request))
-	 :include "hop-prefs"
-	 :css ,(format "\"~a.hss\"" name))
-      (<,(string-upcase name):BODY> :class ,(format "\"~a-body-preferences\"" name)
-         :header "Preferences"
-	 (<CONFIGURE>))))])
-
-         (when dashboard
-            (newline)
-	    (for-each display [
-(define-service (,(begin name)/dashboard)
-   ~(window-open :id ,(format "\"~a/dashboard\"" name)
-       :title ,(format "~s" (string-capitalize name)
-       :src (<IFRAME> :src (,(format "$~a/dashboard-panel" name))
-	       :style "border: 0; width: 370px; height: 130px;")
-       :parent document.body
-       :width 375
-       :height 160
-       :left (- (current-window-width) 390)
-       :top (- (current-window-height) 170))))])))))
-
+(define (make-hzbuilder-path file)
+   (if (and (string? file)
+	    (>fx (string-length file) 0)
+	    (not (char=? (string-ref file 0) (file-separator))))
+       (make-file-name (hzbuilder-dir) file)
+       file))
 
 ;*---------------------------------------------------------------------*/
-;*    hzbuilder-generate-hss ...                                       */
+;*    copy-directory ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hzbuilder-generate-hss filename name)
-   (with-output-to-file filename
-      (lambda ()
-	 (for-each display [/* the server side module declaration for the hss */
-$(module ,(format "~a_hss" name)
-   (import ,(format "~a_config" name)))
-])
-	 (send-file (make-file-path (hzbuilder-dir) "etc" "default.hss")
-		    (current-output-port)))))
+(define (copy-directory srcdir targetdir replacements)
    
-;*---------------------------------------------------------------------*/
-;*    hzbuilder-generate-config ...                                    */
-;*---------------------------------------------------------------------*/
-(define (hzbuilder-generate-config filename name author)
-   (with-output-to-file filename
-      (lambda ()
-	 (for-each display [;; the module declaration for the hss
-(module ,(format "~a_config" name)
-  (export (,(format "~a-version::bstring" name))
-          (,(format "~a-date::bstring" name))
-	  (,(format "~a-author::bstring" name))
-	  (,(format "~a-dir::bstring" name))
-	  (,(format "~a-rc-directory::bstring" name))
-	  (,(format "~a-table-size::int" name))
-	  (,(format "~a-table-size-set!" name) ::int)
-	  (,(format "~a-table-align::symbol" name))
-	  (,(format "~a-table-align-set!" name) ::symbol)
-	  (,(format "~a-table-border::bool" name))
-	  (,(format "~a-table-border-set!" name) ::bool)
-
-	  (,(format "~a-preferences-edit" name) . obj)
-	  (,(format "~a-preferences-save" name) file)))
-
-(define (,(format "~a-version" name))
-   "@VERSION@")
-(define (,(format "~a-date" name))
-   "@DATE@")
-(define (,(format "~a-author" name))
-   ,(format "~s" author))
- 
-(define (,(format "~a-dir" name))
-   (dirname (the-loading-file)))
-(define (,(format "~a-rc-directory" name))
-   (make-file-name (hop-rc-directory) ,(format "~s" name)))
-
-(define-parameter ,(format "~a-table-size" name)
-   3)
-(define-parameter ,(format "~a-table-align" name)
-   'center)
-(define-parameter ,(format "~a-table-border" name)
-   #t)
-
-(define-preferences ,(format "~a-preferences" name)
-   ("Example table size" integer ,(format "~a-table-size" name))
-   ("Example table alignment" (enum left center right) ,(format "~a-table-align" name))
-   ("Example table border" bool ,(format "~a-table-border" name)))
- ]))))
+   (define (copy-file file)
+      (let ((target (make-file-name targetdir file)))
+	 (if (file-exists? target)
+	     '()
+	     (let ((src (make-file-name srcdir file)))
+		(if (directory? src)
+		    (begin
+		       (make-directory target)
+		       (cons (<DIV> "Directory created: " (<TTDIR> target))
+			     (copy-directory src target)))
+		    (begin
+		       (sed src target replacements)
+		       (list (<DIV> "File created: " (<TTFILE> target)))))))))
    
-;*---------------------------------------------------------------------*/
-;*    hzbuilder-generate-wiki ...                                      */
-;*---------------------------------------------------------------------*/
-(define (hzbuilder-generate-wiki filename name header description)
-   (with-output-to-file filename
-      (lambda ()
-	 (for-each display [
-<doc> ,(string-upcase name) -- ,(begin header)
-
-== Description ==
-
-,(begin "[[")/hop/,(begin name)|,(string-upcase name),(begin "]]") ,(begin description)
-
-
-~~
-,(begin ",")(<TABLE> :class "weblet-facts"
-  (<TR> (<TD> :rowspan 5 :class "logo"
-	   (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
-        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
-  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
-  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
-  (<TR> (<TH> "Date") (<TD> "@DATE@"))
-  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))]))))
+   (append-map copy-file (directory->list srcdir)))
 
 ;*---------------------------------------------------------------------*/
-;*    hzbuilder-generate-webletinfo ...                                */
+;*    sed ...                                                          */
 ;*---------------------------------------------------------------------*/
-(define (hzbuilder-generate-webletinfo filename name header description)
-   (with-output-to-file filename
-      (lambda ()
-	 (for-each display [
-((name "@HZ@")
- (author ,(format "~s" name))
- (version "@VERSION@")
- (publisher "@PUBLISHER@")
- (repository "@REPOSITORY@")
- (category "@CATEGORY@")
- (minhop "@MINHOP@")
- (mxhop "@MAXHOP@")
- (home "@HOME@")
- (title ,(format "~s" header))
- (comment ,(format "~s" description)))]))))
-
-;*---------------------------------------------------------------------*/
-;*    hzbuilder-generate-makefile ...                                  */
-;*---------------------------------------------------------------------*/
-(define (hzbuilder-generate-makefile filename dirname name version category
-				     minhop maxhop home)
-   (with-output-to-file filename
-      (lambda ()
-	 (let* ((srcs (filter (lambda (f)
-				 (and (or (string-suffix? ".hop" f)
-					  (string-suffix? ".hss" f)
-					  (string-suffix? ".scm" f))
-				      (not (file-exists? (string-append f ".in")))))
-			      (directory->list dirname)))
-		(files (apply string-append
-			      (map (lambda (f) (string-append f " ")) srcs))))
-	    (for-each display [## run "make" to build the .hz file
-HZ=,(begin name)
-VERSION=,(begin version)
-CATEGORY=,(begin category)
-MINHOP=,(begin minhop)
-,(if home (format "HOME=~a" home) "")
-,(if maxhop (format "MAXHOP=~a" maxhop) "")
-
-FILES=,(begin files)config.hop.in \\
-  etc/logo.png etc/favicon.png etc/,(begin name).wiki.in etc/weblet.info.in \\
-  Makefile
-
-HOPREPOSITORY=,(hzbuilder-repository)
-
-])
-	 (send-file (make-file-path (hzbuilder-dir) "etc" "Makefile.hz")
-		    (current-output-port))))))
+(define (sed src target replacements)
    
-
-
+   (define *sed-grammar*
+      (regular-grammar (replacements)
+	 ((+ (out #\@))
+	  (display (the-string))
+	  (ignore))
+	 ((: #\@ (+ (or alpha digit #\_ #\-)) #\@)
+	  (let ((k (the-symbol)))
+	     (let ((r (assq k replacements)))
+		(if (pair? r)
+		    (display (cadr r))
+		    (display k)))
+	     (ignore)))
+	 ("@@"
+	  (display #\@)
+	  (ignore))
+	 ("@"
+	  (display #\@)
+	  (ignore))
+	 (else
+	  #f)))
+   
+   (with-input-from-file src
+      (lambda ()
+	 (with-output-to-file target
+	    (lambda ()
+	       (read/rp *sed-grammar* (current-input-port) replacements))))))

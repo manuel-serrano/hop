@@ -1,10 +1,9 @@
 ;; automatically generated, don't edit
-;; /users/serrano/prgm/project/hop/1.9.x/weblets/home
-;; Wed Apr 16 10:34:26 2008
+;; /users/serrano/prgm/project/hop/1.10.x/weblets/home
+;; Mon Sep 29 09:47:22 2008
 
 (
   (hophome_config "config.hop")
-  (hophome_demo "demo.hop")
   (hophome_demos-minesweeper "demos/minesweeper/minesweeper.hop")
   (hophome_demos-music "demos/music/music.hop")
   (hophome_demos-repl "demos/repl/repl.hop")
@@ -16,8 +15,5 @@
   (hophome_demos-source "demos/source/source.hop")
   (hophome_demos-sudoku "demos/sudoku/sudoku.hop")
   (hophome_demos-wiki "demos/wiki/wiki.hop")
-  (hophome "home.hop")
-  (hophome_widgets "widgets.hop")
-  (hophome_wiki "wiki.hop")
 )
 

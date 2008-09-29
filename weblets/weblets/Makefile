@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/weblets/Makefile          */
+#*    serrano/prgm/project/hop/1.10.x/weblets/weblets/Makefile         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Jun 20 15:45:59 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:41:06 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
@@ -22,10 +22,10 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-HOP_POP		= weblets.hop package.hop config.hop markup.hop \
+SOURCES		= weblets.hop package.hop config.hop markup.hop \
                   homepage.hop fontifier.hop
 
-POPULATION	= $(HOP_POP) \
+POPULATION	= $(SOURCES) \
                   Makefile \
                   weblets.hss weblets-homepage.hss config.hop \
                   LICENSE \
@@ -37,7 +37,7 @@ POPULATION	= $(HOP_POP) \
 #*---------------------------------------------------------------------*/
 build: etc/weblet.info etc/$(TITLE).wiki .afile
 
-.afile: $(HOP_POP)
+.afile: $(SOURCES)
 	$(AFILE) -suffix hop $(POPULATION) -o .afile
 
 clean:

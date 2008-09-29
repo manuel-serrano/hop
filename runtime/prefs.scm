@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Fri Sep 26 11:14:36 2008 (serrano)                */
+;*    Last change :  Sun Sep 28 19:42:09 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -102,11 +102,13 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    init-hop-prefs-services! ...                                     */
+;*    -------------------------------------------------------------    */
+;*    The svc URLs are used in hop-prefs.js                            */
 ;*---------------------------------------------------------------------*/
 (define (init-hop-prefs-services!)
    ;; prefs/edit
    (set! *prefs-edit-svc*
-	 (service :name "prefs/edit" (name type value key)
+	 (service :name "admin/preferences/edit" (name type value key)
 	    (mutex-lock! (preferences-mutex))
 	    (let* ((pref (string->symbol name))
 		   (value (string->value (string->symbol type) value))
@@ -124,14 +126,14 @@
 		  #t))))
    ;; prefs/save
    (set! *prefs-save-svc*
-	 (service :name "prefs/save" (key file ov)
+	 (service :name "admin/preferences/save" (key file ov)
 	    (mutex-lock! (preferences-mutex))
 	    (let ((save (hashtable-get *pref-save-table* key))
 		  (req (current-request)))
 	       (mutex-unlock! (preferences-mutex))
 	       (when (procedure? save)
 		  (if (and (or (authorized-service? req 'admin)
-			       (authorized-service? req 'admin/preferences-save))
+			       (authorized-service? req 'admin/preferences/save))
 			   (authorized-path? req file))
 		      ((cdr save) file (string=? ov "true"))
 		      (user-access-denied req)))))))

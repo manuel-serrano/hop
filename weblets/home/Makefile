@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/home/Makefile             */
+#*    serrano/prgm/project/hop/1.10.x/weblets/home/Makefile            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Jun 20 14:30:58 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:38:32 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -23,14 +23,14 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-HOP_POP         = home.hop config.hop widgets.hop demo.hop wiki.hop \
-                  presentation.wiki docs.wiki license.wiki faq.wiki \
+SOURCES         = home.hop config.hop widgets.hop demo.hop wiki.hop
+HOP_POP		= presentation.wiki docs.wiki license.wiki faq.wiki \
                   download.wiki weblets.wiki install.wiki install-jvm.wiki \
                   community.wiki
 POPULATION	= Makefile .afile home.hss tips.hss \
                   demos etc/icons articles etc/weblet.info.in etc/home.wiki.in \
                   etc/logo.png etc/favicon.png \
-                  $(HOP_POP) config.hop.in
+                  $(SOURCES) $(HOP_POP) config.hop.in
 
 HOP_DEMOS	= minesweeper/minesweeper.hop \
                   music/music.hop \

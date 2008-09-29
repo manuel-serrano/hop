@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/hzbuilder/Makefile        */
+#*    serrano/prgm/project/hop/1.10.x/weblets/hzbuilder/Makefile       */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Thu Sep 25 10:22:31 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 10:46:16 2008 (serrano)                */
 #*    Copyright   :  2007-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
@@ -22,11 +22,15 @@ DATE=24 sep 2008
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION=hzbuilder.hop generate.hop test.hop hzbuilder.hss \
-  etc/weblet.info.in etc/hzbuilder.wiki.in config.hop.in \
+SOURCES= hzbuilder.hop generate.hop test.hop hzbuilder.hss config.hop.in
+POPULATION= $(SOURCES) \
+  etc/weblet.info.in etc/hzbuilder.wiki.in  \
   etc/logo.png etc/favicon.png etc/doc.png etc/configure.png \
-  etc/logo-default.png etc/favicon-default.png \
-  etc/Makefile.hz etc/default.hss \
+  etc/skeleton/Makefile etc/skeleton/default.hss \
+  etc/skeleton/main.hop etc/skeleton/config.hop.in \
+  etc/skeleton/doc.wiki.in etc/skeleton/weblet.info.in \
+  etc/skeleton/logo.png etc/skeleton/favicon.png etc/skeleton/dashboard.png \
+  etc/skeleton/01-homepage.wiki \
   Makefile LICENSE
 
 #*---------------------------------------------------------------------*/

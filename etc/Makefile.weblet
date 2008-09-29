@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Apr 18 11:40:57 2008                          */
-#*    Last change :  Fri Apr 18 13:54:50 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:33:54 2008 (serrano)                */
 #*    Copyright   :  2008 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Generic entries for weblets Makefile                             */
@@ -41,6 +41,6 @@ config.hop: config.hop.in Makefile
                      -e "s|@HOST@|$(PRIVATEHOST)|" \
                      -e "s|@CATEGORY@|$(CATEGORY)|" > $@
 
-.afile: $(filter %.scm %.hop %.sch, $(POPULATION)) \
-        $(patsubst %.in,%,$(filter %.scm.in %.hop.in, $(POPULATION)))
+.afile: $(filter %.scm %.hop %.sch, $(SOURCES)) \
+        $(patsubst %.in,%,$(filter %.scm.in %.hop.in, $(SOURCES)))
 	$(AFILE) -suffix hop $^ -o $@

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/1.9.x/weblets/hzbuilder/hzbuilder.hop       */
+;*    .../prgm/project/hop/1.10.x/weblets/hzbuilder/hzbuilder.hop      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Sep 26 17:37:21 2008 (serrano)                */
+;*    Last change :  Mon Sep 29 10:36:57 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
@@ -365,7 +365,8 @@
 		  "name"))
 	 (<TD> (<ENTRY> :title "The author name"
 		  :id "hzb-author"
-		  "author")))
+		  "author"
+		  :default (string-capitalize (user-name (http-request-user (current-request)))))))
       (<TR> :class "form"
 	 (<TD> (<ENTRY> :class "required" :default "1.0.0"
 		  :id "hzb-version"
@@ -393,13 +394,11 @@
       (<SEPARATOR>)
       (<TR> :class "form"
 	 (<TD> (<IENTRY> :title "Default weblet icon" :id "hzb-logo"
-		  :src (make-file-name (hzbuilder-dir)
-				       "etc/logo-default.png")
+		  :src (hzbuilder-logo-skeleton)
 		  :legend "A 48x48 icon"
 		  "icon"))
 	 (<TD> (<IENTRY> :title "Default weblet favicon" :id "hzb-favicon"
-		  :src (make-file-name (hzbuilder-dir)
-				       "etc/favicon-default.png")
+		  :src (hzbuilder-favicon-skeleton)
 		  :legend "A 16x16 icon"
 		  "favicon")))
       (<SEPARATOR>)
@@ -414,7 +413,7 @@
 		  "dashboard"))
 	 (<TD> (<DIV> :id "hzb-dashicon" :style "display: none"
 		  (<IENTRY> :title "Default dashboard icon" :id "hzb-dashboard"
-		     :src (service-resource hzbuilder "etc/dashboard-default.png")
+		     :src (hzbuilder-dashboard-skeleton)
 		     :legend "A 32x32 icon"
 		     "Dashboard icon"))))
       (<SEPARATOR>)

@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/hz/Makefile               */
+#*    serrano/prgm/project/hop/1.10.x/weblets/hz/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Jun 27 15:33:51 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:43:37 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -22,11 +22,11 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-HOP_POP		= hz.hop config.hop install.hop sync.hop \
+SOURCES		= hz.hop config.hop install.hop sync.hop \
                   install.hop sync.hop db.hop \
                   markup.hop package.hop weblet.hop
 
-POPULATION	= $(HOP_POP) \
+POPULATION	= $(SOURCES) \
                   hz.hss \
                   Makefile \
                   etc/icons .afile etc/weblet.info.in \
@@ -39,7 +39,7 @@ POPULATION	= $(HOP_POP) \
 #*---------------------------------------------------------------------*/
 build: etc/weblet.info etc/$(TITLE).wiki .afile
 
-.afile: $(HOP_POP)
+.afile: $(SOURCES)
 	$(AFILE) -suffix hop $(POPULATION) -o .afile
 
 clean:

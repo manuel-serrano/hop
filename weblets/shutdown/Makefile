@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/shutdown/Makefile         */
+#*    serrano/prgm/project/hop/1.10.x/weblets/shutdown/Makefile        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Jun 20 15:33:54 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:39:50 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the shutdown weblet                              */
@@ -22,11 +22,11 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-HOP_POP         = shutdown.hop 
-POPULATION	= Makefile shutdown.hss \
+SOURCES         = shutdown.hop shutdown.hss \
+POPULATION	= Makefile \
                   etc/weblet.info.in etc/shutdown.wiki.in \
                   etc/logo.png etc/favicon.png \
-                  $(HOP_POP)
+                  $(SOURCES)
 
 #*---------------------------------------------------------------------*/
 #*    Targets                                                          */

@@ -1,0 +1,124 @@
+;; The module declaration 
+(module @HZ@
+   (import @HZ@_config))
+
+;; The weblet entry point
+(define-service (@HZ@)
+   (<HTML>
+      (<HEAD> :title "@TITLE@"
+	 :favicon (service-resource @HZ@ "etc/favicon.png")
+	 :base (service-base-url @HZ@ (current-request))
+	 :include (when @DASHBOARD@ "hop-dashboard")
+	 :css "@HZ@.hss")
+      (<@HZUPCASE@:BODY> :prefs #t
+	   :header "@TITLE@"
+	   ;; ========================================
+	   ;; INSERT HERE YOU CONTENT
+   	   (<DIV>
+	      (<BUTTON> :onclick ~(with-hop ($@HZ@/example)
+				     (lambda (h)
+					(innerHTML-set! "example-result" h)))
+		 "Im an example"))
+	   (<BR>)
+	   (<DIV> :id "example-result")
+	   (<BR>)
+	   ;; ========================================
+	   )))
+
+;; an example
+(define-service (@HZ@/example)
+   (let* ((size (@HZ@-table-size))
+	  (lst (iota size))
+	  (style (format "text-align: ~a" (@HZ@-table-align))))
+      (<TABLE> :border (if (@HZ@-table-border) 1 #f)
+	 (<TR> (map (lambda (i) (<TH> (format "col ~a" i))) lst))
+	 (<TR> (map (lambda (i) (<TD> :style style (random size))) lst)))))
+
+;; <@HZUPCASE@:BODY> widget
+(define-xml-compound <@HZUPCASE@:BODY>
+      ((class "@HZ@")
+       (header string "")
+       (prefs #f)
+       body)
+   (<BODY> :class class
+      (<DIV> :align "center"
+	 (<TABLE> :class "main"
+	    (<COLGROUP> (<COL> :width "0*"))
+	    (<TR>
+	       (<TD> (<IMG> :class "logo" :src "etc/logo.png")
+		     (<DIV> :class "version"
+			(<DIV> "@HZ@ v @VERSION@")
+			(<DIV> "@DATEDAY@ @DATEAMONTH@ @DATEYEAR@"))
+		     (<DIV> :class "buttons"
+			(<DIV> :class "button doc"
+			   (<A> :title "Documentation"
+			      :class "doc"
+			      :href "documentation"
+			      :onclick ~(set! this.href ($@HZ@/documentation))
+			      :target "_blank"
+			      :title "@HZ@ documentation"
+			      (<IMG> :class "doc"
+				 :inline #t
+				 :src (service-resource @HZ@ "etc/doc.png"))
+			      "Help"))
+			(when prefs
+			   (<DIV> :class "button prefs"
+			      (<A> :title "Preferences"
+				 :class "doc"
+				 :href "preferences"
+				 :onclick ~(set! this.href ($@HZ@/preferences))
+				 :target "_blank"
+				 :title "@HZ@ configuration"
+				 (<IMG> :class "doc"
+				    :inline #t
+				    :src (service-resource @HZ@ "etc/prefs.png"))
+				 "Prefs")))))
+	       (<TD>
+		  (<TABLE> :class "body"
+		     (<TR> (<TD> :class "weblet-title"
+			      (format "~a - @TITLE@" (string-capitalize "@HZ@"))))
+		     (<TR> (<TD> body)))))))
+      (<FOOT>)))
+
+;; the documentation entry point
+(define-service (@HZ@/documentation)
+   (let* ((file (service-resource @HZ@/documentation "etc/@HZ@.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
+
+;; the <CONFIGURE> user markup
+(define (<CONFIGURE>)
+   (<DIV> :class "@HZ@-preferences"
+      (<BUTTON> :onclick
+	 ~(preferences-save "@HZ@-configure"
+			    (make-file-name (hop-rc-directory) "@HZ@rc.hop"))
+	 :title "Save configuration (needs admin privileges)"
+	 "Save Configuration")
+      (<BR>)
+      (@HZ@-preferences-edit :id "@HZ@-configure")))
+
+;; the perferences service that can store configuration permanently
+(define-service (@HZ@/preferences)
+   (<HTML>
+      (<HEAD> :title (string-capitalize "@HZ@")
+	 :favicon (service-resource @HZ@ "etc/favicon.png")
+	 :base (service-base-url @HZ@ (current-request))
+	 :include "hop-prefs"
+	 :css "@HZ@.hss")
+      (<@HZUPCASE@:BODY> :class "@HZ@-body-preferences"
+         :header "Preferences"
+	 (<CONFIGURE>))))
+
+;; the optional dashboard entry
+(define-service (@HZ@/dashboard)
+   ~(window-open :id "@HZ@/dashboard")
+       :title (string-capitalize "@HZ@")
+       :src (<IFRAME> :src (@HZ@/dashboard-panel)
+	       :style "border: 0; width: 370px; height: 130px;")
+       :parent document.body
+       :width 375
+       :height 160
+       :left (- (current-window-width) 390)
+       :top (- (current-window-height) 170))

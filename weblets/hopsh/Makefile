@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/hopsh/Makefile            */
+#*    serrano/prgm/project/hop/1.10.x/weblets/hopsh/Makefile           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Apr 18 15:57:43 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:49:25 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the hopsh weblet                                 */
@@ -22,7 +22,8 @@ DATE = 18 april 2008
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile hopsh.hop hopsh.hss \
+SOURCES		= hopsh.hop hopsh.hss 
+POPULATION	= Makefile $(SOURCES) \
 		  etc/weblet.info.in etc/hopsh.wiki.in \
                   etc/logo.png etc/favicon.png
                   

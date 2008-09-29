@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/doc/Makefile              */
+#*    serrano/prgm/project/hop/1.10.x/weblets/doc/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Sep 19 14:26:22 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:37:05 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
@@ -22,7 +22,7 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-HOP_POP         = doc.hop config.hop \
+SOURCES         = doc.hop config.hop \
                   api.hop tutorials.hop libraries.hop weblets.hop \
                   search.hop widgets.hop wiki.hop services.hop index.hop
 API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
@@ -72,7 +72,7 @@ POPULATION	= Makefile .afile doc.hss doc.scm \
                   etc/kangaroo.svgz \
                   etc/favicon.png \
                   etc/anim.gif \
-                  $(HOP_POP) \
+                  $(SOURCES) \
 		  $(API_POP:%=api/%) \
 		  $(CORE_POP:%=core/%) \
 		  $(EXAMPLES_POP:%=examples/%) \

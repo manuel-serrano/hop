@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Sep 24 09:37:39 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:46:10 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -22,15 +22,15 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-HOP_POP         = hop.hop config.hop
-POPULATION	= Makefile .afile hop.hss \
+SOURCES         = hop.hop config.hop hop.hss
+POPULATION	= Makefile .afile \
                   etc/weblet.info.in etc/hop.wiki.in \
                   etc/logo.png etc/favicon.png etc/default.png \
-                  $(HOP_POP) 
+                  $(SOURCES) 
 
 build: etc/weblet.info etc/$(TITLE).wiki .afile
 
-.afile: $(HOP_POP)
+.afile: $(SOURCES)
 	$(AFILE) -suffix hop $(POPULATION) -o .afile
 
 clean:

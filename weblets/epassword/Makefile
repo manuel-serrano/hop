@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/epassword/Makefile        */
+#*    serrano/prgm/project/hop/1.10.x/weblets/epassword/Makefile       */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Jun 20 14:28:06 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:47:17 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the password weblet                              */
@@ -22,7 +22,8 @@ DATE = 18 april 2008
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile epassword.hss epassword.hop \
+SOURCES		= epassword.hss epassword.hop
+POPULATION	= Makefile $(SOURCES) \
 		  etc/weblet.info.in etc/logo.png etc/favicon.png \
                   etc/epassword.wiki.in
 

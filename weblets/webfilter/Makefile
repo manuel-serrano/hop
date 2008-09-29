@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/weblets/webfilter/Makefile        */
+#*    serrano/prgm/project/hop/1.10.x/weblets/webfilter/Makefile       */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri Jun 20 15:41:51 2008 (serrano)                */
+#*    Last change :  Mon Sep 29 09:44:46 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
@@ -22,18 +22,18 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-HOP_POP		= webfilter.hop 
+SOURCES		= webfilter.hop 
 
 POPULATION	= Makefile webfilter.hss etc/weblet.info.in \
                   etc/logo.png etc/favicon.png etc/webfilter.wiki.in BLACKLIST \
-                  $(HOP_POP)
+                  $(SOURCES)
 
 #*---------------------------------------------------------------------*/
 #*    Targets                                                          */
 #*---------------------------------------------------------------------*/
 build: etc/weblet.info etc/$(TITLE).wiki .afile
 
-.afile: $(HOP_POP)
+.afile: $(SOURCES)
 	$(AFILE) -suffix hop $(POPULATION) -o .afile
 
 clean:
