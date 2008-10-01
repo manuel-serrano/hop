@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/hz/weblet.hop                   */
+;*    serrano/prgm/project/hop/1.10.x/weblets/hz/weblet.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Nov 28 11:11:42 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Wed Oct  1 16:13:29 2008 (serrano)                */
+;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
 ;*=====================================================================*/
@@ -64,7 +64,7 @@
 ;*    Extra fields are simply ignored by HZ.                           */
 ;*---------------------------------------------------------------------*/
 (define (info->weblet info::pair #!key name version url)
-   
+
    (define (find key default)
       (cond
 	 ((assq key info) => cadr)
@@ -88,14 +88,14 @@
 		   (if (or (not (string? name)) (string=? v name))
 		       (convert v)
 		       (error 'info->weblet
-			      "weblet name mismatch"
-			      (format "~a vs ~a" name v)))))
+			      (format "weblet ~a name mismatch" name)
+			      (format "~a expected, ~a provided" name v)))))
 	  (version (let ((v (find 'version (or version "0.0.0"))))
 		      (if (or (not (string? version)) (string=? v version))
 			  (convert v)
 			  (error 'info->weblet
 				 (format "weblet ~a, version mismatch" name)
-				 (format "~a vs ~a" version v)))))
+				 (format "~a expected, ~a provided" version v)))))
 	  (publisher (convert (find 'publisher #f)))
 	  (url (let ((u (convert (find 'url url))))
 		  (cond

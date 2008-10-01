@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/hz/config.hop             */
+;*    serrano/prgm/project/hop/1.10.x/weblets/hz/config.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Mon Aug 11 09:56:59 2008 (serrano)                */
+;*    Last change :  Wed Oct  1 16:22:51 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -47,7 +47,7 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hz-categories
    '("hop" "devel" "games" "multimedia" "other" "system" "desktop" "education"
-     "office" "scientific"))
+     "office" "scientific" "domotics"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-dir                                                           */

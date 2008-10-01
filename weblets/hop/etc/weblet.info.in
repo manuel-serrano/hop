@@ -1,4 +1,4 @@
-((name "doc")
+((name "hop")
  (author "M. Serrano")
  (version "@VERSION@")
  (date "@DATE@")
