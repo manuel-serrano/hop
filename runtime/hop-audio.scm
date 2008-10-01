@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-audio.scm             */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-audio.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Sep  3 11:32:35 2008 (serrano)                */
+;*    Last change :  Wed Oct  1 15:26:20 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -38,25 +38,95 @@
 	    __hop_hop-sym
 	    __hop_event
 	    __hop_http-error
-	    __hop_charset)
+	    __hop_charset
+	    __hop_user
+	    __hop_http-request
+	    __hop_hop)
    
-   (export  (<AUDIO> . args)
+   (export  (init-hop-audio-services!)
+
+	    (<AUDIO> . args)
 	    
 	    (class hop-audio-player
 	       (hop-audio-player-init)
 	       (engine read-only)
 	       (name read-only (default #f))
+	       (ident read-only (default (gensym 'hop-audio)))
 	       (%thread (default #f))
 	       (%service (default #unspecified))
 	       (%event (default #unspecified))
 	       (%mutex (default (make-mutex 'hop-audio-player)))
-	       (%errcount::int (default 0)))
+	       (%errcount::int (default 0))
+	       (%status::symbol (default 'init))
+	       (%log::pair-nil (default '())))
 	    
 	    (generic hop-audio-player-init ::hop-audio-player)
 	    (generic hop-audio-player-close ::hop-audio-player)
 
 	    (hop-audio-player-json ::hop-audio-player)))
 
+;*---------------------------------------------------------------------*/
+;*    debug-players-list ...                                           */
+;*---------------------------------------------------------------------*/
+(define debug-players-list '())
+(define debug-mutex (make-mutex "hop-audio-debug"))
+(define debug-svc #f)
+(define debug-log-length 10)
+
+(define-struct logentry command args complete)
+
+;*---------------------------------------------------------------------*/
+;*    debutg-player ...                                                */
+;*---------------------------------------------------------------------*/
+(define (debug-player p)
+   
+   (define (debug-log log)
+      (<TABLE> :style "border: 1px dashed #777; width: 100%"
+	 (let loop ((log log)
+		    (i debug-log-length)
+		    (res '()))
+	    (if (>fx i 0)
+		(loop (cdr log)
+		      (-fx i 1)
+		      (cons (<TR> (<TD> :style "vertical-align: top"
+				     (<TT> :style (unless (logentry-complete (car log))
+						     "color: red; font-weight: bold")
+					(logentry-command (car log))))
+				  (<TD> :style "vertical-align: top"
+				     (<TT> (logentry-args (car log)))))
+			    res))
+		res))))
+   
+   (with-access::hop-audio-player p (name %status %mutex %log ident)
+      (with-lock %mutex
+	 (lambda ()
+	    (<TABLE> :style "border: 2px solid red; width: 100%"
+	       (<COLGROUP> (<COL> :width "0*"))
+	       (<TR> (<TH> :colspan 2 :style "text-align: left" "Player " name))
+	       (<TR> (<TD> "ident: " (<TD> (<TT> ident))))
+	       (<TR> (<TD> "status:") (<TD> (<TT> %status)))
+	       (<TR> (<TD> "log:" :style "vertical-align: top")
+		     (<TD> :style "vertical-align: top"
+			(debug-log %log))))))))
+
+;*---------------------------------------------------------------------*/
+;*    init-hop-audio-services! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (init-hop-audio-services!)
+   (set! debug-svc
+	 (service :name "hopaudio/debug" (name)
+	    (when (authorized-service? (current-request) 'admin)
+	       (with-lock debug-mutex
+		  (lambda ()
+		     (let ((p (if name
+				  (filter (lambda (p)
+					     (string=? (hop-audio-player-name p) name))
+					  debug-players-list)
+				  debug-players-list)))
+			(<HTML>
+			   (<BODY>
+			      (map debug-player p))))))))))
+						      
 ;*---------------------------------------------------------------------*/
 ;*    <AUDIO> ...                                                      */
 ;*    -------------------------------------------------------------    */
@@ -372,6 +442,13 @@
 		     :onchange (on "pan_set")))
 	    (<TH> "R")))))
 
+(define-expander hop-event-broadcast!
+   (lambda (x e)
+      `(begin
+	  ,(e `(tprint "HOP-EVENT-BROADCAST!..."
+		,@(map (lambda (x) (e x e)) (cdr x))) e)
+	  (hop-event-broadcast! ,@(map (lambda (x) (e x e)) (cdr x))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    audio-onstate ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -451,13 +528,16 @@
 (define (make-audio-thread player)
    
    (define (audio-thread-trace player)
-      (with-access::hop-audio-player player (%event engine)
+      (with-access::hop-audio-player player (%event %status %mutex engine)
 	 (let ((th (current-thread)))
 	    ;; debug
 	    (tprint ">>> AUDIO-LOOP STARTED, e=" (find-runtime-type engine))
 	    (thread-cleanup-set!
 	     th
 	     (lambda (_)
+		(mutex-lock! %mutex)
+		(set! %status 'closed)
+		(mutex-unlock! %mutex)
 		(hop-event-broadcast! %event (list 'close))
 		(tprint "<<< AUDIO-LOOP THREAD ENDED, e=" (find-runtime-type engine)))))))
    
@@ -465,7 +545,7 @@
     (make-thread
      (lambda ()
 	(audio-thread-trace player)
-	(with-access::hop-audio-player player (engine %event %errcount)
+	(with-access::hop-audio-player player (engine %event %errcount %status)
 	   (let ((onstate (audio-onstate %event engine player))
 		 (onerror (audio-onerror %event engine))
 		 (onvolume (audio-onvolume %event engine))
@@ -477,6 +557,7 @@
 				  (lambda ()
 				     (exception-notify e)))))
 		       (onerror msg)))
+		 (set! %status 'running)
 		 (music-event-loop engine
 				   :onstate onstate
 				   :onerror onerror
@@ -491,27 +572,61 @@
    (for-each (lambda (s)
 		(music-playlist-add! engine ((hop-charset->locale) s)))
 	     a1))
-   
+
+;*---------------------------------------------------------------------*/
+;*    debug-log ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (debug-log player a0 a1)
+   (with-access::hop-audio-player player (%log %mutex)
+      (mutex-lock! %mutex)
+      (let ((loge (car %log)))
+	 (logentry-command-set! loge a0)
+	 (logentry-args-set! loge a1)
+	 (logentry-complete-set! loge #f)
+      (mutex-unlock! %mutex))))
+
+;*---------------------------------------------------------------------*/
+;*    debug-log-complete ...                                           */
+;*---------------------------------------------------------------------*/
+(define (debug-log-complete player a0 a1)
+   (with-access::hop-audio-player player (%log %mutex)
+      (mutex-lock! %mutex)
+      (let ((loge (car %log)))
+	 (logentry-complete-set! loge #t)
+	 (set! %log (cdr %log)))
+      (mutex-unlock! %mutex)))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-audio-player-init ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (hop-audio-player-init player::hop-audio-player)
 
    (define (hop-audio-player-event-loop-start player)
-      (with-access::hop-audio-player player (%thread %mutex engine)
+      (with-access::hop-audio-player player (%thread %mutex %status %log engine)
 	 (mutex-lock! %mutex)
 	 (if (thread? %thread)
 	     (begin
+		(set! %status 'reset-event-loop)
 		(mutex-unlock! %mutex)
 		(music-event-loop-reset! engine))
 	     (unwind-protect
-		(set! %thread (make-audio-thread player))
+		(begin
+		   (set! %status 'start-event-loop)
+		   (set! %thread (make-audio-thread player)))
 		(mutex-unlock! %mutex)))))
+
+   (mutex-lock! debug-mutex)
+   (set! debug-players-list (cons player debug-players-list))
+   (let ((log (map! (lambda (_) (logentry #f #f #t)) (iota debug-log-length))))
+      (set-cdr! (last-pair log) log)
+      (hop-audio-player-%log-set! player log))
+   (mutex-unlock! debug-mutex)
    
    (cond-expand
       (enable-threads
        (with-access::hop-audio-player player (%service %event engine)
 	  (set! %service (service :name (get-service-url "hop-audio") (a0 a1)
+			    (debug-log player a0 a1)
 			    (with-handler
 			       (lambda (e)
 				  (error-notify e)
@@ -538,6 +653,7 @@
 				   (music-volume-set! engine a1))
 				  ((close)
 				   (hop-audio-player-close player)))
+			       (debug-log-complete player a0 a1)
 			       #t)))
 	  (set! %event (hop-service-path %service))
 	  player))
@@ -550,13 +666,18 @@
 ;*    hop-audio-player-close ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (hop-audio-player-close audio::hop-audio-player)
-   (with-access::hop-audio-player audio (%mutex %thread engine)
+   (tprint "hop-audio-player-close...")
+   (with-access::hop-audio-player audio (%mutex %thread %status engine)
       (with-lock %mutex
 	 (lambda ()
+	    (set! %status 'close)
 	    (when (thread? %thread)
 	       (music-event-loop-abort! engine)
 	       (music-close engine)
-	       (set! %thread #f))))))
+	       (set! %thread #f)
+	       (mutex-lock! debug-mutex)
+	       (set! debug-players-list (remq! audio debug-players-list))
+	       (mutex-unlock! debug-mutex))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-audio-player-json ...                                        */

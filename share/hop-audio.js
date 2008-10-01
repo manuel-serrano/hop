@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-audio.js                */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-audio.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Sep  3 11:31:43 2008 (serrano)                */
+/*    Last change :  Wed Oct  1 15:39:27 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -257,6 +257,7 @@ HopAudioServerProxy.prototype.event_listener = function( e ) {
 	 hop_audio_run_hooks( this.audio, "error", rest.car );
       } else if( k == Sclose ) {
 	 // close
+	 hop_audio_close( this.audio );
 	 hop_audio_run_hooks( this.audio, "close", false );
       } else if( k == Smeta ) {
 	 // meta (and playlist)
@@ -621,7 +622,19 @@ function hop_audio_play( audio, start ) {
 /*** META ((export audio-close)
            (peephole (postfix ".proxy.close()"))) */
 function hop_audio_close( audio ) {
+   /* cleanup the current proxy */
+   if( audio.server_proxy ) {
+      hop_remove_event_listener( audio.server_proxy.url,
+				 "server",
+				 audio.server_proxy.event_listener );
+   }
+   
    audio.proxy.close();
+
+   /* mark the state */
+   audio.state = Sclose;
+   audio.proxy = new HopAudioProxy();
+   audio.player = false;
 }
 
 /*---------------------------------------------------------------------*/
@@ -997,6 +1010,7 @@ function hop_audio_controls_onstop( evt ) {
    var track = document.getElementById( id + "-controls-status-track" );
    var min = document.getElementById( id + "-controls-status-length-min" );
    var sec = document.getElementById( id + "-controls-status-length-sec" );
+   var tl = document.getElementById( id + "-controls-metadata-song" );
 
    track.className = "hop-audio-info-status-track";
    track.innerHTML = "88888";

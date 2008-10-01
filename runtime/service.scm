@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/service.scm               */
+;*    serrano/prgm/project/hop/1.10.x/runtime/service.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Sep  3 07:25:55 2008 (serrano)                */
+;*    Last change :  Wed Oct  1 07:46:47 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -32,7 +32,8 @@
 	    __hop_prefs
 	    __hop_js-lib
 	    __hop_user
-	    __hop_weblets)
+	    __hop_weblets
+	    __hop_hop-audio)
    
    (export  (init-hop-services!)
 	    (get-all-services ::http-request)
@@ -91,7 +92,8 @@
 ;*---------------------------------------------------------------------*/
 (define (init-hop-services!)
    (init-hop-file-services!)
-   (init-hop-prefs-services!))
+   (init-hop-prefs-services!)
+   (init-hop-audio-services!))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-service-url ...                                              */

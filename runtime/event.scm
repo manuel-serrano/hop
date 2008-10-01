@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/1.10.x/runtime/event.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Sep 11 12:40:29 2008 (serrano)                */
+;*    Last change :  Wed Oct  1 15:26:41 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -745,22 +745,13 @@
 	  (when (pair? l)
 	     (let ((val (flash-make-signal-value value)))
 		(for-each (lambda (req)
-;* 			     (tprint "flash broadcast: " name " "      */
-;* 				     (http-request-socket req))        */
-;* 			     (with-output-to-port (current-error-port) */
-;* 				(lambda ()                             */
-;* 				   (display "flash: [")                */
-;* 				   (write value)                       */
-;* 				   (display "] -> [")                  */
-;* 				   (display val)                       */
-;* 				   (print "]")))                       */
 			     (flash-signal-value req name val))
 			  l))))))
 
    (set! hop-broadcast-id (-fx hop-broadcast-id 1))
    (hop-verb 2 (hop-color hop-broadcast-id hop-broadcast-id " BROADCAST")
 	     ": " name)
-   (hop-verb 3 " value=" (with-output-to-string (lambda () (write value))))
+   (hop-verb 3 " value=" (with-output-to-string (lambda () (write-circle value))))
    (hop-verb 2 "\n")
    (mutex-lock! *event-mutex*)
    (unwind-protect
