@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Oct  1 15:39:27 2008 (serrano)                */
+/*    Last change :  Thu Oct  2 07:21:52 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -945,10 +945,13 @@ function hop_audio_controls_onclose( evt ) {
    hop_audio_controls_metadata( audio, true );
    
    status.src = stopbut.src;
-   tl.className = "hop-audio-panel-metadata-close";
-   tl.innerHTML = evt.value ?
-      evt.value + " closed..." :
-      "Player closed...";
+   if( tl.className === "hop-audio-panel-metadata-error" ) {
+      var ab = document.getElementById( audio.id + "-controls-metadata-album" );
+      ab.innerHTML = (evt.value ? evt.value : "player closed...");
+   } else {
+      tl.className = "hop-audio-panel-metadata-close";
+      tl.innerHTML = evt.value ? evt.value + " closed..." : "Player closed...";
+   }
 }
 
 /*---------------------------------------------------------------------*/

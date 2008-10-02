@@ -4,6 +4,9 @@
 
 [[hz|HZ]] manages Hop weblets //installation//, //update//, and //removal//. 
 It operates installation across the web.
+The ,(<TUTORIALREF> "Hz tutorial" "06-hz.wiki") gives additional 
+informations about the structure of Hz package. It complements this
+manual page.
 
 ~~
 ,(<TABLE> :class "weblet-facts"
@@ -59,6 +62,41 @@ Here is a list of example of correct HZ file names:
 
 It should be noted that hyphen can only used in HZ package for separating
 the base name of the package and its version number.
+
+=== The weblet.info file ===
+
+The ++weblet.info++ file contains packages //meta data//. It must be
+located in the ++etc++ directory of the source code of the weblet. It
+is a list of associations. Each association is a key and a value. The
+currently knows keys are:
+
+  * ++name++, the name of the weblet.
+  * ++version++, the version of the weblet.
+  * ++home++, a URL describing the weblet.
+  * ++url++, a URL containing the weblet.
+  * ++publisher++, the URL of the HZ sync-list publishing the weblet.
+  * ++author++, the author of the weblet.
+  * ++version++, the version of the weblet.
+  * ++title++, a one-liner description.
+  * ++comment++, a description of the weblet.
+  * ++category++, the category the weblet belongs to. The category list is
+ closed. A category must be one of:
+    * ++hop++
+    * ++devel++
+    * ++games++
+    * ++multimedia++
+    * ++other++
+    * ++system++
+    * ++desktop++
+    * ++education++
+    * ++office++ 
+    * ++scientific++
+    * ++domotics++ 
+
+
+ this list might be extended in the future versions of HOP.   
+  * ++minhop++, the minimal HOP version able to run the weblet.
+  * ++maxhop++, the maximal HOP version able to run the weblet.
 
 == Configuring HZ ==
 

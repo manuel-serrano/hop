@@ -20,11 +20,11 @@ format used for bundling weblets, is actually a tarball file (a
 code of the weblet plus some utility files and some contribution files
 (e.g., the icons of the application).
 
-~~ The documentation of the ++[[hz]]++ weblet can be found 
-,(<WEBLETREF> "here" (make-file-path (hop-weblets-directory) "hz/etc/hz.wiki")). The documentation of ++[[weblets]]++ 
+~~ The documentation of the ++[[/hop/hz|hz]]++ weblet can be found 
+,(<WEBLETREF> "here" (make-file-path (hop-weblets-directory) "hz/etc/hz.wiki")). The documentation of ++[[/hop/weblets|weblets]]++ 
 ,(<WEBLETREF> "here" (make-file-path (hop-weblets-directory) "hz/etc/weblets.wiki")).
 
-~~ The weblet of the ++[[hzbuilder]]++ creates the minimal file 
+~~ The weblet ++[[/hop/hzbuilder|hzbuilder]]++ creates the minimal file 
 structure needed for a complete weblet. It operates automatically
 the various steps presented in this tutorial.
 
@@ -266,6 +266,7 @@ keys are:
     * ++education++
     * ++office++ 
     * ++scientific++
+    * ++domotics++ 
 
 
  this list might be extended in the future versions of HOP.   
