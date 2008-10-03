@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/wiki/wiki.hop             */
+;*    serrano/prgm/project/hop/1.10.x/weblets/wiki/wiki.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Apr  4 15:13:47 2008 (serrano)                */
+;*    Last change :  Fri Oct  3 11:36:50 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -157,7 +157,7 @@
 		   (<TABLE> :class 'edit :width "100%"
 		      (<TR> (<TD> file)
 			    (<TD> :class 'edit
-			       (if (http-request-localhostp req)
+			       (if (http-server-request? req)
 				   (<EDIT:EMACS> file)
 				   (<EDIT:EDIT> file)))))))
 	     (<TABLE> :width "100%"
