@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/weblets/hz/hz-install.js          */
+/*    serrano/prgm/project/hop/1.10.x/weblets/hz/hz-install.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 16 11:07:40 2007                          */
-/*    Last change :  Wed Dec 12 14:39:24 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Thu Oct  2 08:00:47 2008 (serrano)                */
+/*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Create a click and install panel                                 */
 /*=====================================================================*/
@@ -49,7 +49,7 @@ function hop_install_weblet( url, srci, srcr, parent ) {
       "<td><table style='border-collapse: collapse'>" +
       "<tr><td style='text-align: center'>" +
       "<a href='' target='_blank' onclick='" + oninstall + "'>" +
-      "<img class='hop_hz_click' src='" + srci + "' alt='Click and install' title='Install or update the weblet'/>" +
+      "<img class='hop_hz_click' src='" + srci + "' alt='Click and install' title='Install or update the weblet on the Hop Broker'/>" +
       "</a>" +
       "</td></tr>" +
       "<tr><td style='text-align: center; font-size: 70%'>Install / Update</td></tr>" +
@@ -57,7 +57,7 @@ function hop_install_weblet( url, srci, srcr, parent ) {
       "<td><table style='border-collapse: collapse'>" +
       "<tr><td style='text-align: center'>" +
       "<a href='' target='_blank' onclick='" + onrun + "'>" +
-      "<img class='hop_hz_click' src='" + srcr + "' alt='Click and run' title='Run the weblet'/>" +
+      "<img class='hop_hz_click' src='" + srcr + "' alt='Click and run' title='Run the weblet on the Hop Broker'/>" +
       "</a>" +
       "</td></tr>" +
       "<tr><td style='text-align: center; font-size: 70%'>Run</td></tr>" +

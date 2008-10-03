@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../project/hop/1.9.x/weblets/weblets/weblets-homepage.hss       */
+/*    .../project/hop/1.10.x/weblets/weblets/weblets-homepage.hss      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 12 13:49:57 2006                          */
-/*    Last change :  Mon Apr 21 15:41:43 2008 (serrano)                */
+/*    Last change :  Thu Oct  2 07:50:29 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP weblets homepage cascade style sheet                         */
@@ -62,6 +62,7 @@ nptab img {
 nptab-active {
   background-color: $home-color;
   border-bottom-color: $home-color;
+  color: #8381de;
 }
 
 notepad-body {

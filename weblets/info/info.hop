@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/info/info.hop             */
+;*    serrano/prgm/project/hop/1.10.x/weblets/info/info.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Aug 28 14:26:08 2008 (serrano)                */
+;*    Last change :  Fri Oct  3 09:17:40 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -220,13 +220,11 @@
 				    " " (round
 					 (/ (file-size (cache-entry-upath ce))
 					    1024))
-				    "KB ("
-				    (seconds->date (cache-entry-mtime ce))
-				    ")")))
+				    "KB")))
 			   l)))))
 	 (<TABLE> :class "info-cache"
 	    (<TR>
-	       (<TH> (cache-disk-upath c)))
+	       (<TH> (cache-disk-path c)))
 	    (<TR>
 	       (<TD> (format "~a files, ~a KB on cache."
 			     (length l)
@@ -260,8 +258,8 @@
 					  (lambda (h)
 					     (innerHTML-set! $d h)))
 			     (make-file-name
-			      (basename (dirname (cache-disk-upath c)))
-			      (basename (cache-disk-upath c)))))
+			      (basename (dirname (cache-disk-path c)))
+			      (basename (cache-disk-path c)))))
 		       (filter cache-disk? (registered-caches)))))
 	    (<TD> :width "80%" :valign 'top
 	       d)))))
