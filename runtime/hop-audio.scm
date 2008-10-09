@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Oct  1 15:26:20 2008 (serrano)                */
+;*    Last change :  Wed Oct  8 17:21:02 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -80,7 +80,7 @@
 ;*---------------------------------------------------------------------*/
 (define (debug-player p)
    
-   (define (debug-log log)
+   (define (<log> log)
       (<TABLE> :style "border: 1px dashed #777; width: 100%"
 	 (let loop ((log log)
 		    (i debug-log-length)
@@ -107,20 +107,21 @@
 	       (<TR> (<TD> "status:") (<TD> (<TT> %status)))
 	       (<TR> (<TD> "log:" :style "vertical-align: top")
 		     (<TD> :style "vertical-align: top"
-			(debug-log %log))))))))
+			(<log> %log))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-hop-audio-services! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (init-hop-audio-services!)
    (set! debug-svc
-	 (service :name "hopaudio/debug" (name)
+	 (service :name "hop-audio/debug" (name)
 	    (when (authorized-service? (current-request) 'admin)
 	       (with-lock debug-mutex
 		  (lambda ()
 		     (let ((p (if name
 				  (filter (lambda (p)
-					     (string=? (hop-audio-player-name p) name))
+					     (string=? (hop-audio-player-name p)
+						       name))
 					  debug-players-list)
 				  debug-players-list)))
 			(<HTML>
@@ -442,7 +443,7 @@
 		     :onchange (on "pan_set")))
 	    (<TH> "R")))))
 
-(define-expander hop-event-broadcast!
+#;(define-expander hop-event-broadcast!
    (lambda (x e)
       `(begin
 	  ,(e `(tprint "HOP-EVENT-BROADCAST!..."
@@ -511,7 +512,6 @@
 ;*---------------------------------------------------------------------*/
 (define (audio-onerror %event engine)
    (lambda (error)
-      (tprint "audio signal error=" error " engine=" (find-runtime-type engine))
       (hop-event-broadcast! %event (list 'error error))))
 
 ;*---------------------------------------------------------------------*/
@@ -519,7 +519,6 @@
 ;*---------------------------------------------------------------------*/
 (define (audio-onvolume %event engine)
    (lambda (vol)
-      (tprint "audio signal volume=" vol " engine=" (find-runtime-type engine))
       (hop-event-broadcast! %event (list 'volume vol))))
 
 ;*---------------------------------------------------------------------*/
@@ -528,18 +527,22 @@
 (define (make-audio-thread player)
    
    (define (audio-thread-trace player)
-      (with-access::hop-audio-player player (%event %status %mutex engine)
+      (with-access::hop-audio-player player (%event %status %mutex engine %thread)
 	 (let ((th (current-thread)))
 	    ;; debug
 	    (tprint ">>> AUDIO-LOOP STARTED, e=" (find-runtime-type engine))
 	    (thread-cleanup-set!
 	     th
 	     (lambda (_)
-		(mutex-lock! %mutex)
-		(set! %status 'closed)
-		(mutex-unlock! %mutex)
-		(hop-event-broadcast! %event (list 'close))
-		(tprint "<<< AUDIO-LOOP THREAD ENDED, e=" (find-runtime-type engine)))))))
+		(with-access::musicstatus (music-%status engine) (err)
+		   (tprint "err=" err)
+		   (if err
+		       (hop-event-broadcast! %event (list 'abort err))
+		       (begin
+			  (set! %status 'closed)
+			  (hop-event-broadcast! %event (list 'close)))))
+		(tprint "<<< AUDIO-LOOP THREAD ENDED, e=" (find-runtime-type engine))
+		(set! %thread #f))))))
    
    (thread-start!
     (make-thread
@@ -556,6 +559,7 @@
 		    (let ((msg (with-error-to-string
 				  (lambda ()
 				     (exception-notify e)))))
+		       (set! %status 'error)
 		       (onerror msg)))
 		 (set! %status 'running)
 		 (music-event-loop engine

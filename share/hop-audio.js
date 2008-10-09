@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Thu Oct  2 07:21:52 2008 (serrano)                */
+/*    Last change :  Wed Oct  8 17:10:30 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -61,6 +61,7 @@ var Span = sc_jsstring2symbol( "pan" );
 var Smeta = sc_jsstring2symbol( "meta" );
 var Splaylist = sc_jsstring2symbol( "playlist" );
 var Serror = sc_jsstring2symbol( "error" );
+var Sabort = sc_jsstring2symbol( "abort" );
 
 /*---------------------------------------------------------------------*/
 /*    hop_audio_run_hooks ...                                          */
@@ -255,6 +256,10 @@ HopAudioServerProxy.prototype.event_listener = function( e ) {
       } else if( k == Serror ) {
 	 // error
 	 hop_audio_run_hooks( this.audio, "error", rest.car );
+      } else if( k == Sabort ) {
+	 // abort
+	 hop_audio_run_hooks( this.audio, "error", rest.car );
+	 hop_audio_shutdown( this.audio );
       } else if( k == Sclose ) {
 	 // close
 	 hop_audio_close( this.audio );
@@ -473,6 +478,18 @@ function hop_audio_onload_callback( id, play ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_audio_shutdown ...                                           */
+/*    -------------------------------------------------------------    */
+/*    This internal function is closed to shutdown a proxy player      */
+/*    either after an error or a audio-close call.                     */
+/*---------------------------------------------------------------------*/
+function hop_audio_shutdown( audio ) {
+   audio.state = Sclose;
+   audio.proxy = new HopAudioProxy();
+   audio.player = false;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_audio_onerror_callback ...                                   */
 /*---------------------------------------------------------------------*/
 function hop_audio_onerror_callback( id, play ) {
@@ -483,6 +500,8 @@ function hop_audio_onerror_callback( id, play ) {
       audio.onerror( evt );
    if( !evt.isStopped && audio.controls && audio.controls.onerror )
       audio.controls.onerror( evt );
+
+   hop_audio_shutdown( audio );
 }
 
 /*---------------------------------------------------------------------*/
@@ -628,13 +647,11 @@ function hop_audio_close( audio ) {
 				 "server",
 				 audio.server_proxy.event_listener );
    }
-   
+
    audio.proxy.close();
 
-   /* mark the state */
-   audio.state = Sclose;
-   audio.proxy = new HopAudioProxy();
-   audio.player = false;
+   /* shutdown the proxy */
+   hop_audio_shutdown( audio );
 }
 
 /*---------------------------------------------------------------------*/

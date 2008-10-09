@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/misc.scm                  */
+;*    serrano/prgm/project/hop/1.10.x/runtime/misc.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sat Sep 20 19:31:54 2008 (serrano)                */
+;*    Last change :  Thu Oct  9 05:06:29 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -411,14 +411,14 @@
 ;*    input-timeout-set! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (input-timeout-set! port t)
-   (let ((ms (micro-seconds t)))
+   (let ((ms (if (>fx t 0) (micro-seconds t) t)))
       (input-port-timeout-set! port ms)))
 
 ;*---------------------------------------------------------------------*/
 ;*    output-timeout-set! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (output-timeout-set! port t)
-   (let ((ms (micro-seconds t)))
+   (let ((ms (if (>fx t 0) (micro-seconds t) t)))
       (output-port-timeout-set! port ms)))
 
 ;*---------------------------------------------------------------------*/

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/1.10.x/runtime/types.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Sep 18 10:02:35 2008 (serrano)                */
+;*    Last change :  Thu Oct  9 05:11:52 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -36,7 +36,7 @@
 	      (header::pair-nil (default '()))
 	      (content-length::elong read-only (default #e-1))
 	      (charset (default #f))
-	      (timeout::int (default -1)))
+	      (timeout::int (default 0)))
 	   
 	   (class http-request::%http-message
 	      (id::int read-only (default -1))

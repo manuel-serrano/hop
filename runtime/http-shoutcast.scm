@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/http-shoutcast.scm        */
+;*    serrano/prgm/project/hop/1.10.x/runtime/http-shoutcast.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Sep 19 12:52:44 2008 (serrano)                */
+;*    Last change :  Thu Oct  9 05:01:13 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -39,7 +39,7 @@
 ;*    shoutcast ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (shoutcast r::http-response-shoutcast socket)
-   (with-access::http-response-file r (start-line header content-type file)
+   (with-access::http-response-file r (start-line header content-type file timeout)
       (let ((p (socket-output socket))
 	    (pf (open-input-file file)))
 	 (if (not (input-port? pf))
@@ -66,7 +66,7 @@
 				   (fixnum->elong (+fx 1 l))
 				   (/elong size psize)))))
 		;; in all cases, remove the timeout
-		(output-port-timeout-set! p 0)
+		(output-port-timeout-set! p timeout)
 		;; regular header
 		(http-write-line p start-line)
 		(http-write-header p header)

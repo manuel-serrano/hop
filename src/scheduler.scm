@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/scheduler.scm                 */
+;*    serrano/prgm/project/hop/1.10.x/src/scheduler.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Sat Sep 20 07:53:39 2008 (serrano)                */
+;*    Last change :  Tue Oct  7 15:48:11 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -315,11 +315,12 @@
        (exception-notify e))
       (else
        (fprint (current-error-port) "*** INTERNAL ERROR, uncaught exception: "
-	       (find-runtime-type e))))
-   (let ((th (current-thread)))
-      (when (thread? th)
-	 (fprint (current-error-port) "Thread: " th
-		 " thread-info: " (thread-info th)))))
+	       (find-runtime-type e))
+       (let ((th (current-thread)))
+	  (when (thread? th)
+	     (tprint "Thread: " th
+		     " thread-info: " (thread-info th)
+		     " exception=" e))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-error-handler ...                                      */

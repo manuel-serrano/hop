@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/http-error.scm            */
+;*    serrano/prgm/project/hop/1.10.x/runtime/http-error.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Sep 20 14:20:22 2008 (serrano)                */
+;*    Last change :  Tue Oct  7 14:30:56 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -404,7 +404,7 @@ a timeout which has now expired. The service is then no longer available."))
 			      (<ETD> (<TT> (hop-request-service-name req))))))))))
       (instantiate::http-response-hop
 	 (request req)
-	 (start-line "HTTP/1.0 400 Bad Request")
+	 (start-line (http-start-line req "400 Bad Request"))
 	 (backend (hop-xml-backend))
 	 (content-type (xml-backend-mime-type (hop-xml-backend)))
 	 (charset (hop-charset))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/init.scm                      */
+;*    serrano/prgm/project/hop/1.10.x/src/init.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sat Sep 20 18:54:21 2008 (serrano)                */
+;*    Last change :  Thu Oct  9 05:00:41 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -110,7 +110,7 @@
 ;*    http-get-file-not-found ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (http-get-file-not-found req)
-   (with-access::http-request req (abspath)
+   (with-access::http-request req (abspath timeout)
       (cond
 	 ((hop-service-path? abspath)
 	  (http-service-not-found abspath))
@@ -123,6 +123,7 @@
 </cross-domain-policy>" (hop-port))))
 	     (instantiate::http-response-string
 		(request req)
+		(timeout timeout)
 		(content-type "application/xml")
 		(body s))))
 	 (else
@@ -132,7 +133,7 @@
 ;*    http-get-file-query ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-get-file-query req)
-   (with-access::http-request req (abspath query method)
+   (with-access::http-request req (abspath query method timeout)
       (cond
 	 ((string=? query (hop-scm-compile-suffix))
 	  (scm-response req abspath))
@@ -141,6 +142,7 @@
 	 (else
 	  (instantiate::http-response-file
 	     (request req)
+	     (timeout timeout)
 	     (charset (hop-locale))
 	     (content-type (mime-type abspath "text/plain"))
 	     (bodyp (eq? method 'GET))
@@ -150,7 +152,7 @@
 ;*    http-get-hop ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (http-get-hop req bodyp::bool)
-   (with-access::http-request req (abspath)
+   (with-access::http-request req (abspath timeout)
       (let ((rep (hop-load abspath)))
 	 (cond
 	    ((%http-response? rep)
@@ -158,6 +160,7 @@
 	    ((xml? rep)
 	     (instantiate::http-response-hop
 		(request req)
+		(timeout timeout)
 		(content-type (mime-type abspath (hop-default-mime-type)))
 		(charset (hop-charset))
 		(bodyp bodyp)
@@ -199,11 +202,12 @@
 ;*    http-get-file ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (http-get-file req bodyp)
-   (with-access::http-request req (abspath query header method)
+   (with-access::http-request req (abspath query header method timeout)
       (cond
 	 ((pair? (assq 'icy-metadata: header))
 	  (instantiate::http-response-shoutcast
 	     (request req)
+	     (timeout -1)
 	     (start-line "ICY 200 OK")
 	     (bodyp bodyp)
 	     (file abspath)))
@@ -212,6 +216,7 @@
 	  ;; to the ungzipped file
 	  (instantiate::http-response-file
 	     (request req)
+	     (timeout timeout)
 	     (content-type (mime-type (prefix abspath) "text/plain"))
 	     (charset (hop-locale))
 	     (header `((content-encoding: . "gzip")))
@@ -223,6 +228,7 @@
 	  ;; send a gzipped version of the file
 	  (instantiate::http-response-file
 	     (request req)
+	     (timeout timeout)
 	     (content-type (mime-type abspath "text/plain"))
 	     (charset (hop-locale))
 	     (header `((content-encoding: . "gzip")))
@@ -232,6 +238,7 @@
 	  ;; send a regular file
 	  (instantiate::http-response-file
 	     (request req)
+	     (timeout timeout)
 	     (content-type (mime-type abspath "text/plain"))
 	     (charset (hop-locale))
 	     (bodyp bodyp)

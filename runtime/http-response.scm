@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Sep 26 13:50:29 2008 (serrano)                */
+;*    Last change :  Thu Oct  9 05:15:49 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -265,7 +265,7 @@
 	 (if (>=elong size #e0)
 	     (let ((connection (http-request-connection request))
 		   (p (socket-output socket)))
-		(when (>=fx timeout 0) (output-timeout-set! p timeout))
+		(output-timeout-set! p timeout)
 		(http-write-line-string p start-line)
 		(http-write-header p header)
 		(http-write-line p "Connection: " connection)

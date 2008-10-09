@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Sep 25 15:43:17 2008 (serrano)                */
+;*    Last change :  Wed Oct  8 16:27:08 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -149,8 +149,8 @@
    (define (script p inl)
       (<SCRIPT> :type (hop-javascript-mime-type) :inline inl :src p))
    
-   (define (favicon p)
-      (<LINK> :rel "shortcut icon" :href p))
+   (define (favicon p inl)
+      (<LINK> :rel "shortcut icon" :href p :inline inl))
    
    (define (css p inl)
       (<LINK> :inline inl
@@ -246,7 +246,8 @@
 		 ((:favicon)
 		  (if (string? (cadr a))
 		      (loop (cddr a) #f rts dir path inl packed
-			    (cons (favicon (absolute-path (cadr a) dir)) els))
+			    (cons (favicon (absolute-path (cadr a) dir) inl)
+				  els))
 		      (error '<HEAD> "Illegal :favicon" (cadr a))))
 		 ((:include)
 		  (cond
