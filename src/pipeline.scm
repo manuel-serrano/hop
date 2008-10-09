@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Sep 24 13:15:58 2008 (serrano)                */
+;*    Last change :  Thu Oct  9 07:04:44 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -166,7 +166,7 @@
 
    (if (keep-alive-ellapsed-error? e)
        ;; this is not a true error, just log
-       (hop-verb 3 (hop-color id id " SHUTTING DOWN")
+       (hop-verb 3 (hop-color id id " SHUTDOWN")
 		 (cond
 		    ((&io-timeout-error? e)
 		     " (keep-alive, timeout ellapsed)")
@@ -179,7 +179,7 @@
        ;; this one is a true error
        (begin
 	  (when (&exception? e)
-	     (hop-verb 1 (hop-color id id " ABORTING: ")
+	     (hop-verb 1 (hop-color id id " ABORT: ")
 		       " " (trace-color 1 (find-runtime-type e))
 		       "\n")
 	     (exception-notify e))
@@ -356,7 +356,7 @@
 		 (begin
 		    (keep-alive++)
 		    (stage4 scd thread stage-request
-			    id sock 'keep-alive (hop-keep-alive-timeout)))
+			    id sock 'keep-alive (* 1000 (hop-keep-alive-timeout))))
 		 (socket-close sock)))
 	    (else
 	     (socket-close sock))))))

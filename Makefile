@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Sep 22 17:21:25 2008 (serrano)                */
+#*    Last change :  Thu Oct  9 05:32:58 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -201,10 +201,10 @@ distrib-inc-version:
             distrib=$$version; \
             min=; \
           else \
-            if [ $$version != $$major ]; then \
+            if [ "$$version " != "$$major " ]; then \
               min=1; \
             else \
-              if [ $$devel == $$state ]; then \
+              if [ "$$devel " == "$$state " ]; then \
                 min=`expr $$minor + 1`; \
               else \
                 min=1; \
