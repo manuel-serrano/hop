@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/accept.scm                    */
+;*    serrano/prgm/project/hop/1.10.x/src/accept.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Mon Sep 22 11:09:32 2008 (serrano)                */
+;*    Last change :  Fri Oct 10 10:26:48 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -71,8 +71,7 @@
       ((or bigloo3.1a bigloo3.1b)
        #unspecified)
       (else
-       (unless (socket-option-set! sock :TCP_CORK #t)
-	  (socket-option-set! sock :TCP_NODELAY #t)))))
+       (socket-option-set! sock :TCP_NODELAY #t))))
    
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu Oct  9 07:04:44 2008 (serrano)                */
+;*    Last change :  Fri Oct 10 10:29:25 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -354,9 +354,10 @@
 		      (<fx (scheduler-load scd) 50)
 		      (<fx (keep-alive) (hop-keep-alive-threshold)))
 		 (begin
+		    (flush-output-port (socket-output sock))
 		    (keep-alive++)
 		    (stage4 scd thread stage-request
-			    id sock 'keep-alive (* 1000 (hop-keep-alive-timeout))))
+			    id sock 'keep-alive (hop-keep-alive-timeout)))
 		 (socket-close sock)))
 	    (else
 	     (socket-close sock))))))

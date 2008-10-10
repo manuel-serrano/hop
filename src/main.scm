@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/main.scm                      */
+;*    serrano/prgm/project/hop/1.10.x/src/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep 22 10:58:25 2008 (serrano)                */
+;*    Last change :  Fri Oct 10 10:26:58 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -156,8 +156,7 @@
 	    ((or bigloo3.1a bigloo3.1b)
 	     #unspecified)
 	    (else
-	     (unless (socket-option-set! serv :TCP_CORK #t)
-		(socket-option-set! serv :TCP_NODELAY #t))))
+	     (socket-option-set! serv :TCP_NODELAY #t)))
 	 ;; start the job (background taks, a la cron) scheduler
 	 (when (>fx (hop-max-threads) 1)
 	    (job-start-scheduler!))

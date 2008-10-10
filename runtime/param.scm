@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/1.10.x/runtime/param.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Sep 20 19:37:59 2008 (serrano)                */
+;*    Last change :  Thu Oct  9 09:24:11 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -870,11 +870,11 @@
    ;; with browsers value. There is a tradeoff here, higher value raises
    ;; the number of re-use connections but it also increases the cost
    ;; of abandonned keep-alive connections.
-   30)
+   3000)
 
 (define-parameter hop-remote-keep-alive-timeout
    ;; the number of milli-seconds to keep alive remote connections
-   30)
+   3000)
 
 (define-parameter hop-keep-alive-threshold
    ;; the max number of connections above which keep-alive are closed
