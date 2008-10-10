@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Fri Oct 10 10:26:48 2008 (serrano)                */
+;*    Last change :  Fri Oct 10 16:41:32 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -180,10 +180,6 @@
 	 (let ((dummybuf (make-string 512)))
 	    (let loop ((id 1))
 	       (let ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf)))
-		  (hop-verb 2 (hop-color id id " ACCEPT")
-			    (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
-			    ": " (socket-hostname sock) " [" (current-date)
-			    "]\n")
 		  ;; tune the socket
 		  (tune-socket! sock)
 		  ;; process the request

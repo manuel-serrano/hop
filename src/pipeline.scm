@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Oct 10 10:29:25 2008 (serrano)                */
+;*    Last change :  Fri Oct 10 16:46:01 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -113,12 +113,19 @@
    (define (http-connect-verb scd id sock req)
       (with-access::http-request req (method scheme host port path user header)
 	 (hop-verb 2 (if (http-proxy-request? req)
-			 (hop-color req req " EXEC.prox")
-			 (hop-color req req " EXEC.serv"))
+			 (hop-color req req
+				    (if (eq? mode 'keep-alive)
+					" EXEC.prox+"
+					" EXEC.prox"))
+			 (hop-color req req
+				    (if (eq? mode 'keep-alive)
+					" EXEC.serv+"
+					" EXEC.serv")))
 		   (format " ~a" thread)
 		   (scheduler-stat scd)
 		   ": " method " " scheme "://"
 		   (user-name user) "@" host ":" port (string-for-read path)
+		   " " (http-request-http req)
 		   "\n")
 	 (hop-verb 4 (hop-color id id " CONNECT.header") ": "
 		   (with-output-to-string (lambda () (write header))) "\n")))
@@ -130,12 +137,12 @@
 	     (if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
 	     ": " (socket-hostname sock) " [" (current-date) "]\n")
 
-   ;; debug trace
-   (debug-thread-info-set! thread "connection established with ~a")
-
-   ;; switch to the thread-specific buffer
-   (input-port-buffer-set! (socket-input sock) (hopthread-inbuf thread))
-   (output-port-buffer-set! (socket-output sock) (hopthread-outbuf thread))
+   (unless (eq? mode 'keep-alive)
+      ;; debug trace
+      (debug-thread-info-set! thread "connection established with ~a")
+      ;; switch to the thread-specific buffer
+      (input-port-buffer-set! (socket-input sock) (hopthread-inbuf thread))
+      (output-port-buffer-set! (socket-output sock) (hopthread-outbuf thread)))
    
    (with-stage-handler
       stage-request-error-handler (id sock mode)
@@ -354,7 +361,6 @@
 		      (<fx (scheduler-load scd) 50)
 		      (<fx (keep-alive) (hop-keep-alive-threshold)))
 		 (begin
-		    (flush-output-port (socket-output sock))
 		    (keep-alive++)
 		    (stage4 scd thread stage-request
 			    id sock 'keep-alive (hop-keep-alive-timeout)))

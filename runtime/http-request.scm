@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Oct 10 06:49:37 2008 (serrano)                */
+;*    Last change :  Fri Oct 10 15:59:02 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -127,10 +127,12 @@
                                 (let ((l (string-length path)))
                                    (set! query (substring path 1 l)))   
                                 "/")))
-		   (connection (or co
-				   (if (eq? http-version 'HTTP/1.1)
-				       'keep-alive
-				       'close))))
+		   (connection (if (hop-enable-keep-alive)
+				   (or co
+				       (if (eq? http-version 'HTTP/1.1)
+					   'keep-alive
+					   'close))
+				   'close)))
 	       (trace-item "abspath=" abspath
 			   " query=" query
 			   " connection=" connection)
