@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Fri Oct 10 16:41:32 2008 (serrano)                */
+;*    Last change :  Fri Oct 10 20:50:44 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -79,7 +79,7 @@
 (define-generic (scheduler-accept-loop scd::scheduler serv::socket)
    (let ((dummy-buf (make-string 512)))
       (let loop ((id 1))
-	 (let ((sock (socket-accept serv :inbuf dummy-buf :outbuf dummy-buf)))
+	 (let ((sock (socket-accept serv)))
 	    (hop-verb 2 (hop-color id id " ACCEPT")
 		      ": " (socket-hostname sock) " [" (current-date) "]\n")
 	    ;; tune the socket
@@ -93,12 +93,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::queue-scheduler serv::socket)
    (let* ((acclen (min 50 (/fx (hop-max-threads) 2)))
-	  (dummy-buffers (make-vector acclen (make-string 512)))
 	  (socks (make-vector acclen))) 
       (let loop ((id 1))
-	 (let ((n (socket-accept-many serv socks
-				      :inbufs dummy-buffers
-				      :outbufs dummy-buffers)))
+	 (let* ((in-buffers (make-vector acclen (make-string 512)))
+		(out-buffers (make-vector acclen (make-string 1024)))
+		(n (socket-accept-many serv socks
+				       :inbufs in-buffers
+				       :outbufs out-buffers)))
 	    (when (>fx n 1) (tprint "*** socket-accept-many: n=" n))
 	    (let liip ((i 0))
 	       (if (=fx i n)
@@ -123,6 +124,7 @@
    (define dummybuf (make-string 512))
    (define idmutex (make-mutex))
    (define idcount (scheduler-size scd))
+   (define nbthreads (length (pool-scheduler-free scd)))
    
    (define (get-next-id)
       (if (=fx (hop-verbose) 0)
@@ -145,7 +147,9 @@
 	       (mutex-lock! (pool-scheduler-mutex scd))
 	       (set! naccept (+fx naccept 1))
 	       (mutex-unlock! (pool-scheduler-mutex scd)))
-	    (let* ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf))
+	    (let* ((sock (socket-accept serv
+					:inbuf (hopthread-inbuf thread)
+					:outbuf (hopthread-outbuf thread)))
 		   (id  (get-next-id)))
 	       (with-access::pool-scheduler scd (naccept)
 		  (mutex-lock! (pool-scheduler-mutex scd))
@@ -163,7 +167,7 @@
 	       (loop))))
       (connect-stage scd thread))
    
-   (let loop ((i (length (pool-scheduler-free scd))))
+   (let loop ((i nbthreads))
       (if (<=fx i 1)
 	  (thread-join! (spawn0 scd connect-stage))
 	  (begin
@@ -179,10 +183,11 @@
 	 (make-scheduler-error-handler thread)
 	 (let ((dummybuf (make-string 512)))
 	    (let loop ((id 1))
-	       (let ((sock (socket-accept serv :inbuf dummybuf :outbuf dummybuf)))
+	       (let ((s (socket-accept serv
+				       :inbuf (hopthread-inbuf thread)
+				       :outbuf (hopthread-outbuf thread))))
 		  ;; tune the socket
-		  (tune-socket! sock)
+		  (tune-socket! s)
 		  ;; process the request
-		  (spawn4 scd stage-request id sock 'connect (hop-read-timeout))
+		  (spawn4 scd stage-request id s 'connect (hop-read-timeout))
 		  (loop (+fx id 1))))))))
-

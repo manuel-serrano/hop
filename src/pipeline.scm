@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Oct 10 16:46:01 2008 (serrano)                */
+;*    Last change :  Fri Oct 10 20:50:57 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -137,12 +137,8 @@
 	     (if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
 	     ": " (socket-hostname sock) " [" (current-date) "]\n")
 
-   (unless (eq? mode 'keep-alive)
-      ;; debug trace
-      (debug-thread-info-set! thread "connection established with ~a")
-      ;; switch to the thread-specific buffer
-      (input-port-buffer-set! (socket-input sock) (hopthread-inbuf thread))
-      (output-port-buffer-set! (socket-output sock) (hopthread-outbuf thread)))
+   ;; debug trace
+   (debug-thread-info-set! thread "connection established with ~a")
    
    (with-stage-handler
       stage-request-error-handler (id sock mode)

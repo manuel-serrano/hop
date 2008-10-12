@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Oct  9 05:01:13 2008 (serrano)                */
+;*    Last change :  Sun Oct 12 17:53:47 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -65,8 +65,8 @@
 				  (+elong
 				   (fixnum->elong (+fx 1 l))
 				   (/elong size psize)))))
-		;; in all cases, remove the timeout
-		(output-port-timeout-set! p timeout)
+		;; emove the output timeout
+		(output-port-timeout-set! p 0)
 		;; regular header
 		(http-write-line p start-line)
 		(http-write-header p header)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/http-remote.scm           */
+;*    serrano/prgm/project/hop/1.10.x/runtime/http-remote.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Jul 24 10:43:19 2008 (serrano)                */
+;*    Last change :  Fri Oct 10 18:51:31 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -161,7 +161,9 @@
 			       (trace-item "send-chars.1 cl=" content-length)
 			       (send-chars sp rp content-length))
 			    (flush-output-port rp)
-			    (remote-body r socket remote))))))))))
+			    (let ((connection (remote-body r socket remote)))
+			       (flush-output-port (socket-output socket))
+			       connection))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-body ...                                                  */
@@ -214,7 +216,9 @@
 				   (trace-item "request=" request))
 				(unwind-protect
 				   (if (eq? te 'chunked)
-				       (http-send-chunks ip op2)
+				       (let ((trailers (assq 'te header)))
+					  (print "trailers=" trailers)
+					  (http-send-chunks ip op2 #f))
 				       (unless (=elong cl #e0)
 					  (send-chars ip op2 cl)))
 				   (begin
@@ -223,9 +227,12 @@
 				      (close-output-port snif)
 				      (close-output-port op2))))
 			     (if (eq? te 'chunked)
-				 (http-send-chunks ip op)
+				 (let ((trailers (assq 'te header)))
+				    (print "trailers=" trailers)
+				    (http-send-chunks ip op #f))
 				 (unless (=elong cl #e0)
 				    (send-chars ip op cl)))))))
+		  (flush-output-port op)
 		  ;; what to do with the remote connection. if the
 		  ;; status code is not 200, we always close the connection
 		  ;; in order to avoid, in particular, re-direct problems.

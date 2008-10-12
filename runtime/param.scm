@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Oct 10 16:26:55 2008 (serrano)                */
+;*    Last change :  Sat Oct 11 08:40:44 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -870,11 +870,11 @@
    ;; with browsers value. There is a tradeoff here, higher value raises
    ;; the number of re-use connections but it also increases the cost
    ;; of abandonned keep-alive connections.
-   30000)
+   5000)
 
 (define-parameter hop-remote-keep-alive-timeout
    ;; the number of milli-seconds to keep alive remote connections
-   30000)
+   30)
 
 (define-parameter hop-keep-alive-threshold
    ;; the max number of connections above which keep-alive are closed
