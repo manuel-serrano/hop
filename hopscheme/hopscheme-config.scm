@@ -16,18 +16,18 @@
 		(extend-config*
 		 ;; on top of scheme2js's default config
 		 (default-scheme2js-config)
-		 '(;; unresolved symbols are considered to be JS variables
-		   '(unresolved=JS . module)
+		 `(;; unresolved symbols are considered to be JS variables
+		   (unresolved=JS . module)
 		   ;; procedures may use the 'this' variable. (This was actually
 		   ;; already possible due to the 'unresolved=JS flag. But this
 		   ;; is cleaner.)
-		   '(procedures-provide-js-this . #t)
+		   (procedures-provide-js-this . #t)
 		   ;; one can use the 'return!' form now. eg: (return! #t)
-		   '(return . #t)
+		   (return . #t)
 		   ;; no indentation
-		   '(indent . #f)
+		   (indent . #f)
 		   ;; include-path
-		   `(include-paths . ,(list (hop-share-directory)))
+		   (include-paths . ,(list (hop-share-directory)))
 		   )))
 	  *cached-config*)))
 
