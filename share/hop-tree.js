@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-tree.js                 */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-tree.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Sep 17 17:04:33 2008 (serrano)                */
+/*    Last change :  Mon Oct 13 09:49:05 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */

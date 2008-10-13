@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-tree.scm              */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-tree.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Sep 17 17:03:57 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 15:19:03 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-tree
 
+   (library hopscheme)
+   
    (include "xml.sch"
 	    "service.sch")
 
@@ -241,7 +243,7 @@
 	 ;; is the tree open
 	 (if (xml-tilde? open)
 	     (begin
-		(xml-write-tilde-as-expression open p)
+		(display (JS-expression (xml-tilde-body open)) p)
 		(display ", " p))
 	     (display (if open "true, " "false, ") p))
 	 ;; is the tree cached
@@ -414,4 +416,4 @@
        (display (string-escape icon #\') p)
        (display "'" p))
       ((xml-tilde? icon)
-       (xml-write-tilde-as-expression icon p))))
+       (display (JS-expression (xml-tilde-body icon)) p))))

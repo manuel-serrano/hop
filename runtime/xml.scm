@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Sep 26 10:31:28 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 15:17:24 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_xml
 
-   (library web)
+   (library  web
+	     hopscheme)
    
    (include "param.sch"
 	    "xml.sch")
@@ -112,7 +113,6 @@
 	    (tilde->string::bstring ::xml-tilde)
 	    (tilde-compose::xml-tilde ::xml-tilde ::xml-tilde)
 	    (tilde-make-thunk::xml-tilde ::xml-tilde)
-	    (xml-write-tilde-as-expression ::xml-tilde ::output-port)
 
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -494,13 +494,13 @@
 (define-method (xml-write obj::xml-tilde p backend)
    (with-access::xml-tilde obj (body parent)
       (if (and (xml-markup? parent) (eq? (xml-markup-markup parent) 'script))
-	  (xml-write body p backend)
+	  (xml-write (JS-statement body) p backend)
 	  (with-access::xml-backend backend (cdata-start cdata-stop)
 	     (display "<script type='" p)
 	     (display (hop-javascript-mime-type) p)
 	     (display "'>" p)
 	     (when cdata-start (display cdata-start p))
-	     (xml-write body p backend)
+	     (xml-write (JS-statement body) p backend)
 	     (when cdata-stop (display cdata-stop p))
 	     (display "</script>\n" p)))))
       
@@ -711,7 +711,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute attr::xml-tilde id p)
    (with-access::xml-tilde attr (body)
-      (xml-write-attribute body id p)))
+      (xml-write-attribute (JS-statement body) id p)))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::hop-service ...                            */
@@ -918,43 +918,6 @@
       (body (string-append "function() { return " (xml-tilde-body t) "}"))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write-tilde-as-expression ...                                */
-;*---------------------------------------------------------------------*/
-(define (xml-write-tilde-as-expression t::xml-tilde p::output-port)
-   (let* ((t (tilde->string t))
-	  (l (string-length t)))
-      (if (substring-at? t "var " 0)
-	  (let* ((i (string-index t " \n;" 4))
-		 (var (substring t 4 i)))
-	     (display "(function(){ " p)
-		    (display t p)
-		    (display "return " p)
-		    (display var p)
-		    (display ";})()" p))
-	  (let loop ((i (-fx l 1)))
-	     (if (<fx i 0)
-		 ;; the tilde expression is empty!
-		 #unspecified
-		 (let ((c (string-ref t i)))
-		    (case c
-		       ((#\Newline #\Return #\Space #\Tab)
-			;; skip the trailing space and newline
-			(loop (-fx i 1)))
-		       ((#\;)
-			;; a statement
-			(display "(function(){ return " p)
-			(display t p)
-			(display "})()" p))
-		       ((#\})
-			;; a block
-			(display "(function()" p)
-			(display t p)
-			(display ")()" p))
-		       (else
-			;; a regular expression
-			(display t p)))))))))
-      
-;*---------------------------------------------------------------------*/
 ;*    xml-write-initializer ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-initializer obj p)
@@ -972,7 +935,4 @@
 ;*    xml-write-initializer ::xml-tilde ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-initializer obj::xml-tilde p)
-   (display "(function(){return " p)
-   (display (xml-attribute-encode (xml-tilde-body obj)) p)
-   (display "})()" p))
-   
+   (display (JS-expression (xml-tilde-body obj)) p))

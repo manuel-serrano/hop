@@ -2,9 +2,9 @@
    (library hop
 	    scheme2js)
    (export (compile-hop-client e)
-	   (tilde->expression-JS t)
-	   (tilde->statement-JS t)
-	   (tilde->return-JS t))
+	   (JS-expression t)
+	   (JS-statement t)
+	   (JS-return t))
    (import __hopscheme_config))
 
 ;; ===========================================================================
@@ -37,7 +37,7 @@
 
 (hop-make-escape-set! new-scheme-expr)
 
-(define (tilde->expression-JS t)
+(define (JS-expression t)
    (let* ((assig-var (car t))
 	  (assig-var-str (symbol->string t))
 	  (e (cdr t)))
@@ -45,13 +45,13 @@
        "(function() { var " assig-var-str "; " e "\n"
        "return " assig-var-str "; })"
        ".call(this)")))
-(define (tilde->statement-JS t)
+(define (JS-statement t)
    (let* ((assig-var (car t))
 	  (assig-var-str (symbol->string t))
 	  (e (cdr t)))
       (string-append
        "{ var " assig-var-str "; " e "}")))
-(define (tilde->return-JS t)
+(define (JS-return t)
    (let* ((assig-var (car t))
 	  (assig-var-str (symbol->string t))
 	  (e (cdr t)))
