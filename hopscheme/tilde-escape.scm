@@ -1,21 +1,12 @@
 (module __hopscheme_tilde-escape
-   (library hop
-	    scheme2js)
-   (export (compile-hop-client e)
+   (library scheme2js)
+   (export (compile-scheme-expression e)
 	   (JS-expression t)
 	   (JS-statement t)
 	   (JS-return t))
    (import __hopscheme_config))
 
-;; ===========================================================================
-;; add hook for '~'-escaped expressions.
-;; ===========================================================================
-
-(define (js->hop js-expr)
-   (hop-read-javascript (open-input-string (string-append js-expr "}"))
-			(hop-charset)))
-
-(define (compile-hop-client e)
+(define (compile-scheme-expression e)
    (let ((s-port (open-output-string))
 	 (assig-var (gensym 'result)))
       (with-handler
@@ -30,12 +21,6 @@
 		(extend-config (hopscheme-config #f)
 			       'module-result-var assig-var))) ;; config
 	 (close-output-port s-port))))
-
-(define (new-scheme-expr p expr)
-   (let ((js (compile-hop-client expr)))
-      (js->hop js)))
-
-(hop-make-escape-set! new-scheme-expr)
 
 (define (JS-expression t)
    (let* ((assig-var (car t))

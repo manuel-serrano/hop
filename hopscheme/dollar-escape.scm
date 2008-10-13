@@ -1,6 +1,5 @@
 (module __hopscheme_dollar-escape
-   (library scheme2js
-	    hop))
+   (library scheme2js))
 
 ;; ===========================================================================
 ;; add scheme2js pre-expander, so we recognize '$'escapes.
@@ -23,10 +22,7 @@
 		(error-notify e)
 		#unspecified)
 	     (raise e)))
-      (let ((v (eval e)))
-	 (if (eq? v #unspecified)
-	     v
-	     (hop->json v #f #f)))))
+      (*hop-eval* e)))
 	 
 (define (unhop-list! l)
    (cond

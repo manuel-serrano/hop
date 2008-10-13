@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Oct 13 15:17:24 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 15:28:21 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -101,7 +101,7 @@
 
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port)
-	    (generic xml-write-initializer ::obj ::output-port)
+	    (generic xml-write-expression ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port)
 
 	    (xml->string ::obj ::xml-backend)
@@ -690,7 +690,7 @@
 	  (display "[\"" p)
 	  (display (if (eq? id 'class) "className" id) p)
 	  (display "\"]=" p)
-	  (xml-write-initializer tilde p)
+	  (xml-write-expression tilde p)
 	  (display ";" p))))
 
 ;*---------------------------------------------------------------------*/
@@ -703,7 +703,7 @@
    (display "hop_style_attribute_set(" p)
    (display var p)
    (display "," p)
-   (xml-write-initializer tilde p)
+   (xml-write-expression tilde p)
    (display ");" p))
    
 ;*---------------------------------------------------------------------*/
@@ -918,21 +918,25 @@
       (body (string-append "function() { return " (xml-tilde-body t) "}"))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write-initializer ...                                        */
+;*    xml-write-expression ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-generic (xml-write-initializer obj p)
+(define-generic (xml-write-expression obj p)
    (cond
       ((string? obj)
-       (write obj p))
+       (display "'" p)
+       (display (string-escape obj #\') p)
+       (display "'" p))
       ((eq? obj #t)
        (display "true" p))
       ((eq? obj #f)
        (display "false" p))
+      ((eq? obj #unspecified)
+       (display "undefined" p))
       (else
        (display obj p))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write-initializer ::xml-tilde ...                            */
+;*    xml-write-expression ::xml-tilde ...                             */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write-initializer obj::xml-tilde p)
+(define-method (xml-write-expression obj::xml-tilde p)
    (display (JS-expression (xml-tilde-body obj)) p))

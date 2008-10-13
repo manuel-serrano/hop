@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon Oct 13 09:49:05 2008 (serrano)                */
+/*    Last change :  Mon Oct 13 15:29:18 2008 (serrano)                */
 /*    Copyright   :  2005-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -442,11 +442,10 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    if( iconopen == true ) {
       iconopen = hop_tree_default_open_icon;
    } else {
-      if( iconopen == 0 ) {
+      if( iconopen == undefined ) {
 	 iconopen = hop_tree_default_device_icon;
       } else {
-	 if( iconopen == -1 ) {
-	    iconopen = false;
+	 if( iconopen == false ) {
 	    iconclose = false;
 	 }
       }
@@ -456,12 +455,11 @@ function hop_make_tree( parent, id, visible, level, proc, title,
       if( iconclose == true ) {
 	 iconclose = hop_tree_default_close_icon;
       } else {
-	 if( iconclose == 0 ) {
+	 if( iconclose == undefined ) {
 	    iconclose = hop_tree_default_device_icon;
 	 } else {
-	    if( iconclose == -1 ) {
+	    if( iconclose == false ) {
 	       iconopen = false;
-	       iconclose = false;
 	    }
 	 }
       }
@@ -675,7 +673,7 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
    row.appendChild( td1 );
 
    /* add the icon assiocated with the node, if any */
-   if( icon && (icon != -1) ) {
+   if( icon && (icon != false) ) {
       var td2 = document.createElement( "td" );
       var fimg = document.createElement( "img" );
       fimg.onerror = function () {

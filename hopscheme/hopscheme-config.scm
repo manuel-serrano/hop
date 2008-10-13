@@ -1,11 +1,19 @@
 (module __hopscheme_config
    (library scheme2js)
-   (library hop)
-   (export (hopscheme-config compile-file?)))
+   (export (hopscheme-config compile-file?)
+	   (init-hopscheme! reader::procedure path::bstring)
+	   *hop-reader*
+	   *hop-share-directory*))
 
 (define *module-counter* -1)
 (define *cached-config* #f)
 (define *module-counter-lock* (make-mutex))
+
+(define *hop-reader* (lambda (p v) (error 'hop-reader "not implemented yet" p)))
+(define *hop-share-directory* "/")
+(define *hop-verbose* 0)
+(define *hop-escape* (lambda (e) (error 'hop-escape "not implemented yet" e)))
+(define *hop-eval* (lambda (e) (error 'hop-eval "not implemented yet" e)))
 
 (define (get-cached-config)
    (or *cached-config*
@@ -27,7 +35,7 @@
 		   ;; no indentation
 		   (indent . #f)
 		   ;; include-path
-		   (include-paths . ,(list (hop-share-directory)))
+		   (include-paths . ,(list *hop-share-directory*))
 		   )))
 	  *cached-config*)))
 
@@ -48,11 +56,19 @@
 				(number->string *module-counter*)))))))
 
    (let* ((config (get-cached-config))
-	  (conf-indent (if (>fx (hop-verbose) 0)
+	  (conf-indent (if (>fx *hop-verbose* 0)
 			   (extend-config config 'indent 2)
 			   config))
-	  (conf-verbose (if (>fx (hop-verbose) 10)
+	  (conf-verbose (if (>fx *hop-verbose* 10)
 			    (extend-config config 'verbose #t)
 			    conf-indent))
 	  (conf-module (add-suffix-clause conf-verbose)))
       conf-module))
+
+;;
+(define (init-hopscheme-compiler! reader share verbose escape eval)
+   (set! *hop-reader* reader)
+   (set! *hop-share-directory* share)
+   (set! *hop-verbose* verbose)
+   (set! *hop-escape* escape)
+   (set! *hop-eval* eval))

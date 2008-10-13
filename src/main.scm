@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Oct 10 10:26:58 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 16:15:52 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -104,7 +104,12 @@
 	     "\n")
    ;; init hss, scm compilers, and services
    (init-hss-compiler!)
-   (init-scm-compiler! compile-scheme-file)
+   (init-hopscheme! (lambda (p v) (hop-read p))
+		    (hop-share-directory)
+		    (hop-verbose)
+		    (lambda (e) `(hop->json ,e))
+		    (lambda (e) (hop->json (eval e) #f #f)))
+   (init-scm-compiler! compile-scheme-file compile-scheme-expression)
    (init-hop-services!)
    ;; install the builtin filters
    (hop-filter-add! service-filter)

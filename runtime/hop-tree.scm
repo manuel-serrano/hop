@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Oct 13 15:19:03 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 15:29:44 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -298,13 +298,13 @@
 				      inline
 				      (make-file-name (hop-icons-directory)
 						      "device.png"))))))
-	    (html-write-tree-icon iopen p)
+	    (xml-write-expression iopen p)
 	    (display "," p)
-	    (html-write-tree-icon iconopen p)
+	    (xml-write-expression iconopen p)
 	    (display "," p)
-	    (html-write-tree-icon iclose p)
+	    (xml-write-expression iclose p)
 	    (display "," p)
-	    (html-write-tree-icon iconclose p))
+	    (xml-write-expression iconclose p))
 	 ;; icon dir
 	 (cond
 	    ((string? icondir)
@@ -394,26 +394,8 @@
 	     (display "', " p))
 	  (display "''," p))
       ;; the icon
-      (html-write-tree-icon icon p)
+      (xml-write-expression icon p)
       ;; the icon error
       (display ", " p)
-      (html-write-tree-icon iconerr p)
+      (xml-write-expression iconerr p)
       (display ")" p)))
-
-;*---------------------------------------------------------------------*/
-;*    html-write-tree-icon ...                                         */
-;*---------------------------------------------------------------------*/
-(define (html-write-tree-icon icon p)
-   (cond
-      ((eq? icon #t)
-       (display "true " p))
-      ((eq? icon #f)
-       (display "-1 " p))
-      ((fixnum? icon)
-       (display icon p))
-      ((string? icon)
-       (display "'" p)
-       (display (string-escape icon #\') p)
-       (display "'" p))
-      ((xml-tilde? icon)
-       (display (JS-expression (xml-tilde-body icon)) p))))

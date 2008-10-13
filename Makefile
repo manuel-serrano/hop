@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Oct  9 05:32:58 2008 (serrano)                */
+#*    Last change :  Mon Oct 13 15:33:24 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -52,9 +52,9 @@ hopreplay-bin: lib
 	(cd hopreplay && $(MAKE) build)
 
 lib: libdir
-	(cd runtime && $(MAKE) build)
 	(cd scheme2js && $(MAKE) build)
 	(cd hopscheme && $(MAKE) build)
+	(cd runtime && $(MAKE) build)
 
 share: lib
 	(cd share && $(MAKE) build)
@@ -66,9 +66,9 @@ weblets: lib
 #*    dep                                                              */
 #*---------------------------------------------------------------------*/
 dep:
-	(cd runtime; $(MAKE) dep)
 	(cd scheme2js; $(MAKE) dep)
 	(cd hopscheme; $(MAKE) dep)
+	(cd runtime; $(MAKE) dep)
 	(cd src; $(MAKE) dep)
 	(cd hopsh; $(MAKE) dep)
 	(cd hopreplay; $(MAKE) dep)
@@ -77,9 +77,9 @@ dep:
 #*    ude                                                              */
 #*---------------------------------------------------------------------*/
 ude:
-	(cd runtime; $(MAKE) ude)
 	(cd scheme2js; $(MAKE) ude)
 	(cd hopscheme; $(MAKE) ude)
+	(cd runtime; $(MAKE) ude)
 	(cd src; $(MAKE) ude)
 	(cd hopsh; $(MAKE) ude)
 	(cd hopreplay; $(MAKE) ude)
