@@ -1,6 +1,7 @@
 (module config
    (export (config-init! #!optional config)
 	   (extend-config configuration conf value)
+	   (extend-config* configuration confs) ;; confs = list of pairs
 	   (read-config configuration conf)
 	   (config conf)
 	   (config-set! conf val)
@@ -12,6 +13,10 @@
 
 (define (extend-config c conf val)
    (cons (cons conf val) c))
+
+;; confs must be a list of confs.
+(define (extend-config* c confs)
+   (append confs c))
 
 (define (read-config c conf)
    (let ((tmp (assq conf c)))

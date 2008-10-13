@@ -8,6 +8,7 @@
    (import scheme2js
 	   (default-scheme2js-config
 	      set-optim-level scheme2js-config
+	      extend-config extend-config*
 	      config)
 	   expand)
 

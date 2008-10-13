@@ -13,21 +13,22 @@
 	  ;; no need to worry about multi-threading. in the worst case we
 	  ;; create several lists...
 	  (set! *cached-config*
-		(cons*
-		 ;; unresolved symbols are considered to be JS variables
-		 '(unresolved=JS . module)
-		 ;; procedures may use the 'this' variable. (This was actually
-		 ;; already possible due to the 'unresolved=JS flag. But this
-		 ;; is cleaner.)
-		 '(procedures-provide-js-this . #t)
-		 ;; one can use the 'return!' form now. eg: (return! #t)
-		 '(return . #t)
-		 ;; no indentation
-		 '(indent . #f)
-		 ;; include-path
-		 `(include-paths . ,(list (hop-share-directory)))
+		(extend-config*
 		 ;; on top of scheme2js's default config
-		 (default-scheme2js-config)))
+		 (default-scheme2js-config)
+		 '(;; unresolved symbols are considered to be JS variables
+		   '(unresolved=JS . module)
+		   ;; procedures may use the 'this' variable. (This was actually
+		   ;; already possible due to the 'unresolved=JS flag. But this
+		   ;; is cleaner.)
+		   '(procedures-provide-js-this . #t)
+		   ;; one can use the 'return!' form now. eg: (return! #t)
+		   '(return . #t)
+		   ;; no indentation
+		   '(indent . #f)
+		   ;; include-path
+		   `(include-paths . ,(list (hop-share-directory)))
+		   )))
 	  *cached-config*)))
 
 ;; do not reuse hopscheme-configs!
@@ -40,17 +41,18 @@
 	  (with-lock *module-counter-lock*
 	     (lambda ()
 		(set! *module-counter* (+ *module-counter* 1))
-		(cons `(statics-suffix
-			. ,(string-append "_hopM"
-					  (number->string *module-counter*)))
-		      conf)))))
+		(extend-config
+		 conf
+		 'statics-suffix
+		 (string-append "_hopM"
+				(number->string *module-counter*)))))))
 
    (let* ((config (get-cached-config))
 	  (conf-indent (if (>fx (hop-verbose) 0)
-			   (cons '(indent . 2) config)
+			   (extend-config config 'indent 2)
 			   config))
 	  (conf-verbose (if (>fx (hop-verbose) 10)
-			    (cons '(verbose . #t) conf-indent)
+			    (extend-config config 'verbose #t)
 			    conf-indent))
 	  (conf-module (add-suffix-clause conf-verbose)))
       conf-module))
