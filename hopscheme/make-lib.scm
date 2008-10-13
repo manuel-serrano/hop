@@ -9,6 +9,7 @@
    
    (import __hopscheme
 	   __hopscheme_tilde-escape
-	   __hopscheme_scm-compil)
+	   __hopscheme_scm-compil
+	   __hopscheme_config)
    
    (eval   (export-all)))

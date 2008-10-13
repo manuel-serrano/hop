@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/hopsh/main.scm                    */
+;*    serrano/prgm/project/hop/1.10.x/hopsh/main.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Mar 25 08:16:50 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 17:23:52 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hopsh
 
-   (library hop)
+   (library scheme2js hopscheme hop)
 
    (cond-expand
       (enable-threads (library pthread)))

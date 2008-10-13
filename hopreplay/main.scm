@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/hopreplay/main.scm                */
+;*    serrano/prgm/project/hop/1.10.x/hopreplay/main.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May  7 14:09:10 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 17:24:17 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPREPLAY entry point                                        */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hoprp
 
-   (library hop web)
+   (library scheme2js hopscheme hop web)
 
    (cond-expand
       (enable-threads (library pthread)))

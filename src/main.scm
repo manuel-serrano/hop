@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Oct 13 16:52:11 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 17:29:48 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -102,18 +102,6 @@
 		 (format ", server-events:~a" (hop-fast-server-event-port))
 		 "")
 	     "\n")
-   ;; init hss, scm compilers, and services
-   (init-hss-compiler!)
-   (init-hopscheme! (lambda (p v) (hop-read p))
-		    (hop-share-directory)
-		    (hop-verbose)
-		    (lambda (e) (hop->json (eval e) #f #f))
-		    (lambda (s) (with-input-from-string s
-				   (lambda ()
-				      (hop-read-javascript (current-input-port)
-							   (hop-charset))))))
-   (init-scm-compiler! compile-scheme-file compile-scheme-expression)
-   (init-hop-services!)
    ;; install the builtin filters
    (hop-filter-add! service-filter)
    ;; prepare the regular http handling

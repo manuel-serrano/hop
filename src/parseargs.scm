@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Sep 25 10:17:53 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 17:44:12 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hop_parseargs
 
-   (library hop web)
+   (library scheme2js hopscheme hop web)
 
    (import  hop_param)
    
@@ -209,6 +209,22 @@
 	 (hop-autoload-directory-add!
 	  (make-file-name (hop-rc-directory) "weblets"))
 
+	 ;; init hss, scm compilers, and services
+	 (init-hss-compiler!)
+	 (init-hopscheme! (lambda (p v) (hop-read p))
+			  (hop-share-directory)
+			  (hop-verbose)
+			  (lambda (e)
+			     (hop->json (eval e) #f #f))
+			  (lambda (s)
+			     (with-input-from-string s
+				(lambda ()
+				   (hop-read-javascript
+				    (current-input-port)
+				    (hop-charset))))))
+	 (init-scm-compiler! compile-scheme-file compile-scheme-expression)
+	 (init-hop-services!)
+
 	 ;; hoprc
 	 (when loadp (parseargs-loadrc rc-file (hop-rc-file)))
 
@@ -269,7 +285,9 @@
 	 (hop-process-key-write (hop-process-key) (hop-port))
 	 (register-exit-function! (lambda (ret)
 				     (hop-process-key-delete (hop-port))
-				     ret))))
+				     ret))
+
+	 (reverse! files)))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */

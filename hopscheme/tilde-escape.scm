@@ -13,18 +13,16 @@
 	 (lambda (e)
 	    (close-output-port s-port)
 	    (raise e))
-	 (cons assig-var
-	       (scheme2js-compile-expr
-		e              ;; top-level
-		s-port         ;; out-port
-		'((((import hop-runtime)) . merge-first)) ;; module-headers
-		(extend-config (hopscheme-config #f)
-			       'module-result-var assig-var))) ;; config
-	 (*hop-postprocess* (close-output-port s-port)))))
+	 (scheme2js-compile-expr
+	  e              ;; top-level
+	  s-port         ;; out-port
+	  '((((import hop-runtime)) . merge-first)) ;; module-headers
+	  (extend-config (hopscheme-config #f) 'module-result-var assig-var)) ;; config
+	 `(cons ',assig-var ,(*hop-postprocess* (close-output-port s-port))))))
 
 (define (JS-expression t)
    (let* ((assig-var (car t))
-	  (assig-var-str (symbol->string t))
+	  (assig-var-str (symbol->string assig-var))
 	  (e (cdr t)))
       (string-append
        "(function() { var " assig-var-str "; " e "\n"
@@ -32,13 +30,13 @@
        ".call(this)")))
 (define (JS-statement t)
    (let* ((assig-var (car t))
-	  (assig-var-str (symbol->string t))
+	  (assig-var-str (symbol->string assig-var))
 	  (e (cdr t)))
       (string-append
        "{ var " assig-var-str "; " e "}")))
 (define (JS-return t)
    (let* ((assig-var (car t))
-	  (assig-var-str (symbol->string t))
+	  (assig-var-str (symbol->string assig-var))
 	  (e (cdr t)))
       (string-append
        "{ var " assig-var-str "; " e "\n"
