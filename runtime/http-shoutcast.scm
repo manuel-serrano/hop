@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Oct 12 17:53:47 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 07:09:48 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -39,7 +39,7 @@
 ;*    shoutcast ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (shoutcast r::http-response-shoutcast socket)
-   (with-access::http-response-file r (start-line header content-type file timeout)
+   (with-access::http-response-file r (start-line header content-type file)
       (let ((p (socket-output socket))
 	    (pf (open-input-file file)))
 	 (if (not (input-port? pf))
@@ -65,7 +65,7 @@
 				  (+elong
 				   (fixnum->elong (+fx 1 l))
 				   (/elong size psize)))))
-		;; emove the output timeout
+		;; remove the timeout
 		(output-port-timeout-set! p 0)
 		;; regular header
 		(http-write-line p start-line)

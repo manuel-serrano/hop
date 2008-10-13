@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Oct 10 20:55:23 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 07:08:52 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -278,9 +278,7 @@
 		(http-write-line p)
 		;; the body
 		(with-trace 4 'http-response-file
-		   (if bodyp
-		       (send-file file p size #e-1)
-		       (flush-output-port p)))
+		   (when bodyp (send-file file p size #e-1)))
 		(flush-output-port p)
 		connection)
 	     (http-response (http-file-not-found file) socket)))))

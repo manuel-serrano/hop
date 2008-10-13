@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Mon Oct 13 06:55:26 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 07:10:55 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -173,9 +173,8 @@
 			       (trace-item "send-chars.1 cl=" content-length)
 			       (send-chars sp rp content-length))
 			    (flush-output-port rp)
-			    (let ((connection (remote-body r socket remote)))
-			       (flush-output-port (socket-output socket))
-			       connection))))))))))
+			    (remote-body r socket remote))))))))))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-body ...                                                  */
