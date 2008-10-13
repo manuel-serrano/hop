@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Oct 13 16:15:52 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 16:52:11 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -107,8 +107,11 @@
    (init-hopscheme! (lambda (p v) (hop-read p))
 		    (hop-share-directory)
 		    (hop-verbose)
-		    (lambda (e) `(hop->json ,e))
-		    (lambda (e) (hop->json (eval e) #f #f)))
+		    (lambda (e) (hop->json (eval e) #f #f))
+		    (lambda (s) (with-input-from-string s
+				   (lambda ()
+				      (hop-read-javascript (current-input-port)
+							   (hop-charset))))))
    (init-scm-compiler! compile-scheme-file compile-scheme-expression)
    (init-hop-services!)
    ;; install the builtin filters

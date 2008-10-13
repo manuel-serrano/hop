@@ -1,9 +1,15 @@
 (module __hopscheme_config
    (library scheme2js)
    (export (hopscheme-config compile-file?)
-	   (init-hopscheme! reader::procedure path::bstring)
+	   (init-hopscheme! reader::procedure
+			    path::bstring
+			    verbose::int
+			    eval::procedure
+			    postprocess::procedure)
 	   *hop-reader*
-	   *hop-share-directory*))
+	   *hop-share-directory*
+	   *hop-eval*
+	   *hop-postprocess*))
 
 (define *module-counter* -1)
 (define *cached-config* #f)
@@ -12,8 +18,8 @@
 (define *hop-reader* (lambda (p v) (error 'hop-reader "not implemented yet" p)))
 (define *hop-share-directory* "/")
 (define *hop-verbose* 0)
-(define *hop-escape* (lambda (e) (error 'hop-escape "not implemented yet" e)))
 (define *hop-eval* (lambda (e) (error 'hop-eval "not implemented yet" e)))
+(define *hop-postprocess* (lambda (s) (error 'hop-postprocess "not implemented yet" s)))
 
 (define (get-cached-config)
    (or *cached-config*
@@ -66,9 +72,9 @@
       conf-module))
 
 ;;
-(define (init-hopscheme-compiler! reader share verbose escape eval)
+(define (init-hopscheme-compiler! reader share verbose eval postprocess)
    (set! *hop-reader* reader)
    (set! *hop-share-directory* share)
    (set! *hop-verbose* verbose)
-   (set! *hop-escape* escape)
-   (set! *hop-eval* eval))
+   (set! *hop-eval* eval)
+   (set! *hop-postprocess* postprocess))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec 26 08:30:35 2007                          */
-;*    Last change :  Mon Oct 13 16:16:55 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 16:52:20 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side -> JavaScript compiler                           */
@@ -111,5 +111,3 @@
    
    (set! scm2js-compiler file-compiler)
    (hop-make-escape-set! (lambda (p expr) (expression-compiler expr))))
-	    
-

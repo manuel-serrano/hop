@@ -20,7 +20,7 @@
 		'((((import hop-runtime)) . merge-first)) ;; module-headers
 		(extend-config (hopscheme-config #f)
 			       'module-result-var assig-var))) ;; config
-	 (close-output-port s-port))))
+	 (*hop-postprocess* (close-output-port s-port)))))
 
 (define (JS-expression t)
    (let* ((assig-var (car t))

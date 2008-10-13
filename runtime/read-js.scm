@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/read-js.scm               */
+;*    serrano/prgm/project/hop/1.10.x/runtime/read-js.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Sat May 24 09:52:40 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 16:57:00 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
@@ -44,7 +44,9 @@
 		     (begin
 			(set! acc (cons "}" acc))
 			(ignore))
-		     (reverse! acc)))
+		     (begin
+			(rgc-buffer-unget-char (the-port) (the-byte))
+			(reverse! acc))))
 		((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
 		 (let ((s (the-substring 1 (-fx (the-length) 1))))
 		    (set! acc (cons (string-append "\"" (cset s) "\"") acc))
@@ -80,16 +82,18 @@
 		(else
 		 (let ((char (the-failure)))
 		    (if (eof-object? char)
-			(read-error/location "Unexpected end-of-file"
-					     "Unclosed list"
-					     (input-port-name iport)
-					     sp)
+			(if (=fx bar-open 0)
+			    (reverse! acc)
+			    (read-error/location "Unexpected end-of-file"
+						 "Unclosed list"
+						 (input-port-name iport)
+						 sp))
 			(read-error/location "Illegal char"
 					     (illegal-char-rep char)
 					     (input-port-name iport)
 					     (input-port-position iport))))))))
       (let ((cvt (charset-converter! charset (hop-charset))))
-	 (let ((exp (read/rp g iport 1 '() cvt)))
+	 (let ((exp (read/rp g iport 0 '() cvt)))
 	    (cond
 	       ((null? exp)
 		"")

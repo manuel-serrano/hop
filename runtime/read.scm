@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Sep 25 14:28:47 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 16:58:26 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -542,7 +542,9 @@
       
       ;; javascript (this reads up to the closing bracket).
       ("{"
-       (hop-read-javascript (the-port)))
+       (let ((v (hop-read-javascript (the-port))))
+	  (read-char (the-port))
+	  v))
       
       ;; hss (this reads up to the closing bracket).
       ("@{"
