@@ -40,7 +40,7 @@
 		 (ignore))
 		("}"
 		 (set! bra-open (-fx bra-open 1))
-		 (if (>fx bra-open 0)
+		 (if (>=fx bra-open 0)
 		     (begin
 			(set! acc (cons "}" acc))
 			(ignore))
