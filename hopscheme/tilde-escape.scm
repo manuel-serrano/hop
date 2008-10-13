@@ -1,9 +1,9 @@
 (module __hopscheme_tilde-escape
    (library scheme2js)
    (export (compile-scheme-expression e)
-	   (JS-expression t)
-	   (JS-statement t)
-	   (JS-return t))
+	   (JS-expression::bstring t::pair)
+	   (JS-statement::bstring t::pair)
+	   (JS-return::bstring t::pair))
    (import __hopscheme_config))
 
 (define (compile-scheme-expression e)

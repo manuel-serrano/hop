@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Oct 13 15:28:21 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:40:21 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -109,10 +109,9 @@
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
 
-	    (string->tilde::xml-tilde ::bstring)
-	    (tilde->string::bstring ::xml-tilde)
-	    (tilde-compose::xml-tilde ::xml-tilde ::xml-tilde)
-	    (tilde-make-thunk::xml-tilde ::xml-tilde)
+	    (tilde->statement::bstring ::xml-tilde)
+	    (tilde->expression::bstring ::xml-tilde)
+	    (tilde->return::bstring ::xml-tilde)
 
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -779,6 +778,24 @@
 		     (eval e))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    tilde->statement ...                                             */
+;*---------------------------------------------------------------------*/
+(define (tilde->statement obj)
+   (JS-statement (xml-tilde-body obj)))
+
+;*---------------------------------------------------------------------*/
+;*    tilde->expression ...                                            */
+;*---------------------------------------------------------------------*/
+(define (tilde->expression obj)
+   (JS-expression (xml-tilde-body obj)))
+
+;*---------------------------------------------------------------------*/
+;*    tilde->return ...                                                */
+;*---------------------------------------------------------------------*/
+(define (tilde->return obj)
+   (JS-return (xml-tilde-body obj)))
+
+;*---------------------------------------------------------------------*/
 ;*    HTML 4.01 elements ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-xml-element <A>)
@@ -888,34 +905,6 @@
 	  (id (xml-make-id id 'DELAY))
 	  (thunk (car body)))
        (error '<DELAY> "Illegal delay's thunk" (car body))))
-
-;*---------------------------------------------------------------------*/
-;*    string->tilde ...                                                */
-;*---------------------------------------------------------------------*/
-(define (string->tilde string)
-   (instantiate::xml-tilde
-      (body string)))
-
-;*---------------------------------------------------------------------*/
-;*    tilde->string ...                                                */
-;*---------------------------------------------------------------------*/
-(define (tilde->string t)
-   (with-access::xml-tilde t (body)
-      body))
-
-;*---------------------------------------------------------------------*/
-;*    tilde-compose ...                                                */
-;*---------------------------------------------------------------------*/
-(define (tilde-compose t1 t2)
-   (instantiate::xml-tilde
-      (body (string-append (xml-tilde-body t1) "\n" (xml-tilde-body t2)))))
-
-;*---------------------------------------------------------------------*/
-;*    tilde-make-thunk ...                                             */
-;*---------------------------------------------------------------------*/
-(define (tilde-make-thunk t)
-   (instantiate::xml-tilde
-      (body (string-append "function() { return " (xml-tilde-body t) "}"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-expression ...                                         */

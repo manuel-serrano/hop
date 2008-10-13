@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-video.scm             */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-video.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Fri Feb 22 15:40:12 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:42:57 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
@@ -14,8 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-video
    
-   (library multimedia
-	    web)
+   (library multimedia web)
 
    (include "xml.sch"
 	    "service.sch")
@@ -49,7 +48,7 @@
    (define (expr->function expr)
       (cond
 	 ((xml-tilde? expr)
-	  (format "function( event ) { ~a }" (tilde->string expr)))
+	  (format "function( event ) { ~a }" (xml-tilde->return expr)))
 	 ((string? expr)
 	  (format "function( event ) { ~a }" expr))
 	 (else

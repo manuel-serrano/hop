@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-editor.scm            */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-editor.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Mon Mar 31 06:14:15 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:41:04 2008 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -185,7 +185,7 @@
 (define (obj->js-thunk obj)
    (cond
       ((xml-tilde? obj)
-       (tilde->string (tilde-make-thunk obj)))
+       (format "function( val ) { ~a }" (xml-tilde->return obj)))
       ((string? obj)
        (format "function( val ) { ~a }" obj))
       (else

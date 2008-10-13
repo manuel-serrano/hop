@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-paned.scm             */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-paned.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Wed Apr 16 11:14:00 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:41:33 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
@@ -121,7 +121,7 @@
 	       fraction
 	       (cond
 		  ((xml-tilde? onresize)
-		   (tilde->string onresize))
+		   (xml-tilde->return onresize))
 		  ((string? onresize)
 		   onresize)
 		  (else
@@ -162,7 +162,7 @@
 		   fraction)
 	       (cond
 		  ((xml-tilde? onresize)
-		   (tilde->string onresize))
+		   (xml-tilde->return onresize))
 		  ((string? onresize)
 		   onresize)
 		  (else

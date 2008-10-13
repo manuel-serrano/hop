@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Oct 13 15:29:44 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:42:39 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -166,7 +166,7 @@
 (define (obj->js-tree-thunk obj)
    (cond
       ((xml-tilde? obj)
-       (format "function( event ) { ~a }" (xml-tilde-body obj)))
+       (format "function( event ) { ~a }" (xml-tilde->return obj)))
       ((string? obj)
        (format "function( event ) { ~a }" obj))
       (else
@@ -243,7 +243,7 @@
 	 ;; is the tree open
 	 (if (xml-tilde? open)
 	     (begin
-		(display (JS-expression (xml-tilde-body open)) p)
+		(display (xml-tilde->expression open) p)
 		(display ", " p))
 	     (display (if open "true, " "false, ") p))
 	 ;; is the tree cached

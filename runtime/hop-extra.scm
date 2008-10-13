@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Oct  8 16:27:08 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:41:17 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -535,7 +535,7 @@
 	      (onkeydown (if onkeydown
 			     (format "~a; ~a" comp
 				     (if (xml-tilde? onkeydown)
-					 (tilde->string onkeydown)
+					 (xml-tilde->statement onkeydown)
 					 onkeydown))
 			     comp)))
 	  (instantiate::xml-empty-element

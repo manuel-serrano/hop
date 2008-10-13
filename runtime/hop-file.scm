@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-file.scm              */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-file.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Fri Aug 29 10:36:46 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:43:48 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
@@ -155,7 +155,7 @@
 (define (obj->proc obj)
    (cond
       ((xml-tilde? obj)
-       (format "function( event ) { ~a }" (xml-tilde-body obj)))
+       (format "function( event ) { ~a }" (xml-tilde->return obj)))
       ((string? obj)
        (format "function( event ) { ~a }" obj))))
 

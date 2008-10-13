@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/hop-img.scm               */
+;*    serrano/prgm/project/hop/1.10.x/runtime/hop-img.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Tue Aug 19 14:52:21 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:40:39 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -133,8 +133,7 @@
 	     (set-cdr! onerror (string-append oval "; " val))
 	     attributes)
 	    ((xml-tilde? oval)
-	     (let ((tilde (string->tilde val)))
-		(set-cdr! onerror (tilde-compose oval tilde)))
+	     (set-cdr! onerror (string-append (tile->statement oval) ";" val))
 	     attributes)
 	    (else
 	     (cons `(onerror . ,val) attributes)))))

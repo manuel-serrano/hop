@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Oct 13 15:31:14 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:41:55 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -82,7 +82,7 @@
       (let ((gid (gensym))
 	    (oc (cond
 		   ((xml-tilde? onchange)
-		    (tilde->string onchange))
+		    (xml-tilde->return onchange))
 		   ((string? onchange)
 		    onchange)
 		   (else
