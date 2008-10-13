@@ -170,7 +170,18 @@
 	    (symbol-var-set! module-scope 'this this-var))
 	 
 	 (find-globals env body module-scope)
-	 ;; walk
+	 ;; generally the result should not be needed.
+	 ;; however, when used as library, it is sometimes necessary to assign
+	 ;; the result to a var. this var is then stored in config
+	 ;; 'module-result-var'.
+	 ;; We can't do this earlier, as otherwise the top-level defines are
+	 ;; not found...
+	 (let ((global-assig (config 'module-result-var)))
+	    (when global-assig
+	       (set! body (instantiate::Set!
+			     (lvalue (instantiate::Ref (id global-assig)))
+			     (val body)))))
+	 ;; walk!
 	 (default-walk! this extended-symbol-table)
 	 (set! runtime-vars (scope->list runtime-scope))
 	 (set! imported-vars (scope->list imported-scope))
