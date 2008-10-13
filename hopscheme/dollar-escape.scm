@@ -1,5 +1,6 @@
 (module __hopscheme_dollar-escape
-   (library scheme2js))
+   (library scheme2js)
+   (import __hopscheme_config))
 
 ;; ===========================================================================
 ;; add scheme2js pre-expander, so we recognize '$'escapes.

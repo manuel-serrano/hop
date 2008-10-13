@@ -4,7 +4,7 @@
    
    (import __hopscheme_config)
 
-   (export (compile-scheme-file file::bstring reader::procedure)))
+   (export (compile-scheme-file file::bstring)))
    
 ;*---------------------------------------------------------------------*/
 (define *cached-config* #f)

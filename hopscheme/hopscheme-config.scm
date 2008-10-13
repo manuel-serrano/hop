@@ -72,7 +72,7 @@
       conf-module))
 
 ;;
-(define (init-hopscheme-compiler! reader share verbose eval postprocess)
+(define (init-hopscheme! reader share verbose eval postprocess)
    (set! *hop-reader* reader)
    (set! *hop-share-directory* share)
    (set! *hop-verbose* verbose)

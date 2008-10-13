@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_scm
    
-   (library web)
+   (library hopscheme web)
    
    (include "xml.sch"
 	    "service.sch")
@@ -33,7 +33,7 @@
 	    __hop_http-error
 	    __hop_xml)
    
-   (export  (init-scm-compiler! ::procedure)
+   (export  (init-scm-compiler! ::procedure ::procedure)
 	    (scm-response::%http-response ::http-request ::bstring)
 	    (scm2js-url ::bstring)
 	    (scm2js-compile-file ::bstring)))

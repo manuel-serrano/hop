@@ -82,7 +82,7 @@
 		(else
 		 (let ((char (the-failure)))
 		    (if (eof-object? char)
-			(if (=fx bar-open 0)
+			(if (=fx bra-open 0)
 			    (reverse! acc)
 			    (read-error/location "Unexpected end-of-file"
 						 "Unclosed list"
