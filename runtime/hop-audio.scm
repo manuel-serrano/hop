@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Oct  8 17:21:02 2008 (serrano)                */
+;*    Last change :  Tue Oct 14 02:30:18 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -76,7 +76,7 @@
 (define-struct logentry command args complete)
 
 ;*---------------------------------------------------------------------*/
-;*    debutg-player ...                                                */
+;*    debug-player ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (debug-player p)
    
