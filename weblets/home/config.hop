@@ -32,7 +32,7 @@
 ;*    Version                                                          */
 ;*---------------------------------------------------------------------*/
 (define (home-version) "1.10.0 ")
-(define (home-date) "29 September 2008")
+(define (home-date) "13 October 2008")
 (define (home-author) "M. Serrano")
 
 ;*---------------------------------------------------------------------*/

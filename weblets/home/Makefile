@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Sep 29 12:24:50 2008 (serrano)                */
+#*    Last change :  Tue Oct 14 08:04:07 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -48,6 +48,7 @@ build: .afile license.wiki install.wiki install-jvm.wiki release.info \
        etc/weblet.info etc/home.wiki
 
 clean:
+	$(RM) config.hop
 
 distclean:
 	$(RM) etc/weblet.info etc/$(TITLE).wiki
