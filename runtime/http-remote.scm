@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Mon Oct 13 07:10:55 2008 (serrano)                */
+;*    Last change :  Tue Oct 14 02:12:43 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -228,7 +228,8 @@
 				(unwind-protect
 				   (if (eq? te 'chunked)
 				       (let ((trailers (assq 'te header)))
-					  (print "trailers=" trailers)
+					  (when trailers
+					     (print "******* te=" trailers))
 					  (http-send-chunks ip op2 #f))
 				       (unless (=elong cl #e0)
 					  (send-chars ip op2 cl)))
@@ -239,7 +240,8 @@
 				      (close-output-port op2))))
 			     (if (eq? te 'chunked)
 				 (let ((trailers (assq 'te header)))
-				    (print "trailers=" trailers)
+				    (when trailers
+				       (print "******* te=" trailers))
 				    (http-send-chunks ip op #f))
 				 (unless (=elong cl #e0)
 				    (send-chars ip op cl)))))))
@@ -253,6 +255,8 @@
 					   " conn=" remote)
 		  (if (or (not (=fx status-code 200))
 			  (eq? connection 'close)
+			  (and (not connection)
+			       (string=? http-version "HTTP/1.0"))
 			  (not (hop-enable-remote-keep-alive)))
 		      (connection-close! remote)
 		      (connection-keep-alive! remote))
@@ -260,11 +264,10 @@
 		  (let ((s (http-header-field
 			    (http-request-header request)
 			    proxy-connection:)))
-		     (cond
-			((string? s)
-			 (string->symbol s))
-			(else
-			 'close)))))))))
+		     (if (and (or (>elong cl #e0) (eq? te 'chunked))
+			      (string? s))
+			 (string->symbol s)
+			 'close))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *remote-lock* ...                                                */

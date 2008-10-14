@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Oct 13 19:40:21 2008 (serrano)                */
+;*    Last change :  Tue Oct 14 02:18:41 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -109,9 +109,9 @@
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
 
-	    (tilde->statement::bstring ::xml-tilde)
-	    (tilde->expression::bstring ::xml-tilde)
-	    (tilde->return::bstring ::xml-tilde)
+	    (xml-tilde->statement::bstring ::xml-tilde)
+	    (xml-tilde->expression::bstring ::xml-tilde)
+	    (xml-tilde->return::bstring ::xml-tilde)
 
 	    (<A> . ::obj)
 	    (<ABBR> . ::obj)
@@ -709,8 +709,7 @@
 ;*    xml-write-attribute ::xml-tilde ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-attribute attr::xml-tilde id p)
-   (with-access::xml-tilde attr (body)
-      (xml-write-attribute (JS-statement body) id p)))
+   (xml-write-attribute (xml-tilde->statement attr) id p))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::hop-service ...                            */
@@ -778,21 +777,21 @@
 		     (eval e))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    tilde->statement ...                                             */
+;*    xml-tilde->statement ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (tilde->statement obj)
+(define (xml-tilde->statement obj)
    (JS-statement (xml-tilde-body obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    tilde->expression ...                                            */
+;*    xml-tilde->expression ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (tilde->expression obj)
+(define (xml-tilde->expression obj)
    (JS-expression (xml-tilde-body obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    tilde->return ...                                                */
+;*    xml-tilde->return ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (tilde->return obj)
+(define (xml-tilde->return obj)
    (JS-return (xml-tilde-body obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -831,7 +830,6 @@
 (define-xml-element <EMBED>)
 (define-xml-element <FIELDSET>)
 (define-xml-element <FONT>)
-(define-xml-element <FORM>)
 (define-xml xml-empty-element #t <FRAME>)
 (define-xml-element <FRAMESET>)
 (define-xml-element <H1>)
@@ -887,6 +885,45 @@
 (define-xml-element <VAR>)
 
 ;*---------------------------------------------------------------------*/
+;*    <FORM> ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-xml-compound <FORM> ((id #unspecified string)
+			     (onsubmit #f)
+			     (onreset #f)
+			     (action #f)
+			     (attrs)
+			     body)
+   (let* ((attrs (cond
+		    ((xml-tilde? onsubmit)
+		     (cons (cons 'onsubmit (xml-tilde->return onsubmit)) attrs))
+		    (onsubmit
+		     (cons (cons 'onsubmit onsubmit) attrs))
+		    (else
+		     attrs)))
+	  (attrs (cond
+		    ((xml-tilde? onreset)
+		     (cons (cons 'onreset (xml-tilde->return onreset)) attrs))
+		    (onreset
+		     (cons (cons 'onreset onreset) attrs))
+		    (else
+		     attrs)))
+	  (attrs (cond
+		    ((xml-tilde? action)
+		     (cons (cons 'action
+				 (format "javascript: ~a"
+					 (xml-tilde->statement action)))
+			   attrs))
+		    (action
+		     (cons (cons 'action action) attrs))
+		    (else
+		     attrs))))
+      (instantiate::xml-element
+	 (markup 'form)
+	 (id (xml-make-id id 'FORM))
+	 (attributes attrs)
+	 (body body))))
+
+;*---------------------------------------------------------------------*/
 ;*    <TILDE> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (<TILDE> body)
@@ -928,4 +965,4 @@
 ;*    xml-write-expression ::xml-tilde ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-expression obj::xml-tilde p)
-   (display (JS-expression (xml-tilde-body obj)) p))
+   (display (xml-tilde->expression obj) p))

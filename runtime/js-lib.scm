@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/js-lib.scm                */
+;*    serrano/prgm/project/hop/1.10.x/runtime/js-lib.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat May 24 09:44:48 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:49:25 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple JS lib                                                    */
@@ -236,7 +236,7 @@
 ;*    hop->json ::xml-tilde ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->json obj::xml-tilde isrep isflash)
-   (xml-tilde-body obj))
+   (xml-tilde->statement obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->json ...                                                    */
@@ -461,7 +461,7 @@
 (define (hop->js-callback obj)
    (cond
       ((xml-tilde? obj)
-       (format "function( event ) { ~a }" (xml-tilde-body obj)))
+       (format "function( event ) { ~a }" (xml-tilde->return obj)))
       ((string? obj)
        (format "function( event ) { ~a }" obj))
       (else

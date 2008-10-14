@@ -111,6 +111,10 @@ looks like:
   (<VAR> ...)
 
 
+== Examples ==
+
+<example><FORM></example>
+
 == Server Definitions ==
 <server>
 

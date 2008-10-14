@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Apr  8 13:15:13 2006                          */
-;*    Last change :  Mon Oct 13 19:41:04 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 20:13:18 2008 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of <EDITOR>.                              */
 ;*=====================================================================*/
@@ -20,7 +20,8 @@
 	    __hop_xml
 	    __hop_img
 	    __hop_misc
-	    __hop_hop-extra)
+	    __hop_hop-extra
+	    __hop_js-lib)
 
    (export  (<EDITOR> . ::obj)))
 
@@ -180,18 +181,6 @@
 	       (<FILER>))))))
 
 ;*---------------------------------------------------------------------*/
-;*    obj->js-thunk ...                                                */
-;*---------------------------------------------------------------------*/
-(define (obj->js-thunk obj)
-   (cond
-      ((xml-tilde? obj)
-       (format "function( val ) { ~a }" (xml-tilde->return obj)))
-      ((string? obj)
-       (format "function( val ) { ~a }" obj))
-      (else
-       "false")))
-
-;*---------------------------------------------------------------------*/
 ;*    <EDITOR> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-xml-compound <EDITOR> ((id #unspecified string)
@@ -218,5 +207,5 @@
 	    :onmouseout  "hop_edit_in_iframe = false"
 	    :width width :height height)
 	 (<SCRIPT> (format "hop_edit_init(~s, ~s, ~a, ~a)" id *popups-dir*
-			   (obj->js-thunk onsubmit)
-			   (obj->js-thunk oncancel))))))
+			   (hop->js-callback onsubmit)
+			   (hop->js-callback oncancel))))))

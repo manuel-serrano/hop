@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon Oct 13 19:41:55 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 19:48:41 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
@@ -69,8 +69,7 @@
       ((integer? obj)
        obj)
       ((xml-tilde? obj)
-       (format "function(){return ~a}()"
-	       (xml-attribute-encode (xml-tilde-body obj))))
+       (xml-tilde->expression obj))
       (else
        (error 'SLIDER (format "Illegal ~a" attr) obj))))
        

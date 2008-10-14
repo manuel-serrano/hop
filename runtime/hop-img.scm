@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Mon Oct 13 19:40:39 2008 (serrano)                */
+;*    Last change :  Mon Oct 13 20:12:11 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -133,7 +133,9 @@
 	     (set-cdr! onerror (string-append oval "; " val))
 	     attributes)
 	    ((xml-tilde? oval)
-	     (set-cdr! onerror (string-append (tile->statement oval) ";" val))
+	     (set-cdr! onerror (string-append (xml-tilde->statement oval)
+					      "\n"
+					      val))
 	     attributes)
 	    (else
 	     (cons `(onerror . ,val) attributes)))))
