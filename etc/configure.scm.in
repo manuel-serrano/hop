@@ -18,18 +18,18 @@
            (hop-version)
            (hop-backend)
 	   (hop-url)
-	   (hop-bin-directory)
-	   (hop-lib-directory)
-	   (hop-etc-directory)
-	   (hop-share-directory)
-	   (hop-contribs-directory)
-           (hop-weblets-directory)
-           (hop-mime-types-file)
-	   (hop-configure-javascript-mime-type)
-	   (hop-configure-css-mime-type)
-	   (hop-runtime-system::pair)
-	   (hop-runtime-system-files::pair)
-	   (hop-service-base::bstring))
+	   (inline hop-bin-directory)
+	   (inline hop-lib-directory)
+	   (inline hop-etc-directory)
+	   (inline hop-share-directory)
+	   (inline hop-contribs-directory)
+           (inline hop-weblets-directory)
+           (inline hop-mime-types-file)
+	   (inline hop-configure-javascript-mime-type)
+	   (inline hop-configure-css-mime-type)
+	   (inline hop-runtime-system::pair)
+	   (inline hop-runtime-system-files::pair)
+	   (inline hop-service-base::bstring))
    
    (eval   (export hop-name)
 	   (export hop-version)
@@ -113,29 +113,29 @@
 ;*---------------------------------------------------------------------*/
 ;*    Install directories ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hop-etc-directory) "@ETCDIR@")
-(define (hop-bin-directory) "@BINDIR@")
-(define (hop-lib-directory) "@LIBDIR@")
-(define (hop-share-directory) "@SHAREDIR@")
-(define (hop-contribs-directory) "@CONTRIBSDIR@")
-(define (hop-weblets-directory) "@WEBLETSDIR@")
+(define-inline (hop-etc-directory) "@ETCDIR@")
+(define-inline (hop-bin-directory) "@BINDIR@")
+(define-inline (hop-lib-directory) "@LIBDIR@")
+(define-inline (hop-share-directory) "@SHAREDIR@")
+(define-inline (hop-contribs-directory) "@CONTRIBSDIR@")
+(define-inline (hop-weblets-directory) "@WEBLETSDIR@")
 
 ;*---------------------------------------------------------------------*/
 ;*    Misc ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (hop-mime-types-file) "@MIMETYPES@")
-(define (hop-configure-javascript-mime-type) "@JSMIMETYPE@")
-(define (hop-configure-css-mime-type) "@CSSMIMETYPE@")
+(define-inline (hop-mime-types-file) "@MIMETYPES@")
+(define-inline (hop-configure-javascript-mime-type) "@JSMIMETYPE@")
+(define-inline (hop-configure-css-mime-type) "@CSSMIMETYPE@")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-runtime-system ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (hop-runtime-system) '(@HOPJS@))
-(define (hop-runtime-system-files) '(@HOPJSFILES@))
+(define-inline (hop-runtime-system) '(@HOPJS@))
+(define-inline (hop-runtime-system-files) '(@HOPJSFILES@))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-base ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    The prefix of all HOP weblets.                                   */
 ;*---------------------------------------------------------------------*/
-(define (hop-service-base) "@HOPSERVICEBASE@")
+(define-inline (hop-service-base) "@HOPSERVICEBASE@")
