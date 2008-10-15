@@ -27,6 +27,30 @@ panel, select the following options:
 </code>
 
 
+== Preparing Hop ==
+
+HOP can only execute programs on behalf of //authenticated users//. For
+that, before executing any program, **user accounts** must created. A
+user account specifies which program a user may run and which directories
+a user may access to. The easiest way to create a user account is
+to use the HOP [[/hop/wizard|Wizard]] weblet.
+
+If you don't feel like using this weblet, you can add in your HOP RC
+file (see ,(<TUTORIALREF> "RC file" "07-hoprc.wiki")) expressions such as:
+
+<code>
+  (add-user! "test"
+           :password "4f4ac66d8c71f57bf04d2e00b5360cc8"
+           :directories '*
+           :services '*)
+</code>
+
+This specifies that the user ++test++ may execute all the available
+programs and that he may access all the directories accessible by the
+user that is running the HOP process on the host server. The password
+encrypted key must be generated with [[/hop/epassword|Epassword]].
+
+
 == Defining the service ==
 
 In this example, we define a ,(<APIREF> "service" "service.wiki") named
@@ -41,7 +65,7 @@ In this example, we define a ,(<APIREF> "service" "service.wiki") named
 
   (<HTML>
     (<BODY>
-       (<A> :href "http://hop/hop/hello" "click me")))
+       (<A> :href "/hop/hello" "click me")))
 </example>
 
 This automatically binds the URL ++/hop/hello++ to the service. The prefix
@@ -51,11 +75,11 @@ to be established on the port ++8080++. The actual URL ,(<TT>
 "http://localhost:8080/hop/hello") refers to our previously defined
 service. Since HOP predefines the alias //hop// for ++localhost:8080++
 hence, provided you have configured your browser for using HOP has
-your web proxy, the URL ,(<TT> "http://hop/hop/hello") also refers to our
+your web proxy, the URL ,(<TT> "http://localhost:8080/hop/hello") also refers to our
 service.
 
 ~~ Once, you have evaluated the code above once, the service ++hello++
-being bound, you can directly go to the URL [[http://hop/hop/hello]]
+being bound, you can directly go to the URL [[http://localhost:8080/hop/hello]]
 in your browser.
 
 == Storing the service on a file ==
@@ -103,7 +127,7 @@ idea to store the definition on another file and to
 
 On startup, the HOP server scans the disk of the local computer in order
 to find all the ,(<APIREF> (<I> "weblets") "service.wiki") currently 
-[[http://hop/hop/hz|available]]. For this, it scans the directories returned by
+[[/hop/hop/hz|available]]. For this, it scans the directories returned by
 ++(,(<APIREF> "hop-autoload-directories" "service.wiki"))++. The current
 weblets path is:
 
@@ -119,7 +143,7 @@ weblets path is:
 HOP scans the subdirectories in this path. For each subdirectory ++DIR++,
 HOP checks if a file named ++DIR.hop++ exists. If it exists, then HOP
 adds an //autoload// rule on a weblet named ++DIR++. That is, if HOP
-has to server a request of the form ,(<TT> "http://hop/hop/DIR"), then it
+has to server a request of the form ,(<TT> "http://localhost:8080/hop/DIR"), then it
 loads the previously mentioned file and it executes the service ++DIR++.
 
 ~~ In consequence, for creating a pervasive ++hello++ service, a file named
@@ -141,7 +165,7 @@ text is centered.
 
   (<HTML>
     (<BODY>
-       (<A> :href "http://hop/hop/hello" "click me")))
+       (<A> :href "/hop/hello" "click me")))
 </example>
 
 == Adding a parameter to the service ==
@@ -157,7 +181,7 @@ We now add a parameter to the service.
 
   (<HTML>
     (<BODY>
-       (<A> :href "http://hop/hop/hello?who=foo" "click me")))
+       (<A> :href "/hop/hello?who=foo" "click me")))
 </example>
 
 ~~ Note that in this example, the parameter is specified in the URL

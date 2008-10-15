@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Oct 13 17:29:48 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 10:13:40 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -207,7 +207,3 @@
        (hop-event-init! (hop-fast-server-event-port))
        (let ((serv (make-server-socket (hop-fast-server-event-port))))
 	  (scheduler-accept-loop scd serv)))))
-
-      
-	       
-   

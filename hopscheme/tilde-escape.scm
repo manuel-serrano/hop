@@ -29,11 +29,7 @@
        "return " assig-var-str "; })"
        ".call(this)")))
 (define (JS-statement t)
-   (let* ((assig-var (car t))
-	  (assig-var-str (symbol->string assig-var))
-	  (e (cdr t)))
-      (string-append
-       "{ var " assig-var-str "; " e "}")))
+   (cdr t))
 (define (JS-return t)
    (let* ((assig-var (car t))
 	  (assig-var-str (symbol->string assig-var))

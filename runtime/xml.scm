@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Oct 14 02:18:41 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 10:08:54 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -655,6 +655,24 @@
       (display "'" p)))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::xml-tilde ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute attr::xml-tilde id p)
+   (display id p)
+   (display "='" p)
+   (display (xml-attribute-encode (xml-tilde->statement attr)) p)
+   (display "'" p))
+   
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::hop-service ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute attr::hop-service id p)
+   (display id p)
+   (display "='" p)
+   (display (hop-service-path attr) p)
+   (display "'" p))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (xml-write-initializations obj p backend)
@@ -705,21 +723,6 @@
    (xml-write-expression tilde p)
    (display ");" p))
    
-;*---------------------------------------------------------------------*/
-;*    xml-write-attribute ::xml-tilde ...                              */
-;*---------------------------------------------------------------------*/
-(define-method (xml-write-attribute attr::xml-tilde id p)
-   (xml-write-attribute (xml-tilde->statement attr) id p))
-   
-;*---------------------------------------------------------------------*/
-;*    xml-write-attribute ::hop-service ...                            */
-;*---------------------------------------------------------------------*/
-(define-method (xml-write-attribute attr::hop-service id p)
-   (display id p)
-   (display "='" p)
-   (display (hop-service-path attr) p)
-   (display "'" p))
-
 ;*---------------------------------------------------------------------*/
 ;*    xml->string ...                                                  */
 ;*---------------------------------------------------------------------*/
