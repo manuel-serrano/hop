@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Oct 13 17:44:12 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 07:56:45 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -40,7 +40,7 @@
 	 (log-file #f)
 	 (be #f)
 	 (files '()))
-
+      
       (bigloo-debug-set! 0)
       
       (args-parse (cdr args)
@@ -108,7 +108,7 @@
 	  (set! log-file file))
 	 (("--allow-service-override" (help "Allow service overriding"))
 	  (hop-allow-service-override-set! #t))
-
+	 
 	 ;; Run
 	 (section "Run")
 	 ((("-p" "--http-port") ?port (help (format "Port number [~s]" p)))
@@ -146,148 +146,148 @@
 		 (http :port p :path (format "/hop/shutdown/kill?key=~a" key))
 		 (error 'hop-kill "Cannot find process key" (key-filepath p)))
 	     (exit 0)))
-	  
-	  ;; Paths
-	  (section "Paths")
-	  ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
-	   (hop-path-set! (cons path (hop-path))))
-	  ((("-L" "--library-path") ?path (help "Add <PATH> to hop library path"))
-	   (bigloo-library-path-set! (cons path (bigloo-library-path))))
-	  ((("-l" "--library") ?library (help "Preload additional <LIBRARY>"))
-	   (set! libraries (cons library libraries )))
-	  
-	  ;; Internals
-	  (section "Internals")
-	  (("--configure" ?config (help "Report HOP configuration"))
-	   (hop-configure config)
-	   (exit 0))
-	  (("--no-thread" (help "Disable multithreading (equiv. to \"--scheduler nothread\")"))
-	   (hop-max-threads-set! 1)
-	   (hop-enable-keep-alive-set! #f)
-	   (hop-scheduling-set! 'nothread))
-	  (("--scheduler" ?ident (help (format "Set scheduling policy [~s] (see --help-scheduler)" (hop-scheduling))))
-	   (hop-scheduling-set! (string->symbol ident)))
-	  (("--help-scheduler" (help "Prints the available schedulers list"))
-	   (with-output-to-port (current-error-port)
-	      (lambda ()
-		 (print  "Schedulers:")
-		 (print "  - queue (split threads but avoid useless switches)")
-		 (print "  - nothread (single threaded execution)")
-		 (print "  - cohort (cohorts of task threads)")
-		 (print "  - one-to-one (one thread per request)")
-		 (print "  - pool (one thread per request from a pool)")))
-	   (exit 0))
-	  (("--restore-cache" (help "Restore disk caches"))
-	   (hop-restore-disk-cache-set! #t))
-	  (("--no-restore-cache" (help "Do not restore disk caches"))
-	   (hop-restore-disk-cache-set! #f))
-	  (("-?dummy")
-	   (args-parse-usage #f)
-	   (exit 1))
-	  (else
-	   (set! files (cons else files))))
 	 
-	 ;; http port
-	 (hop-port-set! p)
-	 (when (eq? ep #unspecified) (set! ep p))
-
-	 ;; log
-	 (when log-file
-	    (let ((p (append-output-file log-file)))
-	       (unless p
-		  (error 'hop "Cannot open log file" log-file))
-	       (hop-log-file-set! p)))
-
-	 ;; mime types
-	 (when mimep
-	    (load-mime-types (hop-mime-types-file))
-	    (load-mime-types (if (string? mime-file)
-				 mime-file
-				 (make-file-name (getenv "HOME") ".mime.types"))))
-
-	 ;; weblets path
-	 (hop-autoload-directory-add!
-	  (make-file-name (hop-rc-directory) "weblets"))
-
-	 ;; init hss, scm compilers, and services
-	 (init-hss-compiler!)
-	 (init-hopscheme! (lambda (p v) (hop-read p))
-			  (hop-share-directory)
-			  (hop-verbose)
-			  (lambda (e)
-			     (hop->json (eval e) #f #f))
-			  (lambda (s)
-			     (with-input-from-string s
-				(lambda ()
-				   (hop-read-javascript
-				    (current-input-port)
-				    (hop-charset))))))
-	 (init-scm-compiler! compile-scheme-file compile-scheme-expression)
-	 (init-hop-services!)
-
-	 ;; hoprc
-	 (when loadp (parseargs-loadrc rc-file (hop-rc-file)))
-
-	 ;; default backend
-	 (when (string? be) (hop-xml-backend-set! (string->symbol be)))
+	 ;; Paths
+	 (section "Paths")
+	 ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
+	  (hop-path-set! (cons path (hop-path))))
+	 ((("-L" "--library-path") ?path (help "Add <PATH> to hop library path"))
+	  (bigloo-library-path-set! (cons path (bigloo-library-path))))
+	 ((("-l" "--library") ?library (help "Preload additional <LIBRARY>"))
+	  (set! libraries (cons library libraries )))
 	 
-	 ;; server event port
-	 (when (hop-enable-fast-server-event)
-	    (if (<fx ep 1024)
-		(error 'fast-server-event-port
-		       "Server event port must be greater than 1023. (See `--fast-server-event-port' or `--disable-fast-server-event' options.)"
-		       ep)
-		(hop-fast-server-event-port-set! ep)))
-	 
-	 (for-each (lambda (expr)
-		      (with-input-from-string expr
-			 (lambda ()
-			    (let ((sexp (hop-read (current-input-port))))
-			       (with-handler
-				  (lambda (e)
-				     (if (&eval-warning? e)
-					 (begin
-					    (warning-notify e)
-					    #unspecified)
-					 (raise e)))
-				  (eval sexp))))))
-		   exprs)
-	 
-	 (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
-	 
-	 (for-each (lambda (l) (eval `(library-load ',l))) libraries)
-	 
-	 (for-each (lambda (f)
-		      (let ((path (cond
-				     ((string-index f ":")
-				      f)
-				     ((and (>fx (string-length f) 0)
-					   (char=? (string-ref f 0)
-						   (file-separator)))
-				      f)
-				     (else
-				      (file-name-canonicalize!
-				       (make-file-name (pwd) f))))))
-			 (cond
-			    ((string-suffix? ".hz" path)
-			     ;; this is a weblet
-			     (hop-load-hz path))
-			    ((directory? path)
-			     ;; load a directory
-			     (let ((src (string-append (basename path) ".hop")))
-				(hop-load-weblet (make-file-name path src))))
-			    (else
-			     ;; this is a plain file
-			     (hop-load-weblet path)))))
-		   (reverse! files))
-	 
-	 ;; write the process key
-	 (hop-process-key-write (hop-process-key) (hop-port))
-	 (register-exit-function! (lambda (ret)
-				     (hop-process-key-delete (hop-port))
-				     ret))
-
-	 (reverse! files)))
+	 ;; Internals
+	 (section "Internals")
+	 (("--configure" ?config (help "Report HOP configuration"))
+	  (hop-configure config)
+	  (exit 0))
+	 (("--no-thread" (help "Disable multithreading (equiv. to \"--scheduler nothread\")"))
+	  (hop-max-threads-set! 1)
+	  (hop-enable-keep-alive-set! #f)
+	  (hop-scheduling-set! 'nothread))
+	 (("--scheduler" ?ident (help (format "Set scheduling policy [~s] (see --help-scheduler)" (hop-scheduling))))
+	  (hop-scheduling-set! (string->symbol ident)))
+	 (("--help-scheduler" (help "Prints the available schedulers list"))
+	  (with-output-to-port (current-error-port)
+	     (lambda ()
+		(print  "Schedulers:")
+		(print "  - queue (split threads but avoid useless switches)")
+		(print "  - nothread (single threaded execution)")
+		(print "  - cohort (cohorts of task threads)")
+		(print "  - one-to-one (one thread per request)")
+		(print "  - pool (one thread per request from a pool)")))
+	  (exit 0))
+	 (("--restore-cache" (help "Restore disk caches"))
+	  (hop-restore-disk-cache-set! #t))
+	 (("--no-restore-cache" (help "Do not restore disk caches"))
+	  (hop-restore-disk-cache-set! #f))
+	 (("-?dummy")
+	  (args-parse-usage #f)
+	  (exit 1))
+	 (else
+	  (set! files (cons else files))))
+      
+      ;; http port
+      (hop-port-set! p)
+      (when (eq? ep #unspecified) (set! ep p))
+      
+      ;; log
+      (when log-file
+	 (let ((p (append-output-file log-file)))
+	    (unless p
+	       (error 'hop "Cannot open log file" log-file))
+	    (hop-log-file-set! p)))
+      
+      ;; mime types
+      (when mimep
+	 (load-mime-types (hop-mime-types-file))
+	 (load-mime-types (if (string? mime-file)
+			      mime-file
+			      (make-file-name (getenv "HOME") ".mime.types"))))
+      
+      ;; weblets path
+      (hop-autoload-directory-add!
+       (make-file-name (hop-rc-directory) "weblets"))
+      
+      ;; init hss, scm compilers, and services
+      (init-hss-compiler!)
+      (init-hopscheme! (lambda (p v) (hop-read p))
+		       (hop-share-directory)
+		       (hop-verbose)
+		       (lambda (e)
+			  (hop->json (eval e) #f #f))
+		       (lambda (s)
+			  (with-input-from-string s
+			     (lambda ()
+				(hop-read-javascript
+				 (current-input-port)
+				 (hop-charset))))))
+      (init-scm-compiler! compile-scheme-file compile-scheme-expression)
+      (init-hop-services!)
+      
+      ;; hoprc
+      (when loadp (parseargs-loadrc rc-file (hop-rc-file)))
+      
+      ;; default backend
+      (when (string? be) (hop-xml-backend-set! (string->symbol be)))
+      
+      ;; server event port
+      (when (hop-enable-fast-server-event)
+	 (if (<fx ep 1024)
+	     (error 'fast-server-event-port
+		    "Server event port must be greater than 1023. (See `--fast-server-event-port' or `--disable-fast-server-event' options.)"
+		    ep)
+	     (hop-fast-server-event-port-set! ep)))
+      
+      (for-each (lambda (expr)
+		   (with-input-from-string expr
+		      (lambda ()
+			 (let ((sexp (hop-read (current-input-port))))
+			    (with-handler
+			       (lambda (e)
+				  (if (&eval-warning? e)
+				      (begin
+					 (warning-notify e)
+					 #unspecified)
+				      (raise e)))
+			       (eval sexp))))))
+		exprs)
+      
+      (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
+      
+      (for-each (lambda (l) (eval `(library-load ',l))) libraries)
+      
+      (for-each (lambda (f)
+		   (let ((path (cond
+				  ((string-index f ":")
+				   f)
+				  ((and (>fx (string-length f) 0)
+					(char=? (string-ref f 0)
+						(file-separator)))
+				   f)
+				  (else
+				   (file-name-canonicalize!
+				    (make-file-name (pwd) f))))))
+		      (cond
+			 ((string-suffix? ".hz" path)
+			  ;; this is a weblet
+			  (hop-load-hz path))
+			 ((directory? path)
+			  ;; load a directory
+			  (let ((src (string-append (basename path) ".hop")))
+			     (hop-load-weblet (make-file-name path src))))
+			 (else
+			  ;; this is a plain file
+			  (hop-load-weblet path)))))
+		(reverse! files))
+      
+      ;; write the process key
+      (hop-process-key-write (hop-process-key) (hop-port))
+      (register-exit-function! (lambda (ret)
+				  (hop-process-key-delete (hop-port))
+				  ret))
+      
+      (reverse! files)))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */

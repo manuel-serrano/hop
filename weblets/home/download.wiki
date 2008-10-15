@@ -73,7 +73,7 @@ used without downloading and installing the source code manually:
 
 ~~ We provide some pre-compiled packages for non-standard architectures:
 
-  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "maemo-16x16.png")) ,(<A> :href *maemo-deb-url* "maemo") (Nokia N810)
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "maemo-16x16.png")) ,(<A> :href *maemo-deb-url* "maemo") (Nokia N800, N810)
 
 
 == Getting Bigloo ==
