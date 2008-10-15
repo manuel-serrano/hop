@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/http-webdav.scm           */
+;*    serrano/prgm/project/hop/1.10.x/runtime/http-webdav.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Wed Aug 27 08:11:06 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 12:36:50 2008 (serrano)                */
 ;*    Copyright   :  2007-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
@@ -230,7 +230,6 @@
 		(backend *webdav-backend*)
 		(content-type (xml-backend-mime-type *webdav-backend*))
 		(charset (hop-charset))
-		(force-content-length #t)
 		(xml (<DAV>
 			(<DAV:MULTISTATUS>
 			   (directory->dav abspath depth props))))))))))
@@ -456,7 +455,6 @@
 	     (backend *webdav-backend*)
 	     (content-type (xml-backend-mime-type *webdav-backend*))
 	     (charset (hop-locale))
-	     (force-content-length #t)
 	     (xml (<DAV>
 		     (<DAV:MULTISTATUS>
 			(map (lambda (p)

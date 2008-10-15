@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Oct 11 08:40:44 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 12:30:15 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -206,9 +206,6 @@
 	    (hop-path-access-control::procedure)
 	    (hop-path-access-control-set! ::procedure)
 
-	    (hop-force-content-length::bool)
-	    (hop-force-content-length-set! ::bool)
-	    
 	    (hop-service-access-control::procedure)
 	    (hop-service-access-control-set! ::procedure)
 
@@ -964,12 +961,6 @@
 		 v))
 	 (else
 	  v))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-force-content-length ...                                     */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-force-content-length
-   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-access-control ...                                   */

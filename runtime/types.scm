@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Oct  9 05:11:52 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 12:30:05 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -103,7 +103,6 @@
 
 	   (class http-response-hop::%http-response-local
 	      (backend read-only (default (hop-xml-backend)))
-	      (force-content-length read-only (default (hop-force-content-length)))
 	      (xml read-only))
 	   
 	   (class http-response-js::%http-response-local

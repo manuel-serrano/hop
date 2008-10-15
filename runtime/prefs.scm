@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Mon Oct 13 08:46:01 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 15:26:11 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -135,7 +135,7 @@
 		  (if (and (or (authorized-service? req 'admin)
 			       (authorized-service? req 'admin/preferences/save))
 			   (authorized-path? req file))
-		      ((cdr save) file (string=? ov "true"))
+		      (save file (string=? ov "true"))
 		      (user-access-denied req)))))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Oct 10 20:50:57 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 13:52:57 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -131,11 +131,11 @@
 		   (with-output-to-string (lambda () (write header))) "\n")))
 
    ;; log
-   (hop-verb 1 (hop-color id id " CONNECT")
-	     (if (eq? mode 'keep-alive) "+" "")
-	     (if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
-	     (if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
-	     ": " (socket-hostname sock) " [" (current-date) "]\n")
+   (unless (eq? mode 'keep-alive)
+      (hop-verb 1 (hop-color id id " CONNECT")
+		(if (>=fx (hop-verbose) 3) (format " ~a" thread) "")
+		(if (>=fx (hop-verbose) 2) (scheduler-stat scd) "")
+		": " (socket-hostname sock) " [" (current-date) "]\n"))
 
    ;; debug trace
    (debug-thread-info-set! thread "connection established with ~a")

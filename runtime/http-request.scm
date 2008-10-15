@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Oct 10 15:59:02 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 13:26:11 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -66,6 +66,15 @@
 	    req))))
 
 ;*---------------------------------------------------------------------*/
+;*    request-eof ...                                                  */
+;*---------------------------------------------------------------------*/
+(define request-eof-exception
+   (instantiate::&io-parse-error
+      (obj beof)
+      (proc 'rqeuest-list-grammar)
+      (msg "Illegal premature end-of-file")))
+
+;*---------------------------------------------------------------------*/
 ;*    request-line-grammar ...                                         */
 ;*---------------------------------------------------------------------*/
 (define request-line-grammar
@@ -86,10 +95,13 @@
 		 (msg "Method not implemented")
 		 (obj (the-string)))))
       (else
-       (parse-error 'request-line-grammar
-		    "Illegal method"
-		    (the-failure)
-		    (the-port)))))
+       (let ((o (the-failure)))
+	  (if (eof-object? o)
+	      request-eof-exception
+	      (parse-error 'request-line-grammar
+			   "Illegal method"
+			   o
+			   (the-port)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-method-request ...                                    */

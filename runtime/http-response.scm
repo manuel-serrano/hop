@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Oct 13 07:08:52 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 12:35:49 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -152,23 +152,17 @@
       (with-access::http-response-hop r (request
 					 start-line header
 					 content-type charset server backend
-					 force-content-length content-length
+					 content-length
 					 xml bodyp timeout)
-	 (let ((p (socket-output socket))
-	       (connection (http-request-connection request))
-	       (sbody #f)
+	 (let ((connection (http-request-connection request))
+	       (p (socket-output socket))
 	       (clen content-length)
 	       (chunked (cond-expand
 			   ((or bigloo3.1a bigloo3.1b)
 			    #f)
 			   (else
 			    (eq? (http-request-http request) 'HTTP/1.1)))))
-	    (when (and force-content-length (<=elong clen #e0))
-	       (let ((op (open-output-string)))
-		  (xml-write xml op backend)
-		  (set! sbody (close-output-port op))
-		  (set! clen (fixnum->elong (string-length sbody)))))
-	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
+	    (output-timeout-set! p timeout)
 	    (http-write-line-string p start-line)
 	    (http-write-header p header)
 	    (cond
@@ -199,9 +193,7 @@
 	    ;; the body
 	    (with-trace 4 'http-response-hop
 	       (when bodyp
-		  (if sbody
-		      (display sbody p)
-		      (xml-write xml p backend))))
+		  (xml-write xml p backend)))
 	    (flush-output-port p)
 	    ;; for chunked, write the last 0 chunk
 	    (cond-expand
