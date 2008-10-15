@@ -307,9 +307,13 @@
 
 (install-expander! 'let ;; named let
 		   (lambda (x e macros-ht)
-		      (if (symbol? (cadr x))
-			  (e (expand-named-let x) e macros-ht)
-			  (expand-let x e macros-ht))))
+		      (match-case x
+			 ((?- (? symbol?) (? list?) . ?-)
+			  (e (expand-named-let x) e macros-ht))
+			 ((?- (? list?) . ?-)
+			  (expand-let x e macros-ht))
+			 (else
+			  (error 'let "Illegal form" x)))))
 
 (install-expander! 'define-struct
  (lambda (x e macros-ht)

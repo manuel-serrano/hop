@@ -33,7 +33,8 @@
 			     (with-hop
 			      ($home/demos/repl/compile s)
 			      (lambda (h)
-				 (if (pair? h)
+				 (cond
+				    ((pair? h)
 				     (with-output-to-procedure
 				      (lambda (s)
 					 (set! self.value
@@ -41,7 +42,12 @@
 				      (lambda ()
 					 (let ((e (safe-eval (car h))))
 					    (print e)
-					    (display ":=> ")))))))))))
+					    (display ":=> ")))))
+				    ((string? h)
+				     (alert h)
+				     (set! self.value
+					   (string-append self.value
+							  ";; error\n:=> "))))))))))
 	       ";; Try to cut an paste the following lines, without the semi-colons
 ;;   (let ((el (car (dom-get-elements-by-tag-name document \"h1\"))))
 ;;      (el.style.setProperty \"color\" \"red\" \"\"))
@@ -55,10 +61,10 @@
       (lambda (e) #f)
       (with-input-from-string s
 	 (lambda ()
-	    (let* ((e (hop-read (current-input-port)))
-		   (j (with-handler
-			 (lambda (e)
-			    (with-error-to-string
-			       (lambda () (error-notify e))))
-			 (compile-hop-client e))))
-	       (cons j s))))))
+	    (let ((e (hop-read (current-input-port))))
+	       (with-handler
+		  (lambda (e)
+		     (with-error-to-string
+			(lambda () (error-notify e))))
+		  (let ((expr (eval (compile-scheme-expression e))))
+		     (cons (JS-expression expr) s))))))))

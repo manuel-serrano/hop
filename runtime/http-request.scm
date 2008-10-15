@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Oct 15 13:26:11 2008 (serrano)                */
+;*    Last change :  Wed Oct 15 17:38:36 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -60,7 +60,7 @@
 	     (socket-timeout-set! sock 0 0))
 	    (else
 	     #unspecified))
-	 (with-access::http-request req (socket localclientp user userinfo)
+	 (with-access::http-request req (socket localclientp)
 	    (set! socket sock)
 	    (set! localclientp localc)
 	    req))))
