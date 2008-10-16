@@ -1,5 +1,6 @@
 (module transform-util
    (import nodes
+	   export
 	   symbol)
    (export (parameter-assig-mapping operands
 				    formals

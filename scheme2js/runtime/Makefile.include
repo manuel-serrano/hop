@@ -39,14 +39,14 @@ $(SCHEME2JS_RUNTIME)/runtime.sch $(SCHEME2JS_RUNTIME)/runtime-callcc.sch \
 $(SCHEME2JS_RUNTIME)/mod-runtime.sch $(SCHEME2JS_RUNTIME)/mod-runtime-callcc.sch: $(SCHEME2JS_RUNTIME)/exporter
 
 $(SCHEME2JS_RUNTIME)/runtime.sch: $(SCHEME2JS_RUNTIME)/runtime.js
-	$(SCHEME2JS_RUNTIME)/exporter --constant --module runtime $(RUNTIME_EXPORTER_FLAGS) -o $@ $<
+	$(SCHEME2JS_RUNTIME)/exporter --scheme2js-modules --constant --module runtime $(RUNTIME_EXPORTER_FLAGS) -o $@ $<
 $(SCHEME2JS_RUNTIME)/runtime-callcc.sch: $(SCHEME2JS_RUNTIME)/runtime.js $(SCHEME2JS_RUNTIME)/runtime_callcc.js
-	$(SCHEME2JS_RUNTIME)/exporter --constant --module runtime-callcc $(RUNTIME_EXPORTER_FLAGS) -o $@ \
+	$(SCHEME2JS_RUNTIME)/exporter --scheme2js-modules --constant --module runtime-callcc $(RUNTIME_EXPORTER_FLAGS) -o $@ \
 	$(SCHEME2JS_RUNTIME)/runtime.js	$(SCHEME2JS_RUNTIME)/runtime_callcc.js
 $(SCHEME2JS_RUNTIME)/mod-runtime.sch: $(SCHEME2JS_RUNTIME)/runtime_interface.js
-	$(SCHEME2JS_RUNTIME)/exporter --module mod-runtime $(RUNTIME_EXPORTER_FLAGS) -o $@ $<
+	$(SCHEME2JS_RUNTIME)/exporter --scheme2js-modules --module mod-runtime $(RUNTIME_EXPORTER_FLAGS) -o $@ $<
 $(SCHEME2JS_RUNTIME)/mod-runtime-callcc.sch: $(SCHEME2JS_RUNTIME)/runtime_interface.js $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js
-	$(SCHEME2JS_RUNTIME)/exporter --module mod-runtime-callcc $(RUNTIME_EXPORTER_FLAGS) -o $@ \
+	$(SCHEME2JS_RUNTIME)/exporter --scheme2js-modules --module mod-runtime-callcc $(RUNTIME_EXPORTER_FLAGS) -o $@ \
 	$(SCHEME2JS_RUNTIME)/runtime_interface.js $(SCHEME2JS_RUNTIME)/runtime_interface_callcc.js
 
 #==============================================================================

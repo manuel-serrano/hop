@@ -1,5 +1,6 @@
 (module node-elimination
    (import nodes
+	   export
 	   walk
 	   verbose
 	   mark-statements)

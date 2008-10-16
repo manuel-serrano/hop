@@ -1,5 +1,6 @@
 (module push-set
    (import nodes
+	   export
 	   walk
 	   verbose)
    (static (wide-class Push-Label::Label

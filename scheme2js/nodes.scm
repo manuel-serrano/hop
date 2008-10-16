@@ -1,5 +1,6 @@
 (module nodes
-   (import verbose)
+   (import verbose
+	   export)
    (export
     ;; Labels used for breaks and continues
     (final-class Label
@@ -33,16 +34,10 @@
        (js-id::bstring (default "")))
     (final-class Local::Var)
     (class JS-Var::Var)
-    (final-class Imported-Var::JS-Var
-       (exported-as-const?::bool read-only)
-       (runtime?::bool read-only)
-       (peephole       (default #f) read-only)
-       (higher?::bool  (default #f) read-only)
-       (higher-params  (default #f) read-only) 
-       (return-type    (default #f) read-only))
     (final-class Exported-Var::JS-Var
-       exported-as-const?::bool
-       (return-type (default #f) read-only))
+       ;; when imported? is #t then the var is exported by another module.
+       imported?::bool
+       meta::Export)
     (final-class This-Var::JS-Var)
 
     ;; ===========================  Nodes ==========================

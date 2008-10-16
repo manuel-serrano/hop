@@ -1,5 +1,6 @@
 (module fun-size
    (import nodes
+	   export
 	   walk
 	   verbose)
    (export (fun-size tree::Module)))

@@ -2,6 +2,7 @@
    (import config
 	   tools
 	   nodes
+	   export
 	   walk
 	   gen-js
 	   mutable-strings

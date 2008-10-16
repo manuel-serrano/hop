@@ -43,8 +43,11 @@
        (update-conf 'include-paths
 		    (append (read-config *config* 'include-paths)
 			    (list path))))
+      (("--bigloo-modules" (help (default-str "Use Bigloo-module headers."
+				    'bigloo-modules)))
+       (update-conf 'bigloo-modules (not invert-flag?)))
       (section "JavaScript Interface")
-      (("--infotron" (help (default-str "Activate support for Infotrons.") 'infotron))
+      (("--infotron" (help (default-str "Activate support for Infotrons." 'infotron)))
        (update-conf 'infotron (not invert-flag?)))
       (("--js-dot-notation"
 	(help (default-str "Disallows the access of JS-fields with dots."

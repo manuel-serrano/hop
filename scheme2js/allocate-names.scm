@@ -2,6 +2,7 @@
    (import config
 	   tools
 	   nodes
+	   export
 	   walk
 	   free-vars
 	   verbose
@@ -109,9 +110,13 @@
 		      (loop next-try #t))))))
 	 (hashtable-put! used-ht js-id #t))))
 
-(define-method (allocate-name v::JS-Var env used-ht)
-   (with-access::Var v (js-id)
-      (hashtable-put! used-ht js-id #t))) ;; js-id is already up to date.
+(define-method (allocate-name v::This-Var env used-ht)
+   (hashtable-put! used-ht 'this #t)) ;; js-id is already up to date.
+
+(define-method (allocate-name v::Exported-Var env used-ht)
+   (with-access::Exported-Var v (meta js-id)
+      (set! js-id (Export-js-id meta))
+      (hashtable-put! used-ht js-id #t)))
 
 (define-method (allocate-name v::Global-Var env used-ht)
    (with-access::Name-Env env (suffix)

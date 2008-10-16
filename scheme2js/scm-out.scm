@@ -1,5 +1,6 @@
 (module scm-out
    (import nodes
+	   export
 	   tools
 	   walk)
    (export (scm-out tree p)))

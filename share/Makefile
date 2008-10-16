@@ -184,7 +184,7 @@ hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
 SCHEME2JS_RUNTIME = ../scheme2js/runtime
 include $(SCHEME2JS_RUNTIME)/Makefile.include
 EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
-EXPORTER_FLAGS = --module "hop-runtime" --constant
+EXPORTER_FLAGS = --module "hop-runtime" --scheme2js-modules --constant
 EXPORTED_RTS = $(RTS) $(filter %.js,$(EXTRA)) hop-autoconf.js
 
 hop-runtime.sch: $(EXPORTER) $(EXPORTED_RTS)

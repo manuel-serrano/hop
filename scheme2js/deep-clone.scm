@@ -1,5 +1,6 @@
 (module deep-clone
    (import nodes
+	   export
 	   tools
 	   walk
 	   verbose)

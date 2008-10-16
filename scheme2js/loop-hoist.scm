@@ -2,6 +2,7 @@
    (import config
 	   tools
 	   nodes
+	   export
 	   walk
 	   side
 	   captured-vars

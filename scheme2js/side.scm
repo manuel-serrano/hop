@@ -1,6 +1,7 @@
 (module side
    (import config
 	   nodes
+	   export
 	   walk
 	   verbose)
    (static (class Env
@@ -23,22 +24,20 @@
 		      (set! value #f)))
 		runtime-vars)
       (for-each (lambda (js-var)
-		   (with-access::Imported-Var js-var (already-defined?
-						      constant?
-						      value
-						      exported-as-const?)
-		      (set! already-defined? #t)
-		      (set! constant? exported-as-const?)
-		      (set! value #f)))
+		   (with-access::Exported-Var js-var
+			 (meta already-defined? constant? value)
+		      (with-access::Export meta (exported-as-const?)
+			 (set! already-defined? #t)
+			 (set! constant? exported-as-const?)
+			 (set! value #f))))
 		imported-vars)
       (for-each (lambda (js-var)
-		   (with-access::Exported-Var js-var (already-defined?
-						      constant?
-						      value
-						      exported-as-const?)
-		      (set! constant? #f)
-		      (set! already-defined? (not exported-as-const?))
-		      (set! value #f)))
+		   (with-access::Exported-Var js-var
+			 (meta already-defined? constant? value)
+		      (with-access::Export meta (exported-as-const?)
+			 (set! already-defined? (not exported-as-const?))
+			 (set! constant? #f)
+			 (set! value #f))))
 		scope-vars)
       (default-walk this)))
 
@@ -94,8 +93,9 @@
    (with-access::Set! this (lvalue val)
       (walk val)
       (with-access::Ref lvalue (var)
-	 (if (and (Imported-Var? var)
-		  (Imported-Var-exported-as-const? var))
+	 (if (and (Exported-Var? var)
+		  (Exported-Var-imported? var)
+		  (Exported-Var-constant? var)) ;; equal to exported-as-const?
 	     (error "Set!"
 		    "Imported variable is constant, and must not be modified."
 		    (Var-id var)))

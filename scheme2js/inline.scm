@@ -2,6 +2,7 @@
    (import config
 	   tools
 	   nodes
+	   export
 	   walk
 	   deep-clone
 	   side
@@ -45,12 +46,18 @@
 		(inline-funs! tree))))))
 
 (define (can-be-inlined? var::Var)
+   (define (imported-var? v)
+      (and (Exported-Var? v)
+	   (Exported-Var-imported? v)))
+   (define (exported-as-mutable? v)
+      (and (Exported-Var? v)
+	   (not (Exported-Var-imported? v))
+	   (not (Export-exported-as-const? (Exported-Var-meta v)))))
    (with-access::Var var (constant? value)
       (and constant?
 	   value
-	   (not (Imported-Var? var))
-	   (or (not (Exported-Var? var))
-	       (Exported-Var-exported-as-const? var))
+	   (not (imported-var? var))
+	   (not (exported-as-mutable? var))
 	   (Lambda? value)
 	   (with-access::Lambda value (closure? this-var)
 	      (and (not closure?)
