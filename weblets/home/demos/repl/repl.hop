@@ -59,12 +59,13 @@
 (define-service (home/demos/repl/compile s)
    (with-handler
       (lambda (e) #f)
-      (with-input-from-string s
-	 (lambda ()
-	    (let ((e (hop-read (current-input-port))))
-	       (with-handler
-		  (lambda (e)
-		     (with-error-to-string
-			(lambda () (error-notify e))))
-		  (let ((expr (eval (compile-scheme-expression e))))
-		     (cons (JS-expression expr) s))))))))
+      (if (string-index s #\$)
+	  "For the sake of security, $-expressions are not accepted"
+	  (with-input-from-string s
+	     (lambda ()
+		(let ((e (hop-read (current-input-port))))
+		   (with-handler
+		      (lambda (e)
+			 (with-error-to-string
+			    (lambda () (error-notify e))))
+		      (cons (compile-hop-client e) s))))))))

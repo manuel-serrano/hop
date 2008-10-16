@@ -1,6 +1,7 @@
 (module __hopscheme_tilde-escape
    (library scheme2js)
    (export (compile-scheme-expression e)
+	   (compile-hop-client e)
 	   (JS-expression::bstring t::pair)
 	   (JS-statement::bstring t::pair)
 	   (JS-return::bstring t::pair))
@@ -37,3 +38,14 @@
       (string-append
        "{ var " assig-var-str "; " e "\n"
        "return " assig-var-str "; }")))
+
+(define (compile-hop-client e)
+   ;; This function is used from weblets, don't remove it!
+   (let ((ce (compile-scheme-expression e)))
+      (match-case ce
+	 ((cons ?var ?expr)
+	  (JS-expression expr))
+	 (else
+	  (error 'compile-hop-client "Compilation failed" e)))))
+       
+   

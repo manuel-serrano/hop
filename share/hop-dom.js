@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-dom.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Sep 10 12:10:30 2008 (serrano)                */
+/*    Last change :  Thu Oct 16 11:23:50 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1190,11 +1190,13 @@ function hop_node_eval( node, text ) {
 /*---------------------------------------------------------------------*/
 /*    node_style_get ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export node-style-get node-style))
-*/
+/*** META ((export node-style-get node-style)) */
 function node_style_get( obj, prop ) {
    if( (obj instanceof String) || (typeof obj === "string") )
       obj = document.getElementById( obj );
+   
+   if( sc_isKeyword( prop ) )
+      prop = sc_keyword2jsstring( prop );
    
    return obj.style[ prop ];
 }

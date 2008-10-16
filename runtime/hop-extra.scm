@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Oct 13 19:41:17 2008 (serrano)                */
+;*    Last change :  Thu Oct 16 09:32:17 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -443,10 +443,23 @@
    
    (define (inl body)
       (let ((c (assq 'rel attributes)))
-	 (apply <STYLE> "\n" body
-		(append-map (lambda (x)
-			       (list (symbol->keyword (car x)) (cdr x)))
-			    (remq c attributes)))))
+	 (if (not (pair? c))
+	     (default href)
+	     (cond
+		((string=? (cdr c) "stylesheet")
+		 (apply <STYLE> "\n" body
+			(append-map (lambda (x)
+				       (list (symbol->keyword (car x)) (cdr x)))
+				    (remq c attributes))))
+		((string=? (cdr c) "shortcut icon")
+		 (instantiate::xml-element
+		    (markup 'link)
+		    (id (xml-make-id id 'link))
+		    (attributes (cons `(href . ,(img-base64-encode href))
+				      attributes))
+		    (body '())))
+		(else
+		 (default href))))))
 
    (if (string-suffix? ".hss" href)
        ;; this is a file that need compilation

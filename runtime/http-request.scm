@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Oct 15 17:38:36 2008 (serrano)                */
+;*    Last change :  Thu Oct 16 09:57:37 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -97,7 +97,7 @@
       (else
        (let ((o (the-failure)))
 	  (if (eof-object? o)
-	      request-eof-exception
+	      (raise request-eof-exception)
 	      (parse-error 'request-line-grammar
 			   "Illegal method"
 			   o
