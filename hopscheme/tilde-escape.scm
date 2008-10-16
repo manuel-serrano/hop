@@ -43,8 +43,8 @@
    ;; This function is used from weblets, don't remove it!
    (let ((ce (compile-scheme-expression e)))
       (match-case ce
-	 ((cons ?var ?expr)
-	  (JS-expression expr))
+	 ((cons ((kwote quote) ?var) ?expr)
+	  (JS-expression (cons var expr)))
 	 (else
 	  (error 'compile-hop-client "Compilation failed" e)))))
        

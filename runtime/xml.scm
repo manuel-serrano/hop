@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Oct 15 10:08:54 2008 (serrano)                */
+;*    Last change :  Thu Oct 16 14:12:57 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -74,7 +74,11 @@
 	    
 	    (class xml-tilde::xml
 	       (body read-only)
-	       (parent (default #unspecified)))
+	       (parent (default #unspecified))
+	       (%js-expression (default #f))
+	       (%js-statement (default #f))
+	       (%js-return (default #f))
+	       (%js-attribute (default #f)))
 
 	    (class xml-meta::xml-markup)
 
@@ -660,7 +664,7 @@
 (define-method (xml-write-attribute attr::xml-tilde id p)
    (display id p)
    (display "='" p)
-   (display (xml-attribute-encode (xml-tilde->statement attr)) p)
+   (display (xml-tilde->attribute attr) p)
    (display "'" p))
    
 ;*---------------------------------------------------------------------*/
@@ -783,19 +787,45 @@
 ;*    xml-tilde->statement ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->statement obj)
-   (JS-statement (xml-tilde-body obj)))
+   (with-access::xml-tilde obj (%js-statement)
+      (if (string? %js-statement)
+	  %js-statement
+	  (let ((js-stmt (JS-statement (xml-tilde-body obj))))
+	     (set! %js-statement js-stmt)
+	     js-stmt))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-tilde->expression ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->expression obj)
-   (JS-expression (xml-tilde-body obj)))
+   (with-access::xml-tilde obj (%js-expression)
+      (if (string? %js-expression)
+	  %js-expression
+	  (let ((js-expr (JS-expression (xml-tilde-body obj))))
+	     (set! %js-expression js-expr)
+	     js-expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-tilde->return ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->return obj)
-   (JS-return (xml-tilde-body obj)))
+   (with-access::xml-tilde obj (%js-return)
+      (if (string? %js-return)
+	  %js-return
+	  (let ((js-ret (JS-return (xml-tilde-body obj))))
+	     (set! %js-return js-ret)
+	     js-ret))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-tilde->attribute ...                                         */
+;*---------------------------------------------------------------------*/
+(define (xml-tilde->attribute obj)
+   (with-access::xml-tilde obj (%js-attribute)
+      (if (string? %js-attribute)
+	  %js-attribute
+	  (let ((js-attr (xml-attribute-encode (xml-tilde->statement obj))))
+	     (set! %js-attribute js-attr)
+	     js-attr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    HTML 4.01 elements ...                                           */
