@@ -3,7 +3,8 @@
    (import config
 	   tools
 	   template-display
-	   nodes))
+	   nodes
+	   export))
 
 (define *set!-operators*
    '(("sc_plus" "+")
@@ -31,10 +32,12 @@
 			 (Ref? operator)
 			 (let ((op-var (Ref-var operator)))
 			    (with-access::Var op-var (constant?)
-			       (and (Imported-Var? op-var)
+			       (and (Exported-Var? op-var)
+				    (Exported-Var-imported? op-var)
 				    constant?))))
 		    (let* ((op-var (Ref-var operator))
-			   (js-id (Imported-Var-js-id op-var))
+			   (meta (Exported-Var-meta op-var))
+			   (js-id (Export-js-id meta))
 			   (entry (assoc js-id *set!-operators*)))
 		       (if entry
 			   ;; get ++ and --

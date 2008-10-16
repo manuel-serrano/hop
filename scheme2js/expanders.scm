@@ -55,28 +55,39 @@
 			`(car ,arg)
 			(destructure (cdr pat) `(cdr ,arg) bindings)))))
 
+    (define (macro->expander macro)
+       (match-case macro
+	  ((?- (?name . ?args) ?e0 . ?body)
+	   (let ((L (gensym 'L)))
+	      (eval `(lambda (x e macros-ht)
+			(let ((,L (cdr x)))
+			   (e
+			    ;; macros might reference lists twice.
+			    ;; by deep-copying the result, we are sure,
+			    ;; that we don't share anything.
+			    (,deep-copy
+			     (let ,(destructure args L '())
+				,e0 ,@body))
+			    e macros-ht))))))))
+       
+    (define (lazy-macro macro)
+       (lambda (x e macros-ht)
+	  (let ((name (car (cadr macro)))
+		(macro-expander (macro->expander macro)))
+	     ;; replace this lazy fun by the actual macro-expander.
+	     ;; CARE: we assume that the macros-ht is the same as before, and
+	     ;; that there has not been made any copy... In other words: we
+	     ;; assume that we actually replace the original entry.
+	     (hashtable-put! macros-ht name macro-expander)
+	     ;; execute the macro.
+	     (macro-expander x e macros-ht))))
+
     (match-case x
        ((?- (?name . ?args) ?e0 . ?body)
-	(letrec ((L (gensym 'L))
-		 (body-f (lambda (arg)
-			    ;; lazy eval.
-			    (let ((f (eval `(lambda (,L)
-					       (let ,(destructure args L '())
-						  ,e0 ,@body)))))
-			       ;; replace body-f
-			       (set! body-f f)
-			       (f arg)))))
-	   (hashtable-put!
-	    macros-ht
-	    name
-	    (lambda (x e macros-ht)
-	       (e
-		;; macros might reference lists twice.
-		;; by deep-copying the result, we are sure, that
-		;; we don't share anything.
-		(deep-copy (body-f (cdr x)))
-		e macros-ht))))
-	#unspecified)
+	   (hashtable-put! macros-ht
+			   name
+			   (lazy-macro x))
+	   #unspecified)
        (else
 	(error "define-macro" "Illegal 'define-macro' syntax" x)))))
 

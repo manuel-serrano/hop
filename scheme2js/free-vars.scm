@@ -1,5 +1,6 @@
 (module free-vars
    (import nodes
+	   export
 	   tools
 	   walk
 	   verbose)

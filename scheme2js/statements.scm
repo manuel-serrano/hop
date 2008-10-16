@@ -1,6 +1,7 @@
 (module statements
    (import nodes
 	   tools
+	   export
 	   config
 	   walk
 	   mark-statements

@@ -8,6 +8,7 @@
 	   tools
 	   template-display
 	   nodes
+	   export
 	   verbose))
 
 (define (infix-op nb-operands-min nb-operands-max infix-operator #!optional default-val)
@@ -234,10 +235,10 @@
 			  (with-access::Ref operator (var)
 			     (with-access::Var var (constant?)
 				(and constant?
-				     (Imported-Var? var)
-				     (with-access::Imported-Var var
-					   (return-type)
-					(eq? return-type 'bool)))))))
+				     (Exported-Var? var)
+				     (let ((meta (Exported-Var-meta var)))
+					(eq? (Export-return-type meta)
+					     'bool)))))))
 		  (template-display p env
 		     "!~e" (compile operand p #f)))
 		 (else
@@ -287,39 +288,40 @@
 				compile
 				operator
 				operands)
-   (if (and (Ref? operator)
-	    (Imported-Var? (Ref-var operator)))
-       (with-access::Imported-Var (Ref-var operator) (peephole constant?)
-	  (if (and peephole constant?)
-	      (let* ((optimize-fun
-		      (case (car peephole)
-			 ((infix) (apply infix-op (cdr peephole)))
-			 ((postfix) (apply postfix-op (cdr peephole)))
-			 ((prefix) (apply prefix-op (cdr peephole)))
-			 ((hole) (apply hole-op (cdr peephole)))
-			 ((minus) minus-op)
-			 ((div) div-op)
-			 ((vector) vector-op)
-			 ((id) id)
-			 ((jsNew) jsNew-op)
-			 ((jsCall) jsCall-op)
-			 ((jsMethodCall) jsMethodCall-op)
-			 ((symbolAppend_immutable)
-			  symbolAppend_immutable-op)
-			 ((stringAppend_mutable)
-			  stringAppend_mutable-op)
-			 ((string2jsstring_mutable
-			   string2symbol_mutable)
-			  string2jsstring_mutable-op)
-			 ((symbol2jsstring_immutable
-			   symbol2string_immutable)
-			  symbol2jsstring_immutable-op)
-			 ((modulo) modulo-op)
-			 ((values) values-op)
-			 ((not) not-op)
-			 (else (error "compile-optimized-call"
-				      "forgot optimize-fun:"
-				      (car peephole))))))
-		 (optimize-fun p env compile operands))
-	      #f))
-       #f))
+   (when (and (Ref? operator)
+	      (Var-constant? (Ref-var operator))
+	      (Exported-Var? (Ref-var operator)))
+      (let* ((var (Ref-var operator))
+	     (meta (Exported-Var-meta var))
+	     (peephole (Export-peephole meta)))
+	 (when peephole
+	    (let* ((optimize-fun
+		    (case (car peephole)
+		       ((infix) (apply infix-op (cdr peephole)))
+		       ((postfix) (apply postfix-op (cdr peephole)))
+		       ((prefix) (apply prefix-op (cdr peephole)))
+		       ((hole) (apply hole-op (cdr peephole)))
+		       ((minus) minus-op)
+		       ((div) div-op)
+		       ((vector) vector-op)
+		       ((id) id)
+		       ((jsNew) jsNew-op)
+		       ((jsCall) jsCall-op)
+		       ((jsMethodCall) jsMethodCall-op)
+		       ((symbolAppend_immutable)
+			symbolAppend_immutable-op)
+		       ((stringAppend_mutable)
+			stringAppend_mutable-op)
+		       ((string2jsstring_mutable
+			 string2symbol_mutable)
+			string2jsstring_mutable-op)
+		       ((symbol2jsstring_immutable
+			 symbol2string_immutable)
+			symbol2jsstring_immutable-op)
+		       ((modulo) modulo-op)
+		       ((values) values-op)
+		       ((not) not-op)
+		       (else (error "compile-optimized-call"
+				    "forgot optimize-fun:"
+				    (car peephole))))))
+	       (optimize-fun p env compile operands))))))

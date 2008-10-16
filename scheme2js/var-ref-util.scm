@@ -1,7 +1,8 @@
 (module var-ref-util
    (import config
 	   tools
-	   nodes)
+	   nodes
+	   export)
    (export (constant-var n)
 	   (runtime-var n)
 	   (call-target operator::Node)
@@ -20,8 +21,8 @@
 
 (define (runtime-var n)
    (let ((v (constant-var n)))
-      (and (Imported-Var? v)
-	   (Imported-Var-runtime? v)
+      (and (Exported-Var? v)
+	   (Export-runtime? (Exported-Var-meta v))
 	   v)))
 
 (define (runtime-var-ref? n)
@@ -31,7 +32,7 @@
 (define (higher-order-runtime-var-ref? n)
    (let ((v (runtime-var n)))
       (and v
-	   (Imported-Var-higher? v)
+	   (Export-higher? (Exported-Var-meta v))
 	   #t)))
 
 (define (runtime-var-ref-id n)

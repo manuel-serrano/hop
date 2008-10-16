@@ -4,6 +4,7 @@
 	   symbol-table
 	   config
 	   nodes
+	   export
 	   walk
 	   verbose
 	   gen-js
@@ -58,62 +59,16 @@
 		(export-globals (config 'export-globals)))
 	     '()))
 
-
-
-
-(define (entry-val sym l)
-   (let ((try (assq sym (cdr l))))
-      (and try
-	   (cadr try))))
-
-(define (normalize-export export)
-   (cond
-      ((symbol? export)
-       (list export
-	     (list 'interface (mangle-JS-sym export))))
-      ((pair? export)
-       (cond
-	  ((assq 'interface (cdr export))
-	   export)
-	  ((assq 'JS (cdr export))
-	   (cons* (car export)
-		  (list 'interface (cadr (assq 'JS (cdr export))))
-		  (cdr export)))
-	  (else
-	   (let ((scheme-sym (car export)))
-	      (cons* scheme-sym
-		     (list 'interface (mangle-JS-sym scheme-sym))
-		     (cdr export))))))
-      (else
-       (error "normalize-export" "bad import/export clause: " export))))
-
-(define (export-interface export)
-   (let ((js-id (entry-val 'interface export)))
-      (if (symbol? js-id)
-	  (symbol->string js-id)
-	  js-id)))
-
 (define-nmethod (Node.resolve! symbol-table)
    (default-walk! this symbol-table))
 
-(define (js-symbol-add! scope entry runtime?)
-   (let* ((normalized (normalize-export entry))
-	  (scheme-sym (car normalized))
-	  (peephole (entry-val 'peephole normalized))
-	  (higher? (entry-val 'call/cc? normalized))
-	  (higher-params (entry-val 'call/cc-params normalized))
-	  (return-type (entry-val 'type normalized))
-	  (exported-as-constant? (or (entry-val 'constant? normalized))))
+(define (js-symbol-add! scope meta imported?)
+   (let ((scheme-sym (Export-id meta)))
       (symbol-var-set! scope scheme-sym
-		       (instantiate::Imported-Var
+		       (instantiate::Exported-Var
 			  (id scheme-sym)
-			  (js-id (export-interface normalized))
-			  (exported-as-const? exported-as-constant?)
-			  (runtime? runtime?)
-			  (peephole peephole)
-			  (higher? higher?)
-			  (higher-params higher-params)
-			  (return-type return-type)))))
+			  (imported? #t)
+			  (meta meta)))))
    
 (define-nmethod (Module.resolve! symbol-table)
    (let* ((runtime-scope (make-scope (length (Env-runtime env))))
@@ -126,25 +81,15 @@
 					symbol-table)))
       
       ;; add runtime
-      (for-each (lambda (entry) (js-symbol-add! runtime-scope entry #t))
+      (for-each (lambda (meta) (js-symbol-add! runtime-scope meta #t))
 		(Env-runtime env))
       
       ;; add imported variables
-      (for-each (lambda (entry) (js-symbol-add! imported-scope entry #f))
+      (for-each (lambda (meta) (js-symbol-add! imported-scope meta #t))
 		(Env-imports env))
       
       ;; insert exported variables
-      (for-each (lambda (entry)
-		   (let* ((normalized (normalize-export entry))
-			  (scheme-sym (car normalized))
-			  (return-type (entry-val 'type normalized))
-			  (var (instantiate::Exported-Var
-				  (id scheme-sym)
-				  (js-id (entry-val 'interface normalized))
-				  (exported-as-const? (entry-val 'constant?
-								 normalized))
-				  (return-type return-type))))
-		      (symbol-var-set! module-scope scheme-sym var)))
+      (for-each (lambda (meta) (js-symbol-add! module-scope meta #f))
 		(Env-exports env))
       
       ;; we need to reference runtime-variables from other passes. Export
@@ -154,15 +99,14 @@
       
       (Env-runtime-scope-set! env runtime-scope)
       (Env-unbound-add!-set! env
-			     (lambda (scheme-sym js-sym)
-				(let ((var (instantiate::Imported-Var
-					      (id scheme-sym)
-					      (js-id js-sym)
-					      (exported-as-const? #f)
-					      (runtime? #f))))
-				   (symbol-var-set! imported-scope
-						    scheme-sym
-						    var))))
+			     (lambda (scheme-sym js-str)
+				(js-symbol-add! imported-scope
+						(instantiate::Export
+						   (id scheme-sym)
+						   (js-id js-str)
+						   (exported-as-const? #f))
+						#t)))
+
       (with-access::Module this (this-var runtime-vars imported-vars
 					  scope-vars body)
 	 
@@ -309,10 +253,15 @@
 		   (var
 		    'do-nothing)
 		   ((Env-export-globals env)
-		    (let ((new-var (instantiate::Exported-Var
-				      (id id)
-				      (js-id (mangle-JS-sym id))
-				      (exported-as-const? #f))))
+		    (let* ((js-id (mangle-JS-sym id))
+			   (meta (instantiate::Export
+				    (id id)
+				    (js-id js-id)
+				    (exported-as-const? #f)))
+			   (new-var (instantiate::Exported-Var
+				       (id id)
+				       (imported? #f)
+				       (meta meta))))
 		       (symbol-var-set! module-scope id new-var)))
 		   (else
 		    (let ((new-var (instantiate::Local

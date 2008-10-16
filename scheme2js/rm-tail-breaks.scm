@@ -2,6 +2,7 @@
    (import config
 	   tools
 	   nodes
+	   export
 	   walk
 	   verbose)
    (export (rm-tail-breaks! tree::Module)))

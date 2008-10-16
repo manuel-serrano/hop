@@ -3,7 +3,7 @@
 	   module-system
 	   mutable-strings
 	   config)
-   (export (module->infotron! header module)))
+   (export (module->infotron! module::WIP-Unit)))
 
 ;; Infotrons: http://foundry.maya.com/jda/
 ;; transform modules into infotrons.
@@ -12,7 +12,7 @@
 (define *default-config-name* 'config)
 
    
-(define (module->infotron! header module)
+(define (module->infotron! module)
    (define (make-uuid a-list name)
       (let ((entry (assq 'uuid a-list)))
 	 (if entry
@@ -40,8 +40,10 @@
    (config-set! 'encapsulate-modules #t)
    (config-set! 'export-globals #f)
    
-   (let* ((a-list (filter pair? header))
-	  (uuid (make-uuid a-list (Module-header-name module)))
+   (let* ((header (WIP-Unit-header module))
+	  (module-name (WIP-Unit-name module))
+	  (a-list (filter pair? header))
+	  (uuid (make-uuid a-list module-name))
 	  (config-name (let ((entry (assq 'config-name a-list)))
 			  (if entry (cadr entry) *default-config-name*)))
 	  (iterms (extract-entries a-list 'iterms))
@@ -50,10 +52,10 @@
 	  (BLUEPRINT (gensym 'BLUEPRINT))
 	  (Object (gensym 'Object))
 
-	  (imports (Module-header-imports module))
-	  (exports (Module-header-exports module))
-	  (macros (Module-header-macros module)))
-      (verbose "Infotran " (Module-header-name module) " has uuid " uuid) 
+	  (imports (WIP-Unit-imports module))
+	  (exports (WIP-Unit-exports module))
+	  (macros (WIP-Unit-macros module)))
+      (verbose "Infotron " module-name " has uuid " uuid) 
       (unless (string? uuid)
 	 (error "infotron" "uuid must be given (as string)" uuid))
       (unless (symbol? config-name)
@@ -62,23 +64,22 @@
 	 (error "infotron" "infotrons must not export variables" exports))
       (unless (null? macros)
 	 (error "infotron" "infotrons must not export macros" macros))
-      (let ((tl (infotron-preexpand (Module-header-top-level module)
+      (let ((tl (infotron-preexpand (WIP-Unit-top-level module)
 				    BLUEPRINT
 				    Object
-				    (Module-header-name module)
+				    module-name
 				    uuid
 				    config-name
 				    iterms
 				    oterms
 				    properties))
-	    (imps (append (Module-header-imports module)
+	    (imps (append imports
 			  `((,BLUEPRINT (JS "BLUEPRINT")
 					(constant? #t))
 			    (,Object (JS "Object")
 				     (constant? #t))))))
-      (Module-header-top-level-set! module tl)
-      (Module-header-imports-set! module imps)
-      module)))
+      (WIP-Unit-top-level-set! module tl)
+      (WIP-Unit-imports-set! module imps))))
 
 (define (symbol->jsstring s)
    (if (use-mutable-strings?)

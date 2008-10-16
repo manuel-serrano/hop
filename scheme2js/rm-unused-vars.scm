@@ -1,5 +1,6 @@
 (module rm-unused-vars
    (import nodes
+	   export
 	   tools
 	   walk
 	   use-count

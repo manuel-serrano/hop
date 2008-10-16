@@ -2,6 +2,7 @@
    (import config
 	   tools
 	   nodes
+	   export
 	   walk
 	   var-ref-util
 	   free-vars
@@ -368,12 +369,15 @@
 		       (or (pair? (Const-value value))
 			   (vector? (Const-value value)))
 		       #t)))))
-
+   (define (runtime-var? v)
+      (and (Exported-Var? v)
+	   (Exported-Var-imported? v)
+	   (Export-runtime? (Exported-Var-meta v))))
+   
    (default-walk! this var/vals)
    (with-access::Call this (operator operands)
       (if (and (Ref? operator)
-	       (Imported-Var? (Ref-var operator))
-	       (Imported-Var-runtime? (Ref-var operator))
+	       (runtime-var? (Ref-var operator))
 	       (every? constant-value? operands))
 	  ;; for most runtime-functions we should be able to compute the result
 	  ;; right now. (obviously a "print" won't work now...)

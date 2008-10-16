@@ -3,6 +3,7 @@
    (include "version.sch")
    (import config
 	   nodes
+	   export
 	   module-system
 	   expand
 	   expanders
@@ -52,8 +53,8 @@
 (define (scheme2js module p)
    (let* ((debug-stage (config 'debug-stage))
 	  (top-level-e (my-expand `(begin
-				      ,@(Module-header-macros module)
-				      ,@(Module-header-top-level module))))
+				      ,@(Compilation-Unit-macros module)
+				      ,@(Compilation-Unit-top-level module))))
 	  (dummy1 (if (eq? debug-stage 'expand)
 		      (pp top-level-e p)))
 	  (top-level-runtime-e (runtime-expand! top-level-e))
@@ -64,9 +65,9 @@
       ;;we could do the letrec-expansion in list-form too.
       (pass 'letrec        (letrec-expansion! tree))
 
-      (pass 'symbol        (symbol-resolution tree
-					      (Module-header-imports module)
-					      (Module-header-exports module)))
+      (pass 'symbol      (symbol-resolution tree
+					    (Compilation-Unit-imports module)
+					    (Compilation-Unit-exports module)))
       (pass 'encapsulation (encapsulation! tree))
       (pass 'node-elim1    (node-elimination! tree))
       (pass 'tail-rec      (tail-rec! tree))
@@ -129,11 +130,11 @@
 
       (when (eq? (config 'export-globals) 'module)
 	 (config-set! 'export-globals
-		      (not (Module-header-name module))))
+		      (not (Compilation-Unit-name module))))
 
       (when (eq? (config 'unresolved=JS) 'module)
 	 (config-set! 'unresolved=JS
-		      (not (Module-header-name module))))
+		      (not (Compilation-Unit-name module))))
 
       (scheme2js module out-port)
       (if (not (string=? "-" out-file))

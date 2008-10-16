@@ -5,7 +5,7 @@
 ;; is-XX, has-YY, ZZ-bang which are converted to XX?, YY? and ZZ!
 ;;
 ;; by default both CamlCase and c_underscores are recognized. Both can be
-;; disabled with a flage. In either case a '-' is inserted instead (ex
+;; disabled with a flag. In either case a '-' is inserted instead (ex
 ;; Caml-case and c-underscores).
 ;;
 ;; prefixes can be ignored: --ignored-prefixes '("pre" "sc_" "SC_" "hop_")'
@@ -29,6 +29,8 @@
 
 (define *constant?* #f)
 (define *constant-functions?* #f)
+
+(define *scheme2js-modules?* #f)
 
 (define (unmarshall s)
    (define (is-has-bang str)
@@ -69,21 +71,29 @@
 		       (cons (car chars) rev-res))))))))
 
 (define (extract-scheme-names var meta)
-   (let* ((JS-fun var)
-	  (scheme-funs-entry (assq 'export meta)))
+   (let* ((scheme-funs-entry (assq 'export meta)))
       (cond
 	 ((not scheme-funs-entry)
 	  (warning "Function has META info but is not exported."
-		   JS-fun)
+		   var)
 	  '())
 	 ((null? (cdr scheme-funs-entry))
 	  (error "exporter" "(export) -clause without value" meta))
+	 ((and (eq? (cadr scheme-funs-entry) #t)
+	       (not var))
+	  (let ((var-name-p (assq 'JS meta)))
+	     (unless var-name-p
+		(error "exporter"
+		       "meta without name and without JS"
+		       meta))
+	     ;; TODO: more error-handling.
+	     (list (unmarshall (cadr var-name-p)))))
 	 ((eq? (cadr scheme-funs-entry) #t)
-	  (list (unmarshall JS-fun)))
+	  (list (unmarshall var)))
 	 (else
 	  (cdr scheme-funs-entry)))))
 
-(define (construct-module-clause exports-ht macros-ht)
+(define (construct-scheme2js-module-clause exports-ht macros-ht)
    `(module ,(string->symbol *module-name*)
        (export-macros ,@(hashtable-map macros-ht
 				       (lambda (ignored macro)
@@ -92,6 +102,24 @@
 				(lambda (scheme-name export-clause)
 				   (cons scheme-name export-clause))))))
 
+(define (construct-bigloo-module-clause exports-ht macros-ht)
+   `(module ,(string->symbol *module-name*)
+       (export ,@(hashtable-map exports-ht
+				(lambda (scheme-name export-clause)
+				   scheme-name)))
+       (scheme2js-pragma
+	,@(hashtable-map exports-ht
+			 (lambda (scheme-name export-clause)
+			    (cons scheme-name export-clause))))
+       (export ,@(hashtable-map macros-ht
+				(lambda (ignored macro)
+				   (let ((macro-name (car (cadr macro))))
+				      `(macro ,macro-name)))))))
+(define (print-macros macros-ht)
+   (hashtable-for-each macros-ht
+		       (lambda (ignored macro)
+			  (pp macro))))
+   
 (define (print-module-clause metas)
    (let ((exports-ht (make-hashtable))
 	 (macros-ht (make-hashtable)))
@@ -101,8 +129,10 @@
 	  (let ((var (car var/kind/meta))
 		(kind (cadr var/kind/meta))
 		(meta (caddr var/kind/meta)))
-	     (if (not var)
-		 (hashtable-put! macros-ht (caadr meta) meta)
+	     (cond
+		((eq? kind 'macro)
+		 (hashtable-put! macros-ht (caadr meta) meta))
+		(else
 		 (let* ((scheme-funs (extract-scheme-names var meta))
 			(without-export
 			 (filter (lambda (assoc)
@@ -116,14 +146,17 @@
 					   (cons (list 'constant? #t)
 						 with-JS)
 					   with-JS)))
-			 
 		    (for-each (lambda (scheme-fun)
 				 (hashtable-put! exports-ht
 						 scheme-fun
 						 with-constant))
-			      scheme-funs)))))
+			      scheme-funs))))))
        metas)
-      (pp (construct-module-clause exports-ht macros-ht))))
+      (if *scheme2js-modules?*
+	  (pp (construct-scheme2js-module-clause exports-ht macros-ht))
+	  (begin
+	     (pp (construct-bigloo-module-clause exports-ht macros-ht))
+	     (print-macros macros-ht)))))
 
 (define (handle-args args)
    (args-parse (cdr args)
@@ -149,6 +182,9 @@
       (("--constant-functions"
 	(help "Add (constant? #t) clause to exported functions."))
        (set! *constant-functions?* #t))
+      (("--scheme2js-modules"
+	(help "Create scheme2js-modules and not Bigloo modules."))
+       (set! *scheme2js-modules?* #t))
       (else
        (set! *in-files* (append! *in-files* (list else))))))
 

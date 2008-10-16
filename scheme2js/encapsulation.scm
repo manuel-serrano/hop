@@ -1,6 +1,7 @@
 (module encapsulation
    (import symbol
 	   nodes
+	   export
 	   config
 	   verbose)
    (export (encapsulation! tree::Module)))
