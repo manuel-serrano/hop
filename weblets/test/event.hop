@@ -49,7 +49,7 @@ events succeeded, you should see an acknowledge.")
 		       ~(add-event-listener! $b
 					     "mouseout"
 					     (lambda (e)
-						(mouse-pos "mouse leaved" e)
+						(mouse-pos "mouse left" e)
 						(remove-event-listener!
 						 document
 						 "mousemove"
