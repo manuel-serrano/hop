@@ -6,7 +6,7 @@
    (import config
 	   tools
 	   nodes
-	   export
+	   export-desc
 	   template-display
 	   verbose))
 
@@ -29,7 +29,8 @@
 	      (with-access::Ref operator (var)
 		 (if (and (Exported-Var? var)
 			  (Exported-Var-constant? var)
-			  (eq? (Export-return-type (Exported-Var-meta var))
+			  (eq? (Export-Desc-return-type
+				(Exported-Var-desc var))
 			       'bool))
 		     (compile n p #f)
 		     (compile-unoptimized-boolify p env compile n)))

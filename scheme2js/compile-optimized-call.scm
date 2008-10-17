@@ -8,7 +8,7 @@
 	   tools
 	   template-display
 	   nodes
-	   export
+	   export-desc
 	   verbose))
 
 (define (infix-op nb-operands-min nb-operands-max infix-operator #!optional default-val)
@@ -236,8 +236,8 @@
 			     (with-access::Var var (constant?)
 				(and constant?
 				     (Exported-Var? var)
-				     (let ((meta (Exported-Var-meta var)))
-					(eq? (Export-return-type meta)
+				     (let ((desc (Exported-Var-desc var)))
+					(eq? (Export-Desc-return-type desc)
 					     'bool)))))))
 		  (template-display p env
 		     "!~e" (compile operand p #f)))
@@ -292,8 +292,8 @@
 	      (Var-constant? (Ref-var operator))
 	      (Exported-Var? (Ref-var operator)))
       (let* ((var (Ref-var operator))
-	     (meta (Exported-Var-meta var))
-	     (peephole (Export-peephole meta)))
+	     (desc (Exported-Var-desc var))
+	     (peephole (Export-Desc-peephole desc)))
 	 (when peephole
 	    (let* ((optimize-fun
 		    (case (car peephole)

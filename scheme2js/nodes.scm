@@ -1,6 +1,6 @@
 (module nodes
    (import verbose
-	   export)
+	   export-desc)
    (export
     ;; Labels used for breaks and continues
     (final-class Label
@@ -37,7 +37,7 @@
     (final-class Exported-Var::JS-Var
        ;; when imported? is #t then the var is exported by another module.
        imported?::bool
-       meta::Export)
+       desc::Export-Desc)
     (final-class This-Var::JS-Var)
 
     ;; ===========================  Nodes ==========================

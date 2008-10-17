@@ -1,6 +1,6 @@
 (module mark-statements
    (import nodes
-	   export
+	   export-desc
 	   walk
 	   config
 	   verbose)

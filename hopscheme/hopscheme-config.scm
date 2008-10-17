@@ -1,5 +1,6 @@
 (module __hopscheme_config
    (library scheme2js)
+   (import __hop_exports)
    (export (hopscheme-config compile-file?)
 	   (init-hopscheme! reader::procedure
 			    path::bstring
@@ -44,6 +45,8 @@
 		   (include-paths . ,(list *hop-share-directory*))
 		   ;; currently we are still using scheme2js-modules
 		   (bigloo-modules . #f)
+		   ;; post-processor that will add all the hop-runtime-exports.
+		   (module-postprocessor . ,(hop-runtime-adder))
 		   )))
 	  *cached-config*)))
 

@@ -1,7 +1,7 @@
 (module constant-propagation
    (import config
 	   nodes
-	   export
+	   export-desc
 	   walk
 	   var-ref-util
 	   side

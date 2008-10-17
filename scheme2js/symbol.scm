@@ -4,7 +4,7 @@
 	   symbol-table
 	   config
 	   nodes
-	   export
+	   export-desc
 	   walk
 	   verbose
 	   gen-js
@@ -62,13 +62,13 @@
 (define-nmethod (Node.resolve! symbol-table)
    (default-walk! this symbol-table))
 
-(define (js-symbol-add! scope meta imported?)
-   (let ((scheme-sym (Export-id meta)))
+(define (js-symbol-add! scope desc imported?)
+   (let ((scheme-sym (Export-Desc-id desc)))
       (symbol-var-set! scope scheme-sym
 		       (instantiate::Exported-Var
 			  (id scheme-sym)
 			  (imported? #t)
-			  (meta meta)))))
+			  (desc desc)))))
    
 (define-nmethod (Module.resolve! symbol-table)
    (let* ((runtime-scope (make-scope (length (Env-runtime env))))
@@ -101,7 +101,7 @@
       (Env-unbound-add!-set! env
 			     (lambda (scheme-sym js-str)
 				(js-symbol-add! imported-scope
-						(instantiate::Export
+						(instantiate::Export-Desc
 						   (id scheme-sym)
 						   (js-id js-str)
 						   (exported-as-const? #f))
@@ -254,14 +254,14 @@
 		    'do-nothing)
 		   ((Env-export-globals env)
 		    (let* ((js-id (mangle-JS-sym id))
-			   (meta (instantiate::Export
+			   (desc (instantiate::Export-Desc
 				    (id id)
 				    (js-id js-id)
 				    (exported-as-const? #f)))
 			   (new-var (instantiate::Exported-Var
 				       (id id)
 				       (imported? #f)
-				       (meta meta))))
+				       (desc desc))))
 		       (symbol-var-set! module-scope id new-var)))
 		   (else
 		    (let ((new-var (instantiate::Local

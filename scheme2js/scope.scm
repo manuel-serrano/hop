@@ -2,7 +2,7 @@
    (import config
 	   tools
 	   nodes
-	   export
+	   export-desc
 	   walk
 	   verbose
 	   free-vars

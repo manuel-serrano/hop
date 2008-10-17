@@ -1,6 +1,6 @@
 (module captured-vars
    (import nodes
-	   export
+	   export-desc
 	   walk
 	   free-vars
 	   side

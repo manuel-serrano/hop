@@ -2,7 +2,7 @@
    (import config
 	   tools
 	   nodes
-	   export)
+	   export-desc)
    (export (constant-var n)
 	   (runtime-var n)
 	   (call-target operator::Node)
@@ -22,7 +22,7 @@
 (define (runtime-var n)
    (let ((v (constant-var n)))
       (and (Exported-Var? v)
-	   (Export-runtime? (Exported-Var-meta v))
+	   (Export-Desc-runtime? (Exported-Var-desc v))
 	   v)))
 
 (define (runtime-var-ref? n)
@@ -32,7 +32,7 @@
 (define (higher-order-runtime-var-ref? n)
    (let ((v (runtime-var n)))
       (and v
-	   (Export-higher? (Exported-Var-meta v))
+	   (Export-Desc-higher? (Exported-Var-desc v))
 	   #t)))
 
 (define (runtime-var-ref-id n)

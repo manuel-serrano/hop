@@ -1,7 +1,7 @@
 (module side
    (import config
 	   nodes
-	   export
+	   export-desc
 	   walk
 	   verbose)
    (static (class Env
@@ -25,16 +25,16 @@
 		runtime-vars)
       (for-each (lambda (js-var)
 		   (with-access::Exported-Var js-var
-			 (meta already-defined? constant? value)
-		      (with-access::Export meta (exported-as-const?)
+			 (desc already-defined? constant? value)
+		      (with-access::Export-Desc desc (exported-as-const?)
 			 (set! already-defined? #t)
 			 (set! constant? exported-as-const?)
 			 (set! value #f))))
 		imported-vars)
       (for-each (lambda (js-var)
 		   (with-access::Exported-Var js-var
-			 (meta already-defined? constant? value)
-		      (with-access::Export meta (exported-as-const?)
+			 (desc already-defined? constant? value)
+		      (with-access::Export-Desc desc (exported-as-const?)
 			 (set! already-defined? (not exported-as-const?))
 			 (set! constant? #f)
 			 (set! value #f))))

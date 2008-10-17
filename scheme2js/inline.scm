@@ -2,7 +2,7 @@
    (import config
 	   tools
 	   nodes
-	   export
+	   export-desc
 	   walk
 	   deep-clone
 	   side
@@ -52,7 +52,7 @@
    (define (exported-as-mutable? v)
       (and (Exported-Var? v)
 	   (not (Exported-Var-imported? v))
-	   (not (Export-exported-as-const? (Exported-Var-meta v)))))
+	   (not (Export-Desc-exported-as-const? (Exported-Var-desc v)))))
    (with-access::Var var (constant? value)
       (and constant?
 	   value

@@ -1,6 +1,6 @@
 (module pobject-conv
    (import nodes
-	   export
+	   export-desc
 	   config
 	   verbose)
    (export

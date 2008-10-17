@@ -1,6 +1,6 @@
 (module tail
    (import nodes
-	   export
+	   export-desc
 	   walk
 	   verbose)
    (export (wide-class Tail-Call::SCall))

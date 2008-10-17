@@ -1,7 +1,7 @@
-(module export
+(module export-desc
    (import gen-js)
    (export
-    (final-class Export
+    (final-class Export-Desc
        (id::symbol read-only)
        (js-id::bstring read-only)
        (exported-as-const?::bool (default #f))
@@ -10,7 +10,7 @@
        (higher?::bool  (default #f) read-only)
        (higher-params  (default #f) read-only) 
        (return-type    (default #f) read-only))
-    (create-Export::Export info runtime?::bool)))
+    (create-Export-Desc::Export-Desc info runtime?::bool)))
 
 
 (define (entry-val sym l)
@@ -46,7 +46,7 @@
 	      "JS-clause must be either symbol or string"
 	      id))))
 
-(define (create-Export::Export info runtime?)
+(define (create-Export-Desc::Export-Desc info runtime?)
    (let* ((normalized (normalize-export info))
 	  (scheme-sym (car normalized))
 	  (js-id (normalize-js-id (entry-val 'JS normalized)))
@@ -55,7 +55,7 @@
 	  (higher-params (entry-val 'call/cc-params normalized))
 	  (return-type (entry-val 'type normalized))
 	  (exported-as-const? (or (entry-val 'constant? normalized))))
-      (instantiate::Export
+      (instantiate::Export-Desc
 	 (id scheme-sym)
 	 (js-id js-id)
 	 (exported-as-const? exported-as-const?)

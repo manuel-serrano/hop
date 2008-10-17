@@ -1,6 +1,6 @@
 (module use-count
    (import nodes
-	   export
+	   export-desc
 	   walk
 	   verbose)
    (export (use-count tree::Module)))

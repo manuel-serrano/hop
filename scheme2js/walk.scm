@@ -1,6 +1,6 @@
 (module walk
    (import nodes
-	   export)
+	   export-desc)
    (export
     (generic walk0 n::Node env p::procedure)
     (generic walk1 n::Node env p::procedure arg0)

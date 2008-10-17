@@ -10,6 +10,8 @@
 	      set-optim-level scheme2js-config
 	      extend-config extend-config*
 	      config)
-	   expand)
+	   expand
+	   export-desc
+	   module-system)
 
    (eval   (export-all)))

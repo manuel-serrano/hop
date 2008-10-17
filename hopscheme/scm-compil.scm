@@ -20,9 +20,8 @@
 (define (compile-scheme-file file)
    (with-output-to-string
       (lambda ()
-	 (scheme2js-compile-file file                      ;; input-files
-				 "-"                       ;; output-file
-				 ;; additional module-headers:
-				 '((((import hop-runtime)) . merge-first))
+	 (scheme2js-compile-file file              ;; input-files
+				 "-"               ;; output-file
+				 '()               ;; additional module-headers
 				 (get-cached-config)
 				 :reader *hop-reader*))))

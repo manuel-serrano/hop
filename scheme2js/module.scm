@@ -1,6 +1,6 @@
 (module module-system
    (import verbose
-	   export
+	   export-desc
 	   infotron
 	   config)
    (export (final-class Compilation-Unit
@@ -370,7 +370,8 @@
 		   (cond
 		      ((symbol? e)
 		       (set! exports
-			     (cons (create-Export (normalize-var e pragmas) #f)
+			     (cons (create-Export-Desc
+				    (normalize-var e pragmas) #f)
 				   exports))
 		       (loop (cdr entries) new-macros))
 		      ((not (pair? e))
@@ -382,13 +383,14 @@
 			   (loop (cdr entries) new-macros)))
 		      (else
 		       (set! exports
-			     (cons (create-Export (normalize-fun e pragmas) #f)
+			     (cons (create-Export-Desc
+				    (normalize-fun e pragmas) #f)
 				   exports))
 		       (loop (cdr entries) new-macros)))))))))
 
 (define (normalize-scheme2js-exports! m::WIP-Unit)
    (with-access::WIP-Unit m (header exports macros)
       (set! exports (append exports (map (lambda (ex)
-					    (create-Export ex #f))
+					    (create-Export-Desc ex #f))
 					 (extract-entries header 'export))))
       (set! macros (append macros (extract-entries header 'export-macros)))))

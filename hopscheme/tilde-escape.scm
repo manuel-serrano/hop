@@ -17,7 +17,7 @@
 	 (scheme2js-compile-expr
 	  e              ;; top-level
 	  s-port         ;; out-port
-	  '((((import hop-runtime)) . merge-first)) ;; module-headers
+	  '()            ;; module-headers
 	  (extend-config (hopscheme-config #f) 'module-result-var assig-var)) ;; config
 	 `(cons ',assig-var ,(*hop-postprocess* (close-output-port s-port))))))
 

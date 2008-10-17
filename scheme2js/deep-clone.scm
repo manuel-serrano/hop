@@ -1,6 +1,6 @@
 (module deep-clone
    (import nodes
-	   export
+	   export-desc
 	   tools
 	   walk
 	   verbose)

@@ -1,7 +1,7 @@
 (module letrec-expansion
    (import config
 	   nodes
-	   export
+	   export-desc
 	   walk
 	   verbose
 	   gen-js)

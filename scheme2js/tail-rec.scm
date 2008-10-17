@@ -2,7 +2,7 @@
    (import config
 	   tools
 	   nodes
-	   export
+	   export-desc
 	   walk
 	   symbol
 	   var-ref-util

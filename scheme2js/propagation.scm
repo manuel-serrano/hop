@@ -2,7 +2,7 @@
    (import config
 	   tools
 	   nodes
-	   export
+	   export-desc
 	   walk
 	   var-ref-util
 	   free-vars
@@ -372,7 +372,7 @@
    (define (runtime-var? v)
       (and (Exported-Var? v)
 	   (Exported-Var-imported? v)
-	   (Export-runtime? (Exported-Var-meta v))))
+	   (Export-Desc-runtime? (Exported-Var-desc v))))
    
    (default-walk! this var/vals)
    (with-access::Call this (operator operands)

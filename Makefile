@@ -42,7 +42,7 @@ libdir:
 
 bin: bindir src-bin hopsh-bin hopreplay-bin
 
-src-bin: lib share
+src-bin: share lib
 	(cd src && $(MAKE) build)
 
 hopsh-bin: lib
@@ -51,12 +51,12 @@ hopsh-bin: lib
 hopreplay-bin: lib
 	(cd hopreplay && $(MAKE) build)
 
-lib: libdir
+lib: libdir share
 	(cd scheme2js && $(MAKE) build)
 	(cd hopscheme && $(MAKE) build)
 	(cd runtime && $(MAKE) build)
 
-share: lib
+share:
 	(cd share && $(MAKE) build)
 
 weblets: lib

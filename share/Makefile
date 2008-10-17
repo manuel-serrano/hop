@@ -110,7 +110,7 @@ POPULATION	= $(RTS) $(EXTRA) \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: hop.js $(FLASHSRC:%.as=flash/%.swf) hop-runtime.sch $(BACKEND)
+build: hop.js $(FLASHSRC:%.as=flash/%.swf) hop-runtime.js $(BACKEND)
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
@@ -123,7 +123,6 @@ install:
         done
 	  install -m a+r ../scheme2js/runtime/runtime.js $(DESTDIR)$(HOPSHAREDIR)/runtime.js; \
 	  $(GZIP) ../scheme2js/runtime/runtime.js -c > $(DESTDIR)$(HOPSHAREDIR)/runtime.js.gz; \
-	install -m a+r $(BUILDSHAREDIR)/hop-runtime.sch $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch; \
         for p in $(EXTRA); do \
 	  install -m a+r $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
@@ -165,8 +164,11 @@ uninstall:
         done
 
 #*---------------------------------------------------------------------*/
-#*    hop.js ...                                                       */
+#*    hop.js hop-runtime.js ...                                        */
 #*---------------------------------------------------------------------*/
+SCHEME2JS_RUNTIME = ../scheme2js/runtime
+include $(SCHEME2JS_RUNTIME)/Makefile.include
+
 hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* " >> $@
@@ -181,14 +183,11 @@ hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
 	  cat $^ >> $@; \
         fi
 
-SCHEME2JS_RUNTIME = ../scheme2js/runtime
-include $(SCHEME2JS_RUNTIME)/Makefile.include
-EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
-EXPORTER_FLAGS = --module "hop-runtime" --scheme2js-modules --constant
+# needed for hopscheme.
 EXPORTED_RTS = $(RTS) $(filter %.js,$(EXTRA)) hop-autoconf.js
+hop-runtime.js: $(EXPORTED_RTS)
+	cat $^ > $@
 
-hop-runtime.sch: $(EXPORTER) $(EXPORTED_RTS)
-	$(EXPORTER) $(EXPORTER_FLAGS) -o $@ $(EXPORTED_RTS)
 
 #*---------------------------------------------------------------------*/
 #*    Flash compilation                                                */

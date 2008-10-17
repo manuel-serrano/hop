@@ -3,7 +3,7 @@
    (include "version.sch")
    (import config
 	   nodes
-	   export
+	   export-desc
 	   module-system
 	   expand
 	   expanders

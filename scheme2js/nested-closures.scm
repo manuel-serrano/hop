@@ -1,6 +1,6 @@
 (module nested-closures
    (import nodes
-	   export
+	   export-desc
 	   walk
 	   captured-vars
 	   verbose)

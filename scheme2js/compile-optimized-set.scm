@@ -4,7 +4,7 @@
 	   tools
 	   template-display
 	   nodes
-	   export))
+	   export-desc))
 
 (define *set!-operators*
    '(("sc_plus" "+")
@@ -36,8 +36,8 @@
 				    (Exported-Var-imported? op-var)
 				    constant?))))
 		    (let* ((op-var (Ref-var operator))
-			   (meta (Exported-Var-meta op-var))
-			   (js-id (Export-js-id meta))
+			   (desc (Exported-Var-desc op-var))
+			   (js-id (Export-Desc-js-id desc))
 			   (entry (assoc js-id *set!-operators*)))
 		       (if entry
 			   ;; get ++ and --
