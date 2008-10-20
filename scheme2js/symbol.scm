@@ -122,6 +122,12 @@
 	 ;; not found...
 	 (let ((global-assig (config 'module-result-var)))
 	    (when global-assig
+	       (js-symbol-add! module-scope
+			       (instantiate::Export-Desc
+				  (id global-assig)
+				  (js-id (symbol->string global-assig))
+				  (exported-as-const? #f))
+			       #f)
 	       (set! body (instantiate::Set!
 			     (lvalue (instantiate::Ref (id global-assig)))
 			     (val body)))))

@@ -26,7 +26,7 @@
 	  (assig-var-str (symbol->string assig-var))
 	  (e (cdr t)))
       (string-append
-       "(function() { var " assig-var-str "; " e "\n"
+       "(function() { " e "\n"
        "return " assig-var-str "; })"
        ".call(this)")))
 (define (JS-statement t)
@@ -36,7 +36,7 @@
 	  (assig-var-str (symbol->string assig-var))
 	  (e (cdr t)))
       (string-append
-       "{ var " assig-var-str "; " e "\n"
+       "{ " e "\n"
        "return " assig-var-str "; }")))
 
 (define (compile-hop-client e)
