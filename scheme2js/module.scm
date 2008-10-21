@@ -7,7 +7,7 @@
 	      name              ;; #f if no module-clause
 	      top-level         ;; id or pair-nil
 	      macros::pair-nil  ;; of form (define-macro ... )
-	      imports::pair-nil
+	      imports::pair-nil ;; a list of export-lists/hashtables.
 	      exports::pair-nil)
 	   (wide-class WIP-Unit::Compilation-Unit ;; work in progress
 	      header)
@@ -264,13 +264,24 @@
 				(loop (cdr imported-modules)
 				      (append new-macros
 					      (Compilation-Unit-macros im))
-				      (append new-imports
-					      (Compilation-Unit-exports im)))))
+				      (if (null? (Compilation-Unit-exports im))
+					  new-imports
+					  (cons (Compilation-Unit-exports im)
+						new-imports)))))
 			  (close-input-port ip)))))))))
 
 (define (normalize-JS-imports! m)
    (with-access::WIP-Unit m (header imports)
-      (set! imports (append imports (extract-entries header 'JS)))))
+      (let* ((direct-JS-imports (extract-entries header 'JS))
+	     (descs (map (lambda (js)
+			    (when (not (symbol? js))
+			       (error "scheme2js module"
+				      "JS clauses can only contain symbols"
+				      js))
+			    (create-Export-Desc js #f))
+			 direct-JS-imports)))
+	 (unless (null? descs)
+	    (set! imports (cons descs imports))))))
 
 (define (normalize-exports! m bigloo-modules?
 			    #!optional get-macros? reader input-p)

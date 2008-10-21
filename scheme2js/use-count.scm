@@ -58,6 +58,9 @@
       (for-each count+ vars)))
 
 (define-nmethod (Frame-push.count)
-   (with-access::Frame-push this (storage-vars)
-      (for-each count+ storage-vars))
+   (with-access::Frame-push this (frame-allocs)
+      (for-each (lambda (frame-alloc)
+		   (with-access::Frame-alloc frame-alloc (storage-var)
+		      (count+ storage-var)))
+		frame-allocs))
    (default-walk this))

@@ -135,12 +135,17 @@ ude:
 #*    Implicit Rules                                                   */
 #*---------------------------------------------------------------------*/
 MCOS = $(_OBJECTS:%=mco/%.mco)
+MCOS2 = $(_OBJECTS:%=mco/%.mco2)
 
 .PRECIOUS: $(MCOS)
 
 mco/%.mco: %.scm
-	@mkdir -p mco
-	$(MCO) -I . -o $@ $<
+	@mkdir -p mco;
+	@if [ ! "$@"2 -nt "$^" ]; then \
+	  echo $(MCO) -I . -o $@ $<; \
+	  $(MCO) -I . -o $@ $<; \
+	fi;
+	@touch "$@"2;
 
 mco-clean:
 	rm -rf mco
@@ -210,8 +215,8 @@ o/infotron.o classes/mimosa/inria/scheme2js/infotron.class:              \
       mco/config.mco mco/mutable-strings.mco mco/module.mco              \
       mco/verbose.mco 
 o/allocate-names.o classes/mimosa/inria/scheme2js/allocate-names.class:  \
-      mco/gen-js.mco mco/verbose.mco mco/free-vars.mco mco/walk.mco      \
-      mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
+      mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
 o/symbol.o classes/mimosa/inria/scheme2js/symbol.class:                  \
       mco/pobject-conv.mco mco/gen-js.mco mco/verbose.mco mco/walk.mco   \
       mco/export.mco mco/nodes.mco mco/config.mco mco/symbol-table.mco   \
@@ -293,13 +298,13 @@ o/while.o classes/mimosa/inria/scheme2js/while.class: mco/verbose.mco    \
 o/deep-clone.o classes/mimosa/inria/scheme2js/deep-clone.class:          \
       mco/verbose.mco mco/walk.mco mco/tools.mco mco/export.mco          \
       mco/nodes.mco 
-o/free-vars.o classes/mimosa/inria/scheme2js/free-vars.class:            \
-      mco/verbose.mco mco/walk.mco mco/tools.mco mco/export.mco          \
-      mco/nodes.mco 
 o/statements.o classes/mimosa/inria/scheme2js/statements.class:          \
       mco/verbose.mco mco/push-set.mco mco/side.mco                      \
       mco/mark-statements.mco mco/walk.mco mco/config.mco mco/export.mco \
       mco/tools.mco mco/nodes.mco 
+o/free-vars.o classes/mimosa/inria/scheme2js/free-vars.class:            \
+      mco/verbose.mco mco/walk.mco mco/tools.mco mco/export.mco          \
+      mco/nodes.mco 
 o/fun-size.o classes/mimosa/inria/scheme2js/fun-size.class:              \
       mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
 o/mapping1.o classes/mimosa/inria/scheme2js/mapping1.class: mapping.sch  \
@@ -321,8 +326,8 @@ o/infotron.o classes/mimosa/inria/scheme2js/infotron.class:              \
       mco/config.mco mco/mutable-strings.mco mco/module.mco              \
       mco/verbose.mco 
 o/compile-optimized-set.o classes/mimosa/inria/scheme2js/compile-optimized-set.class: \
-      mco/export.mco mco/nodes.mco mco/template-display.mco              \
-      mco/tools.mco mco/config.mco 
+      mco/export.mco mco/allocate-names.mco mco/nodes.mco                \
+      mco/template-display.mco mco/tools.mco mco/config.mco 
 o/dot-expand.o classes/mimosa/inria/scheme2js/dot-expand.class:          \
       mco/expand.mco mco/config.mco mco/mutable-strings.mco              \
       mco/verbose.mco 
@@ -353,8 +358,8 @@ o/free-vars.o classes/mimosa/inria/scheme2js/free-vars.class:            \
 o/tail.o classes/mimosa/inria/scheme2js/tail.class: mco/verbose.mco      \
       mco/walk.mco mco/export.mco mco/nodes.mco 
 o/compile-optimized-set.o classes/mimosa/inria/scheme2js/compile-optimized-set.class: \
-      mco/export.mco mco/nodes.mco mco/template-display.mco              \
-      mco/tools.mco mco/config.mco 
+      mco/export.mco mco/allocate-names.mco mco/nodes.mco                \
+      mco/template-display.mco mco/tools.mco mco/config.mco 
 o/node-elimination.o classes/mimosa/inria/scheme2js/node-elimination.class: \
       mco/mark-statements.mco mco/verbose.mco mco/walk.mco               \
       mco/export.mco mco/nodes.mco 
@@ -423,8 +428,8 @@ o/mark-statements.o classes/mimosa/inria/scheme2js/mark-statements.class: \
       mco/verbose.mco mco/config.mco mco/walk.mco mco/export.mco         \
       mco/nodes.mco 
 o/allocate-names.o classes/mimosa/inria/scheme2js/allocate-names.class:  \
-      mco/gen-js.mco mco/verbose.mco mco/free-vars.mco mco/walk.mco      \
-      mco/export.mco mco/nodes.mco mco/tools.mco mco/config.mco 
+      mco/gen-js.mco mco/verbose.mco mco/walk.mco mco/export.mco         \
+      mco/nodes.mco mco/tools.mco mco/config.mco 
 o/push-set.o classes/mimosa/inria/scheme2js/push-set.class:              \
       mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
 o/var-ref-util.o classes/mimosa/inria/scheme2js/var-ref-util.class:      \

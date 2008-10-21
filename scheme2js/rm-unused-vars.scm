@@ -5,7 +5,7 @@
 	   walk
 	   use-count
 	   verbose)
-   (static (wide-class Rm-Var::Local))
+   (static (wide-class Rm-Var::Var))
    (export (rm-unused-vars! tree::Module)))
 
 ;; Variables with use-count 0 are not used, and can be removed.

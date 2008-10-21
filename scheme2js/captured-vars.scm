@@ -94,7 +94,7 @@
    (with-access::Module this (scope-vars)
       ;; don't care for runtime and imported variables.
       (for-each (lambda (v)
-		   (with-access::Exported-Var v (captured?)
+		   (with-access::Var v (captured?)
 		      (set! captured? #t)))
 		scope-vars))
    (default-walk this))

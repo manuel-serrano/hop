@@ -14,7 +14,7 @@
 	   verbose)
    (static (wide-class Tail-Lambda::Lambda
 	      label::Label)
-	   (wide-class Repl-Var::Local
+	   (wide-class Repl-Var::Var
 	      replacement::Ref))
    (export (tail-rec! tree::Module)))
 

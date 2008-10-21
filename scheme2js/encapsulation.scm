@@ -15,7 +15,7 @@
    (when (or (config 'encapsulate-modules)
 	     (config 'suspend/resume))
       (verbose " encapsulation")
-      (with-access::Module tree (body)
+      (with-access::Module tree (body this-var)
 	 (let* ((encapsulated-body (instantiate::Return (val body)))
 		(encapsulation-lambda (instantiate::Lambda
 					 (scope-vars '())
@@ -24,8 +24,6 @@
 					 (body encapsulated-body)))
 		(call (instantiate::SCall
 			 (operator (runtime-reference 'js-call))
-			 (operands (list (var-reference (instantiate::This-Var
-							   (id 'this)
-							   (js-id "this")))
+			 (operands (list (var-reference this-var)
 					 encapsulation-lambda)))))
 	 (set! body call)))))

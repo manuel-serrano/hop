@@ -21,7 +21,7 @@
 	      counter::bint)
 	   (wide-class Inlined-Call::SCall
 	      cloned-fun::Lambda)
-	   (wide-class Inlined-Local::Local))
+	   (wide-class Inlined-Local::Var))
    (export (inline! tree::Module full?::bool)))
 
 
@@ -47,12 +47,10 @@
 
 (define (can-be-inlined? var::Var)
    (define (imported-var? v)
-      (and (Exported-Var? v)
-	   (Exported-Var-imported? v)))
+      (eq? (Var-kind v) 'imported))
    (define (exported-as-mutable? v)
-      (and (Exported-Var? v)
-	   (not (Exported-Var-imported? v))
-	   (not (Export-Desc-exported-as-const? (Exported-Var-desc v)))))
+      (and (eq? (Var-kind v) 'exported)
+	   (not (Export-Desc-exported-as-const? (Var-export-desc v)))))
    (with-access::Var var (constant? value)
       (and constant?
 	   value
@@ -62,11 +60,11 @@
 	   (with-access::Lambda value (closure? this-var)
 	      (and (not closure?)
 		   ;; do not inline functions that access 'this'
-		   (zero? (This-Var-uses this-var)))))))
+		   (zero? (Var-uses this-var)))))))
 
 ;; can we move a function from its definition to its use?
 (define (can-be-moved? var::Var)
-   (and (not (Exported-Var? var))
+   (and (eq? (Var-kind var) 'local)
 	(can-be-inlined? var)))
 
 ;; functions that are only used once are directly moved to this position

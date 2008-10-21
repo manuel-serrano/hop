@@ -34,7 +34,7 @@
 (define (move-to-begin n walk! surrounding-fun stmt-begin
 		       #!optional (use-var? #t))
    (if use-var?
-       (let* ((tmp (Ref-of-new-Var 'tmp))
+       (let* ((tmp (Ref-of-new-Var 'stmp))
 	      (tmp-var (Ref-var tmp)))
 	  (with-access::Begin stmt-begin (exprs)
 	     (cons-set! exprs

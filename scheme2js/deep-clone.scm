@@ -6,12 +6,10 @@
 	   verbose)
    (static (wide-class Cloned-Label::Label
 	      replacement::Label)
-	   (wide-class Cloned-Local::Local
-	      replacement::Local)
+	   (wide-class Cloned-Var::Var
+	      replacement::Var)
 	   (wide-class Cloned-Lambda::Lambda
-	      replacement::Lambda)
-	   (wide-class Cloned-This::This-Var
-	      replacement::This-Var))
+	      replacement::Lambda))
    (export (deep-clone o::Node)))
 
 ;; recursively clones the given node and its children.
@@ -45,38 +43,33 @@
 
 (define-method (clone this::Var)
    this)
-(define-method (clone this::Cloned-Local)
-   (with-access::Cloned-Local this (replacement)
+(define-method (clone this::Cloned-Var)
+   (with-access::Cloned-Var this (replacement)
       replacement))
-(define-method (clone this::Cloned-This)
-   (with-access::Cloned-This this (replacement)
-      replacement))
-(define (duplicate-Local var::Local)
-   (with-access::Local var (value)
+(define (duplicate-Local var::Var)
+   (with-access::Var var (value)
       (let ((new-value (cond
-			  ((Cloned-Local? value)
-			   (Cloned-Local-replacement value))
+			  ((Cloned-Var? value)
+			   (Cloned-Var-replacement value))
 			  ((Cloned-Lambda? value)
 			   (Cloned-Lambda-replacement value))
-			  ((Cloned-This? value)
-			   (Cloned-This-replacement value))
 			  (else value))))
-	 (duplicate::Local var
+	 (duplicate::Var var
 	    (value new-value)))))
 
 (define-method (clone this::Lambda)
    (with-access::Lambda this (scope-vars this-var formals body)
       (let* ((new-scope-vars (map (lambda (var) (duplicate-Local var))
 				  scope-vars))
-	     (new-this-var (duplicate::This-Var this-var))
+	     (new-this-var (duplicate::Var this-var))
 	     (new-lambda (duplicate::Lambda this
 			    (scope-vars new-scope-vars)
 			    (this-var new-this-var))))
 	 ;; store clone-info
 	 (map (lambda (old-var new-var)
-		 (widen!::Cloned-Local old-var (replacement new-var)))
+		 (widen!::Cloned-Var old-var (replacement new-var)))
 	      scope-vars new-scope-vars)
-	 (widen!::Cloned-This this-var (replacement new-this-var))
+	 (widen!::Cloned-Var this-var (replacement new-this-var))
 	 (widen!::Cloned-Lambda this (replacement new-lambda))
 
 	 (Lambda-formals-set! new-lambda (map clone formals))
@@ -86,7 +79,7 @@
 (define-method (clone this::Let)
    (with-access::Let this (scope-vars)
       (for-each (lambda (var)
-		   (widen!::Cloned-Local var
+		   (widen!::Cloned-Var var
 		      (replacement (duplicate-Local var))))
 		scope-vars)
       (do-clone this)))
@@ -101,7 +94,7 @@
 (define-method (clone this::Tail-rec)
    (with-access::Tail-rec this (label scope-vars)
       (for-each (lambda (var)
-		   (widen!::Cloned-Local var
+		   (widen!::Cloned-Var var
 		      (replacement (duplicate-Local var))))
 		scope-vars)
       (widen!::Cloned-Label label
@@ -153,6 +146,6 @@
 
 ;; should not be necessary, as deep-clone is only called from inside 'inline'.
 (define-do-clone Frame-alloc storage-var (vars))
-(define-do-clone Frame-push body (storage-vars))
+(define-do-clone Frame-push body (frame-allocs))
 (define-do-clone While test body label)
 (define-do-clone Call/cc-Call operator (operands))

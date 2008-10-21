@@ -12,8 +12,15 @@
 	   (wide-class Call/cc-Tail-rec::Tail-rec
 	      contains-call/cc?::bool
 	      modified-vars::pair-nil)
-	   (wide-class Box-Var::Local
-	      repl-var::Local)
+	   (wide-class Scope-Var::Var
+	      (call/cc-when-alive?::bool (default #f))
+	      (modified-after-call/cc?::bool (default #f))
+	      (needs-boxing?::bool (default #f))
+	      (needs-uniquization?::bool (default #f))
+	      (needs-frame?::bool (default #f))
+	      (needs-update?::bool (default #f))
+	      (box-repl-var (default #f)))
+	      
 	   (class Frame-Env
 	      call/cc?::bool))
    (export (scope-resolution! tree::Module)
@@ -65,7 +72,11 @@
 (define (scope-resolution! tree)
    (verbose "Scope resolution")
    (let-split! tree)
+   (free-vars tree)
    (captured-vars tree)
+   ;; scope-widen-vars! widens all vars. no other analysis is allowed from now
+   ;; on, as they might widen too.
+   (scope-widen-vars! tree)
    (scope-call/cc-when-alive? tree)
    (scope-needs-frame/uniquization? tree)
    (scope-needs-boxing? tree)
@@ -73,26 +84,6 @@
    (scope-loops! tree)
    (let-merge! tree)
    (scope-frame-alloc! tree))
-
-;; some predicates (which are added as .flags to the vars):
-;;  - call/cc-when-alive? : a call/cc is inside the scope
-;;  - modified-after-call/cc? : the variable is updated after a call/cc-call.
-;;  - needs-boxing? : the variable is not constant, escapes, and has a call/cc
-;;         call inside the scope. Due to the call/cc it must 
-;;         be boxed to ensure that the function that uses the escaping variable
-;;         still references the same var after restoration. (The boxing can
-;;         occur anywhere before its use).
-;;  - needs-uniquization? : the variable is "constant", captured, and is inside a
-;;         loop. The init-value may change depending on the iteration. Each
-;;         capturing function must capture a "uniquized" variable.
-;;  - needs-frame? : the variable is not constant, inside a loop, and is
-;;         captured. Each capturing function needs to capture a separate
-;;         frame. The frame must be constructed at each iteration.
-;;  - needs-update? : the variable is not constant, has a call/cc, and is
-;;         modified after a call/cc. The call/ccs that have captured the
-;;         variable need to be updated during a finally.
-;;  - indirect? : if a variable is only referenced through a storage-object.
-
 
 ;; split lets so they became nested lets (thereby forcing an order of
 ;; evaluation).
@@ -171,6 +162,56 @@
 	     (found-fun (car varL))
 	     #f))))
 
+;; some predicates (which are added as .flags to the vars):
+;;  - call/cc-when-alive? : a call/cc is inside the scope
+;;  - modified-after-call/cc? : the variable is updated after a call/cc-call.
+;;  - needs-boxing? : the variable is not constant, escapes, and has a call/cc
+;;         call inside the scope. Due to the call/cc it must 
+;;         be boxed to ensure that the function that uses the escaping variable
+;;         still references the same var after restoration. (The boxing can
+;;         occur anywhere before its use).
+;;  - needs-uniquization? : the variable is "constant", captured, and is inside a
+;;         loop. The init-value may change depending on the iteration. Each
+;;         capturing function must capture a "uniquized" variable.
+;;  - needs-frame? : the variable is not constant, inside a loop, and is
+;;         captured. Each capturing function needs to capture a separate
+;;         frame. The frame must be constructed at each iteration.
+;;  - needs-update? : the variable is not constant, has a call/cc, and is
+;;         modified after a call/cc. The call/ccs that have captured the
+;;         variable need to be updated during a finally.
+;;  - indirect? : if a variable is only referenced through a storage-object.
+
+(define (scope-widen-vars! tree)
+   (verbose " Widening vars")
+   (widen!_ tree #f))
+
+(define (widen!-vars vs)
+   (for-each (lambda (v)
+		(widen!::Scope-Var v))
+	     vs))
+
+(define-nmethod (Node.widen!_)
+   (default-walk this))
+
+(define-nmethod (Module.widen!_)
+   (with-access::Module this (scope-vars runtime-vars imported-vars this-var)
+      (widen!-vars scope-vars)
+      (widen!-vars runtime-vars)
+      (widen!-vars imported-vars)
+      (widen!::Scope-Var this-var))
+   (default-walk this))
+
+(define-nmethod (Lambda.widen!_)
+   (with-access::Lambda this (scope-vars this-var)
+      (widen!-vars scope-vars)
+      (widen!::Scope-Var this-var))
+   (default-walk this))
+   
+(define-nmethod (Scope.widen!_)
+   (with-access::Scope this (scope-vars)
+      (widen!-vars scope-vars))
+   (default-walk this))
+
 ;; determine if a let contains a call/cc. Every variable of the let is
 ;; flagged by .call/cc-when-alive? if it has.
 ;; also: for any variable inside a let determine if it is modified after a
@@ -204,7 +245,7 @@
 	 (default-walk this (list this) ht)
 	 (when (Call/cc-Lambda? this)
 	    (for-each (lambda (var)
-			 (with-access::Var var (call/cc-when-alive?)
+			 (with-access::Scope-Var var (call/cc-when-alive?)
 			    (set! call/cc-when-alive? #t)))
 		      scope-vars)
 	    (shrink! this)))))
@@ -240,7 +281,7 @@
 	 (walk body this+surrounding-scopes var->scope-ht)
 	 (when (Call/cc-Let? this)
 	    (for-each (lambda (var)
-			 (with-access::Var var (call/cc-when-alive?)
+			 (with-access::Scope-Var var (call/cc-when-alive?)
 			    (set! call/cc-when-alive? #t)))
 		      scope-vars)
 	    (shrink! this))
@@ -267,11 +308,11 @@
       (with-access::Call/cc-Tail-rec this (contains-call/cc? modified-vars)
 	 (when contains-call/cc?
 	    (for-each (lambda (var)
-			 (with-access::Var var (call/cc-when-alive?)
+			 (with-access::Scope-Var var (call/cc-when-alive?)
 			    (set! call/cc-when-alive? #t)))
 		      scope-vars)
 	    (for-each (lambda (var)
-			 (with-access::Var var (modified-after-call/cc?)
+			 (with-access::Scope-Var var (modified-after-call/cc?)
 			    (set! modified-after-call/cc? #t)))
 		      modified-vars)
 	    (shrink! this)))
@@ -294,7 +335,7 @@
    (default-walk this surrounding-scopes var->scope-ht)
    (with-access::Set! this (lvalue val)
       (with-access::Ref lvalue (var)
-	 (with-access::Var var (modified-after-call/cc?)
+	 (with-access::Scope-Var var (modified-after-call/cc?)
 	    (when (not modified-after-call/cc?)
 	       (let ((scope (hashtable-get var->scope-ht var)))
 		  (cond
@@ -368,9 +409,9 @@
 		      ;; functions.
 		      (cond
 			 ((needs-frame? var)
-			  (Var-needs-frame?-set! var #t))
+			  (Scope-Var-needs-frame?-set! var #t))
 			 ((needs-uniquization? var)
-			  (Var-needs-uniquization?-set! var #t))))
+			  (Scope-Var-needs-uniquization?-set! var #t))))
 		   scope-vars))
       ;; walk must be after tests, as inside-call/cc-loop? will be physically modified.
       (default-walk this inside-loop? inside-call/cc-loop?)))
@@ -390,9 +431,9 @@
 		   ;; functions.
 		   (cond
 		      ((needs-frame? var)
-		       (Var-needs-frame?-set! var #t))
+		       (Scope-Var-needs-frame?-set! var #t))
 		      ((needs-uniquization? var)
-		       (Var-needs-uniquization?-set! var #t))))
+		       (Scope-Var-needs-uniquization?-set! var #t))))
 		scope-vars)))
 
 (define-nmethod (Call/cc-Call.frame inside-loop? inside-call/cc-loop?)
@@ -413,8 +454,8 @@
       (box!_ tree #f)))
 
 (define (needs-boxing? var::Var)
-   (with-access::Var var (constant? needs-frame? needs-uniquization? escapes?
-				    call/cc-when-alive?)
+   (with-access::Scope-Var var (constant? needs-frame? needs-uniquization?
+					  escapes? call/cc-when-alive?)
       (and (not constant?)
 	   (not needs-frame?)
 	   (not needs-uniquization?)
@@ -433,9 +474,11 @@
 	      (map (lambda (formal-decl)
 		      (with-access::Ref formal-decl (var)
 			 (if (needs-boxing? var)
-			     (let ((repl-decl (Ref-of-new-Var 'arg)))
-				(widen!::Box-Var var
-				   (repl-var (Ref-var repl-decl)))
+			     (let* ((repl-decl (Ref-of-new-Var 'arg))
+				    (repl-var (Ref-var repl-decl)))
+				(widen!::Scope-Var repl-var)
+				(with-access::Scope-Var var (box-repl-var)
+				   (set! box-repl-var repl-var))
 				repl-decl)
 			     formal-decl)))
 		   formals))
@@ -445,24 +488,24 @@
 						    var)))
 					 formals))
 	     (new-scope-vars (map! (lambda (var)
-				      (if (Box-Var? var)
-					  (with-access::Box-Var var (repl-var)
-					     repl-var)
-					  var))
+				      (with-access::Scope-Var var
+					    (box-repl-var)
+					 (or box-repl-var
+					     var)))
 				   scope-vars))
 	     (assigs (map (lambda (decl)
 			     (with-access::Ref decl (var)
-				(with-access::Box-Var var (repl-var)
+				(with-access::Scope-Var var (box-repl-var)
 				   (instantiate::Set!
 				      (lvalue decl)
-				      (val (var-reference repl-var))))
+				      (val (var-reference box-repl-var))))
 				(shrink! var)))
 			  extracted-vars)))
 	 (unless (null? extracted-vars)
 	    (set! formals new-formals)
 	    (set! scope-vars new-scope-vars)
 	    (for-each (lambda (var)
-			 (with-access::Var var (needs-boxing?)
+			 (with-access::Scope-Var var (needs-boxing?)
 			    (set! needs-boxing? #t)))
 		      extracted-vars)
 	    (with-access::Return body (val)
@@ -478,7 +521,7 @@
    (with-access::Let this (scope-vars)
       (for-each (lambda (var)
 		   (when (needs-boxing? var)
-		      (with-access::Var var (needs-boxing?)
+		      (with-access::Scope-Var var (needs-boxing?)
 			 (set! needs-boxing? #t))))
 		scope-vars)))
 
@@ -487,7 +530,7 @@
    (with-access::Tail-rec this (scope-vars)
       (for-each (lambda (var)
 		   (when (needs-boxing? var)
-		      (with-access::Var var (needs-boxing?)
+		      (with-access::Scope-Var var (needs-boxing?)
 			 (set! needs-boxing? #t))))
 		scope-vars)))
 
@@ -501,9 +544,9 @@
       (update tree #f)))
 
 (define (needs-update? var::Var)
-   (with-access::Var var (constant? needs-frame? needs-boxing?
-				    call/cc-when-alive?
-				    modified-after-call/cc?)
+   (with-access::Scope-Var var (constant? needs-frame? needs-boxing?
+					  call/cc-when-alive?
+					  modified-after-call/cc?)
       (and (not constant?)
 	   (not needs-frame?)
 	   (not needs-boxing?)
@@ -513,7 +556,7 @@
 (define (mark-updates vars)
    (for-each (lambda (var)
 		(when (needs-update? var)
-		   (with-access::Var var (needs-update?)
+		   (with-access::Scope-Var var (needs-update?)
 		      (set! needs-update? #t))))
 	     vars))
 
@@ -555,7 +598,7 @@
 			   (bindings bindings)
 			   (body body)
 			   (kind 'let))))
-	    ((with-access::Var (car vars)
+	    ((with-access::Scope-Var (car vars)
 		   (needs-frame? needs-boxing? needs-uniquization?)
 		(or needs-frame?
 		    needs-boxing?
@@ -563,6 +606,7 @@
 	     (let* ((tmp-decl (Ref-of-new-Var 'tmploop))
 		    (tmp-var (Ref-var tmp-decl))
 		    (old-var (car vars)))
+		(widen!::Scope-Var tmp-var)
 		(replace-var! (car inits)
 			      old-var
 			      tmp-var)
@@ -702,89 +746,69 @@
 ;; 'with', or with an anonymous function.)
 (define (scope-frame-alloc! tree)
    (verbose " create storage allocations for Lets and adding frame pushes")
-   (free-vars tree)
-   (captured-vars tree)
-   (alloc! tree #f
-	   '() #f))
+   (alloc! tree #f #f))
 
-(define-nmethod (Node.alloc! scope-hts inside-loop?)
-   (default-walk! this scope-hts inside-loop?))
+(define-nmethod (Node.alloc! inside-loop?)
+   (default-walk! this inside-loop?))
 
-(define-nmethod (Lambda.alloc! scope-hts inside-loop?)
-   (define (used-storage-vars free-vars)
-      (filter-map
-       (lambda (storage/scope-vars-ht)
-	  (let ((storage-var (car storage/scope-vars-ht))
-		(scope-vars-ht (cdr storage/scope-vars-ht)))
-	     (if (any? (lambda (free-var)
-			  (hashtable-get scope-vars-ht free-var))
-		       free-vars)
-		 storage-var
-		 #f)))
-       scope-hts))
-
-   (default-walk! this '() #f)
-   (if inside-loop?
-       (with-access::Lambda this (free-vars)
-	  (let* ((storage-vars (used-storage-vars free-vars)))
-	     (if (null? storage-vars)
-		 this
-		 (instantiate::Frame-push
-		    (storage-vars storage-vars)
-		    (body this)))))
-       this))
+(define-nmethod (Lambda.alloc! inside-loop?)
+   (default-walk! this #f))
 
 ;; TODO: optimize: currently needs-boxing? and needs-frame? are treated the
 ;; same way.
 ;; TODO: optimize: No need to allocate a storage-object, if the recursion is
 ;; due to to call/cc (and all variables do not have any call/cc inside their
 ;; scope). See comments at top.
-(define-nmethod (Let.alloc! scope-hts inside-loop?)
+(define-nmethod (Let.alloc! inside-loop?)
    (with-access::Let this (scope-vars body)
       (let ((frame-vars (cp-filter
 			 (lambda (var)
-			    (with-access::Var var (needs-frame? needs-boxing?
-						   needs-uniquization?)
+			    (with-access::Scope-Var var (needs-frame?
+							 needs-boxing?
+							 needs-uniquization?)
 			       (or needs-frame?
 				   needs-boxing?
 				   needs-uniquization?)))
 			 scope-vars)))
 	 (if (null? frame-vars)
-	     (default-walk! this scope-hts inside-loop?)
+	     (default-walk! this inside-loop?)
 	     ;; create storage-var
 	     (let* ((storage-decl (Ref-of-new-Var 'storage))
-		    (storage-var (Ref-var storage-decl)))
+		    (storage-var (Ref-var storage-decl))
+		    (frame-alloc (instantiate::Frame-alloc
+				    (storage-var (Ref-var storage-decl))
+				    (vars frame-vars))))
 		(for-each (lambda (var)
 			     (with-access::Var var (indirect?)
 				(set! indirect? #t)))
 			  frame-vars)
-		(with-access::Var storage-var (call/cc-when-alive?)
+		(widen!::Scope-Var storage-var)
+		(with-access::Scope-Var storage-var (call/cc-when-alive?)
 		   (set! call/cc-when-alive?
-			 (any? Var-call/cc-when-alive? frame-vars)))
+			 (any? Scope-Var-call/cc-when-alive? frame-vars)))
 
-		(default-walk! this scope-hts inside-loop?)
+		(default-walk! this inside-loop?)
 
 		(instantiate::Let
 		   (scope-vars (list storage-var))
 		   (bindings (list (instantiate::Set!
 				      (lvalue storage-decl)
-				      (val (instantiate::Frame-alloc
-					      (storage-var (Ref-var storage-decl))
-					      (vars frame-vars))))))
+				      (val frame-alloc))))
+		   ;; TODO: with call/cc this would not be correct anymore...
 		   (body (if (not inside-loop?)
 			     this
 			     (instantiate::Frame-push
-				(storage-vars (list storage-var))
+				(frame-allocs (list frame-alloc))
 				(body this))))
 		   (kind 'let)))))))
 
 ;; TODO: optimize: needs-boxing? and needs-frame? treated the same way.
-(define-nmethod (Tail-rec.alloc! scope-vars-ht inside-loop?)
+(define-nmethod (Tail-rec.alloc! inside-loop?)
    (with-access::Tail-rec this (inits body)
       (set! inits (map! (lambda (n)
-			   (walk! n scope-vars-ht inside-loop?))
+			   (walk! n inside-loop?))
 			inits))
-      (set! body (walk! body scope-vars-ht #t))
+      (set! body (walk! body #t))
       this))
 
 

@@ -6,6 +6,14 @@
 ;; small, and (more importantly) the changes inside Scheme2Js not intrusive.
 ;; I expect this module to follow potential changes in Scheme2Js.
 
+(define (make-exports-hashtable exports)
+   (let ((ht (make-hashtable)))
+      (for-each (lambda (e)
+		   (let ((desc (create-Export-Desc e #f)))
+		      (hashtable-put! ht (Export-Desc-id desc) desc)))
+		exports)
+      ht))
+
 (define-macro (read-Hop-runtime-exports)
    (let* ((module-clause (with-input-from-file "hop-runtime.sch"
 			    read))
@@ -13,16 +21,13 @@
 	  (exports (cdr (assq 'export (cddr module-clause)))))
       `(begin
 	  (define *exported-macros* ',macros)
-	  (define *exported-vars* ',exports))))
+	  (define *exported-vars* (make-exports-hashtable ',exports)))))
 
 (read-Hop-runtime-exports)
 
-(define *export-descs* (map (lambda (e) (create-Export-Desc e #f))
-			    *exported-vars*))
-
 (define (add-hop-runtime! m::WIP-Unit)
    (with-access::WIP-Unit m (imports macros)
-      (set! imports (append imports *export-descs*))
+      (set! imports (cons *exported-vars* imports))
       (set! macros (append macros *exported-macros*))))
 
 (define (hop-runtime-adder)

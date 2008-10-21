@@ -23,11 +23,17 @@
 	      (runtime-scope (default #f))
 	      (unbound-add! (default #f)))))
 
+(define *scheme2js-runtime-vars* '(list js-call not))
+
 (define (runtime-reference id)
    (var-reference ((thread-parameter '*runtime-id->var*) id)))
 
 (define (runtime-reference-init! f)
-   (thread-parameter-set! '*runtime-id->var* f))
+   (thread-parameter-set! '*runtime-id->var*
+			  (lambda (sym)
+			     [assert (*scheme2js-runtime-vars* sym)
+				     (memq sym *scheme2js-runtime-vars*)]
+			     (f sym))))
 
 ;; selects runtime imported from 'runtime_mapping.sch'
 (define (select-runtime)
@@ -62,31 +68,68 @@
 (define-nmethod (Node.resolve! symbol-table)
    (default-walk! this symbol-table))
 
+(define (create-js-var id imported? desc)
+   (instantiate::Var
+      (id id)
+      (kind (if imported? 'imported 'exported))
+      (export-desc desc)))
+
 (define (js-symbol-add! scope desc imported?)
    (let ((scheme-sym (Export-Desc-id desc)))
       (symbol-var-set! scope scheme-sym
-		       (instantiate::Exported-Var
-			  (id scheme-sym)
-			  (imported? #t)
-			  (desc desc)))))
-   
+		       (create-js-var scheme-sym imported? desc))))
+
+;; lazy lookup will not create Vars until they are actually used.
+(define (lazy-imported-lookup imports)
+   (define (export-in-list sym l)
+      (any (lambda (desc)
+	      (and (eq? (Export-Desc-id desc) sym)
+		   (create-js-var sym #t desc)))
+	   l))
+   (define (export-in-ht sym ht)
+      (let ((tmp (hashtable-get ht sym)))
+	 (and tmp
+	      (create-js-var sym #t tmp))))
+
+   (cond
+      ((null? imports)
+       (lambda (symbol) #f))
+      ((and (pair? imports)
+	    (Export-Desc? (car imports)))
+       (lambda (symbol)
+	  (export-in-list symbol imports)))
+      ((pair? imports)
+       (lambda (symbol)
+	  (any (lambda (imps)
+		  (cond
+		     ((null? imps) #f)
+		     ((pair? imps) (export-in-list symbol imps))
+		     (else         (export-in-ht symbol imps))))
+	       imports)))
+      (else
+       (lambda (symbol)
+	  (export-in-ht symbol imports)))))
+    
 (define-nmethod (Module.resolve! symbol-table)
-   (let* ((runtime-scope (make-scope (length (Env-runtime env))))
-	  (imported-scope (make-scope (length (Env-imports env))))
+   (let* ((runtime-scope (make-lazy-scope
+			  (lazy-imported-lookup (Env-runtime env))))
+	  (imported-scope (make-lazy-scope
+			   (lazy-imported-lookup (Env-imports env))))
 	  ;; module-scope might grow, but 'length' is just an indication. 
 	  (module-scope (make-scope (length (Env-exports env))))
 	  (extended-symbol-table (cons* module-scope
 					imported-scope
 					runtime-scope
 					symbol-table)))
-      
-      ;; add runtime
-      (for-each (lambda (meta) (js-symbol-add! runtime-scope meta #t))
-		(Env-runtime env))
-      
-      ;; add imported variables
-      (for-each (lambda (meta) (js-symbol-add! imported-scope meta #t))
-		(Env-imports env))
+
+      ;; no need to add runtime or imported variables. They are in a lazy
+      ;; scope. HOWEVER: we need to add the internally used vars.
+      ;; Otherwise 'list', ... might not be in the runtime-vars. They would be
+      ;; added. But maybe too late.
+      (for-each (lambda (id)
+		   ;; simply searching for the variable will mark it as used.
+		   (symbol-var runtime-scope id))
+		*scheme2js-runtime-vars*)
       
       ;; insert exported variables
       (for-each (lambda (meta) (js-symbol-add! module-scope meta #f))
@@ -136,11 +179,13 @@
 	 (set! runtime-vars (scope->list runtime-scope))
 	 (set! imported-vars (scope->list imported-scope))
 	 (let* ((module-vars (filter! (lambda (var)
-					 (not (This-Var? var)))
+					 (not (eq? (Var-kind var) 'this)))
 				      (scope->list module-scope)))
-		(local-vars (cp-filter (lambda (var) (not (Exported-Var? var)))
+		(local-vars (cp-filter (lambda (var)
+					  (eq? (Var-kind var) 'local))
 				       module-vars)))
-	    (set! scope-vars (filter (lambda (var) (Exported-Var? var))
+	    (set! scope-vars (filter (lambda (var)
+					(eq? (Var-kind var) 'exported))
 				     module-vars))
 	    (set! body (instantiate::Let
 			  (scope-vars local-vars)
@@ -157,8 +202,9 @@
 	     (error "symbol-resolution"
 		    "Variable already declared"
 		    id)
-	     (let ((new-var (instantiate::Local
-			       (id id))))
+	     (let ((new-var (instantiate::Var
+			       (id id)
+			       (kind 'local))))
 		(set! var new-var)
 		(symbol-var-set! scope id new-var))))))
 
@@ -264,14 +310,15 @@
 				    (id id)
 				    (js-id js-id)
 				    (exported-as-const? #f)))
-			   (new-var (instantiate::Exported-Var
+			   (new-var (instantiate::Var
 				       (id id)
-				       (imported? #f)
-				       (desc desc))))
+				       (kind 'exported)
+				       (export-desc desc))))
 		       (symbol-var-set! module-scope id new-var)))
 		   (else
-		    (let ((new-var (instantiate::Local
-				      (id id))))
+		    (let ((new-var (instantiate::Var
+				      (id id)
+				      (kind 'local))))
 		       (symbol-var-set! module-scope id new-var))))))))
       (else 'do-nothing)))
 

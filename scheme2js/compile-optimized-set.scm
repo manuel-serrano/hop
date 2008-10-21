@@ -4,6 +4,7 @@
 	   tools
 	   template-display
 	   nodes
+	   allocate-names
 	   export-desc))
 
 (define *set!-operators*
@@ -31,12 +32,11 @@
 			 (eq? (Ref-var (car operands)) var)
 			 (Ref? operator)
 			 (let ((op-var (Ref-var operator)))
-			    (with-access::Var op-var (constant?)
-			       (and (Exported-Var? op-var)
-				    (Exported-Var-imported? op-var)
+			    (with-access::Var op-var (constant? kind)
+			       (and (eq? kind 'imported)
 				    constant?))))
 		    (let* ((op-var (Ref-var operator))
-			   (desc (Exported-Var-desc op-var))
+			   (desc (Var-export-desc op-var))
 			   (js-id (Export-Desc-js-id desc))
 			   (entry (assoc js-id *set!-operators*)))
 		       (if entry
@@ -48,8 +48,8 @@
 			       (template-display p env
 				  "(~a~a~a)"
 				  (cadr entry) (cadr entry) ;; ++ or --
-				  (Var-js-id var))
-			       (with-access::Var var (js-id)
+				  (Named-Var-js-id var))
+			       (with-access::Named-Var var (js-id)
 				  (template-display p env
 				     "($js-id ~a= ~e)"
 				     (cadr entry)

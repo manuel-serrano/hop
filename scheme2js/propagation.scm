@@ -18,6 +18,9 @@
 	      mutated-vars) ;; vars that are mutated inside the while.
 	   (wide-class Prop-Label::Label
 	      var/vals-list)
+	   (wide-class Prop-Var::Var
+	      (escaping-mutated?::bool (default #f))
+	      (current (default #f)))
 	   (class List-Box
 	      v::pair-nil))
    (export (propagation! tree::Module)))
@@ -30,10 +33,10 @@
 ;; call/cc-calls count as loops. suspend/resumes don't.
 ;; each of these loops have a list of all mutated vars.
 ;; Also determine if a variable is changed outside its local scope (that is, if
-;; it escapes, is it modified in these functions). -> .escaping-mutated
+;; it escapes, is it modified in these functions). -> .escaping-mutated?
 ;;
-;; second pass: linearly walk through the code. a ht holds the current value
-;; for all variables. a set! obviously updates the ht. a loop kills all the
+;; second pass: linearly walk through the code. the variables 'current' holds
+;; the current value. a set! obviously updates it. a loop kills all the
 ;; variables that are affected.
 ;; if we have a binding x = y, and this is the only use of y (see
 ;; var-elimination), then we replace x by y.
@@ -51,6 +54,17 @@
    (changed tree (make-Prop-Env call/cc?)
 	    #f '() #f))
 
+(define (widen-vars! vars)
+   (for-each (lambda (v)
+		(widen!::Prop-Var v
+		   (escaping-mutated? #f)
+		   (current #f)))
+	     vars))
+   
+(define (widen-scope-vars! s::Scope)
+   (with-access::Scope s (scope-vars)
+      (widen-vars! scope-vars)))
+   
 ;; surrounding-fun might be the Module. Used to detect free-vars. (that's all)
 ;; surrounding-whiles are the active whiles.
 ;; call/ccs are all encountered call-locations (of the current function), that
@@ -61,14 +75,21 @@
    (default-walk this surrounding-fun surrounding-whiles call/ccs))
 
 (define-nmethod (Module.changed surrounding-fun surrounding-whiles call/ccs)
-   (with-access::Module this (scope-vars)
+   (with-access::Module this (scope-vars runtime-vars imported-vars this-var)
       (for-each (lambda (v)
-		   (with-access::Exported-Var v (escaping-mutated? constant?)
-		      (set! escaping-mutated? (not constant?))))
-		scope-vars))
+		   (with-access::Var v (constant?)
+		      (widen!::Prop-Var v
+			 (escaping-mutated? (not constant?))
+			 (current #f))))
+		scope-vars)
+      (widen-vars! runtime-vars)
+      (widen-vars! imported-vars)
+      (widen!::Prop-Var this-var))
    (default-walk this this '() (make-List-Box '())))
 
 (define-nmethod (Lambda.changed surrounding-fun surrounding-whiles call/ccs)
+   (widen-scope-vars! this)
+   (widen!::Prop-Var (Lambda-this-var this))
    (default-walk this this '() (make-List-Box '())))
 
 ;; result will be merged into orig
@@ -149,7 +170,13 @@
 	 (mutated-vars '())
 	 (visible-whiles surrounding-whiles)))))
 
+(define-nmethod (Let.changed surrounding-fun surrounding-whiles call/ccs)
+   (widen-scope-vars! this)
+   (default-walk this surrounding-fun surrounding-whiles call/ccs))
+
+
 (define-nmethod (While.changed surrounding-fun surrounding-whiles call/ccs)
+   (widen-scope-vars! this)
    (with-access::While this (init test body)
       (walk init surrounding-fun surrounding-whiles call/ccs)
       (widen!::Prop-While this
@@ -180,7 +207,7 @@
       (with-access::Ref lvalue (var)
 	 ;; if the lvar is modified outside its scope, mark it as such.
 	 (with-access::Execution-Unit surrounding-fun (free-vars)
-	    (with-access::Var var (escaping-mutated? escapes?)
+	    (with-access::Prop-Var var (escaping-mutated? escapes?)
 	       (when (and escapes?
 			  (not escaping-mutated?) ;; already marked
 			  (memq var free-vars))
@@ -215,7 +242,7 @@
 	 (for-each (lambda (p)
 		      (let ((var (car p))
 			    (val (cdr p)))
-			 (with-access::Var var (current)
+			 (with-access::Prop-Var var (current)
 			    (cond
 			       ((eq? val 'unknown)
 				(set! current 'unknown))
@@ -244,7 +271,7 @@
 	     boxes)
    (with-access::List-Box b1 (v)
       (set! v (map (lambda (var)
-		      (with-access::Var var (current)
+		      (with-access::Prop-Var var (current)
 			 (let ((tmp current))
 			    (set! current #f)
 			    (cons var tmp))))
@@ -280,7 +307,7 @@
 
 (define-nmethod (Ref.propagate! var/vals)
    (with-access::Ref this (var)
-      (with-access::Var var (escaping-mutated?)
+      (with-access::Prop-Var var (escaping-mutated?)
 	 (let* ((val (assq-val var var/vals)))
 	    (cond
 	       ((or (not val)
@@ -288,7 +315,7 @@
 		    escaping-mutated?)
 		this)
 	       ((and (Ref? val)
-		     (not (Var-escaping-mutated? (Ref-var val))))
+		     (not (Prop-Var-escaping-mutated? (Ref-var val))))
 		(var-reference (Ref-var val)))
 	       ((and (Const? val)
 		     (with-access::Const val (value)
@@ -369,15 +396,11 @@
 		       (or (pair? (Const-value value))
 			   (vector? (Const-value value)))
 		       #t)))))
-   (define (runtime-var? v)
-      (and (Exported-Var? v)
-	   (Exported-Var-imported? v)
-	   (Export-Desc-runtime? (Exported-Var-desc v))))
    
    (default-walk! this var/vals)
    (with-access::Call this (operator operands)
       (if (and (Ref? operator)
-	       (runtime-var? (Ref-var operator))
+	       (runtime-var (Ref-var operator))
 	       (every? constant-value? operands))
 	  ;; for most runtime-functions we should be able to compute the result
 	  ;; right now. (obviously a "print" won't work now...)

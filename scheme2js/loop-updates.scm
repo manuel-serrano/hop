@@ -6,7 +6,7 @@
 	   walk
 	   var-ref-util
 	   verbose)
-   (static (wide-class Update-Var::Local
+   (static (wide-class Update-Var::Var
 	      new-val
 	      (referenced-vars (default #f))
 	      (rev-referenced-vars (default #f))

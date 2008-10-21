@@ -28,7 +28,7 @@
 
 (define-nmethod (Const.scm)
    (with-access::Const this (value)
-      value))
+      `(quote ,value)))
 
 (define-nmethod (Ref.scm)
    (with-access::Ref this (var)
@@ -42,7 +42,7 @@
 	  ,(walk body))))
 
 (define-nmethod (Lambda.scm)
-   (with-access::Lambda this (vaarg? formals body)
+   (with-access::Lambda this (vaarg? formals body declared-vars)
       (let* ((scm-formals (map walk formals))
 	     (vaarg-formals (if vaarg?
 				(let loop ((frms scm-formals))
@@ -51,9 +51,16 @@
 				       (cons (car frms)
 					     (loop (cdr frms)))))
 				scm-formals)))
-	 `(lambda ,vaarg-formals
-	     (bind-exit (return)
-		,(walk body))))))
+	 (if (null? declared-vars)
+	     `(lambda ,vaarg-formals
+		 (bind-exit (return)
+		    ,(walk body)))
+	     `(lambda ,vaarg-formals
+		 (bind-exit (return)
+		    (let ,(map (lambda (v)
+				  (list (Var-id v) #unspecified))
+			       declared-vars)
+		       ,(walk body))))))))
 
 (define-nmethod (If.scm)
    (with-access::If this (test then else)
@@ -108,9 +115,10 @@
 	  'TODO)))
 
 (define-nmethod (Frame-push.scm)
-   (with-access::Frame-push this (storage-vars body)
-      `(let ((storage-vars ,(map var-out storage-vars)))
-	  ,(walk body))))
+   (with-access::Frame-push this (frame-allocs body)
+      (let ((storage-vars (map Frame-alloc-storage-var frame-allocs)))
+	 `(let ((storage-vars ,(map var-out storage-vars)))
+	     ,(walk body)))))
 
 (define-nmethod (Return.scm)
    (with-access::Return this (val)

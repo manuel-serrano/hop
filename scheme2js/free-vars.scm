@@ -38,9 +38,9 @@
 
 (define-nmethod (Ref.find-free surrounding-fun visible-vars-list)
    (with-access::Ref this (var)
-      (unless (any? (lambda (s)
-		       (memq var s))
-		    visible-vars-list)
+      (unless (or (eq? (Var-kind var) 'this)
+		  (any? (lambda (s) (memq var s))
+			visible-vars-list))
 	 (with-access::Execution-Unit surrounding-fun (free-vars)
 	    (unless (memq var free-vars)
 	       (cons-set! free-vars var))))))

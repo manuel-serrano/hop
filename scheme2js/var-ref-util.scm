@@ -21,8 +21,9 @@
 
 (define (runtime-var n)
    (let ((v (constant-var n)))
-      (and (Exported-Var? v)
-	   (Export-Desc-runtime? (Exported-Var-desc v))
+      (and v
+	   (eq? (Var-kind v) 'imported)
+	   (Export-Desc-runtime? (Var-export-desc v))
 	   v)))
 
 (define (runtime-var-ref? n)
@@ -32,7 +33,7 @@
 (define (higher-order-runtime-var-ref? n)
    (let ((v (runtime-var n)))
       (and v
-	   (Export-Desc-higher? (Exported-Var-desc v))
+	   (Export-Desc-higher? (Var-export-desc v))
 	   #t)))
 
 (define (runtime-var-ref-id n)
@@ -79,6 +80,6 @@
 		      (with-access::Ref value (var)
 			 (with-access::Var var (constant?)
 			    (and constant?
-				 (not (This-Var? var))))))
+				 (not (eq? (Var-kind var) 'this))))))
 		 (transitive-value value))
 		(else var-ref))))))

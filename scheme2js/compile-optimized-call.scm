@@ -235,8 +235,9 @@
 			  (with-access::Ref operator (var)
 			     (with-access::Var var (constant?)
 				(and constant?
-				     (Exported-Var? var)
-				     (let ((desc (Exported-Var-desc var)))
+				     (or (eq? (Var-kind var) 'exported)
+					 (eq? (Var-kind var) 'imported))
+				     (let ((desc (Var-export-desc var)))
 					(eq? (Export-Desc-return-type desc)
 					     'bool)))))))
 		  (template-display p env
@@ -290,9 +291,9 @@
 				operands)
    (when (and (Ref? operator)
 	      (Var-constant? (Ref-var operator))
-	      (Exported-Var? (Ref-var operator)))
+	      (eq? (Var-kind (Ref-var operator)) 'imported))
       (let* ((var (Ref-var operator))
-	     (desc (Exported-Var-desc var))
+	     (desc (Var-export-desc var))
 	     (peephole (Export-Desc-peephole desc)))
 	 (when peephole
 	    (let* ((optimize-fun

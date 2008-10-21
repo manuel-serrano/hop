@@ -24,17 +24,17 @@
 		      (set! value #f)))
 		runtime-vars)
       (for-each (lambda (js-var)
-		   (with-access::Exported-Var js-var
-			 (desc already-defined? constant? value)
-		      (with-access::Export-Desc desc (exported-as-const?)
+		   (with-access::Var js-var
+			 (export-desc already-defined? constant? value)
+		      (with-access::Export-Desc export-desc (exported-as-const?)
 			 (set! already-defined? #t)
 			 (set! constant? exported-as-const?)
 			 (set! value #f))))
 		imported-vars)
       (for-each (lambda (js-var)
-		   (with-access::Exported-Var js-var
-			 (desc already-defined? constant? value)
-		      (with-access::Export-Desc desc (exported-as-const?)
+		   (with-access::Var js-var
+			 (export-desc already-defined? constant? value)
+		      (with-access::Export-Desc export-desc (exported-as-const?)
 			 (set! already-defined? (not exported-as-const?))
 			 (set! constant? #f)
 			 (set! value #f))))
@@ -52,8 +52,8 @@
    ;; revisits the formals, but doesn't make any difference.
    (default-walk this))
 
-(define (clean-local l::Local)
-   (with-access::Local l (already-defined? constant? value)
+(define (clean-local l::Var)
+   (with-access::Var l (already-defined? constant? value)
       (set! already-defined? #f)
       (set! constant? #f)
       (set! value #f)))
@@ -93,9 +93,8 @@
    (with-access::Set! this (lvalue val)
       (walk val)
       (with-access::Ref lvalue (var)
-	 (if (and (Exported-Var? var)
-		  (Exported-Var-imported? var)
-		  (Exported-Var-constant? var)) ;; equal to exported-as-const?
+	 (if (and (eq? (Var-kind var) 'imported)
+		  (Var-constant? var)) ;; equal to exported-as-const?
 	     (error "Set!"
 		    "Imported variable is constant, and must not be modified."
 		    (Var-id var)))

@@ -7,8 +7,12 @@
        (id::symbol read-only))
 
     ;; Variables
-    (class Var
+    (final-class Var
        (id::symbol read-only)
+
+       (kind::symbol read-only) ;; one out of local, exported, imported or this
+       ;; export-desc is used for exported and imported vars.
+       (export-desc::Export-Desc (default (Export-Desc-nil)) read-only)
 
        (already-defined?::bool (default #f)) ;; TODO: remove (side)
        (constant?::bool (default #f))
@@ -17,28 +21,7 @@
        (captured?::bool (default #f))
        (escapes?::bool (default #f))
 
-       ;; see scope.scm for the following fields.
-       (call/cc-when-alive?::bool (default #f))
-       (modified-after-call/cc?::bool (default #f))
-       (needs-boxing?::bool (default #f))
-       (needs-uniquization?::bool (default #f))
-       (needs-frame?::bool (default #f))
-       (needs-update?::bool (default #f))
-       (indirect?::bool (default #f))
-
-       ;; see propagation for the following field
-       (escaping-mutated?::bool (default #f))
-       (current (default #f))
-
-       ;; see out for the following field
-       (js-id::bstring (default "")))
-    (final-class Local::Var)
-    (class JS-Var::Var)
-    (final-class Exported-Var::JS-Var
-       ;; when imported? is #t then the var is exported by another module.
-       imported?::bool
-       desc::Export-Desc)
-    (final-class This-Var::JS-Var)
+       (indirect?::bool (default #f))) ;; used in Scope.
 
     ;; ===========================  Nodes ==========================
     (class Node
@@ -53,9 +36,9 @@
     (class Execution-Unit::Scope ;; basically Modules and Lambdas
        ;; this-vars are always instantiated, but might not be used during
        ;; symbol-resolution
-       (this-var::This-Var (default (instantiate::This-Var
+       (this-var::Var (default (instantiate::Var
 					  (id 'this)
-					  (js-id "this")))
+					  (kind 'this)))
 			   read-only)
        body::Node
        
@@ -113,7 +96,7 @@
        storage-var::Var
        vars::pair-nil)
     (final-class Frame-push::Node
-       storage-vars::pair-nil
+       frame-allocs::pair-nil
        body::Node)
     (final-class Return::Node
        val::Node)
@@ -174,8 +157,9 @@
 	 (val val))))
 
 (define (Ref-of-new-Var id)
-   (let* ((var (instantiate::Local
-		  (id id))))
+   (let* ((var (instantiate::Var
+		  (id id)
+		  (kind 'local))))
       (instantiate::Ref
 	 (id id)
 	 (var var))))
