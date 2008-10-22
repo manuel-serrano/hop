@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Wed Oct 22 19:12:19 2008 (serrano)                */
+/*    Last change :  Wed Oct 22 19:13:07 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -106,7 +106,6 @@ function hop_dashboard_populate( div, proc ) {
    }
    
    with_hop( "/hop/dashboard/populate", populate, permission_denied );
-	     
 }   
    
 /*---------------------------------------------------------------------*/
