@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-dashboard.js            */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-dashboard.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Fri Jun 20 11:18:17 2008 (serrano)                */
+/*    Last change :  Wed Oct 22 19:12:19 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -16,6 +16,7 @@ var hop_dashboard_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQ
 
 var hop_dashboard_anim_speed = 10;
 var hop_dashboard = false;
+var hop_dashboard_unpopulated = false;
 var hop_dashboard_icon_size = 32;
 var hop_dashboard_interval = false;
 var hop_dashboard_opacity = "0.75";
@@ -53,7 +54,7 @@ function hop_dashboard_populate( div, proc ) {
       var width = 0;
       var app_size = hop_dashboard_icon_size + 2;
       div.innerHTML = "";
-      
+
       while( h !== null ) {
 	 var p = h.car;
 	 var app = document.createElement( "span" );
@@ -95,10 +96,17 @@ function hop_dashboard_populate( div, proc ) {
       node_style_set( div, "left", ((hop_window_width()-width)/2) + "px" );
       node_style_set( div, "width", width + "px" );
 
+      hop_dashboard = div;
+      
       proc( div );
    }
+
+   function permission_denied( h ) {
+      alert( "Permission denied to run the dashboard on this host!" );
+   }
    
-   with_hop( "/hop/dashboard/populate", populate );
+   with_hop( "/hop/dashboard/populate", populate, permission_denied );
+	     
 }   
    
 /*---------------------------------------------------------------------*/
@@ -168,12 +176,16 @@ function hop_dashboard_deactivate() {
 /*---------------------------------------------------------------------*/
 /*    hop_toggle_dashboard ...                                         */
 /*---------------------------------------------------------------------*/
-function hop_toggle_dashboard() {
-   if( hop_dashboard ) {
-      if( hop_dashboard.activep ) {
-	 hop_dashboard_deactivate();
-      } else {
-	 hop_dashboard_activate();
+function hop_toggle_dashboard( div ) {
+   if( !hop_dashboard ) {
+      hop_dashboard_populate( hop_dashboard_unpopulated, hop_toggle_dashboard );
+   } else {
+      if( hop_dashboard ) {
+	 if( hop_dashboard.activep ) {
+	    hop_dashboard_deactivate();
+	 } else {
+	    hop_dashboard_activate();
+	 }
       }
    }
 }
@@ -250,8 +262,6 @@ function hop_dashboard_control_panel_init() {
    node_style_set( div, "-moz-opacity", hop_dashboard_opacity );
    node_style_set( div, "opacity", hop_dashboard_opacity );
 
-   hop_dashboard_populate( div, function( div ) { hop_dashboard = div } );
-   
    div.onmouseover = function() {
       node_style_set( div, "-moz-opacity", "1" )
       node_style_set( div, "opacity", "1" )
@@ -260,7 +270,8 @@ function hop_dashboard_control_panel_init() {
       node_style_set( div, "-moz-opacity", hop_dashboard_opacity )
       node_style_set( div, "opacity", hop_dashboard_opacity )
    };
-   
+
+   hop_dashboard_unpopulated = div;
    document.body.appendChild( div );
 }
 

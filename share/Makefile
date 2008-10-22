@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/share/Makefile                   */
+#*    serrano/trashcan/1.10.x/share/Makefile                           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Sep 26 15:17:11 2008 (serrano)                */
+#*    Last change :  Wed Oct 22 18:39:43 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -187,7 +187,6 @@ hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
 EXPORTED_RTS = $(RTS) $(filter %.js,$(EXTRA)) hop-autoconf.js
 hop-runtime.js: $(EXPORTED_RTS)
 	cat $^ > $@
-
 
 #*---------------------------------------------------------------------*/
 #*    Flash compilation                                                */
