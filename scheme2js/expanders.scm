@@ -6,14 +6,16 @@
 (install-expander! 'quote identify-expander)
 
 ;; lambda.
-;; get all args (including var-arg), and declare them as locally defined (ie.
-;; add them to the Lenv).
 (install-expander!
  'lambda
  (lambda (x e macros-ht)
-    ;; ignore formal
-    (set-cdr! (cdr x) (map! (lambda (y) (e y e macros-ht))
-			    (cddr x)))
+    (match-case x
+       ((?- ?formal ?- . (? list?))
+	;; ignore formal
+	(set-cdr! (cdr x) (map! (lambda (y) (e y e macros-ht))
+				(cddr x))))
+       (else
+	(error "lambda-expand" "bad 'lambda'-form" x)))
     x))
 
 ;; not used.
@@ -121,13 +123,13 @@
 			 ((?- ?var ?val)
 			  `(define ,(e var e macros-ht) ,(e val e macros-ht)))
 			 (else
-			  (error #f "Invalid define-form: " x)))))
+			  (error "define-expand" "Invalid define-form: " x)))))
 
 (install-expander! 'or
 		   (lambda (x e macros-ht)
 		      (match-case x
 			 ((?-) #f)
-			 ((?- . ?tests)
+			 ((?- . (and (? pair?) ?tests))
 			  (e (if (null? (cdr tests)) ; last element
 				 (car tests)
 				 (let ((tmp-var (gensym 'tmp)))
@@ -135,40 +137,59 @@
 					(if ,tmp-var
 					    ,tmp-var
 					    (or ,@(cdr tests))))))
-			     e macros-ht)))))
+			     e macros-ht))
+			 (else
+			  (error "or-expand" "Invalid 'or'-form" x)))))
 
 (install-expander! 'and
 		   (lambda (x e macros-ht)
 		      (match-case x
 			 ((?-) #t)
-			 ((?- . ?tests)
+			 ((?- . (and (? pair?) ?tests))
 			  (e (if (null? (cdr tests)) ; last element
 				 (car tests)
 				 `(if ,(car tests)
 				      (and ,@(cdr tests))
 				      #f))
-			     e macros-ht)))))
+			     e macros-ht))
+			 (else
+			  (error "and-expand" "Invalid 'and'-form" x)))))
 
-(install-expander! 'do
-		   (lambda (x e macros-ht)
-		      (match-case x
-			 ((?- ?bindings (?test . ?finally) . ?commands)
-			  (let ((loop (gensym 'doloop)))
-			     (e `(let ,loop ,(map (lambda (binding)
-						     (list (car binding)
-							   (cadr binding)))
-						  bindings)
-				      (if ,test
-					  (begin ,@finally)
-					  (begin
-					     ,@commands
-					     (,loop
-					      ,@(map (lambda (bind)
-							(if (null? (cddr bind))
-							    (car bind)
-							    (caddr bind)))
-						     bindings)))))
-				e macros-ht))))))
+(install-expander!
+ 'do
+ (lambda (x e macros-ht)
+    (match-case x
+       ((?- ?bindings (?test . ?finally) . ?commands)
+	(unless (and (list? finally)
+		     (list? commands)
+		     (list? bindings)
+		     (every? (lambda (b)
+				(and (pair? b)
+				     (symbol? (car b))
+				     (pair? (cdr b))
+				     (or (null? (cddr b))
+					 (and (pair? (cddr b))
+					      (null? (cdddr b))))))
+			     bindings))
+	   (error "do-expand" "Invalid 'do'-form" x))
+	(let ((loop (gensym 'doloop)))
+	   (e `(let ,loop ,(map (lambda (binding)
+				   (list (car binding)
+					 (cadr binding)))
+				bindings)
+		    (if ,test
+			(begin ,@finally)
+			(begin
+			   ,@commands
+			   (,loop
+			    ,@(map (lambda (bind)
+				      (if (null? (cddr bind))
+					  (car bind)
+					  (caddr bind)))
+				   bindings)))))
+	      e macros-ht)))
+       (else
+	(error "do-expand" "Invalid 'do'-form" x)))))
 
 (define (quasiquote-expand! x level)
    ;; conservative: if the function returns #f, then there's
@@ -284,32 +305,57 @@
 ;; transform let* into nested lets
 (install-expander! 'let*
 		   (lambda (x e macros-ht)
-		      (let ((bindings (cadr x)))
-			 (e `(let (,(car bindings))
-				,@(if (null? (cdr bindings))
-				      (cddr x) ;; body
-				      `((let* ,(cdr bindings)
-					   ,@(cddr x)))))
-			    e macros-ht))))
+		      (match-case x
+			 ((?- ((?v ?val) . ?bindings) . ?body)
+			  (e `(let ((,v ,val))
+				 ,@(if (null? bindings)
+				       body
+				       `((let* ,bindings
+					    ,@body))))
+			     e macros-ht))
+			 (else
+			  (error "let*-expand"
+				 "Invalid 'let*'-form"
+				 x)))))
 		      
 (define (expand-named-let expr)
+   ;; we know it's of form (?- (? symbol?) (? list?) . ?-)
    (let* ((loop-name (cadr expr))
 	  (binding-clauses (caddr expr))
-	  (body (cdddr expr))
-
-	  (vars (map car binding-clauses))
-	  (init-values (map cadr binding-clauses)))
+	  (body (cdddr expr)))
+      (unless (every? (lambda (b)
+			 (and (pair? b)
+			      (pair? (cdr b))
+			      (null? (cddr b))
+			      (symbol? (car b))))
+		      binding-clauses)
+	 (error "named-let expand"
+		"Invalid named-let form"
+		expr))
+      (let ((vars (map car binding-clauses))
+	    (init-values (map cadr binding-clauses)))
       ;; correct version would be the following expansion
 ;      `((letrec ((,loop-name (lambda ,vars ,@body)))
 ;	   ,loop-name)
 ;	,@init-values)
       ;; this version is however more efficient:
-      `(letrec ((,loop-name (lambda ,vars ,@body)))
-	  (,loop-name ,@init-values))))
+	 `(letrec ((,loop-name (lambda ,vars ,@body)))
+	     (,loop-name ,@init-values)))))
 
 (define (expand-let x e macros-ht)
+   ;; we know it's of form (?- (? list?) . ?-)
    (let* ((bindings (cadr x))
 	  (body (cddr x)))
+      (unless (every? (lambda (b)
+			 (and (pair? b)
+			      (pair? (cdr b))
+			      (null? (cddr b))
+			      (symbol? (car b))))
+		      bindings)
+	 (error "let expand"
+		"Invalid 'let' form"
+		x))
+
       `(let ,(map (lambda (binding)
 		     (list (e (car binding) e macros-ht)
 			   (e (cadr binding) e macros-ht)))
@@ -324,61 +370,84 @@
 			 ((?- (? list?) . ?-)
 			  (expand-let x e macros-ht))
 			 (else
-			  (error 'let "Illegal form" x)))))
+			  (error "let expand" "Illegal form" x)))))
 
 (install-expander! 'define-struct
  (lambda (x e macros-ht)
-    (let* ((name (cadr x))
-	   (fields (map (lambda (f)
-			   (if (pair? f) (car f) f))
-			(cddr x)))
-	   (field-getters (map (lambda (field)
-				  (symbol-append name '- field))
+    (match-case x
+       ((?- ?name . ?fields)
+	(unless (and (symbol? name)
+		     (list? fields)
+		     (every (lambda (f)
+			       (or (symbol? f)
+				   (and (pair? f)
+					(symbol? (car f))
+					(pair? (cdr f))
+					(null? (cddr f)))))
+			    fields))
+	   (error "define-struct expand"
+		  "Illegal 'define-struct' form"
+		  x))
+	(let* ((field-ids (map (lambda (f)
+				  (if (pair? f) (car f) f))
 			       fields))
-	   (field-setters (map (lambda (field)
-				  (symbol-append name '- field '-set!))
-			       fields))
-	   (defaults (map (lambda (f)
-			     (if (pair? f) (cadr f) #unspecified))
-			  (cddr x)))
-	   (tmp (gensym)))
-       `(begin
-	   (define ,(symbol-append 'make- name)
-	      (lambda args (let ((,tmp (make-struct ',name)))
-			      ,@(map (lambda (setter default)
-					`(if (null? args)
-					     (,setter ,tmp ,default)
-					     (begin
-						(,setter ,tmp (car args))
-						(set! args (cdr args)))))
-				     field-setters
-				     defaults)
-			      ,tmp)))
-	   ;; alias for make-name
-	   (define ,name ,(symbol-append 'make- name))
-	   (define ,(symbol-append name '?)
-	      (lambda (s) (struct-named? ',name s)))
-	   ,@(map (lambda (field getter setter)
-		     `(begin
-			 (define ,getter
-			    (lambda (s)
-			       (struct-field s
-					     ',name
-					     ',(symbol-append 'f- field))))
-			 (define ,setter
-			    (lambda (s val)
-			       (struct-field-set! s
-						  ',name
-						  ',(symbol-append 'f- field)
-						  val)))))
-		  fields
-		  field-getters
-		  field-setters)))))
+	       (field-getters (map (lambda (field)
+				      (symbol-append name '- field))
+				   field-ids))
+	       (field-setters (map (lambda (field)
+				      (symbol-append name '- field '-set!))
+				   field-ids))
+	       (defaults (map (lambda (f)
+				 (if (pair? f) (cadr f) #unspecified))
+			      fields))
+	       (tmp (gensym)))
+	   `(begin
+	       (define ,(symbol-append 'make- name)
+		  (lambda args (let ((,tmp (make-struct ',name)))
+				  ,@(map (lambda (setter default)
+					    `(if (null? args)
+						 (,setter ,tmp ,default)
+						 (begin
+						    (,setter ,tmp (car args))
+						    (set! args (cdr args)))))
+					 field-setters
+					 defaults)
+				  ,tmp)))
+	       ;; alias for make-name
+	       (define ,name ,(symbol-append 'make- name))
+	       (define ,(symbol-append name '?)
+		  (lambda (s) (struct-named? ',name s)))
+	       ,@(map (lambda (field getter setter)
+			 `(begin
+			     (define ,getter
+				(lambda (s)
+				   (struct-field s
+						 ',name
+						 ',(symbol-append 'f- field))))
+			     (define ,setter
+				(lambda (s val)
+				   (struct-field-set! s
+						      ',name
+						      ',(symbol-append 'f- field)
+						      val)))))
+		      field-ids
+		      field-getters
+		      field-setters))))
+       (else
+	(error "define-struct expand"
+	       "Illegal 'define-struct' form"
+	       x)))))
 
 (install-expander! 'delay
 		   (lambda (x e macros-ht)
-		      (e `(,(runtime-ref 'make-promise)
-			   (lambda () ,@(cdr x))) e macros-ht)))
+		      (match-case x
+			 ((?- ?exp)
+			  (e `(,(runtime-ref 'make-promise)
+			       (lambda () ,exp)) e macros-ht))
+			 (else
+			  (error "delay expand"
+				 "Illegal 'delay' form"
+				 x)))))
 
 (install-expander!
  'bind-exit

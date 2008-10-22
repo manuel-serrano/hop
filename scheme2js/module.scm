@@ -34,11 +34,42 @@
 ;; - merge-last: but module-clauses after the original header (or ...).
 ;;
 ;; Note: additional headers can (currently) only be used through the
-;; library. The main-executable has no means to add them (as of 2007/11/02).
+;; library. The main-executable has no means to add them (as of 2008/10/22).
+;; Note2: This module deals with user-code. -> we need to do many checks.
 
+;; does not verify it is a well-formed module-clause.
+(define (module-clause? e)
+   (and (pair? e)
+	(eq? (car e) 'module)))
+
+;; checks that module-clause is well formed.
+(define (check-module-clause clause)
+   (unless (and (list? clause)
+		(pair? clause)
+		(eq? (car clause) 'module)
+		(pair? (cdr clause))
+		(symbol? (cadr clause))
+		(every (lambda (sub-term)
+			  (and (pair? sub-term)
+			       (list? sub-term)))
+		       (cddr clause)))
+      (error "scheme2js-module"
+	     "bad module-clause"
+	     clause)))
+
+;; verify that module-header and file-name are the same.
+(define (check-module-name module-name file-name)
+   (when (or (not (symbol? module-name))
+	     (and (not (string=? file-name "-"))
+		  (not (eq? (string->symbol (prefix (basename file-name)))
+			    module-name))))
+      (error "module"
+	     "Module-name and filename are not equal."
+	     (prefix (basename file-name)))))
+   
 (define (create-module-from-file file override-headers reader)
-   (define (read-file-exprs in-port first-expr)
-      (let loop ((rev-top-level (if (and first-expr
+   (define (read-file-exprs in-port first-expr use-first-expr?)
+      (let loop ((rev-top-level (if (and use-first-expr?
 					 (not (eof-object? first-expr)))
 				    (list first-expr)
 				    '())))
@@ -54,13 +85,11 @@
       (if (not in-port)
 	  (error "read-file" "couldn't open: " file))
       (let* ((sexp (reader in-port #t))
-	     (header-sexp? (and (not (eof-object? sexp))
-				(pair? sexp)
-				(eq? (car sexp) 'module)))
+	     (header-sexp? (module-clause? sexp))
 	     (header (and header-sexp? sexp))
-	     (top-level (read-file-exprs in-port (if header-sexp?
-						     #f
-						     sexp)))
+	     (top-level (read-file-exprs in-port
+					 sexp
+					 (not header-sexp?)))
 	     (file-path (if (string=? "-" file) "." (dirname file)))
 	     (m (instantiate::Compilation-Unit
 		   (name #f)
@@ -68,6 +97,7 @@
 		   (macros '())
 		   (imports '())
 		   (exports '()))))
+	 (when header-sexp? (check-module-clause header))
 	 (widen!::WIP-Unit m
 	    (header header))
 
@@ -76,16 +106,9 @@
 	 (prepare-module! m override-headers file-path reader)
 
 	 (let ((module-name (WIP-Unit-name m)))
-	    (when (and (not (config 'infotron)) ;; exclude infotrons from test
-		       file
-		       module-name
-		       (not (string=? file "-"))
-		       (or (not (symbol? module-name))
-			   (not (eq? (string->symbol (prefix (basename file)))
-				     module-name))))
-	       (error "module"
-		      "Module-name and filename are not equal."
-		      (prefix (basename file)))))
+	    (unless (or (config 'infotron)
+			(not header-sexp?))
+	       (check-module-name module-name file)))
 
 	 (shrink! m)
 	 m)))
@@ -106,6 +129,7 @@
       (shrink! m)
       m))
 
+;; really inefficient, but the module-headers should not be too big.
 (define (extract-entries header type)
    (append-map cdr
 	       (filter (lambda (entry)
@@ -131,7 +155,47 @@
 	 (module->infotron! m))
       (when module-postprocessor
 	 (module-postprocessor m))))
-   
+
+(define (check-override-headers o-headers)
+   (define valid-kinds '(replace provide merge-first merge-last))
+
+   (unless (list? o-headers)
+      (error "scheme2js-module"
+	     "Override headers must be a list"
+	     o-headers))
+
+   (let loop ((o-headers o-headers)
+	      (already-a-replace? #f)
+	      (found-provides? #f))
+      (cond
+	 ((null? o-headers)
+	  (when (and already-a-replace?
+		     found-provides?)
+	     (warning "replace-header is always shadowing provide-header")))
+	 ((not (pair? (car o-headers)))
+	  (error "scheme2js-module"
+		 "override-header not a pair" (car o-headers)))
+	 ((not (list? (caar o-headers)))
+	  (error "scheme2js-module"
+		 "override-header does not contain list"
+		 (car o-headers)))
+	 ((not (and (symbol? (cdar o-headers))
+		    (memq (cdar o-headers) valid-kinds)))
+	  (error "scheme2js-module"
+		 (string-append "cdr of override-header must be one of "
+				"replace, provide, merge-first, merge-last")
+		 (car o-headers)))
+	 ((and (eq? (cdar o-headers) 'replace)
+	       already-a-replace?)
+	  (error "scheme2js-module"
+		 "only one replace override header allowed"
+		 (car o-headers)))
+	 ((eq? (cdar o-headers) 'replace)
+	  (loop (cdr o-headers) #t found-provides?))
+	 ((eq? (cdar o-headers) 'provide)
+	  (loop (cdr o-headers) already-a-replace? #t))
+	 (else (loop (cdr o-headers) already-a-replace? found-provides?)))))
+
 (define (merge-headers! m::WIP-Unit override-headers)
    (with-access::WIP-Unit m (header)
       (cond
@@ -141,6 +205,7 @@
 	 ((null? override-headers)
 	  'do-nothing)
 	 (else
+	  (check-override-headers override-headers)
 	  (let ((replaces (filter-map (lambda (p)
 					 (and (eq? (cdr p) 'replace)
 					      (car p)))
@@ -157,13 +222,6 @@
 					    (and (eq? (cdr p) 'merge-last)
 						 (car p)))
 					 override-headers)))
-	     (if (> (length replaces) 1)
-		 (error "module-system"
-			"only one replace-module-header allowed"
-			(length replaces)))
-	     (if (and (not (null? replaces))
-		      (not (null? provides)))
-		 (warning "replace-header is always shadowing provide-header"))
 	     (set! header `(module ,(if header
 					(cadr header)
 					#f)
@@ -184,8 +242,7 @@
 	  (set! name #f))
 	 ((not (and (pair? header)
 		    (pair? (cdr header))
-		    (or (symbol? (cadr header))
-			(not (cadr header))))) ;; we allow #f
+		    (symbol? (cadr header))))
 	  (error "module-system"
 		 "bad module-clause. could not get name"
 		 header))
@@ -194,6 +251,10 @@
 
 (define (read-includes! m::WIP-Unit include-paths reader)
    (define (read-file f)
+      (unless (string? f)
+	 (error "scheme2js-module"
+		"include-parameter must be a string"
+		f))
       (let ((file (find-file/path f include-paths)))
 	 (unless file
 	    (error "scheme2js module"
@@ -214,8 +275,16 @@
 			top-level)))))
 
 (define (read-imports! m::WIP-Unit include-paths reader bigloo-modules?)
+   (define (get-import-list header)
+      (let ((import-list (extract-entries header 'import)))
+	 (unless (every symbol? import-list)
+	    (error "scheme2js-module"
+		   "only symbols are allowed in import-list"
+		   import-list))
+	 import-list))
+
    (with-access::WIP-Unit m (header imports macros)
-      (let loop ((imported-modules (extract-entries header 'import))
+      (let loop ((imported-modules (get-import-list header))
 		 (new-macros macros)
 		 (new-imports imports))
 	 (if (null? imported-modules)
@@ -239,17 +308,8 @@
 		    (let ((ip (open-input-file module-file)))
 		       (unwind-protect
 			  (let ((module-clause (reader ip #t)))
-			     (unless (and
-				      (pair? module-clause)
-				      (eq? (car module-clause) 'module)
-				      (pair? (cdr module-clause))
-				      (or (not (cadr module-clause)) ;; we allow #f
-					  (and (symbol? (cadr module-clause))
-					       (eq? (cadr module-clause)
-						    imported-module))))
-				(error "module"
-				       "Module-name and filename are not equal"
-				       module-file))
+			     (check-module-clause module-clause)
+			     (check-module-name (cadr module-clause) module-file)
 			     (let ((im (instantiate::Compilation-Unit ;; import-module
 					  (name imported-module)
 					  (top-level #f)
@@ -289,6 +349,19 @@
        (normalize-bigloo-exports! m get-macros? reader input-p)
        (normalize-scheme2js-exports! m)))
 
+(define (check-pragma pragma)
+   (unless (and (list? pragma)
+		(pair? pragma)
+		(symbol? (car pragma))
+		(every? (lambda (p)
+			   (list? p)
+			   (pair? p)
+			   (symbol? (car p)))
+			(cdr pragma)))
+      (error "scheme2js-module"
+	     "invalid pragma clause"
+	     pragma)))
+
 ;; the input-port is only used when macros are exported and the module has not
 ;; yet read its top-level.
 (define (normalize-bigloo-exports! m get-macros? reader input-p)
@@ -302,6 +375,10 @@
 	     (values v #f))))
 	  
    (define (normalize-var v pragmas)
+      (unless (symbol? v)
+	 (error "scheme2js-module"
+		"bad export-clause. expected symbol"
+		v))
       (receive (v type)
 	 (untype v)
 	 (let ((pragma-info (assq v pragmas)))
@@ -311,6 +388,7 @@
       (receive (v type)
 	 (untype (car f)) ;; the fun-name
 	 (let ((pragma-info (assq v pragmas)))
+	    (when pragma-info (check-pragma pragma-info))
 	    (cond
 	       ((and (not pragma-info)
 		     type)
@@ -362,6 +440,7 @@
 			 (eq? (car e) 'define-macro)
 			 (pair? (cdr e))
 			 (pair? (cadr e))
+			 (symbol? (car (cadr e)))
 			 (memq (car (cadr e)) new-macros))
 		    (loop (filter (lambda (macro)
 				     (not (eq? macro (car (cadr e)))))
@@ -399,9 +478,39 @@
 				   exports))
 		       (loop (cdr entries) new-macros)))))))))
 
+(define (check-scheme2js-export-clause ex)
+   (cond
+      ((symbol? ex) 'ok)
+      ((and (pair? ex)
+	    (list? ex)
+	    (symbol? (car ex))
+	    (every? (lambda (p)
+		       (and (pair? p)
+			    (list? p)
+			    (symbol? (car p))))
+		    (cdr ex)))
+       'ok)
+      (else
+       (error "scheme2js-module"
+	      "bad export-clause"
+	      ex))))
+
+(define (check-scheme2js-export-macro-clause ex)
+   (unless (and (pair? ex)
+		(eq? (car ex) 'define-macro)
+		(pair? (cdr ex))
+		(pair? (cadr ex))
+		(symbol? (car (cadr ex))))
+      (error "scheme2js-module"
+	     "bad macro-export-clause"
+	     ex)))
+
 (define (normalize-scheme2js-exports! m::WIP-Unit)
    (with-access::WIP-Unit m (header exports macros)
       (set! exports (append exports (map (lambda (ex)
+					    (check-scheme2js-export-clause ex)
 					    (create-Export-Desc ex #f))
 					 (extract-entries header 'export))))
-      (set! macros (append macros (extract-entries header 'export-macros)))))
+      (let ((exported-macros (extract-entries header 'export-macros)))
+	 (for-each check-scheme2js-export-clause exported-macros)
+	 (set! macros (append macros exported-macros)))))
