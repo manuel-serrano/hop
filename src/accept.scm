@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Fri Oct 10 20:50:44 2008 (serrano)                */
+;*    Last change :  Sun Oct 19 17:49:58 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -150,7 +150,11 @@
 	    (let* ((sock (socket-accept serv
 					:inbuf (hopthread-inbuf thread)
 					:outbuf (hopthread-outbuf thread)))
-		   (id  (get-next-id)))
+		   (id  (get-next-id))
+		   (fbuf (hopthread-flushbuf thread)))
+	       ;; the flush buffer is used for hop request but since we don't
+	       ;; know, we allow set it
+	       (output-port-flush-buffer-set! (socket-output sock) fbuf)
 	       (with-access::pool-scheduler scd (naccept)
 		  (mutex-lock! (pool-scheduler-mutex scd))
 		  (set! naccept (-fx naccept 1))

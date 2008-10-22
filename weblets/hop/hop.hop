@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/hop/hop.hop               */
+;*    serrano/prgm/project/hop/1.10.x/weblets/hop/hop.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Fri Jun 20 14:35:26 2008 (serrano)                */
+;*    Last change :  Tue Oct 21 15:40:42 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -23,8 +23,11 @@
 	 (ct (make-hashtable 20)))
       (hashtable-put! t "hop" #t)
       (hashtable-put! t "home" #t)
-      (for-each (lambda (w) (hashtable-put! t w #t)) (hop-builtin-weblets))
-      (set! *weblets-table* t)
+      ;; builtin weblets
+      (for-each (lambda (w)
+		   (hashtable-put! t w #t))
+		(hop-builtin-weblets))
+      ;; user defined weblets
       (for-each (lambda (a)
 		   (let ((n (cadr (assq 'name a))))
 		      (unless (hashtable-get t n)
@@ -67,11 +70,6 @@
 (define (<WEBLETS> title tds)
    (list (<DIV> :class "title" title)
 	 (<DIV> :class "weblets" tds)))
-
-;*---------------------------------------------------------------------*/
-;*    *weblets-table* ...                                              */
-;*---------------------------------------------------------------------*/
-(define *weblets-table* #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLET> ...                                                     */
@@ -142,10 +140,14 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-additional-row ws)
    (map! (lambda (a)
-	    (let ((n (cadr (assq 'name a)))
-		  (w (cadr (assq 'weblet a)))
-		  (d (let ((c (assq 'sdescr a)))
-			(when (pair? c) (cadr c)))))
+	    (let* ((n (cadr (assq 'name a)))
+		   (w (cadr (assq 'weblet a)))
+		   (d (let ((c (assq 'sdescr a)))
+			 (if (pair? c)
+			     (if (>= (bigloo-debug) 1)
+				 (format "~a - ~a" (cadr c) w)
+				 (cadr c))
+			     w))))
 	       (<WEBLET> (dirname (dirname w)) :hz n :title d)))
 	 (sort ws (lambda (a b)
 		     (let ((namea (cadr (assq 'name a)))

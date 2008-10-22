@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Fri Oct 10 20:48:55 2008 (serrano)                */
+;*    Last change :  Sun Oct 19 17:48:58 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
@@ -33,7 +33,8 @@
 		  (error-args::vector read-only (default (make-vector 3)))
 		  (error-args-length::int (default 0))
 		  (inbuf::bstring (default (make-string 512)))
-		  (outbuf::bstring (default (make-string 8192))))))
+		  (outbuf::bstring (default (make-string 8192)))
+		  (flushbuf::bstring (default (make-string 16))))))
       (else
        (export (class hopthread::thread
 		  (proc::procedure (default (lambda (t) #f)))
@@ -47,6 +48,7 @@
 		  (error-args-length::int (default 0))
 		  (inbuf::bstring (default (make-string 512)))
 		  (outbuf::bstring (default (make-string 8192)))
+		  (flushbuf::bstring (default (make-string 8)))
 		  (body::procedure read-only)))))
    
    (export (macro debug-thread-info-set! thread info)

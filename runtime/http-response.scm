@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Oct 15 12:35:49 2008 (serrano)                */
+;*    Last change :  Sun Oct 19 18:13:32 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -137,8 +137,32 @@
 ;*---------------------------------------------------------------------*/
 ;*    chunked-flush-hook ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (chunked-flush-hook size)
-   (string-append "\r\n" (integer->string size 16) "\r\n"))
+(define (chunked-flush-hook port size)
+   (let ((buf (output-port-flush-buffer port)))
+      (if (string? buf)
+	  (let ((letter "0123456789abcdef"))
+	     (string-set! buf 0 #\return)
+	     (string-set! buf 1 #\newline)
+	     (let loop ((size size)
+			(i 2))
+		(if (>fx size 0)
+		    (let ((d (string-ref letter (remainderfx size 16))))
+		       (string-set! buf i d)
+		       (loop (/fx size 16) (+fx i 1)))
+		    ;; swap the string
+		    (let loop ((j 2)
+			       (k (-fx i 1)))
+		       (if (>=fx j k)
+			   (begin
+			      (string-set! buf i #\return)
+			      (string-set! buf (+fx i 1) #\newline)
+			      (+fx i 2))
+			   (let ((c0 (string-ref buf j))
+				 (c1 (string-ref buf k)))
+			      (string-set! buf j c1)
+			      (string-set! buf k c0)
+			      (loop (+fx j 1) (-fx k 1))))))))
+	  (string-append "\r\n" (integer->string size 16) "\r\n"))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-hop ...                            */

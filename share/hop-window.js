@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-window.js               */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-window.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Thu Jun 26 10:03:26 2008 (serrano)                */
+/*    Last change :  Mon Oct 20 16:37:57 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -520,7 +520,7 @@ function hop_window_open() {
    function native_window_open() {
       if( typeof src == "function" ) src = src();
 
-      if( (src instanceof String) || (typeof src == "string" ) ) {
+      if( (src instanceof String) || (typeof src === "string" ) ) {
 	 if( width ) prop += ",width=" + unpx( width );
 	 if( height ) prop += ",height=" + unpx( height );
 	 if( left != undefined ) prop += ",screenX=" + left + ",left=" + left;
@@ -541,7 +541,7 @@ function hop_window_open() {
 	 return win;
       } else {
 	 if( src ) {
-	    throw new Error( "window-open: illegal :src" + src );
+	    throw new Error( "window-open: illegal :src " + src );
 	 } else {
 	    throw new Error( "window-open: no :src specified" );
 	 }
