@@ -59,8 +59,12 @@
 (define-service (home/demos/repl/compile s)
    (with-handler
       (lambda (e) #f)
-      (if (string-index s #\$)
-	  "For the sake of security, $-expressions are not accepted"
+      (cond
+	 ((string-index s #\$)
+	  "For the sake of security, $-expressions are not accepted")
+	 ((string-contains s "define-macro")
+	  "For the sake of security, define-macro are not accepted")
+	 (else
 	  (with-input-from-string s
 	     (lambda ()
 		(let ((e (hop-read (current-input-port))))
@@ -68,4 +72,4 @@
 		      (lambda (e)
 			 (with-error-to-string
 			    (lambda () (error-notify e))))
-		      (cons (compile-hop-client e) s))))))))
+		      (cons (compile-hop-client e) s)))))))))

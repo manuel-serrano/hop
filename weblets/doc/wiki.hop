@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/doc/wiki.hop             */
+;*    serrano/prgm/project/hop.old/1.10.x/weblets/doc/wiki.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Wed Sep 24 08:28:22 2008 (serrano)                */
+;*    Last change :  Wed Oct 22 11:39:08 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -286,7 +286,7 @@
 		       (m2 (eval-module)))
 		    (unwind-protect
 		       (begin
-			  (eval-module-set! m1)
+			  (when m1 (eval-module-set! m1))
 			  (wiki-input-port->hop iport :syntax syntax))
 		       (begin
 			  (eval-module-set! m2)
