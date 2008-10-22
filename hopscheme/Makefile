@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/hopscheme/Makefile                */
+#*    serrano/prgm/project/hop/1.10.x/hopscheme/Makefile               */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Wed Dec 26 10:30:41 2007 (serrano)                */
-#*    Copyright   :  2006-07 Manuel Serrano                            */
+#*    Last change :  Wed Oct 22 19:21:53 2008 (serrano)                */
+#*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
 #*=====================================================================*/
@@ -75,6 +75,7 @@ hop-runtime.sch: $(EXPORTER) $(HOP_RUNTIME_JS)
 #*    additional dependency                                            */
 #*---------------------------------------------------------------------*/
 o/hop-exports.o: hop-runtime.sch
+o/class_s/bigloo/hopscheme/hop-exports.class: hop-runtime.sch
 
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
