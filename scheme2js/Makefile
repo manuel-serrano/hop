@@ -199,7 +199,7 @@ o/walk.o classes/mimosa/inria/scheme2js/walk.class: mco/export.mco       \
 o/expand.o classes/mimosa/inria/scheme2js/expand.class: mco/tools.mco    \
       mco/verbose.mco 
 o/mapping1.o classes/mimosa/inria/scheme2js/mapping1.class: mapping.sch  \
-      mco/export.mco 
+      mco/tools.mco mco/export.mco 
 o/symbol-table.o classes/mimosa/inria/scheme2js/symbol-table.class:      \
       mco/tools.mco 
 o/encapsulation.o classes/mimosa/inria/scheme2js/encapsulation.class:    \
@@ -234,7 +234,7 @@ o/letrec-expansion.o classes/mimosa/inria/scheme2js/letrec-expansion.class: \
 o/runtime-expander.o classes/mimosa/inria/scheme2js/runtime-expander.class: \
       mco/pobject-conv.mco mco/verbose.mco mco/config.mco 
 o/mapping2.o classes/mimosa/inria/scheme2js/mapping2.class: mapping.sch  \
-      mco/export.mco 
+      mco/tools.mco mco/export.mco 
 o/out.o classes/mimosa/inria/scheme2js/out.class:                        \
       mco/template-display.mco mco/compile-optimized-set.mco             \
       mco/compile-optimized-boolify.mco mco/compile-optimized-call.mco   \
@@ -308,7 +308,7 @@ o/free-vars.o classes/mimosa/inria/scheme2js/free-vars.class:            \
 o/fun-size.o classes/mimosa/inria/scheme2js/fun-size.class:              \
       mco/verbose.mco mco/walk.mco mco/export.mco mco/nodes.mco 
 o/mapping1.o classes/mimosa/inria/scheme2js/mapping1.class: mapping.sch  \
-      mco/export.mco 
+      mco/tools.mco mco/export.mco 
 o/node-elimination.o classes/mimosa/inria/scheme2js/node-elimination.class: \
       mco/mark-statements.mco mco/verbose.mco mco/walk.mco               \
       mco/export.mco mco/nodes.mco 
@@ -423,7 +423,7 @@ o/propagation.o classes/mimosa/inria/scheme2js/propagation.class:        \
       mco/free-vars.mco mco/var-ref-util.mco mco/walk.mco mco/export.mco \
       mco/nodes.mco mco/tools.mco mco/config.mco 
 o/mapping2.o classes/mimosa/inria/scheme2js/mapping2.class: mapping.sch  \
-      mco/export.mco 
+      mco/tools.mco mco/export.mco 
 o/mark-statements.o classes/mimosa/inria/scheme2js/mark-statements.class: \
       mco/verbose.mco mco/config.mco mco/walk.mco mco/export.mco         \
       mco/nodes.mco 
