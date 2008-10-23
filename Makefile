@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Oct 13 15:33:24 2008 (serrano)                */
+#*    Last change :  Thu Oct 23 09:33:52 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -165,6 +165,9 @@ devclean:
 
 distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig
+	/bin/rm -f etc/hop.man
+	/bin/rm -f etc/hopsh.man
+	/bin/rm -f etc/hopreplay.man
 	/bin/rm -f lib/hop.init
 	/bin/rm -f lib/scheme2js.init
 	/bin/rm -f lib/hopscheme.init

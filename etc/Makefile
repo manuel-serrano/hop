@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/etc/Makefile                      */
+#*    serrano/prgm/project/hop/1.10.x/etc/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Apr 18 11:41:16 2008 (serrano)                */
+#*    Last change :  Thu Oct 23 09:42:52 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -29,8 +29,15 @@ install:
 	chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
 	cp hoprc.hop $(DESTDIR)$(HOPETCDIR)/hoprc.hop
 	chmod $(BMASK) $(DESTDIR)$(HOPETCDIR)/hoprc.hop
+	for p in hop hopsh hopreplay; do \
+          cp $$p.man $(DESTDIR)$(HOPMANDIR)/$$p.1 && \
+          chmod $(BMASK) $(DESTDIR)$(HOPMANDIR)/$$p.1; \
+        done
 
 uninstall:
 	$(RM) -f $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
 	$(RM) -f $(DESTDIR)$(HOPETCDIR)/hoprc.hop
+	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hop.1
+	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopsh.1
+	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopreplay.1
 

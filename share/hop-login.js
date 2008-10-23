@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-login.js                */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-login.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:20:17 2008                          */
-/*    Last change :  Thu Jun 12 14:22:22 2008 (serrano)                */
+/*    Last change :  Thu Oct 23 08:15:52 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop login panel                                                  */
@@ -121,6 +121,7 @@ function hop_login_panel( args ) {
 
    ok = document.getElementById( 'hop_login_login_' + id );
    cancel = document.getElementById( 'hop_login_cancel_' + id );
+   passwd = document.getElementById( "hop_login_password_" + id );
 
    if( message ) {
       var msg = document.getElementById( 'hop_login_message_' + id );
@@ -138,21 +139,27 @@ function hop_login_panel( args ) {
 	 l.innerHTML = logo;
       }
    }
-      
-   hop_add_event_listener( ok, "click", function( e ) {
-	 var eluser = document.getElementById( "hop_login_user_" + id );
-	 e.user = eluser ? eluser.value : false;
-	 e.password = document.getElementById( "hop_login_password_" + id ).value;
-	 node_style_set( login, "display", "none" );
-	 document.body.removeChild( login );
+
+   var loginlistener = function( e ) {
+      var eluser = document.getElementById( "hop_login_user_" + id );
+      e.user = eluser ? eluser.value : false;
+      e.password = passwd.value;
+      node_style_set( login, "display", "none" );
+      document.body.removeChild( login );
 	 
-	 return onlogin( e );
-      } );
+      return onlogin( e );
+   };
+      
+   hop_add_event_listener( ok, "click", loginlistener );
    
+   hop_add_event_listener( passwd, "keyup", function( e ) {
+	 if( (e.which == 10) || (e.which == 13) ) loginlistener( e );
+      } );
+	 
    hop_add_event_listener( cancel, "click", function( e ) {
 	 var eluser = document.getElementById( "hop_login_user_" + id );
 	 e.user = eluser ? eluser.value : false;
-	 e.password = document.getElementById( "hop_login_password_" + id ).value;
+	 e.password = passwd.value;
 	 if( oncancel ) oncancel( e );
 	 node_style_set( login, "display", "none" );
 	 document.body.removeChild( login );

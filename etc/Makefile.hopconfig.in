@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/1.10.x/etc/Makefile.hopconfig.in        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Wed Sep 10 08:39:28 2008 (serrano)                */
+#*    Last change :  Thu Oct 23 09:43:09 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -84,6 +84,7 @@ HOPETCDIR	= @ETCDIR@
 HOPBINDIR	= @BINDIR@
 HOPLIBDIR	= @LIBDIR@
 HOPSHAREDIR	= @SHAREDIR@
+HOPMANDIR	= @MANDIR@
 HOPWEBLETSDIR	= @WEBLETSDIR@
 HOPCONTRIBSDIR	= @CONTRIBSDIR@
 
