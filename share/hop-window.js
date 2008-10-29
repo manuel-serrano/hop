@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Wed Oct 29 07:43:37 2008 (serrano)                */
+/*    Last change :  Wed Oct 29 13:18:45 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -229,7 +229,7 @@ function hop_iwindow_drag( event, win ) {
       node_style_set( win.el_win, "background", obg );
 
       /* user event */
-      if( win.ondrag ) win.ondrag( evt );
+      if( win.onmove ) win.onmove( evt );
    }
    
    hop_add_event_listener( document, "mousemove", mousemove );
@@ -357,8 +357,8 @@ function hop_iwindow_add_event_listener( event, proc, capture ) {
    if( event === "close" )
       return this.onclose = proc;
 
-   if( event === "drag" )
-      return this.ondrag = proc;
+   if( event === "move" )
+      return this.onmove = proc;
 
    if( event === "raise" )
       return this.onraise = proc;
@@ -793,7 +793,7 @@ function hop_is_iwindow( o ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window?)) */
 function hop_is_window( o ) {
-   return hop_is_iwindow( o );
+   return hop_is_iwindow( o ) || (win instanceof Window);
 }
 
 /*---------------------------------------------------------------------*/
@@ -801,7 +801,13 @@ function hop_is_window( o ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-x)) */
 function hop_window_x( win ) {
-   return win.offsetLeft;
+   if( win instanceof Window ) {
+      if( "left" in win ) return win.left;
+      if( "screenX" in win ) return win.screenX;
+      return 0;
+   } else {
+      return win.offsetLeft;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -809,10 +815,15 @@ function hop_window_x( win ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-x-set!)) */
 function hop_window_x_set( win, x ) {
-   if( typeof x === "number" )
-      node_style_set( win, "left", (x + "px") );
-   else
-      node_style_set( win, "left", x );
+   if( win instanceof Window ) {
+      if( "top" in win ) return win.moveTo( x, win.top );
+      if( "screenY" in win ) return win.moveTo( x, win.screenY );
+   } else {
+      if( typeof x === "number" )
+	 node_style_set( win, "left", (x + "px") );
+      else
+	 node_style_set( win, "left", x );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -820,7 +831,13 @@ function hop_window_x_set( win, x ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-y)) */
 function hop_window_y( win ) {
-   return win.offsetTop;
+   if( win instanceof Window ) {
+      if( "top" in win ) return win.top;
+      if( "screenY" in win ) return win.screenY;
+      return 0;
+   } else {
+      return win.offsetTop;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -828,10 +845,15 @@ function hop_window_y( win ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-y-set!)) */
 function hop_window_y_set( win, y ) {
-   if( typeof x === "number" )
-      node_style_set( win, "top", (y + "px") );
-   else
-      node_style_set( win, "top", y );
+   if( win instanceof Window ) {
+      if( "left" in win ) return win.moveTo( win.left, y );
+      if( "screenX" in win ) return win.moveTo( win.screenX, y );
+   } else {
+      if( typeof x === "number" )
+	 node_style_set( win, "top", (y + "px") );
+      else
+	 node_style_set( win, "top", y );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -839,7 +861,13 @@ function hop_window_y_set( win, y ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-width)) */
 function hop_window_width( win ) {
-   return node_style_get( win.el_win, "width" );
+   if( win instanceof Window ) {
+      if( "outerWidth" in win ) return win.outerWidth;
+      if( "innerWidth" in win ) return win.innerWidth;
+      return 0;
+   } else {
+      return node_style_get( win.el_win, "width" );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -847,10 +875,16 @@ function hop_window_width( win ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-width-set!)) */
 function hop_window_width_set( win, width ) {
-   if( typeof width === "number" ) {
-      return node_style_set( win.el_win, "width", (width + "px") );
+   if( win instanceof Window ) {
+      if( "outerHeight" in win ) return win.resizeTo( width, win.outerHeight );
+      if( "innerHeight" in win ) return win.resizeTo( width, win.innerHeight );
+      return 0;
    } else {
-      return node_style_set( win.el_win, "width", width );
+      if( typeof width === "number" ) {
+	 return node_style_set( win.el_win, "width", (width + "px") );
+      } else {
+	 return node_style_set( win.el_win, "width", width );
+      }
    }
 }
 
@@ -859,7 +893,13 @@ function hop_window_width_set( win, width ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-height)) */
 function hop_window_height( win ) {
-   return node_style_get( win.el_win, "height" );
+   if( win instanceof Window ) {
+      if( "outerHeight" in win ) return win.outerHeight;
+      if( "innerHeight" in win ) return win.innerHeight;
+      return 0;
+   } else {
+      return node_style_get( win.el_win, "height" );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -867,10 +907,16 @@ function hop_window_height( win ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-height-set!)) */
 function hop_window_height_set( win, height ) {
-   if( typeof height === "number" ) {
-      return node_style_set( win.el_win, "height", (height + "px") );
+   if( win instanceof Window ) {
+      if( "outerHeight" in win ) return win.resizeTo( win.outerWidth, height );
+      if( "innerHeight" in win ) return win.resizeTo( win.innerWidth, height ); 
+      return 0;
    } else {
-      return node_style_set( win.el_win, "height", height );
+      if( typeof height === "number" ) {
+	 return node_style_set( win.el_win, "height", (height + "px") );
+      } else {
+	 return node_style_set( win.el_win, "height", height );
+      }
    }
 }
 
@@ -879,7 +925,11 @@ function hop_window_height_set( win, height ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-title)) */
 function hop_window_title( win ) {
-   return win.el_title.innerHTML;
+   if( win instanceof Window ) {
+      return win.name;
+   } else {
+      return win.el_title.innerHTML;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -887,7 +937,14 @@ function hop_window_title( win ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export window-title-set!)) */
 function hop_window_title_set( win, title ) {
-   return hop_innerHTML_set( win.el_title, title );
+   if( win instanceof Window ) {
+      try {
+	 return win.name = title;
+      } catch( _ ) {
+      }
+   } else {
+      return hop_innerHTML_set( win.el_title, title );
+   }
 }
 
 /*---------------------------------------------------------------------*/

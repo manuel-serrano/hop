@@ -17,6 +17,16 @@ to display partial documents.
   (window-resize win width height)
   (window-iconify win)
   (window-maximize win)
+  (window-x win)
+  (window-x-set! win int)
+  (window-y win)
+  (window-y-set! win int)
+  (window-width win)
+  (window-width-set! win int)
+  (window-height win)
+  (window-height-set! win int)
+  (window-title win)
+  (window-title-set! win title)
 
 === Requirements ===
 
@@ -86,6 +96,18 @@ behaviors:
  window is resized.
   * ++resizable++: a boolean that controls whether a window can be resized
  using GUI events.
+
+The inner windows react to the following events:
+
+    * ++iconify++: an event raised when an inner window is about to be iconified.
+    * ++maximize++: an event raised when an inner window is about to be maximized.
+    * ++close++: an event raised when an inner window is about to be closed.
+    * ++raise++: an event raised when an inner window is about to be raised.
+    * ++resize++: an event raised when an inner window has been resized.
+    * ++drag++: an event raised when an inner window has been dragged.
+
+If the listener associated to ++iconify++, ++maximize++, ++close++,
+and ++raise++ prevent propagation, the default action is not executed.
 
 
 ==== Native Windows ====
@@ -170,6 +192,54 @@ This client-side procedure resizes a //window//.
 ~~
 This client-side procedure maximizes a //window//.
 
+</procedure>
+<client>
+
+=== ++(window-x win)++ ===
+=== ++(window-x-set! win x)++ ===
+=== ++(window-y win)++ ===
+=== ++(window-y-set! win y)++ ===
+=== ++(window-width win)++ ===
+=== ++(window-width-set! win width)++ ===
+=== ++(window-height win)++ ===
+=== ++(window-height-set! win height)++ ===
+<procedure> window-x
+<procedure> window-x-set!
+<procedure> window-y
+<procedure> window-y-set!
+<procedure> window-width
+<procedure> window-width-set!
+<procedure> window-height
+<procedure> window-height-set!
+<arguments>
+^  arguments  ^   type    ^   description                                   ^
+| win         |   obj     | A window identifier or a window.                |
+</arguments>
+
+The arguments ++x++, ++y++, ++width++, and ++height++ are dimensions.
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+</procedure>
+
+=== ++(window-title win)++ ===
+=== ++(window-title-set! win title)++ ===
+<procedure> window-title
+<procedure> window-title-set!
+
+<arguments>
+^  arguments  ^   type    ^   description                                   ^
+| win         |   obj     | A window identifier or a window.                |
+</arguments>
+
+~~
+This client-side gets (respec. sets) the //window// title.
+
+</procedure>
 </procedure>
 <client>
 
