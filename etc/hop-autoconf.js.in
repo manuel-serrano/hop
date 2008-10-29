@@ -662,25 +662,25 @@ switch( hop_config.mouse_left_button ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_window_width/height ...                                      */
+/*    hop_current_window_width/height ...                              */
 /*---------------------------------------------------------------------*/
 /*** META ((export current-window-width)) */
-var hop_window_width = undefined;
+var hop_current_window_width = undefined;
 /*** META ((export current-window-height)) */
-var hop_window_height = undefined;
+var hop_current_window_height = undefined;
 
 if( isNaN( window.innerWidth ) ) {
-   hop_window_width = function hop_window_width() {
+   hop_current_window_width = function hop_current_window_width() {
       return document.documentElement.clientWidth;
    }
-   hop_window_height = function hop_window_height() {
+   hop_current_window_height = function hop_current_window_height() {
       return document.documentElement.clientHeight;
    }
 } else {
-   hop_window_width = function hop_window_width() {
+   hop_current_window_width = function hop_current_window_width() {
       return window.innerWidth;
    }
-   hop_window_height = function hop_window_height() {
+   hop_current_window_height = function hop_current_window_height() {
       return window.innerHeight;
    }
 }

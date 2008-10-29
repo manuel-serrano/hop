@@ -15,7 +15,7 @@
 	   (@HZ@-preferences-edit . obj)
 	   (@HZ@-preferences-save file)))
 
-(define (@HZ@-name)
+(define (@HZ@-version)
    "@@VERSION@@")
 (define (@HZ@-date)
    "@@DATE@@")

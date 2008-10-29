@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Sep 26 13:33:38 2008 (serrano)                */
+/*    Last change :  Tue Oct 28 09:30:42 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -14,23 +14,23 @@
 /*---------------------------------------------------------------------*/
 /*** META ((export add-event-listener!)) */
 function hop_add_event_listener( obj, event, proc, capture ) {
-   if( event == "location" )
+   if( event === "location" )
       return hop_add_active_location_listener( obj, proc );
 
-   if( event == "server" )
+   if( event === "server" )
       return hop_add_server_listener( obj, proc, capture );
 
-   if( event == "serverready" )
+   if( event === "serverready" )
       return hop_add_serverready_listener( obj, proc );
 
-   if( event == "serverclose" )
+   if( event === "serverclose" )
       return hop_add_serverclose_listener( obj, proc );
 
-   if( event == "timeout" )
+   if( event === "timeout" )
       return hop_add_timeout_listener( obj, proc );
 
-   if( (obj.hop_add_event_listener != undefined) &&
-      (obj.hop_add_event_listener != hop_add_event_listener) )
+   if( ("hop_add_event_listener" in obj) &&
+       (obj.hop_add_event_listener != hop_add_event_listener) )
       return obj.hop_add_event_listener( event, proc, capture );
 
    return hop_add_native_event_listener( obj, event, proc, capture );
@@ -41,19 +41,19 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export remove-event-listener!)) */
 function hop_remove_event_listener( obj, event, proc, capture ) {
-   if( event == "location" )
+   if( event === "location" )
       return hop_remove_active_location_listener( obj, proc );
 
-   if( event == "server" )
+   if( event === "server" )
       return hop_remove_server_listener( obj, proc );
 
-   if( event == "serverready" )
+   if( event === "serverready" )
       return hop_remove_serverready_listener( obj, proc );
 
-   if( event == "serverclose" )
+   if( event === "serverclose" )
       return hop_remove_serverclose_listener( obj, proc );
 
-   if( event == "timeout" )
+   if( event === "timeout" )
       return hop_remove_timeout_listener( proc );
 
    if( (obj.hop_remove_event_listener != undefined) &&
@@ -461,7 +461,7 @@ function hop_start_servevt_proxy() {
 /*---------------------------------------------------------------------*/
 function hop_trigger_servevt( id, text, value, json ) {
    try {
-      var v = (json ? eval( value, text ) : value);
+      var v = (json ? eval( value ) : value);
       var evt = new HopServerEvent( id, text, v );
       var p2 = hop_servevt_table[ id ];
 

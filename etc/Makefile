@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Oct 23 09:42:52 2008 (serrano)                */
+#*    Last change :  Thu Oct 23 14:42:32 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -29,6 +29,7 @@ install:
 	chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
 	cp hoprc.hop $(DESTDIR)$(HOPETCDIR)/hoprc.hop
 	chmod $(BMASK) $(DESTDIR)$(HOPETCDIR)/hoprc.hop
+	mkdir -p $(DESTDIR)$(HOPMANDIR)
 	for p in hop hopsh hopreplay; do \
           cp $$p.man $(DESTDIR)$(HOPMANDIR)/$$p.1 && \
           chmod $(BMASK) $(DESTDIR)$(HOPMANDIR)/$$p.1; \

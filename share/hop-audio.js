@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Wed Oct  8 17:10:30 2008 (serrano)                */
+/*    Last change :  Sat Oct 25 17:32:22 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
@@ -14,6 +14,8 @@
 /*---------------------------------------------------------------------*/
 function HopAudioEvent( n, a, v ) {
    this.isStopped = false;
+   this.preventDefault = function() { };
+   this.stopPropagation = this.preventDefault;
    this.name = n;
    this.audio = a;
    this.value = v;

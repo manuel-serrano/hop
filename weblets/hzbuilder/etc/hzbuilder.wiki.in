@@ -10,7 +10,14 @@ that must be present in the package.
 
 ,(<TABLE> :class "weblet-facts"
   (<TR> (<TD> :rowspan 5 :class "logo"
-            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+            (<TABLE>
+              (<TR>
+                (<TD> :style "text-align: center"
+                   (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png"))))
+             (<TR>
+                (<TD> :style "font-size: 90%; text-align: center"
+                   (<A> :href "@PUBLICHOST@/hop/weblets/homepage?weblet=@HZ@"
+                     "Home page")))))
         (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
   (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
   (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))

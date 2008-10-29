@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Wed Oct 15 15:26:11 2008 (serrano)                */
+;*    Last change :  Mon Oct 27 14:37:00 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -158,7 +158,19 @@
       ((expr)
        (with-input-from-string val read))
       (else
-       (with-input-from-string (string-append "(" val ")") read))))
+       (let ((v (with-input-from-string (string-append "(" val ")") read)))
+	  (if (eq? type '|(list string)|)
+	      ;; just a hack to avoid usual error
+	      (map (lambda (s)
+		      (cond
+			 ((string? s) s)
+			 ((symbol? s) (symbol->string s))
+			 ((integer? s) (integer->string s))
+			 ((real? s) (real->string s))
+			 ((keyword? s) (keyword->string s))
+			 (else (error 'string->value "Illegal value" val))))
+		   v)
+	      v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    value->string ...                                                */

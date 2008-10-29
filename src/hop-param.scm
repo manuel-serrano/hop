@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Oct  9 07:41:39 2008 (serrano)                */
+;*    Last change :  Fri Oct 24 05:20:53 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -181,7 +181,7 @@
 ;*    actual maximal limit of SOMAXCONN.                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-somaxconn
-   128)
+   16)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-https ...                                             */

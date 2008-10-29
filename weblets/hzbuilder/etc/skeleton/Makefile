@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Sep 29 11:01:40 2008 (serrano)                */
+#*    Last change :  Wed Oct 29 09:00:07 2008 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
@@ -22,6 +22,7 @@ MAXHOP=@MAXHOP@
 HOME=@HOME@
 
 SOURCES=@HZ@.hop @HZ@.hss config.hop.in
+
 FILES=$(SOURCES) \
   etc/logo.png etc/favicon.png etc/@HZ@.wiki.in etc/weblet.info.in \
   etc/homepage/01-homepage.wiki etc/homepage/01-homepage.png \
@@ -81,6 +82,9 @@ etc/weblet.info: etc/weblet.info.in Makefile
                      -e "s|@@DATE@@|$(DATE)|" \
                      -e "s|@@PUBLISHER@@|$(PUBLISHER)|" \
                      -e "s|@@TITLE@@|$(TITLE)|" \
+                     -e "s|@@PRIVATEHOST@@|$(PRIVATEHOST)|" \
+                     -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
+                     -e "s|@@HOME@@|$(HOME)|" \
                      -e "s|@@CATEGORY@@|$(CATEGORY)|" > $@
 
 config.hop: config.hop.in Makefile
@@ -91,6 +95,9 @@ config.hop: config.hop.in Makefile
                      -e "s|@@HOST@@|$(PRIVATEHOST)|" \
                      -e "s|@@URL@@|$(URL)|" \
                      -e "s|@@REPOSITORY@@|$(PUBLICREPOSITORY)|" \
+                     -e "s|@@PRIVATEHOST@@|$(PRIVATEHOST)|" \
+                     -e "s|@@PUBLICHOST@@|$(PUBLIKHOST)|" \
+                     -e "s|@@HOME@@|$(HOME)|" \
                      -e "s|@@CATEGORY@@|$(CATEGORY)|" > $@
 
 .afile: $(filter %.scm %.hop %.sch, $(OBJECTS))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Oct 16 11:23:50 2008 (serrano)                */
+/*    Last change :  Tue Oct 28 09:31:32 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -168,7 +168,7 @@ function dom_create( tag, args ) {
 		       (loop (cddr args)
 			     attrs
 			     (cons (list (substring s 2 (string-length s))
-					 `(lambda () ,(cadr args)))
+					 `(lambda (event) ,(cadr args)))
 				   listeners))))
 		   (else
 		    (loop (cddr args)
@@ -1320,7 +1320,7 @@ function hop_bounding_box( e, m ) {
    }
 
    if( !m ) m = 0;
-   
+
    return [ hop_element_x( n ) - m, hop_element_y( n ) - m,
 	    n.offsetWidth + (2*m), n.offsetHeight + (2*m) ];
 }
