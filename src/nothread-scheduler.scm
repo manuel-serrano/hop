@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/nothread-scheduler.scm        */
+;*    serrano/prgm/project/hop/1.10.x/src/nothread-scheduler.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:28:00 2008                          */
-;*    Last change :  Sat Sep 20 07:54:06 2008 (serrano)                */
+;*    Last change :  Sun Nov  2 09:37:52 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NOTHREAD scheduler                                               */
@@ -41,6 +41,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-stat scd::nothread-scheduler)
    "")
+
+;*---------------------------------------------------------------------*/
+;*    stage ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-method (stage scd::nothread-scheduler thread proc::procedure . args)
+   (apply proc scd thread args))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn ...                                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sun Oct 19 17:49:58 2008 (serrano)                */
+;*    Last change :  Sun Nov  2 09:34:21 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -17,7 +17,7 @@
    (library hop)
 
    (include "stage.sch")
-
+ 
    (cond-expand
       (enable-threads (library pthread)))
 
@@ -77,16 +77,15 @@
 ;*    scheduler-accept-loop ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (scheduler-accept-loop scd::scheduler serv::socket)
-   (let ((dummy-buf (make-string 512)))
-      (let loop ((id 1))
-	 (let ((sock (socket-accept serv)))
-	    (hop-verb 2 (hop-color id id " ACCEPT")
-		      ": " (socket-hostname sock) " [" (current-date) "]\n")
-	    ;; tune the socket
-	    (tune-socket! sock)
-	    ;; process the request
-	    (spawn4 scd stage-request id sock 'connect (hop-read-timeout))
-	    (loop (+fx id 1))))))
+   (let loop ((id 1))
+      (let ((sock (socket-accept serv)))
+	 (hop-verb 2 (hop-color id id " ACCEPT")
+		   ": " (socket-hostname sock) " [" (current-date) "]\n")
+	 ;; tune the socket
+	 (tune-socket! sock)
+	 ;; process the request
+	 (spawn scd stage-request id sock 'connect (hop-read-timeout))
+	 (loop (+fx id 1)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ::queue-scheduler ...                      */
@@ -111,9 +110,9 @@
 		      ;; tune the socket
 		      (tune-socket! sock)
 		      ;; process the request
-		      (spawn4 scd stage-request (+fx id i)
-			      sock
-			      'connect (hop-read-timeout))
+		      (spawn scd stage-request (+fx id i)
+			     sock
+			     'connect (hop-read-timeout))
 		      (liip (+fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -165,17 +164,15 @@
 	       ;; tune the socket
 	       (tune-socket! sock)
 	       ;; process the request
-	       (stage4 scd thread
-		       stage-request id sock
-		       'connect (hop-read-timeout))
+	       (stage scd thread stage-request id sock 'connect (hop-read-timeout))
 	       (loop))))
       (connect-stage scd thread))
    
    (let loop ((i nbthreads))
       (if (<=fx i 1)
-	  (thread-join! (spawn0 scd connect-stage))
+	  (thread-join! (spawn scd connect-stage))
 	  (begin
-	     (spawn0 scd connect-stage)
+	     (spawn scd connect-stage)
 	     (loop (-fx i 1))))))
 
 ;*---------------------------------------------------------------------*/
@@ -185,13 +182,12 @@
    (let ((thread (nothread-scheduler-get-fake-thread)))
       (with-handler
 	 (make-scheduler-error-handler thread)
-	 (let ((dummybuf (make-string 512)))
-	    (let loop ((id 1))
-	       (let ((s (socket-accept serv
-				       :inbuf (hopthread-inbuf thread)
-				       :outbuf (hopthread-outbuf thread))))
-		  ;; tune the socket
-		  (tune-socket! s)
-		  ;; process the request
-		  (spawn4 scd stage-request id s 'connect (hop-read-timeout))
-		  (loop (+fx id 1))))))))
+	 (let loop ((id 1))
+	    (let ((s (socket-accept serv
+				    :inbuf (hopthread-inbuf thread)
+				    :outbuf (hopthread-outbuf thread))))
+	       ;; tune the socket
+	       (tune-socket! s)
+	       ;; process the request
+	       (spawn scd stage-request id s 'connect (hop-read-timeout))
+	       (loop (+fx id 1)))))))

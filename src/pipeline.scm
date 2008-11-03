@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Oct 24 10:31:58 2008 (serrano)                */
+;*    Last change :  Thu Oct 30 10:05:32 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hop_pipeline
 
-   (library hop)
+   (library hop) 
 
    (include "stage.sch")
    
@@ -153,7 +153,7 @@
 	 ;; decrement the keep-alive number (we have a valid connection)
 	 (when (eq? mode 'keep-alive) (keep-alive--))
 	 ;; start compting the answer
-	 (stage2 scd thread stage-response id req))))
+	 (stage scd thread stage-response id req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-request-error-handler ...                                  */
@@ -293,7 +293,7 @@
 	 (let ((proc (if (http-response-static? resp)
 			 stage-static-answer
 			 stage-dynamic-answer)))
-	    (stage3 scd thread proc id req resp)))))
+	    (stage scd thread proc id req resp)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-static-answer ...                                          */
@@ -353,16 +353,16 @@
 	    ((persistent)
 	     #unspecified)
 	    ((keep-alive)
-	     (cond
-		((>=fx (keep-alive) (hop-keep-alive-threshold))
-		 (socket-close sock))
-		((>=fx (scheduler-load scd) 80)
-		 (keep-alive++)
-		 (stage4 scd thread stage-request
-			 id sock 'keep-alive 1))
-		(else
-		 (keep-alive++)
-		 (stage4 scd thread stage-request
-			 id sock 'keep-alive (hop-keep-alive-timeout)))))
+	     (let ((load (scheduler-load scd)))
+		(cond
+		   ((or (>=fx (keep-alive) (hop-keep-alive-threshold))
+			(=fx load 100))
+		    (socket-close sock))
+		   ((>=fx load 80)
+		    (keep-alive++)
+		    (stage scd thread stage-request id sock 'keep-alive 1))
+		   (else
+		    (keep-alive++)
+		    (stage scd thread stage-request id sock 'keep-alive (hop-keep-alive-timeout))))))
 	    (else
 	     (socket-close sock))))))
