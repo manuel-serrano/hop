@@ -451,12 +451,13 @@ function with_hop( svc, success, failure, sync, anim ) {
       (let loop ((rest rest))
 	 (cond
 	    ((null? rest)
-	     `(hop_send_request ,svc
+	     `((@ hop_send_request _)
+	                        ,svc
 				,sync
 				,(or success '(lambda (h) h))
-				,(or fail 'hop_default_failure)
+				,(or fail '(@ hop_default_failure _))
 				,anim
-				(hop_serialize_request_env)
+				((@ hop_serialize_request_env _))
 				,(cond
 				    (authorization
 				     authorization)

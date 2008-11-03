@@ -351,13 +351,13 @@ function hop_filechooser_save_proc( event, proc ) {
 			(attrs '()))
 		(cond
 		   ((null? args)
-		    `(hop_filechooser (list ,@(reverse! attrs))))
+		    `((@ hop_filechooser _) (list ,@(reverse! attrs))))
 		   ((or (null? (cdr args)) (not (keyword? (car args))))
 		    (loop (cdr args) (cons (car args) attrs)))
 		   ((string-prefix? "on" (keyword->string (car args)))
 		    (let ((s (keyword->string (car args))))
 		       (loop (cddr args)
-   		             (cons* `(hop_filechooser_save_proc
+   		             (cons* `((@ hop_filechooser_save_proc _)
                                       ,(substring s 2 (string-length s))
 			              (lambda () ,(cadr args)))
 				    (car args) attrs))))

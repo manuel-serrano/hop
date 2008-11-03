@@ -149,7 +149,7 @@
 	 (module-postprocessor (config 'module-postprocessor))
 	 (bigloo-modules? (config 'bigloo-modules)))
       (when module-preprocessor
-	 ;(module-preprocessor m))
+;	 (module-preprocessor m))
 	 (module-preprocessor (WIP-Unit-header m)))
       (merge-headers! m override-headers)
       (set-name! m)

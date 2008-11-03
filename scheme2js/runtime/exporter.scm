@@ -138,8 +138,11 @@
 			 (filter (lambda (assoc)
 				    (not (eq? (car assoc) 'export)))
 				 meta))
-			(with-JS (cons (list 'JS var)
-				       without-export))
+			(with-JS (if (assoc 'JS without-export)
+				     ;; there is already a JS-clause
+				     without-export
+				     (cons (list 'JS var)
+					   without-export)))
 			(with-constant (if (or *constant?*
 					       (and *constant-functions?*
 						    (eq? kind 'function)))
