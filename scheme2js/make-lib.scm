@@ -10,6 +10,7 @@
 	      set-optim-level scheme2js-config
 	      extend-config extend-config*
 	      config)
+	   (mangle-qualified-var gen-js)
 	   expand
 	   export-desc
 	   module-system)

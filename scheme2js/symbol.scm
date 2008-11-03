@@ -80,7 +80,8 @@
 		       (create-js-var scheme-sym imported? desc))))
 
 ;; lazy lookup will not create Vars until they are actually used.
-(define (lazy-imported-lookup imports)
+;; if JS? is true then direct accesses are to be found/added here.
+(define (lazy-imported-lookup imports JS?)
    (define (export-in-list sym l)
       (any (lambda (desc)
 	      (and (eq? (Export-Desc-id desc) sym)
@@ -91,30 +92,79 @@
 	 (and tmp
 	      (create-js-var sym #t tmp))))
 
-   (cond
-      ((null? imports)
-       (lambda (symbol) #f))
-      ((and (pair? imports)
-	    (Export-Desc? (car imports)))
-       (lambda (symbol)
-	  (export-in-list symbol imports)))
-      ((pair? imports)
-       (lambda (symbol)
-	  (any (lambda (imps)
-		  (cond
-		     ((null? imps) #f)
-		     ((pair? imps) (export-in-list symbol imps))
-		     (else         (export-in-ht symbol imps))))
-	       imports)))
-      (else
-       (lambda (symbol)
-	  (export-in-ht symbol imports)))))
+   (define (qualified? v) ;; just assume it is correctly formed.
+      (pair? v))
+
+   (define (id-symbol id)
+      (if (qualified? id)
+	  (car id)
+	  id))
+   (define (id-qualifier id)
+      (if (qualified? id)
+	  (cadr id)
+	  #f))
+
+   (define (update-scope! scope symbol qualified v)
+      ;; so we found a matching variable. add both versions to the scope.
+      ;; the unqualified and the qualified one.
+      (symbol-var-set! scope symbol v)
+      (symbol-var-set! scope qualified v))
+      
+   (define (lazy-lookup scope id)
+      (let ((sym (id-symbol id))
+	    (qualifier (id-qualifier id)))
+	 (let loop ((imports imports))
+	    (if (null? imports)
+		#f
+		(let* ((imps-qualifier (caar imports))
+		       (imps (cdar imports)))
+		   (cond
+		      ((null? imps) (loop (cdr imports)))
+		      ((and qualifier
+			    (not (eq? qualifier imps-qualifier)))
+		       (loop (cdr imports)))
+		      ((or (and (pair? imps)
+				(export-in-list sym imps))
+			   (and (hashtable? imps)
+				(export-in-ht sym imps)))
+		       =>
+		       (lambda (v)
+			  (update-scope! scope sym
+					 (if (qualified? id)
+					     id
+					     (list sym imps-qualifier))
+					 v)
+			  v))
+		      (else
+		       (loop (cdr imports)))))))))
+      
+   ;; when this fun is called then the scope does not contain the id that we
+   ;; are looking for. -> if we want to cache, just add the new var to the
+   ;; scope.
+   (lambda (scope id)
+      (let ((v (lazy-lookup scope id)))
+	 (cond
+	    (v v)
+	    ((not JS?) #f)
+	    ((and (qualified? id)
+		  (eq? (id-qualifier id) '_)) ;; JS
+	     (let* ((scheme-sym (id-symbol id))
+		    (js-str (symbol->string scheme-sym)) ;; do not mangle.
+		    (var (create-js-var scheme-sym #t
+					(instantiate::Export-Desc
+					   (id scheme-sym)
+					   (js-id js-str)
+					   (exported-as-const? #f)))))
+		(update-scope! scope scheme-sym id var)
+		var))
+	    (else #f)))))
     
 (define-nmethod (Module.resolve! symbol-table)
    (let* ((runtime-scope (make-lazy-scope
-			  (lazy-imported-lookup (Env-runtime env))))
+			  (lazy-imported-lookup `((* . ,(Env-runtime env)))
+						#f)))
 	  (imported-scope (make-lazy-scope
-			   (lazy-imported-lookup (Env-imports env))))
+			   (lazy-imported-lookup (Env-imports env) #t)))
 	  ;; module-scope might grow, but 'length' is just an indication. 
 	  (module-scope (make-scope (length (Env-exports env))))
 	  (extended-symbol-table (cons* module-scope
@@ -141,14 +191,20 @@
 				  (symbol-var runtime-scope id)))
       
       (Env-runtime-scope-set! env runtime-scope)
-      (Env-unbound-add!-set! env
-			     (lambda (scheme-sym js-str)
-				(js-symbol-add! imported-scope
-						(instantiate::Export-Desc
-						   (id scheme-sym)
-						   (js-id js-str)
-						   (exported-as-const? #f))
-						#t)))
+      (Env-unbound-add!-set!
+       env
+       (lambda (id)
+	  (if (pair? id) ;; qualified
+	      (error "symbol-resolution"
+		     "could not resolve qualified variable"
+		     (cons '@ id))
+	      (let ((js-str (mangle-JS-sym id)))
+		 (js-symbol-add! imported-scope
+				 (instantiate::Export-Desc
+				    (id id)
+				    (js-id js-str)
+				    (exported-as-const? #f))
+				 #t)))))
 
       (with-access::Module this (this-var runtime-vars imported-vars
 					  scope-vars body)
@@ -261,7 +317,7 @@
 	 (cond
 	    (v (set! var v))
 	    ((config 'unresolved=JS)
-	     ((Env-unbound-add! env) id (mangle-JS-sym id))
+	     ((Env-unbound-add! env) id)
 	     (verbose "Unresolved symbol '" id "' assumed to be a JS-var")
 	     (ncall resolve! this symbol-table)) ;; try again.
 	    (else

@@ -10,7 +10,7 @@
        (higher?::bool  (default #f) read-only)
        (higher-params  (default #f) read-only) 
        (return-type    (default #f) read-only))
-    (create-Export-Desc::Export-Desc info runtime?::bool)))
+    (create-Export-Desc::Export-Desc info module-name runtime?::bool)))
 
 
 (define (entry-val sym l)
@@ -18,11 +18,12 @@
       (and try
 	   (cadr try))))
 
-(define (normalize-export export)
+(define (normalize-export export module-name)
    (cond
       ((symbol? export)
        (list export
-	     (list 'JS (mangle-JS-sym export))))
+	     (list 'JS
+		   (mangle-qualified-var export module-name))))
       ((pair? export)
        (cond
 	  ((assq 'JS (cdr export))
@@ -30,7 +31,8 @@
 	  (else
 	   (let ((scheme-sym (car export)))
 	      (cons* scheme-sym
-		     (list 'JS (mangle-JS-sym scheme-sym))
+		     (list 'JS
+			   (mangle-qualified-var scheme-sym module-name))
 		     (cdr export))))))
       (else
        (error "normalize-export" "bad import/export clause: " export))))
@@ -46,8 +48,8 @@
 	      "JS-clause must be either symbol or string"
 	      id))))
 
-(define (create-Export-Desc::Export-Desc info runtime?)
-   (let* ((normalized (normalize-export info))
+(define (create-Export-Desc::Export-Desc info module-name runtime?)
+   (let* ((normalized (normalize-export info module-name))
 	  (scheme-sym (car normalized))
 	  (js-id (normalize-js-id (entry-val 'JS normalized)))
 	  (peephole (entry-val 'peephole normalized))

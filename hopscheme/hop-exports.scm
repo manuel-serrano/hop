@@ -9,7 +9,7 @@
 (define (make-exports-hashtable exports)
    (let ((ht (make-hashtable)))
       (for-each (lambda (e)
-		   (let ((desc (create-Export-Desc e #f)))
+		   (let ((desc (create-Export-Desc e #f #f)))
 		      (hashtable-put! ht (Export-Desc-id desc) desc)))
 		exports)
       ht))
@@ -27,7 +27,7 @@
 
 (define (add-hop-runtime! m::WIP-Unit)
    (with-access::WIP-Unit m (imports macros)
-      (set! imports (cons *exported-vars* imports))
+      (set! imports (cons `(hop . ,*exported-vars*) imports))
       (set! macros (append macros *exported-macros*))))
 
 (define (hop-runtime-adder)

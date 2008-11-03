@@ -65,7 +65,12 @@
 			    module-name))))
       (error "module"
 	     "Module-name and filename are not equal."
-	     (prefix (basename file-name)))))
+	     (prefix (basename file-name))))
+   (when (or (eq? module-name '*)
+	     (eq? module-name '_))
+      (error "module"
+	     "Invalid module name"
+	     module-name)))
    
 (define (create-module-from-file file override-headers reader)
    (define (read-file-exprs in-port first-expr use-first-expr?)
@@ -326,22 +331,29 @@
 					      (Compilation-Unit-macros im))
 				      (if (null? (Compilation-Unit-exports im))
 					  new-imports
-					  (cons (Compilation-Unit-exports im)
-						new-imports)))))
+					  (with-access::Compilation-Unit im
+						(name exports)
+					     ;; qualified exports. that is name
+					     ;; followed by exports.
+					     (cons (cons name exports)
+						   new-imports))))))
 			  (close-input-port ip)))))))))
 
 (define (normalize-JS-imports! m)
-   (with-access::WIP-Unit m (header imports)
+   (with-access::WIP-Unit m (header imports name)
       (let* ((direct-JS-imports (extract-entries header 'JS))
 	     (descs (map (lambda (js)
 			    (when (not (symbol? js))
 			       (error "scheme2js module"
 				      "JS clauses can only contain symbols"
 				      js))
-			    (create-Export-Desc js #f))
+			    (create-Export-Desc js name #f))
 			 direct-JS-imports)))
 	 (unless (null? descs)
-	    (set! imports (cons descs imports))))))
+	    (set! imports
+		  ;; qualified name for JavaScript is '_
+		  (cons (cons '_ descs)
+			imports))))))
 
 (define (normalize-exports! m bigloo-modules?
 			    #!optional get-macros? reader input-p)
@@ -449,7 +461,7 @@
 		   (else
 		    (loop new-macros rev-res)))))))
 			  
-   (with-access::WIP-Unit m (header exports macros top-level)
+   (with-access::WIP-Unit m (header name exports macros top-level)
       (let ((new-exports (extract-entries header 'export))
 	    (pragmas (extract-entries header 'scheme2js-pragma)))
 	 (let loop ((entries new-exports)
@@ -461,7 +473,7 @@
 		      ((symbol? e)
 		       (set! exports
 			     (cons (create-Export-Desc
-				    (normalize-var e pragmas) #f)
+				    (normalize-var e pragmas) name #f)
 				   exports))
 		       (loop (cdr entries) new-macros))
 		      ((not (pair? e))
@@ -474,7 +486,7 @@
 		      (else
 		       (set! exports
 			     (cons (create-Export-Desc
-				    (normalize-fun e pragmas) #f)
+				    (normalize-fun e pragmas) name #f)
 				   exports))
 		       (loop (cdr entries) new-macros)))))))))
 
@@ -506,10 +518,10 @@
 	     ex)))
 
 (define (normalize-scheme2js-exports! m::WIP-Unit)
-   (with-access::WIP-Unit m (header exports macros)
+   (with-access::WIP-Unit m (header name exports macros)
       (set! exports (append exports (map (lambda (ex)
 					    (check-scheme2js-export-clause ex)
-					    (create-Export-Desc ex #f))
+					    (create-Export-Desc ex name #f))
 					 (extract-entries header 'export))))
       (let ((exported-macros (extract-entries header 'export-macros)))
 	 (for-each check-scheme2js-export-clause exported-macros)

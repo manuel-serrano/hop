@@ -23,12 +23,18 @@
 (define (scheme->pobject-map l)
    (let loop ((l l)
 	      (rev-res '()))
-      (if (null? l)
-	  (reverse! rev-res)
+      (cond
+	 ((null? l)
+	  (reverse! rev-res))
+	 ((not (pair? l))
+	  (error "Object-conv"
+		 "invalid expression-list"
+		 l))
+	 (else
 	  (let ((loc (location l)))
 	     (loop (cdr l)
 		   (cons (scheme->pobject (car l) loc)
-			 rev-res))))))
+			 rev-res)))))))
 
 (define (location-map f l)
    (let loop ((l l)
@@ -65,14 +71,22 @@
 	 (else
 	  (let* ((p (last-pair arguments))
 		 (vaarg (cdr p)))
-	     (if (null? vaarg)
-		 (values arguments #f)
-		 (begin
-		    (set-cdr! p (list vaarg)) ;; physically attach the vaarg
-		    (values arguments #t)))))))
+	     (cond
+		((null? vaarg)
+		 (values arguments #f))
+		(else
+		 (set-cdr! p (list vaarg)) ;; physically attach the vaarg
+		 (values arguments #t)))))))
+	 
       
    (receive (formals vaarg?)
       (vaarg-list! arguments)
+
+      (unless (and (list? formals)
+		   (every? symbol? formals))
+	 (error "Object-conv"
+		"Invalid arguments-clause"
+		arguments))
 
       (let ((formal-decls
 	     (location-map (lambda (formal loc)
@@ -110,27 +124,40 @@
 
 (define (case->pobject key clauses)
    (define (clause->pobject clause last?)
-      (let* ((consts (car clause))
-	     (raw-exprs (cdr clause))
-	     (exprs (scheme->pobject-map raw-exprs))
-	     (begin-expr (instantiate::Begin (exprs exprs))))
-	 (if (and last?
-		  (eq? consts 'else))
-	     (instantiate::Clause
-		(consts '())
-		(expr begin-expr)
-		(default-clause? #t))
-	     (instantiate::Clause
-		(consts (map (lambda (const)
-				(instantiate::Const (value const)))
-			     consts))
-		(expr begin-expr)
-		(default-clause? #f)))))
+      (match-case clause
+	 ((?consts . ?raw-exprs)
+	  (let* ((exprs (scheme->pobject-map raw-exprs))
+		 (begin-expr (instantiate::Begin (exprs exprs))))
+	     (if (and last?
+		      (eq? consts 'else))
+		 (instantiate::Clause
+		    (consts '())
+		    (expr begin-expr)
+		    (default-clause? #t))
+		 (begin
+		    (unless (list? consts)
+		       (error "Object-conv"
+			      "bad constants in case-clause"
+			      consts))
+		    (instantiate::Clause
+		       (consts (map (lambda (const)
+				       (instantiate::Const (value const)))
+				    consts))
+		       (expr begin-expr)
+		       (default-clause? #f))))))
+	 (else
+	  (error "Object-conv"
+		 "bad Case-clause"
+		 clause))))
    
    (define (clauses->pobjects clauses rev-result)
       (cond
 	 ((null? clauses) ;; should never happen
 	  (reverse! rev-result))
+	 ((not (pair? clauses)) ;; dotted form (x . y)
+	  (error "Object-conv"
+		 "bad case-form"
+		 clauses))
 	 ((null? (cdr clauses))
 	  (let ((rev-all-clauses (cons (clause->pobject (car clauses) #t)
 				       rev-result)))
@@ -169,9 +196,16 @@
 	  ((set! (and ?var (? symbol?)) ?expr)
 	   (instantiate::Set!
 	      (lvalue (attach-location (instantiate::Ref
-					(id var))
-				     (location (cdr exp))))
+					  (id var))
+				       (location (cdr exp))))
 	      (val (scheme->pobject expr (location (cddr exp))))))
+	  ((set! (@ ?sym ?qualifier) ?expr)
+	   (let ((id (cadr exp)))
+	      (instantiate::Set!
+		 (lvalue (attach-location (instantiate::Ref
+					     (id id))
+					  (location (cdr exp))))
+		 (val (scheme->pobject expr (location (cddr exp)))))))
 	  ((set! . ?L) (error #f "bad set!-form: " exp))
 	  ((let ?bindings . ?body) (let-form->pobject bindings body 'let))
 	  ((letrec ?bindings . ?body) (let-form->pobject bindings body 'letrec))
@@ -187,6 +221,8 @@
 	  ((runtime-ref ?id (? procedure?))
 	   (instantiate::Runtime-Ref
 	      (id id)))
+	  ((@ ?sym ?qualifier)
+	   (instantiate::Ref (id (cdr exp))))
 	  ((?operator . ?operands)
 	   (if (and (config 'return)
 		    (eq? operator 'return!))

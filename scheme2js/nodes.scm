@@ -29,7 +29,7 @@
     (final-class Const::Node
        value)
     (final-class Ref::Node
-       id::symbol
+       id ;; either symbol or qualified id of form (symbol module)
        (var::Var (default (Var-nil))))
     (class Scope::Node
        (scope-vars::pair-nil (default '()))) ;; list of Vars

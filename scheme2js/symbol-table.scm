@@ -9,8 +9,8 @@
 	      lazy::procedure))
    (export (make-scope #!optional size)
 	   (make-lazy-scope lazy-fun::procedure)
-	   (symbol-var-set! scope symbol var)
-	   (symbol-var scope symbol)
+	   (symbol-var-set! scope id var)
+	   (symbol-var scope id)
 	   (scope->list scope)))
 
 (define (make-scope #!optional size)
@@ -18,7 +18,7 @@
 	    (>fx size 50)) ;; TODO: hardcoded value
        (instantiate::Scope
 	  (kind 'big)
-	  (ht (make-eq-hashtable (* size 2))) ;; TODO: hardcoded value
+	  (ht (make-hashtable (* size 2))) ;; TODO: hardcoded value
 	  (els '()))
        (instantiate::Scope
 	  (kind 'small)
@@ -32,29 +32,29 @@
       (els '())
       (lazy lazy-fun)))
 
-(define (symbol-var-set! scope symbol var)
+(define (symbol-var-set! scope id var)
    (with-access::Scope scope (kind ht els nb-els)
       (set! nb-els (+fx nb-els 1))
       (cond
 	 ((eq? kind 'big)
-	  (hashtable-put! ht symbol var))
+	  (hashtable-put! ht id var))
 	 ((< nb-els 50) ;; TODO: hardcoded value
-	  (cons-set! els (cons symbol var)))
+	  (cons-set! els (cons id var)))
 	 (else
-	  (set! ht (make-eq-hashtable 100))
+	  (set! ht (make-hashtable 100))
 	  (set! kind 'big)
 	  (for-each (lambda (el)
 		       (hashtable-put! ht (car el) (cdr el)))
 		    els)
 	  (set! els '())
-	  (hashtable-put! ht symbol var)))))
+	  (hashtable-put! ht id var)))))
 
-(define (symbol-var scope symbol)
+(define (symbol-var scope id)
    (with-access::Scope scope (kind ht els)
       (define (get-entry)
 	 (if (eq? kind 'big)
-	     (hashtable-get ht symbol)
-	     (let ((tmp (assq symbol els)))
+	     (hashtable-get ht id)
+	     (let ((tmp (assq id els)))
 		(and tmp (cdr tmp)))))
 
       (let ((entry (get-entry)))
@@ -62,12 +62,7 @@
 	    (entry entry)
 	    ((Lazy-Scope? scope)
 	     (with-access::Lazy-Scope scope (lazy)
-		(let ((tmp (lazy symbol)))
-		   (if tmp
-		       (begin
-			  (symbol-var-set! scope symbol tmp)
-			  tmp)
-		       #f))))
+		(lazy scope id)))
 	    (else #f)))))
 
 (define (scope->list scope)
