@@ -495,3 +495,5 @@
 
 (install-expander! 'receive receive-expander)
 (install-expander! 'multiple-value-bind receive-expander)
+
+(install-expander! '@ (lambda (x e macros-ht) x))

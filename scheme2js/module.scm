@@ -149,7 +149,8 @@
 	 (module-postprocessor (config 'module-postprocessor))
 	 (bigloo-modules? (config 'bigloo-modules)))
       (when module-preprocessor
-	 (module-preprocessor m))
+	 ;(module-preprocessor m))
+	 (module-preprocessor (WIP-Unit-header m)))
       (merge-headers! m override-headers)
       (set-name! m)
       (read-includes! m include-paths reader)
@@ -340,14 +341,14 @@
 			  (close-input-port ip)))))))))
 
 (define (normalize-JS-imports! m)
-   (with-access::WIP-Unit m (header imports name)
+   (with-access::WIP-Unit m (header imports)
       (let* ((direct-JS-imports (extract-entries header 'JS))
 	     (descs (map (lambda (js)
 			    (when (not (symbol? js))
 			       (error "scheme2js module"
 				      "JS clauses can only contain symbols"
 				      js))
-			    (create-Export-Desc js name #f))
+			    (create-Export-Desc js #f #f))
 			 direct-JS-imports)))
 	 (unless (null? descs)
 	    (set! imports
