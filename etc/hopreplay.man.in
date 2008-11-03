@@ -1,0 +1,31 @@
+.TH HOP 1 "Version @VERSION@"
+.de BP
+.sp
+.ti -.2i
+..
+.SH NAME
+hopreplay @RELEASE@ \- replay a Hop execution trace
+
+.SH SYNOPSIS
+.B hopreplay
+[ options ]
+[ \fIinput\fR ]
+
+.SH DESCRIPTION
+.PP
+\fBHopreplay\fR is a tool that can be used to replay a \fBHop\fR
+execution. It might be used for debugging purposes.
+.SH OPTIONS
+
+.TP 10
+options
+Many options are available. Type `hopreplay -help' to print them.
+
+.SH "SEE ALSO"
+hop(1), hopreplay(1)
+
+.SH AUTHOR
+Manuel SERRANO,
+Manuel.Serrano@inria.fr
+
+
