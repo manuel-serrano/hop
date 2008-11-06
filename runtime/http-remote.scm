@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Tue Oct 14 02:27:49 2008 (serrano)                */
+;*    Last change :  Thu Nov  6 09:48:33 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -54,27 +54,6 @@
        (lambda (x e)
 	  (map (lambda (x) (e x e)) x)))))
 
-;*---------------------------------------------------------------------*/
-;*    Debug traces to removed when the keep-alive connections          */
-;*    pool is tested ok.                                               */
-;*---------------------------------------------------------------------*/
-(define debug-port (open-output-file "/tmp/HOP-REMOTE.log"))
-(define (remote-debug . args)
-   (for-each (lambda (a) (display a debug-port)) args)
-   (newline debug-port)
-   (flush-output-port debug-port))
-
-(define (remote-debug-with-lock! . args)
-   (mutex-lock! *remote-lock*)
-   (apply remote-debug args)
-   (mutex-unlock! *remote-lock*))
-
-(define-method (object-display o::connection . p)
-   (with-access::connection o (id socket key intable? locked? %%debug-closed?)
-      (fprintf (if p (car p) (current-output-port))
-	       "#<connection id=~a key=~a locked=~a intable=~a closed=~a>"
-	       id key locked? intable? %%debug-closed?)))
-	     
 ;*---------------------------------------------------------------------*/
 ;*    response-remote-start-line ...                                   */
 ;*---------------------------------------------------------------------*/
@@ -248,10 +227,6 @@
 		  ;; what to do with the remote connection. if the
 		  ;; status code is not 200, we always close the connection
 		  ;; in order to avoid, in particular, re-direct problems.
-		  (remote-debug-with-lock! "STATUS status="
-					   status-code
-					   " connection=" connection
-					   " conn=" remote)
 		  (if (or (not (=fx status-code 200))
 			  (eq? connection 'close)
 			  (and (not connection)
@@ -386,14 +361,9 @@
 				key
 				(lambda (l) (cons conn l))
 				(list conn)))
-	  (begin
-	     (remote-debug "  filter out connection=" conn)
-	     (close-connection! conn))))
+	  (close-connection! conn)))
    
    [assert () (not (symbol? (mutex-state *remote-lock*)))]
-   
-   (remote-debug "FILTER-CONNECTION-TABLE! open-conn=" *open-connection-number*
-		 " keep-alive-conn=" *keep-alive-connection-number*)
    
    (with-trace 5 'filter-connection-table!
       ;; create a new hashtable
@@ -422,19 +392,17 @@
    (define (make-new-connection key id)
       (with-trace 4 'make--new-connection
 	 (let ((s (make-client-socket/timeout host port timeout request ssl)))
-	    (let ((conn (instantiate::connection
-			   (id id)
-			   (socket s)
-			   (host host)
-			   (port port)
-			   (key key)
-			   (request-id (http-request-id request))
-			   (date (current-seconds))
-			   (locked? #t)
-			   (intable? #f))))
-	       (remote-debug "MAKE-NEW-CONNECT conn=" conn)
-	       conn))))
-   
+	    (instantiate::connection
+	       (id id)
+	       (socket s)
+	       (host host)
+	       (port port)
+	       (key key)
+	       (request-id (http-request-id request))
+	       (date (current-seconds))
+	       (locked? #t)
+	       (intable? #f)))))
+
    (define (get-connection)
       (let ((key (string-append host ":" (integer->string port))))
 	 (mutex-lock! *remote-lock*)
@@ -448,9 +416,7 @@
 		   (++ *open-connection-number*)
 		   (mutex-unlock! *remote-lock*)
 		   (make-new-connection key id))))))
-   
-   (remote-debug-with-lock! "REMOTE-GET-SOCKET key=" host ":" port)
-   
+
    (with-trace 4 'remote-get-connection
       (trace-item "host=" host)
       (if (not (hop-enable-remote-keep-alive))
@@ -459,9 +425,7 @@
 	     ;; we don't really a lock here to ensure a correct value
 	     (set! *connection-id* id)
 	     (make-new-connection host id))
-	  (let ((conn (get-connection)))
-	     (remote-debug "REMOTE-GET-SOCKET -> " conn)
-	     conn))))
+	  (get-connection))))
 
 ;*---------------------------------------------------------------------*/
 ;*    too-many-keep-alive-connection? ...                              */
@@ -474,9 +438,6 @@
 ;*---------------------------------------------------------------------*/
 (define (connection-keep-alive! conn)
    (mutex-lock! *remote-lock*)
-   (remote-debug "CONNECTION-KEEP-ALIVE! " conn
-		 " open-conn=" *open-connection-number*
-		 " keep-alive-conn=" *keep-alive-connection-number*)
    (when (too-many-keep-alive-connection?)
       ;; we first try to cleanup the timeout connections
       (let ((now (current-seconds)))
@@ -496,10 +457,7 @@
 	  (unless (connection-intable? conn)
 	     ;; this is the first time we see this connection, we add it to
 	     ;; the connection table
-	     (connection-table-add! conn)
-	     (remote-debug "  add in table conn=" conn
-			   " open-conn=" *open-connection-number*
-			   " keep-alive-conn=" *keep-alive-connection-number*))))
+	     (connection-table-add! conn))))
    (mutex-unlock! *remote-lock*))
 
 ;*---------------------------------------------------------------------*/
@@ -510,14 +468,8 @@
       (when %%debug-closed?
 	 (error 'connection-close-sans-lock! "Connection already closed" conn))
       (close-connection! conn)
-      (remote-debug "CONNECTION-CLOSE conn=" conn
-		    " open-conn=" *open-connection-number*
-		    " keep-alive-conn=" *keep-alive-connection-number*)
       (when (connection-intable? conn)
-	 (connection-table-remove! conn)
-	 (remote-debug "  remove from table conn=" conn
-		       " open-conn=" *open-connection-number*
-		       " keep-alive-conn=" *keep-alive-connection-number*))))
+	 (connection-table-remove! conn))))
    
 ;*---------------------------------------------------------------------*/
 ;*    connection-close! ...                                            */

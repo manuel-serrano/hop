@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/1.9.x/weblets/webfilter/webfilter.hop       */
+;*    .../prgm/project/hop/1.10.x/weblets/webfilter/webfilter.hop      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Sep 12 12:01:13 2008 (serrano)                */
+;*    Last change :  Thu Nov  6 09:21:57 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */

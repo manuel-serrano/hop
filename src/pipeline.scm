@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu Oct 30 10:05:32 2008 (serrano)                */
+;*    Last change :  Thu Nov  6 09:29:51 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -209,6 +209,7 @@
 ;*    response-error-handler ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (response-error-handler e scd req)
+   (tprint "E=" e)
    (with-handler
       (lambda (e)
 	 ;; there is nothing we can do but aborting the request
