@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu Nov  6 09:29:51 2008 (serrano)                */
+;*    Last change :  Thu Nov  6 10:22:24 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -209,7 +209,6 @@
 ;*    response-error-handler ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (response-error-handler e scd req)
-   (tprint "E=" e)
    (with-handler
       (lambda (e)
 	 ;; there is nothing we can do but aborting the request
@@ -283,6 +282,7 @@
    (with-stage-handler
       response-error-handler (scd req)
       (let ((resp (with-time (request->response req) id "RESPONSE")))
+	 (evmeaning-reset-error!)
 	 (debug-thread-info-set! thread
 				 (format "~a ~a://~a:~a~a... -> ~a"
 					 (http-request-method req)
