@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Nov  7 09:45:40 2008 (serrano)                */
+/*    Last change :  Fri Nov  7 11:49:41 2008 (serrano)                */
 /*    Copyright   :  2006-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1233,8 +1233,7 @@ function hop_create_element( html ) {
       alert( "Cannot create tag element: " + tag );
    }
 
-/*    return el.childNodes[ 0 ];                                       */
-   return el.foo;
+   return el.childNodes[ 0 ];
 }
 
 /*---------------------------------------------------------------------*/
