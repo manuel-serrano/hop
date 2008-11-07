@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Mon Nov  3 17:30:48 2008 (serrano)                */
+;*    Last change :  Thu Nov  6 17:07:34 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -106,7 +106,7 @@
       (mutex-lock! mutex)
       (let loop ()
 	 (condition-variable-wait! condv mutex)
-	 (let liip ((proc (hopthread-proc t)))
+	 (let ((proc (hopthread-proc t)))
 	    ;; complete the demanded task
 	    (with-handler
 	       (make-scheduler-error-handler t)
