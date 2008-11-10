@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Oct 15 12:30:15 2008 (serrano)                */
+;*    Last change :  Mon Nov 10 14:42:36 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -238,7 +238,7 @@
 
 	    (hop-accept-kill::bool)
 	    (hop-accept-kill-set! ::bool)
-	    
+
 	    (hop-enable-proxy-sniffer::bool)
 	    (hop-enable-proxy-sniffer-set! ::bool)
 	    

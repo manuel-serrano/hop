@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Nov  7 11:23:52 2008 (serrano)                */
+/*    Last change :  Mon Nov 10 16:57:23 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -130,7 +130,7 @@ function hop_default_failure( xhr ) {
 	 t = t.replace( /&quot;/g, "\"" );
 	 div.innerHTML = t;
       } else {
-	 div.innerHTML = "Status" + xhr.status;
+	 div.innerHTML = "Status: " + xhr.status + " -- " + xhr.statusText;
       }
    }
    

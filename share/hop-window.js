@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Wed Oct 29 13:18:45 2008 (serrano)                */
+/*    Last change :  Mon Nov 10 17:27:24 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -21,6 +21,69 @@ function HopWindowEvent() {
    this.isStopped = false;
    this.preventDefault = function() { };
    this.stopPropagation = this.preventDefault;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_iwindow_invoke_listener ...                                  */
+/*---------------------------------------------------------------------*/
+function hop_iwindow_invoke_listener( lst, event ) {
+   while( sc_isPair( lst ) ) {
+      lst.car( event );
+
+      if( event.isStopped ) break;
+
+      lst = lst.cdr;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_iwindow_add_event_listener ...                               */
+/*---------------------------------------------------------------------*/
+function hop_iwindow_add_event_listener( event, proc, capture ) {
+   if( event === "iconify" )
+      return this.oniconify = sc_cons( proc, this.oniconify );
+
+   if( event === "resize" )
+      return this.onresize = sc_cons( proc, this.onresize );
+
+   if( event === "maximize" )
+      return this.onmaximize = sc_cons( proc, this.onmaximize );
+
+   if( event === "close" )
+      return this.onclose = sc_cons( proc, this.onclose );
+
+   if( event === "move" )
+      return this.onmove = sc_cons( proc, this.onmove );
+
+   if( event === "raise" )
+      return this.onraise = sc_cons( proc, this.onraise );
+
+   return hop_add_native_event_listener( this, event, proc, capture );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_iwindow_remove_event_listener ...                            */
+/*---------------------------------------------------------------------*/
+function hop_iwindow_remove_event_listener( event, proc ) {
+   if( event === "iconify" )
+      return this.oniconify = sc_deleteBang( proc, this.oniconify );
+
+   if( event === "resize" )
+      return this.onresize = sc_deleteBang( proc, this.onresize );
+
+   if( event === "maximize" )
+      return this.onmaximize = sc_deleteBang( proc, this.onmaximize );
+
+   if( event === "close" )
+      return this.onclose = sc_deleteBang( proc, this.onclose );
+
+   if( event === "move" )
+      return this.onmove = sc_deleteBang( proc, this.onmove );
+
+   if( event === "raise" )
+      return this.onraise = sc_deleteBang( proc, this.onraise );
+
+   return hop_remove_native_event_listener( this, event, proc, capture );
 }
 
 /*---------------------------------------------------------------------*/
@@ -52,7 +115,7 @@ var hop_iwindow_count = 0;
 function hop_iwindow_close( win ) {
    var evt = new HopWindowEvent();
 
-   if( win.onclose ) win.onclose( evt );
+   hop_iwindow_invoke_listener( win.onclose, evt );
 
    if( !evt.isStopped ) node_style_set( win, "display", "none" );
 }
@@ -63,8 +126,8 @@ function hop_iwindow_close( win ) {
 function hop_iwindow_maximize( win ) {
    if( win.resizable ) {
       var evt = new HopWindowEvent();
-      
-      if( win.onmaximize ) win.onmaximize( evt );
+
+      hop_iwindow_invoke_listener( win.onmaximize, evt );
       if( evt.isStopped ) return;
       
       if( win.maximized ) {
@@ -119,7 +182,7 @@ function hop_iwindow_maximize( win ) {
 	 }
       }
 
-      if( win.onresize ) win.onresize( evt );
+      hop_iwindow_invoke_listener( win.onresize, evt );
       if( evt.isStopped ) return;
    }
 }
@@ -130,7 +193,7 @@ function hop_iwindow_maximize( win ) {
 function hop_iwindow_iconify( win ) {
    var evt = new HopWindowEvent();
 
-   if( win.oniconify ) win.oniconify( evt );
+   hop_iwindow_invoke_listener( win.oniconify, evt );
    
    if( !evt.isStopped ) {
       if( win.iconifiedp ) {
@@ -174,8 +237,7 @@ function hop_iwindow_raise( win ) {
 
    /* user event */
    if( win.onraise ) {
-      var evt = new HopWindowEvent();
-      win.onraise( evt );
+      hop_iwindow_invoke_listener( win.onraise, new HopWindowEvent() );
    }
 }
 
@@ -229,7 +291,7 @@ function hop_iwindow_drag( event, win ) {
       node_style_set( win.el_win, "background", obg );
 
       /* user event */
-      if( win.onmove ) win.onmove( evt );
+      if( win.onmove ) hop_iwindow_invoke_listener( win.onmove, evt );
    }
    
    hop_add_event_listener( document, "mousemove", mousemove );
@@ -322,7 +384,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
 
       /* user event */
       if( win.onresize ) {
-	 win.onresize( new HopWindowEvent() );
+	 hop_iwindow_invoke_listener( win.onresize, new HopWindowEvent() );
       }
    }
 
@@ -339,31 +401,6 @@ function hop_iwindow_evresize( event, win, widthp, heightp ) {
       return hop_iwindow_evresize_inner( event, win, widthp, heightp );
    else
       return false;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_iwindow_add_event_listener ...                               */
-/*---------------------------------------------------------------------*/
-function hop_iwindow_add_event_listener( event, proc, capture ) {
-   if( event === "iconify" )
-      return this.oniconify = proc;
-
-   if( event === "resize" )
-      return this.onresize = proc;
-
-   if( event === "maximize" )
-      return this.onmaximize = proc;
-
-   if( event === "close" )
-      return this.onclose = proc;
-
-   if( event === "move" )
-      return this.onmove = proc;
-
-   if( event === "raise" )
-      return this.onraise = proc;
-
-   return hop_add_native_event_listener( this, event, proc, capture );
 }
 
 /*---------------------------------------------------------------------*/
@@ -463,6 +500,7 @@ function make_hop_iwindow( id, klass, parent ) {
       function( event ) { hop_iwindow_evresize( event, win, false, false ) } );
 
    win.hop_add_event_listener = hop_iwindow_add_event_listener;
+   win.hop_remove_event_listener = hop_iwindow_remove_event_listener;
    
    return win;
 }
