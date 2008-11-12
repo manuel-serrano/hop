@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Nov  7 11:21:40 2008 (serrano)                */
+/*    Last change :  Wed Nov 12 08:54:32 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -348,7 +348,7 @@ function hop_window_onunload_add( proc ) {
 /*    (e.g., a notepad or a tabslider). It gives a child the           */
 /*    opportunity to update (i.e., to re-compute dimensions).          */
 /*    Widgets interested have to register by setting their             */
-/*    hop_update field (see hop-tabliser.js for an example).           */
+/*    hop_update field (see hop-tabslider.js for an example).          */
 /*---------------------------------------------------------------------*/
 function hop_update( node ) {
    /* update the children recursively */

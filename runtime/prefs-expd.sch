@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Tue Oct 28 08:34:27 2008 (serrano)                */
+;*    Last change :  Wed Nov 12 08:31:51 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
@@ -37,7 +37,10 @@
 	    ((?- ?type (and (? symbol?) ?param))
 	     `(begin
 		 ,(match-case type
-		     ((or expr (list . ?-))
+		     (expr
+		      `(write (list ',(symbol-append param '-set!)
+				    (,param))))
+		     ((or quote (list . ?-))
 		      `(write (list ',(symbol-append param '-set!)
 				    (list 'quote (,param)))))
 		     (else

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Mon Nov 10 17:27:24 2008 (serrano)                */
+/*    Last change :  Wed Nov 12 09:45:00 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -242,6 +242,39 @@ function hop_iwindow_raise( win ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_iwindow_clip ...                                             */
+/*---------------------------------------------------------------------*/
+function hop_iwindow_clip( win ) {
+   var parent = win.parentNode;
+   
+   if( parent ) {
+      var x = hop_element_x( win );
+      var y = hop_element_y( win );
+      var px = hop_element_x( parent );
+      var py = hop_element_y( parent );
+
+      var top = 'auto';
+      var right = 'auto';
+      var bottom = 'auto';
+      var left = 'auto';
+      
+      if( x < px )
+	 left = ((px - x) + 'px');
+      if( y < py )
+	 top = ((py - y) + 'px');
+      if( x + win.offsetWidth > px + parent.offsetWidth )
+	 right = ((px + parent.offsetWidth) - x) + 'px';
+      if( y + win.offsetHeight > py + parent.offsetHeight )
+	 bottom = ((py + parent.offsetHeight) - y) + 'px';
+
+      node_style_set( win, 'clip', 'rect( ' + top + ', ' +
+		      right + ', ' +
+		      bottom + ', ' +
+		      left + ') ');
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_iwindow_drag ...                                             */
 /*---------------------------------------------------------------------*/
 function hop_iwindow_drag( event, win ) {
@@ -260,6 +293,7 @@ function hop_iwindow_drag( event, win ) {
    node_style_set( win.el_content, "visibility", "hidden" );
    node_style_set( win.el_handle, "cursor", "move" );
    node_style_set( win.el_win, "background", "white" );
+   node_style_set( win, "clip", "auto" );
 
    var mousemove = function( event ) {
       var nx = (hop_event_mouse_x( event ) - dx);
@@ -268,12 +302,20 @@ function hop_iwindow_drag( event, win ) {
       if( win.user_parent ) {
 	 var nx0 = hop_event_mouse_x( event ) - dx0;
 	 var ny0 = hop_event_mouse_y( event ) - dy0;
-	 
-	 if( (nx0 > px) && ((nx0 + win.offsetWidth) < (px + p.offsetWidth)) ) {
+
+	 if( win.clip ) {
+	    /* because we will apply cplipping once the drag */
+	    /* is over, we only ensure that the window does  */
+	    /* not escape on the top of the window.          */
 	    node_style_set( win, "left", nx + "px" );
-	 }
-	 if( (ny0 > py) && ((ny0 + win.offsetHeight) < (py + p.offsetHeight)) ) {
-	    node_style_set( win, "top", ny + "px" );
+	    if( ny0 > py ) node_style_set( win, "top", ny + "px" );
+	 } else {
+	    if( (nx0 > px) && ((nx0 + win.offsetWidth) < (px + p.offsetWidth)) ) {
+	       node_style_set( win, "left", nx + "px" );
+	    }
+	    if( (ny0 > py) && ((ny0 + win.offsetHeight) < (py + p.offsetHeight)) ) {
+	       node_style_set( win, "top", ny + "px" );
+	    }
 	 }
       } else {
 	 if( nx > 0 ) node_style_set( win, "left", nx + "px" );
@@ -290,6 +332,9 @@ function hop_iwindow_drag( event, win ) {
       node_style_set( win.el_content, "visibility", "visible" );
       node_style_set( win.el_win, "background", obg );
 
+      /* clip the window */
+      hop_iwindow_clip( win );
+      
       /* user event */
       if( win.onmove ) hop_iwindow_invoke_listener( win.onmove, evt );
    }
@@ -331,6 +376,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
    node_style_set( win.el_content, "border", "0" );
    node_style_set( win.el_content, "display", "none" );
    node_style_set( win.el_win, "background", "white" );
+   node_style_set( win, "clip", "auto" );
 
    if( widthp && heightp ) {
       mousemove = function( event ) {
@@ -453,7 +499,7 @@ function make_hop_iwindow( id, klass, parent ) {
    if( parent ) {
       if( (parent instanceof String) || (typeof parent === "string") )
 	 parent = document.getElementById( parent );
-   
+
       parent.appendChild( win );
    } else {
       document.body.appendChild( win );
@@ -501,7 +547,7 @@ function make_hop_iwindow( id, klass, parent ) {
 
    win.hop_add_event_listener = hop_iwindow_add_event_listener;
    win.hop_remove_event_listener = hop_iwindow_remove_event_listener;
-   
+
    return win;
 }
 
@@ -593,6 +639,12 @@ function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resiz
 
    win.resizable = resizable;
    node_style_set( win.el_content, "display", "block" );
+   
+   win.clip = true;
+   if( win.clip ) {
+      hop_iwindow_clip( win );
+      win.hop_update = function() { hop_iwindow_clip( this ) };
+   }
 
    hop_iwindow_raise( win );
 

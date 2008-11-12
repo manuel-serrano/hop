@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Wed Oct 29 20:53:46 2008 (serrano)                */
+;*    Last change :  Wed Nov 12 08:39:52 2008 (serrano)                */
 ;*    Copyright   :  2006-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -155,7 +155,7 @@
        (string=? val "true"))
       ((enum)
        (string->symbol val))
-      ((expr)
+      ((expr quote)
        (with-input-from-string val read))
       (else
        (let ((v (with-input-from-string (string-append "(" val ")") read)))
@@ -192,7 +192,7 @@
 	  (if (eq? val #unspecified)
 	      '||
 	      val))
-	 ((expr)
+	 ((expr quote)
 	  (let ((s (open-output-string)))
 	     (write val s)
 	     (close-output-port s)))
