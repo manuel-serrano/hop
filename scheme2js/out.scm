@@ -488,7 +488,7 @@
 	     "  ~e" (walk body p #t)
 	     "} while (true);\n")
 	  (template-display p env
-	     "while (~e) {\n" (walk test p #f)
+	     "while (~e) {\n" (compile-boolified p env walk test)
 	     "  ~e"           (walk body p #t)
 	     "}\n"))))
 			  
