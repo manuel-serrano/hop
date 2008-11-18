@@ -6,31 +6,25 @@
 ;; module is small, and the changes inside Scheme2Js not intrusive.
 ;; This module should "follow" changes inside Scheme2Js.
 
-;; This module adds support for $(import XYZ) inside Scheme2Js-module headers.
+;; This module adds support for ($ (import XYZ)) inside Scheme2Js-module headers.
 
-; (define (dollar-modules! m::WIP-Unit)
-;    (tprint "dollar-modules!")
-;    (tprint m)
-;    (tprint (class-name (object-class m)))
-;    (tprint (pair? (WIP-Unit-header m)))
-;    (tprint (object? (WIP-Unit-header m)))
-;    (with-access::WIP-Unit m (header)
-;       (tprint header)
-(define (dollar-modules! header)
-   (begin
-      (let loop ((header (cddr header))
-		 (dollar-clauses '()))
-	 (cond
-	    ((null? header)
-	     (eval (cons* 'module (gensym) dollar-clauses)))
-	    ((not (pair? (car header))) ;; should never happen
-	     (loop (cdr header) dollar-clauses))
-	    ((eq? (caar header) '$)
-	     (loop (cdr header)
-		   (append (cdr (car header)) dollar-clauses)))
-	    (else
-	     (loop (cdr header)
-		   dollar-clauses))))))
+(define (dollar-modules! m::WIP-Unit)
+   (with-access::WIP-Unit m (header)
+      (when (and (pair? header)
+		 (pair? (cdr header)))
+	 (let loop ((header (cddr header))
+		    (dollar-clauses '()))
+	    (cond
+	       ((or (not header) (null? header))
+		(eval (cons* 'module (gensym) dollar-clauses)))
+	       ((not (pair? (car header))) ;; should never happen
+		(loop (cdr header) dollar-clauses))
+	       ((eq? (caar header) '$)
+		(loop (cdr header)
+		      (append (cdr (car header)) dollar-clauses)))
+	       (else
+		(loop (cdr header)
+		      dollar-clauses)))))))
 
 (define (dollar-modules-adder)
    dollar-modules!)
