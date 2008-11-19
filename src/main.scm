@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Oct 15 10:13:40 2008 (serrano)                */
+;*    Last change :  Wed Nov 19 13:17:07 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -31,7 +31,7 @@
 	    hop_scheduler-queue
 	    hop_scheduler-one-to-one
 	    hop_scheduler-pool
-	    hop_scheduler-cohort)
+	    hop_scheduler-accept-many)
 
    (main    main))
 
@@ -118,10 +118,6 @@
 	  (case (hop-scheduling)
 	     ((nothread)
 	      (hop-scheduler-set! (instantiate::nothread-scheduler)))
-	     ((cohort)
-	      (hop-scheduler-set! (instantiate::cohort-scheduler
-				     (size (hop-max-threads))
-				     (cohort 4))))
 	     ((queue)
 	      (hop-scheduler-set! (instantiate::queue-scheduler
 				     (size (hop-max-threads)))))
@@ -130,6 +126,9 @@
 				     (size (hop-max-threads)))))
 	     ((pool)
 	      (hop-scheduler-set! (instantiate::pool-scheduler
+				     (size (hop-max-threads)))))
+	     ((accept-many)
+	      (hop-scheduler-set! (instantiate::accept-many-scheduler
 				     (size (hop-max-threads)))))
 	     (else
 	      (error 'hop "Unknown scheduling policy" (hop-scheduling)))))

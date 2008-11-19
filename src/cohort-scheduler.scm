@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/cohort-scheduler.scm          */
+;*    serrano/prgm/project/hop/1.10.x/src/cohort-scheduler.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 16:03:01 2008                          */
-;*    Last change :  Mon Sep  1 13:41:13 2008 (serrano)                */
+;*    Last change :  Wed Nov 19 13:15:57 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    COHORT scheduler                                                 */
@@ -103,6 +103,12 @@
    (%spawn scd p args))
 
 ;*---------------------------------------------------------------------*/
+;*    stage ::cohort-scheduler ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (stage scd::cohort-scheduler thread proc . args)
+   (%spawn scd proc args))
+   
+;*---------------------------------------------------------------------*/
 ;*    %spawn ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (%spawn scd::cohort-scheduler p args)
@@ -113,12 +119,6 @@
 	 (condition-variable-signal! condv)
 	 (mutex-unlock! mutex))))
 
-;*---------------------------------------------------------------------*/
-;*    stage ::cohort-scheduler ...                                     */
-;*---------------------------------------------------------------------*/
-(define-method (stage scd::cohort-scheduler thread proc . args)
-   (%spawn scd proc args))
-   
 ;*---------------------------------------------------------------------*/
 ;*    cohort-get-pool ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -146,22 +146,23 @@
 ;*    pool-get ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (pool-get pool::pool)
-   (with-access::pool pool (id free nfree condv mutex scheduler)
+   (with-access::pool pool (mutex condv)
       (mutex-lock! mutex)
       (let loop ()
-	 (if (pair? free)
-	     (let ((t (car free)))
-		(set! free (cdr free))
-		(set! nfree (-fx nfree 1))
-		(with-access::cohort-scheduler scheduler (mutex nfree)
-		   (mutex-lock! mutex)
+	 (with-access::pool pool (id free nfree scheduler)
+	    (if (pair? free)
+		(let ((t (car free)))
+		   (set! free (cdr free))
 		   (set! nfree (-fx nfree 1))
-		   (mutex-unlock! mutex))
-		(mutex-unlock! mutex)
-		t)
-	     (begin
-		(condition-variable-wait! condv mutex)
-		(loop))))))
+		   (with-access::cohort-scheduler scheduler (mutex nfree)
+		      (mutex-lock! mutex)
+		      (set! nfree (-fx nfree 1))
+		      (mutex-unlock! mutex))
+		   (mutex-unlock! mutex)
+		   t)
+		(begin
+		   (condition-variable-wait! condv mutex)
+		   (loop)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    pool-add! ...                                                    */
@@ -190,7 +191,8 @@
       (let loop ()
 	 (condition-variable-wait! condv mutex)
 	 (with-handler
-	    (make-scheduler-error-handler t)
+	    (lambda (e)
+	       (make-scheduler-error-handler t) e)
 	    ((hopthread-proc t) scd t))
 	 (pool-add! pool t)
 	 (loop))))

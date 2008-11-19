@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.9.x/src/Makefile                      */
+#*    serrano/prgm/project/hop/1.10.x/src/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sat Sep 20 20:24:29 2008 (serrano)                */
+#*    Last change :  Wed Nov 19 13:16:33 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -29,7 +29,7 @@ MODULES		= hop-param parseargs main init \
                   queue-scheduler \
                   oto-scheduler \
                   pool-scheduler \
-                  cohort-scheduler
+                  amany-scheduler
 
 INCLUDES	= stage.sch
 

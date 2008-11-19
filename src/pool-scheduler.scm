@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Thu Nov  6 17:07:34 2008 (serrano)                */
+;*    Last change :  Wed Nov 19 11:39:45 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -90,6 +90,29 @@
 	    (set! nfree (-fx nfree 1))
 	    (mutex-unlock! smutex)
 	    (set! proc (lambda (s t) (apply p s t args)))
+	    (mutex-lock! mutex)
+	    (condition-variable-signal! condv)
+	    (mutex-unlock! mutex)
+	    thread))))
+
+;*---------------------------------------------------------------------*/
+;*    spawn5 ::pool-scheduler ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (spawn5 scd::pool-scheduler p a0 a1 a2 a3 a4)
+   (with-access::pool-scheduler scd ((smutex mutex) condv free nfree)
+      (mutex-lock! smutex)
+      (let loop ()
+	 (unless (pair? free)
+	    ;; we have to wait for a thread to complete
+	    (condition-variable-wait! condv smutex)
+	    (loop)))
+      (let ((thread (car free)))
+	 (with-access::hopthread thread (proc mutex condv userdata)
+	    (set! userdata free)
+	    (set! free (cdr free))
+	    (set! nfree (-fx nfree 1))
+	    (mutex-unlock! smutex)
+	    (set! proc (lambda (s t) (p s t a0 a1 a2 a3 a4)))
 	    (mutex-lock! mutex)
 	    (condition-variable-signal! condv)
 	    (mutex-unlock! mutex)

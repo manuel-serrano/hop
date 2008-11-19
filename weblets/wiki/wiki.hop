@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Oct  3 11:36:50 2008 (serrano)                */
+;*    Last change :  Mon Nov 17 12:14:57 2008 (serrano)                */
 ;*    Copyright   :  2005-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -135,16 +135,17 @@
 	 :favicon "etc/favicon.png"
 	 :css "wiki.hss")
       (<WIKI:BODY>
-	 (<FORM> :action wiki
-	    (<FILECHOOSER>
-	       :filters '(("Wiki (*.wiki)" "^[^.].*[.]wiki$")
-			  ("All Files" ".*"))
-	       :onopen ~(set! document.location ($wiki this.value)))))))
+	 (<FILECHOOSER>
+	    :filters '(("Wiki (*.wiki)" "^[^.].*[.]wiki$")
+		       ("All Files" ".*"))
+	    :onopen ~(set! document.location ($wiki this.value))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-view ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (wiki-view req file)
+   (unless (file-exists? file)
+      (with-output-to-file file (lambda () (display "== Sample ==\n"))))
    (if (file-exists? file)
        (<HTML>
 	  (<HEAD> :title "Hop wiki"

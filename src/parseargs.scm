@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Oct 15 07:56:45 2008 (serrano)                */
+;*    Last change :  Wed Nov 19 13:17:12 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -173,9 +173,9 @@
 		(print  "Schedulers:")
 		(print "  - queue (split threads but avoid useless switches)")
 		(print "  - nothread (single threaded execution)")
-		(print "  - cohort (cohorts of task threads)")
 		(print "  - one-to-one (one thread per request)")
-		(print "  - pool (one thread per request from a pool)")))
+		(print "  - pool (one thread per request from a pool)")
+		(print "  - accept-many (as pool but an accept-many call)")))
 	  (exit 0))
 	 (("--restore-cache" (help "Restore disk caches"))
 	  (hop-restore-disk-cache-set! #t))

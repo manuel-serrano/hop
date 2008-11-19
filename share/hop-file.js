@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-file.js                 */
+/*    serrano/prgm/project/hop/1.10.x/share/hop-file.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Sun Aug 17 14:53:49 2008 (serrano)                */
+/*    Last change :  Mon Nov 17 12:13:22 2008 (serrano)                */
 /*    Copyright   :  2008 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
@@ -117,6 +117,7 @@ function hop_filechooser_open( id, url ) {
    var el = document.getElementById( id );
    var fe = document.getElementById( id + "-filters" );
    var he = document.getElementById( id + "-hidden" );
+   
    // the name of the service is defined in runtime/hop-file.scm
    var svc = hop_service_base() + "/server-file/files?id=" + id +
       "&url=" + url + "&regexp=" + fe.value + "&hidden=" + he.checked;
@@ -129,7 +130,7 @@ function hop_filechooser_open( id, url ) {
    }
 
    el.value = url;
-   
+
    with_hop( svc, callback );
 }
 
@@ -146,7 +147,7 @@ function hop_filechooser_add( id ) {
    function callback( h ) {
       hop_innerHTML_set( id + "-places", h )
    }
-   
+
    with_hop( svc, callback );
 }
 

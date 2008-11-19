@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Nov 12 08:57:35 2008 (serrano)                */
+;*    Last change :  Wed Nov 19 09:40:02 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -307,14 +307,32 @@
 ;*---------------------------------------------------------------------*/
 (define (stage-dynamic-answer scd thread id req resp)
    (stage-answer scd thread id req resp))
-   
+
+;*---------------------------------------------------------------------*/
+;*    stage-answer-verb ...                                            */
+;*---------------------------------------------------------------------*/
+(define (stage-answer-verb scd thread req resp connection mode)
+   (hop-verb 3 (hop-color req req mode)
+	     (format " ~a" thread)
+	     " load=" (scheduler-load scd)
+	     (scheduler-stat scd)
+	     ": " (find-runtime-type resp) " " connection
+	     " [" (current-date) "] "
+	     (if (and (eq? connection 'keep-alive) (>=fx (hop-verbose) 4))
+		 (format " keep-alive [open=~a/~a]"
+			 (keep-alive)
+			 (hop-keep-alive-threshold))
+		 connection)
+	     "\n"))
+
 ;*---------------------------------------------------------------------*/
 ;*    stage-answer ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (stage-answer scd thread id req resp)
    (hopthread-request-set! thread req)
-   ;; log4
+   ;; log
    (hop-verb 3 (hop-color req req " EXEC")
+	     " load=" (scheduler-load scd)
 	     (scheduler-stat scd)
 	     (format " ~a" thread)
 	     ": " (find-runtime-type resp)
@@ -334,36 +352,34 @@
 					 (http-request-path req)
 					 (find-runtime-type resp)
 					 connection))
-	 ;; log2
-	 (hop-verb 3 (hop-color req req
-				(if (eq? connection 'keep-alive)
-				    " KEEP-ALIVE"
-				    " END"))
-		   (format " ~a" thread)
-		   (scheduler-stat scd)
-		   ": " (find-runtime-type resp) " " connection
-		   " [" (current-date) "] "
-		   (if (and (eq? connection 'keep-alive) (>=fx (hop-verbose) 4))
-		       (format " keep-alive [open=~a/~a]"
-			       (keep-alive)
-			       (hop-keep-alive-threshold))
-		       connection)
-		   "\n")
-
 	 (case connection
 	    ((persistent)
+	     (when (>=fx (hop-verbose) 3)
+		(stage-answer-verb scd thread req resp connection
+				   " PERSISTENT"))
 	     #unspecified)
 	    ((keep-alive)
 	     (let ((load (scheduler-load scd)))
 		(cond
 		   ((or (>=fx (keep-alive) (hop-keep-alive-threshold))
 			(=fx load 100))
+		    (when (>=fx (hop-verbose) 3)
+		       (stage-answer-verb scd thread req resp connection
+					  " END"))
 		    (socket-close sock))
 		   ((>=fx load 80)
+		    (when (>=fx (hop-verbose) 3)
+		       (stage-answer-verb scd thread req resp connection
+					  " KEEP-ALIVE"))
 		    (keep-alive++)
 		    (stage scd thread stage-request id sock 'keep-alive 1))
 		   (else
+		    (when (>=fx (hop-verbose) 3)
+		       (stage-answer-verb scd thread req resp connection
+					  " KEEP-ALIVE"))
 		    (keep-alive++)
 		    (stage scd thread stage-request id sock 'keep-alive (hop-keep-alive-timeout))))))
 	    (else
+	     (when (>=fx (hop-verbose) 3)
+		(stage-answer-verb scd thread req resp connection " END"))
 	     (socket-close sock))))))

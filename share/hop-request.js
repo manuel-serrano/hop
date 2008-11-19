@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Nov 10 16:57:23 2008 (serrano)                */
+/*    Last change :  Mon Nov 17 18:43:54 2008 (serrano)                */
 /*    Copyright   :  2004-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -91,12 +91,35 @@ function hop_default_failure( xhr ) {
    var div = document.getElementById( "hop_default_failure" );
    var div2 = document.getElementById( "hop_default_failure_background" );
 
+   var notify_error = function( d, xhr ) {
+      if( xhr.responseError ) {
+	 d.appendChild( xhr.responseError );
+      } else {
+	 var t = xhr.responseText;
+	 if( t ) {
+	    t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
+	    t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
+	    t = t.replace( /<\/head>/g, "</div>" );
+	    t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
+	    t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	    t = t.replace( /<\/html>/g, "</div>" );
+	    t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
+	    t = t.replace( /<\/body>/g, "</div>" );
+	    t = t.replace( /&quot;/g, "\"" );
+	    d.innerHTML = t;
+	 } else {
+	    d.innerHTML = "Status: " + xhr.status + " -- " + xhr.statusText;
+	 }
+      }
+   }
+      
    if( !div ) {
-      var w = (hop_current_window_width() / 5) + "px";
+      var w = (hop_current_window_width() / 8) + "px";
       var h = ((hop_current_window_height() / 4) + 50) + "px";
 
       div = document.createElement( "div" );
       div.id = "hop_default_failure";
+      div.align = "center";
       node_style_set( div, "position", "fixed" );
       node_style_set( div, "top",  "50px" );
       node_style_set( div, "bottom", h );
@@ -109,34 +132,15 @@ function hop_default_failure( xhr ) {
       node_style_set( div, "background", "#fff" );
       node_style_set( div, "padding", "4px" );
       node_style_set( div, "padding-bottom", "8px" );
-      div.align = "center";
+      node_style_set( div, "overflow", "hidden" );
    } else {
       div.innerHTML = "";
    }
 
-   if( xhr.responseError ) {
-      div.appendChild( xhr.responseError );
-   } else {
-      var t = xhr.responseText;
-      if( t ) {
-	 t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
-	 t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
-	 t = t.replace( /<\/head>/g, "</div>" );
-	 t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
-	 t = t.replace( /<html[^>]*>/g, "<div align='center' style='background: transparent; cursor: pointer' onclick='document.body.removeChild( document.getElementById( \"hop_default_failure_background\" ) ); document.body.removeChild( document.getElementById( \"hop_default_failure\" ) );' title='Click to hide this message'>" );
-	 t = t.replace( /<\/html>/g, "</div>" );
-	 t = t.replace( /<body[^>]*>/g, "<div align='center' style='border: 3px dashed red; overflow: auto; width: 50em; background: white; padding: 4px; font-family: sans serif; text-align: center;'>" );
-	 t = t.replace( /<\/body>/g, "</div>" );
-	 t = t.replace( /&quot;/g, "\"" );
-	 div.innerHTML = t;
-      } else {
-	 div.innerHTML = "Status: " + xhr.status + " -- " + xhr.statusText;
-      }
-   }
-   
    if( !div2 ) {
       div2 = document.createElement( "div" );
       div2.id = "hop_default_failure_background";
+      div2.align = "center";
       node_style_set( div2, "position", "fixed" );
       node_style_set( div2, "top", "0" );
       node_style_set( div2, "bottom", "0" );
@@ -147,11 +151,20 @@ function hop_default_failure( xhr ) {
       node_style_set( div2, "overflow", "hidden" );
       node_style_set( div2, "text-align", "center" );
       node_style_set( div2, "z-index", "9999" );
+      node_style_set( div2, "text-align", "center" );
 
-      div2.appendChild( div );
       document.body.appendChild( div2 );
    }
 
+   if( xhr.status >= 500 ) {
+      node_style_set( div, "border", "5px dashed red" );
+   } else {
+      node_style_set( div, "border", "5px dashed #f87d0f" );
+   }
+
+   notify_error( div, xhr );
+   div2.appendChild( div );
+   
    node_style_set( div2, "display", "block" );
    hop_add_event_listener( div2,
 			   "click",

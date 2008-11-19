@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Mon Nov 10 14:42:01 2008 (serrano)                */
+;*    Last change :  Wed Nov 19 13:17:46 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -34,7 +34,7 @@
 	    hop_scheduler-queue
 	    hop_scheduler-one-to-one
 	    hop_scheduler-pool
-	    hop_scheduler-cohort
+	    hop_scheduler-accept-many
 	    hop_pipeline)
 
    (export  (generic scheduler-accept-loop ::scheduler ::socket)
@@ -71,8 +71,9 @@
       ((or bigloo3.1a bigloo3.1b)
        #unspecified)
       (else
+       (socket-option-set! sock :SO_SNDBUF (hop-sndbuf))
        (socket-option-set! sock :TCP_NODELAY #t))))
-   
+    
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ...                                        */
 ;*---------------------------------------------------------------------*/
@@ -88,14 +89,27 @@
 	 (loop (+fx id 1)))))
 
 ;*---------------------------------------------------------------------*/
+;*    allocate-vector ...                                              */
+;*---------------------------------------------------------------------*/
+(define-macro (allocate-vector size fill)
+   (let ((v (gensym)))
+      `(let ((,v (make-vector ,size)))
+	  (let loop ((i 0))
+	     (if (=fx i ,size)
+		 ,v
+		 (begin
+		    (vector-set! ,v i ,fill)
+		    (loop (+fx i 1))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ::queue-scheduler ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::queue-scheduler serv::socket)
    (let* ((acclen (min 50 (/fx (hop-max-threads) 2)))
 	  (socks (make-vector acclen))) 
       (let loop ((id 1))
-	 (let* ((in-buffers (make-vector acclen (make-string 512)))
-		(out-buffers (make-vector acclen (make-string 1024)))
+	 (let* ((in-buffers (allocate-vector acclen (make-string 512)))
+		(out-buffers (allocate-vector acclen (make-string 1024)))
 		(n (socket-accept-many serv socks
 				       :inbufs in-buffers
 				       :outbufs out-buffers)))
@@ -151,8 +165,6 @@
 					:outbuf (hopthread-outbuf thread)))
 		   (id  (get-next-id))
 		   (fbuf (hopthread-flushbuf thread)))
-	       ;; the flush buffer is used for hop request but since we don't
-	       ;; know, we allow set it
 	       (output-port-flush-buffer-set! (socket-output sock) fbuf)
 	       (with-access::pool-scheduler scd (naccept)
 		  (mutex-lock! (pool-scheduler-mutex scd))
@@ -174,6 +186,49 @@
 	  (begin
 	     (spawn scd connect-stage)
 	     (loop (-fx i 1))))))
+
+;*---------------------------------------------------------------------*/
+;*    scheduler-accept-loop ::accept-many-scheduler ...                */
+;*---------------------------------------------------------------------*/
+(define-method (scheduler-accept-loop scd::accept-many-scheduler serv::socket)
+   
+   (define acclen (length (pool-scheduler-free scd)))
+   (define dummybufs (make-vector acclen (make-string 10)))
+   (define socks (make-vector acclen))
+
+   (define (stage-accept scd thread id sock mode timeout n)
+      ;; a little bit of traces
+      (hop-verb 2 (hop-color id id " ACCEPT")
+		(if (>=fx (hop-verbose) 3)
+		    (format " ~a, ~a accept" thread n)
+		    "")
+		": " (socket-hostname sock) " [" (current-date) "]\n")
+      ;; tune the socket
+      (tune-socket! sock)
+      ;; prepare the socket buffers
+      (let ((fbuf (hopthread-flushbuf thread)))
+	 (output-port-flush-buffer-set! (socket-output sock) fbuf)
+	 (input-port-buffer-set! (socket-input sock) (hopthread-inbuf thread))
+	 (output-port-buffer-set! (socket-output sock) (hopthread-outbuf thread)))
+      ;; process the request
+      (stage scd thread stage-request id sock mode timeout))
+
+   (tprint "acclen=" acclen)
+   (let loop ((id 1))
+      (let ((n (socket-accept-many serv socks
+				   :inbufs dummybufs
+				   :outbufs dummybufs)))
+	 (if (> n 1) (tprint "*** socket-accept-many: " n))
+	 (let liip ((i 0))
+	    (if (=fx i n)
+		(loop (+fx id i))
+		(let ((sock (vector-ref socks i)))
+		   ;; process the request
+		   (spawn scd stage-accept (+fx id i)
+			  sock
+			  'connect (hop-read-timeout)
+			  n)
+		   (liip (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ...                                        */

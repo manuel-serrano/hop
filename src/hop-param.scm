@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Oct 24 05:20:53 2008 (serrano)                */
+;*    Last change :  Tue Nov 18 06:48:57 2008 (serrano)                */
 ;*    Copyright   :  2004-08 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -51,6 +51,9 @@
 
 	    (hop-somaxconn::int)
 	    (hop-somaxconn-set! ::int)
+
+	    (hop-sndbuf::int)
+	    (hop-sndbuf-set! ::int)
 	    
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
@@ -182,6 +185,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-somaxconn
    16)
+
+;*---------------------------------------------------------------------*/
+;*    hop-sndbuf ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sndbuf
+   (*fx 1024 12))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-https ...                                             */

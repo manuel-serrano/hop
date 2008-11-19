@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Nov 10 17:12:38 2008 (serrano)                */
+/*    Last change :  Fri Nov 14 17:13:28 2008 (serrano)                */
 /*    Copyright   :  2007-08 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -173,7 +173,7 @@ function start_servevt_ajax_proxy( key ) {
 	       register( "" );
 	       // invoke all the user handlers (we have received a list of
 	       // values corresponding to server buffer).
-	       while( val != null ) {
+	       while( sc_isPair( val ) ) {
 		  var v = val.car;
 		  var id = v.car;
 		  var vals = v.cdr;

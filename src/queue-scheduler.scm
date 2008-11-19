@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/queue-scheduler.scm           */
+;*    serrano/prgm/project/hop/1.10.x/src/queue-scheduler.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Wed Sep 10 14:07:12 2008 (serrano)                */
+;*    Last change :  Wed Nov 19 10:30:07 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
@@ -230,29 +230,30 @@
 ;*---------------------------------------------------------------------*/
 ;*    queue-thread-body ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (queue-thread-body t)
-   (with-handler
-      (lambda (e)
-	 (scheduler-error-handler e t)
-	 (queue-thread-body t))
-      (let* ((scd (hopthread-scheduler t))
-	     (mutex (hopthread-mutex t))
-	     (condv (hopthread-condv t)))
-	 (define (loop)
-	    (condition-variable-wait! condv mutex)
-	    (let liip ((proc (hopthread-proc t)))
-	       ;; execute the user task
-	       (proc scd t)
-	       ;; check if there is a new task
-	       (let ((nproc (queue-pop! scd)))
-		  (if nproc
-		      ;; there is a waiting task, execute it
-		      (liip nproc)
-		      ;; nothing to do, go to sleep waiting for a new task
-		      (begin
-			 (put-thread! scd t)
-			 (loop))))))
-	 (with-lock mutex loop))))
+(define (queue-thread-body scd t)
+   (let loop ()
+      (with-handler
+	 (lambda (e)
+	    (scheduler-error-handler e t))
+	 (let ((mutex (hopthread-mutex t))
+	       (condv (hopthread-condv t)))
+	    (define (loop)
+	       (condition-variable-wait! condv mutex)
+	       (let liip ((proc (hopthread-proc t)))
+		  ;; execute the user task
+		  (proc scd t)
+		  ;; check if there is a new task
+		  (let ((nproc (queue-pop! scd)))
+		     (if nproc
+			 ;; there is a waiting task, execute it
+			 (liip nproc)
+			 ;; nothing to do, go to sleep waiting for a new task
+			 (begin
+			    (put-thread! scd t)
+			    (loop))))))
+	    (with-lock mutex loop)))
+      (put-thread! scd t)
+      (loop)))
    
 ;*---------------------------------------------------------------------*/
 ;*    make-queue-thread ...                                            */
@@ -261,7 +262,7 @@
    (letrec ((t (instantiate::hopthread
 		  (name (gensym 'queue-scheduler))
 		  (scheduler scd)
-		  (body (lambda () (queue-thread-body t))))))
+		  (body (lambda () (queue-thread-body scd t))))))
       (thread-start-joinable! t)
       t))
 
