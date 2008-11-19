@@ -28,26 +28,26 @@
 			  (lambda (exception)
 			     (format "*** ~a" exception))
 			  (eval expr)))
-		      (if (>= i 0)
-			  (let ((s (e.substr (+ i 4) e.length)))
-			     (with-hop
-			      ($home/demos/repl/compile s)
-			      (lambda (h)
-				 (cond
-				    ((pair? h)
-				     (with-output-to-procedure
-				      (lambda (s)
-					 (set! self.value
-					       (string-append self.value s)))
-				      (lambda ()
-					 (let ((e (safe-eval (car h))))
-					    (print e)
-					    (display ":=> ")))))
-				    ((string? h)
-				     (alert h)
-				     (set! self.value
-					   (string-append self.value
-							  ";; error\n:=> "))))))))))
+		      (when (>= i 0)
+			 (let ((s (e.substr (+ i 4) e.length)))
+			    (with-hop ($home/demos/repl/compile s)
+			       (lambda (h)
+				  (cond
+				     ((pair? h)
+				      (with-output-to-procedure
+				       (lambda (s)
+					  (set! self.value
+						(string-append self.value s)))
+				       (lambda ()
+					  (unless (string=? (car h) "")
+					     (let ((e (safe-eval (car h))))
+						(print e)))
+					  (display ":=> "))))
+				     ((string? h)
+				      (alert h)
+				      (set! self.value
+					    (string-append self.value
+							   ";; error\n:=> "))))))))))
 	       ";; Try to cut an paste the following lines, without the semi-colons
 ;;   (let ((el (car (dom-get-elements-by-tag-name document \"h1\"))))
 ;;      (el.style.setProperty \"color\" \"red\" \"\"))
@@ -68,8 +68,10 @@
 	  (with-input-from-string s
 	     (lambda ()
 		(let ((e (hop-read (current-input-port))))
-		   (with-handler
-		      (lambda (e)
-			 (with-error-to-string
-			    (lambda () (error-notify e))))
-		      (cons (compile-hop-client e) s)))))))))
+		   (if (eof-object? e)
+		       (cons "" "")
+		       (with-handler
+			  (lambda (e)
+			     (with-error-to-string
+				(lambda () (error-notify e))))
+			  (cons (compile-hop-client e) s))))))))))
