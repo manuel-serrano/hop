@@ -302,12 +302,7 @@
 	  (move-to-begin this walk! surrounding-fun stmt-begin)
 	  (default-walk! this surrounding-fun #f))))
       
-;; TODO: what about Call/cc-Call ?
-;(define-nmethod (Call/cc-Resume.stmts! surrounding-fun state-var/return
-;				       statement-form?)
-;   (Value-stmts! this state-var/return statement-form?))
-;
-;(define-nmethod (Call/cc-Counter-Update.stmts! surrounding-fun
-;					       state-var/return
-;					       statement-form?)
-;   (Value-stmts! this state-var/return statement-form?))
+(define-nmethod (Call/cc-Resume.stmts! surrounding-fun stmt-begin)
+   (error "statements"
+	  "internal error: Call/cc-Resume nodes should not exist yet."
+	  #f))

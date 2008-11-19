@@ -1,195 +1,204 @@
 (module callcc-locations
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   config
+   (import config
 	   nodes
+	   walk
+	   export-desc
 	   side
 	   free-vars
-	   locals
-	   var
 	   var-ref-util
-	   verbose)
-   (export (call/cc-locations tree::pobject)))
+	   verbose
+	   tools)
+   (static (wide-class Call/cc-Lambda::Lambda
+	      (callers::pair-nil (default '())))
+	   (wide-class Call/cc-Call::Call
+	      (target (default #f))
+	      (verify-later-targets::pair-nil (default '())))
+	   (final-class Mark-Env
+	      extern-always-call/cc?::bool))
+   (export (call/cc-locations tree::Module)))
 
 ;; sets .call/cc? for calls and functions that might reach call/cc.
 (define (call/cc-locations tree)
    (when (config 'suspend/resume)
       (verbose "call/cc locations")
       (side-effect tree)
-      (rev-call-tree tree)
-      (callcc-typing tree)
-      (clean-callers tree)))
+      (rev-call-tree tree)   ;; build call-tree
+      (callcc-mark tree)     ;; detect call/ccs and mark calls/funs.
+      (shrink tree)))        ;; shrink all nodes.
 
 ;; every lambda receives its callers. recursive calls are ignored.
 (define (rev-call-tree tree)
    (verbose " call/cc rev-call-tree")
-   (overload traverse call-tree (Node
-				 Module
-				 Lambda
-				 Call)
-	     (tree.traverse #f)))
+   (rev-tree tree #f #f))
 
-(define-pmethod (Node-call-tree current-fun)
-   (this.traverse1 current-fun))
+(define-nmethod (Node.rev-tree current-fun)
+   (default-walk this current-fun))
 
 ;; Module is not really a function, but we'll treat it like one, here.
-(define-pmethod (Module-call-tree current-fun)
-   (this.traverse1 this))
+(define-nmethod (Module.rev-tree current-fun)
+   (default-walk this this))
 
-(define-pmethod (Lambda-call-tree current-fun)
-   (this.traverse1 this))
+(define-nmethod (Lambda.rev-tree current-fun)
+   (widen!::Call/cc-Lambda this)
+   (default-walk this this))
 
-(define-pmethod (Call-call-tree current-fun)
-   (this.traverse1 current-fun)
-   (let ((target (call-target this.operator)))
-      (when target
-	 (set! this.target target)
-	 (if (inherits-from? target (node 'Lambda))
-	     (set! target.callers (cons current-fun
-					(or target.callers '())))))))
+(define-nmethod (Call/cc-Lambda.rev-tree current-fun)
+   (default-walk this this))
 
-;; 'typing' is probably the wrong term...
-(define (callcc-typing tree)
-   (verbose " call/cc typing")
-   (overload traverse type (Node
-			    Module
-			    Lambda
-			    Call)
-	     (tree.traverse #f))
-   (overload traverse finish-type (Node
-				   Call)
-	     (tree.traverse)))
+;; set target for call, and add current-fun to callers of target.
+(define-nmethod (Call.rev-tree current-fun)
+   (default-walk this current-fun)
+   (with-access::Call this (operator)
+      (let ((target (call-target operator)))
+	 (when target
+	    (widen!::Call/cc-Call this (target target))
+	    (when (Lambda? target)
+	       (unless (Call/cc-Lambda? target)
+		  (widen!::Call/cc-Lambda target))
+	       (with-access::Call/cc-Lambda target (callers)
+		  (unless (memq current-fun callers)
+		     (set! callers (cons current-fun callers)))))))))
 
-(define-pmethod (Node-type current-fun)
-   (this.traverse1 current-fun))
+(define (callcc-mark tree)
+   (verbose " call/cc mark")
+   (mark tree (instantiate::Mark-Env (extern-always-call/cc?
+				      (config 'extern-always-call/cc)))
+	 #f)
+   (finish-marking tree #f))
 
-;; Module is not a function, but in this context we'll treat it like one.
-(define-pmethod (Module-type current-fun)
-   (this.traverse1 this))
+(define-nmethod (Node.mark current-fun)
+   (default-walk this current-fun))
 
-(define-pmethod (Lambda-type current-fun)
-   (this.traverse1 this))
+(define-nmethod (Module.mark current-fun)
+   (default-walk this #f))
 
-(define-pmethod (Call-type current-fun)
-   (define (mark-call/cc-fun fun)
-      (unless fun.call/cc?
-	 (set! fun.call/cc? #t)
-	 (if fun.callers (for-each (lambda (fun)
-				      (mark-call/cc-fun fun))
-				   fun.callers))))
+(define-nmethod (Lambda.mark current-fun)
+   (default-walk this this))
 
-   (this.traverse1 current-fun)
-   (let* ((target this.target)
-	  (var (constant-var target)))
+(define (unsafe-param? param call current-fun env)
+   (let* ((higher-target (call-target param))
+	  (target-var (constant-var higher-target)))
       (cond
-	 ;; optim.
-	 ((and var
-	       var.higher?
-	       var.higher-params)
-	  (if (any?
-	       (lambda (which)
-		  (let* ((higher-target (call-target (list-ref this.operands which)))
-			 (target-var (constant-var higher-target)))
-		     (cond
-			((and (inherits-from? higher-target (node 'Lambda))
-			      (not higher-target.call/cc?))
-			 ;; put us into the callers list of the
-			 ;; higher-target, in case it hasn't been traversed
-			 ;; yet.
-			 ;; we are technically not calling the higher-target,
-			 ;; but this simplifies the code.
-			 (set! higher-target.callers
-			       (cons current-fun
-				     (or higher-target.callers
-					 '())))
-			 ;; put us into a 'higher-targets' list so we can
-			 ;; verify later on, if any of these yet unevaluated
-			 ;; functions turned out to contain call/ccs.
-			 (set! this.higher-targets
-			       (cons higher-target
-				     (or this.higher-targets
-					 '())))
-			 ;; for now don't mark us as call/cc
-			 #f)
-			((and target-var
-			      target-var.runtime?)
-			 ;; true if target-var is higher.
-			 ;; we could optimize even more...
-			 ;; TODO: optimize more.
-			 target-var.higher?)
-			((and target-var
-			      target-var.extern?
-			      (not target-var.higher?)
-			      (not (config 'extern-always-call/cc)))
-			 ;; do-nothing
-			 #f)
-			(else
-			 ;; mark call/cc-fun and abort traversal of list.
-			 #t))))
-	       var.higher-params)
-	      (begin
-		 (mark-call/cc-fun current-fun)
-		 (set! this.call/cc? #t))))
-; 	 ((not target)
-; 	  (print "not target")
-; 	  #f)
-; 	 (target.potential-call/cc?
-; 	  (print "potential")
-; 	  #f)
-; 	 ((and var var.higher)
-; 	  (print "higher"))
-; 	 ((and var var.extern (not var.runtime?) (config
-;    'extern-always-call/cc))
-; 	  (print "long one"))
-	 ((or (not target) ;; assume call/cc
-	      target.call/cc?
-	      (and var var.higher?)
-	      (and var
-		   var.extern
-		   (not var.runtime?)
-		   (config 'extern-always-call/cc)))
-	  (mark-call/cc-fun current-fun)
-	  (set! this.call/cc? #t))
+	 ((and (Lambda? higher-target)
+	       (Lambda-call/cc? higher-target))
+	  #t)
+	 ((Lambda? param)
+	  ;; maybe the target has just not yet been traversed.
+	  ;; -> put us into the callers list of the higher-target.
+	  ;; we are technically not calling the higher-target, but this
+	  ;; simplifies the code. (we are indirectly calling the target
+	  ;; anyways).
+	  (with-access::Call/cc-Lambda higher-target (callers)
+	     (unless (or (not current-fun) (memq current-fun callers))
+		(set! callers (cons current-fun callers))))
+	  ;; put us into a 'verify-later-targets' list so we can
+	  ;; verify later on, if any of these yet unevaluated
+	  ;; functions turned out to contain call/ccs.
+	  (with-access::Call/cc-Call call (verify-later-targets)
+	     (unless (memq higher-target verify-later-targets)
+		(cons-set! verify-later-targets higher-target)))
+	  ;; for now don't mark us as call/cc
+	  #f)
+	 ((and target-var
+	       (eq? (Var-kind target-var) 'imported)
+	       (Export-Desc-runtime?
+		(Var-export-desc target-var)))
+	  ;; true if target-var is higher.
+	  (Export-Desc-higher? (Var-export-desc target-var)))
+	 ((and target-var
+	       (eq? (Var-kind target-var) 'imported)
+	       (not (Export-Desc-higher?
+		     (Var-export-desc target-var)))
+	       (not (Mark-Env-extern-always-call/cc? env)))
+	  ;; do-nothing
+	  #f)
 	 (else
-	  'do-nothing))))
+	  ;; assume the parameter is unsafe.
+	  #t))))
 
-(define-pmethod (Node-finish-type)
-   (this.traverse0))
+(define (mark-call/cc-fun fun)
+   (with-access::Call/cc-Lambda fun (call/cc? callers)
+      (unless call/cc?
+	 (set! call/cc? #t)
+	 (for-each mark-call/cc-fun callers))))
 
-(define-pmethod (Call-finish-type)
-   (this.traverse0)
+(define-nmethod (Call.mark current-fun)
+   (default-walk this current-fun)
+   ;; As this is not a Call/cc-Call we do not know the target. -> mark as
+   ;; call/cc-call.
+   (with-access::Call this (call/cc?)
+      (set! call/cc? #t))
+   (unless (not current-fun)
+      (mark-call/cc-fun current-fun)))
+
+(define-nmethod (Call/cc-Call.mark current-fun)
+   (default-walk this current-fun)
+   (with-access::Call/cc-Call this (target operands call/cc?)
+      (let ((var (constant-var target))
+	    (nb-params (length operands)))
+	 (cond
+	    ;; optim.
+	    ((and var
+		  (eq? (Var-kind var) 'imported)
+		  (Export-Desc-higher? (Var-export-desc var))
+		  (Export-Desc-higher-params (Var-export-desc var)))
+	     ;; higher-params contains a list of parameters that are treated as
+	     ;; functions. If any of them is .call/cc? then the call is unsafe.
+	     ;; The other parameters are safe (never invoked).
+	     (when (any? (lambda (param-nb)
+			    (if (>fx param-nb nb-params)
+				;; not enough arguments. This will yield an
+				;; error, but not a call/cc-call.
+				#f
+				(unsafe-param? (list-ref operands param-nb)
+					       this current-fun env)))
+			 (Export-Desc-higher-params (Var-export-desc var)))
+		(unless (not current-fun) (mark-call/cc-fun current-fun))
+		(set! call/cc? #t)))
+	    ((and var
+		  (eq? (Var-kind var) 'imported)
+		  (not (Export-Desc-higher? (Var-export-desc var)))
+		  (or (Export-Desc-runtime? (Var-export-desc var))
+		      (not (Mark-Env-extern-always-call/cc? env))))
+	     ;; do nothing. safe call.
+	     'do-nothing)
+	    ((and (Lambda? target)
+		  (not (Lambda-call/cc? target)))
+	     ;; the target has not yet been marked as call/cc. However this
+	     ;; might happen later on. -> add this fun to the verify list.
+	     (with-access::Call/cc-Call this (verify-later-targets)
+		(set! verify-later-targets (list target))))
+	    (else ;; assume call/cc.
+	     (unless (not current-fun) (mark-call/cc-fun current-fun))
+	     (set! call/cc? #t))))))
+
+(define-nmethod (Node.finish-marking)
+   (default-walk this))
+
+(define-nmethod (Call/cc-Call.finish-marking)
+   (default-walk this)
    
-   ;; higher-targets have been set during typing pass.
+   ;; verify-later-targets have been set during first marking pass.
    ;; at that time these targets hadn't been evaluated yet (at least not
    ;; always.)
    ;; if one of them turned out to contain call/cc we must mark this call
    ;; as call/cc.
    ;; the surrounding function however has already been marked correctly.
-   (let* ((higher-targets this.higher-targets))
-      (if (and higher-targets
-	       (any? (lambda (n)
-			n.call/cc?)
-		     higher-targets))
-	  (set! this.call/cc? #t)))
-   ;; same is true, if the call-target has been marked later on.
-   ;; TODO: can this actually happen?
-   (let ((target this.target))
-      (if (and target target.call/cc?)
-	  (set! this.call/cc? #t))))
+   (with-access::Call/cc-Call this (verify-later-targets call/cc?)
+      (when (any? Lambda-call/cc? verify-later-targets)
+	 (set! call/cc? #t))))
 
-(define (clean-callers tree)
+(define (shrink tree)
    (verbose " clean nodes")
-   (overload traverse clean-callers (Node Lambda)
-	     (tree.traverse)))
+   (clean tree #f))
 
-(define-pmethod (Node-clean-callers)
-   (this.traverse0))
+(define-nmethod (Node.clean)
+   (default-walk this))
 
-(define-pmethod (Lambda-clean-callers)
-   (delete! this.callers)
-   (this.traverse0))
+(define-nmethod (Call/cc-Call.clean)
+   (shrink! this)
+   (default-walk this))
 
-
+(define-nmethod (Call/cc-Lambda.clean)
+   (shrink! this)
+   (default-walk this))

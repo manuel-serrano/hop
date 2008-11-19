@@ -13,12 +13,38 @@
 	   (symbol-var scope id)
 	   (scope->list scope)))
 
+;; the scope-hashtable (as well as the list, that is used for shorter scopes)
+;; is using the following comparison-functions:
+;;  - if a qualified name is given (a pair), then it matches only the
+;;    corresponding qualified var. (pairs only match pairs).
+;;  - if an unqualified name is given (a symbol), then it matches unqualified
+;;     _and_ qualified vars of the same name. (if there are several qualified
+;;     names then the matched var is unspecified).
+
+(define (make-scope-hashtable size)
+   (create-hashtable
+    :size size
+    :eqtest (lambda (a b)
+	       (cond
+		  ((and (pair? a) (pair? b))
+		   (equal? a b))
+		  ((pair? a)
+		   (eq? (car a) b))
+		  ((pair? b)
+		   (eq? (car b) a))
+		  (else
+		   (eq? a b))))
+    :hash (lambda (a)
+	     (if (pair? a)
+		 (get-hashnumber (car a))
+		 (get-hashnumber a)))))
+
 (define (make-scope #!optional size)
    (if (and size
 	    (>fx size 50)) ;; TODO: hardcoded value
        (instantiate::Scope
 	  (kind 'big)
-	  (ht (make-hashtable (* size 2))) ;; TODO: hardcoded value
+	  (ht (make-scope-hashtable (* size 2))) ;; TODO: hardcoded value
 	  (els '()))
        (instantiate::Scope
 	  (kind 'small)
@@ -41,7 +67,7 @@
 	 ((< nb-els 50) ;; TODO: hardcoded value
 	  (cons-set! els (cons id var)))
 	 (else
-	  (set! ht (make-hashtable 100))
+	  (set! ht (make-scope-hashtable 100))
 	  (set! kind 'big)
 	  (for-each (lambda (el)
 		       (hashtable-put! ht (car el) (cdr el)))
@@ -54,8 +80,19 @@
       (define (get-entry)
 	 (if (eq? kind 'big)
 	     (hashtable-get ht id)
-	     (let ((tmp (assq id els)))
-		(and tmp (cdr tmp)))))
+	     (any (lambda (entry)
+		     (cond
+			((eq? (car entry) id)
+			 (cdr entry))
+			((and (pair? id) (pair? (car entry)))
+			 (and (equal? id (car entry))
+			      (cdr entry)))
+			((pair? id) #f)
+			((pair? (car entry))
+			 (and (eq? (caar entry) id)
+			      (cdr entry)))
+			(else #f)))
+		  els)))
 
       (let ((entry (get-entry)))
 	 (cond

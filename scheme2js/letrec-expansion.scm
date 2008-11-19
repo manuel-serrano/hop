@@ -1,14 +1,24 @@
 (module letrec-expansion
    (import config
 	   nodes
+	   pobject-conv
 	   export-desc
 	   walk
 	   verbose
 	   gen-js)
+   (static (final-class Env
+	      (call/cc?::bool read-only)))
    (export (letrec-expansion! tree::Module)))
 
+;; This pass servers two purposes:
+;;   1. it transforms non-global defines to letrecs
+;;   2. it decomposes letrecs when call/cc is activated.
+
 ;; According to the spec a (letrec ((x0 v0) (x1 v1) ...) body) is equivalent
-;; to: (let ((x0 _undef) (x1 _undef) ...) (set! x0 v0) (set! x1 v1) ... body)
+;; to: (let ((x0 _undef) (x1 _undef) ...)
+;;       (let ((tmp0 v0) (tmp1 v1) ...)
+;;         (set! x0 tmp0) (set! x1 tmp1) ...
+;;         body)
 ;;
 ;; Our optimizations however do not like it, when there are two assignments to
 ;; the same variable. Therefore we expand into this form only for call/cc, and
@@ -31,10 +41,14 @@
 ;;           (x1 (some-other-call ...)))
 ;;     body)
 ;;
-;; then the calls might be call/cc calls, and we expand the letrec (at least
-;; for the concerned terms. The spec explitely states, that the assignments can
-;; happen in any order. As such we can selectively expand, and leave some terms
-;; before the extracted terms (thereby reordering the initial bindings).
+;; or even
+;;   (letrec ((x0 (lambda () ...))
+;;            (x1 (some-call ...)))
+;;     body)
+;;
+;; then the calls might be call/cc calls, and we expand the letrec. Note that
+;; in the second example we coulde leave 'x0' inside the letrec if we were
+;; certain, that it was constant (which we do not know yet...)
 ;;
 ;; This pass has to happen quite early, as we assume that the bindings are of
 ;; the form (Set! x0 v0). (Something, that could easily change in later
@@ -45,7 +59,7 @@
 
 (define (letrec-expansion! tree)
    (verbose "letrec-expansion")
-   (letrec-expand tree #f)) ;; no environment.
+   (letrec-expand tree (make-Env (config 'call/cc))))
 
 (define-nmethod (Node.letrec-expand)
    (default-walk this))
@@ -55,27 +69,90 @@
        (Ref? n)
        (Lambda? n)))
 
+(define-nmethod (Lambda.letrec-expand)
+   (with-access::Lambda this (body)
+      (with-access::Return body (val)
+	 (set! val (defines->letrec! val)))
+      (default-walk this)))
+   
 (define-nmethod (Let.letrec-expand)
-   (default-walk this)
    (with-access::Let this (kind body bindings)
-      (when (eq? kind 'letrec)
-	 (let loop ((bindings bindings)
-		    (body-assigs '()))
-	    (cond
-	       ((and (null? bindings)
-		     (null? body-assigs))
-		'do-nothing)
-	       ((null? bindings)
-		(set! body (instantiate::Begin
-			      (exprs (append! body-assigs
-					      (list body))))))
-	       ((letrec-constant? (Set!-val (car bindings)))
-		(loop (cdr bindings)
-		      body-assigs))
-	       (else
-		(with-access::Set! (car bindings) (lvalue val)
-		   (let ((old-val val))
-		      (set! val (instantiate::Const (value #unspecified)))
-		      (loop (cdr bindings)
-			    (cons (var-assig (Ref-var lvalue) old-val)
-				  body-assigs))))))))))
+      (set! body (defines->letrec! body))
+      (default-walk this)
+      (when (and (eq? kind 'letrec)
+		 (Env-call/cc? env)
+		 (any? (lambda (binding)
+			  (with-access::Set! binding (val)
+			     (not (letrec-constant? val))))
+		       bindings))
+	 (let* ((tmp-vars (map (lambda (ign) (gensym 'ltr-tmp))
+			       bindings))
+		(new-bindings (map (lambda (tmp-var binding)
+				      (with-access::Set! binding (val)
+					 (instantiate::Set!
+					    (lvalue (instantiate::Ref
+						       (id tmp-var)))
+					    (val val))))
+				   tmp-vars
+				   bindings))
+		(assigs (map (lambda (tmp-var binding)
+				(with-access::Set! binding (lvalue)
+				   (instantiate::Set!
+				      (lvalue lvalue)
+				      (val (instantiate::Ref
+					      (id tmp-var))))))
+			     tmp-vars
+			     bindings)))
+	    ;; initially declare the bindings to #unspecified
+	    (for-each (lambda (binding)
+			 (with-access::Set! binding (val)
+			    (set! val
+				  (instantiate::Const (value #unspecified)))))
+		      bindings)
+	    ;; then evaluate the inits and store them in temporary variables
+	    (set! body
+		  (instantiate::Let
+		     (bindings new-bindings)
+		     (body (instantiate::Begin
+			      ;; and finally assign them back to the originals.
+			      (exprs (append! assigs (list body)))))
+		     (kind 'let)))))))
+
+(define (defines->letrec! n)
+   (cond
+      ((Define? n)
+       ;; wrap into begin.
+       (defines->letrec! (instantiate::Begin
+			    (exprs (list n)))))
+      ((Begin? n)
+       (let ((bindings (map (lambda (n) (shrink! n)) (head-defines! n))))
+	  (if (null? bindings)
+	      n
+	      (instantiate::Let
+		 (bindings bindings)
+		 (body n)
+		 (kind 'letrec)))))
+      (else n)))
+
+(define (head-defines! bnode::Begin)
+   (define (inner bnode::Begin rev-found-defines finish-fun)
+      (let loop ((exprs (Begin-exprs bnode))
+		 (rev-defines rev-found-defines))
+	 (cond
+	    ((null? exprs)
+	     rev-defines)
+	    ((Begin? (car exprs))
+	     (loop (cdr exprs)
+		   (inner (car exprs)
+			  rev-defines
+			  finish-fun)))
+	    ((Define? (car exprs))
+	     (let ((binding (car exprs)))
+		(set-car! exprs (instantiate::Const (value #unspecified)))
+		(loop (cdr exprs)
+		      (cons binding rev-defines))))
+	    (else
+	     (finish-fun rev-defines)))))
+
+   (reverse! (bind-exit (finish-fun)
+		(inner bnode '() finish-fun))))

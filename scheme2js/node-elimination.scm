@@ -241,3 +241,6 @@
 		(shrink! label)
 		(set! label (default-label)))))
       this))
+
+(define-nmethod (Call/cc-Resume.elim! val-is-needed?)
+   this)

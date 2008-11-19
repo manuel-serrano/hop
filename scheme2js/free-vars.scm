@@ -10,6 +10,8 @@
 ;; Modules will have imported variables marked as free.
 ;; variables that are escaping (i.e. are free in some fun) have their
 ;; .escapes? flag set to #t.
+;; If a variable is mutated outside its local function (that is it must
+;; escape), then .mutated-outside-local? is set to true.
 (define (free-vars tree)
    (verbose " free vars")
    (find-free tree #f #f '()))
@@ -20,11 +22,7 @@
 (define-nmethod (Execution-Unit.find-free surrounding-fun visible-vars-list)
    (with-access::Execution-Unit this (scope-vars free-vars)
       (set! free-vars '())
-      (default-walk this this (list scope-vars))
-      (for-each (lambda (v)
-		   (with-access::Var v (escapes?)
-		      (set! escapes? #t)))
-		free-vars)))
+      (default-walk this this (list scope-vars))))
 
 (define-nmethod (Scope.find-free surrounding-fun visible-vars-list)
    (with-access::Scope this (scope-vars)
@@ -43,4 +41,17 @@
 			visible-vars-list))
 	 (with-access::Execution-Unit surrounding-fun (free-vars)
 	    (unless (memq var free-vars)
-	       (cons-set! free-vars var))))))
+	       (cons-set! free-vars var)))
+	 (with-access::Var var (escapes?)
+	    (set! escapes? #t)))))
+
+(define-nmethod (Set!.find-free surrounding-fun visible-vars-list)
+   (default-walk this surrounding-fun visible-vars-list)
+   (with-access::Set! this (lvalue val)
+      (with-access::Ref lvalue (var)
+	 (with-access::Var var (escapes? mutated-outside-local?)
+	    (when (and escapes?
+		       (not mutated-outside-local?) ;; already marked
+		       (not (any? (lambda (s) (memq var s))
+				  visible-vars-list)))
+	       (set! mutated-outside-local? #t))))))

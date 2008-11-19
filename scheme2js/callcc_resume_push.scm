@@ -1,19 +1,20 @@
 (module callcc-resume-push
-   (include "protobject.sch")
-   (include "nodes.sch")
-   (include "tools.sch")
-   (option (loadq "protobject-eval.sch"))
-   (import protobject
-	   config
+   (import config
 	   nodes
+	   export-desc
+	   walk
 	   tail
 	   mark-statements
-	   verbose)
-   (export (call/cc-resume-push! tree::pobject)))
+	   verbose
+	   tools)
+   (static (wide-class Call/cc-Label::Label
+	      (resumes::pair-nil (default '()))))
+   (export (call/cc-resume-push! tree::Module)))
 
 ;; When call/cc resumes, the instruction following the call/cc should be
 ;; executed.
-;; Call/cc-Resume represents this location.
+;; Call/cc-Resume represents this location. These nodes are introduced here.
+;;
 ;; The Resume node is then (sometimes) pushed further, to push it to cheaper
 ;; locations. All skipped expressions are copied into the Resume-node and need
 ;; to be executed before jumping to the resume-point. At the moment only the
@@ -21,33 +22,42 @@
 ;; skipped var).
 (define (call/cc-resume-push! tree)
    (verbose " call/cc resume push")
-   (overload traverse! resume! (Node
-				Call/cc-Call
-				If
-				Case
-				Begin
-				Set!
-				Break
-				While
-				Labeled)
-	     (tree.traverse!)))
+   (resume! tree #f #f))
 
-;; a resume-begin is a begin finishing with a resume-node.
-(define (resume-begin? n)
-   (and (inherits-from? n (node 'Begin))
-	(inherits-from? (car (last-pair n.exprs)) (node 'Call/cc-Resume))))
+(define (update-hoisted! fun index instr)
+   (with-access::Lambda fun (call/cc-hoisted)
+      (let ((rev-hoisted (assq index call/cc-hoisted)))
+	 (if (not rev-hoisted) ;; first hoisting for variable
+	     (cons-set! call/cc-hoisted `(,index ,instr))
+	     ;; physically update the element
+	     (set-cdr! rev-hoisted (cons instr (cdr rev-hoisted)))))))
 
-(define (resume-begin-split bnode)
-   (let ((exprs bnode.exprs))
-      (if (= (length exprs) 2) ;; something + resume
-	  (cons (car exprs) (cadr exprs))
-	  (begin
-	     ;; remove last element
-	     ;; not very elegant. I know.
-	     (let* ((rev-exprs (reverse! exprs))
-		    (resume (car rev-exprs)))
-		(set! bnode.exprs (reverse! (cdr rev-exprs)))
-		(cons bnode resume))))))
+;; if n is a Begin:
+;; returns #f or the last element of the begin, if it was a Call/cc-Resume
+;; physically modifies the begin, so it does not contain the resume-node
+;; anymore.
+(define (resume-begin-split n)
+   (when (Begin? n)
+      (with-access::Begin n (exprs)
+	 (let loop ((exprs exprs))
+	    (cond
+	       ((null? exprs) #f) ;; should never happen
+	       ((null? (cdr exprs)) #f)
+	       ((and (null? (cddr exprs))
+		     (Call/cc-Resume? (cadr exprs)))
+		(let ((resume (cadr exprs)))
+		   (set-cdr! exprs '())
+		   resume))
+	       (else
+		(loop (cdr exprs))))))))
+
+(define (simplified-begin bnode::Begin)
+   (with-access::Begin bnode (exprs)
+      (cond
+	 ((null? exprs) (instantiate::Const (value #unspecified)))
+	 ((null? (cdr exprs)) (car exprs))
+	 (else
+	  bnode))))
 
 ;; merges all Resumes into the first of the list.
 ;; returns #f if the list is empty.
@@ -55,66 +65,71 @@
    (and resumes
 	(not (null? resumes))
 	(let ((first-resume (car resumes)))
-	   ;; first merge all the Resumes
-	   (let loop ((resumes (cdr resumes))
-		      (indices/vars first-resume.indices/vars))
-	      (if (null? resumes)
-		  (set! first-resume.indices/vars indices/vars)
-		  (loop (cdr resumes)
-			(append (car resumes).indices/vars
-				indices/vars))))
+	   (with-access::Call/cc-Resume first-resume (indices)
+	      ;; first merge all the Resumes
+	      (let loop ((resumes (cdr resumes))
+			 (inds indices))
+		 (if (null? resumes)
+		     (set! indices inds)
+		     (loop (cdr resumes)
+			   (append (Call/cc-Resume-indices (car resumes))
+				   inds)))))
 	   first-resume)))
    
-(define-pmethod (Node-resume!)
-   (this.traverse0!))
+(define-nmethod (Node.resume! surrounding-fun)
+   (default-walk! this surrounding-fun))
+
+(define-nmethod (Lambda.resume! surrounding-fun)
+   (default-walk! this this))
 
 ;; add Resume node.
-(define-pmethod (Call/cc-Call-resume!)
-   (this.traverse0!)
-   (let* ((resume-node (new-node Call/cc-Resume this.call/cc-index))
-	  (bnode (new-node Begin (list this resume-node))))
-      (mark-statement-form! bnode #t)
-      bnode))
+(define-nmethod (Call.resume! surrounding-fun)
+   (with-access::Call this (call/cc? call/cc-index)
+      (if (or (not call/cc?)
+	      (not call/cc-index)) ;; tail-call
+	  (default-walk! this surrounding-fun)
+	  (begin
+	     (default-walk! this surrounding-fun)
+	     (let ((resume-node (instantiate::Call/cc-Resume
+				   (indices (list call/cc-index)))))
+		(instantiate::Begin
+		   (exprs (list this resume-node))))))))
 
-(define-pmethod (If-resume!)
-   (this.traverse0!)
-   (let ((then/resume (and (resume-begin? this.then)
-			   (resume-begin-split this.then)))
-	 (else/resume (and (resume-begin? this.else)
-			   (resume-begin-split this.else))))
-      (when then/resume
-	 (set! this.then (car then/resume)))
-      (when else/resume
-	 (set! this.else (car else/resume)))
-      (if (or then/resume else/resume)
+(define-nmethod (If.resume! surrounding-fun)
+   (default-walk! this surrounding-fun)
+   (with-access::If this (then else)
+      (let ((then-resume (resume-begin-split then))
+	    (else-resume (resume-begin-split else)))
+      (when then-resume
+	 ;; in case there is only one element left.
+	 (set! then (simplified-begin then)))
+      (when else-resume
+	 (set! else (simplified-begin else)))
+      (if (or then-resume else-resume)
 	  (let* ((resume (cond
-			    ((and then/resume else/resume)
-			     (resumes-merge! (list (cdr then/resume)
-						   (cdr else/resume))))
-			    (then/resume
-			     (cdr then/resume))
+			    ((and then-resume else-resume)
+			     (resumes-merge! (list then-resume else-resume)))
 			    (else
-			     (cdr else/resume))))
-		 (bnode (new-node Begin (list this resume))))
-	     (mark-statement-form! bnode #t)
+			     (or then-resume else-resume))))
+		 (bnode (instantiate::Begin (exprs (list this resume)))))
 	     bnode)
-	  this)))
+	  this))))
 
-(define-pmethod (Case-resume!)
+(define-nmethod (Case.resume! surrounding-fun)
    ;; TODO: implement Case-resume
-   (this.traverse0!))
+   (default-walk! this surrounding-fun))
 
-(define-pmethod (Begin-resume!)
-   (this.traverse0!)
-   (let ((exprs this.exprs))
+(define-nmethod (Begin.resume! surrounding-fun)
+   (default-walk! this surrounding-fun)
+   (with-access::Begin this (exprs)
       ;; merge nested Begins.
       (let loop ((exprs exprs))
 	 (unless (null? exprs)
 	    (let ((expr (car exprs)))
 	       (cond
-		  ((inherits-from? expr (node 'Begin))
+		  ((Begin? expr)
 		   ;; insert into our list.
-		   (let ((other-exprs expr.exprs)
+		   (let ((other-exprs (Begin-exprs expr))
 			 (exprs-tail (cdr exprs)))
 		      ;; we know there must be at least 2 elements.
 		      ;; otherwise we wouldn't have gotten a 'Begin'.
@@ -122,23 +137,27 @@
 		      (set-cdr! exprs (cdr other-exprs))
 		      (set-cdr! (last-pair other-exprs) exprs-tail))
 		   (loop exprs))
-		  ((inherits-from? expr (node 'Call/cc-Resume))
+		  ((Call/cc-Resume? expr)
 		   (let ((next (and (not (null? (cdr exprs)))
 				    (cadr exprs))))
 		      (cond
 			 ((not next)
 			  (loop (cdr exprs)))
 			 ;; merge two consecutive Resumes into one.
-			 ((inherits-from? next (node 'Call/cc-Resume))
+			 ((Call/cc-Resume? next)
 			  (set-car! exprs (resumes-merge! (list (car exprs) next)))
 			  (set-cdr! exprs (cddr exprs))
 			  (loop exprs))
-			 ((or (inherits-from? next (node 'Continue))
-			      (and (inherits-from? next (node 'Break))
-				   (not next.val)))
-			  (set! next.label.resumes
-				(cons expr (or next.label.resumes
-					       '())))
+			 ((or (Continue? next)
+			      (and (Break? next)
+				   (not (Break-val next))))
+			  (let ((label (if Continue?
+					   (Continue-label next)
+					   (Break-label next))))
+			     (unless (Call/cc-Label? label)
+				(widen!::Call/cc-Label label))
+			     (with-access::Call/cc-Label label (resumes)
+				(cons-set! resumes expr)))
 			  ;; remove Resume from this Begin
 			  (set-car! exprs (cadr exprs))
 			  (set-cdr! exprs (cddr exprs))
@@ -149,83 +168,116 @@
 		   (loop (cdr exprs))))))))
    this)
 
-(define-pmethod (Set!-resume!)
-   (this.traverse0!)
-   (if (resume-begin? this.val)
-       (let* ((val/resume (resume-begin-split this.val))
-	      (new-val (car val/resume))
-	      (resume (cdr val/resume)))
-	  ;; TODO: optimize. reuse the begin-node.
-	  (set! this.val new-val)
-	  ;; there must only one entry in the a-list.
-	  ;; before resuming the execution at our resume-point we need to
-	  ;; update the lvalue.
-	  ;; ex:
-	  ;;    case 0:
-	  ;;      index = 2;
-	  ;;      x = call/cc();
-	  ;;    case 2:
-	  ;;      ....
-	  ;; In this case we would need to update 'x' before resuming at 'case 2:'.
-	  (set-cdr! (car resume.indices/vars) this.lvalue.var)
-	  (let ((bnode (new-node Begin (list this resume))))
-	     (mark-statement-form! bnode #t)
-	     bnode))
-       this))
+(define-nmethod (Set!.resume! surrounding-fun)
+   (default-walk! this surrounding-fun)
+   (with-access::Set! this (val lvalue)
+      (let ((resume (resume-begin-split val)))
+	 (if resume
+	     (begin
+		(set! val (simplified-begin val))
+		;; before resuming the execution at our resume-point we need to
+		;; update the lvalue.
+		;; ex:
+		;;    case 0:
+		;;      index = 2;
+		;;      x = call/cc();
+		;;    case 2:
+		;;      ....
+		;; Here we need to update 'x' before resuming at 'case 2:'.
+		(with-access::Call/cc-Resume resume (indices)
+		   ;; there could be several indices for one variable.
+		   ;; ex:
+		   ;;     (set! a (if xxx
+		   ;;                 (call/cc..)
+		   ;;                 (call/cc..)))
+		   (for-each (lambda (index)
+				(update-hoisted! surrounding-fun index
+						 `(set! ,(Ref-var lvalue))))
+			     indices)
+		   (instantiate::Begin (exprs (list this resume)))))
+	     this))))
 
-(define-pmethod (Break-resume!)
-   (this.traverse0!)
-   (let* ((val/resume (and (resume-begin? this.val)
-			    (resume-begin-split this.val))))
-      (when val/resume
-	 (set! this.val (car val/resume))
-	 (set! this.label.resumes
-	       (cons (cdr val/resume)
-		     (or this.label.resumes '()))))
-      this))
+(define-nmethod (Break.resume! surrounding-fun)
+   (default-walk! this surrounding-fun)
+   (with-access::Break this (val label)
+      (let ((resume (resume-begin-split val)))
+	 (when resume
+	    (set! val (simplified-begin val))
+	    (unless (Call/cc-Label? label)
+	       (widen!::Call/cc-Label label))
+	    (with-access::Call/cc-Label label (resumes)
+	       (cons-set! resumes resume)))))
+   this)
    
-(define-pmethod (While-resume!)
-   (this.traverse0!)
-   (let* ((body/resume (and (resume-begin? this.body)
-			    (resume-begin-split this.body)))
+(define-nmethod (While.resume! surrounding-fun)
+   (default-walk! this surrounding-fun)
+   (with-access::While this (body label)
+      (let ((body-resume (resume-begin-split body))
+	    (continue-resumes (and (Call/cc-Label? label)
+				   (Call/cc-Label-resumes label))))
+	 (when body-resume (set! body (simplified-begin body)))
 	  ;; a body-resume continues at the end of the while -> like a continue
 	  ;; We put it just before the loop.
-	  (body-resume (and body/resume
-			    (cdr body/resume)))
 	  ;; a continue-resume initially was just before a
-	  ;; continue. We put it just before the loop now.
-	  (continue-resumes (or this.label.resumes '()))
-	  (resume (if body-resume
-		      (resumes-merge! (cons body-resume continue-resumes))
-		      (and (not (null? continue-resumes))
-			   continue-resumes))))
-      (delete! this.label.resumes)
-      (if body/resume
-	  (set! this.body (car body/resume)))
-      (if resume
-	  ;; note the 'resume' before the 'this'.
-	  (let ((bnode (new-node Begin (list resume this))))
-	     (mark-statement-form! bnode #t)
-	     bnode)
-	  this)))
+	  ;; continue. We put it just before the loop now, too.
+	 (let ((resume (cond
+			  ((and body-resume continue-resumes)
+			   (resumes-merge! (cons body-resume
+						 continue-resumes)))
+			  (body-resume
+			   body-resume)
+			  (continue-resumes
+			   (resumes-merge! continue-resumes))
+			  (else #f))))
+	    (when (Call/cc-Label? label) (shrink! label))
+	    (if resume
+		;; note the 'resume' before the 'this'
+		(instantiate::Begin (exprs (list resume this)))
+		this)))))
 
-(define-pmethod (Labeled-resume!)
-   (this.traverse0!)
-   (let* ((body/resume (and (resume-begin? this.body)
-			    (resume-begin-split this.body)))
-	  (body-resume (if body/resume
-			   (list (cdr body/resume))
-			   '()))
-	  (resumes (or this.label.resumes
-		       '()))
-	  (resume (resumes-merge! (append body-resume resumes))))
-      (delete! this.label.resumes)
-      (if body/resume
-	  (set! this.body (car body/resume)))
-      (if resume
-	  ;; all resumes are after Labeled.
-	  (let ((bnode (new-node Begin (list this resume))))
-	     (mark-statement-form! bnode #t)
-	     bnode)
-	  this)))
+(define-nmethod (Labeled.resume! surrounding-fun)
+   (default-walk! this surrounding-fun)
+   (with-access::Labeled this (body label)
+      (let ((body-resume (resume-begin-split body))
+	    (label-resumes (and (Call/cc-Label? label)
+				(Call/cc-Label-resumes label))))
+	 (when body-resume (set! body (simplified-begin body)))
+	 (let ((resume (cond
+			  ((and body-resume label-resumes)
+			   (resumes-merge! (cons body-resume label-resumes)))
+			  (body-resume
+			   body-resume)
+			  (label-resumes
+			   (resumes-merge! label-resumes))
+			  (else #f))))
+	    (when (Call/cc-Label? label) (shrink! label))
+	    (if resume
+		;; all resumes are after Labelled.
+		(instantiate::Begin (exprs (list this resume)))
+		this)))))
 
+(define-nmethod (Return.resume! surrounding-fun)
+   (default-walk! this surrounding-fun)
+   (with-access::Return this (val)
+      (let ((return-resume (resume-begin-split val)))
+	 ;; if there is (are) actually a return-resume, then it must be a
+	 ;; resume assigning a variable. Otherwise the call would be in
+	 ;; tail-position and thus would not have any resume.
+	 ;; ex:
+	 ;;    (return (if xyz
+	 ;;                (set! a (call/cc..))
+	 ;;                (set! b (if xxx
+	 ;;                            (call/cc..)
+	 ;;                            (call/cc..)))))
+	 ;;
+	 ;;   all call/cc-calls are not in tail-position. but once the resume
+	 ;;   has been pushed after the 'set!'s, the resumes are in
+	 ;;   tail-position.
+	 (when return-resume
+	    (with-access::Call/cc-Resume return-resume (indices)
+	       (for-each (lambda (index)
+			    (update-hoisted! surrounding-fun index '(return)))
+			 indices))
+	    ;; drop the resume-node, as it is not needed anymore
+	    )))
+   this)

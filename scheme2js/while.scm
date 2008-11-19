@@ -106,7 +106,7 @@
 	     (instantiate::Begin
 		(exprs (list this iff-else))))
 	    ((no-continue-in-then)
-	     (set! test (instantiate::SCall
+	     (set! test (instantiate::Call
 			   (operator (runtime-reference 'not))
 			   (operands (list iff-test))))
 	     (set! body iff-else)

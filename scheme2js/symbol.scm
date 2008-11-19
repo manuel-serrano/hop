@@ -105,9 +105,6 @@
 	  #f))
 
    (define (update-scope! scope symbol qualified v)
-      ;; so we found a matching variable. add both versions to the scope.
-      ;; the unqualified and the qualified one.
-      (symbol-var-set! scope symbol v)
       (symbol-var-set! scope qualified v))
       
    (define (lazy-lookup scope id)
@@ -267,9 +264,6 @@
 (define-nmethod (Lambda.resolve! symbol-table)
    ;; this.body must be 'return'.
    (with-access::Lambda this (body formals scope-vars this-var)
-      (with-access::Return body (val)
-	 (set! val (defines->letrec! val)))
-      
       (let* ((formals-scope (make-scope))
 	     (new-symbol-table (cons formals-scope symbol-table)))
 	 (for-each (lambda (formal)
@@ -283,7 +277,6 @@
    
 (define-nmethod (Let.resolve! symbol-table)
    (with-access::Let this (body bindings kind scope-vars)
-      (set! body (defines->letrec! body))
       (let ((local-scope (make-scope)))
 	 (for-each (lambda (binding)
 		      (with-access::Set! binding (lvalue)
@@ -377,42 +370,3 @@
 				      (kind 'local))))
 		       (symbol-var-set! module-scope id new-var))))))))
       (else 'do-nothing)))
-
-(define (defines->letrec! n)
-   (cond
-      ((Define? n)
-       ;; wrap into begin.
-       (defines->letrec! (instantiate::Begin
-			    (exprs (list n)))))
-      ((Begin? n)
-       (let ((bindings (map (lambda (n) (shrink! n)) (head-defines! n))))
-	  (if (null? bindings)
-	      n
-	      (instantiate::Let
-		 (bindings bindings)
-		 (body n)
-		 (kind 'letrec)))))
-      (else n)))
-
-(define (head-defines! bnode::Begin)
-   (define (inner bnode::Begin rev-found-defines finish-fun)
-      (let loop ((exprs (Begin-exprs bnode))
-		 (rev-defines rev-found-defines))
-	 (cond
-	    ((null? exprs)
-	     rev-defines)
-	    ((Begin? (car exprs))
-	     (loop (cdr exprs)
-		   (inner (car exprs)
-			  rev-defines
-			  finish-fun)))
-	    ((Define? (car exprs))
-	     (let ((binding (car exprs)))
-		(set-car! exprs (instantiate::Const (value #unspecified)))
-		(loop (cdr exprs)
-		      (cons binding rev-defines))))
-	    (else
-	     (finish-fun rev-defines)))))
-
-   (reverse! (bind-exit (finish-fun)
-		(inner bnode '() finish-fun))))

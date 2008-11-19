@@ -232,7 +232,7 @@
 		   (instantiate::Return
 		      (val (scheme->pobject (car operands)
 					    (location operands)))))
-	       (instantiate::SCall
+	       (instantiate::Call
 		  (operator (scheme->pobject operator (location exp)))
 		  (operands (scheme->pobject-map operands)))))))
       ((eq? exp #unspecified)

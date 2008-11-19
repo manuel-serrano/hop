@@ -2085,7 +2085,5 @@ function sc_BindExitException() {
 
 var SC_SCM2JS_GLOBALS = new Object();
 
-// default tail-call depth.
-// normally the program should set it again. but just in case...
-var SC_TAIL_OBJECT = new Object();
+var SC_TAIL_OBJECT = new Object();  // (used in runtime_callcc.)
 SC_SCM2JS_GLOBALS.TAIL_OBJECT = SC_TAIL_OBJECT;
