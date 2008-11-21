@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Wed Nov 19 13:17:46 2008 (serrano)                */
+;*    Last change :  Thu Nov 20 17:29:08 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -213,7 +213,6 @@
       ;; process the request
       (stage scd thread stage-request id sock mode timeout))
 
-   (tprint "acclen=" acclen)
    (let loop ((id 1))
       (let ((n (socket-accept-many serv socks
 				   :inbufs dummybufs

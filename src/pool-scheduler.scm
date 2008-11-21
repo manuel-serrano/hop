@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Wed Nov 19 11:39:45 2008 (serrano)                */
+;*    Last change :  Thu Nov 20 17:33:39 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -124,8 +124,7 @@
 (define (pool-thread-body t)
    (let* ((scd (hopthread-scheduler t))
 	  (mutex (hopthread-mutex t))
-	  (condv (hopthread-condv t))
-	  (smutex (pool-scheduler-mutex scd)))
+	  (condv (hopthread-condv t)))
       (mutex-lock! mutex)
       (let loop ()
 	 (condition-variable-wait! condv mutex)
@@ -135,12 +134,15 @@
 	       (make-scheduler-error-handler t)
 	       (proc scd t))
 	    ;; go back to the free pool
-	    (mutex-lock! smutex)
-	    (with-access::pool-scheduler scd (free nfree)
+	    (with-access::pool-scheduler scd ((smutex mutex)
+					      (scondv condv)
+					      free nfree)
+	       (mutex-lock! smutex)
 	       (let ((cell (hopthread-userdata t)))
 		  (set-cdr! cell free)
 		  (set! free cell)
 		  (set! nfree (+fx nfree 1))
+		  (condition-variable-signal! scondv)
 		  (mutex-unlock! smutex)
 		  (loop)))))))
    
