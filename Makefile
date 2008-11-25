@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Nov 25 08:03:31 2008 (serrano)                */
+#*    Last change :  Tue Nov 25 08:04:40 2008 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -215,7 +215,7 @@ distrib-inc-version:
             fi; \
             distrib=$$version-$$devel$$min; \
           fi; \
-          echo "#!/bin/sh" > .hoprelease \
+          echo "#!/bin/sh" > .hoprelease; \
           echo "major=$$version" >> .hoprelease; \
           echo "state=$$devel" >> .hoprelease; \
           echo "minor=$$min" >> .hoprelease; \

@@ -1,5 +1,6 @@
 (
- (#!/bin/sh echo major 1.10.0)
+ (#!/bin/sh )
+ (major 1.10.0)
  (state pre)
- (minor 1)
+ (minor 4)
 )
