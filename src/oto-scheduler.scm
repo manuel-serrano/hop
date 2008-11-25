@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/src/oto-scheduler.scm             */
+;*    .../lab/HOP/HOP-OPTIM/hop-1.10.0-pre3/src/oto-scheduler.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 06:41:38 2008                          */
-;*    Last change :  Sat Sep 20 07:54:21 2008 (serrano)                */
+;*    Last change :  Fri Nov 21 14:05:35 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    One to one scheduler                                             */
@@ -35,6 +35,12 @@
 	       (cur::int (default 0)))))
 
 ;*---------------------------------------------------------------------*/
+;*    dummy-mutex ...                                                  */
+;*---------------------------------------------------------------------*/
+(define dummy-mutex (make-mutex))
+(define dummy-condv (make-condition-variable))
+
+;*---------------------------------------------------------------------*/
 ;*    scheduler-stat ::one-to-one-scheduler ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-stat scd::one-to-one-scheduler)
@@ -61,6 +67,9 @@
 	    (condition-variable-wait! condv mutex)
 	    (loop)))
       (letrec ((thread (instantiate::hopthread
+			  (condv dummy-condv)
+			  (mutex dummy-mutex)
+			  (scheduler scd)
 			  (body (lambda ()
 				   (with-handler
 				      (make-scheduler-error-handler thread)
@@ -85,6 +94,9 @@
 	    (condition-variable-wait! condv mutex)
 	    (loop)))
       (letrec ((thread (instantiate::hopthread
+			  (condv dummy-condv)
+			  (mutex dummy-mutex)
+			  (scheduler scd)
 			  (body (lambda ()
 				   (with-handler
 				      (make-scheduler-error-handler thread)

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Oct 23 09:38:10 2008 (serrano)                */
+#*    Last change :  Tue Nov 25 08:01:17 2008 (serrano)                */
 #*    Copyright   :  2004-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -674,7 +674,7 @@ done
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */
 #*---------------------------------------------------------------------*/
-. .hoprelease
+. ./.hoprelease
 
 echo "** Configuration summary **"
 echo 

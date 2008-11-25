@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Thu Nov 20 17:29:08 2008 (serrano)                */
+;*    Last change :  Fri Nov 21 11:08:16 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -117,14 +117,15 @@
 	    (let liip ((i 0))
 	       (if (=fx i n)
 		   (loop (+fx id i))
-		   (let ((sock (vector-ref socks i)))
-		      (hop-verb 2 (hop-color id id " ACCEPT")
+		   (let ((sock (vector-ref socks i))
+			 (nid (+fx id i)))
+		      (hop-verb 2 (hop-color nid nid " ACCEPT")
 				": " (socket-hostname sock)
 				" [" (current-date) "]\n")
 		      ;; tune the socket
 		      (tune-socket! sock)
 		      ;; process the request
-		      (spawn scd stage-request (+fx id i)
+		      (spawn scd stage-request nid
 			     sock
 			     'connect (hop-read-timeout))
 		      (liip (+fx i 1)))))))))
